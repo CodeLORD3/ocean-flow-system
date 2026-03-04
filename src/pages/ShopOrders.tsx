@@ -92,6 +92,16 @@ export default function ShopOrders() {
     return () => { supabase.removeChannel(channel); };
   }, [activeStoreId, qc]);
 
+  // Keep selectedOrder in sync with fetched data
+  useEffect(() => {
+    if (selectedOrder && orders.length > 0) {
+      const updated = orders.find((o: any) => o.id === selectedOrder.id);
+      if (updated && JSON.stringify(updated) !== JSON.stringify(selectedOrder)) {
+        setSelectedOrder(updated);
+      }
+    }
+  }, [orders]);
+
   const filteredProducts = products.filter(p =>
     productSearch &&
     (p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
@@ -250,24 +260,60 @@ export default function ShopOrders() {
                     {orders.length === 0 ? "Inga beställningar ännu. Klicka \"Ny beställning\" för att börja." : "Inga matchande beställningar."}
                   </td></tr>
                 )}
-                {filteredOrders.map((o: any) => (
-                  <tr key={o.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors cursor-pointer" onClick={() => setSelectedOrder(o)}>
+                {filteredOrders.map((o: any) => {
+                  const lines = o.shop_order_lines || [];
+                  const statusCounts: Record<string, number> = {};
+                  lines.forEach((l: any) => {
+                    const s = l.status || "Ny";
+                    statusCounts[s] = (statusCounts[s] || 0) + 1;
+                  });
+                  const total = lines.length || 1;
+                  // Build gradient segments for progress bar
+                  const statusColorMap: Record<string, string> = {
+                    "": "hsl(var(--primary))", Ny: "hsl(var(--primary))",
+                    Behandlas: "hsl(var(--warning))", Packad: "hsl(45 93% 47%)",
+                    Skickad: "hsl(var(--success))", Levererad: "hsl(var(--success))",
+                    "Klar / Levererad": "hsl(var(--success))",
+                    Avbruten: "hsl(var(--destructive))",
+                  };
+                  let gradientParts: string[] = [];
+                  let cumPct = 0;
+                  for (const [status, count] of Object.entries(statusCounts)) {
+                    const pct = (count / total) * 100;
+                    const color = statusColorMap[status] || "hsl(var(--muted))";
+                    gradientParts.push(`${color} ${cumPct}% ${cumPct + pct}%`);
+                    cumPct += pct;
+                  }
+                  const gradient = `linear-gradient(90deg, ${gradientParts.join(", ")})`;
+                  
+                  return (
+                  <tr key={o.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors cursor-pointer relative" onClick={() => setSelectedOrder(o)}>
                     <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
                     <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                     <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
-                    <td className="p-3 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
+                    <td className="p-3 text-right text-foreground">{lines.length}</td>
                     <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
-                      {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
+                      {lines.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
                     </td>
                     <td className="p-3 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
                     <td className="p-3 text-right">
-                      <Badge variant="outline" className={`${statusColor[o.status] || ""} text-[10px] gap-1`}>
-                        {statusIcon[o.status]}
-                        {o.status}
-                      </Badge>
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="flex gap-1 flex-wrap justify-end">
+                          {Object.entries(statusCounts).map(([s, c]) => (
+                            <Badge key={s} variant="outline" className={`${statusColor[s] || statusColor["Ny"] || ""} text-[10px] gap-0.5`}>
+                              {statusIcon[s] || statusIcon["Ny"]}
+                              {c}×{s || "Ny"}
+                            </Badge>
+                          ))}
+                        </div>
+                        <div className="w-full h-1.5 rounded-full overflow-hidden bg-muted" style={{ minWidth: "80px" }}>
+                          <div className="h-full rounded-full" style={{ background: gradient, width: "100%" }} />
+                        </div>
+                      </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -434,8 +480,16 @@ export default function ShopOrders() {
                           <td className="p-2.5 text-muted-foreground">{line.deviation || "–"}</td>
                           <td className="p-2.5">
                             {line.status ? (
-                              <Badge variant="outline" className="text-[10px]">{line.status}</Badge>
-                            ) : "–"}
+                              <Badge variant="outline" className={`${statusColor[line.status] || ""} text-[10px] gap-1`}>
+                                {statusIcon[line.status]}
+                                {line.status}
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className={`${statusColor["Ny"]} text-[10px] gap-1`}>
+                                {statusIcon["Ny"]}
+                                Ny
+                              </Badge>
+                            )}
                           </td>
                         </tr>
                       );
