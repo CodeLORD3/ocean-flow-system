@@ -32,10 +32,32 @@ export function useCreateCustomer() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (customer: Omit<Customer, "id" | "created_at">) => {
-      const { error } = await supabase.from("customers").insert(customer);
+      // Create a store entry so this customer appears in the portal switcher
+      const { data: store, error: storeError } = await supabase
+        .from("stores")
+        .insert({
+          name: customer.name,
+          city: customer.city || "–",
+          address: customer.address || null,
+          phone: customer.phone || null,
+          manager: customer.contact_person || null,
+          is_wholesale: false,
+        })
+        .select()
+        .single();
+      if (storeError) throw storeError;
+
+      // Create customer linked to the store
+      const { error } = await supabase.from("customers").insert({
+        ...customer,
+        store_id: store.id,
+      });
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["customers"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["customers"] });
+      qc.invalidateQueries({ queryKey: ["stores"] });
+    },
   });
 }
 
