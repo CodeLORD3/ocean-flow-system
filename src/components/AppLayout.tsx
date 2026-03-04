@@ -2,11 +2,12 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { ShopSidebar } from "@/components/ShopSidebar";
 import { useLocation } from "react-router-dom";
-import { Bell, ChevronRight, Search, User, ArrowLeftRight } from "lucide-react";
+import { Bell, ChevronRight, Search, User, ArrowLeftRight, Factory, Store, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useSite } from "@/contexts/SiteContext";
+import { useStores } from "@/hooks/useStores";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,8 +36,9 @@ const pageTitles: Record<string, { title: string; breadcrumb: string[] }> = {
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const page = pageTitles[location.pathname] || { title: "Sida", breadcrumb: ["Hem"] };
-  const { site, setSite } = useSite();
-
+  const { site, setSite, activeStoreName, setActiveStore } = useSite();
+  const { data: allStores = [] } = useStores();
+  const retailStores = allStores.filter(s => !s.is_wholesale);
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -48,20 +50,50 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <span>FiskHandel ERP v2.4.1</span>
               <span className="hidden sm:inline">•</span>
               <span className="hidden sm:inline">
-                {site === "shop" ? "Butiksportal" : "Grossist/Produktion"}
+                {site === "shop" ? `Butik: ${activeStoreName || "–"}` : "Grossist/Produktion"}
               </span>
             </div>
             <div className="flex items-center gap-3">
-              {/* Site switcher */}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 text-[10px] gap-1 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-                onClick={() => setSite(site === "shop" ? "wholesale" : "shop")}
-              >
-                <ArrowLeftRight className="h-3 w-3" />
-                Byt till {site === "shop" ? "Grossist" : "Butik"}
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-[10px] gap-1 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                  >
+                    <ArrowLeftRight className="h-3 w-3" />
+                    {site === "shop" ? activeStoreName || "Butik" : "Grossist"}
+                    <ChevronDown className="h-2.5 w-2.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel className="text-[10px]">Välj portal</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className={`text-xs gap-2 ${site === "wholesale" ? "bg-muted font-medium" : ""}`}
+                    onClick={() => { setSite("wholesale"); setActiveStore(null, null); }}
+                  >
+                    <Factory className="h-3 w-3" /> Grossist / Produktion
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-[10px]">Butiker</DropdownMenuLabel>
+                  {retailStores.length === 0 ? (
+                    <DropdownMenuItem disabled className="text-[10px] text-muted-foreground">
+                      Inga butiker tillagda
+                    </DropdownMenuItem>
+                  ) : (
+                    retailStores.map(store => (
+                      <DropdownMenuItem
+                        key={store.id}
+                        className={`text-xs gap-2 ${site === "shop" && activeStoreName === store.name ? "bg-muted font-medium" : ""}`}
+                        onClick={() => { setSite("shop"); setActiveStore(store.id, store.name); }}
+                      >
+                        <Store className="h-3 w-3" /> {store.name}
+                      </DropdownMenuItem>
+                    ))
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
               <span className="hidden sm:inline">•</span>
               <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
               <span className="hidden sm:inline">Online</span>
@@ -140,7 +172,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="flex items-center gap-2">
               <h1 className="font-heading text-sm font-semibold text-foreground">{page.title}</h1>
               <Badge variant="outline" className="text-[9px] h-4">
-                {site === "shop" ? "Butik" : "Grossist"}
+                {site === "shop" ? (activeStoreName || "Butik") : "Grossist"}
               </Badge>
             </div>
             <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
