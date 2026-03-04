@@ -39,7 +39,7 @@ const overviewNav = [
 ];
 
 const salesNav = [
-  { title: "Beställningar", url: "/orders", icon: ShoppingCart },
+  { title: "Ordrar", url: "/orders", icon: ShoppingCart },
   { title: "Kunder", url: "/customers", icon: Users },
   { title: "Fakturor", url: "/invoices", icon: FileText },
 ];
