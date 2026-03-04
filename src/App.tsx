@@ -13,6 +13,7 @@ import Stores from "./pages/Stores";
 import Staff from "./pages/Staff";
 import Wholesale from "./pages/Wholesale";
 import Barcodes from "./pages/Barcodes";
+import Products from "./pages/Products";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/forecasts" element={<PlaceholderPage title="Prognoser" />} />
             <Route path="/invoices" element={<PlaceholderPage title="Fakturor" />} />
             <Route path="/receiving" element={<Receiving />} />
+            <Route path="/products" element={<Products />} />
             <Route path="/barcodes" element={<Barcodes />} />
             <Route path="/audit" element={<PlaceholderPage title="Revision & Logg" />} />
             <Route path="/settings" element={<PlaceholderPage title="Systeminställningar" />} />
