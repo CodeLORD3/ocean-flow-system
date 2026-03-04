@@ -1,0 +1,369 @@
+import { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  ShoppingCart, Plus, Search, Clock, CheckCircle2, Truck, XCircle, X, Package,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { useProducts } from "@/hooks/useProducts";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
+type OrderLine = {
+  product_id: string;
+  product_name: string;
+  unit: string;
+  quantity: string;
+};
+
+const statusColor: Record<string, string> = {
+  Ny: "bg-primary/10 text-primary border-primary/20",
+  Behandlas: "bg-warning/15 text-warning border-warning/20",
+  Packad: "bg-accent/10 text-accent border-accent/20",
+  Skickad: "bg-success/15 text-success border-success/20",
+  Levererad: "bg-success/15 text-success border-success/20",
+  Avbruten: "bg-destructive/10 text-destructive border-destructive/20",
+};
+
+const statusIcon: Record<string, React.ReactNode> = {
+  Ny: <Clock className="h-3 w-3" />,
+  Behandlas: <Clock className="h-3 w-3" />,
+  Packad: <Package className="h-3 w-3" />,
+  Skickad: <Truck className="h-3 w-3" />,
+  Levererad: <CheckCircle2 className="h-3 w-3" />,
+  Avbruten: <XCircle className="h-3 w-3" />,
+};
+
+export default function ShopOrders() {
+  const { toast } = useToast();
+  const qc = useQueryClient();
+  const { data: products = [] } = useProducts();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("Alla");
+
+  // Order form
+  const [orderNote, setOrderNote] = useState("");
+  const [orderLines, setOrderLines] = useState<OrderLine[]>([]);
+  const [productSearch, setProductSearch] = useState("");
+
+  // Fetch shop orders with lines
+  const { data: orders = [], isLoading } = useQuery({
+    queryKey: ["shop-orders-shop"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("shop_orders")
+        .select("*, stores(name), shop_order_lines(*, products(name, unit))")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const filteredProducts = products.filter(p =>
+    productSearch &&
+    (p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+     p.sku.toLowerCase().includes(productSearch.toLowerCase())) &&
+    !orderLines.find(l => l.product_id === p.id)
+  ).slice(0, 8);
+
+  const addProduct = (p: any) => {
+    setOrderLines(prev => [...prev, {
+      product_id: p.id, product_name: p.name, unit: p.unit, quantity: "",
+    }]);
+    setProductSearch("");
+  };
+
+  const updateLine = (idx: number, qty: string) => {
+    setOrderLines(prev => prev.map((l, i) => i === idx ? { ...l, quantity: qty } : l));
+  };
+
+  const removeLine = (idx: number) => {
+    setOrderLines(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleCreateOrder = async () => {
+    const validLines = orderLines.filter(l => l.quantity && Number(l.quantity) > 0);
+    if (validLines.length === 0) return;
+
+    // Get the first store as default (shop context would set this)
+    const { data: stores } = await supabase.from("stores").select("id").limit(1);
+    const storeId = stores?.[0]?.id;
+    if (!storeId) {
+      toast({ title: "Ingen butik hittad", variant: "destructive" });
+      return;
+    }
+
+    const weekNum = `V${Math.ceil((new Date().getTime() - new Date(new Date().getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000))}`;
+
+    const { data: order, error } = await supabase
+      .from("shop_orders")
+      .insert({
+        store_id: storeId,
+        order_week: weekNum,
+        notes: orderNote || null,
+        status: "Ny",
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast({ title: "Fel", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    const lines = validLines.map(l => ({
+      shop_order_id: order.id,
+      product_id: l.product_id,
+      quantity_ordered: Number(l.quantity),
+      unit: l.unit,
+      order_date: new Date().toISOString().slice(0, 10),
+    }));
+
+    const { error: lineError } = await supabase.from("shop_order_lines").insert(lines);
+    if (lineError) {
+      toast({ title: "Fel vid orderrader", description: lineError.message, variant: "destructive" });
+      return;
+    }
+
+    toast({ title: "Beställning skickad!", description: `${validLines.length} produkter beställda` });
+    qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
+    setDialogOpen(false);
+    setOrderLines([]);
+    setOrderNote("");
+  };
+
+  const filteredOrders = orders.filter((o: any) => {
+    const matchSearch = !search || o.order_week?.includes(search) || o.notes?.toLowerCase().includes(search.toLowerCase());
+    const matchStatus = statusFilter === "Alla" || o.status === statusFilter;
+    return matchSearch && matchStatus;
+  });
+
+  const totalOrders = orders.length;
+  const pending = orders.filter((o: any) => o.status === "Ny" || o.status === "Behandlas").length;
+  const delivered = orders.filter((o: any) => o.status === "Levererad").length;
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+        <div>
+          <h1 className="text-xl font-heading font-bold text-foreground flex items-center gap-2">
+            <ShoppingCart className="h-5 w-5 text-primary" /> Beställningar
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">Beställ produkter från grossist/produktion och följ leveransstatus.</p>
+        </div>
+        <Button size="sm" className="gap-1.5 text-xs" onClick={() => setDialogOpen(true)}>
+          <Plus className="h-3.5 w-3.5" /> Ny beställning
+        </Button>
+      </div>
+
+      {/* KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="shadow-card"><CardContent className="p-3">
+          <p className="text-[10px] text-muted-foreground">Totalt beställningar</p>
+          <p className="text-xl font-heading font-bold text-foreground">{totalOrders}</p>
+        </CardContent></Card>
+        <Card className="shadow-card"><CardContent className="p-3">
+          <p className="text-[10px] text-muted-foreground">Pågående</p>
+          <p className="text-xl font-heading font-bold text-warning">{pending}</p>
+        </CardContent></Card>
+        <Card className="shadow-card"><CardContent className="p-3">
+          <p className="text-[10px] text-muted-foreground">Levererade</p>
+          <p className="text-xl font-heading font-bold text-success">{delivered}</p>
+        </CardContent></Card>
+        <Card className="shadow-card"><CardContent className="p-3">
+          <p className="text-[10px] text-muted-foreground">Denna vecka</p>
+          <p className="text-xl font-heading font-bold text-foreground">
+            {orders.filter((o: any) => {
+              const d = new Date(o.created_at);
+              const now = new Date();
+              return d > new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+            }).length}
+          </p>
+        </CardContent></Card>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input placeholder="Sök vecka eller anteckning..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="h-8 text-xs w-36"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {["Alla", "Ny", "Behandlas", "Packad", "Skickad", "Levererad", "Avbruten"].map(s =>
+              <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
+            )}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Orders table */}
+      <Card className="shadow-card">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="p-3 text-left font-medium text-muted-foreground">VECKA</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground">DATUM</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground">BUTIK</th>
+                  <th className="p-3 text-right font-medium text-muted-foreground">RADER</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground">PRODUKTER</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground">ANTECKNING</th>
+                  <th className="p-3 text-right font-medium text-muted-foreground">STATUS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredOrders.length === 0 && (
+                  <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">
+                    {orders.length === 0 ? "Inga beställningar ännu. Klicka \"Ny beställning\" för att börja." : "Inga matchande beställningar."}
+                  </td></tr>
+                )}
+                {filteredOrders.map((o: any) => (
+                  <tr key={o.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
+                    <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
+                    <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
+                    <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
+                    <td className="p-3 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
+                    <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
+                      {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
+                    </td>
+                    <td className="p-3 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
+                    <td className="p-3 text-right">
+                      <Badge variant="outline" className={`${statusColor[o.status] || ""} text-[10px] gap-1`}>
+                        {statusIcon[o.status]}
+                        {o.status}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Create order dialog */}
+      <Dialog open={dialogOpen} onOpenChange={open => { setDialogOpen(open); if (!open) { setOrderLines([]); setOrderNote(""); } }}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-heading">Ny beställning till grossist</DialogTitle>
+            <DialogDescription className="text-xs">
+              Sök och lägg till produkter från produktbanken. Ange önskat antal och skicka beställningen.
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Product search */}
+          <div className="relative">
+            <Label className="text-xs font-medium mb-1.5 block">Lägg till produkter</Label>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                placeholder="Sök produkt (namn eller SKU)..."
+                value={productSearch}
+                onChange={e => setProductSearch(e.target.value)}
+                className="pl-8 h-8 text-xs"
+              />
+            </div>
+            {filteredProducts.length > 0 && (
+              <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                {filteredProducts.map(p => (
+                  <button
+                    key={p.id}
+                    className="w-full text-left px-3 py-2 text-xs hover:bg-muted/50 flex items-center justify-between"
+                    onClick={() => addProduct(p)}
+                  >
+                    <span className="font-medium text-foreground">{p.name}</span>
+                    <span className="text-muted-foreground font-mono text-[10px]">{p.sku} · {p.unit}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Order lines */}
+          {orderLines.length > 0 && (
+            <div className="space-y-2">
+              <Separator />
+              <div className="text-xs font-medium text-muted-foreground">
+                {orderLines.length} produkt{orderLines.length > 1 ? "er" : ""} tillagda
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="pb-2 text-left font-medium text-muted-foreground">Produkt</th>
+                      <th className="pb-2 text-left font-medium text-muted-foreground">Enhet</th>
+                      <th className="pb-2 text-right font-medium text-muted-foreground w-32">Antal</th>
+                      <th className="pb-2 w-8"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orderLines.map((line, idx) => (
+                      <tr key={line.product_id} className="border-b border-border/30">
+                        <td className="py-2 font-medium text-foreground">{line.product_name}</td>
+                        <td className="py-2 text-muted-foreground">{line.unit}</td>
+                        <td className="py-2 text-right">
+                          <Input
+                            type="number"
+                            step="0.1"
+                            value={line.quantity}
+                            onChange={e => updateLine(idx, e.target.value)}
+                            className="h-7 text-xs w-24 ml-auto text-right"
+                            placeholder="0"
+                            autoFocus={idx === orderLines.length - 1}
+                          />
+                        </td>
+                        <td className="py-2">
+                          <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeLine(idx)}>
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <Label className="text-xs">Anteckning (valfritt)</Label>
+            <Textarea
+              value={orderNote}
+              onChange={e => setOrderNote(e.target.value)}
+              placeholder="T.ex. brådskande leverans, specialförpackning..."
+              className="text-xs min-h-[50px]"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setDialogOpen(false)}>Avbryt</Button>
+            <Button
+              size="sm"
+              className="gap-1.5"
+              onClick={handleCreateOrder}
+              disabled={orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0}
+            >
+              <ShoppingCart className="h-3.5 w-3.5" /> Skicka beställning
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </motion.div>
+  );
+}
