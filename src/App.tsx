@@ -7,6 +7,7 @@ import { AppLayout } from "@/components/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Inventory from "./pages/Inventory";
 import Orders from "./pages/Orders";
+import Receiving from "./pages/Receiving";
 import Suppliers from "./pages/Suppliers";
 import Stores from "./pages/Stores";
 import Staff from "./pages/Staff";
@@ -34,7 +35,7 @@ const App = () => (
             <Route path="/finance" element={<PlaceholderPage title="Ekonomi" />} />
             <Route path="/forecasts" element={<PlaceholderPage title="Prognoser" />} />
             <Route path="/invoices" element={<PlaceholderPage title="Fakturor" />} />
-            <Route path="/receiving" element={<PlaceholderPage title="Inleveranser" />} />
+            <Route path="/receiving" element={<Receiving />} />
             <Route path="/audit" element={<PlaceholderPage title="Revision & Logg" />} />
             <Route path="/settings" element={<PlaceholderPage title="Systeminställningar" />} />
             <Route path="*" element={<NotFound />} />
