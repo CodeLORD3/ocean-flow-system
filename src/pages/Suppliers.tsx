@@ -1,17 +1,17 @@
 import { motion } from "framer-motion";
-import { Search, Plus, Phone, Mail } from "lucide-react";
+import { Search, Plus, Mail } from "lucide-react";
 import { useState } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 const suppliersData = [
-  { id: 1, name: "Nordic Seafarms", contact: "Erik Johansson", email: "erik@nordicsea.no", phone: "+47 123 4567", location: "Bergen, Norway", products: ["Salmon", "Cod"], rating: "A" },
-  { id: 2, name: "Tokyo Fish Market", contact: "Yuki Tanaka", email: "yuki@tokyofish.jp", phone: "+81 3 1234 5678", location: "Tokyo, Japan", products: ["Bluefin Tuna"], rating: "A+" },
-  { id: 3, name: "Gulf Shrimp Co.", contact: "Maria Santos", email: "maria@gulfshrimp.th", phone: "+66 2 345 6789", location: "Bangkok, Thailand", products: ["Tiger Shrimp", "White Shrimp"], rating: "B+" },
-  { id: 4, name: "Alaska Wild Catch", contact: "John Miller", email: "john@alaskawild.us", phone: "+1 907 555 0123", location: "Anchorage, USA", products: ["Pacific Cod", "Salmon"], rating: "A" },
-  { id: 5, name: "Maritime Shellfish", contact: "Pierre Dubois", email: "pierre@maritime.ca", phone: "+1 506 555 0456", location: "Halifax, Canada", products: ["Lobster", "Snow Crab"], rating: "A" },
+  { id: 1, name: "Norsk Sjömat AB", contact: "Erik Johansson", email: "erik@norsksjömat.no", location: "Bergen, Norge", products: ["Lax", "Torsk", "Kungskrabba"], rating: "A" },
+  { id: 2, name: "Göteborgs Fiskauktion", contact: "Anna Lindberg", email: "anna@gbgfisk.se", location: "Göteborg, Sverige", products: ["Nordhavsräkor", "Rödspätta", "Sill"], rating: "A+" },
+  { id: 3, name: "Smögen Shellfish", contact: "Lars Pettersson", email: "lars@smogenshell.se", location: "Smögen, Sverige", products: ["Hummer", "Krabba"], rating: "A" },
+  { id: 4, name: "Mediterranean Imports", contact: "Marco Rossi", email: "marco@medimport.ch", location: "Zürich, Schweiz", products: ["Tonfisk", "Bläckfisk"], rating: "B+" },
+  { id: 5, name: "Kungshamns Fisk", contact: "Eva Svensson", email: "eva@kungshamnsfisk.se", location: "Kungshamn, Sverige", products: ["Torsk", "Sill", "Makrill"], rating: "A" },
 ];
 
 const ratingColor: Record<string, string> = {
@@ -31,17 +31,17 @@ export default function Suppliers() {
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-heading font-bold text-foreground">Suppliers</h2>
-          <p className="text-sm text-muted-foreground">Manage your seafood suppliers and vendors</p>
+          <h2 className="text-2xl font-heading font-bold text-foreground">Leverantörer</h2>
+          <p className="text-sm text-muted-foreground">Hantera era fisk- och skaldjursleverantörer</p>
         </div>
         <Button className="gap-2">
-          <Plus className="h-4 w-4" /> Add Supplier
+          <Plus className="h-4 w-4" /> Lägg till leverantör
         </Button>
       </div>
 
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search suppliers..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+        <Input placeholder="Sök leverantörer..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -59,8 +59,8 @@ export default function Suppliers() {
                   <Badge key={p} variant="secondary" className="text-xs">{p}</Badge>
                 ))}
               </div>
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{supplier.email}</span>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Mail className="h-3 w-3" />{supplier.email}
               </div>
             </CardContent>
           </Card>

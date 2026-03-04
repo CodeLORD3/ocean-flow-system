@@ -7,6 +7,7 @@ import {
   BarChart3,
   Settings,
   Anchor,
+  Store,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -25,16 +26,17 @@ import {
 } from "@/components/ui/sidebar";
 
 const mainNav = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Inventory", url: "/inventory", icon: Fish },
-  { title: "Orders", url: "/orders", icon: ShoppingCart },
-  { title: "Suppliers", url: "/suppliers", icon: Truck },
-  { title: "Customers", url: "/customers", icon: Users },
-  { title: "Reports", url: "/reports", icon: BarChart3 },
+  { title: "Översikt", url: "/", icon: LayoutDashboard },
+  { title: "Lager", url: "/inventory", icon: Fish },
+  { title: "Beställningar", url: "/orders", icon: ShoppingCart },
+  { title: "Leverantörer", url: "/suppliers", icon: Truck },
+  { title: "Kunder", url: "/customers", icon: Users },
+  { title: "Butiker", url: "/stores", icon: Store },
+  { title: "Rapporter", url: "/reports", icon: BarChart3 },
 ];
 
 const bottomNav = [
-  { title: "Settings", url: "/settings", icon: Settings },
+  { title: "Inställningar", url: "/settings", icon: Settings },
 ];
 
 export function AppSidebar() {
@@ -52,8 +54,8 @@ export function AppSidebar() {
           </div>
           {!collapsed && (
             <div>
-              <h2 className="font-heading text-sm font-bold text-sidebar-accent-foreground">OceanCatch</h2>
-              <p className="text-xs text-sidebar-foreground/60">Seafood ERP</p>
+              <h2 className="font-heading text-sm font-bold text-sidebar-accent-foreground">FiskHandel</h2>
+              <p className="text-xs text-sidebar-foreground/60">Fiskaffärs-ERP</p>
             </div>
           )}
         </div>
@@ -61,7 +63,7 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Main</SidebarGroupLabel>
+          <SidebarGroupLabel>Meny</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainNav.map((item) => (

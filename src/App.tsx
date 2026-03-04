@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import Inventory from "./pages/Inventory";
 import Orders from "./pages/Orders";
 import Suppliers from "./pages/Suppliers";
+import Stores from "./pages/Stores";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -25,9 +26,10 @@ const App = () => (
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/suppliers" element={<Suppliers />} />
-            <Route path="/customers" element={<PlaceholderPage title="Customers" />} />
-            <Route path="/reports" element={<PlaceholderPage title="Reports" />} />
-            <Route path="/settings" element={<PlaceholderPage title="Settings" />} />
+            <Route path="/customers" element={<PlaceholderPage title="Kunder" />} />
+            <Route path="/stores" element={<Stores />} />
+            <Route path="/reports" element={<PlaceholderPage title="Rapporter" />} />
+            <Route path="/settings" element={<PlaceholderPage title="Inställningar" />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>
