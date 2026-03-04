@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useProducts } from "@/hooks/useProducts";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-
+import { useSite } from "@/contexts/SiteContext";
 type OrderLine = {
   product_id: string;
   product_name: string;
@@ -49,6 +49,7 @@ const statusIcon: Record<string, React.ReactNode> = {
 export default function ShopOrders() {
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { activeStoreId } = useSite();
   const { data: products = [] } = useProducts();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -62,11 +63,13 @@ export default function ShopOrders() {
 
   // Fetch shop orders with lines
   const { data: orders = [], isLoading } = useQuery({
-    queryKey: ["shop-orders-shop"],
+    queryKey: ["shop-orders-shop", activeStoreId],
     queryFn: async () => {
+      if (!activeStoreId) return [];
       const { data, error } = await supabase
         .from("shop_orders")
         .select("*, stores(name), shop_order_lines(*, products(name, unit))")
+        .eq("store_id", activeStoreId)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -99,11 +102,8 @@ export default function ShopOrders() {
     const validLines = orderLines.filter(l => l.quantity && Number(l.quantity) > 0);
     if (validLines.length === 0) return;
 
-    // Get the first store as default (shop context would set this)
-    const { data: stores } = await supabase.from("stores").select("id").limit(1);
-    const storeId = stores?.[0]?.id;
-    if (!storeId) {
-      toast({ title: "Ingen butik hittad", variant: "destructive" });
+    if (!activeStoreId) {
+      toast({ title: "Ingen butik vald", variant: "destructive" });
       return;
     }
 
@@ -112,7 +112,7 @@ export default function ShopOrders() {
     const { data: order, error } = await supabase
       .from("shop_orders")
       .insert({
-        store_id: storeId,
+        store_id: activeStoreId,
         order_week: weekNum,
         notes: orderNote || null,
         status: "Ny",
