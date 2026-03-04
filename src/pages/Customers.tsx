@@ -22,8 +22,10 @@ export default function Customers() {
   const { toast } = useToast();
   const { site, activeStoreId } = useSite();
   const { data: allCustomers = [], isLoading } = useCustomers();
+  // Grossist sees customers they created (linked to a store, i.e. the shops themselves)
+  // Shop sees only their own local customers (store_id matches their active store but they were added by the shop, not auto-created)
   const customers = site === "wholesale"
-    ? allCustomers.filter(c => !c.store_id)
+    ? allCustomers
     : allCustomers.filter(c => c.store_id === activeStoreId);
   const createCustomer = useCreateCustomer();
   const updateCustomer = useUpdateCustomer();
