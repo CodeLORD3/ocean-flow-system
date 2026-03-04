@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      customers: {
+        Row: {
+          address: string | null
+          city: string | null
+          contact_person: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          store_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          store_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          store_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       delivery_note_lines: {
         Row: {
           delivery_note_id: string
@@ -588,6 +635,7 @@ export type Database = {
       }
       suppliers: {
         Row: {
+          address: string | null
           contact_person: string | null
           country: string | null
           created_at: string | null
@@ -595,8 +643,10 @@ export type Database = {
           id: string
           name: string
           phone: string | null
+          supplier_type: string | null
         }
         Insert: {
+          address?: string | null
           contact_person?: string | null
           country?: string | null
           created_at?: string | null
@@ -604,8 +654,10 @@ export type Database = {
           id?: string
           name: string
           phone?: string | null
+          supplier_type?: string | null
         }
         Update: {
+          address?: string | null
           contact_person?: string | null
           country?: string | null
           created_at?: string | null
@@ -613,6 +665,7 @@ export type Database = {
           id?: string
           name?: string
           phone?: string | null
+          supplier_type?: string | null
         }
         Relationships: []
       }
