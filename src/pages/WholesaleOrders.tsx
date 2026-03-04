@@ -62,7 +62,7 @@ function buildProgressGradient(lines: any[]): string {
     segments.push(`${color} ${start}%`, `${color} ${end}%`);
     pos++;
   }
-  return `linear-gradient(to right, ${segments.join(", ")})`;
+  return `linear-gradient(to bottom, ${segments.join(", ")})`;
 }
 
 const rowBgByStatus: Record<string, string> = {
