@@ -41,6 +41,18 @@ const statusIcon: Record<string, React.ReactNode> = {
 
 const LINE_STATUSES = ["", "Behandlas", "Producerad", "Packad", "Skickad", "Ej tillgänglig"];
 
+const rowBgByStatus: Record<string, string> = {
+  "": "",
+  "Behandlas": "bg-amber-50 dark:bg-amber-950/20",
+  "Producerad": "bg-blue-50 dark:bg-blue-950/20",
+  "Packad": "bg-emerald-50 dark:bg-emerald-950/20",
+  "Skickad": "bg-green-50 dark:bg-green-950/20",
+  "Ej tillgänglig": "bg-red-50 dark:bg-red-950/20",
+  "Ny": "bg-sky-50 dark:bg-sky-950/20",
+  "Levererad": "bg-green-50 dark:bg-green-950/20",
+  "Avbruten": "bg-red-50 dark:bg-red-950/20",
+};
+
 export default function WholesaleOrders() {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -230,7 +242,7 @@ export default function WholesaleOrders() {
                                   </td>
                                 </tr>
                               )}
-                              <tr key={item.product_id} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
+                              <tr key={item.product_id} className={`border-b border-border/30 transition-colors ${rowBgByStatus[item.currentStatus] || ""}`}>
                                 <td className="p-2.5 font-medium text-foreground">{item.product_name}</td>
                                 <td className="p-2.5">
                                   <Badge variant="outline" className="text-[10px]">{item.category}</Badge>
@@ -310,7 +322,7 @@ export default function WholesaleOrders() {
                         <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
                       )}
                       {filteredOrders.map((o: any) => (
-                        <tr key={o.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors cursor-pointer" onClick={() => setSelectedOrder(o)}>
+                        <tr key={o.id} className={`border-b border-border/40 transition-colors cursor-pointer ${rowBgByStatus[o.status] || ""}`} onClick={() => setSelectedOrder(o)}>
                           <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
                           <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                           <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
