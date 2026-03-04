@@ -310,6 +310,7 @@ export type Database = {
           category: string
           cost_price: number
           created_at: string | null
+          hs_code: string | null
           id: string
           name: string
           origin: string | null
@@ -319,6 +320,7 @@ export type Database = {
           supplier_id: string | null
           unit: string
           updated_at: string | null
+          weight_per_piece: number | null
           wholesale_price: number
         }
         Insert: {
@@ -326,6 +328,7 @@ export type Database = {
           category: string
           cost_price?: number
           created_at?: string | null
+          hs_code?: string | null
           id?: string
           name: string
           origin?: string | null
@@ -335,6 +338,7 @@ export type Database = {
           supplier_id?: string | null
           unit?: string
           updated_at?: string | null
+          weight_per_piece?: number | null
           wholesale_price?: number
         }
         Update: {
@@ -342,6 +346,7 @@ export type Database = {
           category?: string
           cost_price?: number
           created_at?: string | null
+          hs_code?: string | null
           id?: string
           name?: string
           origin?: string | null
@@ -351,6 +356,7 @@ export type Database = {
           supplier_id?: string | null
           unit?: string
           updated_at?: string | null
+          weight_per_piece?: number | null
           wholesale_price?: number
         }
         Relationships: [
@@ -359,6 +365,104 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_order_lines: {
+        Row: {
+          category_section: string | null
+          delivery_date: string | null
+          deviation: string | null
+          id: string
+          order_date: string | null
+          ordered_elsewhere: string | null
+          product_id: string
+          quantity_delivered: number | null
+          quantity_ordered: number
+          shop_order_id: string
+          status: string | null
+          unit: string | null
+        }
+        Insert: {
+          category_section?: string | null
+          delivery_date?: string | null
+          deviation?: string | null
+          id?: string
+          order_date?: string | null
+          ordered_elsewhere?: string | null
+          product_id: string
+          quantity_delivered?: number | null
+          quantity_ordered?: number
+          shop_order_id: string
+          status?: string | null
+          unit?: string | null
+        }
+        Update: {
+          category_section?: string | null
+          delivery_date?: string | null
+          deviation?: string | null
+          id?: string
+          order_date?: string | null
+          ordered_elsewhere?: string | null
+          product_id?: string
+          quantity_delivered?: number | null
+          quantity_ordered?: number
+          shop_order_id?: string
+          status?: string | null
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_order_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_order_lines_shop_order_id_fkey"
+            columns: ["shop_order_id"]
+            isOneToOne: false
+            referencedRelation: "shop_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_orders: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          notes: string | null
+          order_week: string
+          status: string
+          store_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          order_week: string
+          status?: string
+          store_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          order_week?: string
+          status?: string
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
