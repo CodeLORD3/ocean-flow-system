@@ -119,8 +119,7 @@ export default function Products() {
     setDialogOpen(false);
   };
 
-  const handleInlinePriceSave = async (productId: string) => {
-    const cost = Number(inlineCostPrice);
+  const handleInlinePriceSave = async (productId: string, cost: number) => {
     if (isNaN(cost) || cost <= 0) return;
     const wholesale = Number((cost * 1.35).toFixed(2));
     const { error } = await supabase.from("products").update({
@@ -137,8 +136,7 @@ export default function Products() {
       changed_by: "Admin",
     });
     qc.invalidateQueries({ queryKey: ["products"] });
-    setEditingPriceId(null);
-    toast({ title: "Pris uppdaterat", description: `Nytt grossistpris: ${wholesale.toFixed(2)} kr` });
+    toast({ title: "Pris uppdaterat", description: `Grossistpris: ${wholesale.toFixed(2)} SEK` });
   };
 
   const handleDelete = async () => {
@@ -264,35 +262,22 @@ export default function Products() {
                        <td className="p-3 text-muted-foreground">{p.unit}</td>
                        {isWholesale && (
                          <td className="p-3 text-right">
-                           {editingPriceId === p.id ? (
-                             <div className="flex items-center justify-end gap-1">
-                               <Input
-                                 value={inlineCostPrice}
-                                 onChange={e => setInlineCostPrice(e.target.value)}
-                                 type="number"
-                                 step="0.01"
-                                 className="h-6 w-20 text-xs text-right"
-                                 autoFocus
-                                 onKeyDown={e => {
-                                   if (e.key === "Enter") handleInlinePriceSave(p.id);
-                                   if (e.key === "Escape") setEditingPriceId(null);
-                                 }}
-                               />
-                               <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => handleInlinePriceSave(p.id)}>
-                                 <Check className="h-3 w-3 text-green-600" />
-                               </Button>
-                               <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setEditingPriceId(null)}>
-                                 <X className="h-3 w-3" />
-                               </Button>
-                             </div>
-                           ) : (
-                             <button
-                               className="text-foreground hover:text-primary cursor-pointer hover:underline"
-                               onClick={() => { setEditingPriceId(p.id); setInlineCostPrice(String(p.cost_price)); }}
-                             >
-                               {Number(p.cost_price).toFixed(2)}
-                             </button>
-                           )}
+                           <Input
+                             defaultValue={Number(p.cost_price).toFixed(2)}
+                             type="number"
+                             step="0.01"
+                             className="h-6 w-20 text-xs text-right ml-auto"
+                             onBlur={e => {
+                               const val = Number(e.target.value);
+                               if (val > 0 && val !== Number(p.cost_price)) {
+                                 setInlineCostPrice(String(val));
+                                 handleInlinePriceSave(p.id, val);
+                               }
+                             }}
+                             onKeyDown={e => {
+                               if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                             }}
+                           />
                          </td>
                        )}
                        <td className="p-3 text-right font-medium text-foreground">{Number(p.wholesale_price).toFixed(2)}</td>
