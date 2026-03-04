@@ -559,6 +559,53 @@ export type Database = {
           },
         ]
       }
+      shop_reports: {
+        Row: {
+          closing_inventory: number
+          created_at: string | null
+          id: string
+          notes: string | null
+          opening_inventory: number
+          purchase: number
+          report_month: string
+          sales: number
+          store_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          closing_inventory?: number
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          opening_inventory?: number
+          purchase?: number
+          report_month: string
+          sales?: number
+          store_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          closing_inventory?: number
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          opening_inventory?: number
+          purchase?: number
+          report_month?: string
+          sales?: number
+          store_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_reports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       storage_locations: {
         Row: {
           created_at: string | null
