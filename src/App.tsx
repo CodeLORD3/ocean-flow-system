@@ -18,6 +18,7 @@ import Barcodes from "./pages/Barcodes";
 import Products from "./pages/Products";
 import OrganisationOverview from "./pages/OrganisationOverview";
 import PlaceholderPage from "./pages/PlaceholderPage";
+import ShopReports from "./pages/ShopReports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,7 +41,7 @@ const App = () => (
               <Route path="/organisation" element={<OrganisationOverview />} />
               <Route path="/staff" element={<Staff />} />
               <Route path="/wholesale" element={<Wholesale />} />
-              <Route path="/reports" element={<PlaceholderPage title="Rapporter & Analys" />} />
+              <Route path="/reports" element={<ShopReports />} />
               <Route path="/finance" element={<PlaceholderPage title="Ekonomi" />} />
               <Route path="/forecasts" element={<PlaceholderPage title="Prognoser" />} />
               <Route path="/invoices" element={<PlaceholderPage title="Fakturor" />} />
