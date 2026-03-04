@@ -8,6 +8,13 @@ import {
   Settings,
   Anchor,
   Store,
+  UserCheck,
+  Package,
+  FileText,
+  CreditCard,
+  ClipboardList,
+  TrendingUp,
+  Shield,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -25,18 +32,46 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const mainNav = [
+const overviewNav = [
   { title: "Översikt", url: "/", icon: LayoutDashboard },
-  { title: "Lager", url: "/inventory", icon: Fish },
+];
+
+const salesNav = [
   { title: "Beställningar", url: "/orders", icon: ShoppingCart },
-  { title: "Leverantörer", url: "/suppliers", icon: Truck },
   { title: "Kunder", url: "/customers", icon: Users },
+  { title: "Fakturor", url: "/invoices", icon: FileText },
+];
+
+const inventoryNav = [
+  { title: "Lager", url: "/inventory", icon: Fish },
+  { title: "Inleveranser", url: "/receiving", icon: Package },
+  { title: "Leverantörer", url: "/suppliers", icon: Truck },
+];
+
+const orgNav = [
   { title: "Butiker", url: "/stores", icon: Store },
+  { title: "Personal", url: "/staff", icon: UserCheck },
+];
+
+const financeNav = [
   { title: "Rapporter", url: "/reports", icon: BarChart3 },
+  { title: "Ekonomi", url: "/finance", icon: CreditCard },
+  { title: "Prognoser", url: "/forecasts", icon: TrendingUp },
 ];
 
 const bottomNav = [
-  { title: "Inställningar", url: "/settings", icon: Settings },
+  { title: "Revision & Logg", url: "/audit", icon: ClipboardList },
+  { title: "Administration", url: "/settings", icon: Settings },
+];
+
+type NavSection = { label: string; items: typeof overviewNav };
+
+const sections: NavSection[] = [
+  { label: "Översikt", items: overviewNav },
+  { label: "Försäljning", items: salesNav },
+  { label: "Lagerstyrning", items: inventoryNav },
+  { label: "Organisation", items: orgNav },
+  { label: "Ekonomi & Rapporter", items: financeNav },
 ];
 
 export function AppSidebar() {
@@ -55,30 +90,32 @@ export function AppSidebar() {
           {!collapsed && (
             <div>
               <h2 className="font-heading text-sm font-bold text-sidebar-accent-foreground">FiskHandel</h2>
-              <p className="text-xs text-sidebar-foreground/60">Fiskaffärs-ERP</p>
+              <p className="text-[10px] text-sidebar-foreground/60">Enterprise Resource Planning</p>
             </div>
           )}
         </div>
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Meny</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {mainNav.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                    <NavLink to={item.url} end>
-                      <item.icon className="h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {sections.map((section) => (
+          <SidebarGroup key={section.label}>
+            <SidebarGroupLabel>{section.label}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {section.items.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={isActive(item.url)}>
+                      <NavLink to={item.url} end>
+                        <item.icon className="h-4 w-4" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
       <SidebarFooter>

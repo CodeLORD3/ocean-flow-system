@@ -9,6 +9,7 @@ import Inventory from "./pages/Inventory";
 import Orders from "./pages/Orders";
 import Suppliers from "./pages/Suppliers";
 import Stores from "./pages/Stores";
+import Staff from "./pages/Staff";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -26,10 +27,16 @@ const App = () => (
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/suppliers" element={<Suppliers />} />
-            <Route path="/customers" element={<PlaceholderPage title="Kunder" />} />
+            <Route path="/customers" element={<PlaceholderPage title="Kundreskontra" />} />
             <Route path="/stores" element={<Stores />} />
-            <Route path="/reports" element={<PlaceholderPage title="Rapporter" />} />
-            <Route path="/settings" element={<PlaceholderPage title="Inställningar" />} />
+            <Route path="/staff" element={<Staff />} />
+            <Route path="/reports" element={<PlaceholderPage title="Rapporter & Analys" />} />
+            <Route path="/finance" element={<PlaceholderPage title="Ekonomi" />} />
+            <Route path="/forecasts" element={<PlaceholderPage title="Prognoser" />} />
+            <Route path="/invoices" element={<PlaceholderPage title="Fakturor" />} />
+            <Route path="/receiving" element={<PlaceholderPage title="Inleveranser" />} />
+            <Route path="/audit" element={<PlaceholderPage title="Revision & Logg" />} />
+            <Route path="/settings" element={<PlaceholderPage title="Systeminställningar" />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>
