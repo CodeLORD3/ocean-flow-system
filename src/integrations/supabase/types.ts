@@ -559,6 +559,41 @@ export type Database = {
           },
         ]
       }
+      shop_report_lines: {
+        Row: {
+          amount: number
+          category: string
+          id: string
+          line_type: string
+          notes: string | null
+          report_id: string
+        }
+        Insert: {
+          amount?: number
+          category: string
+          id?: string
+          line_type: string
+          notes?: string | null
+          report_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          id?: string
+          line_type?: string
+          notes?: string | null
+          report_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_report_lines_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "shop_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shop_reports: {
         Row: {
           closing_inventory: number
@@ -566,11 +601,12 @@ export type Database = {
           id: string
           notes: string | null
           opening_inventory: number
-          purchase: number
-          report_month: string
-          sales: number
+          report_month: string | null
+          report_type: string
           store_id: string
           updated_at: string | null
+          week_number: number | null
+          year: number
         }
         Insert: {
           closing_inventory?: number
@@ -578,11 +614,12 @@ export type Database = {
           id?: string
           notes?: string | null
           opening_inventory?: number
-          purchase?: number
-          report_month: string
-          sales?: number
+          report_month?: string | null
+          report_type?: string
           store_id: string
           updated_at?: string | null
+          week_number?: number | null
+          year: number
         }
         Update: {
           closing_inventory?: number
@@ -590,11 +627,12 @@ export type Database = {
           id?: string
           notes?: string | null
           opening_inventory?: number
-          purchase?: number
-          report_month?: string
-          sales?: number
+          report_month?: string | null
+          report_type?: string
           store_id?: string
           updated_at?: string | null
+          week_number?: number | null
+          year?: number
         }
         Relationships: [
           {
