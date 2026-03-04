@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   Warehouse, Search, Plus, Package, AlertTriangle, MapPin,
   Edit, ArrowRightLeft, ScanLine, Camera, ClipboardList, X, CheckCircle2,
+  ChevronDown, ChevronRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ import {
   useCreateStorageLocation,
   useUpsertStockLocation,
 } from "@/hooks/useStorageLocations";
+import { useSite } from "@/contexts/SiteContext";
 import BarcodeScanner from "@/components/barcode/BarcodeScanner";
 
 const zoneIcon: Record<string, string> = {
@@ -44,16 +46,26 @@ type InventoryLine = {
   product_name: string;
   sku: string;
   unit: string;
+  category: string;
+  cost_price: number;
   quantity: string;
 };
 
+const fmt = (v: number) =>
+  new Intl.NumberFormat("sv-SE", {
+    style: "currency",
+    currency: "SEK",
+    maximumFractionDigits: 0,
+  }).format(v);
+
 export default function Inventory() {
   const { toast } = useToast();
-  const [storeFilter, setStoreFilter] = useState("all");
+  const { activeStoreId, activeStoreName } = useSite();
   const [search, setSearch] = useState("");
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
   const [stockDialogOpen, setStockDialogOpen] = useState(false);
-  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   // Location form
   const [locName, setLocName] = useState("");
@@ -67,42 +79,74 @@ export default function Inventory() {
   const [stockQty, setStockQty] = useState("");
   const [stockMin, setStockMin] = useState("");
 
-  // Inventory tab state
-  const [invLocation, setInvLocation] = useState("");
+  // Lagerrapport state
   const [invLines, setInvLines] = useState<InventoryLine[]>([]);
   const [invProductSearch, setInvProductSearch] = useState("");
   const [showScanner, setShowScanner] = useState(false);
   const [invSaving, setInvSaving] = useState(false);
+  const [invLocation, setInvLocation] = useState("");
 
   const { data: stores = [] } = useStores();
   const { data: products = [] } = useProducts();
+  const storeFilter = activeStoreId || "all";
   const { data: locations = [], isLoading: loadingLoc } = useStorageLocations(storeFilter !== "all" ? storeFilter : undefined);
   const { data: allStock = [], isLoading: loadingStock } = useAllStockByLocation();
   const createLocation = useCreateStorageLocation();
   const upsertStock = useUpsertStockLocation();
 
-  const filteredStock = allStock.filter(s => {
-    const matchSearch = !search ||
-      s.products?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      s.products?.sku?.toLowerCase().includes(search.toLowerCase()) ||
-      s.storage_locations?.name?.toLowerCase().includes(search.toLowerCase());
-    const matchLoc = !selectedLocationId || s.location_id === selectedLocationId;
-    const matchStore = storeFilter === "all" || s.storage_locations?.store_id === storeFilter;
-    return matchSearch && matchLoc && matchStore;
-  });
+  // Filter stock for active store
+  const storeStock = useMemo(() => {
+    let filtered = allStock;
+    if (activeStoreId) {
+      filtered = allStock.filter((s: any) => s.storage_locations?.store_id === activeStoreId);
+    }
+    if (search) {
+      filtered = filtered.filter((s: any) =>
+        s.products?.name?.toLowerCase().includes(search.toLowerCase()) ||
+        s.products?.sku?.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+    return filtered;
+  }, [allStock, activeStoreId, search]);
 
-  const locationSummary = locations.map((loc: any) => {
-    const locStock = allStock.filter(s => s.location_id === loc.id);
-    const totalQty = locStock.reduce((sum: number, s: any) => sum + Number(s.quantity), 0);
-    const productCount = locStock.length;
-    const lowStockCount = locStock.filter((s: any) => Number(s.min_stock) > 0 && Number(s.quantity) < Number(s.min_stock)).length;
-    return { ...loc, totalQty, productCount, lowStockCount };
-  });
+  // Group stock by category
+  const stockByCategory = useMemo(() => {
+    const groups: Record<string, any[]> = {};
+    storeStock.forEach((s: any) => {
+      const cat = s.products?.category || "Övrigt";
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(s);
+    });
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b, "sv"));
+  }, [storeStock]);
 
-  const totalProducts = allStock.length;
-  const totalQty = allStock.reduce((s: number, i: any) => s + Number(i.quantity), 0);
-  const lowStockItems = allStock.filter((s: any) => Number(s.min_stock) > 0 && Number(s.quantity) < Number(s.min_stock)).length;
+  // KPIs
+  const totalProducts = storeStock.length;
+  const totalQty = storeStock.reduce((s: number, i: any) => s + Number(i.quantity), 0);
+  const totalValue = storeStock.reduce((s: number, i: any) => {
+    const qty = Number(i.quantity) || 0;
+    const cost = Number(i.products?.cost_price) || 0;
+    return s + qty * cost;
+  }, 0);
+  const lowStockItems = storeStock.filter((s: any) => Number(s.min_stock) > 0 && Number(s.quantity) < Number(s.min_stock)).length;
 
+  const toggleCategory = (cat: string) => {
+    setExpandedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat); else next.add(cat);
+      return next;
+    });
+  };
+
+  const expandAll = () => {
+    setExpandedCategories(new Set(stockByCategory.map(([cat]) => cat)));
+  };
+
+  const collapseAll = () => {
+    setExpandedCategories(new Set());
+  };
+
+  // --- Location dialog ---
   const handleCreateLocation = () => {
     if (!locName || !locStore) return;
     createLocation.mutate({ name: locName, store_id: locStore, zone: locZone || undefined, description: locDesc || undefined }, {
@@ -127,14 +171,15 @@ export default function Inventory() {
     });
   };
 
-  // --- Inventory tab logic ---
-  const addProductToInventory = (product: any) => {
+  // --- Lagerrapport logic ---
+  const addProductToReport = (product: any) => {
     if (invLines.find(l => l.product_id === product.id)) {
       toast({ title: "Redan tillagd", description: product.name }); return;
     }
     setInvLines(prev => [...prev, {
       product_id: product.id, product_name: product.name,
-      sku: product.sku, unit: product.unit, quantity: "",
+      sku: product.sku, unit: product.unit, category: product.category,
+      cost_price: Number(product.cost_price) || 0, quantity: "",
     }]);
     setInvProductSearch("");
   };
@@ -142,7 +187,7 @@ export default function Inventory() {
   const handleScan = (code: string) => {
     const product = products.find((p: any) => (p as any).barcode === code);
     if (product) {
-      addProductToInventory(product);
+      addProductToReport(product);
       toast({ title: "Produkt skannad", description: product.name });
     } else {
       toast({ title: "Okänd streckkod", description: `Kod: ${code}`, variant: "destructive" });
@@ -158,7 +203,12 @@ export default function Inventory() {
     setInvLines(prev => prev.filter((_, i) => i !== idx));
   };
 
-  const saveInventory = async () => {
+  const reportTotalValue = invLines.reduce((sum, l) => {
+    const qty = Number(l.quantity) || 0;
+    return sum + qty * l.cost_price;
+  }, 0);
+
+  const saveReport = async () => {
     if (!invLocation || invLines.length === 0) return;
     const validLines = invLines.filter(l => l.quantity !== "" && !isNaN(Number(l.quantity)));
     if (validLines.length === 0) { toast({ title: "Ange antal för minst en produkt", variant: "destructive" }); return; }
@@ -171,8 +221,9 @@ export default function Inventory() {
           quantity: Number(line.quantity),
         });
       }
-      toast({ title: "Inventering sparad", description: `${validLines.length} produkter uppdaterade` });
+      toast({ title: "Lagerrapport sparad", description: `${validLines.length} produkter uppdaterade · Lagervärde: ${fmt(reportTotalValue)}` });
       setInvLines([]);
+      setReportDialogOpen(false);
     } catch (err: any) {
       toast({ title: "Fel", description: err.message, variant: "destructive" });
     }
@@ -186,36 +237,35 @@ export default function Inventory() {
     !invLines.find(l => l.product_id === p.id)
   ).slice(0, 8);
 
+  // Group report lines by category for display
+  const reportLinesByCategory = useMemo(() => {
+    const groups: Record<string, InventoryLine[]> = {};
+    invLines.forEach((l, idx) => {
+      const cat = l.category || "Övrigt";
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push({ ...l, quantity: l.quantity });
+    });
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b, "sv"));
+  }, [invLines]);
+
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-heading font-bold text-foreground">Lagerhantering</h2>
-          <p className="text-xs text-muted-foreground">Lagerställen, inventering och lagersaldo per plats</p>
+          <h2 className="text-xl font-heading font-bold text-foreground">
+            Lager {activeStoreName ? `— ${activeStoreName}` : ""}
+          </h2>
+          <p className="text-xs text-muted-foreground">Lageröversikt och lagerrapporter</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Select value={storeFilter} onValueChange={v => { setStoreFilter(v); setSelectedLocationId(null); }}>
-            <SelectTrigger className="h-8 text-xs w-44"><SelectValue placeholder="Alla lager" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all" className="text-xs">Alla lager</SelectItem>
-              {stores.map(s => <SelectItem key={s.id} value={s.id} className="text-xs">{s.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => setStockDialogOpen(true)}>
-            <ArrowRightLeft className="h-3 w-3" /> Uppdatera saldo
-          </Button>
-          <Button size="sm" className="gap-1.5 text-xs h-8" onClick={() => setLocationDialogOpen(true)}>
-            <Plus className="h-3 w-3" /> Nytt lagerställe
+          <Button size="sm" className="gap-1.5 text-xs h-8" onClick={() => setReportDialogOpen(true)}>
+            <ClipboardList className="h-3 w-3" /> Skapa lagerrapport
           </Button>
         </div>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="shadow-card"><CardContent className="p-3">
-          <p className="text-[10px] text-muted-foreground">Lagerställen</p>
-          <p className="text-xl font-heading font-bold text-foreground">{locations.length}</p>
-        </CardContent></Card>
         <Card className="shadow-card"><CardContent className="p-3">
           <p className="text-[10px] text-muted-foreground">Produkter i lager</p>
           <p className="text-xl font-heading font-bold text-foreground">{totalProducts}</p>
@@ -225,149 +275,129 @@ export default function Inventory() {
           <p className="text-xl font-heading font-bold text-foreground">{totalQty.toLocaleString("sv-SE")}</p>
         </CardContent></Card>
         <Card className="shadow-card"><CardContent className="p-3">
+          <p className="text-[10px] text-muted-foreground">Lagervärde (SEK)</p>
+          <p className="text-xl font-heading font-bold text-foreground">{fmt(totalValue)}</p>
+        </CardContent></Card>
+        <Card className="shadow-card"><CardContent className="p-3">
           <p className="text-[10px] text-muted-foreground flex items-center gap-1"><AlertTriangle className="h-3 w-3 text-warning" /> Lågt lager</p>
           <p className="text-xl font-heading font-bold text-destructive">{lowStockItems}</p>
         </CardContent></Card>
       </div>
 
-      <Tabs defaultValue="inventory" className="space-y-3">
+      <Tabs defaultValue="overview" className="space-y-3">
         <TabsList className="h-8">
-          <TabsTrigger value="inventory" className="text-xs h-7">📋 Inventering</TabsTrigger>
+          <TabsTrigger value="overview" className="text-xs h-7">📦 Lageröversikt</TabsTrigger>
           <TabsTrigger value="locations" className="text-xs h-7">📍 Lagerställen</TabsTrigger>
-          <TabsTrigger value="stock" className="text-xs h-7">📦 Lagersaldo</TabsTrigger>
         </TabsList>
 
-        {/* Inventory Tab */}
-        <TabsContent value="inventory">
+        {/* Overview Tab - Stock by Category */}
+        <TabsContent value="overview">
           <Card className="shadow-card">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-heading flex items-center gap-2">
-                <ClipboardList className="h-4 w-4 text-primary" /> Inventering
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Välj lagerställe, lägg till produkter via sökning eller skanna streckkoder, ange antal och spara.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Location picker */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="space-y-1.5 flex-1 max-w-xs">
-                  <Label className="text-xs font-medium">Lagerställe *</Label>
-                  <Select value={invLocation} onValueChange={setInvLocation}>
-                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Välj lagerställe" /></SelectTrigger>
-                    <SelectContent>
-                      {locations.map((loc: any) => (
-                        <SelectItem key={loc.id} value={loc.id} className="text-xs">
-                          {zoneIcon[loc.zone] || "📍"} {loc.name} ({loc.stores?.name})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
+                <div>
+                  <CardTitle className="text-sm font-heading">Lagersaldo per kategori</CardTitle>
+                  <CardDescription className="text-xs">
+                    {activeStoreName || "Alla butiker"} · {stockByCategory.length} kategorier
+                  </CardDescription>
                 </div>
-                <div className="flex items-end gap-2">
-                  <Button
-                    variant="outline" size="sm" className="gap-1.5 text-xs h-8"
-                    onClick={() => setShowScanner(!showScanner)}
-                    disabled={!invLocation}
-                  >
-                    <Camera className="h-3 w-3" /> {showScanner ? "Stäng skanner" : "Scanna streckkod"}
-                  </Button>
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" onClick={expandAll}>Visa alla</Button>
+                  <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" onClick={collapseAll}>Dölj alla</Button>
+                  <div className="relative w-48">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input placeholder="Sök produkt..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
+                  </div>
                 </div>
               </div>
+            </CardHeader>
+            <CardContent>
+              {loadingStock ? <Skeleton className="h-48" /> : stockByCategory.length === 0 ? (
+                <div className="text-center py-12">
+                  <Package className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground mb-1">Inga lagersaldon registrerade</p>
+                  <p className="text-xs text-muted-foreground mb-4">Skapa en lagerrapport för att registrera lagersaldo.</p>
+                  <Button size="sm" onClick={() => setReportDialogOpen(true)} className="gap-1.5">
+                    <ClipboardList className="h-3 w-3" /> Skapa lagerrapport
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {stockByCategory.map(([category, items]) => {
+                    const isExpanded = expandedCategories.has(category);
+                    const catQty = items.reduce((s: number, i: any) => s + Number(i.quantity), 0);
+                    const catValue = items.reduce((s: number, i: any) => s + Number(i.quantity) * (Number(i.products?.cost_price) || 0), 0);
+                    const catLowStock = items.filter((i: any) => Number(i.min_stock) > 0 && Number(i.quantity) < Number(i.min_stock)).length;
 
-              {/* Scanner */}
-              {showScanner && invLocation && (
-                <BarcodeScanner onScan={handleScan} onClose={() => setShowScanner(false)} />
-              )}
-
-              {/* Manual product search */}
-              {invLocation && (
-                <div className="relative">
-                  <Label className="text-xs font-medium mb-1.5 block">Lägg till produkt manuellt</Label>
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                    <Input
-                      placeholder="Sök produkt (namn eller SKU)..."
-                      value={invProductSearch}
-                      onChange={e => setInvProductSearch(e.target.value)}
-                      className="pl-8 h-8 text-xs"
-                    />
-                  </div>
-                  {filteredProductsForAdd.length > 0 && (
-                    <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
-                      {filteredProductsForAdd.map(p => (
+                    return (
+                      <div key={category} className="border border-border/50 rounded-md overflow-hidden">
                         <button
-                          key={p.id}
-                          className="w-full text-left px-3 py-2 text-xs hover:bg-muted/50 flex items-center justify-between"
-                          onClick={() => addProductToInventory(p)}
+                          className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors text-left"
+                          onClick={() => toggleCategory(category)}
                         >
-                          <span className="font-medium text-foreground">{p.name}</span>
-                          <span className="text-muted-foreground font-mono text-[10px]">{p.sku} · {p.unit}</span>
+                          <div className="flex items-center gap-2">
+                            {isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                            <span className="text-sm font-medium text-foreground">{category}</span>
+                            <Badge variant="secondary" className="text-[10px] h-5">{items.length} produkter</Badge>
+                            {catLowStock > 0 && (
+                              <Badge variant="outline" className="text-[10px] h-5 bg-destructive/10 text-destructive border-destructive/20">
+                                <AlertTriangle className="h-2.5 w-2.5 mr-0.5" /> {catLowStock}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <span>{catQty.toLocaleString("sv-SE")} enheter</span>
+                            <span className="font-medium text-foreground">{fmt(catValue)}</span>
+                          </div>
                         </button>
-                      ))}
-                    </div>
-                  )}
+                        {isExpanded && (
+                          <div className="border-t border-border/50">
+                            <table className="w-full text-xs">
+                              <thead>
+                                <tr className="bg-muted/20">
+                                  <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Produkt</th>
+                                  <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">SKU</th>
+                                  <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Plats</th>
+                                  <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Antal</th>
+                                  <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Värde</th>
+                                  <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Status</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {items.map((s: any) => {
+                                  const isLow = Number(s.min_stock) > 0 && Number(s.quantity) < Number(s.min_stock);
+                                  const value = Number(s.quantity) * (Number(s.products?.cost_price) || 0);
+                                  return (
+                                    <tr key={s.id} className="border-b border-border/30 last:border-0 hover:bg-muted/20">
+                                      <td className="px-3 py-2 font-medium text-foreground">{s.products?.name}</td>
+                                      <td className="px-3 py-2 font-mono text-muted-foreground text-[10px]">{s.products?.sku}</td>
+                                      <td className="px-3 py-2 text-muted-foreground">
+                                        {zoneIcon[s.storage_locations?.zone] || "📍"} {s.storage_locations?.name}
+                                      </td>
+                                      <td className="px-3 py-2 text-right font-medium text-foreground">
+                                        {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
+                                      </td>
+                                      <td className="px-3 py-2 text-right text-muted-foreground">{fmt(value)}</td>
+                                      <td className="px-3 py-2 text-right">
+                                        {isLow ? (
+                                          <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 text-[10px]">
+                                            <AlertTriangle className="h-2.5 w-2.5 mr-0.5" /> Lågt
+                                          </Badge>
+                                        ) : (
+                                          <Badge variant="outline" className="bg-success/10 text-success border-success/20 text-[10px]">OK</Badge>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
-
-              {/* Inventory lines */}
-              {invLines.length > 0 && (
-                <div className="space-y-2">
-                  <Separator />
-                  <div className="text-xs font-medium text-muted-foreground">
-                    {invLines.length} produkt{invLines.length > 1 ? "er" : ""} tillagda
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr className="border-b border-border">
-                          <th className="pb-2 text-left font-medium text-muted-foreground">Produkt</th>
-                          <th className="pb-2 text-left font-medium text-muted-foreground">SKU</th>
-                          <th className="pb-2 text-left font-medium text-muted-foreground">Enhet</th>
-                          <th className="pb-2 text-right font-medium text-muted-foreground w-32">Antal</th>
-                          <th className="pb-2 w-8"></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {invLines.map((line, idx) => (
-                          <tr key={line.product_id} className="border-b border-border/30">
-                            <td className="py-2 font-medium text-foreground">{line.product_name}</td>
-                            <td className="py-2 font-mono text-muted-foreground text-[10px]">{line.sku}</td>
-                            <td className="py-2 text-muted-foreground">{line.unit}</td>
-                            <td className="py-2 text-right">
-                              <Input
-                                type="number"
-                                step="0.1"
-                                value={line.quantity}
-                                onChange={e => updateInvLine(idx, e.target.value)}
-                                className="h-7 text-xs w-24 ml-auto text-right"
-                                placeholder="0"
-                                autoFocus={idx === invLines.length - 1}
-                              />
-                            </td>
-                            <td className="py-2">
-                              <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeInvLine(idx)}>
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="flex justify-end pt-2">
-                    <Button size="sm" className="gap-1.5" onClick={saveInventory} disabled={invSaving || !invLocation}>
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      {invSaving ? "Sparar..." : "Spara inventering"}
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {!invLocation && (
-                <p className="text-xs text-muted-foreground py-6 text-center">
-                  👆 Välj ett lagerställe ovan för att börja inventera
-                </p>
               )}
             </CardContent>
           </Card>
@@ -375,128 +405,208 @@ export default function Inventory() {
 
         {/* Locations Tab */}
         <TabsContent value="locations">
+          <div className="flex justify-end gap-2 mb-3">
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => setStockDialogOpen(true)}>
+              <ArrowRightLeft className="h-3 w-3" /> Uppdatera saldo
+            </Button>
+            <Button size="sm" className="gap-1.5 text-xs h-8" onClick={() => setLocationDialogOpen(true)}>
+              <Plus className="h-3 w-3" /> Nytt lagerställe
+            </Button>
+          </div>
           {loadingLoc ? <Skeleton className="h-48" /> : locations.length === 0 ? (
             <Card className="shadow-card"><CardContent className="p-8 text-center">
               <p className="text-xs text-muted-foreground">Inga lagerställen ännu. Klicka "Nytt lagerställe" för att börja.</p>
             </CardContent></Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {locationSummary.map((loc: any) => (
-                <Card
-                  key={loc.id}
-                  className={`shadow-card cursor-pointer transition-all hover:ring-2 hover:ring-primary/30 ${selectedLocationId === loc.id ? "ring-2 ring-primary" : ""}`}
-                  onClick={() => setSelectedLocationId(selectedLocationId === loc.id ? null : loc.id)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{zoneIcon[loc.zone] || "📍"}</span>
+              {locations.map((loc: any) => {
+                const locStock = allStock.filter((s: any) => s.location_id === loc.id);
+                const totalQtyLoc = locStock.reduce((sum: number, s: any) => sum + Number(s.quantity), 0);
+                const productCount = locStock.length;
+                const lowStockCount = locStock.filter((s: any) => Number(s.min_stock) > 0 && Number(s.quantity) < Number(s.min_stock)).length;
+                return (
+                  <Card key={loc.id} className="shadow-card">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{zoneIcon[loc.zone] || "📍"}</span>
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{loc.name}</p>
+                            <p className="text-[10px] text-muted-foreground">{loc.stores?.name}</p>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className={`text-[10px] ${zoneColor[loc.zone] || ""}`}>{loc.zone || "Övrigt"}</Badge>
+                      </div>
+                      {loc.description && <p className="text-[10px] text-muted-foreground mb-2">{loc.description}</p>}
+                      <Separator className="my-2" />
+                      <div className="grid grid-cols-3 gap-2 text-center">
                         <div>
-                          <p className="text-sm font-medium text-foreground">{loc.name}</p>
-                          <p className="text-[10px] text-muted-foreground">{loc.stores?.name}</p>
+                          <p className="text-lg font-bold text-foreground">{productCount}</p>
+                          <p className="text-[9px] text-muted-foreground">Produkter</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-foreground">{totalQtyLoc.toLocaleString("sv-SE")}</p>
+                          <p className="text-[9px] text-muted-foreground">Kvantitet</p>
+                        </div>
+                        <div>
+                          <p className={`text-lg font-bold ${lowStockCount > 0 ? "text-destructive" : "text-success"}`}>{lowStockCount}</p>
+                          <p className="text-[9px] text-muted-foreground">Varningar</p>
                         </div>
                       </div>
-                      <Badge variant="outline" className={`text-[10px] ${zoneColor[loc.zone] || ""}`}>{loc.zone || "Övrigt"}</Badge>
-                    </div>
-                    {loc.description && <p className="text-[10px] text-muted-foreground mb-2">{loc.description}</p>}
-                    <Separator className="my-2" />
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                      <div>
-                        <p className="text-lg font-bold text-foreground">{loc.productCount}</p>
-                        <p className="text-[9px] text-muted-foreground">Produkter</p>
-                      </div>
-                      <div>
-                        <p className="text-lg font-bold text-foreground">{loc.totalQty.toLocaleString("sv-SE")}</p>
-                        <p className="text-[9px] text-muted-foreground">Kvantitet</p>
-                      </div>
-                      <div>
-                        <p className={`text-lg font-bold ${loc.lowStockCount > 0 ? "text-destructive" : "text-success"}`}>{loc.lowStockCount}</p>
-                        <p className="text-[9px] text-muted-foreground">Varningar</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </TabsContent>
+      </Tabs>
 
-        {/* Stock Tab */}
-        <TabsContent value="stock">
-          <Card className="shadow-card">
-            <CardHeader className="pb-2">
-              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
-                <div>
-                  <CardTitle className="text-sm font-heading">Lagersaldo per plats</CardTitle>
-                  <CardDescription className="text-xs">
-                    {selectedLocationId
-                      ? `Visar ${locations.find((l: any) => l.id === selectedLocationId)?.name || "valt ställe"}`
-                      : "Alla lagerställen"}
-                  </CardDescription>
-                </div>
-                <div className="relative w-48">
+      {/* Lagerrapport Dialog */}
+      <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-heading flex items-center gap-2">
+              <ClipboardList className="h-5 w-5 text-primary" /> Skapa lagerrapport
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Välj lagerställe, lägg till produkter och ange aktuellt antal. Enheten (kg/st) styrs av produktens inställning.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Location picker + scanner */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="space-y-1.5 flex-1">
+                <Label className="text-xs font-medium">Lagerställe *</Label>
+                <Select value={invLocation} onValueChange={setInvLocation}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Välj lagerställe" /></SelectTrigger>
+                  <SelectContent>
+                    {locations.map((loc: any) => (
+                      <SelectItem key={loc.id} value={loc.id} className="text-xs">
+                        {zoneIcon[loc.zone] || "📍"} {loc.name} ({loc.stores?.name})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-end gap-2">
+                <Button
+                  variant="outline" size="sm" className="gap-1.5 text-xs h-8"
+                  onClick={() => setShowScanner(!showScanner)}
+                  disabled={!invLocation}
+                >
+                  <Camera className="h-3 w-3" /> {showScanner ? "Stäng skanner" : "Scanna"}
+                </Button>
+              </div>
+            </div>
+
+            {showScanner && invLocation && (
+              <BarcodeScanner onScan={handleScan} onClose={() => setShowScanner(false)} />
+            )}
+
+            {/* Product search */}
+            {invLocation && (
+              <div className="relative">
+                <Label className="text-xs font-medium mb-1.5 block">Lägg till produkt</Label>
+                <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                  <Input placeholder="Sök produkt..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
+                  <Input
+                    placeholder="Sök produkt (namn eller SKU)..."
+                    value={invProductSearch}
+                    onChange={e => setInvProductSearch(e.target.value)}
+                    className="pl-8 h-8 text-xs"
+                  />
+                </div>
+                {filteredProductsForAdd.length > 0 && (
+                  <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                    {filteredProductsForAdd.map(p => (
+                      <button
+                        key={p.id}
+                        className="w-full text-left px-3 py-2 text-xs hover:bg-muted/50 flex items-center justify-between"
+                        onClick={() => addProductToReport(p)}
+                      >
+                        <div>
+                          <span className="font-medium text-foreground">{p.name}</span>
+                          <span className="text-muted-foreground ml-2 text-[10px]">{p.category}</span>
+                        </div>
+                        <span className="text-muted-foreground font-mono text-[10px]">{p.sku} · {p.unit}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Lines grouped by category */}
+            {invLines.length > 0 && (
+              <div className="space-y-3">
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {invLines.length} produkt{invLines.length > 1 ? "er" : ""} tillagda
+                  </span>
+                  <span className="text-xs font-semibold text-foreground">
+                    Lagervärde: {fmt(reportTotalValue)}
+                  </span>
+                </div>
+
+                {reportLinesByCategory.map(([category, catLines]) => (
+                  <div key={category}>
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">{category}</p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <tbody>
+                          {catLines.map((line) => {
+                            const globalIdx = invLines.findIndex(l => l.product_id === line.product_id);
+                            return (
+                              <tr key={line.product_id} className="border-b border-border/30">
+                                <td className="py-1.5 font-medium text-foreground">{line.product_name}</td>
+                                <td className="py-1.5 font-mono text-muted-foreground text-[10px] w-20">{line.sku}</td>
+                                <td className="py-1.5 text-muted-foreground w-12 text-center">
+                                  <Badge variant="secondary" className="text-[10px]">{line.unit}</Badge>
+                                </td>
+                                <td className="py-1.5 text-right w-28">
+                                  <Input
+                                    type="number"
+                                    step={line.unit.toLowerCase() === "kg" ? "0.1" : "1"}
+                                    value={line.quantity}
+                                    onChange={e => updateInvLine(globalIdx, e.target.value)}
+                                    className="h-7 text-xs w-24 ml-auto text-right"
+                                    placeholder={`0 ${line.unit}`}
+                                  />
+                                </td>
+                                <td className="py-1.5 w-8">
+                                  <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeInvLine(globalIdx)}>
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ))}
+
+                <div className="flex justify-end pt-2">
+                  <Button size="sm" className="gap-1.5" onClick={saveReport} disabled={invSaving || !invLocation}>
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    {invSaving ? "Sparar..." : "Spara lagerrapport"}
+                  </Button>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              {loadingStock ? <Skeleton className="h-48" /> : filteredStock.length === 0 ? (
-                <p className="text-xs text-muted-foreground py-8 text-center">Inga lagersaldon registrerade.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="pb-2 text-left font-medium text-muted-foreground">Produkt</th>
-                        <th className="pb-2 text-left font-medium text-muted-foreground">SKU</th>
-                        <th className="pb-2 text-left font-medium text-muted-foreground">Lagerställe</th>
-                        <th className="pb-2 text-left font-medium text-muted-foreground">Plats</th>
-                        <th className="pb-2 text-left font-medium text-muted-foreground">Zon</th>
-                        <th className="pb-2 text-right font-medium text-muted-foreground">Kvantitet</th>
-                        <th className="pb-2 text-right font-medium text-muted-foreground">Min</th>
-                        <th className="pb-2 text-right font-medium text-muted-foreground">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredStock.map((s: any) => {
-                        const isLow = Number(s.min_stock) > 0 && Number(s.quantity) < Number(s.min_stock);
-                        return (
-                          <tr key={s.id} className="border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors">
-                            <td className="py-2 font-medium text-foreground">{s.products?.name}</td>
-                            <td className="py-2 font-mono text-muted-foreground text-[10px]">{s.products?.sku}</td>
-                            <td className="py-2 text-foreground">
-                              <span className="mr-1">{zoneIcon[s.storage_locations?.zone] || "📍"}</span>
-                              {s.storage_locations?.name}
-                            </td>
-                            <td className="py-2 text-muted-foreground">{s.storage_locations?.stores?.name}</td>
-                            <td className="py-2">
-                              <Badge variant="outline" className={`text-[10px] ${zoneColor[s.storage_locations?.zone] || ""}`}>
-                                {s.storage_locations?.zone || "–"}
-                              </Badge>
-                            </td>
-                            <td className="py-2 text-right font-medium text-foreground">{Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}</td>
-                            <td className="py-2 text-right text-muted-foreground">{Number(s.min_stock) || "–"}</td>
-                            <td className="py-2 text-right">
-                              {isLow ? (
-                                <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 text-[10px]">
-                                  <AlertTriangle className="h-2.5 w-2.5 mr-0.5" /> Lågt
-                                </Badge>
-                              ) : (
-                                <Badge variant="outline" className="bg-success/10 text-success border-success/20 text-[10px]">OK</Badge>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            )}
+
+            {!invLocation && (
+              <p className="text-xs text-muted-foreground py-6 text-center">
+                👆 Välj ett lagerställe ovan för att börja
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Create location dialog */}
       <Dialog open={locationDialogOpen} onOpenChange={setLocationDialogOpen}>
