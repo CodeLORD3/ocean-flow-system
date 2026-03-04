@@ -53,6 +53,7 @@ export default function ShopOrders() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Alla");
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
   // Order form
   const [orderNote, setOrderNote] = useState("");
@@ -234,7 +235,7 @@ export default function ShopOrders() {
                   </td></tr>
                 )}
                 {filteredOrders.map((o: any) => (
-                  <tr key={o.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
+                  <tr key={o.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors cursor-pointer" onClick={() => setSelectedOrder(o)}>
                     <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
                     <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                     <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
@@ -362,6 +363,76 @@ export default function ShopOrders() {
               <ShoppingCart className="h-3.5 w-3.5" /> Skicka beställning
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Order detail dialog */}
+      <Dialog open={!!selectedOrder} onOpenChange={open => { if (!open) setSelectedOrder(null); }}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          {selectedOrder && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="font-heading flex items-center gap-2">
+                  Order {selectedOrder.order_week}
+                  <Badge variant="outline" className={`${statusColor[selectedOrder.status] || ""} text-[10px] gap-1 ml-2`}>
+                    {statusIcon[selectedOrder.status]}
+                    {selectedOrder.status}
+                  </Badge>
+                </DialogTitle>
+                <DialogDescription className="text-xs">
+                  Skapad {new Date(selectedOrder.created_at).toLocaleDateString("sv-SE")} · {selectedOrder.stores?.name || "–"}
+                </DialogDescription>
+              </DialogHeader>
+
+              {selectedOrder.notes && (
+                <div className="bg-muted/30 rounded-md p-3 text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">Anteckning:</span> {selectedOrder.notes}
+                </div>
+              )}
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30">
+                      <th className="p-2.5 text-left font-medium text-muted-foreground">Produkt</th>
+                      <th className="p-2.5 text-left font-medium text-muted-foreground">Enhet</th>
+                      <th className="p-2.5 text-right font-medium text-muted-foreground">Beställt</th>
+                      <th className="p-2.5 text-right font-medium text-muted-foreground">Levererat</th>
+                      <th className="p-2.5 text-left font-medium text-muted-foreground">Avvikelse</th>
+                      <th className="p-2.5 text-left font-medium text-muted-foreground">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedOrder.shop_order_lines?.map((line: any) => {
+                      const qtyOrdered = line.quantity_ordered || 0;
+                      const qtyDelivered = line.quantity_delivered || 0;
+                      const hasDiff = qtyDelivered > 0 && qtyDelivered !== qtyOrdered;
+                      return (
+                        <tr key={line.id} className="border-b border-border/30">
+                          <td className="p-2.5 font-medium text-foreground">{line.products?.name || "–"}</td>
+                          <td className="p-2.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
+                          <td className="p-2.5 text-right font-mono text-foreground">{qtyOrdered}</td>
+                          <td className={`p-2.5 text-right font-mono ${hasDiff ? "text-warning font-bold" : "text-muted-foreground"}`}>
+                            {qtyDelivered || "–"}
+                          </td>
+                          <td className="p-2.5 text-muted-foreground">{line.deviation || "–"}</td>
+                          <td className="p-2.5">
+                            {line.status ? (
+                              <Badge variant="outline" className="text-[10px]">{line.status}</Badge>
+                            ) : "–"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" size="sm" onClick={() => setSelectedOrder(null)}>Stäng</Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </motion.div>
