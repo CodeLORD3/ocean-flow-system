@@ -46,6 +46,47 @@ const statusIcon: Record<string, React.ReactNode> = {
   Avbruten: <XCircle className="h-3 w-3" />,
 };
 
+const statusSegmentColor: Record<string, string> = {
+  "": "transparent",
+  "Ny": "transparent",
+  "Behandlas": "#fef3c7",
+  "Producerad": "#dbeafe",
+  "Packad": "#d1fae5",
+  "Skickad": "#bbf7d0",
+  "Levererad": "#bbf7d0",
+  "Klar / Levererad": "#bbf7d0",
+  "Ej tillgänglig": "#fee2e2",
+  "Avbruten": "#fee2e2",
+};
+
+const rowBgByStatus: Record<string, string> = {
+  "": "",
+  "Ny": "",
+  "Behandlas": "bg-amber-50 dark:bg-amber-950/20",
+  "Producerad": "bg-blue-50 dark:bg-blue-950/20",
+  "Packad": "bg-emerald-50 dark:bg-emerald-950/20",
+  "Skickad": "bg-green-50 dark:bg-green-950/20",
+  "Levererad": "bg-green-50 dark:bg-green-950/20",
+  "Klar / Levererad": "bg-green-50 dark:bg-green-950/20",
+  "Ej tillgänglig": "bg-red-50 dark:bg-red-950/20",
+  "Avbruten": "bg-red-50 dark:bg-red-950/20",
+};
+
+function buildProgressGradient(lines: any[]): string {
+  if (!lines || lines.length === 0) return "transparent";
+  const total = lines.length;
+  const segments: string[] = [];
+  let pos = 0;
+  for (const line of lines) {
+    const color = statusSegmentColor[line.status || ""] || "transparent";
+    const start = (pos / total) * 100;
+    const end = ((pos + 1) / total) * 100;
+    segments.push(`${color} ${start}%`, `${color} ${end}%`);
+    pos++;
+  }
+  return `linear-gradient(to bottom, ${segments.join(", ")})`;
+}
+
 export default function ShopOrders() {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -262,32 +303,8 @@ export default function ShopOrders() {
                 )}
                 {filteredOrders.map((o: any) => {
                   const lines = o.shop_order_lines || [];
-                  const statusCounts: Record<string, number> = {};
-                  lines.forEach((l: any) => {
-                    const s = l.status || "Ny";
-                    statusCounts[s] = (statusCounts[s] || 0) + 1;
-                  });
-                  const total = lines.length || 1;
-                  // Build gradient segments for progress bar
-                  const statusColorMap: Record<string, string> = {
-                    "": "hsl(var(--primary))", Ny: "hsl(var(--primary))",
-                    Behandlas: "hsl(var(--warning))", Packad: "hsl(45 93% 47%)",
-                    Skickad: "hsl(var(--success))", Levererad: "hsl(var(--success))",
-                    "Klar / Levererad": "hsl(var(--success))",
-                    Avbruten: "hsl(var(--destructive))",
-                  };
-                  let gradientParts: string[] = [];
-                  let cumPct = 0;
-                  for (const [status, count] of Object.entries(statusCounts)) {
-                    const pct = (count / total) * 100;
-                    const color = statusColorMap[status] || "hsl(var(--muted))";
-                    gradientParts.push(`${color} ${cumPct}% ${cumPct + pct}%`);
-                    cumPct += pct;
-                  }
-                  const gradient = `linear-gradient(90deg, ${gradientParts.join(", ")})`;
-                  
                   return (
-                  <tr key={o.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors cursor-pointer relative" onClick={() => setSelectedOrder(o)}>
+                  <tr key={o.id} className="border-b border-border/40 transition-colors cursor-pointer" style={{ background: buildProgressGradient(lines) }} onClick={() => setSelectedOrder(o)}>
                     <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
                     <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                     <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
@@ -297,19 +314,10 @@ export default function ShopOrders() {
                     </td>
                     <td className="p-3 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
                     <td className="p-3 text-right">
-                      <div className="flex flex-col items-end gap-1">
-                        <div className="flex gap-1 flex-wrap justify-end">
-                          {Object.entries(statusCounts).map(([s, c]) => (
-                            <Badge key={s} variant="outline" className={`${statusColor[s] || statusColor["Ny"] || ""} text-[10px] gap-0.5`}>
-                              {statusIcon[s] || statusIcon["Ny"]}
-                              {c}×{s || "Ny"}
-                            </Badge>
-                          ))}
-                        </div>
-                        <div className="w-full h-1.5 rounded-full overflow-hidden bg-muted" style={{ minWidth: "80px" }}>
-                          <div className="h-full rounded-full" style={{ background: gradient, width: "100%" }} />
-                        </div>
-                      </div>
+                      <Badge variant="outline" className={`${statusColor[o.status] || ""} text-[10px] gap-1`}>
+                        {statusIcon[o.status]}
+                        {o.status}
+                      </Badge>
                     </td>
                   </tr>
                   );
@@ -470,7 +478,7 @@ export default function ShopOrders() {
                       const qtyDelivered = line.quantity_delivered || 0;
                       const hasDiff = qtyDelivered > 0 && qtyDelivered !== qtyOrdered;
                       return (
-                        <tr key={line.id} className="border-b border-border/30">
+                        <tr key={line.id} className={`border-b border-border/30 transition-colors ${rowBgByStatus[line.status || ""] || ""}`}>
                           <td className="p-2.5 font-medium text-foreground">{line.products?.name || "–"}</td>
                           <td className="p-2.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
                           <td className="p-2.5 text-right font-mono text-foreground">{qtyOrdered}</td>
