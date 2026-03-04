@@ -44,11 +44,11 @@ export function ShopSidebar() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="border-r-2 border-r-emerald-700/30 bg-gradient-to-b from-sidebar-background to-emerald-950/10">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary/20">
-            <Store className="h-5 w-5 text-sidebar-primary" />
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/20">
+            <Store className="h-5 w-5 text-emerald-400" />
           </div>
           {!collapsed && (
             <div>
