@@ -208,8 +208,17 @@ export default function Customers() {
                 <Input value={form.phone} onChange={e => setField("phone", e.target.value)} className="h-8 text-xs" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Stad</Label>
-                <Input value={form.city} onChange={e => setField("city", e.target.value)} className="h-8 text-xs" />
+                <Label className="text-xs">Stad *</Label>
+                <select
+                  value={form.city}
+                  onChange={e => setField("city", e.target.value)}
+                  className="flex h-8 w-full rounded-md border border-input bg-background px-3 text-xs ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <option value="">Välj stad...</option>
+                  <option value="Göteborg">Göteborg</option>
+                  <option value="Stockholm">Stockholm</option>
+                  <option value="Zürich">Zürich</option>
+                </select>
               </div>
             </div>
             <div className="space-y-1.5">
