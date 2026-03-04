@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Plus, Search, Edit, Trash2, Package, Tag, Printer, ScanLine } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Plus, Search, Edit, Trash2, Package, Tag, Printer, ScanLine, DollarSign, Check, X } from "lucide-react";
+import { useSite } from "@/contexts/SiteContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +30,11 @@ const UNITS = ["KG", "ST", "L", "FÖRP"];
 export default function Products() {
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { site } = useSite();
+  const isWholesale = site === "wholesale";
   const { data: products = [], isLoading } = useProducts();
+  const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
+  const [inlineCostPrice, setInlineCostPrice] = useState("");
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -43,7 +48,16 @@ export default function Products() {
     origin: "",
   });
 
-  const setField = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }));
+  const setField = (key: string, value: string) => {
+    setForm(f => {
+      const updated = { ...f, [key]: value };
+      // Auto-calc wholesale_price as cost_price * 1.35 when cost_price changes
+      if (key === "cost_price" && value) {
+        updated.wholesale_price = (Number(value) * 1.35).toFixed(2);
+      }
+      return updated;
+    });
+  };
 
   const filtered = products.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -86,6 +100,15 @@ export default function Products() {
     if (editId) {
       const { error } = await supabase.from("products").update(payload).eq("id", editId);
       if (error) { toast({ title: "Fel", description: error.message, variant: "destructive" }); return; }
+      // Log price history
+      await supabase.from("price_history").insert({
+        product_id: editId,
+        cost_price: payload.cost_price,
+        wholesale_price: payload.wholesale_price,
+        retail_suggested: payload.retail_suggested,
+        reason: "Manuell ändring via produktdialog",
+        changed_by: "Admin",
+      });
       toast({ title: "Produkt uppdaterad", description: form.name });
     } else {
       const { error } = await supabase.from("products").insert(payload);
@@ -94,6 +117,28 @@ export default function Products() {
     }
     qc.invalidateQueries({ queryKey: ["products"] });
     setDialogOpen(false);
+  };
+
+  const handleInlinePriceSave = async (productId: string) => {
+    const cost = Number(inlineCostPrice);
+    if (isNaN(cost) || cost <= 0) return;
+    const wholesale = Number((cost * 1.35).toFixed(2));
+    const { error } = await supabase.from("products").update({
+      cost_price: cost,
+      wholesale_price: wholesale,
+      updated_at: new Date().toISOString(),
+    }).eq("id", productId);
+    if (error) { toast({ title: "Fel", description: error.message, variant: "destructive" }); return; }
+    await supabase.from("price_history").insert({
+      product_id: productId,
+      cost_price: cost,
+      wholesale_price: wholesale,
+      reason: "Daglig prisuppdatering",
+      changed_by: "Admin",
+    });
+    qc.invalidateQueries({ queryKey: ["products"] });
+    setEditingPriceId(null);
+    toast({ title: "Pris uppdaterat", description: `Nytt grossistpris: ${wholesale.toFixed(2)} kr` });
   };
 
   const handleDelete = async () => {
@@ -192,18 +237,18 @@ export default function Products() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="p-3 text-left font-medium text-muted-foreground">PRODUKTNAMN</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">SKU</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">KATEGORI</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">ENHET</th>
-                  <th className="p-3 text-right font-medium text-muted-foreground">INKÖP</th>
-                  <th className="p-3 text-right font-medium text-muted-foreground">GROSSIST</th>
-                  <th className="p-3 text-right font-medium text-muted-foreground">BUTIK</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">STRECKKOD</th>
-                  <th className="p-3 text-right font-medium text-muted-foreground">LAGER</th>
-                  <th className="p-3 text-center font-medium text-muted-foreground">ÅTGÄRD</th>
-                </tr>
+                 <tr className="border-b border-border bg-muted/30">
+                   <th className="p-3 text-left font-medium text-muted-foreground">PRODUKTNAMN</th>
+                   <th className="p-3 text-left font-medium text-muted-foreground">SKU</th>
+                   <th className="p-3 text-left font-medium text-muted-foreground">KATEGORI</th>
+                   <th className="p-3 text-left font-medium text-muted-foreground">ENHET</th>
+                   {isWholesale && <th className="p-3 text-right font-medium text-muted-foreground">PROD.PRIS (SEK)</th>}
+                   <th className="p-3 text-right font-medium text-muted-foreground">{isWholesale ? "GROSSISTPRIS" : "PRIS"} (SEK)</th>
+                   {isWholesale && <th className="p-3 text-right font-medium text-muted-foreground">BUTIKSPRIS</th>}
+                   <th className="p-3 text-left font-medium text-muted-foreground">STRECKKOD</th>
+                   <th className="p-3 text-right font-medium text-muted-foreground">LAGER</th>
+                   <th className="p-3 text-center font-medium text-muted-foreground">ÅTGÄRD</th>
+                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 && (
@@ -212,49 +257,83 @@ export default function Products() {
                 {filtered.map(p => {
                   const barcode = (p as any).barcode;
                   return (
-                    <tr key={p.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
-                      <td className="p-3 font-medium text-foreground">{p.name}</td>
-                      <td className="p-3 font-mono text-muted-foreground text-[10px]">{p.sku}</td>
-                      <td className="p-3"><Badge variant="outline" className="text-[10px]">{p.category}</Badge></td>
-                      <td className="p-3 text-muted-foreground">{p.unit}</td>
-                      <td className="p-3 text-right text-muted-foreground">{Number(p.cost_price).toFixed(2)}</td>
-                      <td className="p-3 text-right text-muted-foreground">{Number(p.wholesale_price).toFixed(2)}</td>
-                      <td className="p-3 text-right text-muted-foreground">{p.retail_suggested ? Number(p.retail_suggested).toFixed(2) : "–"}</td>
-                      <td className="p-3">
-                        {barcode ? (
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={() => setBarcodePreview(p)}
-                              className="font-mono text-[10px] text-primary hover:underline cursor-pointer"
-                            >
-                              {barcode}
-                            </button>
-                            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => printLabel(p)} title="Skriv ut etikett">
-                              <Printer className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <Button variant="ghost" size="sm" className="h-6 text-[10px] gap-1 text-muted-foreground" onClick={() => generateBarcodeForProduct(p.id)}>
-                            <Tag className="h-3 w-3" /> Generera
-                          </Button>
-                        )}
-                      </td>
-                      <td className="p-3 text-right font-medium">
-                        <span className={Number(p.stock) <= 0 ? "text-destructive" : "text-foreground"}>
-                          {Number(p.stock).toFixed(1)}
-                        </span>
-                      </td>
-                      <td className="p-3 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(p)}>
-                            <Edit className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ id: p.id, name: p.name })}>
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
+                     <tr key={p.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
+                       <td className="p-3 font-medium text-foreground">{p.name}</td>
+                       <td className="p-3 font-mono text-muted-foreground text-[10px]">{p.sku}</td>
+                       <td className="p-3"><Badge variant="outline" className="text-[10px]">{p.category}</Badge></td>
+                       <td className="p-3 text-muted-foreground">{p.unit}</td>
+                       {isWholesale && (
+                         <td className="p-3 text-right">
+                           {editingPriceId === p.id ? (
+                             <div className="flex items-center justify-end gap-1">
+                               <Input
+                                 value={inlineCostPrice}
+                                 onChange={e => setInlineCostPrice(e.target.value)}
+                                 type="number"
+                                 step="0.01"
+                                 className="h-6 w-20 text-xs text-right"
+                                 autoFocus
+                                 onKeyDown={e => {
+                                   if (e.key === "Enter") handleInlinePriceSave(p.id);
+                                   if (e.key === "Escape") setEditingPriceId(null);
+                                 }}
+                               />
+                               <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => handleInlinePriceSave(p.id)}>
+                                 <Check className="h-3 w-3 text-green-600" />
+                               </Button>
+                               <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setEditingPriceId(null)}>
+                                 <X className="h-3 w-3" />
+                               </Button>
+                             </div>
+                           ) : (
+                             <button
+                               className="text-foreground hover:text-primary cursor-pointer hover:underline"
+                               onClick={() => { setEditingPriceId(p.id); setInlineCostPrice(String(p.cost_price)); }}
+                             >
+                               {Number(p.cost_price).toFixed(2)}
+                             </button>
+                           )}
+                         </td>
+                       )}
+                       <td className="p-3 text-right font-medium text-foreground">{Number(p.wholesale_price).toFixed(2)}</td>
+                       {isWholesale && (
+                         <td className="p-3 text-right text-muted-foreground">{p.retail_suggested ? Number(p.retail_suggested).toFixed(2) : "–"}</td>
+                       )}
+                       <td className="p-3">
+                         {barcode ? (
+                           <div className="flex items-center gap-1.5">
+                             <button
+                               onClick={() => setBarcodePreview(p)}
+                               className="font-mono text-[10px] text-primary hover:underline cursor-pointer"
+                             >
+                               {barcode}
+                             </button>
+                             <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => printLabel(p)} title="Skriv ut etikett">
+                               <Printer className="h-3 w-3" />
+                             </Button>
+                           </div>
+                         ) : (
+                           <Button variant="ghost" size="sm" className="h-6 text-[10px] gap-1 text-muted-foreground" onClick={() => generateBarcodeForProduct(p.id)}>
+                             <Tag className="h-3 w-3" /> Generera
+                           </Button>
+                         )}
+                       </td>
+                       <td className="p-3 text-right font-medium">
+                         <span className={Number(p.stock) <= 0 ? "text-destructive" : "text-foreground"}>
+                           {Number(p.stock).toFixed(1)}
+                         </span>
+                       </td>
+                       <td className="p-3 text-center">
+                         <div className="flex items-center justify-center gap-1">
+                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(p)}>
+                             <Edit className="h-3.5 w-3.5" />
+                           </Button>
+                           <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ id: p.id, name: p.name })}>
+                             <Trash2 className="h-3.5 w-3.5" />
+                           </Button>
+                         </div>
+                       </td>
+                     </tr>
                   );
                 })}
               </tbody>
@@ -317,18 +396,23 @@ export default function Products() {
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs">Inköpspris (kr)</Label>
+                <Label className="text-xs">Produktionspris (SEK)</Label>
                 <Input value={form.cost_price} onChange={e => setField("cost_price", e.target.value)} type="number" step="0.01" className="h-8 text-xs" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Grossistpris (kr)</Label>
-                <Input value={form.wholesale_price} onChange={e => setField("wholesale_price", e.target.value)} type="number" step="0.01" className="h-8 text-xs" />
+                <Label className="text-xs">Grossistpris (SEK) <span className="text-muted-foreground">+35%</span></Label>
+                <Input value={form.wholesale_price} onChange={e => setField("wholesale_price", e.target.value)} type="number" step="0.01" className="h-8 text-xs bg-muted/50" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Butikspris (kr)</Label>
+                <Label className="text-xs">Rek. butikspris (SEK)</Label>
                 <Input value={form.retail_suggested} onChange={e => setField("retail_suggested", e.target.value)} type="number" step="0.01" className="h-8 text-xs" />
               </div>
             </div>
+            {form.cost_price && (
+              <p className="text-[10px] text-muted-foreground">
+                💡 Produktionspris {Number(form.cost_price).toFixed(2)} × 1.35 = Grossistpris {(Number(form.cost_price) * 1.35).toFixed(2)} SEK
+              </p>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">HS-kod</Label>
