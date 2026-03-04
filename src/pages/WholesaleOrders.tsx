@@ -41,6 +41,30 @@ const statusIcon: Record<string, React.ReactNode> = {
 
 const LINE_STATUSES = ["", "Behandlas", "Producerad", "Packad", "Skickad", "Ej tillgänglig"];
 
+const statusSegmentColor: Record<string, string> = {
+  "": "transparent",
+  "Behandlas": "#fef3c7",
+  "Producerad": "#dbeafe",
+  "Packad": "#d1fae5",
+  "Skickad": "#bbf7d0",
+  "Ej tillgänglig": "#fee2e2",
+};
+
+function buildProgressGradient(lines: any[]): string {
+  if (!lines || lines.length === 0) return "transparent";
+  const total = lines.length;
+  const segments: string[] = [];
+  let pos = 0;
+  for (const line of lines) {
+    const color = statusSegmentColor[line.status || ""] || "transparent";
+    const start = (pos / total) * 100;
+    const end = ((pos + 1) / total) * 100;
+    segments.push(`${color} ${start}%`, `${color} ${end}%`);
+    pos++;
+  }
+  return `linear-gradient(to right, ${segments.join(", ")})`;
+}
+
 const rowBgByStatus: Record<string, string> = {
   "": "",
   "Behandlas": "bg-amber-50 dark:bg-amber-950/20",
@@ -322,7 +346,7 @@ export default function WholesaleOrders() {
                         <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
                       )}
                       {filteredOrders.map((o: any) => (
-                        <tr key={o.id} className={`border-b border-border/40 transition-colors cursor-pointer ${rowBgByStatus[o.status] || ""}`} onClick={() => setSelectedOrder(o)}>
+                        <tr key={o.id} className="border-b border-border/40 transition-colors cursor-pointer" style={{ background: buildProgressGradient(o.shop_order_lines || []) }} onClick={() => setSelectedOrder(o)}>
                           <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
                           <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                           <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
