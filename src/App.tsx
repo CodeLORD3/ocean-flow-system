@@ -7,7 +7,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { SiteProvider } from "@/contexts/SiteContext";
 import Dashboard from "./pages/Dashboard";
 import Inventory from "./pages/Inventory";
-import ShopOrders from "./pages/ShopOrders";
+import OrdersRouter from "./pages/OrdersRouter";
 import Receiving from "./pages/Receiving";
 import Suppliers from "./pages/Suppliers";
 import Customers from "./pages/Customers";
@@ -32,7 +32,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/inventory" element={<Inventory />} />
-              <Route path="/orders" element={<ShopOrders />} />
+              <Route path="/orders" element={<OrdersRouter />} />
               <Route path="/suppliers" element={<Suppliers />} />
               <Route path="/customers" element={<Customers />} />
               <Route path="/stores" element={<Stores />} />
