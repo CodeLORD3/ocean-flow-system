@@ -16,10 +16,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useCustomers, useCreateCustomer, useUpdateCustomer, useDeleteCustomer, Customer } from "@/hooks/useCustomers";
+import { useSite } from "@/contexts/SiteContext";
 
 export default function Customers() {
   const { toast } = useToast();
-  const { data: customers = [], isLoading } = useCustomers();
+  const { site, activeStoreId } = useSite();
+  const { data: allCustomers = [], isLoading } = useCustomers();
+  const customers = site === "wholesale"
+    ? allCustomers.filter(c => !c.store_id)
+    : allCustomers.filter(c => c.store_id === activeStoreId);
   const createCustomer = useCreateCustomer();
   const updateCustomer = useUpdateCustomer();
   const deleteCustomer = useDeleteCustomer();
@@ -63,7 +68,7 @@ export default function Customers() {
       name: form.name, email: form.email || null, phone: form.phone || null,
       address: form.address || null, city: form.city || null,
       contact_person: form.contact_person || null, notes: form.notes || null,
-      store_id: null,
+      store_id: site === "shop" ? activeStoreId : null,
     };
 
     if (editId) {

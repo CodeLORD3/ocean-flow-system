@@ -32,7 +32,14 @@ export function useCreateCustomer() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (customer: Omit<Customer, "id" | "created_at">) => {
-      // Create a store entry so this customer appears in the portal switcher
+      // If store_id is already set (shop-created customer), just insert the customer
+      if (customer.store_id) {
+        const { error } = await supabase.from("customers").insert(customer);
+        if (error) throw error;
+        return;
+      }
+
+      // Grossist-created customer: also create a store entry for the portal switcher
       const { data: store, error: storeError } = await supabase
         .from("stores")
         .insert({
@@ -47,7 +54,6 @@ export function useCreateCustomer() {
         .single();
       if (storeError) throw storeError;
 
-      // Create customer linked to the store
       const { error } = await supabase.from("customers").insert({
         ...customer,
         store_id: store.id,
