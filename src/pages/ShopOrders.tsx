@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Plus, Search, Clock, CheckCircle2, Truck, XCircle, X, Package,
@@ -75,6 +75,22 @@ export default function ShopOrders() {
       return data;
     },
   });
+
+  // Realtime subscription for live status updates
+  useEffect(() => {
+    if (!activeStoreId) return;
+    const channel = supabase
+      .channel(`shop-order-lines-${activeStoreId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "shop_order_lines" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["shop-orders-shop", activeStoreId] });
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [activeStoreId, qc]);
 
   const filteredProducts = products.filter(p =>
     productSearch &&
