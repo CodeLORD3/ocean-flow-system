@@ -28,6 +28,10 @@ import { useDeliveryNotes, useCreateDeliveryNote } from "@/hooks/useDeliveryNote
 import { useIncomingDeliveries, useCreateIncomingDelivery } from "@/hooks/useIncomingDeliveries";
 import { useProductionBatches, useCreateBatch, useUpdateBatchStatus } from "@/hooks/useProductionBatches";
 import { usePriceHistory, useSuppliers } from "@/hooks/usePriceHistory";
+import ShopOrderTab from "@/components/wholesale/ShopOrderTab";
+import TtottiiiTab from "@/components/wholesale/TtottiiiTab";
+import FakturaChTab from "@/components/wholesale/FakturaChTab";
+import ProductBankTab from "@/components/wholesale/ProductBankTab";
 
 const statusColor: Record<string, string> = {
   "Skickad": "bg-primary/10 text-primary border-primary/20",
@@ -276,13 +280,22 @@ export default function Wholesale() {
         <Card className="shadow-card"><CardContent className="p-3"><div className="flex items-center gap-1.5 mb-1"><Package className="h-3.5 w-3.5 text-primary" /><p className="text-[10px] text-muted-foreground">Inleveranser</p></div><p className="text-lg font-heading font-bold text-foreground">{incomingDeliveries.length}</p></CardContent></Card>
       </div>
 
-      <Tabs defaultValue="delivery-notes" className="space-y-3">
-        <TabsList className="h-8">
+      <Tabs defaultValue="shop-orders" className="space-y-3">
+        <TabsList className="h-8 flex-wrap">
+          <TabsTrigger value="shop-orders" className="text-xs h-7">📋 Beställningar</TabsTrigger>
+          <TabsTrigger value="ttottiii" className="text-xs h-7">📊 TTOTTIII</TabsTrigger>
+          <TabsTrigger value="product-bank" className="text-xs h-7">🐟 Produktbank</TabsTrigger>
           <TabsTrigger value="delivery-notes" className="text-xs h-7">Följesedlar</TabsTrigger>
           <TabsTrigger value="incoming" className="text-xs h-7">Inleveranser</TabsTrigger>
-          <TabsTrigger value="catalog" className="text-xs h-7">Produktkatalog & Priser</TabsTrigger>
+          <TabsTrigger value="catalog" className="text-xs h-7">Priser</TabsTrigger>
           <TabsTrigger value="production" className="text-xs h-7">Produktion</TabsTrigger>
+          <TabsTrigger value="faktura-ch" className="text-xs h-7">🇨🇭 Faktura CH</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="shop-orders"><ShopOrderTab /></TabsContent>
+        <TabsContent value="ttottiii"><TtottiiiTab /></TabsContent>
+        <TabsContent value="product-bank"><ProductBankTab /></TabsContent>
+        <TabsContent value="faktura-ch"><FakturaChTab /></TabsContent>
 
         {/* Tab 1: Följesedlar */}
         <TabsContent value="delivery-notes">
