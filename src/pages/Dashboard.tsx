@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Fish, ShoppingCart, DollarSign, TrendingUp, AlertTriangle, Package } from "lucide-react";
+import { Fish, ShoppingCart, DollarSign, TrendingUp, AlertTriangle, Store } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -15,42 +15,42 @@ import {
 } from "recharts";
 
 const kpis = [
-  { label: "Total Inventory", value: "12,450 kg", change: "+8.2%", icon: Fish, trend: "up" },
-  { label: "Active Orders", value: "184", change: "+12.5%", icon: ShoppingCart, trend: "up" },
-  { label: "Monthly Revenue", value: "$284,320", change: "+15.3%", icon: DollarSign, trend: "up" },
-  { label: "Low Stock Alerts", value: "7", change: "-2", icon: AlertTriangle, trend: "down" },
+  { label: "Totalt lager", value: "8 240 kg", change: "+8,2%", icon: Fish, trend: "up" as const },
+  { label: "Aktiva beställningar", value: "67", change: "+12,5%", icon: ShoppingCart, trend: "up" as const },
+  { label: "Månadsintäkt", value: "1 284 320 kr", change: "+15,3%", icon: DollarSign, trend: "up" as const },
+  { label: "Lågt lager-varningar", value: "4", change: "-2", icon: AlertTriangle, trend: "down" as const },
 ];
 
 const revenueData = [
-  { month: "Jan", revenue: 186000, orders: 120 },
-  { month: "Feb", revenue: 205000, orders: 135 },
-  { month: "Mar", revenue: 198000, orders: 128 },
-  { month: "Apr", revenue: 245000, orders: 156 },
-  { month: "May", revenue: 262000, orders: 168 },
-  { month: "Jun", revenue: 284000, orders: 184 },
+  { month: "Jan", revenue: 986000, orders: 120 },
+  { month: "Feb", revenue: 1105000, orders: 135 },
+  { month: "Mar", revenue: 1048000, orders: 128 },
+  { month: "Apr", revenue: 1245000, orders: 156 },
+  { month: "Maj", revenue: 1162000, orders: 168 },
+  { month: "Jun", revenue: 1284000, orders: 184 },
 ];
 
-const inventoryByCategory = [
-  { name: "Salmon", stock: 3200 },
-  { name: "Tuna", stock: 2800 },
-  { name: "Shrimp", stock: 2100 },
-  { name: "Cod", stock: 1800 },
-  { name: "Lobster", stock: 1500 },
-  { name: "Crab", stock: 1050 },
+const storePerformance = [
+  { name: "Stockholm Östermalm", revenue: 320000 },
+  { name: "Stockholm Södermalm", revenue: 275000 },
+  { name: "Göteborg Haga", revenue: 248000 },
+  { name: "Göteborg Linné", revenue: 195000 },
+  { name: "Göteborg Majorna", revenue: 142000 },
+  { name: "Zürich", revenue: 104000 },
 ];
 
 const recentOrders = [
-  { id: "ORD-2847", customer: "Pacific Fresh Co.", items: "Salmon, Tuna", total: "$12,450", status: "Processing" },
-  { id: "ORD-2846", customer: "Harbor Bistro", items: "Lobster, Crab", total: "$8,200", status: "Shipped" },
-  { id: "ORD-2845", customer: "Ocean Delights", items: "Shrimp, Cod", total: "$5,680", status: "Delivered" },
-  { id: "ORD-2844", customer: "Bay View Restaurant", items: "Tuna, Shrimp", total: "$9,340", status: "Processing" },
-  { id: "ORD-2843", customer: "Coastal Catering", items: "Salmon", total: "$4,120", status: "Delivered" },
+  { id: "ORD-2847", store: "Stockholm Östermalm", items: "Lax, Torsk", total: "12 450 kr", status: "Behandlas" },
+  { id: "ORD-2846", store: "Göteborg Haga", items: "Hummer, Krabba", total: "8 200 kr", status: "Levererad" },
+  { id: "ORD-2845", store: "Zürich", items: "Räkor, Torsk", total: "5 680 kr", status: "Skickad" },
+  { id: "ORD-2844", store: "Stockholm Södermalm", items: "Tonfisk, Räkor", total: "9 340 kr", status: "Behandlas" },
+  { id: "ORD-2843", store: "Göteborg Linné", items: "Lax", total: "4 120 kr", status: "Levererad" },
 ];
 
 const statusColor: Record<string, string> = {
-  Processing: "bg-warning/15 text-warning border-warning/20",
-  Shipped: "bg-primary/10 text-primary border-primary/20",
-  Delivered: "bg-success/15 text-success border-success/20",
+  Behandlas: "bg-warning/15 text-warning border-warning/20",
+  Skickad: "bg-primary/10 text-primary border-primary/20",
+  Levererad: "bg-success/15 text-success border-success/20",
 };
 
 const container = {
@@ -66,6 +66,11 @@ const fadeUp = {
 export default function Dashboard() {
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-heading font-bold text-foreground">Översikt</h2>
+        <p className="text-sm text-muted-foreground">6 butiker — Stockholm · Göteborg · Zürich</p>
+      </div>
+
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map((kpi) => (
@@ -82,7 +87,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <p className={`mt-2 text-xs font-medium ${kpi.trend === "up" ? "text-success" : "text-destructive"}`}>
-                  {kpi.change} from last month
+                  {kpi.change} jämfört med förra månaden
                 </p>
               </CardContent>
             </Card>
@@ -95,7 +100,7 @@ export default function Dashboard() {
         <motion.div variants={fadeUp} className="lg:col-span-2">
           <Card className="shadow-card">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-heading">Revenue Overview</CardTitle>
+              <CardTitle className="text-base font-heading">Intäkter per månad</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-64">
@@ -109,8 +114,8 @@ export default function Dashboard() {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(214 20% 88%)" />
                     <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="hsl(215 15% 50%)" />
-                    <YAxis tick={{ fontSize: 12 }} stroke="hsl(215 15% 50%)" tickFormatter={(v) => `$${v / 1000}k`} />
-                    <Tooltip formatter={(v: number) => [`$${v.toLocaleString()}`, "Revenue"]} />
+                    <YAxis tick={{ fontSize: 12 }} stroke="hsl(215 15% 50%)" tickFormatter={(v) => `${v / 1000}k`} />
+                    <Tooltip formatter={(v: number) => [`${v.toLocaleString("sv-SE")} kr`, "Intäkt"]} />
                     <Area type="monotone" dataKey="revenue" stroke="hsl(205 78% 28%)" fill="url(#revGrad)" strokeWidth={2} />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -122,17 +127,17 @@ export default function Dashboard() {
         <motion.div variants={fadeUp}>
           <Card className="shadow-card">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-heading">Stock by Category</CardTitle>
+              <CardTitle className="text-base font-heading">Intäkt per butik</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={inventoryByCategory} layout="vertical">
+                  <BarChart data={storePerformance} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(214 20% 88%)" />
-                    <XAxis type="number" tick={{ fontSize: 11 }} stroke="hsl(215 15% 50%)" />
-                    <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} stroke="hsl(215 15% 50%)" width={60} />
-                    <Tooltip />
-                    <Bar dataKey="stock" fill="hsl(172 55% 40%)" radius={[0, 4, 4, 0]} />
+                    <XAxis type="number" tick={{ fontSize: 10 }} stroke="hsl(215 15% 50%)" tickFormatter={(v) => `${v / 1000}k`} />
+                    <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} stroke="hsl(215 15% 50%)" width={110} />
+                    <Tooltip formatter={(v: number) => [`${v.toLocaleString("sv-SE")} kr`, "Intäkt"]} />
+                    <Bar dataKey="revenue" fill="hsl(172 55% 40%)" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -145,17 +150,17 @@ export default function Dashboard() {
       <motion.div variants={fadeUp}>
         <Card className="shadow-card">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-heading">Recent Orders</CardTitle>
+            <CardTitle className="text-base font-heading">Senaste beställningar</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="pb-3 text-left font-medium text-muted-foreground">Order ID</th>
-                    <th className="pb-3 text-left font-medium text-muted-foreground">Customer</th>
-                    <th className="pb-3 text-left font-medium text-muted-foreground">Items</th>
-                    <th className="pb-3 text-right font-medium text-muted-foreground">Total</th>
+                    <th className="pb-3 text-left font-medium text-muted-foreground">Order-ID</th>
+                    <th className="pb-3 text-left font-medium text-muted-foreground">Butik</th>
+                    <th className="pb-3 text-left font-medium text-muted-foreground">Produkter</th>
+                    <th className="pb-3 text-right font-medium text-muted-foreground">Totalt</th>
                     <th className="pb-3 text-right font-medium text-muted-foreground">Status</th>
                   </tr>
                 </thead>
@@ -163,13 +168,11 @@ export default function Dashboard() {
                   {recentOrders.map((order) => (
                     <tr key={order.id} className="border-b border-border/50 last:border-0">
                       <td className="py-3 font-medium text-foreground">{order.id}</td>
-                      <td className="py-3 text-foreground">{order.customer}</td>
+                      <td className="py-3 text-foreground">{order.store}</td>
                       <td className="py-3 text-muted-foreground">{order.items}</td>
                       <td className="py-3 text-right font-medium text-foreground">{order.total}</td>
                       <td className="py-3 text-right">
-                        <Badge variant="outline" className={statusColor[order.status]}>
-                          {order.status}
-                        </Badge>
+                        <Badge variant="outline" className={statusColor[order.status]}>{order.status}</Badge>
                       </td>
                     </tr>
                   ))}

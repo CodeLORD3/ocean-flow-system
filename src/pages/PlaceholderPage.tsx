@@ -12,7 +12,7 @@ export default function PlaceholderPage({ title }: { title: string }) {
         <Construction className="h-8 w-8 text-primary" />
       </div>
       <h2 className="text-2xl font-heading font-bold text-foreground mb-2">{title}</h2>
-      <p className="text-muted-foreground">This section is coming soon.</p>
+      <p className="text-muted-foreground">Den här sektionen kommer snart.</p>
     </motion.div>
   );
 }
