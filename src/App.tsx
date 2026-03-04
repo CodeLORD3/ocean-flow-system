@@ -16,6 +16,7 @@ import Staff from "./pages/Staff";
 import Wholesale from "./pages/Wholesale";
 import Barcodes from "./pages/Barcodes";
 import Products from "./pages/Products";
+import OrganisationOverview from "./pages/OrganisationOverview";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/suppliers" element={<Suppliers />} />
               <Route path="/customers" element={<Customers />} />
               <Route path="/stores" element={<Stores />} />
+              <Route path="/organisation" element={<OrganisationOverview />} />
               <Route path="/staff" element={<Staff />} />
               <Route path="/wholesale" element={<Wholesale />} />
               <Route path="/reports" element={<PlaceholderPage title="Rapporter & Analys" />} />
