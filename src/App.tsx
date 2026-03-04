@@ -11,6 +11,7 @@ import Receiving from "./pages/Receiving";
 import Suppliers from "./pages/Suppliers";
 import Stores from "./pages/Stores";
 import Staff from "./pages/Staff";
+import Wholesale from "./pages/Wholesale";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/customers" element={<PlaceholderPage title="Kundreskontra" />} />
             <Route path="/stores" element={<Stores />} />
             <Route path="/staff" element={<Staff />} />
+            <Route path="/wholesale" element={<Wholesale />} />
             <Route path="/reports" element={<PlaceholderPage title="Rapporter & Analys" />} />
             <Route path="/finance" element={<PlaceholderPage title="Ekonomi" />} />
             <Route path="/forecasts" element={<PlaceholderPage title="Prognoser" />} />
