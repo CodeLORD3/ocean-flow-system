@@ -1,4 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useSite } from "@/contexts/SiteContext";
 import {
   useWeeklyReports,
@@ -72,10 +74,12 @@ function WeeklyReportForm({
   storeId,
   onDone,
   editReport,
+  allReports,
 }: {
   storeId: string;
   onDone: () => void;
   editReport?: any;
+  allReports?: any[];
 }) {
   const currentYear = new Date().getFullYear();
   const currentWeek = getCurrentWeek();
@@ -84,6 +88,58 @@ function WeeklyReportForm({
   const [week, setWeek] = useState(editReport?.week_number ?? currentWeek);
   const [openingInv, setOpeningInv] = useState(String(editReport?.opening_inventory ?? ""));
   const [closingInv, setClosingInv] = useState(String(editReport?.closing_inventory ?? ""));
+  const [openingAutoFilled, setOpeningAutoFilled] = useState(false);
+  const [closingAutoFilled, setClosingAutoFilled] = useState(false);
+
+  // Auto-fill opening inventory from previous week's closing inventory
+  useEffect(() => {
+    if (editReport) return;
+    if (!allReports || allReports.length === 0) {
+      setOpeningAutoFilled(false);
+      return;
+    }
+    const previous = allReports
+      .filter((r: any) => r.year < year || (r.year === year && (r.week_number ?? 0) < week))
+      .sort((a: any, b: any) => b.year - a.year || (b.week_number ?? 0) - (a.week_number ?? 0))[0];
+    if (previous) {
+      setOpeningInv(String(previous.closing_inventory ?? 0));
+      setOpeningAutoFilled(true);
+    } else {
+      setOpeningAutoFilled(false);
+    }
+  }, [year, week, allReports, editReport]);
+
+  // Auto-fill closing inventory from store's current stock value
+  const { data: closingStockValue } = useQuery({
+    queryKey: ["store_stock_value", storeId],
+    enabled: !editReport,
+    queryFn: async () => {
+      const { data: locations } = await supabase
+        .from("storage_locations")
+        .select("id")
+        .eq("store_id", storeId);
+      if (!locations || locations.length === 0) return 0;
+      const locationIds = locations.map((l) => l.id);
+      const { data: stockEntries } = await supabase
+        .from("product_stock_locations")
+        .select("quantity, product_id, products(cost_price)")
+        .in("location_id", locationIds);
+      if (!stockEntries) return 0;
+      return stockEntries.reduce((sum, entry: any) => {
+        const qty = Number(entry.quantity) || 0;
+        const cost = Number(entry.products?.cost_price) || 0;
+        return sum + qty * cost;
+      }, 0);
+    },
+  });
+
+  useEffect(() => {
+    if (editReport) return;
+    if (closingStockValue !== undefined && closingStockValue > 0) {
+      setClosingInv(String(Math.round(closingStockValue)));
+      setClosingAutoFilled(true);
+    }
+  }, [closingStockValue, editReport]);
   const [notes, setNotes] = useState(editReport?.notes ?? "");
 
   const existingLines: ReportLine[] = editReport?.shop_report_lines ?? [];
@@ -244,12 +300,18 @@ function WeeklyReportForm({
       {/* Inventory */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label>Ingående lager (SEK)</Label>
-          <Input type="number" placeholder="0" value={openingInv} onChange={(e) => setOpeningInv(e.target.value)} />
+          <Label className="flex items-center gap-1">
+            Ingående lager (SEK)
+            {openingAutoFilled && <span className="text-[10px] text-muted-foreground ml-1">(auto från förra veckan)</span>}
+          </Label>
+          <Input type="number" placeholder="0" value={openingInv} onChange={(e) => { setOpeningInv(e.target.value); setOpeningAutoFilled(false); }} />
         </div>
         <div>
-          <Label>Utgående lager (SEK)</Label>
-          <Input type="number" placeholder="0" value={closingInv} onChange={(e) => setClosingInv(e.target.value)} />
+          <Label className="flex items-center gap-1">
+            Utgående lager (SEK)
+            {closingAutoFilled && <span className="text-[10px] text-muted-foreground ml-1">(auto från lager)</span>}
+          </Label>
+          <Input type="number" placeholder="0" value={closingInv} onChange={(e) => { setClosingInv(e.target.value); setClosingAutoFilled(false); }} />
         </div>
       </div>
 
@@ -362,7 +424,7 @@ export default function ShopReports() {
             <DialogHeader>
               <DialogTitle>{editingReport ? `Redigera V${editingReport.week_number} ${editingReport.year}` : "Ny veckorapport"}</DialogTitle>
             </DialogHeader>
-            <WeeklyReportForm storeId={activeStoreId} onDone={handleDialogClose} editReport={editingReport} />
+            <WeeklyReportForm storeId={activeStoreId} onDone={handleDialogClose} editReport={editingReport} allReports={weeklyReports} />
           </DialogContent>
         </Dialog>
       </div>
