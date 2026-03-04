@@ -21,6 +21,7 @@ const pageTitles: Record<string, { title: string; breadcrumb: string[] }> = {
   "/suppliers": { title: "Leverantörsreskontra", breadcrumb: ["Hem", "Inköp", "Leverantörer"] },
   "/customers": { title: "Kundreskontra", breadcrumb: ["Hem", "Försäljning", "Kunder"] },
   "/stores": { title: "Butikshantering", breadcrumb: ["Hem", "Organisation", "Butiker"] },
+  "/wholesale": { title: "Produktion & Grossist", breadcrumb: ["Hem", "Organisation", "Grossist"] },
   "/reports": { title: "Rapporter & Analys", breadcrumb: ["Hem", "Rapporter"] },
   "/staff": { title: "Personalhantering", breadcrumb: ["Hem", "HR", "Personal"] },
   "/settings": { title: "Systeminställningar", breadcrumb: ["Hem", "Administration", "Inställningar"] },
@@ -131,7 +132,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="h-11 flex items-center justify-between border-b border-border bg-card/50 px-6 shrink-0">
             <h1 className="font-heading text-sm font-semibold text-foreground">{page.title}</h1>
             <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-              <span className="hidden sm:inline">6 butiker</span>
+              <span className="hidden sm:inline">5 butiker + grossist</span>
               <span>•</span>
               <span>27 anställda</span>
               <span>•</span>

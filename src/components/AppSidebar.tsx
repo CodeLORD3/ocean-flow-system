@@ -15,6 +15,7 @@ import {
   ClipboardList,
   TrendingUp,
   Shield,
+  Factory,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -50,6 +51,7 @@ const inventoryNav = [
 
 const orgNav = [
   { title: "Butiker", url: "/stores", icon: Store },
+  { title: "Produktion/Grossist", url: "/wholesale", icon: Factory },
   { title: "Personal", url: "/staff", icon: UserCheck },
 ];
 

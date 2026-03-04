@@ -12,13 +12,12 @@ const stores = [
   { id: 3, name: "Göteborg Haga", address: "Haga Nygata 18, Göteborg", phone: "031-345 67 89", hours: "Mån–Lör 09:00–17:30", staff: 5, city: "Göteborg", status: "Öppen", revenue: 248000, target: 240000, orders: 19, stock: 1650, sqm: 88, manager: "Erik Johansson" },
   { id: 4, name: "Göteborg Linné", address: "Linnégatan 56, Göteborg", phone: "031-456 78 90", hours: "Mån–Lör 10:00–18:00", staff: 4, city: "Göteborg", status: "Öppen", revenue: 195000, target: 210000, orders: 15, stock: 980, sqm: 65, manager: "Lars Pettersson" },
   { id: 5, name: "Göteborg Majorna", address: "Mariaplan 3, Göteborg", phone: "031-567 89 01", hours: "Mån–Fre 09:30–17:00, Lör 09:30–15:00", staff: 3, city: "Göteborg", status: "Öppen", revenue: 142000, target: 150000, orders: 12, stock: 720, sqm: 55, manager: "Karl Andersson" },
-  { id: 6, name: "Zürich", address: "Bahnhofstrasse 92, Zürich", phone: "+41 44 123 45 67", hours: "Mon–Sat 08:00–19:00", staff: 5, city: "Schweiz", status: "Öppen", revenue: 104000, target: 120000, orders: 8, stock: 620, sqm: 78, manager: "Eva Bergström" },
+  
 ];
 
 const cityColor: Record<string, string> = {
   Stockholm: "bg-primary/10 text-primary border-primary/20",
   Göteborg: "bg-accent/15 text-accent border-accent/20",
-  Schweiz: "bg-warning/15 text-warning border-warning/20",
 };
 
 export default function Stores() {
@@ -29,7 +28,7 @@ export default function Stores() {
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       <div>
         <h2 className="text-xl font-heading font-bold text-foreground">Butikshantering</h2>
-        <p className="text-xs text-muted-foreground">Era 6 fiskaffärer — 2 Stockholm, 3 Göteborg, 1 Zürich</p>
+        <p className="text-xs text-muted-foreground">Era 5 fiskaffärer — 2 Stockholm, 3 Göteborg</p>
       </div>
 
       {/* Summary */}
