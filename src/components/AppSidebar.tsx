@@ -16,6 +16,7 @@ import {
   TrendingUp,
   Shield,
   Factory,
+  ScanLine,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -45,6 +46,7 @@ const salesNav = [
 
 const inventoryNav = [
   { title: "Lager", url: "/inventory", icon: Fish },
+  { title: "Streckkoder", url: "/barcodes", icon: ScanLine },
   { title: "Inleveranser", url: "/receiving", icon: Package },
   { title: "Leverantörer", url: "/suppliers", icon: Truck },
 ];
