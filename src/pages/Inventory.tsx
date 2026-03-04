@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Warehouse, Search, Plus, Package, AlertTriangle, MapPin, Thermometer,
-  Edit, X, ArrowRightLeft,
+  Warehouse, Search, Plus, Package, AlertTriangle, MapPin,
+  Edit, ArrowRightLeft, ScanLine, Camera, ClipboardList, X, CheckCircle2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,19 +27,24 @@ import {
   useCreateStorageLocation,
   useUpsertStockLocation,
 } from "@/hooks/useStorageLocations";
+import BarcodeScanner from "@/components/barcode/BarcodeScanner";
 
 const zoneIcon: Record<string, string> = {
-  Kyl: "❄️",
-  Frys: "🧊",
-  Torrt: "📦",
-  Produktion: "🏭",
+  Kyl: "❄️", Frys: "🧊", Torrt: "📦", Produktion: "🏭",
 };
-
 const zoneColor: Record<string, string> = {
   Kyl: "bg-blue-500/10 text-blue-600 border-blue-500/20",
   Frys: "bg-cyan-500/10 text-cyan-600 border-cyan-500/20",
   Torrt: "bg-amber-500/10 text-amber-600 border-amber-500/20",
   Produktion: "bg-purple-500/10 text-purple-600 border-purple-500/20",
+};
+
+type InventoryLine = {
+  product_id: string;
+  product_name: string;
+  sku: string;
+  unit: string;
+  quantity: string;
 };
 
 export default function Inventory() {
@@ -62,6 +67,13 @@ export default function Inventory() {
   const [stockQty, setStockQty] = useState("");
   const [stockMin, setStockMin] = useState("");
 
+  // Inventory tab state
+  const [invLocation, setInvLocation] = useState("");
+  const [invLines, setInvLines] = useState<InventoryLine[]>([]);
+  const [invProductSearch, setInvProductSearch] = useState("");
+  const [showScanner, setShowScanner] = useState(false);
+  const [invSaving, setInvSaving] = useState(false);
+
   const { data: stores = [] } = useStores();
   const { data: products = [] } = useProducts();
   const { data: locations = [], isLoading: loadingLoc } = useStorageLocations(storeFilter !== "all" ? storeFilter : undefined);
@@ -69,9 +81,8 @@ export default function Inventory() {
   const createLocation = useCreateStorageLocation();
   const upsertStock = useUpsertStockLocation();
 
-  // Filter stock by search & selected location
   const filteredStock = allStock.filter(s => {
-    const matchSearch = !search || 
+    const matchSearch = !search ||
       s.products?.name?.toLowerCase().includes(search.toLowerCase()) ||
       s.products?.sku?.toLowerCase().includes(search.toLowerCase()) ||
       s.storage_locations?.name?.toLowerCase().includes(search.toLowerCase());
@@ -80,7 +91,6 @@ export default function Inventory() {
     return matchSearch && matchLoc && matchStore;
   });
 
-  // Group stock by location for overview
   const locationSummary = locations.map((loc: any) => {
     const locStock = allStock.filter(s => s.location_id === loc.id);
     const totalQty = locStock.reduce((sum: number, s: any) => sum + Number(s.quantity), 0);
@@ -95,12 +105,7 @@ export default function Inventory() {
 
   const handleCreateLocation = () => {
     if (!locName || !locStore) return;
-    createLocation.mutate({
-      name: locName,
-      store_id: locStore,
-      zone: locZone || undefined,
-      description: locDesc || undefined,
-    }, {
+    createLocation.mutate({ name: locName, store_id: locStore, zone: locZone || undefined, description: locDesc || undefined }, {
       onSuccess: () => {
         toast({ title: "Lagerställe skapat", description: locName });
         setLocationDialogOpen(false);
@@ -112,12 +117,7 @@ export default function Inventory() {
 
   const handleUpsertStock = () => {
     if (!stockProduct || !stockLocation || !stockQty) return;
-    upsertStock.mutate({
-      product_id: stockProduct,
-      location_id: stockLocation,
-      quantity: Number(stockQty),
-      min_stock: stockMin ? Number(stockMin) : 0,
-    }, {
+    upsertStock.mutate({ product_id: stockProduct, location_id: stockLocation, quantity: Number(stockQty), min_stock: stockMin ? Number(stockMin) : 0 }, {
       onSuccess: () => {
         toast({ title: "Lagersaldo uppdaterat" });
         setStockDialogOpen(false);
@@ -127,12 +127,71 @@ export default function Inventory() {
     });
   };
 
+  // --- Inventory tab logic ---
+  const addProductToInventory = (product: any) => {
+    if (invLines.find(l => l.product_id === product.id)) {
+      toast({ title: "Redan tillagd", description: product.name }); return;
+    }
+    setInvLines(prev => [...prev, {
+      product_id: product.id, product_name: product.name,
+      sku: product.sku, unit: product.unit, quantity: "",
+    }]);
+    setInvProductSearch("");
+  };
+
+  const handleScan = (code: string) => {
+    const product = products.find((p: any) => (p as any).barcode === code);
+    if (product) {
+      addProductToInventory(product);
+      toast({ title: "Produkt skannad", description: product.name });
+    } else {
+      toast({ title: "Okänd streckkod", description: `Kod: ${code}`, variant: "destructive" });
+    }
+    setShowScanner(false);
+  };
+
+  const updateInvLine = (idx: number, qty: string) => {
+    setInvLines(prev => prev.map((l, i) => i === idx ? { ...l, quantity: qty } : l));
+  };
+
+  const removeInvLine = (idx: number) => {
+    setInvLines(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const saveInventory = async () => {
+    if (!invLocation || invLines.length === 0) return;
+    const validLines = invLines.filter(l => l.quantity !== "" && !isNaN(Number(l.quantity)));
+    if (validLines.length === 0) { toast({ title: "Ange antal för minst en produkt", variant: "destructive" }); return; }
+    setInvSaving(true);
+    try {
+      for (const line of validLines) {
+        await upsertStock.mutateAsync({
+          product_id: line.product_id,
+          location_id: invLocation,
+          quantity: Number(line.quantity),
+        });
+      }
+      toast({ title: "Inventering sparad", description: `${validLines.length} produkter uppdaterade` });
+      setInvLines([]);
+    } catch (err: any) {
+      toast({ title: "Fel", description: err.message, variant: "destructive" });
+    }
+    setInvSaving(false);
+  };
+
+  const filteredProductsForAdd = products.filter(p =>
+    invProductSearch &&
+    (p.name.toLowerCase().includes(invProductSearch.toLowerCase()) ||
+     p.sku.toLowerCase().includes(invProductSearch.toLowerCase())) &&
+    !invLines.find(l => l.product_id === p.id)
+  ).slice(0, 8);
+
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-heading font-bold text-foreground">Lagerhantering</h2>
-          <p className="text-xs text-muted-foreground">Lagerställen, zoner och lagersaldo per plats</p>
+          <p className="text-xs text-muted-foreground">Lagerställen, inventering och lagersaldo per plats</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Select value={storeFilter} onValueChange={v => { setStoreFilter(v); setSelectedLocationId(null); }}>
@@ -156,7 +215,6 @@ export default function Inventory() {
         <Card className="shadow-card"><CardContent className="p-3">
           <p className="text-[10px] text-muted-foreground">Lagerställen</p>
           <p className="text-xl font-heading font-bold text-foreground">{locations.length}</p>
-          <p className="text-[10px] text-muted-foreground">Över {stores.length} platser</p>
         </CardContent></Card>
         <Card className="shadow-card"><CardContent className="p-3">
           <p className="text-[10px] text-muted-foreground">Produkter i lager</p>
@@ -169,17 +227,153 @@ export default function Inventory() {
         <Card className="shadow-card"><CardContent className="p-3">
           <p className="text-[10px] text-muted-foreground flex items-center gap-1"><AlertTriangle className="h-3 w-3 text-warning" /> Lågt lager</p>
           <p className="text-xl font-heading font-bold text-destructive">{lowStockItems}</p>
-          <p className="text-[10px] text-muted-foreground">Under min.nivå</p>
         </CardContent></Card>
       </div>
 
-      <Tabs defaultValue="locations" className="space-y-3">
+      <Tabs defaultValue="inventory" className="space-y-3">
         <TabsList className="h-8">
+          <TabsTrigger value="inventory" className="text-xs h-7">📋 Inventering</TabsTrigger>
           <TabsTrigger value="locations" className="text-xs h-7">📍 Lagerställen</TabsTrigger>
-          <TabsTrigger value="stock" className="text-xs h-7">📦 Lagersaldo per plats</TabsTrigger>
+          <TabsTrigger value="stock" className="text-xs h-7">📦 Lagersaldo</TabsTrigger>
         </TabsList>
 
-        {/* Tab 1: Location overview */}
+        {/* Inventory Tab */}
+        <TabsContent value="inventory">
+          <Card className="shadow-card">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-heading flex items-center gap-2">
+                <ClipboardList className="h-4 w-4 text-primary" /> Inventering
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Välj lagerställe, lägg till produkter via sökning eller skanna streckkoder, ange antal och spara.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Location picker */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="space-y-1.5 flex-1 max-w-xs">
+                  <Label className="text-xs font-medium">Lagerställe *</Label>
+                  <Select value={invLocation} onValueChange={setInvLocation}>
+                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Välj lagerställe" /></SelectTrigger>
+                    <SelectContent>
+                      {locations.map((loc: any) => (
+                        <SelectItem key={loc.id} value={loc.id} className="text-xs">
+                          {zoneIcon[loc.zone] || "📍"} {loc.name} ({loc.stores?.name})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-end gap-2">
+                  <Button
+                    variant="outline" size="sm" className="gap-1.5 text-xs h-8"
+                    onClick={() => setShowScanner(!showScanner)}
+                    disabled={!invLocation}
+                  >
+                    <Camera className="h-3 w-3" /> {showScanner ? "Stäng skanner" : "Scanna streckkod"}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Scanner */}
+              {showScanner && invLocation && (
+                <BarcodeScanner onScan={handleScan} onClose={() => setShowScanner(false)} />
+              )}
+
+              {/* Manual product search */}
+              {invLocation && (
+                <div className="relative">
+                  <Label className="text-xs font-medium mb-1.5 block">Lägg till produkt manuellt</Label>
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input
+                      placeholder="Sök produkt (namn eller SKU)..."
+                      value={invProductSearch}
+                      onChange={e => setInvProductSearch(e.target.value)}
+                      className="pl-8 h-8 text-xs"
+                    />
+                  </div>
+                  {filteredProductsForAdd.length > 0 && (
+                    <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                      {filteredProductsForAdd.map(p => (
+                        <button
+                          key={p.id}
+                          className="w-full text-left px-3 py-2 text-xs hover:bg-muted/50 flex items-center justify-between"
+                          onClick={() => addProductToInventory(p)}
+                        >
+                          <span className="font-medium text-foreground">{p.name}</span>
+                          <span className="text-muted-foreground font-mono text-[10px]">{p.sku} · {p.unit}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Inventory lines */}
+              {invLines.length > 0 && (
+                <div className="space-y-2">
+                  <Separator />
+                  <div className="text-xs font-medium text-muted-foreground">
+                    {invLines.length} produkt{invLines.length > 1 ? "er" : ""} tillagda
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="pb-2 text-left font-medium text-muted-foreground">Produkt</th>
+                          <th className="pb-2 text-left font-medium text-muted-foreground">SKU</th>
+                          <th className="pb-2 text-left font-medium text-muted-foreground">Enhet</th>
+                          <th className="pb-2 text-right font-medium text-muted-foreground w-32">Antal</th>
+                          <th className="pb-2 w-8"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {invLines.map((line, idx) => (
+                          <tr key={line.product_id} className="border-b border-border/30">
+                            <td className="py-2 font-medium text-foreground">{line.product_name}</td>
+                            <td className="py-2 font-mono text-muted-foreground text-[10px]">{line.sku}</td>
+                            <td className="py-2 text-muted-foreground">{line.unit}</td>
+                            <td className="py-2 text-right">
+                              <Input
+                                type="number"
+                                step="0.1"
+                                value={line.quantity}
+                                onChange={e => updateInvLine(idx, e.target.value)}
+                                className="h-7 text-xs w-24 ml-auto text-right"
+                                placeholder="0"
+                                autoFocus={idx === invLines.length - 1}
+                              />
+                            </td>
+                            <td className="py-2">
+                              <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeInvLine(idx)}>
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="flex justify-end pt-2">
+                    <Button size="sm" className="gap-1.5" onClick={saveInventory} disabled={invSaving || !invLocation}>
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      {invSaving ? "Sparar..." : "Spara inventering"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {!invLocation && (
+                <p className="text-xs text-muted-foreground py-6 text-center">
+                  👆 Välj ett lagerställe ovan för att börja inventera
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Locations Tab */}
         <TabsContent value="locations">
           {loadingLoc ? <Skeleton className="h-48" /> : locations.length === 0 ? (
             <Card className="shadow-card"><CardContent className="p-8 text-center">
@@ -227,7 +421,7 @@ export default function Inventory() {
           )}
         </TabsContent>
 
-        {/* Tab 2: Stock per location detail */}
+        {/* Stock Tab */}
         <TabsContent value="stock">
           <Card className="shadow-card">
             <CardHeader className="pb-2">
@@ -237,7 +431,7 @@ export default function Inventory() {
                   <CardDescription className="text-xs">
                     {selectedLocationId
                       ? `Visar ${locations.find((l: any) => l.id === selectedLocationId)?.name || "valt ställe"}`
-                      : "Alla lagerställen — klicka ett lagerställe i fliken ovan för att filtrera"}
+                      : "Alla lagerställen"}
                   </CardDescription>
                 </div>
                 <div className="relative w-48">
@@ -248,7 +442,7 @@ export default function Inventory() {
             </CardHeader>
             <CardContent>
               {loadingStock ? <Skeleton className="h-48" /> : filteredStock.length === 0 ? (
-                <p className="text-xs text-muted-foreground py-8 text-center">Inga lagersaldon registrerade. Använd "Uppdatera saldo" för att lägga till.</p>
+                <p className="text-xs text-muted-foreground py-8 text-center">Inga lagersaldon registrerade.</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
@@ -257,7 +451,7 @@ export default function Inventory() {
                         <th className="pb-2 text-left font-medium text-muted-foreground">Produkt</th>
                         <th className="pb-2 text-left font-medium text-muted-foreground">SKU</th>
                         <th className="pb-2 text-left font-medium text-muted-foreground">Lagerställe</th>
-                        <th className="pb-2 text-left font-medium text-muted-foreground">Plats (Butik)</th>
+                        <th className="pb-2 text-left font-medium text-muted-foreground">Plats</th>
                         <th className="pb-2 text-left font-medium text-muted-foreground">Zon</th>
                         <th className="pb-2 text-right font-medium text-muted-foreground">Kvantitet</th>
                         <th className="pb-2 text-right font-medium text-muted-foreground">Min</th>
@@ -299,9 +493,6 @@ export default function Inventory() {
                   </table>
                 </div>
               )}
-              <div className="mt-3 text-[10px] text-muted-foreground">
-                Visar {filteredStock.length} rader · Senast uppdaterad: {new Date().toLocaleString("sv-SE")}
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
