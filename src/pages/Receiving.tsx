@@ -1,394 +1,518 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
-  Package, Plus, Search, FileText, CheckCircle2, Clock, Truck, Calendar,
-  ChevronDown, X, AlertTriangle
+  Package, Search, CheckCircle2, Clock, Truck, AlertTriangle, X,
+  ThumbsUp, Flag, Eye,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useSite } from "@/contexts/SiteContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSubmitReceivingReport } from "@/hooks/useDeliveryReceivingReports";
 
-// --- Types ---
-interface ReceivingLineInput {
-  product: string;
-  expectedQty: string;
-  receivedQty: string;
-  unit: string;
-  batchNo: string;
-  temp: string;
-  note: string;
-}
-
-const emptyLine: ReceivingLineInput = { product: "", expectedQty: "", receivedQty: "", unit: "kg", batchNo: "", temp: "", note: "" };
-
-// --- Data ---
-const receivingHistory = [
-  { id: "INL-0098", date: "2026-03-04", time: "07:15", supplier: "Norsk Sjömat AB", deliveryNote: "NS-44521", store: "Stockholm Östermalm", lines: 3, totalKg: 450, status: "Godkänd", registeredBy: "Johan E.", discrepancy: false },
-  { id: "INL-0097", date: "2026-03-03", time: "06:45", supplier: "Göteborgs Fiskauktion", deliveryNote: "GF-8834", store: "Göteborg Haga", lines: 4, totalKg: 620, status: "Godkänd", registeredBy: "Anna L.", discrepancy: false },
-  { id: "INL-0096", date: "2026-03-03", time: "08:20", supplier: "Smögen Shellfish", deliveryNote: "SS-2201", store: "Göteborg Linné", lines: 2, totalKg: 85, status: "Avvikelse", registeredBy: "Lars P.", discrepancy: true },
-  { id: "INL-0095", date: "2026-03-02", time: "07:00", supplier: "Kungshamns Fisk", deliveryNote: "KF-1190", store: "Göteborg Majorna", lines: 3, totalKg: 380, status: "Godkänd", registeredBy: "Karl A.", discrepancy: false },
-  { id: "INL-0094", date: "2026-03-02", time: "09:30", supplier: "Mediterranean Imports", deliveryNote: "MI-7782", store: "Zürich", lines: 2, totalKg: 140, status: "Godkänd", registeredBy: "Eva B.", discrepancy: false },
-  { id: "INL-0093", date: "2026-03-01", time: "06:30", supplier: "Norsk Sjömat AB", deliveryNote: "NS-44498", store: "Stockholm Södermalm", lines: 5, totalKg: 720, status: "Avvikelse", registeredBy: "Maria S.", discrepancy: true },
-  { id: "INL-0092", date: "2026-03-01", time: "07:45", supplier: "Göteborgs Fiskauktion", deliveryNote: "GF-8820", store: "Göteborg Haga", lines: 3, totalKg: 290, status: "Godkänd", registeredBy: "Erik J.", discrepancy: false },
-  { id: "INL-0091", date: "2026-02-28", time: "08:00", supplier: "Smögen Shellfish", deliveryNote: "SS-2198", store: "Stockholm Östermalm", lines: 2, totalKg: 60, status: "Godkänd", registeredBy: "Sofia N.", discrepancy: false },
-];
-
-const suppliers = ["Norsk Sjömat AB", "Göteborgs Fiskauktion", "Smögen Shellfish", "Mediterranean Imports", "Kungshamns Fisk"];
-const storeOptions = ["Stockholm Östermalm", "Stockholm Södermalm", "Göteborg Haga", "Göteborg Linné", "Göteborg Majorna", "Zürich"];
-const products = ["Atlantlax", "Blåfenad tonfisk", "Jätteräkor", "Torsk", "Hummer", "Kungskrabba", "Gulfenad tonfisk", "Rödlax", "Nordhavsräkor", "Snökrabba", "Rödspätta", "Sill"];
-
-const statusColor: Record<string, string> = {
-  Godkänd: "bg-success/15 text-success border-success/20",
-  Avvikelse: "bg-warning/15 text-warning border-warning/20",
-  Utkast: "bg-muted text-muted-foreground border-muted",
-};
+const REPORT_TYPES = ["Skadad", "Fel kvantitet", "Dålig kvalitet", "Saknas", "Annat"];
 
 export default function Receiving() {
-  const [search, setSearch] = useState("");
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [step, setStep] = useState<1 | 2 | 3>(1);
   const { toast } = useToast();
+  const qc = useQueryClient();
+  const { activeStoreId } = useSite();
+  const [search, setSearch] = useState("");
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const submitReport = useSubmitReceivingReport();
 
-  // Form state
-  const [supplier, setSupplier] = useState("");
-  const [store, setStore] = useState("");
-  const [deliveryNoteNo, setDeliveryNoteNo] = useState("");
-  const [deliveryDate, setDeliveryDate] = useState(new Date().toISOString().slice(0, 10));
-  const [headerNote, setHeaderNote] = useState("");
-  const [lines, setLines] = useState<ReceivingLineInput[]>([{ ...emptyLine }]);
+  // Line-level report state: { [lineId]: { status, report_type, notes, quantity_received } }
+  const [lineReports, setLineReports] = useState<Record<string, {
+    status: "Godkänd" | "Rapporterad";
+    report_type?: string;
+    notes?: string;
+    quantity_received?: string;
+  }>>({});
 
-  const resetForm = () => {
-    setStep(1);
-    setSupplier("");
-    setStore("");
-    setDeliveryNoteNo("");
-    setDeliveryDate(new Date().toISOString().slice(0, 10));
-    setHeaderNote("");
-    setLines([{ ...emptyLine }]);
-  };
+  // Fetch orders that are "Packad" or "Skickad" for this store — these are pending deliveries
+  const { data: pendingOrders = [] } = useQuery({
+    queryKey: ["pending-deliveries", activeStoreId],
+    queryFn: async () => {
+      if (!activeStoreId) return [];
+      const { data, error } = await supabase
+        .from("shop_orders")
+        .select("*, stores(name), shop_order_lines(*, products(name, unit, category))")
+        .eq("store_id", activeStoreId)
+        .in("status", ["Packad", "Skickad", "Ny", "Behandlas"])
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  const addLine = () => setLines([...lines, { ...emptyLine }]);
-  const removeLine = (i: number) => setLines(lines.filter((_, idx) => idx !== i));
-  const updateLine = (i: number, field: keyof ReceivingLineInput, value: string) => {
-    const updated = [...lines];
-    updated[i] = { ...updated[i], [field]: value };
-    setLines(updated);
-  };
+  // Fetch existing reports for this store
+  const { data: existingReports = [] } = useQuery({
+    queryKey: ["delivery_receiving_reports", activeStoreId],
+    queryFn: async () => {
+      if (!activeStoreId) return [];
+      const { data, error } = await supabase
+        .from("delivery_receiving_reports")
+        .select("*")
+        .eq("store_id", activeStoreId);
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  const hasDiscrepancy = lines.some(l => l.expectedQty && l.receivedQty && l.expectedQty !== l.receivedQty);
+  // Fetch completed reports (orders that have been fully reported on)
+  const { data: completedOrders = [] } = useQuery({
+    queryKey: ["completed-deliveries", activeStoreId],
+    queryFn: async () => {
+      if (!activeStoreId) return [];
+      const { data, error } = await supabase
+        .from("shop_orders")
+        .select("*, stores(name), shop_order_lines(*, products(name, unit, category))")
+        .eq("store_id", activeStoreId)
+        .eq("status", "Levererad")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  const handleSubmit = () => {
-    toast({
-      title: "Inleverans registrerad",
-      description: `Följesedel ${deliveryNoteNo} från ${supplier} har registrerats${hasDiscrepancy ? " med avvikelse" : ""}.`,
+  // Check which orders already have reports
+  const reportedOrderLineIds = useMemo(() => {
+    return new Set(existingReports.map((r: any) => r.order_line_id));
+  }, [existingReports]);
+
+  const reportedOrderIds = useMemo(() => {
+    const ids = new Set<string>();
+    existingReports.forEach((r: any) => ids.add(r.shop_order_id));
+    return ids;
+  }, [existingReports]);
+
+  // Orders that haven't been reported on yet
+  const unreportedOrders = pendingOrders.filter((o: any) => !reportedOrderIds.has(o.id));
+  const reportedPendingOrders = pendingOrders.filter((o: any) => reportedOrderIds.has(o.id));
+
+  const openOrder = (order: any) => {
+    setSelectedOrder(order);
+    // Pre-fill all lines as "Godkänd"
+    const initial: typeof lineReports = {};
+    (order.shop_order_lines || []).forEach((line: any) => {
+      initial[line.id] = { status: "Godkänd", quantity_received: String(line.quantity_ordered) };
     });
-    setDialogOpen(false);
-    resetForm();
+    setLineReports(initial);
   };
 
-  const filtered = receivingHistory.filter((r) =>
-    r.id.toLowerCase().includes(search.toLowerCase()) ||
-    r.supplier.toLowerCase().includes(search.toLowerCase()) ||
-    r.deliveryNote.toLowerCase().includes(search.toLowerCase())
+  const updateLineReport = (lineId: string, field: string, value: string) => {
+    setLineReports(prev => ({
+      ...prev,
+      [lineId]: { ...prev[lineId], [field]: value },
+    }));
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedOrder || !activeStoreId) return;
+
+    const reports = Object.entries(lineReports).map(([lineId, report]) => ({
+      shop_order_id: selectedOrder.id,
+      order_line_id: lineId,
+      store_id: activeStoreId,
+      status: report.status,
+      report_type: report.status === "Rapporterad" ? report.report_type : null,
+      notes: report.notes || null,
+      quantity_received: report.quantity_received ? Number(report.quantity_received) : null,
+      reported_by: "Butik",
+    }));
+
+    try {
+      await submitReport.mutateAsync(reports);
+
+      // Update order status to Levererad
+      await supabase
+        .from("shop_orders")
+        .update({ status: "Levererad" })
+        .eq("id", selectedOrder.id);
+
+      // Update each line status
+      for (const [lineId, report] of Object.entries(lineReports)) {
+        await supabase
+          .from("shop_order_lines")
+          .update({
+            quantity_delivered: report.quantity_received ? Number(report.quantity_received) : 0,
+            status: "Klar / Levererad",
+            deviation: report.status === "Rapporterad" ? (report.report_type || "Rapporterad") : null,
+          })
+          .eq("id", lineId);
+      }
+
+      const hasIssues = Object.values(lineReports).some(r => r.status === "Rapporterad");
+      toast({
+        title: hasIssues ? "Inleverans rapporterad med avvikelser" : "Inleverans godkänd",
+        description: `Order ${selectedOrder.order_week} har ${hasIssues ? "rapporterats" : "godkänts"}.`,
+      });
+
+      qc.invalidateQueries({ queryKey: ["pending-deliveries"] });
+      qc.invalidateQueries({ queryKey: ["completed-deliveries"] });
+      qc.invalidateQueries({ queryKey: ["delivery_receiving_reports"] });
+      qc.invalidateQueries({ queryKey: ["shop_orders"] });
+      qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
+      setSelectedOrder(null);
+    } catch (err: any) {
+      toast({ title: "Fel", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const approveAll = () => {
+    if (!selectedOrder) return;
+    const updated: typeof lineReports = {};
+    (selectedOrder.shop_order_lines || []).forEach((line: any) => {
+      updated[line.id] = { status: "Godkänd", quantity_received: String(line.quantity_ordered) };
+    });
+    setLineReports(updated);
+  };
+
+  // Reporting detail dialog for already-reported orders
+  const [viewReportOrder, setViewReportOrder] = useState<any>(null);
+  const viewReportLines = useMemo(() => {
+    if (!viewReportOrder) return [];
+    return existingReports.filter((r: any) => r.shop_order_id === viewReportOrder.id);
+  }, [viewReportOrder, existingReports]);
+
+  const hasIssuesInReport = Object.values(lineReports).some(r => r.status === "Rapporterad");
+
+  const filteredUnreported = unreportedOrders.filter((o: any) =>
+    !search || o.order_week?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalThisMonth = receivingHistory.length;
-  const discrepancies = receivingHistory.filter(r => r.discrepancy).length;
-  const totalKg = receivingHistory.reduce((s, r) => s + r.totalKg, 0);
+  const allHistoryOrders = [...reportedPendingOrders, ...completedOrders];
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-heading font-bold text-foreground">Inleveranser</h2>
-          <p className="text-xs text-muted-foreground">Registrera mottagna leveranser från följesedel — kontrollera mot förväntad kvantitet</p>
-        </div>
-        <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
-          <DialogTrigger asChild>
-            <Button size="sm" className="gap-1.5 text-xs h-8">
-              <Plus className="h-3 w-3" /> Registrera inleverans
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="font-heading">
-                {step === 1 && "Steg 1: Följesedelsinformation"}
-                {step === 2 && "Steg 2: Produktrader"}
-                {step === 3 && "Steg 3: Granska och godkänn"}
-              </DialogTitle>
-              <DialogDescription className="text-xs">
-                {step === 1 && "Fyll i uppgifterna från följesedeln — leverantör, butik och följesedelsnummer."}
-                {step === 2 && "Ange varje produktrad från följesedeln. Jämför förväntad kvantitet med mottagen kvantitet."}
-                {step === 3 && "Kontrollera att all information stämmer innan du godkänner."}
-              </DialogDescription>
-            </DialogHeader>
-
-            {/* Step indicators */}
-            <div className="flex items-center gap-2 my-2">
-              {[1, 2, 3].map((s) => (
-                <div key={s} className="flex items-center gap-1.5">
-                  <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold ${step >= s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-                    {s}
-                  </div>
-                  {s < 3 && <div className={`w-8 h-0.5 ${step > s ? "bg-primary" : "bg-muted"}`} />}
-                </div>
-              ))}
-            </div>
-
-            {/* Step 1: Header info */}
-            {step === 1 && (
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Leverantör *</Label>
-                    <Select value={supplier} onValueChange={setSupplier}>
-                      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Välj leverantör" /></SelectTrigger>
-                      <SelectContent>{suppliers.map(s => <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Mottagande butik *</Label>
-                    <Select value={store} onValueChange={setStore}>
-                      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Välj butik" /></SelectTrigger>
-                      <SelectContent>{storeOptions.map(s => <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Följesedelsnummer *</Label>
-                    <Input value={deliveryNoteNo} onChange={(e) => setDeliveryNoteNo(e.target.value)} placeholder="T.ex. NS-44521" className="h-8 text-xs" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Leveransdatum</Label>
-                    <Input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} className="h-8 text-xs" />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Anteckning (valfritt)</Label>
-                  <Textarea value={headerNote} onChange={(e) => setHeaderNote(e.target.value)} placeholder="T.ex. del av beställning ORD-2847, chaufför ringde 10 min sent..." className="text-xs min-h-[60px]" />
-                </div>
-              </div>
-            )}
-
-            {/* Step 2: Product lines */}
-            {step === 2 && (
-              <div className="space-y-3">
-                {lines.map((line, i) => (
-                  <div key={i} className="p-3 rounded-md border border-border bg-muted/20 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-semibold text-muted-foreground">Rad {i + 1}</span>
-                      {lines.length > 1 && (
-                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => removeLine(i)}>
-                          <X className="h-3 w-3" />
-                        </Button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-6 gap-2">
-                      <div className="col-span-2 space-y-1">
-                        <Label className="text-[10px]">Produkt *</Label>
-                        <Select value={line.product} onValueChange={(v) => updateLine(i, "product", v)}>
-                          <SelectTrigger className="h-7 text-[11px]"><SelectValue placeholder="Välj" /></SelectTrigger>
-                          <SelectContent>{products.map(p => <SelectItem key={p} value={p} className="text-xs">{p}</SelectItem>)}</SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-[10px]">Förväntat</Label>
-                        <Input value={line.expectedQty} onChange={(e) => updateLine(i, "expectedQty", e.target.value)} placeholder="kg" className="h-7 text-[11px]" />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-[10px]">Mottaget *</Label>
-                        <Input value={line.receivedQty} onChange={(e) => updateLine(i, "receivedQty", e.target.value)} placeholder="kg" className={`h-7 text-[11px] ${line.expectedQty && line.receivedQty && line.expectedQty !== line.receivedQty ? "border-warning" : ""}`} />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-[10px]">Batch/Lot</Label>
-                        <Input value={line.batchNo} onChange={(e) => updateLine(i, "batchNo", e.target.value)} placeholder="LOT-..." className="h-7 text-[11px]" />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-[10px]">Temp °C</Label>
-                        <Input value={line.temp} onChange={(e) => updateLine(i, "temp", e.target.value)} placeholder="-2" className="h-7 text-[11px]" />
-                      </div>
-                    </div>
-                    {line.expectedQty && line.receivedQty && line.expectedQty !== line.receivedQty && (
-                      <div className="flex items-center gap-1.5 text-[10px] text-warning">
-                        <AlertTriangle className="h-3 w-3" />
-                        Avvikelse: förväntade {line.expectedQty} kg, mottog {line.receivedQty} kg (diff: {Number(line.receivedQty) - Number(line.expectedQty)} kg)
-                      </div>
-                    )}
-                    <div className="space-y-1">
-                      <Label className="text-[10px]">Anmärkning</Label>
-                      <Input value={line.note} onChange={(e) => updateLine(i, "note", e.target.value)} placeholder="T.ex. skadad förpackning, dålig lukt..." className="h-7 text-[11px]" />
-                    </div>
-                  </div>
-                ))}
-                <Button variant="outline" size="sm" className="w-full text-xs h-7 gap-1" onClick={addLine}>
-                  <Plus className="h-3 w-3" /> Lägg till rad
-                </Button>
-              </div>
-            )}
-
-            {/* Step 3: Review */}
-            {step === 3 && (
-              <div className="space-y-3">
-                <Card className="shadow-card">
-                  <CardContent className="p-3 space-y-2 text-xs">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div><span className="text-muted-foreground">Leverantör:</span> <span className="font-medium">{supplier}</span></div>
-                      <div><span className="text-muted-foreground">Butik:</span> <span className="font-medium">{store}</span></div>
-                      <div><span className="text-muted-foreground">Följesedel:</span> <span className="font-mono font-medium">{deliveryNoteNo}</span></div>
-                      <div><span className="text-muted-foreground">Datum:</span> <span className="font-medium">{deliveryDate}</span></div>
-                    </div>
-                    {headerNote && <div><span className="text-muted-foreground">Anteckning:</span> {headerNote}</div>}
-                  </CardContent>
-                </Card>
-
-                <div className="text-xs font-semibold text-muted-foreground">Produktrader</div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="pb-1.5 text-left font-medium text-muted-foreground">Produkt</th>
-                        <th className="pb-1.5 text-right font-medium text-muted-foreground">Förväntat</th>
-                        <th className="pb-1.5 text-right font-medium text-muted-foreground">Mottaget</th>
-                        <th className="pb-1.5 text-right font-medium text-muted-foreground">Diff</th>
-                        <th className="pb-1.5 text-left font-medium text-muted-foreground">Batch</th>
-                        <th className="pb-1.5 text-right font-medium text-muted-foreground">Temp</th>
-                        <th className="pb-1.5 text-left font-medium text-muted-foreground">Anm.</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {lines.filter(l => l.product).map((line, i) => {
-                        const diff = Number(line.receivedQty) - Number(line.expectedQty);
-                        const hasDiff = line.expectedQty && line.receivedQty && diff !== 0;
-                        return (
-                          <tr key={i} className="border-b border-border/50 last:border-0">
-                            <td className="py-1.5 font-medium text-foreground">{line.product}</td>
-                            <td className="py-1.5 text-right text-muted-foreground">{line.expectedQty || "—"} kg</td>
-                            <td className="py-1.5 text-right font-medium text-foreground">{line.receivedQty} kg</td>
-                            <td className={`py-1.5 text-right font-medium ${hasDiff ? "text-warning" : "text-success"}`}>
-                              {hasDiff ? `${diff > 0 ? "+" : ""}${diff} kg` : "OK"}
-                            </td>
-                            <td className="py-1.5 text-muted-foreground font-mono">{line.batchNo || "—"}</td>
-                            <td className="py-1.5 text-right text-muted-foreground">{line.temp ? `${line.temp}°C` : "—"}</td>
-                            <td className="py-1.5 text-muted-foreground truncate max-w-24">{line.note || "—"}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                {hasDiscrepancy && (
-                  <div className="flex items-center gap-2 p-2 rounded-md bg-warning/10 border border-warning/20 text-xs text-warning">
-                    <AlertTriangle className="h-4 w-4 shrink-0" />
-                    <span>Avvikelse upptäckt — inleveransen markeras för uppföljning.</span>
-                  </div>
-                )}
-
-                <div className="text-[10px] text-muted-foreground">
-                  Total mottagen kvantitet: <span className="font-bold text-foreground">{lines.reduce((s, l) => s + (Number(l.receivedQty) || 0), 0)} kg</span> · {lines.filter(l => l.product).length} rader
-                </div>
-              </div>
-            )}
-
-            <DialogFooter className="gap-2">
-              {step > 1 && (
-                <Button variant="outline" size="sm" className="text-xs" onClick={() => setStep((step - 1) as 1 | 2)}>
-                  ← Tillbaka
-                </Button>
-              )}
-              {step < 3 ? (
-                <Button size="sm" className="text-xs" onClick={() => setStep((step + 1) as 2 | 3)}
-                  disabled={step === 1 ? (!supplier || !store || !deliveryNoteNo) : lines.every(l => !l.product || !l.receivedQty)}>
-                  Nästa →
-                </Button>
-              ) : (
-                <Button size="sm" className="text-xs gap-1.5" onClick={handleSubmit}>
-                  <CheckCircle2 className="h-3 w-3" /> Godkänn inleverans
-                </Button>
-              )}
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+      <div>
+        <h2 className="text-xl font-heading font-bold text-foreground flex items-center gap-2">
+          <Truck className="h-5 w-5 text-primary" /> Inleveranser
+        </h2>
+        <p className="text-xs text-muted-foreground">
+          Väntande leveranser från grossist. Godkänn hela leveransen eller rapportera avvikelser per produkt.
+        </p>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="shadow-card"><CardContent className="p-3"><p className="text-[10px] text-muted-foreground">Inleveranser denna månad</p><p className="text-xl font-heading font-bold text-foreground">{totalThisMonth}</p></CardContent></Card>
-        <Card className="shadow-card"><CardContent className="p-3"><p className="text-[10px] text-muted-foreground">Total mottagen kvantitet</p><p className="text-xl font-heading font-bold text-foreground">{totalKg.toLocaleString("sv-SE")} kg</p></CardContent></Card>
-        <Card className="shadow-card"><CardContent className="p-3"><p className="text-[10px] text-muted-foreground flex items-center gap-1"><AlertTriangle className="h-3 w-3 text-warning" />Avvikelser</p><p className="text-xl font-heading font-bold text-warning">{discrepancies}</p><p className="text-[10px] text-muted-foreground">{Math.round((discrepancies / totalThisMonth) * 100)}% av leveranser</p></CardContent></Card>
-        <Card className="shadow-card"><CardContent className="p-3"><p className="text-[10px] text-muted-foreground">Leverantörer</p><p className="text-xl font-heading font-bold text-foreground">{new Set(receivingHistory.map(r => r.supplier)).size}</p></CardContent></Card>
+        <Card className="shadow-card"><CardContent className="p-3">
+          <p className="text-[10px] text-muted-foreground">Väntande leveranser</p>
+          <p className="text-xl font-heading font-bold text-warning">{unreportedOrders.length}</p>
+        </CardContent></Card>
+        <Card className="shadow-card"><CardContent className="p-3">
+          <p className="text-[10px] text-muted-foreground">Rapporterade</p>
+          <p className="text-xl font-heading font-bold text-foreground">{reportedOrderIds.size}</p>
+        </CardContent></Card>
+        <Card className="shadow-card"><CardContent className="p-3">
+          <p className="text-[10px] text-muted-foreground flex items-center gap-1"><AlertTriangle className="h-3 w-3 text-warning" />Med avvikelser</p>
+          <p className="text-xl font-heading font-bold text-warning">
+            {existingReports.filter((r: any) => r.status === "Rapporterad").length > 0
+              ? new Set(existingReports.filter((r: any) => r.status === "Rapporterad").map((r: any) => r.shop_order_id)).size
+              : 0}
+          </p>
+        </CardContent></Card>
+        <Card className="shadow-card"><CardContent className="p-3">
+          <p className="text-[10px] text-muted-foreground">Totalt godkända</p>
+          <p className="text-xl font-heading font-bold text-success">{completedOrders.length}</p>
+        </CardContent></Card>
       </div>
 
-      {/* History table */}
+      {/* Search */}
+      <div className="relative max-w-xs">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <Input placeholder="Sök vecka..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
+      </div>
+
+      {/* Pending deliveries */}
       <Card className="shadow-card">
         <CardHeader className="pb-2">
-          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
-            <div>
-              <CardTitle className="text-sm font-heading">Inleveranshistorik</CardTitle>
-              <CardDescription className="text-xs">Alla registrerade inleveranser med följesedelreferens</CardDescription>
-            </div>
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input placeholder="Sök ID, leverantör eller följesedel..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
-            </div>
-          </div>
+          <CardTitle className="text-sm font-heading flex items-center gap-2">
+            <Clock className="h-4 w-4 text-warning" /> Väntande leveranser
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Beställningar som är på väg eller redo att tas emot. Klicka för att rapportera.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="pb-2 text-left font-medium text-muted-foreground">INL-ID</th>
-                  <th className="pb-2 text-left font-medium text-muted-foreground">Datum</th>
-                  <th className="pb-2 text-left font-medium text-muted-foreground">Leverantör</th>
-                  <th className="pb-2 text-left font-medium text-muted-foreground">Följesedel</th>
-                  <th className="pb-2 text-left font-medium text-muted-foreground">Butik</th>
-                  <th className="pb-2 text-right font-medium text-muted-foreground">Rader</th>
-                  <th className="pb-2 text-right font-medium text-muted-foreground">Kvantitet</th>
-                  <th className="pb-2 text-left font-medium text-muted-foreground">Registrerad av</th>
-                  <th className="pb-2 text-right font-medium text-muted-foreground">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((r) => (
-                  <tr key={r.id} className="border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors">
-                    <td className="py-2 font-mono font-medium text-foreground">{r.id}</td>
-                    <td className="py-2 text-muted-foreground">{r.date} {r.time}</td>
-                    <td className="py-2 text-foreground">{r.supplier}</td>
-                    <td className="py-2 font-mono text-muted-foreground">{r.deliveryNote}</td>
-                    <td className="py-2 text-muted-foreground">{r.store}</td>
-                    <td className="py-2 text-right text-foreground">{r.lines}</td>
-                    <td className="py-2 text-right font-medium text-foreground">{r.totalKg} kg</td>
-                    <td className="py-2 text-muted-foreground">{r.registeredBy}</td>
-                    <td className="py-2 text-right">
-                      <Badge variant="outline" className={`${statusColor[r.status]} text-[10px] gap-1`}>
-                        {r.discrepancy && <AlertTriangle className="h-2.5 w-2.5" />}
-                        {r.status}
+          {filteredUnreported.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-8">
+              Inga väntande leveranser just nu.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {filteredUnreported.map((order: any) => {
+                const lines = order.shop_order_lines || [];
+                const allPacked = lines.every((l: any) => l.status === "Packad" || l.status === "Skickad" || l.status === "Klar / Levererad");
+                return (
+                  <div
+                    key={order.id}
+                    className="flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:bg-muted/30 cursor-pointer transition-colors"
+                    onClick={() => openOrder(order)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`h-8 w-8 rounded-full flex items-center justify-center ${allPacked ? "bg-success/15 text-success" : "bg-warning/15 text-warning"}`}>
+                        {allPacked ? <Package className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-foreground">
+                          Order {order.order_week} — {order.stores?.name || "Okänd"}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {lines.length} produkt{lines.length !== 1 ? "er" : ""} · {new Date(order.created_at).toLocaleDateString("sv-SE")}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className={`text-[10px] ${allPacked ? "bg-success/10 text-success border-success/20" : "bg-warning/10 text-warning border-warning/20"}`}>
+                        {allPacked ? "Redo att ta emot" : order.status}
                       </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="flex items-center justify-between mt-3 text-[10px] text-muted-foreground">
-            <span>Visar {filtered.length} av {receivingHistory.length} inleveranser</span>
-            <span>Lagret uppdateras automatiskt vid godkänd inleverans</span>
-          </div>
+                      <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
+                        <CheckCircle2 className="h-3 w-3" /> Rapportera
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* History */}
+      {allHistoryOrders.length > 0 && (
+        <Card className="shadow-card">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-heading">Inleveranshistorik</CardTitle>
+            <CardDescription className="text-xs">Tidigare rapporterade leveranser</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="pb-2 text-left font-medium text-muted-foreground">VECKA</th>
+                    <th className="pb-2 text-left font-medium text-muted-foreground">DATUM</th>
+                    <th className="pb-2 text-right font-medium text-muted-foreground">RADER</th>
+                    <th className="pb-2 text-right font-medium text-muted-foreground">STATUS</th>
+                    <th className="pb-2 text-right font-medium text-muted-foreground"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allHistoryOrders.map((o: any) => {
+                    const orderReports = existingReports.filter((r: any) => r.shop_order_id === o.id);
+                    const hasIssues = orderReports.some((r: any) => r.status === "Rapporterad");
+                    return (
+                      <tr key={o.id} className="border-b border-border/50 hover:bg-muted/30">
+                        <td className="py-2 font-mono font-medium text-foreground">{o.order_week}</td>
+                        <td className="py-2 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
+                        <td className="py-2 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
+                        <td className="py-2 text-right">
+                          <Badge variant="outline" className={`text-[10px] gap-1 ${hasIssues ? "bg-warning/10 text-warning border-warning/20" : "bg-success/10 text-success border-success/20"}`}>
+                            {hasIssues && <AlertTriangle className="h-2.5 w-2.5" />}
+                            {hasIssues ? "Avvikelse" : "Godkänd"}
+                          </Badge>
+                        </td>
+                        <td className="py-2 text-right">
+                          {orderReports.length > 0 && (
+                            <Button variant="ghost" size="sm" className="h-6 text-[10px] gap-1" onClick={() => setViewReportOrder(o)}>
+                              <Eye className="h-3 w-3" /> Visa
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Report dialog */}
+      <Dialog open={!!selectedOrder} onOpenChange={open => { if (!open) setSelectedOrder(null); }}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          {selectedOrder && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="font-heading">
+                  Ta emot leverans — {selectedOrder.order_week}
+                </DialogTitle>
+                <DialogDescription className="text-xs">
+                  Godkänn varje produkt eller rapportera avvikelser. Du kan godkänna alla direkt.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="flex gap-2 mb-2">
+                <Button size="sm" variant="outline" className="text-xs gap-1 h-7" onClick={approveAll}>
+                  <ThumbsUp className="h-3 w-3" /> Godkänn alla
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                {(selectedOrder.shop_order_lines || []).map((line: any) => {
+                  const report = lineReports[line.id] || { status: "Godkänd" };
+                  const isReported = report.status === "Rapporterad";
+                  return (
+                    <div
+                      key={line.id}
+                      className={`p-3 rounded-lg border transition-colors ${
+                        isReported ? "border-warning/40 bg-warning/5" : "border-border bg-card"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <span className="text-xs font-medium text-foreground">{line.products?.name || "Okänd"}</span>
+                          <span className="text-[10px] text-muted-foreground ml-2">
+                            {line.quantity_ordered} {line.unit || line.products?.unit || ""}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Button
+                            size="sm"
+                            variant={!isReported ? "default" : "outline"}
+                            className="h-6 text-[10px] gap-1 px-2"
+                            onClick={() => updateLineReport(line.id, "status", "Godkänd")}
+                          >
+                            <ThumbsUp className="h-2.5 w-2.5" /> OK
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={isReported ? "destructive" : "outline"}
+                            className="h-6 text-[10px] gap-1 px-2"
+                            onClick={() => updateLineReport(line.id, "status", "Rapporterad")}
+                          >
+                            <Flag className="h-2.5 w-2.5" /> Rapportera
+                          </Button>
+                        </div>
+                      </div>
+
+                      {isReported && (
+                        <div className="space-y-2 mt-2 pt-2 border-t border-warning/20">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                              <Label className="text-[10px]">Typ av problem</Label>
+                              <Select
+                                value={report.report_type || ""}
+                                onValueChange={v => updateLineReport(line.id, "report_type", v)}
+                              >
+                                <SelectTrigger className="h-7 text-[10px]"><SelectValue placeholder="Välj..." /></SelectTrigger>
+                                <SelectContent>
+                                  {REPORT_TYPES.map(t => <SelectItem key={t} value={t} className="text-xs">{t}</SelectItem>)}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-[10px]">Mottagen kvantitet</Label>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                value={report.quantity_received || ""}
+                                onChange={e => updateLineReport(line.id, "quantity_received", e.target.value)}
+                                className="h-7 text-[10px]"
+                                placeholder={String(line.quantity_ordered)}
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[10px]">Anteckning</Label>
+                            <Textarea
+                              value={report.notes || ""}
+                              onChange={e => updateLineReport(line.id, "notes", e.target.value)}
+                              placeholder="Beskriv problemet..."
+                              className="text-[10px] min-h-[40px]"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {hasIssuesInReport && (
+                <div className="flex items-center gap-2 p-2 rounded-md bg-warning/10 border border-warning/20 text-xs text-warning">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <span>Avvikelser har rapporterats — grossist kommer att se detta.</span>
+                </div>
+              )}
+
+              <DialogFooter className="gap-2">
+                <Button variant="outline" size="sm" className="text-xs" onClick={() => setSelectedOrder(null)}>
+                  Avbryt
+                </Button>
+                <Button
+                  size="sm"
+                  className="text-xs gap-1.5"
+                  onClick={handleSubmit}
+                  disabled={submitReport.isPending}
+                >
+                  <CheckCircle2 className="h-3 w-3" />
+                  {hasIssuesInReport ? "Skicka rapport" : "Godkänn leverans"}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* View report detail dialog */}
+      <Dialog open={!!viewReportOrder} onOpenChange={open => { if (!open) setViewReportOrder(null); }}>
+        <DialogContent className="max-w-lg">
+          {viewReportOrder && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="font-heading text-sm">
+                  Rapport — {viewReportOrder.order_week}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-2">
+                {(viewReportOrder.shop_order_lines || []).map((line: any) => {
+                  const report = viewReportLines.find((r: any) => r.order_line_id === line.id);
+                  return (
+                    <div key={line.id} className={`p-2 rounded-md border text-xs ${
+                      report?.status === "Rapporterad" ? "border-warning/40 bg-warning/5" : "border-border"
+                    }`}>
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{line.products?.name}</span>
+                        <Badge variant="outline" className={`text-[10px] ${
+                          report?.status === "Rapporterad" ? "text-warning border-warning/30" : "text-success border-success/30"
+                        }`}>
+                          {report?.status || "–"}
+                        </Badge>
+                      </div>
+                      {report?.status === "Rapporterad" && (
+                        <div className="mt-1 text-[10px] text-muted-foreground space-y-0.5">
+                          {report.report_type && <p><span className="font-medium text-foreground">Typ:</span> {report.report_type}</p>}
+                          {report.quantity_received != null && (
+                            <p><span className="font-medium text-foreground">Mottaget:</span> {report.quantity_received} (beställt: {line.quantity_ordered})</p>
+                          )}
+                          {report.notes && <p><span className="font-medium text-foreground">Not:</span> {report.notes}</p>}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" size="sm" className="text-xs" onClick={() => setViewReportOrder(null)}>Stäng</Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
