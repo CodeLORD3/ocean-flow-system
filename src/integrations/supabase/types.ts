@@ -153,6 +153,67 @@ export type Database = {
           },
         ]
       }
+      delivery_receiving_reports: {
+        Row: {
+          id: string
+          notes: string | null
+          order_line_id: string
+          quantity_received: number | null
+          report_type: string | null
+          reported_at: string
+          reported_by: string | null
+          shop_order_id: string
+          status: string
+          store_id: string
+        }
+        Insert: {
+          id?: string
+          notes?: string | null
+          order_line_id: string
+          quantity_received?: number | null
+          report_type?: string | null
+          reported_at?: string
+          reported_by?: string | null
+          shop_order_id: string
+          status?: string
+          store_id: string
+        }
+        Update: {
+          id?: string
+          notes?: string | null
+          order_line_id?: string
+          quantity_received?: number | null
+          report_type?: string | null
+          reported_at?: string
+          reported_by?: string | null
+          shop_order_id?: string
+          status?: string
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_receiving_reports_order_line_id_fkey"
+            columns: ["order_line_id"]
+            isOneToOne: false
+            referencedRelation: "shop_order_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_receiving_reports_shop_order_id_fkey"
+            columns: ["shop_order_id"]
+            isOneToOne: false
+            referencedRelation: "shop_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_receiving_reports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incoming_deliveries: {
         Row: {
           created_at: string | null

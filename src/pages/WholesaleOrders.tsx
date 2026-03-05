@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useShopOrders } from "@/hooks/useShopOrders";
 import { useStores } from "@/hooks/useStores";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 
 const statusColor: Record<string, string> = {
   Ny: "bg-primary/10 text-primary border-primary/20",
@@ -87,6 +87,29 @@ export default function WholesaleOrders() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Alla");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [reportViewOrder, setReportViewOrder] = useState<any>(null);
+
+  // Fetch all receiving reports
+  const { data: allReports = [] } = useQuery({
+    queryKey: ["delivery_receiving_reports_all"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("delivery_receiving_reports")
+        .select("*");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Group reports by order id
+  const reportsByOrder = useMemo(() => {
+    const map = new Map<string, any[]>();
+    allReports.forEach((r: any) => {
+      if (!map.has(r.shop_order_id)) map.set(r.shop_order_id, []);
+      map.get(r.shop_order_id)!.push(r);
+    });
+    return map;
+  }, [allReports]);
 
   // Filter orders
   const filteredOrders = orders.filter((o: any) => {
@@ -339,11 +362,12 @@ export default function WholesaleOrders() {
                         <th className="p-3 text-left font-medium text-muted-foreground">PRODUKTER</th>
                         <th className="p-3 text-left font-medium text-muted-foreground">ANTECKNING</th>
                         <th className="p-3 text-left font-medium text-muted-foreground min-w-[120px]">STATUS</th>
+                        <th className="p-3 text-left font-medium text-muted-foreground">LEVERANSRAPPORT</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredOrders.length === 0 && (
-                        <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
+                        <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
                       )}
                       {filteredOrders.map((o: any) => (
                         <tr key={o.id} className="border-b border-border/40 transition-colors cursor-pointer" style={{ background: buildProgressGradient(o.shop_order_lines || []) }} onClick={() => setSelectedOrder(o)}>
@@ -366,6 +390,26 @@ export default function WholesaleOrders() {
                                 )}
                               </SelectContent>
                             </Select>
+                          </td>
+                          <td className="p-3" onClick={e => e.stopPropagation()}>
+                            {(() => {
+                              const reports = reportsByOrder.get(o.id);
+                              if (!reports || reports.length === 0) {
+                                return <span className="text-[10px] text-muted-foreground/40">–</span>;
+                              }
+                              const hasIssues = reports.some((r: any) => r.status === "Rapporterad");
+                              return (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className={`h-6 text-[10px] gap-1 ${hasIssues ? "text-warning" : "text-success"}`}
+                                  onClick={() => setReportViewOrder(o)}
+                                >
+                                  {hasIssues ? <AlertTriangle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
+                                  {hasIssues ? "Avvikelse" : "Godkänd"}
+                                </Button>
+                              );
+                            })()}
                           </td>
                         </tr>
                       ))}
@@ -449,6 +493,62 @@ export default function WholesaleOrders() {
               </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delivery report view dialog */}
+      <Dialog open={!!reportViewOrder} onOpenChange={open => { if (!open) setReportViewOrder(null); }}>
+        <DialogContent className="max-w-lg">
+          {reportViewOrder && (() => {
+            const reports = reportsByOrder.get(reportViewOrder.id) || [];
+            const hasIssues = reports.some((r: any) => r.status === "Rapporterad");
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="font-heading text-sm flex items-center gap-2">
+                    Leveransrapport — {reportViewOrder.order_week} · {reportViewOrder.stores?.name}
+                    <Badge variant="outline" className={`text-[10px] ml-2 ${hasIssues ? "text-warning border-warning/30" : "text-success border-success/30"}`}>
+                      {hasIssues ? "Avvikelse" : "Allt godkänt"}
+                    </Badge>
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-2">
+                  {(reportViewOrder.shop_order_lines || []).map((line: any) => {
+                    const report = reports.find((r: any) => r.order_line_id === line.id);
+                    return (
+                      <div key={line.id} className={`p-2.5 rounded-md border text-xs ${
+                        report?.status === "Rapporterad" ? "border-warning/40 bg-warning/5" : "border-border"
+                      }`}>
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-foreground">{line.products?.name}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-muted-foreground">{line.quantity_ordered} {line.unit}</span>
+                            <Badge variant="outline" className={`text-[10px] ${
+                              report?.status === "Rapporterad" ? "text-warning border-warning/30" : "text-success border-success/30"
+                            }`}>
+                              {report?.status || "Ej rapporterad"}
+                            </Badge>
+                          </div>
+                        </div>
+                        {report?.status === "Rapporterad" && (
+                          <div className="mt-1.5 text-[10px] text-muted-foreground space-y-0.5 pl-1 border-l-2 border-warning/30 ml-1">
+                            {report.report_type && <p><span className="font-medium text-foreground">Typ:</span> {report.report_type}</p>}
+                            {report.quantity_received != null && (
+                              <p><span className="font-medium text-foreground">Mottaget:</span> {report.quantity_received} (beställt: {line.quantity_ordered})</p>
+                            )}
+                            {report.notes && <p><span className="font-medium text-foreground">Anteckning:</span> {report.notes}</p>}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" size="sm" className="text-xs" onClick={() => setReportViewOrder(null)}>Stäng</Button>
+                </DialogFooter>
+              </>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </motion.div>
