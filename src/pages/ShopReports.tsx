@@ -434,6 +434,7 @@ export default function ShopReports() {
         <TabsList>
           <TabsTrigger value="weekly">Veckorapporter</TabsTrigger>
           <TabsTrigger value="monthly">Månadsrapport</TabsTrigger>
+          <TabsTrigger value="inventory">Lagerrapporter</TabsTrigger>
         </TabsList>
 
         {/* ── Weekly Tab ── */}
