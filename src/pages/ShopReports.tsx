@@ -625,6 +625,11 @@ export default function ShopReports() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* ── Inventory Tab ── */}
+        <TabsContent value="inventory" className="space-y-4">
+          <InventoryReportsTab storeId={activeStoreId} />
+        </TabsContent>
       </Tabs>
     </div>
   );
