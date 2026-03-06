@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Package } from "lucide-react";
 import { useSite } from "@/contexts/SiteContext";
 import {
   useWeeklyReports,
@@ -328,6 +329,117 @@ function WeeklyReportForm({
   );
 }
 
+// ─── Inventory Reports Tab ──────────────────────────────────────────
+function InventoryReportsTab({ storeId }: { storeId: string }) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const { data: reports, isLoading } = useQuery({
+    queryKey: ["inventory_reports", storeId],
+    enabled: !!storeId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("inventory_reports")
+        .select("*")
+        .eq("store_id", storeId)
+        .order("reported_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: expandedLines } = useQuery({
+    queryKey: ["inventory_report_lines", expandedId],
+    enabled: !!expandedId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("inventory_report_lines")
+        .select("*")
+        .eq("report_id", expandedId!)
+        .order("category", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  return (
+    <Card>
+      <CardHeader><CardTitle className="text-base flex items-center gap-2"><Package className="h-4 w-4" /> Lagerrapporter</CardTitle></CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <p className="text-muted-foreground text-sm">Laddar...</p>
+        ) : !reports?.length ? (
+          <p className="text-muted-foreground text-sm">Inga lagerrapporter ännu. Skapa en via Lager-sidan.</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Datum</TableHead>
+                <TableHead>Plats</TableHead>
+                <TableHead className="text-right">Produkter</TableHead>
+                <TableHead className="text-right">Lagervärde (SEK)</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {reports.map((r: any) => (
+                <>
+                  <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}>
+                    <TableCell className="font-medium text-sm">
+                      {new Date(r.reported_at).toLocaleDateString("sv-SE")} {new Date(r.reported_at).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}
+                    </TableCell>
+                    <TableCell className="text-sm">{r.location_name}</TableCell>
+                    <TableCell className="text-right text-sm">{r.line_count}</TableCell>
+                    <TableCell className="text-right text-sm font-medium">{fmt(Number(r.total_value))}</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm">{expandedId === r.id ? "Dölj" : "Visa"}</Button>
+                    </TableCell>
+                  </TableRow>
+                  {expandedId === r.id && (
+                    <TableRow key={`${r.id}-detail`}>
+                      <TableCell colSpan={5} className="bg-muted/30 p-0">
+                        <div className="p-4">
+                          {!expandedLines ? (
+                            <p className="text-xs text-muted-foreground">Laddar detaljer...</p>
+                          ) : (
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead className="text-xs">Produkt</TableHead>
+                                  <TableHead className="text-xs">SKU</TableHead>
+                                  <TableHead className="text-xs">Kategori</TableHead>
+                                  <TableHead className="text-xs text-right">Antal</TableHead>
+                                  <TableHead className="text-xs text-right">Á-pris</TableHead>
+                                  <TableHead className="text-xs text-right">Värde</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {expandedLines.map((l: any) => (
+                                  <TableRow key={l.id}>
+                                    <TableCell className="text-xs">{l.product_name}</TableCell>
+                                    <TableCell className="text-xs text-muted-foreground">{l.sku}</TableCell>
+                                    <TableCell className="text-xs">{l.category}</TableCell>
+                                    <TableCell className="text-xs text-right">{l.quantity} {l.unit}</TableCell>
+                                    <TableCell className="text-xs text-right">{fmt(Number(l.cost_price))}</TableCell>
+                                    <TableCell className="text-xs text-right font-medium">{fmt(Number(l.line_value))}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 // ─── Main Page ──────────────────────────────────────────────────────
 export default function ShopReports() {
   const { activeStoreId, activeStoreName } = useSite();
@@ -433,6 +545,7 @@ export default function ShopReports() {
         <TabsList>
           <TabsTrigger value="weekly">Veckorapporter</TabsTrigger>
           <TabsTrigger value="monthly">Månadsrapport</TabsTrigger>
+          <TabsTrigger value="inventory">Lagerrapporter</TabsTrigger>
         </TabsList>
 
         {/* ── Weekly Tab ── */}
@@ -622,6 +735,11 @@ export default function ShopReports() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ── Inventory Tab ── */}
+        <TabsContent value="inventory" className="space-y-4">
+          <InventoryReportsTab storeId={activeStoreId} />
         </TabsContent>
       </Tabs>
     </div>

@@ -312,6 +312,111 @@ export type Database = {
           },
         ]
       }
+      inventory_report_lines: {
+        Row: {
+          category: string | null
+          cost_price: number
+          id: string
+          line_value: number
+          product_id: string
+          product_name: string
+          quantity: number
+          report_id: string
+          sku: string | null
+          unit: string | null
+        }
+        Insert: {
+          category?: string | null
+          cost_price?: number
+          id?: string
+          line_value?: number
+          product_id: string
+          product_name: string
+          quantity?: number
+          report_id: string
+          sku?: string | null
+          unit?: string | null
+        }
+        Update: {
+          category?: string | null
+          cost_price?: number
+          id?: string
+          line_value?: number
+          product_id?: string
+          product_name?: string
+          quantity?: number
+          report_id?: string
+          sku?: string | null
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_report_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_report_lines_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_reports: {
+        Row: {
+          id: string
+          line_count: number
+          location_id: string | null
+          location_name: string | null
+          notes: string | null
+          reported_at: string
+          reported_by: string | null
+          store_id: string
+          total_value: number
+        }
+        Insert: {
+          id?: string
+          line_count?: number
+          location_id?: string | null
+          location_name?: string | null
+          notes?: string | null
+          reported_at?: string
+          reported_by?: string | null
+          store_id: string
+          total_value?: number
+        }
+        Update: {
+          id?: string
+          line_count?: number
+          location_id?: string | null
+          location_name?: string | null
+          notes?: string | null
+          reported_at?: string
+          reported_by?: string | null
+          store_id?: string
+          total_value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_reports_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_reports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       price_history: {
         Row: {
           changed_by: string | null
