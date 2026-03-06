@@ -264,7 +264,7 @@ export default function WholesaleOrders() {
         <TabsList className="h-8">
           <TabsTrigger value="total" className="text-xs h-7 gap-1"><ListChecks className="h-3 w-3" /> Totalvy</TabsTrigger>
           <TabsTrigger value="per-order" className="text-xs h-7 gap-1"><Eye className="h-3 w-3" /> Per order</TabsTrigger>
-        </TabsList>
+          <TabsTrigger value="archived" className="text-xs h-7 gap-1"><Archive className="h-3 w-3" /> Arkiverade ({archivedOrders.length})</TabsTrigger>
 
         {/* TOTAL VIEW — aggregated products across all orders */}
         <TabsContent value="total">
