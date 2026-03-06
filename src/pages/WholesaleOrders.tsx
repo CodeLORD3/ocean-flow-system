@@ -88,6 +88,7 @@ export default function WholesaleOrders() {
   const [statusFilter, setStatusFilter] = useState("Alla");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [reportViewOrder, setReportViewOrder] = useState<any>(null);
+  const [archiveConfirmOrder, setArchiveConfirmOrder] = useState<any>(null);
 
   // Fetch all receiving reports
   const { data: allReports = [] } = useQuery({
