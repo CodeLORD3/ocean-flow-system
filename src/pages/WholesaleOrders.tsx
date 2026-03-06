@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Search, Clock, CheckCircle2, Truck, XCircle, Package,
-  Eye, ListChecks, ChefHat, AlertTriangle,
+  Eye, ListChecks, ChefHat, AlertTriangle, Archive,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -88,6 +88,7 @@ export default function WholesaleOrders() {
   const [statusFilter, setStatusFilter] = useState("Alla");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [reportViewOrder, setReportViewOrder] = useState<any>(null);
+  const [archiveConfirmOrder, setArchiveConfirmOrder] = useState<any>(null);
 
   // Fetch all receiving reports
   const { data: allReports = [] } = useQuery({
@@ -111,16 +112,20 @@ export default function WholesaleOrders() {
     return map;
   }, [allReports]);
 
-  // Filter orders
-  const filteredOrders = orders.filter((o: any) => {
+  // Split active vs archived
+  const activeOrders = orders.filter((o: any) => o.status !== "Arkiverad");
+  const archivedOrders = orders.filter((o: any) => o.status === "Arkiverad");
+
+  // Filter orders (active only)
+  const filteredOrders = activeOrders.filter((o: any) => {
     const matchSearch = !search || o.order_week?.includes(search) || o.stores?.name?.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "Alla" || o.status === statusFilter;
     return matchSearch && matchStatus;
   });
 
-  const totalOrders = orders.length;
-  const newOrders = orders.filter((o: any) => o.status === "Ny").length;
-  const inProgress = orders.filter((o: any) => o.status === "Behandlas").length;
+  const totalOrders = activeOrders.length;
+  const newOrders = activeOrders.filter((o: any) => o.status === "Ny").length;
+  const inProgress = activeOrders.filter((o: any) => o.status === "Behandlas").length;
 
   // Aggregated total view: group all order lines by product
   const aggregated = useMemo(() => {
@@ -208,6 +213,22 @@ export default function WholesaleOrders() {
     }
   };
 
+  const handleArchiveOrder = async (orderId: string) => {
+    const { error } = await supabase
+      .from("shop_orders")
+      .update({ status: "Arkiverad" })
+      .eq("id", orderId);
+    if (error) {
+      toast({ title: "Fel", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Order arkiverad" });
+    qc.invalidateQueries({ queryKey: ["shop_orders"] });
+    qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
+    setArchiveConfirmOrder(null);
+    if (selectedOrder?.id === orderId) setSelectedOrder(null);
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
@@ -243,6 +264,7 @@ export default function WholesaleOrders() {
         <TabsList className="h-8">
           <TabsTrigger value="total" className="text-xs h-7 gap-1"><ListChecks className="h-3 w-3" /> Totalvy</TabsTrigger>
           <TabsTrigger value="per-order" className="text-xs h-7 gap-1"><Eye className="h-3 w-3" /> Per order</TabsTrigger>
+          <TabsTrigger value="archived" className="text-xs h-7 gap-1"><Archive className="h-3 w-3" /> Arkiverade ({archivedOrders.length})</TabsTrigger>
         </TabsList>
 
         {/* TOTAL VIEW — aggregated products across all orders */}
@@ -363,11 +385,12 @@ export default function WholesaleOrders() {
                         <th className="p-3 text-left font-medium text-muted-foreground">ANTECKNING</th>
                         <th className="p-3 text-left font-medium text-muted-foreground min-w-[120px]">STATUS</th>
                         <th className="p-3 text-left font-medium text-muted-foreground">LEVERANSRAPPORT</th>
+                        <th className="p-3 text-center font-medium text-muted-foreground">ARKIVERA</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredOrders.length === 0 && (
-                        <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
+                        <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
                       )}
                       {filteredOrders.map((o: any) => (
                         <tr key={o.id} className="border-b border-border/40 transition-colors cursor-pointer" style={{ background: buildProgressGradient(o.shop_order_lines || []) }} onClick={() => setSelectedOrder(o)}>
@@ -411,6 +434,16 @@ export default function WholesaleOrders() {
                               );
                             })()}
                           </td>
+                          <td className="p-3 text-center" onClick={e => e.stopPropagation()}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
+                              onClick={() => setArchiveConfirmOrder(o)}
+                            >
+                              <Archive className="h-3 w-3" /> Arkivera
+                            </Button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -419,6 +452,49 @@ export default function WholesaleOrders() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* ARCHIVED ORDERS */}
+        <TabsContent value="archived">
+          <Card className="shadow-card">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-heading">Arkiverade ordrar</CardTitle>
+              <CardDescription className="text-xs">Ordrar som har slutbehandlats och arkiverats.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30">
+                      <th className="p-3 text-left font-medium text-muted-foreground">VECKA</th>
+                      <th className="p-3 text-left font-medium text-muted-foreground">DATUM</th>
+                      <th className="p-3 text-left font-medium text-muted-foreground">BUTIK</th>
+                      <th className="p-3 text-right font-medium text-muted-foreground">RADER</th>
+                      <th className="p-3 text-left font-medium text-muted-foreground">PRODUKTER</th>
+                      <th className="p-3 text-left font-medium text-muted-foreground">ANTECKNING</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {archivedOrders.length === 0 && (
+                      <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Inga arkiverade ordrar.</td></tr>
+                    )}
+                    {archivedOrders.map((o: any) => (
+                      <tr key={o.id} className="border-b border-border/40 cursor-pointer hover:bg-muted/20" onClick={() => setSelectedOrder(o)}>
+                        <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
+                        <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
+                        <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
+                        <td className="p-3 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
+                        <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
+                          {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
+                        </td>
+                        <td className="p-3 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 
@@ -549,6 +625,22 @@ export default function WholesaleOrders() {
               </>
             );
           })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Archive confirmation dialog */}
+      <Dialog open={!!archiveConfirmOrder} onOpenChange={open => { if (!open) setArchiveConfirmOrder(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-sm">Arkivera order?</DialogTitle>
+            <DialogDescription className="text-xs">
+              Är du säker på att du vill arkivera order {archiveConfirmOrder?.order_week} från {archiveConfirmOrder?.stores?.name}? Ordern flyttas till fliken "Arkiverade".
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" size="sm" className="text-xs" onClick={() => setArchiveConfirmOrder(null)}>Avbryt</Button>
+            <Button size="sm" className="text-xs" onClick={() => handleArchiveOrder(archiveConfirmOrder?.id)}>Bekräfta arkivering</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </motion.div>
