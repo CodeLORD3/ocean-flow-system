@@ -378,7 +378,7 @@ export default function Inventory() {
                             )}
                           </div>
                           <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span>{catQty.toLocaleString("sv-SE")} enheter</span>
+                            <span>{catQty.toLocaleString("sv-SE")} kg</span>
                             <span className="font-medium text-foreground">{fmt(catValue)}</span>
                           </div>
                         </button>
