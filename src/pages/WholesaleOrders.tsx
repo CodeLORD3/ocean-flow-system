@@ -390,7 +390,7 @@ export default function WholesaleOrders() {
                     </thead>
                     <tbody>
                       {filteredOrders.length === 0 && (
-                        <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
+                        <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
                       )}
                       {filteredOrders.map((o: any) => (
                         <tr key={o.id} className="border-b border-border/40 transition-colors cursor-pointer" style={{ background: buildProgressGradient(o.shop_order_lines || []) }} onClick={() => setSelectedOrder(o)}>
