@@ -385,7 +385,7 @@ export default function WholesaleOrders() {
                         <th className="p-3 text-left font-medium text-muted-foreground">ANTECKNING</th>
                         <th className="p-3 text-left font-medium text-muted-foreground min-w-[120px]">STATUS</th>
                         <th className="p-3 text-left font-medium text-muted-foreground">LEVERANSRAPPORT</th>
-                      </tr>
+                        <th className="p-3 text-center font-medium text-muted-foreground">ARKIVERA</th>
                     </thead>
                     <tbody>
                       {filteredOrders.length === 0 && (
