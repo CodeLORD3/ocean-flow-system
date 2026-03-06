@@ -213,7 +213,21 @@ export default function WholesaleOrders() {
     }
   };
 
-  return (
+  const handleArchiveOrder = async (orderId: string) => {
+    const { error } = await supabase
+      .from("shop_orders")
+      .update({ status: "Arkiverad" })
+      .eq("id", orderId);
+    if (error) {
+      toast({ title: "Fel", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Order arkiverad" });
+    qc.invalidateQueries({ queryKey: ["shop_orders"] });
+    qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
+    setArchiveConfirmOrder(null);
+    if (selectedOrder?.id === orderId) setSelectedOrder(null);
+  };
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <div>
