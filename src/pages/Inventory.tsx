@@ -221,6 +221,37 @@ export default function Inventory() {
           quantity: Number(line.quantity),
         });
       }
+
+      // Save inventory report history
+      const loc = locations.find(l => l.id === invLocation);
+      const totalValue = validLines.reduce((sum, l) => sum + Number(l.quantity) * l.cost_price, 0);
+      const { data: report } = await supabase
+        .from("inventory_reports")
+        .insert({
+          store_id: activeStoreId!,
+          location_id: invLocation,
+          location_name: loc?.name || "Okänd",
+          total_value: Math.round(totalValue),
+          line_count: validLines.length,
+        })
+        .select()
+        .single();
+
+      if (report) {
+        const reportLines = validLines.map(l => ({
+          report_id: report.id,
+          product_id: l.product_id,
+          product_name: l.product_name,
+          sku: l.sku,
+          unit: l.unit,
+          category: l.category,
+          quantity: Number(l.quantity),
+          cost_price: l.cost_price,
+          line_value: Number(l.quantity) * l.cost_price,
+        }));
+        await supabase.from("inventory_report_lines").insert(reportLines);
+      }
+
       toast({ title: "Lagerrapport sparad", description: `${validLines.length} produkter uppdaterade · Lagervärde: ${fmt(reportTotalValue)}` });
       setInvLines([]);
       setReportDialogOpen(false);
