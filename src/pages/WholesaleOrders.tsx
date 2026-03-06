@@ -112,8 +112,12 @@ export default function WholesaleOrders() {
     return map;
   }, [allReports]);
 
-  // Filter orders
-  const filteredOrders = orders.filter((o: any) => {
+  // Split active vs archived
+  const activeOrders = orders.filter((o: any) => o.status !== "Arkiverad");
+  const archivedOrders = orders.filter((o: any) => o.status === "Arkiverad");
+
+  // Filter orders (active only)
+  const filteredOrders = activeOrders.filter((o: any) => {
     const matchSearch = !search || o.order_week?.includes(search) || o.stores?.name?.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "Alla" || o.status === statusFilter;
     return matchSearch && matchStatus;
