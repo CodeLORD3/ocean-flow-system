@@ -227,6 +227,7 @@ export default function WholesaleOrders() {
     qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
     setArchiveConfirmOrder(null);
     if (selectedOrder?.id === orderId) setSelectedOrder(null);
+  };
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
