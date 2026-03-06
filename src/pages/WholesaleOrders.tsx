@@ -627,6 +627,22 @@ export default function WholesaleOrders() {
           })()}
         </DialogContent>
       </Dialog>
+
+      {/* Archive confirmation dialog */}
+      <Dialog open={!!archiveConfirmOrder} onOpenChange={open => { if (!open) setArchiveConfirmOrder(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-sm">Arkivera order?</DialogTitle>
+            <DialogDescription className="text-xs">
+              Är du säker på att du vill arkivera order {archiveConfirmOrder?.order_week} från {archiveConfirmOrder?.stores?.name}? Ordern flyttas till fliken "Arkiverade".
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" size="sm" className="text-xs" onClick={() => setArchiveConfirmOrder(null)}>Avbryt</Button>
+            <Button size="sm" className="text-xs" onClick={() => handleArchiveOrder(archiveConfirmOrder?.id)}>Bekräfta arkivering</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
