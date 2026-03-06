@@ -434,6 +434,16 @@ export default function WholesaleOrders() {
                               );
                             })()}
                           </td>
+                          <td className="p-3 text-center" onClick={e => e.stopPropagation()}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
+                              onClick={() => setArchiveConfirmOrder(o)}
+                            >
+                              <Archive className="h-3 w-3" /> Arkivera
+                            </Button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -442,6 +452,49 @@ export default function WholesaleOrders() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* ARCHIVED ORDERS */}
+        <TabsContent value="archived">
+          <Card className="shadow-card">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-heading">Arkiverade ordrar</CardTitle>
+              <CardDescription className="text-xs">Ordrar som har slutbehandlats och arkiverats.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30">
+                      <th className="p-3 text-left font-medium text-muted-foreground">VECKA</th>
+                      <th className="p-3 text-left font-medium text-muted-foreground">DATUM</th>
+                      <th className="p-3 text-left font-medium text-muted-foreground">BUTIK</th>
+                      <th className="p-3 text-right font-medium text-muted-foreground">RADER</th>
+                      <th className="p-3 text-left font-medium text-muted-foreground">PRODUKTER</th>
+                      <th className="p-3 text-left font-medium text-muted-foreground">ANTECKNING</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {archivedOrders.length === 0 && (
+                      <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Inga arkiverade ordrar.</td></tr>
+                    )}
+                    {archivedOrders.map((o: any) => (
+                      <tr key={o.id} className="border-b border-border/40 cursor-pointer hover:bg-muted/20" onClick={() => setSelectedOrder(o)}>
+                        <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
+                        <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
+                        <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
+                        <td className="p-3 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
+                        <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
+                          {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
+                        </td>
+                        <td className="p-3 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 
