@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Plus, Search, Clock, CheckCircle2, Truck, XCircle, X, Package,
+  Archive, ListChecks, History,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -21,6 +23,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSite } from "@/contexts/SiteContext";
+
 type OrderLine = {
   product_id: string;
   product_name: string;
@@ -35,6 +38,7 @@ const statusColor: Record<string, string> = {
   Skickad: "bg-success/15 text-success border-success/20",
   Levererad: "bg-success/15 text-success border-success/20",
   Avbruten: "bg-destructive/10 text-destructive border-destructive/20",
+  Arkiverad: "bg-muted text-muted-foreground border-border",
 };
 
 const statusIcon: Record<string, React.ReactNode> = {
@@ -44,6 +48,7 @@ const statusIcon: Record<string, React.ReactNode> = {
   Skickad: <Truck className="h-3 w-3" />,
   Levererad: <CheckCircle2 className="h-3 w-3" />,
   Avbruten: <XCircle className="h-3 w-3" />,
+  Arkiverad: <Archive className="h-3 w-3" />,
 };
 
 const statusSegmentColor: Record<string, string> = {
@@ -87,6 +92,59 @@ function buildProgressGradient(lines: any[]): string {
   return `linear-gradient(to bottom, ${segments.join(", ")})`;
 }
 
+const LIVE_STATUSES = ["Ny", "Behandlas", "Packad", "Skickad"];
+const DONE_STATUSES = ["Levererad", "Arkiverad", "Avbruten"];
+
+function OrderTable({ orders, onSelect, emptyMsg }: { orders: any[]; onSelect: (o: any) => void; emptyMsg: string }) {
+  return (
+    <Card className="shadow-card">
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-border bg-muted/30">
+                <th className="p-3 text-left font-medium text-muted-foreground">VECKA</th>
+                <th className="p-3 text-left font-medium text-muted-foreground">DATUM</th>
+                <th className="p-3 text-left font-medium text-muted-foreground">BUTIK</th>
+                <th className="p-3 text-right font-medium text-muted-foreground">RADER</th>
+                <th className="p-3 text-left font-medium text-muted-foreground">PRODUKTER</th>
+                <th className="p-3 text-left font-medium text-muted-foreground">ANTECKNING</th>
+                <th className="p-3 text-right font-medium text-muted-foreground">STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.length === 0 && (
+                <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">{emptyMsg}</td></tr>
+              )}
+              {orders.map((o: any) => {
+                const lines = o.shop_order_lines || [];
+                return (
+                  <tr key={o.id} className="border-b border-border/40 transition-colors cursor-pointer" style={{ background: buildProgressGradient(lines) }} onClick={() => onSelect(o)}>
+                    <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
+                    <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
+                    <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
+                    <td className="p-3 text-right text-foreground">{lines.length}</td>
+                    <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
+                      {lines.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
+                    </td>
+                    <td className="p-3 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
+                    <td className="p-3 text-right">
+                      <Badge variant="outline" className={`${statusColor[o.status] || ""} text-[10px] gap-1`}>
+                        {statusIcon[o.status]}
+                        {o.status}
+                      </Badge>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function ShopOrders() {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -94,7 +152,6 @@ export default function ShopOrders() {
   const { data: products = [] } = useProducts();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("Alla");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
   // Order form
@@ -142,6 +199,10 @@ export default function ShopOrders() {
       }
     }
   }, [orders]);
+
+  // Split orders
+  const liveOrders = useMemo(() => orders.filter((o: any) => LIVE_STATUSES.includes(o.status)), [orders]);
+  const doneOrders = useMemo(() => orders.filter((o: any) => DONE_STATUSES.includes(o.status)), [orders]);
 
   const filteredProducts = products.filter(p =>
     productSearch &&
@@ -213,15 +274,7 @@ export default function ShopOrders() {
     setOrderNote("");
   };
 
-  const filteredOrders = orders.filter((o: any) => {
-    const matchSearch = !search || o.order_week?.includes(search) || o.notes?.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === "Alla" || o.status === statusFilter;
-    return matchSearch && matchStatus;
-  });
-
-  const totalOrders = orders.length;
-  const pending = orders.filter((o: any) => o.status === "Ny" || o.status === "Behandlas").length;
-  const delivered = orders.filter((o: any) => o.status === "Levererad").length;
+  const pending = liveOrders.filter((o: any) => o.status === "Ny" || o.status === "Behandlas").length;
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
@@ -240,93 +293,54 @@ export default function ShopOrders() {
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card className="shadow-card"><CardContent className="p-3">
-          <p className="text-[10px] text-muted-foreground">Totalt beställningar</p>
-          <p className="text-xl font-heading font-bold text-foreground">{totalOrders}</p>
+          <p className="text-[10px] text-muted-foreground">Aktiva ordrar</p>
+          <p className="text-xl font-heading font-bold text-foreground">{liveOrders.length}</p>
         </CardContent></Card>
         <Card className="shadow-card"><CardContent className="p-3">
           <p className="text-[10px] text-muted-foreground">Pågående</p>
           <p className="text-xl font-heading font-bold text-warning">{pending}</p>
         </CardContent></Card>
         <Card className="shadow-card"><CardContent className="p-3">
-          <p className="text-[10px] text-muted-foreground">Levererade</p>
-          <p className="text-xl font-heading font-bold text-success">{delivered}</p>
+          <p className="text-[10px] text-muted-foreground">Levererade / Arkiverade</p>
+          <p className="text-xl font-heading font-bold text-success">{doneOrders.length}</p>
         </CardContent></Card>
         <Card className="shadow-card"><CardContent className="p-3">
-          <p className="text-[10px] text-muted-foreground">Denna vecka</p>
-          <p className="text-xl font-heading font-bold text-foreground">
-            {orders.filter((o: any) => {
-              const d = new Date(o.created_at);
-              const now = new Date();
-              return d > new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
-            }).length}
-          </p>
+          <p className="text-[10px] text-muted-foreground">Totalt alla</p>
+          <p className="text-xl font-heading font-bold text-foreground">{orders.length}</p>
         </CardContent></Card>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-2">
-        <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <Input placeholder="Sök vecka eller anteckning..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="h-8 text-xs w-36"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {["Alla", "Ny", "Behandlas", "Packad", "Skickad", "Levererad", "Avbruten"].map(s =>
-              <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
-            )}
-          </SelectContent>
-        </Select>
-      </div>
+      <Tabs defaultValue="live" className="space-y-3">
+        <TabsList className="h-8">
+          <TabsTrigger value="live" className="text-xs h-7 gap-1"><ListChecks className="h-3 w-3" /> Aktiva ({liveOrders.length})</TabsTrigger>
+          <TabsTrigger value="done" className="text-xs h-7 gap-1"><Archive className="h-3 w-3" /> Levererade / Arkiverade ({doneOrders.length})</TabsTrigger>
+          <TabsTrigger value="all" className="text-xs h-7 gap-1"><History className="h-3 w-3" /> Alla ordrar ({orders.length})</TabsTrigger>
+        </TabsList>
 
-      {/* Orders table */}
-      <Card className="shadow-card">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="p-3 text-left font-medium text-muted-foreground">VECKA</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">DATUM</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">BUTIK</th>
-                  <th className="p-3 text-right font-medium text-muted-foreground">RADER</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">PRODUKTER</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">ANTECKNING</th>
-                  <th className="p-3 text-right font-medium text-muted-foreground">STATUS</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredOrders.length === 0 && (
-                  <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">
-                    {orders.length === 0 ? "Inga beställningar ännu. Klicka \"Ny beställning\" för att börja." : "Inga matchande beställningar."}
-                  </td></tr>
-                )}
-                {filteredOrders.map((o: any) => {
-                  const lines = o.shop_order_lines || [];
-                  return (
-                  <tr key={o.id} className="border-b border-border/40 transition-colors cursor-pointer" style={{ background: buildProgressGradient(lines) }} onClick={() => setSelectedOrder(o)}>
-                    <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
-                    <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
-                    <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
-                    <td className="p-3 text-right text-foreground">{lines.length}</td>
-                    <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
-                      {lines.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
-                    </td>
-                    <td className="p-3 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
-                    <td className="p-3 text-right">
-                      <Badge variant="outline" className={`${statusColor[o.status] || ""} text-[10px] gap-1`}>
-                        {statusIcon[o.status]}
-                        {o.status}
-                      </Badge>
-                    </td>
-                  </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+        <TabsContent value="live">
+          <OrderTable
+            orders={liveOrders}
+            onSelect={setSelectedOrder}
+            emptyMsg="Inga aktiva beställningar just nu."
+          />
+        </TabsContent>
+
+        <TabsContent value="done">
+          <OrderTable
+            orders={doneOrders}
+            onSelect={setSelectedOrder}
+            emptyMsg="Inga levererade eller arkiverade ordrar."
+          />
+        </TabsContent>
+
+        <TabsContent value="all">
+          <OrderTable
+            orders={orders}
+            onSelect={setSelectedOrder}
+            emptyMsg="Inga beställningar ännu. Klicka &quot;Ny beställning&quot; för att börja."
+          />
+        </TabsContent>
+      </Tabs>
 
       {/* Create order dialog */}
       <Dialog open={dialogOpen} onOpenChange={open => { setDialogOpen(open); if (!open) { setOrderLines([]); setOrderNote(""); } }}>
