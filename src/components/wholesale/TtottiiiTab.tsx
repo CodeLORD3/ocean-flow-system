@@ -24,7 +24,7 @@ export default function TtottiiiTab() {
       total: number;
     }>();
 
-    for (const order of orders) {
+    for (const order of orders.filter((o: any) => o.status !== "Arkiverad")) {
       const storeId = (order as any).store_id;
       for (const line of ((order as any).shop_order_lines || [])) {
         const pName = line.products?.name || "Okänd";
