@@ -141,8 +141,8 @@ export default function WholesaleOrders() {
     }>();
 
     for (const order of orders) {
-      // Only aggregate active orders (not Levererad/Avbruten)
-      if ((order as any).status === "Avbruten" || (order as any).status === "Levererad") continue;
+      // Only aggregate active orders (not Arkiverad/Levererad/Avbruten)
+      if ((order as any).status === "Avbruten" || (order as any).status === "Levererad" || (order as any).status === "Arkiverad") continue;
       const storeId = (order as any).store_id;
       for (const line of ((order as any).shop_order_lines || [])) {
         const pid = line.product_id;
