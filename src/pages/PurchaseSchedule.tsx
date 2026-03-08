@@ -221,7 +221,7 @@ export default function PurchaseSchedule() {
         if (shopEntry) {
           shopEntry.quantity += item.quantity;
         } else {
-          existing.shops.push({ name: item.storeName, zoneKey: item.zoneKey, quantity: item.quantity });
+          existing.shops.push({ name: item.storeName, zoneKey: item.zoneKey, quantity: item.quantity, deliveryDate: item.deliveryDate });
         }
         if (item.deliveryDate < existing.earliestDelivery) existing.earliestDelivery = item.deliveryDate;
       } else {
