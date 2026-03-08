@@ -461,6 +461,43 @@ export default function Products() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* Add Category Dialog */}
+      <Dialog open={addCategoryOpen} onOpenChange={setAddCategoryOpen}>
+        <DialogContent className="max-w-xs">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-sm">Lägg till kategori</DialogTitle>
+            <DialogDescription className="text-xs">Ange namn på den nya kategorin. Den blir tillgänglig direkt i alla dropdown-menyer.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Kategorinamn</Label>
+            <Input
+              value={newCategoryName}
+              onChange={e => setNewCategoryName(e.target.value)}
+              placeholder="T.ex. Marinader"
+              className="h-8 text-xs"
+              autoFocus
+              onKeyDown={e => {
+                if (e.key === "Enter" && newCategoryName.trim()) {
+                  // Just set as filter — it'll appear in dropdowns once a product uses it
+                  setFilterCategory(newCategoryName.trim());
+                  toast({ title: "Kategori tillagd", description: `"${newCategoryName.trim()}" — tilldela produkter till denna kategori för att den ska synas permanent.` });
+                  setNewCategoryName("");
+                  setAddCategoryOpen(false);
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => { setAddCategoryOpen(false); setNewCategoryName(""); }}>Avbryt</Button>
+            <Button size="sm" disabled={!newCategoryName.trim()} onClick={() => {
+              setFilterCategory(newCategoryName.trim());
+              toast({ title: "Kategori tillagd", description: `"${newCategoryName.trim()}" — tilldela produkter till denna kategori för att den ska synas permanent.` });
+              setNewCategoryName("");
+              setAddCategoryOpen(false);
+            }}>Lägg till</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
