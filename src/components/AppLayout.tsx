@@ -1,6 +1,7 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { ShopSidebar } from "@/components/ShopSidebar";
+import { ProductionSidebar } from "@/components/ProductionSidebar";
 import { useLocation } from "react-router-dom";
 import { Bell, ChevronRight, Search, User, ArrowLeftRight, Factory, Store, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,7 +43,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
-        {site === "shop" ? <ShopSidebar /> : <AppSidebar />}
+        {site === "shop" ? <ShopSidebar /> : site === "production" ? <ProductionSidebar /> : <AppSidebar />}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Top status bar */}
           <div className="h-8 flex items-center justify-between bg-sidebar-background px-4 text-xs text-sidebar-foreground/70 shrink-0">
@@ -50,7 +51,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <span>FiskHandel ERP v2.4.1</span>
               <span className="hidden sm:inline">•</span>
               <span className="hidden sm:inline">
-                {site === "shop" ? `Butik: ${activeStoreName || "–"}` : "Grossist/Produktion"}
+                {site === "shop" ? `Butik: ${activeStoreName || "–"}` : site === "production" ? "Produktion" : "Grossist"}
               </span>
             </div>
             <div className="flex items-center gap-3">
@@ -62,7 +63,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     className="h-6 text-[10px] gap-1 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
                   >
                     <ArrowLeftRight className="h-3 w-3" />
-                    {site === "shop" ? activeStoreName || "Butik" : "Grossist"}
+                    {site === "shop" ? activeStoreName || "Butik" : site === "production" ? "Produktion" : "Grossist"}
                     <ChevronDown className="h-2.5 w-2.5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -73,7 +74,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     className={`text-xs gap-2 ${site === "wholesale" ? "bg-muted font-medium" : ""}`}
                     onClick={() => { setSite("wholesale"); setActiveStore(null, null); }}
                   >
-                    <Factory className="h-3 w-3" /> Grossist / Produktion
+                    <Factory className="h-3 w-3" /> Grossist
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className={`text-xs gap-2 ${site === "production" ? "bg-muted font-medium" : ""}`}
+                    onClick={() => { setSite("production"); setActiveStore(null, null); }}
+                  >
+                    <Factory className="h-3 w-3" /> Produktion
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuLabel className="text-[10px]">Butiker</DropdownMenuLabel>
@@ -151,7 +158,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                       <User className="h-3.5 w-3.5 text-primary" />
                     </div>
                     <span className="hidden sm:inline text-xs font-medium">
-                      {site === "shop" ? "Butikschef" : "Admin"}
+                      {site === "shop" ? "Butikschef" : site === "production" ? "Produktionschef" : "Admin"}
                     </span>
                   </Button>
                 </DropdownMenuTrigger>
@@ -172,7 +179,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="flex items-center gap-2">
               <h1 className="font-heading text-sm font-semibold text-foreground">{page.title}</h1>
               <Badge variant="outline" className="text-[9px] h-4">
-                {site === "shop" ? (activeStoreName || "Butik") : "Grossist"}
+                {site === "shop" ? (activeStoreName || "Butik") : site === "production" ? "Produktion" : "Grossist"}
               </Badge>
             </div>
             <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
