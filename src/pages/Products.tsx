@@ -26,7 +26,6 @@ import BarcodeDisplay from "@/components/barcode/BarcodeDisplay";
 import { generateEAN13 } from "@/lib/barcode";
 
 const UNITS = ["KG", "ST", "L", "FÖRP"];
-const UNITS = ["KG", "ST", "L", "FÖRP"];
 
 export default function Products() {
   const { toast } = useToast();
@@ -34,6 +33,8 @@ export default function Products() {
   const { site } = useSite();
   const isWholesale = site === "wholesale";
   const { data: products = [], isLoading } = useProducts();
+  const { data: dbCategories = [] } = useCategories();
+  const addCategory = useAddCategory();
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
   const [inlineCostPrice, setInlineCostPrice] = useState("");
   const [search, setSearch] = useState("");
@@ -45,12 +46,10 @@ export default function Products() {
   const [addCategoryOpen, setAddCategoryOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
 
-  // Dynamic categories: defaults + any custom ones from existing products
+  // Categories from DB (persisted)
   const CATEGORIES = useMemo(() => {
-    const fromProducts = products.map(p => p.category).filter(Boolean);
-    const all = new Set([...DEFAULT_CATEGORIES, ...fromProducts]);
-    return Array.from(all).sort((a, b) => a.localeCompare(b, "sv"));
-  }, [products]);
+    return dbCategories.map(c => c.name).sort((a, b) => a.localeCompare(b, "sv"));
+  }, [dbCategories]);
 
   const [form, setForm] = useState({
     name: "", category: "", unit: "KG", sku: "",
