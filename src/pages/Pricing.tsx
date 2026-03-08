@@ -84,7 +84,7 @@ export default function Pricing() {
     setInlineEdits((prev) => {
       const current = prev[id];
       if (!current) return prev;
-      return { ...prev, [id]: { ...current, margin, wholesale_price: Number((current.cost_price * (1 + margin / 100)).toFixed(2)) } };
+      return { ...prev, [id]: { ...current, margin, wholesale_price: Number((current.cost_price / (1 - margin / 100)).toFixed(2)) } };
     });
   };
 
