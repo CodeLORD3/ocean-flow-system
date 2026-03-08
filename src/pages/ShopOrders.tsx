@@ -355,7 +355,7 @@ export default function ShopOrders() {
       </Tabs>
 
       {/* Create order dialog */}
-      <Dialog open={dialogOpen} onOpenChange={open => { setDialogOpen(open); if (!open) { setOrderLines([]); setOrderNote(""); } }}>
+      <Dialog open={dialogOpen} onOpenChange={open => { setDialogOpen(open); if (!open) { setOrderLines([]); setOrderNote(""); setDesiredDeliveryDate(undefined); } }}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-heading">Ny beställning till grossist</DialogTitle>
