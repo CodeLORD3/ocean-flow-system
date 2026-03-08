@@ -41,6 +41,15 @@ export default function Products() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [barcodePreview, setBarcodePreview] = useState<any>(null);
+  const [addCategoryOpen, setAddCategoryOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+
+  // Dynamic categories: defaults + any custom ones from existing products
+  const CATEGORIES = useMemo(() => {
+    const fromProducts = products.map(p => p.category).filter(Boolean);
+    const all = new Set([...DEFAULT_CATEGORIES, ...fromProducts]);
+    return Array.from(all).sort((a, b) => a.localeCompare(b, "sv"));
+  }, [products]);
 
   const [form, setForm] = useState({
     name: "", category: "", unit: "KG", sku: "",
