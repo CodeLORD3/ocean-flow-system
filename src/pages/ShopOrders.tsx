@@ -27,7 +27,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSite } from "@/contexts/SiteContext";
-import { useCreateChangeRequest, useOrderChangeRequests } from "@/hooks/useOrderChangeRequests";
+import { useCreateChangeRequest, useOrderChangeRequests, useResolveChangeRequest } from "@/hooks/useOrderChangeRequests";
 
 type OrderLine = {
   product_id: string;
