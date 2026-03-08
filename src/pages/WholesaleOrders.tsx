@@ -676,3 +676,88 @@ export default function WholesaleOrders() {
     </motion.div>
   );
 }
+
+/* ---- Wholesaler order detail with "Ej tillgänglig" capability ---- */
+function WholesaleOrderDetail({ order, onClose }: { order: any; onClose: () => void }) {
+  const { toast } = useToast();
+  const createChange = useCreateChangeRequest();
+
+  const handleMarkUnavailable = async (line: any) => {
+    await createChange.mutateAsync({
+      shop_order_id: order.id,
+      order_line_id: line.id,
+      change_type: "product_unavailable",
+      product_id: line.product_id,
+      old_value: String(line.quantity_ordered),
+      new_value: "0",
+      unit: line.unit || line.products?.unit || "ST",
+      requested_by: "grossist",
+    });
+    toast({ title: "Förfrågan skickad", description: `"${line.products?.name}" markerad som ej tillgänglig. Butiken behöver bekräfta.` });
+  };
+
+  return (
+    <>
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="border-b border-border bg-muted/30">
+              <th className="p-2.5 text-left font-medium text-muted-foreground">Produkt</th>
+              <th className="p-2.5 text-left font-medium text-muted-foreground">Enhet</th>
+              <th className="p-2.5 text-right font-medium text-muted-foreground">Beställt</th>
+              <th className="p-2.5 text-right font-medium text-muted-foreground">Levererat</th>
+              <th className="p-2.5 text-left font-medium text-muted-foreground">Avvikelse</th>
+              <th className="p-2.5 text-left font-medium text-muted-foreground">Status</th>
+              <th className="p-2.5 text-center font-medium text-muted-foreground">Åtgärd</th>
+            </tr>
+          </thead>
+          <tbody>
+            {order.shop_order_lines?.map((line: any) => {
+              const qtyOrdered = line.quantity_ordered || 0;
+              const qtyDelivered = line.quantity_delivered || 0;
+              const hasDiff = qtyDelivered > 0 && qtyDelivered !== qtyOrdered;
+              const isUnavailable = line.status === "Ej tillgänglig";
+              return (
+                <tr key={line.id} className={`border-b border-border/30 ${isUnavailable ? "opacity-50" : ""}`}>
+                  <td className="p-2.5 font-medium text-foreground">{line.products?.name || "–"}</td>
+                  <td className="p-2.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
+                  <td className="p-2.5 text-right font-mono text-foreground">{qtyOrdered}</td>
+                  <td className={`p-2.5 text-right font-mono ${hasDiff ? "text-warning font-bold" : "text-muted-foreground"}`}>
+                    {qtyDelivered || "–"}
+                  </td>
+                  <td className="p-2.5 text-muted-foreground">{line.deviation || "–"}</td>
+                  <td className="p-2.5">
+                    {line.status ? (
+                      <Badge variant="outline" className={`text-[10px] ${
+                        line.status === "Ej tillgänglig" ? "text-destructive border-destructive/20" :
+                        line.status === "Packad" || line.status === "Producerad" ? "text-success border-success/20" :
+                        ""
+                      }`}>{line.status}</Badge>
+                    ) : <span className="text-muted-foreground/50">–</span>}
+                  </td>
+                  <td className="p-2.5 text-center">
+                    {!isUnavailable && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-6 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+                        onClick={() => handleMarkUnavailable(line)}
+                        disabled={createChange.isPending}
+                      >
+                        <Ban className="h-3 w-3" /> Ej tillgänglig
+                      </Button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <DialogFooter>
+        <Button variant="outline" size="sm" onClick={onClose}>Stäng</Button>
+      </DialogFooter>
+    </>
+  );
+}
