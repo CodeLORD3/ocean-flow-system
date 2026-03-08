@@ -66,7 +66,6 @@ const sections: NavSection[] = [
   { label: "Översikt", items: overviewNav },
   { label: "Inköp", items: salesNav },
   { label: "Lagerstyrning", items: inventoryNav },
-  { label: "Inköp", items: purchasingNav },
   { label: "Ekonomi & Rapporter", items: financeNav },
 ];
 
