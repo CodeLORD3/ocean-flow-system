@@ -13,25 +13,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { format, startOfWeek, addDays, isSameDay, parseISO, getISOWeek, getYear, getDay } from "date-fns";
 import { sv } from "date-fns/locale";
-import { CalendarDays, Clock, ChevronLeft, ChevronRight, AlertTriangle, Truck, Settings2, ChevronDown, ListChecks } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, AlertTriangle, Truck, Settings2, ChevronDown, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 const WEEKDAYS = ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag", "Söndag"];
 const WEEKDAY_OPTIONS = WEEKDAYS.map((name, i) => ({ value: i + 1, label: name }));
 
-/** Convert JS getDay() (0=Sun) to our 1=Mon format */
 function jsToWeekday(jsDay: number): number {
   return jsDay === 0 ? 7 : jsDay;
 }
 
-/** For a given delivery date, find the latest purchase date = the transport departure weekday
- *  that falls on or before the delivery date in the same week. */
 function getLatestPurchaseDate(deliveryDate: Date, departureWeekday: number): Date {
   const deliveryWd = jsToWeekday(getDay(deliveryDate));
-  // How many days back from delivery to the departure weekday
   let diff = deliveryWd - departureWeekday;
-  if (diff < 0) diff += 7; // departure is in the previous week
+  if (diff < 0) diff += 7;
   return addDays(deliveryDate, -diff);
 }
 
@@ -116,6 +112,8 @@ export default function PurchaseSchedule() {
   const updateSchedule = useUpdateTransportSchedule();
   const [weekOffset, setWeekOffset] = useState(0);
   const [view, setView] = useState<"purchase" | "delivery">("purchase");
+  const [tab, setTab] = useState<"daily" | "total">("daily");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
   const weekStart = useMemo(() => {
     const now = new Date();
@@ -150,7 +148,6 @@ export default function PurchaseSchedule() {
     );
   };
 
-  // Build schedule items, aggregated by product + purchase date
   const schedule = useMemo(() => {
     if (!orders || !stores || !transportSchedules) return [];
 
@@ -198,7 +195,6 @@ export default function PurchaseSchedule() {
       }
     }
 
-    // Aggregate by productName + latestPurchaseDate
     const key = (item: RawItem) =>
       `${item.productName}|${item.unit}|${format(item.latestPurchaseDate, "yyyy-MM-dd")}`;
 
@@ -242,22 +238,82 @@ export default function PurchaseSchedule() {
     return Array.from(grouped.values());
   }, [orders, stores, transportSchedules, storeMap, zoneMap]);
 
-  // Group by day
-  const groupByDay = (dateGetter: (item: (typeof schedule)[0]) => Date) => {
-    const map = new Map<number, typeof schedule>();
+  // All unique categories
+  const allCategories = useMemo(() => {
+    const cats = new Set(schedule.map((s) => s.category));
+    return Array.from(cats).sort();
+  }, [schedule]);
+
+  // Filter by category
+  const filteredSchedule = useMemo(
+    () => categoryFilter === "all" ? schedule : schedule.filter((s) => s.category === categoryFilter),
+    [schedule, categoryFilter],
+  );
+
+  // Weekly totals: aggregate across all days by product
+  const weeklyTotals = useMemo(() => {
+    const map = new Map<string, {
+      productName: string;
+      unit: string;
+      totalQuantity: number;
+      category: string;
+      shops: { name: string; zoneKey: string; quantity: number }[];
+    }>();
+
+    for (const item of filteredSchedule) {
+      const inWeek = weekDates.some((d) => isSameDay(d, item.latestPurchaseDate));
+      if (!inWeek) continue;
+
+      const k = `${item.productName}|${item.unit}`;
+      const existing = map.get(k);
+      if (existing) {
+        existing.totalQuantity += item.totalQuantity;
+        for (const shop of item.shops) {
+          const s = existing.shops.find((e) => e.name === shop.name);
+          if (s) s.quantity += shop.quantity;
+          else existing.shops.push({ name: shop.name, zoneKey: shop.zoneKey, quantity: shop.quantity });
+        }
+      } else {
+        map.set(k, {
+          productName: item.productName,
+          unit: item.unit,
+          totalQuantity: item.totalQuantity,
+          category: item.category,
+          shops: item.shops.map((s) => ({ name: s.name, zoneKey: s.zoneKey, quantity: s.quantity })),
+        });
+      }
+    }
+
+    return Array.from(map.values()).sort((a, b) => a.category.localeCompare(b.category) || a.productName.localeCompare(b.productName));
+  }, [filteredSchedule, weekDates]);
+
+  // Group by day (filtered)
+  const groupByDay = (dateGetter: (item: (typeof filteredSchedule)[0]) => Date) => {
+    const map = new Map<number, typeof filteredSchedule>();
     for (let i = 0; i < 7; i++) map.set(i, []);
-    for (const item of schedule) {
+    for (const item of filteredSchedule) {
       const dayIndex = weekDates.findIndex((d) => isSameDay(d, dateGetter(item)));
       if (dayIndex >= 0) map.get(dayIndex)?.push(item);
     }
     return map;
   };
 
-  const byDeliveryDay = useMemo(() => groupByDay((i) => i.earliestDelivery), [schedule, weekDates]);
-  const byPurchaseDay = useMemo(() => groupByDay((i) => i.latestPurchaseDate), [schedule, weekDates]);
+  const byDeliveryDay = useMemo(() => groupByDay((i) => i.earliestDelivery), [filteredSchedule, weekDates]);
+  const byPurchaseDay = useMemo(() => groupByDay((i) => i.latestPurchaseDate), [filteredSchedule, weekDates]);
 
   const activeMap = view === "purchase" ? byPurchaseDay : byDeliveryDay;
   const isLoading = ordersLoading || storesLoading || schedulesLoading;
+
+  // Group weekly totals by category
+  const totalsByCategory = useMemo(() => {
+    const map = new Map<string, typeof weeklyTotals>();
+    for (const item of weeklyTotals) {
+      const arr = map.get(item.category) || [];
+      arr.push(item);
+      map.set(item.category, arr);
+    }
+    return map;
+  }, [weeklyTotals]);
 
   return (
     <div className="space-y-6">
@@ -269,16 +325,29 @@ export default function PurchaseSchedule() {
             {format(weekDates[6], "d MMM", { locale: sv })}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Select value={view} onValueChange={(v) => setView(v as "purchase" | "delivery")}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue />
+        <div className="flex items-center gap-2 flex-wrap">
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Alla kategorier" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="purchase">Visa per inköpsdag</SelectItem>
-              <SelectItem value="delivery">Visa per leveransdag</SelectItem>
+              <SelectItem value="all">Alla kategorier</SelectItem>
+              {allCategories.map((cat) => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
+          {tab === "daily" && (
+            <Select value={view} onValueChange={(v) => setView(v as "purchase" | "delivery")}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="purchase">Visa per inköpsdag</SelectItem>
+                <SelectItem value="delivery">Visa per leveransdag</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
           <div className="flex items-center gap-1">
             <Button variant="outline" size="icon" onClick={() => setWeekOffset((w) => w - 1)}>
               <ChevronLeft className="h-4 w-4" />
@@ -293,7 +362,7 @@ export default function PurchaseSchedule() {
         </div>
       </div>
 
-      {/* Transport zones — clickable to edit */}
+      {/* Transport zones */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
@@ -311,104 +380,190 @@ export default function PurchaseSchedule() {
         </CardContent>
       </Card>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-20 text-muted-foreground">Laddar schema...</div>
-      ) : (
-        <div className="space-y-1">
-          {weekDates.map((date, dayIndex) => {
-            const items = activeMap.get(dayIndex) || [];
-            const isToday = isSameDay(date, new Date());
-            const isPast = date < new Date() && !isToday;
-            const dayLabel = `${WEEKDAYS[dayIndex]} ${format(date, "d/M")}`;
+      <Tabs value={tab} onValueChange={(v) => setTab(v as "daily" | "total")}>
+        <TabsList>
+          <TabsTrigger value="daily" className="gap-1.5">
+            <CalendarDays className="h-3.5 w-3.5" />
+            Dagsvy
+          </TabsTrigger>
+          <TabsTrigger value="total" className="gap-1.5">
+            <ListChecks className="h-3.5 w-3.5" />
+            Totalvy vecka
+          </TabsTrigger>
+        </TabsList>
 
-            return (
-              <Collapsible key={dayIndex} defaultOpen={isToday || items.length > 0}>
-                <CollapsibleTrigger className={`flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm font-medium hover:bg-muted/50 transition-colors ${isToday ? "bg-primary/10 text-primary" : isPast ? "opacity-50 text-muted-foreground" : "text-foreground"}`}>
-                  <ChevronDown className="h-3.5 w-3.5 shrink-0 transition-transform [[data-state=open]>&]:rotate-0 [[data-state=closed]>&]:-rotate-90" />
-                  <CalendarDays className="h-3.5 w-3.5" />
-                  <span>{dayLabel}</span>
-                  {items.length > 0 && (
+        {/* ── DAILY VIEW ── */}
+        <TabsContent value="daily">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20 text-muted-foreground">Laddar schema...</div>
+          ) : (
+            <div className="space-y-1">
+              {weekDates.map((date, dayIndex) => {
+                const items = activeMap.get(dayIndex) || [];
+                const isToday = isSameDay(date, new Date());
+                const isPast = date < new Date() && !isToday;
+                const dayLabel = `${WEEKDAYS[dayIndex]} ${format(date, "d/M")}`;
+
+                return (
+                  <Collapsible key={dayIndex} defaultOpen={isToday || items.length > 0}>
+                    <CollapsibleTrigger className={`flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm font-medium hover:bg-muted/50 transition-colors ${isToday ? "bg-primary/10 text-primary" : isPast ? "opacity-50 text-muted-foreground" : "text-foreground"}`}>
+                      <ChevronDown className="h-3.5 w-3.5 shrink-0 transition-transform [[data-state=open]>&]:rotate-0 [[data-state=closed]>&]:-rotate-90" />
+                      <CalendarDays className="h-3.5 w-3.5" />
+                      <span>{dayLabel}</span>
+                      {items.length > 0 && (
+                        <Badge variant="outline" className="text-[9px] ml-auto py-0 h-4">
+                          {items.length} {items.length === 1 ? "produkt" : "produkter"}
+                        </Badge>
+                      )}
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      {items.length === 0 ? (
+                        <p className="pl-10 py-1 text-[10px] text-muted-foreground italic">Inga produkter</p>
+                      ) : (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="h-6 px-2 pl-10 text-[10px]">Produkt</TableHead>
+                              <TableHead className="h-6 px-2 text-[10px] text-right w-[80px]">Totalt</TableHead>
+                              <TableHead className="h-6 px-2 text-[10px] w-[80px]">Butiker</TableHead>
+                              <TableHead className="h-6 px-2 text-[10px] w-[120px]">
+                                {view === "purchase" ? "Avgång" : "Senast inköp"}
+                              </TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {items.map((item, i) => {
+                              const isUrgent = view === "purchase" && isSameDay(item.latestPurchaseDate, new Date());
+                              return (
+                                <Collapsible key={`${dayIndex}-${item.productName}-${i}`} asChild>
+                                  <>
+                                    <CollapsibleTrigger asChild>
+                                      <TableRow className={`cursor-pointer hover:bg-muted/50 ${isUrgent ? "bg-destructive/5" : ""}`}>
+                                        <TableCell className="px-2 pl-10 py-0.5 text-xs">
+                                          <span className="flex items-center gap-1">
+                                            <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
+                                            {item.productName}
+                                          </span>
+                                        </TableCell>
+                                        <TableCell className="px-2 py-0.5 text-xs text-right font-medium">{item.totalQuantity} {item.unit}</TableCell>
+                                        <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">{item.shops.length} butik{item.shops.length > 1 ? "er" : ""}</TableCell>
+                                        <TableCell className="px-2 py-0.5">
+                                          <span className="text-[10px] text-muted-foreground">
+                                            {view === "purchase"
+                                              ? `${format(item.latestPurchaseDate, "EEE d/M", { locale: sv })} ${item.departureTime}`
+                                              : format(item.latestPurchaseDate, "EEE d/M", { locale: sv })}
+                                          </span>
+                                        </TableCell>
+                                      </TableRow>
+                                    </CollapsibleTrigger>
+                                    <CollapsibleContent asChild>
+                                      <>
+                                        {item.shops.map((shop) => {
+                                          const zone = zoneMap.get(shop.zoneKey);
+                                          return (
+                                            <TableRow key={shop.name} className="bg-muted/30 border-0">
+                                              <TableCell className="px-2 pl-14 py-0.5 text-[10px] text-muted-foreground">
+                                                <Badge variant={(zone?.badge_color || "default") as any} className="text-[9px] py-0">
+                                                  {shop.name}
+                                                </Badge>
+                                              </TableCell>
+                                              <TableCell className="px-2 py-0.5 text-[10px] text-right text-muted-foreground">{shop.quantity} {item.unit}</TableCell>
+                                              <TableCell className="px-2 py-0.5" />
+                                              <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">
+                                                {format(item.latestPurchaseDate, "EEE d/M", { locale: sv })} {zone?.departure_time || item.departureTime}
+                                              </TableCell>
+                                            </TableRow>
+                                          );
+                                        })}
+                                      </>
+                                    </CollapsibleContent>
+                                  </>
+                                </Collapsible>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      )}
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* ── TOTAL WEEK VIEW ── */}
+        <TabsContent value="total">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20 text-muted-foreground">Laddar...</div>
+          ) : weeklyTotals.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-10 text-center">Inga produkter att köpa in denna vecka.</p>
+          ) : (
+            <div className="space-y-1">
+              {Array.from(totalsByCategory.entries()).map(([category, items]) => (
+                <Collapsible key={category} defaultOpen>
+                  <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm font-medium hover:bg-muted/50 transition-colors text-foreground">
+                    <ChevronDown className="h-3.5 w-3.5 shrink-0 transition-transform [[data-state=open]>&]:rotate-0 [[data-state=closed]>&]:-rotate-90" />
+                    <span>{category}</span>
                     <Badge variant="outline" className="text-[9px] ml-auto py-0 h-4">
                       {items.length} {items.length === 1 ? "produkt" : "produkter"}
                     </Badge>
-                  )}
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  {items.length === 0 ? (
-                    <p className="pl-10 py-1 text-[10px] text-muted-foreground italic">Inga produkter</p>
-                  ) : (
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead className="h-6 px-2 pl-10 text-[10px]">Produkt</TableHead>
-                          <TableHead className="h-6 px-2 text-[10px] text-right w-[80px]">Totalt</TableHead>
+                          <TableHead className="h-6 px-2 text-[10px] text-right w-[100px]">Total vecka</TableHead>
                           <TableHead className="h-6 px-2 text-[10px] w-[80px]">Butiker</TableHead>
-                          <TableHead className="h-6 px-2 text-[10px] w-[120px]">
-                            {view === "purchase" ? "Avgång" : "Senast inköp"}
-                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {items.map((item, i) => {
-                          const isUrgent = view === "purchase" && isSameDay(item.latestPurchaseDate, new Date());
-                          return (
-                            <Collapsible key={`${dayIndex}-${item.productName}-${i}`} asChild>
-                              <>
-                                <CollapsibleTrigger asChild>
-                                  <TableRow
-                                    className={`cursor-pointer hover:bg-muted/50 ${isUrgent ? "bg-destructive/5" : ""}`}
-                                  >
-                                    <TableCell className="px-2 pl-10 py-0.5 text-xs">
-                                      <span className="flex items-center gap-1">
-                                        <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
-                                        {item.productName}
-                                      </span>
-                                    </TableCell>
-                                    <TableCell className="px-2 py-0.5 text-xs text-right font-medium">{item.totalQuantity} {item.unit}</TableCell>
-                                    <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">{item.shops.length} butik{item.shops.length > 1 ? "er" : ""}</TableCell>
-                                    <TableCell className="px-2 py-0.5">
-                                      <span className="text-[10px] text-muted-foreground">
-                                        {view === "purchase"
-                                          ? `${format(item.latestPurchaseDate, "EEE d/M", { locale: sv })} ${item.departureTime}`
-                                          : format(item.latestPurchaseDate, "EEE d/M", { locale: sv })}
-                                      </span>
-                                    </TableCell>
-                                  </TableRow>
-                                </CollapsibleTrigger>
-                                <CollapsibleContent asChild>
-                                  <>
-                                    {item.shops.map((shop) => {
-                                      const zone = zoneMap.get(shop.zoneKey);
-                                      return (
-                                        <TableRow key={shop.name} className="bg-muted/30 border-0">
-                                          <TableCell className="px-2 pl-14 py-0.5 text-[10px] text-muted-foreground">
-                                            <Badge variant={(zone?.badge_color || "default") as any} className="text-[9px] py-0">
-                                              {shop.name}
-                                            </Badge>
-                                          </TableCell>
-                                          <TableCell className="px-2 py-0.5 text-[10px] text-right text-muted-foreground">{shop.quantity} {item.unit}</TableCell>
-                                          <TableCell className="px-2 py-0.5" />
-                                        <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">
-                                          {format(item.latestPurchaseDate, "EEE d/M", { locale: sv })} {zone?.departure_time || item.departureTime}
+                        {items.map((item) => (
+                          <Collapsible key={item.productName} asChild>
+                            <>
+                              <CollapsibleTrigger asChild>
+                                <TableRow className="cursor-pointer hover:bg-muted/50">
+                                  <TableCell className="px-2 pl-10 py-0.5 text-xs">
+                                    <span className="flex items-center gap-1">
+                                      <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
+                                      {item.productName}
+                                    </span>
+                                  </TableCell>
+                                  <TableCell className="px-2 py-0.5 text-xs text-right font-medium">{item.totalQuantity} {item.unit}</TableCell>
+                                  <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">{item.shops.length} butik{item.shops.length > 1 ? "er" : ""}</TableCell>
+                                </TableRow>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent asChild>
+                                <>
+                                  {item.shops.map((shop) => {
+                                    const zone = zoneMap.get(shop.zoneKey);
+                                    return (
+                                      <TableRow key={shop.name} className="bg-muted/30 border-0">
+                                        <TableCell className="px-2 pl-14 py-0.5 text-[10px] text-muted-foreground">
+                                          <Badge variant={(zone?.badge_color || "default") as any} className="text-[9px] py-0">
+                                            {shop.name}
+                                          </Badge>
                                         </TableCell>
-                                        </TableRow>
-                                      );
-                                    })}
-                                  </>
-                                </CollapsibleContent>
-                              </>
-                            </Collapsible>
-                          );
-                        })}
+                                        <TableCell className="px-2 py-0.5 text-[10px] text-right text-muted-foreground">{shop.quantity} {item.unit}</TableCell>
+                                        <TableCell className="px-2 py-0.5" />
+                                      </TableRow>
+                                    );
+                                  })}
+                                </>
+                              </CollapsibleContent>
+                            </>
+                          </Collapsible>
+                        ))}
                       </TableBody>
                     </Table>
-                  )}
-                </CollapsibleContent>
-              </Collapsible>
-            );
-          })}
-        </div>
-      )}
+                  </CollapsibleContent>
+                </Collapsible>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Summary */}
       {!isLoading && schedule.length > 0 && (
