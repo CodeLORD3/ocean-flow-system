@@ -564,7 +564,7 @@ function ReportSection({
                   <AlertDialogHeader>
                     <AlertDialogTitle>Bekräfta inköp</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Du är på väg att låsa <strong>{report.file_name}</strong> med {lines.length} rader
+                      Du är på väg att låsa <strong>{displayName}</strong> med {lines.length} rader
                       och ett totalt värde på{" "}
                       <strong>{sectionTotal.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr</strong>.
                       <br /><br />
