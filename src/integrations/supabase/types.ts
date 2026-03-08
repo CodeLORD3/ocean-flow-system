@@ -662,8 +662,11 @@ export type Database = {
           line_total: number | null
           product_id: string | null
           product_name: string
+          purchase_date: string | null
           quantity: number
           report_id: string
+          status: string
+          supplier_name: string | null
           unit: string | null
           unit_price: number | null
         }
@@ -673,8 +676,11 @@ export type Database = {
           line_total?: number | null
           product_id?: string | null
           product_name: string
+          purchase_date?: string | null
           quantity?: number
           report_id: string
+          status?: string
+          supplier_name?: string | null
           unit?: string | null
           unit_price?: number | null
         }
@@ -684,8 +690,11 @@ export type Database = {
           line_total?: number | null
           product_id?: string | null
           product_name?: string
+          purchase_date?: string | null
           quantity?: number
           report_id?: string
+          status?: string
+          supplier_name?: string | null
           unit?: string | null
           unit_price?: number | null
         }
