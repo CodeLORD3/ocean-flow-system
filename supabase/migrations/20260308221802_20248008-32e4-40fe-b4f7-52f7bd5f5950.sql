@@ -1,0 +1,1 @@
+ALTER TABLE public.product_stock_locations DROP CONSTRAINT product_stock_locations_product_id_location_id_key;
