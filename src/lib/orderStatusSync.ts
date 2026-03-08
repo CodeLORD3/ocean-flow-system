@@ -4,193 +4,169 @@ const GROSSIST_FLYTANDE_ID = "5da57ad6-f72c-4a84-9873-87174d194e10";
 
 /**
  * When a product enters Grossist Flytande, find pending order lines
- * for that product and set their status to "Behandlas".
+ * and re-allocate stock to them based on priority.
  */
 export async function markOrderLinesBehandlas(productIds: string[]) {
   if (!productIds.length) return;
-
-  // Find open shop_order_lines for these products where status is empty or 'Ny'
-  // Only for non-archived orders
-  const { data: orderLines } = await supabase
-    .from("shop_order_lines")
-    .select("id, status, shop_order_id, product_id, shop_orders!inner(status)")
-    .in("product_id", productIds)
-    .in("status", ["", "Ny"])
-    .not("shop_orders.status", "in", '("Arkiverad","Klar / Levererad")');
-
-  if (!orderLines?.length) return;
-
-  const lineIds = orderLines.map((l) => l.id);
-  await supabase
-    .from("shop_order_lines")
-    .update({ status: "Behandlas" })
-    .in("id", lineIds);
-
-  // Also update parent order status
-  const orderIds = [...new Set(orderLines.map((l) => l.shop_order_id))];
-  for (const orderId of orderIds) {
-    await supabase
-      .from("shop_orders")
-      .update({ status: "Behandlas" })
-      .eq("id", orderId)
-      .in("status", ["Ny"]);
-  }
+  await syncBehandlasFromStock();
 }
 
 /**
  * Sync ALL pending order lines against current Grossist Flytande stock.
- * Any order line whose product exists in Grossist Flytande gets set to "Behandlas".
- * Call this on page load or after order creation.
+ * Only allocates "Behandlas" if the full ordered quantity is available.
+ * Sorts by priority (desc) then created_at (asc).
  */
 export async function syncBehandlasFromStock() {
-  // Get all products currently in Grossist Flytande
+  // 1) Get all products currently in Grossist Flytande
   const { data: stock } = await supabase
-    .from("product_stock_locations")
-    .select("product_id")
-    .eq("location_id", GROSSIST_FLYTANDE_ID)
-    .gt("quantity", 0);
-
-  if (!stock?.length) return;
-
-  const productIdsInStock = stock.map((s) => s.product_id);
-
-  // Find all pending order lines matching these products
-  const { data: orderLines } = await supabase
-    .from("shop_order_lines")
-    .select("id, status, shop_order_id, product_id, shop_orders!inner(status)")
-    .in("product_id", productIdsInStock)
-    .in("status", ["", "Ny"])
-    .not("shop_orders.status", "in", '("Arkiverad","Klar / Levererad")');
-
-  if (!orderLines?.length) return;
-
-  const lineIds = orderLines.map((l) => l.id);
-  await supabase
-    .from("shop_order_lines")
-    .update({ status: "Behandlas" })
-    .in("id", lineIds);
-
-  // Update parent order statuses
-  const orderIds = [...new Set(orderLines.map((l) => l.shop_order_id))];
-  for (const orderId of orderIds) {
-    await supabase
-      .from("shop_orders")
-      .update({ status: "Behandlas" })
-      .eq("id", orderId)
-      .in("status", ["Ny"]);
-  }
-}
-
-/**
- * Reverse sync: revert order lines whose status was set based on stock
- * that no longer exists. For each "Behandlas" order line, check if the product
- * still has quantity > 0 in Grossist Flytande. If not, revert to "Ny".
- * For each "Packad" order line, check if the product still exists in the
- * relevant Pre-location. If not, check Grossist Flytande – if present revert
- * to "Behandlas", otherwise revert to "Ny".
- * Call this after any stock deletion or movement out of Grossist Flytande.
- */
-export async function revertOrderLinesIfStockGone() {
-  // 1) Get all products currently in Grossist Flytande with qty > 0
-  const { data: gfStock } = await supabase
     .from("product_stock_locations")
     .select("product_id, quantity")
     .eq("location_id", GROSSIST_FLYTANDE_ID)
     .gt("quantity", 0);
 
-  const gfProductIds = new Set((gfStock || []).map((s) => s.product_id));
+  const stockMap = new Map<string, number>();
+  for (const s of stock || []) {
+    stockMap.set(s.product_id, (stockMap.get(s.product_id) || 0) + Number(s.quantity));
+  }
 
-  // 2) Get all Pre-location stock
+  // 2) Find all pending order lines (Ny and Behandlas)
+  const { data: orderLines } = await supabase
+    .from("shop_order_lines")
+    .select("id, status, shop_order_id, product_id, quantity_ordered, shop_orders!inner(status, priority, created_at)")
+    .in("status", ["", "Ny", "Behandlas"])
+    .not("shop_orders.status", "in", '("Arkiverad","Klar / Levererad")');
+
+  if (!orderLines?.length) return;
+
+  // Sort order lines by priority (desc) and created_at (asc)
+  const sortedLines = [...orderLines].sort((a, b) => {
+    const aPriority = a.shop_orders.priority || 0;
+    const bPriority = b.shop_orders.priority || 0;
+    if (aPriority !== bPriority) return bPriority - aPriority;
+    return new Date(a.shop_orders.created_at).getTime() - new Date(b.shop_orders.created_at).getTime();
+  });
+
+  const linesToBehandlas: string[] = [];
+  const linesToNy: string[] = [];
+  const affectedOrderIds = new Set<string>();
+
+  for (const line of sortedLines) {
+    const available = stockMap.get(line.product_id) || 0;
+    const qtyOrdered = Number(line.quantity_ordered);
+    if (available >= qtyOrdered) {
+      stockMap.set(line.product_id, available - qtyOrdered);
+      if (line.status !== "Behandlas") {
+        linesToBehandlas.push(line.id);
+        affectedOrderIds.add(line.shop_order_id);
+      }
+    } else {
+      if (line.status === "Behandlas") {
+        linesToNy.push(line.id);
+        affectedOrderIds.add(line.shop_order_id);
+      }
+    }
+  }
+
+  if (linesToBehandlas.length) {
+    await supabase.from("shop_order_lines").update({ status: "Behandlas" }).in("id", linesToBehandlas);
+  }
+  if (linesToNy.length) {
+    await supabase.from("shop_order_lines").update({ status: "Ny" }).in("id", linesToNy);
+  }
+
+  // Update parent order statuses for affected orders
+  for (const orderId of affectedOrderIds) {
+    const { data: allLines } = await supabase.from("shop_order_lines").select("status").eq("shop_order_id", orderId);
+    if (!allLines?.length) continue;
+    
+    const statuses = allLines.map((l) => l.status || "");
+    let newOrderStatus = "Ny";
+    if (statuses.every((s) => s === "Klar / Levererad")) newOrderStatus = "Klar / Levererad";
+    else if (statuses.every((s) => s === "Packad" || s === "Klar / Levererad")) newOrderStatus = "Packad";
+    else if (statuses.some((s) => s === "Behandlas" || s === "Packad" || s === "Klar / Levererad")) newOrderStatus = "Behandlas";
+
+    await supabase.from("shop_orders").update({ status: newOrderStatus }).eq("id", orderId).not("status", "in", '("Arkiverad","Klar / Levererad")');
+  }
+}
+
+/**
+ * Re-evaluates all "Packad" and "Behandlas" order lines against current stock.
+ * If stock is insufficient (quantity < ordered), reverts them to "Ny".
+ */
+export async function revertOrderLinesIfStockGone() {
+  // 1) Get all Pre-location stock
   const { data: preLocations } = await supabase
     .from("storage_locations")
     .select("id, store_id, name")
     .like("name", "Pre-%");
 
-  const preLocationMap = new Map<string, string>(); // location_id -> store_id
+  const preLocationMap = new Map<string, string>();
   for (const loc of preLocations || []) {
     if (loc.store_id) preLocationMap.set(loc.id, loc.store_id);
   }
 
   const preLocationIds = [...preLocationMap.keys()];
-  let preStock: { product_id: string; location_id: string }[] = [];
+  const preStockMap = new Map<string, number>(); // "store_id:product_id" -> quantity
   if (preLocationIds.length) {
     const { data } = await supabase
       .from("product_stock_locations")
-      .select("product_id, location_id")
+      .select("product_id, location_id, quantity")
       .in("location_id", preLocationIds)
       .gt("quantity", 0);
-    preStock = data || [];
-  }
-
-  // Build a set of "store_id:product_id" for quick lookup
-  const preStockSet = new Set(
-    preStock.map((s) => `${preLocationMap.get(s.location_id)}:${s.product_id}`)
-  );
-
-  // 3) Find all "Behandlas" order lines on active orders
-  const { data: behandlasLines } = await supabase
-    .from("shop_order_lines")
-    .select("id, product_id, shop_order_id, shop_orders!inner(status)")
-    .eq("status", "Behandlas")
-    .not("shop_orders.status", "in", '("Arkiverad","Klar / Levererad")');
-
-  // Revert "Behandlas" lines where product is no longer in Grossist Flytande
-  const revertToNyIds: string[] = [];
-  const revertToNyOrderIds = new Set<string>();
-  for (const line of behandlasLines || []) {
-    if (!gfProductIds.has(line.product_id)) {
-      revertToNyIds.push(line.id);
-      revertToNyOrderIds.add(line.shop_order_id);
+    
+    for (const s of data || []) {
+      const storeId = preLocationMap.get(s.location_id);
+      const key = `${storeId}:${s.product_id}`;
+      preStockMap.set(key, (preStockMap.get(key) || 0) + Number(s.quantity));
     }
   }
 
-  if (revertToNyIds.length) {
-    await supabase
-      .from("shop_order_lines")
-      .update({ status: "Ny" })
-      .in("id", revertToNyIds);
-  }
-
-  // 4) Find all "Packad" order lines on active orders
+  // 2) Find all "Packad" order lines
   const { data: packadLines } = await supabase
     .from("shop_order_lines")
-    .select("id, product_id, shop_order_id, shop_orders!inner(status, store_id)")
+    .select("id, product_id, quantity_ordered, shop_order_id, shop_orders!inner(status, store_id, priority, created_at)")
     .eq("status", "Packad")
     .not("shop_orders.status", "in", '("Arkiverad","Klar / Levererad")');
 
-  const revertPackadToBehandlasIds: string[] = [];
-  const revertPackadToNyIds: string[] = [];
+  // Sort them
+  const sortedPackadLines = [...(packadLines || [])].sort((a, b) => {
+    const aPriority = a.shop_orders.priority || 0;
+    const bPriority = b.shop_orders.priority || 0;
+    if (aPriority !== bPriority) return bPriority - aPriority;
+    return new Date(a.shop_orders.created_at).getTime() - new Date(b.shop_orders.created_at).getTime();
+  });
+
+  const linesToRevertFromPackad: string[] = [];
   const affectedOrderIds = new Set<string>();
 
-  for (const line of packadLines || []) {
+  for (const line of sortedPackadLines) {
     const storeId = (line as any).shop_orders?.store_id;
-    const inPreLocation = preStockSet.has(`${storeId}:${line.product_id}`);
-    if (!inPreLocation) {
+    const key = `${storeId}:${line.product_id}`;
+    const available = preStockMap.get(key) || 0;
+    const qtyOrdered = Number(line.quantity_ordered);
+
+    if (available >= qtyOrdered) {
+      preStockMap.set(key, available - qtyOrdered); // Consume it
+    } else {
+      linesToRevertFromPackad.push(line.id);
       affectedOrderIds.add(line.shop_order_id);
-      if (gfProductIds.has(line.product_id)) {
-        revertPackadToBehandlasIds.push(line.id);
-      } else {
-        revertPackadToNyIds.push(line.id);
-      }
     }
   }
 
-  if (revertPackadToBehandlasIds.length) {
+  if (linesToRevertFromPackad.length) {
     await supabase
       .from("shop_order_lines")
-      .update({ status: "Behandlas" })
-      .in("id", revertPackadToBehandlasIds);
-  }
-  if (revertPackadToNyIds.length) {
-    await supabase
-      .from("shop_order_lines")
-      .update({ status: "Ny" })
-      .in("id", revertPackadToNyIds);
+      .update({ status: "Ny" }) // Temporarily set to Ny
+      .in("id", linesToRevertFromPackad);
   }
 
-  // 5) Recalculate parent order statuses for all affected orders
-  const allAffectedOrderIds = new Set([...revertToNyOrderIds, ...affectedOrderIds]);
-  for (const orderId of allAffectedOrderIds) {
+  // 3) Run syncBehandlasFromStock to re-allocate Grossist Flytande stock for ALL "Ny" and "Behandlas" lines
+  // This handles reverting "Behandlas" lines if Grossist Flytande stock dropped, 
+  // AND potentially promotes lines we just reverted from Packad to Behandlas if they still have Grossist Flytande stock.
+  await syncBehandlasFromStock(); 
+
+  // Update order statuses for orders that had lines reverted from Packad
+  for (const orderId of affectedOrderIds) {
     const { data: allLines } = await supabase
       .from("shop_order_lines")
       .select("status")
@@ -199,15 +175,13 @@ export async function revertOrderLinesIfStockGone() {
     if (!allLines?.length) continue;
 
     const statuses = allLines.map((l) => l.status || "");
-    let newOrderStatus: string;
+    let newOrderStatus = "Ny";
     if (statuses.every((s) => s === "Klar / Levererad")) {
       newOrderStatus = "Klar / Levererad";
     } else if (statuses.every((s) => s === "Packad" || s === "Klar / Levererad")) {
       newOrderStatus = "Packad";
     } else if (statuses.some((s) => s === "Behandlas" || s === "Packad" || s === "Klar / Levererad")) {
       newOrderStatus = "Behandlas";
-    } else {
-      newOrderStatus = "Ny";
     }
 
     await supabase
@@ -220,13 +194,12 @@ export async function revertOrderLinesIfStockGone() {
 
 /**
  * When products move from Grossist Flytande to a Pre-location,
- * find matching order lines for the store linked to that Pre-location
- * and set their status to "Packad".
+ * check if the Pre-location has enough stock to cover the full order line.
+ * If so, mark it "Packad".
  */
 export async function markOrderLinesPackad(productIds: string[], targetLocationId: string) {
   if (!productIds.length) return;
 
-  // Get the store linked to this Pre-location
   const { data: location } = await supabase
     .from("storage_locations")
     .select("store_id, name")
@@ -234,36 +207,78 @@ export async function markOrderLinesPackad(productIds: string[], targetLocationI
     .single();
 
   if (!location?.store_id) return;
-  // Only apply to Pre-locations
   if (!location.name.startsWith("Pre-")) return;
 
-  // Find order lines for these products belonging to orders for this store
+  // Get stock in this Pre-location for these products
+  const { data: preStock } = await supabase
+    .from("product_stock_locations")
+    .select("product_id, quantity")
+    .eq("location_id", targetLocationId)
+    .in("product_id", productIds)
+    .gt("quantity", 0);
+
+  const stockMap = new Map<string, number>();
+  for (const s of preStock || []) {
+    stockMap.set(s.product_id, (stockMap.get(s.product_id) || 0) + Number(s.quantity));
+  }
+
+  // Find order lines for these products
   const { data: orderLines } = await supabase
     .from("shop_order_lines")
-    .select("id, status, shop_order_id, product_id, shop_orders!inner(store_id)")
+    .select("id, status, shop_order_id, product_id, quantity_ordered, shop_orders!inner(store_id, priority, created_at)")
     .in("product_id", productIds)
     .eq("shop_orders.store_id", location.store_id)
     .in("status", ["", "Ny", "Behandlas"]);
 
   if (!orderLines?.length) return;
 
-  const lineIds = orderLines.map((l) => l.id);
+  // Sort them
+  const sortedLines = [...orderLines].sort((a, b) => {
+    const aPriority = a.shop_orders.priority || 0;
+    const bPriority = b.shop_orders.priority || 0;
+    if (aPriority !== bPriority) return bPriority - aPriority;
+    return new Date(a.shop_orders.created_at).getTime() - new Date(b.shop_orders.created_at).getTime();
+  });
+
+  const linesToPack: string[] = [];
+  const affectedOrderIds = new Set<string>();
+
+  for (const line of sortedLines) {
+    const available = stockMap.get(line.product_id) || 0;
+    const qtyOrdered = Number(line.quantity_ordered);
+    if (available >= qtyOrdered) {
+      stockMap.set(line.product_id, available - qtyOrdered);
+      linesToPack.push(line.id);
+      affectedOrderIds.add(line.shop_order_id);
+    }
+  }
+
+  if (!linesToPack.length) return;
+
   await supabase
     .from("shop_order_lines")
     .update({ status: "Packad" })
-    .in("id", lineIds);
+    .in("id", linesToPack);
 
-  // Check if ALL lines in the order are now "Packad" to update order status
-  const orderIds = [...new Set(orderLines.map((l) => l.shop_order_id))];
-  for (const orderId of orderIds) {
+  // Update order status
+  for (const orderId of affectedOrderIds) {
     const { data: allLines } = await supabase
       .from("shop_order_lines")
       .select("status")
       .eq("shop_order_id", orderId);
 
-    const allPacked = allLines?.every((l) => l.status === "Packad" || l.status === "Klar / Levererad");
-    if (allPacked) {
-      await supabase.from("shop_orders").update({ status: "Packad" }).eq("id", orderId);
+    if (!allLines?.length) continue;
+    
+    const statuses = allLines.map((l) => l.status || "");
+    let newOrderStatus = "Ny";
+    if (statuses.every((s) => s === "Klar / Levererad")) {
+      newOrderStatus = "Klar / Levererad";
+    } else if (statuses.every((s) => s === "Packad" || s === "Klar / Levererad")) {
+      newOrderStatus = "Packad";
+    } else if (statuses.some((s) => s === "Behandlas" || s === "Packad" || s === "Klar / Levererad")) {
+      newOrderStatus = "Behandlas";
     }
+
+    await supabase.from("shop_orders").update({ status: newOrderStatus }).eq("id", orderId);
   }
 }
