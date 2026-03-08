@@ -668,6 +668,7 @@ export default function PurchaseReporting() {
                         onSave={(updates) => updateLine.mutate({ id: l.id, ...updates } as any)}
                         onDelete={() => deleteLine.mutate(l.id)}
                         products={products}
+                        suppliers={suppliers}
                       />
                     ))}
                   </TableBody>
