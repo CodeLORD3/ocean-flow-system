@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { markOrderLinesPackad } from "@/lib/orderStatusSync";
+import { markOrderLinesPackad, revertOrderLinesIfStockGone } from "@/lib/orderStatusSync";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
@@ -174,6 +174,8 @@ export default function Inventory() {
       // Auto-update order statuses to "Packad" if moving to a Pre-location
       const movedProductIds = items.map((i: any) => i.product_id);
       await markOrderLinesPackad(movedProductIds, targetLocationId);
+      // Reverse sync: revert order lines if stock no longer supports their status
+      await revertOrderLinesIfStockGone();
 
       clearSelection(activeLocationId);
       invalidateStock();
@@ -200,8 +202,11 @@ export default function Inventory() {
         });
         await supabase.from("product_stock_locations").delete().eq("id", item.id);
       }
+      // Reverse sync: revert order lines if stock no longer supports their status
+      await revertOrderLinesIfStockGone();
       clearSelection(activeLocationId);
       invalidateStock();
+      queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
       toast({ title: "Raderat", description: `${items.length} produkt(er) raderade` });
       setDeleteDialogOpen(false);
       setDeleteReason("");
