@@ -259,6 +259,56 @@ export default function Inventory() {
     setActionLoading(false);
   };
 
+  const handleTransform = async () => {
+    if (!transformTargetProduct || !transformNewWeight) return;
+    setActionLoading(true);
+    try {
+      const items = getSelectedStockItems(activeLocationId);
+      const item = items[0];
+      const newWeight = Number(transformNewWeight);
+      const oldWeight = Number(item.quantity);
+      if (newWeight <= 0 || newWeight >= oldWeight) {
+        toast({ title: "Ogiltig vikt", description: "Ny vikt måste vara mindre än nuvarande.", variant: "destructive" });
+        setActionLoading(false);
+        return;
+      }
+      const weightLoss = oldWeight - newWeight;
+      const itemCost = Number(item.unit_cost) || 0;
+      // Cost per kg stays the same for original, but total cost transfers to new product
+      const totalCostTransfer = oldWeight * itemCost; // total value of original
+      const newUnitCost = newWeight > 0 ? totalCostTransfer / newWeight : 0; // cost concentrates into less weight
+
+      // Remove the original stock row
+      await supabase.from("product_stock_locations").delete().eq("id", item.id);
+
+      // Insert transformed product at the same location
+      await supabase.from("product_stock_locations").insert({
+        product_id: transformTargetProduct,
+        location_id: item.location_id,
+        quantity: newWeight,
+        unit_cost: newUnitCost,
+      });
+
+      // Log the weight loss
+      await supabase.from("deleted_stock_log").insert({
+        product_id: item.product_id,
+        location_id: item.location_id,
+        quantity: weightLoss,
+        reason: `Omvandling: ${item.products?.name} → ${products.find(p => p.id === transformTargetProduct)?.name || "okänd"} (svinn ${weightLoss.toFixed(2)} ${item.products?.unit || "kg"})`,
+      });
+
+      clearSelection(activeLocationId);
+      invalidateStock();
+      toast({ title: "Omvandlad", description: `${item.products?.name} → ${products.find(p => p.id === transformTargetProduct)?.name}, ${newWeight} ${item.products?.unit || "kg"} (svinn: ${weightLoss.toFixed(2)})` });
+      setTransformDialogOpen(false);
+      setTransformTargetProduct("");
+      setTransformNewWeight("");
+      setTransformProductSearch("");
+    } catch (err: any) {
+      toast({ title: "Fel", description: err.message, variant: "destructive" });
+    }
+    setActionLoading(false);
+
   // Compute aggregated stock: "Total Butik" should include stock from all other locations in the same store
   const storeStock = useMemo(() => {
     let filtered = allStock;
