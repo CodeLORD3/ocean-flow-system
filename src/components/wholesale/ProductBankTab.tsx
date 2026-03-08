@@ -17,7 +17,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
-const CATEGORIES = ["VARMKÖK", "KALLKÖK", "FISK / SKALDJUR"];
+const CATEGORIES = ["Färsk Fisk", "Skaldjur", "Varmkök", "Rökta Produkter", "Såser & Röror", "Frukt & Grönt"];
 
 export default function ProductBankTab() {
   const { toast } = useToast();

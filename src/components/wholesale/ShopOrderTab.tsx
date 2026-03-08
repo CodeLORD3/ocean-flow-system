@@ -18,7 +18,7 @@ import { useShopOrders, useCreateShopOrder } from "@/hooks/useShopOrders";
 import { useStores } from "@/hooks/useStores";
 import { useProducts } from "@/hooks/useProducts";
 
-const CATEGORIES = ["VARMKÖK", "KALLKÖK", "FISK / SKALDJUR"];
+const CATEGORIES = ["Färsk Fisk", "Skaldjur", "Varmkök", "Rökta Produkter", "Såser & Röror", "Frukt & Grönt"];
 
 function getWeekNumber(d: Date) {
   const dt = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));

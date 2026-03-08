@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useShopOrders } from "@/hooks/useShopOrders";
 import { useStores } from "@/hooks/useStores";
 
-const CATEGORIES = ["VARMKÖK", "KALLKÖK", "FISK / SKALDJUR"];
+const CATEGORIES = ["Färsk Fisk", "Skaldjur", "Varmkök", "Rökta Produkter", "Såser & Röror", "Frukt & Grönt"];
 
 export default function FakturaChTab() {
   const { data: stores = [] } = useStores();
