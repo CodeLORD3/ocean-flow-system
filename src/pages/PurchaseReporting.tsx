@@ -173,12 +173,59 @@ function EditableRow({
         />
       </TableCell>
       <TableCell className="py-1 px-2">
-        <Input
-          defaultValue={line.supplier_name || ""}
-          onChange={(e) => commitField("supplier_name", e.target.value || null)}
-          className="h-7 text-xs border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1.5 w-24"
-          placeholder="—"
-        />
+        <Popover open={supplierOpen} onOpenChange={setSupplierOpen}>
+          <PopoverTrigger asChild>
+            <div className="relative">
+              <Input
+                defaultValue={line.supplier_name || ""}
+                onChange={(e) => {
+                  setSupplierSearch(e.target.value);
+                  if (e.target.value.length > 0 && !supplierOpen) setSupplierOpen(true);
+                  if (e.target.value.length === 0) setSupplierOpen(false);
+                  commitField("supplier_name", e.target.value || null);
+                }}
+                onFocus={(e) => {
+                  setSupplierSearch(e.target.value);
+                  if (e.target.value.length > 0) setSupplierOpen(true);
+                }}
+                className="h-7 text-xs border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1.5 w-28"
+                placeholder="Sök leverantör..."
+              />
+            </div>
+          </PopoverTrigger>
+          {supplierSearch.length > 0 && (
+            <PopoverContent className="p-0 w-[220px]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+              <Command shouldFilter={false}>
+                <CommandList>
+                  <CommandEmpty className="py-2 text-xs text-center">Ingen träff</CommandEmpty>
+                  <CommandGroup>
+                    {suppliers
+                      .filter((s: any) => s.name.toLowerCase().includes(supplierSearch.toLowerCase()))
+                      .slice(0, 10)
+                      .map((s: any) => (
+                        <CommandItem
+                          key={s.id}
+                          onSelect={() => {
+                            onSave({ supplier_name: s.name });
+                            setSupplierOpen(false);
+                            setSupplierSearch("");
+                          }}
+                          className="py-1"
+                        >
+                          <div className="flex flex-col">
+                            <span className="text-xs">{s.name}</span>
+                            {s.supplier_type && (
+                              <span className="text-[10px] text-muted-foreground">{s.supplier_type}</span>
+                            )}
+                          </div>
+                        </CommandItem>
+                      ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          )}
+        </Popover>
       </TableCell>
       <TableCell className="py-1 px-2">
         <Select defaultValue={line.status} onValueChange={(v) => onSave({ status: v })}>
