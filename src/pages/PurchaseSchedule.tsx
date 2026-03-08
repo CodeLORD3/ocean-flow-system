@@ -111,10 +111,22 @@ export default function PurchaseSchedule() {
   const { data: stores, isLoading: storesLoading } = useStores();
   const { data: transportSchedules, isLoading: schedulesLoading } = useTransportSchedules();
   const updateSchedule = useUpdateTransportSchedule();
+  const createChange = useCreateChangeRequest();
+  const { data: allProducts } = useQuery({
+    queryKey: ["products_active"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("products").select("id, name, unit").eq("active", true).order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
   const [weekOffset, setWeekOffset] = useState(0);
   const [view, setView] = useState<"purchase" | "delivery">("purchase");
   const [tab, setTab] = useState<"daily" | "total">("daily");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [altDialogItem, setAltDialogItem] = useState<any>(null);
+  const [altProductId, setAltProductId] = useState<string>("");
+  const [altSearch, setAltSearch] = useState("");
 
   const weekStart = useMemo(() => {
     const now = new Date();
