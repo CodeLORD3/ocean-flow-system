@@ -521,6 +521,7 @@ export default function Products() {
                    <th className="p-3 text-left font-medium text-muted-foreground">SKU</th>
                    <th className="p-3 text-left font-medium text-muted-foreground">KATEGORI</th>
                    <th className="p-3 text-left font-medium text-muted-foreground">ENHET</th>
+                   <th className="p-3 text-left font-medium text-muted-foreground">PRODUCENT</th>
                    {isWholesale && <th className="p-3 text-right font-medium text-muted-foreground">PROD.PRIS</th>}
                    <th className="p-3 text-right font-medium text-muted-foreground">{isWholesale ? "GROSSISTPRIS" : "PRIS"}</th>
                    {isWholesale && <th className="p-3 text-right font-medium text-muted-foreground">MARGINAL</th>}
