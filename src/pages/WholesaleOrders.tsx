@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Search, Clock, CheckCircle2, Truck, XCircle, Package,
-  Eye, ListChecks, ChefHat, AlertTriangle, Archive,
+  Eye, ListChecks, ChefHat, AlertTriangle, Archive, Bell, Check, X,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ import { useShopOrders } from "@/hooks/useShopOrders";
 import { useStores } from "@/hooks/useStores";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useAllPendingChangeRequests, useResolveChangeRequest } from "@/hooks/useOrderChangeRequests";
 
 const statusColor: Record<string, string> = {
   Ny: "bg-primary/10 text-primary border-primary/20",
@@ -89,6 +90,8 @@ export default function WholesaleOrders() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [reportViewOrder, setReportViewOrder] = useState<any>(null);
   const [archiveConfirmOrder, setArchiveConfirmOrder] = useState<any>(null);
+  const { data: pendingChanges = [] } = useAllPendingChangeRequests();
+  const resolveChange = useResolveChangeRequest();
 
   // Fetch all receiving reports
   const { data: allReports = [] } = useQuery({
@@ -265,6 +268,10 @@ export default function WholesaleOrders() {
           <TabsTrigger value="per-order" className="text-xs h-7 gap-1"><Eye className="h-3 w-3" /> Per order</TabsTrigger>
           <TabsTrigger value="total" className="text-xs h-7 gap-1"><ListChecks className="h-3 w-3" /> Totalvy</TabsTrigger>
           <TabsTrigger value="archived" className="text-xs h-7 gap-1"><Archive className="h-3 w-3" /> Arkiverade ({archivedOrders.length})</TabsTrigger>
+          <TabsTrigger value="changes" className="text-xs h-7 gap-1 relative">
+            <Bell className="h-3 w-3" /> Ändringar ({pendingChanges.length})
+            {pendingChanges.length > 0 && <span className="absolute -top-1 -right-1 h-3 w-3 bg-warning rounded-full animate-pulse" />}
+          </TabsTrigger>
         </TabsList>
 
         {/* TOTAL VIEW — aggregated products across all orders */}
@@ -497,6 +504,66 @@ export default function WholesaleOrders() {
                   </tbody>
                 </table>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        {/* CHANGE REQUESTS */}
+        <TabsContent value="changes">
+          <Card className="shadow-card">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-heading">Ändringsförfrågningar från butiker</CardTitle>
+              <CardDescription className="text-xs">
+                Butiker har begärt ändringar på sina ordrar. Godkänn eller neka varje ändring.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {pendingChanges.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-8 text-center">Inga väntande ändringsförfrågningar.</p>
+              ) : (
+                <div className="space-y-2">
+                  {pendingChanges.map((cr: any) => (
+                    <div key={cr.id} className="border border-warning/30 bg-warning/5 rounded-md p-3 text-xs flex items-start justify-between gap-3">
+                      <div className="flex-1 space-y-0.5">
+                        <div className="font-medium text-foreground">
+                          {cr.shop_orders?.stores?.name || "Okänd butik"} · {cr.shop_orders?.order_week}
+                        </div>
+                        <div className="text-muted-foreground">
+                          {cr.change_type === "quantity_change" && (
+                            <>Ändra antal: <span className="font-mono">{cr.old_value}</span> → <span className="font-mono font-bold text-foreground">{cr.new_value}</span> {cr.unit}</>
+                          )}
+                          {cr.change_type === "add_line" && (
+                            <>Ny produkt: <span className="font-medium text-foreground">{cr.products?.name}</span> — {cr.new_value} {cr.unit}</>
+                          )}
+                          {cr.change_type === "delivery_date" && (
+                            <>Leveransdatum: <span className="font-mono">{cr.old_value}</span> → <span className="font-mono font-bold text-foreground">{cr.new_value}</span></>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground/60">{new Date(cr.created_at).toLocaleString("sv-SE")}</div>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-[10px] gap-1 text-success border-success/30 hover:bg-success/10"
+                          onClick={() => resolveChange.mutate({ id: cr.id, status: "Godkänd" })}
+                          disabled={resolveChange.isPending}
+                        >
+                          <Check className="h-3 w-3" /> Godkänn
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+                          onClick={() => resolveChange.mutate({ id: cr.id, status: "Nekad" })}
+                          disabled={resolveChange.isPending}
+                        >
+                          <X className="h-3 w-3" /> Neka
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
