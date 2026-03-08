@@ -20,9 +20,6 @@ import { toast } from "sonner";
 const WEEKDAYS = ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag", "Söndag"];
 const WEEKDAY_OPTIONS = WEEKDAYS.map((name, i) => ({ value: i + 1, label: name }));
 
-function jsToWeekday(jsDay: number): number {
-  return jsDay === 0 ? 7 : jsDay;
-}
 
 /** For a given delivery date, find the departure date = the transport zone's
  *  departure weekday in the SAME ISO week as the delivery date. */
