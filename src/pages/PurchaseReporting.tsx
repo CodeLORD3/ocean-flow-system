@@ -297,7 +297,7 @@ function EditableRow({
           </SelectContent>
         </Select>
       </TableCell>
-      <TableCell className="py-1 px-1 w-[70px]">
+      <TableCell className="py-0.5 px-1 w-[58px]">
         <Input
           type="number"
           defaultValue={line.unit_price ?? 0}
