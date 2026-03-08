@@ -568,6 +568,8 @@ export default function ShopOrders() {
               products={products}
               onClose={() => setSelectedOrder(null)}
               toast={toast}
+              allowedWeekdays={allowedWeekdays}
+              isDateDisabled={isDateDisabled}
             />
           )}
         </DialogContent>
