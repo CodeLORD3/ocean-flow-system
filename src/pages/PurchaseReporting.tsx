@@ -369,10 +369,10 @@ function EditableRow({
           className="h-6 text-[11px] border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 w-[78px]"
         />
       </TableCell>
-      <TableCell className="py-1 px-1 w-[110px]">
+      <TableCell className="py-0.5 px-1 w-[90px]">
         <div className="flex items-center gap-0.5">
           <Select defaultValue={line.report_id} onValueChange={(v) => onSave({ report_id: v })}>
-            <SelectTrigger className="h-7 w-[90px] text-xs border-transparent bg-transparent hover:border-input">
+            <SelectTrigger className="h-6 w-[72px] text-[11px] border-transparent bg-transparent hover:border-input">
               <SelectValue placeholder="—" />
             </SelectTrigger>
             <SelectContent>
