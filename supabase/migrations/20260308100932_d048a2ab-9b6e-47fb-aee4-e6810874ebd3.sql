@@ -1,0 +1,1 @@
+ALTER TABLE public.products ADD COLUMN parent_product_id uuid REFERENCES public.products(id) ON DELETE SET NULL DEFAULT NULL;
