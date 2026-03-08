@@ -260,7 +260,7 @@ export default function Products() {
                 {filtered.map(p => {
                    const barcode = (p as any).barcode;
                    return (
-                      <tr key={p.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
+                      <tr key={p.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors h-9">
                         <td className="p-3 font-medium text-foreground">{p.name}</td>
                         <td className="p-3 font-mono text-muted-foreground text-[10px]">{p.sku}</td>
                         <td className="p-3"><Badge variant="outline" className="text-[10px]">{p.category}</Badge></td>
