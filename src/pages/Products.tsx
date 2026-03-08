@@ -395,23 +395,21 @@ export default function Products() {
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs">Produktionspris (SEK)</Label>
-                <Input value={form.cost_price} onChange={e => setField("cost_price", e.target.value)} type="number" step="0.01" className="h-8 text-xs" />
+                <Label className="text-xs text-muted-foreground">Produktionspris (SEK)</Label>
+                <Input value={form.cost_price} readOnly disabled type="number" className="h-8 text-xs bg-muted/50 cursor-not-allowed" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Grossistpris (SEK) <span className="text-muted-foreground">+35%</span></Label>
-                <Input value={form.wholesale_price} onChange={e => setField("wholesale_price", e.target.value)} type="number" step="0.01" className="h-8 text-xs bg-muted/50" />
+                <Label className="text-xs text-muted-foreground">Grossistpris (SEK)</Label>
+                <Input value={form.wholesale_price} readOnly disabled type="number" className="h-8 text-xs bg-muted/50 cursor-not-allowed" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Rek. butikspris (SEK)</Label>
-                <Input value={form.retail_suggested} onChange={e => setField("retail_suggested", e.target.value)} type="number" step="0.01" className="h-8 text-xs" />
+                <Label className="text-xs text-muted-foreground">Rek. butikspris (SEK)</Label>
+                <Input value={form.retail_suggested} readOnly disabled type="number" className="h-8 text-xs bg-muted/50 cursor-not-allowed" />
               </div>
             </div>
-            {form.cost_price && (
-              <p className="text-[10px] text-muted-foreground">
-                💡 Produktionspris {Number(form.cost_price).toFixed(2)} × 1.35 = Grossistpris {(Number(form.cost_price) * 1.35).toFixed(2)} SEK
-              </p>
-            )}
+            <p className="text-[10px] text-muted-foreground">
+              🔒 Priser hanteras under <span className="font-medium">Prissättning</span>
+            </p>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">HS-kod</Label>
