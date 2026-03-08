@@ -128,6 +128,7 @@ function OrderTable({ orders, onSelect, emptyMsg }: { orders: any[]; onSelect: (
                     <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
                     <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                     <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
+                    <td className="p-3 text-muted-foreground">{o.desired_delivery_date || "–"}</td>
                     <td className="p-3 text-right text-foreground">{lines.length}</td>
                     <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
                       {lines.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
