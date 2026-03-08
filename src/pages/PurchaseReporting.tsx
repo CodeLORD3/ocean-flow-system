@@ -802,6 +802,37 @@ export default function PurchaseReporting() {
               </div>
             )}
 
+            {/* Sort/filter row */}
+            {allLines.length > 0 && (
+              <div className="flex items-center gap-2 px-3 py-2 border-b">
+                <span className="text-xs text-muted-foreground shrink-0">Filtrera:</span>
+                <Select value={filterSupplier} onValueChange={setFilterSupplier}>
+                  <SelectTrigger className="h-7 text-xs w-[160px]"><SelectValue placeholder="Leverantör" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alla leverantörer</SelectItem>
+                    {uniqueSuppliers.map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={filterCategory} onValueChange={setFilterCategory}>
+                  <SelectTrigger className="h-7 text-xs w-[160px]"><SelectValue placeholder="Kategori" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alla kategorier</SelectItem>
+                    {uniqueCategories.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {(filterSupplier !== "all" || filterCategory !== "all") && (
+                  <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setFilterSupplier("all"); setFilterCategory("all"); }}>
+                    Rensa filter
+                  </Button>
+                )}
+                <span className="text-xs text-muted-foreground ml-auto">{filteredLines.length} av {allLines.length} rader</span>
+              </div>
+            )}
+
             <ScrollArea className="flex-1">
               {allLines.length === 0 ? (
                 <p className="text-muted-foreground text-sm text-center py-16">
@@ -822,7 +853,7 @@ export default function PurchaseReporting() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {allLines.map((l) => (
+                    {filteredLines.map((l) => (
                       <EditableRow
                         key={l.id}
                         line={l}
