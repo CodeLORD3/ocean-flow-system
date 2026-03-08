@@ -1,17 +1,22 @@
-import { useMemo } from "react";
-import { BarChart3 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { BarChart3, ArrowUpDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useShopOrders } from "@/hooks/useShopOrders";
 import { useStores } from "@/hooks/useStores";
+import { useCategories } from "@/hooks/useCategories";
 
-const CATEGORIES = ["Färsk Fisk", "Skaldjur", "Varmkök", "Rökta Produkter", "Såser & Röror", "Frukt & Grönt"];
+const DEFAULT_CATEGORIES = ["Färsk Fisk", "Skaldjur", "Varmkök", "Rökta Produkter", "Såser & Röror", "Frukt & Grönt"];
 
 export default function TtottiiiTab() {
   const { data: orders = [], isLoading } = useShopOrders();
   const { data: stores = [] } = useStores();
+  const { data: dbCategories = [] } = useCategories();
+  const [filterCategory, setFilterCategory] = useState<string>("all");
 
+  const CATEGORIES = dbCategories.length > 0 ? dbCategories.map(c => c.name) : DEFAULT_CATEGORIES;
   const retailStores = stores.filter(s => !s.is_wholesale);
 
   // Aggregate: per product, sum quantity_ordered per store
@@ -54,12 +59,26 @@ export default function TtottiiiTab() {
   return (
     <Card className="shadow-card">
       <CardHeader className="pb-2">
-        <div className="flex items-center gap-2">
-          <BarChart3 className="h-4 w-4 text-primary" />
-          <div>
-            <CardTitle className="text-sm font-heading">TTOTTIII — Total produktionsöversikt</CardTitle>
-            <CardDescription className="text-xs">Summering av alla butikers beställningar — uppdateras automatiskt</CardDescription>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-primary" />
+            <div>
+              <CardTitle className="text-sm font-heading">TTOTTIII — Total produktionsöversikt</CardTitle>
+              <CardDescription className="text-xs">Summering av alla butikers beställningar — uppdateras automatiskt</CardDescription>
+            </div>
           </div>
+          <Select value={filterCategory} onValueChange={setFilterCategory}>
+            <SelectTrigger className="w-[180px] h-8 text-xs">
+              <ArrowUpDown className="h-3 w-3 mr-1" />
+              <SelectValue placeholder="Alla kategorier" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alla kategorier</SelectItem>
+              {CATEGORIES.map(cat => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </CardHeader>
       <CardContent>
@@ -80,7 +99,7 @@ export default function TtottiiiTab() {
                 </tr>
               </thead>
               <tbody>
-                {CATEGORIES.map(cat => {
+                {(filterCategory === "all" ? CATEGORIES : [filterCategory]).map(cat => {
                   const catItems = aggregated.filter(a => a.category === cat);
                   if (catItems.length === 0) return null;
                   return (
