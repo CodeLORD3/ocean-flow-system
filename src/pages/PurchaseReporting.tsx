@@ -1,5 +1,4 @@
-import { useState, useCallback, useRef } from "react";
-import { PdfViewer } from "@/components/PdfViewer";
+import { useState, useCallback, useRef } from "ret { PdfViewer } from "@/components/PdfViewer";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -206,7 +205,7 @@ export default function PurchaseReporting() {
   const [parsing, setParsing] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
-  const [editingLineId, seuseRef_unused = null; // cleaned uprch bar state
+  const [edit// Product seate
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
 
