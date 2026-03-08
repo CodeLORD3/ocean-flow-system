@@ -523,13 +523,13 @@ export default function ShopOrders() {
       </Dialog>
 
       {/* Order detail dialog with edit capability */}
-      <Dialog open={!!selectedOrder} onOpenChange={open => { if (!open) { setSelectedOrder(null); setEditMode(false); setEditLines([]); setEditProductSearch(""); setEditHighlightedIndex(-1); setEditDeliveryDate(undefined); } }}>
+      <Dialog open={!!selectedOrder} onOpenChange={open => { if (!open) setSelectedOrder(null); }}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           {selectedOrder && (
             <OrderDetailWithEdit
               order={selectedOrder}
               products={products}
-              onClose={() => { setSelectedOrder(null); setEditMode(false); }}
+              onClose={() => setSelectedOrder(null)}
               toast={toast}
             />
           )}
