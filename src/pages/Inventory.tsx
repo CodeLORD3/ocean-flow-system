@@ -96,11 +96,16 @@ export default function Inventory() {
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [splitDialogOpen, setSplitDialogOpen] = useState(false);
+  const [transformDialogOpen, setTransformDialogOpen] = useState(false);
   const [activeLocationId, setActiveLocationId] = useState<string>("");
   const [deleteReason, setDeleteReason] = useState("");
   const [splitQty, setSplitQty] = useState("");
   const [splitTargetLocation, setSplitTargetLocation] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+  // Transform state
+  const [transformTargetProduct, setTransformTargetProduct] = useState("");
+  const [transformNewWeight, setTransformNewWeight] = useState("");
+  const [transformProductSearch, setTransformProductSearch] = useState("");
 
   const { data: stores = [] } = useStores();
   const { data: products = [] } = useProducts();
