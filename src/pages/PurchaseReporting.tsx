@@ -455,7 +455,7 @@ export default function PurchaseReporting() {
         reportId = newReport.id;
         setSelectedReportId(reportId);
       }
-      const { error } = await supabase.from("purchase_report_lines").insert({
+      const { data: newLine, error } = await supabase.from("purchase_report_lines").insert({
         report_id: reportId,
         product_name: product.name,
         product_id: product.id,
@@ -466,8 +466,9 @@ export default function PurchaseReporting() {
         supplier_name: product.suppliers?.name || null,
         status: "Inköpt",
         purchase_date: format(new Date(), "yyyy-MM-dd"),
-      });
+      }).select("id").single();
       if (error) throw error;
+      return newLine.id;
     },
     onSuccess: (_, product) => {
       queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
