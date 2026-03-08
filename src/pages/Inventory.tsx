@@ -302,7 +302,7 @@ export default function Inventory() {
   // KPIs (aggregated per product to avoid double-counting across locations)
   const totalProducts = aggregatedStock.size;
   const totalQty = Array.from(aggregatedStock.values()).reduce((s, i) => s + i.quantity, 0);
-  const totalValue = Array.from(aggregatedStock.values()).reduce((s, i) => s + i.quantity * i.cost_price, 0);
+  const totalValue = storeStock.reduce((s: number, i: any) => s + Number(i.quantity) * (Number(i.unit_cost) || Number(i.products?.cost_price) || 0), 0);
   const lowStockItems = Array.from(aggregatedStock.values()).filter(i => i.min_stock > 0 && i.quantity < i.min_stock).length;
 
   const toggleCategory = (cat: string) => {
