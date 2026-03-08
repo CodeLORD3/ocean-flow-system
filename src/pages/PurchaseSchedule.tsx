@@ -450,8 +450,8 @@ export default function PurchaseSchedule() {
                                         <TableCell className="px-2 py-0.5">
                                           <span className="text-[10px] text-muted-foreground">
                                             {view === "purchase"
-                                              ? `${format(item.latestPurchaseDate, "EEE d/M", { locale: sv })} ${item.departureTime}`
-                                              : format(item.latestPurchaseDate, "EEE d/M", { locale: sv })}
+                                              ? `${format(item.departureDate, "EEE d/M", { locale: sv })} ${item.departureTime}`
+                                              : format(item.departureDate, "EEE d/M", { locale: sv })}
                                           </span>
                                         </TableCell>
                                       </TableRow>
