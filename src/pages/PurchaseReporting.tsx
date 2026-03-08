@@ -602,42 +602,39 @@ export default function PurchaseReporting() {
             {/* Search bar to add existing products + new product button */}
             {(
               <div className="flex items-center gap-2 px-4 py-2 border-b bg-muted/30">
-                <Popover open={searchOpen} onOpenChange={setSearchOpen}>
-                  <PopoverTrigger asChild>
-                    <div className="relative flex-1">
-                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        value={searchQuery}
-                        onChange={(e) => {
-                          setSearchQuery(e.target.value);
-                          setSearchIdx(0);
-                          if (e.target.value.length > 0 && !searchOpen) setSearchOpen(true);
-                          if (e.target.value.length === 0) setSearchOpen(false);
-                        }}
-                        onKeyDown={(e) => {
-                          const items = searchedProducts.slice(0, 20);
-                          if (items.length === 0) return;
-                          if (e.key === "ArrowDown") {
-                            e.preventDefault();
-                            if (!searchOpen) setSearchOpen(true);
-                            setSearchIdx((i) => Math.min(i + 1, items.length - 1));
-                          } else if (e.key === "ArrowUp") {
-                            e.preventDefault();
-                            setSearchIdx((i) => Math.max(i - 1, 0));
-                          } else if (e.key === "Enter" && searchQuery.length > 0) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const item = items[Math.min(searchIdx, items.length - 1)];
-                            if (item) addLineFromProduct.mutate(item);
-                          }
-                        }}
-                        placeholder="Sök och lägg till produkt från produktlistan..."
-                        className="pl-9 h-9 text-sm"
-                      />
-                    </div>
-                  </PopoverTrigger>
-                  {searchQuery.length > 0 && (
-                    <PopoverContent className="p-0 w-[400px]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setSearchIdx(0);
+                      setSearchOpen(e.target.value.length > 0);
+                    }}
+                    onFocus={() => { if (searchQuery.length > 0) setSearchOpen(true); }}
+                    onBlur={() => { setTimeout(() => setSearchOpen(false), 200); }}
+                    onKeyDown={(e) => {
+                      const items = searchedProducts.slice(0, 20);
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        if (!searchOpen && items.length > 0) setSearchOpen(true);
+                        setSearchIdx((i) => Math.min(i + 1, items.length - 1));
+                      } else if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        setSearchIdx((i) => Math.max(i - 1, 0));
+                      } else if (e.key === "Enter" && searchQuery.length > 0 && items.length > 0) {
+                        e.preventDefault();
+                        const item = items[Math.min(searchIdx, items.length - 1)];
+                        if (item) addLineFromProduct.mutate(item);
+                      } else if (e.key === "Escape") {
+                        setSearchOpen(false);
+                      }
+                    }}
+                    placeholder="Sök och lägg till produkt från produktlistan..."
+                    className="pl-9 h-9 text-sm"
+                  />
+                  {searchOpen && searchQuery.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-md border bg-popover shadow-md">
                       <div className="max-h-[300px] overflow-y-auto py-1">
                         {searchedProducts.length === 0 ? (
                           <div className="py-3 text-center">
@@ -645,7 +642,8 @@ export default function PurchaseReporting() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => {
+                              onMouseDown={(e) => {
+                                e.preventDefault();
                                 setSearchOpen(false);
                                 setNewProduct((p) => ({ ...p, name: searchQuery }));
                                 setNewProductOpen(true);
@@ -678,9 +676,9 @@ export default function PurchaseReporting() {
                           </>
                         )}
                       </div>
-                    </PopoverContent>
+                    </div>
                   )}
-                </Popover>
+                </div>
 
                 <Dialog open={newProductOpen} onOpenChange={setNewProductOpen}>
                   <DialogTrigger asChild>
