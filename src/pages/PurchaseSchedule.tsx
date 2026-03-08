@@ -382,17 +382,15 @@ export default function PurchaseSchedule() {
                                       return (
                                         <TableRow key={shop.name} className="bg-muted/30 border-0">
                                           <TableCell className="px-2 pl-14 py-0.5 text-[10px] text-muted-foreground">
-                                            <div className="flex items-center gap-2">
-                                              <Badge variant={(zone?.badge_color || "default") as any} className="text-[9px] py-0">
-                                                {shop.name}
-                                              </Badge>
-                                              <span className="text-muted-foreground">
-                                                leverans {format(shop.deliveryDate, "EEE d/M", { locale: sv })}
-                                              </span>
-                                            </div>
+                                            <Badge variant={(zone?.badge_color || "default") as any} className="text-[9px] py-0">
+                                              {shop.name}
+                                            </Badge>
                                           </TableCell>
                                           <TableCell className="px-2 py-0.5 text-[10px] text-right text-muted-foreground">{shop.quantity} {item.unit}</TableCell>
-                                          <TableCell colSpan={2} className="px-2 py-0.5" />
+                                          <TableCell className="px-2 py-0.5" />
+                                          <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">
+                                            {format(shop.deliveryDate, "EEE d/M", { locale: sv })} {item.departureTime}
+                                          </TableCell>
                                         </TableRow>
                                       );
                                     })}
