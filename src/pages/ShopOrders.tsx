@@ -283,6 +283,7 @@ export default function ShopOrders() {
     setDialogOpen(false);
     setOrderLines([]);
     setOrderNote("");
+    setDesiredDeliveryDate(undefined);
   };
 
   const pending = liveOrders.filter((o: any) => o.status === "Ny" || o.status === "Behandlas").length;
