@@ -284,37 +284,20 @@ export default function Products() {
                   <tr><td colSpan={10} className="p-8 text-center text-muted-foreground">Inga produkter hittades.</td></tr>
                 )}
                 {filtered.map(p => {
-                  const barcode = (p as any).barcode;
-                  return (
-                     <tr key={p.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
-                       <td className="p-3 font-medium text-foreground">{p.name}</td>
-                       <td className="p-3 font-mono text-muted-foreground text-[10px]">{p.sku}</td>
-                       <td className="p-3"><Badge variant="outline" className="text-[10px]">{p.category}</Badge></td>
-                       <td className="p-3 text-muted-foreground">{p.unit}</td>
-                       {isWholesale && (
-                         <td className="p-3 text-right">
-                           <Input
-                             defaultValue={Number(p.cost_price).toFixed(2)}
-                             type="number"
-                             step="0.01"
-                             className="h-6 w-20 text-xs text-right ml-auto"
-                             onBlur={e => {
-                               const val = Number(e.target.value);
-                               if (val > 0 && val !== Number(p.cost_price)) {
-                                 setInlineCostPrice(String(val));
-                                 handleInlinePriceSave(p.id, val);
-                               }
-                             }}
-                             onKeyDown={e => {
-                               if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                             }}
-                           />
-                         </td>
-                       )}
-                       <td className="p-3 text-right font-medium text-foreground">{Number(p.wholesale_price).toFixed(2)}</td>
-                       {isWholesale && (
-                         <td className="p-3 text-right text-muted-foreground">{p.retail_suggested ? Number(p.retail_suggested).toFixed(2) : "–"}</td>
-                       )}
+                   const barcode = (p as any).barcode;
+                   return (
+                      <tr key={p.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
+                        <td className="p-3 font-medium text-foreground">{p.name}</td>
+                        <td className="p-3 font-mono text-muted-foreground text-[10px]">{p.sku}</td>
+                        <td className="p-3"><Badge variant="outline" className="text-[10px]">{p.category}</Badge></td>
+                        <td className="p-3 text-muted-foreground">{p.unit}</td>
+                        {isWholesale && (
+                          <td className="p-3 text-right text-muted-foreground">{Number(p.cost_price).toFixed(2)}</td>
+                        )}
+                        <td className="p-3 text-right font-medium text-foreground">{Number(p.wholesale_price).toFixed(2)}</td>
+                        {isWholesale && (
+                          <td className="p-3 text-right text-muted-foreground">{p.retail_suggested ? Number(p.retail_suggested).toFixed(2) : "–"}</td>
+                        )}
                        <td className="p-3">
                          {barcode ? (
                            <div className="flex items-center gap-1.5">
