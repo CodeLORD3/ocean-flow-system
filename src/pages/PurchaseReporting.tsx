@@ -215,7 +215,7 @@ function EditableRow({
           </PopoverTrigger>
           {supplierSearch.length > 0 && (
             <PopoverContent className="p-0 w-[220px]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
-              <Command shouldFilter={false}>
+              <Command ref={supplierCmdRef} shouldFilter={false}>
                 <CommandList>
                   <CommandEmpty className="py-2 text-xs text-center">Ingen träff</CommandEmpty>
                   <CommandGroup>
