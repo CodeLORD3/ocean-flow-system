@@ -1158,8 +1158,8 @@ export default function Inventory() {
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Destination *</Label>
-                  <div className="space-y-1 max-h-40 overflow-y-auto">
-                    {locations.filter((l: any) => l.id !== activeLocationId).map((loc: any) => (
+                   <div className="space-y-1 max-h-40 overflow-y-auto">
+                    {portalLocations.map((loc: any) => (
                       <button
                         key={loc.id}
                         className={`w-full flex items-center gap-2 px-3 py-2 rounded-md border transition-colors text-left text-xs ${splitTargetLocation === loc.id ? "border-primary bg-primary/10" : "border-border/50 hover:bg-muted/40"}`}
