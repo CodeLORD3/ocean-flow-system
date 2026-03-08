@@ -40,8 +40,8 @@ export default function Pricing() {
   const [inlineEdits, setInlineEdits] = useState<Record<string, InlineEdit>>({});
 
   const calcMargin = (cost: number, wholesale: number) => {
-    if (cost === 0) return 0;
-    return Math.round(((wholesale - cost) / cost) * 100);
+    if (wholesale === 0) return 0;
+    return Math.round(((wholesale - cost) / wholesale) * 100);
   };
 
   const startInlineEdit = (p: any) => {
@@ -68,7 +68,7 @@ export default function Pricing() {
       const current = prev[id];
       if (!current) return prev;
       const m = current.margin;
-      return { ...prev, [id]: { cost_price: cost, margin: m, wholesale_price: Number((cost * (1 + m / 100)).toFixed(2)) } };
+      return { ...prev, [id]: { cost_price: cost, margin: m, wholesale_price: Number((cost / (1 - m / 100)).toFixed(2)) } };
     });
   };
 
@@ -84,7 +84,7 @@ export default function Pricing() {
     setInlineEdits((prev) => {
       const current = prev[id];
       if (!current) return prev;
-      return { ...prev, [id]: { ...current, margin, wholesale_price: Number((current.cost_price * (1 + margin / 100)).toFixed(2)) } };
+      return { ...prev, [id]: { ...current, margin, wholesale_price: Number((current.cost_price / (1 - margin / 100)).toFixed(2)) } };
     });
   };
 
