@@ -158,11 +158,44 @@ export default function ShopOrders() {
   const qc = useQueryClient();
   const { activeStoreId } = useSite();
   const { data: products = [] } = useProducts();
+  const { data: transportSchedules = [] } = useTransportSchedules();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [confirmSendOpen, setConfirmSendOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+
+  // Fetch active store details to determine zone
+  const { data: activeStore } = useQuery({
+    queryKey: ["store-detail", activeStoreId],
+    queryFn: async () => {
+      if (!activeStoreId) return null;
+      const { data } = await supabase.from("stores").select("*").eq("id", activeStoreId).single();
+      return data;
+    },
+    enabled: !!activeStoreId,
+  });
+
+  // Determine allowed departure weekdays for this store's zone
+  const allowedWeekdays = useMemo(() => {
+    if (!activeStore) return null; // null = no restriction yet
+    const city = (activeStore.city || "").toLowerCase();
+    const name = (activeStore.name || "").toLowerCase();
+    let zoneKey = "international";
+    if (city.includes("göteborg") || city.includes("gothenburg") || name.includes("göteborg") || name.includes("amhult") || name.includes("särö")) zoneKey = "gothenburg";
+    else if (city.includes("stockholm") || name.includes("stockholm") || name.includes("kungsholmen") || name.includes("ålsten")) zoneKey = "stockholm";
+    
+    const days = transportSchedules.filter(s => s.zone_key === zoneKey).map(s => s.departure_weekday);
+    return days.length > 0 ? new Set(days) : null;
+  }, [activeStore, transportSchedules]);
+
+  // Disable dates that are not valid departure weekdays (also disable past & weekends if not in zone)
+  const isDateDisabled = (date: Date) => {
+    if (!allowedWeekdays) return false;
+    const jsDay = getDay(date); // 0=Sun
+    const isoDay = jsDay === 0 ? 7 : jsDay;
+    return !allowedWeekdays.has(isoDay);
+  };
 
   // Order form
   const [orderNote, setOrderNote] = useState("");
