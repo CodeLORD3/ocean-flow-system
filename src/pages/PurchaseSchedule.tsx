@@ -148,14 +148,12 @@ export default function PurchaseSchedule() {
     );
   };
 
-  // Build schedule items
+  // Build schedule items, aggregated by product + purchase date
   const schedule = useMemo(() => {
     if (!orders || !stores || !transportSchedules) return [];
 
-    type ScheduleItem = {
-      orderId: string;
+    type RawItem = {
       storeName: string;
-      storeCity: string;
       zoneKey: string;
       productName: string;
       quantity: number;
@@ -163,11 +161,10 @@ export default function PurchaseSchedule() {
       deliveryDate: Date;
       latestPurchaseDate: Date;
       departureTime: string;
-      departureWeekday: number;
       category: string;
     };
 
-    const items: ScheduleItem[] = [];
+    const rawItems: RawItem[] = [];
 
     for (const order of orders) {
       if (order.status === "Arkiverad") continue;
@@ -185,10 +182,8 @@ export default function PurchaseSchedule() {
         const deliveryDate = parseISO(deliveryDateStr);
         const latestPurchaseDate = getLatestPurchaseDate(deliveryDate, zone.departure_weekday);
 
-        items.push({
-          orderId: order.id,
+        rawItems.push({
           storeName: store.name,
-          storeCity: store.city,
           zoneKey,
           productName: line.products?.name || "Okänd produkt",
           quantity: line.quantity_ordered,
@@ -196,13 +191,53 @@ export default function PurchaseSchedule() {
           deliveryDate,
           latestPurchaseDate,
           departureTime: zone.departure_time,
-          departureWeekday: zone.departure_weekday,
           category: line.products?.category || "Övrigt",
         });
       }
     }
 
-    return items;
+    // Aggregate by productName + latestPurchaseDate
+    const key = (item: RawItem) =>
+      `${item.productName}|${item.unit}|${format(item.latestPurchaseDate, "yyyy-MM-dd")}`;
+
+    const grouped = new Map<string, {
+      productName: string;
+      unit: string;
+      totalQuantity: number;
+      shops: { name: string; zoneKey: string; quantity: number }[];
+      latestPurchaseDate: Date;
+      earliestDelivery: Date;
+      departureTime: string;
+      category: string;
+    }>();
+
+    for (const item of rawItems) {
+      const k = key(item);
+      const existing = grouped.get(k);
+      if (existing) {
+        existing.totalQuantity += item.quantity;
+        const shopEntry = existing.shops.find((s) => s.name === item.storeName);
+        if (shopEntry) {
+          shopEntry.quantity += item.quantity;
+        } else {
+          existing.shops.push({ name: item.storeName, zoneKey: item.zoneKey, quantity: item.quantity });
+        }
+        if (item.deliveryDate < existing.earliestDelivery) existing.earliestDelivery = item.deliveryDate;
+      } else {
+        grouped.set(k, {
+          productName: item.productName,
+          unit: item.unit,
+          totalQuantity: item.quantity,
+          shops: [{ name: item.storeName, zoneKey: item.zoneKey, quantity: item.quantity }],
+          latestPurchaseDate: item.latestPurchaseDate,
+          earliestDelivery: item.deliveryDate,
+          departureTime: item.departureTime,
+          category: item.category,
+        });
+      }
+    }
+
+    return Array.from(grouped.values());
   }, [orders, stores, transportSchedules, storeMap, zoneMap]);
 
   // Group by day
@@ -216,7 +251,7 @@ export default function PurchaseSchedule() {
     return map;
   };
 
-  const byDeliveryDay = useMemo(() => groupByDay((i) => i.deliveryDate), [schedule, weekDates]);
+  const byDeliveryDay = useMemo(() => groupByDay((i) => i.earliestDelivery), [schedule, weekDates]);
   const byPurchaseDay = useMemo(() => groupByDay((i) => i.latestPurchaseDate), [schedule, weekDates]);
 
   const activeMap = view === "purchase" ? byPurchaseDay : byDeliveryDay;
@@ -310,11 +345,10 @@ export default function PurchaseSchedule() {
               }
 
               return items.map((item, i) => {
-                const zone = zoneMap.get(item.zoneKey);
                 const isUrgent = view === "purchase" && isSameDay(item.latestPurchaseDate, new Date());
                 return (
                   <TableRow
-                    key={`${dayIndex}-${item.orderId}-${item.productName}-${i}`}
+                    key={`${dayIndex}-${item.productName}-${i}`}
                     className={`${isUrgent ? "bg-destructive/5" : ""} ${isPast ? "opacity-40" : ""} ${isToday ? "bg-primary/5" : ""}`}
                   >
                     <TableCell className="px-2 py-0.5 text-xs whitespace-nowrap">
@@ -328,16 +362,23 @@ export default function PurchaseSchedule() {
                       )}
                     </TableCell>
                     <TableCell className="px-2 py-0.5 text-xs">{item.productName}</TableCell>
-                    <TableCell className="px-2 py-0.5 text-xs text-right">{item.quantity} {item.unit}</TableCell>
+                    <TableCell className="px-2 py-0.5 text-xs text-right">{item.totalQuantity} {item.unit}</TableCell>
                     <TableCell className="px-2 py-0.5">
-                      <Badge variant={(zone?.badge_color || "default") as any} className="text-[9px] py-0">
-                        {item.storeName}
-                      </Badge>
+                      <div className="flex flex-wrap gap-1">
+                        {item.shops.map((shop) => {
+                          const zone = zoneMap.get(shop.zoneKey);
+                          return (
+                            <Badge key={shop.name} variant={(zone?.badge_color || "default") as any} className="text-[9px] py-0 whitespace-nowrap">
+                              {shop.name} ({shop.quantity})
+                            </Badge>
+                          );
+                        })}
+                      </div>
                     </TableCell>
                     <TableCell className="px-2 py-0.5">
                       <span className="text-[10px] text-muted-foreground">
                         {view === "purchase"
-                          ? format(item.deliveryDate, "EEE d/M", { locale: sv })
+                          ? format(item.earliestDelivery, "EEE d/M", { locale: sv })
                           : format(item.latestPurchaseDate, "EEE d/M", { locale: sv })}
                         {" "}{item.departureTime}
                       </span>
@@ -362,7 +403,7 @@ export default function PurchaseSchedule() {
           <CardContent>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               {transportSchedules?.map((zone) => {
-                const count = schedule.filter((s) => s.zoneKey === zone.zone_key).length;
+                const count = schedule.filter((s) => s.shops.some((sh) => sh.zoneKey === zone.zone_key)).length;
                 const dayName = WEEKDAYS[(zone.departure_weekday - 1) % 7];
                 return (
                   <div key={zone.id} className="rounded-lg border p-3">
