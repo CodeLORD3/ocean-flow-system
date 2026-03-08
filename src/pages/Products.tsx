@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
-import { Plus, Search, Edit, Trash2, Package, Tag, Printer, ChevronRight, ChevronDown, Layers } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Package, Tag, Printer, ChevronRight, ChevronDown, Layers, Check, X, History } from "lucide-react";
 import { useSite } from "@/contexts/SiteContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,15 +17,24 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { useProductsWithChildren, useAddSubproduct } from "@/hooks/useProducts";
+import { useProductsWithChildren, useAddSubproduct, useUpdateProduct } from "@/hooks/useProducts";
 import { useCategories, useAddCategory } from "@/hooks/useCategories";
+import { usePriceHistory } from "@/hooks/usePriceHistory";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import BarcodeDisplay from "@/components/barcode/BarcodeDisplay";
 import { generateEAN13 } from "@/lib/barcode";
+import { format } from "date-fns";
 
 const UNITS = ["KG", "ST", "L", "FÖRP"];
+
+interface InlineEdit {
+  cost_price: number;
+  wholesale_price: number;
+  margin: number;
+}
 
 export default function Products() {
   const { toast } = useToast();
@@ -36,6 +45,7 @@ export default function Products() {
   const { data: dbCategories = [] } = useCategories();
   const addCategory = useAddCategory();
   const addSubproduct = useAddSubproduct();
+  const updateProduct = useUpdateProduct();
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -48,6 +58,64 @@ export default function Products() {
   const [subproductDialogOpen, setSubproductDialogOpen] = useState(false);
   const [subproductParentId, setSubproductParentId] = useState<string | null>(null);
   const [subForm, setSubForm] = useState({ name: "", cost_price: "", wholesale_price: "", retail_suggested: "" });
+  const [historyProduct, setHistoryProduct] = useState<string | null>(null);
+
+  // Inline price editing state (wholesale only)
+  const [inlineEdits, setInlineEdits] = useState<Record<string, InlineEdit>>({});
+
+  const calcMargin = (cost: number, price: number) => {
+    if (price === 0) return 0;
+    return Math.round(((price - cost) / price) * 100);
+  };
+
+  const startInlineEdit = (p: any) => {
+    setInlineEdits((prev) => ({
+      ...prev,
+      [p.id]: {
+        cost_price: Number(p.cost_price),
+        wholesale_price: Number(p.wholesale_price),
+        margin: calcMargin(Number(p.cost_price), Number(p.wholesale_price)),
+      },
+    }));
+  };
+
+  const cancelInlineEdit = (id: string) => {
+    setInlineEdits((prev) => { const next = { ...prev }; delete next[id]; return next; });
+  };
+
+  const updateInlineCost = (id: string, cost: number) => {
+    setInlineEdits((prev) => {
+      const current = prev[id];
+      if (!current) return prev;
+      const m = current.margin;
+      return { ...prev, [id]: { cost_price: cost, margin: m, wholesale_price: Number((cost / (1 - m / 100)).toFixed(2)) } };
+    });
+  };
+
+  const updateInlineWholesale = (id: string, wholesale: number) => {
+    setInlineEdits((prev) => {
+      const current = prev[id];
+      if (!current) return prev;
+      return { ...prev, [id]: { ...current, wholesale_price: wholesale, margin: calcMargin(current.cost_price, wholesale) } };
+    });
+  };
+
+  const updateInlineMargin = (id: string, margin: number) => {
+    setInlineEdits((prev) => {
+      const current = prev[id];
+      if (!current) return prev;
+      return { ...prev, [id]: { ...current, margin, wholesale_price: Number((current.cost_price / (1 - margin / 100)).toFixed(2)) } };
+    });
+  };
+
+  const saveInlineEdit = (p: any) => {
+    const edit = inlineEdits[p.id];
+    if (!edit) return;
+    updateProduct.mutate(
+      { id: p.id, cost_price: edit.cost_price, wholesale_price: edit.wholesale_price, retail_suggested: p.retail_suggested || 0, reason: "Inline prisändring" },
+      { onSuccess: () => { toast({ title: "Pris uppdaterat", description: `${p.name} sparad.` }); cancelInlineEdit(p.id); } }
+    );
+  };
 
   const CATEGORIES = useMemo(() => {
     return dbCategories.map(c => c.name).sort((a, b) => a.localeCompare(b, "sv"));
@@ -220,7 +288,6 @@ export default function Products() {
 
   const productsWithout = allProducts.filter((p: any) => !(p as any).barcode).length;
 
-  // Helper to compute aggregated values for a parent from its subproducts
   const getAggregated = (p: any) => {
     if (!p.subproducts || p.subproducts.length === 0) return null;
     return {
@@ -240,6 +307,16 @@ export default function Products() {
     const hasChildren = p.subproducts && p.subproducts.length > 0;
     const isExpanded = expandedProducts.has(p.id);
     const agg = hasChildren ? getAggregated(p) : null;
+    const isAggregatedParent = hasChildren;
+
+    // Inline edit values for wholesale
+    const costVal = inlineEdits[p.id]?.cost_price ?? Number(p.cost_price);
+    const wholesaleVal = inlineEdits[p.id]?.wholesale_price ?? Number(p.wholesale_price);
+    const marginVal = inlineEdits[p.id]?.margin ?? calcMargin(Number(p.cost_price), Number(p.wholesale_price));
+    const hasChanges = !!inlineEdits[p.id] && (
+      inlineEdits[p.id].cost_price !== Number(p.cost_price) ||
+      inlineEdits[p.id].wholesale_price !== Number(p.wholesale_price)
+    );
 
     return (
       <tr key={p.id} className={`border-b border-border/40 hover:bg-muted/20 transition-colors h-9 ${isSubproduct ? "bg-muted/10" : ""}`}>
@@ -259,19 +336,70 @@ export default function Products() {
         <td className="px-3 py-1 font-mono text-muted-foreground text-[10px]">{p.sku}</td>
         <td className="px-3 py-1"><Badge variant="outline" className="text-[10px]">{p.category}</Badge></td>
         <td className="px-3 py-1 text-muted-foreground">{p.unit}</td>
+
+        {/* Prod.pris — inline editable for wholesale */}
         {isWholesale && (
-          <td className="px-3 py-1 text-right text-muted-foreground">
-            {agg ? <span className="font-medium text-foreground">{agg.cost_price.toFixed(2)}</span> : Number(p.cost_price).toFixed(2)}
+          <td className="px-3 py-1 text-right">
+            {isAggregatedParent ? (
+              <span className="font-medium text-foreground">{agg!.cost_price.toFixed(2)}</span>
+            ) : (
+              <Input
+                type="number" value={costVal}
+                onFocus={(e) => { if (!inlineEdits[p.id]) startInlineEdit(p); e.target.select(); }}
+                onChange={(e) => updateInlineCost(p.id, Number(e.target.value))}
+                onKeyDown={(e) => { if (e.key === "Enter") saveInlineEdit(p); }}
+                className="h-7 w-24 text-right text-xs ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
+              />
+            )}
           </td>
         )}
-        <td className="px-3 py-1 text-right font-medium text-foreground">
-          {agg ? agg.wholesale_price.toFixed(2) : Number(p.wholesale_price).toFixed(2)}
+
+        {/* Grossistpris — inline editable for wholesale */}
+        <td className="px-3 py-1 text-right">
+          {isAggregatedParent ? (
+            <span className="font-medium text-foreground">{(agg ? agg.wholesale_price : Number(p.wholesale_price)).toFixed(2)}</span>
+          ) : isWholesale ? (
+            <Input
+              type="number" value={wholesaleVal}
+              onFocus={(e) => { if (!inlineEdits[p.id]) startInlineEdit(p); e.target.select(); }}
+              onChange={(e) => updateInlineWholesale(p.id, Number(e.target.value))}
+              onKeyDown={(e) => { if (e.key === "Enter") saveInlineEdit(p); }}
+              className="h-7 w-24 text-right text-xs ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
+            />
+          ) : (
+            <span className="font-medium text-foreground">{Number(p.wholesale_price).toFixed(2)}</span>
+          )}
         </td>
+
+        {/* Marginal — inline editable for wholesale */}
+        {isWholesale && (
+          <td className="px-3 py-1 text-right">
+            <div className="flex items-center justify-end gap-0.5">
+              {isAggregatedParent ? (
+                <span className="text-muted-foreground text-xs">{calcMargin(agg!.cost_price, agg!.wholesale_price)}%</span>
+              ) : (
+                <>
+                  <Input
+                    type="number" value={marginVal}
+                    onFocus={(e) => { if (!inlineEdits[p.id]) startInlineEdit(p); e.target.select(); }}
+                    onChange={(e) => updateInlineMargin(p.id, Number(e.target.value))}
+                    onKeyDown={(e) => { if (e.key === "Enter") saveInlineEdit(p); }}
+                    className="h-7 w-14 text-right text-xs border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
+                  />
+                  <span className="text-[10px] text-muted-foreground">%</span>
+                </>
+              )}
+            </div>
+          </td>
+        )}
+
+        {/* Rek. butikspris */}
         {isWholesale && (
           <td className="px-3 py-1 text-right text-muted-foreground">
             {agg ? agg.retail_suggested.toFixed(2) : (p.retail_suggested ? Number(p.retail_suggested).toFixed(2) : "–")}
           </td>
         )}
+
         <td className="px-3 py-1">
           {barcode ? (
             <div className="flex items-center gap-1.5">
@@ -291,6 +419,22 @@ export default function Products() {
         </td>
         <td className="px-3 py-1 text-center">
           <div className="flex items-center justify-center gap-1">
+            {/* Inline save/cancel for wholesale */}
+            {isWholesale && hasChanges && (
+              <>
+                <Button variant="default" size="icon" className="h-6 w-6" onClick={() => saveInlineEdit(p)} disabled={updateProduct.isPending}>
+                  <Check className="h-3.5 w-3.5" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => cancelInlineEdit(p.id)}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </>
+            )}
+            {isWholesale && !isAggregatedParent && (
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setHistoryProduct(p.id)} title="Prishistorik">
+                <History className="h-3.5 w-3.5" />
+              </Button>
+            )}
             {isWholesale && !isSubproduct && (
               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openAddSubproduct(p.id)} title="Lägg till delprodukt">
                 <Layers className="h-3.5 w-3.5" />
@@ -317,7 +461,9 @@ export default function Products() {
             <Package className="h-5 w-5 text-primary" /> Produkter
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Central produktbank — alla produkter som används i beställningar, lager och fakturering.
+            {isWholesale
+              ? "Central produktbank — produkter, priser, marginaler och streckkoder."
+              : "Central produktbank — alla produkter som används i beställningar, lager och fakturering."}
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -365,9 +511,10 @@ export default function Products() {
                    <th className="p-3 text-left font-medium text-muted-foreground">SKU</th>
                    <th className="p-3 text-left font-medium text-muted-foreground">KATEGORI</th>
                    <th className="p-3 text-left font-medium text-muted-foreground">ENHET</th>
-                   {isWholesale && <th className="p-3 text-right font-medium text-muted-foreground">PROD.PRIS (SEK)</th>}
-                   <th className="p-3 text-right font-medium text-muted-foreground">{isWholesale ? "GROSSISTPRIS" : "PRIS"} (SEK)</th>
-                   {isWholesale && <th className="p-3 text-right font-medium text-muted-foreground">BUTIKSPRIS</th>}
+                   {isWholesale && <th className="p-3 text-right font-medium text-muted-foreground">PROD.PRIS</th>}
+                   <th className="p-3 text-right font-medium text-muted-foreground">{isWholesale ? "GROSSISTPRIS" : "PRIS"}</th>
+                   {isWholesale && <th className="p-3 text-right font-medium text-muted-foreground">MARGINAL</th>}
+                   {isWholesale && <th className="p-3 text-right font-medium text-muted-foreground">REK. BUTIK</th>}
                    <th className="p-3 text-left font-medium text-muted-foreground">STRECKKOD</th>
                    <th className="p-3 text-right font-medium text-muted-foreground">LAGER</th>
                    <th className="p-3 text-center font-medium text-muted-foreground">ÅTGÄRD</th>
@@ -375,7 +522,7 @@ export default function Products() {
               </thead>
               <tbody>
                 {filtered.length === 0 && (
-                  <tr><td colSpan={10} className="p-8 text-center text-muted-foreground">Inga produkter hittades.</td></tr>
+                  <tr><td colSpan={isWholesale ? 11 : 8} className="p-8 text-center text-muted-foreground">Inga produkter hittades.</td></tr>
                 )}
                 {filtered.map(p => {
                   const isExpanded = expandedProducts.has(p.id);
@@ -461,7 +608,7 @@ export default function Products() {
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground">
-                  🔒 Priser hanteras under <span className="font-medium">Prissättning</span>
+                  🔒 Priser ändras direkt i produktlistan
                 </p>
               </>
             ) : (
@@ -605,6 +752,48 @@ export default function Products() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Price History Dialog */}
+      <PriceHistoryDialog productId={historyProduct} onClose={() => setHistoryProduct(null)} />
     </div>
+  );
+}
+
+function PriceHistoryDialog({ productId, onClose }: { productId: string | null; onClose: () => void }) {
+  const { data: history = [] } = usePriceHistory(productId || "");
+  if (!productId) return null;
+
+  return (
+    <Dialog open={!!productId} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader><DialogTitle>Prishistorik</DialogTitle></DialogHeader>
+        {history.length === 0 ? (
+          <p className="text-muted-foreground text-sm py-4 text-center">Ingen prishistorik</p>
+        ) : (
+          <div className="max-h-80 overflow-y-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Datum</TableHead>
+                  <TableHead className="text-right">Inköp</TableHead>
+                  <TableHead className="text-right">Grossist</TableHead>
+                  <TableHead>Anledning</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {history.map((h: any) => (
+                  <TableRow key={h.id}>
+                    <TableCell className="text-sm">{h.created_at ? format(new Date(h.created_at), "yyyy-MM-dd") : "–"}</TableCell>
+                    <TableCell className="text-right">{h.cost_price?.toFixed(2) ?? "–"}</TableCell>
+                    <TableCell className="text-right">{h.wholesale_price?.toFixed(2) ?? "–"}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{h.reason || "–"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
