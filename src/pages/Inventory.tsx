@@ -185,7 +185,7 @@ export default function Inventory() {
     }
   };
 
-  const { site } = useSite();
+  
 
   // Stock grouped by location for purchasing portal
   const stockByLocation = useMemo(() => {
