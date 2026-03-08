@@ -14,8 +14,46 @@ export function useProducts() {
         .eq("active", true)
         .order("name");
       if (error) throw error;
-      return data as (Product & { suppliers: { name: string } | null })[];
+      return data as (Product & { suppliers: { name: string } | null; parent_product_id: string | null })[];
     },
+  });
+}
+
+/** Returns only top-level (parent) products, with their subproducts attached */
+export function useProductsWithChildren() {
+  const { data: allProducts = [], ...rest } = useProducts();
+
+  const parentProducts = allProducts.filter(p => !p.parent_product_id);
+  const childMap = new Map<string, typeof allProducts>();
+  
+  for (const p of allProducts) {
+    if (p.parent_product_id) {
+      const existing = childMap.get(p.parent_product_id) || [];
+      existing.push(p);
+      childMap.set(p.parent_product_id, existing);
+    }
+  }
+
+  const productsWithChildren = parentProducts.map(p => ({
+    ...p,
+    subproducts: childMap.get(p.id) || [],
+  }));
+
+  return { data: productsWithChildren, allProducts, ...rest };
+}
+
+export function useAddSubproduct() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: { parent_id: string; name: string; sku: string; category: string; unit: string; cost_price: number; wholesale_price: number; retail_suggested: number }) => {
+      const { parent_id, ...rest } = params;
+      const { error } = await supabase.from("products").insert({
+        ...rest,
+        parent_product_id: parent_id,
+      } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["products"] }),
   });
 }
 
@@ -24,10 +62,8 @@ export function useUpdateProduct() {
   return useMutation({
     mutationFn: async (params: { id: string; cost_price: number; wholesale_price: number; retail_suggested: number; reason?: string }) => {
       const { id, reason, ...prices } = params;
-      // Update product
       const { error } = await supabase.from("products").update({ ...prices, updated_at: new Date().toISOString() }).eq("id", id);
       if (error) throw error;
-      // Log price history
       await supabase.from("price_history").insert({
         product_id: id,
         cost_price: prices.cost_price,
@@ -45,7 +81,6 @@ export function useUpdateStock() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (params: { id: string; delta: number }) => {
-      // Get current stock first
       const { data: product } = await supabase.from("products").select("stock").eq("id", params.id).single();
       if (!product) throw new Error("Product not found");
       const newStock = Number(product.stock) + params.delta;

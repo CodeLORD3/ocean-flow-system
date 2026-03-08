@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
-import { Plus, Search, Edit, Trash2, Package, Tag, Printer } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Package, Tag, Printer, ChevronRight, ChevronDown, Layers } from "lucide-react";
 import { useSite } from "@/contexts/SiteContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { useProducts } from "@/hooks/useProducts";
+import { useProductsWithChildren, useAddSubproduct } from "@/hooks/useProducts";
 import { useCategories, useAddCategory } from "@/hooks/useCategories";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -32,9 +32,10 @@ export default function Products() {
   const qc = useQueryClient();
   const { site } = useSite();
   const isWholesale = site === "wholesale";
-  const { data: products = [], isLoading } = useProducts();
+  const { data: products = [], allProducts = [], isLoading } = useProductsWithChildren();
   const { data: dbCategories = [] } = useCategories();
   const addCategory = useAddCategory();
+  const addSubproduct = useAddSubproduct();
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -43,8 +44,11 @@ export default function Products() {
   const [barcodePreview, setBarcodePreview] = useState<any>(null);
   const [addCategoryOpen, setAddCategoryOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set());
+  const [subproductDialogOpen, setSubproductDialogOpen] = useState(false);
+  const [subproductParentId, setSubproductParentId] = useState<string | null>(null);
+  const [subForm, setSubForm] = useState({ name: "", cost_price: "", wholesale_price: "", retail_suggested: "" });
 
-  // Categories from DB (persisted)
   const CATEGORIES = useMemo(() => {
     return dbCategories.map(c => c.name).sort((a, b) => a.localeCompare(b, "sv"));
   }, [dbCategories]);
@@ -58,7 +62,6 @@ export default function Products() {
   const setField = (key: string, value: string) => {
     setForm(f => {
       const updated = { ...f, [key]: value };
-      // Auto-calc wholesale_price as cost_price * 1.35 when cost_price changes
       if (key === "cost_price" && value) {
         updated.wholesale_price = (Number(value) * 1.35).toFixed(2);
       }
@@ -69,10 +72,19 @@ export default function Products() {
   const filtered = products.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.sku.toLowerCase().includes(search.toLowerCase()) ||
-      ((p as any).barcode || "").includes(search);
+      ((p as any).barcode || "").includes(search) ||
+      p.subproducts.some(sp => sp.name.toLowerCase().includes(search.toLowerCase()));
     const matchCat = filterCategory === "all" || p.category === filterCategory;
     return matchSearch && matchCat;
   });
+
+  const toggleExpand = (id: string) => {
+    setExpandedProducts(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
 
   const openAdd = () => {
     setEditId(null);
@@ -91,6 +103,35 @@ export default function Products() {
     setDialogOpen(true);
   };
 
+  const openAddSubproduct = (parentId: string) => {
+    setSubproductParentId(parentId);
+    setSubForm({ name: "", cost_price: "", wholesale_price: "", retail_suggested: "" });
+    setSubproductDialogOpen(true);
+  };
+
+  const handleSaveSubproduct = () => {
+    if (!subproductParentId || !subForm.name) return;
+    const parent = products.find(p => p.id === subproductParentId);
+    if (!parent) return;
+    addSubproduct.mutate({
+      parent_id: subproductParentId,
+      name: subForm.name,
+      sku: `${parent.sku}-SUB-${Date.now().toString(36)}`,
+      category: parent.category,
+      unit: parent.unit,
+      cost_price: subForm.cost_price ? Number(subForm.cost_price) : 0,
+      wholesale_price: subForm.wholesale_price ? Number(subForm.wholesale_price) : 0,
+      retail_suggested: subForm.retail_suggested ? Number(subForm.retail_suggested) : 0,
+    }, {
+      onSuccess: () => {
+        toast({ title: "Delprodukt tillagd", description: subForm.name });
+        setSubproductDialogOpen(false);
+        setExpandedProducts(prev => new Set(prev).add(subproductParentId!));
+      },
+      onError: (err: any) => toast({ title: "Fel", description: err.message, variant: "destructive" }),
+    });
+  };
+
   const handleSave = async () => {
     if (!form.name || !form.category) return;
     const sku = form.sku || `${form.category.slice(0, 2).toUpperCase()}-${Date.now().toString(36)}`;
@@ -102,12 +143,10 @@ export default function Products() {
     };
 
     if (editId) {
-      // Don't update prices from product dialog — prices are managed in Prissättning
       const { error } = await supabase.from("products").update(payload).eq("id", editId);
       if (error) { toast({ title: "Fel", description: error.message, variant: "destructive" }); return; }
       toast({ title: "Produkt uppdaterad", description: form.name });
     } else {
-      // New products get initial prices (can be updated later in Prissättning)
       payload.cost_price = form.cost_price ? Number(form.cost_price) : 0;
       payload.wholesale_price = form.wholesale_price ? Number(form.wholesale_price) : 0;
       payload.retail_suggested = form.retail_suggested ? Number(form.retail_suggested) : 0;
@@ -118,9 +157,6 @@ export default function Products() {
     qc.invalidateQueries({ queryKey: ["products"] });
     setDialogOpen(false);
   };
-
-
-
 
   const handleAddCategory = () => {
     const name = newCategoryName.trim();
@@ -147,7 +183,7 @@ export default function Products() {
   };
 
   const generateBarcodeForProduct = async (productId: string) => {
-    const existing = products.filter((p: any) => (p as any).barcode).length;
+    const existing = allProducts.filter((p: any) => (p as any).barcode).length;
     const barcode = generateEAN13("20", existing + 1);
     const { error } = await supabase.from("products").update({ barcode }).eq("id", productId);
     if (error) { toast({ title: "Fel", description: error.message, variant: "destructive" }); return; }
@@ -156,9 +192,9 @@ export default function Products() {
   };
 
   const generateAllBarcodes = async () => {
-    const without = products.filter((p: any) => !(p as any).barcode);
+    const without = allProducts.filter((p: any) => !(p as any).barcode);
     if (without.length === 0) { toast({ title: "Alla har redan streckkoder" }); return; }
-    let seq = products.filter((p: any) => (p as any).barcode).length + 1;
+    let seq = allProducts.filter((p: any) => (p as any).barcode).length + 1;
     for (const p of without) {
       const barcode = generateEAN13("20", seq++);
       await supabase.from("products").update({ barcode }).eq("id", p.id);
@@ -182,11 +218,95 @@ export default function Products() {
     w.document.close();
   };
 
-  const productsWithout = products.filter((p: any) => !(p as any).barcode).length;
+  const productsWithout = allProducts.filter((p: any) => !(p as any).barcode).length;
+
+  // Helper to compute aggregated values for a parent from its subproducts
+  const getAggregated = (p: any) => {
+    if (!p.subproducts || p.subproducts.length === 0) return null;
+    return {
+      cost_price: p.subproducts.reduce((s: number, sp: any) => s + Number(sp.cost_price), 0),
+      wholesale_price: p.subproducts.reduce((s: number, sp: any) => s + Number(sp.wholesale_price), 0),
+      retail_suggested: p.subproducts.reduce((s: number, sp: any) => s + Number(sp.retail_suggested || 0), 0),
+      stock: p.subproducts.reduce((s: number, sp: any) => s + Number(sp.stock), 0),
+    };
+  };
 
   if (isLoading) return (
     <div className="p-6 space-y-4"><Skeleton className="h-10 w-64" /><Skeleton className="h-96" /></div>
   );
+
+  const renderProductRow = (p: any, isSubproduct: boolean = false) => {
+    const barcode = (p as any).barcode;
+    const hasChildren = p.subproducts && p.subproducts.length > 0;
+    const isExpanded = expandedProducts.has(p.id);
+    const agg = hasChildren ? getAggregated(p) : null;
+
+    return (
+      <tr key={p.id} className={`border-b border-border/40 hover:bg-muted/20 transition-colors h-9 ${isSubproduct ? "bg-muted/10" : ""}`}>
+        <td className="px-3 py-1 font-medium text-foreground">
+          <div className="flex items-center gap-1.5">
+            {!isSubproduct && hasChildren && (
+              <button onClick={() => toggleExpand(p.id)} className="p-0.5 rounded hover:bg-muted">
+                {isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+              </button>
+            )}
+            {isSubproduct && <span className="ml-5 text-muted-foreground">└</span>}
+            {!isSubproduct && !hasChildren && <span className="w-5" />}
+            <span className={isSubproduct ? "text-muted-foreground" : ""}>{p.name}</span>
+            {hasChildren && <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-1">{p.subproducts.length} del</Badge>}
+          </div>
+        </td>
+        <td className="px-3 py-1 font-mono text-muted-foreground text-[10px]">{p.sku}</td>
+        <td className="px-3 py-1"><Badge variant="outline" className="text-[10px]">{p.category}</Badge></td>
+        <td className="px-3 py-1 text-muted-foreground">{p.unit}</td>
+        {isWholesale && (
+          <td className="px-3 py-1 text-right text-muted-foreground">
+            {agg ? <span className="font-medium text-foreground">{agg.cost_price.toFixed(2)}</span> : Number(p.cost_price).toFixed(2)}
+          </td>
+        )}
+        <td className="px-3 py-1 text-right font-medium text-foreground">
+          {agg ? agg.wholesale_price.toFixed(2) : Number(p.wholesale_price).toFixed(2)}
+        </td>
+        {isWholesale && (
+          <td className="px-3 py-1 text-right text-muted-foreground">
+            {agg ? agg.retail_suggested.toFixed(2) : (p.retail_suggested ? Number(p.retail_suggested).toFixed(2) : "–")}
+          </td>
+        )}
+        <td className="px-3 py-1">
+          {barcode ? (
+            <div className="flex items-center gap-1.5">
+              <button onClick={() => setBarcodePreview(p)} className="font-mono text-[10px] text-primary hover:underline cursor-pointer">{barcode}</button>
+              <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => printLabel(p)} title="Skriv ut etikett"><Printer className="h-3 w-3" /></Button>
+            </div>
+          ) : (
+            <Button variant="ghost" size="sm" className="h-5 text-[10px] gap-1 text-muted-foreground" onClick={() => generateBarcodeForProduct(p.id)}>
+              <Tag className="h-3 w-3" /> Generera
+            </Button>
+          )}
+        </td>
+        <td className="px-3 py-1 text-right font-medium">
+          <span className={Number(agg ? agg.stock : p.stock) <= 0 ? "text-destructive" : "text-foreground"}>
+            {Number(agg ? agg.stock : p.stock).toFixed(1)}
+          </span>
+        </td>
+        <td className="px-3 py-1 text-center">
+          <div className="flex items-center justify-center gap-1">
+            {isWholesale && !isSubproduct && (
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openAddSubproduct(p.id)} title="Lägg till delprodukt">
+                <Layers className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(p)}>
+              <Edit className="h-3.5 w-3.5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ id: p.id, name: p.name })}>
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </td>
+      </tr>
+    );
+  };
 
   return (
     <div className="p-4 md:p-6 space-y-4">
@@ -258,48 +378,12 @@ export default function Products() {
                   <tr><td colSpan={10} className="p-8 text-center text-muted-foreground">Inga produkter hittades.</td></tr>
                 )}
                 {filtered.map(p => {
-                   const barcode = (p as any).barcode;
-                   return (
-                      <tr key={p.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors h-9">
-                        <td className="px-3 py-1 font-medium text-foreground">{p.name}</td>
-                        <td className="px-3 py-1 font-mono text-muted-foreground text-[10px]">{p.sku}</td>
-                        <td className="px-3 py-1"><Badge variant="outline" className="text-[10px]">{p.category}</Badge></td>
-                        <td className="px-3 py-1 text-muted-foreground">{p.unit}</td>
-                        {isWholesale && (
-                          <td className="px-3 py-1 text-right text-muted-foreground">{Number(p.cost_price).toFixed(2)}</td>
-                        )}
-                        <td className="px-3 py-1 text-right font-medium text-foreground">{Number(p.wholesale_price).toFixed(2)}</td>
-                        {isWholesale && (
-                          <td className="px-3 py-1 text-right text-muted-foreground">{p.retail_suggested ? Number(p.retail_suggested).toFixed(2) : "–"}</td>
-                        )}
-                       <td className="px-3 py-1">
-                         {barcode ? (
-                           <div className="flex items-center gap-1.5">
-                             <button onClick={() => setBarcodePreview(p)} className="font-mono text-[10px] text-primary hover:underline cursor-pointer">{barcode}</button>
-                             <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => printLabel(p)} title="Skriv ut etikett"><Printer className="h-3 w-3" /></Button>
-                           </div>
-                         ) : (
-                           <Button variant="ghost" size="sm" className="h-5 text-[10px] gap-1 text-muted-foreground" onClick={() => generateBarcodeForProduct(p.id)}>
-                             <Tag className="h-3 w-3" /> Generera
-                           </Button>
-                         )}
-                       </td>
-                       <td className="px-3 py-1 text-right font-medium">
-                         <span className={Number(p.stock) <= 0 ? "text-destructive" : "text-foreground"}>
-                           {Number(p.stock).toFixed(1)}
-                         </span>
-                       </td>
-                       <td className="px-3 py-1 text-center">
-                         <div className="flex items-center justify-center gap-1">
-                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(p)}>
-                             <Edit className="h-3.5 w-3.5" />
-                           </Button>
-                           <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ id: p.id, name: p.name })}>
-                             <Trash2 className="h-3.5 w-3.5" />
-                           </Button>
-                         </div>
-                       </td>
-                     </tr>
+                  const isExpanded = expandedProducts.has(p.id);
+                  return (
+                    <>
+                      {renderProductRow(p, false)}
+                      {isExpanded && p.subproducts.map(sp => renderProductRow(sp, true))}
+                    </>
                   );
                 })}
               </tbody>
@@ -435,6 +519,46 @@ export default function Products() {
         </DialogContent>
       </Dialog>
 
+      {/* Add Subproduct Dialog */}
+      <Dialog open={subproductDialogOpen} onOpenChange={setSubproductDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-sm flex items-center gap-2">
+              <Layers className="h-4 w-4 text-primary" /> Lägg till delprodukt
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Delprodukten ärver kategori och enhet från huvudprodukten. Priserna summeras till huvudproduktens totala värde.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Namn på delprodukt *</Label>
+              <Input value={subForm.name} onChange={e => setSubForm(f => ({ ...f, name: e.target.value }))} placeholder="T.ex. Räkor 1" className="h-8 text-xs" />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Prod.pris (SEK)</Label>
+                <Input value={subForm.cost_price} onChange={e => setSubForm(f => ({ ...f, cost_price: e.target.value }))} type="number" step="0.01" className="h-8 text-xs" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Grossistpris (SEK)</Label>
+                <Input value={subForm.wholesale_price} onChange={e => setSubForm(f => ({ ...f, wholesale_price: e.target.value }))} type="number" step="0.01" className="h-8 text-xs" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Rek. butik (SEK)</Label>
+                <Input value={subForm.retail_suggested} onChange={e => setSubForm(f => ({ ...f, retail_suggested: e.target.value }))} type="number" step="0.01" className="h-8 text-xs" />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setSubproductDialogOpen(false)}>Avbryt</Button>
+            <Button size="sm" onClick={handleSaveSubproduct} disabled={!subForm.name || addSubproduct.isPending}>
+              {addSubproduct.isPending ? "Sparar..." : "Lägg till delprodukt"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={open => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
@@ -450,6 +574,7 @@ export default function Products() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
       {/* Add Category Dialog */}
       <Dialog open={addCategoryOpen} onOpenChange={setAddCategoryOpen}>
         <DialogContent className="max-w-xs">

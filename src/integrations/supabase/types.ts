@@ -588,6 +588,7 @@ export type Database = {
           id: string
           name: string
           origin: string | null
+          parent_product_id: string | null
           retail_suggested: number | null
           sku: string
           stock: number
@@ -607,6 +608,7 @@ export type Database = {
           id?: string
           name: string
           origin?: string | null
+          parent_product_id?: string | null
           retail_suggested?: number | null
           sku: string
           stock?: number
@@ -626,6 +628,7 @@ export type Database = {
           id?: string
           name?: string
           origin?: string | null
+          parent_product_id?: string | null
           retail_suggested?: number | null
           sku?: string
           stock?: number
@@ -636,6 +639,13 @@ export type Database = {
           wholesale_price?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "products_parent_product_id_fkey"
+            columns: ["parent_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "products_supplier_id_fkey"
             columns: ["supplier_id"]
