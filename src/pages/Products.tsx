@@ -125,7 +125,7 @@ export default function Products() {
   const [form, setForm] = useState({
     name: "", category: "", unit: "KG", sku: "",
     hs_code: "", weight_per_piece: "", cost_price: "", wholesale_price: "", retail_suggested: "",
-    origin: "",
+    origin: "", producer: "",
   });
 
   const setField = (key: string, value: string) => {
