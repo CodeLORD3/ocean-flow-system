@@ -363,17 +363,31 @@ export default function ShopOrders() {
               <Input
                 placeholder="Sök produkt (namn eller SKU)..."
                 value={productSearch}
-                onChange={e => setProductSearch(e.target.value)}
+                onChange={e => { setProductSearch(e.target.value); setHighlightedIndex(-1); }}
+                onKeyDown={e => {
+                  if (filteredProducts.length === 0) return;
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setHighlightedIndex(prev => (prev + 1) % filteredProducts.length);
+                  } else if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    setHighlightedIndex(prev => (prev <= 0 ? filteredProducts.length - 1 : prev - 1));
+                  } else if (e.key === "Enter" && highlightedIndex >= 0 && highlightedIndex < filteredProducts.length) {
+                    e.preventDefault();
+                    addProduct(filteredProducts[highlightedIndex]);
+                  }
+                }}
                 className="pl-8 h-8 text-xs"
               />
             </div>
             {filteredProducts.length > 0 && (
               <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
-                {filteredProducts.map(p => (
+                {filteredProducts.map((p, idx) => (
                   <button
                     key={p.id}
-                    className="w-full text-left px-3 py-2 text-xs hover:bg-muted/50 flex items-center justify-between"
+                    className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between ${idx === highlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
                     onClick={() => addProduct(p)}
+                    onMouseEnter={() => setHighlightedIndex(idx)}
                   >
                     <span className="font-medium text-foreground">{p.name}</span>
                     <span className="text-muted-foreground font-mono text-[10px]">{p.sku} · {p.unit}</span>
