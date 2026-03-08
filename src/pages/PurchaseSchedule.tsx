@@ -283,7 +283,7 @@ export default function PurchaseSchedule() {
               <TableHead className="h-7 px-2 text-[10px] w-[100px]">Dag</TableHead>
               <TableHead className="h-7 px-2 text-[10px]">Produkt</TableHead>
               <TableHead className="h-7 px-2 text-[10px] text-right w-[80px]">Antal</TableHead>
-              <TableHead className="h-7 px-2 text-[10px] w-[130px]">Butik</TableHead>
+              <TableHead className="h-7 px-2 text-[10px] w-[200px]">Butik</TableHead>
               <TableHead className="h-7 px-2 text-[10px] w-[120px]">
                 {view === "purchase" ? "Leverans" : "Senast inköp"}
               </TableHead>
