@@ -233,6 +233,8 @@ export default function PurchaseSchedule() {
       const existing = grouped.get(k);
       if (existing) {
         existing.totalQuantity += item.quantity;
+        existing.lineIds.push(item.lineId);
+        if (!existing.shopOrderIds.includes(item.shopOrderId)) existing.shopOrderIds.push(item.shopOrderId);
         const shopEntry = existing.shops.find((s) => s.name === item.storeName);
         if (shopEntry) {
           shopEntry.quantity += item.quantity;
@@ -242,6 +244,7 @@ export default function PurchaseSchedule() {
         if (item.deliveryDate < existing.earliestDelivery) existing.earliestDelivery = item.deliveryDate;
       } else {
         grouped.set(k, {
+          productId: item.productId,
           productName: item.productName,
           unit: item.unit,
           totalQuantity: item.quantity,
@@ -250,6 +253,8 @@ export default function PurchaseSchedule() {
           earliestDelivery: item.deliveryDate,
           departureTime: item.departureTime,
           category: item.category,
+          lineIds: [item.lineId],
+          shopOrderIds: [item.shopOrderId],
         });
       }
     }
