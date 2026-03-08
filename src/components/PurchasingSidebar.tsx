@@ -49,10 +49,6 @@ const inventoryNav = [
   { title: "Inleveranser", url: "/receiving", icon: Truck },
 ];
 
-const purchasingNav = [
-  { title: "Produktion/Grossist", url: "/wholesale", icon: ShoppingBag },
-];
-
 const financeNav = [
   { title: "Rapporter", url: "/reports", icon: BarChart3 },
   { title: "Ekonomi", url: "/finance", icon: CreditCard },
@@ -70,7 +66,6 @@ const sections: NavSection[] = [
   { label: "Översikt", items: overviewNav },
   { label: "Inköp", items: salesNav },
   { label: "Lagerstyrning", items: inventoryNav },
-  { label: "Inköp", items: purchasingNav },
   { label: "Ekonomi & Rapporter", items: financeNav },
 ];
 
