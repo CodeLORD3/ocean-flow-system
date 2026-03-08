@@ -528,6 +528,7 @@ export type Database = {
           min_stock: number | null
           product_id: string
           quantity: number
+          unit_cost: number | null
           updated_at: string | null
         }
         Insert: {
@@ -536,6 +537,7 @@ export type Database = {
           min_stock?: number | null
           product_id: string
           quantity?: number
+          unit_cost?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -544,6 +546,7 @@ export type Database = {
           min_stock?: number | null
           product_id?: string
           quantity?: number
+          unit_cost?: number | null
           updated_at?: string | null
         }
         Relationships: [

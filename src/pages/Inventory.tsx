@@ -143,18 +143,23 @@ export default function Inventory() {
         // Check if product already exists at target
         const { data: existing } = await supabase
           .from("product_stock_locations")
-          .select("id, quantity")
+          .select("id, quantity, unit_cost")
           .eq("product_id", item.product_id)
           .eq("location_id", targetLocationId)
           .maybeSingle();
 
+        const itemCost = Number(item.unit_cost) || 0;
         if (existing) {
+          const oldTotal = Number(existing.quantity) * (Number(existing.unit_cost) || 0);
+          const newTotal = Number(item.quantity) * itemCost;
+          const combinedQty = Number(existing.quantity) + Number(item.quantity);
+          const avgCost = combinedQty > 0 ? (oldTotal + newTotal) / combinedQty : 0;
           await supabase.from("product_stock_locations")
-            .update({ quantity: Number(existing.quantity) + Number(item.quantity), updated_at: new Date().toISOString() })
+            .update({ quantity: combinedQty, unit_cost: avgCost, updated_at: new Date().toISOString() })
             .eq("id", existing.id);
         } else {
           await supabase.from("product_stock_locations")
-            .insert({ product_id: item.product_id, location_id: targetLocationId, quantity: Number(item.quantity) });
+            .insert({ product_id: item.product_id, location_id: targetLocationId, quantity: Number(item.quantity), unit_cost: itemCost });
         }
         // Remove from source
         await supabase.from("product_stock_locations").delete().eq("id", item.id);
@@ -212,20 +217,24 @@ export default function Inventory() {
       await supabase.from("product_stock_locations")
         .update({ quantity: remaining, updated_at: new Date().toISOString() })
         .eq("id", item.id);
-      // Add/merge to target
+      // Add/merge to target, preserving unit_cost
+      const itemCost = Number(item.unit_cost) || 0;
       const { data: existing } = await supabase
         .from("product_stock_locations")
-        .select("id, quantity")
+        .select("id, quantity, unit_cost")
         .eq("product_id", item.product_id)
         .eq("location_id", splitTargetLocation)
         .maybeSingle();
       if (existing) {
+        const oldTotal = Number(existing.quantity) * (Number(existing.unit_cost) || 0);
+        const combinedQty = Number(existing.quantity) + splitAmount;
+        const avgCost = combinedQty > 0 ? (oldTotal + splitAmount * itemCost) / combinedQty : 0;
         await supabase.from("product_stock_locations")
-          .update({ quantity: Number(existing.quantity) + splitAmount, updated_at: new Date().toISOString() })
+          .update({ quantity: combinedQty, unit_cost: avgCost, updated_at: new Date().toISOString() })
           .eq("id", existing.id);
       } else {
         await supabase.from("product_stock_locations")
-          .insert({ product_id: item.product_id, location_id: splitTargetLocation, quantity: splitAmount });
+          .insert({ product_id: item.product_id, location_id: splitTargetLocation, quantity: splitAmount, unit_cost: itemCost });
       }
       clearSelection(activeLocationId);
       invalidateStock();
@@ -341,7 +350,7 @@ export default function Inventory() {
         );
       }
       const totalQty = items.reduce((sum: number, s: any) => sum + Number(s.quantity), 0);
-      const totalValue = items.reduce((sum: number, s: any) => sum + Number(s.quantity) * (Number(s.products?.cost_price) || 0), 0);
+      const totalValue = items.reduce((sum: number, s: any) => sum + Number(s.quantity) * (Number(s.unit_cost) || Number(s.products?.cost_price) || 0), 0);
       return { ...loc, items, totalQty, totalValue };
     });
   }, [locations, allStock, search]);
@@ -595,7 +604,7 @@ export default function Inventory() {
                               </thead>
                               <tbody>
                                 {loc.items.map((s: any) => {
-                                  const value = Number(s.quantity) * (Number(s.products?.cost_price) || 0);
+                                  const value = Number(s.quantity) * (Number(s.unit_cost) || Number(s.products?.cost_price) || 0);
                                   const isChecked = getSelectedForLocation(loc.id).has(s.id);
                                   return (
                                     <tr key={s.id} className={`border-b border-border/30 last:border-0 hover:bg-muted/20 ${isChecked ? "bg-primary/5" : ""}`}>

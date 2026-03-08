@@ -1,0 +1,1 @@
+ALTER TABLE public.product_stock_locations ADD COLUMN unit_cost NUMERIC DEFAULT 0;
