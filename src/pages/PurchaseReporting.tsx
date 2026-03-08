@@ -63,6 +63,11 @@ function EditableRow({
   const [supplierOpen, setSupplierOpen] = useState(false);
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
 
+  const productInputRef = useRef<HTMLInputElement>(null);
+  const supplierInputRef = useRef<HTMLInputElement>(null);
+  const productCmdRef = useRef<HTMLDivElement>(null);
+  const supplierCmdRef = useRef<HTMLDivElement>(null);
+
   const commitField = (field: string, value: any) => {
     const updates: any = { [field]: value };
     if (field === "quantity" || field === "unit_price") {
@@ -73,6 +78,17 @@ function EditableRow({
     // Debounce saves
     clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(() => onSave(updates), 400);
+  };
+
+  // Forward arrow/enter keys from input to Command list
+  const handleSearchKeyDown = (e: React.KeyboardEvent, cmdRef: React.RefObject<HTMLDivElement | null>) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Enter") {
+      const cmd = cmdRef.current;
+      if (cmd) {
+        cmd.dispatchEvent(new KeyboardEvent("keydown", { key: e.key, bubbles: true }));
+        e.preventDefault();
+      }
+    }
   };
 
   const filteredProducts = products.filter((p: any) =>
