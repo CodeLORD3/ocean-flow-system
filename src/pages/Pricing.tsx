@@ -68,7 +68,7 @@ export default function Pricing() {
       const current = prev[id];
       if (!current) return prev;
       const m = current.margin;
-      return { ...prev, [id]: { cost_price: cost, margin: m, wholesale_price: Number((cost * (1 + m / 100)).toFixed(2)) } };
+      return { ...prev, [id]: { cost_price: cost, margin: m, wholesale_price: Number((cost / (1 - m / 100)).toFixed(2)) } };
     });
   };
 
