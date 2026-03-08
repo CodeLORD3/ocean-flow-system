@@ -1021,6 +1021,39 @@ export type Database = {
         }
         Relationships: []
       }
+      transport_schedules: {
+        Row: {
+          badge_color: string
+          created_at: string | null
+          departure_days_before: number
+          departure_time: string
+          id: string
+          label: string
+          updated_at: string | null
+          zone_key: string
+        }
+        Insert: {
+          badge_color?: string
+          created_at?: string | null
+          departure_days_before?: number
+          departure_time?: string
+          id?: string
+          label: string
+          updated_at?: string | null
+          zone_key: string
+        }
+        Update: {
+          badge_color?: string
+          created_at?: string | null
+          departure_days_before?: number
+          departure_time?: string
+          id?: string
+          label?: string
+          updated_at?: string | null
+          zone_key?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
