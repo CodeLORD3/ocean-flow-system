@@ -217,24 +217,30 @@ export default function Inventory() {
       await supabase.from("product_stock_locations")
         .update({ quantity: remaining, updated_at: new Date().toISOString() })
         .eq("id", item.id);
-      // Add/merge to target, preserving unit_cost
       const itemCost = Number(item.unit_cost) || 0;
-      const { data: existing } = await supabase
-        .from("product_stock_locations")
-        .select("id, quantity, unit_cost")
-        .eq("product_id", item.product_id)
-        .eq("location_id", splitTargetLocation)
-        .maybeSingle();
-      if (existing) {
-        const oldTotal = Number(existing.quantity) * (Number(existing.unit_cost) || 0);
-        const combinedQty = Number(existing.quantity) + splitAmount;
-        const avgCost = combinedQty > 0 ? (oldTotal + splitAmount * itemCost) / combinedQty : 0;
-        await supabase.from("product_stock_locations")
-          .update({ quantity: combinedQty, unit_cost: avgCost, updated_at: new Date().toISOString() })
-          .eq("id", existing.id);
-      } else {
+      // If splitting to the SAME location, always create a new row
+      if (splitTargetLocation === activeLocationId) {
         await supabase.from("product_stock_locations")
           .insert({ product_id: item.product_id, location_id: splitTargetLocation, quantity: splitAmount, unit_cost: itemCost });
+      } else {
+        // Add/merge to target, preserving unit_cost
+        const { data: existing } = await supabase
+          .from("product_stock_locations")
+          .select("id, quantity, unit_cost")
+          .eq("product_id", item.product_id)
+          .eq("location_id", splitTargetLocation)
+          .maybeSingle();
+        if (existing) {
+          const oldTotal = Number(existing.quantity) * (Number(existing.unit_cost) || 0);
+          const combinedQty = Number(existing.quantity) + splitAmount;
+          const avgCost = combinedQty > 0 ? (oldTotal + splitAmount * itemCost) / combinedQty : 0;
+          await supabase.from("product_stock_locations")
+            .update({ quantity: combinedQty, unit_cost: avgCost, updated_at: new Date().toISOString() })
+            .eq("id", existing.id);
+        } else {
+          await supabase.from("product_stock_locations")
+            .insert({ product_id: item.product_id, location_id: splitTargetLocation, quantity: splitAmount, unit_cost: itemCost });
+        }
       }
       clearSelection(activeLocationId);
       invalidateStock();
@@ -1158,8 +1164,8 @@ export default function Inventory() {
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Destination *</Label>
-                  <div className="space-y-1 max-h-40 overflow-y-auto">
-                    {locations.filter((l: any) => l.id !== activeLocationId).map((loc: any) => (
+                   <div className="space-y-1 max-h-40 overflow-y-auto">
+                    {portalLocations.map((loc: any) => (
                       <button
                         key={loc.id}
                         className={`w-full flex items-center gap-2 px-3 py-2 rounded-md border transition-colors text-left text-xs ${splitTargetLocation === loc.id ? "border-primary bg-primary/10" : "border-border/50 hover:bg-muted/40"}`}
@@ -1167,6 +1173,7 @@ export default function Inventory() {
                       >
                         <MapPin className="h-3 w-3 text-primary shrink-0" />
                         <span className="font-medium text-foreground">{loc.name}</span>
+                        {loc.id === activeLocationId && <Badge variant="secondary" className="text-[9px] ml-auto">Samma plats (ny rad)</Badge>}
                       </button>
                     ))}
                   </div>
