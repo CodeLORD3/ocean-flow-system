@@ -390,9 +390,9 @@ function EditableRow({
           )}
         </div>
       </TableCell>
-      <TableCell className="py-1 px-0 w-7">
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onDelete}>
-          <Trash2 className="h-3 w-3 text-destructive" />
+      <TableCell className="py-0.5 px-0 w-6">
+        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={onDelete}>
+          <Trash2 className="h-2.5 w-2.5 text-destructive" />
         </Button>
       </TableCell>
     </TableRow>
