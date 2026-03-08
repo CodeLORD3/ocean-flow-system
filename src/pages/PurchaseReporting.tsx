@@ -529,35 +529,19 @@ export default function PurchaseReporting() {
             ) : (
               /* Document viewer with zoom */
               <ScrollArea className="flex-1">
-              <div className="p-4 flex justify-center min-h-full">
+              <div className="p-4">
                   {selectedReport.file_name.toLowerCase().endsWith(".pdf") ? (
-                    <object
-                      data={selectedReport.file_url}
-                      type="application/pdf"
-                      className="w-full rounded"
-                      style={{ height: `${Math.max(600, 600 * zoom)}px`, minHeight: "600px" }}
-                    >
-                      <div className="flex flex-col items-center gap-3 py-12">
-                        <FileText className="h-10 w-10 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">Kan inte visa PDF i förhandsgranskning</p>
-                        <a
-                          href={selectedReport.file_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-primary underline"
-                        >
-                          Öppna PDF i ny flik
-                        </a>
-                      </div>
-                    </object>
+                    <PdfViewer url={selectedReport.file_url} zoom={zoom} />
                   ) : (
-                    <img
-                      src={selectedReport.file_url}
-                      alt={selectedReport.file_name}
-                      className="rounded-md shadow-sm max-w-full"
-                      style={{ transform: `scale(${zoom})`, transformOrigin: "top center" }}
-                      draggable={false}
-                    />
+                    <div className="flex justify-center">
+                      <img
+                        src={selectedReport.file_url}
+                        alt={selectedReport.file_name}
+                        className="rounded-md shadow-sm max-w-full"
+                        style={{ transform: `scale(${zoom})`, transformOrigin: "top center" }}
+                        draggable={false}
+                      />
+                    </div>
                   )}
                 </div>
               </ScrollArea>
