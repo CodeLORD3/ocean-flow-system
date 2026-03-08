@@ -1025,7 +1025,6 @@ export type Database = {
         Row: {
           badge_color: string
           created_at: string | null
-          departure_days_before: number
           departure_time: string
           departure_weekday: number
           id: string
@@ -1036,7 +1035,6 @@ export type Database = {
         Insert: {
           badge_color?: string
           created_at?: string | null
-          departure_days_before?: number
           departure_time?: string
           departure_weekday?: number
           id?: string
@@ -1047,7 +1045,6 @@ export type Database = {
         Update: {
           badge_color?: string
           created_at?: string | null
-          departure_days_before?: number
           departure_time?: string
           departure_weekday?: number
           id?: string

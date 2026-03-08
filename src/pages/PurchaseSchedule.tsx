@@ -20,15 +20,12 @@ import { toast } from "sonner";
 const WEEKDAYS = ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag", "Söndag"];
 const WEEKDAY_OPTIONS = WEEKDAYS.map((name, i) => ({ value: i + 1, label: name }));
 
-function jsToWeekday(jsDay: number): number {
-  return jsDay === 0 ? 7 : jsDay;
-}
 
-function getLatestPurchaseDate(deliveryDate: Date, departureWeekday: number): Date {
-  const deliveryWd = jsToWeekday(getDay(deliveryDate));
-  let diff = deliveryWd - departureWeekday;
-  if (diff < 0) diff += 7;
-  return addDays(deliveryDate, -diff);
+/** For a given delivery date, find the departure date = the transport zone's
+ *  departure weekday in the SAME ISO week as the delivery date. */
+function getDepartureDate(deliveryDate: Date, departureWeekday: number): Date {
+  const weekMonday = startOfWeek(deliveryDate, { weekStartsOn: 1 });
+  return addDays(weekMonday, departureWeekday - 1);
 }
 
 function getStoreZoneKey(store: { city: string; name: string }): string {
@@ -158,7 +155,7 @@ export default function PurchaseSchedule() {
       quantity: number;
       unit: string;
       deliveryDate: Date;
-      latestPurchaseDate: Date;
+      departureDate: Date;
       departureTime: string;
       category: string;
     };
@@ -179,7 +176,7 @@ export default function PurchaseSchedule() {
         if (!deliveryDateStr) continue;
 
         const deliveryDate = parseISO(deliveryDateStr);
-        const latestPurchaseDate = getLatestPurchaseDate(deliveryDate, zone.departure_weekday);
+        const departureDate = getDepartureDate(deliveryDate, zone.departure_weekday);
 
         rawItems.push({
           storeName: store.name,
@@ -188,7 +185,7 @@ export default function PurchaseSchedule() {
           quantity: line.quantity_ordered,
           unit: line.unit || line.products?.unit || "kg",
           deliveryDate,
-          latestPurchaseDate,
+          departureDate,
           departureTime: zone.departure_time,
           category: line.products?.category || "Övrigt",
         });
@@ -196,14 +193,14 @@ export default function PurchaseSchedule() {
     }
 
     const key = (item: RawItem) =>
-      `${item.productName}|${item.unit}|${format(item.latestPurchaseDate, "yyyy-MM-dd")}`;
+      `${item.productName}|${item.unit}|${format(item.departureDate, "yyyy-MM-dd")}`;
 
     const grouped = new Map<string, {
       productName: string;
       unit: string;
       totalQuantity: number;
       shops: { name: string; zoneKey: string; quantity: number; deliveryDate: Date }[];
-      latestPurchaseDate: Date;
+      departureDate: Date;
       earliestDelivery: Date;
       departureTime: string;
       category: string;
@@ -227,7 +224,7 @@ export default function PurchaseSchedule() {
           unit: item.unit,
           totalQuantity: item.quantity,
           shops: [{ name: item.storeName, zoneKey: item.zoneKey, quantity: item.quantity, deliveryDate: item.deliveryDate }],
-          latestPurchaseDate: item.latestPurchaseDate,
+          departureDate: item.departureDate,
           earliestDelivery: item.deliveryDate,
           departureTime: item.departureTime,
           category: item.category,
@@ -261,7 +258,7 @@ export default function PurchaseSchedule() {
     }>();
 
     for (const item of filteredSchedule) {
-      const inWeek = weekDates.some((d) => isSameDay(d, item.latestPurchaseDate));
+      const inWeek = weekDates.some((d) => isSameDay(d, item.departureDate));
       if (!inWeek) continue;
 
       const k = `${item.productName}|${item.unit}`;
@@ -299,7 +296,7 @@ export default function PurchaseSchedule() {
   };
 
   const byDeliveryDay = useMemo(() => groupByDay((i) => i.earliestDelivery), [filteredSchedule, weekDates]);
-  const byPurchaseDay = useMemo(() => groupByDay((i) => i.latestPurchaseDate), [filteredSchedule, weekDates]);
+  const byPurchaseDay = useMemo(() => groupByDay((i) => i.departureDate), [filteredSchedule, weekDates]);
 
   const activeMap = view === "purchase" ? byPurchaseDay : byDeliveryDay;
   const isLoading = ordersLoading || storesLoading || schedulesLoading;
@@ -433,7 +430,7 @@ export default function PurchaseSchedule() {
                           </TableHeader>
                           <TableBody>
                             {items.map((item, i) => {
-                              const isUrgent = view === "purchase" && isSameDay(item.latestPurchaseDate, new Date());
+                              const isUrgent = view === "purchase" && isSameDay(item.departureDate, new Date());
                               return (
                                 <Collapsible key={`${dayIndex}-${item.productName}-${i}`} asChild>
                                   <>
@@ -450,8 +447,8 @@ export default function PurchaseSchedule() {
                                         <TableCell className="px-2 py-0.5">
                                           <span className="text-[10px] text-muted-foreground">
                                             {view === "purchase"
-                                              ? `${format(item.latestPurchaseDate, "EEE d/M", { locale: sv })} ${item.departureTime}`
-                                              : format(item.latestPurchaseDate, "EEE d/M", { locale: sv })}
+                                              ? `${format(item.departureDate, "EEE d/M", { locale: sv })} ${item.departureTime}`
+                                              : format(item.departureDate, "EEE d/M", { locale: sv })}
                                           </span>
                                         </TableCell>
                                       </TableRow>
@@ -470,7 +467,7 @@ export default function PurchaseSchedule() {
                                               <TableCell className="px-2 py-0.5 text-[10px] text-right text-muted-foreground">{shop.quantity} {item.unit}</TableCell>
                                               <TableCell className="px-2 py-0.5" />
                                               <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">
-                                                {format(item.latestPurchaseDate, "EEE d/M", { locale: sv })} {zone?.departure_time || item.departureTime}
+                                                {format(item.departureDate, "EEE d/M", { locale: sv })} {zone?.departure_time || item.departureTime}
                                               </TableCell>
                                             </TableRow>
                                           );

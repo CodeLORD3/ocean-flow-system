@@ -1,0 +1,1 @@
+ALTER TABLE public.transport_schedules DROP COLUMN departure_days_before;
