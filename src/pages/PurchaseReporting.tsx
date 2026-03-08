@@ -101,6 +101,7 @@ function EditableRow({
   products,
   suppliers,
   reports,
+  onViewDocument,
   autoFocusQty,
   onQtyFocused,
 }: {
@@ -110,6 +111,7 @@ function EditableRow({
   products: any[];
   suppliers: any[];
   reports: Report[];
+  onViewDocument?: (reportId: string) => void;
   autoFocusQty?: boolean;
   onQtyFocused?: () => void;
 }) {
