@@ -565,7 +565,8 @@ export default function WholesaleOrders() {
                     </div>
                   ))}
                 </div>
-              )}
+              );
+              })()}
             </CardContent>
           </Card>
         </TabsContent>
