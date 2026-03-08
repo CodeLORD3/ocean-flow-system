@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import {
   Warehouse, Search, Plus, Package, AlertTriangle, MapPin,
   Edit, ArrowRightLeft, ScanLine, Camera, ClipboardList, X, CheckCircle2,
-  ChevronDown, ChevronRight, Trash2, Scissors, Move,
+  ChevronDown, ChevronRight, Trash2, Scissors, Move, RefreshCw,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
