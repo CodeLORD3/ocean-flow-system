@@ -303,7 +303,7 @@ function EditableRow({
           defaultValue={line.unit_price ?? 0}
           onFocus={(e) => e.target.select()}
           onChange={(e) => commitField("unit_price", parseFloat(e.target.value) || 0)}
-          className="h-7 text-xs w-20 border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1.5 text-right"
+          className="h-7 text-xs w-16 border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 text-right"
         />
       </TableCell>
       <TableCell className="py-1 px-2">
