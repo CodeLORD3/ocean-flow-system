@@ -254,7 +254,8 @@ export default function ShopOrders() {
         order_week: weekNum,
         notes: orderNote || null,
         status: "Ny",
-      })
+        desired_delivery_date: desiredDeliveryDate ? format(desiredDeliveryDate, "yyyy-MM-dd") : null,
+      } as any)
       .select()
       .single();
 
