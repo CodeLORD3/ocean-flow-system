@@ -651,9 +651,16 @@ export default function Inventory() {
                                 <Trash2 className="h-3 w-3" /> Radera
                               </Button>
                               {getSelectedForLocation(loc.id).size === 1 && (
-                                <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] gap-1" onClick={() => { setActiveLocationId(loc.id); setSplitDialogOpen(true); }}>
-                                  <Scissors className="h-3 w-3" /> Splitta
-                                </Button>
+                                <>
+                                  <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] gap-1" onClick={() => { setActiveLocationId(loc.id); setSplitDialogOpen(true); }}>
+                                    <Scissors className="h-3 w-3" /> Splitta
+                                  </Button>
+                                  {site === "production" && (
+                                    <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] gap-1 text-purple-600 border-purple-300 hover:bg-purple-50" onClick={() => { setActiveLocationId(loc.id); setTransformDialogOpen(true); }}>
+                                      <RefreshCw className="h-3 w-3" /> Omvandla
+                                    </Button>
+                                  )}
+                                </>
                               )}
                             </div>
                           )}
