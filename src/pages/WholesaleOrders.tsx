@@ -515,6 +515,9 @@ export default function WholesaleOrders() {
                 </DialogTitle>
                 <DialogDescription className="text-xs">
                   Skapad {new Date(selectedOrder.created_at).toLocaleDateString("sv-SE")}
+                  {(selectedOrder as any).desired_delivery_date && (
+                    <> · Önskat leveransdatum: <span className="font-medium text-foreground">{(selectedOrder as any).desired_delivery_date}</span></>
+                  )}
                 </DialogDescription>
               </DialogHeader>
 
