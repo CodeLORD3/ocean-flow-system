@@ -345,6 +345,20 @@ function EditableRow({
           className="h-7 text-xs border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1.5 w-28"
         />
       </TableCell>
+      <TableCell className="py-1 px-2">
+        <Select defaultValue={line.report_id} onValueChange={(v) => onSave({ report_id: v })}>
+          <SelectTrigger className="h-7 w-[140px] text-xs border-transparent bg-transparent hover:border-input">
+            <SelectValue placeholder="Inget dokument" />
+          </SelectTrigger>
+          <SelectContent>
+            {reports.map((r) => (
+              <SelectItem key={r.id} value={r.id}>
+                <span className="truncate">{r.file_name}</span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </TableCell>
       <TableCell className="py-1 px-1">
         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onDelete}>
           <Trash2 className="h-3 w-3 text-destructive" />
