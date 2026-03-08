@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useProducts, useUpdateProduct } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
 import { usePriceHistory } from "@/hooks/usePriceHistory";
@@ -13,8 +13,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { DollarSign, History, Search, Store } from "lucide-react";
+import { Check, DollarSign, History, Search, Store, X } from "lucide-react";
 import { format } from "date-fns";
+
+interface InlineEdit {
+  cost_price: number;
+  wholesale_price: number;
+  margin: number;
+}
 
 export default function Pricing() {
   const { data: products = [], isLoading } = useProducts();
@@ -29,6 +35,78 @@ export default function Pricing() {
   const [editPrices, setEditPrices] = useState({ cost_price: 0, wholesale_price: 0, retail_suggested: 0 });
   const [reason, setReason] = useState("");
   const [historyProduct, setHistoryProduct] = useState<string | null>(null);
+
+  // Inline editing state for grossist rows: productId -> edit values
+  const [inlineEdits, setInlineEdits] = useState<Record<string, InlineEdit>>({});
+
+  const calcMargin = (cost: number, wholesale: number) => {
+    if (cost === 0) return 0;
+    return Math.round(((wholesale - cost) / cost) * 100);
+  };
+
+  const startInlineEdit = (p: any) => {
+    setInlineEdits((prev) => ({
+      ...prev,
+      [p.id]: {
+        cost_price: Number(p.cost_price),
+        wholesale_price: Number(p.wholesale_price),
+        margin: calcMargin(Number(p.cost_price), Number(p.wholesale_price)),
+      },
+    }));
+  };
+
+  const cancelInlineEdit = (id: string) => {
+    setInlineEdits((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
+
+  const updateInlineCost = (id: string, cost: number) => {
+    setInlineEdits((prev) => {
+      const current = prev[id];
+      if (!current) return prev;
+      const m = current.margin;
+      return { ...prev, [id]: { cost_price: cost, margin: m, wholesale_price: Number((cost * (1 + m / 100)).toFixed(2)) } };
+    });
+  };
+
+  const updateInlineWholesale = (id: string, wholesale: number) => {
+    setInlineEdits((prev) => {
+      const current = prev[id];
+      if (!current) return prev;
+      return { ...prev, [id]: { ...current, wholesale_price: wholesale, margin: calcMargin(current.cost_price, wholesale) } };
+    });
+  };
+
+  const updateInlineMargin = (id: string, margin: number) => {
+    setInlineEdits((prev) => {
+      const current = prev[id];
+      if (!current) return prev;
+      return { ...prev, [id]: { ...current, margin, wholesale_price: Number((current.cost_price * (1 + margin / 100)).toFixed(2)) } };
+    });
+  };
+
+  const saveInlineEdit = (p: any) => {
+    const edit = inlineEdits[p.id];
+    if (!edit) return;
+    updateProduct.mutate(
+      {
+        id: p.id,
+        cost_price: edit.cost_price,
+        wholesale_price: edit.wholesale_price,
+        retail_suggested: p.retail_suggested || 0,
+        reason: "Inline prisändring",
+      },
+      {
+        onSuccess: () => {
+          toast({ title: "Pris uppdaterat", description: `${p.name} sparad.` });
+          cancelInlineEdit(p.id);
+        },
+      }
+    )
+  };
 
   const filtered = products.filter((p) => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase());
