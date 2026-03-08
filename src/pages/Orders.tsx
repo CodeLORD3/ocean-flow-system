@@ -46,6 +46,17 @@ export default function Orders() {
 
   const { data: orders = [], isLoading } = useShopOrders();
   const { data: stores = [] } = useStores();
+  const queryClient = useQueryClient();
+  const syncRan = useRef(false);
+
+  // On mount, sync order statuses with current Grossist Flytande stock
+  useEffect(() => {
+    if (syncRan.current) return;
+    syncRan.current = true;
+    syncBehandlasFromStock().then(() => {
+      queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
+    });
+  }, []);
 
   const storeOptions = ["Alla butiker", ...stores.map((s: any) => s.name)];
   const statusOptions = ["Alla", "Ny", "Behandlas", "Packad", "Skickad", "Klar / Levererad"];
