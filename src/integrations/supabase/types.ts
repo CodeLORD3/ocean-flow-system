@@ -718,6 +718,7 @@ export type Database = {
       purchase_reports: {
         Row: {
           created_at: string | null
+          display_name: string | null
           file_name: string
           file_url: string
           id: string
@@ -727,6 +728,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          display_name?: string | null
           file_name: string
           file_url: string
           id?: string
@@ -736,6 +738,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          display_name?: string | null
           file_name?: string
           file_url?: string
           id?: string
