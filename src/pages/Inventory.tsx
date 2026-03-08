@@ -321,16 +321,18 @@ export default function Inventory() {
     });
   };
 
+  const isLocationPortal = site === "purchasing" || site === "production";
+
   const expandAll = () => {
-    if (site === "purchasing") {
-      setExpandedLocations(new Set(locations.map((l: any) => l.id)));
+    if (isLocationPortal) {
+      setExpandedLocations(new Set(portalLocations.map((l: any) => l.id)));
     } else {
       setExpandedCategories(new Set(stockByCategory.map(([cat]) => cat)));
     }
   };
 
   const collapseAll = () => {
-    if (site === "purchasing") {
+    if (isLocationPortal) {
       setExpandedLocations(new Set());
     } else {
       setExpandedCategories(new Set());
@@ -339,9 +341,20 @@ export default function Inventory() {
 
   
 
-  // Stock grouped by location for purchasing portal
+  // Filter locations by zone for purchasing/production portals
+  const portalLocations = useMemo(() => {
+    if (site === "purchasing") {
+      return locations.filter((loc: any) => loc.zone === "Inköp" || loc.name === "Grossist Flytande");
+    }
+    if (site === "production") {
+      return locations.filter((loc: any) => loc.zone === "Produktion" || loc.name === "Grossist Flytande");
+    }
+    return locations;
+  }, [locations, site]);
+
+  // Stock grouped by location for purchasing/production portal
   const stockByLocation = useMemo(() => {
-    return locations.map((loc: any) => {
+    return portalLocations.map((loc: any) => {
       let items = allStock.filter((s: any) => s.location_id === loc.id);
       if (search) {
         items = items.filter((s: any) =>
@@ -353,7 +366,7 @@ export default function Inventory() {
       const totalValue = items.reduce((sum: number, s: any) => sum + Number(s.quantity) * (Number(s.unit_cost) || Number(s.products?.cost_price) || 0), 0);
       return { ...loc, items, totalQty, totalValue };
     });
-  }, [locations, allStock, search]);
+  }, [portalLocations, allStock, search]);
 
   // --- Location dialog ---
   const handleCreateLocation = () => {
@@ -524,8 +537,8 @@ export default function Inventory() {
         </CardContent></Card>
       </div>
 
-      {site === "purchasing" ? (
-        /* ── INKÖP PORTAL: Location accordion ── */
+      {isLocationPortal ? (
+        /* ── INKÖP/PRODUKTION PORTAL: Location accordion ── */
         <Card className="shadow-card">
           <CardHeader className="pb-2">
             <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
