@@ -348,18 +348,25 @@ function EditableRow({
         />
       </TableCell>
       <TableCell className="py-1 px-2">
-        <Select defaultValue={line.report_id} onValueChange={(v) => onSave({ report_id: v })}>
-          <SelectTrigger className="h-7 w-[140px] text-xs border-transparent bg-transparent hover:border-input">
-            <SelectValue placeholder="Inget dokument" />
-          </SelectTrigger>
-          <SelectContent>
-            {reports.map((r) => (
-              <SelectItem key={r.id} value={r.id}>
-                <span className="truncate">{r.file_name}</span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-1">
+          <Select defaultValue={line.report_id} onValueChange={(v) => onSave({ report_id: v })}>
+            <SelectTrigger className="h-7 w-[120px] text-xs border-transparent bg-transparent hover:border-input">
+              <SelectValue placeholder="Inget dokument" />
+            </SelectTrigger>
+            <SelectContent>
+              {reports.map((r) => (
+                <SelectItem key={r.id} value={r.id}>
+                  <span className="truncate">{r.file_name}</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {line.report_id && onViewDocument && (
+            <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => onViewDocument(line.report_id)} title="Visa dokument">
+              <FileText className="h-3 w-3 text-muted-foreground" />
+            </Button>
+          )}
+        </div>
       </TableCell>
       <TableCell className="py-1 px-1">
         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onDelete}>
