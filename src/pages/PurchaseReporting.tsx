@@ -768,6 +768,7 @@ export default function PurchaseReporting() {
       queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
       queryClient.invalidateQueries({ queryKey: ["product_stock_locations"] });
       queryClient.invalidateQueries({ queryKey: ["all_stock_locations"] });
+      queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
       setSelectedReportId(null);
       toast({ title: "Inköp bekräftat", description: "Dokumentet har låsts och varor har lagts till i Grossist Flytande." });
     },

@@ -522,6 +522,7 @@ export default function ProductionReporting() {
       queryClient.invalidateQueries({ queryKey: ["production-reports"] });
       queryClient.invalidateQueries({ queryKey: ["product_stock_locations"] });
       queryClient.invalidateQueries({ queryKey: ["all_stock_locations"] });
+      queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
       toast({ title: "Produktion bekräftad", description: "Producerade varor har lagts till i Grossist Flytande." });
     },
   });
