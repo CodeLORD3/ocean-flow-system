@@ -291,16 +291,16 @@ export default function WholesaleOrders() {
                   <table className="w-full text-xs">
                     <thead>
                        <tr className="border-b border-border bg-muted/30 h-9">
-                        <th className="p-2.5 text-left font-medium text-muted-foreground">PRODUKT</th>
-                        <th className="p-2.5 text-left font-medium text-muted-foreground">KATEGORI</th>
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">PRODUKT</th>
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">KATEGORI</th>
                         {retailStores.map(s => (
-                          <th key={s.id} className="p-2.5 text-right font-medium text-muted-foreground text-[10px] uppercase">
-                            {s.name?.split(" ").pop()}
-                          </th>
-                        ))}
-                        <th className="p-2.5 text-right font-bold text-primary">TOTAL</th>
-                        <th className="p-2.5 text-left font-medium text-muted-foreground">ENHET</th>
-                        <th className="p-2.5 text-left font-medium text-muted-foreground min-w-[140px]">STATUS</th>
+                           <th key={s.id} className="px-2.5 py-1 text-right font-medium text-muted-foreground text-[10px] uppercase">
+                             {s.name?.split(" ").pop()}
+                           </th>
+                         ))}
+                         <th className="px-2.5 py-1 text-right font-bold text-primary">TOTAL</th>
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">ENHET</th>
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground min-w-[140px]">STATUS</th>
                       </tr>
                     </thead>
                     <tbody>
