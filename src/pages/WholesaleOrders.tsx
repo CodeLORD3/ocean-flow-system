@@ -383,17 +383,17 @@ export default function WholesaleOrders() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="border-b border-border bg-muted/30">
-                        <th className="p-3 text-left font-medium text-muted-foreground">VECKA</th>
-                        <th className="p-3 text-left font-medium text-muted-foreground">DATUM</th>
-                        <th className="p-3 text-left font-medium text-muted-foreground">BUTIK</th>
-                        <th className="p-3 text-left font-medium text-muted-foreground">ÖNSKAD LEV.</th>
-                        <th className="p-3 text-right font-medium text-muted-foreground">RADER</th>
-                        <th className="p-3 text-left font-medium text-muted-foreground">PRODUKTER</th>
-                        <th className="p-3 text-left font-medium text-muted-foreground">ANTECKNING</th>
-                        <th className="p-3 text-left font-medium text-muted-foreground min-w-[120px]">STATUS</th>
-                        <th className="p-3 text-left font-medium text-muted-foreground">LEVERANSRAPPORT</th>
-                        <th className="p-3 text-center font-medium text-muted-foreground">ARKIVERA</th>
+                       <tr className="border-b border-border bg-muted/30 h-9">
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">VECKA</th>
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">DATUM</th>
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">BUTIK</th>
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">ÖNSKAD LEV.</th>
+                         <th className="px-2.5 py-1 text-right font-medium text-muted-foreground">RADER</th>
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">PRODUKTER</th>
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">ANTECKNING</th>
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground min-w-[120px]">STATUS</th>
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">LEVERANSRAPPORT</th>
+                         <th className="px-2.5 py-1 text-center font-medium text-muted-foreground">ARKIVERA</th>
                       </tr>
                     </thead>
                     <tbody>
