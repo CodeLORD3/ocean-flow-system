@@ -211,23 +211,23 @@ function EditableRow({
 
   if (locked) {
     return (
-      <TableRow className="h-9 opacity-75">
-        <TableCell className="py-1 px-2 text-xs min-w-[180px]">{line.product_name}</TableCell>
-        <TableCell className="py-1 px-1 text-xs text-right w-[60px]">{line.quantity}</TableCell>
-        <TableCell className="py-1 px-1 text-xs w-[50px]">{line.unit || "kg"}</TableCell>
-        <TableCell className="py-1 px-1 text-xs text-right w-[70px]">{(line.unit_price ?? 0).toLocaleString("sv-SE")}</TableCell>
-        <TableCell className="py-1 px-1 text-xs w-[100px]">{line.supplier_name || "—"}</TableCell>
-        <TableCell className="py-1 px-1 text-xs w-[72px]">{line.status}</TableCell>
-        <TableCell className="py-1 px-1 text-xs w-[100px]">{line.purchase_date || "—"}</TableCell>
-        <TableCell className="py-1 px-1 text-xs w-[110px]">—</TableCell>
-        <TableCell className="py-1 px-0 w-7"></TableCell>
+      <TableRow className="h-8 opacity-75">
+        <TableCell className="py-0.5 px-1.5 text-[11px] min-w-[140px]">{line.product_name}</TableCell>
+        <TableCell className="py-0.5 px-1 text-[11px] text-right w-[50px]">{line.quantity}</TableCell>
+        <TableCell className="py-0.5 px-1 text-[11px] w-[42px]">{line.unit || "kg"}</TableCell>
+        <TableCell className="py-0.5 px-1 text-[11px] text-right w-[58px]">{(line.unit_price ?? 0).toLocaleString("sv-SE")}</TableCell>
+        <TableCell className="py-0.5 px-1 text-[11px] w-[88px] truncate">{line.supplier_name || "—"}</TableCell>
+        <TableCell className="py-0.5 px-1 text-[11px] w-[62px]">{line.status}</TableCell>
+        <TableCell className="py-0.5 px-1 text-[11px] w-[86px]">{line.purchase_date || "—"}</TableCell>
+        <TableCell className="py-0.5 px-1 text-[11px] w-[90px]">—</TableCell>
+        <TableCell className="py-0.5 px-0 w-6"></TableCell>
       </TableRow>
     );
   }
 
   return (
-    <TableRow className="h-9 group/row">
-      <TableCell className="py-1 px-2 min-w-[180px]">
+    <TableRow className="h-8 group/row">
+      <TableCell className="py-0.5 px-1.5 min-w-[140px]">
         <Popover open={productOpen} onOpenChange={setProductOpen}>
           <PopoverTrigger asChild>
             <div className="relative">
@@ -247,7 +247,7 @@ function EditableRow({
                   if (e.target.value.length > 0) setProductOpen(true);
                 }}
                 onKeyDown={handleProductKeyDown}
-                className="h-7 text-xs border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1.5 min-w-[160px]"
+                className="h-6 text-[11px] border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 min-w-[120px]"
                 placeholder="Sök produkt..."
               />
               {!line.product_id && (
@@ -276,19 +276,19 @@ function EditableRow({
           )}
         </Popover>
       </TableCell>
-      <TableCell className="py-1 px-1 w-[60px]">
+      <TableCell className="py-0.5 px-1 w-[50px]">
         <Input
           ref={qtyInputRef}
           type="number"
           defaultValue={line.quantity}
           onFocus={(e) => e.target.select()}
           onChange={(e) => commitField("quantity", parseFloat(e.target.value) || 0)}
-          className="h-7 text-xs w-14 border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 text-right"
+          className="h-6 text-[11px] w-12 border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 text-right"
         />
       </TableCell>
-      <TableCell className="py-1 px-1 w-[50px]">
+      <TableCell className="py-0.5 px-1 w-[42px]">
         <Select defaultValue={line.unit || "kg"} onValueChange={(v) => onSave({ unit: v })}>
-          <SelectTrigger className="h-7 w-12 text-xs border-transparent bg-transparent hover:border-input"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="h-6 w-10 text-[11px] border-transparent bg-transparent hover:border-input"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="kg">kg</SelectItem>
             <SelectItem value="st">st</SelectItem>
@@ -297,16 +297,16 @@ function EditableRow({
           </SelectContent>
         </Select>
       </TableCell>
-      <TableCell className="py-1 px-1 w-[70px]">
+      <TableCell className="py-0.5 px-1 w-[58px]">
         <Input
           type="number"
           defaultValue={line.unit_price ?? 0}
           onFocus={(e) => e.target.select()}
           onChange={(e) => commitField("unit_price", parseFloat(e.target.value) || 0)}
-          className="h-7 text-xs w-16 border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 text-right"
+          className="h-6 text-[11px] w-14 border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 text-right"
         />
       </TableCell>
-      <TableCell className="py-1 px-1 w-[100px]">
+      <TableCell className="py-0.5 px-1 w-[88px]">
         <Popover open={supplierOpen} onOpenChange={setSupplierOpen}>
           <PopoverTrigger asChild>
             <div className="relative">
@@ -326,7 +326,7 @@ function EditableRow({
                   if (e.target.value.length > 0) setSupplierOpen(true);
                 }}
                 onKeyDown={handleSupplierKeyDown}
-                className="h-7 text-xs border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 w-24"
+                className="h-6 text-[11px] border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 w-20"
                 placeholder="Sök leverantör..."
               />
             </div>
@@ -352,27 +352,27 @@ function EditableRow({
           )}
         </Popover>
       </TableCell>
-      <TableCell className="py-1 px-1 w-[72px]">
+      <TableCell className="py-0.5 px-1 w-[62px]">
         <Select defaultValue={line.status} onValueChange={(v) => onSave({ status: v })}>
-          <SelectTrigger className="h-7 w-[68px] text-xs border-transparent bg-transparent hover:border-input"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="h-6 w-[58px] text-[11px] border-transparent bg-transparent hover:border-input"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="Beställd">Beställd</SelectItem>
             <SelectItem value="Inköpt">Inköpt</SelectItem>
           </SelectContent>
         </Select>
       </TableCell>
-      <TableCell className="py-1 px-1 w-[100px]">
+      <TableCell className="py-0.5 px-1 w-[86px]">
         <Input
           type="date"
           defaultValue={line.purchase_date || ""}
           onChange={(e) => commitField("purchase_date", e.target.value || null)}
-          className="h-7 text-xs border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 w-24"
+          className="h-6 text-[11px] border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 w-[78px]"
         />
       </TableCell>
-      <TableCell className="py-1 px-1 w-[110px]">
+      <TableCell className="py-0.5 px-1 w-[90px]">
         <div className="flex items-center gap-0.5">
           <Select defaultValue={line.report_id} onValueChange={(v) => onSave({ report_id: v })}>
-            <SelectTrigger className="h-7 w-[90px] text-xs border-transparent bg-transparent hover:border-input">
+            <SelectTrigger className="h-6 w-[72px] text-[11px] border-transparent bg-transparent hover:border-input">
               <SelectValue placeholder="—" />
             </SelectTrigger>
             <SelectContent>
@@ -390,9 +390,9 @@ function EditableRow({
           )}
         </div>
       </TableCell>
-      <TableCell className="py-1 px-0 w-7">
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onDelete}>
-          <Trash2 className="h-3 w-3 text-destructive" />
+      <TableCell className="py-0.5 px-0 w-6">
+        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={onDelete}>
+          <Trash2 className="h-2.5 w-2.5 text-destructive" />
         </Button>
       </TableCell>
     </TableRow>
@@ -514,16 +514,16 @@ function ReportSection({
         <div>
           <Table>
             <TableHeader>
-              <TableRow className="h-8">
-                <TableHead className="py-1 px-2 text-xs min-w-[180px]">Produkt</TableHead>
-                <TableHead className="py-1 px-1 text-xs text-right w-[60px]">Antal</TableHead>
-                <TableHead className="py-1 px-1 text-xs w-[50px]">Enhet</TableHead>
-                <TableHead className="py-1 px-1 text-xs text-right w-[70px]">Pris</TableHead>
-                <TableHead className="py-1 px-1 text-xs w-[100px]">Leverantör</TableHead>
-                <TableHead className="py-1 px-1 text-xs w-[72px]">Status</TableHead>
-                <TableHead className="py-1 px-1 text-xs w-[100px]">Datum</TableHead>
-                <TableHead className="py-1 px-1 text-xs w-[110px]">Dokument</TableHead>
-                <TableHead className="py-1 px-0 w-7"></TableHead>
+              <TableRow className="h-7">
+                <TableHead className="py-0.5 px-1.5 text-[11px] min-w-[140px]">Produkt</TableHead>
+                <TableHead className="py-0.5 px-1 text-[11px] text-right w-[50px]">Antal</TableHead>
+                <TableHead className="py-0.5 px-1 text-[11px] w-[42px]">Enhet</TableHead>
+                <TableHead className="py-0.5 px-1 text-[11px] text-right w-[58px]">Pris</TableHead>
+                <TableHead className="py-0.5 px-1 text-[11px] w-[88px]">Leverantör</TableHead>
+                <TableHead className="py-0.5 px-1 text-[11px] w-[62px]">Status</TableHead>
+                <TableHead className="py-0.5 px-1 text-[11px] w-[86px]">Datum</TableHead>
+                <TableHead className="py-0.5 px-1 text-[11px] w-[90px]">Dokument</TableHead>
+                <TableHead className="py-0.5 px-0 w-6"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
