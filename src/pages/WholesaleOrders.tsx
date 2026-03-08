@@ -290,7 +290,7 @@ export default function WholesaleOrders() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="border-b border-border bg-muted/30">
+                       <tr className="border-b border-border bg-muted/30 h-9">
                         <th className="p-2.5 text-left font-medium text-muted-foreground">PRODUKT</th>
                         <th className="p-2.5 text-left font-medium text-muted-foreground">KATEGORI</th>
                         {retailStores.map(s => (
