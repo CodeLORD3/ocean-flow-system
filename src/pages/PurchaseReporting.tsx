@@ -1123,7 +1123,7 @@ export default function PurchaseReporting() {
                       reports={reports}
                       onUpdateLine={(id, updates) => updateLine.mutate({ id, ...updates } as any)}
                       onDeleteLine={(id) => deleteLine.mutate(id)}
-                      onViewDocument={(reportId) => { setSelectedReportId(reportId); setZoom(1); }}
+                      onViewDocument={(reportId) => { setSelectedReportId(reportId); setDocExpanded(true); setZoom(1); }}
                       onConfirm={(reportId) => confirmReport.mutate(reportId)}
                       onRenameReport={(id, name) => renameReport.mutate({ id, name })}
                       focusLineId={focusLineId}
