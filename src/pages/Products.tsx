@@ -168,6 +168,7 @@ export default function Products() {
       sku: p.sku, hs_code: p.hs_code || "", weight_per_piece: String(p.weight_per_piece || ""),
       cost_price: String(p.cost_price || ""), wholesale_price: String(p.wholesale_price || ""),
       retail_suggested: String(p.retail_suggested || ""), origin: p.origin || "",
+      producer: (p as any).producer || "",
     });
     setDialogOpen(true);
   };
