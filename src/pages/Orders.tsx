@@ -137,17 +137,17 @@ export default function Orders() {
               </thead>
               <tbody>
                 {filtered.map((order) => (
-                  <tr key={order.id} className="border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors">
-                    <td className="py-2 font-medium text-foreground font-mono">{order.id}</td>
-                    <td className="py-2 text-foreground">{order.customer}</td>
-                    <td className="py-2 text-muted-foreground">{order.store}</td>
-                    <td className="py-2 text-muted-foreground">{order.date} {order.time}</td>
-                    <td className="py-2 text-muted-foreground max-w-48 truncate text-[10px]">{order.products}</td>
-                    <td className="py-2 text-right text-foreground">{order.items}</td>
-                    <td className="py-2 text-right text-muted-foreground text-[10px]">{order.payment}</td>
-                    <td className="py-2 text-muted-foreground">{order.delivery}</td>
-                    <td className="py-2 text-right font-medium text-foreground">{order.total.toLocaleString("sv-SE")} kr</td>
-                    <td className="py-2 text-right">
+                  <tr key={order.id} className="border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors h-9">
+                    <td className="px-2 py-1 font-medium text-foreground font-mono">{order.id}</td>
+                    <td className="px-2 py-1 text-foreground">{order.customer}</td>
+                    <td className="px-2 py-1 text-muted-foreground">{order.store}</td>
+                    <td className="px-2 py-1 text-muted-foreground">{order.date} {order.time}</td>
+                    <td className="px-2 py-1 text-muted-foreground max-w-48 truncate text-[10px]">{order.products}</td>
+                    <td className="px-2 py-1 text-right text-foreground">{order.items}</td>
+                    <td className="px-2 py-1 text-right text-muted-foreground text-[10px]">{order.payment}</td>
+                    <td className="px-2 py-1 text-muted-foreground">{order.delivery}</td>
+                    <td className="px-2 py-1 text-right font-medium text-foreground">{order.total.toLocaleString("sv-SE")} kr</td>
+                    <td className="px-2 py-1 text-right">
                       <Badge variant="outline" className={`${statusColor[order.status]} text-[10px] gap-1`}>
                         {statusIcon[order.status]}
                         {order.status}

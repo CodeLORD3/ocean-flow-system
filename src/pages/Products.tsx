@@ -260,48 +260,41 @@ export default function Products() {
                 {filtered.map(p => {
                    const barcode = (p as any).barcode;
                    return (
-                      <tr key={p.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
-                        <td className="p-3 font-medium text-foreground">{p.name}</td>
-                        <td className="p-3 font-mono text-muted-foreground text-[10px]">{p.sku}</td>
-                        <td className="p-3"><Badge variant="outline" className="text-[10px]">{p.category}</Badge></td>
-                        <td className="p-3 text-muted-foreground">{p.unit}</td>
+                      <tr key={p.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors h-9">
+                        <td className="px-3 py-1 font-medium text-foreground">{p.name}</td>
+                        <td className="px-3 py-1 font-mono text-muted-foreground text-[10px]">{p.sku}</td>
+                        <td className="px-3 py-1"><Badge variant="outline" className="text-[10px]">{p.category}</Badge></td>
+                        <td className="px-3 py-1 text-muted-foreground">{p.unit}</td>
                         {isWholesale && (
-                          <td className="p-3 text-right text-muted-foreground">{Number(p.cost_price).toFixed(2)}</td>
+                          <td className="px-3 py-1 text-right text-muted-foreground">{Number(p.cost_price).toFixed(2)}</td>
                         )}
-                        <td className="p-3 text-right font-medium text-foreground">{Number(p.wholesale_price).toFixed(2)}</td>
+                        <td className="px-3 py-1 text-right font-medium text-foreground">{Number(p.wholesale_price).toFixed(2)}</td>
                         {isWholesale && (
-                          <td className="p-3 text-right text-muted-foreground">{p.retail_suggested ? Number(p.retail_suggested).toFixed(2) : "–"}</td>
+                          <td className="px-3 py-1 text-right text-muted-foreground">{p.retail_suggested ? Number(p.retail_suggested).toFixed(2) : "–"}</td>
                         )}
-                       <td className="p-3">
+                       <td className="px-3 py-1">
                          {barcode ? (
                            <div className="flex items-center gap-1.5">
-                             <button
-                               onClick={() => setBarcodePreview(p)}
-                               className="font-mono text-[10px] text-primary hover:underline cursor-pointer"
-                             >
-                               {barcode}
-                             </button>
-                             <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => printLabel(p)} title="Skriv ut etikett">
-                               <Printer className="h-3 w-3" />
-                             </Button>
+                             <button onClick={() => setBarcodePreview(p)} className="font-mono text-[10px] text-primary hover:underline cursor-pointer">{barcode}</button>
+                             <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => printLabel(p)} title="Skriv ut etikett"><Printer className="h-3 w-3" /></Button>
                            </div>
                          ) : (
-                           <Button variant="ghost" size="sm" className="h-6 text-[10px] gap-1 text-muted-foreground" onClick={() => generateBarcodeForProduct(p.id)}>
+                           <Button variant="ghost" size="sm" className="h-5 text-[10px] gap-1 text-muted-foreground" onClick={() => generateBarcodeForProduct(p.id)}>
                              <Tag className="h-3 w-3" /> Generera
                            </Button>
                          )}
                        </td>
-                       <td className="p-3 text-right font-medium">
+                       <td className="px-3 py-1 text-right font-medium">
                          <span className={Number(p.stock) <= 0 ? "text-destructive" : "text-foreground"}>
                            {Number(p.stock).toFixed(1)}
                          </span>
                        </td>
-                       <td className="p-3 text-center">
+                       <td className="px-3 py-1 text-center">
                          <div className="flex items-center justify-center gap-1">
-                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(p)}>
+                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(p)}>
                              <Edit className="h-3.5 w-3.5" />
                            </Button>
-                           <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ id: p.id, name: p.name })}>
+                           <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ id: p.id, name: p.name })}>
                              <Trash2 className="h-3.5 w-3.5" />
                            </Button>
                          </div>
