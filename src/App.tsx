@@ -20,6 +20,7 @@ import OrganisationOverview from "./pages/OrganisationOverview";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import Pricing from "./pages/Pricing";
 import ShopReports from "./pages/ShopReports";
+import PurchaseSchedule from "./pages/PurchaseSchedule";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
