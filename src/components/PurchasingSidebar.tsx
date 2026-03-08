@@ -39,6 +39,7 @@ const salesNav = [
   { title: "Ordrar", url: "/orders", icon: ShoppingCart },
   { title: "Inköpsschema", url: "/purchase-schedule", icon: CalendarDays },
   { title: "Inköpsrapportering", url: "/purchase-reporting", icon: FileText },
+  { title: "Leverantörer", url: "/suppliers", icon: Truck },
 ];
 
 const inventoryNav = [
@@ -46,7 +47,6 @@ const inventoryNav = [
   { title: "Lager", url: "/inventory", icon: Package },
   { title: "Streckkoder", url: "/barcodes", icon: ScanLine },
   { title: "Inleveranser", url: "/receiving", icon: Truck },
-  { title: "Leverantörer", url: "/suppliers", icon: Truck },
 ];
 
 const purchasingNav = [
