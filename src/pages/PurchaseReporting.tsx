@@ -486,7 +486,7 @@ function ReportSection({
             className="font-medium text-sm truncate flex-1"
             onDoubleClick={(e) => { e.stopPropagation(); setEditing(true); }}
           >
-            {report.file_name}
+            {displayName}
           </span>
         )}
         {!editing && (
