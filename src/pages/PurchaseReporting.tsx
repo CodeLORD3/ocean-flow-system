@@ -206,7 +206,8 @@ export default function PurchaseReporting() {
   const [parsing, setParsing] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
-  const [edit// Product seate
+
+  // Product search bar state
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
 
