@@ -19,12 +19,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useProducts } from "@/hooks/useProducts";
+import { useCategories, useAddCategory } from "@/hooks/useCategories";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import BarcodeDisplay from "@/components/barcode/BarcodeDisplay";
 import { generateEAN13 } from "@/lib/barcode";
 
-const DEFAULT_CATEGORIES = ["Färsk Fisk", "Skaldjur", "Varmkök", "Rökta Produkter", "Såser & Röror", "Frukt & Grönt"];
+const UNITS = ["KG", "ST", "L", "FÖRP"];
 const UNITS = ["KG", "ST", "L", "FÖRP"];
 
 export default function Products() {
