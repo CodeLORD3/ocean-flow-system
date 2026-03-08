@@ -43,10 +43,70 @@ export default function Pricing() {
 
   // Inline editing state for grossist rows: productId -> edit values
   const [inlineEdits, setInlineEdits] = useState<Record<string, InlineEdit>>({});
+  // Inline editing state for shop rows: productId -> edit values
+  const [shopInlineEdits, setShopInlineEdits] = useState<Record<string, ShopInlineEdit>>({});
 
-  const calcMargin = (cost: number, wholesale: number) => {
-    if (wholesale === 0) return 0;
-    return Math.round(((wholesale - cost) / wholesale) * 100);
+  const calcMargin = (cost: number, price: number) => {
+    if (price === 0) return 0;
+    return Math.round(((price - cost) / price) * 100);
+  };
+
+  const calcShopMargin = (wholesale: number, retail: number) => {
+    if (retail === 0) return 0;
+    return Math.round(((retail - wholesale) / retail) * 100);
+  };
+
+  const startShopInlineEdit = (p: any) => {
+    setShopInlineEdits((prev) => ({
+      ...prev,
+      [p.id]: {
+        retail_price: Number(p.retail_suggested || 0),
+        margin: calcShopMargin(Number(p.wholesale_price), Number(p.retail_suggested || 0)),
+      },
+    }));
+  };
+
+  const cancelShopInlineEdit = (id: string) => {
+    setShopInlineEdits((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
+
+  const updateShopRetailPrice = (id: string, retail: number, wholesalePrice: number) => {
+    setShopInlineEdits((prev) => ({
+      ...prev,
+      [id]: { retail_price: retail, margin: calcShopMargin(wholesalePrice, retail) },
+    }));
+  };
+
+  const updateShopMargin = (id: string, margin: number, wholesalePrice: number) => {
+    const retail = margin >= 100 ? 0 : Number((wholesalePrice / (1 - margin / 100)).toFixed(2));
+    setShopInlineEdits((prev) => ({
+      ...prev,
+      [id]: { retail_price: retail, margin },
+    }));
+  };
+
+  const saveShopInlineEdit = (p: any) => {
+    const edit = shopInlineEdits[p.id];
+    if (!edit) return;
+    updateProduct.mutate(
+      {
+        id: p.id,
+        cost_price: p.cost_price,
+        wholesale_price: p.wholesale_price,
+        retail_suggested: edit.retail_price,
+        reason: "Butik prisändring",
+      },
+      {
+        onSuccess: () => {
+          toast({ title: "Pris uppdaterat", description: `${p.name} sparad.` });
+          cancelShopInlineEdit(p.id);
+        },
+      }
+    );
   };
 
   const startInlineEdit = (p: any) => {
