@@ -118,7 +118,7 @@ function OrderTable({ orders, onSelect, emptyMsg }: { orders: any[]; onSelect: (
             </thead>
             <tbody>
               {orders.length === 0 && (
-                <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">{emptyMsg}</td></tr>
+                <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">{emptyMsg}</td></tr>
               )}
               {orders.map((o: any) => {
                 const lines = o.shop_order_lines || [];
