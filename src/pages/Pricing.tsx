@@ -207,31 +207,93 @@ export default function Pricing() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((p) => (
+                  {filtered.map((p) => {
+                    const edit = !isShop ? inlineEdits[p.id] : undefined;
+                    const isEditing = !!edit;
+                    return (
                     <TableRow key={p.id} className="h-9">
                       <TableCell className="py-1 font-medium">{p.name}</TableCell>
                       <TableCell className="py-1 text-muted-foreground">{p.sku}</TableCell>
                       <TableCell className="py-1"><Badge variant="outline">{p.category}</Badge></TableCell>
-                      {!isShop && <TableCell className="py-1 text-right">{Number(p.cost_price).toFixed(2)} kr</TableCell>}
-                      <TableCell className="py-1 text-right">{Number(p.wholesale_price).toFixed(2)} kr</TableCell>
+                      {!isShop && (
+                        <TableCell className="py-1 text-right">
+                          {isEditing ? (
+                            <Input
+                              type="number"
+                              value={edit.cost_price}
+                              onChange={(e) => updateInlineCost(p.id, Number(e.target.value))}
+                              className="h-7 w-24 text-right text-sm ml-auto"
+                            />
+                          ) : (
+                            <span className="cursor-pointer hover:text-primary hover:underline" onClick={() => startInlineEdit(p)}>
+                              {Number(p.cost_price).toFixed(2)} kr
+                            </span>
+                          )}
+                        </TableCell>
+                      )}
+                      <TableCell className="py-1 text-right">
+                        {isEditing ? (
+                          <Input
+                            type="number"
+                            value={edit.wholesale_price}
+                            onChange={(e) => updateInlineWholesale(p.id, Number(e.target.value))}
+                            className="h-7 w-24 text-right text-sm ml-auto"
+                          />
+                        ) : (
+                          <span>{Number(p.wholesale_price).toFixed(2)} kr</span>
+                        )}
+                      </TableCell>
                       <TableCell className="py-1 text-right">{Number(p.retail_suggested || 0).toFixed(2)} kr</TableCell>
                       {!isShop && (
                         <TableCell className="py-1 text-right">
-                          <Badge variant={margin(p.cost_price, p.wholesale_price) >= 30 ? "default" : "destructive"}>
-                            {margin(p.cost_price, p.wholesale_price)}%
-                          </Badge>
+                          {isEditing ? (
+                            <div className="flex items-center justify-end gap-1">
+                              <Input
+                                type="number"
+                                value={edit.margin}
+                                onChange={(e) => updateInlineMargin(p.id, Number(e.target.value))}
+                                className="h-7 w-16 text-right text-sm"
+                              />
+                              <span className="text-xs text-muted-foreground">%</span>
+                            </div>
+                          ) : (
+                            <Badge variant={margin(p.cost_price, p.wholesale_price) >= 30 ? "default" : "destructive"}>
+                              {margin(p.cost_price, p.wholesale_price)}%
+                            </Badge>
+                          )}
                         </TableCell>
                       )}
                       <TableCell className="py-1 text-right space-x-1">
-                        <Button size="sm" variant="outline" className="h-6 text-xs" onClick={() => openEdit(p)}>
-                          {isShop ? "Ändra försäljningspris" : "Ändra pris"}
-                        </Button>
+                        {isEditing ? (
+                          <>
+                            <Button size="sm" variant="default" className="h-6 w-6 p-0" onClick={() => saveInlineEdit(p)} disabled={updateProduct.isPending}>
+                              <Check className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => cancelInlineEdit(p.id)}>
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            {isShop && (
+                              <Button size="sm" variant="outline" className="h-6 text-xs" onClick={() => openEdit(p)}>
+                                Ändra försäljningspris
+                              </Button>
+                            )}
+                            {!isShop && (
+                              <Button size="sm" variant="outline" className="h-6 text-xs" onClick={() => startInlineEdit(p)}>
+                                Ändra pris
+                              </Button>
+                            )}
+                          </>
+                        )}
                         <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => setHistoryProduct(p.id)}>
                           <History className="h-3.5 w-3.5" />
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                   {filtered.length === 0 && (
                     <TableRow><TableCell colSpan={isShop ? 6 : 8} className="text-center text-muted-foreground py-8">Inga produkter hittades</TableCell></TableRow>
                   )}
