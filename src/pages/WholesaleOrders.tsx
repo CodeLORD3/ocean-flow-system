@@ -423,7 +423,7 @@ export default function WholesaleOrders() {
                               </SelectContent>
                             </Select>
                           </td>
-                          <td className="p-3" onClick={e => e.stopPropagation()}>
+                          <td className="px-2.5 py-1" onClick={e => e.stopPropagation()}>
                             {(() => {
                               const reports = reportsByOrder.get(o.id);
                               if (!reports || reports.length === 0) {
