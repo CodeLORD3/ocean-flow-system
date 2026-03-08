@@ -215,6 +215,7 @@ export default function PurchaseSchedule() {
       `${item.productName}|${item.unit}|${format(item.departureDate, "yyyy-MM-dd")}`;
 
     const grouped = new Map<string, {
+      productId: string;
       productName: string;
       unit: string;
       totalQuantity: number;
@@ -223,6 +224,8 @@ export default function PurchaseSchedule() {
       earliestDelivery: Date;
       departureTime: string;
       category: string;
+      lineIds: string[];
+      shopOrderIds: string[];
     }>();
 
     for (const item of rawItems) {
