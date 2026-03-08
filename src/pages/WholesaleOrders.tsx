@@ -269,8 +269,8 @@ export default function WholesaleOrders() {
           <TabsTrigger value="total" className="text-xs h-7 gap-1"><ListChecks className="h-3 w-3" /> Totalvy</TabsTrigger>
           <TabsTrigger value="archived" className="text-xs h-7 gap-1"><Archive className="h-3 w-3" /> Arkiverade ({archivedOrders.length})</TabsTrigger>
           <TabsTrigger value="changes" className="text-xs h-7 gap-1 relative">
-            <Bell className="h-3 w-3" /> Ändringar ({pendingChanges.length})
-            {pendingChanges.length > 0 && <span className="absolute -top-1 -right-1 h-3 w-3 bg-warning rounded-full animate-pulse" />}
+            <Bell className="h-3 w-3" /> Ändringar ({pendingChanges.filter((cr: any) => cr.requested_by !== "grossist").length})
+            {pendingChanges.filter((cr: any) => cr.requested_by !== "grossist").length > 0 && <span className="absolute -top-1 -right-1 h-3 w-3 bg-warning rounded-full animate-pulse" />}
           </TabsTrigger>
         </TabsList>
 
@@ -517,11 +517,13 @@ export default function WholesaleOrders() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {pendingChanges.length === 0 ? (
+              {(() => {
+                const shopInitiated = pendingChanges.filter((cr: any) => cr.requested_by !== "grossist");
+                return shopInitiated.length === 0 ? (
                 <p className="text-xs text-muted-foreground py-8 text-center">Inga väntande ändringsförfrågningar.</p>
               ) : (
                 <div className="space-y-2">
-                  {pendingChanges.map((cr: any) => (
+                  {shopInitiated.map((cr: any) => (
                     <div key={cr.id} className="border border-warning/30 bg-warning/5 rounded-md p-3 text-xs flex items-start justify-between gap-3">
                       <div className="flex-1 space-y-0.5">
                         <div className="font-medium text-foreground">
@@ -563,7 +565,8 @@ export default function WholesaleOrders() {
                     </div>
                   ))}
                 </div>
-              )}
+              );
+              })()}
             </CardContent>
           </Card>
         </TabsContent>
