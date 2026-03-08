@@ -48,6 +48,7 @@ const App = () => (
               <Route path="/finance" element={<PlaceholderPage title="Ekonomi" />} />
               <Route path="/forecasts" element={<PlaceholderPage title="Prognoser" />} />
               <Route path="/invoices" element={<PlaceholderPage title="Fakturor" />} />
+              <Route path="/purchase-reporting" element={<PurchaseReporting />} />
               <Route path="/receiving" element={<Receiving />} />
               <Route path="/products" element={<Products />} />
               <Route path="/barcodes" element={<Barcodes />} />
