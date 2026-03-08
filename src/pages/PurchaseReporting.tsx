@@ -226,8 +226,8 @@ function EditableRow({
   }
 
   return (
-    <TableRow className="h-9 group/row">
-      <TableCell className="py-1 px-2 min-w-[180px]">
+    <TableRow className="h-8 group/row">
+      <TableCell className="py-0.5 px-1.5 min-w-[140px]">
         <Popover open={productOpen} onOpenChange={setProductOpen}>
           <PopoverTrigger asChild>
             <div className="relative">
