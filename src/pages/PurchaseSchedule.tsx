@@ -179,7 +179,7 @@ export default function PurchaseSchedule() {
         if (!deliveryDateStr) continue;
 
         const deliveryDate = parseISO(deliveryDateStr);
-        const latestPurchaseDate = getLatestPurchaseDate(deliveryDate, zone.departure_weekday);
+        const departureDate = getDepartureDate(deliveryDate, zone.departure_weekday);
 
         rawItems.push({
           storeName: store.name,
