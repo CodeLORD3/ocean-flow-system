@@ -398,19 +398,19 @@ export default function WholesaleOrders() {
                     </thead>
                     <tbody>
                       {filteredOrders.length === 0 && (
-                        <tr><td colSpan={10} className="p-8 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
-                      )}
-                      {filteredOrders.map((o: any) => (
-                        <tr key={o.id} className="border-b-2 border-border transition-colors cursor-pointer" style={{ background: buildProgressGradient(o.shop_order_lines || []) }} onClick={() => setSelectedOrder(o)}>
-                          <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
-                          <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
-                          <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
-                          <td className="p-3 text-muted-foreground">{(o as any).desired_delivery_date || "–"}</td>
-                          <td className="p-3 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
-                          <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
-                            {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
-                          </td>
-                          <td className="p-3 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
+                         <tr><td colSpan={10} className="px-2.5 py-6 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
+                       )}
+                       {filteredOrders.map((o: any) => (
+                         <tr key={o.id} className="border-b-2 border-black h-9 transition-colors cursor-pointer" style={{ background: buildProgressGradient(o.shop_order_lines || []) }} onClick={() => setSelectedOrder(o)}>
+                           <td className="px-2.5 py-1 font-mono font-medium text-foreground">{o.order_week}</td>
+                           <td className="px-2.5 py-1 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
+                           <td className="px-2.5 py-1 text-muted-foreground">{o.stores?.name || "–"}</td>
+                           <td className="px-2.5 py-1 text-muted-foreground">{(o as any).desired_delivery_date || "–"}</td>
+                           <td className="px-2.5 py-1 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
+                           <td className="px-2.5 py-1 text-muted-foreground text-[10px] max-w-48 truncate">
+                             {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
+                           </td>
+                           <td className="px-2.5 py-1 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
                           <td className="p-3" onClick={e => e.stopPropagation()}>
                             <Select value={o.status} onValueChange={(val) => handleOrderStatusChange(o.id, val)}>
                               <SelectTrigger className="h-7 text-[10px] w-[110px]">
