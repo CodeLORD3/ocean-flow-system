@@ -295,8 +295,7 @@ export default function PurchaseSchedule() {
       totalQuantity: number;
       category: string;
       shops: { name: string; zoneKey: string; quantity: number }[];
-      lineIds: string[];
-      shopOrderIds: string[];
+      lines: { lineId: string; shopOrderId: string }[];
     }>();
 
     for (const item of filteredSchedule) {
@@ -305,12 +304,10 @@ export default function PurchaseSchedule() {
 
       const k = `${item.productName}|${item.unit}`;
       const existing = map.get(k);
+      const itemLines = item.lineIds.map((lid, idx) => ({ lineId: lid, shopOrderId: item.shopOrderIds[Math.min(idx, item.shopOrderIds.length - 1)] }));
       if (existing) {
         existing.totalQuantity += item.totalQuantity;
-        existing.lineIds.push(...item.lineIds);
-        for (const oid of item.shopOrderIds) {
-          if (!existing.shopOrderIds.includes(oid)) existing.shopOrderIds.push(oid);
-        }
+        existing.lines.push(...itemLines);
         for (const shop of item.shops) {
           const s = existing.shops.find((e) => e.name === shop.name);
           if (s) s.quantity += shop.quantity;
@@ -324,8 +321,7 @@ export default function PurchaseSchedule() {
           totalQuantity: item.totalQuantity,
           category: item.category,
           shops: item.shops.map((s) => ({ name: s.name, zoneKey: s.zoneKey, quantity: s.quantity })),
-          lineIds: [...item.lineIds],
-          shopOrderIds: [...item.shopOrderIds],
+          lines: [...itemLines],
         });
       }
     }
