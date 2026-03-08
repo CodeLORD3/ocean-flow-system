@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import { PdfViewer } from "@/components/PdfViewer";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Upload, Loader2, Trash2, Plus, ZoomIn, ZoomOut, RotateCcw, FileText, ChevronLeft, ChevronRight, Search, Pencil, Check, X, PackagePlus } from "lucide-react";
+import { Upload, Loader2, Trash2, Plus, ZoomIn, ZoomOut, RotateCcw, FileText, ChevronLeft, ChevronRight, Search, PackagePlus } from "lucide-react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
@@ -43,223 +43,158 @@ type Report = {
   total_amount: number;
 };
 
-// Inline editable row
+// Inline always-editable row
 function EditableRow({
   line,
-  isEditing,
-  onStartEdit,
-  onCancelEdit,
   onSave,
   onDelete,
   products,
-  suppliers,
 }: {
   line: ReportLine;
-  isEditing: boolean;
-  onStartEdit: () => void;
-  onCancelEdit: () => void;
   onSave: (updated: Partial<ReportLine>) => void;
   onDelete: () => void;
   products: any[];
-  suppliers: any[];
 }) {
-  const [draft, setDraft] = useState({
-    product_name: line.product_name,
-    quantity: String(line.quantity),
-    unit: line.unit || "kg",
-    unit_price: String(line.unit_price ?? 0),
-    supplier_name: line.supplier_name || "",
-    status: line.status,
-    purchase_date: line.purchase_date || "",
-    product_id: line.product_id || "",
-  });
   const [productSearch, setProductSearch] = useState("");
   const [productOpen, setProductOpen] = useState(false);
+  const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
 
-  useEffect(() => {
-    if (isEditing) {
-      setDraft({
-        product_name: line.product_name,
-        quantity: String(line.quantity),
-        unit: line.unit || "kg",
-        unit_price: String(line.unit_price ?? 0),
-        supplier_name: line.supplier_name || "",
-        status: line.status,
-        purchase_date: line.purchase_date || "",
-        product_id: line.product_id || "",
-      });
+  const commitField = (field: string, value: any) => {
+    const updates: any = { [field]: value };
+    if (field === "quantity" || field === "unit_price") {
+      const qty = field === "quantity" ? (parseFloat(value) || 0) : line.quantity;
+      const price = field === "unit_price" ? (parseFloat(value) || 0) : (line.unit_price ?? 0);
+      updates.line_total = qty * price;
     }
-  }, [isEditing, line]);
+    // Debounce saves
+    clearTimeout(saveTimeout.current);
+    saveTimeout.current = setTimeout(() => onSave(updates), 400);
+  };
 
-  const filteredProducts = products.filter((p) =>
-    p.name.toLowerCase().includes(productSearch.toLowerCase())
+  const filteredProducts = products.filter((p: any) =>
+    productSearch.length > 0 && p.name.toLowerCase().includes(productSearch.toLowerCase())
   );
 
-  const handleSave = () => {
-    const qty = parseFloat(draft.quantity) || 0;
-    const price = parseFloat(draft.unit_price) || 0;
-    onSave({
-      product_name: draft.product_name,
-      quantity: qty,
-      unit: draft.unit,
-      unit_price: price,
-      line_total: qty * price,
-      supplier_name: draft.supplier_name || null,
-      status: draft.status,
-      purchase_date: draft.purchase_date || null,
-      product_id: draft.product_id || null,
-    });
-  };
-
-  const statusColor = (s: string) => {
-    switch (s) {
-      case "Beställd": return "secondary";
-      case "Inköpt": return "default";
-      default: return "outline";
-    }
-  };
-
-  if (!isEditing) {
-    return (
-      <TableRow className="group cursor-pointer hover:bg-accent/30" onDoubleClick={onStartEdit}>
-        <TableCell className="font-medium text-sm">
-          <div className="flex items-center gap-1">
-            {line.product_name}
-            {!line.product_id && (
-              <Badge variant="outline" className="text-[10px] px-1 py-0 text-amber-600 border-amber-300">Ej kopplad</Badge>
-            )}
-          </div>
-        </TableCell>
-        <TableCell className="text-right text-sm">{line.quantity} {line.unit}</TableCell>
-        <TableCell className="text-right text-sm">{line.unit_price?.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr</TableCell>
-        <TableCell className="text-sm text-muted-foreground">{line.supplier_name ?? "—"}</TableCell>
-        <TableCell><Badge variant={statusColor(line.status)} className="text-xs">{line.status}</Badge></TableCell>
-        <TableCell className="text-sm text-muted-foreground">
-          {line.purchase_date ? new Date(line.purchase_date).toLocaleDateString("sv-SE") : "—"}
-        </TableCell>
-        <TableCell>
-          <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onStartEdit}>
-              <Pencil className="h-3.5 w-3.5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onDelete}>
-              <Trash2 className="h-3.5 w-3.5 text-destructive" />
-            </Button>
-          </div>
-        </TableCell>
-      </TableRow>
-    );
-  }
-
   return (
-    <TableRow className="bg-accent/20">
-      <TableCell>
+    <TableRow className="h-9">
+      <TableCell className="py-1 px-2">
         <Popover open={productOpen} onOpenChange={setProductOpen}>
           <PopoverTrigger asChild>
-            <Input
-              value={draft.product_name}
-              onChange={(e) => {
-                setDraft((d) => ({ ...d, product_name: e.target.value, product_id: "" }));
-                setProductSearch(e.target.value);
-                if (!productOpen) setProductOpen(true);
-              }}
-              className="h-8 text-sm"
-              placeholder="Sök produkt..."
-            />
+            <div className="relative">
+              <Input
+                defaultValue={line.product_name}
+                onChange={(e) => {
+                  setProductSearch(e.target.value);
+                  if (e.target.value.length > 0 && !productOpen) setProductOpen(true);
+                  if (e.target.value.length === 0) setProductOpen(false);
+                  commitField("product_name", e.target.value);
+                }}
+                onFocus={(e) => {
+                  setProductSearch(e.target.value);
+                  if (e.target.value.length > 0) setProductOpen(true);
+                }}
+                className="h-7 text-xs border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1.5"
+                placeholder="Sök produkt..."
+              />
+              {!line.product_id && (
+                <span className="absolute right-1 top-1/2 -translate-y-1/2">
+                  <Badge variant="outline" className="text-[9px] px-1 py-0 text-amber-600 border-amber-300">Ej kopplad</Badge>
+                </span>
+              )}
+            </div>
           </PopoverTrigger>
-          <PopoverContent className="p-0 w-[280px]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
-            <Command shouldFilter={false}>
-              <CommandList>
-                <CommandEmpty>Ingen produkt hittad</CommandEmpty>
-                <CommandGroup heading="Produkter">
-                  {filteredProducts.slice(0, 15).map((p) => (
-                    <CommandItem
-                      key={p.id}
-                      onSelect={() => {
-                        setDraft((d) => ({
-                          ...d,
-                          product_name: p.name,
-                          product_id: p.id,
-                          unit: p.unit || d.unit,
-                          unit_price: String(p.cost_price || d.unit_price),
-                          supplier_name: p.suppliers?.name || d.supplier_name,
-                        }));
-                        setProductOpen(false);
-                      }}
-                    >
-                      <div className="flex flex-col">
-                        <span className="text-sm">{p.name}</span>
-                        <span className="text-xs text-muted-foreground">{p.sku} · {p.category}</span>
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
+          {productSearch.length > 0 && (
+            <PopoverContent className="p-0 w-[260px]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+              <Command shouldFilter={false}>
+                <CommandList>
+                  <CommandEmpty className="py-2 text-xs text-center">Ingen träff</CommandEmpty>
+                  <CommandGroup>
+                    {filteredProducts.slice(0, 12).map((p: any) => (
+                      <CommandItem
+                        key={p.id}
+                        onSelect={() => {
+                          onSave({
+                            product_name: p.name,
+                            product_id: p.id,
+                            unit: p.unit || line.unit,
+                            unit_price: p.cost_price || line.unit_price,
+                            supplier_name: p.suppliers?.name || line.supplier_name,
+                            line_total: line.quantity * (p.cost_price || line.unit_price || 0),
+                          });
+                          setProductOpen(false);
+                          setProductSearch("");
+                        }}
+                        className="py-1"
+                      >
+                        <div className="flex flex-col">
+                          <span className="text-xs">{p.name}</span>
+                          <span className="text-[10px] text-muted-foreground">{p.sku} · {p.category}</span>
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          )}
         </Popover>
       </TableCell>
-      <TableCell>
-        <div className="flex gap-1">
-          <Input
-            type="number"
-            value={draft.quantity}
-            onChange={(e) => setDraft((d) => ({ ...d, quantity: e.target.value }))}
-            className="h-8 text-sm w-16"
-          />
-          <Select value={draft.unit} onValueChange={(v) => setDraft((d) => ({ ...d, unit: v }))}>
-            <SelectTrigger className="h-8 w-16 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="kg">kg</SelectItem>
-              <SelectItem value="st">st</SelectItem>
-              <SelectItem value="l">l</SelectItem>
-              <SelectItem value="förp">förp</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </TableCell>
-      <TableCell>
+      <TableCell className="py-1 px-2">
         <Input
           type="number"
-          value={draft.unit_price}
-          onChange={(e) => setDraft((d) => ({ ...d, unit_price: e.target.value }))}
-          className="h-8 text-sm w-20"
+          defaultValue={line.quantity}
+          onChange={(e) => commitField("quantity", parseFloat(e.target.value) || 0)}
+          className="h-7 text-xs w-16 border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1.5 text-right"
         />
       </TableCell>
-      <TableCell>
+      <TableCell className="py-1 px-2">
+        <Select defaultValue={line.unit || "kg"} onValueChange={(v) => onSave({ unit: v })}>
+          <SelectTrigger className="h-7 w-14 text-xs border-transparent bg-transparent hover:border-input"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="kg">kg</SelectItem>
+            <SelectItem value="st">st</SelectItem>
+            <SelectItem value="l">l</SelectItem>
+            <SelectItem value="förp">förp</SelectItem>
+          </SelectContent>
+        </Select>
+      </TableCell>
+      <TableCell className="py-1 px-2">
         <Input
-          value={draft.supplier_name}
-          onChange={(e) => setDraft((d) => ({ ...d, supplier_name: e.target.value }))}
-          className="h-8 text-sm"
-          placeholder="Leverantör"
+          type="number"
+          defaultValue={line.unit_price ?? 0}
+          onChange={(e) => commitField("unit_price", parseFloat(e.target.value) || 0)}
+          className="h-7 text-xs w-20 border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1.5 text-right"
         />
       </TableCell>
-      <TableCell>
-        <Select value={draft.status} onValueChange={(v) => setDraft((d) => ({ ...d, status: v }))}>
-          <SelectTrigger className="h-8 w-24 text-xs"><SelectValue /></SelectTrigger>
+      <TableCell className="py-1 px-2">
+        <Input
+          defaultValue={line.supplier_name || ""}
+          onChange={(e) => commitField("supplier_name", e.target.value || null)}
+          className="h-7 text-xs border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1.5 w-24"
+          placeholder="—"
+        />
+      </TableCell>
+      <TableCell className="py-1 px-2">
+        <Select defaultValue={line.status} onValueChange={(v) => onSave({ status: v })}>
+          <SelectTrigger className="h-7 w-20 text-xs border-transparent bg-transparent hover:border-input"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="Beställd">Beställd</SelectItem>
             <SelectItem value="Inköpt">Inköpt</SelectItem>
           </SelectContent>
         </Select>
       </TableCell>
-      <TableCell>
+      <TableCell className="py-1 px-2">
         <Input
           type="date"
-          value={draft.purchase_date}
-          onChange={(e) => setDraft((d) => ({ ...d, purchase_date: e.target.value }))}
-          className="h-8 text-sm w-32"
+          defaultValue={line.purchase_date || ""}
+          onChange={(e) => commitField("purchase_date", e.target.value || null)}
+          className="h-7 text-xs border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1.5 w-28"
         />
       </TableCell>
-      <TableCell>
-        <div className="flex gap-0.5">
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" onClick={handleSave}>
-            <Check className="h-3.5 w-3.5" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onCancelEdit}>
-            <X className="h-3.5 w-3.5" />
-          </Button>
-        </div>
+      <TableCell className="py-1 px-1">
+        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onDelete}>
+          <Trash2 className="h-3 w-3 text-destructive" />
+        </Button>
       </TableCell>
     </TableRow>
   );
@@ -271,7 +206,6 @@ export default function PurchaseReporting() {
   const [parsing, setParsing] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
-  const [editingLineId, setEditingLineId] = useState<string | null>(null);
 
   // Product search bar state
   const [searchQuery, setSearchQuery] = useState("");
@@ -348,7 +282,7 @@ export default function PurchaseReporting() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["purchase-report-lines"] });
-      setEditingLineId(null);
+      
       toast({ title: "Rad uppdaterad" });
     },
   });
@@ -662,14 +596,15 @@ export default function PurchaseReporting() {
               ) : (
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Produkt</TableHead>
-                      <TableHead className="text-right">Antal</TableHead>
-                      <TableHead className="text-right">Pris</TableHead>
-                      <TableHead>Leverantör</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Datum</TableHead>
-                      <TableHead className="w-16"></TableHead>
+                    <TableRow className="h-8">
+                      <TableHead className="py-1 px-2 text-xs">Produkt</TableHead>
+                      <TableHead className="py-1 px-2 text-xs text-right">Antal</TableHead>
+                      <TableHead className="py-1 px-2 text-xs">Enhet</TableHead>
+                      <TableHead className="py-1 px-2 text-xs text-right">Pris</TableHead>
+                      <TableHead className="py-1 px-2 text-xs">Leverantör</TableHead>
+                      <TableHead className="py-1 px-2 text-xs">Status</TableHead>
+                      <TableHead className="py-1 px-2 text-xs">Datum</TableHead>
+                      <TableHead className="py-1 px-1 w-8"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -677,13 +612,9 @@ export default function PurchaseReporting() {
                       <EditableRow
                         key={l.id}
                         line={l}
-                        isEditing={editingLineId === l.id}
-                        onStartEdit={() => setEditingLineId(l.id)}
-                        onCancelEdit={() => setEditingLineId(null)}
                         onSave={(updates) => updateLine.mutate({ id: l.id, ...updates } as any)}
                         onDelete={() => deleteLine.mutate(l.id)}
                         products={products}
-                        suppliers={suppliers}
                       />
                     ))}
                   </TableBody>
