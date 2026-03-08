@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { PdfViewer } from "@/components/PdfViewer";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -18,6 +18,55 @@ import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useProducts } from "@/hooks/useProducts";
 import { useSuppliers } from "@/hooks/useSuppliers";
+
+// Magnifying glass overlay for document viewer
+function DocumentMagnifier({ children }: { children: React.ReactNode }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ x: 0, y: 0, visible: false });
+  const LENS_SIZE = 180;
+  const MAGNIFY = 2.5;
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setPos({ x: e.clientX - rect.left, y: e.clientY - rect.top, visible: true });
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative cursor-none"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setPos((p) => ({ ...p, visible: false }))}
+    >
+      {children}
+      {pos.visible && (
+        <div
+          className="pointer-events-none absolute border-2 border-foreground/20 rounded-full shadow-lg z-50 overflow-hidden"
+          style={{
+            width: LENS_SIZE,
+            height: LENS_SIZE,
+            left: pos.x - LENS_SIZE / 2,
+            top: pos.y - LENS_SIZE / 2,
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              left: -(pos.x * MAGNIFY - LENS_SIZE / 2),
+              top: -(pos.y * MAGNIFY - LENS_SIZE / 2),
+              transform: `scale(${MAGNIFY})`,
+              transformOrigin: "0 0",
+              pointerEvents: "none",
+            }}
+          >
+            {children}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 type ReportLine = {
   id: string;
@@ -537,7 +586,7 @@ export default function PurchaseReporting() {
     <div className="h-[calc(100vh-4rem)]">
       <ResizablePanelGroup direction="horizontal" className="h-full rounded-lg border">
         {/* LEFT: Product list */}
-        <ResizablePanel defaultSize={55} minSize={35}>
+        <ResizablePanel defaultSize={70} minSize={35}>
           <div className="flex flex-col h-full">
             <div className="flex items-center justify-between p-4 border-b">
               <div>
@@ -716,7 +765,7 @@ export default function PurchaseReporting() {
         <ResizableHandle withHandle />
 
         {/* RIGHT: Document viewer */}
-        <ResizablePanel defaultSize={45} minSize={25}>
+        <ResizablePanel defaultSize={30} minSize={20}>
           <div className="flex flex-col h-full">
             <div className="flex items-center justify-between p-3 border-b gap-2">
               <div className="flex items-center gap-1">
@@ -793,32 +842,34 @@ export default function PurchaseReporting() {
               </ScrollArea>
             ) : (
               <ScrollArea className="flex-1">
-                <div className="p-4">
-                  {selectedReport.file_name.toLowerCase().endsWith(".pdf") ? (
-                    <PdfViewer url={selectedReport.file_url} zoom={zoom} />
-                  ) : (
-                    <div className="flex justify-center">
-                      <img
-                        src={selectedReport.file_url}
-                        alt={selectedReport.file_name}
-                        className="rounded-md shadow-sm max-w-full"
-                        style={{ transform: `scale(${zoom})`, transformOrigin: "top center" }}
-                        draggable={false}
-                      />
+                <DocumentMagnifier>
+                  <div className="p-4">
+                    {selectedReport.file_name.toLowerCase().endsWith(".pdf") ? (
+                      <PdfViewer url={selectedReport.file_url} zoom={zoom} />
+                    ) : (
+                      <div className="flex justify-center">
+                        <img
+                          src={selectedReport.file_url}
+                          alt={selectedReport.file_name}
+                          className="rounded-md shadow-sm max-w-full"
+                          style={{ transform: `scale(${zoom})`, transformOrigin: "top center" }}
+                          draggable={false}
+                        />
+                      </div>
+                    )}
+                    <div className="flex justify-center pt-4 pb-2">
+                      <label>
+                        <Input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileUpload} disabled={uploading || parsing} />
+                        <Button asChild size="sm" variant="outline" disabled={uploading || parsing}>
+                          <span className="cursor-pointer">
+                            {uploading || parsing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />}
+                            {parsing ? "Extraherar..." : "Ladda upp ny följesedel"}
+                          </span>
+                        </Button>
+                      </label>
                     </div>
-                  )}
-                  <div className="flex justify-center pt-4 pb-2">
-                    <label>
-                      <Input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileUpload} disabled={uploading || parsing} />
-                      <Button asChild size="sm" variant="outline" disabled={uploading || parsing}>
-                        <span className="cursor-pointer">
-                          {uploading || parsing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />}
-                          {parsing ? "Extraherar..." : "Ladda upp ny följesedel"}
-                        </span>
-                      </Button>
-                    </label>
                   </div>
-                </div>
+                </DocumentMagnifier>
               </ScrollArea>
             )}
           </div>
