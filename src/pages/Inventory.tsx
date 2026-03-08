@@ -1045,6 +1045,121 @@ export default function Inventory() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ── FLYTTA dialog ── */}
+      <Dialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="font-heading">Flytta produkter</DialogTitle>
+            <DialogDescription className="text-xs">
+              Välj destination för {getSelectedForLocation(activeLocationId).size} valda produkt(er).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1 max-h-64 overflow-y-auto">
+            {locations.filter((l: any) => l.id !== activeLocationId).map((loc: any) => (
+              <button
+                key={loc.id}
+                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-md border border-border/50 hover:bg-muted/40 transition-colors text-left"
+                onClick={() => handleMove(loc.id)}
+                disabled={actionLoading}
+              >
+                <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span className="text-sm font-medium text-foreground">{loc.name}</span>
+                {loc.zone && <Badge variant="secondary" className="text-[10px] h-5">{loc.zone}</Badge>}
+              </button>
+            ))}
+          </div>
+          {actionLoading && <p className="text-xs text-muted-foreground text-center">Flyttar...</p>}
+        </DialogContent>
+      </Dialog>
+
+      {/* ── RADERA dialog ── */}
+      <Dialog open={deleteDialogOpen} onOpenChange={(o) => { setDeleteDialogOpen(o); if (!o) setDeleteReason(""); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="font-heading text-destructive">Radera produkter</DialogTitle>
+            <DialogDescription className="text-xs">
+              {getSelectedForLocation(activeLocationId).size} produkt(er) kommer tas bort från lagret. Ange en anledning.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Anledning *</Label>
+              <Textarea
+                value={deleteReason}
+                onChange={e => setDeleteReason(e.target.value)}
+                placeholder="T.ex. Utgånget, skadat, felrapporterat..."
+                className="text-xs min-h-[80px]"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setDeleteDialogOpen(false)}>Avbryt</Button>
+            <Button variant="destructive" size="sm" onClick={handleDelete} disabled={!deleteReason.trim() || actionLoading}>
+              {actionLoading ? "Raderar..." : "Bekräfta radering"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── SPLITTA dialog ── */}
+      <Dialog open={splitDialogOpen} onOpenChange={(o) => { setSplitDialogOpen(o); if (!o) { setSplitQty(""); setSplitTargetLocation(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="font-heading">Splitta produkt</DialogTitle>
+            <DialogDescription className="text-xs">
+              Dela upp kvantiteten till ett annat lagerställe.
+            </DialogDescription>
+          </DialogHeader>
+          {(() => {
+            const items = getSelectedStockItems(activeLocationId);
+            const item = items[0];
+            if (!item) return null;
+            return (
+              <div className="space-y-3">
+                <div className="p-2.5 rounded-md bg-muted/30 border border-border/50">
+                  <p className="text-xs font-medium text-foreground">{item.products?.name}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Nuvarande: {Number(item.quantity).toLocaleString("sv-SE")} {item.products?.unit || "kg"}
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Antal att splitta *</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={splitQty}
+                    onChange={e => setSplitQty(e.target.value)}
+                    placeholder={`Max ${Number(item.quantity) - 0.1}`}
+                    className="h-8 text-xs"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Destination *</Label>
+                  <div className="space-y-1 max-h-40 overflow-y-auto">
+                    {locations.filter((l: any) => l.id !== activeLocationId).map((loc: any) => (
+                      <button
+                        key={loc.id}
+                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-md border transition-colors text-left text-xs ${splitTargetLocation === loc.id ? "border-primary bg-primary/10" : "border-border/50 hover:bg-muted/40"}`}
+                        onClick={() => setSplitTargetLocation(loc.id)}
+                      >
+                        <MapPin className="h-3 w-3 text-primary shrink-0" />
+                        <span className="font-medium text-foreground">{loc.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setSplitDialogOpen(false)}>Avbryt</Button>
+            <Button size="sm" onClick={handleSplit} disabled={!splitQty || !splitTargetLocation || actionLoading}>
+              {actionLoading ? "Splittar..." : "Bekräfta split"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
