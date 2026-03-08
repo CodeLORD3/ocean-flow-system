@@ -227,7 +227,7 @@ function EditableRow({
 
   return (
     <TableRow className="h-9 group/row">
-      <TableCell className="py-1 px-2">
+      <TableCell className="py-1 px-2 min-w-[180px]">
         <Popover open={productOpen} onOpenChange={setProductOpen}>
           <PopoverTrigger asChild>
             <div className="relative">
