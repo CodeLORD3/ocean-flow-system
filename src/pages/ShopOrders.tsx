@@ -695,7 +695,40 @@ function OrderDetailWithEdit({ order, products, onClose, toast }: {
         </div>
       )}
 
-      {/* View mode */}
+      {/* Wholesaler-initiated change requests */}
+      {wholesalerRequests.length > 0 && !editMode && (
+        <div className="bg-destructive/5 border border-destructive/30 rounded-md p-3 text-xs space-y-2">
+          <span className="font-medium text-destructive">⚠️ Grossisten har meddelat att {wholesalerRequests.length} produkt(er) ej är tillgänglig(a):</span>
+          {wholesalerRequests.map((cr: any) => (
+            <div key={cr.id} className="flex items-center justify-between gap-3 bg-background/50 rounded p-2">
+              <div className="flex-1">
+                <span className="font-medium text-foreground">{cr.products?.name || "Okänd produkt"}</span>
+                <span className="text-muted-foreground ml-2">({cr.old_value} {cr.unit})</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-[10px] gap-1 text-success border-success/30 hover:bg-success/10"
+                  onClick={() => resolveChange.mutate({ id: cr.id, status: "Godkänd" })}
+                  disabled={resolveChange.isPending}
+                >
+                  <CheckCircle2 className="h-3 w-3" /> Acceptera
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+                  onClick={() => resolveChange.mutate({ id: cr.id, status: "Nekad" })}
+                  disabled={resolveChange.isPending}
+                >
+                  <XCircle className="h-3 w-3" /> Ta bort
+                </Button>
+              </div>
+            </div>
+          ))}
+          <p className="text-[10px] text-muted-foreground">Acceptera = markeras som ej tillgänglig i ordern. Ta bort = produkten tas bort från ordern.</p>
+        </div>
       {!editMode && (
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
