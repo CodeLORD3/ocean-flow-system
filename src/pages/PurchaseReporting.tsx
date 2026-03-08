@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Upload, Loader2, Trash2, Plus, ZoomIn, ZoomOut, RotateCcw, FileText, ChevronLeft, ChevronRight, Search, PackagePlus, Lock, ChevronDown, ChevronUp, CheckCircle2 } from "lucide-react";
+import { Upload, Loader2, Trash2, Plus, ZoomIn, ZoomOut, RotateCcw, FileText, ChevronLeft, ChevronRight, Search, PackagePlus, Lock, ChevronDown, ChevronUp, CheckCircle2, X, Pencil } from "lucide-react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
@@ -409,6 +409,7 @@ function ReportSection({
   onDeleteLine,
   onViewDocument,
   onConfirm,
+  onRenameReport,
   focusLineId,
   onQtyFocused,
 }: {
@@ -421,22 +422,43 @@ function ReportSection({
   onDeleteLine: (id: string) => void;
   onViewDocument: (reportId: string) => void;
   onConfirm: (reportId: string) => void;
+  onRenameReport: (reportId: string, newName: string) => void;
   focusLineId: string | null;
   onQtyFocused: () => void;
 }) {
   const isLocked = report.status === "Godkänd";
   const [expanded, setExpanded] = useState(!isLocked);
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(report.file_name);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing && nameInputRef.current) {
+      nameInputRef.current.focus();
+      nameInputRef.current.select();
+    }
+  }, [editing]);
+
+  const commitRename = () => {
+    const trimmed = editName.trim();
+    if (trimmed && trimmed !== report.file_name) {
+      onRenameReport(report.id, trimmed);
+    } else {
+      setEditName(report.file_name);
+    }
+    setEditing(false);
+  };
 
   const sectionTotal = lines.reduce((s, l) => s + (l.line_total ?? 0), 0);
 
   return (
     <div className="border-b last:border-b-0">
       {/* Section header */}
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className={`w-full flex items-center gap-2 px-3 py-2.5 text-left transition-colors ${
+      <div
+        className={`group w-full flex items-center gap-2 px-3 py-2.5 text-left transition-colors cursor-pointer ${
           isLocked ? "bg-muted/40 hover:bg-muted/60" : "bg-muted/20 hover:bg-muted/40"
         }`}
+        onClick={() => !editing && setExpanded(!expanded)}
       >
         {expanded ? <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />}
         {isLocked ? (
@@ -444,7 +466,35 @@ function ReportSection({
         ) : (
           <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         )}
-        <span className="font-medium text-sm truncate flex-1">{report.file_name}</span>
+        {editing ? (
+          <Input
+            ref={nameInputRef}
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            onBlur={commitRename}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commitRename();
+              if (e.key === "Escape") { setEditName(report.file_name); setEditing(false); }
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="h-7 text-sm font-medium flex-1 px-1.5"
+          />
+        ) : (
+          <span
+            className="font-medium text-sm truncate flex-1"
+            onDoubleClick={(e) => { e.stopPropagation(); setEditing(true); }}
+          >
+            {report.file_name}
+          </span>
+        )}
+        {!editing && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setEditing(true); }}
+            className="shrink-0 opacity-0 group-hover:opacity-100 hover:text-foreground text-muted-foreground"
+          >
+            <Pencil className="h-3 w-3" />
+          </button>
+        )}
         <span className="text-xs text-muted-foreground shrink-0">
           {lines.length} rader · {sectionTotal.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr
         </span>
@@ -455,7 +505,7 @@ function ReportSection({
         ) : (
           <Badge variant="secondary" className="text-[10px] shrink-0">Ej bekräftad</Badge>
         )}
-      </button>
+      </div>
 
       {/* Expanded content */}
       {expanded && (
@@ -651,6 +701,17 @@ export default function PurchaseReporting() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["purchase-report-lines"] });
       toast({ title: "Rad uppdaterad" });
+    },
+  });
+
+  const renameReport = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { error } = await supabase.from("purchase_reports").update({ file_name: name }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
+      toast({ title: "Namn uppdaterat" });
     },
   });
 
@@ -1061,6 +1122,7 @@ export default function PurchaseReporting() {
                       onDeleteLine={(id) => deleteLine.mutate(id)}
                       onViewDocument={(reportId) => { setSelectedReportId(reportId); setZoom(1); }}
                       onConfirm={(reportId) => confirmReport.mutate(reportId)}
+                      onRenameReport={(id, name) => renameReport.mutate({ id, name })}
                       focusLineId={focusLineId}
                       onQtyFocused={() => setFocusLineId(null)}
                     />
@@ -1084,6 +1146,7 @@ export default function PurchaseReporting() {
                       onDeleteLine={(id) => deleteLine.mutate(id)}
                       onViewDocument={(reportId) => { setSelectedReportId(reportId); setZoom(1); }}
                       onConfirm={(reportId) => confirmReport.mutate(reportId)}
+                      onRenameReport={(id, name) => renameReport.mutate({ id, name })}
                       focusLineId={focusLineId}
                       onQtyFocused={() => setFocusLineId(null)}
                     />
@@ -1127,7 +1190,10 @@ export default function PurchaseReporting() {
                       <RotateCcw className="h-4 w-4" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteReport.mutate(selectedReport.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelectedReportId(null); setZoom(1); }} title="Stäng dokument">
+                      <X className="h-4 w-4" />
                     </Button>
                   </>
                 )}
