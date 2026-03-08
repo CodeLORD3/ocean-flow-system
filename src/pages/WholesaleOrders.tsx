@@ -380,6 +380,7 @@ export default function WholesaleOrders() {
                         <th className="p-3 text-left font-medium text-muted-foreground">VECKA</th>
                         <th className="p-3 text-left font-medium text-muted-foreground">DATUM</th>
                         <th className="p-3 text-left font-medium text-muted-foreground">BUTIK</th>
+                        <th className="p-3 text-left font-medium text-muted-foreground">ÖNSKAD LEV.</th>
                         <th className="p-3 text-right font-medium text-muted-foreground">RADER</th>
                         <th className="p-3 text-left font-medium text-muted-foreground">PRODUKTER</th>
                         <th className="p-3 text-left font-medium text-muted-foreground">ANTECKNING</th>
@@ -390,13 +391,14 @@ export default function WholesaleOrders() {
                     </thead>
                     <tbody>
                       {filteredOrders.length === 0 && (
-                        <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
+                        <tr><td colSpan={10} className="p-8 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
                       )}
                       {filteredOrders.map((o: any) => (
                         <tr key={o.id} className="border-b border-border/40 transition-colors cursor-pointer" style={{ background: buildProgressGradient(o.shop_order_lines || []) }} onClick={() => setSelectedOrder(o)}>
                           <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
                           <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                           <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
+                          <td className="p-3 text-muted-foreground">{(o as any).desired_delivery_date || "–"}</td>
                           <td className="p-3 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
                           <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
                             {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
@@ -465,24 +467,26 @@ export default function WholesaleOrders() {
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="border-b border-border bg-muted/30">
-                      <th className="p-3 text-left font-medium text-muted-foreground">VECKA</th>
-                      <th className="p-3 text-left font-medium text-muted-foreground">DATUM</th>
-                      <th className="p-3 text-left font-medium text-muted-foreground">BUTIK</th>
-                      <th className="p-3 text-right font-medium text-muted-foreground">RADER</th>
-                      <th className="p-3 text-left font-medium text-muted-foreground">PRODUKTER</th>
-                      <th className="p-3 text-left font-medium text-muted-foreground">ANTECKNING</th>
-                    </tr>
+                     <tr className="border-b border-border bg-muted/30">
+                       <th className="p-3 text-left font-medium text-muted-foreground">VECKA</th>
+                       <th className="p-3 text-left font-medium text-muted-foreground">DATUM</th>
+                       <th className="p-3 text-left font-medium text-muted-foreground">BUTIK</th>
+                       <th className="p-3 text-left font-medium text-muted-foreground">ÖNSKAD LEV.</th>
+                       <th className="p-3 text-right font-medium text-muted-foreground">RADER</th>
+                       <th className="p-3 text-left font-medium text-muted-foreground">PRODUKTER</th>
+                       <th className="p-3 text-left font-medium text-muted-foreground">ANTECKNING</th>
+                     </tr>
                   </thead>
                   <tbody>
                     {archivedOrders.length === 0 && (
-                      <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Inga arkiverade ordrar.</td></tr>
+                      <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Inga arkiverade ordrar.</td></tr>
                     )}
                     {archivedOrders.map((o: any) => (
                       <tr key={o.id} className="border-b border-border/40 cursor-pointer hover:bg-muted/20" onClick={() => setSelectedOrder(o)}>
                         <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
                         <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                         <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
+                        <td className="p-3 text-muted-foreground">{(o as any).desired_delivery_date || "–"}</td>
                         <td className="p-3 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
                         <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
                           {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
@@ -513,6 +517,9 @@ export default function WholesaleOrders() {
                 </DialogTitle>
                 <DialogDescription className="text-xs">
                   Skapad {new Date(selectedOrder.created_at).toLocaleDateString("sv-SE")}
+                  {(selectedOrder as any).desired_delivery_date && (
+                    <> · Önskat leveransdatum: <span className="font-medium text-foreground">{(selectedOrder as any).desired_delivery_date}</span></>
+                  )}
                 </DialogDescription>
               </DialogHeader>
 

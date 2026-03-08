@@ -7,7 +7,7 @@ export function useShopOrders(storeId?: string) {
     queryFn: async () => {
       let q = supabase
         .from("shop_orders")
-        .select("*, stores(name), shop_order_lines(*, products(name, unit, category, hs_code, weight_per_piece))")
+        .select("*, desired_delivery_date, stores(name), shop_order_lines(*, products(name, unit, category, hs_code, weight_per_piece))")
         .order("created_at", { ascending: false });
       if (storeId) q = q.eq("store_id", storeId);
       const { data, error } = await q;

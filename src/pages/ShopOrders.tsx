@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Plus, Search, Clock, CheckCircle2, Truck, XCircle, X, Package,
-  Archive, ListChecks, History,
+  Archive, ListChecks, History, CalendarIcon,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,10 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useProducts } from "@/hooks/useProducts";
 import { supabase } from "@/integrations/supabase/client";
@@ -106,6 +110,7 @@ function OrderTable({ orders, onSelect, emptyMsg }: { orders: any[]; onSelect: (
                 <th className="p-3 text-left font-medium text-muted-foreground">VECKA</th>
                 <th className="p-3 text-left font-medium text-muted-foreground">DATUM</th>
                 <th className="p-3 text-left font-medium text-muted-foreground">BUTIK</th>
+                <th className="p-3 text-left font-medium text-muted-foreground">ÖNSKAD LEV.</th>
                 <th className="p-3 text-right font-medium text-muted-foreground">RADER</th>
                 <th className="p-3 text-left font-medium text-muted-foreground">PRODUKTER</th>
                 <th className="p-3 text-left font-medium text-muted-foreground">ANTECKNING</th>
@@ -114,7 +119,7 @@ function OrderTable({ orders, onSelect, emptyMsg }: { orders: any[]; onSelect: (
             </thead>
             <tbody>
               {orders.length === 0 && (
-                <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">{emptyMsg}</td></tr>
+                <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">{emptyMsg}</td></tr>
               )}
               {orders.map((o: any) => {
                 const lines = o.shop_order_lines || [];
@@ -123,6 +128,7 @@ function OrderTable({ orders, onSelect, emptyMsg }: { orders: any[]; onSelect: (
                     <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
                     <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                     <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
+                    <td className="p-3 text-muted-foreground">{o.desired_delivery_date || "–"}</td>
                     <td className="p-3 text-right text-foreground">{lines.length}</td>
                     <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
                       {lines.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
@@ -160,6 +166,7 @@ export default function ShopOrders() {
   const [orderNote, setOrderNote] = useState("");
   const [orderLines, setOrderLines] = useState<OrderLine[]>([]);
   const [productSearch, setProductSearch] = useState("");
+  const [desiredDeliveryDate, setDesiredDeliveryDate] = useState<Date | undefined>(undefined);
 
   // Fetch shop orders with lines
   const { data: orders = [], isLoading } = useQuery({
@@ -247,7 +254,8 @@ export default function ShopOrders() {
         order_week: weekNum,
         notes: orderNote || null,
         status: "Ny",
-      })
+        desired_delivery_date: desiredDeliveryDate ? format(desiredDeliveryDate, "yyyy-MM-dd") : null,
+      } as any)
       .select()
       .single();
 
@@ -275,6 +283,7 @@ export default function ShopOrders() {
     setDialogOpen(false);
     setOrderLines([]);
     setOrderNote("");
+    setDesiredDeliveryDate(undefined);
   };
 
   const pending = liveOrders.filter((o: any) => o.status === "Ny" || o.status === "Behandlas").length;
@@ -346,7 +355,7 @@ export default function ShopOrders() {
       </Tabs>
 
       {/* Create order dialog */}
-      <Dialog open={dialogOpen} onOpenChange={open => { setDialogOpen(open); if (!open) { setOrderLines([]); setOrderNote(""); } }}>
+      <Dialog open={dialogOpen} onOpenChange={open => { setDialogOpen(open); if (!open) { setOrderLines([]); setOrderNote(""); setDesiredDeliveryDate(undefined); } }}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-heading">Ny beställning till grossist</DialogTitle>
@@ -444,6 +453,33 @@ export default function ShopOrders() {
           )}
 
           <div className="space-y-1.5">
+            <Label className="text-xs">Önskat leveransdatum (valfritt)</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left text-xs h-8 font-normal",
+                    !desiredDeliveryDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                  {desiredDeliveryDate ? format(desiredDeliveryDate, "yyyy-MM-dd") : "Välj datum..."}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={desiredDeliveryDate}
+                  onSelect={setDesiredDeliveryDate}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div className="space-y-1.5">
             <Label className="text-xs">Anteckning (valfritt)</Label>
             <Textarea
               value={orderNote}
@@ -500,6 +536,9 @@ export default function ShopOrders() {
                 </DialogTitle>
                 <DialogDescription className="text-xs">
                   Skapad {new Date(selectedOrder.created_at).toLocaleDateString("sv-SE")} · {selectedOrder.stores?.name || "–"}
+                  {selectedOrder.desired_delivery_date && (
+                    <> · Önskat leveransdatum: <span className="font-medium text-foreground">{selectedOrder.desired_delivery_date}</span></>
+                  )}
                 </DialogDescription>
               </DialogHeader>
 

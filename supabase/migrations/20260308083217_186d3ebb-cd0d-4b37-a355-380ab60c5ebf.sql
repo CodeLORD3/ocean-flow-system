@@ -1,0 +1,1 @@
+ALTER TABLE public.shop_orders ADD COLUMN desired_delivery_date date DEFAULT NULL;
