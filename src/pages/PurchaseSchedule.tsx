@@ -584,11 +584,12 @@ export default function PurchaseSchedule() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              {transportSchedules?.map((zone) => {
-                const count = schedule.filter((s) => s.shops.some((sh) => sh.zoneKey === zone.zone_key)).length;
-                const dayName = WEEKDAYS[(zone.departure_weekday - 1) % 7];
+              {Array.from(zoneSchedules.entries()).map(([zoneKey, scheds]) => {
+                const count = schedule.filter((s) => s.shops.some((sh) => sh.zoneKey === zoneKey)).length;
+                const dayNames = scheds.map(s => WEEKDAYS[(s.departure_weekday - 1) % 7]).join(", ");
+                const zone = scheds[0];
                 return (
-                  <div key={zone.id} className="rounded-lg border p-3">
+                  <div key={zoneKey} className="rounded-lg border p-3">
                     <div className="flex items-center justify-between">
                       <Badge variant={zone.badge_color as any} className="text-xs">
                         {zone.label}
@@ -596,7 +597,7 @@ export default function PurchaseSchedule() {
                       <span className="text-lg font-bold text-foreground">{count}</span>
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Avgång: {dayName} kl {zone.departure_time}
+                      Avgång: {dayNames} kl {zone.departure_time}
                     </p>
                   </div>
                 );
