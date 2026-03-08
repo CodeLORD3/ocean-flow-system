@@ -100,6 +100,7 @@ function EditableRow({
   onDelete,
   products,
   suppliers,
+  reports,
   autoFocusQty,
   onQtyFocused,
 }: {
@@ -108,6 +109,7 @@ function EditableRow({
   onDelete: () => void;
   products: any[];
   suppliers: any[];
+  reports: Report[];
   autoFocusQty?: boolean;
   onQtyFocused?: () => void;
 }) {
