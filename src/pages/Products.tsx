@@ -655,7 +655,14 @@ export default function Products() {
                 <Input value={form.weight_per_piece} onChange={e => setField("weight_per_piece", e.target.value)} type="number" step="0.001" className="h-8 text-xs" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Producent</Label>
+                <Select value={form.producer} onValueChange={v => setField("producer", v)}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Välj producent" /></SelectTrigger>
+                  <SelectContent>{PRODUCERS.map(p => <SelectItem key={p} value={p} className="text-xs">{p}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Ursprung</Label>
                 <Input value={form.origin} onChange={e => setField("origin", e.target.value)} placeholder="T.ex. Norge" className="h-8 text-xs" />
