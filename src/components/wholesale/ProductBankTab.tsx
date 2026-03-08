@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Plus, Search, Edit, Trash2, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
-const CATEGORIES = ["Färsk Fisk", "Skaldjur", "Varmkök", "Rökta Produkter", "Såser & Röror", "Frukt & Grönt"];
+const DEFAULT_CATEGORIES = ["Färsk Fisk", "Skaldjur", "Varmkök", "Rökta Produkter", "Såser & Röror", "Frukt & Grönt"];
 
 export default function ProductBankTab() {
   const { toast } = useToast();
@@ -32,6 +32,15 @@ export default function ProductBankTab() {
   const [formHsCode, setFormHsCode] = useState("");
   const [formWeight, setFormWeight] = useState("");
   const [formSku, setFormSku] = useState("");
+  const [newCategory, setNewCategory] = useState("");
+  const [addingCategory, setAddingCategory] = useState(false);
+
+  // Merge default categories with any custom categories from existing products
+  const CATEGORIES = useMemo(() => {
+    const fromProducts = products.map(p => p.category).filter(Boolean);
+    const all = new Set([...DEFAULT_CATEGORIES, ...fromProducts]);
+    return Array.from(all).sort((a, b) => a.localeCompare(b, "sv"));
+  }, [products]);
 
   const filtered = products.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -42,6 +51,7 @@ export default function ProductBankTab() {
   const openAdd = () => {
     setEditId(null);
     setFormName(""); setFormCategory(""); setFormUnit("KG"); setFormHsCode(""); setFormWeight(""); setFormSku("");
+    setAddingCategory(false); setNewCategory("");
     setDialogOpen(true);
   };
 
@@ -169,10 +179,42 @@ export default function ProductBankTab() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">Kategori *</Label>
-                <Select value={formCategory} onValueChange={setFormCategory}>
+                <Select value={formCategory} onValueChange={(val) => {
+                  if (val === "__add_new__") {
+                    setAddingCategory(true);
+                  } else {
+                    setFormCategory(val);
+                    setAddingCategory(false);
+                  }
+                }}>
                   <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Välj" /></SelectTrigger>
-                  <SelectContent>{CATEGORIES.map(c => <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>)}</SelectContent>
+                  <SelectContent>
+                    {CATEGORIES.map(c => <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>)}
+                    <SelectItem value="__add_new__" className="text-xs font-medium text-primary">+ Lägg till kategori</SelectItem>
+                  </SelectContent>
                 </Select>
+                {addingCategory && (
+                  <div className="flex gap-1.5 mt-1.5">
+                    <Input
+                      value={newCategory}
+                      onChange={e => setNewCategory(e.target.value)}
+                      placeholder="Ny kategori..."
+                      className="h-7 text-xs flex-1"
+                      autoFocus
+                    />
+                    <Button size="sm" className="h-7 text-xs px-2" onClick={() => {
+                      if (newCategory.trim()) {
+                        setFormCategory(newCategory.trim());
+                        setNewCategory("");
+                        setAddingCategory(false);
+                      }
+                    }}>OK</Button>
+                    <Button size="sm" variant="ghost" className="h-7 text-xs px-2" onClick={() => {
+                      setAddingCategory(false);
+                      setNewCategory("");
+                    }}><X className="h-3 w-3" /></Button>
+                  </div>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Enhet</Label>
