@@ -94,28 +94,17 @@ export default function Products() {
   const handleSave = async () => {
     if (!form.name || !form.category) return;
     const sku = form.sku || `${form.category.slice(0, 2).toUpperCase()}-${Date.now().toString(36)}`;
-    const payload = {
+    const payload: any = {
       name: form.name, category: form.category, unit: form.unit, sku,
       hs_code: form.hs_code || null,
       weight_per_piece: form.weight_per_piece ? Number(form.weight_per_piece) : 0,
-      cost_price: form.cost_price ? Number(form.cost_price) : 0,
-      wholesale_price: form.wholesale_price ? Number(form.wholesale_price) : 0,
-      retail_suggested: form.retail_suggested ? Number(form.retail_suggested) : 0,
       origin: form.origin || null,
     };
 
     if (editId) {
+      // Don't update prices from product dialog — prices are managed in Prissättning
       const { error } = await supabase.from("products").update(payload).eq("id", editId);
       if (error) { toast({ title: "Fel", description: error.message, variant: "destructive" }); return; }
-      // Log price history
-      await supabase.from("price_history").insert({
-        product_id: editId,
-        cost_price: payload.cost_price,
-        wholesale_price: payload.wholesale_price,
-        retail_suggested: payload.retail_suggested,
-        reason: "Manuell ändring via produktdialog",
-        changed_by: "Admin",
-      });
       toast({ title: "Produkt uppdaterad", description: form.name });
     } else {
       const { error } = await supabase.from("products").insert(payload);
