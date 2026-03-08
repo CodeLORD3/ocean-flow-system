@@ -49,10 +49,6 @@ const inventoryNav = [
   { title: "Inleveranser", url: "/receiving", icon: Truck },
 ];
 
-const purchasingNav = [
-  { title: "Produktion/Grossist", url: "/wholesale", icon: ShoppingBag },
-];
-
 const financeNav = [
   { title: "Rapporter", url: "/reports", icon: BarChart3 },
   { title: "Ekonomi", url: "/finance", icon: CreditCard },
