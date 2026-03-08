@@ -716,7 +716,7 @@ export default function PurchaseReporting() {
         <ResizableHandle withHandle />
 
         {/* RIGHT: Document viewer */}
-        <ResizablePanel defaultSize={45} minSize={25}>
+        <ResizablePanel defaultSize={30} minSize={20}>
           <div className="flex flex-col h-full">
             <div className="flex items-center justify-between p-3 border-b gap-2">
               <div className="flex items-center gap-1">
