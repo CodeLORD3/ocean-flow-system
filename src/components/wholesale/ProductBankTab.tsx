@@ -178,10 +178,42 @@ export default function ProductBankTab() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">Kategori *</Label>
-                <Select value={formCategory} onValueChange={setFormCategory}>
+                <Select value={formCategory} onValueChange={(val) => {
+                  if (val === "__add_new__") {
+                    setAddingCategory(true);
+                  } else {
+                    setFormCategory(val);
+                    setAddingCategory(false);
+                  }
+                }}>
                   <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Välj" /></SelectTrigger>
-                  <SelectContent>{CATEGORIES.map(c => <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>)}</SelectContent>
+                  <SelectContent>
+                    {CATEGORIES.map(c => <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>)}
+                    <SelectItem value="__add_new__" className="text-xs font-medium text-primary">+ Lägg till kategori</SelectItem>
+                  </SelectContent>
                 </Select>
+                {addingCategory && (
+                  <div className="flex gap-1.5 mt-1.5">
+                    <Input
+                      value={newCategory}
+                      onChange={e => setNewCategory(e.target.value)}
+                      placeholder="Ny kategori..."
+                      className="h-7 text-xs flex-1"
+                      autoFocus
+                    />
+                    <Button size="sm" className="h-7 text-xs px-2" onClick={() => {
+                      if (newCategory.trim()) {
+                        setFormCategory(newCategory.trim());
+                        setNewCategory("");
+                        setAddingCategory(false);
+                      }
+                    }}>OK</Button>
+                    <Button size="sm" variant="ghost" className="h-7 text-xs px-2" onClick={() => {
+                      setAddingCategory(false);
+                      setNewCategory("");
+                    }}><X className="h-3 w-3" /></Button>
+                  </div>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Enhet</Label>
