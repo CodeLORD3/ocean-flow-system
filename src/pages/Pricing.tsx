@@ -154,10 +154,7 @@ export default function Pricing() {
     }
   };
 
-  const margin = (cost: number, wholesale: number) => {
-    if (cost === 0) return 0;
-    return Math.round(((wholesale - cost) / cost) * 100);
-  };
+  const margin = calcMargin;
 
   return (
     <div className="space-y-6">
