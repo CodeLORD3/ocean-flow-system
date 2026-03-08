@@ -277,94 +277,77 @@ export default function PurchaseSchedule() {
       {isLoading ? (
         <div className="flex items-center justify-center py-20 text-muted-foreground">Laddar schema...</div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-          {weekDates.map((date, dayIndex) => {
-            const items = activeMap.get(dayIndex) || [];
-            const isToday = isSameDay(date, new Date());
-            const isPast = date < new Date() && !isToday;
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="h-7 px-2 text-[10px] w-[100px]">Dag</TableHead>
+              <TableHead className="h-7 px-2 text-[10px]">Produkt</TableHead>
+              <TableHead className="h-7 px-2 text-[10px] text-right w-[80px]">Antal</TableHead>
+              <TableHead className="h-7 px-2 text-[10px] w-[130px]">Butik</TableHead>
+              <TableHead className="h-7 px-2 text-[10px] w-[120px]">
+                {view === "purchase" ? "Leverans" : "Senast inköp"}
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {weekDates.map((date, dayIndex) => {
+              const items = activeMap.get(dayIndex) || [];
+              const isToday = isSameDay(date, new Date());
+              const isPast = date < new Date() && !isToday;
 
-            return (
-              <Card key={dayIndex} className={`${isToday ? "ring-2 ring-primary" : ""} ${isPast ? "opacity-60" : ""}`}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-2">
-                      <CalendarDays className="h-4 w-4 text-muted-foreground" />
-                      {WEEKDAYS[dayIndex]}
-                    </span>
-                    <span className="text-xs font-normal text-muted-foreground">
-                      {format(date, "d MMM", { locale: sv })}
-                    </span>
-                  </CardTitle>
-                  {items.length > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      {items.length} {items.length === 1 ? "produkt" : "produkter"} att{" "}
-                      {view === "purchase" ? "beställa" : "leverera"}
-                    </p>
-                  )}
-                </CardHeader>
-                <CardContent className="pt-0">
-                  {items.length === 0 ? (
-                    <p className="py-4 text-center text-xs text-muted-foreground">Inga produkter</p>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="h-8 px-2 text-[10px]">Produkt</TableHead>
-                          <TableHead className="h-8 px-2 text-[10px] text-right">Antal</TableHead>
-                          <TableHead className="h-8 px-2 text-[10px]">Butik</TableHead>
-                          <TableHead className="h-8 px-2 text-[10px]">
-                            {view === "purchase" ? "Leverans" : "Senast inköp"}
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {items.map((item, i) => {
-                          const zone = zoneMap.get(item.zoneKey);
-                          const isUrgent = view === "purchase" && isSameDay(item.latestPurchaseDate, new Date());
-                          return (
-                            <TableRow
-                              key={`${item.orderId}-${item.productName}-${i}`}
-                              className={isUrgent ? "bg-destructive/10" : ""}
-                            >
-                              <TableCell className="px-2 py-1.5 text-xs font-medium">
-                                {item.productName}
-                              </TableCell>
-                              <TableCell className="px-2 py-1.5 text-xs text-right">
-                                {item.quantity} {item.unit}
-                              </TableCell>
-                              <TableCell className="px-2 py-1.5">
-                                <Badge variant={(zone?.badge_color || "default") as any} className="text-[9px]">
-                                  {item.storeName}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="px-2 py-1.5">
-                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                                  {view === "purchase" ? (
-                                    <>
-                                      {format(item.deliveryDate, "EEE d/M", { locale: sv })}
-                                      <Clock className="h-3 w-3 ml-1" />
-                                      <span className="font-medium">{item.departureTime}</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      {format(item.latestPurchaseDate, "EEE d/M", { locale: sv })}
-                                      <Clock className="h-3 w-3 ml-1" />
-                                      <span className="font-medium">{item.departureTime}</span>
-                                    </>
-                                  )}
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+              if (items.length === 0) {
+                return (
+                  <TableRow key={dayIndex} className={`${isPast ? "opacity-40" : ""} ${isToday ? "bg-primary/5" : ""}`}>
+                    <TableCell className="px-2 py-1 text-xs font-medium whitespace-nowrap">
+                      <span className={isToday ? "text-primary font-bold" : "text-foreground"}>
+                        {WEEKDAYS[dayIndex].slice(0, 3)}
+                      </span>
+                      <span className="text-muted-foreground ml-1 text-[10px]">{format(date, "d/M")}</span>
+                    </TableCell>
+                    <TableCell colSpan={4} className="px-2 py-1 text-[10px] text-muted-foreground italic">—</TableCell>
+                  </TableRow>
+                );
+              }
+
+              return items.map((item, i) => {
+                const zone = zoneMap.get(item.zoneKey);
+                const isUrgent = view === "purchase" && isSameDay(item.latestPurchaseDate, new Date());
+                return (
+                  <TableRow
+                    key={`${dayIndex}-${item.orderId}-${item.productName}-${i}`}
+                    className={`${isUrgent ? "bg-destructive/5" : ""} ${isPast ? "opacity-40" : ""} ${isToday ? "bg-primary/5" : ""}`}
+                  >
+                    <TableCell className="px-2 py-0.5 text-xs whitespace-nowrap">
+                      {i === 0 && (
+                        <>
+                          <span className={isToday ? "text-primary font-bold" : "font-medium text-foreground"}>
+                            {WEEKDAYS[dayIndex].slice(0, 3)}
+                          </span>
+                          <span className="text-muted-foreground ml-1 text-[10px]">{format(date, "d/M")}</span>
+                        </>
+                      )}
+                    </TableCell>
+                    <TableCell className="px-2 py-0.5 text-xs">{item.productName}</TableCell>
+                    <TableCell className="px-2 py-0.5 text-xs text-right">{item.quantity} {item.unit}</TableCell>
+                    <TableCell className="px-2 py-0.5">
+                      <Badge variant={(zone?.badge_color || "default") as any} className="text-[9px] py-0">
+                        {item.storeName}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="px-2 py-0.5">
+                      <span className="text-[10px] text-muted-foreground">
+                        {view === "purchase"
+                          ? format(item.deliveryDate, "EEE d/M", { locale: sv })
+                          : format(item.latestPurchaseDate, "EEE d/M", { locale: sv })}
+                        {" "}{item.departureTime}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                );
+              });
+            })}
+          </TableBody>
+        </Table>
       )}
 
       {/* Summary */}
