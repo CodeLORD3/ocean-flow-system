@@ -22,6 +22,7 @@ import PurchaseReporting from "./pages/PurchaseReporting";
 import Pricing from "./pages/Pricing";
 import ShopReports from "./pages/ShopReports";
 import PurchaseSchedule from "./pages/PurchaseSchedule";
+import ReportsRouter from "./pages/ReportsRouter";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,7 +45,7 @@ const App = () => (
               <Route path="/organisation" element={<OrganisationOverview />} />
               <Route path="/staff" element={<Staff />} />
               <Route path="/wholesale" element={<Wholesale />} />
-              <Route path="/reports" element={<ShopReports />} />
+              <Route path="/reports" element={<ReportsRouter />} />
               <Route path="/finance" element={<PlaceholderPage title="Ekonomi" />} />
               <Route path="/forecasts" element={<PlaceholderPage title="Prognoser" />} />
               <Route path="/invoices" element={<PlaceholderPage title="Fakturor" />} />

@@ -623,6 +623,7 @@ export default function PurchaseReporting() {
       const { data, error } = await supabase
         .from("purchase_reports")
         .select("*")
+        .is("archived_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Report[];
