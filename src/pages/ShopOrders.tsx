@@ -577,11 +577,13 @@ export default function ShopOrders() {
 }
 
 /* ---- Inline edit component for order detail ---- */
-function OrderDetailWithEdit({ order, products, onClose, toast }: {
+function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays, isDateDisabled }: {
   order: any;
   products: any[];
   onClose: () => void;
   toast: any;
+  allowedWeekdays: Set<number> | null;
+  isDateDisabled: (date: Date) => boolean;
 }) {
   const createChange = useCreateChangeRequest();
   const resolveChange = useResolveChangeRequest();
