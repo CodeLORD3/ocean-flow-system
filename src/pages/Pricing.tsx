@@ -22,6 +22,11 @@ interface InlineEdit {
   margin: number;
 }
 
+interface ShopInlineEdit {
+  retail_price: number;
+  margin: number;
+}
+
 export default function Pricing() {
   const { data: products = [], isLoading } = useProducts();
   const { data: categories = [] } = useCategories();
