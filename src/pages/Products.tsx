@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Plus, Search, Edit, Trash2, Package, Tag, Printer, ScanLine, DollarSign, Check, X } from "lucide-react";
 import { useSite } from "@/contexts/SiteContext";
 import { Card, CardContent } from "@/components/ui/card";
