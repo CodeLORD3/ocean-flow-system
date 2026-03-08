@@ -286,9 +286,9 @@ function EditableRow({
           className="h-7 text-xs w-14 border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 text-right"
         />
       </TableCell>
-      <TableCell className="py-1 px-2">
+      <TableCell className="py-1 px-1 w-[50px]">
         <Select defaultValue={line.unit || "kg"} onValueChange={(v) => onSave({ unit: v })}>
-          <SelectTrigger className="h-7 w-14 text-xs border-transparent bg-transparent hover:border-input"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="h-7 w-12 text-xs border-transparent bg-transparent hover:border-input"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="kg">kg</SelectItem>
             <SelectItem value="st">st</SelectItem>
