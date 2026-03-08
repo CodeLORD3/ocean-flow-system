@@ -173,15 +173,19 @@ export default function PurchaseSchedule() {
       if (!store) continue;
 
       const zoneKey = getStoreZoneKey(store);
-      const zone = zoneMap.get(zoneKey);
-      if (!zone) continue;
+      const schedules = zoneSchedules.get(zoneKey);
+      if (!schedules || schedules.length === 0) continue;
 
       for (const line of order.shop_order_lines || []) {
         const deliveryDateStr = line.delivery_date || order.desired_delivery_date;
         if (!deliveryDateStr) continue;
 
         const deliveryDate = parseISO(deliveryDateStr);
-        const departureDate = getDepartureDate(deliveryDate, zone.departure_weekday);
+        // The delivery date IS the departure day (shops only pick valid departure weekdays)
+        const jsDay = getDay(deliveryDate); // 0=Sun
+        const isoDay = jsDay === 0 ? 7 : jsDay; // 1=Mon..7=Sun
+        const matchingSchedule = schedules.find(s => s.departure_weekday === isoDay) || schedules[0];
+        const departureDate = deliveryDate;
 
         rawItems.push({
           storeName: store.name,
