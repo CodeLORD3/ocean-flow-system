@@ -218,6 +218,7 @@ export default function ShopOrders() {
       product_id: p.id, product_name: p.name, unit: p.unit, quantity: "",
     }]);
     setProductSearch("");
+    setHighlightedIndex(-1);
   };
 
   const updateLine = (idx: number, qty: string) => {
