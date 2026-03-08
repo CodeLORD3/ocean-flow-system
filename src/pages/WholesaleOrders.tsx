@@ -330,7 +330,7 @@ export default function WholesaleOrders() {
                                  ))}
                                  <td className="px-2.5 py-1 text-right font-bold text-primary font-mono">{item.totalOrdered}</td>
                                  <td className="px-2.5 py-1 text-muted-foreground">{item.unit}</td>
-                                <td className="p-2.5">
+                                 <td className="px-2.5 py-1">
                                   <Select
                                     value={item.currentStatus || ""}
                                     onValueChange={(val) => handleProductStatusChange(item, val)}
