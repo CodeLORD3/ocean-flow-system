@@ -11,11 +11,15 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { format, startOfWeek, addDays, isSameDay, parseISO, getISOWeek, getYear, getDay } from "date-fns";
 import { sv } from "date-fns/locale";
-import { CalendarDays, ChevronLeft, ChevronRight, AlertTriangle, Truck, Settings2, ChevronDown, ListChecks } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, AlertTriangle, Truck, Settings2, ChevronDown, ListChecks, Ban, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useCreateChangeRequest } from "@/hooks/useOrderChangeRequests";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 const WEEKDAYS = ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag", "Söndag"];
 const WEEKDAY_OPTIONS = WEEKDAYS.map((name, i) => ({ value: i + 1, label: name }));
