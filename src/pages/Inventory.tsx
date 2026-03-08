@@ -146,15 +146,11 @@ export default function Inventory() {
     return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b, "sv"));
   }, [storeStock]);
 
-  // KPIs
-  const totalProducts = storeStock.length;
-  const totalQty = storeStock.reduce((s: number, i: any) => s + Number(i.quantity), 0);
-  const totalValue = storeStock.reduce((s: number, i: any) => {
-    const qty = Number(i.quantity) || 0;
-    const cost = Number(i.products?.cost_price) || 0;
-    return s + qty * cost;
-  }, 0);
-  const lowStockItems = storeStock.filter((s: any) => Number(s.min_stock) > 0 && Number(s.quantity) < Number(s.min_stock)).length;
+  // KPIs (aggregated per product to avoid double-counting across locations)
+  const totalProducts = aggregatedStock.size;
+  const totalQty = Array.from(aggregatedStock.values()).reduce((s, i) => s + i.quantity, 0);
+  const totalValue = Array.from(aggregatedStock.values()).reduce((s, i) => s + i.quantity * i.cost_price, 0);
+  const lowStockItems = Array.from(aggregatedStock.values()).filter(i => i.min_stock > 0 && i.quantity < i.min_stock).length;
 
   const toggleCategory = (cat: string) => {
     setExpandedCategories(prev => {
