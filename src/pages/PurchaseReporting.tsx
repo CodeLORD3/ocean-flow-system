@@ -961,19 +961,31 @@ export default function PurchaseReporting() {
                 ) : (
                   <div className="p-3 space-y-2">
                     {reports.map((r) => (
-                      <button
+                      <div
                         key={r.id}
-                        onClick={() => { setSelectedReportId(r.id); setZoom(1); }}
-                        className="w-full text-left p-3 rounded-md border hover:bg-accent/50 transition-colors"
+                        className="flex items-center gap-2 p-3 rounded-md border hover:bg-accent/50 transition-colors"
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium text-sm truncate">{r.file_name}</span>
-                          <Badge variant={r.status === "Klar" ? "default" : "secondary"} className="text-xs ml-2">{r.status}</Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {new Date(r.created_at).toLocaleDateString("sv-SE")} · {r.total_amount?.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr
-                        </p>
-                      </button>
+                        <button
+                          onClick={() => { setSelectedReportId(r.id); setZoom(1); }}
+                          className="flex-1 text-left"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-sm truncate">{r.file_name}</span>
+                            <Badge variant={r.status === "Klar" ? "default" : "secondary"} className="text-xs ml-2">{r.status}</Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(r.created_at).toLocaleDateString("sv-SE")} · {r.total_amount?.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr
+                          </p>
+                        </button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 shrink-0"
+                          onClick={(e) => { e.stopPropagation(); deleteReport.mutate(r.id); }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        </Button>
+                      </div>
                     ))}
                   </div>
                 )}
