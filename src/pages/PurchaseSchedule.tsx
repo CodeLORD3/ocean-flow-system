@@ -195,7 +195,7 @@ export default function PurchaseSchedule() {
           unit: line.unit || line.products?.unit || "kg",
           deliveryDate,
           departureDate,
-          departureTime: zone.departure_time,
+          departureTime: matchingSchedule.departure_time,
           category: line.products?.category || "Övrigt",
         });
       }
