@@ -59,14 +59,14 @@ function EditableRow({
 }) {
   const [productSearch, setProductSearch] = useState("");
   const [productOpen, setProductOpen] = useState(false);
+  const [productIdx, setProductIdx] = useState(0);
   const [supplierSearch, setSupplierSearch] = useState("");
   const [supplierOpen, setSupplierOpen] = useState(false);
+  const [supplierIdx, setSupplierIdx] = useState(0);
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   const productInputRef = useRef<HTMLInputElement>(null);
   const supplierInputRef = useRef<HTMLInputElement>(null);
-  const productCmdRef = useRef<HTMLDivElement>(null);
-  const supplierCmdRef = useRef<HTMLDivElement>(null);
 
   const commitField = (field: string, value: any) => {
     const updates: any = { [field]: value };
@@ -75,25 +75,66 @@ function EditableRow({
       const price = field === "unit_price" ? (parseFloat(value) || 0) : (line.unit_price ?? 0);
       updates.line_total = qty * price;
     }
-    // Debounce saves
     clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(() => onSave(updates), 400);
   };
 
-  // Forward arrow/enter keys from input to Command list
-  const handleSearchKeyDown = (e: React.KeyboardEvent, cmdRef: React.RefObject<HTMLDivElement | null>) => {
-    if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Enter") {
-      const cmd = cmdRef.current;
-      if (cmd) {
-        cmd.dispatchEvent(new KeyboardEvent("keydown", { key: e.key, bubbles: true }));
-        e.preventDefault();
-      }
+  const filteredProducts = products.filter((p: any) =>
+    productSearch.length > 0 && p.name.toLowerCase().includes(productSearch.toLowerCase())
+  ).slice(0, 12);
+
+  const filteredSuppliers = suppliers
+    .filter((s: any) => supplierSearch.length > 0 && s.name.toLowerCase().includes(supplierSearch.toLowerCase()))
+    .slice(0, 10);
+
+  const selectProduct = (p: any) => {
+    onSave({
+      product_name: p.name,
+      product_id: p.id,
+      unit: p.unit || line.unit,
+      unit_price: p.cost_price || line.unit_price,
+      supplier_name: p.suppliers?.name || line.supplier_name,
+      line_total: line.quantity * (p.cost_price || line.unit_price || 0),
+    });
+    setProductOpen(false);
+    setProductSearch("");
+    if (productInputRef.current) productInputRef.current.value = p.name;
+  };
+
+  const selectSupplier = (s: any) => {
+    onSave({ supplier_name: s.name });
+    setSupplierOpen(false);
+    setSupplierSearch("");
+    if (supplierInputRef.current) supplierInputRef.current.value = s.name;
+  };
+
+  const handleProductKeyDown = (e: React.KeyboardEvent) => {
+    if (!productOpen || filteredProducts.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setProductIdx((i) => Math.min(i + 1, filteredProducts.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setProductIdx((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      selectProduct(filteredProducts[productIdx]);
     }
   };
 
-  const filteredProducts = products.filter((p: any) =>
-    productSearch.length > 0 && p.name.toLowerCase().includes(productSearch.toLowerCase())
-  );
+  const handleSupplierKeyDown = (e: React.KeyboardEvent) => {
+    if (!supplierOpen || filteredSuppliers.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSupplierIdx((i) => Math.min(i + 1, filteredSuppliers.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSupplierIdx((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      selectSupplier(filteredSuppliers[supplierIdx]);
+    }
+  };
 
   return (
     <TableRow className="h-9">
@@ -106,15 +147,17 @@ function EditableRow({
                 defaultValue={line.product_name}
                 onChange={(e) => {
                   setProductSearch(e.target.value);
+                  setProductIdx(0);
                   if (e.target.value.length > 0 && !productOpen) setProductOpen(true);
                   if (e.target.value.length === 0) setProductOpen(false);
                   commitField("product_name", e.target.value);
                 }}
                 onFocus={(e) => {
+                  e.target.select();
                   setProductSearch(e.target.value);
                   if (e.target.value.length > 0) setProductOpen(true);
                 }}
-                onKeyDown={(e) => handleSearchKeyDown(e, productCmdRef)}
+                onKeyDown={handleProductKeyDown}
                 className="h-7 text-xs border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1.5"
                 placeholder="Sök produkt..."
               />
@@ -125,38 +168,21 @@ function EditableRow({
               )}
             </div>
           </PopoverTrigger>
-          {productSearch.length > 0 && (
+          {productSearch.length > 0 && filteredProducts.length > 0 && (
             <PopoverContent className="p-0 w-[260px]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
-              <Command ref={productCmdRef} shouldFilter={false}>
-                <CommandList>
-                  <CommandEmpty className="py-2 text-xs text-center">Ingen träff</CommandEmpty>
-                  <CommandGroup>
-                    {filteredProducts.slice(0, 12).map((p: any) => (
-                      <CommandItem
-                        key={p.id}
-                        onSelect={() => {
-                          onSave({
-                            product_name: p.name,
-                            product_id: p.id,
-                            unit: p.unit || line.unit,
-                            unit_price: p.cost_price || line.unit_price,
-                            supplier_name: p.suppliers?.name || line.supplier_name,
-                            line_total: line.quantity * (p.cost_price || line.unit_price || 0),
-                          });
-                          setProductOpen(false);
-                          setProductSearch("");
-                        }}
-                        className="py-1"
-                      >
-                        <div className="flex flex-col">
-                          <span className="text-xs">{p.name}</span>
-                          <span className="text-[10px] text-muted-foreground">{p.sku} · {p.category}</span>
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
+              <div className="max-h-[200px] overflow-y-auto py-1">
+                {filteredProducts.map((p: any, i: number) => (
+                  <div
+                    key={p.id}
+                    className={`px-2 py-1.5 text-xs cursor-pointer rounded-sm mx-1 ${i === productIdx ? "bg-accent text-accent-foreground" : "hover:bg-muted"}`}
+                    onMouseEnter={() => setProductIdx(i)}
+                    onMouseDown={(e) => { e.preventDefault(); selectProduct(p); }}
+                  >
+                    <div className="font-medium">{p.name}</div>
+                    <div className="text-[10px] text-muted-foreground">{p.sku} · {p.category}</div>
+                  </div>
+                ))}
+              </div>
             </PopoverContent>
           )}
         </Popover>
@@ -199,50 +225,39 @@ function EditableRow({
                 defaultValue={line.supplier_name || ""}
                 onChange={(e) => {
                   setSupplierSearch(e.target.value);
+                  setSupplierIdx(0);
                   if (e.target.value.length > 0 && !supplierOpen) setSupplierOpen(true);
                   if (e.target.value.length === 0) setSupplierOpen(false);
                   commitField("supplier_name", e.target.value || null);
                 }}
                 onFocus={(e) => {
+                  e.target.select();
                   setSupplierSearch(e.target.value);
                   if (e.target.value.length > 0) setSupplierOpen(true);
                 }}
-                onKeyDown={(e) => handleSearchKeyDown(e, supplierCmdRef)}
+                onKeyDown={handleSupplierKeyDown}
                 className="h-7 text-xs border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1.5 w-28"
                 placeholder="Sök leverantör..."
               />
             </div>
           </PopoverTrigger>
-          {supplierSearch.length > 0 && (
+          {supplierSearch.length > 0 && filteredSuppliers.length > 0 && (
             <PopoverContent className="p-0 w-[220px]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
-              <Command ref={supplierCmdRef} shouldFilter={false}>
-                <CommandList>
-                  <CommandEmpty className="py-2 text-xs text-center">Ingen träff</CommandEmpty>
-                  <CommandGroup>
-                    {suppliers
-                      .filter((s: any) => s.name.toLowerCase().includes(supplierSearch.toLowerCase()))
-                      .slice(0, 10)
-                      .map((s: any) => (
-                        <CommandItem
-                          key={s.id}
-                          onSelect={() => {
-                            onSave({ supplier_name: s.name });
-                            setSupplierOpen(false);
-                            setSupplierSearch("");
-                          }}
-                          className="py-1"
-                        >
-                          <div className="flex flex-col">
-                            <span className="text-xs">{s.name}</span>
-                            {s.supplier_type && (
-                              <span className="text-[10px] text-muted-foreground">{s.supplier_type}</span>
-                            )}
-                          </div>
-                        </CommandItem>
-                      ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
+              <div className="max-h-[200px] overflow-y-auto py-1">
+                {filteredSuppliers.map((s: any, i: number) => (
+                  <div
+                    key={s.id}
+                    className={`px-2 py-1.5 text-xs cursor-pointer rounded-sm mx-1 ${i === supplierIdx ? "bg-accent text-accent-foreground" : "hover:bg-muted"}`}
+                    onMouseEnter={() => setSupplierIdx(i)}
+                    onMouseDown={(e) => { e.preventDefault(); selectSupplier(s); }}
+                  >
+                    <div className="font-medium">{s.name}</div>
+                    {s.supplier_type && (
+                      <div className="text-[10px] text-muted-foreground">{s.supplier_type}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </PopoverContent>
           )}
         </Popover>
