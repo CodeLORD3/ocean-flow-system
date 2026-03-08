@@ -467,14 +467,15 @@ export default function WholesaleOrders() {
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="border-b border-border bg-muted/30">
-                      <th className="p-3 text-left font-medium text-muted-foreground">VECKA</th>
-                      <th className="p-3 text-left font-medium text-muted-foreground">DATUM</th>
-                      <th className="p-3 text-left font-medium text-muted-foreground">BUTIK</th>
-                      <th className="p-3 text-right font-medium text-muted-foreground">RADER</th>
-                      <th className="p-3 text-left font-medium text-muted-foreground">PRODUKTER</th>
-                      <th className="p-3 text-left font-medium text-muted-foreground">ANTECKNING</th>
-                    </tr>
+                     <tr className="border-b border-border bg-muted/30">
+                       <th className="p-3 text-left font-medium text-muted-foreground">VECKA</th>
+                       <th className="p-3 text-left font-medium text-muted-foreground">DATUM</th>
+                       <th className="p-3 text-left font-medium text-muted-foreground">BUTIK</th>
+                       <th className="p-3 text-left font-medium text-muted-foreground">ÖNSKAD LEV.</th>
+                       <th className="p-3 text-right font-medium text-muted-foreground">RADER</th>
+                       <th className="p-3 text-left font-medium text-muted-foreground">PRODUKTER</th>
+                       <th className="p-3 text-left font-medium text-muted-foreground">ANTECKNING</th>
+                     </tr>
                   </thead>
                   <tbody>
                     {archivedOrders.length === 0 && (
