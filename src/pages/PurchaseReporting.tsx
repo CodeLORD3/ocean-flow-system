@@ -616,16 +616,19 @@ export default function PurchaseReporting() {
                         }}
                         onKeyDown={(e) => {
                           const items = searchedProducts.slice(0, 20);
-                          if (!searchOpen || items.length === 0) return;
+                          if (items.length === 0) return;
                           if (e.key === "ArrowDown") {
                             e.preventDefault();
+                            if (!searchOpen) setSearchOpen(true);
                             setSearchIdx((i) => Math.min(i + 1, items.length - 1));
                           } else if (e.key === "ArrowUp") {
                             e.preventDefault();
                             setSearchIdx((i) => Math.max(i - 1, 0));
-                          } else if (e.key === "Enter") {
+                          } else if (e.key === "Enter" && searchQuery.length > 0) {
                             e.preventDefault();
-                            addLineFromProduct.mutate(items[searchIdx]);
+                            e.stopPropagation();
+                            const item = items[Math.min(searchIdx, items.length - 1)];
+                            if (item) addLineFromProduct.mutate(item);
                           }
                         }}
                         placeholder="Sök och lägg till produkt från produktlistan..."
