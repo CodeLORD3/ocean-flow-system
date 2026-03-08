@@ -100,12 +100,16 @@ function EditableRow({
   onDelete,
   products,
   suppliers,
+  autoFocusQty,
+  onQtyFocused,
 }: {
   line: ReportLine;
   onSave: (updated: Partial<ReportLine>) => void;
   onDelete: () => void;
   products: any[];
   suppliers: any[];
+  autoFocusQty?: boolean;
+  onQtyFocused?: () => void;
 }) {
   const [productSearch, setProductSearch] = useState("");
   const [productOpen, setProductOpen] = useState(false);
