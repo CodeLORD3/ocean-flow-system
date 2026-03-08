@@ -340,11 +340,22 @@ export default function Products() {
         <td className="px-3 py-1"><Badge variant="outline" className="text-[10px]">{p.category}</Badge></td>
         <td className="px-3 py-1 text-muted-foreground">{p.unit}</td>
         <td className="px-3 py-1">
-          {(p as any).producer ? (
-            <Badge variant={(p as any).producer === "Produktion" ? "default" : "secondary"} className="text-[10px]">{(p as any).producer}</Badge>
-          ) : (
-            <span className="text-muted-foreground text-[10px]">–</span>
-          )}
+          <Select
+            value={(p as any).producer || "__none__"}
+            onValueChange={async (val) => {
+              const producer = val === "__none__" ? null : val;
+              await supabase.from("products").update({ producer } as any).eq("id", p.id);
+              qc.invalidateQueries({ queryKey: ["products"] });
+            }}
+          >
+            <SelectTrigger className="h-7 w-28 text-[10px] border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__" className="text-[10px] text-muted-foreground">–</SelectItem>
+              {PRODUCERS.map(pr => <SelectItem key={pr} value={pr} className="text-[10px]">{pr}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </td>
 
         {/* Prod.pris — inline editable for wholesale */}
