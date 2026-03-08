@@ -166,6 +166,7 @@ export default function ShopOrders() {
   const [orderNote, setOrderNote] = useState("");
   const [orderLines, setOrderLines] = useState<OrderLine[]>([]);
   const [productSearch, setProductSearch] = useState("");
+  const [desiredDeliveryDate, setDesiredDeliveryDate] = useState<Date | undefined>(undefined);
 
   // Fetch shop orders with lines
   const { data: orders = [], isLoading } = useQuery({
