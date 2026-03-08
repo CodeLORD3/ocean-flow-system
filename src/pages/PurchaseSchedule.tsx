@@ -389,7 +389,7 @@ export default function PurchaseSchedule() {
                                           <TableCell className="px-2 py-0.5 text-[10px] text-right text-muted-foreground">{shop.quantity} {item.unit}</TableCell>
                                           <TableCell className="px-2 py-0.5" />
                                           <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">
-                                            {format(shop.deliveryDate, "EEE d/M", { locale: sv })} {item.departureTime}
+                                            {format(shop.deliveryDate, "EEE d/M", { locale: sv })} {zone?.departure_time || item.departureTime}
                                           </TableCell>
                                         </TableRow>
                                       );
