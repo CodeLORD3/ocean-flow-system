@@ -174,6 +174,8 @@ export default function Inventory() {
       // Auto-update order statuses to "Packad" if moving to a Pre-location
       const movedProductIds = items.map((i: any) => i.product_id);
       await markOrderLinesPackad(movedProductIds, targetLocationId);
+      // Reverse sync: revert order lines if stock no longer supports their status
+      await revertOrderLinesIfStockGone();
 
       clearSelection(activeLocationId);
       invalidateStock();
