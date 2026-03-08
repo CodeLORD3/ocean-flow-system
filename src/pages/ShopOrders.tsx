@@ -151,6 +151,7 @@ export default function ShopOrders() {
   const { activeStoreId } = useSite();
   const { data: products = [] } = useProducts();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [confirmSendOpen, setConfirmSendOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
