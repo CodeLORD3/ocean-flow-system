@@ -637,6 +637,7 @@ export type Database = {
           name: string
           origin: string | null
           parent_product_id: string | null
+          producer: string | null
           retail_suggested: number | null
           sku: string
           stock: number
@@ -657,6 +658,7 @@ export type Database = {
           name: string
           origin?: string | null
           parent_product_id?: string | null
+          producer?: string | null
           retail_suggested?: number | null
           sku: string
           stock?: number
@@ -677,6 +679,7 @@ export type Database = {
           name?: string
           origin?: string | null
           parent_product_id?: string | null
+          producer?: string | null
           retail_suggested?: number | null
           sku?: string
           stock?: number
