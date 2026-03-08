@@ -696,6 +696,7 @@ export default function PurchaseReporting() {
                             {searchedProducts.slice(0, 20).map((p, i) => (
                               <div
                                 key={p.id}
+                                data-search-idx={i}
                                 className={`px-2 py-1.5 mx-1 rounded-sm cursor-pointer flex items-center justify-between ${i === searchIdx ? "bg-accent text-accent-foreground" : "hover:bg-muted"}`}
                                 onMouseEnter={() => setSearchIdx(i)}
                                 onMouseDown={(e) => { e.preventDefault(); addLineFromProduct.mutate(p); }}
