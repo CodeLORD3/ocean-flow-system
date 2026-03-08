@@ -157,7 +157,7 @@ export default function Products() {
 
   const openAdd = () => {
     setEditId(null);
-    setForm({ name: "", category: "", unit: "KG", sku: "", hs_code: "", weight_per_piece: "", cost_price: "", wholesale_price: "", retail_suggested: "", origin: "" });
+    setForm({ name: "", category: "", unit: "KG", sku: "", hs_code: "", weight_per_piece: "", cost_price: "", wholesale_price: "", retail_suggested: "", origin: "", producer: "" });
     setDialogOpen(true);
   };
 
