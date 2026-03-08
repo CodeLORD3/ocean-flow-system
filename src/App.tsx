@@ -23,6 +23,7 @@ import Pricing from "./pages/Pricing";
 import ShopReports from "./pages/ShopReports";
 import PurchaseSchedule from "./pages/PurchaseSchedule";
 import ProductionSchedule from "./pages/ProductionSchedule";
+import ProductionReporting from "./pages/ProductionReporting";
 import ReportsRouter from "./pages/ReportsRouter";
 import NotFound from "./pages/NotFound";
 
