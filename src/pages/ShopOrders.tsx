@@ -488,7 +488,7 @@ export default function ShopOrders() {
           )}
 
           <div className="space-y-1.5">
-            <Label className="text-xs">Önskat leveransdatum (valfritt)</Label>
+            <Label className="text-xs">Önskat avgångsdatum{allowedWeekdays ? "" : " (valfritt)"}</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -507,8 +507,11 @@ export default function ShopOrders() {
                   mode="single"
                   selected={desiredDeliveryDate}
                   onSelect={setDesiredDeliveryDate}
+                  disabled={isDateDisabled}
                   initialFocus
                   className={cn("p-3 pointer-events-auto")}
+                  modifiers={allowedWeekdays ? { allowed: (date: Date) => !isDateDisabled(date) } : {}}
+                  modifiersClassNames={allowedWeekdays ? { allowed: "!bg-primary/10 !text-primary font-medium" } : {}}
                 />
               </PopoverContent>
             </Popover>
