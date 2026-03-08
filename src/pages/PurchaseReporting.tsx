@@ -345,9 +345,9 @@ export default function PurchaseReporting() {
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
 
-  // Product search bar state
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchIdx, setSearchIdx] = useState(0);
 
   // New product dialog
   const [newProductOpen, setNewProductOpen] = useState(false);
@@ -610,8 +610,23 @@ export default function PurchaseReporting() {
                         value={searchQuery}
                         onChange={(e) => {
                           setSearchQuery(e.target.value);
+                          setSearchIdx(0);
                           if (e.target.value.length > 0 && !searchOpen) setSearchOpen(true);
                           if (e.target.value.length === 0) setSearchOpen(false);
+                        }}
+                        onKeyDown={(e) => {
+                          const items = searchedProducts.slice(0, 20);
+                          if (!searchOpen || items.length === 0) return;
+                          if (e.key === "ArrowDown") {
+                            e.preventDefault();
+                            setSearchIdx((i) => Math.min(i + 1, items.length - 1));
+                          } else if (e.key === "ArrowUp") {
+                            e.preventDefault();
+                            setSearchIdx((i) => Math.max(i - 1, 0));
+                          } else if (e.key === "Enter") {
+                            e.preventDefault();
+                            addLineFromProduct.mutate(items[searchIdx]);
+                          }
                         }}
                         placeholder="Sök och lägg till produkt från produktlistan..."
                         className="pl-9 h-9 text-sm"
@@ -620,31 +635,32 @@ export default function PurchaseReporting() {
                   </PopoverTrigger>
                   {searchQuery.length > 0 && (
                     <PopoverContent className="p-0 w-[400px]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
-                      <Command shouldFilter={false}>
-                        <CommandList>
-                          <CommandEmpty>
-                            <div className="py-3 text-center">
-                              <p className="text-sm text-muted-foreground mb-2">Ingen produkt hittad för "{searchQuery}"</p>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setSearchOpen(false);
-                                  setNewProduct((p) => ({ ...p, name: searchQuery }));
-                                  setNewProductOpen(true);
-                                  setSearchQuery("");
-                                }}
-                              >
-                                <PackagePlus className="h-4 w-4 mr-1" /> Skapa ny produkt
-                              </Button>
-                            </div>
-                          </CommandEmpty>
-                          <CommandGroup heading="Produkter i systemet">
-                            {searchedProducts.slice(0, 20).map((p) => (
-                              <CommandItem
+                      <div className="max-h-[300px] overflow-y-auto py-1">
+                        {searchedProducts.length === 0 ? (
+                          <div className="py-3 text-center">
+                            <p className="text-sm text-muted-foreground mb-2">Ingen produkt hittad för "{searchQuery}"</p>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSearchOpen(false);
+                                setNewProduct((p) => ({ ...p, name: searchQuery }));
+                                setNewProductOpen(true);
+                                setSearchQuery("");
+                              }}
+                            >
+                              <PackagePlus className="h-4 w-4 mr-1" /> Skapa ny produkt
+                            </Button>
+                          </div>
+                        ) : (
+                          <>
+                            <p className="px-2 py-1 text-xs font-medium text-muted-foreground">Produkter i systemet</p>
+                            {searchedProducts.slice(0, 20).map((p, i) => (
+                              <div
                                 key={p.id}
-                                onSelect={() => addLineFromProduct.mutate(p)}
-                                className="cursor-pointer"
+                                className={`px-2 py-1.5 mx-1 rounded-sm cursor-pointer flex items-center justify-between ${i === searchIdx ? "bg-accent text-accent-foreground" : "hover:bg-muted"}`}
+                                onMouseEnter={() => setSearchIdx(i)}
+                                onMouseDown={(e) => { e.preventDefault(); addLineFromProduct.mutate(p); }}
                               >
                                 <div className="flex flex-col flex-1">
                                   <span className="text-sm font-medium">{p.name}</span>
@@ -654,11 +670,11 @@ export default function PurchaseReporting() {
                                   </span>
                                 </div>
                                 <Plus className="h-4 w-4 text-muted-foreground" />
-                              </CommandItem>
+                              </div>
                             ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
+                          </>
+                        )}
+                      </div>
                     </PopoverContent>
                   )}
                 </Popover>
