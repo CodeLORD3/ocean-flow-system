@@ -455,7 +455,7 @@ function ReportSection({
     <div className="border-b last:border-b-0">
       {/* Section header */}
       <div
-        className={`w-full flex items-center gap-2 px-3 py-2.5 text-left transition-colors cursor-pointer ${
+        className={`group w-full flex items-center gap-2 px-3 py-2.5 text-left transition-colors cursor-pointer ${
           isLocked ? "bg-muted/40 hover:bg-muted/60" : "bg-muted/20 hover:bg-muted/40"
         }`}
         onClick={() => !editing && setExpanded(!expanded)}
