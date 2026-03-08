@@ -528,13 +528,27 @@ export default function PurchaseReporting() {
             ) : (
               /* Document viewer with zoom */
               <ScrollArea className="flex-1">
-                <div className="p-4 flex justify-center min-h-full">
-                  {selectedReport.file_url.endsWith(".pdf") ? (
-                    <iframe
-                      src={selectedReport.file_url}
-                      className="w-full border-0 rounded"
-                      style={{ height: "100%", minHeight: "600px", transform: `scale(${zoom})`, transformOrigin: "top center" }}
-                    />
+              <div className="p-4 flex justify-center min-h-full">
+                  {selectedReport.file_name.toLowerCase().endsWith(".pdf") ? (
+                    <object
+                      data={selectedReport.file_url}
+                      type="application/pdf"
+                      className="w-full rounded"
+                      style={{ height: `${Math.max(600, 600 * zoom)}px`, minHeight: "600px" }}
+                    >
+                      <div className="flex flex-col items-center gap-3 py-12">
+                        <FileText className="h-10 w-10 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">Kan inte visa PDF i förhandsgranskning</p>
+                        <a
+                          href={selectedReport.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary underline"
+                        >
+                          Öppna PDF i ny flik
+                        </a>
+                      </div>
+                    </object>
                   ) : (
                     <img
                       src={selectedReport.file_url}
