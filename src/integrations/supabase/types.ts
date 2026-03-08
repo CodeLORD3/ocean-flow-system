@@ -1027,6 +1027,7 @@ export type Database = {
           created_at: string | null
           departure_days_before: number
           departure_time: string
+          departure_weekday: number
           id: string
           label: string
           updated_at: string | null
@@ -1037,6 +1038,7 @@ export type Database = {
           created_at?: string | null
           departure_days_before?: number
           departure_time?: string
+          departure_weekday?: number
           id?: string
           label: string
           updated_at?: string | null
@@ -1047,6 +1049,7 @@ export type Database = {
           created_at?: string | null
           departure_days_before?: number
           departure_time?: string
+          departure_weekday?: number
           id?: string
           label?: string
           updated_at?: string | null
