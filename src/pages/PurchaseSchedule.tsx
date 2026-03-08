@@ -343,7 +343,7 @@ export default function PurchaseSchedule() {
                           <TableHead className="h-6 px-2 text-[10px] text-right w-[80px]">Totalt</TableHead>
                           <TableHead className="h-6 px-2 text-[10px] w-[80px]">Butiker</TableHead>
                           <TableHead className="h-6 px-2 text-[10px] w-[120px]">
-                            {view === "purchase" ? "Leverans" : "Senast inköp"}
+                            {view === "purchase" ? "Avgång" : "Senast inköp"}
                           </TableHead>
                         </TableRow>
                       </TableHeader>
