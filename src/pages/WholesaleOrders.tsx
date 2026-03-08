@@ -411,7 +411,7 @@ export default function WholesaleOrders() {
                              {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
                            </td>
                            <td className="px-2.5 py-1 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
-                          <td className="p-3" onClick={e => e.stopPropagation()}>
+                           <td className="px-2.5 py-1" onClick={e => e.stopPropagation()}>
                             <Select value={o.status} onValueChange={(val) => handleOrderStatusChange(o.id, val)}>
                               <SelectTrigger className="h-7 text-[10px] w-[110px]">
                                 <SelectValue />
