@@ -48,7 +48,6 @@ const inventoryNav = [
   { title: "Produkter", url: "/products", icon: Fish },
   { title: "Lager", url: "/inventory", icon: Package },
   { title: "Streckkoder", url: "/barcodes", icon: ScanLine },
-  { title: "Prissättning", url: "/pricing", icon: CreditCard },
   { title: "Inleveranser", url: "/receiving", icon: Truck },
   { title: "Leverantörer", url: "/suppliers", icon: Truck },
 ];
