@@ -211,16 +211,16 @@ function EditableRow({
 
   if (locked) {
     return (
-      <TableRow className="h-9 opacity-75">
-        <TableCell className="py-1 px-2 text-xs min-w-[180px]">{line.product_name}</TableCell>
-        <TableCell className="py-1 px-1 text-xs text-right w-[60px]">{line.quantity}</TableCell>
-        <TableCell className="py-1 px-1 text-xs w-[50px]">{line.unit || "kg"}</TableCell>
-        <TableCell className="py-1 px-1 text-xs text-right w-[70px]">{(line.unit_price ?? 0).toLocaleString("sv-SE")}</TableCell>
-        <TableCell className="py-1 px-1 text-xs w-[100px]">{line.supplier_name || "—"}</TableCell>
-        <TableCell className="py-1 px-1 text-xs w-[72px]">{line.status}</TableCell>
-        <TableCell className="py-1 px-1 text-xs w-[100px]">{line.purchase_date || "—"}</TableCell>
-        <TableCell className="py-1 px-1 text-xs w-[110px]">—</TableCell>
-        <TableCell className="py-1 px-0 w-7"></TableCell>
+      <TableRow className="h-8 opacity-75">
+        <TableCell className="py-0.5 px-1.5 text-[11px] min-w-[140px]">{line.product_name}</TableCell>
+        <TableCell className="py-0.5 px-1 text-[11px] text-right w-[50px]">{line.quantity}</TableCell>
+        <TableCell className="py-0.5 px-1 text-[11px] w-[42px]">{line.unit || "kg"}</TableCell>
+        <TableCell className="py-0.5 px-1 text-[11px] text-right w-[58px]">{(line.unit_price ?? 0).toLocaleString("sv-SE")}</TableCell>
+        <TableCell className="py-0.5 px-1 text-[11px] w-[88px] truncate">{line.supplier_name || "—"}</TableCell>
+        <TableCell className="py-0.5 px-1 text-[11px] w-[62px]">{line.status}</TableCell>
+        <TableCell className="py-0.5 px-1 text-[11px] w-[86px]">{line.purchase_date || "—"}</TableCell>
+        <TableCell className="py-0.5 px-1 text-[11px] w-[90px]">—</TableCell>
+        <TableCell className="py-0.5 px-0 w-6"></TableCell>
       </TableRow>
     );
   }
