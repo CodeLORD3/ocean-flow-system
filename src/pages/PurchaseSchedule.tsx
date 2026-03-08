@@ -433,7 +433,7 @@ export default function PurchaseSchedule() {
                           </TableHeader>
                           <TableBody>
                             {items.map((item, i) => {
-                              const isUrgent = view === "purchase" && isSameDay(item.latestPurchaseDate, new Date());
+                              const isUrgent = view === "purchase" && isSameDay(item.departureDate, new Date());
                               return (
                                 <Collapsible key={`${dayIndex}-${item.productName}-${i}`} asChild>
                                   <>
