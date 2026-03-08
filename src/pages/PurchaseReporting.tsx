@@ -252,6 +252,7 @@ function EditableRow({
       </TableCell>
       <TableCell className="py-1 px-2">
         <Input
+          ref={qtyInputRef}
           type="number"
           defaultValue={line.quantity}
           onFocus={(e) => e.target.select()}
