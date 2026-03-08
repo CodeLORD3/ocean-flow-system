@@ -1190,7 +1190,10 @@ export default function PurchaseReporting() {
                       <RotateCcw className="h-4 w-4" />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteReport.mutate(selectedReport.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelectedReportId(null); setZoom(1); }} title="Stäng dokument">
+                      <X className="h-4 w-4" />
                     </Button>
                   </>
                 )}
