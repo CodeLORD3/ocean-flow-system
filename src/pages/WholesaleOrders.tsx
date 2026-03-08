@@ -290,17 +290,17 @@ export default function WholesaleOrders() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="border-b border-border bg-muted/30">
-                        <th className="p-2.5 text-left font-medium text-muted-foreground">PRODUKT</th>
-                        <th className="p-2.5 text-left font-medium text-muted-foreground">KATEGORI</th>
+                       <tr className="border-b border-border bg-muted/30 h-9">
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">PRODUKT</th>
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">KATEGORI</th>
                         {retailStores.map(s => (
-                          <th key={s.id} className="p-2.5 text-right font-medium text-muted-foreground text-[10px] uppercase">
-                            {s.name?.split(" ").pop()}
-                          </th>
-                        ))}
-                        <th className="p-2.5 text-right font-bold text-primary">TOTAL</th>
-                        <th className="p-2.5 text-left font-medium text-muted-foreground">ENHET</th>
-                        <th className="p-2.5 text-left font-medium text-muted-foreground min-w-[140px]">STATUS</th>
+                           <th key={s.id} className="px-2.5 py-1 text-right font-medium text-muted-foreground text-[10px] uppercase">
+                             {s.name?.split(" ").pop()}
+                           </th>
+                         ))}
+                         <th className="px-2.5 py-1 text-right font-bold text-primary">TOTAL</th>
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">ENHET</th>
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground min-w-[140px]">STATUS</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -318,19 +318,19 @@ export default function WholesaleOrders() {
                                   </td>
                                 </tr>
                               )}
-                              <tr key={item.product_id} className={`border-b border-border/30 transition-colors ${rowBgByStatus[item.currentStatus] || ""}`}>
-                                <td className="p-2.5 font-medium text-foreground">{item.product_name}</td>
-                                <td className="p-2.5">
-                                  <Badge variant="outline" className="text-[10px]">{item.category}</Badge>
-                                </td>
-                                {retailStores.map(s => (
-                                  <td key={s.id} className="p-2.5 text-right text-muted-foreground font-mono">
-                                    {item.byStore[s.id]?.qty || <span className="text-muted-foreground/30">–</span>}
-                                  </td>
-                                ))}
-                                <td className="p-2.5 text-right font-bold text-primary font-mono">{item.totalOrdered}</td>
-                                <td className="p-2.5 text-muted-foreground">{item.unit}</td>
-                                <td className="p-2.5">
+                               <tr key={item.product_id} className={`border-b border-border/30 h-9 transition-colors ${rowBgByStatus[item.currentStatus] || ""}`}>
+                                 <td className="px-2.5 py-1 font-medium text-foreground">{item.product_name}</td>
+                                 <td className="px-2.5 py-1">
+                                   <Badge variant="outline" className="text-[10px]">{item.category}</Badge>
+                                 </td>
+                                 {retailStores.map(s => (
+                                   <td key={s.id} className="px-2.5 py-1 text-right text-muted-foreground font-mono">
+                                     {item.byStore[s.id]?.qty || <span className="text-muted-foreground/30">–</span>}
+                                   </td>
+                                 ))}
+                                 <td className="px-2.5 py-1 text-right font-bold text-primary font-mono">{item.totalOrdered}</td>
+                                 <td className="px-2.5 py-1 text-muted-foreground">{item.unit}</td>
+                                 <td className="px-2.5 py-1">
                                   <Select
                                     value={item.currentStatus || ""}
                                     onValueChange={(val) => handleProductStatusChange(item, val)}
@@ -383,35 +383,35 @@ export default function WholesaleOrders() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="border-b border-border bg-muted/30">
-                        <th className="p-3 text-left font-medium text-muted-foreground">VECKA</th>
-                        <th className="p-3 text-left font-medium text-muted-foreground">DATUM</th>
-                        <th className="p-3 text-left font-medium text-muted-foreground">BUTIK</th>
-                        <th className="p-3 text-left font-medium text-muted-foreground">ÖNSKAD LEV.</th>
-                        <th className="p-3 text-right font-medium text-muted-foreground">RADER</th>
-                        <th className="p-3 text-left font-medium text-muted-foreground">PRODUKTER</th>
-                        <th className="p-3 text-left font-medium text-muted-foreground">ANTECKNING</th>
-                        <th className="p-3 text-left font-medium text-muted-foreground min-w-[120px]">STATUS</th>
-                        <th className="p-3 text-left font-medium text-muted-foreground">LEVERANSRAPPORT</th>
-                        <th className="p-3 text-center font-medium text-muted-foreground">ARKIVERA</th>
+                       <tr className="border-b border-border bg-muted/30 h-9">
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">VECKA</th>
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">DATUM</th>
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">BUTIK</th>
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">ÖNSKAD LEV.</th>
+                         <th className="px-2.5 py-1 text-right font-medium text-muted-foreground">RADER</th>
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">PRODUKTER</th>
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">ANTECKNING</th>
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground min-w-[120px]">STATUS</th>
+                         <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">LEVERANSRAPPORT</th>
+                         <th className="px-2.5 py-1 text-center font-medium text-muted-foreground">ARKIVERA</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredOrders.length === 0 && (
-                        <tr><td colSpan={10} className="p-8 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
-                      )}
-                      {filteredOrders.map((o: any) => (
-                        <tr key={o.id} className="border-b-2 border-border transition-colors cursor-pointer" style={{ background: buildProgressGradient(o.shop_order_lines || []) }} onClick={() => setSelectedOrder(o)}>
-                          <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
-                          <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
-                          <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
-                          <td className="p-3 text-muted-foreground">{(o as any).desired_delivery_date || "–"}</td>
-                          <td className="p-3 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
-                          <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
-                            {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
-                          </td>
-                          <td className="p-3 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
-                          <td className="p-3" onClick={e => e.stopPropagation()}>
+                         <tr><td colSpan={10} className="px-2.5 py-6 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
+                       )}
+                       {filteredOrders.map((o: any) => (
+                         <tr key={o.id} className="border-b-2 border-black h-9 transition-colors cursor-pointer" style={{ background: buildProgressGradient(o.shop_order_lines || []) }} onClick={() => setSelectedOrder(o)}>
+                           <td className="px-2.5 py-1 font-mono font-medium text-foreground">{o.order_week}</td>
+                           <td className="px-2.5 py-1 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
+                           <td className="px-2.5 py-1 text-muted-foreground">{o.stores?.name || "–"}</td>
+                           <td className="px-2.5 py-1 text-muted-foreground">{(o as any).desired_delivery_date || "–"}</td>
+                           <td className="px-2.5 py-1 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
+                           <td className="px-2.5 py-1 text-muted-foreground text-[10px] max-w-48 truncate">
+                             {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
+                           </td>
+                           <td className="px-2.5 py-1 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
+                           <td className="px-2.5 py-1" onClick={e => e.stopPropagation()}>
                             <Select value={o.status} onValueChange={(val) => handleOrderStatusChange(o.id, val)}>
                               <SelectTrigger className="h-7 text-[10px] w-[110px]">
                                 <SelectValue />
@@ -423,7 +423,7 @@ export default function WholesaleOrders() {
                               </SelectContent>
                             </Select>
                           </td>
-                          <td className="p-3" onClick={e => e.stopPropagation()}>
+                          <td className="px-2.5 py-1" onClick={e => e.stopPropagation()}>
                             {(() => {
                               const reports = reportsByOrder.get(o.id);
                               if (!reports || reports.length === 0) {
@@ -443,7 +443,7 @@ export default function WholesaleOrders() {
                               );
                             })()}
                           </td>
-                          <td className="p-3 text-center" onClick={e => e.stopPropagation()}>
+                          <td className="px-2.5 py-1 text-center" onClick={e => e.stopPropagation()}>
                             <Button
                               variant="ghost"
                               size="sm"
