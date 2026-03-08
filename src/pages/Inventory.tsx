@@ -91,13 +91,153 @@ export default function Inventory() {
   const [invSaving, setInvSaving] = useState(false);
   const [invLocation, setInvLocation] = useState("");
 
+  // Stock action state (purchasing portal)
+  const [selectedItems, setSelectedItems] = useState<Map<string, Set<string>>>(new Map()); // locationId -> Set of stock item ids
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [splitDialogOpen, setSplitDialogOpen] = useState(false);
+  const [activeLocationId, setActiveLocationId] = useState<string>("");
+  const [deleteReason, setDeleteReason] = useState("");
+  const [splitQty, setSplitQty] = useState("");
+  const [splitTargetLocation, setSplitTargetLocation] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
+
   const { data: stores = [] } = useStores();
   const { data: products = [] } = useProducts();
+  const queryClient = useQueryClient();
   const storeFilter = activeStoreId || "all";
   const { data: locations = [], isLoading: loadingLoc } = useStorageLocations(storeFilter !== "all" ? storeFilter : undefined);
   const { data: allStock = [], isLoading: loadingStock } = useAllStockByLocation();
   const createLocation = useCreateStorageLocation();
   const upsertStock = useUpsertStockLocation();
+
+  const getSelectedForLocation = (locId: string) => selectedItems.get(locId) || new Set<string>();
+  const toggleItemSelection = (locId: string, itemId: string) => {
+    setSelectedItems(prev => {
+      const next = new Map(prev);
+      const set = new Set(next.get(locId) || []);
+      if (set.has(itemId)) set.delete(itemId); else set.add(itemId);
+      if (set.size === 0) next.delete(locId); else next.set(locId, set);
+      return next;
+    });
+  };
+  const clearSelection = (locId: string) => {
+    setSelectedItems(prev => { const next = new Map(prev); next.delete(locId); return next; });
+  };
+
+  const getSelectedStockItems = (locId: string) => {
+    const ids = getSelectedForLocation(locId);
+    return allStock.filter((s: any) => ids.has(s.id));
+  };
+
+  const invalidateStock = () => {
+    queryClient.invalidateQueries({ queryKey: ["product_stock_locations"] });
+    queryClient.invalidateQueries({ queryKey: ["all_stock_locations"] });
+  };
+
+  const handleMove = async (targetLocationId: string) => {
+    setActionLoading(true);
+    try {
+      const items = getSelectedStockItems(activeLocationId);
+      for (const item of items) {
+        // Check if product already exists at target
+        const { data: existing } = await supabase
+          .from("product_stock_locations")
+          .select("id, quantity")
+          .eq("product_id", item.product_id)
+          .eq("location_id", targetLocationId)
+          .maybeSingle();
+
+        if (existing) {
+          await supabase.from("product_stock_locations")
+            .update({ quantity: Number(existing.quantity) + Number(item.quantity), updated_at: new Date().toISOString() })
+            .eq("id", existing.id);
+        } else {
+          await supabase.from("product_stock_locations")
+            .insert({ product_id: item.product_id, location_id: targetLocationId, quantity: Number(item.quantity) });
+        }
+        // Remove from source
+        await supabase.from("product_stock_locations").delete().eq("id", item.id);
+      }
+      clearSelection(activeLocationId);
+      invalidateStock();
+      toast({ title: "Flyttat", description: `${items.length} produkt(er) flyttade` });
+      setMoveDialogOpen(false);
+    } catch (err: any) {
+      toast({ title: "Fel", description: err.message, variant: "destructive" });
+    }
+    setActionLoading(false);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteReason.trim()) return;
+    setActionLoading(true);
+    try {
+      const items = getSelectedStockItems(activeLocationId);
+      for (const item of items) {
+        await supabase.from("deleted_stock_log").insert({
+          product_id: item.product_id,
+          location_id: item.location_id,
+          quantity: Number(item.quantity),
+          reason: deleteReason.trim(),
+        });
+        await supabase.from("product_stock_locations").delete().eq("id", item.id);
+      }
+      clearSelection(activeLocationId);
+      invalidateStock();
+      toast({ title: "Raderat", description: `${items.length} produkt(er) raderade` });
+      setDeleteDialogOpen(false);
+      setDeleteReason("");
+    } catch (err: any) {
+      toast({ title: "Fel", description: err.message, variant: "destructive" });
+    }
+    setActionLoading(false);
+  };
+
+  const handleSplit = async () => {
+    if (!splitQty || !splitTargetLocation) return;
+    setActionLoading(true);
+    try {
+      const items = getSelectedStockItems(activeLocationId);
+      // Split only works on first selected item
+      const item = items[0];
+      const splitAmount = Number(splitQty);
+      const remaining = Number(item.quantity) - splitAmount;
+      if (splitAmount <= 0 || splitAmount >= Number(item.quantity)) {
+        toast({ title: "Ogiltigt antal", description: "Ange ett antal mindre än nuvarande.", variant: "destructive" });
+        setActionLoading(false);
+        return;
+      }
+      // Update source quantity
+      await supabase.from("product_stock_locations")
+        .update({ quantity: remaining, updated_at: new Date().toISOString() })
+        .eq("id", item.id);
+      // Add/merge to target
+      const { data: existing } = await supabase
+        .from("product_stock_locations")
+        .select("id, quantity")
+        .eq("product_id", item.product_id)
+        .eq("location_id", splitTargetLocation)
+        .maybeSingle();
+      if (existing) {
+        await supabase.from("product_stock_locations")
+          .update({ quantity: Number(existing.quantity) + splitAmount, updated_at: new Date().toISOString() })
+          .eq("id", existing.id);
+      } else {
+        await supabase.from("product_stock_locations")
+          .insert({ product_id: item.product_id, location_id: splitTargetLocation, quantity: splitAmount });
+      }
+      clearSelection(activeLocationId);
+      invalidateStock();
+      toast({ title: "Splittat", description: `${splitAmount} ${item.products?.unit || "kg"} flyttades` });
+      setSplitDialogOpen(false);
+      setSplitQty("");
+      setSplitTargetLocation("");
+    } catch (err: any) {
+      toast({ title: "Fel", description: err.message, variant: "destructive" });
+    }
+    setActionLoading(false);
+  };
 
   // Compute aggregated stock: "Total Butik" should include stock from all other locations in the same store
   const storeStock = useMemo(() => {
