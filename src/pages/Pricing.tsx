@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useProducts } from "@/hooks/useProducts";
+import { useProducts, useUpdateProduct } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
-import { useUpdateProduct } from "@/hooks/useProducts";
 import { usePriceHistory } from "@/hooks/usePriceHistory";
+import { useSite } from "@/contexts/SiteContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,12 +13,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { DollarSign, History, Search } from "lucide-react";
+import { DollarSign, History, Search, Store } from "lucide-react";
 import { format } from "date-fns";
 
 export default function Pricing() {
   const { data: products = [], isLoading } = useProducts();
   const { data: categories = [] } = useCategories();
+  const { site } = useSite();
+  const isShop = site === "shop";
   const updateProduct = useUpdateProduct();
 
   const [search, setSearch] = useState("");
@@ -42,15 +44,36 @@ export default function Pricing() {
 
   const handleSave = () => {
     if (!editProduct) return;
-    updateProduct.mutate(
-      { id: editProduct.id, ...editPrices, reason: reason || "Manuell ändring" },
-      {
-        onSuccess: () => {
-          toast({ title: "Pris uppdaterat", description: `${editProduct.name} har fått nya priser.` });
-          setEditProduct(null);
+
+    if (isShop) {
+      // Shop can only change retail_suggested (selling price)
+      updateProduct.mutate(
+        {
+          id: editProduct.id,
+          cost_price: editProduct.cost_price,
+          wholesale_price: editProduct.wholesale_price,
+          retail_suggested: editPrices.retail_suggested,
+          reason: reason || "Butiksprisändring",
         },
-      }
-    );
+        {
+          onSuccess: () => {
+            toast({ title: "Försäljningspris uppdaterat", description: `${editProduct.name} har fått nytt försäljningspris.` });
+            setEditProduct(null);
+          },
+        }
+      );
+    } else {
+      // Wholesale can change all prices
+      updateProduct.mutate(
+        { id: editProduct.id, ...editPrices, reason: reason || "Manuell ändring" },
+        {
+          onSuccess: () => {
+            toast({ title: "Pris uppdaterat", description: `${editProduct.name} har fått nya priser.` });
+            setEditProduct(null);
+          },
+        }
+      );
+    }
   };
 
   const margin = (cost: number, wholesale: number) => {
@@ -62,7 +85,11 @@ export default function Pricing() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Prissättning</h1>
-        <p className="text-muted-foreground text-sm">Hantera produktpriser, marginaler och prishistorik</p>
+        <p className="text-muted-foreground text-sm">
+          {isShop
+            ? "Hantera försäljningspriser för butiken. Grossistpris är fast."
+            : "Hantera produktpriser, marginaler och prishistorik"}
+        </p>
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -82,7 +109,8 @@ export default function Pricing() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
-            <DollarSign className="h-5 w-5" /> Produktpriser
+            {isShop ? <Store className="h-5 w-5" /> : <DollarSign className="h-5 w-5" />}
+            {isShop ? "Butikspriser" : "Produktpriser"}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -96,10 +124,10 @@ export default function Pricing() {
                     <TableHead>Produkt</TableHead>
                     <TableHead>SKU</TableHead>
                     <TableHead>Kategori</TableHead>
-                    <TableHead className="text-right">Inköpspris</TableHead>
+                    {!isShop && <TableHead className="text-right">Inköpspris</TableHead>}
                     <TableHead className="text-right">Grossistpris</TableHead>
-                    <TableHead className="text-right">Rek. butik</TableHead>
-                    <TableHead className="text-right">Marginal</TableHead>
+                    <TableHead className="text-right">{isShop ? "Försäljningspris" : "Rek. butik"}</TableHead>
+                    {!isShop && <TableHead className="text-right">Marginal</TableHead>}
                     <TableHead className="text-right">Åtgärd</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -109,16 +137,20 @@ export default function Pricing() {
                       <TableCell className="font-medium">{p.name}</TableCell>
                       <TableCell className="text-muted-foreground">{p.sku}</TableCell>
                       <TableCell><Badge variant="outline">{p.category}</Badge></TableCell>
-                      <TableCell className="text-right">{Number(p.cost_price).toFixed(2)} kr</TableCell>
+                      {!isShop && <TableCell className="text-right">{Number(p.cost_price).toFixed(2)} kr</TableCell>}
                       <TableCell className="text-right">{Number(p.wholesale_price).toFixed(2)} kr</TableCell>
                       <TableCell className="text-right">{Number(p.retail_suggested || 0).toFixed(2)} kr</TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant={margin(p.cost_price, p.wholesale_price) >= 30 ? "default" : "destructive"}>
-                          {margin(p.cost_price, p.wholesale_price)}%
-                        </Badge>
-                      </TableCell>
+                      {!isShop && (
+                        <TableCell className="text-right">
+                          <Badge variant={margin(p.cost_price, p.wholesale_price) >= 30 ? "default" : "destructive"}>
+                            {margin(p.cost_price, p.wholesale_price)}%
+                          </Badge>
+                        </TableCell>
+                      )}
                       <TableCell className="text-right space-x-1">
-                        <Button size="sm" variant="outline" onClick={() => openEdit(p)}>Ändra pris</Button>
+                        <Button size="sm" variant="outline" onClick={() => openEdit(p)}>
+                          {isShop ? "Ändra försäljningspris" : "Ändra pris"}
+                        </Button>
                         <Button size="sm" variant="ghost" onClick={() => setHistoryProduct(p.id)}>
                           <History className="h-4 w-4" />
                         </Button>
@@ -126,7 +158,7 @@ export default function Pricing() {
                     </TableRow>
                   ))}
                   {filtered.length === 0 && (
-                    <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Inga produkter hittades</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={isShop ? 6 : 8} className="text-center text-muted-foreground py-8">Inga produkter hittades</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
@@ -138,20 +170,42 @@ export default function Pricing() {
       {/* Edit dialog */}
       <Dialog open={!!editProduct} onOpenChange={(o) => !o && setEditProduct(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Ändra pris – {editProduct?.name}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>
+              {isShop ? `Ändra försäljningspris – ${editProduct?.name}` : `Ändra pris – ${editProduct?.name}`}
+            </DialogTitle>
+          </DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label>Inköpspris (kr)</Label>
-              <Input type="number" value={editPrices.cost_price} onChange={(e) => setEditPrices((p) => ({ ...p, cost_price: Number(e.target.value) }))} />
-            </div>
-            <div>
-              <Label>Grossistpris (kr)</Label>
-              <Input type="number" value={editPrices.wholesale_price} onChange={(e) => setEditPrices((p) => ({ ...p, wholesale_price: Number(e.target.value) }))} />
-            </div>
-            <div>
-              <Label>Rek. butikspris (kr)</Label>
-              <Input type="number" value={editPrices.retail_suggested} onChange={(e) => setEditPrices((p) => ({ ...p, retail_suggested: Number(e.target.value) }))} />
-            </div>
+            {isShop ? (
+              <>
+                <div>
+                  <Label className="text-muted-foreground">Grossistpris (kr) — fast</Label>
+                  <Input type="number" value={editProduct?.wholesale_price || 0} readOnly disabled className="bg-muted/50 cursor-not-allowed" />
+                </div>
+                <div>
+                  <Label>Försäljningspris (kr)</Label>
+                  <Input type="number" value={editPrices.retail_suggested} onChange={(e) => setEditPrices((p) => ({ ...p, retail_suggested: Number(e.target.value) }))} />
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <Label>Inköpspris (kr)</Label>
+                  <Input type="number" value={editPrices.cost_price} onChange={(e) => {
+                    const cost = Number(e.target.value);
+                    setEditPrices((p) => ({ ...p, cost_price: cost, wholesale_price: Number((cost * 1.35).toFixed(2)) }));
+                  }} />
+                </div>
+                <div>
+                  <Label>Grossistpris (kr) <span className="text-muted-foreground text-xs">+35% auto</span></Label>
+                  <Input type="number" value={editPrices.wholesale_price} onChange={(e) => setEditPrices((p) => ({ ...p, wholesale_price: Number(e.target.value) }))} />
+                </div>
+                <div>
+                  <Label>Rek. butikspris (kr)</Label>
+                  <Input type="number" value={editPrices.retail_suggested} onChange={(e) => setEditPrices((p) => ({ ...p, retail_suggested: Number(e.target.value) }))} />
+                </div>
+              </>
+            )}
             <div>
               <Label>Anledning</Label>
               <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Varför ändras priset?" />

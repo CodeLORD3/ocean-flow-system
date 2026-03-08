@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
-import { Plus, Search, Edit, Trash2, Package, Tag, Printer, ScanLine, DollarSign, Check, X } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Package, Tag, Printer } from "lucide-react";
 import { useSite } from "@/contexts/SiteContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,8 +35,6 @@ export default function Products() {
   const { data: products = [], isLoading } = useProducts();
   const { data: dbCategories = [] } = useCategories();
   const addCategory = useAddCategory();
-  const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
-  const [inlineCostPrice, setInlineCostPrice] = useState("");
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -96,30 +94,23 @@ export default function Products() {
   const handleSave = async () => {
     if (!form.name || !form.category) return;
     const sku = form.sku || `${form.category.slice(0, 2).toUpperCase()}-${Date.now().toString(36)}`;
-    const payload = {
+    const payload: any = {
       name: form.name, category: form.category, unit: form.unit, sku,
       hs_code: form.hs_code || null,
       weight_per_piece: form.weight_per_piece ? Number(form.weight_per_piece) : 0,
-      cost_price: form.cost_price ? Number(form.cost_price) : 0,
-      wholesale_price: form.wholesale_price ? Number(form.wholesale_price) : 0,
-      retail_suggested: form.retail_suggested ? Number(form.retail_suggested) : 0,
       origin: form.origin || null,
     };
 
     if (editId) {
+      // Don't update prices from product dialog — prices are managed in Prissättning
       const { error } = await supabase.from("products").update(payload).eq("id", editId);
       if (error) { toast({ title: "Fel", description: error.message, variant: "destructive" }); return; }
-      // Log price history
-      await supabase.from("price_history").insert({
-        product_id: editId,
-        cost_price: payload.cost_price,
-        wholesale_price: payload.wholesale_price,
-        retail_suggested: payload.retail_suggested,
-        reason: "Manuell ändring via produktdialog",
-        changed_by: "Admin",
-      });
       toast({ title: "Produkt uppdaterad", description: form.name });
     } else {
+      // New products get initial prices (can be updated later in Prissättning)
+      payload.cost_price = form.cost_price ? Number(form.cost_price) : 0;
+      payload.wholesale_price = form.wholesale_price ? Number(form.wholesale_price) : 0;
+      payload.retail_suggested = form.retail_suggested ? Number(form.retail_suggested) : 0;
       const { error } = await supabase.from("products").insert(payload);
       if (error) { toast({ title: "Fel", description: error.message, variant: "destructive" }); return; }
       toast({ title: "Produkt tillagd", description: form.name });
@@ -128,25 +119,8 @@ export default function Products() {
     setDialogOpen(false);
   };
 
-  const handleInlinePriceSave = async (productId: string, cost: number) => {
-    if (isNaN(cost) || cost <= 0) return;
-    const wholesale = Number((cost * 1.35).toFixed(2));
-    const { error } = await supabase.from("products").update({
-      cost_price: cost,
-      wholesale_price: wholesale,
-      updated_at: new Date().toISOString(),
-    }).eq("id", productId);
-    if (error) { toast({ title: "Fel", description: error.message, variant: "destructive" }); return; }
-    await supabase.from("price_history").insert({
-      product_id: productId,
-      cost_price: cost,
-      wholesale_price: wholesale,
-      reason: "Daglig prisuppdatering",
-      changed_by: "Admin",
-    });
-    qc.invalidateQueries({ queryKey: ["products"] });
-    toast({ title: "Pris uppdaterat", description: `Grossistpris: ${wholesale.toFixed(2)} SEK` });
-  };
+
+
 
   const handleAddCategory = () => {
     const name = newCategoryName.trim();
@@ -284,37 +258,20 @@ export default function Products() {
                   <tr><td colSpan={10} className="p-8 text-center text-muted-foreground">Inga produkter hittades.</td></tr>
                 )}
                 {filtered.map(p => {
-                  const barcode = (p as any).barcode;
-                  return (
-                     <tr key={p.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
-                       <td className="p-3 font-medium text-foreground">{p.name}</td>
-                       <td className="p-3 font-mono text-muted-foreground text-[10px]">{p.sku}</td>
-                       <td className="p-3"><Badge variant="outline" className="text-[10px]">{p.category}</Badge></td>
-                       <td className="p-3 text-muted-foreground">{p.unit}</td>
-                       {isWholesale && (
-                         <td className="p-3 text-right">
-                           <Input
-                             defaultValue={Number(p.cost_price).toFixed(2)}
-                             type="number"
-                             step="0.01"
-                             className="h-6 w-20 text-xs text-right ml-auto"
-                             onBlur={e => {
-                               const val = Number(e.target.value);
-                               if (val > 0 && val !== Number(p.cost_price)) {
-                                 setInlineCostPrice(String(val));
-                                 handleInlinePriceSave(p.id, val);
-                               }
-                             }}
-                             onKeyDown={e => {
-                               if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                             }}
-                           />
-                         </td>
-                       )}
-                       <td className="p-3 text-right font-medium text-foreground">{Number(p.wholesale_price).toFixed(2)}</td>
-                       {isWholesale && (
-                         <td className="p-3 text-right text-muted-foreground">{p.retail_suggested ? Number(p.retail_suggested).toFixed(2) : "–"}</td>
-                       )}
+                   const barcode = (p as any).barcode;
+                   return (
+                      <tr key={p.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
+                        <td className="p-3 font-medium text-foreground">{p.name}</td>
+                        <td className="p-3 font-mono text-muted-foreground text-[10px]">{p.sku}</td>
+                        <td className="p-3"><Badge variant="outline" className="text-[10px]">{p.category}</Badge></td>
+                        <td className="p-3 text-muted-foreground">{p.unit}</td>
+                        {isWholesale && (
+                          <td className="p-3 text-right text-muted-foreground">{Number(p.cost_price).toFixed(2)}</td>
+                        )}
+                        <td className="p-3 text-right font-medium text-foreground">{Number(p.wholesale_price).toFixed(2)}</td>
+                        {isWholesale && (
+                          <td className="p-3 text-right text-muted-foreground">{p.retail_suggested ? Number(p.retail_suggested).toFixed(2) : "–"}</td>
+                        )}
                        <td className="p-3">
                          {barcode ? (
                            <div className="flex items-center gap-1.5">
@@ -410,24 +367,48 @@ export default function Products() {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Produktionspris (SEK)</Label>
-                <Input value={form.cost_price} onChange={e => setField("cost_price", e.target.value)} type="number" step="0.01" className="h-8 text-xs" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Grossistpris (SEK) <span className="text-muted-foreground">+35%</span></Label>
-                <Input value={form.wholesale_price} onChange={e => setField("wholesale_price", e.target.value)} type="number" step="0.01" className="h-8 text-xs bg-muted/50" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Rek. butikspris (SEK)</Label>
-                <Input value={form.retail_suggested} onChange={e => setField("retail_suggested", e.target.value)} type="number" step="0.01" className="h-8 text-xs" />
-              </div>
-            </div>
-            {form.cost_price && (
-              <p className="text-[10px] text-muted-foreground">
-                💡 Produktionspris {Number(form.cost_price).toFixed(2)} × 1.35 = Grossistpris {(Number(form.cost_price) * 1.35).toFixed(2)} SEK
-              </p>
+            {editId ? (
+              <>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Produktionspris (SEK)</Label>
+                    <Input value={form.cost_price} readOnly disabled type="number" className="h-8 text-xs bg-muted/50 cursor-not-allowed" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Grossistpris (SEK)</Label>
+                    <Input value={form.wholesale_price} readOnly disabled type="number" className="h-8 text-xs bg-muted/50 cursor-not-allowed" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">Rek. butikspris (SEK)</Label>
+                    <Input value={form.retail_suggested} readOnly disabled type="number" className="h-8 text-xs bg-muted/50 cursor-not-allowed" />
+                  </div>
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  🔒 Priser hanteras under <span className="font-medium">Prissättning</span>
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Produktionspris (SEK)</Label>
+                    <Input value={form.cost_price} onChange={e => setField("cost_price", e.target.value)} type="number" step="0.01" className="h-8 text-xs" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Grossistpris (SEK) <span className="text-muted-foreground">+35%</span></Label>
+                    <Input value={form.wholesale_price} onChange={e => setField("wholesale_price", e.target.value)} type="number" step="0.01" className="h-8 text-xs bg-muted/50" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Rek. butikspris (SEK)</Label>
+                    <Input value={form.retail_suggested} onChange={e => setField("retail_suggested", e.target.value)} type="number" step="0.01" className="h-8 text-xs" />
+                  </div>
+                </div>
+                {form.cost_price && (
+                  <p className="text-[10px] text-muted-foreground">
+                    💡 Produktionspris {Number(form.cost_price).toFixed(2)} × 1.35 = Grossistpris {(Number(form.cost_price) * 1.35).toFixed(2)} SEK
+                  </p>
+                )}
+              </>
             )}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
