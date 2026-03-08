@@ -592,6 +592,7 @@ export default function PurchaseReporting() {
   const [uploading, setUploading] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  const [docExpanded, setDocExpanded] = useState(true);
   const [zoom, setZoom] = useState(1);
 
   const [searchQuery, setSearchQuery] = useState("");
