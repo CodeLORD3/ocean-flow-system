@@ -1252,6 +1252,98 @@ export default function Inventory() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ── OMVANDLA dialog (production only) ── */}
+      <Dialog open={transformDialogOpen} onOpenChange={(o) => { setTransformDialogOpen(o); if (!o) { setTransformTargetProduct(""); setTransformNewWeight(""); setTransformProductSearch(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="font-heading">Omvandla produkt</DialogTitle>
+            <DialogDescription className="text-xs">
+              Ändra en råvara till en beredd produkt. Viktskillnaden tas bort från lagret som svinn.
+            </DialogDescription>
+          </DialogHeader>
+          {(() => {
+            const items = getSelectedStockItems(activeLocationId);
+            const item = items[0];
+            if (!item) return null;
+            const filteredTransformProducts = products.filter(p =>
+              p.id !== item.product_id &&
+              transformProductSearch &&
+              (p.name.toLowerCase().includes(transformProductSearch.toLowerCase()) ||
+               p.sku.toLowerCase().includes(transformProductSearch.toLowerCase()))
+            ).slice(0, 8);
+            const selectedProduct = products.find(p => p.id === transformTargetProduct);
+            return (
+              <div className="space-y-3">
+                <div className="p-2.5 rounded-md bg-muted/30 border border-border/50">
+                  <p className="text-xs font-medium text-foreground">{item.products?.name}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Nuvarande: {Number(item.quantity).toLocaleString("sv-SE")} {item.products?.unit || "kg"}
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Omvandla till produkt *</Label>
+                  {selectedProduct ? (
+                    <div className="flex items-center gap-2 p-2 rounded-md border border-primary/30 bg-primary/5">
+                      <span className="text-xs font-medium text-foreground flex-1">{selectedProduct.name}</span>
+                      <Badge variant="secondary" className="text-[10px]">{selectedProduct.sku}</Badge>
+                      <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => { setTransformTargetProduct(""); setTransformProductSearch(""); }}>
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <Input
+                        value={transformProductSearch}
+                        onChange={e => setTransformProductSearch(e.target.value)}
+                        placeholder="Sök produkt (t.ex. Bergtungafilé)..."
+                        className="h-8 text-xs"
+                      />
+                      {filteredTransformProducts.length > 0 && (
+                        <div className="border border-border/50 rounded-md max-h-32 overflow-y-auto">
+                          {filteredTransformProducts.map(p => (
+                            <button
+                              key={p.id}
+                              className="w-full text-left px-3 py-1.5 hover:bg-muted/40 text-xs flex items-center justify-between"
+                              onClick={() => { setTransformTargetProduct(p.id); setTransformProductSearch(""); }}
+                            >
+                              <span className="font-medium text-foreground">{p.name}</span>
+                              <span className="text-muted-foreground font-mono text-[10px]">{p.sku}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Ny vikt efter omvandling ({item.products?.unit || "kg"}) *</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={transformNewWeight}
+                    onChange={e => setTransformNewWeight(e.target.value)}
+                    placeholder={`Mindre än ${Number(item.quantity)}`}
+                    className="h-8 text-xs"
+                  />
+                  {transformNewWeight && Number(transformNewWeight) > 0 && Number(transformNewWeight) < Number(item.quantity) && (
+                    <p className="text-[10px] text-muted-foreground">
+                      Svinn: {(Number(item.quantity) - Number(transformNewWeight)).toFixed(2)} {item.products?.unit || "kg"} 
+                      ({((1 - Number(transformNewWeight) / Number(item.quantity)) * 100).toFixed(1)}%)
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setTransformDialogOpen(false)}>Avbryt</Button>
+            <Button size="sm" onClick={handleTransform} disabled={!transformTargetProduct || !transformNewWeight || actionLoading}>
+              {actionLoading ? "Omvandlar..." : "Bekräfta omvandling"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
