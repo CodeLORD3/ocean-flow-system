@@ -225,8 +225,9 @@ export default function Pricing() {
                           <Input
                             type="number"
                             value={costVal}
-                            onFocus={() => { if (!inlineEdits[p.id]) startInlineEdit(p); }}
+                            onFocus={(e) => { if (!inlineEdits[p.id]) startInlineEdit(p); e.target.select(); }}
                             onChange={(e) => updateInlineCost(p.id, Number(e.target.value))}
+                            onKeyDown={(e) => { if (e.key === "Enter") saveInlineEdit(p); }}
                             className="h-7 w-24 text-right text-sm ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
                           />
                         </TableCell>
@@ -236,8 +237,9 @@ export default function Pricing() {
                           <Input
                             type="number"
                             value={wholesaleVal}
-                            onFocus={() => { if (!inlineEdits[p.id]) startInlineEdit(p); }}
+                            onFocus={(e) => { if (!inlineEdits[p.id]) startInlineEdit(p); e.target.select(); }}
                             onChange={(e) => updateInlineWholesale(p.id, Number(e.target.value))}
+                            onKeyDown={(e) => { if (e.key === "Enter") saveInlineEdit(p); }}
                             className="h-7 w-24 text-right text-sm ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
                           />
                         ) : (
@@ -251,8 +253,9 @@ export default function Pricing() {
                             <Input
                               type="number"
                               value={marginVal}
-                              onFocus={() => { if (!inlineEdits[p.id]) startInlineEdit(p); }}
+                              onFocus={(e) => { if (!inlineEdits[p.id]) startInlineEdit(p); e.target.select(); }}
                               onChange={(e) => updateInlineMargin(p.id, Number(e.target.value))}
+                              onKeyDown={(e) => { if (e.key === "Enter") saveInlineEdit(p); }}
                               className="h-7 w-16 text-right text-sm border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
                             />
                             <span className="text-xs text-muted-foreground">%</span>
