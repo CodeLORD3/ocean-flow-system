@@ -35,22 +35,11 @@ const overviewNav = [
   { title: "Översikt", url: "/", icon: LayoutDashboard },
 ];
 
-const salesNav = [
+const produktionSectionNav = [
   { title: "Ordrar", url: "/orders", icon: ShoppingCart },
+  { title: "Produktionsschema", url: "/production-schedule", icon: CalendarDays },
   { title: "Kunder", url: "/customers", icon: Users },
   { title: "Fakturor", url: "/invoices", icon: FileText },
-];
-
-const inventoryNav = [
-  { title: "Produkter", url: "/products", icon: Fish },
-  { title: "Lager", url: "/inventory", icon: Package },
-  { title: "Streckkoder", url: "/barcodes", icon: ScanLine },
-  { title: "Inleveranser", url: "/receiving", icon: Truck },
-  { title: "Leverantörer", url: "/suppliers", icon: Truck },
-];
-
-const productionNav = [
-  { title: "Produktionsschema", url: "/production-schedule", icon: CalendarDays },
   { title: "Produktion/Grossist", url: "/wholesale", icon: Factory },
 ];
 
