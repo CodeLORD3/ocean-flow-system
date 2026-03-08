@@ -210,6 +210,7 @@ export default function Products() {
       hs_code: form.hs_code || null,
       weight_per_piece: form.weight_per_piece ? Number(form.weight_per_piece) : 0,
       origin: form.origin || null,
+      producer: form.producer || null,
     };
 
     if (editId) {
