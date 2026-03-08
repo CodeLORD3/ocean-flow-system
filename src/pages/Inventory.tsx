@@ -341,9 +341,20 @@ export default function Inventory() {
 
   
 
-  // Stock grouped by location for purchasing portal
+  // Filter locations by zone for purchasing/production portals
+  const portalLocations = useMemo(() => {
+    if (site === "purchasing") {
+      return locations.filter((loc: any) => loc.zone === "Inköp" || loc.name === "Grossist Flytande");
+    }
+    if (site === "production") {
+      return locations.filter((loc: any) => loc.zone === "Produktion" || loc.name === "Grossist Flytande");
+    }
+    return locations;
+  }, [locations, site]);
+
+  // Stock grouped by location for purchasing/production portal
   const stockByLocation = useMemo(() => {
-    return locations.map((loc: any) => {
+    return portalLocations.map((loc: any) => {
       let items = allStock.filter((s: any) => s.location_id === loc.id);
       if (search) {
         items = items.filter((s: any) =>
@@ -355,7 +366,7 @@ export default function Inventory() {
       const totalValue = items.reduce((sum: number, s: any) => sum + Number(s.quantity) * (Number(s.unit_cost) || Number(s.products?.cost_price) || 0), 0);
       return { ...loc, items, totalQty, totalValue };
     });
-  }, [locations, allStock, search]);
+  }, [portalLocations, allStock, search]);
 
   // --- Location dialog ---
   const handleCreateLocation = () => {
