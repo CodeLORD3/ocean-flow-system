@@ -127,7 +127,7 @@ function EditableRow({
           </PopoverTrigger>
           {productSearch.length > 0 && (
             <PopoverContent className="p-0 w-[260px]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
-              <Command shouldFilter={false}>
+              <Command ref={productCmdRef} shouldFilter={false}>
                 <CommandList>
                   <CommandEmpty className="py-2 text-xs text-center">Ingen träff</CommandEmpty>
                   <CommandGroup>
