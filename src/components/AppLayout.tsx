@@ -83,6 +83,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   >
                     <Factory className="h-3 w-3" /> Produktion
                   </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className={`text-xs gap-2 ${site === "purchasing" ? "bg-muted font-medium" : ""}`}
+                    onClick={() => { setSite("purchasing"); setActiveStore(null, null); }}
+                  >
+                    <ShoppingBag className="h-3 w-3" /> Inköp
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuLabel className="text-[10px]">Butiker</DropdownMenuLabel>
                   {retailStores.length === 0 ? (
