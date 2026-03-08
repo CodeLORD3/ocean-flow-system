@@ -647,7 +647,8 @@ function OrderDetailWithEdit({ order, products, onClose, toast }: {
     setEditMode(false);
   };
 
-  const pendingForOrder = pendingChanges.filter((c: any) => c.status === "Väntande");
+  const pendingForOrder = pendingChanges.filter((c: any) => c.status === "Väntande" && (c as any).requested_by !== "grossist");
+  const wholesalerRequests = pendingChanges.filter((c: any) => c.status === "Väntande" && (c as any).requested_by === "grossist");
 
   return (
     <>
