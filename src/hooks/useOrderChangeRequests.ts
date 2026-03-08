@@ -106,10 +106,8 @@ export function useResolveChangeRequest() {
       const isWholesalerRequest = (cr as any).requested_by === "grossist";
 
       if (isWholesalerRequest) {
-        // Wholesaler requested change (product unavailable)
         if (cr.change_type === "product_unavailable") {
           if (params.status === "Godkänd") {
-            // Shop accepts: mark line as "Ej tillgänglig"
             if (cr.order_line_id) {
               const { error: upErr } = await supabase
                 .from("shop_order_lines")
@@ -118,7 +116,29 @@ export function useResolveChangeRequest() {
               if (upErr) throw upErr;
             }
           } else {
-            // Shop denies: remove the line from the order
+            if (cr.order_line_id) {
+              const { error: delErr } = await supabase
+                .from("shop_order_lines")
+                .delete()
+                .eq("id", cr.order_line_id);
+              if (delErr) throw delErr;
+            }
+          }
+        } else if (cr.change_type === "product_alternative") {
+          if (params.status === "Godkänd") {
+            // Shop accepts: swap product on the order line
+            if (cr.order_line_id && cr.product_id) {
+              const { error: upErr } = await supabase
+                .from("shop_order_lines")
+                .update({
+                  product_id: cr.product_id,
+                  deviation: `Ersatt från ursprunglig produkt – godkänd av butik`,
+                })
+                .eq("id", cr.order_line_id);
+              if (upErr) throw upErr;
+            }
+          } else {
+            // Shop denies alternative: remove the line
             if (cr.order_line_id) {
               const { error: delErr } = await supabase
                 .from("shop_order_lines")

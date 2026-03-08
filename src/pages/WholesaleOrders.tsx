@@ -677,10 +677,22 @@ export default function WholesaleOrders() {
   );
 }
 
-/* ---- Wholesaler order detail with "Ej tillgänglig" capability ---- */
+/* ---- Wholesaler order detail with "Ej tillgänglig" + alternative capability ---- */
 function WholesaleOrderDetail({ order, onClose }: { order: any; onClose: () => void }) {
   const { toast } = useToast();
   const createChange = useCreateChangeRequest();
+  const { data: allProducts } = useQuery({
+    queryKey: ["products"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("products").select("id, name, unit").eq("active", true).order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const [altDialogLine, setAltDialogLine] = useState<any>(null);
+  const [altProductId, setAltProductId] = useState<string>("");
+  const [altSearch, setAltSearch] = useState("");
 
   const handleMarkUnavailable = async (line: any) => {
     await createChange.mutateAsync({
@@ -693,8 +705,36 @@ function WholesaleOrderDetail({ order, onClose }: { order: any; onClose: () => v
       unit: line.unit || line.products?.unit || "ST",
       requested_by: "grossist",
     });
-    toast({ title: "Förfrågan skickad", description: `"${line.products?.name}" markerad som ej tillgänglig. Butiken behöver bekräfta.` });
+    toast({ title: "Förfrågan skickad", description: `"${line.products?.name}" markerad som ej tillgänglig.` });
   };
+
+  const handleSuggestAlternative = async () => {
+    if (!altDialogLine || !altProductId) return;
+    const altProduct = allProducts?.find((p: any) => p.id === altProductId);
+    await createChange.mutateAsync({
+      shop_order_id: order.id,
+      order_line_id: altDialogLine.id,
+      change_type: "product_alternative",
+      product_id: altProductId,
+      old_value: altDialogLine.product_id,
+      new_value: altProduct?.name || altProductId,
+      unit: altDialogLine.unit || altDialogLine.products?.unit || "ST",
+      requested_by: "grossist",
+    });
+    toast({ title: "Alternativ föreslagit", description: `Alternativ "${altProduct?.name}" föreslaget för "${altDialogLine.products?.name}".` });
+    setAltDialogLine(null);
+    setAltProductId("");
+    setAltSearch("");
+  };
+
+  const filteredProducts = useMemo(() => {
+    if (!allProducts) return [];
+    const s = altSearch.toLowerCase();
+    return allProducts.filter((p: any) =>
+      p.id !== altDialogLine?.product_id &&
+      (p.name.toLowerCase().includes(s) || !s)
+    ).slice(0, 20);
+  }, [allProducts, altSearch, altDialogLine]);
 
   return (
     <>
@@ -737,15 +777,26 @@ function WholesaleOrderDetail({ order, onClose }: { order: any; onClose: () => v
                   </td>
                   <td className="p-2.5 text-center">
                     {!isUnavailable && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-6 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
-                        onClick={() => handleMarkUnavailable(line)}
-                        disabled={createChange.isPending}
-                      >
-                        <Ban className="h-3 w-3" /> Ej tillgänglig
-                      </Button>
+                      <div className="flex items-center justify-center gap-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-6 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+                          onClick={() => handleMarkUnavailable(line)}
+                          disabled={createChange.isPending}
+                        >
+                          <Ban className="h-3 w-3" /> Ej tillgänglig
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-6 text-[10px] gap-1 text-primary border-primary/30 hover:bg-primary/10"
+                          onClick={() => { setAltDialogLine(line); setAltProductId(""); setAltSearch(""); }}
+                          disabled={createChange.isPending}
+                        >
+                          <Package className="h-3 w-3" /> Alternativ
+                        </Button>
+                      </div>
                     )}
                   </td>
                 </tr>
@@ -754,6 +805,47 @@ function WholesaleOrderDetail({ order, onClose }: { order: any; onClose: () => v
           </tbody>
         </table>
       </div>
+
+      {/* Alternative product dialog */}
+      <Dialog open={!!altDialogLine} onOpenChange={(open) => { if (!open) setAltDialogLine(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-sm">Föreslå alternativ produkt</DialogTitle>
+            <DialogDescription className="text-xs">
+              Ersätt <span className="font-semibold">{altDialogLine?.products?.name}</span> med en alternativ produkt.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              placeholder="Sök produkt..."
+              value={altSearch}
+              onChange={(e) => setAltSearch(e.target.value)}
+              className="h-8 text-xs"
+            />
+            <div className="max-h-48 overflow-y-auto border rounded-md">
+              {filteredProducts.map((p: any) => (
+                <div
+                  key={p.id}
+                  className={`px-3 py-2 text-xs cursor-pointer hover:bg-muted/50 flex items-center justify-between ${altProductId === p.id ? "bg-primary/10 font-medium" : ""}`}
+                  onClick={() => setAltProductId(p.id)}
+                >
+                  <span>{p.name}</span>
+                  <span className="text-muted-foreground">{p.unit}</span>
+                </div>
+              ))}
+              {filteredProducts.length === 0 && (
+                <p className="text-xs text-muted-foreground p-3">Inga produkter hittades.</p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setAltDialogLine(null)}>Avbryt</Button>
+            <Button size="sm" disabled={!altProductId || createChange.isPending} onClick={handleSuggestAlternative}>
+              Föreslå alternativ
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <DialogFooter>
         <Button variant="outline" size="sm" onClick={onClose}>Stäng</Button>

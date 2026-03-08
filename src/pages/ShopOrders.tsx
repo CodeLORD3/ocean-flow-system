@@ -698,12 +698,23 @@ function OrderDetailWithEdit({ order, products, onClose, toast }: {
       {/* Wholesaler-initiated change requests */}
       {wholesalerRequests.length > 0 && !editMode && (
         <div className="bg-destructive/5 border border-destructive/30 rounded-md p-3 text-xs space-y-2">
-          <span className="font-medium text-destructive">⚠️ Grossisten har meddelat att {wholesalerRequests.length} produkt(er) ej är tillgänglig(a):</span>
+          <span className="font-medium text-destructive">⚠️ Grossisten har {wholesalerRequests.length} ändringsförfrågan/-or:</span>
           {wholesalerRequests.map((cr: any) => (
             <div key={cr.id} className="flex items-center justify-between gap-3 bg-background/50 rounded p-2">
               <div className="flex-1">
-                <span className="font-medium text-foreground">{cr.products?.name || "Okänd produkt"}</span>
-                <span className="text-muted-foreground ml-2">({cr.old_value} {cr.unit})</span>
+                {cr.change_type === "product_alternative" ? (
+                  <>
+                    <span className="font-medium text-foreground">{cr.products?.name || "Okänd produkt"}</span>
+                    <span className="text-primary ml-1">→ föreslår alternativ: <span className="font-semibold">{cr.new_value}</span></span>
+                    <span className="text-muted-foreground ml-1">({cr.unit})</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-medium text-foreground">{cr.products?.name || "Okänd produkt"}</span>
+                    <span className="text-destructive ml-1">ej tillgänglig</span>
+                    <span className="text-muted-foreground ml-1">({cr.old_value} {cr.unit})</span>
+                  </>
+                )}
               </div>
               <div className="flex items-center gap-1.5">
                 <Button
@@ -722,12 +733,15 @@ function OrderDetailWithEdit({ order, products, onClose, toast }: {
                   onClick={() => resolveChange.mutate({ id: cr.id, status: "Nekad" })}
                   disabled={resolveChange.isPending}
                 >
-                  <XCircle className="h-3 w-3" /> Ta bort
+                  <XCircle className="h-3 w-3" /> Neka
                 </Button>
               </div>
             </div>
           ))}
-          <p className="text-[10px] text-muted-foreground">Acceptera = markeras som ej tillgänglig i ordern. Ta bort = produkten tas bort från ordern.</p>
+          <p className="text-[10px] text-muted-foreground">
+            Ej tillgänglig: Acceptera = markeras som ej tillgänglig. Neka = produkten tas bort.<br />
+            Alternativ: Acceptera = produkten byts ut. Neka = produkten tas bort.
+          </p>
         </div>
       )}
 
