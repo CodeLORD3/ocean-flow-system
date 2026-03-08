@@ -282,7 +282,7 @@ export default function PurchaseReporting() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["purchase-report-lines"] });
-      setEditingLineId(null);
+      
       toast({ title: "Rad uppdaterad" });
     },
   });
