@@ -515,15 +515,15 @@ function ReportSection({
           <Table>
             <TableHeader>
               <TableRow className="h-8">
-                <TableHead className="py-1 px-2 text-xs">Produkt</TableHead>
-                <TableHead className="py-1 px-2 text-xs text-right">Antal</TableHead>
-                <TableHead className="py-1 px-2 text-xs">Enhet</TableHead>
-                <TableHead className="py-1 px-2 text-xs text-right">Pris</TableHead>
-                <TableHead className="py-1 px-2 text-xs">Leverantör</TableHead>
-                <TableHead className="py-1 px-2 text-xs">Status</TableHead>
-                <TableHead className="py-1 px-2 text-xs">Datum</TableHead>
-                <TableHead className="py-1 px-2 text-xs">Dokument</TableHead>
-                <TableHead className="py-1 px-1 w-8"></TableHead>
+                <TableHead className="py-1 px-2 text-xs min-w-[180px]">Produkt</TableHead>
+                <TableHead className="py-1 px-1 text-xs text-right w-[60px]">Antal</TableHead>
+                <TableHead className="py-1 px-1 text-xs w-[50px]">Enhet</TableHead>
+                <TableHead className="py-1 px-1 text-xs text-right w-[70px]">Pris</TableHead>
+                <TableHead className="py-1 px-1 text-xs w-[100px]">Leverantör</TableHead>
+                <TableHead className="py-1 px-1 text-xs w-[72px]">Status</TableHead>
+                <TableHead className="py-1 px-1 text-xs w-[100px]">Datum</TableHead>
+                <TableHead className="py-1 px-1 text-xs w-[110px]">Dokument</TableHead>
+                <TableHead className="py-1 px-0 w-7"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
