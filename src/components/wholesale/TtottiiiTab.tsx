@@ -59,12 +59,26 @@ export default function TtottiiiTab() {
   return (
     <Card className="shadow-card">
       <CardHeader className="pb-2">
-        <div className="flex items-center gap-2">
-          <BarChart3 className="h-4 w-4 text-primary" />
-          <div>
-            <CardTitle className="text-sm font-heading">TTOTTIII — Total produktionsöversikt</CardTitle>
-            <CardDescription className="text-xs">Summering av alla butikers beställningar — uppdateras automatiskt</CardDescription>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-primary" />
+            <div>
+              <CardTitle className="text-sm font-heading">TTOTTIII — Total produktionsöversikt</CardTitle>
+              <CardDescription className="text-xs">Summering av alla butikers beställningar — uppdateras automatiskt</CardDescription>
+            </div>
           </div>
+          <Select value={filterCategory} onValueChange={setFilterCategory}>
+            <SelectTrigger className="w-[180px] h-8 text-xs">
+              <ArrowUpDown className="h-3 w-3 mr-1" />
+              <SelectValue placeholder="Alla kategorier" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alla kategorier</SelectItem>
+              {CATEGORIES.map(cat => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </CardHeader>
       <CardContent>
