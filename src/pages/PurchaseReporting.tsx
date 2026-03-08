@@ -22,14 +22,14 @@ import { useSuppliers } from "@/hooks/useSuppliers";
 // Magnifying glass overlay for document viewer
 function DocumentMagnifier({ children }: { children: React.ReactNode }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState({ x: 0, y: 0, visible: false });
+  const [pos, setPos] = useState({ x: 0, y: 0, visible: false, w: 0 });
   const LENS_SIZE = 180;
   const MAGNIFY = 2.5;
 
   const handleMouseMove = (e: React.MouseEvent) => {
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
-    setPos({ x: e.clientX - rect.left, y: e.clientY - rect.top, visible: true });
+    setPos({ x: e.clientX - rect.left, y: e.clientY - rect.top, visible: true, w: rect.width });
   };
 
   return (
@@ -53,6 +53,7 @@ function DocumentMagnifier({ children }: { children: React.ReactNode }) {
           <div
             style={{
               position: "absolute",
+              width: pos.w,
               left: -(pos.x * MAGNIFY - LENS_SIZE / 2),
               top: -(pos.y * MAGNIFY - LENS_SIZE / 2),
               transform: `scale(${MAGNIFY})`,
@@ -381,7 +382,7 @@ export default function PurchaseReporting() {
       const { data, error } = await supabase
         .from("purchase_report_lines")
         .select("*")
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data as ReportLine[];
     },
