@@ -465,7 +465,8 @@ export default function PurchaseSchedule() {
                                     <CollapsibleContent asChild>
                                       <>
                                         {item.shops.map((shop) => {
-                                          const zone = zoneMap.get(shop.zoneKey);
+                                          const zoneScheds = zoneSchedules.get(shop.zoneKey);
+                                          const zone = zoneScheds?.[0];
                                           return (
                                             <TableRow key={shop.name} className="bg-muted/30 border-0">
                                               <TableCell className="px-2 pl-14 py-0.5 text-[10px] text-muted-foreground">
