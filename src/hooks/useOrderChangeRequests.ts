@@ -33,6 +33,28 @@ export function useAllPendingChangeRequests() {
   });
 }
 
+/** Pending wholesaler-initiated requests for a specific store's orders */
+export function usePendingWholesaleRequests(storeId?: string) {
+  return useQuery({
+    queryKey: ["order_change_requests_wholesale_pending", storeId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("shop_order_change_requests")
+        .select("*, products(name, unit), shop_orders(order_week, store_id, stores(name))")
+        .eq("status", "Väntande")
+        .eq("requested_by", "grossist")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      // Filter by store if needed
+      if (storeId) {
+        return (data || []).filter((cr: any) => cr.shop_orders?.store_id === storeId);
+      }
+      return data;
+    },
+    enabled: !!storeId,
+  });
+}
+
 export function useCreateChangeRequest() {
   const qc = useQueryClient();
   return useMutation({
@@ -44,6 +66,7 @@ export function useCreateChangeRequest() {
       old_value?: string;
       new_value: string;
       unit?: string;
+      requested_by?: string;
     }) => {
       const { error } = await supabase
         .from("shop_order_change_requests")
@@ -53,6 +76,7 @@ export function useCreateChangeRequest() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["order_change_requests"] });
       qc.invalidateQueries({ queryKey: ["order_change_requests_pending"] });
+      qc.invalidateQueries({ queryKey: ["order_change_requests_wholesale_pending"] });
     },
   });
 }
@@ -79,37 +103,65 @@ export function useResolveChangeRequest() {
         .eq("id", params.id);
       if (error) throw error;
 
-      // If approved, apply the change
-      if (params.status === "Godkänd") {
-        if (cr.change_type === "quantity_change" && cr.order_line_id) {
-          const { error: upErr } = await supabase
-            .from("shop_order_lines")
-            .update({ quantity_ordered: Number(cr.new_value) })
-            .eq("id", cr.order_line_id);
-          if (upErr) throw upErr;
-        } else if (cr.change_type === "add_line" && cr.product_id) {
-          const { error: insErr } = await supabase
-            .from("shop_order_lines")
-            .insert({
-              shop_order_id: cr.shop_order_id,
-              product_id: cr.product_id,
-              quantity_ordered: Number(cr.new_value),
-              unit: cr.unit || "ST",
-              order_date: new Date().toISOString().slice(0, 10),
-            });
-          if (insErr) throw insErr;
-        } else if (cr.change_type === "delivery_date") {
-          const { error: upErr } = await supabase
-            .from("shop_orders")
-            .update({ desired_delivery_date: cr.new_value } as any)
-            .eq("id", cr.shop_order_id);
-          if (upErr) throw upErr;
+      const isWholesalerRequest = (cr as any).requested_by === "grossist";
+
+      if (isWholesalerRequest) {
+        // Wholesaler requested change (product unavailable)
+        if (cr.change_type === "product_unavailable") {
+          if (params.status === "Godkänd") {
+            // Shop accepts: mark line as "Ej tillgänglig"
+            if (cr.order_line_id) {
+              const { error: upErr } = await supabase
+                .from("shop_order_lines")
+                .update({ status: "Ej tillgänglig", deviation: "Ej tillgänglig – godkänd av butik" })
+                .eq("id", cr.order_line_id);
+              if (upErr) throw upErr;
+            }
+          } else {
+            // Shop denies: remove the line from the order
+            if (cr.order_line_id) {
+              const { error: delErr } = await supabase
+                .from("shop_order_lines")
+                .delete()
+                .eq("id", cr.order_line_id);
+              if (delErr) throw delErr;
+            }
+          }
+        }
+      } else {
+        // Shop-initiated changes (existing logic)
+        if (params.status === "Godkänd") {
+          if (cr.change_type === "quantity_change" && cr.order_line_id) {
+            const { error: upErr } = await supabase
+              .from("shop_order_lines")
+              .update({ quantity_ordered: Number(cr.new_value) })
+              .eq("id", cr.order_line_id);
+            if (upErr) throw upErr;
+          } else if (cr.change_type === "add_line" && cr.product_id) {
+            const { error: insErr } = await supabase
+              .from("shop_order_lines")
+              .insert({
+                shop_order_id: cr.shop_order_id,
+                product_id: cr.product_id,
+                quantity_ordered: Number(cr.new_value),
+                unit: cr.unit || "ST",
+                order_date: new Date().toISOString().slice(0, 10),
+              });
+            if (insErr) throw insErr;
+          } else if (cr.change_type === "delivery_date") {
+            const { error: upErr } = await supabase
+              .from("shop_orders")
+              .update({ desired_delivery_date: cr.new_value } as any)
+              .eq("id", cr.shop_order_id);
+            if (upErr) throw upErr;
+          }
         }
       }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["order_change_requests"] });
       qc.invalidateQueries({ queryKey: ["order_change_requests_pending"] });
+      qc.invalidateQueries({ queryKey: ["order_change_requests_wholesale_pending"] });
       qc.invalidateQueries({ queryKey: ["shop_orders"] });
       qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
     },
