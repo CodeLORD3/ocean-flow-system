@@ -361,12 +361,12 @@ function EditableRow({
           </SelectContent>
         </Select>
       </TableCell>
-      <TableCell className="py-1 px-1 w-[100px]">
+      <TableCell className="py-0.5 px-1 w-[86px]">
         <Input
           type="date"
           defaultValue={line.purchase_date || ""}
           onChange={(e) => commitField("purchase_date", e.target.value || null)}
-          className="h-7 text-xs border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 w-24"
+          className="h-6 text-[11px] border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 w-[78px]"
         />
       </TableCell>
       <TableCell className="py-1 px-1 w-[110px]">
