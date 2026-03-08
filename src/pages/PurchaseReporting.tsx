@@ -888,6 +888,7 @@ export default function PurchaseReporting() {
                         products={products}
                         suppliers={suppliers}
                         reports={reports}
+                        onViewDocument={(reportId) => { setSelectedReportId(reportId); setZoom(1); }}
                         autoFocusQty={focusLineId === l.id}
                         onQtyFocused={() => setFocusLineId(null)}
                       />
