@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Search, Plus, ShoppingCart, Clock, CheckCircle2, Truck, XCircle, Package } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -15,6 +15,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useShopOrders } from "@/hooks/useShopOrders";
 import { useStores } from "@/hooks/useStores";
+import { useQueryClient } from "@tanstack/react-query";
+import { syncBehandlasFromStock } from "@/lib/orderStatusSync";
 import { format } from "date-fns";
 
 const statusColor: Record<string, string> = {
