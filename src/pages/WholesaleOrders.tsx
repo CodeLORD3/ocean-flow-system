@@ -401,7 +401,7 @@ export default function WholesaleOrders() {
                         <tr><td colSpan={10} className="p-8 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
                       )}
                       {filteredOrders.map((o: any) => (
-                        <tr key={o.id} className="border-b border-border/40 transition-colors cursor-pointer" style={{ background: buildProgressGradient(o.shop_order_lines || []) }} onClick={() => setSelectedOrder(o)}>
+                        <tr key={o.id} className="border-b-2 border-border transition-colors cursor-pointer" style={{ background: buildProgressGradient(o.shop_order_lines || []) }} onClick={() => setSelectedOrder(o)}>
                           <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
                           <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                           <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
