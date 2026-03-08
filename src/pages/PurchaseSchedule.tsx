@@ -345,11 +345,10 @@ export default function PurchaseSchedule() {
               }
 
               return items.map((item, i) => {
-                const zone = zoneMap.get(item.zoneKey);
                 const isUrgent = view === "purchase" && isSameDay(item.latestPurchaseDate, new Date());
                 return (
                   <TableRow
-                    key={`${dayIndex}-${item.orderId}-${item.productName}-${i}`}
+                    key={`${dayIndex}-${item.productName}-${i}`}
                     className={`${isUrgent ? "bg-destructive/5" : ""} ${isPast ? "opacity-40" : ""} ${isToday ? "bg-primary/5" : ""}`}
                   >
                     <TableCell className="px-2 py-0.5 text-xs whitespace-nowrap">
@@ -363,16 +362,23 @@ export default function PurchaseSchedule() {
                       )}
                     </TableCell>
                     <TableCell className="px-2 py-0.5 text-xs">{item.productName}</TableCell>
-                    <TableCell className="px-2 py-0.5 text-xs text-right">{item.quantity} {item.unit}</TableCell>
+                    <TableCell className="px-2 py-0.5 text-xs text-right">{item.totalQuantity} {item.unit}</TableCell>
                     <TableCell className="px-2 py-0.5">
-                      <Badge variant={(zone?.badge_color || "default") as any} className="text-[9px] py-0">
-                        {item.storeName}
-                      </Badge>
+                      <div className="flex flex-wrap gap-1">
+                        {item.shops.map((shop) => {
+                          const zone = zoneMap.get(shop.zoneKey);
+                          return (
+                            <Badge key={shop.name} variant={(zone?.badge_color || "default") as any} className="text-[9px] py-0 whitespace-nowrap">
+                              {shop.name} ({shop.quantity})
+                            </Badge>
+                          );
+                        })}
+                      </div>
                     </TableCell>
                     <TableCell className="px-2 py-0.5">
                       <span className="text-[10px] text-muted-foreground">
                         {view === "purchase"
-                          ? format(item.deliveryDate, "EEE d/M", { locale: sv })
+                          ? format(item.earliestDelivery, "EEE d/M", { locale: sv })
                           : format(item.latestPurchaseDate, "EEE d/M", { locale: sv })}
                         {" "}{item.departureTime}
                       </span>
