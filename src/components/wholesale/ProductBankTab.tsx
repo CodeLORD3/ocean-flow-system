@@ -32,6 +32,15 @@ export default function ProductBankTab() {
   const [formHsCode, setFormHsCode] = useState("");
   const [formWeight, setFormWeight] = useState("");
   const [formSku, setFormSku] = useState("");
+  const [newCategory, setNewCategory] = useState("");
+  const [addingCategory, setAddingCategory] = useState(false);
+
+  // Merge default categories with any custom categories from existing products
+  const CATEGORIES = useMemo(() => {
+    const fromProducts = products.map(p => p.category).filter(Boolean);
+    const all = new Set([...DEFAULT_CATEGORIES, ...fromProducts]);
+    return Array.from(all).sort((a, b) => a.localeCompare(b, "sv"));
+  }, [products]);
 
   const filtered = products.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
