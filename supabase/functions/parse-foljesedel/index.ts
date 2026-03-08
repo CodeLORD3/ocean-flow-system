@@ -1,11 +1,32 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+// Convert a URL to a base64 data URL so the AI gateway can process it
+async function toDataUrl(fileUrl: string): Promise<{ dataUrl: string; mimeType: string }> {
+  const res = await fetch(fileUrl);
+  if (!res.ok) throw new Error(`Failed to fetch file: ${res.status}`);
+
+  const contentType = res.headers.get("content-type") || "application/octet-stream";
+  const buffer = await res.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+
+  // Manual base64 encoding for Deno
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  const base64 = btoa(binary);
+
+  return {
+    dataUrl: `data:${contentType};base64,${base64}`,
+    mimeType: contentType,
+  };
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -16,6 +37,45 @@ serve(async (req) => {
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    // Determine if the file is a PDF — Gemini doesn't accept PDF image URLs,
+    // so we need to send it as a base64 data URL instead
+    const isPdf = fileUrl.toLowerCase().endsWith(".pdf") ||
+      fileUrl.toLowerCase().includes(".pdf?") ||
+      fileUrl.toLowerCase().includes("content-type=application/pdf");
+
+    let imageContent: { type: string; image_url?: { url: string }; file?: { filename: string; file_data: string } };
+
+    if (isPdf) {
+      // Download and convert to base64 data URL for PDF
+      const { dataUrl } = await toDataUrl(fileUrl);
+      imageContent = {
+        type: "file",
+        file: {
+          filename: "document.pdf",
+          file_data: dataUrl,
+        },
+      };
+    } else {
+      // For images, try data URL first to avoid URL format issues
+      const lowerUrl = fileUrl.toLowerCase();
+      const isImage = lowerUrl.endsWith(".png") || lowerUrl.endsWith(".jpg") || lowerUrl.endsWith(".jpeg") ||
+        lowerUrl.endsWith(".webp") || lowerUrl.endsWith(".gif");
+
+      if (isImage) {
+        imageContent = {
+          type: "image_url",
+          image_url: { url: fileUrl },
+        };
+      } else {
+        // Unknown format — download and send as data URL
+        const { dataUrl } = await toDataUrl(fileUrl);
+        imageContent = {
+          type: "image_url",
+          image_url: { url: dataUrl },
+        };
+      }
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -36,10 +96,7 @@ Example: [{"product_name":"Lax färsk","quantity":10,"unit":"kg","unit_price":89
           {
             role: "user",
             content: [
-              {
-                type: "image_url",
-                image_url: { url: fileUrl },
-              },
+              imageContent as any,
               {
                 type: "text",
                 text: "Extract all product lines from this följesedel (delivery note). Return a JSON array.",
@@ -112,7 +169,6 @@ Example: [{"product_name":"Lax färsk","quantity":10,"unit":"kg","unit_price":89
         const parsed = JSON.parse(toolCall.function.arguments);
         products = parsed.products || [];
       } catch {
-        // Fallback: try parsing the content directly
         const content = data.choices?.[0]?.message?.content || "";
         const match = content.match(/\[[\s\S]*\]/);
         if (match) products = JSON.parse(match[0]);
