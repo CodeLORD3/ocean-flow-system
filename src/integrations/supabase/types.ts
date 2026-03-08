@@ -655,6 +655,87 @@ export type Database = {
           },
         ]
       }
+      purchase_report_lines: {
+        Row: {
+          created_at: string | null
+          id: string
+          line_total: number | null
+          product_id: string | null
+          product_name: string
+          quantity: number
+          report_id: string
+          unit: string | null
+          unit_price: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          line_total?: number | null
+          product_id?: string | null
+          product_name: string
+          quantity?: number
+          report_id: string
+          unit?: string | null
+          unit_price?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          line_total?: number | null
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          report_id?: string
+          unit?: string | null
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_report_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_report_lines_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_reports: {
+        Row: {
+          created_at: string | null
+          file_name: string
+          file_url: string
+          id: string
+          notes: string | null
+          status: string
+          total_amount: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_name: string
+          file_url: string
+          id?: string
+          notes?: string | null
+          status?: string
+          total_amount?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string
+          file_url?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          total_amount?: number | null
+        }
+        Relationships: []
+      }
       shop_order_change_requests: {
         Row: {
           change_type: string
