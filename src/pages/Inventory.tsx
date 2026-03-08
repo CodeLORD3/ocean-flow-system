@@ -595,7 +595,7 @@ export default function Inventory() {
                               </thead>
                               <tbody>
                                 {loc.items.map((s: any) => {
-                                  const value = Number(s.quantity) * (Number(s.products?.cost_price) || 0);
+                                  const value = Number(s.quantity) * (Number(s.unit_cost) || Number(s.products?.cost_price) || 0);
                                   const isChecked = getSelectedForLocation(loc.id).has(s.id);
                                   return (
                                     <tr key={s.id} className={`border-b border-border/30 last:border-0 hover:bg-muted/20 ${isChecked ? "bg-primary/5" : ""}`}>
