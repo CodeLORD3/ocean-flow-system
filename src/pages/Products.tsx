@@ -107,6 +107,10 @@ export default function Products() {
       if (error) { toast({ title: "Fel", description: error.message, variant: "destructive" }); return; }
       toast({ title: "Produkt uppdaterad", description: form.name });
     } else {
+      // New products get initial prices (can be updated later in Prissättning)
+      payload.cost_price = form.cost_price ? Number(form.cost_price) : 0;
+      payload.wholesale_price = form.wholesale_price ? Number(form.wholesale_price) : 0;
+      payload.retail_suggested = form.retail_suggested ? Number(form.retail_suggested) : 0;
       const { error } = await supabase.from("products").insert(payload);
       if (error) { toast({ title: "Fel", description: error.message, variant: "destructive" }); return; }
       toast({ title: "Produkt tillagd", description: form.name });
