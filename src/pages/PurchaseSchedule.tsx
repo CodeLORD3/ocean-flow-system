@@ -148,14 +148,12 @@ export default function PurchaseSchedule() {
     );
   };
 
-  // Build schedule items
+  // Build schedule items, aggregated by product + purchase date
   const schedule = useMemo(() => {
     if (!orders || !stores || !transportSchedules) return [];
 
-    type ScheduleItem = {
-      orderId: string;
+    type RawItem = {
       storeName: string;
-      storeCity: string;
       zoneKey: string;
       productName: string;
       quantity: number;
@@ -163,11 +161,10 @@ export default function PurchaseSchedule() {
       deliveryDate: Date;
       latestPurchaseDate: Date;
       departureTime: string;
-      departureWeekday: number;
       category: string;
     };
 
-    const items: ScheduleItem[] = [];
+    const rawItems: RawItem[] = [];
 
     for (const order of orders) {
       if (order.status === "Arkiverad") continue;
@@ -185,10 +182,8 @@ export default function PurchaseSchedule() {
         const deliveryDate = parseISO(deliveryDateStr);
         const latestPurchaseDate = getLatestPurchaseDate(deliveryDate, zone.departure_weekday);
 
-        items.push({
-          orderId: order.id,
+        rawItems.push({
           storeName: store.name,
-          storeCity: store.city,
           zoneKey,
           productName: line.products?.name || "Okänd produkt",
           quantity: line.quantity_ordered,
@@ -196,13 +191,53 @@ export default function PurchaseSchedule() {
           deliveryDate,
           latestPurchaseDate,
           departureTime: zone.departure_time,
-          departureWeekday: zone.departure_weekday,
           category: line.products?.category || "Övrigt",
         });
       }
     }
 
-    return items;
+    // Aggregate by productName + latestPurchaseDate
+    const key = (item: RawItem) =>
+      `${item.productName}|${item.unit}|${format(item.latestPurchaseDate, "yyyy-MM-dd")}`;
+
+    const grouped = new Map<string, {
+      productName: string;
+      unit: string;
+      totalQuantity: number;
+      shops: { name: string; zoneKey: string; quantity: number }[];
+      latestPurchaseDate: Date;
+      earliestDelivery: Date;
+      departureTime: string;
+      category: string;
+    }>();
+
+    for (const item of rawItems) {
+      const k = key(item);
+      const existing = grouped.get(k);
+      if (existing) {
+        existing.totalQuantity += item.quantity;
+        const shopEntry = existing.shops.find((s) => s.name === item.storeName);
+        if (shopEntry) {
+          shopEntry.quantity += item.quantity;
+        } else {
+          existing.shops.push({ name: item.storeName, zoneKey: item.zoneKey, quantity: item.quantity });
+        }
+        if (item.deliveryDate < existing.earliestDelivery) existing.earliestDelivery = item.deliveryDate;
+      } else {
+        grouped.set(k, {
+          productName: item.productName,
+          unit: item.unit,
+          totalQuantity: item.quantity,
+          shops: [{ name: item.storeName, zoneKey: item.zoneKey, quantity: item.quantity }],
+          latestPurchaseDate: item.latestPurchaseDate,
+          earliestDelivery: item.deliveryDate,
+          departureTime: item.departureTime,
+          category: item.category,
+        });
+      }
+    }
+
+    return Array.from(grouped.values());
   }, [orders, stores, transportSchedules, storeMap, zoneMap]);
 
   // Group by day
