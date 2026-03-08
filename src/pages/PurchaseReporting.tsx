@@ -864,7 +864,8 @@ export default function PurchaseReporting() {
                       <TableHead className="py-1 px-2 text-xs text-right">Pris</TableHead>
                       <TableHead className="py-1 px-2 text-xs">Leverantör</TableHead>
                       <TableHead className="py-1 px-2 text-xs">Status</TableHead>
-                      <TableHead className="py-1 px-2 text-xs">Datum</TableHead>
+                    <TableHead className="py-1 px-2 text-xs">Datum</TableHead>
+                      <TableHead className="py-1 px-2 text-xs">Dokument</TableHead>
                       <TableHead className="py-1 px-1 w-8"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -877,6 +878,7 @@ export default function PurchaseReporting() {
                         onDelete={() => deleteLine.mutate(l.id)}
                         products={products}
                         suppliers={suppliers}
+                        reports={reports}
                         autoFocusQty={focusLineId === l.id}
                         onQtyFocused={() => setFocusLineId(null)}
                       />
