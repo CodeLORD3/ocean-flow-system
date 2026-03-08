@@ -35,10 +35,12 @@ const overviewNav = [
   { title: "Översikt", url: "/", icon: LayoutDashboard },
 ];
 
-const salesNav = [
+const produktionSectionNav = [
   { title: "Ordrar", url: "/orders", icon: ShoppingCart },
+  { title: "Produktionsschema", url: "/production-schedule", icon: CalendarDays },
   { title: "Kunder", url: "/customers", icon: Users },
   { title: "Fakturor", url: "/invoices", icon: FileText },
+  { title: "Produktion/Grossist", url: "/wholesale", icon: Factory },
 ];
 
 const inventoryNav = [
@@ -47,11 +49,6 @@ const inventoryNav = [
   { title: "Streckkoder", url: "/barcodes", icon: ScanLine },
   { title: "Inleveranser", url: "/receiving", icon: Truck },
   { title: "Leverantörer", url: "/suppliers", icon: Truck },
-];
-
-const productionNav = [
-  { title: "Produktionsschema", url: "/production-schedule", icon: CalendarDays },
-  { title: "Produktion/Grossist", url: "/wholesale", icon: Factory },
 ];
 
 const financeNav = [
@@ -69,9 +66,8 @@ type NavSection = { label: string; items: typeof overviewNav };
 
 const sections: NavSection[] = [
   { label: "Översikt", items: overviewNav },
-  { label: "Försäljning", items: salesNav },
+  { label: "Produktion", items: produktionSectionNav },
   { label: "Lagerstyrning", items: inventoryNav },
-  { label: "Produktion", items: productionNav },
   { label: "Ekonomi & Rapporter", items: financeNav },
 ];
 
