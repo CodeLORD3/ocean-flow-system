@@ -1027,6 +1027,7 @@ export type Database = {
           id: string
           notes: string | null
           order_week: string
+          priority: number | null
           status: string
           store_id: string
         }
@@ -1037,6 +1038,7 @@ export type Database = {
           id?: string
           notes?: string | null
           order_week: string
+          priority?: number | null
           status?: string
           store_id: string
         }
@@ -1047,6 +1049,7 @@ export type Database = {
           id?: string
           notes?: string | null
           order_week?: string
+          priority?: number | null
           status?: string
           store_id?: string
         }
