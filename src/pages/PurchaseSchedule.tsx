@@ -132,9 +132,14 @@ export default function PurchaseSchedule() {
     return m;
   }, [stores]);
 
-  const zoneMap = useMemo(() => {
-    const m = new Map<string, NonNullable<typeof transportSchedules>[number]>();
-    transportSchedules?.forEach((s) => m.set(s.zone_key, s));
+  // Map zone_key -> array of schedules (multiple departure days per zone)
+  const zoneSchedules = useMemo(() => {
+    const m = new Map<string, NonNullable<typeof transportSchedules>[number][]>();
+    transportSchedules?.forEach((s) => {
+      const arr = m.get(s.zone_key) || [];
+      arr.push(s);
+      m.set(s.zone_key, arr);
+    });
     return m;
   }, [transportSchedules]);
 
