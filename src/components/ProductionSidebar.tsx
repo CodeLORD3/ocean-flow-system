@@ -43,10 +43,12 @@ const produktionSectionNav = [
   { title: "Produktion/Grossist", url: "/wholesale", icon: Factory },
 ];
 
-const financeNav = [
-  { title: "Rapporter", url: "/reports", icon: BarChart3 },
-  { title: "Ekonomi", url: "/finance", icon: CreditCard },
-  { title: "Prognoser", url: "/forecasts", icon: TrendingUp },
+const inventoryNav = [
+  { title: "Produkter", url: "/products", icon: Fish },
+  { title: "Lager", url: "/inventory", icon: Package },
+  { title: "Streckkoder", url: "/barcodes", icon: ScanLine },
+  { title: "Inleveranser", url: "/receiving", icon: Truck },
+  { title: "Leverantörer", url: "/suppliers", icon: Truck },
 ];
 
 const bottomNav = [
