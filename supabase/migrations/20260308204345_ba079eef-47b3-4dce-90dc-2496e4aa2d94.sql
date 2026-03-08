@@ -1,0 +1,1 @@
+ALTER TABLE public.purchase_reports ADD COLUMN archived_at timestamptz DEFAULT NULL;
