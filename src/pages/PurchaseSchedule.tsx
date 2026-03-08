@@ -343,7 +343,7 @@ export default function PurchaseSchedule() {
                           <TableHead className="h-6 px-2 text-[10px] text-right w-[80px]">Totalt</TableHead>
                           <TableHead className="h-6 px-2 text-[10px] w-[80px]">Butiker</TableHead>
                           <TableHead className="h-6 px-2 text-[10px] w-[120px]">
-                            {view === "purchase" ? "Leverans" : "Senast inköp"}
+                            {view === "purchase" ? "Avgång" : "Senast inköp"}
                           </TableHead>
                         </TableRow>
                       </TableHeader>
@@ -368,9 +368,8 @@ export default function PurchaseSchedule() {
                                     <TableCell className="px-2 py-0.5">
                                       <span className="text-[10px] text-muted-foreground">
                                         {view === "purchase"
-                                          ? format(item.earliestDelivery, "EEE d/M", { locale: sv })
+                                          ? `${format(item.latestPurchaseDate, "EEE d/M", { locale: sv })} ${item.departureTime}`
                                           : format(item.latestPurchaseDate, "EEE d/M", { locale: sv })}
-                                        {" "}{item.departureTime}
                                       </span>
                                     </TableCell>
                                   </TableRow>
@@ -389,8 +388,7 @@ export default function PurchaseSchedule() {
                                           <TableCell className="px-2 py-0.5 text-[10px] text-right text-muted-foreground">{shop.quantity} {item.unit}</TableCell>
                                           <TableCell className="px-2 py-0.5" />
                                         <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">
-                                          <div>lev. {format(shop.deliveryDate, "EEE d/M", { locale: sv })}</div>
-                                          <div>avgång {format(item.latestPurchaseDate, "EEE d/M", { locale: sv })} {zone?.departure_time || item.departureTime}</div>
+                                          {format(item.latestPurchaseDate, "EEE d/M", { locale: sv })} {zone?.departure_time || item.departureTime}
                                         </TableCell>
                                         </TableRow>
                                       );
