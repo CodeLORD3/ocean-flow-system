@@ -950,7 +950,16 @@ function OrderDetailWithEdit({ order, products, onClose, toast }: {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={editDeliveryDate} onSelect={setEditDeliveryDate} initialFocus className="p-3 pointer-events-auto" />
+                <Calendar
+                  mode="single"
+                  selected={editDeliveryDate}
+                  onSelect={setEditDeliveryDate}
+                  disabled={isDateDisabled}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                  modifiers={allowedWeekdays ? { allowed: (date: Date) => !isDateDisabled(date) } : {}}
+                  modifiersClassNames={allowedWeekdays ? { allowed: "!bg-primary/10 !text-primary font-medium" } : {}}
+                />
               </PopoverContent>
             </Popover>
           </div>
