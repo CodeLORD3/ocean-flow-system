@@ -133,26 +133,26 @@ export default function Pricing() {
                 </TableHeader>
                 <TableBody>
                   {filtered.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell className="font-medium">{p.name}</TableCell>
-                      <TableCell className="text-muted-foreground">{p.sku}</TableCell>
-                      <TableCell><Badge variant="outline">{p.category}</Badge></TableCell>
-                      {!isShop && <TableCell className="text-right">{Number(p.cost_price).toFixed(2)} kr</TableCell>}
-                      <TableCell className="text-right">{Number(p.wholesale_price).toFixed(2)} kr</TableCell>
-                      <TableCell className="text-right">{Number(p.retail_suggested || 0).toFixed(2)} kr</TableCell>
+                    <TableRow key={p.id} className="h-9">
+                      <TableCell className="py-1 font-medium">{p.name}</TableCell>
+                      <TableCell className="py-1 text-muted-foreground">{p.sku}</TableCell>
+                      <TableCell className="py-1"><Badge variant="outline">{p.category}</Badge></TableCell>
+                      {!isShop && <TableCell className="py-1 text-right">{Number(p.cost_price).toFixed(2)} kr</TableCell>}
+                      <TableCell className="py-1 text-right">{Number(p.wholesale_price).toFixed(2)} kr</TableCell>
+                      <TableCell className="py-1 text-right">{Number(p.retail_suggested || 0).toFixed(2)} kr</TableCell>
                       {!isShop && (
-                        <TableCell className="text-right">
+                        <TableCell className="py-1 text-right">
                           <Badge variant={margin(p.cost_price, p.wholesale_price) >= 30 ? "default" : "destructive"}>
                             {margin(p.cost_price, p.wholesale_price)}%
                           </Badge>
                         </TableCell>
                       )}
-                      <TableCell className="text-right space-x-1">
-                        <Button size="sm" variant="outline" onClick={() => openEdit(p)}>
+                      <TableCell className="py-1 text-right space-x-1">
+                        <Button size="sm" variant="outline" className="h-6 text-xs" onClick={() => openEdit(p)}>
                           {isShop ? "Ändra försäljningspris" : "Ändra pris"}
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => setHistoryProduct(p.id)}>
-                          <History className="h-4 w-4" />
+                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => setHistoryProduct(p.id)}>
+                          <History className="h-3.5 w-3.5" />
                         </Button>
                       </TableCell>
                     </TableRow>
