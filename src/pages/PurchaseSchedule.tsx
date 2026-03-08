@@ -7,11 +7,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { format, startOfWeek, addDays, isSameDay, parseISO, getISOWeek, getYear, getDay } from "date-fns";
 import { sv } from "date-fns/locale";
-import { CalendarDays, Clock, ChevronLeft, ChevronRight, AlertTriangle, Truck, Settings2 } from "lucide-react";
+import { CalendarDays, Clock, ChevronLeft, ChevronRight, AlertTriangle, Truck, Settings2, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -317,8 +318,8 @@ export default function PurchaseSchedule() {
             <TableRow>
               <TableHead className="h-7 px-2 text-[10px] w-[100px]">Dag</TableHead>
               <TableHead className="h-7 px-2 text-[10px]">Produkt</TableHead>
-              <TableHead className="h-7 px-2 text-[10px] text-right w-[80px]">Antal</TableHead>
-              <TableHead className="h-7 px-2 text-[10px] w-[200px]">Butik</TableHead>
+              <TableHead className="h-7 px-2 text-[10px] text-right w-[80px]">Totalt</TableHead>
+              <TableHead className="h-7 px-2 text-[10px] w-[100px]">Butiker</TableHead>
               <TableHead className="h-7 px-2 text-[10px] w-[120px]">
                 {view === "purchase" ? "Leverans" : "Senast inköp"}
               </TableHead>
@@ -347,43 +348,61 @@ export default function PurchaseSchedule() {
               return items.map((item, i) => {
                 const isUrgent = view === "purchase" && isSameDay(item.latestPurchaseDate, new Date());
                 return (
-                  <TableRow
-                    key={`${dayIndex}-${item.productName}-${i}`}
-                    className={`${isUrgent ? "bg-destructive/5" : ""} ${isPast ? "opacity-40" : ""} ${isToday ? "bg-primary/5" : ""}`}
-                  >
-                    <TableCell className="px-2 py-0.5 text-xs whitespace-nowrap">
-                      {i === 0 && (
+                  <Collapsible key={`${dayIndex}-${item.productName}-${i}`} asChild>
+                    <>
+                      <CollapsibleTrigger asChild>
+                        <TableRow
+                          className={`cursor-pointer hover:bg-muted/50 ${isUrgent ? "bg-destructive/5" : ""} ${isPast ? "opacity-40" : ""} ${isToday ? "bg-primary/5" : ""}`}
+                        >
+                          <TableCell className="px-2 py-0.5 text-xs whitespace-nowrap">
+                            {i === 0 && (
+                              <>
+                                <span className={isToday ? "text-primary font-bold" : "font-medium text-foreground"}>
+                                  {WEEKDAYS[dayIndex].slice(0, 3)}
+                                </span>
+                                <span className="text-muted-foreground ml-1 text-[10px]">{format(date, "d/M")}</span>
+                              </>
+                            )}
+                          </TableCell>
+                          <TableCell className="px-2 py-0.5 text-xs">
+                            <span className="flex items-center gap-1">
+                              <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
+                              {item.productName}
+                            </span>
+                          </TableCell>
+                          <TableCell className="px-2 py-0.5 text-xs text-right font-medium">{item.totalQuantity} {item.unit}</TableCell>
+                          <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">{item.shops.length} butik{item.shops.length > 1 ? "er" : ""}</TableCell>
+                          <TableCell className="px-2 py-0.5">
+                            <span className="text-[10px] text-muted-foreground">
+                              {view === "purchase"
+                                ? format(item.earliestDelivery, "EEE d/M", { locale: sv })
+                                : format(item.latestPurchaseDate, "EEE d/M", { locale: sv })}
+                              {" "}{item.departureTime}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent asChild>
                         <>
-                          <span className={isToday ? "text-primary font-bold" : "font-medium text-foreground"}>
-                            {WEEKDAYS[dayIndex].slice(0, 3)}
-                          </span>
-                          <span className="text-muted-foreground ml-1 text-[10px]">{format(date, "d/M")}</span>
+                          {item.shops.map((shop) => {
+                            const zone = zoneMap.get(shop.zoneKey);
+                            return (
+                              <TableRow key={shop.name} className="bg-muted/30 border-0">
+                                <TableCell className="px-2 py-0 text-xs" />
+                                <TableCell className="px-2 py-0.5 pl-8 text-[10px] text-muted-foreground">
+                                  <Badge variant={(zone?.badge_color || "default") as any} className="text-[9px] py-0">
+                                    {shop.name}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="px-2 py-0.5 text-[10px] text-right text-muted-foreground">{shop.quantity} {item.unit}</TableCell>
+                                <TableCell colSpan={2} className="px-2 py-0.5" />
+                              </TableRow>
+                            );
+                          })}
                         </>
-                      )}
-                    </TableCell>
-                    <TableCell className="px-2 py-0.5 text-xs">{item.productName}</TableCell>
-                    <TableCell className="px-2 py-0.5 text-xs text-right">{item.totalQuantity} {item.unit}</TableCell>
-                    <TableCell className="px-2 py-0.5">
-                      <div className="flex flex-wrap gap-1">
-                        {item.shops.map((shop) => {
-                          const zone = zoneMap.get(shop.zoneKey);
-                          return (
-                            <Badge key={shop.name} variant={(zone?.badge_color || "default") as any} className="text-[9px] py-0 whitespace-nowrap">
-                              {shop.name} ({shop.quantity})
-                            </Badge>
-                          );
-                        })}
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-2 py-0.5">
-                      <span className="text-[10px] text-muted-foreground">
-                        {view === "purchase"
-                          ? format(item.earliestDelivery, "EEE d/M", { locale: sv })
-                          : format(item.latestPurchaseDate, "EEE d/M", { locale: sv })}
-                        {" "}{item.departureTime}
-                      </span>
-                    </TableCell>
-                  </TableRow>
+                      </CollapsibleContent>
+                    </>
+                  </Collapsible>
                 );
               });
             })}
