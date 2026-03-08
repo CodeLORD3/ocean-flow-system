@@ -154,6 +154,7 @@ export default function ShopOrders() {
   const [confirmSendOpen, setConfirmSendOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   // Order form
   const [orderNote, setOrderNote] = useState("");
