@@ -647,10 +647,18 @@ export default function PurchaseReporting() {
                       if (e.key === "ArrowDown") {
                         e.preventDefault();
                         if (!searchOpen && items.length > 0) setSearchOpen(true);
-                        setSearchIdx((i) => Math.min(i + 1, items.length - 1));
+                        setSearchIdx((i) => {
+                          const next = Math.min(i + 1, items.length - 1);
+                          setTimeout(() => document.querySelector(`[data-search-idx="${next}"]`)?.scrollIntoView({ block: "nearest" }), 0);
+                          return next;
+                        });
                       } else if (e.key === "ArrowUp") {
                         e.preventDefault();
-                        setSearchIdx((i) => Math.max(i - 1, 0));
+                        setSearchIdx((i) => {
+                          const next = Math.max(i - 1, 0);
+                          setTimeout(() => document.querySelector(`[data-search-idx="${next}"]`)?.scrollIntoView({ block: "nearest" }), 0);
+                          return next;
+                        });
                       } else if (e.key === "Enter" && searchQuery.length > 0 && items.length > 0) {
                         e.preventDefault();
                         const item = items[Math.min(searchIdx, items.length - 1)];
@@ -688,6 +696,7 @@ export default function PurchaseReporting() {
                             {searchedProducts.slice(0, 20).map((p, i) => (
                               <div
                                 key={p.id}
+                                data-search-idx={i}
                                 className={`px-2 py-1.5 mx-1 rounded-sm cursor-pointer flex items-center justify-between ${i === searchIdx ? "bg-accent text-accent-foreground" : "hover:bg-muted"}`}
                                 onMouseEnter={() => setSearchIdx(i)}
                                 onMouseDown={(e) => { e.preventDefault(); addLineFromProduct.mutate(p); }}
