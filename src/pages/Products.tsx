@@ -339,6 +339,13 @@ export default function Products() {
         <td className="px-3 py-1 font-mono text-muted-foreground text-[10px]">{p.sku}</td>
         <td className="px-3 py-1"><Badge variant="outline" className="text-[10px]">{p.category}</Badge></td>
         <td className="px-3 py-1 text-muted-foreground">{p.unit}</td>
+        <td className="px-3 py-1">
+          {(p as any).producer ? (
+            <Badge variant={(p as any).producer === "Produktion" ? "default" : "secondary"} className="text-[10px]">{(p as any).producer}</Badge>
+          ) : (
+            <span className="text-muted-foreground text-[10px]">–</span>
+          )}
+        </td>
 
         {/* Prod.pris — inline editable for wholesale */}
         {isWholesale && (
