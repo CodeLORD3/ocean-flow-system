@@ -23,6 +23,7 @@ export default function ProductBankTab() {
   const { toast } = useToast();
   const qc = useQueryClient();
   const { data: products = [], isLoading } = useProducts();
+  const { data: dbCategories = [] } = useCategories();
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -35,12 +36,9 @@ export default function ProductBankTab() {
   const [newCategory, setNewCategory] = useState("");
   const [addingCategory, setAddingCategory] = useState(false);
 
-  // Merge default categories with any custom categories from existing products
   const CATEGORIES = useMemo(() => {
-    const fromProducts = products.map(p => p.category).filter(Boolean);
-    const all = new Set([...DEFAULT_CATEGORIES, ...fromProducts]);
-    return Array.from(all).sort((a, b) => a.localeCompare(b, "sv"));
-  }, [products]);
+    return dbCategories.map(c => c.name).sort((a, b) => a.localeCompare(b, "sv"));
+  }, [dbCategories]);
 
   const filtered = products.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
