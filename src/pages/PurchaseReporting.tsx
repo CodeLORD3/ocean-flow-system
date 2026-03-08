@@ -430,7 +430,8 @@ function ReportSection({
   const isLocked = report.status === "Godkänd";
   const [expanded, setExpanded] = useState(!isLocked);
   const [editing, setEditing] = useState(false);
-  const [editName, setEditName] = useState(report.file_name);
+  const displayName = report.display_name || report.file_name;
+  const [editName, setEditName] = useState(displayName);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
