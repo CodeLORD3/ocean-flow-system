@@ -143,6 +143,7 @@ function EditableRow({
         <Input
           type="number"
           defaultValue={line.quantity}
+          onFocus={(e) => e.target.select()}
           onChange={(e) => commitField("quantity", parseFloat(e.target.value) || 0)}
           className="h-7 text-xs w-16 border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1.5 text-right"
         />
