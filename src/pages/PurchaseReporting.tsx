@@ -352,9 +352,9 @@ function EditableRow({
           )}
         </Popover>
       </TableCell>
-      <TableCell className="py-1 px-2">
+      <TableCell className="py-1 px-1 w-[72px]">
         <Select defaultValue={line.status} onValueChange={(v) => onSave({ status: v })}>
-          <SelectTrigger className="h-7 w-20 text-xs border-transparent bg-transparent hover:border-input"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="h-7 w-[68px] text-xs border-transparent bg-transparent hover:border-input"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="Beställd">Beställd</SelectItem>
             <SelectItem value="Inköpt">Inköpt</SelectItem>
