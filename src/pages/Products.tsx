@@ -19,12 +19,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useProducts } from "@/hooks/useProducts";
+import { useCategories, useAddCategory } from "@/hooks/useCategories";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import BarcodeDisplay from "@/components/barcode/BarcodeDisplay";
 import { generateEAN13 } from "@/lib/barcode";
 
-const DEFAULT_CATEGORIES = ["Färsk Fisk", "Skaldjur", "Varmkök", "Rökta Produkter", "Såser & Röror", "Frukt & Grönt"];
 const UNITS = ["KG", "ST", "L", "FÖRP"];
 
 export default function Products() {
@@ -33,6 +33,8 @@ export default function Products() {
   const { site } = useSite();
   const isWholesale = site === "wholesale";
   const { data: products = [], isLoading } = useProducts();
+  const { data: dbCategories = [] } = useCategories();
+  const addCategory = useAddCategory();
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
   const [inlineCostPrice, setInlineCostPrice] = useState("");
   const [search, setSearch] = useState("");
@@ -44,12 +46,10 @@ export default function Products() {
   const [addCategoryOpen, setAddCategoryOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
 
-  // Dynamic categories: defaults + any custom ones from existing products
+  // Categories from DB (persisted)
   const CATEGORIES = useMemo(() => {
-    const fromProducts = products.map(p => p.category).filter(Boolean);
-    const all = new Set([...DEFAULT_CATEGORIES, ...fromProducts]);
-    return Array.from(all).sort((a, b) => a.localeCompare(b, "sv"));
-  }, [products]);
+    return dbCategories.map(c => c.name).sort((a, b) => a.localeCompare(b, "sv"));
+  }, [dbCategories]);
 
   const [form, setForm] = useState({
     name: "", category: "", unit: "KG", sku: "",
@@ -146,6 +146,21 @@ export default function Products() {
     });
     qc.invalidateQueries({ queryKey: ["products"] });
     toast({ title: "Pris uppdaterat", description: `Grossistpris: ${wholesale.toFixed(2)} SEK` });
+  };
+
+  const handleAddCategory = () => {
+    const name = newCategoryName.trim();
+    if (!name) return;
+    addCategory.mutate(name, {
+      onSuccess: () => {
+        toast({ title: "Kategori sparad", description: `"${name}" är nu tillgänglig i alla dropdown-menyer.` });
+        setNewCategoryName("");
+        setAddCategoryOpen(false);
+      },
+      onError: (err: any) => {
+        toast({ title: "Fel", description: err.message?.includes("duplicate") ? "Kategorin finns redan." : err.message, variant: "destructive" });
+      },
+    });
   };
 
   const handleDelete = async () => {
@@ -466,7 +481,7 @@ export default function Products() {
         <DialogContent className="max-w-xs">
           <DialogHeader>
             <DialogTitle className="font-heading text-sm">Lägg till kategori</DialogTitle>
-            <DialogDescription className="text-xs">Ange namn på den nya kategorin. Den blir tillgänglig direkt i alla dropdown-menyer.</DialogDescription>
+            <DialogDescription className="text-xs">Ange namn på den nya kategorin. Den sparas permanent och blir tillgänglig i alla dropdown-menyer.</DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5">
             <Label className="text-xs">Kategorinamn</Label>
@@ -478,23 +493,16 @@ export default function Products() {
               autoFocus
               onKeyDown={e => {
                 if (e.key === "Enter" && newCategoryName.trim()) {
-                  // Just set as filter — it'll appear in dropdowns once a product uses it
-                  setFilterCategory(newCategoryName.trim());
-                  toast({ title: "Kategori tillagd", description: `"${newCategoryName.trim()}" — tilldela produkter till denna kategori för att den ska synas permanent.` });
-                  setNewCategoryName("");
-                  setAddCategoryOpen(false);
+                  handleAddCategory();
                 }
               }}
             />
           </div>
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => { setAddCategoryOpen(false); setNewCategoryName(""); }}>Avbryt</Button>
-            <Button size="sm" disabled={!newCategoryName.trim()} onClick={() => {
-              setFilterCategory(newCategoryName.trim());
-              toast({ title: "Kategori tillagd", description: `"${newCategoryName.trim()}" — tilldela produkter till denna kategori för att den ska synas permanent.` });
-              setNewCategoryName("");
-              setAddCategoryOpen(false);
-            }}>Lägg till</Button>
+            <Button size="sm" disabled={!newCategoryName.trim() || addCategory.isPending} onClick={handleAddCategory}>
+              {addCategory.isPending ? "Sparar..." : "Lägg till"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
