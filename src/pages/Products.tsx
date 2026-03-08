@@ -29,6 +29,7 @@ import { generateEAN13 } from "@/lib/barcode";
 import { format } from "date-fns";
 
 const UNITS = ["KG", "ST", "L", "FÖRP"];
+const PRODUCERS = ["Inköp", "Produktion"];
 
 interface InlineEdit {
   cost_price: number;
@@ -124,7 +125,7 @@ export default function Products() {
   const [form, setForm] = useState({
     name: "", category: "", unit: "KG", sku: "",
     hs_code: "", weight_per_piece: "", cost_price: "", wholesale_price: "", retail_suggested: "",
-    origin: "",
+    origin: "", producer: "",
   });
 
   const setField = (key: string, value: string) => {
@@ -156,7 +157,7 @@ export default function Products() {
 
   const openAdd = () => {
     setEditId(null);
-    setForm({ name: "", category: "", unit: "KG", sku: "", hs_code: "", weight_per_piece: "", cost_price: "", wholesale_price: "", retail_suggested: "", origin: "" });
+    setForm({ name: "", category: "", unit: "KG", sku: "", hs_code: "", weight_per_piece: "", cost_price: "", wholesale_price: "", retail_suggested: "", origin: "", producer: "" });
     setDialogOpen(true);
   };
 
@@ -167,6 +168,7 @@ export default function Products() {
       sku: p.sku, hs_code: p.hs_code || "", weight_per_piece: String(p.weight_per_piece || ""),
       cost_price: String(p.cost_price || ""), wholesale_price: String(p.wholesale_price || ""),
       retail_suggested: String(p.retail_suggested || ""), origin: p.origin || "",
+      producer: (p as any).producer || "",
     });
     setDialogOpen(true);
   };
@@ -208,6 +210,7 @@ export default function Products() {
       hs_code: form.hs_code || null,
       weight_per_piece: form.weight_per_piece ? Number(form.weight_per_piece) : 0,
       origin: form.origin || null,
+      producer: form.producer || null,
     };
 
     if (editId) {
@@ -336,6 +339,13 @@ export default function Products() {
         <td className="px-3 py-1 font-mono text-muted-foreground text-[10px]">{p.sku}</td>
         <td className="px-3 py-1"><Badge variant="outline" className="text-[10px]">{p.category}</Badge></td>
         <td className="px-3 py-1 text-muted-foreground">{p.unit}</td>
+        <td className="px-3 py-1">
+          {(p as any).producer ? (
+            <Badge variant={(p as any).producer === "Produktion" ? "default" : "secondary"} className="text-[10px]">{(p as any).producer}</Badge>
+          ) : (
+            <span className="text-muted-foreground text-[10px]">–</span>
+          )}
+        </td>
 
         {/* Prod.pris — inline editable for wholesale */}
         {isWholesale && (
@@ -511,6 +521,7 @@ export default function Products() {
                    <th className="p-3 text-left font-medium text-muted-foreground">SKU</th>
                    <th className="p-3 text-left font-medium text-muted-foreground">KATEGORI</th>
                    <th className="p-3 text-left font-medium text-muted-foreground">ENHET</th>
+                   <th className="p-3 text-left font-medium text-muted-foreground">PRODUCENT</th>
                    {isWholesale && <th className="p-3 text-right font-medium text-muted-foreground">PROD.PRIS</th>}
                    <th className="p-3 text-right font-medium text-muted-foreground">{isWholesale ? "GROSSISTPRIS" : "PRIS"}</th>
                    {isWholesale && <th className="p-3 text-right font-medium text-muted-foreground">MARGINAL</th>}
@@ -522,7 +533,7 @@ export default function Products() {
               </thead>
               <tbody>
                 {filtered.length === 0 && (
-                  <tr><td colSpan={isWholesale ? 11 : 8} className="p-8 text-center text-muted-foreground">Inga produkter hittades.</td></tr>
+                  <tr><td colSpan={isWholesale ? 12 : 9} className="p-8 text-center text-muted-foreground">Inga produkter hittades.</td></tr>
                 )}
                 {filtered.map(p => {
                   const isExpanded = expandedProducts.has(p.id);
@@ -644,7 +655,14 @@ export default function Products() {
                 <Input value={form.weight_per_piece} onChange={e => setField("weight_per_piece", e.target.value)} type="number" step="0.001" className="h-8 text-xs" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Producent</Label>
+                <Select value={form.producer} onValueChange={v => setField("producer", v)}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Välj producent" /></SelectTrigger>
+                  <SelectContent>{PRODUCERS.map(p => <SelectItem key={p} value={p} className="text-xs">{p}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Ursprung</Label>
                 <Input value={form.origin} onChange={e => setField("origin", e.target.value)} placeholder="T.ex. Norge" className="h-8 text-xs" />
