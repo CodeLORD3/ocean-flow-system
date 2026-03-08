@@ -647,10 +647,18 @@ export default function PurchaseReporting() {
                       if (e.key === "ArrowDown") {
                         e.preventDefault();
                         if (!searchOpen && items.length > 0) setSearchOpen(true);
-                        setSearchIdx((i) => Math.min(i + 1, items.length - 1));
+                        setSearchIdx((i) => {
+                          const next = Math.min(i + 1, items.length - 1);
+                          setTimeout(() => document.querySelector(`[data-search-idx="${next}"]`)?.scrollIntoView({ block: "nearest" }), 0);
+                          return next;
+                        });
                       } else if (e.key === "ArrowUp") {
                         e.preventDefault();
-                        setSearchIdx((i) => Math.max(i - 1, 0));
+                        setSearchIdx((i) => {
+                          const next = Math.max(i - 1, 0);
+                          setTimeout(() => document.querySelector(`[data-search-idx="${next}"]`)?.scrollIntoView({ block: "nearest" }), 0);
+                          return next;
+                        });
                       } else if (e.key === "Enter" && searchQuery.length > 0 && items.length > 0) {
                         e.preventDefault();
                         const item = items[Math.min(searchIdx, items.length - 1)];
