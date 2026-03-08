@@ -1173,6 +1173,7 @@ export default function Inventory() {
                       >
                         <MapPin className="h-3 w-3 text-primary shrink-0" />
                         <span className="font-medium text-foreground">{loc.name}</span>
+                        {loc.id === activeLocationId && <Badge variant="secondary" className="text-[9px] ml-auto">Samma plats (ny rad)</Badge>}
                       </button>
                     ))}
                   </div>
