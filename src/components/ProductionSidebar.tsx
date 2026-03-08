@@ -49,6 +49,7 @@ const inventoryNav = [
 ];
 
 const productionNav = [
+  { title: "Produktionsschema", url: "/production-schedule", icon: CalendarDays },
   { title: "Produktion/Grossist", url: "/wholesale", icon: Factory },
 ];
 
