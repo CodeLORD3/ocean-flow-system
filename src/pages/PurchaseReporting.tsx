@@ -443,10 +443,10 @@ function ReportSection({
 
   const commitRename = () => {
     const trimmed = editName.trim();
-    if (trimmed && trimmed !== report.file_name) {
+    if (trimmed && trimmed !== displayName) {
       onRenameReport(report.id, trimmed);
     } else {
-      setEditName(report.file_name);
+      setEditName(displayName);
     }
     setEditing(false);
   };
