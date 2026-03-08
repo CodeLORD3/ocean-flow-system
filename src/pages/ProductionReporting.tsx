@@ -466,6 +466,47 @@ export default function ProductionReporting() {
     mutationFn: async (reportId: string) => {
       const lines = allLines.filter((l) => l.report_id === reportId);
       const total = lines.reduce((s, l) => s + l.quantity, 0);
+
+      // Find Grossist Flytande location
+      const { data: flytandeLoc } = await supabase
+        .from("storage_locations")
+        .select("id")
+        .eq("name", "Grossist Flytande")
+        .maybeSingle();
+
+      if (!flytandeLoc) throw new Error("Kunde inte hitta lagerstället 'Grossist Flytande'");
+
+      // Transfer each produced line to Grossist Flytande
+      for (const line of lines) {
+        if (!line.product_id || line.quantity <= 0) continue;
+
+        // Check if product already exists at Grossist Flytande
+        const { data: existing } = await supabase
+          .from("product_stock_locations")
+          .select("id, quantity, unit_cost")
+          .eq("product_id", line.product_id)
+          .eq("location_id", flytandeLoc.id)
+          .maybeSingle();
+
+        // Get product cost_price for unit_cost
+        const product = products.find((p: any) => p.id === line.product_id);
+        const unitCost = Number(product?.cost_price) || 0;
+
+        if (existing) {
+          const oldTotal = Number(existing.quantity) * (Number(existing.unit_cost) || 0);
+          const newTotal = line.quantity * unitCost;
+          const combinedQty = Number(existing.quantity) + line.quantity;
+          const avgCost = combinedQty > 0 ? (oldTotal + newTotal) / combinedQty : 0;
+          await supabase.from("product_stock_locations")
+            .update({ quantity: combinedQty, unit_cost: avgCost, updated_at: new Date().toISOString() })
+            .eq("id", existing.id);
+        } else {
+          await supabase.from("product_stock_locations")
+            .insert({ product_id: line.product_id, location_id: flytandeLoc.id, quantity: line.quantity, unit_cost: unitCost });
+        }
+      }
+
+      // Lock the report
       const { error } = await supabase
         .from("production_reports")
         .update({ status: "Bekräftad", total_quantity: total })
@@ -474,7 +515,9 @@ export default function ProductionReporting() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["production-reports"] });
-      toast({ title: "Produktion bekräftad", description: "Rapporten har låsts." });
+      queryClient.invalidateQueries({ queryKey: ["product_stock_locations"] });
+      queryClient.invalidateQueries({ queryKey: ["all_stock_locations"] });
+      toast({ title: "Produktion bekräftad", description: "Producerade varor har lagts till i Grossist Flytande." });
     },
   });
 
