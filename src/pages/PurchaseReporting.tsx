@@ -470,11 +470,12 @@ export default function PurchaseReporting() {
       if (error) throw error;
       return newLine.id;
     },
-    onSuccess: (_, product) => {
+    onSuccess: (newLineId, product) => {
       queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
       queryClient.invalidateQueries({ queryKey: ["purchase-report-lines"] });
       setSearchQuery("");
       setSearchOpen(false);
+      setFocusLineId(newLineId);
       toast({ title: `${product.name} tillagd` });
     },
   });
