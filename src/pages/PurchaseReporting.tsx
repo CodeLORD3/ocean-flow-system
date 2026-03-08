@@ -326,7 +326,7 @@ function EditableRow({
                   if (e.target.value.length > 0) setSupplierOpen(true);
                 }}
                 onKeyDown={handleSupplierKeyDown}
-                className="h-7 text-xs border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 w-24"
+                className="h-6 text-[11px] border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 w-20"
                 placeholder="Sök leverantör..."
               />
             </div>
