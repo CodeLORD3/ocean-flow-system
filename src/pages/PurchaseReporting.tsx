@@ -363,6 +363,8 @@ export default function PurchaseReporting() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchIdx, setSearchIdx] = useState(0);
   const [focusLineId, setFocusLineId] = useState<string | null>(null);
+  const [filterSupplier, setFilterSupplier] = useState<string>("all");
+  const [filterCategory, setFilterCategory] = useState<string>("all");
 
   // New product dialog
   const [newProductOpen, setNewProductOpen] = useState(false);
@@ -405,6 +407,25 @@ export default function PurchaseReporting() {
 
   const selectedReport = reports.find((r) => r.id === selectedReportId) ?? null;
   const selectedLines = allLines.filter((l) => l.report_id === selectedReportId);
+
+  // Build lookup: product_id -> category
+  const productCategoryMap = new Map(products.map((p: any) => [p.id, p.category]));
+
+  // Unique suppliers & categories from lines
+  const uniqueSuppliers = [...new Set(allLines.map((l) => l.supplier_name).filter(Boolean))].sort() as string[];
+  const uniqueCategories = [...new Set(
+    allLines.map((l) => l.product_id ? productCategoryMap.get(l.product_id) : null).filter(Boolean)
+  )].sort() as string[];
+
+  // Filtered lines
+  const filteredLines = allLines.filter((l) => {
+    if (filterSupplier !== "all" && l.supplier_name !== filterSupplier) return false;
+    if (filterCategory !== "all") {
+      const cat = l.product_id ? productCategoryMap.get(l.product_id) : null;
+      if (cat !== filterCategory) return false;
+    }
+    return true;
+  });
 
   const deleteReport = useMutation({
     mutationFn: async (id: string) => {
@@ -781,6 +802,37 @@ export default function PurchaseReporting() {
               </div>
             )}
 
+            {/* Sort/filter row */}
+            {allLines.length > 0 && (
+              <div className="flex items-center gap-2 px-3 py-2 border-b">
+                <span className="text-xs text-muted-foreground shrink-0">Filtrera:</span>
+                <Select value={filterSupplier} onValueChange={setFilterSupplier}>
+                  <SelectTrigger className="h-7 text-xs w-[160px]"><SelectValue placeholder="Leverantör" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alla leverantörer</SelectItem>
+                    {uniqueSuppliers.map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={filterCategory} onValueChange={setFilterCategory}>
+                  <SelectTrigger className="h-7 text-xs w-[160px]"><SelectValue placeholder="Kategori" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alla kategorier</SelectItem>
+                    {uniqueCategories.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {(filterSupplier !== "all" || filterCategory !== "all") && (
+                  <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setFilterSupplier("all"); setFilterCategory("all"); }}>
+                    Rensa filter
+                  </Button>
+                )}
+                <span className="text-xs text-muted-foreground ml-auto">{filteredLines.length} av {allLines.length} rader</span>
+              </div>
+            )}
+
             <ScrollArea className="flex-1">
               {allLines.length === 0 ? (
                 <p className="text-muted-foreground text-sm text-center py-16">
@@ -801,7 +853,7 @@ export default function PurchaseReporting() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {allLines.map((l) => (
+                    {filteredLines.map((l) => (
                       <EditableRow
                         key={l.id}
                         line={l}
