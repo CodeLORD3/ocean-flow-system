@@ -625,6 +625,93 @@ export type Database = {
           },
         ]
       }
+      production_report_lines: {
+        Row: {
+          created_at: string | null
+          id: string
+          notes: string | null
+          operator: string | null
+          product_id: string | null
+          product_name: string
+          production_date: string | null
+          quantity: number
+          report_id: string
+          status: string
+          unit: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          operator?: string | null
+          product_id?: string | null
+          product_name: string
+          production_date?: string | null
+          quantity?: number
+          report_id: string
+          status?: string
+          unit?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          operator?: string | null
+          product_id?: string | null
+          product_name?: string
+          production_date?: string | null
+          quantity?: number
+          report_id?: string
+          status?: string
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_report_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_report_lines_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "production_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_reports: {
+        Row: {
+          created_at: string | null
+          display_name: string | null
+          id: string
+          notes: string | null
+          report_name: string
+          status: string
+          total_quantity: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          notes?: string | null
+          report_name: string
+          status?: string
+          total_quantity?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          notes?: string | null
+          report_name?: string
+          status?: string
+          total_quantity?: number | null
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           active: boolean | null
