@@ -952,8 +952,8 @@ export default function PurchaseReporting() {
               </ScrollArea>
             ) : (
               <ScrollArea className="flex-1">
-                <DocumentMagnifier>
-                  <div className="p-4">
+                <div className="p-4">
+                  <DocumentMagnifier>
                     {selectedReport.file_name.toLowerCase().endsWith(".pdf") ? (
                       <PdfViewer url={selectedReport.file_url} zoom={zoom} />
                     ) : (
@@ -967,19 +967,19 @@ export default function PurchaseReporting() {
                         />
                       </div>
                     )}
-                    <div className="flex justify-center pt-4 pb-2">
-                      <label>
-                        <Input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileUpload} disabled={uploading || parsing} />
-                        <Button asChild size="sm" variant="outline" disabled={uploading || parsing}>
-                          <span className="cursor-pointer">
-                            {uploading || parsing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />}
-                            {parsing ? "Extraherar..." : "Ladda upp ny följesedel"}
-                          </span>
-                        </Button>
-                      </label>
-                    </div>
+                  </DocumentMagnifier>
+                  <div className="flex justify-center pt-4 pb-2">
+                    <label>
+                      <Input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileUpload} disabled={uploading || parsing} />
+                      <Button asChild size="sm" variant="outline" disabled={uploading || parsing}>
+                        <span className="cursor-pointer">
+                          {uploading || parsing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />}
+                          {parsing ? "Extraherar..." : "Ladda upp dokument"}
+                        </span>
+                      </Button>
+                    </label>
                   </div>
-                </DocumentMagnifier>
+                </div>
               </ScrollArea>
             )}
           </div>
