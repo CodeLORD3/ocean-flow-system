@@ -168,38 +168,21 @@ function EditableRow({
               )}
             </div>
           </PopoverTrigger>
-          {productSearch.length > 0 && (
+          {productSearch.length > 0 && filteredProducts.length > 0 && (
             <PopoverContent className="p-0 w-[260px]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
-              <Command ref={productCmdRef} shouldFilter={false}>
-                <CommandList>
-                  <CommandEmpty className="py-2 text-xs text-center">Ingen träff</CommandEmpty>
-                  <CommandGroup>
-                    {filteredProducts.slice(0, 12).map((p: any) => (
-                      <CommandItem
-                        key={p.id}
-                        onSelect={() => {
-                          onSave({
-                            product_name: p.name,
-                            product_id: p.id,
-                            unit: p.unit || line.unit,
-                            unit_price: p.cost_price || line.unit_price,
-                            supplier_name: p.suppliers?.name || line.supplier_name,
-                            line_total: line.quantity * (p.cost_price || line.unit_price || 0),
-                          });
-                          setProductOpen(false);
-                          setProductSearch("");
-                        }}
-                        className="py-1"
-                      >
-                        <div className="flex flex-col">
-                          <span className="text-xs">{p.name}</span>
-                          <span className="text-[10px] text-muted-foreground">{p.sku} · {p.category}</span>
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
+              <div className="max-h-[200px] overflow-y-auto py-1">
+                {filteredProducts.map((p: any, i: number) => (
+                  <div
+                    key={p.id}
+                    className={`px-2 py-1.5 text-xs cursor-pointer rounded-sm mx-1 ${i === productIdx ? "bg-accent text-accent-foreground" : "hover:bg-muted"}`}
+                    onMouseEnter={() => setProductIdx(i)}
+                    onMouseDown={(e) => { e.preventDefault(); selectProduct(p); }}
+                  >
+                    <div className="font-medium">{p.name}</div>
+                    <div className="text-[10px] text-muted-foreground">{p.sku} · {p.category}</div>
+                  </div>
+                ))}
+              </div>
             </PopoverContent>
           )}
         </Popover>
