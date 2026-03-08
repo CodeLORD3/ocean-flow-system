@@ -443,7 +443,7 @@ export default function WholesaleOrders() {
                               );
                             })()}
                           </td>
-                          <td className="p-3 text-center" onClick={e => e.stopPropagation()}>
+                          <td className="px-2.5 py-1 text-center" onClick={e => e.stopPropagation()}>
                             <Button
                               variant="ghost"
                               size="sm"
