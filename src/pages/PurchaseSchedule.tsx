@@ -261,7 +261,7 @@ export default function PurchaseSchedule() {
     }>();
 
     for (const item of filteredSchedule) {
-      const inWeek = weekDates.some((d) => isSameDay(d, item.latestPurchaseDate));
+      const inWeek = weekDates.some((d) => isSameDay(d, item.departureDate));
       if (!inWeek) continue;
 
       const k = `${item.productName}|${item.unit}`;
