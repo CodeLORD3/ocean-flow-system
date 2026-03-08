@@ -99,7 +99,7 @@ export default function TtottiiiTab() {
                 </tr>
               </thead>
               <tbody>
-                {CATEGORIES.map(cat => {
+                {(filterCategory === "all" ? CATEGORIES : [filterCategory]).map(cat => {
                   const catItems = aggregated.filter(a => a.category === cat);
                   if (catItems.length === 0) return null;
                   return (
