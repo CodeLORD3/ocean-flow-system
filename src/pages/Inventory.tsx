@@ -217,24 +217,30 @@ export default function Inventory() {
       await supabase.from("product_stock_locations")
         .update({ quantity: remaining, updated_at: new Date().toISOString() })
         .eq("id", item.id);
-      // Add/merge to target, preserving unit_cost
       const itemCost = Number(item.unit_cost) || 0;
-      const { data: existing } = await supabase
-        .from("product_stock_locations")
-        .select("id, quantity, unit_cost")
-        .eq("product_id", item.product_id)
-        .eq("location_id", splitTargetLocation)
-        .maybeSingle();
-      if (existing) {
-        const oldTotal = Number(existing.quantity) * (Number(existing.unit_cost) || 0);
-        const combinedQty = Number(existing.quantity) + splitAmount;
-        const avgCost = combinedQty > 0 ? (oldTotal + splitAmount * itemCost) / combinedQty : 0;
-        await supabase.from("product_stock_locations")
-          .update({ quantity: combinedQty, unit_cost: avgCost, updated_at: new Date().toISOString() })
-          .eq("id", existing.id);
-      } else {
+      // If splitting to the SAME location, always create a new row
+      if (splitTargetLocation === activeLocationId) {
         await supabase.from("product_stock_locations")
           .insert({ product_id: item.product_id, location_id: splitTargetLocation, quantity: splitAmount, unit_cost: itemCost });
+      } else {
+        // Add/merge to target, preserving unit_cost
+        const { data: existing } = await supabase
+          .from("product_stock_locations")
+          .select("id, quantity, unit_cost")
+          .eq("product_id", item.product_id)
+          .eq("location_id", splitTargetLocation)
+          .maybeSingle();
+        if (existing) {
+          const oldTotal = Number(existing.quantity) * (Number(existing.unit_cost) || 0);
+          const combinedQty = Number(existing.quantity) + splitAmount;
+          const avgCost = combinedQty > 0 ? (oldTotal + splitAmount * itemCost) / combinedQty : 0;
+          await supabase.from("product_stock_locations")
+            .update({ quantity: combinedQty, unit_cost: avgCost, updated_at: new Date().toISOString() })
+            .eq("id", existing.id);
+        } else {
+          await supabase.from("product_stock_locations")
+            .insert({ product_id: item.product_id, location_id: splitTargetLocation, quantity: splitAmount, unit_cost: itemCost });
+        }
       }
       clearSelection(activeLocationId);
       invalidateStock();
