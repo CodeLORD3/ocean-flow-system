@@ -361,6 +361,53 @@ export default function PurchaseSchedule() {
     return map;
   }, [weeklyTotals]);
 
+  const filteredAltProducts = useMemo(() => {
+    if (!allProducts) return [];
+    const s = altSearch.toLowerCase();
+    return allProducts.filter((p: any) =>
+      p.id !== altDialogItem?.productId &&
+      (p.name.toLowerCase().includes(s) || !s)
+    ).slice(0, 20);
+  }, [allProducts, altSearch, altDialogItem]);
+
+  const handleMarkUnavailable = async (item: typeof weeklyTotals[0]) => {
+    // Create a change request for each order that has this product
+    for (let i = 0; i < item.lineIds.length; i++) {
+      await createChange.mutateAsync({
+        shop_order_id: item.shopOrderIds[Math.min(i, item.shopOrderIds.length - 1)],
+        order_line_id: item.lineIds[i],
+        change_type: "product_unavailable",
+        product_id: item.productId,
+        old_value: String(item.totalQuantity),
+        new_value: "0",
+        unit: item.unit,
+        requested_by: "grossist",
+      });
+    }
+    toast.success(`"${item.productName}" markerad som ej tillgänglig för ${item.lineIds.length} orderrad(er).`);
+  };
+
+  const handleSuggestAlternative = async () => {
+    if (!altDialogItem || !altProductId) return;
+    const altProduct = allProducts?.find((p: any) => p.id === altProductId);
+    for (let i = 0; i < altDialogItem.lineIds.length; i++) {
+      await createChange.mutateAsync({
+        shop_order_id: altDialogItem.shopOrderIds[Math.min(i, altDialogItem.shopOrderIds.length - 1)],
+        order_line_id: altDialogItem.lineIds[i],
+        change_type: "product_alternative",
+        product_id: altProductId,
+        old_value: altDialogItem.productId,
+        new_value: altProduct?.name || altProductId,
+        unit: altDialogItem.unit,
+        requested_by: "grossist",
+      });
+    }
+    toast.success(`Alternativ "${altProduct?.name}" föreslagit för "${altDialogItem.productName}" (${altDialogItem.lineIds.length} orderrader).`);
+    setAltDialogItem(null);
+    setAltProductId("");
+    setAltSearch("");
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
