@@ -49,14 +49,18 @@ function EditableRow({
   onSave,
   onDelete,
   products,
+  suppliers,
 }: {
   line: ReportLine;
   onSave: (updated: Partial<ReportLine>) => void;
   onDelete: () => void;
   products: any[];
+  suppliers: any[];
 }) {
   const [productSearch, setProductSearch] = useState("");
   const [productOpen, setProductOpen] = useState(false);
+  const [supplierSearch, setSupplierSearch] = useState("");
+  const [supplierOpen, setSupplierOpen] = useState(false);
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   const commitField = (field: string, value: any) => {
