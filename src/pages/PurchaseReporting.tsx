@@ -596,14 +596,15 @@ export default function PurchaseReporting() {
               ) : (
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Produkt</TableHead>
-                      <TableHead className="text-right">Antal</TableHead>
-                      <TableHead className="text-right">Pris</TableHead>
-                      <TableHead>Leverantör</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Datum</TableHead>
-                      <TableHead className="w-16"></TableHead>
+                    <TableRow className="h-8">
+                      <TableHead className="py-1 px-2 text-xs">Produkt</TableHead>
+                      <TableHead className="py-1 px-2 text-xs text-right">Antal</TableHead>
+                      <TableHead className="py-1 px-2 text-xs">Enhet</TableHead>
+                      <TableHead className="py-1 px-2 text-xs text-right">Pris</TableHead>
+                      <TableHead className="py-1 px-2 text-xs">Leverantör</TableHead>
+                      <TableHead className="py-1 px-2 text-xs">Status</TableHead>
+                      <TableHead className="py-1 px-2 text-xs">Datum</TableHead>
+                      <TableHead className="py-1 px-1 w-8"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
