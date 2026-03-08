@@ -308,6 +308,7 @@ export default function Inventory() {
       toast({ title: "Fel", description: err.message, variant: "destructive" });
     }
     setActionLoading(false);
+  };
 
   // Compute aggregated stock: "Total Butik" should include stock from all other locations in the same store
   const storeStock = useMemo(() => {
