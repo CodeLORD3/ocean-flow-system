@@ -127,25 +127,8 @@ export default function Products() {
     setDialogOpen(false);
   };
 
-  const handleInlinePriceSave = async (productId: string, cost: number) => {
-    if (isNaN(cost) || cost <= 0) return;
-    const wholesale = Number((cost * 1.35).toFixed(2));
-    const { error } = await supabase.from("products").update({
-      cost_price: cost,
-      wholesale_price: wholesale,
-      updated_at: new Date().toISOString(),
-    }).eq("id", productId);
-    if (error) { toast({ title: "Fel", description: error.message, variant: "destructive" }); return; }
-    await supabase.from("price_history").insert({
-      product_id: productId,
-      cost_price: cost,
-      wholesale_price: wholesale,
-      reason: "Daglig prisuppdatering",
-      changed_by: "Admin",
-    });
-    qc.invalidateQueries({ queryKey: ["products"] });
-    toast({ title: "Pris uppdaterat", description: `Grossistpris: ${wholesale.toFixed(2)} SEK` });
-  };
+
+
 
   const handleAddCategory = () => {
     const name = newCategoryName.trim();
