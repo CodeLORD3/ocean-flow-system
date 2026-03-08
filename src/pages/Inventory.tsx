@@ -545,22 +545,38 @@ export default function Inventory() {
                 {stockByLocation.map((loc: any) => {
                   const isExpanded = expandedLocations.has(loc.id);
                   return (
-                    <div key={loc.id} className="border border-border/50 rounded-md overflow-hidden">
-                      <button
-                        className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors text-left"
-                        onClick={() => toggleLocation(loc.id)}
-                      >
-                        <div className="flex items-center gap-2">
+                     <div key={loc.id} className="border border-border/50 rounded-md overflow-hidden">
+                      <div className="flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors">
+                        <button
+                          className="flex items-center gap-2 flex-1 text-left"
+                          onClick={() => toggleLocation(loc.id)}
+                        >
                           {isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
                           <MapPin className="h-3.5 w-3.5 text-primary" />
                           <span className="text-sm font-medium text-foreground">{loc.name}</span>
                           <Badge variant="secondary" className="text-[10px] h-5">{loc.items.length} produkter</Badge>
+                        </button>
+                        <div className="flex items-center gap-2">
+                          {getSelectedForLocation(loc.id).size > 0 && (
+                            <div className="flex items-center gap-1 mr-2">
+                              <Badge variant="outline" className="text-[10px] h-5">{getSelectedForLocation(loc.id).size} valda</Badge>
+                              <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] gap-1" onClick={() => { setActiveLocationId(loc.id); setMoveDialogOpen(true); }}>
+                                <Move className="h-3 w-3" /> Flytta
+                              </Button>
+                              <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => { setActiveLocationId(loc.id); setDeleteDialogOpen(true); }}>
+                                <Trash2 className="h-3 w-3" /> Radera
+                              </Button>
+                              {getSelectedForLocation(loc.id).size === 1 && (
+                                <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] gap-1" onClick={() => { setActiveLocationId(loc.id); setSplitDialogOpen(true); }}>
+                                  <Scissors className="h-3 w-3" /> Splitta
+                                </Button>
+                              )}
+                            </div>
+                          )}
+                          <span className="text-xs text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
+                          <span className="text-xs font-medium text-foreground">{fmt(loc.totalValue)}</span>
                         </div>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span>{loc.totalQty.toLocaleString("sv-SE")} kg</span>
-                          <span className="font-medium text-foreground">{fmt(loc.totalValue)}</span>
-                        </div>
-                      </button>
+                      </div>
                       {isExpanded && (
                         <div className="border-t border-border/50">
                           {loc.items.length === 0 ? (
@@ -569,6 +585,7 @@ export default function Inventory() {
                             <table className="w-full text-xs">
                               <thead>
                                 <tr className="bg-muted/20">
+                                  <th className="px-3 py-1.5 w-8"></th>
                                   <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Produkt</th>
                                   <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">SKU</th>
                                   <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Kategori</th>
@@ -579,8 +596,12 @@ export default function Inventory() {
                               <tbody>
                                 {loc.items.map((s: any) => {
                                   const value = Number(s.quantity) * (Number(s.products?.cost_price) || 0);
+                                  const isChecked = getSelectedForLocation(loc.id).has(s.id);
                                   return (
-                                    <tr key={s.id} className="border-b border-border/30 last:border-0 hover:bg-muted/20">
+                                    <tr key={s.id} className={`border-b border-border/30 last:border-0 hover:bg-muted/20 ${isChecked ? "bg-primary/5" : ""}`}>
+                                      <td className="px-3 py-2 text-center">
+                                        <Checkbox checked={isChecked} onCheckedChange={() => toggleItemSelection(loc.id, s.id)} />
+                                      </td>
                                       <td className="px-3 py-2 font-medium text-foreground">{s.products?.name}</td>
                                       <td className="px-3 py-2 font-mono text-muted-foreground text-[10px]">{s.products?.sku}</td>
                                       <td className="px-3 py-2 text-muted-foreground">{s.products?.category}</td>
