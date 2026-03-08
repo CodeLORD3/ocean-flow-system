@@ -7,6 +7,7 @@ import {
   BarChart3,
   Settings,
   Factory,
+  CalendarDays,
   Package,
   FileText,
   CreditCard,
