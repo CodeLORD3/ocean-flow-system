@@ -160,6 +160,7 @@ export default function PurchaseSchedule() {
     type RawItem = {
       storeName: string;
       zoneKey: string;
+      productId: string;
       productName: string;
       quantity: number;
       unit: string;
@@ -167,6 +168,8 @@ export default function PurchaseSchedule() {
       departureDate: Date;
       departureTime: string;
       category: string;
+      lineId: string;
+      shopOrderId: string;
     };
 
     const rawItems: RawItem[] = [];
