@@ -563,6 +563,7 @@ export default function PurchaseSchedule() {
                           <TableHead className="h-6 px-2 pl-10 text-[10px]">Produkt</TableHead>
                           <TableHead className="h-6 px-2 text-[10px] text-right w-[100px]">Total vecka</TableHead>
                           <TableHead className="h-6 px-2 text-[10px] w-[80px]">Butiker</TableHead>
+                          <TableHead className="h-6 px-2 text-[10px] text-center w-[200px]">Åtgärd</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -579,6 +580,28 @@ export default function PurchaseSchedule() {
                                   </TableCell>
                                   <TableCell className="px-2 py-0.5 text-xs text-right font-medium">{item.totalQuantity} {item.unit}</TableCell>
                                   <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">{item.shops.length} butik{item.shops.length > 1 ? "er" : ""}</TableCell>
+                                  <TableCell className="px-2 py-0.5 text-center" onClick={(e) => e.stopPropagation()}>
+                                    <div className="flex items-center justify-center gap-1">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-6 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+                                        onClick={() => handleMarkUnavailable(item)}
+                                        disabled={createChange.isPending}
+                                      >
+                                        <Ban className="h-3 w-3" /> Ej tillgänglig
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-6 text-[10px] gap-1 text-primary border-primary/30 hover:bg-primary/10"
+                                        onClick={() => { setAltDialogItem(item); setAltProductId(""); setAltSearch(""); }}
+                                        disabled={createChange.isPending}
+                                      >
+                                        <Package className="h-3 w-3" /> Alternativ
+                                      </Button>
+                                    </div>
+                                  </TableCell>
                                 </TableRow>
                               </CollapsibleTrigger>
                               <CollapsibleContent asChild>
@@ -594,6 +617,7 @@ export default function PurchaseSchedule() {
                                           </Badge>
                                         </TableCell>
                                         <TableCell className="px-2 py-0.5 text-[10px] text-right text-muted-foreground">{shop.quantity} {item.unit}</TableCell>
+                                        <TableCell className="px-2 py-0.5" />
                                         <TableCell className="px-2 py-0.5" />
                                       </TableRow>
                                     );
@@ -613,12 +637,53 @@ export default function PurchaseSchedule() {
         </TabsContent>
       </Tabs>
 
+      {/* Alternative product dialog */}
+      <Dialog open={!!altDialogItem} onOpenChange={(open) => { if (!open) setAltDialogItem(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-sm">Föreslå alternativ produkt</DialogTitle>
+            <DialogDescription className="text-xs">
+              Ersätt <span className="font-semibold">{altDialogItem?.productName}</span> med en alternativ produkt. Förfrågan skickas till berörda butiker.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Input
+              placeholder="Sök produkt..."
+              value={altSearch}
+              onChange={(e) => setAltSearch(e.target.value)}
+              className="h-8 text-xs"
+            />
+            <div className="max-h-48 overflow-y-auto border rounded-md">
+              {filteredAltProducts.map((p: any) => (
+                <div
+                  key={p.id}
+                  className={`px-3 py-2 text-xs cursor-pointer hover:bg-muted/50 flex items-center justify-between ${altProductId === p.id ? "bg-primary/10 font-medium" : ""}`}
+                  onClick={() => setAltProductId(p.id)}
+                >
+                  <span>{p.name}</span>
+                  <span className="text-muted-foreground">{p.unit}</span>
+                </div>
+              ))}
+              {filteredAltProducts.length === 0 && (
+                <p className="text-xs text-muted-foreground p-3">Inga produkter hittades.</p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setAltDialogItem(null)}>Avbryt</Button>
+            <Button size="sm" disabled={!altProductId || createChange.isPending} onClick={handleSuggestAlternative}>
+              Föreslå alternativ
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Summary */}
       {!isLoading && schedule.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              <AlertTriangle className="h-4 w-4 text-warning" />
               Sammanfattning denna vecka
             </CardTitle>
           </CardHeader>
