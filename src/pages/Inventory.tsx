@@ -95,12 +95,16 @@ export default function Inventory() {
   const createLocation = useCreateStorageLocation();
   const upsertStock = useUpsertStockLocation();
 
-  // Filter stock for active store
+  // Compute aggregated stock: "Total Butik" should include stock from all other locations in the same store
   const storeStock = useMemo(() => {
     let filtered = allStock;
     if (activeStoreId) {
       filtered = allStock.filter((s: any) => s.storage_locations?.store_id === activeStoreId);
     }
+
+    // Aggregate: combine quantities across all locations per product, 
+    // and also keep individual location entries for the detail view
+    // For KPIs we use aggregated (unique product) totals
     if (search) {
       filtered = filtered.filter((s: any) =>
         s.products?.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -109,6 +113,27 @@ export default function Inventory() {
     }
     return filtered;
   }, [allStock, activeStoreId, search]);
+
+  // Aggregated stock per product (summing across all locations in the store) for KPIs
+  const aggregatedStock = useMemo(() => {
+    const map = new Map<string, { quantity: number; cost_price: number; min_stock: number; product: any }>();
+    storeStock.forEach((s: any) => {
+      const pid = s.product_id;
+      const existing = map.get(pid);
+      if (existing) {
+        existing.quantity += Number(s.quantity) || 0;
+        existing.min_stock += Number(s.min_stock) || 0;
+      } else {
+        map.set(pid, {
+          quantity: Number(s.quantity) || 0,
+          cost_price: Number(s.products?.cost_price) || 0,
+          min_stock: Number(s.min_stock) || 0,
+          product: s.products,
+        });
+      }
+    });
+    return map;
+  }, [storeStock]);
 
   // Group stock by category
   const stockByCategory = useMemo(() => {
