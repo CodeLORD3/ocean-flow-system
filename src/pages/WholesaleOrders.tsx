@@ -479,13 +479,14 @@ export default function WholesaleOrders() {
                   </thead>
                   <tbody>
                     {archivedOrders.length === 0 && (
-                      <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Inga arkiverade ordrar.</td></tr>
+                      <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Inga arkiverade ordrar.</td></tr>
                     )}
                     {archivedOrders.map((o: any) => (
                       <tr key={o.id} className="border-b border-border/40 cursor-pointer hover:bg-muted/20" onClick={() => setSelectedOrder(o)}>
                         <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
                         <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                         <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
+                        <td className="p-3 text-muted-foreground">{(o as any).desired_delivery_date || "–"}</td>
                         <td className="p-3 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
                         <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
                           {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
