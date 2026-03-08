@@ -742,14 +742,19 @@ export default function PurchaseReporting() {
           .maybeSingle();
 
         if (existing) {
+          // Weighted average unit cost
+          const oldTotal = Number(existing.quantity) * Number(existing.unit_cost || 0);
+          const newTotal = Number(line.quantity) * Number(line.unit_price || 0);
+          const combinedQty = Number(existing.quantity) + Number(line.quantity);
+          const avgCost = combinedQty > 0 ? (oldTotal + newTotal) / combinedQty : 0;
           await supabase
             .from("product_stock_locations")
-            .update({ quantity: Number(existing.quantity) + Number(line.quantity), updated_at: new Date().toISOString() })
+            .update({ quantity: combinedQty, unit_cost: avgCost, updated_at: new Date().toISOString() })
             .eq("id", existing.id);
         } else {
           await supabase
             .from("product_stock_locations")
-            .insert({ product_id: line.product_id!, location_id: GROSSIST_FLYTANDE_ID, quantity: Number(line.quantity) });
+            .insert({ product_id: line.product_id!, location_id: GROSSIST_FLYTANDE_ID, quantity: Number(line.quantity), unit_cost: Number(line.unit_price || 0) });
         }
       }
     },
