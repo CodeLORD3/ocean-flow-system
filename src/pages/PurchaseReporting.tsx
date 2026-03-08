@@ -718,6 +718,8 @@ export default function PurchaseReporting() {
     },
   });
 
+  const GROSSIST_FLYTANDE_ID = "5da57ad6-f72c-4a84-9873-87174d194e10";
+
   const confirmReport = useMutation({
     mutationFn: async (reportId: string) => {
       const lines = allLines.filter((l) => l.report_id === reportId);
@@ -727,11 +729,36 @@ export default function PurchaseReporting() {
         .update({ status: "Godkänd", total_amount: total })
         .eq("id", reportId);
       if (error) throw error;
+
+      // Transfer confirmed lines to Grossist Flytande storage
+      const productLines = lines.filter((l) => l.product_id);
+      for (const line of productLines) {
+        // Check if there's already stock for this product at Grossist Flytande
+        const { data: existing } = await supabase
+          .from("product_stock_locations")
+          .select("id, quantity")
+          .eq("product_id", line.product_id!)
+          .eq("location_id", GROSSIST_FLYTANDE_ID)
+          .maybeSingle();
+
+        if (existing) {
+          await supabase
+            .from("product_stock_locations")
+            .update({ quantity: Number(existing.quantity) + Number(line.quantity), updated_at: new Date().toISOString() })
+            .eq("id", existing.id);
+        } else {
+          await supabase
+            .from("product_stock_locations")
+            .insert({ product_id: line.product_id!, location_id: GROSSIST_FLYTANDE_ID, quantity: Number(line.quantity) });
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
+      queryClient.invalidateQueries({ queryKey: ["product_stock_locations"] });
+      queryClient.invalidateQueries({ queryKey: ["all_stock_locations"] });
       setSelectedReportId(null);
-      toast({ title: "Inköp bekräftat", description: "Dokumentet och raderna har låsts." });
+      toast({ title: "Inköp bekräftat", description: "Dokumentet har låsts och varor har lagts till i Grossist Flytande." });
     },
   });
 
