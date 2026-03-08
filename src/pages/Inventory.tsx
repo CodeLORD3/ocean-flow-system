@@ -537,8 +537,8 @@ export default function Inventory() {
         </CardContent></Card>
       </div>
 
-      {site === "purchasing" ? (
-        /* ── INKÖP PORTAL: Location accordion ── */
+      {isLocationPortal ? (
+        /* ── INKÖP/PRODUKTION PORTAL: Location accordion ── */
         <Card className="shadow-card">
           <CardHeader className="pb-2">
             <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
