@@ -6,6 +6,7 @@ export type TransportSchedule = {
   zone_key: string;
   label: string;
   departure_days_before: number;
+  departure_weekday: number; // 1=Mon, 7=Sun
   departure_time: string;
   badge_color: string;
   created_at: string | null;
@@ -19,7 +20,7 @@ export function useTransportSchedules() {
       const { data, error } = await supabase
         .from("transport_schedules")
         .select("*")
-        .order("departure_days_before", { ascending: false });
+        .order("departure_weekday", { ascending: true });
       if (error) throw error;
       return data as TransportSchedule[];
     },
@@ -29,11 +30,11 @@ export function useTransportSchedules() {
 export function useUpdateTransportSchedule() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (params: { id: string; departure_days_before: number; departure_time: string }) => {
+    mutationFn: async (params: { id: string; departure_weekday: number; departure_time: string }) => {
       const { error } = await supabase
         .from("transport_schedules")
         .update({
-          departure_days_before: params.departure_days_before,
+          departure_weekday: params.departure_weekday,
           departure_time: params.departure_time,
           updated_at: new Date().toISOString(),
         })

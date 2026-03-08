@@ -9,13 +9,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { format, startOfWeek, addDays, isSameDay, parseISO, getISOWeek, getYear } from "date-fns";
+import { format, startOfWeek, addDays, isSameDay, parseISO, getISOWeek, getYear, getDay } from "date-fns";
 import { sv } from "date-fns/locale";
 import { CalendarDays, Clock, ChevronLeft, ChevronRight, AlertTriangle, Truck, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 const WEEKDAYS = ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag", "Söndag"];
+const WEEKDAY_OPTIONS = WEEKDAYS.map((name, i) => ({ value: i + 1, label: name }));
+
+/** Convert JS getDay() (0=Sun) to our 1=Mon format */
+function jsToWeekday(jsDay: number): number {
+  return jsDay === 0 ? 7 : jsDay;
+}
+
+/** For a given delivery date, find the latest purchase date = the transport departure weekday
+ *  that falls on or before the delivery date in the same week. */
+function getLatestPurchaseDate(deliveryDate: Date, departureWeekday: number): Date {
+  const deliveryWd = jsToWeekday(getDay(deliveryDate));
+  // How many days back from delivery to the departure weekday
+  let diff = deliveryWd - departureWeekday;
+  if (diff < 0) diff += 7; // departure is in the previous week
+  return addDays(deliveryDate, -diff);
+}
 
 function getStoreZoneKey(store: { city: string; name: string }): string {
   const city = store.city?.toLowerCase() || "";
@@ -29,21 +45,19 @@ function TransportZoneBadge({
   schedule,
   onSave,
 }: {
-  schedule: { id: string; zone_key: string; label: string; departure_days_before: number; departure_time: string; badge_color: string };
-  onSave: (id: string, days: number, time: string) => void;
+  schedule: { id: string; zone_key: string; label: string; departure_weekday: number; departure_time: string; badge_color: string };
+  onSave: (id: string, weekday: number, time: string) => void;
 }) {
-  const [days, setDays] = useState(schedule.departure_days_before);
+  const [weekday, setWeekday] = useState(schedule.departure_weekday);
   const [time, setTime] = useState(schedule.departure_time);
   const [open, setOpen] = useState(false);
 
   const handleSave = () => {
-    onSave(schedule.id, days, time);
+    onSave(schedule.id, weekday, time);
     setOpen(false);
   };
 
-  const description = days === 0
-    ? `Samma dag, avgång ${schedule.departure_time}`
-    : `${days} ${days === 1 ? "dag" : "dagar"} före, avgång ${schedule.departure_time}`;
+  const dayName = WEEKDAYS[(schedule.departure_weekday - 1) % 7];
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -53,7 +67,9 @@ function TransportZoneBadge({
             <Truck className="h-3 w-3 mr-1" />
             {schedule.label}
           </Badge>
-          <span className="text-[10px] text-muted-foreground">{description}</span>
+          <span className="text-[10px] text-muted-foreground">
+            Avgång: {dayName} {schedule.departure_time}
+          </span>
           <Settings2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
         </button>
       </PopoverTrigger>
@@ -61,26 +77,25 @@ function TransportZoneBadge({
         <div className="space-y-3">
           <div>
             <h4 className="font-medium text-sm text-foreground">Transport: {schedule.label}</h4>
-            <p className="text-xs text-muted-foreground">Ställ in avgångstid för transport</p>
+            <p className="text-xs text-muted-foreground">Välj veckodag och tid för transportavgång</p>
           </div>
           <div className="space-y-2">
-            <Label className="text-xs">Dagar före leverans</Label>
-            <Select value={String(days)} onValueChange={(v) => setDays(Number(v))}>
+            <Label className="text-xs">Avgångsdag</Label>
+            <Select value={String(weekday)} onValueChange={(v) => setWeekday(Number(v))}>
               <SelectTrigger className="h-8 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="0">Samma dag (0)</SelectItem>
-                <SelectItem value="1">1 dag före</SelectItem>
-                <SelectItem value="2">2 dagar före</SelectItem>
-                <SelectItem value="3">3 dagar före</SelectItem>
-                <SelectItem value="4">4 dagar före</SelectItem>
-                <SelectItem value="5">5 dagar före</SelectItem>
+                {WEEKDAY_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={String(opt.value)}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label className="text-xs">Avgångstid (senast inköp)</Label>
+            <Label className="text-xs">Avgångstid</Label>
             <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="h-8 text-xs" />
           </div>
           <Button size="sm" className="w-full" onClick={handleSave}>
@@ -121,14 +136,14 @@ export default function PurchaseSchedule() {
   }, [stores]);
 
   const zoneMap = useMemo(() => {
-    const m = new Map<string, (typeof transportSchedules extends (infer T)[] | undefined ? T : never)>();
+    const m = new Map<string, NonNullable<typeof transportSchedules>[number]>();
     transportSchedules?.forEach((s) => m.set(s.zone_key, s));
     return m;
   }, [transportSchedules]);
 
-  const handleSaveSchedule = (id: string, days: number, time: string) => {
+  const handleSaveSchedule = (id: string, weekday: number, time: string) => {
     updateSchedule.mutate(
-      { id, departure_days_before: days, departure_time: time },
+      { id, departure_weekday: weekday, departure_time: time },
       { onSuccess: () => toast.success("Transportschema uppdaterat") },
     );
   };
@@ -148,6 +163,7 @@ export default function PurchaseSchedule() {
       deliveryDate: Date;
       latestPurchaseDate: Date;
       departureTime: string;
+      departureWeekday: number;
       category: string;
     };
 
@@ -167,7 +183,7 @@ export default function PurchaseSchedule() {
         if (!deliveryDateStr) continue;
 
         const deliveryDate = parseISO(deliveryDateStr);
-        const latestPurchaseDate = addDays(deliveryDate, -zone.departure_days_before);
+        const latestPurchaseDate = getLatestPurchaseDate(deliveryDate, zone.departure_weekday);
 
         items.push({
           orderId: order.id,
@@ -180,6 +196,7 @@ export default function PurchaseSchedule() {
           deliveryDate,
           latestPurchaseDate,
           departureTime: zone.departure_time,
+          departureWeekday: zone.departure_weekday,
           category: line.products?.category || "Övrigt",
         });
       }
@@ -245,7 +262,7 @@ export default function PurchaseSchedule() {
           <CardTitle className="text-sm flex items-center gap-2">
             <Truck className="h-4 w-4 text-muted-foreground" />
             Transportzoner
-            <span className="text-xs font-normal text-muted-foreground">(klicka för att ändra avgångstid)</span>
+            <span className="text-xs font-normal text-muted-foreground">(klicka för att ändra avgångsdag & tid)</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -303,8 +320,7 @@ export default function PurchaseSchedule() {
                       <TableBody>
                         {items.map((item, i) => {
                           const zone = zoneMap.get(item.zoneKey);
-                          const isUrgent =
-                            view === "purchase" && isSameDay(item.latestPurchaseDate, new Date());
+                          const isUrgent = view === "purchase" && isSameDay(item.latestPurchaseDate, new Date());
                           return (
                             <TableRow
                               key={`${item.orderId}-${item.productName}-${i}`}
@@ -317,10 +333,7 @@ export default function PurchaseSchedule() {
                                 {item.quantity} {item.unit}
                               </TableCell>
                               <TableCell className="px-2 py-1.5">
-                                <Badge
-                                  variant={(zone?.badge_color || "default") as any}
-                                  className="text-[9px]"
-                                >
+                                <Badge variant={(zone?.badge_color || "default") as any} className="text-[9px]">
                                   {item.storeName}
                                 </Badge>
                               </TableCell>
@@ -367,10 +380,7 @@ export default function PurchaseSchedule() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               {transportSchedules?.map((zone) => {
                 const count = schedule.filter((s) => s.zoneKey === zone.zone_key).length;
-                const desc =
-                  zone.departure_days_before === 0
-                    ? `Samma dag, avgång ${zone.departure_time}`
-                    : `${zone.departure_days_before} ${zone.departure_days_before === 1 ? "dag" : "dagar"} före, avgång ${zone.departure_time}`;
+                const dayName = WEEKDAYS[(zone.departure_weekday - 1) % 7];
                 return (
                   <div key={zone.id} className="rounded-lg border p-3">
                     <div className="flex items-center justify-between">
@@ -379,7 +389,9 @@ export default function PurchaseSchedule() {
                       </Badge>
                       <span className="text-lg font-bold text-foreground">{count}</span>
                     </div>
-                    <p className="mt-1 text-xs text-muted-foreground">{desc}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Avgång: {dayName} kl {zone.departure_time}
+                    </p>
                   </div>
                 );
               })}
