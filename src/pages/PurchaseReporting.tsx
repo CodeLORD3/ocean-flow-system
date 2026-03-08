@@ -428,9 +428,20 @@ export default function PurchaseReporting() {
   // Add line from search (existing product)
   const addLineFromProduct = useMutation({
     mutationFn: async (product: any) => {
-      if (!selectedReportId) throw new Error("Välj en rapport först");
+      let reportId = selectedReportId;
+      if (!reportId) {
+        // Auto-create a report when none is selected
+        const { data: newReport, error: rErr } = await supabase
+          .from("purchase_reports")
+          .insert({ file_name: `Manuell rapport ${format(new Date(), "yyyy-MM-dd")}`, file_url: "", status: "Klar" })
+          .select()
+          .single();
+        if (rErr) throw rErr;
+        reportId = newReport.id;
+        setSelectedReportId(reportId);
+      }
       const { error } = await supabase.from("purchase_report_lines").insert({
-        report_id: selectedReportId,
+        report_id: reportId,
         product_name: product.name,
         product_id: product.id,
         quantity: 0,
@@ -444,6 +455,7 @@ export default function PurchaseReporting() {
       if (error) throw error;
     },
     onSuccess: (_, product) => {
+      queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
       queryClient.invalidateQueries({ queryKey: ["purchase-report-lines"] });
       setSearchQuery("");
       setSearchOpen(false);
