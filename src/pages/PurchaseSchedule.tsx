@@ -242,7 +242,7 @@ export default function PurchaseSchedule() {
     }
 
     return Array.from(grouped.values());
-  }, [orders, stores, transportSchedules, storeMap, zoneMap]);
+  }, [orders, stores, transportSchedules, storeMap, zoneSchedules]);
 
   // All unique categories
   const allCategories = useMemo(() => {
