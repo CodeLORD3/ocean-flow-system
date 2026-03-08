@@ -736,7 +736,7 @@ export default function PurchaseReporting() {
         // Check if there's already stock for this product at Grossist Flytande
         const { data: existing } = await supabase
           .from("product_stock_locations")
-          .select("id, quantity")
+          .select("id, quantity, unit_cost")
           .eq("product_id", line.product_id!)
           .eq("location_id", GROSSIST_FLYTANDE_ID)
           .maybeSingle();
