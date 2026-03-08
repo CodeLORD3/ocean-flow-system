@@ -251,7 +251,7 @@ export default function PurchaseSchedule() {
     return map;
   };
 
-  const byDeliveryDay = useMemo(() => groupByDay((i) => i.deliveryDate), [schedule, weekDates]);
+  const byDeliveryDay = useMemo(() => groupByDay((i) => i.earliestDelivery), [schedule, weekDates]);
   const byPurchaseDay = useMemo(() => groupByDay((i) => i.latestPurchaseDate), [schedule, weekDates]);
 
   const activeMap = view === "purchase" ? byPurchaseDay : byDeliveryDay;
