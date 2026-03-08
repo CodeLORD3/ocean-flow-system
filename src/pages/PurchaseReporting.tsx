@@ -704,6 +704,17 @@ export default function PurchaseReporting() {
     },
   });
 
+  const renameReport = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { error } = await supabase.from("purchase_reports").update({ file_name: name }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
+      toast({ title: "Namn uppdaterat" });
+    },
+  });
+
   const confirmReport = useMutation({
     mutationFn: async (reportId: string) => {
       const lines = allLines.filter((l) => l.report_id === reportId);
