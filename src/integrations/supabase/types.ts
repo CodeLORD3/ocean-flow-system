@@ -709,6 +709,7 @@ export type Database = {
         Row: {
           created_at: string | null
           created_by: string | null
+          desired_delivery_date: string | null
           id: string
           notes: string | null
           order_week: string
@@ -718,6 +719,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           created_by?: string | null
+          desired_delivery_date?: string | null
           id?: string
           notes?: string | null
           order_week: string
@@ -727,6 +729,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           created_by?: string | null
+          desired_delivery_date?: string | null
           id?: string
           notes?: string | null
           order_week?: string
