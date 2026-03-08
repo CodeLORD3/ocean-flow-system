@@ -51,6 +51,7 @@ export default function ProductBankTab() {
   const openAdd = () => {
     setEditId(null);
     setFormName(""); setFormCategory(""); setFormUnit("KG"); setFormHsCode(""); setFormWeight(""); setFormSku("");
+    setAddingCategory(false); setNewCategory("");
     setDialogOpen(true);
   };
 
