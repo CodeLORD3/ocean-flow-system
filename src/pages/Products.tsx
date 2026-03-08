@@ -29,7 +29,7 @@ import { generateEAN13 } from "@/lib/barcode";
 import { format } from "date-fns";
 
 const UNITS = ["KG", "ST", "L", "FÖRP"];
-const PRODUCERS = ["Inköp", "Produktion"];
+const PRODUCERS = ["Inköp", "Produktion", "Inköp/Produktion"];
 
 interface InlineEdit {
   cost_price: number;
