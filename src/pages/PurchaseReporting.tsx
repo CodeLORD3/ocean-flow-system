@@ -345,9 +345,9 @@ export default function PurchaseReporting() {
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
 
-  // Product search bar state
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchIdx, setSearchIdx] = useState(0);
 
   // New product dialog
   const [newProductOpen, setNewProductOpen] = useState(false);
