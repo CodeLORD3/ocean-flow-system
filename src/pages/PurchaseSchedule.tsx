@@ -229,7 +229,7 @@ export default function PurchaseSchedule() {
           productName: item.productName,
           unit: item.unit,
           totalQuantity: item.quantity,
-          shops: [{ name: item.storeName, zoneKey: item.zoneKey, quantity: item.quantity }],
+          shops: [{ name: item.storeName, zoneKey: item.zoneKey, quantity: item.quantity, deliveryDate: item.deliveryDate }],
           latestPurchaseDate: item.latestPurchaseDate,
           earliestDelivery: item.deliveryDate,
           departureTime: item.departureTime,
