@@ -1,11 +1,14 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
   Warehouse, Search, Plus, Package, AlertTriangle, MapPin,
   Edit, ArrowRightLeft, ScanLine, Camera, ClipboardList, X, CheckCircle2,
-  ChevronDown, ChevronRight,
+  ChevronDown, ChevronRight, Trash2, Scissors, Move,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -88,13 +91,153 @@ export default function Inventory() {
   const [invSaving, setInvSaving] = useState(false);
   const [invLocation, setInvLocation] = useState("");
 
+  // Stock action state (purchasing portal)
+  const [selectedItems, setSelectedItems] = useState<Map<string, Set<string>>>(new Map()); // locationId -> Set of stock item ids
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [splitDialogOpen, setSplitDialogOpen] = useState(false);
+  const [activeLocationId, setActiveLocationId] = useState<string>("");
+  const [deleteReason, setDeleteReason] = useState("");
+  const [splitQty, setSplitQty] = useState("");
+  const [splitTargetLocation, setSplitTargetLocation] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
+
   const { data: stores = [] } = useStores();
   const { data: products = [] } = useProducts();
+  const queryClient = useQueryClient();
   const storeFilter = activeStoreId || "all";
   const { data: locations = [], isLoading: loadingLoc } = useStorageLocations(storeFilter !== "all" ? storeFilter : undefined);
   const { data: allStock = [], isLoading: loadingStock } = useAllStockByLocation();
   const createLocation = useCreateStorageLocation();
   const upsertStock = useUpsertStockLocation();
+
+  const getSelectedForLocation = (locId: string) => selectedItems.get(locId) || new Set<string>();
+  const toggleItemSelection = (locId: string, itemId: string) => {
+    setSelectedItems(prev => {
+      const next = new Map(prev);
+      const set = new Set(next.get(locId) || []);
+      if (set.has(itemId)) set.delete(itemId); else set.add(itemId);
+      if (set.size === 0) next.delete(locId); else next.set(locId, set);
+      return next;
+    });
+  };
+  const clearSelection = (locId: string) => {
+    setSelectedItems(prev => { const next = new Map(prev); next.delete(locId); return next; });
+  };
+
+  const getSelectedStockItems = (locId: string) => {
+    const ids = getSelectedForLocation(locId);
+    return allStock.filter((s: any) => ids.has(s.id));
+  };
+
+  const invalidateStock = () => {
+    queryClient.invalidateQueries({ queryKey: ["product_stock_locations"] });
+    queryClient.invalidateQueries({ queryKey: ["all_stock_locations"] });
+  };
+
+  const handleMove = async (targetLocationId: string) => {
+    setActionLoading(true);
+    try {
+      const items = getSelectedStockItems(activeLocationId);
+      for (const item of items) {
+        // Check if product already exists at target
+        const { data: existing } = await supabase
+          .from("product_stock_locations")
+          .select("id, quantity")
+          .eq("product_id", item.product_id)
+          .eq("location_id", targetLocationId)
+          .maybeSingle();
+
+        if (existing) {
+          await supabase.from("product_stock_locations")
+            .update({ quantity: Number(existing.quantity) + Number(item.quantity), updated_at: new Date().toISOString() })
+            .eq("id", existing.id);
+        } else {
+          await supabase.from("product_stock_locations")
+            .insert({ product_id: item.product_id, location_id: targetLocationId, quantity: Number(item.quantity) });
+        }
+        // Remove from source
+        await supabase.from("product_stock_locations").delete().eq("id", item.id);
+      }
+      clearSelection(activeLocationId);
+      invalidateStock();
+      toast({ title: "Flyttat", description: `${items.length} produkt(er) flyttade` });
+      setMoveDialogOpen(false);
+    } catch (err: any) {
+      toast({ title: "Fel", description: err.message, variant: "destructive" });
+    }
+    setActionLoading(false);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteReason.trim()) return;
+    setActionLoading(true);
+    try {
+      const items = getSelectedStockItems(activeLocationId);
+      for (const item of items) {
+        await supabase.from("deleted_stock_log").insert({
+          product_id: item.product_id,
+          location_id: item.location_id,
+          quantity: Number(item.quantity),
+          reason: deleteReason.trim(),
+        });
+        await supabase.from("product_stock_locations").delete().eq("id", item.id);
+      }
+      clearSelection(activeLocationId);
+      invalidateStock();
+      toast({ title: "Raderat", description: `${items.length} produkt(er) raderade` });
+      setDeleteDialogOpen(false);
+      setDeleteReason("");
+    } catch (err: any) {
+      toast({ title: "Fel", description: err.message, variant: "destructive" });
+    }
+    setActionLoading(false);
+  };
+
+  const handleSplit = async () => {
+    if (!splitQty || !splitTargetLocation) return;
+    setActionLoading(true);
+    try {
+      const items = getSelectedStockItems(activeLocationId);
+      // Split only works on first selected item
+      const item = items[0];
+      const splitAmount = Number(splitQty);
+      const remaining = Number(item.quantity) - splitAmount;
+      if (splitAmount <= 0 || splitAmount >= Number(item.quantity)) {
+        toast({ title: "Ogiltigt antal", description: "Ange ett antal mindre än nuvarande.", variant: "destructive" });
+        setActionLoading(false);
+        return;
+      }
+      // Update source quantity
+      await supabase.from("product_stock_locations")
+        .update({ quantity: remaining, updated_at: new Date().toISOString() })
+        .eq("id", item.id);
+      // Add/merge to target
+      const { data: existing } = await supabase
+        .from("product_stock_locations")
+        .select("id, quantity")
+        .eq("product_id", item.product_id)
+        .eq("location_id", splitTargetLocation)
+        .maybeSingle();
+      if (existing) {
+        await supabase.from("product_stock_locations")
+          .update({ quantity: Number(existing.quantity) + splitAmount, updated_at: new Date().toISOString() })
+          .eq("id", existing.id);
+      } else {
+        await supabase.from("product_stock_locations")
+          .insert({ product_id: item.product_id, location_id: splitTargetLocation, quantity: splitAmount });
+      }
+      clearSelection(activeLocationId);
+      invalidateStock();
+      toast({ title: "Splittat", description: `${splitAmount} ${item.products?.unit || "kg"} flyttades` });
+      setSplitDialogOpen(false);
+      setSplitQty("");
+      setSplitTargetLocation("");
+    } catch (err: any) {
+      toast({ title: "Fel", description: err.message, variant: "destructive" });
+    }
+    setActionLoading(false);
+  };
 
   // Compute aggregated stock: "Total Butik" should include stock from all other locations in the same store
   const storeStock = useMemo(() => {
@@ -402,22 +545,38 @@ export default function Inventory() {
                 {stockByLocation.map((loc: any) => {
                   const isExpanded = expandedLocations.has(loc.id);
                   return (
-                    <div key={loc.id} className="border border-border/50 rounded-md overflow-hidden">
-                      <button
-                        className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors text-left"
-                        onClick={() => toggleLocation(loc.id)}
-                      >
-                        <div className="flex items-center gap-2">
+                     <div key={loc.id} className="border border-border/50 rounded-md overflow-hidden">
+                      <div className="flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors">
+                        <button
+                          className="flex items-center gap-2 flex-1 text-left"
+                          onClick={() => toggleLocation(loc.id)}
+                        >
                           {isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
                           <MapPin className="h-3.5 w-3.5 text-primary" />
                           <span className="text-sm font-medium text-foreground">{loc.name}</span>
                           <Badge variant="secondary" className="text-[10px] h-5">{loc.items.length} produkter</Badge>
+                        </button>
+                        <div className="flex items-center gap-2">
+                          {getSelectedForLocation(loc.id).size > 0 && (
+                            <div className="flex items-center gap-1 mr-2">
+                              <Badge variant="outline" className="text-[10px] h-5">{getSelectedForLocation(loc.id).size} valda</Badge>
+                              <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] gap-1" onClick={() => { setActiveLocationId(loc.id); setMoveDialogOpen(true); }}>
+                                <Move className="h-3 w-3" /> Flytta
+                              </Button>
+                              <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => { setActiveLocationId(loc.id); setDeleteDialogOpen(true); }}>
+                                <Trash2 className="h-3 w-3" /> Radera
+                              </Button>
+                              {getSelectedForLocation(loc.id).size === 1 && (
+                                <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] gap-1" onClick={() => { setActiveLocationId(loc.id); setSplitDialogOpen(true); }}>
+                                  <Scissors className="h-3 w-3" /> Splitta
+                                </Button>
+                              )}
+                            </div>
+                          )}
+                          <span className="text-xs text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
+                          <span className="text-xs font-medium text-foreground">{fmt(loc.totalValue)}</span>
                         </div>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span>{loc.totalQty.toLocaleString("sv-SE")} kg</span>
-                          <span className="font-medium text-foreground">{fmt(loc.totalValue)}</span>
-                        </div>
-                      </button>
+                      </div>
                       {isExpanded && (
                         <div className="border-t border-border/50">
                           {loc.items.length === 0 ? (
@@ -426,6 +585,7 @@ export default function Inventory() {
                             <table className="w-full text-xs">
                               <thead>
                                 <tr className="bg-muted/20">
+                                  <th className="px-3 py-1.5 w-8"></th>
                                   <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Produkt</th>
                                   <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">SKU</th>
                                   <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Kategori</th>
@@ -436,8 +596,12 @@ export default function Inventory() {
                               <tbody>
                                 {loc.items.map((s: any) => {
                                   const value = Number(s.quantity) * (Number(s.products?.cost_price) || 0);
+                                  const isChecked = getSelectedForLocation(loc.id).has(s.id);
                                   return (
-                                    <tr key={s.id} className="border-b border-border/30 last:border-0 hover:bg-muted/20">
+                                    <tr key={s.id} className={`border-b border-border/30 last:border-0 hover:bg-muted/20 ${isChecked ? "bg-primary/5" : ""}`}>
+                                      <td className="px-3 py-2 text-center">
+                                        <Checkbox checked={isChecked} onCheckedChange={() => toggleItemSelection(loc.id, s.id)} />
+                                      </td>
                                       <td className="px-3 py-2 font-medium text-foreground">{s.products?.name}</td>
                                       <td className="px-3 py-2 font-mono text-muted-foreground text-[10px]">{s.products?.sku}</td>
                                       <td className="px-3 py-2 text-muted-foreground">{s.products?.category}</td>
@@ -877,6 +1041,121 @@ export default function Inventory() {
           <DialogFooter>
             <Button size="sm" onClick={handleUpsertStock} disabled={!stockProduct || !stockLocation || !stockQty || upsertStock.isPending}>
               {upsertStock.isPending ? "Sparar..." : "Uppdatera saldo"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── FLYTTA dialog ── */}
+      <Dialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="font-heading">Flytta produkter</DialogTitle>
+            <DialogDescription className="text-xs">
+              Välj destination för {getSelectedForLocation(activeLocationId).size} valda produkt(er).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1 max-h-64 overflow-y-auto">
+            {locations.filter((l: any) => l.id !== activeLocationId).map((loc: any) => (
+              <button
+                key={loc.id}
+                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-md border border-border/50 hover:bg-muted/40 transition-colors text-left"
+                onClick={() => handleMove(loc.id)}
+                disabled={actionLoading}
+              >
+                <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span className="text-sm font-medium text-foreground">{loc.name}</span>
+                {loc.zone && <Badge variant="secondary" className="text-[10px] h-5">{loc.zone}</Badge>}
+              </button>
+            ))}
+          </div>
+          {actionLoading && <p className="text-xs text-muted-foreground text-center">Flyttar...</p>}
+        </DialogContent>
+      </Dialog>
+
+      {/* ── RADERA dialog ── */}
+      <Dialog open={deleteDialogOpen} onOpenChange={(o) => { setDeleteDialogOpen(o); if (!o) setDeleteReason(""); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="font-heading text-destructive">Radera produkter</DialogTitle>
+            <DialogDescription className="text-xs">
+              {getSelectedForLocation(activeLocationId).size} produkt(er) kommer tas bort från lagret. Ange en anledning.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Anledning *</Label>
+              <Textarea
+                value={deleteReason}
+                onChange={e => setDeleteReason(e.target.value)}
+                placeholder="T.ex. Utgånget, skadat, felrapporterat..."
+                className="text-xs min-h-[80px]"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setDeleteDialogOpen(false)}>Avbryt</Button>
+            <Button variant="destructive" size="sm" onClick={handleDelete} disabled={!deleteReason.trim() || actionLoading}>
+              {actionLoading ? "Raderar..." : "Bekräfta radering"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── SPLITTA dialog ── */}
+      <Dialog open={splitDialogOpen} onOpenChange={(o) => { setSplitDialogOpen(o); if (!o) { setSplitQty(""); setSplitTargetLocation(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="font-heading">Splitta produkt</DialogTitle>
+            <DialogDescription className="text-xs">
+              Dela upp kvantiteten till ett annat lagerställe.
+            </DialogDescription>
+          </DialogHeader>
+          {(() => {
+            const items = getSelectedStockItems(activeLocationId);
+            const item = items[0];
+            if (!item) return null;
+            return (
+              <div className="space-y-3">
+                <div className="p-2.5 rounded-md bg-muted/30 border border-border/50">
+                  <p className="text-xs font-medium text-foreground">{item.products?.name}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Nuvarande: {Number(item.quantity).toLocaleString("sv-SE")} {item.products?.unit || "kg"}
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Antal att splitta *</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={splitQty}
+                    onChange={e => setSplitQty(e.target.value)}
+                    placeholder={`Max ${Number(item.quantity) - 0.1}`}
+                    className="h-8 text-xs"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Destination *</Label>
+                  <div className="space-y-1 max-h-40 overflow-y-auto">
+                    {locations.filter((l: any) => l.id !== activeLocationId).map((loc: any) => (
+                      <button
+                        key={loc.id}
+                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-md border transition-colors text-left text-xs ${splitTargetLocation === loc.id ? "border-primary bg-primary/10" : "border-border/50 hover:bg-muted/40"}`}
+                        onClick={() => setSplitTargetLocation(loc.id)}
+                      >
+                        <MapPin className="h-3 w-3 text-primary shrink-0" />
+                        <span className="font-medium text-foreground">{loc.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setSplitDialogOpen(false)}>Avbryt</Button>
+            <Button size="sm" onClick={handleSplit} disabled={!splitQty || !splitTargetLocation || actionLoading}>
+              {actionLoading ? "Splittar..." : "Bekräfta split"}
             </Button>
           </DialogFooter>
         </DialogContent>
