@@ -729,6 +729,9 @@ function OrderDetailWithEdit({ order, products, onClose, toast }: {
           ))}
           <p className="text-[10px] text-muted-foreground">Acceptera = markeras som ej tillgänglig i ordern. Ta bort = produkten tas bort från ordern.</p>
         </div>
+      )}
+
+      {/* View mode */}
       {!editMode && (
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
