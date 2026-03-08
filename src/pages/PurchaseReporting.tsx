@@ -276,7 +276,7 @@ function EditableRow({
           )}
         </Popover>
       </TableCell>
-      <TableCell className="py-1 px-2">
+      <TableCell className="py-1 px-1 w-[60px]">
         <Input
           ref={qtyInputRef}
           type="number"
