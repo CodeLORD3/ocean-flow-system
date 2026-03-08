@@ -505,7 +505,7 @@ function ReportSection({
         ) : (
           <Badge variant="secondary" className="text-[10px] shrink-0">Ej bekräftad</Badge>
         )}
-      </button>
+      </div>
 
       {/* Expanded content */}
       {expanded && (
