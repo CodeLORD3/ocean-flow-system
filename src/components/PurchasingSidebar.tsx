@@ -68,7 +68,7 @@ type NavSection = { label: string; items: typeof overviewNav };
 
 const sections: NavSection[] = [
   { label: "Översikt", items: overviewNav },
-  { label: "Försäljning", items: salesNav },
+  { label: "Inköp", items: salesNav },
   { label: "Lagerstyrning", items: inventoryNav },
   { label: "Inköp", items: purchasingNav },
   { label: "Ekonomi & Rapporter", items: financeNav },
