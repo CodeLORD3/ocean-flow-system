@@ -645,6 +645,73 @@ export type Database = {
           },
         ]
       }
+      shop_order_change_requests: {
+        Row: {
+          change_type: string
+          created_at: string
+          id: string
+          new_value: string
+          old_value: string | null
+          order_line_id: string | null
+          product_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          shop_order_id: string
+          status: string
+          unit: string | null
+        }
+        Insert: {
+          change_type: string
+          created_at?: string
+          id?: string
+          new_value: string
+          old_value?: string | null
+          order_line_id?: string | null
+          product_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          shop_order_id: string
+          status?: string
+          unit?: string | null
+        }
+        Update: {
+          change_type?: string
+          created_at?: string
+          id?: string
+          new_value?: string
+          old_value?: string | null
+          order_line_id?: string | null
+          product_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          shop_order_id?: string
+          status?: string
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_order_change_requests_order_line_id_fkey"
+            columns: ["order_line_id"]
+            isOneToOne: false
+            referencedRelation: "shop_order_lines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_order_change_requests_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_order_change_requests_shop_order_id_fkey"
+            columns: ["shop_order_id"]
+            isOneToOne: false
+            referencedRelation: "shop_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shop_order_lines: {
         Row: {
           category_section: string | null
