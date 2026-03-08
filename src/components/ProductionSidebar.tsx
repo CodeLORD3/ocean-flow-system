@@ -7,6 +7,7 @@ import {
   BarChart3,
   Settings,
   Factory,
+  CalendarDays,
   Package,
   FileText,
   CreditCard,
@@ -49,6 +50,7 @@ const inventoryNav = [
 ];
 
 const productionNav = [
+  { title: "Produktionsschema", url: "/production-schedule", icon: CalendarDays },
   { title: "Produktion/Grossist", url: "/wholesale", icon: Factory },
 ];
 

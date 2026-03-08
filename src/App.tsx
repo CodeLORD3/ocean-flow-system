@@ -22,6 +22,7 @@ import PurchaseReporting from "./pages/PurchaseReporting";
 import Pricing from "./pages/Pricing";
 import ShopReports from "./pages/ShopReports";
 import PurchaseSchedule from "./pages/PurchaseSchedule";
+import ProductionSchedule from "./pages/ProductionSchedule";
 import ReportsRouter from "./pages/ReportsRouter";
 import NotFound from "./pages/NotFound";
 
@@ -55,6 +56,7 @@ const App = () => (
               <Route path="/barcodes" element={<Barcodes />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/purchase-schedule" element={<PurchaseSchedule />} />
+              <Route path="/production-schedule" element={<ProductionSchedule />} />
               <Route path="/audit" element={<PlaceholderPage title="Revision & Logg" />} />
               <Route path="/settings" element={<PlaceholderPage title="Systeminställningar" />} />
               <Route path="*" element={<NotFound />} />
