@@ -18,6 +18,7 @@ import Barcodes from "./pages/Barcodes";
 import Products from "./pages/Products";
 import OrganisationOverview from "./pages/OrganisationOverview";
 import PlaceholderPage from "./pages/PlaceholderPage";
+import PurchaseReporting from "./pages/PurchaseReporting";
 import Pricing from "./pages/Pricing";
 import ShopReports from "./pages/ShopReports";
 import PurchaseSchedule from "./pages/PurchaseSchedule";
