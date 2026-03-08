@@ -313,101 +313,103 @@ export default function PurchaseSchedule() {
       {isLoading ? (
         <div className="flex items-center justify-center py-20 text-muted-foreground">Laddar schema...</div>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="h-7 px-2 text-[10px] w-[100px]">Dag</TableHead>
-              <TableHead className="h-7 px-2 text-[10px]">Produkt</TableHead>
-              <TableHead className="h-7 px-2 text-[10px] text-right w-[80px]">Totalt</TableHead>
-              <TableHead className="h-7 px-2 text-[10px] w-[100px]">Butiker</TableHead>
-              <TableHead className="h-7 px-2 text-[10px] w-[120px]">
-                {view === "purchase" ? "Leverans" : "Senast inköp"}
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {weekDates.map((date, dayIndex) => {
-              const items = activeMap.get(dayIndex) || [];
-              const isToday = isSameDay(date, new Date());
-              const isPast = date < new Date() && !isToday;
+        <div className="space-y-1">
+          {weekDates.map((date, dayIndex) => {
+            const items = activeMap.get(dayIndex) || [];
+            const isToday = isSameDay(date, new Date());
+            const isPast = date < new Date() && !isToday;
+            const dayLabel = `${WEEKDAYS[dayIndex]} ${format(date, "d/M")}`;
 
-              if (items.length === 0) {
-                return (
-                  <TableRow key={dayIndex} className={`${isPast ? "opacity-40" : ""} ${isToday ? "bg-primary/5" : ""}`}>
-                    <TableCell className="px-2 py-1 text-xs font-medium whitespace-nowrap">
-                      <span className={isToday ? "text-primary font-bold" : "text-foreground"}>
-                        {WEEKDAYS[dayIndex].slice(0, 3)}
-                      </span>
-                      <span className="text-muted-foreground ml-1 text-[10px]">{format(date, "d/M")}</span>
-                    </TableCell>
-                    <TableCell colSpan={4} className="px-2 py-1 text-[10px] text-muted-foreground italic">—</TableCell>
-                  </TableRow>
-                );
-              }
-
-              return items.map((item, i) => {
-                const isUrgent = view === "purchase" && isSameDay(item.latestPurchaseDate, new Date());
-                return (
-                  <Collapsible key={`${dayIndex}-${item.productName}-${i}`} asChild>
-                    <>
-                      <CollapsibleTrigger asChild>
-                        <TableRow
-                          className={`cursor-pointer hover:bg-muted/50 ${isUrgent ? "bg-destructive/5" : ""} ${isPast ? "opacity-40" : ""} ${isToday ? "bg-primary/5" : ""}`}
-                        >
-                          <TableCell className="px-2 py-0.5 text-xs whitespace-nowrap">
-                            {i === 0 && (
-                              <>
-                                <span className={isToday ? "text-primary font-bold" : "font-medium text-foreground"}>
-                                  {WEEKDAYS[dayIndex].slice(0, 3)}
-                                </span>
-                                <span className="text-muted-foreground ml-1 text-[10px]">{format(date, "d/M")}</span>
-                              </>
-                            )}
-                          </TableCell>
-                          <TableCell className="px-2 py-0.5 text-xs">
-                            <span className="flex items-center gap-1">
-                              <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
-                              {item.productName}
-                            </span>
-                          </TableCell>
-                          <TableCell className="px-2 py-0.5 text-xs text-right font-medium">{item.totalQuantity} {item.unit}</TableCell>
-                          <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">{item.shops.length} butik{item.shops.length > 1 ? "er" : ""}</TableCell>
-                          <TableCell className="px-2 py-0.5">
-                            <span className="text-[10px] text-muted-foreground">
-                              {view === "purchase"
-                                ? format(item.earliestDelivery, "EEE d/M", { locale: sv })
-                                : format(item.latestPurchaseDate, "EEE d/M", { locale: sv })}
-                              {" "}{item.departureTime}
-                            </span>
-                          </TableCell>
+            return (
+              <Collapsible key={dayIndex} defaultOpen={isToday || items.length > 0}>
+                <CollapsibleTrigger className={`flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm font-medium hover:bg-muted/50 transition-colors ${isToday ? "bg-primary/10 text-primary" : isPast ? "opacity-50 text-muted-foreground" : "text-foreground"}`}>
+                  <ChevronDown className="h-3.5 w-3.5 shrink-0 transition-transform [[data-state=open]>&]:rotate-0 [[data-state=closed]>&]:-rotate-90" />
+                  <CalendarDays className="h-3.5 w-3.5" />
+                  <span>{dayLabel}</span>
+                  {items.length > 0 && (
+                    <Badge variant="outline" className="text-[9px] ml-auto py-0 h-4">
+                      {items.length} {items.length === 1 ? "produkt" : "produkter"}
+                    </Badge>
+                  )}
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  {items.length === 0 ? (
+                    <p className="pl-10 py-1 text-[10px] text-muted-foreground italic">Inga produkter</p>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="h-6 px-2 pl-10 text-[10px]">Produkt</TableHead>
+                          <TableHead className="h-6 px-2 text-[10px] text-right w-[80px]">Totalt</TableHead>
+                          <TableHead className="h-6 px-2 text-[10px] w-[80px]">Butiker</TableHead>
+                          <TableHead className="h-6 px-2 text-[10px] w-[120px]">
+                            {view === "purchase" ? "Leverans" : "Senast inköp"}
+                          </TableHead>
                         </TableRow>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent asChild>
-                        <>
-                          {item.shops.map((shop) => {
-                            const zone = zoneMap.get(shop.zoneKey);
-                            return (
-                              <TableRow key={shop.name} className="bg-muted/30 border-0">
-                                <TableCell className="px-2 py-0 text-xs" />
-                                <TableCell className="px-2 py-0.5 pl-8 text-[10px] text-muted-foreground">
-                                  <Badge variant={(zone?.badge_color || "default") as any} className="text-[9px] py-0">
-                                    {shop.name}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell className="px-2 py-0.5 text-[10px] text-right text-muted-foreground">{shop.quantity} {item.unit}</TableCell>
-                                <TableCell colSpan={2} className="px-2 py-0.5" />
-                              </TableRow>
-                            );
-                          })}
-                        </>
-                      </CollapsibleContent>
-                    </>
-                  </Collapsible>
-                );
-              });
-            })}
-          </TableBody>
-        </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {items.map((item, i) => {
+                          const isUrgent = view === "purchase" && isSameDay(item.latestPurchaseDate, new Date());
+                          return (
+                            <Collapsible key={`${dayIndex}-${item.productName}-${i}`} asChild>
+                              <>
+                                <CollapsibleTrigger asChild>
+                                  <TableRow
+                                    className={`cursor-pointer hover:bg-muted/50 ${isUrgent ? "bg-destructive/5" : ""}`}
+                                  >
+                                    <TableCell className="px-2 pl-10 py-0.5 text-xs">
+                                      <span className="flex items-center gap-1">
+                                        <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
+                                        {item.productName}
+                                      </span>
+                                    </TableCell>
+                                    <TableCell className="px-2 py-0.5 text-xs text-right font-medium">{item.totalQuantity} {item.unit}</TableCell>
+                                    <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">{item.shops.length} butik{item.shops.length > 1 ? "er" : ""}</TableCell>
+                                    <TableCell className="px-2 py-0.5">
+                                      <span className="text-[10px] text-muted-foreground">
+                                        {view === "purchase"
+                                          ? format(item.earliestDelivery, "EEE d/M", { locale: sv })
+                                          : format(item.latestPurchaseDate, "EEE d/M", { locale: sv })}
+                                        {" "}{item.departureTime}
+                                      </span>
+                                    </TableCell>
+                                  </TableRow>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent asChild>
+                                  <>
+                                    {item.shops.map((shop) => {
+                                      const zone = zoneMap.get(shop.zoneKey);
+                                      return (
+                                        <TableRow key={shop.name} className="bg-muted/30 border-0">
+                                          <TableCell className="px-2 pl-14 py-0.5 text-[10px] text-muted-foreground">
+                                            <div className="flex items-center gap-2">
+                                              <Badge variant={(zone?.badge_color || "default") as any} className="text-[9px] py-0">
+                                                {shop.name}
+                                              </Badge>
+                                              <span className="text-muted-foreground">
+                                                leverans {format(shop.deliveryDate, "EEE d/M", { locale: sv })}
+                                              </span>
+                                            </div>
+                                          </TableCell>
+                                          <TableCell className="px-2 py-0.5 text-[10px] text-right text-muted-foreground">{shop.quantity} {item.unit}</TableCell>
+                                          <TableCell colSpan={2} className="px-2 py-0.5" />
+                                        </TableRow>
+                                      );
+                                    })}
+                                  </>
+                                </CollapsibleContent>
+                              </>
+                            </Collapsible>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CollapsibleContent>
+              </Collapsible>
+            );
+          })}
+        </div>
       )}
 
       {/* Summary */}
