@@ -229,11 +229,18 @@ export default function Products() {
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input placeholder="Sök namn, SKU eller streckkod..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
         </div>
-        <Select value={filterCategory} onValueChange={setFilterCategory}>
+        <Select value={filterCategory} onValueChange={(val) => {
+          if (val === "__add_new__") {
+            setAddCategoryOpen(true);
+          } else {
+            setFilterCategory(val);
+          }
+        }}>
           <SelectTrigger className="h-8 text-xs w-44"><SelectValue placeholder="Alla kategorier" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all" className="text-xs">Alla kategorier</SelectItem>
             {CATEGORIES.map(c => <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>)}
+            <SelectItem value="__add_new__" className="text-xs font-medium text-primary">+ Lägg till kategori</SelectItem>
           </SelectContent>
         </Select>
       </div>
