@@ -708,7 +708,7 @@ export default function PurchaseReporting() {
 
   const renameReport = useMutation({
     mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      const { error } = await supabase.from("purchase_reports").update({ file_name: name }).eq("id", id);
+      const { error } = await supabase.from("purchase_reports").update({ display_name: name } as any).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
