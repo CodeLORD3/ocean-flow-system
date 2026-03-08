@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Upload, Loader2, Trash2, Plus, ZoomIn, ZoomOut, RotateCcw, FileText, ChevronLeft, ChevronRight, Search, PackagePlus, Lock, ChevronDown, ChevronUp, CheckCircle2, X, Pencil } from "lucide-react";
+import { Upload, Loader2, Trash2, Plus, ZoomIn, ZoomOut, RotateCcw, FileText, Search, PackagePlus, Lock, ChevronDown, ChevronUp, CheckCircle2, Pencil } from "lucide-react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
@@ -91,6 +91,7 @@ type Report = {
   status: string;
   notes: string | null;
   total_amount: number;
+  display_name: string | null;
 };
 
 // Inline always-editable row
@@ -429,7 +430,8 @@ function ReportSection({
   const isLocked = report.status === "Godkänd";
   const [expanded, setExpanded] = useState(!isLocked);
   const [editing, setEditing] = useState(false);
-  const [editName, setEditName] = useState(report.file_name);
+  const displayName = report.display_name || report.file_name;
+  const [editName, setEditName] = useState(displayName);
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -441,10 +443,10 @@ function ReportSection({
 
   const commitRename = () => {
     const trimmed = editName.trim();
-    if (trimmed && trimmed !== report.file_name) {
+    if (trimmed && trimmed !== displayName) {
       onRenameReport(report.id, trimmed);
     } else {
-      setEditName(report.file_name);
+      setEditName(displayName);
     }
     setEditing(false);
   };
@@ -474,7 +476,7 @@ function ReportSection({
             onBlur={commitRename}
             onKeyDown={(e) => {
               if (e.key === "Enter") commitRename();
-              if (e.key === "Escape") { setEditName(report.file_name); setEditing(false); }
+              if (e.key === "Escape") { setEditName(displayName); setEditing(false); }
             }}
             onClick={(e) => e.stopPropagation()}
             className="h-7 text-sm font-medium flex-1 px-1.5"
@@ -484,7 +486,7 @@ function ReportSection({
             className="font-medium text-sm truncate flex-1"
             onDoubleClick={(e) => { e.stopPropagation(); setEditing(true); }}
           >
-            {report.file_name}
+            {displayName}
           </span>
         )}
         {!editing && (
@@ -562,7 +564,7 @@ function ReportSection({
                   <AlertDialogHeader>
                     <AlertDialogTitle>Bekräfta inköp</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Du är på väg att låsa <strong>{report.file_name}</strong> med {lines.length} rader
+                      Du är på väg att låsa <strong>{displayName}</strong> med {lines.length} rader
                       och ett totalt värde på{" "}
                       <strong>{sectionTotal.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr</strong>.
                       <br /><br />
@@ -590,6 +592,7 @@ export default function PurchaseReporting() {
   const [uploading, setUploading] = useState(false);
   const [parsing, setParsing] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  const [docExpanded, setDocExpanded] = useState(true);
   const [zoom, setZoom] = useState(1);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -706,7 +709,7 @@ export default function PurchaseReporting() {
 
   const renameReport = useMutation({
     mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      const { error } = await supabase.from("purchase_reports").update({ file_name: name }).eq("id", id);
+      const { error } = await supabase.from("purchase_reports").update({ display_name: name } as any).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -1120,7 +1123,7 @@ export default function PurchaseReporting() {
                       reports={reports}
                       onUpdateLine={(id, updates) => updateLine.mutate({ id, ...updates } as any)}
                       onDeleteLine={(id) => deleteLine.mutate(id)}
-                      onViewDocument={(reportId) => { setSelectedReportId(reportId); setZoom(1); }}
+                      onViewDocument={(reportId) => { setSelectedReportId(reportId); setDocExpanded(true); setZoom(1); }}
                       onConfirm={(reportId) => confirmReport.mutate(reportId)}
                       onRenameReport={(id, name) => renameReport.mutate({ id, name })}
                       focusLineId={focusLineId}
@@ -1144,7 +1147,7 @@ export default function PurchaseReporting() {
                       reports={reports}
                       onUpdateLine={(id, updates) => updateLine.mutate({ id, ...updates } as any)}
                       onDeleteLine={(id) => deleteLine.mutate(id)}
-                      onViewDocument={(reportId) => { setSelectedReportId(reportId); setZoom(1); }}
+                      onViewDocument={(reportId) => { setSelectedReportId(reportId); setDocExpanded(true); setZoom(1); }}
                       onConfirm={(reportId) => confirmReport.mutate(reportId)}
                       onRenameReport={(id, name) => renameReport.mutate({ id, name })}
                       focusLineId={focusLineId}
@@ -1162,132 +1165,117 @@ export default function PurchaseReporting() {
         {/* RIGHT: Document viewer */}
         <ResizablePanel defaultSize={30} minSize={20}>
           <div className="flex flex-col h-full">
+            {/* Upload bar */}
             <div className="flex items-center justify-between p-3 border-b gap-2">
-              <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-8 w-8" disabled={currentIdx <= 0} onClick={goPrev}>
-                  <ChevronLeft className="h-4 w-4" />
+              <span className="text-sm font-medium">Dokument</span>
+              <label>
+                <Input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileUpload} disabled={uploading || parsing} />
+                <Button asChild size="sm" variant="outline" disabled={uploading || parsing}>
+                  <span className="cursor-pointer">
+                    {uploading || parsing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />}
+                    {parsing ? "Extraherar..." : "Ladda upp"}
+                  </span>
                 </Button>
-                {selectedReport ? (
-                  <span className="text-sm font-medium truncate max-w-[180px]">{selectedReport.file_name}</span>
-                ) : (
-                  <span className="text-sm text-muted-foreground">Ingen följesedel vald</span>
-                )}
-                <Button variant="ghost" size="icon" className="h-8 w-8" disabled={currentIdx >= reports.length - 1 || currentIdx < 0} onClick={goNext}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="flex items-center gap-1">
-                {selectedReport && (
-                  <>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setZoom((z) => Math.max(0.25, z - 0.25))}>
-                      <ZoomOut className="h-4 w-4" />
-                    </Button>
-                    <span className="text-xs w-12 text-center text-muted-foreground">{Math.round(zoom * 100)}%</span>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setZoom((z) => Math.min(4, z + 0.25))}>
-                      <ZoomIn className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setZoom(1)}>
-                      <RotateCcw className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteReport.mutate(selectedReport.id)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setSelectedReportId(null); setZoom(1); }} title="Stäng dokument">
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </>
-                )}
-                <label>
-                  <Input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileUpload} disabled={uploading || parsing} />
-                  <Button asChild size="sm" variant="outline" disabled={uploading || parsing}>
-                    <span className="cursor-pointer">
-                      {uploading || parsing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />}
-                      {parsing ? "Extraherar..." : "Ladda upp"}
-                    </span>
-                  </Button>
-                </label>
-              </div>
+              </label>
             </div>
 
-            {!selectedReport ? (
-              <ScrollArea className="flex-1">
-                {reportsLoading ? (
-                  <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-                ) : reports.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full py-16 text-center px-6">
-                    <FileText className="h-12 w-12 text-muted-foreground/40 mb-3" />
-                    <p className="text-muted-foreground text-sm">Ladda upp en bild eller PDF av en följesedel för att komma igång</p>
-                  </div>
-                ) : (
-                  <div className="p-3 space-y-2">
-                    {reports.map((r) => (
-                      <div
-                        key={r.id}
-                        className="flex items-center gap-2 p-3 rounded-md border hover:bg-accent/50 transition-colors"
-                      >
-                        <button
-                          onClick={() => { setSelectedReportId(r.id); setZoom(1); }}
-                          className="flex-1 text-left"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium text-sm truncate">{r.file_name}</span>
-                            <Badge
-                              variant={r.status === "Godkänd" ? "default" : r.status === "Klar" ? "secondary" : "outline"}
-                              className={`text-xs ml-2 ${r.status === "Godkänd" ? "bg-primary/10 text-primary border-primary/20" : ""}`}
-                            >
-                              {r.status === "Godkänd" && <Lock className="h-3 w-3 mr-0.5" />}
-                              {r.status}
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {new Date(r.created_at).toLocaleDateString("sv-SE")} · {r.total_amount?.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr
-                          </p>
-                        </button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 shrink-0"
-                          onClick={(e) => { e.stopPropagation(); deleteReport.mutate(r.id); }}
-                        >
-                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </ScrollArea>
-            ) : (
-              <ScrollArea className="flex-1">
-                <div className="p-4">
-                  <DocumentMagnifier>
-                    {selectedReport.file_name.toLowerCase().endsWith(".pdf") ? (
-                      <PdfViewer url={selectedReport.file_url} zoom={zoom} />
-                    ) : (
-                      <div className="flex justify-center">
-                        <img
-                          src={selectedReport.file_url}
-                          alt={selectedReport.file_name}
-                          className="rounded-md shadow-sm max-w-full"
-                          style={{ transform: `scale(${zoom})`, transformOrigin: "top center" }}
-                          draggable={false}
-                        />
-                      </div>
-                    )}
-                  </DocumentMagnifier>
-                  <div className="flex justify-center pt-4 pb-2">
-                    <label>
-                      <Input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileUpload} disabled={uploading || parsing} />
-                      <Button asChild size="sm" variant="outline" disabled={uploading || parsing}>
-                        <span className="cursor-pointer">
-                          {uploading || parsing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />}
-                          {parsing ? "Extraherar..." : "Ladda upp dokument"}
-                        </span>
-                      </Button>
-                    </label>
-                  </div>
+            <ScrollArea className="flex-1">
+              {reportsLoading ? (
+                <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+              ) : reports.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full py-16 text-center px-6">
+                  <FileText className="h-12 w-12 text-muted-foreground/40 mb-3" />
+                  <p className="text-muted-foreground text-sm">Ladda upp en bild eller PDF av en följesedel för att komma igång</p>
                 </div>
-              </ScrollArea>
-            )}
+              ) : (
+                <div>
+                  {reports.map((r) => {
+                    const isSelected = selectedReportId === r.id;
+                    const isExpanded = isSelected && docExpanded;
+                    return (
+                      <div key={r.id} className="border-b last:border-b-0">
+                        {/* Collapsible header */}
+                        <div
+                          className={`flex items-center gap-2 px-3 py-2.5 cursor-pointer transition-colors ${
+                            isExpanded ? "bg-accent/50" : "hover:bg-muted/40"
+                          }`}
+                          onClick={() => {
+                            if (isSelected) {
+                              setDocExpanded(!docExpanded);
+                            } else {
+                              setSelectedReportId(r.id);
+                              setDocExpanded(true);
+                              setZoom(1);
+                            }
+                          }}
+                        >
+                          {isExpanded ? (
+                            <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          )}
+                          <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                          <span className="font-medium text-sm truncate flex-1">{r.file_name}</span>
+                          <Badge
+                            variant={r.status === "Godkänd" ? "default" : r.status === "Klar" ? "secondary" : "outline"}
+                            className={`text-[10px] shrink-0 ${r.status === "Godkänd" ? "bg-primary/10 text-primary border-primary/20" : ""}`}
+                          >
+                            {r.status === "Godkänd" && <Lock className="h-3 w-3 mr-0.5" />}
+                            {r.status}
+                          </Badge>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0"
+                            onClick={(e) => { e.stopPropagation(); deleteReport.mutate(r.id); }}
+                          >
+                            <Trash2 className="h-3 w-3 text-destructive" />
+                          </Button>
+                        </div>
+
+                        {/* Expanded document viewer */}
+                        {isExpanded && (
+                          <div className="border-t bg-background">
+                            {/* Zoom controls */}
+                            <div className="flex items-center justify-center gap-1 py-1.5 border-b bg-muted/20">
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom((z) => Math.max(0.25, z - 0.25))}>
+                                <ZoomOut className="h-3.5 w-3.5" />
+                              </Button>
+                              <span className="text-xs w-10 text-center text-muted-foreground">{Math.round(zoom * 100)}%</span>
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom((z) => Math.min(4, z + 0.25))}>
+                                <ZoomIn className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setZoom(1)}>
+                                <RotateCcw className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                            <div className="p-4">
+                              <DocumentMagnifier>
+                                {r.file_url && r.file_name.toLowerCase().endsWith(".pdf") ? (
+                                  <PdfViewer url={r.file_url} zoom={zoom} />
+                                ) : r.file_url ? (
+                                  <div className="flex justify-center">
+                                    <img
+                                      src={r.file_url}
+                                      alt={r.file_name}
+                                      className="rounded-md shadow-sm max-w-full"
+                                      style={{ transform: `scale(${zoom})`, transformOrigin: "top center" }}
+                                      draggable={false}
+                                    />
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-muted-foreground text-center py-8">Inget dokument kopplat</p>
+                                )}
+                              </DocumentMagnifier>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </ScrollArea>
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
