@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Plus, Search, Edit, Trash2, Package, Tag, Printer, ScanLine, DollarSign, Check, X } from "lucide-react";
 import { useSite } from "@/contexts/SiteContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,7 +24,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import BarcodeDisplay from "@/components/barcode/BarcodeDisplay";
 import { generateEAN13 } from "@/lib/barcode";
 
-const CATEGORIES = ["Färsk Fisk", "Skaldjur", "Varmkök", "Rökta Produkter", "Såser & Röror", "Frukt & Grönt"];
+const DEFAULT_CATEGORIES = ["Färsk Fisk", "Skaldjur", "Varmkök", "Rökta Produkter", "Såser & Röror", "Frukt & Grönt"];
 const UNITS = ["KG", "ST", "L", "FÖRP"];
 
 export default function Products() {
@@ -41,6 +41,15 @@ export default function Products() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [barcodePreview, setBarcodePreview] = useState<any>(null);
+  const [addCategoryOpen, setAddCategoryOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+
+  // Dynamic categories: defaults + any custom ones from existing products
+  const CATEGORIES = useMemo(() => {
+    const fromProducts = products.map(p => p.category).filter(Boolean);
+    const all = new Set([...DEFAULT_CATEGORIES, ...fromProducts]);
+    return Array.from(all).sort((a, b) => a.localeCompare(b, "sv"));
+  }, [products]);
 
   const [form, setForm] = useState({
     name: "", category: "", unit: "KG", sku: "",
@@ -220,11 +229,18 @@ export default function Products() {
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input placeholder="Sök namn, SKU eller streckkod..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
         </div>
-        <Select value={filterCategory} onValueChange={setFilterCategory}>
+        <Select value={filterCategory} onValueChange={(val) => {
+          if (val === "__add_new__") {
+            setAddCategoryOpen(true);
+          } else {
+            setFilterCategory(val);
+          }
+        }}>
           <SelectTrigger className="h-8 text-xs w-44"><SelectValue placeholder="Alla kategorier" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all" className="text-xs">Alla kategorier</SelectItem>
             {CATEGORIES.map(c => <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>)}
+            <SelectItem value="__add_new__" className="text-xs font-medium text-primary">+ Lägg till kategori</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -445,6 +461,43 @@ export default function Products() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* Add Category Dialog */}
+      <Dialog open={addCategoryOpen} onOpenChange={setAddCategoryOpen}>
+        <DialogContent className="max-w-xs">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-sm">Lägg till kategori</DialogTitle>
+            <DialogDescription className="text-xs">Ange namn på den nya kategorin. Den blir tillgänglig direkt i alla dropdown-menyer.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Kategorinamn</Label>
+            <Input
+              value={newCategoryName}
+              onChange={e => setNewCategoryName(e.target.value)}
+              placeholder="T.ex. Marinader"
+              className="h-8 text-xs"
+              autoFocus
+              onKeyDown={e => {
+                if (e.key === "Enter" && newCategoryName.trim()) {
+                  // Just set as filter — it'll appear in dropdowns once a product uses it
+                  setFilterCategory(newCategoryName.trim());
+                  toast({ title: "Kategori tillagd", description: `"${newCategoryName.trim()}" — tilldela produkter till denna kategori för att den ska synas permanent.` });
+                  setNewCategoryName("");
+                  setAddCategoryOpen(false);
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => { setAddCategoryOpen(false); setNewCategoryName(""); }}>Avbryt</Button>
+            <Button size="sm" disabled={!newCategoryName.trim()} onClick={() => {
+              setFilterCategory(newCategoryName.trim());
+              toast({ title: "Kategori tillagd", description: `"${newCategoryName.trim()}" — tilldela produkter till denna kategori för att den ska synas permanent.` });
+              setNewCategoryName("");
+              setAddCategoryOpen(false);
+            }}>Lägg till</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
