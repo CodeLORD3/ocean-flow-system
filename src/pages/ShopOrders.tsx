@@ -20,10 +20,11 @@ import {
 } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import { format, getDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useProducts } from "@/hooks/useProducts";
+import { useTransportSchedules } from "@/hooks/useTransportSchedules";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSite } from "@/contexts/SiteContext";
@@ -157,11 +158,44 @@ export default function ShopOrders() {
   const qc = useQueryClient();
   const { activeStoreId } = useSite();
   const { data: products = [] } = useProducts();
+  const { data: transportSchedules = [] } = useTransportSchedules();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [confirmSendOpen, setConfirmSendOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+
+  // Fetch active store details to determine zone
+  const { data: activeStore } = useQuery({
+    queryKey: ["store-detail", activeStoreId],
+    queryFn: async () => {
+      if (!activeStoreId) return null;
+      const { data } = await supabase.from("stores").select("*").eq("id", activeStoreId).single();
+      return data;
+    },
+    enabled: !!activeStoreId,
+  });
+
+  // Determine allowed departure weekdays for this store's zone
+  const allowedWeekdays = useMemo(() => {
+    if (!activeStore) return null; // null = no restriction yet
+    const city = (activeStore.city || "").toLowerCase();
+    const name = (activeStore.name || "").toLowerCase();
+    let zoneKey = "international";
+    if (city.includes("göteborg") || city.includes("gothenburg") || name.includes("göteborg") || name.includes("amhult") || name.includes("särö")) zoneKey = "gothenburg";
+    else if (city.includes("stockholm") || name.includes("stockholm") || name.includes("kungsholmen") || name.includes("ålsten")) zoneKey = "stockholm";
+    
+    const days = transportSchedules.filter(s => s.zone_key === zoneKey).map(s => s.departure_weekday);
+    return days.length > 0 ? new Set(days) : null;
+  }, [activeStore, transportSchedules]);
+
+  // Disable dates that are not valid departure weekdays (also disable past & weekends if not in zone)
+  const isDateDisabled = (date: Date) => {
+    if (!allowedWeekdays) return false;
+    const jsDay = getDay(date); // 0=Sun
+    const isoDay = jsDay === 0 ? 7 : jsDay;
+    return !allowedWeekdays.has(isoDay);
+  };
 
   // Order form
   const [orderNote, setOrderNote] = useState("");
@@ -454,7 +488,7 @@ export default function ShopOrders() {
           )}
 
           <div className="space-y-1.5">
-            <Label className="text-xs">Önskat leveransdatum (valfritt)</Label>
+            <Label className="text-xs">Önskat avgångsdatum{allowedWeekdays ? "" : " (valfritt)"}</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -473,8 +507,11 @@ export default function ShopOrders() {
                   mode="single"
                   selected={desiredDeliveryDate}
                   onSelect={setDesiredDeliveryDate}
+                  disabled={isDateDisabled}
                   initialFocus
                   className={cn("p-3 pointer-events-auto")}
+                  modifiers={allowedWeekdays ? { allowed: (date: Date) => !isDateDisabled(date) } : {}}
+                  modifiersClassNames={allowedWeekdays ? { allowed: "!bg-primary/10 !text-primary font-medium" } : {}}
                 />
               </PopoverContent>
             </Popover>
@@ -531,6 +568,8 @@ export default function ShopOrders() {
               products={products}
               onClose={() => setSelectedOrder(null)}
               toast={toast}
+              allowedWeekdays={allowedWeekdays}
+              isDateDisabled={isDateDisabled}
             />
           )}
         </DialogContent>
@@ -540,11 +579,13 @@ export default function ShopOrders() {
 }
 
 /* ---- Inline edit component for order detail ---- */
-function OrderDetailWithEdit({ order, products, onClose, toast }: {
+function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays, isDateDisabled }: {
   order: any;
   products: any[];
   onClose: () => void;
   toast: any;
+  allowedWeekdays: Set<number> | null;
+  isDateDisabled: (date: Date) => boolean;
 }) {
   const createChange = useCreateChangeRequest();
   const resolveChange = useResolveChangeRequest();
@@ -913,7 +954,16 @@ function OrderDetailWithEdit({ order, products, onClose, toast }: {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={editDeliveryDate} onSelect={setEditDeliveryDate} initialFocus className="p-3 pointer-events-auto" />
+                <Calendar
+                  mode="single"
+                  selected={editDeliveryDate}
+                  onSelect={setEditDeliveryDate}
+                  disabled={isDateDisabled}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                  modifiers={allowedWeekdays ? { allowed: (date: Date) => !isDateDisabled(date) } : {}}
+                  modifiersClassNames={allowedWeekdays ? { allowed: "!bg-primary/10 !text-primary font-medium" } : {}}
+                />
               </PopoverContent>
             </Popover>
           </div>

@@ -5,7 +5,6 @@ export type TransportSchedule = {
   id: string;
   zone_key: string;
   label: string;
-  departure_days_before: number;
   departure_weekday: number; // 1=Mon, 7=Sun
   departure_time: string;
   badge_color: string;

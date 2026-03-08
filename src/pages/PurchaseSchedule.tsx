@@ -132,9 +132,14 @@ export default function PurchaseSchedule() {
     return m;
   }, [stores]);
 
-  const zoneMap = useMemo(() => {
-    const m = new Map<string, NonNullable<typeof transportSchedules>[number]>();
-    transportSchedules?.forEach((s) => m.set(s.zone_key, s));
+  // Map zone_key -> array of schedules (multiple departure days per zone)
+  const zoneSchedules = useMemo(() => {
+    const m = new Map<string, NonNullable<typeof transportSchedules>[number][]>();
+    transportSchedules?.forEach((s) => {
+      const arr = m.get(s.zone_key) || [];
+      arr.push(s);
+      m.set(s.zone_key, arr);
+    });
     return m;
   }, [transportSchedules]);
 
@@ -168,15 +173,19 @@ export default function PurchaseSchedule() {
       if (!store) continue;
 
       const zoneKey = getStoreZoneKey(store);
-      const zone = zoneMap.get(zoneKey);
-      if (!zone) continue;
+      const schedules = zoneSchedules.get(zoneKey);
+      if (!schedules || schedules.length === 0) continue;
 
       for (const line of order.shop_order_lines || []) {
         const deliveryDateStr = line.delivery_date || order.desired_delivery_date;
         if (!deliveryDateStr) continue;
 
         const deliveryDate = parseISO(deliveryDateStr);
-        const departureDate = getDepartureDate(deliveryDate, zone.departure_weekday);
+        // The delivery date IS the departure day (shops only pick valid departure weekdays)
+        const jsDay = getDay(deliveryDate); // 0=Sun
+        const isoDay = jsDay === 0 ? 7 : jsDay; // 1=Mon..7=Sun
+        const matchingSchedule = schedules.find(s => s.departure_weekday === isoDay) || schedules[0];
+        const departureDate = deliveryDate;
 
         rawItems.push({
           storeName: store.name,
@@ -186,7 +195,7 @@ export default function PurchaseSchedule() {
           unit: line.unit || line.products?.unit || "kg",
           deliveryDate,
           departureDate,
-          departureTime: zone.departure_time,
+          departureTime: matchingSchedule.departure_time,
           category: line.products?.category || "Övrigt",
         });
       }
@@ -233,7 +242,7 @@ export default function PurchaseSchedule() {
     }
 
     return Array.from(grouped.values());
-  }, [orders, stores, transportSchedules, storeMap, zoneMap]);
+  }, [orders, stores, transportSchedules, storeMap, zoneSchedules]);
 
   // All unique categories
   const allCategories = useMemo(() => {
@@ -456,7 +465,8 @@ export default function PurchaseSchedule() {
                                     <CollapsibleContent asChild>
                                       <>
                                         {item.shops.map((shop) => {
-                                          const zone = zoneMap.get(shop.zoneKey);
+                                          const zoneScheds = zoneSchedules.get(shop.zoneKey);
+                                          const zone = zoneScheds?.[0];
                                           return (
                                             <TableRow key={shop.name} className="bg-muted/30 border-0">
                                               <TableCell className="px-2 pl-14 py-0.5 text-[10px] text-muted-foreground">
@@ -534,7 +544,8 @@ export default function PurchaseSchedule() {
                               <CollapsibleContent asChild>
                                 <>
                                   {item.shops.map((shop) => {
-                                    const zone = zoneMap.get(shop.zoneKey);
+                                    const zoneScheds = zoneSchedules.get(shop.zoneKey);
+                                    const zone = zoneScheds?.[0];
                                     return (
                                       <TableRow key={shop.name} className="bg-muted/30 border-0">
                                         <TableCell className="px-2 pl-14 py-0.5 text-[10px] text-muted-foreground">
@@ -573,11 +584,12 @@ export default function PurchaseSchedule() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              {transportSchedules?.map((zone) => {
-                const count = schedule.filter((s) => s.shops.some((sh) => sh.zoneKey === zone.zone_key)).length;
-                const dayName = WEEKDAYS[(zone.departure_weekday - 1) % 7];
+              {Array.from(zoneSchedules.entries()).map(([zoneKey, scheds]) => {
+                const count = schedule.filter((s) => s.shops.some((sh) => sh.zoneKey === zoneKey)).length;
+                const dayNames = scheds.map(s => WEEKDAYS[(s.departure_weekday - 1) % 7]).join(", ");
+                const zone = scheds[0];
                 return (
-                  <div key={zone.id} className="rounded-lg border p-3">
+                  <div key={zoneKey} className="rounded-lg border p-3">
                     <div className="flex items-center justify-between">
                       <Badge variant={zone.badge_color as any} className="text-xs">
                         {zone.label}
@@ -585,7 +597,7 @@ export default function PurchaseSchedule() {
                       <span className="text-lg font-bold text-foreground">{count}</span>
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Avgång: {dayName} kl {zone.departure_time}
+                      Avgång: {dayNames} kl {zone.departure_time}
                     </p>
                   </div>
                 );
