@@ -17,6 +17,7 @@ import {
   Shield,
   Factory,
   ScanLine,
+  CalendarDays,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -40,6 +41,7 @@ const overviewNav = [
 
 const salesNav = [
   { title: "Ordrar", url: "/orders", icon: ShoppingCart },
+  { title: "Inköpsschema", url: "/purchase-schedule", icon: CalendarDays },
   { title: "Kunder", url: "/customers", icon: Users },
   { title: "Fakturor", url: "/invoices", icon: FileText },
 ];
