@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Plus, Search, Clock, CheckCircle2, Truck, XCircle, X, Package,
-  Archive, ListChecks, History,
+  Archive, ListChecks, History, CalendarIcon,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
