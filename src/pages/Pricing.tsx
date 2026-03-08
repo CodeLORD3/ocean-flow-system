@@ -22,6 +22,11 @@ interface InlineEdit {
   margin: number;
 }
 
+interface ShopInlineEdit {
+  retail_price: number;
+  margin: number;
+}
+
 export default function Pricing() {
   const { data: products = [], isLoading } = useProducts();
   const { data: categories = [] } = useCategories();
@@ -38,10 +43,70 @@ export default function Pricing() {
 
   // Inline editing state for grossist rows: productId -> edit values
   const [inlineEdits, setInlineEdits] = useState<Record<string, InlineEdit>>({});
+  // Inline editing state for shop rows: productId -> edit values
+  const [shopInlineEdits, setShopInlineEdits] = useState<Record<string, ShopInlineEdit>>({});
 
-  const calcMargin = (cost: number, wholesale: number) => {
-    if (wholesale === 0) return 0;
-    return Math.round(((wholesale - cost) / wholesale) * 100);
+  const calcMargin = (cost: number, price: number) => {
+    if (price === 0) return 0;
+    return Math.round(((price - cost) / price) * 100);
+  };
+
+  const calcShopMargin = (wholesale: number, retail: number) => {
+    if (retail === 0) return 0;
+    return Math.round(((retail - wholesale) / retail) * 100);
+  };
+
+  const startShopInlineEdit = (p: any) => {
+    setShopInlineEdits((prev) => ({
+      ...prev,
+      [p.id]: {
+        retail_price: Number(p.retail_suggested || 0),
+        margin: calcShopMargin(Number(p.wholesale_price), Number(p.retail_suggested || 0)),
+      },
+    }));
+  };
+
+  const cancelShopInlineEdit = (id: string) => {
+    setShopInlineEdits((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+  };
+
+  const updateShopRetailPrice = (id: string, retail: number, wholesalePrice: number) => {
+    setShopInlineEdits((prev) => ({
+      ...prev,
+      [id]: { retail_price: retail, margin: calcShopMargin(wholesalePrice, retail) },
+    }));
+  };
+
+  const updateShopMargin = (id: string, margin: number, wholesalePrice: number) => {
+    const retail = margin >= 100 ? 0 : Number((wholesalePrice / (1 - margin / 100)).toFixed(2));
+    setShopInlineEdits((prev) => ({
+      ...prev,
+      [id]: { retail_price: retail, margin },
+    }));
+  };
+
+  const saveShopInlineEdit = (p: any) => {
+    const edit = shopInlineEdits[p.id];
+    if (!edit) return;
+    updateProduct.mutate(
+      {
+        id: p.id,
+        cost_price: p.cost_price,
+        wholesale_price: p.wholesale_price,
+        retail_suggested: edit.retail_price,
+        reason: "Butik prisändring",
+      },
+      {
+        onSuccess: () => {
+          toast({ title: "Pris uppdaterat", description: `${p.name} sparad.` });
+          cancelShopInlineEdit(p.id);
+        },
+      }
+    );
   };
 
   const startInlineEdit = (p: any) => {
@@ -202,7 +267,7 @@ export default function Pricing() {
                     {!isShop && <TableHead className="text-right">Inköpspris</TableHead>}
                     <TableHead className="text-right">Grossistpris</TableHead>
                     <TableHead className="text-right">{isShop ? "Försäljningspris" : "Rek. butik"}</TableHead>
-                    {!isShop && <TableHead className="text-right">Marginal</TableHead>}
+                    <TableHead className="text-right">Marginal</TableHead>
                     <TableHead className="text-right">Åtgärd</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -215,6 +280,14 @@ export default function Pricing() {
                       inlineEdits[p.id].cost_price !== Number(p.cost_price) ||
                       inlineEdits[p.id].wholesale_price !== Number(p.wholesale_price)
                     );
+
+                    // Shop inline edit values
+                    const shopRetailVal = shopInlineEdits[p.id]?.retail_price ?? Number(p.retail_suggested || 0);
+                    const shopMarginVal = shopInlineEdits[p.id]?.margin ?? calcShopMargin(Number(p.wholesale_price), Number(p.retail_suggested || 0));
+                    const shopHasChanges = !!shopInlineEdits[p.id] && (
+                      shopInlineEdits[p.id].retail_price !== Number(p.retail_suggested || 0)
+                    );
+
                     return (
                     <TableRow key={p.id} className="h-9">
                       <TableCell className="py-1 font-medium">{p.name}</TableCell>
@@ -243,13 +316,35 @@ export default function Pricing() {
                             className="h-7 w-24 text-right text-sm ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
                           />
                         ) : (
-                          <span>{Number(p.wholesale_price).toFixed(2)} kr</span>
+                          <span className="text-muted-foreground">{Number(p.wholesale_price).toFixed(2)} kr</span>
                         )}
                       </TableCell>
-                      <TableCell className="py-1 text-right">{Number(p.retail_suggested || 0).toFixed(2)} kr</TableCell>
-                      {!isShop && (
-                        <TableCell className="py-1 text-right">
-                          <div className="flex items-center justify-end gap-1">
+                      <TableCell className="py-1 text-right">
+                        {isShop ? (
+                          <Input
+                            type="number"
+                            value={shopRetailVal}
+                            onFocus={(e) => { if (!shopInlineEdits[p.id]) startShopInlineEdit(p); e.target.select(); }}
+                            onChange={(e) => updateShopRetailPrice(p.id, Number(e.target.value), Number(p.wholesale_price))}
+                            onKeyDown={(e) => { if (e.key === "Enter") saveShopInlineEdit(p); }}
+                            className="h-7 w-24 text-right text-sm ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
+                          />
+                        ) : (
+                          <span>{Number(p.retail_suggested || 0).toFixed(2)} kr</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="py-1 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          {isShop ? (
+                            <Input
+                              type="number"
+                              value={shopMarginVal}
+                              onFocus={(e) => { if (!shopInlineEdits[p.id]) startShopInlineEdit(p); e.target.select(); }}
+                              onChange={(e) => updateShopMargin(p.id, Number(e.target.value), Number(p.wholesale_price))}
+                              onKeyDown={(e) => { if (e.key === "Enter") saveShopInlineEdit(p); }}
+                              className="h-7 w-16 text-right text-sm border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
+                            />
+                          ) : (
                             <Input
                               type="number"
                               value={marginVal}
@@ -258,10 +353,10 @@ export default function Pricing() {
                               onKeyDown={(e) => { if (e.key === "Enter") saveInlineEdit(p); }}
                               className="h-7 w-16 text-right text-sm border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
                             />
-                            <span className="text-xs text-muted-foreground">%</span>
-                          </div>
-                        </TableCell>
-                      )}
+                          )}
+                          <span className="text-xs text-muted-foreground">%</span>
+                        </div>
+                      </TableCell>
                       <TableCell className="py-1 text-right space-x-1">
                         {!isShop && hasChanges && (
                           <>
@@ -273,10 +368,15 @@ export default function Pricing() {
                             </Button>
                           </>
                         )}
-                        {isShop && (
-                          <Button size="sm" variant="outline" className="h-6 text-xs" onClick={() => openEdit(p)}>
-                            Ändra försäljningspris
-                          </Button>
+                        {isShop && shopHasChanges && (
+                          <>
+                            <Button size="sm" variant="default" className="h-6 w-6 p-0" onClick={() => saveShopInlineEdit(p)} disabled={updateProduct.isPending}>
+                              <Check className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => cancelShopInlineEdit(p.id)}>
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                          </>
                         )}
                         <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => setHistoryProduct(p.id)}>
                           <History className="h-3.5 w-3.5" />
@@ -286,7 +386,7 @@ export default function Pricing() {
                     );
                   })}
                   {filtered.length === 0 && (
-                    <TableRow><TableCell colSpan={isShop ? 6 : 8} className="text-center text-muted-foreground py-8">Inga produkter hittades</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={isShop ? 7 : 8} className="text-center text-muted-foreground py-8">Inga produkter hittades</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
