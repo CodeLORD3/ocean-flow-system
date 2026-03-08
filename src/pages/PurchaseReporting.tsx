@@ -195,6 +195,7 @@ function EditableRow({
           <PopoverTrigger asChild>
             <div className="relative">
               <Input
+                ref={supplierInputRef}
                 defaultValue={line.supplier_name || ""}
                 onChange={(e) => {
                   setSupplierSearch(e.target.value);
@@ -206,6 +207,7 @@ function EditableRow({
                   setSupplierSearch(e.target.value);
                   if (e.target.value.length > 0) setSupplierOpen(true);
                 }}
+                onKeyDown={(e) => handleSearchKeyDown(e, supplierCmdRef)}
                 className="h-7 text-xs border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1.5 w-28"
                 placeholder="Sök leverantör..."
               />
