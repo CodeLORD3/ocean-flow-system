@@ -367,11 +367,10 @@ export default function PurchaseSchedule() {
   }, [allProducts, altSearch, altDialogItem]);
 
   const handleMarkUnavailable = async (item: typeof weeklyTotals[0]) => {
-    // Create a change request for each order that has this product
-    for (let i = 0; i < item.lineIds.length; i++) {
+    for (const line of item.lines) {
       await createChange.mutateAsync({
-        shop_order_id: item.shopOrderIds[Math.min(i, item.shopOrderIds.length - 1)],
-        order_line_id: item.lineIds[i],
+        shop_order_id: line.shopOrderId,
+        order_line_id: line.lineId,
         change_type: "product_unavailable",
         product_id: item.productId,
         old_value: String(item.totalQuantity),
@@ -380,16 +379,16 @@ export default function PurchaseSchedule() {
         requested_by: "grossist",
       });
     }
-    toast.success(`"${item.productName}" markerad som ej tillgänglig för ${item.lineIds.length} orderrad(er).`);
+    toast.success(`"${item.productName}" markerad som ej tillgänglig för ${item.lines.length} orderrad(er).`);
   };
 
   const handleSuggestAlternative = async () => {
     if (!altDialogItem || !altProductId) return;
     const altProduct = allProducts?.find((p: any) => p.id === altProductId);
-    for (let i = 0; i < altDialogItem.lineIds.length; i++) {
+    for (const line of altDialogItem.lines) {
       await createChange.mutateAsync({
-        shop_order_id: altDialogItem.shopOrderIds[Math.min(i, altDialogItem.shopOrderIds.length - 1)],
-        order_line_id: altDialogItem.lineIds[i],
+        shop_order_id: line.shopOrderId,
+        order_line_id: line.lineId,
         change_type: "product_alternative",
         product_id: altProductId,
         old_value: altDialogItem.productId,
@@ -398,7 +397,7 @@ export default function PurchaseSchedule() {
         requested_by: "grossist",
       });
     }
-    toast.success(`Alternativ "${altProduct?.name}" föreslagit för "${altDialogItem.productName}" (${altDialogItem.lineIds.length} orderrader).`);
+    toast.success(`Alternativ "${altProduct?.name}" föreslagit för "${altDialogItem.productName}" (${altDialogItem.lines.length} orderrader).`);
     setAltDialogItem(null);
     setAltProductId("");
     setAltSearch("");
