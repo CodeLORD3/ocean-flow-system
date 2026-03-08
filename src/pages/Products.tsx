@@ -163,6 +163,7 @@ export default function Products() {
     });
   };
 
+  const handleDelete = async () => {
     if (!deleteTarget) return;
     const { error } = await supabase.from("products").update({ active: false }).eq("id", deleteTarget.id);
     if (error) { toast({ title: "Fel", description: error.message, variant: "destructive" }); return; }
