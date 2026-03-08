@@ -158,7 +158,7 @@ export default function PurchaseSchedule() {
       quantity: number;
       unit: string;
       deliveryDate: Date;
-      latestPurchaseDate: Date;
+      departureDate: Date;
       departureTime: string;
       category: string;
     };
