@@ -59,14 +59,14 @@ function EditableRow({
 }) {
   const [productSearch, setProductSearch] = useState("");
   const [productOpen, setProductOpen] = useState(false);
+  const [productIdx, setProductIdx] = useState(0);
   const [supplierSearch, setSupplierSearch] = useState("");
   const [supplierOpen, setSupplierOpen] = useState(false);
+  const [supplierIdx, setSupplierIdx] = useState(0);
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
 
   const productInputRef = useRef<HTMLInputElement>(null);
   const supplierInputRef = useRef<HTMLInputElement>(null);
-  const productCmdRef = useRef<HTMLDivElement>(null);
-  const supplierCmdRef = useRef<HTMLDivElement>(null);
 
   const commitField = (field: string, value: any) => {
     const updates: any = { [field]: value };
@@ -75,25 +75,66 @@ function EditableRow({
       const price = field === "unit_price" ? (parseFloat(value) || 0) : (line.unit_price ?? 0);
       updates.line_total = qty * price;
     }
-    // Debounce saves
     clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(() => onSave(updates), 400);
   };
 
-  // Forward arrow/enter keys from input to Command list
-  const handleSearchKeyDown = (e: React.KeyboardEvent, cmdRef: React.RefObject<HTMLDivElement | null>) => {
-    if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Enter") {
-      const cmd = cmdRef.current;
-      if (cmd) {
-        cmd.dispatchEvent(new KeyboardEvent("keydown", { key: e.key, bubbles: true }));
-        e.preventDefault();
-      }
+  const filteredProducts = products.filter((p: any) =>
+    productSearch.length > 0 && p.name.toLowerCase().includes(productSearch.toLowerCase())
+  ).slice(0, 12);
+
+  const filteredSuppliers = suppliers
+    .filter((s: any) => supplierSearch.length > 0 && s.name.toLowerCase().includes(supplierSearch.toLowerCase()))
+    .slice(0, 10);
+
+  const selectProduct = (p: any) => {
+    onSave({
+      product_name: p.name,
+      product_id: p.id,
+      unit: p.unit || line.unit,
+      unit_price: p.cost_price || line.unit_price,
+      supplier_name: p.suppliers?.name || line.supplier_name,
+      line_total: line.quantity * (p.cost_price || line.unit_price || 0),
+    });
+    setProductOpen(false);
+    setProductSearch("");
+    if (productInputRef.current) productInputRef.current.value = p.name;
+  };
+
+  const selectSupplier = (s: any) => {
+    onSave({ supplier_name: s.name });
+    setSupplierOpen(false);
+    setSupplierSearch("");
+    if (supplierInputRef.current) supplierInputRef.current.value = s.name;
+  };
+
+  const handleProductKeyDown = (e: React.KeyboardEvent) => {
+    if (!productOpen || filteredProducts.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setProductIdx((i) => Math.min(i + 1, filteredProducts.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setProductIdx((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      selectProduct(filteredProducts[productIdx]);
     }
   };
 
-  const filteredProducts = products.filter((p: any) =>
-    productSearch.length > 0 && p.name.toLowerCase().includes(productSearch.toLowerCase())
-  );
+  const handleSupplierKeyDown = (e: React.KeyboardEvent) => {
+    if (!supplierOpen || filteredSuppliers.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSupplierIdx((i) => Math.min(i + 1, filteredSuppliers.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSupplierIdx((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      selectSupplier(filteredSuppliers[supplierIdx]);
+    }
+  };
 
   return (
     <TableRow className="h-9">
