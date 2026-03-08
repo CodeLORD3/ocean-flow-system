@@ -202,8 +202,11 @@ export default function Inventory() {
         });
         await supabase.from("product_stock_locations").delete().eq("id", item.id);
       }
+      // Reverse sync: revert order lines if stock no longer supports their status
+      await revertOrderLinesIfStockGone();
       clearSelection(activeLocationId);
       invalidateStock();
+      queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
       toast({ title: "Raderat", description: `${items.length} produkt(er) raderade` });
       setDeleteDialogOpen(false);
       setDeleteReason("");
