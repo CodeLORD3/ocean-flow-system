@@ -2,6 +2,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { ShopSidebar } from "@/components/ShopSidebar";
 import { ProductionSidebar } from "@/components/ProductionSidebar";
+import { PurchasingSidebar } from "@/components/PurchasingSidebar";
 import { useLocation } from "react-router-dom";
 import { Bell, ChevronRight, Search, User, ArrowLeftRight, Factory, Store, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
