@@ -318,18 +318,18 @@ export default function WholesaleOrders() {
                                   </td>
                                 </tr>
                               )}
-                              <tr key={item.product_id} className={`border-b border-border/30 transition-colors ${rowBgByStatus[item.currentStatus] || ""}`}>
-                                <td className="p-2.5 font-medium text-foreground">{item.product_name}</td>
-                                <td className="p-2.5">
-                                  <Badge variant="outline" className="text-[10px]">{item.category}</Badge>
-                                </td>
-                                {retailStores.map(s => (
-                                  <td key={s.id} className="p-2.5 text-right text-muted-foreground font-mono">
-                                    {item.byStore[s.id]?.qty || <span className="text-muted-foreground/30">–</span>}
-                                  </td>
-                                ))}
-                                <td className="p-2.5 text-right font-bold text-primary font-mono">{item.totalOrdered}</td>
-                                <td className="p-2.5 text-muted-foreground">{item.unit}</td>
+                               <tr key={item.product_id} className={`border-b border-border/30 h-9 transition-colors ${rowBgByStatus[item.currentStatus] || ""}`}>
+                                 <td className="px-2.5 py-1 font-medium text-foreground">{item.product_name}</td>
+                                 <td className="px-2.5 py-1">
+                                   <Badge variant="outline" className="text-[10px]">{item.category}</Badge>
+                                 </td>
+                                 {retailStores.map(s => (
+                                   <td key={s.id} className="px-2.5 py-1 text-right text-muted-foreground font-mono">
+                                     {item.byStore[s.id]?.qty || <span className="text-muted-foreground/30">–</span>}
+                                   </td>
+                                 ))}
+                                 <td className="px-2.5 py-1 text-right font-bold text-primary font-mono">{item.totalOrdered}</td>
+                                 <td className="px-2.5 py-1 text-muted-foreground">{item.unit}</td>
                                 <td className="p-2.5">
                                   <Select
                                     value={item.currentStatus || ""}
