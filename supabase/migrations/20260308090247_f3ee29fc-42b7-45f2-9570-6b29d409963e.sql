@@ -1,0 +1,1 @@
+ALTER TABLE public.shop_order_change_requests ADD COLUMN requested_by text NOT NULL DEFAULT 'shop';

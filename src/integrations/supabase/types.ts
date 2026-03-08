@@ -654,6 +654,7 @@ export type Database = {
           old_value: string | null
           order_line_id: string | null
           product_id: string | null
+          requested_by: string
           resolved_at: string | null
           resolved_by: string | null
           shop_order_id: string
@@ -668,6 +669,7 @@ export type Database = {
           old_value?: string | null
           order_line_id?: string | null
           product_id?: string | null
+          requested_by?: string
           resolved_at?: string | null
           resolved_by?: string | null
           shop_order_id: string
@@ -682,6 +684,7 @@ export type Database = {
           old_value?: string | null
           order_line_id?: string | null
           product_id?: string | null
+          requested_by?: string
           resolved_at?: string | null
           resolved_by?: string | null
           shop_order_id?: string
