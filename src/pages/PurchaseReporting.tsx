@@ -408,6 +408,25 @@ export default function PurchaseReporting() {
   const selectedReport = reports.find((r) => r.id === selectedReportId) ?? null;
   const selectedLines = allLines.filter((l) => l.report_id === selectedReportId);
 
+  // Build lookup: product_id -> category
+  const productCategoryMap = new Map(products.map((p: any) => [p.id, p.category]));
+
+  // Unique suppliers & categories from lines
+  const uniqueSuppliers = [...new Set(allLines.map((l) => l.supplier_name).filter(Boolean))].sort() as string[];
+  const uniqueCategories = [...new Set(
+    allLines.map((l) => l.product_id ? productCategoryMap.get(l.product_id) : null).filter(Boolean)
+  )].sort() as string[];
+
+  // Filtered lines
+  const filteredLines = allLines.filter((l) => {
+    if (filterSupplier !== "all" && l.supplier_name !== filterSupplier) return false;
+    if (filterCategory !== "all") {
+      const cat = l.product_id ? productCategoryMap.get(l.product_id) : null;
+      if (cat !== filterCategory) return false;
+    }
+    return true;
+  });
+
   const deleteReport = useMutation({
     mutationFn: async (id: string) => {
       await supabase.from("purchase_report_lines").delete().eq("report_id", id);
