@@ -596,51 +596,7 @@ export default function WholesaleOrders() {
                 </div>
               )}
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/30">
-                      <th className="p-2.5 text-left font-medium text-muted-foreground">Produkt</th>
-                      <th className="p-2.5 text-left font-medium text-muted-foreground">Enhet</th>
-                      <th className="p-2.5 text-right font-medium text-muted-foreground">Beställt</th>
-                      <th className="p-2.5 text-right font-medium text-muted-foreground">Levererat</th>
-                      <th className="p-2.5 text-left font-medium text-muted-foreground">Avvikelse</th>
-                      <th className="p-2.5 text-left font-medium text-muted-foreground">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selectedOrder.shop_order_lines?.map((line: any) => {
-                      const qtyOrdered = line.quantity_ordered || 0;
-                      const qtyDelivered = line.quantity_delivered || 0;
-                      const hasDiff = qtyDelivered > 0 && qtyDelivered !== qtyOrdered;
-                      return (
-                        <tr key={line.id} className="border-b border-border/30">
-                          <td className="p-2.5 font-medium text-foreground">{line.products?.name || "–"}</td>
-                          <td className="p-2.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
-                          <td className="p-2.5 text-right font-mono text-foreground">{qtyOrdered}</td>
-                          <td className={`p-2.5 text-right font-mono ${hasDiff ? "text-warning font-bold" : "text-muted-foreground"}`}>
-                            {qtyDelivered || "–"}
-                          </td>
-                          <td className="p-2.5 text-muted-foreground">{line.deviation || "–"}</td>
-                          <td className="p-2.5">
-                            {line.status ? (
-                              <Badge variant="outline" className={`text-[10px] ${
-                                line.status === "Ej tillgänglig" ? "text-destructive border-destructive/20" :
-                                line.status === "Packad" || line.status === "Producerad" ? "text-success border-success/20" :
-                                ""
-                              }`}>{line.status}</Badge>
-                            ) : <span className="text-muted-foreground/50">–</span>}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              <DialogFooter>
-                <Button variant="outline" size="sm" onClick={() => setSelectedOrder(null)}>Stäng</Button>
-              </DialogFooter>
+              <WholesaleOrderDetail order={selectedOrder} onClose={() => setSelectedOrder(null)} />
             </>
           )}
         </DialogContent>
