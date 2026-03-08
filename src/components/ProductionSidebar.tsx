@@ -51,6 +51,12 @@ const inventoryNav = [
   { title: "Leverantörer", url: "/suppliers", icon: Truck },
 ];
 
+const financeNav = [
+  { title: "Rapporter", url: "/reports", icon: BarChart3 },
+  { title: "Ekonomi", url: "/finance", icon: CreditCard },
+  { title: "Prognoser", url: "/forecasts", icon: TrendingUp },
+];
+
 const bottomNav = [
   { title: "Revision & Logg", url: "/audit", icon: ClipboardList },
   { title: "Administration", url: "/settings", icon: Settings },
@@ -60,9 +66,8 @@ type NavSection = { label: string; items: typeof overviewNav };
 
 const sections: NavSection[] = [
   { label: "Översikt", items: overviewNav },
-  { label: "Försäljning", items: salesNav },
+  { label: "Produktion", items: produktionSectionNav },
   { label: "Lagerstyrning", items: inventoryNav },
-  { label: "Produktion", items: productionNav },
   { label: "Ekonomi & Rapporter", items: financeNav },
 ];
 
