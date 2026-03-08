@@ -247,7 +247,7 @@ function EditableRow({
                   if (e.target.value.length > 0) setProductOpen(true);
                 }}
                 onKeyDown={handleProductKeyDown}
-                className="h-7 text-xs border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1.5"
+                className="h-7 text-xs border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1.5 min-w-[160px]"
                 placeholder="Sök produkt..."
               />
               {!line.product_id && (
