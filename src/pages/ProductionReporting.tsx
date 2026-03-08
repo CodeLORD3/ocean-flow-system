@@ -507,6 +507,10 @@ export default function ProductionReporting() {
         }
       }
 
+      // Auto-update order line statuses to "Behandlas"
+      const confirmedProductIds = lines.map((l) => l.product_id!).filter(Boolean);
+      await markOrderLinesBehandlas(confirmedProductIds);
+
       // Lock the report
       const { error } = await supabase
         .from("production_reports")
