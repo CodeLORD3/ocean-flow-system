@@ -61,7 +61,7 @@ const fmt = (v: number) =>
 
 export default function Inventory() {
   const { toast } = useToast();
-  const { activeStoreId, activeStoreName } = useSite();
+  const { activeStoreId, activeStoreName, site } = useSite();
   const [search, setSearch] = useState("");
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
