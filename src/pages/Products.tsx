@@ -266,11 +266,11 @@ export default function Products() {
                         <td className="px-3 py-1"><Badge variant="outline" className="text-[10px]">{p.category}</Badge></td>
                         <td className="px-3 py-1 text-muted-foreground">{p.unit}</td>
                         {isWholesale && (
-                          <td className="p-3 text-right text-muted-foreground">{Number(p.cost_price).toFixed(2)}</td>
+                          <td className="px-3 py-1 text-right text-muted-foreground">{Number(p.cost_price).toFixed(2)}</td>
                         )}
-                        <td className="p-3 text-right font-medium text-foreground">{Number(p.wholesale_price).toFixed(2)}</td>
+                        <td className="px-3 py-1 text-right font-medium text-foreground">{Number(p.wholesale_price).toFixed(2)}</td>
                         {isWholesale && (
-                          <td className="p-3 text-right text-muted-foreground">{p.retail_suggested ? Number(p.retail_suggested).toFixed(2) : "–"}</td>
+                          <td className="px-3 py-1 text-right text-muted-foreground">{p.retail_suggested ? Number(p.retail_suggested).toFixed(2) : "–"}</td>
                         )}
                        <td className="p-3">
                          {barcode ? (
