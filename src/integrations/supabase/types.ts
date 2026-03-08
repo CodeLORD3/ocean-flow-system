@@ -79,6 +79,51 @@ export type Database = {
           },
         ]
       }
+      deleted_stock_log: {
+        Row: {
+          deleted_at: string
+          deleted_by: string | null
+          id: string
+          location_id: string
+          product_id: string
+          quantity: number
+          reason: string
+        }
+        Insert: {
+          deleted_at?: string
+          deleted_by?: string | null
+          id?: string
+          location_id: string
+          product_id: string
+          quantity?: number
+          reason: string
+        }
+        Update: {
+          deleted_at?: string
+          deleted_by?: string | null
+          id?: string
+          location_id?: string
+          product_id?: string
+          quantity?: number
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deleted_stock_log_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deleted_stock_log_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       delivery_note_lines: {
         Row: {
           delivery_note_id: string
