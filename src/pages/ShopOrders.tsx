@@ -536,6 +536,9 @@ export default function ShopOrders() {
                 </DialogTitle>
                 <DialogDescription className="text-xs">
                   Skapad {new Date(selectedOrder.created_at).toLocaleDateString("sv-SE")} · {selectedOrder.stores?.name || "–"}
+                  {selectedOrder.desired_delivery_date && (
+                    <> · Önskat leveransdatum: <span className="font-medium text-foreground">{selectedOrder.desired_delivery_date}</span></>
+                  )}
                 </DialogDescription>
               </DialogHeader>
 
