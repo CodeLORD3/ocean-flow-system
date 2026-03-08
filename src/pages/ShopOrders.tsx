@@ -110,6 +110,7 @@ function OrderTable({ orders, onSelect, emptyMsg }: { orders: any[]; onSelect: (
                 <th className="p-3 text-left font-medium text-muted-foreground">VECKA</th>
                 <th className="p-3 text-left font-medium text-muted-foreground">DATUM</th>
                 <th className="p-3 text-left font-medium text-muted-foreground">BUTIK</th>
+                <th className="p-3 text-left font-medium text-muted-foreground">ÖNSKAD LEV.</th>
                 <th className="p-3 text-right font-medium text-muted-foreground">RADER</th>
                 <th className="p-3 text-left font-medium text-muted-foreground">PRODUKTER</th>
                 <th className="p-3 text-left font-medium text-muted-foreground">ANTECKNING</th>
