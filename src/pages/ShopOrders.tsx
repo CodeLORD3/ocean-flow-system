@@ -453,6 +453,33 @@ export default function ShopOrders() {
           )}
 
           <div className="space-y-1.5">
+            <Label className="text-xs">Önskat leveransdatum (valfritt)</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left text-xs h-8 font-normal",
+                    !desiredDeliveryDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                  {desiredDeliveryDate ? format(desiredDeliveryDate, "yyyy-MM-dd") : "Välj datum..."}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={desiredDeliveryDate}
+                  onSelect={setDesiredDeliveryDate}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div className="space-y-1.5">
             <Label className="text-xs">Anteckning (valfritt)</Label>
             <Textarea
               value={orderNote}
