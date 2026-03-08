@@ -537,7 +537,7 @@ export default function PurchaseReporting() {
     <div className="h-[calc(100vh-4rem)]">
       <ResizablePanelGroup direction="horizontal" className="h-full rounded-lg border">
         {/* LEFT: Product list */}
-        <ResizablePanel defaultSize={55} minSize={35}>
+        <ResizablePanel defaultSize={70} minSize={35}>
           <div className="flex flex-col h-full">
             <div className="flex items-center justify-between p-4 border-b">
               <div>
