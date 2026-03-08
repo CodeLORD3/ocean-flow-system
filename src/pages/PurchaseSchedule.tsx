@@ -196,7 +196,7 @@ export default function PurchaseSchedule() {
     }
 
     const key = (item: RawItem) =>
-      `${item.productName}|${item.unit}|${format(item.latestPurchaseDate, "yyyy-MM-dd")}`;
+      `${item.productName}|${item.unit}|${format(item.departureDate, "yyyy-MM-dd")}`;
 
     const grouped = new Map<string, {
       productName: string;
