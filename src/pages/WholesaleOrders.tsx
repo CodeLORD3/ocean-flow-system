@@ -517,11 +517,13 @@ export default function WholesaleOrders() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {pendingChanges.length === 0 ? (
+              {(() => {
+                const shopInitiated = pendingChanges.filter((cr: any) => cr.requested_by !== "grossist");
+                return shopInitiated.length === 0 ? (
                 <p className="text-xs text-muted-foreground py-8 text-center">Inga väntande ändringsförfrågningar.</p>
               ) : (
                 <div className="space-y-2">
-                  {pendingChanges.map((cr: any) => (
+                  {shopInitiated.map((cr: any) => (
                     <div key={cr.id} className="border border-warning/30 bg-warning/5 rounded-md p-3 text-xs flex items-start justify-between gap-3">
                       <div className="flex-1 space-y-0.5">
                         <div className="font-medium text-foreground">
