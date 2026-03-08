@@ -24,11 +24,11 @@ function jsToWeekday(jsDay: number): number {
   return jsDay === 0 ? 7 : jsDay;
 }
 
-function getLatestPurchaseDate(deliveryDate: Date, departureWeekday: number): Date {
-  const deliveryWd = jsToWeekday(getDay(deliveryDate));
-  let diff = deliveryWd - departureWeekday;
-  if (diff < 0) diff += 7;
-  return addDays(deliveryDate, -diff);
+/** For a given delivery date, find the departure date = the transport zone's
+ *  departure weekday in the SAME ISO week as the delivery date. */
+function getDepartureDate(deliveryDate: Date, departureWeekday: number): Date {
+  const weekMonday = startOfWeek(deliveryDate, { weekStartsOn: 1 });
+  return addDays(weekMonday, departureWeekday - 1);
 }
 
 function getStoreZoneKey(store: { city: string; name: string }): string {
