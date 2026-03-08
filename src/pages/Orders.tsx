@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Search, Plus, ShoppingCart, Clock, CheckCircle2, Truck, XCircle, Package } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -15,6 +15,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useShopOrders } from "@/hooks/useShopOrders";
 import { useStores } from "@/hooks/useStores";
+import { useQueryClient } from "@tanstack/react-query";
+import { syncBehandlasFromStock } from "@/lib/orderStatusSync";
 import { format } from "date-fns";
 
 const statusColor: Record<string, string> = {
@@ -44,6 +46,17 @@ export default function Orders() {
 
   const { data: orders = [], isLoading } = useShopOrders();
   const { data: stores = [] } = useStores();
+  const queryClient = useQueryClient();
+  const syncRan = useRef(false);
+
+  // On mount, sync order statuses with current Grossist Flytande stock
+  useEffect(() => {
+    if (syncRan.current) return;
+    syncRan.current = true;
+    syncBehandlasFromStock().then(() => {
+      queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
+    });
+  }, []);
 
   const storeOptions = ["Alla butiker", ...stores.map((s: any) => s.name)];
   const statusOptions = ["Alla", "Ny", "Behandlas", "Packad", "Skickad", "Klar / Levererad"];

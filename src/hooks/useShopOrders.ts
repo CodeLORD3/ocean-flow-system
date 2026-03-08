@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { syncBehandlasFromStock } from "@/lib/orderStatusSync";
 
 export function useShopOrders(storeId?: string) {
   return useQuery({
@@ -43,6 +44,8 @@ export function useCreateShopOrder() {
       }));
       const { error: lineErr } = await supabase.from("shop_order_lines").insert(lines);
       if (lineErr) throw lineErr;
+      // After creating the order, sync statuses with existing stock
+      await syncBehandlasFromStock();
       return order;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["shop_orders"] }),
