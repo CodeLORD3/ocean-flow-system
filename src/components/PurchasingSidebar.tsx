@@ -38,7 +38,7 @@ const overviewNav = [
 const salesNav = [
   { title: "Ordrar", url: "/orders", icon: ShoppingCart },
   { title: "Inköpsschema", url: "/purchase-schedule", icon: CalendarDays },
-  { title: "Fakturor", url: "/invoices", icon: FileText },
+  { title: "Inköpsrapportering", url: "/purchase-reporting", icon: FileText },
 ];
 
 const inventoryNav = [

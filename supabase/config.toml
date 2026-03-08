@@ -1,1 +1,4 @@
 project_id = "tzcvoqnrhjtrxlzhhdmu"
+
+[functions.parse-foljesedel]
+verify_jwt = false
