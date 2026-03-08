@@ -678,7 +678,7 @@ export default function PurchaseReporting() {
                       </div>
                     </div>
                   )}
-                </Popover>
+                </div>
 
                 <Dialog open={newProductOpen} onOpenChange={setNewProductOpen}>
                   <DialogTrigger asChild>
