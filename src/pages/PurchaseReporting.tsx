@@ -100,12 +100,16 @@ function EditableRow({
   onDelete,
   products,
   suppliers,
+  autoFocusQty,
+  onQtyFocused,
 }: {
   line: ReportLine;
   onSave: (updated: Partial<ReportLine>) => void;
   onDelete: () => void;
   products: any[];
   suppliers: any[];
+  autoFocusQty?: boolean;
+  onQtyFocused?: () => void;
 }) {
   const [productSearch, setProductSearch] = useState("");
   const [productOpen, setProductOpen] = useState(false);
@@ -117,6 +121,15 @@ function EditableRow({
 
   const productInputRef = useRef<HTMLInputElement>(null);
   const supplierInputRef = useRef<HTMLInputElement>(null);
+  const qtyInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (autoFocusQty && qtyInputRef.current) {
+      qtyInputRef.current.focus();
+      qtyInputRef.current.select();
+      onQtyFocused?.();
+    }
+  }, [autoFocusQty]);
 
   const commitField = (field: string, value: any) => {
     const updates: any = { [field]: value };
@@ -239,6 +252,7 @@ function EditableRow({
       </TableCell>
       <TableCell className="py-1 px-2">
         <Input
+          ref={qtyInputRef}
           type="number"
           defaultValue={line.quantity}
           onFocus={(e) => e.target.select()}
@@ -348,6 +362,7 @@ export default function PurchaseReporting() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchIdx, setSearchIdx] = useState(0);
+  const [focusLineId, setFocusLineId] = useState<string | null>(null);
 
   // New product dialog
   const [newProductOpen, setNewProductOpen] = useState(false);
@@ -440,7 +455,7 @@ export default function PurchaseReporting() {
         reportId = newReport.id;
         setSelectedReportId(reportId);
       }
-      const { error } = await supabase.from("purchase_report_lines").insert({
+      const { data: newLine, error } = await supabase.from("purchase_report_lines").insert({
         report_id: reportId,
         product_name: product.name,
         product_id: product.id,
@@ -451,14 +466,16 @@ export default function PurchaseReporting() {
         supplier_name: product.suppliers?.name || null,
         status: "Inköpt",
         purchase_date: format(new Date(), "yyyy-MM-dd"),
-      });
+      }).select("id").single();
       if (error) throw error;
+      return newLine.id;
     },
-    onSuccess: (_, product) => {
+    onSuccess: (newLineId, product) => {
       queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
       queryClient.invalidateQueries({ queryKey: ["purchase-report-lines"] });
       setSearchQuery("");
       setSearchOpen(false);
+      setFocusLineId(newLineId);
       toast({ title: `${product.name} tillagd` });
     },
   });
@@ -783,6 +800,8 @@ export default function PurchaseReporting() {
                         onDelete={() => deleteLine.mutate(l.id)}
                         products={products}
                         suppliers={suppliers}
+                        autoFocusQty={focusLineId === l.id}
+                        onQtyFocused={() => setFocusLineId(null)}
                       />
                     ))}
                   </TableBody>
