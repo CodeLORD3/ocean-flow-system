@@ -442,12 +442,30 @@ export default function ShopOrders() {
             <Button
               size="sm"
               className="gap-1.5"
-              onClick={handleCreateOrder}
+              onClick={() => setConfirmSendOpen(true)}
               disabled={orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0}
             >
               <ShoppingCart className="h-3.5 w-3.5" /> Skicka beställning
             </Button>
           </DialogFooter>
+
+          {/* Confirmation dialog */}
+          <Dialog open={confirmSendOpen} onOpenChange={setConfirmSendOpen}>
+            <DialogContent className="max-w-sm">
+              <DialogHeader>
+                <DialogTitle className="font-heading">Bekräfta beställning</DialogTitle>
+                <DialogDescription className="text-xs">
+                  Är du säker på att du vill skicka beställningen med {orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length} produkt(er)? Ordern kan inte ändras efter att den skickats.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button variant="outline" size="sm" onClick={() => setConfirmSendOpen(false)}>Avbryt</Button>
+                <Button size="sm" className="gap-1.5" onClick={() => { setConfirmSendOpen(false); handleCreateOrder(); }}>
+                  <CheckCircle2 className="h-3.5 w-3.5" /> Ja, skicka
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </DialogContent>
       </Dialog>
 
