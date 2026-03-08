@@ -800,6 +800,8 @@ export default function PurchaseReporting() {
                         onDelete={() => deleteLine.mutate(l.id)}
                         products={products}
                         suppliers={suppliers}
+                        autoFocusQty={focusLineId === l.id}
+                        onQtyFocused={() => setFocusLineId(null)}
                       />
                     ))}
                   </TableBody>
