@@ -758,6 +758,10 @@ export default function PurchaseReporting() {
             .insert({ product_id: line.product_id!, location_id: GROSSIST_FLYTANDE_ID, quantity: Number(line.quantity), unit_cost: Number(line.unit_price || 0) });
         }
       }
+
+      // Auto-update order line statuses to "Behandlas"
+      const confirmedProductIds = productLines.map((l) => l.product_id!).filter(Boolean);
+      await markOrderLinesBehandlas(confirmedProductIds);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
