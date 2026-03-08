@@ -197,6 +197,7 @@ export default function PurchaseSchedule() {
         rawItems.push({
           storeName: store.name,
           zoneKey,
+          productId: line.product_id,
           productName: line.products?.name || "Okänd produkt",
           quantity: line.quantity_ordered,
           unit: line.unit || line.products?.unit || "kg",
@@ -204,6 +205,8 @@ export default function PurchaseSchedule() {
           departureDate,
           departureTime: matchingSchedule.departure_time,
           category: line.products?.category || "Övrigt",
+          lineId: line.id,
+          shopOrderId: order.id,
         });
       }
     }
