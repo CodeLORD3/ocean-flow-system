@@ -13,7 +13,10 @@ const DEFAULT_CATEGORIES = ["Färsk Fisk", "Skaldjur", "Varmkök", "Rökta Produ
 export default function TtottiiiTab() {
   const { data: orders = [], isLoading } = useShopOrders();
   const { data: stores = [] } = useStores();
+  const { data: dbCategories = [] } = useCategories();
+  const [filterCategory, setFilterCategory] = useState<string>("all");
 
+  const CATEGORIES = dbCategories.length > 0 ? dbCategories.map(c => c.name) : DEFAULT_CATEGORIES;
   const retailStores = stores.filter(s => !s.is_wholesale);
 
   // Aggregate: per product, sum quantity_ordered per store
