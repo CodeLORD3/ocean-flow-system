@@ -409,6 +409,7 @@ function ReportSection({
   onDeleteLine,
   onViewDocument,
   onConfirm,
+  onRenameReport,
   focusLineId,
   onQtyFocused,
 }: {
@@ -421,22 +422,43 @@ function ReportSection({
   onDeleteLine: (id: string) => void;
   onViewDocument: (reportId: string) => void;
   onConfirm: (reportId: string) => void;
+  onRenameReport: (reportId: string, newName: string) => void;
   focusLineId: string | null;
   onQtyFocused: () => void;
 }) {
   const isLocked = report.status === "Godkänd";
   const [expanded, setExpanded] = useState(!isLocked);
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(report.file_name);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing && nameInputRef.current) {
+      nameInputRef.current.focus();
+      nameInputRef.current.select();
+    }
+  }, [editing]);
+
+  const commitRename = () => {
+    const trimmed = editName.trim();
+    if (trimmed && trimmed !== report.file_name) {
+      onRenameReport(report.id, trimmed);
+    } else {
+      setEditName(report.file_name);
+    }
+    setEditing(false);
+  };
 
   const sectionTotal = lines.reduce((s, l) => s + (l.line_total ?? 0), 0);
 
   return (
     <div className="border-b last:border-b-0">
       {/* Section header */}
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className={`w-full flex items-center gap-2 px-3 py-2.5 text-left transition-colors ${
+      <div
+        className={`w-full flex items-center gap-2 px-3 py-2.5 text-left transition-colors cursor-pointer ${
           isLocked ? "bg-muted/40 hover:bg-muted/60" : "bg-muted/20 hover:bg-muted/40"
         }`}
+        onClick={() => !editing && setExpanded(!expanded)}
       >
         {expanded ? <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />}
         {isLocked ? (
@@ -444,7 +466,35 @@ function ReportSection({
         ) : (
           <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         )}
-        <span className="font-medium text-sm truncate flex-1">{report.file_name}</span>
+        {editing ? (
+          <Input
+            ref={nameInputRef}
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            onBlur={commitRename}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commitRename();
+              if (e.key === "Escape") { setEditName(report.file_name); setEditing(false); }
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="h-7 text-sm font-medium flex-1 px-1.5"
+          />
+        ) : (
+          <span
+            className="font-medium text-sm truncate flex-1"
+            onDoubleClick={(e) => { e.stopPropagation(); setEditing(true); }}
+          >
+            {report.file_name}
+          </span>
+        )}
+        {!editing && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setEditing(true); }}
+            className="shrink-0 opacity-0 group-hover:opacity-100 hover:text-foreground text-muted-foreground"
+          >
+            <Pencil className="h-3 w-3" />
+          </button>
+        )}
         <span className="text-xs text-muted-foreground shrink-0">
           {lines.length} rader · {sectionTotal.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr
         </span>
