@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { markOrderLinesPackad } from "@/lib/orderStatusSync";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
@@ -169,8 +170,14 @@ export default function Inventory() {
         // Remove from source
         await supabase.from("product_stock_locations").delete().eq("id", item.id);
       }
+
+      // Auto-update order statuses to "Packad" if moving to a Pre-location
+      const movedProductIds = items.map((i: any) => i.product_id);
+      await markOrderLinesPackad(movedProductIds, targetLocationId);
+
       clearSelection(activeLocationId);
       invalidateStock();
+      queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
       toast({ title: "Flyttat", description: `${items.length} produkt(er) flyttade` });
       setMoveDialogOpen(false);
     } catch (err: any) {

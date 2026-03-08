@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+import { markOrderLinesBehandlas } from "@/lib/orderStatusSync";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -506,6 +507,10 @@ export default function ProductionReporting() {
         }
       }
 
+      // Auto-update order line statuses to "Behandlas"
+      const confirmedProductIds = lines.map((l) => l.product_id!).filter(Boolean);
+      await markOrderLinesBehandlas(confirmedProductIds);
+
       // Lock the report
       const { error } = await supabase
         .from("production_reports")
@@ -517,6 +522,7 @@ export default function ProductionReporting() {
       queryClient.invalidateQueries({ queryKey: ["production-reports"] });
       queryClient.invalidateQueries({ queryKey: ["product_stock_locations"] });
       queryClient.invalidateQueries({ queryKey: ["all_stock_locations"] });
+      queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
       toast({ title: "Produktion bekräftad", description: "Producerade varor har lagts till i Grossist Flytande." });
     },
   });

@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+import { markOrderLinesBehandlas } from "@/lib/orderStatusSync";
 import { PdfViewer } from "@/components/PdfViewer";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -758,11 +759,16 @@ export default function PurchaseReporting() {
             .insert({ product_id: line.product_id!, location_id: GROSSIST_FLYTANDE_ID, quantity: Number(line.quantity), unit_cost: Number(line.unit_price || 0) });
         }
       }
+
+      // Auto-update order line statuses to "Behandlas"
+      const confirmedProductIds = productLines.map((l) => l.product_id!).filter(Boolean);
+      await markOrderLinesBehandlas(confirmedProductIds);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
       queryClient.invalidateQueries({ queryKey: ["product_stock_locations"] });
       queryClient.invalidateQueries({ queryKey: ["all_stock_locations"] });
+      queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
       setSelectedReportId(null);
       toast({ title: "Inköp bekräftat", description: "Dokumentet har låsts och varor har lagts till i Grossist Flytande." });
     },
