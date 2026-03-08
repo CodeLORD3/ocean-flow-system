@@ -10,11 +10,13 @@ export async function markOrderLinesBehandlas(productIds: string[]) {
   if (!productIds.length) return;
 
   // Find open shop_order_lines for these products where status is empty or 'Ny'
+  // Only for non-archived orders
   const { data: orderLines } = await supabase
     .from("shop_order_lines")
     .select("id, status, shop_order_id, product_id, shop_orders!inner(status)")
     .in("product_id", productIds)
-    .in("status", ["", "Ny"]);
+    .in("status", ["", "Ny"])
+    .not("shop_orders.status", "in", '("Arkiverad","Klar / Levererad")');
 
   if (!orderLines?.length) return;
 
@@ -25,6 +27,50 @@ export async function markOrderLinesBehandlas(productIds: string[]) {
     .in("id", lineIds);
 
   // Also update parent order status
+  const orderIds = [...new Set(orderLines.map((l) => l.shop_order_id))];
+  for (const orderId of orderIds) {
+    await supabase
+      .from("shop_orders")
+      .update({ status: "Behandlas" })
+      .eq("id", orderId)
+      .in("status", ["Ny"]);
+  }
+}
+
+/**
+ * Sync ALL pending order lines against current Grossist Flytande stock.
+ * Any order line whose product exists in Grossist Flytande gets set to "Behandlas".
+ * Call this on page load or after order creation.
+ */
+export async function syncBehandlasFromStock() {
+  // Get all products currently in Grossist Flytande
+  const { data: stock } = await supabase
+    .from("product_stock_locations")
+    .select("product_id")
+    .eq("location_id", GROSSIST_FLYTANDE_ID)
+    .gt("quantity", 0);
+
+  if (!stock?.length) return;
+
+  const productIdsInStock = stock.map((s) => s.product_id);
+
+  // Find all pending order lines matching these products
+  const { data: orderLines } = await supabase
+    .from("shop_order_lines")
+    .select("id, status, shop_order_id, product_id, shop_orders!inner(status)")
+    .in("product_id", productIdsInStock)
+    .in("status", ["", "Ny"])
+    .not("shop_orders.status", "in", '("Arkiverad","Klar / Levererad")');
+
+  if (!orderLines?.length) return;
+
+  const lineIds = orderLines.map((l) => l.id);
+  await supabase
+    .from("shop_order_lines")
+    .update({ status: "Behandlas" })
+    .in("id", lineIds);
+
+  // Update parent order statuses
   const orderIds = [...new Set(orderLines.map((l) => l.shop_order_id))];
   for (const orderId of orderIds) {
     await supabase
