@@ -121,6 +121,15 @@ function EditableRow({
 
   const productInputRef = useRef<HTMLInputElement>(null);
   const supplierInputRef = useRef<HTMLInputElement>(null);
+  const qtyInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (autoFocusQty && qtyInputRef.current) {
+      qtyInputRef.current.focus();
+      qtyInputRef.current.select();
+      onQtyFocused?.();
+    }
+  }, [autoFocusQty]);
 
   const commitField = (field: string, value: any) => {
     const updates: any = { [field]: value };
