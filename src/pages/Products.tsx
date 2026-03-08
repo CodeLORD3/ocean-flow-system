@@ -148,7 +148,21 @@ export default function Products() {
     toast({ title: "Pris uppdaterat", description: `Grossistpris: ${wholesale.toFixed(2)} SEK` });
   };
 
-  const handleDelete = async () => {
+  const handleAddCategory = () => {
+    const name = newCategoryName.trim();
+    if (!name) return;
+    addCategory.mutate(name, {
+      onSuccess: () => {
+        toast({ title: "Kategori sparad", description: `"${name}" är nu tillgänglig i alla dropdown-menyer.` });
+        setNewCategoryName("");
+        setAddCategoryOpen(false);
+      },
+      onError: (err: any) => {
+        toast({ title: "Fel", description: err.message?.includes("duplicate") ? "Kategorin finns redan." : err.message, variant: "destructive" });
+      },
+    });
+  };
+
     if (!deleteTarget) return;
     const { error } = await supabase.from("products").update({ active: false }).eq("id", deleteTarget.id);
     if (error) { toast({ title: "Fel", description: error.message, variant: "destructive" }); return; }
