@@ -147,15 +147,17 @@ function EditableRow({
                 defaultValue={line.product_name}
                 onChange={(e) => {
                   setProductSearch(e.target.value);
+                  setProductIdx(0);
                   if (e.target.value.length > 0 && !productOpen) setProductOpen(true);
                   if (e.target.value.length === 0) setProductOpen(false);
                   commitField("product_name", e.target.value);
                 }}
                 onFocus={(e) => {
+                  e.target.select();
                   setProductSearch(e.target.value);
                   if (e.target.value.length > 0) setProductOpen(true);
                 }}
-                onKeyDown={(e) => handleSearchKeyDown(e, productCmdRef)}
+                onKeyDown={handleProductKeyDown}
                 className="h-7 text-xs border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1.5"
                 placeholder="Sök produkt..."
               />
