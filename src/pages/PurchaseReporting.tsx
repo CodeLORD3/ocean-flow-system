@@ -369,11 +369,11 @@ function EditableRow({
           className="h-7 text-xs border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 w-24"
         />
       </TableCell>
-      <TableCell className="py-1 px-2">
-        <div className="flex items-center gap-1">
+      <TableCell className="py-1 px-1 w-[110px]">
+        <div className="flex items-center gap-0.5">
           <Select defaultValue={line.report_id} onValueChange={(v) => onSave({ report_id: v })}>
-            <SelectTrigger className="h-7 w-[120px] text-xs border-transparent bg-transparent hover:border-input">
-              <SelectValue placeholder="Inget dokument" />
+            <SelectTrigger className="h-7 w-[90px] text-xs border-transparent bg-transparent hover:border-input">
+              <SelectValue placeholder="—" />
             </SelectTrigger>
             <SelectContent>
               {reports.map((r) => (
