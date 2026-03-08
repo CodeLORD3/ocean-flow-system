@@ -208,8 +208,13 @@ export default function Pricing() {
                 </TableHeader>
                 <TableBody>
                   {filtered.map((p) => {
-                    const edit = !isShop ? inlineEdits[p.id] : undefined;
-                    const isEditing = !!edit;
+                    const costVal = inlineEdits[p.id]?.cost_price ?? Number(p.cost_price);
+                    const wholesaleVal = inlineEdits[p.id]?.wholesale_price ?? Number(p.wholesale_price);
+                    const marginVal = inlineEdits[p.id]?.margin ?? calcMargin(Number(p.cost_price), Number(p.wholesale_price));
+                    const hasChanges = !!inlineEdits[p.id] && (
+                      inlineEdits[p.id].cost_price !== Number(p.cost_price) ||
+                      inlineEdits[p.id].wholesale_price !== Number(p.wholesale_price)
+                    );
                     return (
                     <TableRow key={p.id} className="h-9">
                       <TableCell className="py-1 font-medium">{p.name}</TableCell>
@@ -217,27 +222,23 @@ export default function Pricing() {
                       <TableCell className="py-1"><Badge variant="outline">{p.category}</Badge></TableCell>
                       {!isShop && (
                         <TableCell className="py-1 text-right">
-                          {isEditing ? (
-                            <Input
-                              type="number"
-                              value={edit.cost_price}
-                              onChange={(e) => updateInlineCost(p.id, Number(e.target.value))}
-                              className="h-7 w-24 text-right text-sm ml-auto"
-                            />
-                          ) : (
-                            <span className="cursor-pointer hover:text-primary hover:underline" onClick={() => startInlineEdit(p)}>
-                              {Number(p.cost_price).toFixed(2)} kr
-                            </span>
-                          )}
+                          <Input
+                            type="number"
+                            value={costVal}
+                            onFocus={() => { if (!inlineEdits[p.id]) startInlineEdit(p); }}
+                            onChange={(e) => updateInlineCost(p.id, Number(e.target.value))}
+                            className="h-7 w-24 text-right text-sm ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
+                          />
                         </TableCell>
                       )}
                       <TableCell className="py-1 text-right">
-                        {isEditing ? (
+                        {!isShop ? (
                           <Input
                             type="number"
-                            value={edit.wholesale_price}
+                            value={wholesaleVal}
+                            onFocus={() => { if (!inlineEdits[p.id]) startInlineEdit(p); }}
                             onChange={(e) => updateInlineWholesale(p.id, Number(e.target.value))}
-                            className="h-7 w-24 text-right text-sm ml-auto"
+                            className="h-7 w-24 text-right text-sm ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
                           />
                         ) : (
                           <span>{Number(p.wholesale_price).toFixed(2)} kr</span>
@@ -246,25 +247,20 @@ export default function Pricing() {
                       <TableCell className="py-1 text-right">{Number(p.retail_suggested || 0).toFixed(2)} kr</TableCell>
                       {!isShop && (
                         <TableCell className="py-1 text-right">
-                          {isEditing ? (
-                            <div className="flex items-center justify-end gap-1">
-                              <Input
-                                type="number"
-                                value={edit.margin}
-                                onChange={(e) => updateInlineMargin(p.id, Number(e.target.value))}
-                                className="h-7 w-16 text-right text-sm"
-                              />
-                              <span className="text-xs text-muted-foreground">%</span>
-                            </div>
-                          ) : (
-                            <Badge variant={margin(p.cost_price, p.wholesale_price) >= 30 ? "default" : "destructive"}>
-                              {margin(p.cost_price, p.wholesale_price)}%
-                            </Badge>
-                          )}
+                          <div className="flex items-center justify-end gap-1">
+                            <Input
+                              type="number"
+                              value={marginVal}
+                              onFocus={() => { if (!inlineEdits[p.id]) startInlineEdit(p); }}
+                              onChange={(e) => updateInlineMargin(p.id, Number(e.target.value))}
+                              className="h-7 w-16 text-right text-sm border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
+                            />
+                            <span className="text-xs text-muted-foreground">%</span>
+                          </div>
                         </TableCell>
                       )}
                       <TableCell className="py-1 text-right space-x-1">
-                        {isEditing ? (
+                        {!isShop && hasChanges && (
                           <>
                             <Button size="sm" variant="default" className="h-6 w-6 p-0" onClick={() => saveInlineEdit(p)} disabled={updateProduct.isPending}>
                               <Check className="h-3.5 w-3.5" />
@@ -273,19 +269,11 @@ export default function Pricing() {
                               <X className="h-3.5 w-3.5" />
                             </Button>
                           </>
-                        ) : (
-                          <>
-                            {isShop && (
-                              <Button size="sm" variant="outline" className="h-6 text-xs" onClick={() => openEdit(p)}>
-                                Ändra försäljningspris
-                              </Button>
-                            )}
-                            {!isShop && (
-                              <Button size="sm" variant="outline" className="h-6 text-xs" onClick={() => startInlineEdit(p)}>
-                                Ändra pris
-                              </Button>
-                            )}
-                          </>
+                        )}
+                        {isShop && (
+                          <Button size="sm" variant="outline" className="h-6 text-xs" onClick={() => openEdit(p)}>
+                            Ändra försäljningspris
+                          </Button>
                         )}
                         <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => setHistoryProduct(p.id)}>
                           <History className="h-3.5 w-3.5" />
