@@ -35,8 +35,7 @@ export default function Products() {
   const { data: products = [], isLoading } = useProducts();
   const { data: dbCategories = [] } = useCategories();
   const addCategory = useAddCategory();
-  const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
-  const [inlineCostPrice, setInlineCostPrice] = useState("");
+  const [search, setSearch] = useState("");
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
