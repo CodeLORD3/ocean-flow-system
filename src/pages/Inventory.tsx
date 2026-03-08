@@ -1154,7 +1154,23 @@ export default function Inventory() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1 max-h-64 overflow-y-auto">
-            {locations.filter((l: any) => l.id !== activeLocationId).map((loc: any) => (
+            {locations
+              .filter((l: any) => l.id !== activeLocationId)
+              .filter((l: any) => {
+                // Portal-based filtering: only show locations relevant to current portal
+                const name = (l.name || "").toLowerCase();
+                const isGrossistFlytande = name.includes("grossist flytande");
+                if (site === "purchasing") {
+                  // Inköp portal: Grossist Flytande + Pre-* Inköp locations
+                  return isGrossistFlytande || name.includes("inköp");
+                }
+                if (site === "production") {
+                  // Produktion portal: Grossist Flytande + Pre-* Produktion locations
+                  return isGrossistFlytande || name.includes("produktion");
+                }
+                return true; // wholesale sees all
+              })
+              .map((loc: any) => (
               <button
                 key={loc.id}
                 className="w-full flex items-center gap-2 px-3 py-2.5 rounded-md border border-border/50 hover:bg-muted/40 transition-colors text-left"
