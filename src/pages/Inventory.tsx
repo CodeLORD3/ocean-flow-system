@@ -161,13 +161,47 @@ export default function Inventory() {
     });
   };
 
+  const toggleLocation = (locId: string) => {
+    setExpandedLocations(prev => {
+      const next = new Set(prev);
+      if (next.has(locId)) next.delete(locId); else next.add(locId);
+      return next;
+    });
+  };
+
   const expandAll = () => {
-    setExpandedCategories(new Set(stockByCategory.map(([cat]) => cat)));
+    if (site === "purchasing") {
+      setExpandedLocations(new Set(locations.map((l: any) => l.id)));
+    } else {
+      setExpandedCategories(new Set(stockByCategory.map(([cat]) => cat)));
+    }
   };
 
   const collapseAll = () => {
-    setExpandedCategories(new Set());
+    if (site === "purchasing") {
+      setExpandedLocations(new Set());
+    } else {
+      setExpandedCategories(new Set());
+    }
   };
+
+  const { site } = useSite();
+
+  // Stock grouped by location for purchasing portal
+  const stockByLocation = useMemo(() => {
+    return locations.map((loc: any) => {
+      let items = allStock.filter((s: any) => s.location_id === loc.id);
+      if (search) {
+        items = items.filter((s: any) =>
+          s.products?.name?.toLowerCase().includes(search.toLowerCase()) ||
+          s.products?.sku?.toLowerCase().includes(search.toLowerCase())
+        );
+      }
+      const totalQty = items.reduce((sum: number, s: any) => sum + Number(s.quantity), 0);
+      const totalValue = items.reduce((sum: number, s: any) => sum + Number(s.quantity) * (Number(s.products?.cost_price) || 0), 0);
+      return { ...loc, items, totalQty, totalValue };
+    });
+  }, [locations, allStock, search]);
 
   // --- Location dialog ---
   const handleCreateLocation = () => {
