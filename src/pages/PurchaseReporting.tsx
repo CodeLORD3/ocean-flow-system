@@ -363,6 +363,8 @@ export default function PurchaseReporting() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchIdx, setSearchIdx] = useState(0);
   const [focusLineId, setFocusLineId] = useState<string | null>(null);
+  const [filterSupplier, setFilterSupplier] = useState<string>("all");
+  const [filterCategory, setFilterCategory] = useState<string>("all");
 
   // New product dialog
   const [newProductOpen, setNewProductOpen] = useState(false);
