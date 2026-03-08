@@ -36,7 +36,6 @@ export default function Products() {
   const { data: dbCategories = [] } = useCategories();
   const addCategory = useAddCategory();
   const [search, setSearch] = useState("");
-  const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
