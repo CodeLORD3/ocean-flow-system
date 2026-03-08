@@ -19,6 +19,55 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useProducts } from "@/hooks/useProducts";
 import { useSuppliers } from "@/hooks/useSuppliers";
 
+// Magnifying glass overlay for document viewer
+function DocumentMagnifier({ children }: { children: React.ReactNode }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ x: 0, y: 0, visible: false });
+  const LENS_SIZE = 180;
+  const MAGNIFY = 2.5;
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setPos({ x: e.clientX - rect.left, y: e.clientY - rect.top, visible: true });
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative cursor-none"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setPos((p) => ({ ...p, visible: false }))}
+    >
+      {children}
+      {pos.visible && (
+        <div
+          className="pointer-events-none absolute border-2 border-foreground/20 rounded-full shadow-lg z-50 overflow-hidden"
+          style={{
+            width: LENS_SIZE,
+            height: LENS_SIZE,
+            left: pos.x - LENS_SIZE / 2,
+            top: pos.y - LENS_SIZE / 2,
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              left: -(pos.x * MAGNIFY - LENS_SIZE / 2),
+              top: -(pos.y * MAGNIFY - LENS_SIZE / 2),
+              transform: `scale(${MAGNIFY})`,
+              transformOrigin: "0 0",
+              pointerEvents: "none",
+            }}
+          >
+            {children}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 type ReportLine = {
   id: string;
   report_id: string;
