@@ -1,11 +1,14 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
   Warehouse, Search, Plus, Package, AlertTriangle, MapPin,
   Edit, ArrowRightLeft, ScanLine, Camera, ClipboardList, X, CheckCircle2,
-  ChevronDown, ChevronRight,
+  ChevronDown, ChevronRight, Trash2, Scissors, Move,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
