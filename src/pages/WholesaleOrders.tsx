@@ -269,8 +269,8 @@ export default function WholesaleOrders() {
           <TabsTrigger value="total" className="text-xs h-7 gap-1"><ListChecks className="h-3 w-3" /> Totalvy</TabsTrigger>
           <TabsTrigger value="archived" className="text-xs h-7 gap-1"><Archive className="h-3 w-3" /> Arkiverade ({archivedOrders.length})</TabsTrigger>
           <TabsTrigger value="changes" className="text-xs h-7 gap-1 relative">
-            <Bell className="h-3 w-3" /> Ändringar ({pendingChanges.length})
-            {pendingChanges.length > 0 && <span className="absolute -top-1 -right-1 h-3 w-3 bg-warning rounded-full animate-pulse" />}
+            <Bell className="h-3 w-3" /> Ändringar ({pendingChanges.filter((cr: any) => cr.requested_by !== "grossist").length})
+            {pendingChanges.filter((cr: any) => cr.requested_by !== "grossist").length > 0 && <span className="absolute -top-1 -right-1 h-3 w-3 bg-warning rounded-full animate-pulse" />}
           </TabsTrigger>
         </TabsList>
 
