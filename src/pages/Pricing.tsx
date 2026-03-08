@@ -40,8 +40,8 @@ export default function Pricing() {
   const [inlineEdits, setInlineEdits] = useState<Record<string, InlineEdit>>({});
 
   const calcMargin = (cost: number, wholesale: number) => {
-    if (cost === 0) return 0;
-    return Math.round(((wholesale - cost) / cost) * 100);
+    if (wholesale === 0) return 0;
+    return Math.round(((wholesale - cost) / wholesale) * 100);
   };
 
   const startInlineEdit = (p: any) => {
