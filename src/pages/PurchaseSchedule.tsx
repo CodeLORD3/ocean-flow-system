@@ -403,7 +403,7 @@ export default function PurchaseSchedule() {
           <CardContent>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               {transportSchedules?.map((zone) => {
-                const count = schedule.filter((s) => s.zoneKey === zone.zone_key).length;
+                const count = schedule.filter((s) => s.shops.some((sh) => sh.zoneKey === zone.zone_key)).length;
                 const dayName = WEEKDAYS[(zone.departure_weekday - 1) % 7];
                 return (
                   <div key={zone.id} className="rounded-lg border p-3">
