@@ -372,183 +372,274 @@ export default function Inventory() {
         </CardContent></Card>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-3">
-        <TabsList className="h-8">
-          <TabsTrigger value="overview" className="text-xs h-7">📦 Lageröversikt</TabsTrigger>
-          <TabsTrigger value="locations" className="text-xs h-7">📍 Lagerställen</TabsTrigger>
-        </TabsList>
-
-        {/* Overview Tab - Stock by Category */}
-        <TabsContent value="overview">
-          <Card className="shadow-card">
-            <CardHeader className="pb-2">
-              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
-                <div>
-                  <CardTitle className="text-sm font-heading">Lagersaldo per kategori</CardTitle>
-                  <CardDescription className="text-xs">
-                    {activeStoreName || "Alla butiker"} · {stockByCategory.length} kategorier
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" onClick={expandAll}>Visa alla</Button>
-                  <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" onClick={collapseAll}>Dölj alla</Button>
-                  <div className="relative w-48">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                    <Input placeholder="Sök produkt..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
-                  </div>
+      {site === "purchasing" ? (
+        /* ── INKÖP PORTAL: Location accordion ── */
+        <Card className="shadow-card">
+          <CardHeader className="pb-2">
+            <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
+              <div>
+                <CardTitle className="text-sm font-heading">Lager per destination</CardTitle>
+                <CardDescription className="text-xs">{stockByLocation.length} lagerställen</CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" onClick={expandAll}>Visa alla</Button>
+                <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" onClick={collapseAll}>Dölj alla</Button>
+                <div className="relative w-48">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input placeholder="Sök produkt..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              {loadingStock ? <Skeleton className="h-48" /> : stockByCategory.length === 0 ? (
-                <div className="text-center py-12">
-                  <Package className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground mb-1">Inga lagersaldon registrerade</p>
-                  <p className="text-xs text-muted-foreground mb-4">Skapa en lagerrapport för att registrera lagersaldo.</p>
-                  <Button size="sm" onClick={() => setReportDialogOpen(true)} className="gap-1.5">
-                    <ClipboardList className="h-3 w-3" /> Skapa lagerrapport
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  {stockByCategory.map(([category, items]) => {
-                    const isExpanded = expandedCategories.has(category);
-                    const catQty = items.reduce((s: number, i: any) => s + Number(i.quantity), 0);
-                    const catValue = items.reduce((s: number, i: any) => s + Number(i.quantity) * (Number(i.products?.cost_price) || 0), 0);
-                    const catLowStock = items.filter((i: any) => Number(i.min_stock) > 0 && Number(i.quantity) < Number(i.min_stock)).length;
-
-                    return (
-                      <div key={category} className="border border-border/50 rounded-md overflow-hidden">
-                        <button
-                          className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors text-left"
-                          onClick={() => toggleCategory(category)}
-                        >
-                          <div className="flex items-center gap-2">
-                            {isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
-                            <span className="text-sm font-medium text-foreground">{category}</span>
-                            <Badge variant="secondary" className="text-[10px] h-5">{items.length} produkter</Badge>
-                            {catLowStock > 0 && (
-                              <Badge variant="outline" className="text-[10px] h-5 bg-destructive/10 text-destructive border-destructive/20">
-                                <AlertTriangle className="h-2.5 w-2.5 mr-0.5" /> {catLowStock}
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span>{catQty.toLocaleString("sv-SE")} kg</span>
-                            <span className="font-medium text-foreground">{fmt(catValue)}</span>
-                          </div>
-                        </button>
-                        {isExpanded && (
-                          <div className="border-t border-border/50">
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loadingLoc || loadingStock ? <Skeleton className="h-48" /> : stockByLocation.length === 0 ? (
+              <div className="text-center py-12">
+                <Warehouse className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">Inga lagerställen</p>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {stockByLocation.map((loc: any) => {
+                  const isExpanded = expandedLocations.has(loc.id);
+                  return (
+                    <div key={loc.id} className="border border-border/50 rounded-md overflow-hidden">
+                      <button
+                        className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors text-left"
+                        onClick={() => toggleLocation(loc.id)}
+                      >
+                        <div className="flex items-center gap-2">
+                          {isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                          <MapPin className="h-3.5 w-3.5 text-primary" />
+                          <span className="text-sm font-medium text-foreground">{loc.name}</span>
+                          <Badge variant="secondary" className="text-[10px] h-5">{loc.items.length} produkter</Badge>
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span>{loc.totalQty.toLocaleString("sv-SE")} kg</span>
+                          <span className="font-medium text-foreground">{fmt(loc.totalValue)}</span>
+                        </div>
+                      </button>
+                      {isExpanded && (
+                        <div className="border-t border-border/50">
+                          {loc.items.length === 0 ? (
+                            <div className="px-3 py-4 text-center text-xs text-muted-foreground">Tomt lager</div>
+                          ) : (
                             <table className="w-full text-xs">
                               <thead>
                                 <tr className="bg-muted/20">
                                   <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Produkt</th>
                                   <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">SKU</th>
-                                  <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Plats</th>
+                                  <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Kategori</th>
                                   <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Antal</th>
                                   <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Värde</th>
-                                  <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Status</th>
                                 </tr>
                               </thead>
                               <tbody>
-                                {items.map((s: any) => {
-                                  const isLow = Number(s.min_stock) > 0 && Number(s.quantity) < Number(s.min_stock);
+                                {loc.items.map((s: any) => {
                                   const value = Number(s.quantity) * (Number(s.products?.cost_price) || 0);
                                   return (
                                     <tr key={s.id} className="border-b border-border/30 last:border-0 hover:bg-muted/20">
                                       <td className="px-3 py-2 font-medium text-foreground">{s.products?.name}</td>
                                       <td className="px-3 py-2 font-mono text-muted-foreground text-[10px]">{s.products?.sku}</td>
-                                      <td className="px-3 py-2 text-muted-foreground">
-                                        {zoneIcon[s.storage_locations?.zone] || "📍"} {s.storage_locations?.name}
-                                      </td>
+                                      <td className="px-3 py-2 text-muted-foreground">{s.products?.category}</td>
                                       <td className="px-3 py-2 text-right font-medium text-foreground">
                                         {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
                                       </td>
                                       <td className="px-3 py-2 text-right text-muted-foreground">{fmt(value)}</td>
-                                      <td className="px-3 py-2 text-right">
-                                        {isLow ? (
-                                          <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 text-[10px]">
-                                            <AlertTriangle className="h-2.5 w-2.5 mr-0.5" /> Lågt
-                                          </Badge>
-                                        ) : (
-                                          <Badge variant="outline" className="bg-success/10 text-success border-success/20 text-[10px]">OK</Badge>
-                                        )}
-                                      </td>
                                     </tr>
                                   );
                                 })}
                               </tbody>
                             </table>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        /* ── DEFAULT: Tabs layout for other portals ── */
+        <Tabs defaultValue="overview" className="space-y-3">
+          <TabsList className="h-8">
+            <TabsTrigger value="overview" className="text-xs h-7">📦 Lageröversikt</TabsTrigger>
+            <TabsTrigger value="locations" className="text-xs h-7">📍 Lagerställen</TabsTrigger>
+          </TabsList>
 
-        {/* Locations Tab */}
-        <TabsContent value="locations">
-          <div className="flex justify-end gap-2 mb-3">
-            <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => setStockDialogOpen(true)}>
-              <ArrowRightLeft className="h-3 w-3" /> Uppdatera saldo
-            </Button>
-            <Button size="sm" className="gap-1.5 text-xs h-8" onClick={() => setLocationDialogOpen(true)}>
-              <Plus className="h-3 w-3" /> Nytt lagerställe
-            </Button>
-          </div>
-          {loadingLoc ? <Skeleton className="h-48" /> : locations.length === 0 ? (
-            <Card className="shadow-card"><CardContent className="p-8 text-center">
-              <p className="text-xs text-muted-foreground">Inga lagerställen ännu. Klicka "Nytt lagerställe" för att börja.</p>
-            </CardContent></Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {locations.map((loc: any) => {
-                const locStock = allStock.filter((s: any) => s.location_id === loc.id);
-                const totalQtyLoc = locStock.reduce((sum: number, s: any) => sum + Number(s.quantity), 0);
-                const productCount = locStock.length;
-                const lowStockCount = locStock.filter((s: any) => Number(s.min_stock) > 0 && Number(s.quantity) < Number(s.min_stock)).length;
-                return (
-                  <Card key={loc.id} className="shadow-card">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">{zoneIcon[loc.zone] || "📍"}</span>
+          {/* Overview Tab - Stock by Category */}
+          <TabsContent value="overview">
+            <Card className="shadow-card">
+              <CardHeader className="pb-2">
+                <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
+                  <div>
+                    <CardTitle className="text-sm font-heading">Lagersaldo per kategori</CardTitle>
+                    <CardDescription className="text-xs">
+                      {activeStoreName || "Alla butiker"} · {stockByCategory.length} kategorier
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" onClick={expandAll}>Visa alla</Button>
+                    <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" onClick={collapseAll}>Dölj alla</Button>
+                    <div className="relative w-48">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                      <Input placeholder="Sök produkt..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loadingStock ? <Skeleton className="h-48" /> : stockByCategory.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Package className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground mb-1">Inga lagersaldon registrerade</p>
+                    <p className="text-xs text-muted-foreground mb-4">Skapa en lagerrapport för att registrera lagersaldo.</p>
+                    <Button size="sm" onClick={() => setReportDialogOpen(true)} className="gap-1.5">
+                      <ClipboardList className="h-3 w-3" /> Skapa lagerrapport
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {stockByCategory.map(([category, items]) => {
+                      const isExpanded = expandedCategories.has(category);
+                      const catQty = items.reduce((s: number, i: any) => s + Number(i.quantity), 0);
+                      const catValue = items.reduce((s: number, i: any) => s + Number(i.quantity) * (Number(i.products?.cost_price) || 0), 0);
+                      const catLowStock = items.filter((i: any) => Number(i.min_stock) > 0 && Number(i.quantity) < Number(i.min_stock)).length;
+
+                      return (
+                        <div key={category} className="border border-border/50 rounded-md overflow-hidden">
+                          <button
+                            className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors text-left"
+                            onClick={() => toggleCategory(category)}
+                          >
+                            <div className="flex items-center gap-2">
+                              {isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                              <span className="text-sm font-medium text-foreground">{category}</span>
+                              <Badge variant="secondary" className="text-[10px] h-5">{items.length} produkter</Badge>
+                              {catLowStock > 0 && (
+                                <Badge variant="outline" className="text-[10px] h-5 bg-destructive/10 text-destructive border-destructive/20">
+                                  <AlertTriangle className="h-2.5 w-2.5 mr-0.5" /> {catLowStock}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <span>{catQty.toLocaleString("sv-SE")} kg</span>
+                              <span className="font-medium text-foreground">{fmt(catValue)}</span>
+                            </div>
+                          </button>
+                          {isExpanded && (
+                            <div className="border-t border-border/50">
+                              <table className="w-full text-xs">
+                                <thead>
+                                  <tr className="bg-muted/20">
+                                    <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Produkt</th>
+                                    <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">SKU</th>
+                                    <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Plats</th>
+                                    <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Antal</th>
+                                    <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Värde</th>
+                                    <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Status</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {items.map((s: any) => {
+                                    const isLow = Number(s.min_stock) > 0 && Number(s.quantity) < Number(s.min_stock);
+                                    const value = Number(s.quantity) * (Number(s.products?.cost_price) || 0);
+                                    return (
+                                      <tr key={s.id} className="border-b border-border/30 last:border-0 hover:bg-muted/20">
+                                        <td className="px-3 py-2 font-medium text-foreground">{s.products?.name}</td>
+                                        <td className="px-3 py-2 font-mono text-muted-foreground text-[10px]">{s.products?.sku}</td>
+                                        <td className="px-3 py-2 text-muted-foreground">
+                                          {zoneIcon[s.storage_locations?.zone] || "📍"} {s.storage_locations?.name}
+                                        </td>
+                                        <td className="px-3 py-2 text-right font-medium text-foreground">
+                                          {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
+                                        </td>
+                                        <td className="px-3 py-2 text-right text-muted-foreground">{fmt(value)}</td>
+                                        <td className="px-3 py-2 text-right">
+                                          {isLow ? (
+                                            <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 text-[10px]">
+                                              <AlertTriangle className="h-2.5 w-2.5 mr-0.5" /> Lågt
+                                            </Badge>
+                                          ) : (
+                                            <Badge variant="outline" className="bg-success/10 text-success border-success/20 text-[10px]">OK</Badge>
+                                          )}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Locations Tab */}
+          <TabsContent value="locations">
+            <div className="flex justify-end gap-2 mb-3">
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => setStockDialogOpen(true)}>
+                <ArrowRightLeft className="h-3 w-3" /> Uppdatera saldo
+              </Button>
+              <Button size="sm" className="gap-1.5 text-xs h-8" onClick={() => setLocationDialogOpen(true)}>
+                <Plus className="h-3 w-3" /> Nytt lagerställe
+              </Button>
+            </div>
+            {loadingLoc ? <Skeleton className="h-48" /> : locations.length === 0 ? (
+              <Card className="shadow-card"><CardContent className="p-8 text-center">
+                <p className="text-xs text-muted-foreground">Inga lagerställen ännu. Klicka "Nytt lagerställe" för att börja.</p>
+              </CardContent></Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {locations.map((loc: any) => {
+                  const locStock = allStock.filter((s: any) => s.location_id === loc.id);
+                  const totalQtyLoc = locStock.reduce((sum: number, s: any) => sum + Number(s.quantity), 0);
+                  const productCount = locStock.length;
+                  const lowStockCount = locStock.filter((s: any) => Number(s.min_stock) > 0 && Number(s.quantity) < Number(s.min_stock)).length;
+                  return (
+                    <Card key={loc.id} className="shadow-card">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{zoneIcon[loc.zone] || "📍"}</span>
+                            <div>
+                              <p className="text-sm font-medium text-foreground">{loc.name}</p>
+                              <p className="text-[10px] text-muted-foreground">{loc.stores?.name}</p>
+                            </div>
+                          </div>
+                          <Badge variant="outline" className={`text-[10px] ${zoneColor[loc.zone] || ""}`}>{loc.zone || "Övrigt"}</Badge>
+                        </div>
+                        {loc.description && <p className="text-[10px] text-muted-foreground mb-2">{loc.description}</p>}
+                        <Separator className="my-2" />
+                        <div className="grid grid-cols-3 gap-2 text-center">
                           <div>
-                            <p className="text-sm font-medium text-foreground">{loc.name}</p>
-                            <p className="text-[10px] text-muted-foreground">{loc.stores?.name}</p>
+                            <p className="text-lg font-bold text-foreground">{productCount}</p>
+                            <p className="text-[9px] text-muted-foreground">Produkter</p>
+                          </div>
+                          <div>
+                            <p className="text-lg font-bold text-foreground">{totalQtyLoc.toLocaleString("sv-SE")}</p>
+                            <p className="text-[9px] text-muted-foreground">Kvantitet</p>
+                          </div>
+                          <div>
+                            <p className={`text-lg font-bold ${lowStockCount > 0 ? "text-destructive" : "text-success"}`}>{lowStockCount}</p>
+                            <p className="text-[9px] text-muted-foreground">Varningar</p>
                           </div>
                         </div>
-                        <Badge variant="outline" className={`text-[10px] ${zoneColor[loc.zone] || ""}`}>{loc.zone || "Övrigt"}</Badge>
-                      </div>
-                      {loc.description && <p className="text-[10px] text-muted-foreground mb-2">{loc.description}</p>}
-                      <Separator className="my-2" />
-                      <div className="grid grid-cols-3 gap-2 text-center">
-                        <div>
-                          <p className="text-lg font-bold text-foreground">{productCount}</p>
-                          <p className="text-[9px] text-muted-foreground">Produkter</p>
-                        </div>
-                        <div>
-                          <p className="text-lg font-bold text-foreground">{totalQtyLoc.toLocaleString("sv-SE")}</p>
-                          <p className="text-[9px] text-muted-foreground">Kvantitet</p>
-                        </div>
-                        <div>
-                          <p className={`text-lg font-bold ${lowStockCount > 0 ? "text-destructive" : "text-success"}`}>{lowStockCount}</p>
-                          <p className="text-[9px] text-muted-foreground">Varningar</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      )}
 
       {/* Lagerrapport Dialog */}
       <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
