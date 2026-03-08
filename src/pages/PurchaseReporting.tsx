@@ -8,13 +8,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Upload, Loader2, Trash2, Plus, ZoomIn, ZoomOut, RotateCcw, FileText, ChevronLeft, ChevronRight, Search, PackagePlus } from "lucide-react";
+import { Upload, Loader2, Trash2, Plus, ZoomIn, ZoomOut, RotateCcw, FileText, ChevronLeft, ChevronRight, Search, PackagePlus, Lock, ChevronDown, ChevronUp, CheckCircle2 } from "lucide-react";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
-import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useProducts } from "@/hooks/useProducts";
 import { useSuppliers } from "@/hooks/useSuppliers";
@@ -104,6 +104,7 @@ function EditableRow({
   onViewDocument,
   autoFocusQty,
   onQtyFocused,
+  locked,
 }: {
   line: ReportLine;
   onSave: (updated: Partial<ReportLine>) => void;
@@ -114,6 +115,7 @@ function EditableRow({
   onViewDocument?: (reportId: string) => void;
   autoFocusQty?: boolean;
   onQtyFocused?: () => void;
+  locked?: boolean;
 }) {
   const [productSearch, setProductSearch] = useState("");
   const [productOpen, setProductOpen] = useState(false);
@@ -136,6 +138,7 @@ function EditableRow({
   }, [autoFocusQty]);
 
   const commitField = (field: string, value: any) => {
+    if (locked) return;
     const updates: any = { [field]: value };
     if (field === "quantity" || field === "unit_price") {
       const qty = field === "quantity" ? (parseFloat(value) || 0) : line.quantity;
@@ -155,6 +158,7 @@ function EditableRow({
     .slice(0, 10);
 
   const selectProduct = (p: any) => {
+    if (locked) return;
     onSave({
       product_name: p.name,
       product_id: p.id,
@@ -169,6 +173,7 @@ function EditableRow({
   };
 
   const selectSupplier = (s: any) => {
+    if (locked) return;
     onSave({ supplier_name: s.name });
     setSupplierOpen(false);
     setSupplierSearch("");
@@ -202,6 +207,22 @@ function EditableRow({
       selectSupplier(filteredSuppliers[supplierIdx]);
     }
   };
+
+  if (locked) {
+    return (
+      <TableRow className="h-9 opacity-75">
+        <TableCell className="py-1 px-2 text-xs">{line.product_name}</TableCell>
+        <TableCell className="py-1 px-2 text-xs text-right">{line.quantity}</TableCell>
+        <TableCell className="py-1 px-2 text-xs">{line.unit || "kg"}</TableCell>
+        <TableCell className="py-1 px-2 text-xs text-right">{(line.unit_price ?? 0).toLocaleString("sv-SE")}</TableCell>
+        <TableCell className="py-1 px-2 text-xs">{line.supplier_name || "—"}</TableCell>
+        <TableCell className="py-1 px-2 text-xs">{line.status}</TableCell>
+        <TableCell className="py-1 px-2 text-xs">{line.purchase_date || "—"}</TableCell>
+        <TableCell className="py-1 px-2 text-xs">—</TableCell>
+        <TableCell className="py-1 px-1 w-8"></TableCell>
+      </TableRow>
+    );
+  }
 
   return (
     <TableRow className="h-9">
@@ -377,6 +398,143 @@ function EditableRow({
   );
 }
 
+// Collapsible report section
+function ReportSection({
+  report,
+  lines,
+  products,
+  suppliers,
+  reports,
+  onUpdateLine,
+  onDeleteLine,
+  onViewDocument,
+  onConfirm,
+  focusLineId,
+  onQtyFocused,
+}: {
+  report: Report;
+  lines: ReportLine[];
+  products: any[];
+  suppliers: any[];
+  reports: Report[];
+  onUpdateLine: (id: string, updates: Partial<ReportLine>) => void;
+  onDeleteLine: (id: string) => void;
+  onViewDocument: (reportId: string) => void;
+  onConfirm: (reportId: string) => void;
+  focusLineId: string | null;
+  onQtyFocused: () => void;
+}) {
+  const isLocked = report.status === "Godkänd";
+  const [expanded, setExpanded] = useState(!isLocked);
+
+  const sectionTotal = lines.reduce((s, l) => s + (l.line_total ?? 0), 0);
+
+  return (
+    <div className="border-b last:border-b-0">
+      {/* Section header */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className={`w-full flex items-center gap-2 px-3 py-2.5 text-left transition-colors ${
+          isLocked ? "bg-muted/40 hover:bg-muted/60" : "bg-muted/20 hover:bg-muted/40"
+        }`}
+      >
+        {expanded ? <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />}
+        {isLocked ? (
+          <Lock className="h-3.5 w-3.5 shrink-0 text-primary" />
+        ) : (
+          <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+        )}
+        <span className="font-medium text-sm truncate flex-1">{report.file_name}</span>
+        <span className="text-xs text-muted-foreground shrink-0">
+          {lines.length} rader · {sectionTotal.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr
+        </span>
+        {isLocked ? (
+          <Badge className="text-[10px] shrink-0 bg-primary/10 text-primary border-primary/20" variant="outline">
+            <CheckCircle2 className="h-3 w-3 mr-0.5" /> Bekräftad
+          </Badge>
+        ) : (
+          <Badge variant="secondary" className="text-[10px] shrink-0">Ej bekräftad</Badge>
+        )}
+      </button>
+
+      {/* Expanded content */}
+      {expanded && (
+        <div>
+          <Table>
+            <TableHeader>
+              <TableRow className="h-8">
+                <TableHead className="py-1 px-2 text-xs">Produkt</TableHead>
+                <TableHead className="py-1 px-2 text-xs text-right">Antal</TableHead>
+                <TableHead className="py-1 px-2 text-xs">Enhet</TableHead>
+                <TableHead className="py-1 px-2 text-xs text-right">Pris</TableHead>
+                <TableHead className="py-1 px-2 text-xs">Leverantör</TableHead>
+                <TableHead className="py-1 px-2 text-xs">Status</TableHead>
+                <TableHead className="py-1 px-2 text-xs">Datum</TableHead>
+                <TableHead className="py-1 px-2 text-xs">Dokument</TableHead>
+                <TableHead className="py-1 px-1 w-8"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {lines.map((l) => (
+                <EditableRow
+                  key={l.id}
+                  line={l}
+                  onSave={(updates) => onUpdateLine(l.id, updates)}
+                  onDelete={() => onDeleteLine(l.id)}
+                  products={products}
+                  suppliers={suppliers}
+                  reports={reports}
+                  onViewDocument={onViewDocument}
+                  autoFocusQty={focusLineId === l.id}
+                  onQtyFocused={onQtyFocused}
+                  locked={isLocked}
+                />
+              ))}
+            </TableBody>
+          </Table>
+
+          {/* Confirm button for unlocked sections */}
+          {!isLocked && lines.length > 0 && (
+            <div className="flex items-center justify-between px-3 py-2 border-t bg-muted/10">
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => onViewDocument(report.id)}>
+                  <FileText className="h-3.5 w-3.5 mr-1" /> Visa dokument
+                </Button>
+              </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" className="h-8">
+                    <Lock className="h-3.5 w-3.5 mr-1.5" />
+                    Bekräfta inköp
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Bekräfta inköp</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Du är på väg att låsa <strong>{report.file_name}</strong> med {lines.length} rader
+                      och ett totalt värde på{" "}
+                      <strong>{sectionTotal.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr</strong>.
+                      <br /><br />
+                      När inköpet är bekräftat kan raderna inte längre redigeras. Dokumentet och listan kommer att vikas ihop.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => onConfirm(report.id)}>
+                      <CheckCircle2 className="h-4 w-4 mr-1" /> Bekräfta
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function PurchaseReporting() {
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
@@ -431,7 +589,6 @@ export default function PurchaseReporting() {
   });
 
   const selectedReport = reports.find((r) => r.id === selectedReportId) ?? null;
-  const selectedLines = allLines.filter((l) => l.report_id === selectedReportId);
 
   // Build lookup: product_id -> category
   const productCategoryMap = new Map(products.map((p: any) => [p.id, p.category]));
@@ -451,6 +608,18 @@ export default function PurchaseReporting() {
     }
     return true;
   });
+
+  // Group filtered lines by report_id
+  const groupedByReport = new Map<string, ReportLine[]>();
+  for (const line of filteredLines) {
+    const existing = groupedByReport.get(line.report_id) || [];
+    existing.push(line);
+    groupedByReport.set(line.report_id, existing);
+  }
+
+  // Order: unlocked reports first, then locked, each sub-sorted by created_at desc
+  const unlockedReports = reports.filter((r) => r.status !== "Godkänd" && groupedByReport.has(r.id));
+  const lockedReports = reports.filter((r) => r.status === "Godkänd" && groupedByReport.has(r.id));
 
   const deleteReport = useMutation({
     mutationFn: async (id: string) => {
@@ -481,8 +650,24 @@ export default function PurchaseReporting() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["purchase-report-lines"] });
-      
       toast({ title: "Rad uppdaterad" });
+    },
+  });
+
+  const confirmReport = useMutation({
+    mutationFn: async (reportId: string) => {
+      const lines = allLines.filter((l) => l.report_id === reportId);
+      const total = lines.reduce((s, l) => s + (l.line_total ?? 0), 0);
+      const { error } = await supabase
+        .from("purchase_reports")
+        .update({ status: "Godkänd", total_amount: total })
+        .eq("id", reportId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
+      setSelectedReportId(null);
+      toast({ title: "Inköp bekräftat", description: "Dokumentet och raderna har låsts." });
     },
   });
 
@@ -491,7 +676,6 @@ export default function PurchaseReporting() {
     mutationFn: async (product: any) => {
       let reportId = selectedReportId;
       if (!reportId) {
-        // Auto-create a report when none is selected
         const { data: newReport, error: rErr } = await supabase
           .from("purchase_reports")
           .insert({ file_name: `Manuell rapport ${format(new Date(), "yyyy-MM-dd")}`, file_url: "", status: "Klar" })
@@ -670,162 +854,161 @@ export default function PurchaseReporting() {
                 <p className="text-muted-foreground text-xs">
                   Totalt: <span className="font-semibold text-foreground">{grandTotal.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr</span>
                   {" · "}{allLines.length} rader
+                  {" · "}{lockedReports.length} bekräftade
                 </p>
               </div>
             </div>
 
             {/* Search bar to add existing products + new product button */}
-            {(
-              <div className="flex items-center gap-2 px-4 py-2 border-b bg-muted/30">
-                <div className="relative flex-1">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      setSearchIdx(0);
-                      setSearchOpen(e.target.value.length > 0);
-                    }}
-                    onFocus={() => { if (searchQuery.length > 0) setSearchOpen(true); }}
-                    onBlur={() => { setTimeout(() => setSearchOpen(false), 200); }}
-                    onKeyDown={(e) => {
-                      const items = searchedProducts.slice(0, 20);
-                      if (e.key === "ArrowDown") {
-                        e.preventDefault();
-                        if (!searchOpen && items.length > 0) setSearchOpen(true);
-                        setSearchIdx((i) => {
-                          const next = Math.min(i + 1, items.length - 1);
-                          setTimeout(() => document.querySelector(`[data-search-idx="${next}"]`)?.scrollIntoView({ block: "nearest" }), 0);
-                          return next;
-                        });
-                      } else if (e.key === "ArrowUp") {
-                        e.preventDefault();
-                        setSearchIdx((i) => {
-                          const next = Math.max(i - 1, 0);
-                          setTimeout(() => document.querySelector(`[data-search-idx="${next}"]`)?.scrollIntoView({ block: "nearest" }), 0);
-                          return next;
-                        });
-                      } else if (e.key === "Enter" && searchQuery.length > 0 && items.length > 0) {
-                        e.preventDefault();
-                        const item = items[Math.min(searchIdx, items.length - 1)];
-                        if (item) addLineFromProduct.mutate(item);
-                      } else if (e.key === "Escape") {
-                        setSearchOpen(false);
-                      }
-                    }}
-                    placeholder="Sök och lägg till produkt från produktlistan..."
-                    className="pl-9 h-9 text-sm"
-                  />
-                  {searchOpen && searchQuery.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-md border bg-popover shadow-md">
-                      <div className="max-h-[300px] overflow-y-auto py-1">
-                        {searchedProducts.length === 0 ? (
-                          <div className="py-3 text-center">
-                            <p className="text-sm text-muted-foreground mb-2">Ingen produkt hittad för "{searchQuery}"</p>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onMouseDown={(e) => {
-                                e.preventDefault();
-                                setSearchOpen(false);
-                                setNewProduct((p) => ({ ...p, name: searchQuery }));
-                                setNewProductOpen(true);
-                                setSearchQuery("");
-                              }}
+            <div className="flex items-center gap-2 px-4 py-2 border-b bg-muted/30">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setSearchIdx(0);
+                    setSearchOpen(e.target.value.length > 0);
+                  }}
+                  onFocus={() => { if (searchQuery.length > 0) setSearchOpen(true); }}
+                  onBlur={() => { setTimeout(() => setSearchOpen(false), 200); }}
+                  onKeyDown={(e) => {
+                    const items = searchedProducts.slice(0, 20);
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      if (!searchOpen && items.length > 0) setSearchOpen(true);
+                      setSearchIdx((i) => {
+                        const next = Math.min(i + 1, items.length - 1);
+                        setTimeout(() => document.querySelector(`[data-search-idx="${next}"]`)?.scrollIntoView({ block: "nearest" }), 0);
+                        return next;
+                      });
+                    } else if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      setSearchIdx((i) => {
+                        const next = Math.max(i - 1, 0);
+                        setTimeout(() => document.querySelector(`[data-search-idx="${next}"]`)?.scrollIntoView({ block: "nearest" }), 0);
+                        return next;
+                      });
+                    } else if (e.key === "Enter" && searchQuery.length > 0 && items.length > 0) {
+                      e.preventDefault();
+                      const item = items[Math.min(searchIdx, items.length - 1)];
+                      if (item) addLineFromProduct.mutate(item);
+                    } else if (e.key === "Escape") {
+                      setSearchOpen(false);
+                    }
+                  }}
+                  placeholder="Sök och lägg till produkt från produktlistan..."
+                  className="pl-9 h-9 text-sm"
+                />
+                {searchOpen && searchQuery.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 z-50 mt-1 rounded-md border bg-popover shadow-md">
+                    <div className="max-h-[300px] overflow-y-auto py-1">
+                      {searchedProducts.length === 0 ? (
+                        <div className="py-3 text-center">
+                          <p className="text-sm text-muted-foreground mb-2">Ingen produkt hittad för "{searchQuery}"</p>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setSearchOpen(false);
+                              setNewProduct((p) => ({ ...p, name: searchQuery }));
+                              setNewProductOpen(true);
+                              setSearchQuery("");
+                            }}
+                          >
+                            <PackagePlus className="h-4 w-4 mr-1" /> Skapa ny produkt
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="px-2 py-1 text-xs font-medium text-muted-foreground">Produkter i systemet</p>
+                          {searchedProducts.slice(0, 20).map((p, i) => (
+                            <div
+                              key={p.id}
+                              data-search-idx={i}
+                              className={`px-2 py-1.5 mx-1 rounded-sm cursor-pointer flex items-center justify-between ${i === searchIdx ? "bg-accent text-accent-foreground" : "hover:bg-muted"}`}
+                              onMouseEnter={() => setSearchIdx(i)}
+                              onMouseDown={(e) => { e.preventDefault(); addLineFromProduct.mutate(p); }}
                             >
-                              <PackagePlus className="h-4 w-4 mr-1" /> Skapa ny produkt
-                            </Button>
-                          </div>
-                        ) : (
-                          <>
-                            <p className="px-2 py-1 text-xs font-medium text-muted-foreground">Produkter i systemet</p>
-                            {searchedProducts.slice(0, 20).map((p, i) => (
-                              <div
-                                key={p.id}
-                                data-search-idx={i}
-                                className={`px-2 py-1.5 mx-1 rounded-sm cursor-pointer flex items-center justify-between ${i === searchIdx ? "bg-accent text-accent-foreground" : "hover:bg-muted"}`}
-                                onMouseEnter={() => setSearchIdx(i)}
-                                onMouseDown={(e) => { e.preventDefault(); addLineFromProduct.mutate(p); }}
-                              >
-                                <div className="flex flex-col flex-1">
-                                  <span className="text-sm font-medium">{p.name}</span>
-                                  <span className="text-xs text-muted-foreground">
-                                    {p.sku} · {p.category} · {p.cost_price?.toLocaleString("sv-SE")} kr/{p.unit}
-                                    {p.suppliers?.name ? ` · ${p.suppliers.name}` : ""}
-                                  </span>
-                                </div>
-                                <Plus className="h-4 w-4 text-muted-foreground" />
+                              <div className="flex flex-col flex-1">
+                                <span className="text-sm font-medium">{p.name}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {p.sku} · {p.category} · {p.cost_price?.toLocaleString("sv-SE")} kr/{p.unit}
+                                  {p.suppliers?.name ? ` · ${p.suppliers.name}` : ""}
+                                </span>
                               </div>
-                            ))}
-                          </>
-                        )}
-                      </div>
+                              <Plus className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          ))}
+                        </>
+                      )}
                     </div>
-                  )}
-                </div>
-
-                <Dialog open={newProductOpen} onOpenChange={setNewProductOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="sm" variant="outline" className="shrink-0">
-                      <PackagePlus className="h-4 w-4 mr-1" /> Ny produkt
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Skapa ny produkt</DialogTitle>
-                    </DialogHeader>
-                    <p className="text-sm text-muted-foreground">
-                      Produkten finns inte i systemet. Fyll i uppgifterna för att skapa den och lägga till den i rapporten.
-                    </p>
-                    <div className="grid gap-3 py-2">
-                      <div>
-                        <Label>Produktnamn *</Label>
-                        <Input value={newProduct.name} onChange={(e) => setNewProduct((p) => ({ ...p, name: e.target.value }))} placeholder="T.ex. Lax färsk" />
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <Label>SKU</Label>
-                          <Input value={newProduct.sku} onChange={(e) => setNewProduct((p) => ({ ...p, sku: e.target.value }))} placeholder="AUTO om tom" />
-                        </div>
-                        <div>
-                          <Label>Kategori</Label>
-                          <Input value={newProduct.category} onChange={(e) => setNewProduct((p) => ({ ...p, category: e.target.value }))} />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2">
-                        <div>
-                          <Label>Enhet</Label>
-                          <Select value={newProduct.unit} onValueChange={(v) => setNewProduct((p) => ({ ...p, unit: v }))}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="kg">kg</SelectItem>
-                              <SelectItem value="st">st</SelectItem>
-                              <SelectItem value="l">l</SelectItem>
-                              <SelectItem value="förp">förp</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>Inköpspris</Label>
-                          <Input type="number" value={newProduct.cost_price} onChange={(e) => setNewProduct((p) => ({ ...p, cost_price: e.target.value }))} />
-                        </div>
-                        <div>
-                          <Label>Grossistpris</Label>
-                          <Input type="number" value={newProduct.wholesale_price} onChange={(e) => setNewProduct((p) => ({ ...p, wholesale_price: e.target.value }))} />
-                        </div>
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <DialogClose asChild><Button variant="outline">Avbryt</Button></DialogClose>
-                      <Button onClick={() => createProductAndAdd.mutate()} disabled={!newProduct.name.trim() || createProductAndAdd.isPending}>
-                        {createProductAndAdd.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
-                        Skapa & lägg till
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                  </div>
+                )}
               </div>
-            )}
+
+              <Dialog open={newProductOpen} onOpenChange={setNewProductOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline" className="shrink-0">
+                    <PackagePlus className="h-4 w-4 mr-1" /> Ny produkt
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Skapa ny produkt</DialogTitle>
+                  </DialogHeader>
+                  <p className="text-sm text-muted-foreground">
+                    Produkten finns inte i systemet. Fyll i uppgifterna för att skapa den och lägga till den i rapporten.
+                  </p>
+                  <div className="grid gap-3 py-2">
+                    <div>
+                      <Label>Produktnamn *</Label>
+                      <Input value={newProduct.name} onChange={(e) => setNewProduct((p) => ({ ...p, name: e.target.value }))} placeholder="T.ex. Lax färsk" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label>SKU</Label>
+                        <Input value={newProduct.sku} onChange={(e) => setNewProduct((p) => ({ ...p, sku: e.target.value }))} placeholder="AUTO om tom" />
+                      </div>
+                      <div>
+                        <Label>Kategori</Label>
+                        <Input value={newProduct.category} onChange={(e) => setNewProduct((p) => ({ ...p, category: e.target.value }))} />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <Label>Enhet</Label>
+                        <Select value={newProduct.unit} onValueChange={(v) => setNewProduct((p) => ({ ...p, unit: v }))}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="kg">kg</SelectItem>
+                            <SelectItem value="st">st</SelectItem>
+                            <SelectItem value="l">l</SelectItem>
+                            <SelectItem value="förp">förp</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Inköpspris</Label>
+                        <Input type="number" value={newProduct.cost_price} onChange={(e) => setNewProduct((p) => ({ ...p, cost_price: e.target.value }))} />
+                      </div>
+                      <div>
+                        <Label>Grossistpris</Label>
+                        <Input type="number" value={newProduct.wholesale_price} onChange={(e) => setNewProduct((p) => ({ ...p, wholesale_price: e.target.value }))} />
+                      </div>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <DialogClose asChild><Button variant="outline">Avbryt</Button></DialogClose>
+                    <Button onClick={() => createProductAndAdd.mutate()} disabled={!newProduct.name.trim() || createProductAndAdd.isPending}>
+                      {createProductAndAdd.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+                      Skapa & lägg till
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
 
             {/* Sort/filter row */}
             {allLines.length > 0 && (
@@ -864,37 +1047,48 @@ export default function PurchaseReporting() {
                   Inga produkter ännu. Ladda upp en följesedel till höger eller sök efter produkter ovan.
                 </p>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="h-8">
-                      <TableHead className="py-1 px-2 text-xs">Produkt</TableHead>
-                      <TableHead className="py-1 px-2 text-xs text-right">Antal</TableHead>
-                      <TableHead className="py-1 px-2 text-xs">Enhet</TableHead>
-                      <TableHead className="py-1 px-2 text-xs text-right">Pris</TableHead>
-                      <TableHead className="py-1 px-2 text-xs">Leverantör</TableHead>
-                      <TableHead className="py-1 px-2 text-xs">Status</TableHead>
-                    <TableHead className="py-1 px-2 text-xs">Datum</TableHead>
-                      <TableHead className="py-1 px-2 text-xs">Dokument</TableHead>
-                      <TableHead className="py-1 px-1 w-8"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredLines.map((l) => (
-                      <EditableRow
-                        key={l.id}
-                        line={l}
-                        onSave={(updates) => updateLine.mutate({ id: l.id, ...updates } as any)}
-                        onDelete={() => deleteLine.mutate(l.id)}
-                        products={products}
-                        suppliers={suppliers}
-                        reports={reports}
-                        onViewDocument={(reportId) => { setSelectedReportId(reportId); setZoom(1); }}
-                        autoFocusQty={focusLineId === l.id}
-                        onQtyFocused={() => setFocusLineId(null)}
-                      />
-                    ))}
-                  </TableBody>
-                </Table>
+                <div>
+                  {/* Unlocked reports first */}
+                  {unlockedReports.map((report) => (
+                    <ReportSection
+                      key={report.id}
+                      report={report}
+                      lines={groupedByReport.get(report.id) || []}
+                      products={products}
+                      suppliers={suppliers}
+                      reports={reports}
+                      onUpdateLine={(id, updates) => updateLine.mutate({ id, ...updates } as any)}
+                      onDeleteLine={(id) => deleteLine.mutate(id)}
+                      onViewDocument={(reportId) => { setSelectedReportId(reportId); setZoom(1); }}
+                      onConfirm={(reportId) => confirmReport.mutate(reportId)}
+                      focusLineId={focusLineId}
+                      onQtyFocused={() => setFocusLineId(null)}
+                    />
+                  ))}
+
+                  {/* Locked/confirmed reports */}
+                  {lockedReports.length > 0 && unlockedReports.length > 0 && (
+                    <div className="px-3 py-1.5 bg-muted/30 border-y">
+                      <span className="text-xs font-medium text-muted-foreground">Bekräftade inköp</span>
+                    </div>
+                  )}
+                  {lockedReports.map((report) => (
+                    <ReportSection
+                      key={report.id}
+                      report={report}
+                      lines={groupedByReport.get(report.id) || []}
+                      products={products}
+                      suppliers={suppliers}
+                      reports={reports}
+                      onUpdateLine={(id, updates) => updateLine.mutate({ id, ...updates } as any)}
+                      onDeleteLine={(id) => deleteLine.mutate(id)}
+                      onViewDocument={(reportId) => { setSelectedReportId(reportId); setZoom(1); }}
+                      onConfirm={(reportId) => confirmReport.mutate(reportId)}
+                      focusLineId={focusLineId}
+                      onQtyFocused={() => setFocusLineId(null)}
+                    />
+                  ))}
+                </div>
               )}
             </ScrollArea>
           </div>
@@ -971,7 +1165,13 @@ export default function PurchaseReporting() {
                         >
                           <div className="flex items-center justify-between">
                             <span className="font-medium text-sm truncate">{r.file_name}</span>
-                            <Badge variant={r.status === "Klar" ? "default" : "secondary"} className="text-xs ml-2">{r.status}</Badge>
+                            <Badge
+                              variant={r.status === "Godkänd" ? "default" : r.status === "Klar" ? "secondary" : "outline"}
+                              className={`text-xs ml-2 ${r.status === "Godkänd" ? "bg-primary/10 text-primary border-primary/20" : ""}`}
+                            >
+                              {r.status === "Godkänd" && <Lock className="h-3 w-3 mr-0.5" />}
+                              {r.status}
+                            </Badge>
                           </div>
                           <p className="text-xs text-muted-foreground mt-1">
                             {new Date(r.created_at).toLocaleDateString("sv-SE")} · {r.total_amount?.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr
