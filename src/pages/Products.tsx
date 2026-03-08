@@ -24,7 +24,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import BarcodeDisplay from "@/components/barcode/BarcodeDisplay";
 import { generateEAN13 } from "@/lib/barcode";
 
-const CATEGORIES = ["Färsk Fisk", "Skaldjur", "Varmkök", "Rökta Produkter", "Såser & Röror", "Frukt & Grönt"];
+const DEFAULT_CATEGORIES = ["Färsk Fisk", "Skaldjur", "Varmkök", "Rökta Produkter", "Såser & Röror", "Frukt & Grönt"];
 const UNITS = ["KG", "ST", "L", "FÖRP"];
 
 export default function Products() {
