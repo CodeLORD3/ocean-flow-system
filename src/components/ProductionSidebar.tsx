@@ -39,9 +39,6 @@ const produktionSectionNav = [
   { title: "Ordrar", url: "/orders", icon: ShoppingCart },
   { title: "Produktionsschema", url: "/production-schedule", icon: CalendarDays },
   { title: "Produktionsrapportering", url: "/production-reporting", icon: ClipboardList },
-  { title: "Kunder", url: "/customers", icon: Users },
-  { title: "Fakturor", url: "/invoices", icon: FileText },
-  { title: "Produktion/Grossist", url: "/wholesale", icon: Factory },
 ];
 
 const inventoryNav = [
