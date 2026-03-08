@@ -547,6 +547,7 @@ function OrderDetailWithEdit({ order, products, onClose, toast }: {
   toast: any;
 }) {
   const createChange = useCreateChangeRequest();
+  const resolveChange = useResolveChangeRequest();
   const { data: pendingChanges = [] } = useOrderChangeRequests(order.id);
   const isEditable = LIVE_STATUSES.includes(order.status);
 
