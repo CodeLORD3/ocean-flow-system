@@ -306,7 +306,7 @@ function EditableRow({
           className="h-6 text-[11px] w-14 border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1 text-right"
         />
       </TableCell>
-      <TableCell className="py-1 px-1 w-[100px]">
+      <TableCell className="py-0.5 px-1 w-[88px]">
         <Popover open={supplierOpen} onOpenChange={setSupplierOpen}>
           <PopoverTrigger asChild>
             <div className="relative">
