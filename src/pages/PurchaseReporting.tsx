@@ -63,6 +63,11 @@ function EditableRow({
   const [supplierOpen, setSupplierOpen] = useState(false);
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
 
+  const productInputRef = useRef<HTMLInputElement>(null);
+  const supplierInputRef = useRef<HTMLInputElement>(null);
+  const productCmdRef = useRef<HTMLDivElement>(null);
+  const supplierCmdRef = useRef<HTMLDivElement>(null);
+
   const commitField = (field: string, value: any) => {
     const updates: any = { [field]: value };
     if (field === "quantity" || field === "unit_price") {
@@ -73,6 +78,17 @@ function EditableRow({
     // Debounce saves
     clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(() => onSave(updates), 400);
+  };
+
+  // Forward arrow/enter keys from input to Command list
+  const handleSearchKeyDown = (e: React.KeyboardEvent, cmdRef: React.RefObject<HTMLDivElement | null>) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Enter") {
+      const cmd = cmdRef.current;
+      if (cmd) {
+        cmd.dispatchEvent(new KeyboardEvent("keydown", { key: e.key, bubbles: true }));
+        e.preventDefault();
+      }
+    }
   };
 
   const filteredProducts = products.filter((p: any) =>
@@ -86,6 +102,7 @@ function EditableRow({
           <PopoverTrigger asChild>
             <div className="relative">
               <Input
+                ref={productInputRef}
                 defaultValue={line.product_name}
                 onChange={(e) => {
                   setProductSearch(e.target.value);
@@ -97,6 +114,7 @@ function EditableRow({
                   setProductSearch(e.target.value);
                   if (e.target.value.length > 0) setProductOpen(true);
                 }}
+                onKeyDown={(e) => handleSearchKeyDown(e, productCmdRef)}
                 className="h-7 text-xs border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1.5"
                 placeholder="Sök produkt..."
               />
@@ -109,7 +127,7 @@ function EditableRow({
           </PopoverTrigger>
           {productSearch.length > 0 && (
             <PopoverContent className="p-0 w-[260px]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
-              <Command shouldFilter={false}>
+              <Command ref={productCmdRef} shouldFilter={false}>
                 <CommandList>
                   <CommandEmpty className="py-2 text-xs text-center">Ingen träff</CommandEmpty>
                   <CommandGroup>
@@ -177,6 +195,7 @@ function EditableRow({
           <PopoverTrigger asChild>
             <div className="relative">
               <Input
+                ref={supplierInputRef}
                 defaultValue={line.supplier_name || ""}
                 onChange={(e) => {
                   setSupplierSearch(e.target.value);
@@ -188,6 +207,7 @@ function EditableRow({
                   setSupplierSearch(e.target.value);
                   if (e.target.value.length > 0) setSupplierOpen(true);
                 }}
+                onKeyDown={(e) => handleSearchKeyDown(e, supplierCmdRef)}
                 className="h-7 text-xs border-transparent bg-transparent hover:border-input focus:border-input transition-colors px-1.5 w-28"
                 placeholder="Sök leverantör..."
               />
@@ -195,7 +215,7 @@ function EditableRow({
           </PopoverTrigger>
           {supplierSearch.length > 0 && (
             <PopoverContent className="p-0 w-[220px]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
-              <Command shouldFilter={false}>
+              <Command ref={supplierCmdRef} shouldFilter={false}>
                 <CommandList>
                   <CommandEmpty className="py-2 text-xs text-center">Ingen träff</CommandEmpty>
                   <CommandGroup>
