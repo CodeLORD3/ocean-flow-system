@@ -91,6 +91,7 @@ type Report = {
   status: string;
   notes: string | null;
   total_amount: number;
+  display_name: string | null;
 };
 
 // Inline always-editable row
