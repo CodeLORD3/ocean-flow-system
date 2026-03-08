@@ -610,13 +610,9 @@ export default function PurchaseReporting() {
                       <EditableRow
                         key={l.id}
                         line={l}
-                        isEditing={editingLineId === l.id}
-                        onStartEdit={() => setEditingLineId(l.id)}
-                        onCancelEdit={() => setEditingLineId(null)}
                         onSave={(updates) => updateLine.mutate({ id: l.id, ...updates } as any)}
                         onDelete={() => deleteLine.mutate(l.id)}
                         products={products}
-                        suppliers={suppliers}
                       />
                     ))}
                   </TableBody>
