@@ -476,7 +476,7 @@ function ReportSection({
             onBlur={commitRename}
             onKeyDown={(e) => {
               if (e.key === "Enter") commitRename();
-              if (e.key === "Escape") { setEditName(report.file_name); setEditing(false); }
+              if (e.key === "Escape") { setEditName(displayName); setEditing(false); }
             }}
             onClick={(e) => e.stopPropagation()}
             className="h-7 text-sm font-medium flex-1 px-1.5"
