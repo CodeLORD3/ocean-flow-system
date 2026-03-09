@@ -339,6 +339,7 @@ export default function Products() {
         <td className="px-3 py-1 font-mono text-muted-foreground text-[10px]">{p.sku}</td>
         <td className="px-3 py-1"><Badge variant="outline" className="text-[10px]">{p.category}</Badge></td>
         <td className="px-3 py-1 text-muted-foreground">{p.unit}</td>
+        <td className="px-3 py-1 font-mono text-muted-foreground">{(p as any).hs_code || "–"}</td>
         <td className="px-3 py-1">
           <Select
             value={(p as any).producer || "__none__"}
@@ -532,6 +533,7 @@ export default function Products() {
                    <th className="p-3 text-left font-medium text-muted-foreground">SKU</th>
                    <th className="p-3 text-left font-medium text-muted-foreground">KATEGORI</th>
                    <th className="p-3 text-left font-medium text-muted-foreground">ENHET</th>
+                   <th className="p-3 text-left font-medium text-muted-foreground">HS-KOD</th>
                    <th className="p-3 text-left font-medium text-muted-foreground">PRODUCENT</th>
                    {isWholesale && <th className="p-3 text-right font-medium text-muted-foreground">PROD.PRIS</th>}
                    <th className="p-3 text-right font-medium text-muted-foreground">{isWholesale ? "GROSSISTPRIS" : "PRIS"}</th>
@@ -544,7 +546,7 @@ export default function Products() {
               </thead>
               <tbody>
                 {filtered.length === 0 && (
-                  <tr><td colSpan={isWholesale ? 12 : 9} className="p-8 text-center text-muted-foreground">Inga produkter hittades.</td></tr>
+                  <tr><td colSpan={isWholesale ? 13 : 10} className="p-8 text-center text-muted-foreground">Inga produkter hittades.</td></tr>
                 )}
                 {filtered.map(p => {
                   const isExpanded = expandedProducts.has(p.id);
