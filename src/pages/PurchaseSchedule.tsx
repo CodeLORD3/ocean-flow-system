@@ -465,10 +465,27 @@ export default function PurchaseSchedule() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-4">
-            {transportSchedules?.map((s) => (
-              <TransportZoneBadge key={s.id} schedule={s} onSave={handleSaveSchedule} />
-            ))}
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
+            {WEEKDAYS.map((dayName, index) => {
+              const daySchedules = transportSchedules
+                ?.filter(s => s.departure_weekday === index + 1)
+                .sort((a, b) => a.departure_time.localeCompare(b.departure_time)) || [];
+                
+              return (
+                <div key={dayName} className="flex flex-col gap-2 rounded-md border bg-muted/10 p-2.5">
+                  <h4 className="font-semibold text-[11px] text-muted-foreground uppercase">{dayName}</h4>
+                  <div className="flex flex-col gap-2.5">
+                    {daySchedules.length > 0 ? (
+                      daySchedules.map(s => (
+                        <TransportZoneBadge key={s.id} schedule={s} onSave={handleSaveSchedule} />
+                      ))
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground italic">Inga avgångar</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
