@@ -337,18 +337,32 @@ export default function ProductionSchedule() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-4">
-            {transportSchedules?.map((s) => {
-              const dayName = WEEKDAYS[(s.departure_weekday - 1) % 7];
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
+            {WEEKDAYS.map((dayName, index) => {
+              const daySchedules = transportSchedules
+                ?.filter(s => s.departure_weekday === index + 1)
+                .sort((a, b) => a.departure_time.localeCompare(b.departure_time)) || [];
+                
               return (
-                <div key={s.id} className="inline-flex items-center gap-1.5">
-                  <Badge variant={s.badge_color as any} className="text-[10px]">
-                    <Truck className="h-3 w-3 mr-1" />
-                    {s.label}
-                  </Badge>
-                  <span className="text-[10px] text-muted-foreground">
-                    Avgång: {dayName} {s.departure_time}
-                  </span>
+                <div key={dayName} className="flex flex-col gap-2 rounded-md border bg-muted/10 p-2.5">
+                  <h4 className="font-semibold text-[11px] text-muted-foreground uppercase">{dayName}</h4>
+                  <div className="flex flex-col gap-2.5">
+                    {daySchedules.length > 0 ? (
+                      daySchedules.map(s => (
+                        <div key={s.id} className="flex flex-col items-start gap-1">
+                          <Badge variant={s.badge_color as any} className="text-[10px]">
+                            <Truck className="h-3 w-3 mr-1" />
+                            {s.label}
+                          </Badge>
+                          <span className="text-[10px] text-muted-foreground font-medium">
+                            {s.departure_time}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground italic">Inga avgångar</span>
+                    )}
+                  </div>
                 </div>
               );
             })}
