@@ -395,6 +395,7 @@ export default function ProductionReporting() {
       const { data, error } = await supabase
         .from("production_reports")
         .select("*")
+        .is("archived_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as ProdReport[];
