@@ -482,16 +482,19 @@ export type Database = {
       }
       portal_settings: {
         Row: {
+          display_name: string | null
           logo_url: string | null
           portal_name: string
           updated_at: string | null
         }
         Insert: {
+          display_name?: string | null
           logo_url?: string | null
           portal_name: string
           updated_at?: string | null
         }
         Update: {
+          display_name?: string | null
           logo_url?: string | null
           portal_name?: string
           updated_at?: string | null
