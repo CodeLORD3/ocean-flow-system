@@ -13,7 +13,6 @@ import Suppliers from "./pages/Suppliers";
 import Customers from "./pages/Customers";
 import Stores from "./pages/Stores";
 import Staff from "./pages/Staff";
-import Wholesale from "./pages/Wholesale";
 import Barcodes from "./pages/Barcodes";
 import Products from "./pages/Products";
 import OrganisationOverview from "./pages/OrganisationOverview";
