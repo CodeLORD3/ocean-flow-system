@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { MapPin, Phone, Clock, Edit, X, Save } from "lucide-react";
+import { MapPin, Phone, Clock, Edit, X, Save, Camera, Store as StoreIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,12 +11,15 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useStores, useUpdateStore, Store } from "@/hooks/useStores";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Stores() {
   const { data: stores = [], isLoading } = useStores(true);
   const updateStore = useUpdateStore();
   const { toast } = useToast();
   const [editStore, setEditStore] = useState<Store | null>(null);
+  const [hoveredStore, setHoveredStore] = useState<string | null>(null);
+  const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
   // Edit form state
   const [form, setForm] = useState({
@@ -34,6 +37,40 @@ export default function Stores() {
       hours: store.hours || "",
       sqm: store.sqm || 0,
     });
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>, storeId: string, storeName: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const ext = file.name.split(".").pop();
+    const path = `stores/${storeId}/logo-${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("logos")
+      .upload(path, file, { upsert: true });
+
+    if (uploadError) {
+      toast({ title: "Fel", description: "Kunde inte ladda upp logotypen", variant: "destructive" });
+      return;
+    }
+
+    const { data: urlData } = supabase.storage.from("logos").getPublicUrl(path);
+    const url = urlData.publicUrl;
+
+    updateStore.mutate(
+      { id: storeId, logo_url: url },
+      {
+        onSuccess: () => {
+          toast({ title: "Logotyp uppdaterad", description: storeName });
+        },
+        onError: (err) => toast({ title: "Fel", description: err.message, variant: "destructive" }),
+      }
+    );
+
+    if (fileInputRefs.current[storeId]) {
+      fileInputRefs.current[storeId]!.value = "";
+    }
   };
 
   const handleSave = () => {
@@ -83,9 +120,36 @@ export default function Stores() {
             <Card key={store.id} className="shadow-card hover:shadow-card-hover transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h3 className="font-heading font-semibold text-foreground text-sm">{store.name}</h3>
-                    {store.manager && <p className="text-[10px] text-muted-foreground">{store.manager}</p>}
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg cursor-pointer overflow-hidden bg-primary/10"
+                      onClick={() => fileInputRefs.current[store.id]?.click()}
+                      onMouseEnter={() => setHoveredStore(store.id)}
+                      onMouseLeave={() => setHoveredStore(null)}
+                      title="Klicka för att byta logotyp"
+                    >
+                      {store.logo_url ? (
+                        <img src={store.logo_url} alt={store.name} className="h-full w-full object-contain" />
+                      ) : (
+                        <StoreIcon className="h-5 w-5 text-primary" />
+                      )}
+                      {hoveredStore === store.id && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
+                          <Camera className="h-4 w-4 text-white" />
+                        </div>
+                      )}
+                      <input
+                        ref={(el) => (fileInputRefs.current[store.id] = el)}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleLogoUpload(e, store.id, store.name)}
+                      />
+                    </div>
+                    <div>
+                      <h3 className="font-heading font-semibold text-foreground text-sm">{store.name}</h3>
+                      {store.manager && <p className="text-[10px] text-muted-foreground">{store.manager}</p>}
+                    </div>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Badge variant="outline" className="text-[10px]">{store.city}</Badge>
