@@ -62,10 +62,10 @@ export default function PurchaseReportsArchive() {
     enabled: archivedReports.length > 0,
   });
 
-  // Group reports by archive date
+  // Group reports by the date they were created (i.e. the day the report was made, not the archive midnight timestamp)
   const reportsByDate = new Map<string, ArchivedReport[]>();
   for (const r of archivedReports) {
-    const dateKey = format(new Date(r.archived_at), "yyyy-MM-dd");
+    const dateKey = format(new Date(r.created_at), "yyyy-MM-dd");
     const existing = reportsByDate.get(dateKey) || [];
     existing.push(r);
     reportsByDate.set(dateKey, existing);
