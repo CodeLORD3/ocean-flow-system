@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -67,9 +67,9 @@ const AppContent = () => {
 };
 
 const App = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = React.useState<boolean | null>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const auth = localStorage.getItem("app_authenticated");
     if (auth === "true") {
       setIsAuthenticated(true);
