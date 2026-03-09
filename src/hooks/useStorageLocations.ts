@@ -74,10 +74,16 @@ export function useUpsertStockLocation() {
           updated_at: new Date().toISOString(),
         }, { onConflict: "product_id,location_id" });
       if (error) throw error;
+      
+      // Auto-update order statuses after manual stock adjustment
+      const { markOrderLinesPackad, revertOrderLinesIfStockGone } = await import("@/lib/orderStatusSync");
+      await markOrderLinesPackad([params.product_id], params.location_id);
+      await revertOrderLinesIfStockGone();
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
       qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
+      qc.invalidateQueries({ queryKey: ["shop_orders"] });
     },
   });
 }
