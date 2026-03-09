@@ -1,0 +1,1 @@
+ALTER TABLE public.portal_settings ADD COLUMN display_name text;
