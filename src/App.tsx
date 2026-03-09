@@ -13,7 +13,6 @@ import Suppliers from "./pages/Suppliers";
 import Customers from "./pages/Customers";
 import Stores from "./pages/Stores";
 import Staff from "./pages/Staff";
-import Wholesale from "./pages/Wholesale";
 import Barcodes from "./pages/Barcodes";
 import Products from "./pages/Products";
 import OrganisationOverview from "./pages/OrganisationOverview";
@@ -46,7 +45,6 @@ const App = () => (
               <Route path="/stores" element={<Stores />} />
               <Route path="/organisation" element={<OrganisationOverview />} />
               <Route path="/staff" element={<Staff />} />
-              <Route path="/wholesale" element={<Wholesale />} />
               <Route path="/reports" element={<ReportsRouter />} />
               <Route path="/finance" element={<PlaceholderPage title="Ekonomi" />} />
               <Route path="/forecasts" element={<PlaceholderPage title="Prognoser" />} />
