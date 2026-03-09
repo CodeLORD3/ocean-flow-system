@@ -1212,6 +1212,7 @@ export type Database = {
           hours: string | null
           id: string
           is_wholesale: boolean | null
+          logo_url: string | null
           manager: string | null
           name: string
           phone: string | null
@@ -1224,6 +1225,7 @@ export type Database = {
           hours?: string | null
           id?: string
           is_wholesale?: boolean | null
+          logo_url?: string | null
           manager?: string | null
           name: string
           phone?: string | null
@@ -1236,6 +1238,7 @@ export type Database = {
           hours?: string | null
           id?: string
           is_wholesale?: boolean | null
+          logo_url?: string | null
           manager?: string | null
           name?: string
           phone?: string | null

@@ -120,9 +120,36 @@ export default function Stores() {
             <Card key={store.id} className="shadow-card hover:shadow-card-hover transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h3 className="font-heading font-semibold text-foreground text-sm">{store.name}</h3>
-                    {store.manager && <p className="text-[10px] text-muted-foreground">{store.manager}</p>}
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg cursor-pointer overflow-hidden bg-primary/10"
+                      onClick={() => fileInputRefs.current[store.id]?.click()}
+                      onMouseEnter={() => setHoveredStore(store.id)}
+                      onMouseLeave={() => setHoveredStore(null)}
+                      title="Klicka för att byta logotyp"
+                    >
+                      {store.logo_url ? (
+                        <img src={store.logo_url} alt={store.name} className="h-full w-full object-contain" />
+                      ) : (
+                        <StoreIcon className="h-5 w-5 text-primary" />
+                      )}
+                      {hoveredStore === store.id && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
+                          <Camera className="h-4 w-4 text-white" />
+                        </div>
+                      )}
+                      <input
+                        ref={(el) => (fileInputRefs.current[store.id] = el)}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleLogoUpload(e, store.id, store.name)}
+                      />
+                    </div>
+                    <div>
+                      <h3 className="font-heading font-semibold text-foreground text-sm">{store.name}</h3>
+                      {store.manager && <p className="text-[10px] text-muted-foreground">{store.manager}</p>}
+                    </div>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Badge variant="outline" className="text-[10px]">{store.city}</Badge>
