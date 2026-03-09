@@ -1,8 +1,9 @@
 import { useRef, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { LucideIcon, Camera } from "lucide-react";
+import { LucideIcon, Camera, Edit2, Check, X } from "lucide-react";
 import { useUpdateStore } from "@/hooks/useStores";
+import { Input } from "@/components/ui/input";
 
 interface PortalLogoProps {
   portalName: string;
@@ -30,22 +31,32 @@ export function PortalLogo({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [hovering, setHovering] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [displayName, setDisplayName] = useState(title);
+  const [editName, setEditName] = useState(title);
+  const [hoveringName, setHoveringName] = useState(false);
   const updateStore = useUpdateStore();
 
   useEffect(() => {
     if (storeId) {
       setLogoUrl(storeLogoUrl || null);
+      setDisplayName(title);
     } else {
       supabase
         .from("portal_settings")
-        .select("logo_url")
+        .select("logo_url, display_name")
         .eq("portal_name", portalName)
         .maybeSingle()
         .then(({ data }) => {
           if (data?.logo_url) setLogoUrl(data.logo_url);
+          if ((data as any)?.display_name) {
+            setDisplayName((data as any).display_name);
+          } else {
+            setDisplayName(title);
+          }
         });
     }
-  }, [portalName, storeId, storeLogoUrl]);
+  }, [portalName, storeId, storeLogoUrl, title]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
