@@ -339,6 +339,7 @@ export default function Products() {
         <td className="px-3 py-1 font-mono text-muted-foreground text-[10px]">{p.sku}</td>
         <td className="px-3 py-1"><Badge variant="outline" className="text-[10px]">{p.category}</Badge></td>
         <td className="px-3 py-1 text-muted-foreground">{p.unit}</td>
+        <td className="px-3 py-1 font-mono text-muted-foreground">{(p as any).hs_code || "–"}</td>
         <td className="px-3 py-1">
           <Select
             value={(p as any).producer || "__none__"}
