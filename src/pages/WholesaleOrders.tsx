@@ -91,6 +91,7 @@ export default function WholesaleOrders() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [reportViewOrder, setReportViewOrder] = useState<any>(null);
   const [archiveConfirmOrder, setArchiveConfirmOrder] = useState<any>(null);
+  const [packingSlipOrder, setPackingSlipOrder] = useState<any>(null);
   const { data: pendingChanges = [] } = useAllPendingChangeRequests();
   const resolveChange = useResolveChangeRequest();
 
