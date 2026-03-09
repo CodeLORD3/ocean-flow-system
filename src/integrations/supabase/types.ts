@@ -684,6 +684,7 @@ export type Database = {
       }
       production_reports: {
         Row: {
+          archived_at: string | null
           created_at: string | null
           display_name: string | null
           id: string
@@ -693,6 +694,7 @@ export type Database = {
           total_quantity: number | null
         }
         Insert: {
+          archived_at?: string | null
           created_at?: string | null
           display_name?: string | null
           id?: string
@@ -702,6 +704,7 @@ export type Database = {
           total_quantity?: number | null
         }
         Update: {
+          archived_at?: string | null
           created_at?: string | null
           display_name?: string | null
           id?: string

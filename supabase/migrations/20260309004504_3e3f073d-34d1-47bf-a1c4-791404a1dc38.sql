@@ -1,0 +1,1 @@
+ALTER TABLE public.production_reports ADD COLUMN archived_at TIMESTAMP WITH TIME ZONE DEFAULT NULL;
