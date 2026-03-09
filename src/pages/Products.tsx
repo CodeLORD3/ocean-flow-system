@@ -546,7 +546,7 @@ export default function Products() {
               </thead>
               <tbody>
                 {filtered.length === 0 && (
-                  <tr><td colSpan={isWholesale ? 12 : 9} className="p-8 text-center text-muted-foreground">Inga produkter hittades.</td></tr>
+                  <tr><td colSpan={isWholesale ? 13 : 10} className="p-8 text-center text-muted-foreground">Inga produkter hittades.</td></tr>
                 )}
                 {filtered.map(p => {
                   const isExpanded = expandedProducts.has(p.id);
