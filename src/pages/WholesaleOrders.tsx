@@ -451,10 +451,20 @@ export default function WholesaleOrders() {
                               variant="ghost"
                               size="sm"
                               className="h-6 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
-                              onClick={() => setArchiveConfirmOrder(o)}
+                              onClick={() => setPackingSlipOrder(o)}
                             >
-                              <Archive className="h-3 w-3" /> Arkivera
+                              <Printer className="h-3 w-3" /> Packsedel
                             </Button>
+                          </td>
+                          <td className="px-2.5 py-1 text-center" onClick={e => e.stopPropagation()}>
+                             <Button
+                               variant="ghost"
+                               size="sm"
+                               className="h-6 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
+                               onClick={() => setArchiveConfirmOrder(o)}
+                             >
+                               <Archive className="h-3 w-3" /> Arkivera
+                             </Button>
                           </td>
                         </tr>
                       ))}
