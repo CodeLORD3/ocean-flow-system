@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.archive-daily-reports]
 verify_jwt = false
+
+[functions.archive-daily-production-reports]
+verify_jwt = false
