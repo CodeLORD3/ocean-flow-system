@@ -21,6 +21,7 @@ import { useStores } from "@/hooks/useStores";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useAllPendingChangeRequests, useResolveChangeRequest, useCreateChangeRequest } from "@/hooks/useOrderChangeRequests";
+import PackingSlip from "@/components/PackingSlip";
 
 const statusColor: Record<string, string> = {
   Ny: "bg-primary/10 text-primary border-primary/20",
