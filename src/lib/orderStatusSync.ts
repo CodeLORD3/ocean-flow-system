@@ -222,13 +222,14 @@ export async function markOrderLinesPackad(productIds: string[], targetLocationI
     stockMap.set(s.product_id, (stockMap.get(s.product_id) || 0) + Number(s.quantity));
   }
 
-  // Find order lines for these products
+  // Find order lines for these products - prioritize "Behandlas" status for Pre-location packing
   const { data: orderLines } = await supabase
     .from("shop_order_lines")
     .select("id, status, shop_order_id, product_id, quantity_ordered, shop_orders!inner(store_id, priority, created_at)")
     .in("product_id", productIds)
     .eq("shop_orders.store_id", location.store_id)
-    .in("status", ["", "Ny", "Behandlas"]);
+    .in("status", ["", "Ny", "Behandlas"])
+    .not("shop_orders.status", "in", '("Arkiverad","Klar / Levererad")');
 
   if (!orderLines?.length) return;
 
