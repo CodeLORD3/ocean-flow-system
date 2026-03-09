@@ -192,13 +192,13 @@ export function PortalLogo({
                   }
                 }}
               />
-              <button onClick={handleNameSave} className="p-1 hover:bg-sidebar-accent rounded text-emerald-500 shrink-0">
+              <button onClick={handleNameSave} className="p-1 hover:bg-sidebar-accent rounded text-primary shrink-0">
                 <Check className="h-3.5 w-3.5" />
               </button>
               <button onClick={() => {
                 setEditName(displayName);
                 setIsEditingName(false);
-              }} className="p-1 hover:bg-sidebar-accent rounded text-red-500 shrink-0">
+              }} className="p-1 hover:bg-sidebar-accent rounded text-destructive shrink-0">
                 <X className="h-3.5 w-3.5" />
               </button>
             </div>
