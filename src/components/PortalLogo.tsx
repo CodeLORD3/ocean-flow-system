@@ -52,7 +52,9 @@ export function PortalLogo({
     if (!file) return;
 
     const ext = file.name.split(".").pop();
-    const path = `${portalName}/logo-${Date.now()}.${ext}`;
+    const path = storeId 
+      ? `stores/${storeId}/logo-${Date.now()}.${ext}`
+      : `${portalName}/logo-${Date.now()}.${ext}`;
 
     const { error: uploadError } = await supabase.storage
       .from("logos")
@@ -66,20 +68,34 @@ export function PortalLogo({
     const { data: urlData } = supabase.storage.from("logos").getPublicUrl(path);
     const url = urlData.publicUrl;
 
-    const { error: upsertError } = await supabase
-      .from("portal_settings")
-      .upsert(
-        { portal_name: portalName, logo_url: url, updated_at: new Date().toISOString() },
-        { onConflict: "portal_name" }
+    if (storeId) {
+      updateStore.mutate(
+        { id: storeId, logo_url: url },
+        {
+          onSuccess: () => {
+            setLogoUrl(url);
+            toast.success("Butikslogotyp uppdaterad!");
+          },
+          onError: () => toast.error("Kunde inte spara logotypen")
+        }
       );
+    } else {
+      const { error: upsertError } = await supabase
+        .from("portal_settings")
+        .upsert(
+          { portal_name: portalName, logo_url: url, updated_at: new Date().toISOString() },
+          { onConflict: "portal_name" }
+        );
 
-    if (upsertError) {
-      toast.error("Kunde inte spara logotypen");
-      return;
+      if (upsertError) {
+        toast.error("Kunde inte spara logotypen");
+        return;
+      }
+
+      setLogoUrl(url);
+      toast.success("Logotyp uppdaterad!");
     }
-
-    setLogoUrl(url);
-    toast.success("Logotyp uppdaterad!");
+    
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
