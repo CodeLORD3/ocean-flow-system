@@ -18,6 +18,8 @@ export default function Stores() {
   const updateStore = useUpdateStore();
   const { toast } = useToast();
   const [editStore, setEditStore] = useState<Store | null>(null);
+  const [hoveredStore, setHoveredStore] = useState<string | null>(null);
+  const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
   // Edit form state
   const [form, setForm] = useState({
