@@ -110,8 +110,46 @@ export function PortalLogo({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const handleNameSave = async () => {
+    if (!editName.trim()) return;
+    
+    if (storeId) {
+      updateStore.mutate(
+        { id: storeId, name: editName },
+        {
+          onSuccess: () => {
+            setDisplayName(editName);
+            setIsEditingName(false);
+            toast.success("Butiksnamn uppdaterat!");
+          },
+          onError: () => toast.error("Kunde inte spara namnet")
+        }
+      );
+    } else {
+      const { error: upsertError } = await supabase
+        .from("portal_settings")
+        .upsert(
+          { 
+            portal_name: portalName, 
+            display_name: editName,
+            updated_at: new Date().toISOString() 
+          } as any,
+          { onConflict: "portal_name" }
+        );
+
+      if (upsertError) {
+        toast.error("Kunde inte spara namnet");
+        return;
+      }
+
+      setDisplayName(editName);
+      setIsEditingName(false);
+      toast.success("Namn uppdaterat!");
+    }
+  };
+
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 w-full overflow-hidden">
       <div
         className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg cursor-pointer overflow-hidden ${iconBgClass}`}
         onClick={() => fileInputRef.current?.click()}
@@ -120,7 +158,7 @@ export function PortalLogo({
         title="Klicka för att byta logotyp"
       >
         {logoUrl ? (
-          <img src={logoUrl} alt={title} className="h-full w-full object-contain" />
+          <img src={logoUrl} alt={displayName} className="h-full w-full object-contain bg-white" />
         ) : (
           <FallbackIcon className={`h-5 w-5 ${iconColorClass}`} />
         )}
@@ -138,8 +176,49 @@ export function PortalLogo({
         />
       </div>
       {!collapsed && (
-        <div>
-          <h2 className="font-heading text-sm font-bold text-sidebar-accent-foreground">{title}</h2>
+        <div className="flex-1 min-w-0">
+          {isEditingName ? (
+            <div className="flex items-center gap-1">
+              <Input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="h-7 text-sm font-bold px-1.5 py-0 w-full bg-sidebar-accent text-sidebar-accent-foreground"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleNameSave();
+                  if (e.key === 'Escape') {
+                    setEditName(displayName);
+                    setIsEditingName(false);
+                  }
+                }}
+              />
+              <button onClick={handleNameSave} className="p-1 hover:bg-sidebar-accent rounded text-emerald-500 shrink-0">
+                <Check className="h-3.5 w-3.5" />
+              </button>
+              <button onClick={() => {
+                setEditName(displayName);
+                setIsEditingName(false);
+              }} className="p-1 hover:bg-sidebar-accent rounded text-red-500 shrink-0">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div 
+              className="flex items-center gap-2 group cursor-pointer" 
+              onClick={() => {
+                setEditName(displayName);
+                setIsEditingName(true);
+              }}
+              onMouseEnter={() => setHoveringName(true)}
+              onMouseLeave={() => setHoveringName(false)}
+              title="Klicka för att byta namn"
+            >
+              <h2 className="font-heading text-sm font-bold text-sidebar-accent-foreground truncate">
+                {displayName}
+              </h2>
+              {hoveringName && <Edit2 className="h-3 w-3 text-sidebar-foreground/50 shrink-0" />}
+            </div>
+          )}
           <p className="text-[10px] text-sidebar-foreground/60">{subtitle}</p>
         </div>
       )}
