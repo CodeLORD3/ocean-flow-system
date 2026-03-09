@@ -480,6 +480,24 @@ export type Database = {
           },
         ]
       }
+      portal_settings: {
+        Row: {
+          logo_url: string | null
+          portal_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          logo_url?: string | null
+          portal_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          logo_url?: string | null
+          portal_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       price_history: {
         Row: {
           changed_by: string | null
