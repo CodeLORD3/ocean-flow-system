@@ -61,15 +61,17 @@ function TransportZoneBadge({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button className="inline-flex items-center gap-1.5 cursor-pointer group">
-          <Badge variant={schedule.badge_color as any} className="text-[10px] group-hover:ring-2 group-hover:ring-primary/40 transition-all">
-            <Truck className="h-3 w-3 mr-1" />
-            {schedule.label}
-          </Badge>
-          <span className="text-[10px] text-muted-foreground">
-            Avgång: {dayName} {schedule.departure_time}
+        <button className="flex flex-col items-start gap-1 cursor-pointer group w-full text-left">
+          <div className="flex items-center gap-1 w-full">
+            <Badge variant={schedule.badge_color as any} className="text-[10px] group-hover:ring-2 group-hover:ring-primary/40 transition-all">
+              <Truck className="h-3 w-3 mr-1" />
+              {schedule.label}
+            </Badge>
+            <Settings2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity ml-auto shrink-0" />
+          </div>
+          <span className="text-[10px] text-muted-foreground font-medium">
+            {schedule.departure_time}
           </span>
-          <Settings2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-72" align="start">
