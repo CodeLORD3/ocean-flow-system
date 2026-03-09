@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -67,26 +67,11 @@ const AppContent = () => {
 };
 
 const App = () => {
-  const [isAuthenticated, setIsAuthenticated] = React.useState<boolean | null>(null);
-
-  React.useEffect(() => {
-    // Clear localStorage to test login - remove this line later
-    localStorage.removeItem("app_authenticated");
-    
-    const auth = localStorage.getItem("app_authenticated");
-    if (auth === "true") {
-      setIsAuthenticated(true);
-    } else {
-      setIsAuthenticated(false);
-    }
-  }, []);
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
 
   const handleLogin = () => {
-    localStorage.setItem("app_authenticated", "true");
     setIsAuthenticated(true);
   };
-
-  if (isAuthenticated === null) return null;
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -100,3 +85,4 @@ const App = () => {
 };
 
 export default App;
+
