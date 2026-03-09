@@ -689,6 +689,9 @@ export default function WholesaleOrders() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Packing slip dialog */}
+      <PackingSlip order={packingSlipOrder} open={!!packingSlipOrder} onOpenChange={(open) => { if (!open) setPackingSlipOrder(null); }} />
     </motion.div>
   );
 }
