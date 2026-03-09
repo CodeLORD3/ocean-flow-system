@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Search, Clock, CheckCircle2, Truck, XCircle, Package,
-  Eye, ListChecks, ChefHat, AlertTriangle, Archive, Bell, Check, X, Ban,
+  Eye, ListChecks, ChefHat, AlertTriangle, Archive, Bell, Check, X, Ban, Printer,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import { useStores } from "@/hooks/useStores";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useAllPendingChangeRequests, useResolveChangeRequest, useCreateChangeRequest } from "@/hooks/useOrderChangeRequests";
+import PackingSlip from "@/components/PackingSlip";
 
 const statusColor: Record<string, string> = {
   Ny: "bg-primary/10 text-primary border-primary/20",
@@ -90,6 +91,7 @@ export default function WholesaleOrders() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [reportViewOrder, setReportViewOrder] = useState<any>(null);
   const [archiveConfirmOrder, setArchiveConfirmOrder] = useState<any>(null);
+  const [packingSlipOrder, setPackingSlipOrder] = useState<any>(null);
   const { data: pendingChanges = [] } = useAllPendingChangeRequests();
   const resolveChange = useResolveChangeRequest();
 
@@ -393,6 +395,7 @@ export default function WholesaleOrders() {
                          <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">ANTECKNING</th>
                          <th className="px-2.5 py-1 text-left font-medium text-muted-foreground min-w-[120px]">STATUS</th>
                          <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">LEVERANSRAPPORT</th>
+                         <th className="px-2.5 py-1 text-center font-medium text-muted-foreground">PACKSEDEL</th>
                          <th className="px-2.5 py-1 text-center font-medium text-muted-foreground">ARKIVERA</th>
                       </tr>
                     </thead>
@@ -448,10 +451,20 @@ export default function WholesaleOrders() {
                               variant="ghost"
                               size="sm"
                               className="h-6 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
-                              onClick={() => setArchiveConfirmOrder(o)}
+                              onClick={() => setPackingSlipOrder(o)}
                             >
-                              <Archive className="h-3 w-3" /> Arkivera
+                              <Printer className="h-3 w-3" /> Packsedel
                             </Button>
+                          </td>
+                          <td className="px-2.5 py-1 text-center" onClick={e => e.stopPropagation()}>
+                             <Button
+                               variant="ghost"
+                               size="sm"
+                               className="h-6 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
+                               onClick={() => setArchiveConfirmOrder(o)}
+                             >
+                               <Archive className="h-3 w-3" /> Arkivera
+                             </Button>
                           </td>
                         </tr>
                       ))}
@@ -676,6 +689,9 @@ export default function WholesaleOrders() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Packing slip dialog */}
+      <PackingSlip order={packingSlipOrder} open={!!packingSlipOrder} onOpenChange={(open) => { if (!open) setPackingSlipOrder(null); }} />
     </motion.div>
   );
 }
