@@ -39,6 +39,40 @@ export default function Stores() {
     });
   };
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>, storeId: string, storeName: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const ext = file.name.split(".").pop();
+    const path = `stores/${storeId}/logo-${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("logos")
+      .upload(path, file, { upsert: true });
+
+    if (uploadError) {
+      toast({ title: "Fel", description: "Kunde inte ladda upp logotypen", variant: "destructive" });
+      return;
+    }
+
+    const { data: urlData } = supabase.storage.from("logos").getPublicUrl(path);
+    const url = urlData.publicUrl;
+
+    updateStore.mutate(
+      { id: storeId, logo_url: url },
+      {
+        onSuccess: () => {
+          toast({ title: "Logotyp uppdaterad", description: storeName });
+        },
+        onError: (err) => toast({ title: "Fel", description: err.message, variant: "destructive" }),
+      }
+    );
+
+    if (fileInputRefs.current[storeId]) {
+      fileInputRefs.current[storeId]!.value = "";
+    }
+  };
+
   const handleSave = () => {
     if (!editStore) return;
     updateStore.mutate(
