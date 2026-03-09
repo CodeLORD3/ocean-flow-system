@@ -70,6 +70,9 @@ const App = () => {
   const [isAuthenticated, setIsAuthenticated] = React.useState<boolean | null>(null);
 
   React.useEffect(() => {
+    // Clear localStorage to test login - remove this line later
+    localStorage.removeItem("app_authenticated");
+    
     const auth = localStorage.getItem("app_authenticated");
     if (auth === "true") {
       setIsAuthenticated(true);
