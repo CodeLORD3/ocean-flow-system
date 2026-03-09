@@ -41,9 +41,14 @@ const overviewNav = [
 
 const salesNav = [
   { title: "Ordrar", url: "/orders", icon: ShoppingCart },
-  { title: "Inköpsschema", url: "/purchase-schedule", icon: CalendarDays },
   { title: "Kunder", url: "/customers", icon: Users },
   { title: "Fakturor", url: "/invoices", icon: FileText },
+];
+
+const purchaseNav = [
+  { title: "Inköpsschema", url: "/purchase-schedule", icon: CalendarDays },
+  { title: "Inköpsrapportering", url: "/purchase-reporting", icon: FileText },
+  { title: "Leverantörer", url: "/suppliers", icon: Truck },
 ];
 
 const inventoryNav = [
@@ -51,7 +56,6 @@ const inventoryNav = [
   { title: "Lager", url: "/inventory", icon: Package },
   { title: "Streckkoder", url: "/barcodes", icon: ScanLine },
   { title: "Inleveranser", url: "/receiving", icon: Truck },
-  { title: "Leverantörer", url: "/suppliers", icon: Truck },
 ];
 
 const orgNav = [
@@ -77,6 +81,7 @@ type NavSection = { label: string; items: typeof overviewNav };
 const sections: NavSection[] = [
   { label: "Översikt", items: overviewNav },
   { label: "Försäljning", items: salesNav },
+  { label: "Inköp", items: purchaseNav },
   { label: "Lagerstyrning", items: inventoryNav },
   { label: "Organisation", items: orgNav },
   { label: "Ekonomi & Rapporter", items: financeNav },
