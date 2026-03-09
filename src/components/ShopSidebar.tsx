@@ -4,6 +4,8 @@ import {
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
+import { useSite } from "@/contexts/SiteContext";
+import { useStores } from "@/hooks/useStores";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
@@ -44,6 +46,10 @@ export function ShopSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
+  
+  const { activeStoreId, activeStoreName } = useSite();
+  const { data: stores } = useStores();
+  const activeStore = stores?.find(s => s.id === activeStoreId);
 
   return (
     <Sidebar collapsible="icon" className="border-r-2 border-r-emerald-700/30" style={{ background: 'hsl(160 30% 12%)' }}>
@@ -53,9 +59,11 @@ export function ShopSidebar() {
           fallbackIcon={Store}
           iconColorClass="text-emerald-400"
           iconBgClass="bg-emerald-500/20"
-          title="FiskHandel"
-          subtitle="Butiksportal"
+          title={activeStoreName || "Butiksportal"}
+          subtitle="Butiksvy"
           collapsed={collapsed}
+          storeId={activeStoreId}
+          storeLogoUrl={activeStore?.logo_url}
         />
       </SidebarHeader>
 

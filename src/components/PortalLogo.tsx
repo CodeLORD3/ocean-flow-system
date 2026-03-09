@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LucideIcon, Camera } from "lucide-react";
+import { useUpdateStore } from "@/hooks/useStores";
 
 interface PortalLogoProps {
   portalName: string;
@@ -11,6 +12,8 @@ interface PortalLogoProps {
   title: string;
   subtitle: string;
   collapsed: boolean;
+  storeId?: string | null;
+  storeLogoUrl?: string | null;
 }
 
 export function PortalLogo({
@@ -21,28 +24,37 @@ export function PortalLogo({
   title,
   subtitle,
   collapsed,
+  storeId,
+  storeLogoUrl,
 }: PortalLogoProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [hovering, setHovering] = useState(false);
+  const updateStore = useUpdateStore();
 
   useEffect(() => {
-    supabase
-      .from("portal_settings")
-      .select("logo_url")
-      .eq("portal_name", portalName)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.logo_url) setLogoUrl(data.logo_url);
-      });
-  }, [portalName]);
+    if (storeId) {
+      setLogoUrl(storeLogoUrl || null);
+    } else {
+      supabase
+        .from("portal_settings")
+        .select("logo_url")
+        .eq("portal_name", portalName)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data?.logo_url) setLogoUrl(data.logo_url);
+        });
+    }
+  }, [portalName, storeId, storeLogoUrl]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const ext = file.name.split(".").pop();
-    const path = `${portalName}/logo-${Date.now()}.${ext}`;
+    const path = storeId 
+      ? `stores/${storeId}/logo-${Date.now()}.${ext}`
+      : `${portalName}/logo-${Date.now()}.${ext}`;
 
     const { error: uploadError } = await supabase.storage
       .from("logos")
@@ -56,20 +68,34 @@ export function PortalLogo({
     const { data: urlData } = supabase.storage.from("logos").getPublicUrl(path);
     const url = urlData.publicUrl;
 
-    const { error: upsertError } = await supabase
-      .from("portal_settings")
-      .upsert(
-        { portal_name: portalName, logo_url: url, updated_at: new Date().toISOString() },
-        { onConflict: "portal_name" }
+    if (storeId) {
+      updateStore.mutate(
+        { id: storeId, logo_url: url },
+        {
+          onSuccess: () => {
+            setLogoUrl(url);
+            toast.success("Butikslogotyp uppdaterad!");
+          },
+          onError: () => toast.error("Kunde inte spara logotypen")
+        }
       );
+    } else {
+      const { error: upsertError } = await supabase
+        .from("portal_settings")
+        .upsert(
+          { portal_name: portalName, logo_url: url, updated_at: new Date().toISOString() },
+          { onConflict: "portal_name" }
+        );
 
-    if (upsertError) {
-      toast.error("Kunde inte spara logotypen");
-      return;
+      if (upsertError) {
+        toast.error("Kunde inte spara logotypen");
+        return;
+      }
+
+      setLogoUrl(url);
+      toast.success("Logotyp uppdaterad!");
     }
-
-    setLogoUrl(url);
-    toast.success("Logotyp uppdaterad!");
+    
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
