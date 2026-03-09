@@ -15,6 +15,7 @@ import {
   TrendingUp,
   ScanLine,
 } from "lucide-react";
+import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -78,17 +79,15 @@ export function ProductionSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r-2 border-r-amber-700/30 bg-gradient-to-b from-sidebar-background to-amber-950/10">
       <SidebarHeader className="p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/20">
-            <Factory className="h-5 w-5 text-amber-400" />
-          </div>
-          {!collapsed && (
-            <div>
-              <h2 className="font-heading text-sm font-bold text-sidebar-accent-foreground">FiskHandel</h2>
-              <p className="text-[10px] text-sidebar-foreground/60">Produktion</p>
-            </div>
-          )}
-        </div>
+        <PortalLogo
+          portalName="production"
+          fallbackIcon={Factory}
+          iconColorClass="text-amber-400"
+          iconBgClass="bg-amber-500/20"
+          title="FiskHandel"
+          subtitle="Produktion"
+          collapsed={collapsed}
+        />
       </SidebarHeader>
 
       <SidebarContent>

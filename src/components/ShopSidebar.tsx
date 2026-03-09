@@ -1,6 +1,7 @@
 import {
   LayoutDashboard, ShoppingCart, Users, Fish, Package, Truck, Store, UserCheck, BarChart3, Settings, Anchor, CreditCard,
 } from "lucide-react";
+import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -47,17 +48,15 @@ export function ShopSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r-2 border-r-emerald-700/30" style={{ background: 'hsl(160 30% 12%)' }}>
       <SidebarHeader className="p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/20">
-            <Store className="h-5 w-5 text-emerald-400" />
-          </div>
-          {!collapsed && (
-            <div>
-              <h2 className="font-heading text-sm font-bold text-sidebar-accent-foreground">FiskHandel</h2>
-              <p className="text-[10px] text-sidebar-foreground/60">Butiksportal</p>
-            </div>
-          )}
-        </div>
+        <PortalLogo
+          portalName="shop"
+          fallbackIcon={Store}
+          iconColorClass="text-emerald-400"
+          iconBgClass="bg-emerald-500/20"
+          title="FiskHandel"
+          subtitle="Butiksportal"
+          collapsed={collapsed}
+        />
       </SidebarHeader>
 
       <SidebarContent>

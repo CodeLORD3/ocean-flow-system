@@ -19,6 +19,7 @@ import {
   ScanLine,
   CalendarDays,
 } from "lucide-react";
+import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -102,17 +103,15 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r-2 border-r-sky-700/30 bg-gradient-to-b from-sidebar-background to-sky-950/10">
       <SidebarHeader className="p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-500/20">
-            <Anchor className="h-5 w-5 text-sky-400" />
-          </div>
-          {!collapsed && (
-            <div>
-              <h2 className="font-heading text-sm font-bold text-sidebar-accent-foreground">FiskHandel</h2>
-              <p className="text-[10px] text-sidebar-foreground/60">Enterprise Resource Planning</p>
-            </div>
-          )}
-        </div>
+        <PortalLogo
+          portalName="wholesale"
+          fallbackIcon={Anchor}
+          iconColorClass="text-sky-400"
+          iconBgClass="bg-sky-500/20"
+          title="FiskHandel"
+          subtitle="Enterprise Resource Planning"
+          collapsed={collapsed}
+        />
       </SidebarHeader>
 
       <SidebarContent>
