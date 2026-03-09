@@ -207,7 +207,7 @@ export async function markOrderLinesPackad(productIds: string[], targetLocationI
     .single();
 
   if (!location?.store_id) return;
-  if (!location.name.startsWith("Pre-")) return;
+  if (!location.name.toLowerCase().startsWith("pre-")) return;
 
   // Get stock in this Pre-location for these products
   const { data: preStock } = await supabase
