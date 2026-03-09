@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { MapPin, Phone, Clock, Edit, X, Save } from "lucide-react";
+import { MapPin, Phone, Clock, Edit, X, Save, Camera, Store as StoreIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useStores, useUpdateStore, Store } from "@/hooks/useStores";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Stores() {
   const { data: stores = [], isLoading } = useStores(true);
