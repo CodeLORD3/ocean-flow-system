@@ -180,7 +180,7 @@ export default function DeliveryNote({ order, open, onOpenChange }: DeliveryNote
                     {Array.from({ length: Math.max(0, 20 - lines.length) }).map((_, i) => (
                       <tr key={`empty-${i}`} style={{ background: (lines.length + i) % 2 === 0 ? "#fff" : "#f7f7f7" }}>
                         {Array.from({ length: 8 }).map((_, ci) => (
-                          <td key={ci} style={{ padding: "5px", borderBottom: "1px solid #ddd", height: 24 }}>&nbsp;</td>
+                          <td key={ci} style={{ padding: "4px", borderBottom: "1px solid #ddd", height: 20 }}>&nbsp;</td>
                         ))}
                       </tr>
                     ))}
