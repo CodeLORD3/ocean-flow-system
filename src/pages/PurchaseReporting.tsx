@@ -760,7 +760,7 @@ export default function PurchaseReporting() {
         }
       }
 
-      // Auto-update order line statuses to "Behandlas"
+      // Auto-update order line statuses (no-op, kept for compatibility)
       const confirmedProductIds = productLines.map((l) => l.product_id!).filter(Boolean);
       await markOrderLinesBehandlas(confirmedProductIds);
     },

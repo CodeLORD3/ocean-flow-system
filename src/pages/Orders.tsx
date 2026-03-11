@@ -129,7 +129,7 @@ export default function Orders() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "Behandlas", count: pending, icon: Clock, color: "text-warning" },
+          { label: "Pågående", count: pending, icon: Clock, color: "text-warning" },
           { label: "Packade", count: packed, icon: Package, color: "text-accent-foreground" },
           { label: "Levererade", count: delivered, icon: CheckCircle2, color: "text-success" },
           { label: "Totalt", count: totalOrders, icon: ShoppingCart, color: "text-foreground" },
