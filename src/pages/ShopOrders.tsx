@@ -274,6 +274,10 @@ export default function ShopOrders() {
   const handleCreateOrder = async () => {
     const validLines = orderLines.filter(l => l.quantity && Number(l.quantity) > 0);
     if (validLines.length === 0) return;
+    if (!desiredDeliveryDate) {
+      toast({ title: "Välj avgångsdatum", description: "Du måste välja ett avgångsdatum innan du kan skicka beställningen.", variant: "destructive" });
+      return;
+    }
 
     if (!activeStoreId) {
       toast({ title: "Ingen butik vald", variant: "destructive" });
