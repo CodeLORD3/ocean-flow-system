@@ -117,8 +117,8 @@ export function useUpdateOrderLineStatus() {
         newOrderStatus = "Skickad";
       } else if (statuses.every((s) => s === "Packad" || s === "Skickad" || s === "Klar / Levererad")) {
         newOrderStatus = "Packad";
-      } else if (statuses.some((s) => s === "Behandlas" || s === "Packad" || s === "Skickad" || s === "Klar / Levererad")) {
-        newOrderStatus = "Behandlas";
+      } else if (statuses.some((s) => s === "Pågående" || s === "Packad" || s === "Skickad" || s === "Klar / Levererad")) {
+        newOrderStatus = "Pågående";
       }
 
       await supabase

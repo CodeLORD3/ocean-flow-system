@@ -159,11 +159,11 @@ export async function markOrderLinesPackad(productIds: string[], targetLocationI
 
   if (!orderLines?.length) return;
 
-  // Sort them: "Behandlas" first, then by priority, then by creation date
+  // Sort them: "Pågående" first, then by priority, then by creation date
   const sortedLines = [...orderLines].sort((a, b) => {
-    // Prioritize lines already "Behandlas" to upgrade them to "Packad"
-    if (a.status === "Behandlas" && b.status !== "Behandlas") return -1;
-    if (b.status === "Behandlas" && a.status !== "Behandlas") return 1;
+    // Prioritize lines already "Pågående" to upgrade them to "Packad"
+    if (a.status === "Pågående" && b.status !== "Pågående") return -1;
+    if (b.status === "Pågående" && a.status !== "Pågående") return 1;
     
     const aPriority = a.shop_orders.priority || 0;
     const bPriority = b.shop_orders.priority || 0;
