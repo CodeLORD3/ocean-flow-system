@@ -604,7 +604,7 @@ export default function Inventory() {
         </CardContent></Card>
       </div>
 
-      {isLocationPortal ? (
+      {(site === "purchasing" || site === "production") ? (
         /* ── INKÖP/PRODUKTION PORTAL: Location accordion ── */
         <Card className="shadow-card">
           <CardHeader className="pb-2">
