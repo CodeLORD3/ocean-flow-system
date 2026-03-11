@@ -418,11 +418,6 @@ export default function Inventory() {
   const portalLocations = useMemo(() => {
     const isPre = (loc: any) => (loc.name || "").toLowerCase().startsWith("pre-");
     const isShared = (loc: any) => loc.name === "Grossist Flytande" || loc.name === "Transportlager";
-    if (site === "purchasing") {
-      return locations.filter((loc: any) =>
-        loc.zone === "Inköp" || isPre(loc) || isShared(loc)
-      );
-    }
     if (site === "production") {
       return locations.filter((loc: any) =>
         loc.zone === "Produktion" || isPre(loc) || isShared(loc)
@@ -430,7 +425,7 @@ export default function Inventory() {
     }
     if (site === "wholesale") {
       return locations.filter((loc: any) =>
-        isPre(loc) || isShared(loc) || loc.name?.startsWith("Raw")
+        loc.zone === "Inköp" || isPre(loc) || isShared(loc) || loc.name?.startsWith("Raw")
       );
     }
     return locations;
