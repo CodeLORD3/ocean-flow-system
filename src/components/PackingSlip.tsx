@@ -148,7 +148,7 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
                         <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 13, fontWeight: 500 }}>
                           {line.products?.name || "—"}
                         </td>
-                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 10, color: "#555" }}>
+                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 12, color: "#555" }}>
                           {line.products?.category || "—"}
                         </td>
                         <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 10, color: "#555" }}>
