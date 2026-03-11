@@ -66,7 +66,6 @@ const inventoryNav = [
 
 const orgNav = [
   { title: "Butiker", url: "/stores", icon: Store },
-  { title: "Produktion/Grossist", url: "/wholesale", icon: Factory },
   { title: "Personal", url: "/staff", icon: UserCheck },
 ];
 
