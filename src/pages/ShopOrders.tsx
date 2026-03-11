@@ -274,6 +274,10 @@ export default function ShopOrders() {
   const handleCreateOrder = async () => {
     const validLines = orderLines.filter(l => l.quantity && Number(l.quantity) > 0);
     if (validLines.length === 0) return;
+    if (!desiredDeliveryDate) {
+      toast({ title: "Välj avgångsdatum", description: "Du måste välja ett avgångsdatum innan du kan skicka beställningen.", variant: "destructive" });
+      return;
+    }
 
     if (!activeStoreId) {
       toast({ title: "Ingen butik vald", variant: "destructive" });
@@ -299,12 +303,14 @@ export default function ShopOrders() {
       return;
     }
 
+    const deliveryDateStr = format(desiredDeliveryDate, "yyyy-MM-dd");
     const lines = validLines.map(l => ({
       shop_order_id: order.id,
       product_id: l.product_id,
       quantity_ordered: Number(l.quantity),
       unit: l.unit,
       order_date: new Date().toISOString().slice(0, 10),
+      delivery_date: deliveryDateStr,
     }));
 
     const { error: lineError } = await supabase.from("shop_order_lines").insert(lines);
@@ -488,7 +494,7 @@ export default function ShopOrders() {
           )}
 
           <div className="space-y-1.5">
-            <Label className="text-xs">Önskat avgångsdatum{allowedWeekdays ? "" : " (valfritt)"}</Label>
+            <Label className="text-xs">Önskat avgångsdatum <span className="text-destructive">*</span></Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -533,7 +539,7 @@ export default function ShopOrders() {
               size="sm"
               className="gap-1.5"
               onClick={() => setConfirmSendOpen(true)}
-              disabled={orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0}
+              disabled={orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0 || !desiredDeliveryDate}
             >
               <ShoppingCart className="h-3.5 w-3.5" /> Skicka beställning
             </Button>
