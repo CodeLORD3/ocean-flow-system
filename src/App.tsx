@@ -48,7 +48,7 @@ const AppContent = () => {
             <Route path="/reports" element={<ReportsRouter />} />
             <Route path="/finance" element={<PlaceholderPage title="Ekonomi" />} />
             <Route path="/forecasts" element={<PlaceholderPage title="Prognoser" />} />
-            <Route path="/invoices" element={<PlaceholderPage title="Fakturor" />} />
+            <Route path="/invoices" element={<Invoices />} />
             <Route path="/purchase-reporting" element={<PurchaseReporting />} />
             <Route path="/receiving" element={<Receiving />} />
             <Route path="/products" element={<Products />} />
