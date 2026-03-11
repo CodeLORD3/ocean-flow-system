@@ -491,6 +491,19 @@ export default function WholesaleOrders() {
                             </Button>
                           </td>
                           <td className="px-2.5 py-1 text-center" onClick={e => e.stopPropagation()}>
+                            {["Packad", "Skickad", "Levererad"].includes(o.status) ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
+                                onClick={() => setDeliveryNoteOrder(o)}
+                              >
+                                <Printer className="h-3 w-3" /> Följesedel
+                              </Button>
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground/40">–</span>
+                            )}
+                          <td className="px-2.5 py-1 text-center" onClick={e => e.stopPropagation()}>
                              <Button
                                variant="ghost"
                                size="sm"
