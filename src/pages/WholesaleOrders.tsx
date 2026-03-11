@@ -399,7 +399,7 @@ export default function WholesaleOrders() {
                 <span className="text-[10px] text-muted-foreground font-medium">Totalt ordervärde (aktiva):</span>
                 <span className="text-xs font-mono font-semibold text-foreground">
                   {activeOrders.reduce((sum: number, o: any) =>
-                    sum + (o.shop_order_lines || []).reduce((s: number, l: any) => s + (l.quantity_ordered || 0) * (l.products?.wholesale_price || 0), 0)
+                    sum + (o.shop_order_lines || []).reduce((s: number, l: any) => s + (l.quantity_delivered || l.quantity_ordered || 0) * (l.products?.wholesale_price || 0), 0)
                   , 0).toFixed(2)} kr
                 </span>
               </div>
