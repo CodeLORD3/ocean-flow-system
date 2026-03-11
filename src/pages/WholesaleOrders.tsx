@@ -172,9 +172,24 @@ export default function WholesaleOrders() {
 
   // Update order-level status
   const handleOrderStatusChange = async (orderId: string, newStatus: string) => {
+    // When changing to Pågående, show packer name dialog first
+    if (newStatus === "Pågående") {
+      setPendingPackerOrderId(orderId);
+      setPackerName("");
+      setPackerDialogOpen(true);
+      return;
+    }
+
+    await applyOrderStatusChange(orderId, newStatus);
+  };
+
+  const applyOrderStatusChange = async (orderId: string, newStatus: string, packer?: string) => {
+    const updatePayload: any = { status: newStatus };
+    if (packer !== undefined) updatePayload.packer_name = packer;
+
     const { error } = await supabase
       .from("shop_orders")
-      .update({ status: newStatus })
+      .update(updatePayload)
       .eq("id", orderId);
 
     if (error) {
@@ -182,11 +197,19 @@ export default function WholesaleOrders() {
       return;
     }
 
+    // When changing to Pågående, also update all order lines to Pågående
+    if (newStatus === "Pågående") {
+      await supabase
+        .from("shop_order_lines")
+        .update({ status: "Pågående" })
+        .eq("shop_order_id", orderId)
+        .in("status", ["", "Ny"]);
+    }
+
     // When marking as "Skickad", move stock from Pre-locations to Transportlager
     if (newStatus === "Skickad") {
       try {
         await moveStockToTransport(orderId);
-        // Also update all order lines to "Skickad"
         await supabase
           .from("shop_order_lines")
           .update({ status: "Skickad" })
@@ -202,7 +225,14 @@ export default function WholesaleOrders() {
     qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
     qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
     qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
-    // No need to manually update selectedOrder — it derives from query data
+  };
+
+  const handlePackerConfirm = async () => {
+    if (!pendingPackerOrderId || !packerName.trim()) return;
+    setPackerDialogOpen(false);
+    await applyOrderStatusChange(pendingPackerOrderId, "Pågående", packerName.trim());
+    setPendingPackerOrderId(null);
+    setPackerName("");
   };
 
   const handleArchiveOrder = async (orderId: string) => {
