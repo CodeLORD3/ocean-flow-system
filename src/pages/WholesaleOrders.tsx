@@ -187,7 +187,7 @@ export default function WholesaleOrders() {
           .from("shop_order_lines")
           .update({ status: "Skickad" })
           .eq("shop_order_id", orderId)
-          .in("status", ["Packad", "Behandlas", "Ny", ""]);
+          .in("status", ["Packad", "Pågående", "Ny", ""]);
       } catch (err) {
         console.error("Stock transfer error:", err);
       }
