@@ -838,7 +838,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
               <th className="px-2 py-1 text-left font-medium text-muted-foreground">Enhet</th>
               <th className="px-2 py-1 text-right font-medium text-muted-foreground">Beställt</th>
               <th className="px-2 py-1 text-right font-medium text-muted-foreground">Lager</th>
-              <th className="px-2 py-1 text-right font-medium text-muted-foreground">Levererat</th>
+              <th className="px-2 py-1 text-right font-medium text-muted-foreground">Packat</th>
               <th className="px-2 py-1 text-left font-medium text-muted-foreground">Avvikelse</th>
               <th className="px-2 py-1 text-left font-medium text-muted-foreground min-w-[160px]">Status</th>
               <th className="px-2 py-1 text-center font-medium text-muted-foreground">Åtgärd</th>
@@ -873,8 +873,29 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                   <td className={`px-2 py-0.5 text-right font-mono ${stockQty >= qtyOrdered ? "text-success" : stockQty > 0 ? "text-warning" : "text-destructive"}`}>
                     {stockQty > 0 ? stockQty : "0"}
                   </td>
-                  <td className={`px-2 py-0.5 text-right font-mono ${hasDiff ? "text-warning font-bold" : "text-muted-foreground"}`}>
-                    {qtyDelivered || "–"}
+                  <td className="px-2 py-0.5 text-right">
+                    <input
+                      type="number"
+                      min={0}
+                      defaultValue={qtyDelivered || ""}
+                      placeholder="0"
+                      className="w-16 h-6 text-right text-xs font-mono bg-background border border-border rounded px-1 focus:outline-none focus:ring-1 focus:ring-primary"
+                      onKeyDown={async (e) => {
+                        if (e.key === "Enter") {
+                          const val = Number((e.target as HTMLInputElement).value);
+                          if (val > 0) {
+                            await supabase
+                              .from("shop_order_lines")
+                              .update({ quantity_delivered: val })
+                              .eq("id", line.id);
+                            updateLineStatus.mutate(
+                              { lineId: line.id, newStatus: "Packad", orderId: order.id },
+                              { onSuccess: () => toast({ title: `Packad: ${val} ${line.unit || line.products?.unit || ""}` }) }
+                            );
+                          }
+                        }
+                      }}
+                    />
                   </td>
                   <td className="px-2 py-0.5 text-muted-foreground">{line.deviation || "–"}</td>
                   <td className="px-2 py-0.5">
