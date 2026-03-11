@@ -873,8 +873,31 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                   <td className={`px-2 py-0.5 text-right font-mono ${stockQty >= qtyOrdered ? "text-success" : stockQty > 0 ? "text-warning" : "text-destructive"}`}>
                     {stockQty > 0 ? stockQty : "0"}
                   </td>
-                  <td className={`px-2 py-0.5 text-right font-mono ${hasDiff ? "text-warning font-bold" : "text-muted-foreground"}`}>
-                    {qtyDelivered || "–"}
+                  <td className="px-2 py-0.5 text-right">
+                    <input
+                      type="number"
+                      min={0}
+                      defaultValue={qtyDelivered || ""}
+                      placeholder="0"
+                      className="w-16 h-6 text-right text-xs font-mono bg-background border border-border rounded px-1 focus:outline-none focus:ring-1 focus:ring-primary"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          const val = Number((e.target as HTMLInputElement).value);
+                          if (val > 0) {
+                            supabase
+                              .from("shop_order_lines")
+                              .update({ quantity_delivered: val, status: "Packad" })
+                              .eq("id", line.id)
+                              .then(() => {
+                                updateLineStatus.mutate(
+                                  { lineId: line.id, newStatus: "Packad", orderId: order.id },
+                                  { onSuccess: () => toast({ title: `Packad: ${val} ${line.unit || line.products?.unit || ""}` }) }
+                                );
+                              });
+                          }
+                        }
+                      }}
+                    />
                   </td>
                   <td className="px-2 py-0.5 text-muted-foreground">{line.deviation || "–"}</td>
                   <td className="px-2 py-0.5">
