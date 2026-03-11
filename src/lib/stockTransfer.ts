@@ -153,15 +153,17 @@ export async function moveStockToRawLager(orderId: string, storeId: string) {
   // Get order lines
   const { data: orderLines } = await supabase
     .from("shop_order_lines")
-    .select("product_id, quantity_ordered")
+    .select("product_id, quantity_delivered")
     .eq("shop_order_id", orderId);
 
   if (!orderLines?.length) return;
 
   for (const line of orderLines) {
+    const qty = Number(line.quantity_delivered) || 0;
+    if (qty <= 0) continue;
     await transferStock(
       line.product_id,
-      Number(line.quantity_ordered),
+      qty,
       transportId,
       rawLagerId
     );
