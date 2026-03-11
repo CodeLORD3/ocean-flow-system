@@ -494,7 +494,7 @@ export default function ShopOrders() {
           )}
 
           <div className="space-y-1.5">
-            <Label className="text-xs">Önskat avgångsdatum{allowedWeekdays ? "" : " (valfritt)"}</Label>
+            <Label className="text-xs">Önskat avgångsdatum <span className="text-destructive">*</span></Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
