@@ -112,7 +112,9 @@ export default function Inventory() {
   const { data: products = [] } = useProducts();
   const queryClient = useQueryClient();
   const storeFilter = activeStoreId || "all";
-  const { data: locations = [], isLoading: loadingLoc } = useStorageLocations(storeFilter !== "all" ? storeFilter : undefined);
+  // For grossist portals, load ALL locations (not filtered by store) so we can group by store
+  const isGrossist = site === "purchasing" || site === "production";
+  const { data: locations = [], isLoading: loadingLoc } = useStorageLocations(isGrossist ? undefined : (storeFilter !== "all" ? storeFilter : undefined));
   const { data: allStock = [], isLoading: loadingStock } = useAllStockByLocation();
   const createLocation = useCreateStorageLocation();
   const upsertStock = useUpsertStockLocation();
