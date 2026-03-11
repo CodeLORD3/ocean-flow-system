@@ -1216,13 +1216,12 @@ export default function Inventory() {
                 // Portal-based filtering: only show locations relevant to current portal
                 const name = (l.name || "").toLowerCase();
                 const isGrossistFlytande = name.includes("grossist flytande");
+                const isPre = name.startsWith("pre-");
                 if (site === "purchasing") {
-                  // Inköp portal: Grossist Flytande + Pre-* Inköp locations
-                  return isGrossistFlytande || name.includes("inköp");
+                  return isGrossistFlytande || isPre || l.zone === "Inköp";
                 }
                 if (site === "production") {
-                  // Produktion portal: Grossist Flytande + Pre-* Produktion locations
-                  return isGrossistFlytande || name.includes("produktion");
+                  return isGrossistFlytande || isPre || l.zone === "Produktion";
                 }
                 return true; // wholesale sees all
               })
