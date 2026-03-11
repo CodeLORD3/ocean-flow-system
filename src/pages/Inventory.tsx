@@ -892,25 +892,28 @@ export default function Inventory() {
               <div className="space-y-1">
                 {stockByLocation.map((loc: any) => {
                   const isExpanded = expandedLocations.has(loc.id);
+                  const isRawLager = (loc.name || "").toLowerCase().startsWith("raw-");
                   return (
                     <div key={loc.id} className="border border-border/50 rounded-md overflow-hidden">
-                      <button
-                        className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors text-left"
-                        onClick={() => toggleLocation(loc.id)}
-                      >
-                        <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors">
+                        <button
+                          className="flex items-center gap-2 flex-1 text-left"
+                          onClick={() => toggleLocation(loc.id)}
+                        >
                           {isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
                           <MapPin className="h-3.5 w-3.5 text-primary" />
                           <span className="text-sm font-medium text-foreground">{loc.name}</span>
                           {loc.zone && <Badge variant="outline" className={`text-[10px] h-5 ${zoneColor[loc.zone] || ""}`}>{zoneIcon[loc.zone] || "📍"} {loc.zone}</Badge>}
                           <Badge variant="secondary" className="text-[10px] h-5">{loc.items.length} produkter</Badge>
+                        </button>
+                        <div className="flex items-center gap-2">
+                          {isRawLager && getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
+                          <span className="text-xs text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
+                          <span className="text-xs font-medium text-foreground">{fmt(loc.totalValue)}</span>
                         </div>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span>{loc.totalQty.toLocaleString("sv-SE")} kg</span>
-                          <span className="font-medium text-foreground">{fmt(loc.totalValue)}</span>
-                        </div>
-                      </button>
+                      </div>
                       {isExpanded && (
+                        isRawLager ? renderLocationTable(loc) : (
                         <div className="border-t border-border/50">
                           {loc.items.length === 0 ? (
                             <div className="px-3 py-4 text-center text-xs text-muted-foreground">Tomt lager</div>
@@ -929,10 +932,7 @@ export default function Inventory() {
                               <tbody>
                                 {loc.items.map((s: any) => {
                                   const isLow = Number(s.min_stock) > 0 && Number(s.quantity) < Number(s.min_stock);
-                                  const isRawLager = (loc.name || "").toLowerCase().startsWith("raw-");
-                                  const unitPrice = isRawLager
-                                    ? (Number(s.products?.wholesale_price) || 0)
-                                    : (Number(s.unit_cost) || Number(s.products?.cost_price) || 0);
+                                  const unitPrice = Number(s.unit_cost) || Number(s.products?.cost_price) || 0;
                                   const value = Number(s.quantity) * unitPrice;
                                   return (
                                     <tr key={s.id} className="border-b border-border/30 last:border-0 hover:bg-muted/20">
@@ -959,6 +959,7 @@ export default function Inventory() {
                             </table>
                           )}
                         </div>
+                        )
                       )}
                     </div>
                   );
