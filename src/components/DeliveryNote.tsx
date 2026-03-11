@@ -74,7 +74,7 @@ export default function DeliveryNote({ order, open, onOpenChange }: DeliveryNote
 
         <div className="px-6 pb-2">
           <div ref={printRef}>
-            <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", fontSize: 11, color: "#111" }}>
+            <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", fontSize: 11, color: "#111", display: "flex", flexDirection: "column", minHeight: "1100px" }}>
 
               {/* Header */}
               <div style={{ textAlign: "center", borderBottom: "3px solid #111", paddingBottom: 10, marginBottom: 16 }}>
@@ -124,7 +124,8 @@ export default function DeliveryNote({ order, open, onOpenChange }: DeliveryNote
                 </div>
               </div>
 
-              {/* Product table */}
+              {/* Product table — flex-grow to fill A4 space */}
+              <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
                 <thead>
                   <tr style={{ background: "#222", color: "#fff" }}>
@@ -175,8 +176,17 @@ export default function DeliveryNote({ order, open, onOpenChange }: DeliveryNote
                       </tr>
                     );
                   })}
+                    {/* Empty rows to fill A4 space */}
+                    {Array.from({ length: Math.max(0, 20 - lines.length) }).map((_, i) => (
+                      <tr key={`empty-${i}`} style={{ background: (lines.length + i) % 2 === 0 ? "#fff" : "#f7f7f7" }}>
+                        {Array.from({ length: 8 }).map((_, ci) => (
+                          <td key={ci} style={{ padding: "5px", borderBottom: "1px solid #ddd", height: 24 }}>&nbsp;</td>
+                        ))}
+                      </tr>
+                    ))}
                 </tbody>
               </table>
+              </div>
 
               {/* Totals */}
               <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
