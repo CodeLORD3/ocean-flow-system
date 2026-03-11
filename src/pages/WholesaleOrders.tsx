@@ -55,7 +55,8 @@ export default function WholesaleOrders() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Alla");
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const selectedOrder = useMemo(() => selectedOrderId ? orders.find((o: any) => o.id === selectedOrderId) || null : null, [selectedOrderId, orders]);
   const [reportViewOrder, setReportViewOrder] = useState<any>(null);
   const [archiveConfirmOrder, setArchiveConfirmOrder] = useState<any>(null);
   const [packingSlipOrder, setPackingSlipOrder] = useState<any>(null);
@@ -197,9 +198,7 @@ export default function WholesaleOrders() {
     qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
     qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
     qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
-    if (selectedOrder?.id === orderId) {
-      setSelectedOrder((prev: any) => prev ? { ...prev, status: newStatus } : null);
-    }
+    // No need to manually update selectedOrder — it derives from query data
   };
 
   const handleArchiveOrder = async (orderId: string) => {
@@ -215,7 +214,7 @@ export default function WholesaleOrders() {
     qc.invalidateQueries({ queryKey: ["shop_orders"] });
     qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
     setArchiveConfirmOrder(null);
-    if (selectedOrder?.id === orderId) setSelectedOrder(null);
+    if (selectedOrder?.id === orderId) setSelectedOrderId(null);
   };
 
   return (
@@ -388,7 +387,7 @@ export default function WholesaleOrders() {
                          <tr><td colSpan={10} className="px-2.5 py-6 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
                        )}
                        {filteredOrders.map((o: any) => (
-                         <tr key={o.id} className="border-b border-border h-9 transition-colors cursor-pointer hover:bg-muted/30" onClick={() => setSelectedOrder(o)}>
+                         <tr key={o.id} className="border-b border-border h-9 transition-colors cursor-pointer hover:bg-muted/30" onClick={() => setSelectedOrderId(o.id)}>
                            <td className="px-2.5 py-1 font-mono font-medium text-foreground">{o.order_week}</td>
                            <td className="px-2.5 py-1 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                            <td className="px-2.5 py-1 text-muted-foreground">{o.stores?.name || "–"}</td>
@@ -486,7 +485,7 @@ export default function WholesaleOrders() {
                       <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Inga arkiverade ordrar.</td></tr>
                     )}
                     {archivedOrders.map((o: any) => (
-                      <tr key={o.id} className="border-b border-border/40 cursor-pointer hover:bg-muted/20" onClick={() => setSelectedOrder(o)}>
+                      <tr key={o.id} className="border-b border-border/40 cursor-pointer hover:bg-muted/20" onClick={() => setSelectedOrderId(o.id)}>
                         <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
                         <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                         <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
@@ -570,7 +569,7 @@ export default function WholesaleOrders() {
       </Tabs>
 
       {/* Order detail dialog */}
-      <Dialog open={!!selectedOrder} onOpenChange={open => { if (!open) setSelectedOrder(null); }}>
+      <Dialog open={!!selectedOrder} onOpenChange={open => { if (!open) setSelectedOrderId(null); }}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           {selectedOrder && (
             <>
@@ -596,7 +595,7 @@ export default function WholesaleOrders() {
                 </div>
               )}
 
-              <WholesaleOrderDetail order={selectedOrder} onClose={() => setSelectedOrder(null)} stores={stores} />
+              <WholesaleOrderDetail order={selectedOrder} onClose={() => setSelectedOrderId(null)} stores={stores} />
             </>
           )}
         </DialogContent>
@@ -788,9 +787,9 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
               return (
                 <tr key={line.id} className={`border-b border-border/30 h-7 transition-colors ${
                   isUnavailable ? "opacity-50 bg-destructive/5" :
-                  currentStatus === "Skickad" ? "bg-primary/8" :
-                  currentStatus === "Packad" || currentStatus === "Producerad" ? "bg-success/8" :
-                  currentStatus === "Behandlas" ? "bg-warning/8" :
+                  currentStatus === "Skickad" ? "bg-primary/10" :
+                  currentStatus === "Packad" || currentStatus === "Producerad" ? "bg-success/10" :
+                  currentStatus === "Behandlas" ? "bg-warning/10" :
                   ""
                 }`}>
                   <td className="px-2 py-0.5 font-medium text-foreground">{line.products?.name || "–"}</td>
