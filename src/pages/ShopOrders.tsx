@@ -99,7 +99,7 @@ function buildProgressGradient(lines: any[]): string {
 }
 
 const LIVE_STATUSES = ["Ny", "Pågående", "Packad", "Skickad"];
-const DONE_STATUSES = ["Levererad", "Arkiverad", "Avbruten"];
+const DONE_STATUSES = ["Levererad", "Klar / Levererad", "Arkiverad", "Avbruten"];
 
 function OrderTable({ orders, onSelect, emptyMsg }: { orders: any[]; onSelect: (o: any) => void; emptyMsg: string }) {
   return (
