@@ -72,10 +72,10 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
 
               {/* Header */}
               <div style={{ textAlign: "center", borderBottom: "3px solid #111", paddingBottom: 10, marginBottom: 16 }}>
-                <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase" }}>
+                <div style={{ fontSize: 23, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase" }}>
                   Grossist Packsedel
                 </div>
-                <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>Wholesale Packing Slip</div>
+                <div style={{ fontSize: 15, color: "#666", marginTop: 2 }}>Wholesale Packing Slip</div>
               </div>
 
               {/* Info grid — 2 columns */}
