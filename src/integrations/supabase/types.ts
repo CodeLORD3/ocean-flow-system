@@ -1178,6 +1178,53 @@ export type Database = {
           },
         ]
       }
+      staff: {
+        Row: {
+          age: number | null
+          created_at: string | null
+          email: string | null
+          first_name: string
+          id: string
+          last_name: string
+          phone: string | null
+          profile_image_url: string | null
+          store_id: string | null
+          workplace: string | null
+        }
+        Insert: {
+          age?: number | null
+          created_at?: string | null
+          email?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+          phone?: string | null
+          profile_image_url?: string | null
+          store_id?: string | null
+          workplace?: string | null
+        }
+        Update: {
+          age?: number | null
+          created_at?: string | null
+          email?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone?: string | null
+          profile_image_url?: string | null
+          store_id?: string | null
+          workplace?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       storage_locations: {
         Row: {
           created_at: string | null
