@@ -28,6 +28,10 @@ const inventoryNav = [
   { title: "Leverantörer", url: "/suppliers", icon: Truck },
 ];
 
+const orgNav = [
+  { title: "Personal", url: "/staff", icon: UserCheck },
+];
+
 const financeNav = [
   { title: "Rapporter", url: "/reports", icon: BarChart3 },
 ];
