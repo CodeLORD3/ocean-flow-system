@@ -123,13 +123,14 @@ export function useUpdateOrderLineStatus() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (params: { lineId: string; newStatus: string; orderId: string }) => {
-      // Get current status before updating
+      // Get current status and quantity_delivered before updating
       const { data: currentLine } = await supabase
         .from("shop_order_lines")
-        .select("status")
+        .select("status, quantity_delivered, quantity_ordered")
         .eq("id", params.lineId)
         .single();
       const oldStatus = currentLine?.status || "";
+      const oldQtyDelivered = Number(currentLine?.quantity_delivered || 0);
 
       // Update line status
       const { error } = await supabase
@@ -138,14 +139,27 @@ export function useUpdateOrderLineStatus() {
         .eq("id", params.lineId);
       if (error) throw error;
 
-      // If moving to Packad, transfer stock from Grossist Flytande → Pre-location
+      // If moving to Packad, compute delta from previous quantity_delivered
       if (params.newStatus === "Packad") {
-        await transferToPreLocation(params.lineId, params.orderId);
+        // Re-read the new quantity_delivered (set by caller before this mutation)
+        const { data: updatedLine } = await supabase
+          .from("shop_order_lines")
+          .select("quantity_delivered, quantity_ordered")
+          .eq("id", params.lineId)
+          .single();
+        const newQtyDelivered = Number(updatedLine?.quantity_delivered || updatedLine?.quantity_ordered || 0);
+        
+        // If was already Packad, delta is the difference; if newly Packad, delta is full new amount
+        const previousPacked = oldStatus === "Packad" ? oldQtyDelivered : 0;
+        const delta = newQtyDelivered - previousPacked;
+        if (delta !== 0) {
+          await transferDeltaToPreLocation(params.lineId, params.orderId, delta);
+        }
       }
 
-      // If moving FROM Packad back to Pågående/Ny, reverse the transfer
+      // If moving FROM Packad back to Pågående/Ny, reverse the full previously packed amount
       if (oldStatus === "Packad" && (params.newStatus === "Pågående" || params.newStatus === "Ny")) {
-        await transferFromPreLocationBack(params.lineId, params.orderId);
+        await transferDeltaToPreLocation(params.lineId, params.orderId, -oldQtyDelivered);
       }
 
       // Recalculate parent order status
