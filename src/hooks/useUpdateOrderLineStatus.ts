@@ -5,14 +5,16 @@ import { moveStockToTransport } from "@/lib/stockTransfer";
 const STATUS_FLOW = ["Ny", "Pågående", "Packad", "Skickad"] as const;
 
 /**
- * When a line moves to "Packad", transfer the ordered quantity
+ * When a line moves to "Packad", transfer only the DELTA quantity
  * from "Grossist Flytande" to the store's "Pre-" location.
+ * deltaQty > 0 means move TO pre-location, < 0 means move back.
  */
-async function transferToPreLocation(lineId: string, orderId: string) {
-  // Get the order line (product + qty) and the order's store
+async function transferDeltaToPreLocation(lineId: string, orderId: string, deltaQty: number) {
+  if (deltaQty === 0) return;
+
   const { data: line } = await supabase
     .from("shop_order_lines")
-    .select("product_id, quantity_ordered, quantity_delivered")
+    .select("product_id")
     .eq("id", lineId)
     .single();
   if (!line) return;
@@ -42,47 +44,76 @@ async function transferToPreLocation(lineId: string, orderId: string) {
   const preLoc = preLocs?.[0];
   if (!preLoc) return;
 
-  const qty = Number(line.quantity_delivered || line.quantity_ordered);
+  const absDelta = Math.abs(deltaQty);
 
-  // Deduct from Grossist Flytande
-  const { data: srcStock } = await supabase
-    .from("product_stock_locations")
-    .select("id, quantity")
-    .eq("product_id", line.product_id)
-    .eq("location_id", gfLoc.id)
-    .single();
-
-  if (srcStock) {
-    const newSrcQty = Math.max(0, Number(srcStock.quantity) - qty);
-    await supabase
+  if (deltaQty > 0) {
+    // Move FROM Grossist Flytande TO Pre-location
+    const { data: srcStock } = await supabase
       .from("product_stock_locations")
-      .update({ quantity: newSrcQty, updated_at: new Date().toISOString() })
-      .eq("id", srcStock.id);
-  }
+      .select("id, quantity")
+      .eq("product_id", line.product_id)
+      .eq("location_id", gfLoc.id)
+      .single();
+    if (srcStock) {
+      await supabase
+        .from("product_stock_locations")
+        .update({ quantity: Math.max(0, Number(srcStock.quantity) - absDelta), updated_at: new Date().toISOString() })
+        .eq("id", srcStock.id);
+    }
 
-  // Upsert into Pre- location
-  const { data: destStock } = await supabase
-    .from("product_stock_locations")
-    .select("id, quantity")
-    .eq("product_id", line.product_id)
-    .eq("location_id", preLoc.id)
-    .maybeSingle();
-
-  if (destStock) {
-    await supabase
+    const { data: destStock } = await supabase
       .from("product_stock_locations")
-      .update({
-        quantity: Number(destStock.quantity) + qty,
+      .select("id, quantity")
+      .eq("product_id", line.product_id)
+      .eq("location_id", preLoc.id)
+      .maybeSingle();
+    if (destStock) {
+      await supabase
+        .from("product_stock_locations")
+        .update({ quantity: Number(destStock.quantity) + absDelta, updated_at: new Date().toISOString() })
+        .eq("id", destStock.id);
+    } else {
+      await supabase.from("product_stock_locations").insert({
+        product_id: line.product_id,
+        location_id: preLoc.id,
+        quantity: absDelta,
         updated_at: new Date().toISOString(),
-      })
-      .eq("id", destStock.id);
+      });
+    }
   } else {
-    await supabase.from("product_stock_locations").insert({
-      product_id: line.product_id,
-      location_id: preLoc.id,
-      quantity: qty,
-      updated_at: new Date().toISOString(),
-    });
+    // Move FROM Pre-location BACK TO Grossist Flytande
+    const { data: preStock } = await supabase
+      .from("product_stock_locations")
+      .select("id, quantity")
+      .eq("product_id", line.product_id)
+      .eq("location_id", preLoc.id)
+      .single();
+    if (preStock) {
+      await supabase
+        .from("product_stock_locations")
+        .update({ quantity: Math.max(0, Number(preStock.quantity) - absDelta), updated_at: new Date().toISOString() })
+        .eq("id", preStock.id);
+    }
+
+    const { data: gfStock } = await supabase
+      .from("product_stock_locations")
+      .select("id, quantity")
+      .eq("product_id", line.product_id)
+      .eq("location_id", gfLoc.id)
+      .maybeSingle();
+    if (gfStock) {
+      await supabase
+        .from("product_stock_locations")
+        .update({ quantity: Number(gfStock.quantity) + absDelta, updated_at: new Date().toISOString() })
+        .eq("id", gfStock.id);
+    } else {
+      await supabase.from("product_stock_locations").insert({
+        product_id: line.product_id,
+        location_id: gfLoc.id,
+        quantity: absDelta,
+        updated_at: new Date().toISOString(),
+      });
+    }
   }
 }
 
