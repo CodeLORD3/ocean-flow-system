@@ -629,7 +629,72 @@ export default function Inventory() {
       groups[cat].push({ ...l, quantity: l.quantity });
     });
     return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b, "sv"));
-  }, [invLines]);
+  // Helper: render selection action buttons for a location
+  const renderSelectionActions = (locId: string) => (
+    <div className="flex items-center gap-1 mr-2">
+      <Badge variant="outline" className="text-[10px] h-5">{getSelectedForLocation(locId).size} valda</Badge>
+      <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] gap-1" onClick={() => { setActiveLocationId(locId); setMoveDialogOpen(true); }}>
+        <Move className="h-3 w-3" /> Flytta
+      </Button>
+      <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => { setActiveLocationId(locId); setDeleteDialogOpen(true); }}>
+        <Trash2 className="h-3 w-3" /> Radera
+      </Button>
+      {getSelectedForLocation(locId).size === 1 && (
+        <>
+          <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] gap-1" onClick={() => { setActiveLocationId(locId); setSplitDialogOpen(true); }}>
+            <Scissors className="h-3 w-3" /> Splitta
+          </Button>
+          {site === "production" && (
+            <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] gap-1" onClick={() => { setActiveLocationId(locId); setTransformDialogOpen(true); }}>
+              <RefreshCw className="h-3 w-3" /> Omvandla
+            </Button>
+          )}
+        </>
+      )}
+    </div>
+  );
+
+  // Helper: render the product table for a location
+  const renderLocationTable = (loc: any) => (
+    <div className="border-t border-border/50">
+      {loc.items.length === 0 ? (
+        <div className="px-3 py-4 text-center text-xs text-muted-foreground">Tomt lager</div>
+      ) : (
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="bg-muted/20">
+              <th className="px-3 py-1.5 w-8"></th>
+              <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Produkt</th>
+              <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">SKU</th>
+              <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Kategori</th>
+              <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Antal</th>
+              <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Värde</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loc.items.map((s: any) => {
+              const value = Number(s.quantity) * (Number(s.unit_cost) || Number(s.products?.cost_price) || 0);
+              const isChecked = getSelectedForLocation(loc.id).has(s.id);
+              return (
+                <tr key={s.id} className={`border-b border-border/30 last:border-0 hover:bg-muted/20 ${isChecked ? "bg-primary/5" : ""}`}>
+                  <td className="px-3 py-2 text-center">
+                    <Checkbox checked={isChecked} onCheckedChange={() => toggleItemSelection(loc.id, s.id)} />
+                  </td>
+                  <td className="px-3 py-2 font-medium text-foreground">{s.products?.name}</td>
+                  <td className="px-3 py-2 font-mono text-muted-foreground text-[10px]">{s.products?.sku}</td>
+                  <td className="px-3 py-2 text-muted-foreground">{s.products?.category}</td>
+                  <td className="px-3 py-2 text-right font-medium text-foreground">
+                    {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
+                  </td>
+                  <td className="px-3 py-2 text-right text-muted-foreground">{fmt(value)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
