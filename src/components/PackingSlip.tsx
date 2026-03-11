@@ -201,8 +201,8 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
               {/* Notes */}
               {order.notes && (
                 <div style={{ marginTop: 16 }}>
-                  <div style={{ fontWeight: 700, fontSize: 10, textTransform: "uppercase", color: "#444", marginBottom: 4 }}>Anteckning / Notes</div>
-                  <div style={{ border: "1px solid #ccc", borderRadius: 3, padding: 8, fontSize: 11, minHeight: 30 }}>{order.notes}</div>
+                  <div style={{ fontWeight: 700, fontSize: 15, textTransform: "uppercase", color: "#444", marginBottom: 4 }}>Anteckning / Notes</div>
+                  <div style={{ border: "1px solid #ccc", borderRadius: 3, padding: 8, fontSize: 16, minHeight: 30 }}>{order.notes}</div>
                 </div>
               )}
 
