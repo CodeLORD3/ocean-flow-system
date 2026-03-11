@@ -342,19 +342,22 @@ export default function OrganisationOverview() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {recentDeliveries.length === 0 ? (
+            {recentDeliveredOrders.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-6">Inga leveranser ännu.</p>
             ) : (
               <div className="space-y-2">
-                {recentDeliveries.map((dn: any) => (
-                  <div key={dn.id} className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0">
-                    <div>
-                      <p className="text-xs font-medium text-foreground">{dn.stores?.name || "–"}</p>
-                      <p className="text-[10px] text-muted-foreground">{dn.note_number} · {dn.delivery_date}</p>
+                {recentDeliveredOrders.map((o: any) => {
+                  const orderSales = (o.shop_order_lines || []).reduce((s: number, l: any) => s + (l.quantity_delivered || 0) * (l.products?.wholesale_price || 0), 0);
+                  return (
+                    <div key={o.id} className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0">
+                      <div>
+                        <p className="text-xs font-medium text-foreground">{o.stores?.name || "–"}</p>
+                        <p className="text-[10px] text-muted-foreground">{o.order_week} · {o.desired_delivery_date || "–"}</p>
+                      </div>
+                      <span className="text-xs font-bold text-foreground">{Math.round(orderSales).toLocaleString("sv-SE")} kr</span>
                     </div>
-                    <span className="text-xs font-bold text-foreground">{(dn.total_amount || 0).toLocaleString("sv-SE")} kr</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
