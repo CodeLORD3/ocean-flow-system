@@ -128,7 +128,7 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
                       {["✓", "Produkt / Product", "Kategori", "HS-kod", "Beställt", "Packat", "Enhet"].map((h, i) => (
                         <th key={h} style={{
                           padding: "6px 5px",
-                          fontSize: 9,
+                          fontSize: 11,
                           fontWeight: 700,
                           textTransform: "uppercase",
                           letterSpacing: 0.5,
