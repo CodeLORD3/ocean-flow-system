@@ -174,9 +174,10 @@ export default function Receiving() {
     if (!selectedOrder) return;
     const updated: typeof lineReports = {};
     (selectedOrder.shop_order_lines || []).forEach((line: any) => {
-      updated[line.id] = { status: "Godkänd", quantity_received: String(line.quantity_ordered) };
+      updated[line.id] = { status: "Godkänd", quantity_received: String(line.quantity_ordered), confirmed: true };
     });
     setLineReports(updated);
+    toast({ title: "Alla produkter godkända", description: "Klicka 'Godkänn leverans' för att bekräfta." });
   };
 
   // Reporting detail dialog for already-reported orders
