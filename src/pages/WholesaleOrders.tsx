@@ -596,7 +596,7 @@ export default function WholesaleOrders() {
                 </div>
               )}
 
-              <WholesaleOrderDetail order={selectedOrder} onClose={() => setSelectedOrder(null)} />
+              <WholesaleOrderDetail order={selectedOrder} onClose={() => setSelectedOrder(null)} stores={stores} />
             </>
           )}
         </DialogContent>
