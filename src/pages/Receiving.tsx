@@ -106,7 +106,7 @@ export default function Receiving() {
     setSelectedOrder(order);
     const initial: Record<string, LineReport> = {};
     (order.shop_order_lines || []).forEach((line: any) => {
-      initial[line.id] = { status: "Godkänd", quantity_received: String(line.quantity_ordered), confirmed: false };
+      initial[line.id] = { status: "Godkänd", quantity_received: String(line.quantity_delivered || line.quantity_ordered), confirmed: false };
     });
     setLineReports(initial);
   };
@@ -399,7 +399,7 @@ export default function Receiving() {
                             onClick={() => {
                               setLineReports(prev => ({
                                 ...prev,
-                                [line.id]: { ...prev[line.id], status: "Godkänd", confirmed: true, quantity_received: String(line.quantity_ordered) },
+                                [line.id]: { ...prev[line.id], status: "Godkänd", confirmed: true, quantity_received: String(line.quantity_delivered || line.quantity_ordered) },
                               }));
                             }}
                           >
