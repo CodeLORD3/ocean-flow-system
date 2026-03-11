@@ -106,7 +106,7 @@ export default function Receiving() {
     // Pre-fill all lines as "Godkänd"
     const initial: typeof lineReports = {};
     (order.shop_order_lines || []).forEach((line: any) => {
-      initial[line.id] = { status: "Godkänd", quantity_received: String(line.quantity_ordered) };
+      initial[line.id] = { status: "Godkänd", quantity_received: String(line.quantity_ordered), confirmed: false };
     });
     setLineReports(initial);
   };
