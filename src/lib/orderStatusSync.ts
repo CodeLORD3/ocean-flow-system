@@ -206,8 +206,8 @@ export async function markOrderLinesPackad(productIds: string[], targetLocationI
       newOrderStatus = "Klar / Levererad";
     } else if (statuses.every((s) => s === "Packad" || s === "Klar / Levererad")) {
       newOrderStatus = "Packad";
-    } else if (statuses.some((s) => s === "Behandlas" || s === "Packad" || s === "Klar / Levererad")) {
-      newOrderStatus = "Behandlas";
+    } else if (statuses.some((s) => s === "Pågående" || s === "Packad" || s === "Klar / Levererad")) {
+      newOrderStatus = "Pågående";
     }
 
     await supabase.from("shop_orders").update({ status: newOrderStatus }).eq("id", orderId);
