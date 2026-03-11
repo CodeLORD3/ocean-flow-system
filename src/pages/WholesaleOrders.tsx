@@ -962,7 +962,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
       {/* Total order value */}
       {(() => {
         const totalValue = (order.shop_order_lines || []).reduce((sum: number, line: any) => {
-          const qty = line.quantity_ordered || 0;
+          const qty = line.quantity_delivered || line.quantity_ordered || 0;
           const price = line.products?.wholesale_price || 0;
           return sum + qty * price;
         }, 0);
