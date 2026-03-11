@@ -21,6 +21,7 @@ import { useSite } from "@/contexts/SiteContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSubmitReceivingReport } from "@/hooks/useDeliveryReceivingReports";
+import { moveStockToRawLager } from "@/lib/stockTransfer";
 
 const REPORT_TYPES = ["Skadad", "Fel kvantitet", "Dålig kvalitet", "Saknas", "Annat"];
 
