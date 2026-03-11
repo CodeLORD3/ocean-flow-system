@@ -160,9 +160,6 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
                       <td style={{ padding: "5px", borderBottom: "1px solid #ddd", textAlign: "center", fontSize: 10 }}>
                         {line.unit || line.products?.unit || "kg"}
                       </td>
-                      <td style={{ padding: "5px", borderBottom: "1px solid #ddd", textAlign: "center", fontSize: 10, fontVariantNumeric: "tabular-nums" }}>
-                        {line.products?.weight_per_piece ?? ""}
-                      </td>
                     </tr>
                   ))}
                 </tbody>
