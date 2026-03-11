@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useAllPendingChangeRequests, useResolveChangeRequest, useCreateChangeRequest } from "@/hooks/useOrderChangeRequests";
 import PackingSlip from "@/components/PackingSlip";
+import DeliveryNote from "@/components/DeliveryNote";
 import { moveStockToTransport } from "@/lib/stockTransfer";
 import { useUpdateOrderLineStatus, STATUS_FLOW } from "@/hooks/useUpdateOrderLineStatus";
 import { useAllStockByLocation } from "@/hooks/useStorageLocations";
@@ -60,6 +61,7 @@ export default function WholesaleOrders() {
   const [reportViewOrder, setReportViewOrder] = useState<any>(null);
   const [archiveConfirmOrder, setArchiveConfirmOrder] = useState<any>(null);
   const [packingSlipOrder, setPackingSlipOrder] = useState<any>(null);
+  const [deliveryNoteOrder, setDeliveryNoteOrder] = useState<any>(null);
   // Packer name dialog state
   const [packerDialogOpen, setPackerDialogOpen] = useState(false);
   const [packerName, setPackerName] = useState("");
@@ -423,12 +425,13 @@ export default function WholesaleOrders() {
                           <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">PACKARE</th>
                           <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">LEVERANSRAPPORT</th>
                           <th className="px-2.5 py-1 text-center font-medium text-muted-foreground">PACKSEDEL</th>
+                          <th className="px-2.5 py-1 text-center font-medium text-muted-foreground">FÖLJESEDEL</th>
                           <th className="px-2.5 py-1 text-center font-medium text-muted-foreground">ARKIVERA</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredOrders.length === 0 && (
-                         <tr><td colSpan={13} className="px-2.5 py-6 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
+                         <tr><td colSpan={14} className="px-2.5 py-6 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
                        )}
                        {filteredOrders.map((o: any) => (
                          <tr key={o.id} className="border-b border-border h-9 transition-colors cursor-pointer hover:bg-muted/30" onClick={() => setSelectedOrderId(o.id)}>
@@ -486,6 +489,20 @@ export default function WholesaleOrders() {
                             >
                               <Printer className="h-3 w-3" /> Packsedel
                             </Button>
+                          </td>
+                          <td className="px-2.5 py-1 text-center" onClick={e => e.stopPropagation()}>
+                            {["Packad", "Skickad", "Levererad"].includes(o.status) ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
+                                onClick={() => setDeliveryNoteOrder(o)}
+                              >
+                                <Printer className="h-3 w-3" /> Följesedel
+                              </Button>
+                            ) : (
+                              <span className="text-[10px] text-muted-foreground/40">–</span>
+                            )}
                           </td>
                           <td className="px-2.5 py-1 text-center" onClick={e => e.stopPropagation()}>
                              <Button
@@ -747,6 +764,7 @@ export default function WholesaleOrders() {
 
       {/* Packing slip dialog */}
       <PackingSlip order={packingSlipOrder} open={!!packingSlipOrder} onOpenChange={(open) => { if (!open) setPackingSlipOrder(null); }} />
+      <DeliveryNote order={deliveryNoteOrder} open={!!deliveryNoteOrder} onOpenChange={(open) => { if (!open) setDeliveryNoteOrder(null); }} />
     </motion.div>
   );
 }
