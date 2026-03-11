@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useAllPendingChangeRequests, useResolveChangeRequest, useCreateChangeRequest } from "@/hooks/useOrderChangeRequests";
 import PackingSlip from "@/components/PackingSlip";
+import { moveStockToTransport } from "@/lib/stockTransfer";
 
 const statusColor: Record<string, string> = {
   Ny: "bg-primary/10 text-primary border-primary/20",
@@ -210,9 +211,26 @@ export default function WholesaleOrders() {
       return;
     }
 
+    // When marking as "Skickad", move stock from Pre-locations to Transportlager
+    if (newStatus === "Skickad") {
+      try {
+        await moveStockToTransport(orderId);
+        // Also update all order lines to "Skickad"
+        await supabase
+          .from("shop_order_lines")
+          .update({ status: "Skickad" })
+          .eq("shop_order_id", orderId)
+          .in("status", ["Packad", "Behandlas", "Ny", ""]);
+      } catch (err) {
+        console.error("Stock transfer error:", err);
+      }
+    }
+
     toast({ title: "Orderstatus uppdaterad", description: newStatus });
     qc.invalidateQueries({ queryKey: ["shop_orders"] });
     qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
+    qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
+    qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
     if (selectedOrder?.id === orderId) {
       setSelectedOrder((prev: any) => prev ? { ...prev, status: newStatus } : null);
     }

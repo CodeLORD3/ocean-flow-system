@@ -21,6 +21,7 @@ import { useSite } from "@/contexts/SiteContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSubmitReceivingReport } from "@/hooks/useDeliveryReceivingReports";
+import { moveStockToRawLager } from "@/lib/stockTransfer";
 
 const REPORT_TYPES = ["Skadad", "Fel kvantitet", "Dålig kvalitet", "Saknas", "Annat"];
 
@@ -150,6 +151,13 @@ export default function Receiving() {
           .eq("id", lineId);
       }
 
+      // Move stock from Transportlager to shop's Raw-lager
+      try {
+        await moveStockToRawLager(selectedOrder.id, activeStoreId);
+      } catch (err) {
+        console.error("Stock transfer to Raw-lager error:", err);
+      }
+
       const hasIssues = Object.values(lineReports).some(r => r.status === "Rapporterad");
       toast({
         title: hasIssues ? "Inleverans rapporterad med avvikelser" : "Inleverans godkänd",
@@ -161,6 +169,8 @@ export default function Receiving() {
       qc.invalidateQueries({ queryKey: ["delivery_receiving_reports"] });
       qc.invalidateQueries({ queryKey: ["shop_orders"] });
       qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
+      qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
+      qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
       setSelectedOrder(null);
     } catch (err: any) {
       toast({ title: "Fel", description: err.message, variant: "destructive" });
