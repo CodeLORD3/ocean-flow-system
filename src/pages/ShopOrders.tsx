@@ -539,7 +539,7 @@ export default function ShopOrders() {
               size="sm"
               className="gap-1.5"
               onClick={() => setConfirmSendOpen(true)}
-              disabled={orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0}
+              disabled={orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0 || !desiredDeliveryDate}
             >
               <ShoppingCart className="h-3.5 w-3.5" /> Skicka beställning
             </Button>
