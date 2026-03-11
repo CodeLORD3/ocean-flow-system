@@ -98,7 +98,7 @@ export default function WholesaleOrders() {
 
   const totalOrders = activeOrders.length;
   const newOrders = activeOrders.filter((o: any) => o.status === "Ny").length;
-  const inProgress = activeOrders.filter((o: any) => o.status === "Behandlas").length;
+  const inProgress = activeOrders.filter((o: any) => o.status === "Pågående").length;
 
   // Aggregated total view: group all order lines by product
   const aggregated = useMemo(() => {
