@@ -416,30 +416,21 @@ export default function Inventory() {
   // Filter locations by zone for purchasing/production portals
   // For grossist portals, include Pre-locations, general locations, AND shop Raw-lager
   const portalLocations = useMemo(() => {
+    const isPre = (loc: any) => (loc.name || "").toLowerCase().startsWith("pre-");
+    const isShared = (loc: any) => loc.name === "Grossist Flytande" || loc.name === "Transportlager";
     if (site === "purchasing") {
-      // Inköp: only Pre-Inköp locations, Transportlager, Grossist Flytande
       return locations.filter((loc: any) =>
-        loc.zone === "Inköp" ||
-        loc.name === "Grossist Flytande" ||
-        loc.name === "Transportlager"
+        loc.zone === "Inköp" || isPre(loc) || isShared(loc)
       );
     }
     if (site === "production") {
-      // Produktion: only Pre-Produktion locations, Transportlager, Grossist Flytande
       return locations.filter((loc: any) =>
-        loc.zone === "Produktion" ||
-        loc.name === "Grossist Flytande" ||
-        loc.name === "Transportlager"
+        loc.zone === "Produktion" || isPre(loc) || isShared(loc)
       );
     }
     if (site === "wholesale") {
-      // Grossist: all Pre-locations + Raw-lager
       return locations.filter((loc: any) =>
-        loc.zone === "Inköp" ||
-        loc.zone === "Produktion" ||
-        loc.name === "Grossist Flytande" ||
-        loc.name === "Transportlager" ||
-        loc.name?.startsWith("Raw")
+        isPre(loc) || isShared(loc) || loc.name?.startsWith("Raw")
       );
     }
     return locations;
@@ -1225,13 +1216,12 @@ export default function Inventory() {
                 // Portal-based filtering: only show locations relevant to current portal
                 const name = (l.name || "").toLowerCase();
                 const isGrossistFlytande = name.includes("grossist flytande");
+                const isPre = name.startsWith("pre-");
                 if (site === "purchasing") {
-                  // Inköp portal: Grossist Flytande + Pre-* Inköp locations
-                  return isGrossistFlytande || name.includes("inköp");
+                  return isGrossistFlytande || isPre || l.zone === "Inköp";
                 }
                 if (site === "production") {
-                  // Produktion portal: Grossist Flytande + Pre-* Produktion locations
-                  return isGrossistFlytande || name.includes("produktion");
+                  return isGrossistFlytande || isPre || l.zone === "Produktion";
                 }
                 return true; // wholesale sees all
               })
