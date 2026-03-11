@@ -837,6 +837,8 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
             {order.shop_order_lines?.map((line: any) => {
               const qtyOrdered = line.quantity_ordered || 0;
               const qtyDelivered = line.quantity_delivered || 0;
+              const wholesalePrice = line.products?.wholesale_price || 0;
+              const lineValue = qtyOrdered * wholesalePrice;
               const hasDiff = qtyDelivered > 0 && qtyDelivered !== qtyOrdered;
               const isUnavailable = line.status === "Ej tillgänglig";
               const stockQty = stockByProduct.get(line.product_id) || 0;
