@@ -409,12 +409,23 @@ export default function Inventory() {
   
 
   // Filter locations by zone for purchasing/production portals
+  // For grossist portals, include Pre-locations, general locations, AND shop Raw-lager
   const portalLocations = useMemo(() => {
     if (site === "purchasing") {
-      return locations.filter((loc: any) => loc.zone === "Inköp" || loc.name === "Grossist Flytande");
+      return locations.filter((loc: any) =>
+        loc.zone === "Inköp" ||
+        loc.name === "Grossist Flytande" ||
+        loc.name === "Transportlager" ||
+        loc.name?.startsWith("Raw")
+      );
     }
     if (site === "production") {
-      return locations.filter((loc: any) => loc.zone === "Produktion" || loc.name === "Grossist Flytande");
+      return locations.filter((loc: any) =>
+        loc.zone === "Produktion" ||
+        loc.name === "Grossist Flytande" ||
+        loc.name === "Transportlager" ||
+        loc.name?.startsWith("Raw")
+      );
     }
     return locations;
   }, [locations, site]);
@@ -434,6 +445,56 @@ export default function Inventory() {
       return { ...loc, items, totalQty, totalValue };
     });
   }, [portalLocations, allStock, search]);
+
+  // Group locations by store for grossist portals
+  const groupedByStore = useMemo(() => {
+    if (site !== "purchasing" && site !== "production") return [];
+
+    const generalNames = ["Grossist Flytande", "Transportlager"];
+    const storeGroups = new Map<string, { storeName: string; locations: typeof stockByLocation; totalQty: number; totalValue: number }>();
+    const generalLocations: typeof stockByLocation = [];
+
+    stockByLocation.forEach((loc: any) => {
+      if (generalNames.includes(loc.name)) {
+        generalLocations.push(loc);
+        return;
+      }
+      // Find store name from the location's store relation
+      const storeName = loc.stores?.name || stores.find((s: any) => s.id === loc.store_id)?.name || "Okänd";
+      if (!storeGroups.has(storeName)) {
+        storeGroups.set(storeName, { storeName, locations: [], totalQty: 0, totalValue: 0 });
+      }
+      const group = storeGroups.get(storeName)!;
+      group.locations.push(loc);
+      group.totalQty += loc.totalQty;
+      group.totalValue += loc.totalValue;
+    });
+
+    const result: { type: "store" | "general"; storeName: string; locations: typeof stockByLocation; totalQty: number; totalValue: number }[] = [];
+
+    // General locations first
+    generalLocations.forEach(loc => {
+      result.push({ type: "general", storeName: loc.name, locations: [loc], totalQty: loc.totalQty, totalValue: loc.totalValue });
+    });
+
+    // Then store groups sorted alphabetically
+    Array.from(storeGroups.entries())
+      .sort(([a], [b]) => a.localeCompare(b, "sv"))
+      .forEach(([, group]) => {
+        result.push({ type: "store", ...group });
+      });
+
+    return result;
+  }, [stockByLocation, stores, site]);
+
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const toggleGroup = (name: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name); else next.add(name);
+      return next;
+    });
+  };
 
   // --- Location dialog ---
   const handleCreateLocation = () => {
