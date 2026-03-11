@@ -631,6 +631,8 @@ export default function Inventory() {
       groups[cat].push({ ...l, quantity: l.quantity });
     });
     return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b, "sv"));
+  }, [invLines]);
+
   // Helper: render selection action buttons for a location
   const renderSelectionActions = (locId: string) => (
     <div className="flex items-center gap-1 mr-2">
