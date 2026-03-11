@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-const STATUS_FLOW = ["Ny", "Behandlas", "Packad", "Skickad"] as const;
+const STATUS_FLOW = ["Ny", "Pågående", "Packad", "Skickad"] as const;
 
 /**
  * When a line moves to "Packad", transfer the ordered quantity
