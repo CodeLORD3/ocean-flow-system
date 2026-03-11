@@ -67,18 +67,12 @@ const AppContent = () => {
 };
 
 const App = () => {
-  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
-
-  const handleLogin = () => {
-    setIsAuthenticated(true);
-  };
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        {!isAuthenticated ? <Login onLogin={handleLogin} /> : <AppContent />}
+        <AppContent />
       </TooltipProvider>
     </QueryClientProvider>
   );
