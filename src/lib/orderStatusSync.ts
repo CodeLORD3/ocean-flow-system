@@ -3,12 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 const GROSSIST_FLYTANDE_ID = "5da57ad6-f72c-4a84-9873-87174d194e10";
 
 /**
- * When a product enters Grossist Flytande, find pending order lines
- * and re-allocate stock to them based on priority.
+ * Legacy function — no longer auto-promotes to Behandlas.
+ * Kept for API compatibility.
  */
-export async function markOrderLinesBehandlas(productIds: string[]) {
-  if (!productIds.length) return;
-  await syncBehandlasFromStock();
+export async function markOrderLinesBehandlas(_productIds: string[]) {
+  // No-op: status stays as "Ny" until manually changed
 }
 
 /**
