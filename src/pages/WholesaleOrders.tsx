@@ -403,7 +403,7 @@ export default function WholesaleOrders() {
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                {["Ny", "Behandlas", "Packad", "Skickad", "Levererad", "Avbruten"].map(s =>
+                                {["Ny", "Pågående", "Packad", "Skickad", "Levererad", "Avbruten"].map(s =>
                                   <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
                                 )}
                               </SelectContent>
