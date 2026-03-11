@@ -788,9 +788,9 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
               return (
                 <tr key={line.id} className={`border-b border-border/30 h-7 transition-colors ${
                   isUnavailable ? "opacity-50 bg-destructive/5" :
-                  currentStatus === "Skickad" ? "bg-primary/8" :
-                  currentStatus === "Packad" || currentStatus === "Producerad" ? "bg-success/8" :
-                  currentStatus === "Behandlas" ? "bg-warning/8" :
+                  currentStatus === "Skickad" ? "bg-primary/10" :
+                  currentStatus === "Packad" || currentStatus === "Producerad" ? "bg-success/10" :
+                  currentStatus === "Behandlas" ? "bg-warning/10" :
                   ""
                 }`}>
                   <td className="px-2 py-0.5 font-medium text-foreground">{line.products?.name || "–"}</td>
