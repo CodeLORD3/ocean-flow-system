@@ -909,9 +909,16 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                             return;
                           }
                           if (val > 0) {
+                            const unit = line.unit || line.products?.unit || "kg";
+                            let deviation: string | null = null;
+                            if (val !== qtyOrdered) {
+                              deviation = val > qtyOrdered
+                                ? `+${(val - qtyOrdered).toFixed(1)} ${unit} mer än beställt`
+                                : `-${(qtyOrdered - val).toFixed(1)} ${unit} mindre än beställt`;
+                            }
                             await supabase
                               .from("shop_order_lines")
-                              .update({ quantity_delivered: val })
+                              .update({ quantity_delivered: val, deviation })
                               .eq("id", line.id);
                             updateLineStatus.mutate(
                               { lineId: line.id, newStatus: "Packad", orderId: order.id },
@@ -922,7 +929,17 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                       }}
                     />
                   </td>
-                  <td className="px-2 py-0.5 text-muted-foreground">{line.deviation || "–"}</td>
+                  <td className="px-2 py-0.5 text-muted-foreground text-[10px]">
+                    {line.deviation ? (
+                      <span className="text-warning">{line.deviation}</span>
+                    ) : hasDiff ? (
+                      <span className="text-warning">
+                        {qtyDelivered > qtyOrdered
+                          ? `+${(qtyDelivered - qtyOrdered).toFixed(1)} ${line.unit || line.products?.unit || "kg"} mer`
+                          : `-${(qtyOrdered - qtyDelivered).toFixed(1)} ${line.unit || line.products?.unit || "kg"} mindre`}
+                      </span>
+                    ) : "–"}
+                  </td>
                   <td className="px-2 py-0.5">
                     <Select
                       value={currentStatus}
