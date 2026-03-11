@@ -459,7 +459,7 @@ export default function Inventory() {
         return;
       }
       // Find store name from the location's store relation
-      const storeName = loc.stores?.name || stores.find((s: any) => s.id === loc.store_id)?.name || "Okänd";
+      const storeName = loc.stores?.name || stores.find((s: any) => s.id === loc.store_id)?.name || "Produktion";
       if (!storeGroups.has(storeName)) {
         storeGroups.set(storeName, { storeName, locations: [], totalQty: 0, totalValue: 0 });
       }
