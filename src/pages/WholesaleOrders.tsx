@@ -909,9 +909,16 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                             return;
                           }
                           if (val > 0) {
+                            const unit = line.unit || line.products?.unit || "kg";
+                            let deviation: string | null = null;
+                            if (val !== qtyOrdered) {
+                              deviation = val > qtyOrdered
+                                ? `+${(val - qtyOrdered).toFixed(1)} ${unit} mer än beställt`
+                                : `-${(qtyOrdered - val).toFixed(1)} ${unit} mindre än beställt`;
+                            }
                             await supabase
                               .from("shop_order_lines")
-                              .update({ quantity_delivered: val })
+                              .update({ quantity_delivered: val, deviation })
                               .eq("id", line.id);
                             updateLineStatus.mutate(
                               { lineId: line.id, newStatus: "Packad", orderId: order.id },
