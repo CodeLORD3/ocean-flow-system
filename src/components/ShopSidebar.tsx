@@ -28,6 +28,10 @@ const inventoryNav = [
   { title: "Leverantörer", url: "/suppliers", icon: Truck },
 ];
 
+const orgNav = [
+  { title: "Personal", url: "/staff", icon: UserCheck },
+];
+
 const financeNav = [
   { title: "Rapporter", url: "/reports", icon: BarChart3 },
 ];
@@ -38,6 +42,7 @@ const sections: NavSection[] = [
   { label: "Översikt", items: overviewNav },
   { label: "Inköp", items: salesNav },
   { label: "Lagerstyrning", items: inventoryNav },
+  { label: "Organisation", items: orgNav },
   { label: "Rapporter", items: financeNav },
 ];
 
