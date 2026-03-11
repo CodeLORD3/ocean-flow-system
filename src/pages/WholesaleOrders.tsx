@@ -411,6 +411,7 @@ export default function WholesaleOrders() {
                           <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">PRODUKTER</th>
                           <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">ANTECKNING</th>
                           <th className="px-2.5 py-1 text-left font-medium text-muted-foreground min-w-[120px]">STATUS</th>
+                          <th className="px-2.5 py-1 text-right font-medium text-muted-foreground">ORDERVÄRDE</th>
                           <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">PACKARE</th>
                           <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">LEVERANSRAPPORT</th>
                           <th className="px-2.5 py-1 text-center font-medium text-muted-foreground">PACKSEDEL</th>
