@@ -171,11 +171,12 @@ export default function Inventory() {
         await supabase.from("product_stock_locations").delete().eq("id", item.id);
       }
 
-      // Auto-update order statuses to "Packad" if moving to a Pre-location
+      // Reverse sync FIRST: revert order lines if stock no longer supports their status
+      await revertOrderLinesIfStockGone();
+      // THEN auto-update order statuses to "Packad" if moving to a Pre-location
+      // This must run LAST so Pre-location packing status is not overridden by GF sync
       const movedProductIds = items.map((i: any) => i.product_id);
       await markOrderLinesPackad(movedProductIds, targetLocationId);
-      // Reverse sync: revert order lines if stock no longer supports their status
-      await revertOrderLinesIfStockGone();
 
       clearSelection(activeLocationId);
       invalidateStock();
