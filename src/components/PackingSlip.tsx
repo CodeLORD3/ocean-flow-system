@@ -190,8 +190,8 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
                       ["Antal pallar / Pallets", ""],
                     ] as [string, string][]).map(([label, value]) => (
                       <tr key={label}>
-                        <td style={{ padding: "3px 10px 3px 0", fontWeight: 600, fontSize: 10, color: "#444" }}>{label}</td>
-                        <td style={{ padding: "3px 0", borderBottom: "1px solid #ccc", fontSize: 11, minWidth: 80, textAlign: "right" }}>{value}</td>
+                        <td style={{ padding: "3px 10px 3px 0", fontWeight: 600, fontSize: 15, color: "#444" }}>{label}</td>
+                        <td style={{ padding: "3px 0", borderBottom: "1px solid #ccc", fontSize: 16, minWidth: 80, textAlign: "right" }}>{value}</td>
                       </tr>
                     ))}
                   </tbody>
