@@ -442,7 +442,14 @@ export default function Inventory() {
         );
       }
       const totalQty = items.reduce((sum: number, s: any) => sum + Number(s.quantity), 0);
-      const totalValue = items.reduce((sum: number, s: any) => sum + Number(s.quantity) * (Number(s.unit_cost) || Number(s.products?.cost_price) || 0), 0);
+      const isRawLager = (loc.name || "").toLowerCase().startsWith("raw-");
+      const totalValue = items.reduce((sum: number, s: any) => {
+        const qty = Number(s.quantity);
+        if (isRawLager) {
+          return sum + qty * (Number(s.products?.wholesale_price) || 0);
+        }
+        return sum + qty * (Number(s.unit_cost) || Number(s.products?.cost_price) || 0);
+      }, 0);
       return { ...loc, items, totalQty, totalValue };
     });
   }, [portalLocations, allStock, search]);
