@@ -304,7 +304,7 @@ export default function WholesaleOrders() {
                                   </td>
                                 </tr>
                               )}
-                               <tr key={item.product_id} className={`border-b border-border/30 h-9 transition-colors ${rowBgByStatus[item.currentStatus] || ""}`}>
+                               <tr key={item.product_id} className="border-b border-border/30 h-9 transition-colors">
                                  <td className="px-2.5 py-1 font-medium text-foreground">{item.product_name}</td>
                                  <td className="px-2.5 py-1">
                                    <Badge variant="outline" className="text-[10px]">{item.category}</Badge>
