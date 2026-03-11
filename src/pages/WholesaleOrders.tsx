@@ -819,7 +819,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                         currentStatus === "Ej tillgänglig" ? "text-destructive border-destructive/20" :
                         currentStatus === "Packad" || currentStatus === "Producerad" ? "text-success border-success/20" :
                         currentStatus === "Skickad" ? "text-primary border-primary/20" :
-                        currentStatus === "Behandlas" ? "text-warning border-warning/20" :
+                        currentStatus === "Pågående" ? "text-warning border-warning/20" :
                         ""
                       }`}>
                         <SelectValue />
