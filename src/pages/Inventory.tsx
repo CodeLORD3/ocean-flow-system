@@ -631,6 +631,8 @@ export default function Inventory() {
       groups[cat].push({ ...l, quantity: l.quantity });
     });
     return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b, "sv"));
+  }, [invLines]);
+
   // Helper: render selection action buttons for a location
   const renderSelectionActions = (locId: string) => (
     <div className="flex items-center gap-1 mr-2">
@@ -1404,8 +1406,8 @@ export default function Inventory() {
                   />
                   {transformNewWeight && Number(transformNewWeight) > 0 && Number(transformNewWeight) < Number(item.quantity) && (
                     <p className="text-[10px] text-muted-foreground">
-                      Svinn: {(Number(item.quantity) - Number(transformNewWeight)).toFixed(2)} {item.products?.unit || "kg"} 
-                      ({((1 - Number(transformNewWeight) / Number(item.quantity)) * 100).toFixed(1)}%)
+                      Svinn: {(Number(item.quantity) - Number(transformNewWeight)).toFixed(2)} {item.products?.unit || "kg"}{" "}
+                      {"("}{((1 - Number(transformNewWeight) / Number(item.quantity)) * 100).toFixed(1)}{"%)"}
                     </p>
                   )}
                 </div>
