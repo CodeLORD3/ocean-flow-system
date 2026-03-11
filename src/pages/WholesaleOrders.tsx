@@ -786,21 +786,18 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
     },
   });
 
-  // Build stock lookup: product_id -> qty in Grossist Flytande + Pre-lager for this store
+  // Build stock lookup: product_id -> qty in Grossist Flytande only (reflects packing in real-time)
   const stockByProduct = useMemo(() => {
     const map = new Map<string, number>();
-    const storeName = order.stores?.name || "";
     for (const s of allStock) {
       const locName = (s.storage_locations?.name || "").toLowerCase();
-      const isGrossistFlytande = locName === "grossist flytande";
-      const isPreForStore = locName.startsWith("pre-") && storeName && locName.includes(storeName.toLowerCase().split(" ").pop() || "___");
-      if (isGrossistFlytande || isPreForStore) {
+      if (locName === "grossist flytande") {
         const pid = s.product_id;
         map.set(pid, (map.get(pid) || 0) + Number(s.quantity));
       }
     }
     return map;
-  }, [allStock, order.stores?.name]);
+  }, [allStock]);
 
   const [altDialogLine, setAltDialogLine] = useState<any>(null);
   const [altProductId, setAltProductId] = useState<string>("");
