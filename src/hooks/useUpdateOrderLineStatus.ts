@@ -3,6 +3,88 @@ import { supabase } from "@/integrations/supabase/client";
 
 const STATUS_FLOW = ["Ny", "Behandlas", "Packad", "Skickad"] as const;
 
+/**
+ * When a line moves to "Packad", transfer the ordered quantity
+ * from "Grossist Flytande" to the store's "Pre-" location.
+ */
+async function transferToPreLocation(lineId: string, orderId: string) {
+  // Get the order line (product + qty) and the order's store
+  const { data: line } = await supabase
+    .from("shop_order_lines")
+    .select("product_id, quantity_ordered")
+    .eq("id", lineId)
+    .single();
+  if (!line) return;
+
+  const { data: order } = await supabase
+    .from("shop_orders")
+    .select("store_id, stores(name)")
+    .eq("id", orderId)
+    .single();
+  if (!order?.store_id) return;
+
+  // Find "Grossist Flytande" location
+  const { data: gfLoc } = await supabase
+    .from("storage_locations")
+    .select("id")
+    .ilike("name", "Grossist Flytande")
+    .single();
+  if (!gfLoc) return;
+
+  // Find the Pre- location for this store
+  const { data: preLocs } = await supabase
+    .from("storage_locations")
+    .select("id, name")
+    .eq("store_id", order.store_id)
+    .ilike("name", "Pre-%")
+    .limit(1);
+  const preLoc = preLocs?.[0];
+  if (!preLoc) return;
+
+  const qty = Number(line.quantity_ordered);
+
+  // Deduct from Grossist Flytande
+  const { data: srcStock } = await supabase
+    .from("product_stock_locations")
+    .select("id, quantity")
+    .eq("product_id", line.product_id)
+    .eq("location_id", gfLoc.id)
+    .single();
+
+  if (srcStock) {
+    const newSrcQty = Math.max(0, Number(srcStock.quantity) - qty);
+    await supabase
+      .from("product_stock_locations")
+      .update({ quantity: newSrcQty, updated_at: new Date().toISOString() })
+      .eq("id", srcStock.id);
+  }
+
+  // Upsert into Pre- location
+  const { data: destStock } = await supabase
+    .from("product_stock_locations")
+    .select("id, quantity")
+    .eq("product_id", line.product_id)
+    .eq("location_id", preLoc.id)
+    .maybeSingle();
+
+  if (destStock) {
+    await supabase
+      .from("product_stock_locations")
+      .update({
+        quantity: Number(destStock.quantity) + qty,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", destStock.id);
+  } else {
+    await supabase.from("product_stock_locations").insert({
+      product_id: line.product_id,
+      location_id: preLoc.id,
+      quantity: qty,
+      updated_at: new Date().toISOString(),
+    });
+  }
+}
+
 export function useUpdateOrderLineStatus() {
   const qc = useQueryClient();
   return useMutation({
@@ -13,6 +95,11 @@ export function useUpdateOrderLineStatus() {
         .update({ status: params.newStatus })
         .eq("id", params.lineId);
       if (error) throw error;
+
+      // If moving to Packad, transfer stock from Grossist Flytande → Pre-location
+      if (params.newStatus === "Packad") {
+        await transferToPreLocation(params.lineId, params.orderId);
+      }
 
       // Recalculate parent order status
       const { data: allLines } = await supabase
@@ -41,6 +128,8 @@ export function useUpdateOrderLineStatus() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["shop_orders"] });
+      qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
+      qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
     },
   });
 }
