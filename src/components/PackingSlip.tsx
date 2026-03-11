@@ -128,7 +128,7 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
                       {["✓", "Produkt / Product", "Kategori", "HS-kod", "Beställt", "Packat", "Enhet"].map((h, i) => (
                         <th key={h} style={{
                           padding: "6px 5px",
-                          fontSize: 9,
+                          fontSize: 11,
                           fontWeight: 700,
                           textTransform: "uppercase",
                           letterSpacing: 0.5,
@@ -145,22 +145,22 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
                         <td style={{ padding: "5px", borderBottom: "1px solid #ddd", textAlign: "center", width: 28 }}>
                           <div style={{ width: 12, height: 12, border: "1.5px solid #555", borderRadius: 2, margin: "0 auto" }}></div>
                         </td>
-                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 11, fontWeight: 500 }}>
+                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 13, fontWeight: 500 }}>
                           {line.products?.name || "—"}
                         </td>
-                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 10, color: "#555" }}>
+                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 12, color: "#555" }}>
                           {line.products?.category || "—"}
                         </td>
-                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 10, color: "#555" }}>
+                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 12, color: "#555" }}>
                           {line.products?.hs_code || ""}
                         </td>
-                        <td style={{ padding: 0, borderBottom: "1px solid #ddd", textAlign: "center", border: "2px solid #333", fontVariantNumeric: "tabular-nums", fontSize: 11, minWidth: 40 }}>
+                        <td style={{ padding: 0, borderBottom: "1px solid #ddd", textAlign: "center", border: "2px solid #333", fontVariantNumeric: "tabular-nums", fontSize: 13, minWidth: 40 }}>
                           {line.quantity_ordered}
                         </td>
-                        <td style={{ padding: 0, borderBottom: "1px solid #ddd", textAlign: "center", border: "2px solid #333", fontSize: 11, minWidth: 40, minHeight: 22 }}>
+                        <td style={{ padding: 0, borderBottom: "1px solid #ddd", textAlign: "center", border: "2px solid #333", fontSize: 13, minWidth: 40, minHeight: 22 }}>
                           &nbsp;
                         </td>
-                        <td style={{ padding: 0, borderBottom: "1px solid #ddd", textAlign: "center", border: "2px solid #333", fontSize: 10, minWidth: 36 }}>
+                        <td style={{ padding: 0, borderBottom: "1px solid #ddd", textAlign: "center", border: "2px solid #333", fontSize: 12, minWidth: 36 }}>
                           {line.unit || line.products?.unit || "kg"}
                         </td>
                       </tr>
