@@ -187,29 +187,6 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
                 </table>
               </div>
 
-              {/* Traceability section */}
-              <div style={{ marginTop: 20, borderTop: "2px solid #111", paddingTop: 10 }}>
-                <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>
-                  Spårbarhet / Livsmedelssäkerhet
-                </div>
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <tbody>
-                    {[
-                      "Förvaringstemperatur / Storage Temp",
-                      "Fångstmetod / Catch Method",
-                      "Fångstfartyg / Vessel / Farm",
-                      "Landningshamn / Landing Port",
-                      "Produktionsdatum / Production Date",
-                      "Bäst före / Expiry Date",
-                    ].map((label) => (
-                      <tr key={label}>
-                        <td style={{ padding: "3px 6px 3px 0", fontWeight: 600, fontSize: 10, color: "#444", width: 240 }}>{label}</td>
-                        <td style={{ padding: "3px 0", borderBottom: "1px solid #ccc" }}></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
 
               {/* Notes */}
               {order.notes && (
