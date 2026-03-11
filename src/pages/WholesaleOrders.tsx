@@ -24,6 +24,7 @@ import { useAllPendingChangeRequests, useResolveChangeRequest, useCreateChangeRe
 import PackingSlip from "@/components/PackingSlip";
 import { moveStockToTransport } from "@/lib/stockTransfer";
 import { useUpdateOrderLineStatus, STATUS_FLOW } from "@/hooks/useUpdateOrderLineStatus";
+import { useAllStockByLocation } from "@/hooks/useStorageLocations";
 
 const statusColor: Record<string, string> = {
   Ny: "bg-primary/10 text-primary border-primary/20",
@@ -44,42 +45,6 @@ const statusIcon: Record<string, React.ReactNode> = {
 };
 
 const LINE_STATUSES = ["", "Behandlas", "Producerad", "Packad", "Skickad", "Ej tillgänglig"];
-
-const statusSegmentColor: Record<string, string> = {
-  "": "transparent",
-  "Behandlas": "#fef3c7",
-  "Producerad": "#dbeafe",
-  "Packad": "#d1fae5",
-  "Skickad": "#bbf7d0",
-  "Ej tillgänglig": "#fee2e2",
-};
-
-function buildProgressGradient(lines: any[]): string {
-  if (!lines || lines.length === 0) return "transparent";
-  const total = lines.length;
-  const segments: string[] = [];
-  let pos = 0;
-  for (const line of lines) {
-    const color = statusSegmentColor[line.status || ""] || "transparent";
-    const start = (pos / total) * 100;
-    const end = ((pos + 1) / total) * 100;
-    segments.push(`${color} ${start}%`, `${color} ${end}%`);
-    pos++;
-  }
-  return `linear-gradient(to bottom, ${segments.join(", ")})`;
-}
-
-const rowBgByStatus: Record<string, string> = {
-  "": "",
-  "Behandlas": "bg-amber-50 dark:bg-amber-950/20",
-  "Producerad": "bg-blue-50 dark:bg-blue-950/20",
-  "Packad": "bg-emerald-50 dark:bg-emerald-950/20",
-  "Skickad": "bg-green-50 dark:bg-green-950/20",
-  "Ej tillgänglig": "bg-red-50 dark:bg-red-950/20",
-  "Ny": "bg-sky-50 dark:bg-sky-950/20",
-  "Levererad": "bg-green-50 dark:bg-green-950/20",
-  "Avbruten": "bg-red-50 dark:bg-red-950/20",
-};
 
 export default function WholesaleOrders() {
   const { toast } = useToast();
@@ -339,7 +304,7 @@ export default function WholesaleOrders() {
                                   </td>
                                 </tr>
                               )}
-                               <tr key={item.product_id} className={`border-b border-border/30 h-9 transition-colors ${rowBgByStatus[item.currentStatus] || ""}`}>
+                               <tr key={item.product_id} className="border-b border-border/30 h-9 transition-colors">
                                  <td className="px-2.5 py-1 font-medium text-foreground">{item.product_name}</td>
                                  <td className="px-2.5 py-1">
                                    <Badge variant="outline" className="text-[10px]">{item.category}</Badge>
@@ -423,7 +388,7 @@ export default function WholesaleOrders() {
                          <tr><td colSpan={10} className="px-2.5 py-6 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
                        )}
                        {filteredOrders.map((o: any) => (
-                         <tr key={o.id} className="border-b-2 border-black h-9 transition-colors cursor-pointer" style={{ background: buildProgressGradient(o.shop_order_lines || []) }} onClick={() => setSelectedOrder(o)}>
+                         <tr key={o.id} className="border-b border-border h-9 transition-colors cursor-pointer hover:bg-muted/30" onClick={() => setSelectedOrder(o)}>
                            <td className="px-2.5 py-1 font-mono font-medium text-foreground">{o.order_week}</td>
                            <td className="px-2.5 py-1 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                            <td className="px-2.5 py-1 text-muted-foreground">{o.stores?.name || "–"}</td>
@@ -631,7 +596,7 @@ export default function WholesaleOrders() {
                 </div>
               )}
 
-              <WholesaleOrderDetail order={selectedOrder} onClose={() => setSelectedOrder(null)} />
+              <WholesaleOrderDetail order={selectedOrder} onClose={() => setSelectedOrder(null)} stores={stores} />
             </>
           )}
         </DialogContent>
@@ -716,10 +681,11 @@ export default function WholesaleOrders() {
 }
 
 /* ---- Wholesaler order detail with "Ej tillgänglig" + alternative capability ---- */
-function WholesaleOrderDetail({ order, onClose }: { order: any; onClose: () => void }) {
+function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose: () => void; stores: any[] }) {
   const { toast } = useToast();
   const createChange = useCreateChangeRequest();
   const updateLineStatus = useUpdateOrderLineStatus();
+  const { data: allStock = [] } = useAllStockByLocation();
   const { data: allProducts } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
@@ -728,6 +694,22 @@ function WholesaleOrderDetail({ order, onClose }: { order: any; onClose: () => v
       return data;
     },
   });
+
+  // Build stock lookup: product_id -> qty in Grossist Flytande + Pre-lager for this store
+  const stockByProduct = useMemo(() => {
+    const map = new Map<string, number>();
+    const storeName = order.stores?.name || "";
+    for (const s of allStock) {
+      const locName = (s.storage_locations?.name || "").toLowerCase();
+      const isGrossistFlytande = locName === "grossist flytande";
+      const isPreForStore = locName.startsWith("pre-") && storeName && locName.includes(storeName.toLowerCase().split(" ").pop() || "___");
+      if (isGrossistFlytande || isPreForStore) {
+        const pid = s.product_id;
+        map.set(pid, (map.get(pid) || 0) + Number(s.quantity));
+      }
+    }
+    return map;
+  }, [allStock, order.stores?.name]);
 
   const [altDialogLine, setAltDialogLine] = useState<any>(null);
   const [altProductId, setAltProductId] = useState<string>("");
@@ -781,13 +763,14 @@ function WholesaleOrderDetail({ order, onClose }: { order: any; onClose: () => v
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-border bg-muted/30">
-              <th className="p-2.5 text-left font-medium text-muted-foreground">Produkt</th>
-              <th className="p-2.5 text-left font-medium text-muted-foreground">Enhet</th>
-              <th className="p-2.5 text-right font-medium text-muted-foreground">Beställt</th>
-              <th className="p-2.5 text-right font-medium text-muted-foreground">Levererat</th>
-              <th className="p-2.5 text-left font-medium text-muted-foreground">Avvikelse</th>
-              <th className="p-2.5 text-left font-medium text-muted-foreground">Status</th>
-              <th className="p-2.5 text-center font-medium text-muted-foreground">Åtgärd</th>
+              <th className="px-2 py-1 text-left font-medium text-muted-foreground">Produkt</th>
+              <th className="px-2 py-1 text-left font-medium text-muted-foreground">Enhet</th>
+              <th className="px-2 py-1 text-right font-medium text-muted-foreground">Beställt</th>
+              <th className="px-2 py-1 text-right font-medium text-muted-foreground">Lager</th>
+              <th className="px-2 py-1 text-right font-medium text-muted-foreground">Levererat</th>
+              <th className="px-2 py-1 text-left font-medium text-muted-foreground">Avvikelse</th>
+              <th className="px-2 py-1 text-left font-medium text-muted-foreground min-w-[160px]">Status</th>
+              <th className="px-2 py-1 text-center font-medium text-muted-foreground">Åtgärd</th>
             </tr>
           </thead>
           <tbody>
@@ -796,85 +779,87 @@ function WholesaleOrderDetail({ order, onClose }: { order: any; onClose: () => v
               const qtyDelivered = line.quantity_delivered || 0;
               const hasDiff = qtyDelivered > 0 && qtyDelivered !== qtyOrdered;
               const isUnavailable = line.status === "Ej tillgänglig";
+              const stockQty = stockByProduct.get(line.product_id) || 0;
+              const currentStatus = line.status || "Ny";
+              const idx = STATUS_FLOW.indexOf(currentStatus as any);
+              const prev = idx > 0 ? STATUS_FLOW[idx - 1] : null;
+              const next = idx === -1 ? "Behandlas" : (idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null);
+
               return (
-                <tr key={line.id} className={`border-b border-border/30 ${isUnavailable ? "opacity-50" : ""}`}>
-                  <td className="p-2.5 font-medium text-foreground">{line.products?.name || "–"}</td>
-                  <td className="p-2.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
-                  <td className="p-2.5 text-right font-mono text-foreground">{qtyOrdered}</td>
-                  <td className={`p-2.5 text-right font-mono ${hasDiff ? "text-warning font-bold" : "text-muted-foreground"}`}>
+                <tr key={line.id} className={`border-b border-border/30 h-7 ${isUnavailable ? "opacity-50" : ""}`}>
+                  <td className="px-2 py-0.5 font-medium text-foreground">{line.products?.name || "–"}</td>
+                  <td className="px-2 py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
+                  <td className="px-2 py-0.5 text-right font-mono text-foreground">{qtyOrdered}</td>
+                  <td className={`px-2 py-0.5 text-right font-mono ${stockQty >= qtyOrdered ? "text-success" : stockQty > 0 ? "text-warning" : "text-destructive"}`}>
+                    {stockQty > 0 ? stockQty : "0"}
+                  </td>
+                  <td className={`px-2 py-0.5 text-right font-mono ${hasDiff ? "text-warning font-bold" : "text-muted-foreground"}`}>
                     {qtyDelivered || "–"}
                   </td>
-                  <td className="p-2.5 text-muted-foreground">{line.deviation || "–"}</td>
-                  <td className="p-2.5">
-                    {line.status ? (
-                      <Badge variant="outline" className={`text-[10px] ${
-                        line.status === "Ej tillgänglig" ? "text-destructive border-destructive/20" :
-                        line.status === "Packad" || line.status === "Producerad" ? "text-success border-success/20" :
-                        line.status === "Skickad" ? "text-primary border-primary/20" :
-                        line.status === "Behandlas" ? "text-warning border-warning/20" :
-                        ""
-                      }`}>{line.status}</Badge>
-                    ) : <Badge variant="outline" className="text-[10px] text-muted-foreground">Ny</Badge>}
+                  <td className="px-2 py-0.5 text-muted-foreground">{line.deviation || "–"}</td>
+                  <td className="px-2 py-0.5">
+                    {!isUnavailable ? (
+                      <div className="flex items-center gap-1">
+                        {prev && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 px-1 text-[10px] text-muted-foreground hover:text-foreground"
+                            disabled={updateLineStatus.isPending}
+                            onClick={() => updateLineStatus.mutate(
+                              { lineId: line.id, newStatus: prev, orderId: order.id },
+                              { onSuccess: () => toast({ title: `Status: ${prev}` }) }
+                            )}
+                          >
+                            ←
+                          </Button>
+                        )}
+                        <Badge variant="outline" className={`text-[10px] ${
+                          currentStatus === "Ej tillgänglig" ? "text-destructive border-destructive/20" :
+                          currentStatus === "Packad" || currentStatus === "Producerad" ? "text-success border-success/20" :
+                          currentStatus === "Skickad" ? "text-primary border-primary/20" :
+                          currentStatus === "Behandlas" ? "text-warning border-warning/20" :
+                          ""
+                        }`}>{currentStatus}</Badge>
+                        {next && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 px-1 text-[10px] text-muted-foreground hover:text-foreground"
+                            disabled={updateLineStatus.isPending}
+                            onClick={() => updateLineStatus.mutate(
+                              { lineId: line.id, newStatus: next, orderId: order.id },
+                              { onSuccess: () => toast({ title: `Status: ${next}` }) }
+                            )}
+                          >
+                            →
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] text-destructive border-destructive/20">Ej tillgänglig</Badge>
+                    )}
                   </td>
-                  <td className="p-2.5 text-center">
+                  <td className="px-2 py-0.5 text-center">
                     {!isUnavailable && (
-                      <div className="flex items-center justify-center gap-1 flex-wrap">
-                        {/* Status progression buttons */}
-                        {(() => {
-                          const currentStatus = line.status || "Ny";
-                          const idx = STATUS_FLOW.indexOf(currentStatus as any);
-                          const prev = idx > 0 ? STATUS_FLOW[idx - 1] : (idx === -1 && currentStatus !== "Ny" ? null : null);
-                          const next = idx === -1 ? "Behandlas" : (idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null);
-                          return (
-                            <>
-                              {prev && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-6 text-[10px] text-muted-foreground hover:text-foreground"
-                                  disabled={updateLineStatus.isPending}
-                                  onClick={() => updateLineStatus.mutate(
-                                    { lineId: line.id, newStatus: prev, orderId: order.id },
-                                    { onSuccess: () => toast({ title: `Status: ${prev}` }) }
-                                  )}
-                                >
-                                  ← {prev}
-                                </Button>
-                              )}
-                              {next && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-6 text-[10px] gap-1"
-                                  disabled={updateLineStatus.isPending}
-                                  onClick={() => updateLineStatus.mutate(
-                                    { lineId: line.id, newStatus: next, orderId: order.id },
-                                    { onSuccess: () => toast({ title: `Status: ${next}` }) }
-                                  )}
-                                >
-                                  {next} <ArrowRight className="h-3 w-3" />
-                                </Button>
-                              )}
-                            </>
-                          );
-                        })()}
+                      <div className="flex items-center justify-center gap-1">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-6 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+                          className="h-5 text-[10px] gap-0.5 text-destructive border-destructive/30 hover:bg-destructive/10 px-1.5"
                           onClick={() => handleMarkUnavailable(line)}
                           disabled={createChange.isPending}
                         >
-                          <Ban className="h-3 w-3" /> Ej tillg.
+                          <Ban className="h-2.5 w-2.5" /> Ej tillg.
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-6 text-[10px] gap-1 text-primary border-primary/30 hover:bg-primary/10"
+                          className="h-5 text-[10px] gap-0.5 text-primary border-primary/30 hover:bg-primary/10 px-1.5"
                           onClick={() => { setAltDialogLine(line); setAltProductId(""); setAltSearch(""); }}
                           disabled={createChange.isPending}
                         >
-                          <Package className="h-3 w-3" /> Alt.
+                          <Package className="h-2.5 w-2.5" /> Alt.
                         </Button>
                       </div>
                     )}
