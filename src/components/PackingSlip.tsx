@@ -53,9 +53,7 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
   };
 
   const totalOrderedWeight = lines.reduce((sum: number, l: any) => {
-    const qty = l.quantity_ordered || 0;
-    const weight = l.products?.weight_per_piece || 0;
-    return sum + qty * weight;
+    return sum + (l.quantity_ordered || 0);
   }, 0);
 
   return (
