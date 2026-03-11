@@ -29,10 +29,37 @@ export async function syncBehandlasFromStock() {
     stockMap.set(s.product_id, (stockMap.get(s.product_id) || 0) + Number(s.quantity));
   }
 
-  // 2) Find all pending order lines (Ny and Behandlas)
+  // 1b) Get all Pre-location stock grouped by store_id + product_id
+  const { data: preLocations } = await supabase
+    .from("storage_locations")
+    .select("id, store_id, name")
+    .like("name", "Pre-%");
+
+  const preLocationMap = new Map<string, string>(); // location_id -> store_id
+  for (const loc of preLocations || []) {
+    if (loc.store_id) preLocationMap.set(loc.id, loc.store_id);
+  }
+
+  const preLocationIds = [...preLocationMap.keys()];
+  const preStockMap = new Map<string, number>(); // "store_id:product_id" -> quantity
+  if (preLocationIds.length) {
+    const { data } = await supabase
+      .from("product_stock_locations")
+      .select("product_id, location_id, quantity")
+      .in("location_id", preLocationIds)
+      .gt("quantity", 0);
+
+    for (const s of data || []) {
+      const storeId = preLocationMap.get(s.location_id);
+      const key = `${storeId}:${s.product_id}`;
+      preStockMap.set(key, (preStockMap.get(key) || 0) + Number(s.quantity));
+    }
+  }
+
+  // 2) Find all pending order lines (Ny, Behandlas)
   const { data: orderLines } = await supabase
     .from("shop_order_lines")
-    .select("id, status, shop_order_id, product_id, quantity_ordered, shop_orders!inner(status, priority, created_at)")
+    .select("id, status, shop_order_id, product_id, quantity_ordered, shop_orders!inner(status, store_id, priority, created_at)")
     .in("status", ["", "Ny", "Behandlas"])
     .not("shop_orders.status", "in", '("Arkiverad","Klar / Levererad")');
 
@@ -47,12 +74,28 @@ export async function syncBehandlasFromStock() {
   });
 
   const linesToBehandlas: string[] = [];
+  const linesToPackad: string[] = [];
   const linesToNy: string[] = [];
   const affectedOrderIds = new Set<string>();
 
   for (const line of sortedLines) {
-    const available = stockMap.get(line.product_id) || 0;
     const qtyOrdered = Number(line.quantity_ordered);
+    const storeId = (line as any).shop_orders?.store_id;
+
+    // First check Pre-location stock for this store — if sufficient, mark Packad
+    const preKey = `${storeId}:${line.product_id}`;
+    const preAvailable = preStockMap.get(preKey) || 0;
+    if (preAvailable >= qtyOrdered) {
+      preStockMap.set(preKey, preAvailable - qtyOrdered);
+      if (line.status !== "Packad") {
+        linesToPackad.push(line.id);
+        affectedOrderIds.add(line.shop_order_id);
+      }
+      continue; // Don't consume GF stock for this line
+    }
+
+    // Otherwise check Grossist Flytande stock — if sufficient, mark Behandlas
+    const available = stockMap.get(line.product_id) || 0;
     if (available >= qtyOrdered) {
       stockMap.set(line.product_id, available - qtyOrdered);
       if (line.status !== "Behandlas") {
@@ -67,6 +110,9 @@ export async function syncBehandlasFromStock() {
     }
   }
 
+  if (linesToPackad.length) {
+    await supabase.from("shop_order_lines").update({ status: "Packad" }).in("id", linesToPackad);
+  }
   if (linesToBehandlas.length) {
     await supabase.from("shop_order_lines").update({ status: "Behandlas" }).in("id", linesToBehandlas);
   }
