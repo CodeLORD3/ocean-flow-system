@@ -102,7 +102,7 @@ function buildProgressGradient(lines: any[]): string {
 const LIVE_STATUSES = ["Ny", "Pågående", "Packad", "Skickad"];
 const DONE_STATUSES = ["Levererad", "Klar / Levererad", "Arkiverad", "Avbruten"];
 
-constFOLLJESEDEL_STATUSES = ["Skickad", "Levererad", "Klar / Levererad", "Arkiverad"];
+const FOLLJESEDEL_STATUSES = ["Skickad", "Levererad", "Klar / Levererad", "Arkiverad"];
 
 function OrderTable({ orders, onSelect, emptyMsg }: { orders: any[]; onSelect: (o: any) => void; emptyMsg: string }) {
   const [FolljesedelOrder, setFolljesedelOrder] = useState<any>(null);
