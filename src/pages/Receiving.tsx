@@ -399,7 +399,7 @@ export default function Receiving() {
                             onClick={() => {
                               setLineReports(prev => ({
                                 ...prev,
-                                [line.id]: { ...prev[line.id], status: "Godkänd", confirmed: true, quantity_received: String(line.quantity_ordered) },
+                                [line.id]: { ...prev[line.id], status: "Godkänd", confirmed: true, quantity_received: String(line.quantity_delivered || line.quantity_ordered) },
                               }));
                             }}
                           >
