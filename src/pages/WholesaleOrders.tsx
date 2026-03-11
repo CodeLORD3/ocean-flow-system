@@ -877,12 +877,18 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                     <input
                       type="number"
                       min={0}
+                      max={stockQty}
                       defaultValue={qtyDelivered || ""}
                       placeholder="0"
                       className="w-16 h-6 text-right text-xs font-mono bg-background border border-border rounded px-1 focus:outline-none focus:ring-1 focus:ring-primary"
                       onKeyDown={async (e) => {
                         if (e.key === "Enter") {
                           const val = Number((e.target as HTMLInputElement).value);
+                          if (val > stockQty) {
+                            toast({ title: "Otillräckligt lager", description: `Max tillgängligt: ${stockQty}`, variant: "destructive" });
+                            (e.target as HTMLInputElement).value = String(stockQty);
+                            return;
+                          }
                           if (val > 0) {
                             await supabase
                               .from("shop_order_lines")
