@@ -74,7 +74,7 @@ export default function DeliveryNote({ order, open, onOpenChange }: DeliveryNote
 
         <div className="px-6 pb-2">
           <div ref={printRef}>
-            <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", fontSize: 11, color: "#111" }}>
+            <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", fontSize: 11, color: "#111", display: "flex", flexDirection: "column", minHeight: "1100px" }}>
 
               {/* Header */}
               <div style={{ textAlign: "center", borderBottom: "3px solid #111", paddingBottom: 10, marginBottom: 16 }}>
