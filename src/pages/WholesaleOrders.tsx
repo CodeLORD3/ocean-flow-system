@@ -356,7 +356,7 @@ export default function WholesaleOrders() {
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="h-8 text-xs w-36"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {["Alla", "Ny", "Behandlas", "Packad", "Skickad", "Levererad", "Avbruten"].map(s =>
+                  {["Alla", "Ny", "Pågående", "Packad", "Skickad", "Levererad", "Avbruten"].map(s =>
                     <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
                   )}
                 </SelectContent>
