@@ -227,7 +227,7 @@ export default function DeliveryNote({ order, open, onOpenChange }: DeliveryNote
               )}
 
               {/* Footer */}
-              <div style={{ marginTop: 20, borderTop: "1px solid #ccc", paddingTop: 8, fontSize: 9, color: "#999", display: "flex", justifyContent: "space-between" }}>
+              <div style={{ marginTop: 20, borderTop: "1px solid #ccc", paddingTop: 8, fontSize: 14, color: "#999", display: "flex", justifyContent: "space-between" }}>
                 <span>Utskriven: {new Date().toLocaleDateString("sv-SE")} {new Date().toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}</span>
                 <span>Följesedel-ID: {order.id?.slice(0, 8)}</span>
               </div>
