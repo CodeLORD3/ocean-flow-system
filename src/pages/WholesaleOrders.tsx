@@ -786,7 +786,13 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
               const next = idx === -1 ? "Behandlas" : (idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null);
 
               return (
-                <tr key={line.id} className={`border-b border-border/30 h-7 ${isUnavailable ? "opacity-50" : ""}`}>
+                <tr key={line.id} className={`border-b border-border/30 h-7 transition-colors ${
+                  isUnavailable ? "opacity-50 bg-destructive/5" :
+                  currentStatus === "Skickad" ? "bg-primary/8" :
+                  currentStatus === "Packad" || currentStatus === "Producerad" ? "bg-success/8" :
+                  currentStatus === "Behandlas" ? "bg-warning/8" :
+                  ""
+                }`}>
                   <td className="px-2 py-0.5 font-medium text-foreground">{line.products?.name || "–"}</td>
                   <td className="px-2 py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
                   <td className="px-2 py-0.5 text-right font-mono text-foreground">{qtyOrdered}</td>
