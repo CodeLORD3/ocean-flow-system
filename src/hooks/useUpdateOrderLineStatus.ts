@@ -171,6 +171,14 @@ export function useUpdateOrderLineStatus() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (params: { lineId: string; newStatus: string; orderId: string }) => {
+      // Get current status before updating
+      const { data: currentLine } = await supabase
+        .from("shop_order_lines")
+        .select("status")
+        .eq("id", params.lineId)
+        .single();
+      const oldStatus = currentLine?.status || "";
+
       // Update line status
       const { error } = await supabase
         .from("shop_order_lines")
@@ -181,6 +189,11 @@ export function useUpdateOrderLineStatus() {
       // If moving to Packad, transfer stock from Grossist Flytande → Pre-location
       if (params.newStatus === "Packad") {
         await transferToPreLocation(params.lineId, params.orderId);
+      }
+
+      // If moving FROM Packad back to Pågående/Ny, reverse the transfer
+      if (oldStatus === "Packad" && (params.newStatus === "Pågående" || params.newStatus === "Ny")) {
+        await transferFromPreLocationBack(params.lineId, params.orderId);
       }
 
       // Recalculate parent order status
