@@ -95,7 +95,7 @@ export async function moveStockToTransport(orderId: string) {
   // Get order with lines and store info
   const { data: order } = await supabase
     .from("shop_orders")
-    .select("store_id, shop_order_lines(product_id, quantity_ordered)")
+    .select("store_id, shop_order_lines(product_id, quantity_delivered)")
     .eq("id", orderId)
     .single();
 
@@ -114,7 +114,7 @@ export async function moveStockToTransport(orderId: string) {
 
   // For each order line, find stock in Pre- locations and move to Transportlager
   for (const line of order.shop_order_lines) {
-    let remaining = Number(line.quantity_ordered);
+    let remaining = Number(line.quantity_delivered) || 0;
 
     // Get stock from all Pre- locations for this product
     const { data: stocks } = await supabase
@@ -153,15 +153,17 @@ export async function moveStockToRawLager(orderId: string, storeId: string) {
   // Get order lines
   const { data: orderLines } = await supabase
     .from("shop_order_lines")
-    .select("product_id, quantity_ordered")
+    .select("product_id, quantity_delivered")
     .eq("shop_order_id", orderId);
 
   if (!orderLines?.length) return;
 
   for (const line of orderLines) {
+    const qty = Number(line.quantity_delivered) || 0;
+    if (qty <= 0) continue;
     await transferStock(
       line.product_id,
-      Number(line.quantity_ordered),
+      qty,
       transportId,
       rawLagerId
     );
