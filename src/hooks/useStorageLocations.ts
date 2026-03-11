@@ -75,10 +75,10 @@ export function useUpsertStockLocation() {
         }, { onConflict: "product_id,location_id" });
       if (error) throw error;
       
-      // Auto-update order statuses after manual stock adjustment
+      // Reverse sync FIRST, then pack — so Pre-location packing wins
       const { markOrderLinesPackad, revertOrderLinesIfStockGone } = await import("@/lib/orderStatusSync");
-      await markOrderLinesPackad([params.product_id], params.location_id);
       await revertOrderLinesIfStockGone();
+      await markOrderLinesPackad([params.product_id], params.location_id);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
