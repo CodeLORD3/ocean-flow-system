@@ -23,7 +23,7 @@ export function useProductStockLocations(locationId?: string) {
     queryFn: async () => {
       let q = supabase
         .from("product_stock_locations")
-        .select("*, products(name, sku, category, unit), storage_locations(name, zone, store_id, stores(name))")
+        .select("*, products(name, sku, category, unit, cost_price, wholesale_price), storage_locations(name, zone, store_id, stores(name))")
         .order("quantity", { ascending: false });
       if (locationId && locationId !== "all") q = q.eq("location_id", locationId);
       const { data, error } = await q;
