@@ -124,7 +124,8 @@ export default function DeliveryNote({ order, open, onOpenChange }: DeliveryNote
                 </div>
               </div>
 
-              {/* Product table */}
+              {/* Product table — flex-grow to fill A4 space */}
+              <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
                 <thead>
                   <tr style={{ background: "#222", color: "#fff" }}>
