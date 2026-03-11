@@ -837,12 +837,12 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
               <th className="px-2 py-1 text-left font-medium text-muted-foreground">Produkt</th>
               <th className="px-2 py-1 text-left font-medium text-muted-foreground">Enhet</th>
               <th className="px-2 py-1 text-right font-medium text-muted-foreground">Beställt</th>
-              <th className="px-2 py-1 text-right font-medium text-muted-foreground">Värde (kr)</th>
               <th className="px-2 py-1 text-right font-medium text-muted-foreground">Lager</th>
               <th className="px-2 py-1 text-right font-medium text-muted-foreground">Levererat</th>
               <th className="px-2 py-1 text-left font-medium text-muted-foreground">Avvikelse</th>
               <th className="px-2 py-1 text-left font-medium text-muted-foreground min-w-[160px]">Status</th>
               <th className="px-2 py-1 text-center font-medium text-muted-foreground">Åtgärd</th>
+              <th className="px-2 py-1 text-right font-medium text-muted-foreground">Värde (kr)</th>
             </tr>
           </thead>
           <tbody>
@@ -870,7 +870,6 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                   <td className="px-2 py-0.5 font-medium text-foreground">{line.products?.name || "–"}</td>
                   <td className="px-2 py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
                   <td className="px-2 py-0.5 text-right font-mono text-foreground">{qtyOrdered}</td>
-                  <td className="px-2 py-0.5 text-right font-mono text-foreground">{lineValue.toFixed(2)}</td>
                   <td className={`px-2 py-0.5 text-right font-mono ${stockQty >= qtyOrdered ? "text-success" : stockQty > 0 ? "text-warning" : "text-destructive"}`}>
                     {stockQty > 0 ? stockQty : "0"}
                   </td>
@@ -931,6 +930,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                       </div>
                     )}
                   </td>
+                  <td className="px-2 py-0.5 text-right font-mono text-foreground">{lineValue.toFixed(2)}</td>
                 </tr>
               );
             })}
