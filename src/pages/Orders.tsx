@@ -95,7 +95,7 @@ export default function Orders() {
   });
 
   const totalOrders = orders.length;
-  const pending = orders.filter((o: any) => o.status === "Behandlas").length;
+  const pending = orders.filter((o: any) => o.status === "Pågående").length;
   const packed = orders.filter((o: any) => o.status === "Packad").length;
   const delivered = orders.filter((o: any) => o.status === "Klar / Levererad" || o.status === "Levererad").length;
 
