@@ -396,22 +396,14 @@ export default function Inventory() {
     });
   };
 
-  const isLocationPortal = site === "purchasing" || site === "production";
-
   const expandAll = () => {
-    if (isLocationPortal) {
-      setExpandedLocations(new Set(portalLocations.map((l: any) => l.id)));
-    } else {
-      setExpandedCategories(new Set(stockByCategory.map(([cat]) => cat)));
-    }
+    setExpandedLocations(new Set(portalLocations.map((l: any) => l.id)));
+    setExpandedCategories(new Set(stockByCategory.map(([cat]) => cat)));
   };
 
   const collapseAll = () => {
-    if (isLocationPortal) {
-      setExpandedLocations(new Set());
-    } else {
-      setExpandedCategories(new Set());
-    }
+    setExpandedLocations(new Set());
+    setExpandedCategories(new Set());
   };
 
   
