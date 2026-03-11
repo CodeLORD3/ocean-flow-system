@@ -445,6 +445,9 @@ export default function WholesaleOrders() {
                               </SelectContent>
                             </Select>
                           </td>
+                          <td className="px-2.5 py-1 text-right font-mono text-foreground text-[10px]">
+                            {(o.shop_order_lines || []).reduce((sum: number, l: any) => sum + (l.quantity_ordered || 0) * (l.products?.wholesale_price || 0), 0).toFixed(2)} kr
+                          </td>
                           <td className="px-2.5 py-1 text-muted-foreground text-[10px]">{o.packer_name || "–"}</td>
                           <td className="px-2.5 py-1" onClick={e => e.stopPropagation()}>
                             {(() => {
