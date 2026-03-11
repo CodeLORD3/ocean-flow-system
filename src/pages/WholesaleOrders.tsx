@@ -420,7 +420,7 @@ export default function WholesaleOrders() {
                     </thead>
                     <tbody>
                       {filteredOrders.length === 0 && (
-                         <tr><td colSpan={12} className="px-2.5 py-6 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
+                         <tr><td colSpan={13} className="px-2.5 py-6 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
                        )}
                        {filteredOrders.map((o: any) => (
                          <tr key={o.id} className="border-b border-border h-9 transition-colors cursor-pointer hover:bg-muted/30" onClick={() => setSelectedOrderId(o.id)}>
