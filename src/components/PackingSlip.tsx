@@ -161,10 +161,19 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
                         </td>
                       </tr>
                     ))}
+                    {/* Empty rows to fill A4 space */}
+                    {Array.from({ length: Math.max(0, 20 - lines.length) }).map((_, i) => (
+                      <tr key={`empty-${i}`} style={{ background: (lines.length + i) % 2 === 0 ? "#fff" : "#f7f7f7" }}>
+                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 11, height: 24 }}>&nbsp;</td>
+                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd" }}></td>
+                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd" }}></td>
+                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd" }}></td>
+                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd" }}></td>
+                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd" }}></td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
-                {/* Spacer — fills remaining space between products and totals */}
-                <div style={{ flex: 1, borderLeft: "1px solid #ddd", borderRight: "1px solid #ddd", borderBottom: "1px solid #ddd", minHeight: 20 }}></div>
               </div>
 
               {/* Totals */}
