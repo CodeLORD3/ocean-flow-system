@@ -154,7 +154,7 @@ export async function markOrderLinesPackad(productIds: string[], targetLocationI
     .select("id, status, shop_order_id, product_id, quantity_ordered, shop_orders!inner(store_id, priority, created_at)")
     .in("product_id", productIds)
     .eq("shop_orders.store_id", location.store_id)
-    .in("status", ["", "Ny", "Behandlas"])
+    .in("status", ["", "Ny", "Pågående"])
     .not("shop_orders.status", "in", '("Arkiverad","Klar / Levererad")');
 
   if (!orderLines?.length) return;
