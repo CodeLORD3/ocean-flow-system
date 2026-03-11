@@ -668,7 +668,7 @@ export default function Inventory() {
       </div>
 
       {(site === "purchasing" || site === "production") ? (
-        /* ── INKÖP/PRODUKTION PORTAL: Location accordion ── */
+        /* ── INKÖP/PRODUKTION PORTAL: Grouped by store ── */
         <Card className="shadow-card">
           <CardHeader className="pb-2">
             <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
@@ -687,93 +687,91 @@ export default function Inventory() {
             </div>
           </CardHeader>
           <CardContent>
-            {loadingLoc || loadingStock ? <Skeleton className="h-48" /> : stockByLocation.length === 0 ? (
+            {loadingLoc || loadingStock ? <Skeleton className="h-48" /> : groupedByStore.length === 0 ? (
               <div className="text-center py-12">
                 <Warehouse className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
                 <p className="text-sm text-muted-foreground">Inga lagerställen</p>
               </div>
             ) : (
-              <div className="space-y-1">
-                {stockByLocation.map((loc: any) => {
-                  const isExpanded = expandedLocations.has(loc.id);
-                  return (
-                     <div key={loc.id} className="border border-border/50 rounded-md overflow-hidden">
-                      <div className="flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors">
-                        <button
-                          className="flex items-center gap-2 flex-1 text-left"
-                          onClick={() => toggleLocation(loc.id)}
-                        >
-                          {isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
-                          <MapPin className="h-3.5 w-3.5 text-primary" />
-                          <span className="text-sm font-medium text-foreground">{loc.name}</span>
-                          <Badge variant="secondary" className="text-[10px] h-5">{loc.items.length} produkter</Badge>
-                        </button>
-                        <div className="flex items-center gap-2">
-                          {getSelectedForLocation(loc.id).size > 0 && (
-                            <div className="flex items-center gap-1 mr-2">
-                              <Badge variant="outline" className="text-[10px] h-5">{getSelectedForLocation(loc.id).size} valda</Badge>
-                              <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] gap-1" onClick={() => { setActiveLocationId(loc.id); setMoveDialogOpen(true); }}>
-                                <Move className="h-3 w-3" /> Flytta
-                              </Button>
-                              <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => { setActiveLocationId(loc.id); setDeleteDialogOpen(true); }}>
-                                <Trash2 className="h-3 w-3" /> Radera
-                              </Button>
-                              {getSelectedForLocation(loc.id).size === 1 && (
-                                <>
-                                  <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] gap-1" onClick={() => { setActiveLocationId(loc.id); setSplitDialogOpen(true); }}>
-                                    <Scissors className="h-3 w-3" /> Splitta
-                                  </Button>
-                                  {site === "production" && (
-                                    <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] gap-1 text-purple-600 border-purple-300 hover:bg-purple-50" onClick={() => { setActiveLocationId(loc.id); setTransformDialogOpen(true); }}>
-                                      <RefreshCw className="h-3 w-3" /> Omvandla
-                                    </Button>
-                                  )}
-                                </>
-                              )}
-                            </div>
-                          )}
-                          <span className="text-xs text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
-                          <span className="text-xs font-medium text-foreground">{fmt(loc.totalValue)}</span>
+              <div className="space-y-2">
+                {groupedByStore.map((group) => {
+                  const isGroupExpanded = expandedGroups.has(group.storeName);
+                  const isGeneral = group.type === "general";
+                  const singleLoc = group.locations[0];
+
+                  // For general locations (Transportlager, Grossist Flytande), render as a single expandable row
+                  if (isGeneral) {
+                    const isExpanded = expandedLocations.has(singleLoc.id);
+                    return (
+                      <div key={singleLoc.id} className="border border-border/50 rounded-md overflow-hidden">
+                        <div className="flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors">
+                          <button
+                            className="flex items-center gap-2 flex-1 text-left"
+                            onClick={() => toggleLocation(singleLoc.id)}
+                          >
+                            {isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                            <Warehouse className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-sm font-medium text-foreground">{singleLoc.name}</span>
+                            <Badge variant="secondary" className="text-[10px] h-5">{singleLoc.items.length} produkter</Badge>
+                          </button>
+                          <div className="flex items-center gap-2">
+                            {getSelectedForLocation(singleLoc.id).size > 0 && renderSelectionActions(singleLoc.id)}
+                            <span className="text-xs text-muted-foreground">{singleLoc.totalQty.toLocaleString("sv-SE")} kg</span>
+                            <span className="text-xs font-medium text-foreground">{fmt(singleLoc.totalValue)}</span>
+                          </div>
                         </div>
+                        {isExpanded && renderLocationTable(singleLoc)}
                       </div>
-                      {isExpanded && (
+                    );
+                  }
+
+                  // For store groups, render as a two-level accordion
+                  return (
+                    <div key={group.storeName} className="border border-border rounded-md overflow-hidden">
+                      {/* Store group header */}
+                      <button
+                        className="w-full flex items-center justify-between px-3 py-3 hover:bg-muted/30 transition-colors text-left bg-muted/10"
+                        onClick={() => toggleGroup(group.storeName)}
+                      >
+                        <div className="flex items-center gap-2">
+                          {isGroupExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                          <MapPin className="h-4 w-4 text-primary" />
+                          <span className="text-sm font-semibold text-foreground">{group.storeName}</span>
+                          <Badge variant="secondary" className="text-[10px] h-5">{group.locations.length} lager</Badge>
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span>{group.totalQty.toLocaleString("sv-SE")} kg</span>
+                          <span className="font-medium text-foreground">{fmt(group.totalValue)}</span>
+                        </div>
+                      </button>
+
+                      {isGroupExpanded && (
                         <div className="border-t border-border/50">
-                          {loc.items.length === 0 ? (
-                            <div className="px-3 py-4 text-center text-xs text-muted-foreground">Tomt lager</div>
-                          ) : (
-                            <table className="w-full text-xs">
-                              <thead>
-                                <tr className="bg-muted/20">
-                                  <th className="px-3 py-1.5 w-8"></th>
-                                  <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Produkt</th>
-                                  <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">SKU</th>
-                                  <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Kategori</th>
-                                  <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Antal</th>
-                                  <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Värde</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {loc.items.map((s: any) => {
-                                  const value = Number(s.quantity) * (Number(s.unit_cost) || Number(s.products?.cost_price) || 0);
-                                  const isChecked = getSelectedForLocation(loc.id).has(s.id);
-                                  return (
-                                    <tr key={s.id} className={`border-b border-border/30 last:border-0 hover:bg-muted/20 ${isChecked ? "bg-primary/5" : ""}`}>
-                                      <td className="px-3 py-2 text-center">
-                                        <Checkbox checked={isChecked} onCheckedChange={() => toggleItemSelection(loc.id, s.id)} />
-                                      </td>
-                                      <td className="px-3 py-2 font-medium text-foreground">{s.products?.name}</td>
-                                      <td className="px-3 py-2 font-mono text-muted-foreground text-[10px]">{s.products?.sku}</td>
-                                      <td className="px-3 py-2 text-muted-foreground">{s.products?.category}</td>
-                                      <td className="px-3 py-2 text-right font-medium text-foreground">
-                                        {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
-                                      </td>
-                                      <td className="px-3 py-2 text-right text-muted-foreground">{fmt(value)}</td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          )}
+                          {group.locations.map((loc: any) => {
+                            const isExpanded = expandedLocations.has(loc.id);
+                            // Show a simplified name: strip store prefix for cleaner display
+                            const displayName = loc.name;
+                            return (
+                              <div key={loc.id} className="border-b border-border/30 last:border-0">
+                                <div className="flex items-center justify-between px-4 py-2 hover:bg-muted/20 transition-colors">
+                                  <button
+                                    className="flex items-center gap-2 flex-1 text-left"
+                                    onClick={() => toggleLocation(loc.id)}
+                                  >
+                                    {isExpanded ? <ChevronDown className="h-3 w-3 text-muted-foreground" /> : <ChevronRight className="h-3 w-3 text-muted-foreground" />}
+                                    <span className="text-xs font-medium text-foreground">{displayName}</span>
+                                    <Badge variant="secondary" className="text-[10px] h-4">{loc.items.length} produkter</Badge>
+                                  </button>
+                                  <div className="flex items-center gap-2">
+                                    {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
+                                    <span className="text-[10px] text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
+                                    <span className="text-[10px] font-medium text-foreground">{fmt(loc.totalValue)}</span>
+                                  </div>
+                                </div>
+                                {isExpanded && renderLocationTable(loc)}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
