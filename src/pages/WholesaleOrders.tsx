@@ -198,9 +198,7 @@ export default function WholesaleOrders() {
     qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
     qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
     qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
-    if (selectedOrder?.id === orderId) {
-      setSelectedOrder((prev: any) => prev ? { ...prev, status: newStatus } : null);
-    }
+    // No need to manually update selectedOrder — it derives from query data
   };
 
   const handleArchiveOrder = async (orderId: string) => {
