@@ -24,6 +24,7 @@ import { useAllPendingChangeRequests, useResolveChangeRequest, useCreateChangeRe
 import PackingSlip from "@/components/PackingSlip";
 import { moveStockToTransport } from "@/lib/stockTransfer";
 import { useUpdateOrderLineStatus, STATUS_FLOW } from "@/hooks/useUpdateOrderLineStatus";
+import { useAllStockByLocation } from "@/hooks/useStorageLocations";
 
 const statusColor: Record<string, string> = {
   Ny: "bg-primary/10 text-primary border-primary/20",
@@ -44,42 +45,6 @@ const statusIcon: Record<string, React.ReactNode> = {
 };
 
 const LINE_STATUSES = ["", "Behandlas", "Producerad", "Packad", "Skickad", "Ej tillgänglig"];
-
-const statusSegmentColor: Record<string, string> = {
-  "": "transparent",
-  "Behandlas": "#fef3c7",
-  "Producerad": "#dbeafe",
-  "Packad": "#d1fae5",
-  "Skickad": "#bbf7d0",
-  "Ej tillgänglig": "#fee2e2",
-};
-
-function buildProgressGradient(lines: any[]): string {
-  if (!lines || lines.length === 0) return "transparent";
-  const total = lines.length;
-  const segments: string[] = [];
-  let pos = 0;
-  for (const line of lines) {
-    const color = statusSegmentColor[line.status || ""] || "transparent";
-    const start = (pos / total) * 100;
-    const end = ((pos + 1) / total) * 100;
-    segments.push(`${color} ${start}%`, `${color} ${end}%`);
-    pos++;
-  }
-  return `linear-gradient(to bottom, ${segments.join(", ")})`;
-}
-
-const rowBgByStatus: Record<string, string> = {
-  "": "",
-  "Behandlas": "bg-amber-50 dark:bg-amber-950/20",
-  "Producerad": "bg-blue-50 dark:bg-blue-950/20",
-  "Packad": "bg-emerald-50 dark:bg-emerald-950/20",
-  "Skickad": "bg-green-50 dark:bg-green-950/20",
-  "Ej tillgänglig": "bg-red-50 dark:bg-red-950/20",
-  "Ny": "bg-sky-50 dark:bg-sky-950/20",
-  "Levererad": "bg-green-50 dark:bg-green-950/20",
-  "Avbruten": "bg-red-50 dark:bg-red-950/20",
-};
 
 export default function WholesaleOrders() {
   const { toast } = useToast();
