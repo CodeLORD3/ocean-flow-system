@@ -2,8 +2,9 @@ import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Plus, Search, Clock, CheckCircle2, Truck, XCircle, X, Package,
-  Archive, ListChecks, History, CalendarIcon, Pencil, Send,
+  Archive, ListChecks, History, CalendarIcon, Pencil, Send, FileText,
 } from "lucide-react";
+import DeliveryNote from "@/components/DeliveryNote";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -101,55 +102,78 @@ function buildProgressGradient(lines: any[]): string {
 const LIVE_STATUSES = ["Ny", "Pågående", "Packad", "Skickad"];
 const DONE_STATUSES = ["Levererad", "Klar / Levererad", "Arkiverad", "Avbruten"];
 
+const FOLLJESEDEL_STATUSES = ["Skickad", "Levererad", "Klar / Levererad", "Arkiverad"];
+
 function OrderTable({ orders, onSelect, emptyMsg }: { orders: any[]; onSelect: (o: any) => void; emptyMsg: string }) {
+  const [FolljesedelOrder, setFolljesedelOrder] = useState<any>(null);
+
   return (
-    <Card className="shadow-card">
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b border-border bg-muted/30">
-                <th className="p-3 text-left font-medium text-muted-foreground">VECKA</th>
-                <th className="p-3 text-left font-medium text-muted-foreground">DATUM</th>
-                <th className="p-3 text-left font-medium text-muted-foreground">BUTIK</th>
-                <th className="p-3 text-left font-medium text-muted-foreground">ÖNSKAD LEV.</th>
-                <th className="p-3 text-right font-medium text-muted-foreground">RADER</th>
-                <th className="p-3 text-left font-medium text-muted-foreground">PRODUKTER</th>
-                <th className="p-3 text-left font-medium text-muted-foreground">ANTECKNING</th>
-                <th className="p-3 text-right font-medium text-muted-foreground">STATUS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.length === 0 && (
-                <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">{emptyMsg}</td></tr>
-              )}
-              {orders.map((o: any) => {
-                const lines = o.shop_order_lines || [];
-                return (
-                  <tr key={o.id} className="border-b border-border/40 transition-colors cursor-pointer" style={{ background: buildProgressGradient(lines) }} onClick={() => onSelect(o)}>
-                    <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
-                    <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
-                    <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
-                    <td className="p-3 text-muted-foreground">{o.desired_delivery_date || "–"}</td>
-                    <td className="p-3 text-right text-foreground">{lines.length}</td>
-                    <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
-                      {lines.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
-                    </td>
-                    <td className="p-3 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
-                    <td className="p-3 text-right">
-                      <Badge variant="outline" className={`${statusColor[o.status] || ""} text-[10px] gap-1`}>
-                        {statusIcon[o.status]}
-                        {o.status}
-                      </Badge>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </CardContent>
-    </Card>
+    <>
+      <Card className="shadow-card">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="p-3 text-left font-medium text-muted-foreground">VECKA</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground">DATUM</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground">BUTIK</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground">ÖNSKAD LEV.</th>
+                  <th className="p-3 text-right font-medium text-muted-foreground">RADER</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground">PRODUKTER</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground">ANTECKNING</th>
+                  <th className="p-3 text-center font-medium text-muted-foreground">FÖLJESEDEL</th>
+                  <th className="p-3 text-right font-medium text-muted-foreground">STATUS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.length === 0 && (
+                  <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">{emptyMsg}</td></tr>
+                )}
+                {orders.map((o: any) => {
+                  const lines = o.shop_order_lines || [];
+                  const hasFolljesedel = FOLLJESEDEL_STATUSES.includes(o.status);
+                  return (
+                    <tr key={o.id} className="border-b border-border/40 transition-colors cursor-pointer" style={{ background: buildProgressGradient(lines) }} onClick={() => onSelect(o)}>
+                      <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
+                      <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
+                      <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
+                      <td className="p-3 text-muted-foreground">{o.desired_delivery_date || "–"}</td>
+                      <td className="p-3 text-right text-foreground">{lines.length}</td>
+                      <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
+                        {lines.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
+                      </td>
+                      <td className="p-3 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
+                      <td className="p-3 text-center">
+                        {hasFolljesedel ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-6 text-[10px] gap-1 px-2"
+                            onClick={(e) => { e.stopPropagation(); setFolljesedelOrder(o); }}
+                          >
+                            <FileText className="h-3 w-3" /> Skriv ut
+                          </Button>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground">—</span>
+                        )}
+                      </td>
+                      <td className="p-3 text-right">
+                        <Badge variant="outline" className={`${statusColor[o.status] || ""} text-[10px] gap-1`}>
+                          {statusIcon[o.status]}
+                          {o.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+      <DeliveryNote order={FolljesedelOrder} open={!!FolljesedelOrder} onOpenChange={(open) => { if (!open) setFolljesedelOrder(null); }} />
+    </>
   );
 }
 
