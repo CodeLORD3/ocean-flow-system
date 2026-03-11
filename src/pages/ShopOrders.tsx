@@ -213,8 +213,11 @@ export default function ShopOrders() {
     return days.length > 0 ? new Set(days) : null;
   }, [activeStore, transportSchedules]);
 
-  // Disable dates that are not valid departure weekdays (also disable past & weekends if not in zone)
+  // Disable dates that are not valid departure weekdays AND past dates
   const isDateDisabled = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (date < today) return true;
     if (!allowedWeekdays) return false;
     const jsDay = getDay(date); // 0=Sun
     const isoDay = jsDay === 0 ? 7 : jsDay;
