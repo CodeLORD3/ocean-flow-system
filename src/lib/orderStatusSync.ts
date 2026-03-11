@@ -89,7 +89,7 @@ export async function revertOrderLinesIfStockGone() {
       .in("id", linesToRevertFromPackad);
   }
 
-  // Reverted lines stay as "Ny" — no auto-promotion to Behandlas
+  // Reverted lines stay as "Ny" — no auto-promotion to Pågående
 
   // Update order statuses for orders that had lines reverted from Packad
   for (const orderId of affectedOrderIds) {

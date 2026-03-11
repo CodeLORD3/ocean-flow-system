@@ -81,7 +81,7 @@ export default function Orders() {
   }, []);
 
   const storeOptions = ["Alla butiker", ...stores.map((s: any) => s.name)];
-  const statusOptions = ["Alla", "Ny", "Behandlas", "Packad", "Skickad", "Klar / Levererad"];
+  const statusOptions = ["Alla", "Ny", "Pågående", "Packad", "Skickad", "Klar / Levererad"];
 
   const filtered = orders.filter((o: any) => {
     const storeName = o.stores?.name || "";

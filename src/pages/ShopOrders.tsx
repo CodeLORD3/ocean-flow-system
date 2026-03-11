@@ -321,7 +321,7 @@ export default function ShopOrders() {
     setDesiredDeliveryDate(undefined);
   };
 
-  const pending = liveOrders.filter((o: any) => o.status === "Ny" || o.status === "Behandlas").length;
+  const pending = liveOrders.filter((o: any) => o.status === "Ny" || o.status === "Pågående").length;
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
