@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const overviewNav = [
-  { title: "Översikt", url: "/", icon: LayoutDashboard },
+  { title: "Översikt", url: "/organisation", icon: BarChart3 },
 ];
 
 const salesNav = [
