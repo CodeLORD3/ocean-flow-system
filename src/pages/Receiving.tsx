@@ -24,6 +24,14 @@ import { useSubmitReceivingReport } from "@/hooks/useDeliveryReceivingReports";
 
 const REPORT_TYPES = ["Skadad", "Fel kvantitet", "Dålig kvalitet", "Saknas", "Annat"];
 
+interface LineReport {
+  status: "Godkänd" | "Rapporterad";
+  report_type?: string;
+  notes?: string;
+  quantity_received?: string;
+  confirmed?: boolean;
+}
+
 export default function Receiving() {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -32,15 +40,9 @@ export default function Receiving() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const submitReport = useSubmitReceivingReport();
 
-  // Line-level report state: { [lineId]: { status, report_type, notes, quantity_received } }
-  const [lineReports, setLineReports] = useState<Record<string, {
-    status: "Godkänd" | "Rapporterad";
-    report_type?: string;
-    notes?: string;
-    quantity_received?: string;
-  }>>({});
+  const [lineReports, setLineReports] = useState<Record<string, LineReport>>({});
 
-  // Fetch orders that are "Packad" or "Skickad" for this store — these are pending deliveries
+  // Only fetch orders with status "Skickad" — these are shipped and ready for receiving
   const { data: pendingOrders = [] } = useQuery({
     queryKey: ["pending-deliveries", activeStoreId],
     queryFn: async () => {
@@ -49,7 +51,7 @@ export default function Receiving() {
         .from("shop_orders")
         .select("*, stores(name), shop_order_lines(*, products(name, unit, category))")
         .eq("store_id", activeStoreId)
-        .in("status", ["Packad", "Skickad", "Ny", "Behandlas"])
+        .eq("status", "Skickad")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -86,7 +88,6 @@ export default function Receiving() {
     },
   });
 
-  // Check which orders already have reports
   const reportedOrderLineIds = useMemo(() => {
     return new Set(existingReports.map((r: any) => r.order_line_id));
   }, [existingReports]);
@@ -97,16 +98,14 @@ export default function Receiving() {
     return ids;
   }, [existingReports]);
 
-  // Orders that haven't been reported on yet
   const unreportedOrders = pendingOrders.filter((o: any) => !reportedOrderIds.has(o.id));
   const reportedPendingOrders = pendingOrders.filter((o: any) => reportedOrderIds.has(o.id));
 
   const openOrder = (order: any) => {
     setSelectedOrder(order);
-    // Pre-fill all lines as "Godkänd"
-    const initial: typeof lineReports = {};
+    const initial: Record<string, LineReport> = {};
     (order.shop_order_lines || []).forEach((line: any) => {
-      initial[line.id] = { status: "Godkänd", quantity_received: String(line.quantity_ordered) };
+      initial[line.id] = { status: "Godkänd", quantity_received: String(line.quantity_ordered), confirmed: false };
     });
     setLineReports(initial);
   };
@@ -135,13 +134,11 @@ export default function Receiving() {
     try {
       await submitReport.mutateAsync(reports);
 
-      // Update order status to Levererad
       await supabase
         .from("shop_orders")
         .update({ status: "Levererad" })
         .eq("id", selectedOrder.id);
 
-      // Update each line status
       for (const [lineId, report] of Object.entries(lineReports)) {
         await supabase
           .from("shop_order_lines")
@@ -172,14 +169,14 @@ export default function Receiving() {
 
   const approveAll = () => {
     if (!selectedOrder) return;
-    const updated: typeof lineReports = {};
+    const updated: Record<string, LineReport> = {};
     (selectedOrder.shop_order_lines || []).forEach((line: any) => {
-      updated[line.id] = { status: "Godkänd", quantity_received: String(line.quantity_ordered) };
+      updated[line.id] = { status: "Godkänd", quantity_received: String(line.quantity_ordered), confirmed: true };
     });
     setLineReports(updated);
+    toast({ title: "Alla produkter godkända", description: "Klicka 'Godkänn leverans' för att bekräfta." });
   };
 
-  // Reporting detail dialog for already-reported orders
   const [viewReportOrder, setViewReportOrder] = useState<any>(null);
   const viewReportLines = useMemo(() => {
     if (!viewReportOrder) return [];
@@ -201,7 +198,7 @@ export default function Receiving() {
           <Truck className="h-5 w-5 text-primary" /> Inleveranser
         </h2>
         <p className="text-xs text-muted-foreground">
-          Väntande leveranser från grossist. Godkänn hela leveransen eller rapportera avvikelser per produkt.
+          Leveranser som har skickats från grossist. Godkänn hela leveransen eller rapportera avvikelser per produkt.
         </p>
       </div>
 
@@ -242,19 +239,18 @@ export default function Receiving() {
             <Clock className="h-4 w-4 text-warning" /> Väntande leveranser
           </CardTitle>
           <CardDescription className="text-xs">
-            Beställningar som är på väg eller redo att tas emot. Klicka för att rapportera.
+            Leveranser som har skickats från grossist. Klicka för att ta emot och godkänna.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {filteredUnreported.length === 0 ? (
             <p className="text-xs text-muted-foreground text-center py-8">
-              Inga väntande leveranser just nu.
+              Inga skickade leveranser att ta emot just nu.
             </p>
           ) : (
             <div className="space-y-2">
               {filteredUnreported.map((order: any) => {
                 const lines = order.shop_order_lines || [];
-                const allPacked = lines.every((l: any) => l.status === "Packad" || l.status === "Skickad" || l.status === "Klar / Levererad");
                 return (
                   <div
                     key={order.id}
@@ -262,8 +258,8 @@ export default function Receiving() {
                     onClick={() => openOrder(order)}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`h-8 w-8 rounded-full flex items-center justify-center ${allPacked ? "bg-success/15 text-success" : "bg-warning/15 text-warning"}`}>
-                        {allPacked ? <Package className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
+                      <div className="h-8 w-8 rounded-full flex items-center justify-center bg-primary/15 text-primary">
+                        <Truck className="h-4 w-4" />
                       </div>
                       <div>
                         <p className="text-xs font-medium text-foreground">
@@ -275,11 +271,11 @@ export default function Receiving() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={`text-[10px] ${allPacked ? "bg-success/10 text-success border-success/20" : "bg-warning/10 text-warning border-warning/20"}`}>
-                        {allPacked ? "Redo att ta emot" : order.status}
+                      <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20">
+                        Skickad — redo att ta emot
                       </Badge>
                       <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
-                        <CheckCircle2 className="h-3 w-3" /> Rapportera
+                        <CheckCircle2 className="h-3 w-3" /> Ta emot
                       </Button>
                     </div>
                   </div>
@@ -365,34 +361,51 @@ export default function Receiving() {
                 {(selectedOrder.shop_order_lines || []).map((line: any) => {
                   const report = lineReports[line.id] || { status: "Godkänd" };
                   const isReported = report.status === "Rapporterad";
+                  const isConfirmed = report.confirmed && !isReported;
                   return (
                     <div
                       key={line.id}
                       className={`p-3 rounded-lg border transition-colors ${
-                        isReported ? "border-warning/40 bg-warning/5" : "border-border bg-card"
+                        isReported
+                          ? "border-warning/40 bg-warning/5"
+                          : isConfirmed
+                            ? "border-success/40 bg-success/5"
+                            : "border-border bg-card"
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <div>
+                        <div className="flex items-center gap-2">
+                          {isConfirmed && <CheckCircle2 className="h-3.5 w-3.5 text-success" />}
                           <span className="text-xs font-medium text-foreground">{line.products?.name || "Okänd"}</span>
-                          <span className="text-[10px] text-muted-foreground ml-2">
+                          <span className="text-[10px] text-muted-foreground">
                             {line.quantity_ordered} {line.unit || line.products?.unit || ""}
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <Button
                             size="sm"
-                            variant={!isReported ? "default" : "outline"}
-                            className="h-6 text-[10px] gap-1 px-2"
-                            onClick={() => updateLineReport(line.id, "status", "Godkänd")}
+                            variant={isConfirmed ? "default" : "outline"}
+                            className={`h-6 text-[10px] gap-1 px-2 ${isConfirmed ? "bg-success hover:bg-success/90 text-white" : ""}`}
+                            onClick={() => {
+                              setLineReports(prev => ({
+                                ...prev,
+                                [line.id]: { ...prev[line.id], status: "Godkänd", confirmed: true, quantity_received: String(line.quantity_ordered) },
+                              }));
+                            }}
                           >
-                            <ThumbsUp className="h-2.5 w-2.5" /> OK
+                            {isConfirmed ? <CheckCircle2 className="h-2.5 w-2.5" /> : <ThumbsUp className="h-2.5 w-2.5" />}
+                            {isConfirmed ? "Godkänd ✓" : "OK"}
                           </Button>
                           <Button
                             size="sm"
                             variant={isReported ? "destructive" : "outline"}
                             className="h-6 text-[10px] gap-1 px-2"
-                            onClick={() => updateLineReport(line.id, "status", "Rapporterad")}
+                            onClick={() => {
+                              setLineReports(prev => ({
+                                ...prev,
+                                [line.id]: { ...prev[line.id], status: "Rapporterad", confirmed: false },
+                              }));
+                            }}
                           >
                             <Flag className="h-2.5 w-2.5" /> Rapportera
                           </Button>
