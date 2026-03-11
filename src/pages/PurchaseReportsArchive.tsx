@@ -102,12 +102,9 @@ export default function PurchaseReportsArchive() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold">Inköpsrapporter – Arkiv</h2>
-          <p className="text-xs text-muted-foreground">
-            Rapporter arkiveras automatiskt varje natt. Totalt {archivedReports.length} rapporter.
-          </p>
-        </div>
+        <p className="text-xs text-muted-foreground">
+          Rapporter arkiveras automatiskt varje natt. Totalt {archivedReports.length} rapporter.
+        </p>
       </div>
 
       <ScrollArea className="h-[calc(100vh-220px)]">
