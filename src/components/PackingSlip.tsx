@@ -126,7 +126,7 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
               <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
                 <thead>
                   <tr style={{ background: "#222", color: "#fff" }}>
-                    {["Produkt / Product", "Kategori", "HS-kod", "Beställt", "Packat", "Enhet", "Vikt/st (kg)"].map((h, i) => (
+                    {["Produkt / Product", "Kategori", "HS-kod", "Beställt", "Packat", "Enhet"].map((h, i) => (
                       <th key={h} style={{
                         padding: "6px 5px",
                         fontSize: 9,
@@ -134,7 +134,7 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
                         textTransform: "uppercase",
                         letterSpacing: 0.5,
                         textAlign: i >= 3 ? "center" : "left",
-                        borderRight: i < 6 ? "1px solid #444" : "none",
+                        borderRight: i < 5 ? "1px solid #444" : "none",
                       }}>{h}</th>
                     ))}
                   </tr>
