@@ -122,6 +122,15 @@ export function useUpdateOrderLineStatus() {
         newOrderStatus = "Pågående";
       }
 
+      // If all lines are now "Skickad", trigger stock move to Transportlager
+      if (newOrderStatus === "Skickad") {
+        try {
+          await moveStockToTransport(params.orderId);
+        } catch (err) {
+          console.error("Stock transfer to transport error:", err);
+        }
+      }
+
       await supabase
         .from("shop_orders")
         .update({ status: newOrderStatus })
