@@ -85,7 +85,20 @@ export default function OrganisationOverview() {
   const { data: allCustomers = [] } = useCustomers();
   const { data: suppliers = [] } = useSuppliers();
 
-  // Delivery notes (outgoing to shops = sales)
+  // Shop orders with lines for sales calculation
+  const { data: shopOrders = [] } = useQuery({
+    queryKey: ["shop-orders-overview"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("shop_orders")
+        .select("*, stores(name), shop_order_lines(quantity_ordered, quantity_delivered, unit, product_id, products(name, wholesale_price, cost_price, category))")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Delivery notes (outgoing to shops)
   const { data: deliveryNotes = [] } = useQuery({
     queryKey: ["delivery-notes-overview"],
     queryFn: async () => {
@@ -111,41 +124,63 @@ export default function OrganisationOverview() {
     },
   });
 
-  // Shop orders
-  const { data: shopOrders = [] } = useQuery({
-    queryKey: ["shop-orders-overview"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("shop_orders")
-        .select("*, stores(name)")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-  });
-
   // --- Computed KPIs ---
   const totalInventoryValue = products.reduce((sum, p) => sum + (p.stock * p.cost_price), 0);
   const totalInventoryWholesale = products.reduce((sum, p) => sum + (p.stock * p.wholesale_price), 0);
   const totalStock = products.reduce((sum, p) => sum + p.stock, 0);
   const activeProducts = products.filter(p => p.active).length;
 
-  const totalSales = deliveryNotes.reduce((sum, dn) => sum + (dn.total_amount || 0), 0);
-  const totalPurchases = incomingDeliveries.reduce((sum, d) => sum + (d.total_cost || 0), 0);
-  const grossMargin = totalSales > 0 ? ((totalSales - totalPurchases) / totalSales * 100).toFixed(1) : "0";
+  // Sales = sum of delivered value from shop orders (primary source of truth)
+  const totalDeliveredSales = shopOrders.reduce((sum, o: any) => {
+    const lines = o.shop_order_lines || [];
+    return sum + lines.reduce((ls: number, l: any) => {
+      return ls + (l.quantity_delivered || 0) * (l.products?.wholesale_price || 0);
+    }, 0);
+  }, 0);
 
-  // --- Sales by store chart ---
+  const totalOrderedValue = shopOrders.reduce((sum, o: any) => {
+    const lines = o.shop_order_lines || [];
+    return sum + lines.reduce((ls: number, l: any) => {
+      return ls + (l.quantity_ordered || 0) * (l.products?.wholesale_price || 0);
+    }, 0);
+  }, 0);
+
+  // Also include delivery_notes if available
+  const totalDnSales = deliveryNotes.reduce((sum, dn) => sum + (dn.total_amount || 0), 0);
+  const totalSales = Math.max(totalDeliveredSales, totalDnSales);
+
+  const totalPurchases = incomingDeliveries.reduce((sum, d) => sum + (d.total_cost || 0), 0);
+
+  // Cost of delivered goods
+  const totalDeliveredCost = shopOrders.reduce((sum, o: any) => {
+    const lines = o.shop_order_lines || [];
+    return sum + lines.reduce((ls: number, l: any) => {
+      return ls + (l.quantity_delivered || 0) * (l.products?.cost_price || 0);
+    }, 0);
+  }, 0);
+  const grossMargin = totalSales > 0 ? ((totalSales - totalDeliveredCost) / totalSales * 100).toFixed(1) : "0";
+
+  // --- Sales by store chart (from shop orders) ---
   const salesByStore: Record<string, number> = {};
-  deliveryNotes.forEach((dn: any) => {
-    const storeName = dn.stores?.name || "Okänd";
-    salesByStore[storeName] = (salesByStore[storeName] || 0) + (dn.total_amount || 0);
+  shopOrders.forEach((o: any) => {
+    const storeName = o.stores?.name || "Okänd";
+    const orderSales = (o.shop_order_lines || []).reduce((ls: number, l: any) => {
+      return ls + (l.quantity_delivered || 0) * (l.products?.wholesale_price || 0);
+    }, 0);
+    if (orderSales > 0) {
+      salesByStore[storeName] = (salesByStore[storeName] || 0) + orderSales;
+    }
   });
-  const salesByStoreData = Object.entries(salesByStore).map(([name, value]) => ({ name, value: Math.round(value) }));
+  const salesByStoreData = Object.entries(salesByStore)
+    .map(([name, value]) => ({ name, value: Math.round(value) }))
+    .sort((a, b) => b.value - a.value);
 
   // --- Inventory by category chart ---
   const invByCategory: Record<string, number> = {};
   products.forEach(p => {
-    invByCategory[p.category] = (invByCategory[p.category] || 0) + p.stock;
+    if (p.stock > 0) {
+      invByCategory[p.category] = (invByCategory[p.category] || 0) + p.stock;
+    }
   });
   const inventoryByCategoryData = Object.entries(invByCategory)
     .map(([name, value]) => ({ name, value: Math.round(value) }))
@@ -158,8 +193,10 @@ export default function OrganisationOverview() {
   });
   const orderStatusData = Object.entries(ordersByStatus).map(([name, value]) => ({ name, value }));
 
-  // --- Recent deliveries ---
-  const recentDeliveries = deliveryNotes.slice(0, 5);
+  // --- Recent deliveries from shop orders (most recent delivered) ---
+  const recentDeliveredOrders = shopOrders
+    .filter((o: any) => (o.shop_order_lines || []).some((l: any) => (l.quantity_delivered || 0) > 0))
+    .slice(0, 5);
   const recentPurchases = incomingDeliveries.slice(0, 5);
 
   return (
@@ -177,22 +214,22 @@ export default function OrganisationOverview() {
       {/* KPI Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard
-          title="Total försäljning"
-          value={`${totalSales.toLocaleString("sv-SE")} kr`}
-          subtitle="Alla följesedlar"
+          title="Total försäljning (levererat)"
+          value={`${Math.round(totalSales).toLocaleString("sv-SE")} kr`}
+          subtitle={`${Math.round(totalOrderedValue).toLocaleString("sv-SE")} kr beställt totalt`}
           icon={DollarSign}
           trend={{ value: `${grossMargin}% bruttomarginal`, positive: Number(grossMargin) > 0 }}
         />
         <KpiCard
           title="Lagervärde (kostnad)"
-          value={`${totalInventoryValue.toLocaleString("sv-SE")} kr`}
-          subtitle={`${totalStock.toLocaleString("sv-SE")} kg i lager`}
+          value={`${Math.round(totalInventoryValue).toLocaleString("sv-SE")} kr`}
+          subtitle={`${Math.round(totalStock).toLocaleString("sv-SE")} kg · grossistvärde ${Math.round(totalInventoryWholesale).toLocaleString("sv-SE")} kr`}
           icon={Package}
         />
         <KpiCard
-          title="Totala inköp"
-          value={`${totalPurchases.toLocaleString("sv-SE")} kr`}
-          subtitle={`${incomingDeliveries.length} leveranser`}
+          title="Beställningar"
+          value={`${shopOrders.length} st`}
+          subtitle={`${incomingDeliveries.length} inkommande leveranser`}
           icon={Truck}
         />
         <KpiCard
@@ -305,19 +342,22 @@ export default function OrganisationOverview() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {recentDeliveries.length === 0 ? (
+            {recentDeliveredOrders.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-6">Inga leveranser ännu.</p>
             ) : (
               <div className="space-y-2">
-                {recentDeliveries.map((dn: any) => (
-                  <div key={dn.id} className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0">
-                    <div>
-                      <p className="text-xs font-medium text-foreground">{dn.stores?.name || "–"}</p>
-                      <p className="text-[10px] text-muted-foreground">{dn.note_number} · {dn.delivery_date}</p>
+                {recentDeliveredOrders.map((o: any) => {
+                  const orderSales = (o.shop_order_lines || []).reduce((s: number, l: any) => s + (l.quantity_delivered || 0) * (l.products?.wholesale_price || 0), 0);
+                  return (
+                    <div key={o.id} className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0">
+                      <div>
+                        <p className="text-xs font-medium text-foreground">{o.stores?.name || "–"}</p>
+                        <p className="text-[10px] text-muted-foreground">{o.order_week} · {o.desired_delivery_date || "–"}</p>
+                      </div>
+                      <span className="text-xs font-bold text-foreground">{Math.round(orderSales).toLocaleString("sv-SE")} kr</span>
                     </div>
-                    <span className="text-xs font-bold text-foreground">{(dn.total_amount || 0).toLocaleString("sv-SE")} kr</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
