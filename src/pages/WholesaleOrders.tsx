@@ -411,6 +411,7 @@ export default function WholesaleOrders() {
                           <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">PRODUKTER</th>
                           <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">ANTECKNING</th>
                           <th className="px-2.5 py-1 text-left font-medium text-muted-foreground min-w-[120px]">STATUS</th>
+                          <th className="px-2.5 py-1 text-right font-medium text-muted-foreground">ORDERVÄRDE</th>
                           <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">PACKARE</th>
                           <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">LEVERANSRAPPORT</th>
                           <th className="px-2.5 py-1 text-center font-medium text-muted-foreground">PACKSEDEL</th>
@@ -419,7 +420,7 @@ export default function WholesaleOrders() {
                     </thead>
                     <tbody>
                       {filteredOrders.length === 0 && (
-                         <tr><td colSpan={12} className="px-2.5 py-6 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
+                         <tr><td colSpan={13} className="px-2.5 py-6 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
                        )}
                        {filteredOrders.map((o: any) => (
                          <tr key={o.id} className="border-b border-border h-9 transition-colors cursor-pointer hover:bg-muted/30" onClick={() => setSelectedOrderId(o.id)}>
@@ -443,6 +444,9 @@ export default function WholesaleOrders() {
                                 )}
                               </SelectContent>
                             </Select>
+                          </td>
+                          <td className="px-2.5 py-1 text-right font-mono text-foreground text-[10px]">
+                            {(o.shop_order_lines || []).reduce((sum: number, l: any) => sum + (l.quantity_ordered || 0) * (l.products?.wholesale_price || 0), 0).toFixed(2)} kr
                           </td>
                           <td className="px-2.5 py-1 text-muted-foreground text-[10px]">{o.packer_name || "–"}</td>
                           <td className="px-2.5 py-1" onClick={e => e.stopPropagation()}>
@@ -606,7 +610,7 @@ export default function WholesaleOrders() {
 
       {/* Order detail dialog */}
       <Dialog open={!!selectedOrder} onOpenChange={open => { if (!open) setSelectedOrderId(null); }}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
           {selectedOrder && (
             <>
               <DialogHeader>
@@ -825,6 +829,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
               <th className="px-2 py-1 text-left font-medium text-muted-foreground">Produkt</th>
               <th className="px-2 py-1 text-left font-medium text-muted-foreground">Enhet</th>
               <th className="px-2 py-1 text-right font-medium text-muted-foreground">Beställt</th>
+              <th className="px-2 py-1 text-right font-medium text-muted-foreground">Värde (kr)</th>
               <th className="px-2 py-1 text-right font-medium text-muted-foreground">Lager</th>
               <th className="px-2 py-1 text-right font-medium text-muted-foreground">Levererat</th>
               <th className="px-2 py-1 text-left font-medium text-muted-foreground">Avvikelse</th>
@@ -836,6 +841,8 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
             {order.shop_order_lines?.map((line: any) => {
               const qtyOrdered = line.quantity_ordered || 0;
               const qtyDelivered = line.quantity_delivered || 0;
+              const wholesalePrice = line.products?.wholesale_price || 0;
+              const lineValue = qtyOrdered * wholesalePrice;
               const hasDiff = qtyDelivered > 0 && qtyDelivered !== qtyOrdered;
               const isUnavailable = line.status === "Ej tillgänglig";
               const stockQty = stockByProduct.get(line.product_id) || 0;
@@ -855,6 +862,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                   <td className="px-2 py-0.5 font-medium text-foreground">{line.products?.name || "–"}</td>
                   <td className="px-2 py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
                   <td className="px-2 py-0.5 text-right font-mono text-foreground">{qtyOrdered}</td>
+                  <td className="px-2 py-0.5 text-right font-mono text-foreground">{lineValue.toFixed(2)}</td>
                   <td className={`px-2 py-0.5 text-right font-mono ${stockQty >= qtyOrdered ? "text-success" : stockQty > 0 ? "text-warning" : "text-destructive"}`}>
                     {stockQty > 0 ? stockQty : "0"}
                   </td>
@@ -921,6 +929,23 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
           </tbody>
         </table>
       </div>
+
+      {/* Total order value */}
+      {(() => {
+        const totalValue = (order.shop_order_lines || []).reduce((sum: number, line: any) => {
+          const qty = line.quantity_ordered || 0;
+          const price = line.products?.wholesale_price || 0;
+          return sum + qty * price;
+        }, 0);
+        return (
+          <div className="flex justify-end mt-3 px-2">
+            <div className="bg-muted/40 rounded-md px-4 py-2 border border-border">
+              <span className="text-xs font-medium text-muted-foreground mr-3">Totalt Ordervärde:</span>
+              <span className="text-sm font-bold font-mono text-foreground">{totalValue.toFixed(2)} kr</span>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Alternative product dialog */}
       <Dialog open={!!altDialogLine} onOpenChange={(open) => { if (!open) setAltDialogLine(null); }}>
