@@ -803,47 +803,33 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                   </td>
                   <td className="px-2 py-0.5 text-muted-foreground">{line.deviation || "–"}</td>
                   <td className="px-2 py-0.5">
-                    {!isUnavailable ? (
-                      <div className="flex items-center gap-1">
-                        {prev && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-5 px-1 text-[10px] text-muted-foreground hover:text-foreground"
-                            disabled={updateLineStatus.isPending}
-                            onClick={() => updateLineStatus.mutate(
-                              { lineId: line.id, newStatus: prev, orderId: order.id },
-                              { onSuccess: () => toast({ title: `Status: ${prev}` }) }
-                            )}
-                          >
-                            ←
-                          </Button>
-                        )}
-                        <Badge variant="outline" className={`text-[10px] ${
-                          currentStatus === "Ej tillgänglig" ? "text-destructive border-destructive/20" :
-                          currentStatus === "Packad" || currentStatus === "Producerad" ? "text-success border-success/20" :
-                          currentStatus === "Skickad" ? "text-primary border-primary/20" :
-                          currentStatus === "Behandlas" ? "text-warning border-warning/20" :
-                          ""
-                        }`}>{currentStatus}</Badge>
-                        {next && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-5 px-1 text-[10px] text-muted-foreground hover:text-foreground"
-                            disabled={updateLineStatus.isPending}
-                            onClick={() => updateLineStatus.mutate(
-                              { lineId: line.id, newStatus: next, orderId: order.id },
-                              { onSuccess: () => toast({ title: `Status: ${next}` }) }
-                            )}
-                          >
-                            →
-                          </Button>
-                        )}
-                      </div>
-                    ) : (
-                      <Badge variant="outline" className="text-[10px] text-destructive border-destructive/20">Ej tillgänglig</Badge>
-                    )}
+                    <Select
+                      value={currentStatus}
+                      disabled={updateLineStatus.isPending}
+                      onValueChange={(val) => {
+                        if (val !== currentStatus) {
+                          updateLineStatus.mutate(
+                            { lineId: line.id, newStatus: val, orderId: order.id },
+                            { onSuccess: () => toast({ title: `Status: ${val}` }) }
+                          );
+                        }
+                      }}
+                    >
+                      <SelectTrigger className={`h-6 text-[10px] w-[110px] px-2 ${
+                        currentStatus === "Ej tillgänglig" ? "text-destructive border-destructive/20" :
+                        currentStatus === "Packad" || currentStatus === "Producerad" ? "text-success border-success/20" :
+                        currentStatus === "Skickad" ? "text-primary border-primary/20" :
+                        currentStatus === "Behandlas" ? "text-warning border-warning/20" :
+                        ""
+                      }`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[...STATUS_FLOW, "Ej tillgänglig"].map((s) => (
+                          <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </td>
                   <td className="px-2 py-0.5 text-center">
                     {!isUnavailable && (
