@@ -70,7 +70,7 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
         <div className="px-6 pb-2">
           <div ref={printRef}>
             {/* === PRINTED CONTENT START === */}
-            <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", fontSize: 11, color: "#111" }}>
+            <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", fontSize: 11, color: "#111", display: "flex", flexDirection: "column", minHeight: "1100px" }}>
 
               {/* Header */}
               <div style={{ textAlign: "center", borderBottom: "3px solid #111", paddingBottom: 10, marginBottom: 16 }}>
@@ -82,7 +82,6 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
 
               {/* Info grid — 2 columns */}
               <div style={{ display: "flex", gap: 24, marginBottom: 16 }}>
-                {/* Left column */}
                 <div style={{ flex: 1 }}>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <tbody>
@@ -101,7 +100,6 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
                     </tbody>
                   </table>
                 </div>
-                {/* Right column */}
                 <div style={{ flex: 1 }}>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <tbody>
@@ -122,48 +120,52 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
                 </div>
               </div>
 
-              {/* Product table */}
-              <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
-                <thead>
-                  <tr style={{ background: "#222", color: "#fff" }}>
-                    {["Produkt / Product", "Kategori", "HS-kod", "Beställt", "Packat", "Enhet"].map((h, i) => (
-                      <th key={h} style={{
-                        padding: "6px 5px",
-                        fontSize: 9,
-                        fontWeight: 700,
-                        textTransform: "uppercase",
-                        letterSpacing: 0.5,
-                        textAlign: i >= 3 ? "center" : "left",
-                        borderRight: i < 5 ? "1px solid #444" : "none",
-                      }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {lines.map((line: any, idx: number) => (
-                    <tr key={line.id} style={{ background: idx % 2 === 0 ? "#fff" : "#f7f7f7" }}>
-                      <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 11, fontWeight: 500 }}>
-                        {line.products?.name || "—"}
-                      </td>
-                      <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 10, color: "#555" }}>
-                        {line.products?.category || "—"}
-                      </td>
-                      <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 10, color: "#555" }}>
-                        {line.products?.hs_code || ""}
-                      </td>
-                      <td style={{ padding: "5px", borderBottom: "1px solid #ddd", textAlign: "center", fontVariantNumeric: "tabular-nums", fontSize: 11 }}>
-                        {line.quantity_ordered}
-                      </td>
-                      <td style={{ padding: "5px", borderBottom: "1px solid #ddd", textAlign: "center", minWidth: 50 }}>
-                        {/* Empty — to be filled by hand */}
-                      </td>
-                      <td style={{ padding: "5px", borderBottom: "1px solid #ddd", textAlign: "center", fontSize: 10 }}>
-                        {line.unit || line.products?.unit || "kg"}
-                      </td>
+              {/* Product table — flex-grow to fill A4 space */}
+              <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
+                  <thead>
+                    <tr style={{ background: "#222", color: "#fff" }}>
+                      {["Produkt / Product", "Kategori", "HS-kod", "Beställt", "Packat", "Enhet"].map((h, i) => (
+                        <th key={h} style={{
+                          padding: "6px 5px",
+                          fontSize: 9,
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                          letterSpacing: 0.5,
+                          textAlign: i >= 3 ? "center" : "left",
+                          borderRight: i < 5 ? "1px solid #444" : "none",
+                        }}>{h}</th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {lines.map((line: any, idx: number) => (
+                      <tr key={line.id} style={{ background: idx % 2 === 0 ? "#fff" : "#f7f7f7" }}>
+                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 11, fontWeight: 500 }}>
+                          {line.products?.name || "—"}
+                        </td>
+                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 10, color: "#555" }}>
+                          {line.products?.category || "—"}
+                        </td>
+                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 10, color: "#555" }}>
+                          {line.products?.hs_code || ""}
+                        </td>
+                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", textAlign: "center", fontVariantNumeric: "tabular-nums", fontSize: 11 }}>
+                          {line.quantity_ordered}
+                        </td>
+                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", textAlign: "center", minWidth: 50 }}>
+                          {/* Empty — to be filled by hand */}
+                        </td>
+                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", textAlign: "center", fontSize: 10 }}>
+                          {line.unit || line.products?.unit || "kg"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {/* Spacer — fills remaining space between products and totals */}
+                <div style={{ flex: 1, borderLeft: "1px solid #ddd", borderRight: "1px solid #ddd", borderBottom: "1px solid #ddd", minHeight: 20 }}></div>
+              </div>
 
               {/* Totals */}
               <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
@@ -183,7 +185,6 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
                   </tbody>
                 </table>
               </div>
-
 
               {/* Notes */}
               {order.notes && (
