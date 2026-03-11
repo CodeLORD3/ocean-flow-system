@@ -5,14 +5,16 @@ import { moveStockToTransport } from "@/lib/stockTransfer";
 const STATUS_FLOW = ["Ny", "Pågående", "Packad", "Skickad"] as const;
 
 /**
- * When a line moves to "Packad", transfer the ordered quantity
+ * When a line moves to "Packad", transfer only the DELTA quantity
  * from "Grossist Flytande" to the store's "Pre-" location.
+ * deltaQty > 0 means move TO pre-location, < 0 means move back.
  */
-async function transferToPreLocation(lineId: string, orderId: string) {
-  // Get the order line (product + qty) and the order's store
+async function transferDeltaToPreLocation(lineId: string, orderId: string, deltaQty: number) {
+  if (deltaQty === 0) return;
+
   const { data: line } = await supabase
     .from("shop_order_lines")
-    .select("product_id, quantity_ordered, quantity_delivered")
+    .select("product_id")
     .eq("id", lineId)
     .single();
   if (!line) return;
@@ -42,142 +44,93 @@ async function transferToPreLocation(lineId: string, orderId: string) {
   const preLoc = preLocs?.[0];
   if (!preLoc) return;
 
-  const qty = Number(line.quantity_delivered || line.quantity_ordered);
+  const absDelta = Math.abs(deltaQty);
 
-  // Deduct from Grossist Flytande
-  const { data: srcStock } = await supabase
-    .from("product_stock_locations")
-    .select("id, quantity")
-    .eq("product_id", line.product_id)
-    .eq("location_id", gfLoc.id)
-    .single();
-
-  if (srcStock) {
-    const newSrcQty = Math.max(0, Number(srcStock.quantity) - qty);
-    await supabase
+  if (deltaQty > 0) {
+    // Move FROM Grossist Flytande TO Pre-location
+    const { data: srcStock } = await supabase
       .from("product_stock_locations")
-      .update({ quantity: newSrcQty, updated_at: new Date().toISOString() })
-      .eq("id", srcStock.id);
-  }
+      .select("id, quantity")
+      .eq("product_id", line.product_id)
+      .eq("location_id", gfLoc.id)
+      .single();
+    if (srcStock) {
+      await supabase
+        .from("product_stock_locations")
+        .update({ quantity: Math.max(0, Number(srcStock.quantity) - absDelta), updated_at: new Date().toISOString() })
+        .eq("id", srcStock.id);
+    }
 
-  // Upsert into Pre- location
-  const { data: destStock } = await supabase
-    .from("product_stock_locations")
-    .select("id, quantity")
-    .eq("product_id", line.product_id)
-    .eq("location_id", preLoc.id)
-    .maybeSingle();
-
-  if (destStock) {
-    await supabase
+    const { data: destStock } = await supabase
       .from("product_stock_locations")
-      .update({
-        quantity: Number(destStock.quantity) + qty,
+      .select("id, quantity")
+      .eq("product_id", line.product_id)
+      .eq("location_id", preLoc.id)
+      .maybeSingle();
+    if (destStock) {
+      await supabase
+        .from("product_stock_locations")
+        .update({ quantity: Number(destStock.quantity) + absDelta, updated_at: new Date().toISOString() })
+        .eq("id", destStock.id);
+    } else {
+      await supabase.from("product_stock_locations").insert({
+        product_id: line.product_id,
+        location_id: preLoc.id,
+        quantity: absDelta,
         updated_at: new Date().toISOString(),
-      })
-      .eq("id", destStock.id);
+      });
+    }
   } else {
-    await supabase.from("product_stock_locations").insert({
-      product_id: line.product_id,
-      location_id: preLoc.id,
-      quantity: qty,
-      updated_at: new Date().toISOString(),
-    });
+    // Move FROM Pre-location BACK TO Grossist Flytande
+    const { data: preStock } = await supabase
+      .from("product_stock_locations")
+      .select("id, quantity")
+      .eq("product_id", line.product_id)
+      .eq("location_id", preLoc.id)
+      .single();
+    if (preStock) {
+      await supabase
+        .from("product_stock_locations")
+        .update({ quantity: Math.max(0, Number(preStock.quantity) - absDelta), updated_at: new Date().toISOString() })
+        .eq("id", preStock.id);
+    }
+
+    const { data: gfStock } = await supabase
+      .from("product_stock_locations")
+      .select("id, quantity")
+      .eq("product_id", line.product_id)
+      .eq("location_id", gfLoc.id)
+      .maybeSingle();
+    if (gfStock) {
+      await supabase
+        .from("product_stock_locations")
+        .update({ quantity: Number(gfStock.quantity) + absDelta, updated_at: new Date().toISOString() })
+        .eq("id", gfStock.id);
+    } else {
+      await supabase.from("product_stock_locations").insert({
+        product_id: line.product_id,
+        location_id: gfLoc.id,
+        quantity: absDelta,
+        updated_at: new Date().toISOString(),
+      });
+    }
   }
 }
 
-/**
- * When a line moves FROM "Packad" back to "Pågående", reverse the transfer:
- * move quantity from the store's "Pre-" location back to "Grossist Flytande".
- */
-async function transferFromPreLocationBack(lineId: string, orderId: string) {
-  const { data: line } = await supabase
-    .from("shop_order_lines")
-    .select("product_id, quantity_ordered, quantity_delivered")
-    .eq("id", lineId)
-    .single();
-  if (!line) return;
-
-  const { data: order } = await supabase
-    .from("shop_orders")
-    .select("store_id")
-    .eq("id", orderId)
-    .single();
-  if (!order?.store_id) return;
-
-  // Find "Grossist Flytande" location
-  const { data: gfLoc } = await supabase
-    .from("storage_locations")
-    .select("id")
-    .ilike("name", "Grossist Flytande")
-    .single();
-  if (!gfLoc) return;
-
-  // Find the Pre- location for this store
-  const { data: preLocs } = await supabase
-    .from("storage_locations")
-    .select("id, name")
-    .eq("store_id", order.store_id)
-    .ilike("name", "Pre-%")
-    .limit(1);
-  const preLoc = preLocs?.[0];
-  if (!preLoc) return;
-
-  const qty = Number(line.quantity_delivered || line.quantity_ordered);
-
-  // Deduct from Pre- location
-  const { data: preStock } = await supabase
-    .from("product_stock_locations")
-    .select("id, quantity")
-    .eq("product_id", line.product_id)
-    .eq("location_id", preLoc.id)
-    .single();
-
-  if (preStock) {
-    const newPreQty = Math.max(0, Number(preStock.quantity) - qty);
-    await supabase
-      .from("product_stock_locations")
-      .update({ quantity: newPreQty, updated_at: new Date().toISOString() })
-      .eq("id", preStock.id);
-  }
-
-  // Add back to Grossist Flytande
-  const { data: gfStock } = await supabase
-    .from("product_stock_locations")
-    .select("id, quantity")
-    .eq("product_id", line.product_id)
-    .eq("location_id", gfLoc.id)
-    .maybeSingle();
-
-  if (gfStock) {
-    await supabase
-      .from("product_stock_locations")
-      .update({
-        quantity: Number(gfStock.quantity) + qty,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", gfStock.id);
-  } else {
-    await supabase.from("product_stock_locations").insert({
-      product_id: line.product_id,
-      location_id: gfLoc.id,
-      quantity: qty,
-      updated_at: new Date().toISOString(),
-    });
-  }
-}
+// transferFromPreLocationBack is now handled by transferDeltaToPreLocation with negative delta
 
 export function useUpdateOrderLineStatus() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (params: { lineId: string; newStatus: string; orderId: string }) => {
-      // Get current status before updating
+      // Get current status and quantity_delivered before updating
       const { data: currentLine } = await supabase
         .from("shop_order_lines")
-        .select("status")
+        .select("status, quantity_delivered, quantity_ordered")
         .eq("id", params.lineId)
         .single();
       const oldStatus = currentLine?.status || "";
+      const oldQtyDelivered = Number(currentLine?.quantity_delivered || 0);
 
       // Update line status
       const { error } = await supabase
@@ -186,14 +139,27 @@ export function useUpdateOrderLineStatus() {
         .eq("id", params.lineId);
       if (error) throw error;
 
-      // If moving to Packad, transfer stock from Grossist Flytande → Pre-location
+      // If moving to Packad, compute delta from previous quantity_delivered
       if (params.newStatus === "Packad") {
-        await transferToPreLocation(params.lineId, params.orderId);
+        // Re-read the new quantity_delivered (set by caller before this mutation)
+        const { data: updatedLine } = await supabase
+          .from("shop_order_lines")
+          .select("quantity_delivered, quantity_ordered")
+          .eq("id", params.lineId)
+          .single();
+        const newQtyDelivered = Number(updatedLine?.quantity_delivered || updatedLine?.quantity_ordered || 0);
+        
+        // If was already Packad, delta is the difference; if newly Packad, delta is full new amount
+        const previousPacked = oldStatus === "Packad" ? oldQtyDelivered : 0;
+        const delta = newQtyDelivered - previousPacked;
+        if (delta !== 0) {
+          await transferDeltaToPreLocation(params.lineId, params.orderId, delta);
+        }
       }
 
-      // If moving FROM Packad back to Pågående/Ny, reverse the transfer
+      // If moving FROM Packad back to Pågående/Ny, reverse the full previously packed amount
       if (oldStatus === "Packad" && (params.newStatus === "Pågående" || params.newStatus === "Ny")) {
-        await transferFromPreLocationBack(params.lineId, params.orderId);
+        await transferDeltaToPreLocation(params.lineId, params.orderId, -oldQtyDelivered);
       }
 
       // Recalculate parent order status
