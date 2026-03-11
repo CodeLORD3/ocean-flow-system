@@ -11,7 +11,7 @@ async function transferToPreLocation(lineId: string, orderId: string) {
   // Get the order line (product + qty) and the order's store
   const { data: line } = await supabase
     .from("shop_order_lines")
-    .select("product_id, quantity_ordered")
+    .select("product_id, quantity_ordered, quantity_delivered")
     .eq("id", lineId)
     .single();
   if (!line) return;
@@ -41,7 +41,7 @@ async function transferToPreLocation(lineId: string, orderId: string) {
   const preLoc = preLocs?.[0];
   if (!preLoc) return;
 
-  const qty = Number(line.quantity_ordered);
+  const qty = Number(line.quantity_delivered || line.quantity_ordered);
 
   // Deduct from Grossist Flytande
   const { data: srcStock } = await supabase
