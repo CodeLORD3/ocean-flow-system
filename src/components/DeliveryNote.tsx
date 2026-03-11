@@ -132,7 +132,7 @@ export default function DeliveryNote({ order, open, onOpenChange }: DeliveryNote
                     {["Produkt / Product", "Kategori", "HS-kod", "Beställt", "Packat", "Enhet", "Pris/enhet", "Radvärde"].map((h, i) => (
                       <th key={h} style={{
                         padding: "5px 4px",
-                        fontSize: 8,
+                        fontSize: 13,
                         fontWeight: 700,
                         textTransform: "uppercase",
                         letterSpacing: 0.5,
