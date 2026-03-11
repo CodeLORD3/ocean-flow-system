@@ -1049,6 +1049,7 @@ export type Database = {
           created_by: string | null
           desired_delivery_date: string | null
           id: string
+          invoice_status: string | null
           notes: string | null
           order_week: string
           packer_name: string | null
@@ -1061,6 +1062,7 @@ export type Database = {
           created_by?: string | null
           desired_delivery_date?: string | null
           id?: string
+          invoice_status?: string | null
           notes?: string | null
           order_week: string
           packer_name?: string | null
@@ -1073,6 +1075,7 @@ export type Database = {
           created_by?: string | null
           desired_delivery_date?: string | null
           id?: string
+          invoice_status?: string | null
           notes?: string | null
           order_week?: string
           packer_name?: string | null
