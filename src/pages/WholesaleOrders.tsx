@@ -27,24 +27,24 @@ import { useUpdateOrderLineStatus, STATUS_FLOW } from "@/hooks/useUpdateOrderLin
 import { useAllStockByLocation } from "@/hooks/useStorageLocations";
 
 const statusColor: Record<string, string> = {
-  Ny: "bg-primary/10 text-primary border-primary/20",
-  Behandlas: "bg-warning/15 text-warning border-warning/20",
-  Packad: "bg-accent/10 text-accent border-accent/20",
-  Skickad: "bg-success/15 text-success border-success/20",
+  Ny: "",
+  Pågående: "bg-warning/15 text-warning border-warning/20",
+  Packad: "bg-success/15 text-success border-success/20",
+  Skickad: "bg-primary/15 text-primary border-primary/20",
   Levererad: "bg-success/15 text-success border-success/20",
   Avbruten: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
 const statusIcon: Record<string, React.ReactNode> = {
   Ny: <Clock className="h-3 w-3" />,
-  Behandlas: <Clock className="h-3 w-3" />,
+  Pågående: <Clock className="h-3 w-3" />,
   Packad: <Package className="h-3 w-3" />,
   Skickad: <Truck className="h-3 w-3" />,
   Levererad: <CheckCircle2 className="h-3 w-3" />,
   Avbruten: <XCircle className="h-3 w-3" />,
 };
 
-const LINE_STATUSES = ["", "Behandlas", "Producerad", "Packad", "Skickad", "Ej tillgänglig"];
+const LINE_STATUSES = ["", "Pågående", "Producerad", "Packad", "Skickad", "Ej tillgänglig"];
 
 export default function WholesaleOrders() {
   const { toast } = useToast();
@@ -98,7 +98,7 @@ export default function WholesaleOrders() {
 
   const totalOrders = activeOrders.length;
   const newOrders = activeOrders.filter((o: any) => o.status === "Ny").length;
-  const inProgress = activeOrders.filter((o: any) => o.status === "Behandlas").length;
+  const inProgress = activeOrders.filter((o: any) => o.status === "Pågående").length;
 
   // Aggregated total view: group all order lines by product
   const aggregated = useMemo(() => {
@@ -187,7 +187,7 @@ export default function WholesaleOrders() {
           .from("shop_order_lines")
           .update({ status: "Skickad" })
           .eq("shop_order_id", orderId)
-          .in("status", ["Packad", "Behandlas", "Ny", ""]);
+          .in("status", ["Packad", "Pågående", "Ny", ""]);
       } catch (err) {
         console.error("Stock transfer error:", err);
       }
@@ -356,7 +356,7 @@ export default function WholesaleOrders() {
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="h-8 text-xs w-36"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {["Alla", "Ny", "Behandlas", "Packad", "Skickad", "Levererad", "Avbruten"].map(s =>
+                  {["Alla", "Ny", "Pågående", "Packad", "Skickad", "Levererad", "Avbruten"].map(s =>
                     <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
                   )}
                 </SelectContent>
@@ -403,7 +403,7 @@ export default function WholesaleOrders() {
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                {["Ny", "Behandlas", "Packad", "Skickad", "Levererad", "Avbruten"].map(s =>
+                                {["Ny", "Pågående", "Packad", "Skickad", "Levererad", "Avbruten"].map(s =>
                                   <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
                                 )}
                               </SelectContent>
@@ -782,14 +782,14 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
               const currentStatus = line.status || "Ny";
               const idx = STATUS_FLOW.indexOf(currentStatus as any);
               const prev = idx > 0 ? STATUS_FLOW[idx - 1] : null;
-              const next = idx === -1 ? "Behandlas" : (idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null);
+              const next = idx === -1 ? "Pågående" : (idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null);
 
               return (
                 <tr key={line.id} className={`border-b border-border/30 h-7 transition-colors ${
                   isUnavailable ? "opacity-50 bg-destructive/5" :
                   currentStatus === "Skickad" ? "bg-primary/10" :
                   currentStatus === "Packad" || currentStatus === "Producerad" ? "bg-success/10" :
-                  currentStatus === "Behandlas" ? "bg-warning/10" :
+                  currentStatus === "Pågående" ? "bg-warning/10" :
                   ""
                 }`}>
                   <td className="px-2 py-0.5 font-medium text-foreground">{line.products?.name || "–"}</td>
@@ -819,7 +819,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                         currentStatus === "Ej tillgänglig" ? "text-destructive border-destructive/20" :
                         currentStatus === "Packad" || currentStatus === "Producerad" ? "text-success border-success/20" :
                         currentStatus === "Skickad" ? "text-primary border-primary/20" :
-                        currentStatus === "Behandlas" ? "text-warning border-warning/20" :
+                        currentStatus === "Pågående" ? "text-warning border-warning/20" :
                         ""
                       }`}>
                         <SelectValue />

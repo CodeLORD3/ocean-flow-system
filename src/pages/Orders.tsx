@@ -25,8 +25,8 @@ import { toast } from "sonner";
 const statusColor: Record<string, string> = {
   "": "bg-muted text-muted-foreground border-border",
   Ny: "bg-muted text-muted-foreground border-border",
-  Behandlas: "bg-warning/15 text-warning border-warning/20",
-  Packad: "bg-accent/15 text-accent-foreground border-accent/20",
+  Pågående: "bg-warning/15 text-warning border-warning/20",
+  Packad: "bg-success/15 text-success border-success/20",
   Skickad: "bg-primary/10 text-primary border-primary/20",
   "Klar / Levererad": "bg-success/15 text-success border-success/20",
   Levererad: "bg-success/15 text-success border-success/20",
@@ -36,7 +36,7 @@ const statusColor: Record<string, string> = {
 const statusIcon: Record<string, React.ReactNode> = {
   "": <Clock className="h-3.5 w-3.5" />,
   Ny: <Clock className="h-3.5 w-3.5" />,
-  Behandlas: <Clock className="h-3.5 w-3.5" />,
+  Pågående: <Clock className="h-3.5 w-3.5" />,
   Packad: <Package className="h-3.5 w-3.5" />,
   Skickad: <Truck className="h-3.5 w-3.5" />,
   "Klar / Levererad": <CheckCircle2 className="h-3.5 w-3.5" />,
@@ -46,7 +46,7 @@ const statusIcon: Record<string, React.ReactNode> = {
 
 function getNextStatus(current: string): string | null {
   const idx = STATUS_FLOW.indexOf(current as any);
-  if (idx === -1) return "Behandlas"; // from empty/Ny
+  if (idx === -1) return "Pågående"; // from empty/Ny
   if (idx < STATUS_FLOW.length - 1) return STATUS_FLOW[idx + 1];
   return null;
 }
@@ -81,7 +81,7 @@ export default function Orders() {
   }, []);
 
   const storeOptions = ["Alla butiker", ...stores.map((s: any) => s.name)];
-  const statusOptions = ["Alla", "Ny", "Behandlas", "Packad", "Skickad", "Klar / Levererad"];
+  const statusOptions = ["Alla", "Ny", "Pågående", "Packad", "Skickad", "Klar / Levererad"];
 
   const filtered = orders.filter((o: any) => {
     const storeName = o.stores?.name || "";
@@ -95,7 +95,7 @@ export default function Orders() {
   });
 
   const totalOrders = orders.length;
-  const pending = orders.filter((o: any) => o.status === "Behandlas").length;
+  const pending = orders.filter((o: any) => o.status === "Pågående").length;
   const packed = orders.filter((o: any) => o.status === "Packad").length;
   const delivered = orders.filter((o: any) => o.status === "Klar / Levererad" || o.status === "Levererad").length;
 
@@ -129,7 +129,7 @@ export default function Orders() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "Behandlas", count: pending, icon: Clock, color: "text-warning" },
+          { label: "Pågående", count: pending, icon: Clock, color: "text-warning" },
           { label: "Packade", count: packed, icon: Package, color: "text-accent-foreground" },
           { label: "Levererade", count: delivered, icon: CheckCircle2, color: "text-success" },
           { label: "Totalt", count: totalOrders, icon: ShoppingCart, color: "text-foreground" },

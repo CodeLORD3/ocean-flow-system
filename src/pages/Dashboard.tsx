@@ -29,11 +29,11 @@ const container = { hidden: {}, show: { transition: { staggerChildren: 0.04 } } 
 const fadeUp = { hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.25 } } };
 
 const statusColor: Record<string, string> = {
-  Ny: "bg-primary/10 text-primary border-primary/20",
-  Behandlas: "bg-warning/15 text-warning border-warning/20",
-  Skickad: "bg-accent/15 text-accent border-accent/20",
+  Ny: "",
+  Pågående: "bg-warning/15 text-warning border-warning/20",
+  Skickad: "bg-primary/15 text-primary border-primary/20",
   Levererad: "bg-emerald-500/15 text-emerald-600 border-emerald-500/20",
-  Packad: "bg-emerald-500/15 text-emerald-600 border-emerald-500/20",
+  Packad: "bg-success/15 text-success border-success/20",
 };
 
 export default function Dashboard() {

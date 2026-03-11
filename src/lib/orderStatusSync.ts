@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 const GROSSIST_FLYTANDE_ID = "5da57ad6-f72c-4a84-9873-87174d194e10";
 
 /**
- * Legacy function — no longer auto-promotes to Behandlas.
+ * Legacy function — no longer auto-promotes to Pågående.
  * Kept for API compatibility.
  */
 export async function markOrderLinesBehandlas(_productIds: string[]) {
@@ -11,7 +11,7 @@ export async function markOrderLinesBehandlas(_productIds: string[]) {
 }
 
 /**
- * Legacy function — no longer auto-promotes to Behandlas from Grossist Flytande stock.
+ * Legacy function — no longer auto-promotes to Pågående from Grossist Flytande stock.
  * Kept for API compatibility.
  */
 export async function syncBehandlasFromStock() {
@@ -19,7 +19,7 @@ export async function syncBehandlasFromStock() {
 }
 
 /**
- * Re-evaluates all "Packad" and "Behandlas" order lines against current stock.
+ * Re-evaluates all "Packad" and "Pågående" order lines against current stock.
  * If stock is insufficient (quantity < ordered), reverts them to "Ny".
  */
 export async function revertOrderLinesIfStockGone() {
@@ -89,7 +89,7 @@ export async function revertOrderLinesIfStockGone() {
       .in("id", linesToRevertFromPackad);
   }
 
-  // Reverted lines stay as "Ny" — no auto-promotion to Behandlas
+  // Reverted lines stay as "Ny" — no auto-promotion to Pågående
 
   // Update order statuses for orders that had lines reverted from Packad
   for (const orderId of affectedOrderIds) {
@@ -106,8 +106,8 @@ export async function revertOrderLinesIfStockGone() {
       newOrderStatus = "Klar / Levererad";
     } else if (statuses.every((s) => s === "Packad" || s === "Klar / Levererad")) {
       newOrderStatus = "Packad";
-    } else if (statuses.some((s) => s === "Behandlas" || s === "Packad" || s === "Klar / Levererad")) {
-      newOrderStatus = "Behandlas";
+    } else if (statuses.some((s) => s === "Pågående" || s === "Packad" || s === "Klar / Levererad")) {
+      newOrderStatus = "Pågående";
     }
 
     await supabase
@@ -148,22 +148,22 @@ export async function markOrderLinesPackad(productIds: string[], targetLocationI
     stockMap.set(s.product_id, (stockMap.get(s.product_id) || 0) + Number(s.quantity));
   }
 
-  // Find order lines for these products - prioritize "Behandlas" status for Pre-location packing
+  // Find order lines for these products - prioritize "Pågående" status for Pre-location packing
   const { data: orderLines } = await supabase
     .from("shop_order_lines")
     .select("id, status, shop_order_id, product_id, quantity_ordered, shop_orders!inner(store_id, priority, created_at)")
     .in("product_id", productIds)
     .eq("shop_orders.store_id", location.store_id)
-    .in("status", ["", "Ny", "Behandlas"])
+    .in("status", ["", "Ny", "Pågående"])
     .not("shop_orders.status", "in", '("Arkiverad","Klar / Levererad")');
 
   if (!orderLines?.length) return;
 
-  // Sort them: "Behandlas" first, then by priority, then by creation date
+  // Sort them: "Pågående" first, then by priority, then by creation date
   const sortedLines = [...orderLines].sort((a, b) => {
-    // Prioritize lines already "Behandlas" to upgrade them to "Packad"
-    if (a.status === "Behandlas" && b.status !== "Behandlas") return -1;
-    if (b.status === "Behandlas" && a.status !== "Behandlas") return 1;
+    // Prioritize lines already "Pågående" to upgrade them to "Packad"
+    if (a.status === "Pågående" && b.status !== "Pågående") return -1;
+    if (b.status === "Pågående" && a.status !== "Pågående") return 1;
     
     const aPriority = a.shop_orders.priority || 0;
     const bPriority = b.shop_orders.priority || 0;
@@ -206,8 +206,8 @@ export async function markOrderLinesPackad(productIds: string[], targetLocationI
       newOrderStatus = "Klar / Levererad";
     } else if (statuses.every((s) => s === "Packad" || s === "Klar / Levererad")) {
       newOrderStatus = "Packad";
-    } else if (statuses.some((s) => s === "Behandlas" || s === "Packad" || s === "Klar / Levererad")) {
-      newOrderStatus = "Behandlas";
+    } else if (statuses.some((s) => s === "Pågående" || s === "Packad" || s === "Klar / Levererad")) {
+      newOrderStatus = "Pågående";
     }
 
     await supabase.from("shop_orders").update({ status: newOrderStatus }).eq("id", orderId);

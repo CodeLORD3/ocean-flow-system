@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-const STATUS_FLOW = ["Ny", "Behandlas", "Packad", "Skickad"] as const;
+const STATUS_FLOW = ["Ny", "Pågående", "Packad", "Skickad"] as const;
 
 /**
  * When a line moves to "Packad", transfer the ordered quantity
@@ -117,8 +117,8 @@ export function useUpdateOrderLineStatus() {
         newOrderStatus = "Skickad";
       } else if (statuses.every((s) => s === "Packad" || s === "Skickad" || s === "Klar / Levererad")) {
         newOrderStatus = "Packad";
-      } else if (statuses.some((s) => s === "Behandlas" || s === "Packad" || s === "Skickad" || s === "Klar / Levererad")) {
-        newOrderStatus = "Behandlas";
+      } else if (statuses.some((s) => s === "Pågående" || s === "Packad" || s === "Skickad" || s === "Klar / Levererad")) {
+        newOrderStatus = "Pågående";
       }
 
       await supabase
