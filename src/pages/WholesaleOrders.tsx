@@ -719,6 +719,7 @@ export default function WholesaleOrders() {
 function WholesaleOrderDetail({ order, onClose }: { order: any; onClose: () => void }) {
   const { toast } = useToast();
   const createChange = useCreateChangeRequest();
+  const updateLineStatus = useUpdateOrderLineStatus();
   const { data: allProducts } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
