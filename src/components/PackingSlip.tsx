@@ -166,15 +166,13 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
                     {/* Empty rows to fill A4 space */}
                     {Array.from({ length: Math.max(0, 20 - lines.length) }).map((_, i) => (
                       <tr key={`empty-${i}`} style={{ background: (lines.length + i) % 2 === 0 ? "#fff" : "#f7f7f7" }}>
-                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", textAlign: "center", width: 28, height: 24 }}>
-                          <div style={{ width: 12, height: 12, border: "1.5px solid #555", borderRadius: 2, margin: "0 auto" }}></div>
-                        </td>
+                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", width: 28, height: 24 }}></td>
                         <td style={{ padding: "5px", borderBottom: "1px solid #ddd", height: 24 }}>&nbsp;</td>
                         <td style={{ padding: "5px", borderBottom: "1px solid #ddd" }}></td>
                         <td style={{ padding: "5px", borderBottom: "1px solid #ddd" }}></td>
-                        <td style={{ padding: 0, border: "2px solid #333", height: 24 }}></td>
-                        <td style={{ padding: 0, border: "2px solid #333", height: 24 }}></td>
-                        <td style={{ padding: 0, border: "2px solid #333", height: 24 }}></td>
+                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd" }}></td>
+                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd" }}></td>
+                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd" }}></td>
                       </tr>
                     ))}
                   </tbody>
