@@ -27,17 +27,17 @@ import { useUpdateOrderLineStatus, STATUS_FLOW } from "@/hooks/useUpdateOrderLin
 import { useAllStockByLocation } from "@/hooks/useStorageLocations";
 
 const statusColor: Record<string, string> = {
-  Ny: "bg-primary/10 text-primary border-primary/20",
-  Behandlas: "bg-warning/15 text-warning border-warning/20",
-  Packad: "bg-accent/10 text-accent border-accent/20",
-  Skickad: "bg-success/15 text-success border-success/20",
+  Ny: "",
+  Pågående: "bg-warning/15 text-warning border-warning/20",
+  Packad: "bg-success/15 text-success border-success/20",
+  Skickad: "bg-primary/15 text-primary border-primary/20",
   Levererad: "bg-success/15 text-success border-success/20",
   Avbruten: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
 const statusIcon: Record<string, React.ReactNode> = {
   Ny: <Clock className="h-3 w-3" />,
-  Behandlas: <Clock className="h-3 w-3" />,
+  Pågående: <Clock className="h-3 w-3" />,
   Packad: <Package className="h-3 w-3" />,
   Skickad: <Truck className="h-3 w-3" />,
   Levererad: <CheckCircle2 className="h-3 w-3" />,
