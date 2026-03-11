@@ -782,7 +782,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
               const currentStatus = line.status || "Ny";
               const idx = STATUS_FLOW.indexOf(currentStatus as any);
               const prev = idx > 0 ? STATUS_FLOW[idx - 1] : null;
-              const next = idx === -1 ? "Behandlas" : (idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null);
+              const next = idx === -1 ? "Pågående" : (idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null);
 
               return (
                 <tr key={line.id} className={`border-b border-border/30 h-7 transition-colors ${
