@@ -214,22 +214,22 @@ export default function OrganisationOverview() {
       {/* KPI Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard
-          title="Total försäljning"
-          value={`${totalSales.toLocaleString("sv-SE")} kr`}
-          subtitle="Alla följesedlar"
+          title="Total försäljning (levererat)"
+          value={`${Math.round(totalSales).toLocaleString("sv-SE")} kr`}
+          subtitle={`${Math.round(totalOrderedValue).toLocaleString("sv-SE")} kr beställt totalt`}
           icon={DollarSign}
           trend={{ value: `${grossMargin}% bruttomarginal`, positive: Number(grossMargin) > 0 }}
         />
         <KpiCard
           title="Lagervärde (kostnad)"
-          value={`${totalInventoryValue.toLocaleString("sv-SE")} kr`}
-          subtitle={`${totalStock.toLocaleString("sv-SE")} kg i lager`}
+          value={`${Math.round(totalInventoryValue).toLocaleString("sv-SE")} kr`}
+          subtitle={`${Math.round(totalStock).toLocaleString("sv-SE")} kg · grossistvärde ${Math.round(totalInventoryWholesale).toLocaleString("sv-SE")} kr`}
           icon={Package}
         />
         <KpiCard
-          title="Totala inköp"
-          value={`${totalPurchases.toLocaleString("sv-SE")} kr`}
-          subtitle={`${incomingDeliveries.length} leveranser`}
+          title="Beställningar"
+          value={`${shopOrders.length} st`}
+          subtitle={`${incomingDeliveries.length} inkommande leveranser`}
           icon={Truck}
         />
         <KpiCard
