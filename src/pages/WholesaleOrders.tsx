@@ -709,6 +709,30 @@ export default function WholesaleOrders() {
         </DialogContent>
       </Dialog>
 
+      {/* Packer name dialog */}
+      <Dialog open={packerDialogOpen} onOpenChange={(open) => { if (!open) { setPackerDialogOpen(false); setPendingPackerOrderId(null); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-sm">Vem packar ordern?</DialogTitle>
+            <DialogDescription className="text-xs">
+              Ange namnet på personen som packar denna order.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            placeholder="Packarens namn..."
+            value={packerName}
+            onChange={(e) => setPackerName(e.target.value)}
+            className="text-sm"
+            autoFocus
+            onKeyDown={(e) => { if (e.key === "Enter" && packerName.trim()) handlePackerConfirm(); }}
+          />
+          <DialogFooter className="gap-2">
+            <Button variant="outline" size="sm" className="text-xs" onClick={() => { setPackerDialogOpen(false); setPendingPackerOrderId(null); }}>Avbryt</Button>
+            <Button size="sm" className="text-xs" disabled={!packerName.trim()} onClick={handlePackerConfirm}>Bekräfta</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Packing slip dialog */}
       <PackingSlip order={packingSlipOrder} open={!!packingSlipOrder} onOpenChange={(open) => { if (!open) setPackingSlipOrder(null); }} />
     </motion.div>
