@@ -169,6 +169,8 @@ export default function Receiving() {
       qc.invalidateQueries({ queryKey: ["delivery_receiving_reports"] });
       qc.invalidateQueries({ queryKey: ["shop_orders"] });
       qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
+      qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
+      qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
       setSelectedOrder(null);
     } catch (err: any) {
       toast({ title: "Fel", description: err.message, variant: "destructive" });
