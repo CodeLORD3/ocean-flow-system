@@ -606,7 +606,7 @@ export default function WholesaleOrders() {
 
       {/* Order detail dialog */}
       <Dialog open={!!selectedOrder} onOpenChange={open => { if (!open) setSelectedOrderId(null); }}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
           {selectedOrder && (
             <>
               <DialogHeader>
