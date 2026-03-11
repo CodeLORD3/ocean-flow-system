@@ -449,7 +449,7 @@ export default function Inventory() {
 
   // Group locations by store for grossist portals
   const groupedByStore = useMemo(() => {
-    if (site !== "purchasing" && site !== "production" && site !== "wholesale") return [];
+    if (site !== "production" && site !== "wholesale") return [];
 
     const generalNames = ["Grossist Flytande", "Transportlager"];
     const storeGroups = new Map<string, { storeName: string; locations: typeof stockByLocation; totalQty: number; totalValue: number }>();
