@@ -764,6 +764,7 @@ export default function WholesaleOrders() {
 
       {/* Packing slip dialog */}
       <PackingSlip order={packingSlipOrder} open={!!packingSlipOrder} onOpenChange={(open) => { if (!open) setPackingSlipOrder(null); }} />
+      <DeliveryNote order={deliveryNoteOrder} open={!!deliveryNoteOrder} onOpenChange={(open) => { if (!open) setDeliveryNoteOrder(null); }} />
     </motion.div>
   );
 }
