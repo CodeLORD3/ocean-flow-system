@@ -492,7 +492,6 @@ export default function Inventory() {
     return result;
   }, [stockByLocation, stores, site]);
 
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const toggleGroup = (name: string) => {
     setExpandedGroups(prev => {
       const next = new Set(prev);
