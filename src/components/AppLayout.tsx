@@ -179,7 +179,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="flex items-center gap-2">
               <h1 className="font-heading text-sm font-semibold text-foreground">{page.title}</h1>
               <Badge variant="outline" className="text-[9px] h-4">
-                {site === "shop" ? (activeStoreName || "Butik") : site === "production" ? "Produktion" : site === "purchasing" ? "Inköp" : "Grossist"}
+                {site === "shop" ? (activeStoreName || "Butik") : site === "production" ? "Produktion" : "Grossist"}
               </Badge>
             </div>
             <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
