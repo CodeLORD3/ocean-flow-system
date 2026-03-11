@@ -36,10 +36,10 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
           <title>Packsedel — ${storeName} — ${order.order_week}</title>
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; color: #111; font-size: 11px; }
+            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 0; color: #111; font-size: 10px; }
             @media print {
-              body { padding: 0; }
-              @page { margin: 12mm; size: A4; }
+              body { padding: 0; margin: 0; }
+              @page { margin: 18mm 16mm; size: A4; }
             }
           </style>
         </head>
@@ -68,7 +68,7 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
         <div className="px-6 pb-2">
           <div ref={printRef}>
             {/* === PRINTED CONTENT START === */}
-            <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", fontSize: 11, color: "#111", display: "flex", flexDirection: "column", minHeight: "1100px" }}>
+            <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", fontSize: 10, color: "#111", display: "flex", flexDirection: "column", minHeight: "920px", maxWidth: "700px", margin: "0 auto", padding: "0 8px" }}>
 
               {/* Header */}
               <div style={{ textAlign: "center", borderBottom: "3px solid #111", paddingBottom: 10, marginBottom: 16 }}>
@@ -125,8 +125,8 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
                     <tr style={{ background: "#222", color: "#fff" }}>
                       {["✓", "Produkt / Product", "Kategori", "HS-kod", "Beställt", "Packat", "Enhet"].map((h, i) => (
                         <th key={h} style={{
-                          padding: "6px 5px",
-                          fontSize: 13,
+                          padding: "5px 4px",
+                          fontSize: 9,
                           fontWeight: 700,
                           textTransform: "uppercase",
                           letterSpacing: 0.5,
@@ -143,22 +143,22 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
                         <td style={{ padding: "5px", borderBottom: "1px solid #ddd", textAlign: "center", width: 28 }}>
                           <div style={{ width: 12, height: 12, border: "1.5px solid #555", borderRadius: 2, margin: "0 auto" }}></div>
                         </td>
-                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 15, fontWeight: 500 }}>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", fontSize: 10, fontWeight: 500 }}>
                           {line.products?.name || "—"}
                         </td>
-                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 14, color: "#555" }}>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", fontSize: 9, color: "#555" }}>
                           {line.products?.category || "—"}
                         </td>
-                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 14, color: "#555" }}>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", fontSize: 9, color: "#555" }}>
                           {line.products?.hs_code || ""}
                         </td>
-                        <td style={{ padding: 0, borderBottom: "1px solid #ddd", textAlign: "center", border: "2px solid #333", fontVariantNumeric: "tabular-nums", fontSize: 15, minWidth: 40 }}>
+                        <td style={{ padding: 0, borderBottom: "1px solid #ddd", textAlign: "center", border: "2px solid #333", fontVariantNumeric: "tabular-nums", fontSize: 10, minWidth: 36 }}>
                           {line.quantity_ordered}
                         </td>
-                        <td style={{ padding: 0, borderBottom: "1px solid #ddd", textAlign: "center", border: "2px solid #333", fontSize: 15, minWidth: 40, minHeight: 22 }}>
+                        <td style={{ padding: 0, borderBottom: "1px solid #ddd", textAlign: "center", border: "2px solid #333", fontSize: 10, minWidth: 36, minHeight: 20 }}>
                           &nbsp;
                         </td>
-                        <td style={{ padding: 0, borderBottom: "1px solid #ddd", textAlign: "center", border: "2px solid #333", fontSize: 14, minWidth: 36 }}>
+                        <td style={{ padding: 0, borderBottom: "1px solid #ddd", textAlign: "center", border: "2px solid #333", fontSize: 9, minWidth: 32 }}>
                           {line.unit || line.products?.unit || "kg"}
                         </td>
                       </tr>
@@ -166,13 +166,13 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
                     {/* Empty rows to fill A4 space */}
                     {Array.from({ length: Math.max(0, 20 - lines.length) }).map((_, i) => (
                       <tr key={`empty-${i}`} style={{ background: (lines.length + i) % 2 === 0 ? "#fff" : "#f7f7f7" }}>
-                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", width: 28, height: 24 }}></td>
-                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", height: 24 }}>&nbsp;</td>
-                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd" }}></td>
-                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd" }}></td>
-                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd" }}></td>
-                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd" }}></td>
-                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd" }}></td>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", width: 28, height: 20 }}></td>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", height: 20 }}>&nbsp;</td>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd" }}></td>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd" }}></td>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd" }}></td>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd" }}></td>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd" }}></td>
                       </tr>
                     ))}
                   </tbody>

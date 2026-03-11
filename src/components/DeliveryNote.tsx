@@ -47,10 +47,10 @@ export default function DeliveryNote({ order, open, onOpenChange }: DeliveryNote
           <title>Följesedel — ${storeName} — ${order.order_week}</title>
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; color: #111; font-size: 11px; }
+            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 0; color: #111; font-size: 10px; }
             @media print {
-              body { padding: 0; }
-              @page { margin: 12mm; size: A4; }
+              body { padding: 0; margin: 0; }
+              @page { margin: 18mm 16mm; size: A4; }
             }
           </style>
         </head>
@@ -74,7 +74,7 @@ export default function DeliveryNote({ order, open, onOpenChange }: DeliveryNote
 
         <div className="px-6 pb-2">
           <div ref={printRef}>
-            <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", fontSize: 11, color: "#111", display: "flex", flexDirection: "column", minHeight: "1100px" }}>
+            <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", fontSize: 10, color: "#111", display: "flex", flexDirection: "column", minHeight: "920px", maxWidth: "700px", margin: "0 auto", padding: "0 8px" }}>
 
               {/* Header */}
               <div style={{ textAlign: "center", borderBottom: "3px solid #111", paddingBottom: 10, marginBottom: 16 }}>
@@ -131,8 +131,8 @@ export default function DeliveryNote({ order, open, onOpenChange }: DeliveryNote
                   <tr style={{ background: "#222", color: "#fff" }}>
                     {["Produkt / Product", "Kategori", "HS-kod", "Beställt", "Packat", "Enhet", "Pris/enhet", "Radvärde"].map((h, i) => (
                       <th key={h} style={{
-                        padding: "6px 5px",
-                        fontSize: 9,
+                        padding: "5px 4px",
+                        fontSize: 8,
                         fontWeight: 700,
                         textTransform: "uppercase",
                         letterSpacing: 0.5,
@@ -149,28 +149,28 @@ export default function DeliveryNote({ order, open, onOpenChange }: DeliveryNote
                     const lineVal = packed * price;
                     return (
                       <tr key={line.id} style={{ background: idx % 2 === 0 ? "#fff" : "#f7f7f7" }}>
-                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 11, fontWeight: 500 }}>
+                       <td style={{ padding: "4px", borderBottom: "1px solid #ddd", fontSize: 10, fontWeight: 500 }}>
                           {line.products?.name || "—"}
                         </td>
-                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 10, color: "#555" }}>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", fontSize: 9, color: "#555" }}>
                           {line.products?.category || "—"}
                         </td>
-                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 10, color: "#555" }}>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", fontSize: 9, color: "#555" }}>
                           {line.products?.hs_code || ""}
                         </td>
-                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 11 }}>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 10 }}>
                           {line.quantity_ordered}
                         </td>
-                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 11, fontWeight: 600 }}>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 10, fontWeight: 600 }}>
                           {packed}
                         </td>
-                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", textAlign: "right", fontSize: 10 }}>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", textAlign: "right", fontSize: 9 }}>
                           {line.unit || line.products?.unit || "kg"}
                         </td>
-                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", textAlign: "right", fontSize: 10, fontVariantNumeric: "tabular-nums" }}>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", textAlign: "right", fontSize: 9, fontVariantNumeric: "tabular-nums" }}>
                           {price.toFixed(2)}
                         </td>
-                        <td style={{ padding: "5px", borderBottom: "1px solid #ddd", textAlign: "right", fontSize: 11, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", textAlign: "right", fontSize: 10, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
                           {lineVal.toFixed(2)}
                         </td>
                       </tr>
@@ -180,7 +180,7 @@ export default function DeliveryNote({ order, open, onOpenChange }: DeliveryNote
                     {Array.from({ length: Math.max(0, 20 - lines.length) }).map((_, i) => (
                       <tr key={`empty-${i}`} style={{ background: (lines.length + i) % 2 === 0 ? "#fff" : "#f7f7f7" }}>
                         {Array.from({ length: 8 }).map((_, ci) => (
-                          <td key={ci} style={{ padding: "5px", borderBottom: "1px solid #ddd", height: 24 }}>&nbsp;</td>
+                          <td key={ci} style={{ padding: "4px", borderBottom: "1px solid #ddd", height: 20 }}>&nbsp;</td>
                         ))}
                       </tr>
                     ))}
