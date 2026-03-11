@@ -810,13 +810,54 @@ function WholesaleOrderDetail({ order, onClose }: { order: any; onClose: () => v
                       <Badge variant="outline" className={`text-[10px] ${
                         line.status === "Ej tillgänglig" ? "text-destructive border-destructive/20" :
                         line.status === "Packad" || line.status === "Producerad" ? "text-success border-success/20" :
+                        line.status === "Skickad" ? "text-primary border-primary/20" :
+                        line.status === "Behandlas" ? "text-warning border-warning/20" :
                         ""
                       }`}>{line.status}</Badge>
-                    ) : <span className="text-muted-foreground/50">–</span>}
+                    ) : <Badge variant="outline" className="text-[10px] text-muted-foreground">Ny</Badge>}
                   </td>
                   <td className="p-2.5 text-center">
                     {!isUnavailable && (
-                      <div className="flex items-center justify-center gap-1">
+                      <div className="flex items-center justify-center gap-1 flex-wrap">
+                        {/* Status progression buttons */}
+                        {(() => {
+                          const currentStatus = line.status || "Ny";
+                          const idx = STATUS_FLOW.indexOf(currentStatus as any);
+                          const prev = idx > 0 ? STATUS_FLOW[idx - 1] : (idx === -1 && currentStatus !== "Ny" ? null : null);
+                          const next = idx === -1 ? "Behandlas" : (idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null);
+                          return (
+                            <>
+                              {prev && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 text-[10px] text-muted-foreground hover:text-foreground"
+                                  disabled={updateLineStatus.isPending}
+                                  onClick={() => updateLineStatus.mutate(
+                                    { lineId: line.id, newStatus: prev, orderId: order.id },
+                                    { onSuccess: () => toast({ title: `Status: ${prev}` }) }
+                                  )}
+                                >
+                                  ← {prev}
+                                </Button>
+                              )}
+                              {next && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-6 text-[10px] gap-1"
+                                  disabled={updateLineStatus.isPending}
+                                  onClick={() => updateLineStatus.mutate(
+                                    { lineId: line.id, newStatus: next, orderId: order.id },
+                                    { onSuccess: () => toast({ title: `Status: ${next}` }) }
+                                  )}
+                                >
+                                  {next} <ArrowRight className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </>
+                          );
+                        })()}
                         <Button
                           variant="outline"
                           size="sm"
@@ -824,7 +865,7 @@ function WholesaleOrderDetail({ order, onClose }: { order: any; onClose: () => v
                           onClick={() => handleMarkUnavailable(line)}
                           disabled={createChange.isPending}
                         >
-                          <Ban className="h-3 w-3" /> Ej tillgänglig
+                          <Ban className="h-3 w-3" /> Ej tillg.
                         </Button>
                         <Button
                           variant="outline"
@@ -833,7 +874,7 @@ function WholesaleOrderDetail({ order, onClose }: { order: any; onClose: () => v
                           onClick={() => { setAltDialogLine(line); setAltProductId(""); setAltSearch(""); }}
                           disabled={createChange.isPending}
                         >
-                          <Package className="h-3 w-3" /> Alternativ
+                          <Package className="h-3 w-3" /> Alt.
                         </Button>
                       </div>
                     )}
