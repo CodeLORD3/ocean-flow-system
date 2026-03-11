@@ -49,7 +49,7 @@ export default function Receiving() {
         .from("shop_orders")
         .select("*, stores(name), shop_order_lines(*, products(name, unit, category))")
         .eq("store_id", activeStoreId)
-        .in("status", ["Packad", "Skickad", "Ny", "Behandlas"])
+        .eq("status", "Skickad")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
