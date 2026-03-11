@@ -416,8 +416,8 @@ export default function Inventory() {
   // Filter locations by zone for purchasing/production portals
   // For grossist portals, include Pre-locations, general locations, AND shop Raw-lager
   const portalLocations = useMemo(() => {
-    if (site === "purchasing" || site === "production") {
-      // Both grossist portals see ALL Pre-locations, general locations, and shop Raw-lager
+    if (site === "purchasing" || site === "production" || site === "wholesale") {
+      // All grossist portals see ALL Pre-locations, general locations, and shop Raw-lager
       return locations.filter((loc: any) =>
         loc.zone === "Inköp" ||
         loc.zone === "Produktion" ||
