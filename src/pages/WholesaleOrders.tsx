@@ -926,6 +926,23 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
         </table>
       </div>
 
+      {/* Total order value */}
+      {(() => {
+        const totalValue = (order.shop_order_lines || []).reduce((sum: number, line: any) => {
+          const qty = line.quantity_ordered || 0;
+          const price = line.products?.wholesale_price || 0;
+          return sum + qty * price;
+        }, 0);
+        return (
+          <div className="flex justify-end mt-3 px-2">
+            <div className="bg-muted/40 rounded-md px-4 py-2 border border-border">
+              <span className="text-xs font-medium text-muted-foreground mr-3">Totalt Ordervärde:</span>
+              <span className="text-sm font-bold font-mono text-foreground">{totalValue.toFixed(2)} kr</span>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Alternative product dialog */}
       <Dialog open={!!altDialogLine} onOpenChange={(open) => { if (!open) setAltDialogLine(null); }}>
         <DialogContent className="max-w-md">
