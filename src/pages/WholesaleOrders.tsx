@@ -503,6 +503,7 @@ export default function WholesaleOrders() {
                             ) : (
                               <span className="text-[10px] text-muted-foreground/40">–</span>
                             )}
+                          </td>
                           <td className="px-2.5 py-1 text-center" onClick={e => e.stopPropagation()}>
                              <Button
                                variant="ghost"
