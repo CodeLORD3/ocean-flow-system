@@ -78,10 +78,10 @@ export default function DeliveryNote({ order, open, onOpenChange }: DeliveryNote
 
               {/* Header */}
               <div style={{ textAlign: "center", borderBottom: "3px solid #111", paddingBottom: 10, marginBottom: 16 }}>
-                <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase" }}>
+                <div style={{ fontSize: 23, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase" }}>
                   Följesedel / Delivery Note
                 </div>
-                <div style={{ fontSize: 10, color: "#666", marginTop: 2 }}>Grossist Leverans</div>
+                <div style={{ fontSize: 15, color: "#666", marginTop: 2 }}>Grossist Leverans</div>
               </div>
 
               {/* Info grid */}
