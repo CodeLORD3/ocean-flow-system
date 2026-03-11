@@ -569,7 +569,7 @@ export default function WholesaleOrders() {
       </Tabs>
 
       {/* Order detail dialog */}
-      <Dialog open={!!selectedOrder} onOpenChange={open => { if (!open) setSelectedOrder(null); }}>
+      <Dialog open={!!selectedOrder} onOpenChange={open => { if (!open) setSelectedOrderId(null); }}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           {selectedOrder && (
             <>
