@@ -922,7 +922,17 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                       }}
                     />
                   </td>
-                  <td className="px-2 py-0.5 text-muted-foreground">{line.deviation || "–"}</td>
+                  <td className="px-2 py-0.5 text-muted-foreground text-[10px]">
+                    {line.deviation ? (
+                      <span className="text-warning">{line.deviation}</span>
+                    ) : hasDiff ? (
+                      <span className="text-warning">
+                        {qtyDelivered > qtyOrdered
+                          ? `+${(qtyDelivered - qtyOrdered).toFixed(1)} ${line.unit || line.products?.unit || "kg"} mer`
+                          : `-${(qtyOrdered - qtyDelivered).toFixed(1)} ${line.unit || line.products?.unit || "kg"} mindre`}
+                      </span>
+                    ) : "–"}
+                  </td>
                   <td className="px-2 py-0.5">
                     <Select
                       value={currentStatus}
