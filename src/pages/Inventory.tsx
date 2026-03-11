@@ -399,11 +399,13 @@ export default function Inventory() {
   const expandAll = () => {
     setExpandedLocations(new Set(portalLocations.map((l: any) => l.id)));
     setExpandedCategories(new Set(stockByCategory.map(([cat]) => cat)));
+    setExpandedGroups(new Set(groupedByStore.map(g => g.storeName)));
   };
 
   const collapseAll = () => {
     setExpandedLocations(new Set());
     setExpandedCategories(new Set());
+    setExpandedGroups(new Set());
   };
 
   
