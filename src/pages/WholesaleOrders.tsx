@@ -214,7 +214,7 @@ export default function WholesaleOrders() {
     qc.invalidateQueries({ queryKey: ["shop_orders"] });
     qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
     setArchiveConfirmOrder(null);
-    if (selectedOrder?.id === orderId) setSelectedOrder(null);
+    if (selectedOrder?.id === orderId) setSelectedOrderId(null);
   };
 
   return (
