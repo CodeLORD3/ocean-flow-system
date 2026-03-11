@@ -1,0 +1,1 @@
+ALTER TABLE public.shop_orders ADD COLUMN packer_name text DEFAULT NULL;
