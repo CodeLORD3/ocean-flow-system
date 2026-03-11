@@ -213,7 +213,7 @@ export default function DeliveryNote({ order, open, onOpenChange }: DeliveryNote
                 {["Packad av / Packed By", "Chaufför / Driver", "Mottagen av / Received By"].map((label) => (
                   <div key={label} style={{ flex: 1, textAlign: "center" }}>
                     <div style={{ borderBottom: "1px solid #999", height: 36, marginBottom: 4 }}></div>
-                    <div style={{ fontSize: 9, color: "#666", fontWeight: 600, textTransform: "uppercase" }}>{label}</div>
+                    <div style={{ fontSize: 14, color: "#666", fontWeight: 600, textTransform: "uppercase" }}>{label}</div>
                   </div>
                 ))}
               </div>
