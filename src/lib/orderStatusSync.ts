@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 const GROSSIST_FLYTANDE_ID = "5da57ad6-f72c-4a84-9873-87174d194e10";
 
 /**
- * Legacy function — no longer auto-promotes to Behandlas.
+ * Legacy function — no longer auto-promotes to Pågående.
  * Kept for API compatibility.
  */
 export async function markOrderLinesBehandlas(_productIds: string[]) {
@@ -11,7 +11,7 @@ export async function markOrderLinesBehandlas(_productIds: string[]) {
 }
 
 /**
- * Legacy function — no longer auto-promotes to Behandlas from Grossist Flytande stock.
+ * Legacy function — no longer auto-promotes to Pågående from Grossist Flytande stock.
  * Kept for API compatibility.
  */
 export async function syncBehandlasFromStock() {
@@ -19,7 +19,7 @@ export async function syncBehandlasFromStock() {
 }
 
 /**
- * Re-evaluates all "Packad" and "Behandlas" order lines against current stock.
+ * Re-evaluates all "Packad" and "Pågående" order lines against current stock.
  * If stock is insufficient (quantity < ordered), reverts them to "Ny".
  */
 export async function revertOrderLinesIfStockGone() {
