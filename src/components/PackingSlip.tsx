@@ -154,20 +154,14 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
                         <td style={{ padding: "5px", borderBottom: "1px solid #ddd", fontSize: 10, color: "#555" }}>
                           {line.products?.hs_code || ""}
                         </td>
-                        <td style={{ padding: "4px 3px", borderBottom: "1px solid #ddd", textAlign: "center" }}>
-                          <div style={{ border: "1.5px solid #333", borderRadius: 2, padding: "3px 4px", minWidth: 36, fontSize: 11, fontVariantNumeric: "tabular-nums", textAlign: "center", background: "#fff" }}>
-                            {line.quantity_ordered}
-                          </div>
+                        <td style={{ padding: 0, borderBottom: "1px solid #ddd", textAlign: "center", border: "2px solid #333", fontVariantNumeric: "tabular-nums", fontSize: 11, minWidth: 40 }}>
+                          {line.quantity_ordered}
                         </td>
-                        <td style={{ padding: "4px 3px", borderBottom: "1px solid #ddd", textAlign: "center" }}>
-                          <div style={{ border: "1.5px solid #333", borderRadius: 2, padding: "3px 4px", minWidth: 36, minHeight: 22, fontSize: 11, textAlign: "center", background: "#fff" }}>
-                            &nbsp;
-                          </div>
+                        <td style={{ padding: 0, borderBottom: "1px solid #ddd", textAlign: "center", border: "2px solid #333", fontSize: 11, minWidth: 40, minHeight: 22 }}>
+                          &nbsp;
                         </td>
-                        <td style={{ padding: "4px 3px", borderBottom: "1px solid #ddd", textAlign: "center" }}>
-                          <div style={{ border: "1.5px solid #333", borderRadius: 2, padding: "3px 4px", minWidth: 32, fontSize: 10, textAlign: "center", background: "#fff" }}>
-                            {line.unit || line.products?.unit || "kg"}
-                          </div>
+                        <td style={{ padding: 0, borderBottom: "1px solid #ddd", textAlign: "center", border: "2px solid #333", fontSize: 10, minWidth: 36 }}>
+                          {line.unit || line.products?.unit || "kg"}
                         </td>
                       </tr>
                     ))}
