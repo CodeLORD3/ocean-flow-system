@@ -114,7 +114,7 @@ export default function Inventory() {
   const queryClient = useQueryClient();
   const storeFilter = activeStoreId || "all";
   // For grossist portals, load ALL locations (not filtered by store) so we can group by store
-  const isGrossist = site === "purchasing" || site === "production";
+  const isGrossist = site === "wholesale" || site === "production";
   const { data: locations = [], isLoading: loadingLoc } = useStorageLocations(isGrossist ? undefined : (storeFilter !== "all" ? storeFilter : undefined));
   const { data: allStock = [], isLoading: loadingStock } = useAllStockByLocation();
   const createLocation = useCreateStorageLocation();
@@ -418,11 +418,6 @@ export default function Inventory() {
   const portalLocations = useMemo(() => {
     const isPre = (loc: any) => (loc.name || "").toLowerCase().startsWith("pre-");
     const isShared = (loc: any) => loc.name === "Grossist Flytande" || loc.name === "Transportlager";
-    if (site === "purchasing") {
-      return locations.filter((loc: any) =>
-        loc.zone === "Inköp" || isPre(loc) || isShared(loc)
-      );
-    }
     if (site === "production") {
       return locations.filter((loc: any) =>
         loc.zone === "Produktion" || isPre(loc) || isShared(loc)
@@ -430,7 +425,7 @@ export default function Inventory() {
     }
     if (site === "wholesale") {
       return locations.filter((loc: any) =>
-        isPre(loc) || isShared(loc) || loc.name?.startsWith("Raw")
+        loc.zone === "Inköp" || isPre(loc) || isShared(loc) || loc.name?.startsWith("Raw")
       );
     }
     return locations;
@@ -454,7 +449,7 @@ export default function Inventory() {
 
   // Group locations by store for grossist portals
   const groupedByStore = useMemo(() => {
-    if (site !== "purchasing" && site !== "production" && site !== "wholesale") return [];
+    if (site !== "production" && site !== "wholesale") return [];
 
     const generalNames = ["Grossist Flytande", "Transportlager"];
     const storeGroups = new Map<string, { storeName: string; locations: typeof stockByLocation; totalQty: number; totalValue: number }>();
@@ -737,7 +732,7 @@ export default function Inventory() {
         </CardContent></Card>
       </div>
 
-      {(site === "purchasing" || site === "production" || site === "wholesale") ? (
+      {(site === "production" || site === "wholesale") ? (
         /* ── INKÖP/PRODUKTION PORTAL: Grouped by store ── */
         <Card className="shadow-card">
           <CardHeader className="pb-2">
@@ -1217,7 +1212,7 @@ export default function Inventory() {
                 const name = (l.name || "").toLowerCase();
                 const isGrossistFlytande = name.includes("grossist flytande");
                 const isPre = name.startsWith("pre-");
-                if (site === "purchasing") {
+                if (site === "wholesale") {
                   return isGrossistFlytande || isPre || l.zone === "Inköp";
                 }
                 if (site === "production") {
