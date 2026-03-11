@@ -208,15 +208,17 @@ export default function WholesaleOrders() {
         .in("status", ["", "Ny"]);
     }
 
-    // When marking as "Skickad", move stock from Pre-locations to Transportlager
-    if (newStatus === "Skickad") {
+    // When marking as "Skickad" or "Levererad", move stock from Pre-locations to Transportlager
+    if (newStatus === "Skickad" || newStatus === "Levererad") {
       try {
         await moveStockToTransport(orderId);
+        // Update all qualifying lines to "Skickad" (or "Klar / Levererad" if Levererad)
+        const lineTargetStatus = newStatus === "Levererad" ? "Klar / Levererad" : "Skickad";
         await supabase
           .from("shop_order_lines")
-          .update({ status: "Skickad" })
+          .update({ status: lineTargetStatus })
           .eq("shop_order_id", orderId)
-          .in("status", ["Packad", "Pågående", "Ny", ""]);
+          .in("status", ["Packad", "Pågående", "Ny", "", "Skickad"]);
       } catch (err) {
         console.error("Stock transfer error:", err);
       }

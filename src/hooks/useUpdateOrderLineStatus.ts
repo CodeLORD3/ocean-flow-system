@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { moveStockToTransport } from "@/lib/stockTransfer";
 
 const STATUS_FLOW = ["Ny", "Pågående", "Packad", "Skickad"] as const;
 
@@ -119,6 +120,15 @@ export function useUpdateOrderLineStatus() {
         newOrderStatus = "Packad";
       } else if (statuses.some((s) => s === "Pågående" || s === "Packad" || s === "Skickad" || s === "Klar / Levererad")) {
         newOrderStatus = "Pågående";
+      }
+
+      // If all lines are now "Skickad", trigger stock move to Transportlager
+      if (newOrderStatus === "Skickad") {
+        try {
+          await moveStockToTransport(params.orderId);
+        } catch (err) {
+          console.error("Stock transfer to transport error:", err);
+        }
       }
 
       await supabase
