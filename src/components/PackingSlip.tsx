@@ -68,7 +68,7 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
         <div className="px-6 pb-2">
           <div ref={printRef}>
             {/* === PRINTED CONTENT START === */}
-            <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", fontSize: 10, color: "#111", display: "flex", flexDirection: "column", minHeight: "920px", maxWidth: "700px", margin: "0 auto", padding: "0 8px" }}>
+            <div style={{ fontFamily: "'Segoe UI', Arial, sans-serif", fontSize: 15, color: "#111", display: "flex", flexDirection: "column", minHeight: "920px", maxWidth: "700px", margin: "0 auto", padding: "0 8px" }}>
 
               {/* Header */}
               <div style={{ textAlign: "center", borderBottom: "3px solid #111", paddingBottom: 10, marginBottom: 16 }}>
