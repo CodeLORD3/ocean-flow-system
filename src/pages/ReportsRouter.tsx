@@ -7,7 +7,7 @@ import { ChevronDown, ChevronRight, FileText, Factory } from "lucide-react";
 import { useState } from "react";
 
 function WholesaleReportsPage() {
-  const [purchaseOpen, setPurchaseOpen] = useState(true);
+  const [purchaseOpen, setPurchaseOpen] = useState(false);
   const [productionOpen, setProductionOpen] = useState(false);
 
   return (
