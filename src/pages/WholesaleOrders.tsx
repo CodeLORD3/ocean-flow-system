@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useAllPendingChangeRequests, useResolveChangeRequest, useCreateChangeRequest } from "@/hooks/useOrderChangeRequests";
 import PackingSlip from "@/components/PackingSlip";
+import DeliveryNote from "@/components/DeliveryNote";
 import { moveStockToTransport } from "@/lib/stockTransfer";
 import { useUpdateOrderLineStatus, STATUS_FLOW } from "@/hooks/useUpdateOrderLineStatus";
 import { useAllStockByLocation } from "@/hooks/useStorageLocations";
