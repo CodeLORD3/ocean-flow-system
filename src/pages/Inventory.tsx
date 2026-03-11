@@ -72,6 +72,7 @@ export default function Inventory() {
   const [stockDialogOpen, setStockDialogOpen] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set());
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   // Location form
   const [locName, setLocName] = useState("");
