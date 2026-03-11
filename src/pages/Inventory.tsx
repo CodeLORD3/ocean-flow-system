@@ -1404,8 +1404,8 @@ export default function Inventory() {
                   />
                   {transformNewWeight && Number(transformNewWeight) > 0 && Number(transformNewWeight) < Number(item.quantity) && (
                     <p className="text-[10px] text-muted-foreground">
-                      Svinn: {(Number(item.quantity) - Number(transformNewWeight)).toFixed(2)} {item.products?.unit || "kg"} 
-                      ({((1 - Number(transformNewWeight) / Number(item.quantity)) * 100).toFixed(1)}%)
+                      Svinn: {(Number(item.quantity) - Number(transformNewWeight)).toFixed(2)} {item.products?.unit || "kg"}{" "}
+                      {"("}{((1 - Number(transformNewWeight) / Number(item.quantity)) * 100).toFixed(1)}{"%)"}
                     </p>
                   )}
                 </div>
