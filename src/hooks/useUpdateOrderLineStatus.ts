@@ -11,7 +11,7 @@ async function transferToPreLocation(lineId: string, orderId: string) {
   // Get the order line (product + qty) and the order's store
   const { data: line } = await supabase
     .from("shop_order_lines")
-    .select("product_id, quantity_ordered")
+    .select("product_id, quantity_ordered, quantity_delivered")
     .eq("id", lineId)
     .single();
   if (!line) return;
