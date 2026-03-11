@@ -303,12 +303,14 @@ export default function ShopOrders() {
       return;
     }
 
+    const deliveryDateStr = format(desiredDeliveryDate, "yyyy-MM-dd");
     const lines = validLines.map(l => ({
       shop_order_id: order.id,
       product_id: l.product_id,
       quantity_ordered: Number(l.quantity),
       unit: l.unit,
       order_date: new Date().toISOString().slice(0, 10),
+      delivery_date: deliveryDateStr,
     }));
 
     const { error: lineError } = await supabase.from("shop_order_lines").insert(lines);
