@@ -89,10 +89,7 @@ export async function revertOrderLinesIfStockGone() {
       .in("id", linesToRevertFromPackad);
   }
 
-  // 3) Run syncBehandlasFromStock to re-allocate Grossist Flytande stock for ALL "Ny" and "Behandlas" lines
-  // This handles reverting "Behandlas" lines if Grossist Flytande stock dropped, 
-  // AND potentially promotes lines we just reverted from Packad to Behandlas if they still have Grossist Flytande stock.
-  await syncBehandlasFromStock(); 
+  // Reverted lines stay as "Ny" — no auto-promotion to Behandlas
 
   // Update order statuses for orders that had lines reverted from Packad
   for (const orderId of affectedOrderIds) {
