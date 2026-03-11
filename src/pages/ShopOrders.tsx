@@ -38,10 +38,10 @@ type OrderLine = {
 };
 
 const statusColor: Record<string, string> = {
-  Ny: "bg-primary/10 text-primary border-primary/20",
-  Behandlas: "bg-warning/15 text-warning border-warning/20",
-  Packad: "bg-accent/10 text-accent border-accent/20",
-  Skickad: "bg-success/15 text-success border-success/20",
+  Ny: "",
+  Pågående: "bg-warning/15 text-warning border-warning/20",
+  Packad: "bg-success/15 text-success border-success/20",
+  Skickad: "bg-primary/15 text-primary border-primary/20",
   Levererad: "bg-success/15 text-success border-success/20",
   Avbruten: "bg-destructive/10 text-destructive border-destructive/20",
   Arkiverad: "bg-muted text-muted-foreground border-border",
@@ -49,7 +49,7 @@ const statusColor: Record<string, string> = {
 
 const statusIcon: Record<string, React.ReactNode> = {
   Ny: <Clock className="h-3 w-3" />,
-  Behandlas: <Clock className="h-3 w-3" />,
+  Pågående: <Clock className="h-3 w-3" />,
   Packad: <Package className="h-3 w-3" />,
   Skickad: <Truck className="h-3 w-3" />,
   Levererad: <CheckCircle2 className="h-3 w-3" />,
@@ -60,7 +60,7 @@ const statusIcon: Record<string, React.ReactNode> = {
 const statusSegmentColor: Record<string, string> = {
   "": "transparent",
   "Ny": "transparent",
-  "Behandlas": "#fef3c7",
+  "Pågående": "#fef3c7",
   "Producerad": "#dbeafe",
   "Packad": "#d1fae5",
   "Skickad": "#bbf7d0",
@@ -73,7 +73,7 @@ const statusSegmentColor: Record<string, string> = {
 const rowBgByStatus: Record<string, string> = {
   "": "",
   "Ny": "",
-  "Behandlas": "bg-amber-50 dark:bg-amber-950/20",
+  "Pågående": "bg-amber-50 dark:bg-amber-950/20",
   "Producerad": "bg-blue-50 dark:bg-blue-950/20",
   "Packad": "bg-emerald-50 dark:bg-emerald-950/20",
   "Skickad": "bg-green-50 dark:bg-green-950/20",
@@ -98,7 +98,7 @@ function buildProgressGradient(lines: any[]): string {
   return `linear-gradient(to bottom, ${segments.join(", ")})`;
 }
 
-const LIVE_STATUSES = ["Ny", "Behandlas", "Packad", "Skickad"];
+const LIVE_STATUSES = ["Ny", "Pågående", "Packad", "Skickad"];
 const DONE_STATUSES = ["Levererad", "Arkiverad", "Avbruten"];
 
 function OrderTable({ orders, onSelect, emptyMsg }: { orders: any[]; onSelect: (o: any) => void; emptyMsg: string }) {
