@@ -383,11 +383,17 @@ export default function Receiving() {
                         <div className="flex items-center gap-1.5">
                           <Button
                             size="sm"
-                            variant={!isReported ? "default" : "outline"}
-                            className="h-6 text-[10px] gap-1 px-2"
-                            onClick={() => updateLineReport(line.id, "status", "Godkänd")}
+                            variant={report.confirmed && !isReported ? "default" : "outline"}
+                            className={`h-6 text-[10px] gap-1 px-2 ${report.confirmed && !isReported ? "bg-success hover:bg-success/90 text-success-foreground" : ""}`}
+                            onClick={() => {
+                              setLineReports(prev => ({
+                                ...prev,
+                                [line.id]: { ...prev[line.id], status: "Godkänd", confirmed: true, quantity_received: String(line.quantity_ordered) },
+                              }));
+                            }}
                           >
-                            <ThumbsUp className="h-2.5 w-2.5" /> OK
+                            {report.confirmed && !isReported ? <CheckCircle2 className="h-2.5 w-2.5" /> : <ThumbsUp className="h-2.5 w-2.5" />}
+                            {report.confirmed && !isReported ? "Godkänd" : "OK"}
                           </Button>
                           <Button
                             size="sm"
