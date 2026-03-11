@@ -416,17 +416,24 @@ export default function Inventory() {
   // Filter locations by zone for purchasing/production portals
   // For grossist portals, include Pre-locations, general locations, AND shop Raw-lager
   const portalLocations = useMemo(() => {
-    if (site === "purchasing" || site === "production") {
-      // Inköp & Produktion: Pre-locations, Transportlager, Grossist Flytande (NO Raw-lager)
+    if (site === "purchasing") {
+      // Inköp: only Pre-Inköp locations, Transportlager, Grossist Flytande
       return locations.filter((loc: any) =>
         loc.zone === "Inköp" ||
+        loc.name === "Grossist Flytande" ||
+        loc.name === "Transportlager"
+      );
+    }
+    if (site === "production") {
+      // Produktion: only Pre-Produktion locations, Transportlager, Grossist Flytande
+      return locations.filter((loc: any) =>
         loc.zone === "Produktion" ||
         loc.name === "Grossist Flytande" ||
         loc.name === "Transportlager"
       );
     }
     if (site === "wholesale") {
-      // Grossist: same as above PLUS Raw-lager for each shop
+      // Grossist: all Pre-locations + Raw-lager
       return locations.filter((loc: any) =>
         loc.zone === "Inköp" ||
         loc.zone === "Produktion" ||
