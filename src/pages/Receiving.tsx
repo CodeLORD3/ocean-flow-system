@@ -150,6 +150,13 @@ export default function Receiving() {
           .eq("id", lineId);
       }
 
+      // Move stock from Transportlager to shop's Raw-lager
+      try {
+        await moveStockToRawLager(selectedOrder.id, activeStoreId);
+      } catch (err) {
+        console.error("Stock transfer to Raw-lager error:", err);
+      }
+
       const hasIssues = Object.values(lineReports).some(r => r.status === "Rapporterad");
       toast({
         title: hasIssues ? "Inleverans rapporterad med avvikelser" : "Inleverans godkänd",
