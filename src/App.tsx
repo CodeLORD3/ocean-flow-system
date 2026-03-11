@@ -19,6 +19,7 @@ import Barcodes from "./pages/Barcodes";
 import Products from "./pages/Products";
 import OrganisationOverview from "./pages/OrganisationOverview";
 import PlaceholderPage from "./pages/PlaceholderPage";
+import Invoices from "./pages/Invoices";
 import PurchaseReporting from "./pages/PurchaseReporting";
 import Pricing from "./pages/Pricing";
 import ShopReports from "./pages/ShopReports";
@@ -47,7 +48,7 @@ const AppContent = () => {
             <Route path="/reports" element={<ReportsRouter />} />
             <Route path="/finance" element={<PlaceholderPage title="Ekonomi" />} />
             <Route path="/forecasts" element={<PlaceholderPage title="Prognoser" />} />
-            <Route path="/invoices" element={<PlaceholderPage title="Fakturor" />} />
+            <Route path="/invoices" element={<Invoices />} />
             <Route path="/purchase-reporting" element={<PurchaseReporting />} />
             <Route path="/receiving" element={<Receiving />} />
             <Route path="/products" element={<Products />} />
