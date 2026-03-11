@@ -44,7 +44,7 @@ const statusIcon: Record<string, React.ReactNode> = {
   Avbruten: <XCircle className="h-3 w-3" />,
 };
 
-const LINE_STATUSES = ["", "Behandlas", "Producerad", "Packad", "Skickad", "Ej tillgänglig"];
+const LINE_STATUSES = ["", "Pågående", "Producerad", "Packad", "Skickad", "Ej tillgänglig"];
 
 export default function WholesaleOrders() {
   const { toast } = useToast();
