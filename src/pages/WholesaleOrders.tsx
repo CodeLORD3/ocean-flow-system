@@ -870,8 +870,10 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
               const lineValue = (qtyDelivered || qtyOrdered) * wholesalePrice;
               const hasDiff = qtyDelivered > 0 && qtyDelivered !== qtyOrdered;
               const isUnavailable = line.status === "Ej tillgänglig";
-              const stockQty = stockByProduct.get(line.product_id) || 0;
               const currentStatus = line.status || "Ny";
+              const stockQty = stockByProduct.get(line.product_id) || 0;
+              const alreadyPacked = currentStatus === "Packad" ? qtyDelivered : 0;
+              const availableStock = stockQty + alreadyPacked;
               const idx = STATUS_FLOW.indexOf(currentStatus as any);
               const prev = idx > 0 ? STATUS_FLOW[idx - 1] : null;
               const next = idx === -1 ? "Pågående" : (idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null);
@@ -887,23 +889,23 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                   <td className="px-2 py-0.5 font-medium text-foreground">{line.products?.name || "–"}</td>
                   <td className="px-2 py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
                   <td className="px-2 py-0.5 text-right font-mono text-foreground">{qtyOrdered}</td>
-                  <td className={`px-2 py-0.5 text-right font-mono ${stockQty >= qtyOrdered ? "text-success" : stockQty > 0 ? "text-warning" : "text-destructive"}`}>
-                    {stockQty > 0 ? Number(stockQty.toFixed(1)) : "0"}
+                  <td className={`px-2 py-0.5 text-right font-mono ${availableStock >= qtyOrdered ? "text-success" : availableStock > 0 ? "text-warning" : "text-destructive"}`}>
+                    {availableStock > 0 ? Number(availableStock.toFixed(1)) : "0"}
                   </td>
                   <td className="px-2 py-0.5 text-right">
                     <input
                       type="number"
                       min={0}
-                      max={stockQty}
+                      max={availableStock}
                       defaultValue={qtyDelivered || ""}
                       placeholder="0"
                       className="w-16 h-6 text-right text-xs font-mono bg-background border border-border rounded px-1 focus:outline-none focus:ring-1 focus:ring-primary"
                       onKeyDown={async (e) => {
                         if (e.key === "Enter") {
                           const val = Number((e.target as HTMLInputElement).value);
-                          if (val > stockQty) {
-                            toast({ title: "Otillräckligt lager", description: `Max tillgängligt: ${stockQty}`, variant: "destructive" });
-                            (e.target as HTMLInputElement).value = String(stockQty);
+                          if (val > availableStock) {
+                            toast({ title: "Otillräckligt lager", description: `Max tillgängligt: ${Number(availableStock.toFixed(1))}`, variant: "destructive" });
+                            (e.target as HTMLInputElement).value = String(Number(availableStock.toFixed(1)));
                             return;
                           }
                           if (val > 0) {
