@@ -732,7 +732,7 @@ export default function Inventory() {
         </CardContent></Card>
       </div>
 
-      {(site === "purchasing" || site === "production" || site === "wholesale") ? (
+      {(site === "production" || site === "wholesale") ? (
         /* ── INKÖP/PRODUKTION PORTAL: Grouped by store ── */
         <Card className="shadow-card">
           <CardHeader className="pb-2">
