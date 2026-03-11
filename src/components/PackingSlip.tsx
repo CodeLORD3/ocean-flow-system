@@ -36,7 +36,7 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
           <title>Packsedel — ${storeName} — ${order.order_week}</title>
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 0; color: #111; font-size: 10px; }
+            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 0; color: #111; font-size: 15px; }
             @media print {
               body { padding: 0; margin: 0; }
               @page { margin: 18mm 16mm; size: A4; }
