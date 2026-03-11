@@ -158,7 +158,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                       <User className="h-3.5 w-3.5 text-primary" />
                     </div>
                     <span className="hidden sm:inline text-xs font-medium">
-                      {site === "shop" ? "Butikschef" : site === "production" ? "Produktionschef" : site === "purchasing" ? "Inköpschef" : "Admin"}
+                      {site === "shop" ? "Butikschef" : site === "production" ? "Produktionschef" : "Admin"}
                     </span>
                   </Button>
                 </DropdownMenuTrigger>
