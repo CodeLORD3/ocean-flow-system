@@ -61,6 +61,7 @@ export default function WholesaleOrders() {
   const [reportViewOrder, setReportViewOrder] = useState<any>(null);
   const [archiveConfirmOrder, setArchiveConfirmOrder] = useState<any>(null);
   const [packingSlipOrder, setPackingSlipOrder] = useState<any>(null);
+  const [deliveryNoteOrder, setDeliveryNoteOrder] = useState<any>(null);
   // Packer name dialog state
   const [packerDialogOpen, setPackerDialogOpen] = useState(false);
   const [packerName, setPackerName] = useState("");
