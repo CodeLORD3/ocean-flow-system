@@ -1212,7 +1212,7 @@ export default function Inventory() {
                 const name = (l.name || "").toLowerCase();
                 const isGrossistFlytande = name.includes("grossist flytande");
                 const isPre = name.startsWith("pre-");
-                if (site === "purchasing") {
+                if (site === "wholesale") {
                   return isGrossistFlytande || isPre || l.zone === "Inköp";
                 }
                 if (site === "production") {

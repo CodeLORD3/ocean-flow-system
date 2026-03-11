@@ -6,7 +6,7 @@ import ProductionReportsArchive from "./ProductionReportsArchive";
 export default function ReportsRouter() {
   const { site } = useSite();
 
-  if (site === "purchasing") {
+  if (site === "wholesale") {
     return <PurchaseReportsArchive />;
   }
   
