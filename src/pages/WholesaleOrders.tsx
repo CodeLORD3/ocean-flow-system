@@ -444,6 +444,7 @@ export default function WholesaleOrders() {
                               </SelectContent>
                             </Select>
                           </td>
+                          <td className="px-2.5 py-1 text-muted-foreground text-[10px]">{o.packer_name || "–"}</td>
                           <td className="px-2.5 py-1" onClick={e => e.stopPropagation()}>
                             {(() => {
                               const reports = reportsByOrder.get(o.id);
