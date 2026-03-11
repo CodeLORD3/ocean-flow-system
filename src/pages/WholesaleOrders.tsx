@@ -485,7 +485,7 @@ export default function WholesaleOrders() {
                       <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Inga arkiverade ordrar.</td></tr>
                     )}
                     {archivedOrders.map((o: any) => (
-                      <tr key={o.id} className="border-b border-border/40 cursor-pointer hover:bg-muted/20" onClick={() => setSelectedOrder(o)}>
+                      <tr key={o.id} className="border-b border-border/40 cursor-pointer hover:bg-muted/20" onClick={() => setSelectedOrderId(o.id)}>
                         <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
                         <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                         <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
