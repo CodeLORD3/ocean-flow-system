@@ -789,7 +789,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                   isUnavailable ? "opacity-50 bg-destructive/5" :
                   currentStatus === "Skickad" ? "bg-primary/10" :
                   currentStatus === "Packad" || currentStatus === "Producerad" ? "bg-success/10" :
-                  currentStatus === "Behandlas" ? "bg-warning/10" :
+                  currentStatus === "Pågående" ? "bg-warning/10" :
                   ""
                 }`}>
                   <td className="px-2 py-0.5 font-medium text-foreground">{line.products?.name || "–"}</td>
