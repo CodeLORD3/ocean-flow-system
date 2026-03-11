@@ -871,6 +871,8 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
               const hasDiff = qtyDelivered > 0 && qtyDelivered !== qtyOrdered;
               const isUnavailable = line.status === "Ej tillgänglig";
               const stockQty = stockByProduct.get(line.product_id) || 0;
+              const alreadyPacked = currentStatus === "Packad" ? qtyDelivered : 0;
+              const availableStock = stockQty + alreadyPacked;
               const currentStatus = line.status || "Ny";
               const idx = STATUS_FLOW.indexOf(currentStatus as any);
               const prev = idx > 0 ? STATUS_FLOW[idx - 1] : null;
