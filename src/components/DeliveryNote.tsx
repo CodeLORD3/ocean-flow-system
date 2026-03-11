@@ -149,28 +149,28 @@ export default function DeliveryNote({ order, open, onOpenChange }: DeliveryNote
                     const lineVal = packed * price;
                     return (
                       <tr key={line.id} style={{ background: idx % 2 === 0 ? "#fff" : "#f7f7f7" }}>
-                       <td style={{ padding: "4px", borderBottom: "1px solid #ddd", fontSize: 10, fontWeight: 500 }}>
+                       <td style={{ padding: "4px", borderBottom: "1px solid #ddd", fontSize: 15, fontWeight: 500 }}>
                           {line.products?.name || "—"}
                         </td>
-                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", fontSize: 9, color: "#555" }}>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", fontSize: 14, color: "#555" }}>
                           {line.products?.category || "—"}
                         </td>
-                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", fontSize: 9, color: "#555" }}>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", fontSize: 14, color: "#555" }}>
                           {line.products?.hs_code || ""}
                         </td>
-                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 10 }}>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 15 }}>
                           {line.quantity_ordered}
                         </td>
-                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 10, fontWeight: 600 }}>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", textAlign: "right", fontVariantNumeric: "tabular-nums", fontSize: 15, fontWeight: 600 }}>
                           {packed}
                         </td>
-                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", textAlign: "right", fontSize: 9 }}>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", textAlign: "right", fontSize: 14 }}>
                           {line.unit || line.products?.unit || "kg"}
                         </td>
-                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", textAlign: "right", fontSize: 9, fontVariantNumeric: "tabular-nums" }}>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", textAlign: "right", fontSize: 14, fontVariantNumeric: "tabular-nums" }}>
                           {price.toFixed(2)}
                         </td>
-                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", textAlign: "right", fontSize: 10, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+                        <td style={{ padding: "4px", borderBottom: "1px solid #ddd", textAlign: "right", fontSize: 15, fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
                           {lineVal.toFixed(2)}
                         </td>
                       </tr>
