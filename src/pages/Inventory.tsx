@@ -416,8 +416,8 @@ export default function Inventory() {
   // Filter locations by zone for purchasing/production portals
   // For grossist portals, include Pre-locations, general locations, AND shop Raw-lager
   const portalLocations = useMemo(() => {
-    if (site === "purchasing" || site === "production") {
-      // Both grossist portals see ALL Pre-locations, general locations, and shop Raw-lager
+    if (site === "purchasing" || site === "production" || site === "wholesale") {
+      // All grossist portals see ALL Pre-locations, general locations, and shop Raw-lager
       return locations.filter((loc: any) =>
         loc.zone === "Inköp" ||
         loc.zone === "Produktion" ||
@@ -447,7 +447,7 @@ export default function Inventory() {
 
   // Group locations by store for grossist portals
   const groupedByStore = useMemo(() => {
-    if (site !== "purchasing" && site !== "production") return [];
+    if (site !== "purchasing" && site !== "production" && site !== "wholesale") return [];
 
     const generalNames = ["Grossist Flytande", "Transportlager"];
     const storeGroups = new Map<string, { storeName: string; locations: typeof stockByLocation; totalQty: number; totalValue: number }>();
@@ -730,7 +730,7 @@ export default function Inventory() {
         </CardContent></Card>
       </div>
 
-      {(site === "purchasing" || site === "production") ? (
+      {(site === "purchasing" || site === "production" || site === "wholesale") ? (
         /* ── INKÖP/PRODUKTION PORTAL: Grouped by store ── */
         <Card className="shadow-card">
           <CardHeader className="pb-2">
