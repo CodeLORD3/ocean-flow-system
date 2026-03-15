@@ -758,12 +758,25 @@ export default function Inventory() {
                 </div>
               </div>
               <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-muted/20">
+                    <th className="px-3 py-1.5 w-8"></th>
+                    <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Produkt</th>
+                    <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Kategori</th>
+                    <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Antal</th>
+                    <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Värde</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {group.items.map((s: any) => {
                     const unitPrice = Number(s.unit_cost) || Number(s.products?.cost_price) || 0;
                     const value = Number(s.quantity) * unitPrice;
+                    const isChecked = getSelectedForLocation(loc.id).has(s.id);
                     return (
-                      <tr key={s.id} className="border-b border-border/20 last:border-0 hover:bg-muted/20">
+                      <tr key={s.id} className={`border-b border-border/20 last:border-0 hover:bg-muted/20 ${isChecked ? "bg-primary/5" : ""}`}>
+                        <td className="px-3 py-1.5 text-center">
+                          <Checkbox checked={isChecked} onCheckedChange={() => toggleItemSelection(loc.id, s.id)} />
+                        </td>
                         <td className="px-3 py-1.5 font-medium text-foreground">{s.products?.name}</td>
                         <td className="px-3 py-1.5 text-muted-foreground">{s.products?.category}</td>
                         <td className="px-3 py-1.5 text-right font-medium text-foreground">
@@ -788,8 +801,12 @@ export default function Inventory() {
                 {untagged.map((s: any) => {
                   const unitPrice = Number(s.unit_cost) || Number(s.products?.cost_price) || 0;
                   const value = Number(s.quantity) * unitPrice;
+                  const isChecked = getSelectedForLocation(loc.id).has(s.id);
                   return (
-                    <tr key={s.id} className="border-b border-border/20 last:border-0 hover:bg-muted/20">
+                    <tr key={s.id} className={`border-b border-border/20 last:border-0 hover:bg-muted/20 ${isChecked ? "bg-primary/5" : ""}`}>
+                      <td className="px-3 py-1.5 text-center w-8">
+                        <Checkbox checked={isChecked} onCheckedChange={() => toggleItemSelection(loc.id, s.id)} />
+                      </td>
                       <td className="px-3 py-1.5 font-medium text-foreground">{s.products?.name}</td>
                       <td className="px-3 py-1.5 text-muted-foreground">{s.products?.category}</td>
                       <td className="px-3 py-1.5 text-right font-medium text-foreground">
