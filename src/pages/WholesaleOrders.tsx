@@ -752,17 +752,36 @@ export default function WholesaleOrders() {
                       <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Inga arkiverade ordrar.</td></tr>
                     )}
                     {archivedOrders.map((o: any) => (
-                      <tr key={o.id} className="border-b border-border/40 cursor-pointer hover:bg-muted/20" onClick={() => setSelectedOrderId(o.id)}>
-                        <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
-                        <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
-                        <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
-                        <td className="p-3 text-muted-foreground">{(o as any).desired_delivery_date || "–"}</td>
-                        <td className="p-3 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
-                        <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
-                          {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
-                        </td>
-                        <td className="p-3 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
-                      </tr>
+                      <React.Fragment key={o.id}>
+                        <tr className="border-b border-border/40 cursor-pointer hover:bg-muted/20" onClick={() => toggleExpandOrder(o.id)}>
+                          <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
+                          <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
+                          <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
+                          <td className="p-3 text-muted-foreground">{(o as any).desired_delivery_date || "–"}</td>
+                          <td className="p-3 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
+                          <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
+                            {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
+                          </td>
+                          <td className="p-3 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
+                        </tr>
+                        {expandedOrderId === o.id && (
+                          <tr>
+                            <td colSpan={7} className="p-0">
+                              <div className="border-b-2 border-primary/20 bg-muted/20 px-4 py-3">
+                                <div className="flex items-center justify-between mb-3">
+                                  <h3 className="font-heading text-sm font-semibold">
+                                    Order {o.order_week} — {o.stores?.name || "Okänd butik"}
+                                  </h3>
+                                  <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={(e) => { e.stopPropagation(); setExpandedOrderId(null); }}>
+                                    <X className="h-3 w-3 mr-1" /> Stäng
+                                  </Button>
+                                </div>
+                                <WholesaleOrderDetail order={o} onClose={() => setExpandedOrderId(null)} stores={stores} />
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
