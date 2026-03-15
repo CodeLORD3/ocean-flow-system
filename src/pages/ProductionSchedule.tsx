@@ -185,6 +185,7 @@ export default function ProductionSchedule() {
       unit: string;
       deliveryDate: Date;
       departureDate: Date;
+      productionDate: Date;
       departureTime: string;
       category: string;
       lineId: string;
@@ -216,6 +217,8 @@ export default function ProductionSchedule() {
         const isoDay = jsDay === 0 ? 7 : jsDay;
         const matchingSchedule = schedules.find(s => s.departure_weekday === isoDay) || schedules[0];
         const departureDate = deliveryDate;
+        // order_date is the planned production date (set by drag & drop), defaults to departure date
+        const productionDate = line.order_date ? parseISO(line.order_date) : departureDate;
 
         rawItems.push({
           storeName: store.name,
@@ -226,6 +229,7 @@ export default function ProductionSchedule() {
           unit: line.unit || line.products?.unit || "kg",
           deliveryDate,
           departureDate,
+          productionDate,
           departureTime: matchingSchedule.departure_time,
           category: line.products?.category || "Övrigt",
           lineId: line.id,
