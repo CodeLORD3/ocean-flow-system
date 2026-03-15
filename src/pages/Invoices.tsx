@@ -27,7 +27,7 @@ export default function Invoices() {
   const [printOrder, setPrintOrder] = useState<any>(null);
 
   const invoiceOrders = useMemo(() => {
-    const packedStatuses = ["Packad", "Skickad", "Klar / Levererad"];
+    const packedStatuses = ["Packad", "Skickad", "Levererad", "Klar / Levererad"];
     return orders.filter((o: any) => packedStatuses.includes(o.status));
   }, [orders]);
 
