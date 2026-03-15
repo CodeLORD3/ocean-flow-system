@@ -6,15 +6,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import { format, startOfWeek, addDays, isSameDay, parseISO, getISOWeek, getYear } from "date-fns";
 import { sv } from "date-fns/locale";
-import { CalendarDays, ChevronLeft, ChevronRight, AlertTriangle, Truck, ChevronDown, ListChecks, Factory, PackageCheck, Check } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, AlertTriangle, Truck, ChevronDown, ListChecks, Factory, PackageCheck, Check, Plus, User, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useManualScheduleEntries } from "@/hooks/useManualScheduleEntries";
 
 const WEEKDAYS = ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag", "Söndag"];
 
@@ -36,6 +43,7 @@ export default function ProductionSchedule() {
   const { data: stores, isLoading: storesLoading } = useStores();
   const { data: transportSchedules, isLoading: schedulesLoading } = useTransportSchedules();
   const queryClient = useQueryClient();
+  const { entries: manualEntries, addEntry: addManualEntry, deleteEntry: deleteManualEntry } = useManualScheduleEntries("production");
 
   // Fetch products with producer info to filter production products
   const { data: productsWithProducer } = useQuery({
@@ -43,7 +51,7 @@ export default function ProductionSchedule() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, unit, producer")
+        .select("id, name, unit, producer, category")
         .eq("active", true);
       if (error) throw error;
       return data;
@@ -89,28 +97,61 @@ export default function ProductionSchedule() {
   const [dragOverDay, setDragOverDay] = useState<number | null>(null);
   const [boughtLoading, setBoughtLoading] = useState<string | null>(null);
 
+  // Manual entry dialog state
+  const [manualDialogOpen, setManualDialogOpen] = useState(false);
+  const [manualProductSearch, setManualProductSearch] = useState("");
+  const [manualProductId, setManualProductId] = useState("");
+  const [manualQuantity, setManualQuantity] = useState("");
+  const [manualDate, setManualDate] = useState<Date | undefined>(undefined);
+  const [manualTime, setManualTime] = useState("06:00");
+  const [manualNotes, setManualNotes] = useState("");
+
+  const filteredManualProducts = useMemo(() => {
+    if (!productsWithProducer) return [];
+    const s = manualProductSearch.toLowerCase();
+    return productsWithProducer.filter((p: any) => p.name.toLowerCase().includes(s) || !s).slice(0, 20);
+  }, [productsWithProducer, manualProductSearch]);
+
+  const handleAddManualEntry = async () => {
+    if (!manualProductId || !manualQuantity || !manualDate) return;
+    try {
+      await addManualEntry.mutateAsync({
+        product_id: manualProductId,
+        quantity: Number(manualQuantity),
+        departure_date: format(manualDate, "yyyy-MM-dd"),
+        departure_time: manualTime,
+        notes: manualNotes || undefined,
+      });
+      toast.success("Produkt tillagd i produktionsschemat.");
+      setManualDialogOpen(false);
+      setManualProductId("");
+      setManualQuantity("");
+      setManualDate(undefined);
+      setManualTime("06:00");
+      setManualNotes("");
+      setManualProductSearch("");
+    } catch {
+      toast.error("Kunde inte lägga till produkt.");
+    }
+  };
+
+  const handleDeleteManualEntry = async (id: string, productName: string) => {
+    try {
+      await deleteManualEntry.mutateAsync(id);
+      toast.success(`"${productName}" borttagen.`);
+    } catch {
+      toast.error("Kunde inte ta bort.");
+    }
+  };
+
   const handleUseStock = async (lineIds: string[], shopOrderIds: string[], productName: string) => {
     setUseStockLoading(productName);
     try {
       for (const lineId of lineIds) {
-        await supabase.from("shop_order_lines").update({ status: "Packad" }).eq("id", lineId);
-      }
-      const uniqueOrderIds = [...new Set(shopOrderIds)];
-      for (const orderId of uniqueOrderIds) {
-        const { data: allLines } = await supabase.from("shop_order_lines").select("status").eq("shop_order_id", orderId);
-        if (allLines) {
-          const allPacked = allLines.every((l) => l.status === "Packad");
-          const anyPacked = allLines.some((l) => l.status === "Packad");
-          if (allPacked) {
-            await supabase.from("shop_orders").update({ status: "Packad" }).eq("id", orderId);
-          } else if (anyPacked) {
-            await supabase.from("shop_orders").update({ status: "Pågående" }).eq("id", orderId);
-          }
-        }
+        await supabase.from("shop_order_lines").update({ ordered_elsewhere: "Lager" }).eq("id", lineId);
       }
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
-      queryClient.invalidateQueries({ queryKey: ["grossist_flytande_stock"] });
-      toast.success(`"${productName}" markerad som packad från befintligt lager.`);
+      toast.success(`"${productName}" borttagen från produktionsschema (använder befintligt lager).`);
     } catch (err) {
       toast.error("Kunde inte uppdatera orderrader.");
     } finally {
@@ -206,8 +247,9 @@ export default function ProductionSchedule() {
       for (const line of order.shop_order_lines || []) {
         // Only include production products
         if (!productionProductIds.has(line.product_id)) continue;
-        // Skip lines already being processed (in Grossist Flytande or beyond)
+        // Skip lines already being processed or marked as "Använd lager"
         if (line.status && !["", "Ny"].includes(line.status)) continue;
+        if (line.ordered_elsewhere === "Lager") continue;
 
         const deliveryDateStr = line.delivery_date || order.desired_delivery_date;
         if (!deliveryDateStr) continue;
@@ -253,6 +295,8 @@ export default function ProductionSchedule() {
       category: string;
       lineIds: string[];
       shopOrderIds: string[];
+      isManual?: boolean;
+      manualEntryId?: string;
     }>();
 
     for (const item of rawItems) {
@@ -287,8 +331,34 @@ export default function ProductionSchedule() {
       }
     }
 
+    // Add manual entries
+    for (const entry of manualEntries) {
+      const depDate = parseISO(entry.departure_date);
+      const product = productsWithProducer?.find((p: any) => p.id === entry.product_id);
+      const productName = entry.products?.name || product?.name || "Okänd produkt";
+      const unit = entry.products?.unit || product?.unit || "kg";
+      const category = entry.products?.category || product?.category || "Övrigt";
+      
+      grouped.set(`manual-${entry.id}`, {
+        productId: entry.product_id,
+        productName,
+        unit,
+        totalQuantity: entry.quantity,
+        shops: [],
+        departureDate: depDate,
+        productionDate: depDate,
+        earliestDelivery: depDate,
+        departureTime: entry.departure_time,
+        category,
+        lineIds: [],
+        shopOrderIds: [],
+        isManual: true,
+        manualEntryId: entry.id,
+      });
+    }
+
     return Array.from(grouped.values());
-  }, [orders, stores, transportSchedules, storeMap, zoneSchedules, productionProductIds]);
+  }, [orders, stores, transportSchedules, storeMap, zoneSchedules, productionProductIds, manualEntries, productsWithProducer]);
 
   const allCategories = useMemo(() => {
     const cats = new Set(schedule.map((s) => s.category));
@@ -310,15 +380,17 @@ export default function ProductionSchedule() {
       shops: { name: string; zoneKey: string; quantity: number }[];
       lineIds: string[];
       shopOrderIds: string[];
+      isManual?: boolean;
+      manualEntryId?: string;
     }>();
 
     for (const item of filteredSchedule) {
       const inWeek = weekDates.some((d) => isSameDay(d, item.departureDate));
       if (!inWeek) continue;
 
-      const k = `${item.productName}|${item.unit}`;
+      const k = item.isManual ? `manual-${item.manualEntryId}` : `${item.productName}|${item.unit}`;
       const existing = map.get(k);
-      if (existing) {
+      if (existing && !item.isManual) {
         existing.totalQuantity += item.totalQuantity;
         existing.lineIds.push(...item.lineIds);
         for (const oid of item.shopOrderIds) {
@@ -339,6 +411,8 @@ export default function ProductionSchedule() {
           shops: item.shops.map((s) => ({ name: s.name, zoneKey: s.zoneKey, quantity: s.quantity })),
           lineIds: [...item.lineIds],
           shopOrderIds: [...item.shopOrderIds],
+          isManual: item.isManual,
+          manualEntryId: item.manualEntryId,
         });
       }
     }
@@ -452,6 +526,9 @@ export default function ProductionSchedule() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <Button size="sm" variant="outline" className="gap-1" onClick={() => setManualDialogOpen(true)}>
+            <Plus className="h-3.5 w-3.5" /> Lägg till produkt
+          </Button>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="w-[160px]">
               <SelectValue placeholder="Alla kategorier" />
@@ -621,6 +698,11 @@ export default function ProductionSchedule() {
                                             <span className="flex items-center gap-1">
                                               <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
                                               {item.productName}
+                                              {item.isManual && (
+                                                <Badge variant="outline" className="text-[8px] py-0 px-1 border-primary/40 text-primary bg-primary/5">
+                                                  <User className="h-2.5 w-2.5 mr-0.5" />Manuell
+                                                </Badge>
+                                              )}
                                             </span>
                                           </TableCell>
                                           <TableCell className="px-2 py-0.5 text-xs text-right font-medium">{item.totalQuantity} {item.unit}</TableCell>
@@ -628,7 +710,9 @@ export default function ProductionSchedule() {
                                           <TableCell className={`px-2 py-0.5 text-xs text-right ${isProduced ? "font-semibold text-green-700 dark:text-green-400" : "text-muted-foreground"}`}>
                                             {produced > 0 ? `${produced} ${item.unit}` : "—"}
                                           </TableCell>
-                                          <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">{item.shops.length} butik{item.shops.length > 1 ? "er" : ""}</TableCell>
+                                          <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">
+                                            {item.isManual ? "—" : `${item.shops.length} butik${item.shops.length > 1 ? "er" : ""}`}
+                                          </TableCell>
                                           <TableCell className="px-2 py-0.5">
                                             <span className="text-[10px] text-muted-foreground">
                                               {view === "production"
@@ -638,27 +722,40 @@ export default function ProductionSchedule() {
                                           </TableCell>
                                           <TableCell className="px-2 py-0.5" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex items-center gap-1">
-                                              {isProduced && (
+                                              {item.isManual ? (
                                                 <Button
                                                   variant="outline"
                                                   size="sm"
-                                                  className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
-                                                  onClick={() => handleMarkProduced(item.lineIds, item.shopOrderIds, item.productName)}
-                                                  disabled={boughtLoading === item.productName}
+                                                  className="h-6 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+                                                  onClick={() => handleDeleteManualEntry(item.manualEntryId!, item.productName)}
                                                 >
-                                                  <Check className="h-3 w-3" /> Producerad
+                                                  <Trash2 className="h-3 w-3" /> Ta bort
                                                 </Button>
-                                              )}
-                                              {hasSufficientStock && !isProduced && (
-                                                <Button
-                                                  variant="outline"
-                                                  size="sm"
-                                                  className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
-                                                  onClick={() => handleUseStock(item.lineIds, item.shopOrderIds, item.productName)}
-                                                  disabled={useStockLoading === item.productName}
-                                                >
-                                                  <PackageCheck className="h-3 w-3" /> Använd lager
-                                                </Button>
+                                              ) : (
+                                                <>
+                                                  {isProduced && (
+                                                    <Button
+                                                      variant="outline"
+                                                      size="sm"
+                                                      className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
+                                                      onClick={() => handleMarkProduced(item.lineIds, item.shopOrderIds, item.productName)}
+                                                      disabled={boughtLoading === item.productName}
+                                                    >
+                                                      <Check className="h-3 w-3" /> Producerad
+                                                    </Button>
+                                                  )}
+                                                  {hasSufficientStock && !isProduced && (
+                                                    <Button
+                                                      variant="outline"
+                                                      size="sm"
+                                                      className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
+                                                      onClick={() => handleUseStock(item.lineIds, item.shopOrderIds, item.productName)}
+                                                      disabled={useStockLoading === item.productName}
+                                                    >
+                                                      <PackageCheck className="h-3 w-3" /> Använd lager
+                                                    </Button>
+                                                  )}
+                                                </>
                                               )}
                                             </div>
                                           </TableCell>
@@ -756,6 +853,11 @@ export default function ProductionSchedule() {
                                     <span className="flex items-center gap-1">
                                       <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
                                       {item.productName}
+                                      {item.isManual && (
+                                        <Badge variant="outline" className="text-[8px] py-0 px-1 border-primary/40 text-primary bg-primary/5">
+                                          <User className="h-2.5 w-2.5 mr-0.5" />Manuell
+                                        </Badge>
+                                      )}
                                     </span>
                                   </TableCell>
                                   <TableCell className="px-2 py-0.5 text-xs text-right font-medium">{item.totalQuantity} {item.unit}</TableCell>
@@ -763,30 +865,45 @@ export default function ProductionSchedule() {
                                   <TableCell className={`px-2 py-0.5 text-xs text-right ${isProduced ? "font-semibold text-green-700 dark:text-green-400" : "text-muted-foreground"}`}>
                                     {produced > 0 ? `${produced} ${item.unit}` : "—"}
                                   </TableCell>
-                                  <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">{item.shops.length} butik{item.shops.length > 1 ? "er" : ""}</TableCell>
+                                  <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">
+                                    {item.isManual ? "—" : `${item.shops.length} butik${item.shops.length > 1 ? "er" : ""}`}
+                                  </TableCell>
                                   <TableCell className="px-2 py-0.5" onClick={(e) => e.stopPropagation()}>
                                     <div className="flex items-center gap-1">
-                                      {isProduced && (
+                                      {item.isManual ? (
                                         <Button
                                           variant="outline"
                                           size="sm"
-                                          className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
-                                          onClick={() => handleMarkProduced(item.lineIds, item.shopOrderIds, item.productName)}
-                                          disabled={boughtLoading === item.productName}
+                                          className="h-6 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+                                          onClick={() => handleDeleteManualEntry(item.manualEntryId!, item.productName)}
                                         >
-                                          <Check className="h-3 w-3" /> Producerad
+                                          <Trash2 className="h-3 w-3" /> Ta bort
                                         </Button>
-                                      )}
-                                      {hasSufficientStock && !isProduced && (
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
-                                          onClick={() => handleUseStock(item.lineIds, item.shopOrderIds, item.productName)}
-                                          disabled={useStockLoading === item.productName}
-                                        >
-                                          <PackageCheck className="h-3 w-3" /> Använd lager
-                                        </Button>
+                                      ) : (
+                                        <>
+                                          {isProduced && (
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
+                                              onClick={() => handleMarkProduced(item.lineIds, item.shopOrderIds, item.productName)}
+                                              disabled={boughtLoading === item.productName}
+                                            >
+                                              <Check className="h-3 w-3" /> Producerad
+                                            </Button>
+                                          )}
+                                          {hasSufficientStock && !isProduced && (
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
+                                              onClick={() => handleUseStock(item.lineIds, item.shopOrderIds, item.productName)}
+                                              disabled={useStockLoading === item.productName}
+                                            >
+                                              <PackageCheck className="h-3 w-3" /> Använd lager
+                                            </Button>
+                                          )}
+                                        </>
                                       )}
                                     </div>
                                   </TableCell>
@@ -862,6 +979,100 @@ export default function ProductionSchedule() {
           </CardContent>
         </Card>
       )}
+
+      {/* Manual entry dialog */}
+      <Dialog open={manualDialogOpen} onOpenChange={setManualDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-sm">Lägg till produkt manuellt</DialogTitle>
+            <DialogDescription className="text-xs">
+              Lägg till en produkt i produktionsschemat för egen bevakning. Denna visas med en "Manuell"-märkning.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Produkt</Label>
+              <Input
+                placeholder="Sök produkt..."
+                value={manualProductSearch}
+                onChange={(e) => setManualProductSearch(e.target.value)}
+                className="h-8 text-xs"
+              />
+              <div className="max-h-36 overflow-y-auto border rounded-md mt-1">
+                {filteredManualProducts.map((p: any) => (
+                  <div
+                    key={p.id}
+                    className={`px-3 py-1.5 text-xs cursor-pointer hover:bg-muted/50 flex items-center justify-between ${manualProductId === p.id ? "bg-primary/10 font-medium" : ""}`}
+                    onClick={() => { setManualProductId(p.id); setManualProductSearch(p.name); }}
+                  >
+                    <span>{p.name}</span>
+                    <span className="text-muted-foreground">{p.unit}</span>
+                  </div>
+                ))}
+                {filteredManualProducts.length === 0 && (
+                  <p className="text-xs text-muted-foreground p-3">Inga produkter hittades.</p>
+                )}
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Antal</Label>
+              <Input
+                type="number"
+                min="0"
+                step="0.1"
+                value={manualQuantity}
+                onChange={(e) => setManualQuantity(e.target.value)}
+                className="h-8 text-xs"
+                placeholder="0"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Avgångsdag</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full justify-start text-left text-xs h-8", !manualDate && "text-muted-foreground")}>
+                    <CalendarDays className="h-3.5 w-3.5 mr-1" />
+                    {manualDate ? format(manualDate, "EEE d MMM yyyy", { locale: sv }) : "Välj datum"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={manualDate}
+                    onSelect={setManualDate}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div>
+              <Label className="text-xs">Avgångstid</Label>
+              <Input
+                type="time"
+                value={manualTime}
+                onChange={(e) => setManualTime(e.target.value)}
+                className="h-8 text-xs"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Anteckning (valfritt)</Label>
+              <Input
+                value={manualNotes}
+                onChange={(e) => setManualNotes(e.target.value)}
+                className="h-8 text-xs"
+                placeholder="T.ex. anledning"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setManualDialogOpen(false)}>Avbryt</Button>
+            <Button size="sm" disabled={!manualProductId || !manualQuantity || !manualDate || addManualEntry.isPending} onClick={handleAddManualEntry}>
+              Lägg till
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
