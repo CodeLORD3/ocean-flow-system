@@ -105,6 +105,14 @@ export function useCreateWeeklyReport() {
         }
       }
 
+      await logActivity({
+        action_type: "create",
+        description: `Veckorapport skapad: V${params.week_number} ${params.year}`,
+        portal: "shop",
+        store_id: params.store_id,
+        entity_type: "shop_report",
+        entity_id: report.id,
+      });
       return report;
     },
     onSuccess: (_d, vars) => {
