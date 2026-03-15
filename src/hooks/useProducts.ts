@@ -48,11 +48,17 @@ export function useAddSubproduct() {
   return useMutation({
     mutationFn: async (params: { parent_id: string; name: string; sku: string; category: string; unit: string; cost_price: number; wholesale_price: number; retail_suggested: number }) => {
       const { parent_id, ...rest } = params;
-      const { error } = await supabase.from("products").insert({
+      const { data, error } = await supabase.from("products").insert({
         ...rest,
         parent_product_id: parent_id,
-      } as any);
+      } as any).select().single();
       if (error) throw error;
+      await logActivity({
+        action_type: "create",
+        description: `Subprodukt skapad: ${rest.name}`,
+        entity_type: "product",
+        entity_id: data?.id,
+      });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["products"] }),
   });
