@@ -340,7 +340,6 @@ export default function ShopOrders() {
       product_id: l.product_id,
       quantity_ordered: Number(l.quantity),
       unit: l.unit,
-      order_date: new Date().toISOString().slice(0, 10),
       delivery_date: deliveryDateStr,
     }));
 
