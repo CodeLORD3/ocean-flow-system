@@ -322,7 +322,7 @@ export default function ShopOrders() {
         store_id: activeStoreId,
         order_week: weekNum,
         notes: orderNote || null,
-        status: "Ny",
+        created_by: activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : null,
         desired_delivery_date: desiredDeliveryDate ? format(desiredDeliveryDate, "yyyy-MM-dd") : null,
       } as any)
       .select()
