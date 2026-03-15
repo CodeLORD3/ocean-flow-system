@@ -549,6 +549,7 @@ export type Database = {
           min_stock: number | null
           product_id: string
           quantity: number
+          shop_order_id: string | null
           unit_cost: number | null
           updated_at: string | null
         }
@@ -558,6 +559,7 @@ export type Database = {
           min_stock?: number | null
           product_id: string
           quantity?: number
+          shop_order_id?: string | null
           unit_cost?: number | null
           updated_at?: string | null
         }
@@ -567,6 +569,7 @@ export type Database = {
           min_stock?: number | null
           product_id?: string
           quantity?: number
+          shop_order_id?: string | null
           unit_cost?: number | null
           updated_at?: string | null
         }
@@ -583,6 +586,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_stock_locations_shop_order_id_fkey"
+            columns: ["shop_order_id"]
+            isOneToOne: false
+            referencedRelation: "shop_orders"
             referencedColumns: ["id"]
           },
         ]
