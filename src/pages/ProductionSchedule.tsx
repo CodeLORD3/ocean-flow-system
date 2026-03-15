@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format, startOfWeek, addDays, isSameDay, parseISO, getISOWeek, getYear, getDay } from "date-fns";
+import { format, startOfWeek, addDays, isSameDay, parseISO, getISOWeek, getYear } from "date-fns";
 import { sv } from "date-fns/locale";
 import { CalendarDays, ChevronLeft, ChevronRight, AlertTriangle, Truck, ChevronDown, ListChecks, Factory, PackageCheck, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -213,10 +213,9 @@ export default function ProductionSchedule() {
         if (!deliveryDateStr) continue;
 
         const deliveryDate = parseISO(deliveryDateStr);
-        const jsDay = getDay(deliveryDate);
-        const isoDay = jsDay === 0 ? 7 : jsDay;
-        const matchingSchedule = schedules.find(s => s.departure_weekday === isoDay) || schedules[0];
-        const departureDate = deliveryDate;
+        const matchingSchedule = schedules[0];
+        // Calculate departure date from the transport zone's departure weekday
+        const departureDate = getDepartureDate(deliveryDate, matchingSchedule.departure_weekday);
         // order_date is the planned production date (set by drag & drop), defaults to departure date
         const productionDate = line.order_date ? parseISO(line.order_date) : departureDate;
 
