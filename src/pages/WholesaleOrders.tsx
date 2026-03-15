@@ -795,8 +795,7 @@ export default function WholesaleOrders() {
         </TabsContent>
       </Tabs>
 
-      {/* Order detail dialog */}
-      <Dialog open={!!selectedOrder} onOpenChange={open => { if (!open) setSelectedOrderId(null); }}>
+      {/* Order detail panel */}
       <Sheet open={!!selectedOrder} onOpenChange={open => { if (!open) setSelectedOrderId(null); }}>
         <SheetContent side="right" className="w-full sm:max-w-5xl max-h-screen overflow-y-auto p-6">
           {selectedOrder && (
