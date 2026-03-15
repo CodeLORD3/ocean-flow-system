@@ -907,41 +907,48 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                     {availableStock > 0 ? Number(availableStock.toFixed(1)) : "0"}
                   </td>
                   <td className="px-2 py-0.5 text-right">
-                    <input
-                      type="number"
-                      min={0}
-                      max={availableStock}
-                      defaultValue={qtyDelivered || ""}
-                      placeholder="0"
-                      className="w-16 h-6 text-right text-xs font-mono bg-background border border-border rounded px-1 focus:outline-none focus:ring-1 focus:ring-primary"
-                      onKeyDown={async (e) => {
-                        if (e.key === "Enter") {
-                          const val = Number((e.target as HTMLInputElement).value);
-                          if (val > availableStock) {
-                            toast({ title: "Otillräckligt lager", description: `Max tillgängligt: ${Number(availableStock.toFixed(1))}`, variant: "destructive" });
-                            (e.target as HTMLInputElement).value = String(Number(availableStock.toFixed(1)));
-                            return;
-                          }
-                          if (val > 0) {
-                            const unit = line.unit || line.products?.unit || "kg";
-                            let deviation: string | null = null;
-                            if (val !== qtyOrdered) {
-                              deviation = val > qtyOrdered
-                                ? `+${(val - qtyOrdered).toFixed(1)} ${unit} mer än beställt`
-                                : `-${(qtyOrdered - val).toFixed(1)} ${unit} mindre än beställt`;
+                    {(() => {
+                      const isLocked = currentStatus === "Packad" || currentStatus === "Skickad" || currentStatus === "Klar / Levererad" || currentStatus === "Levererad";
+                      return isLocked ? (
+                        <span className="w-16 inline-block text-right text-xs font-mono text-muted-foreground">{qtyDelivered || "–"}</span>
+                      ) : (
+                        <input
+                          type="number"
+                          min={0}
+                          max={availableStock}
+                          defaultValue={qtyDelivered || ""}
+                          placeholder="0"
+                          className="w-16 h-6 text-right text-xs font-mono bg-background border border-border rounded px-1 focus:outline-none focus:ring-1 focus:ring-primary"
+                          onKeyDown={async (e) => {
+                            if (e.key === "Enter") {
+                              const val = Number((e.target as HTMLInputElement).value);
+                              if (val > availableStock) {
+                                toast({ title: "Otillräckligt lager", description: `Max tillgängligt: ${Number(availableStock.toFixed(1))}`, variant: "destructive" });
+                                (e.target as HTMLInputElement).value = String(Number(availableStock.toFixed(1)));
+                                return;
+                              }
+                              if (val > 0) {
+                                const unit = line.unit || line.products?.unit || "kg";
+                                let deviation: string | null = null;
+                                if (val !== qtyOrdered) {
+                                  deviation = val > qtyOrdered
+                                    ? `+${(val - qtyOrdered).toFixed(1)} ${unit} mer än beställt`
+                                    : `-${(qtyOrdered - val).toFixed(1)} ${unit} mindre än beställt`;
+                                }
+                                await supabase
+                                  .from("shop_order_lines")
+                                  .update({ quantity_delivered: val, deviation })
+                                  .eq("id", line.id);
+                                updateLineStatus.mutate(
+                                  { lineId: line.id, newStatus: "Packad", orderId: order.id },
+                                  { onSuccess: () => toast({ title: `Packad: ${val} ${line.unit || line.products?.unit || ""}` }) }
+                                );
+                              }
                             }
-                            await supabase
-                              .from("shop_order_lines")
-                              .update({ quantity_delivered: val, deviation })
-                              .eq("id", line.id);
-                            updateLineStatus.mutate(
-                              { lineId: line.id, newStatus: "Packad", orderId: order.id },
-                              { onSuccess: () => toast({ title: `Packad: ${val} ${line.unit || line.products?.unit || ""}` }) }
-                            );
-                          }
-                        }
-                      }}
-                    />
+                          }}
+                        />
+                      );
+                    })()}
                   </td>
                   <td className="px-2 py-0.5 text-muted-foreground text-[10px]">
                     {line.deviation ? (
