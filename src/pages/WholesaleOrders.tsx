@@ -84,11 +84,20 @@ export default function WholesaleOrders() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Alla");
-  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
-  const toggleExpandOrder = (id: string) => setExpandedOrderId(prev => prev === id ? null : id);
+  const [expandedOrderIds, setExpandedOrderIds] = useState<Set<string>>(new Set());
+  const toggleExpandOrder = (id: string) => setExpandedOrderIds(prev => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+  const collapseOrder = (id: string) => setExpandedOrderIds(prev => {
+    const next = new Set(prev);
+    next.delete(id);
+    return next;
+  });
   // Keep selectedOrder for compatibility with other dialogs that reference it
-  const selectedOrderId = expandedOrderId;
-  const setSelectedOrderId = setExpandedOrderId;
+  const selectedOrderId = expandedOrderIds.size > 0 ? Array.from(expandedOrderIds)[0] : null;
+  const setSelectedOrderId = (id: string | null) => { if (id) setExpandedOrderIds(new Set([id])); else setExpandedOrderIds(new Set()); };
   const selectedOrder = useMemo(() => selectedOrderId ? orders.find((o: any) => o.id === selectedOrderId) || null : null, [selectedOrderId, orders]);
   const [reportViewOrder, setReportViewOrder] = useState<any>(null);
   const [archiveConfirmOrder, setArchiveConfirmOrder] = useState<any>(null);
