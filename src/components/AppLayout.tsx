@@ -3,7 +3,9 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { ShopSidebar } from "@/components/ShopSidebar";
 import { ProductionSidebar } from "@/components/ProductionSidebar";
 import { useLocation } from "react-router-dom";
-import { Bell, ChevronRight, Search, User, ArrowLeftRight, Factory, Store, ChevronDown, X } from "lucide-react";
+import { Bell, ChevronRight, Search, User, ArrowLeftRight, Factory, Store, ChevronDown, X, Check } from "lucide-react";
+import { useActiveUser } from "@/contexts/ActiveUserContext";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +36,49 @@ const pageTitles: Record<string, { title: string; breadcrumb: string[] }> = {
   "/receiving": { title: "Inleveranser", breadcrumb: ["Hem", "Lagerstyrning", "Inleveranser"] },
   "/barcodes": { title: "Streckkoder", breadcrumb: ["Hem", "Lagerstyrning", "Streckkoder"] },
 };
+
+function AccountSwitcher() {
+  const { activeUser, staff, switchUser } = useActiveUser();
+  const initials = activeUser ? `${activeUser.first_name[0]}${activeUser.last_name[0]}` : "?";
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 gap-2 px-2">
+          <Avatar className="h-6 w-6">
+            {activeUser?.profile_image_url && <AvatarImage src={activeUser.profile_image_url} />}
+            <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{initials}</AvatarFallback>
+          </Avatar>
+          <span className="hidden sm:inline text-xs font-medium">
+            {activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : "Välj konto"}
+          </span>
+          <ChevronDown className="h-3 w-3 text-muted-foreground" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel className="text-xs text-muted-foreground">Byt konto</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {staff.map((s) => (
+          <DropdownMenuItem
+            key={s.id}
+            onClick={() => switchUser(s.id)}
+            className="gap-2 cursor-pointer"
+          >
+            <Avatar className="h-6 w-6">
+              {s.profile_image_url && <AvatarImage src={s.profile_image_url} />}
+              <AvatarFallback className="text-[9px] bg-muted">{s.first_name[0]}{s.last_name[0]}</AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col flex-1 min-w-0">
+              <span className="text-xs font-medium truncate">{s.first_name} {s.last_name}</span>
+              <span className="text-[10px] text-muted-foreground truncate">{s.workplace || "–"}</span>
+            </div>
+            {activeUser?.id === s.id && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -153,26 +198,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 gap-2 px-2">
-                    <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
-                      <User className="h-3.5 w-3.5 text-primary" />
-                    </div>
-                    <span className="hidden sm:inline text-xs font-medium">
-                      {site === "shop" ? "Butikschef" : site === "production" ? "Produktionschef" : "Admin"}
-                    </span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Johan Eriksson</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>Min profil</DropdownMenuItem>
-                  <DropdownMenuItem>Inställningar</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>Logga ut</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <AccountSwitcher />
             </div>
           </header>
 
