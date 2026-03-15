@@ -276,6 +276,8 @@ export default function ProductionSchedule() {
       totalQuantity: number;
       category: string;
       shops: { name: string; zoneKey: string; quantity: number }[];
+      lineIds: string[];
+      shopOrderIds: string[];
     }>();
 
     for (const item of filteredSchedule) {
@@ -286,6 +288,10 @@ export default function ProductionSchedule() {
       const existing = map.get(k);
       if (existing) {
         existing.totalQuantity += item.totalQuantity;
+        existing.lineIds.push(...item.lineIds);
+        for (const oid of item.shopOrderIds) {
+          if (!existing.shopOrderIds.includes(oid)) existing.shopOrderIds.push(oid);
+        }
         for (const shop of item.shops) {
           const s = existing.shops.find((e) => e.name === shop.name);
           if (s) s.quantity += shop.quantity;
@@ -299,6 +305,8 @@ export default function ProductionSchedule() {
           totalQuantity: item.totalQuantity,
           category: item.category,
           shops: item.shops.map((s) => ({ name: s.name, zoneKey: s.zoneKey, quantity: s.quantity })),
+          lineIds: [...item.lineIds],
+          shopOrderIds: [...item.shopOrderIds],
         });
       }
     }
