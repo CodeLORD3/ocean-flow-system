@@ -2,12 +2,15 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Search, Clock, CheckCircle2, Truck, XCircle, Package,
-  Eye, ListChecks, ChefHat, AlertTriangle, Archive, Bell, Check, X, Ban, Printer, ArrowRight,
+  Eye, ListChecks, ChefHat, AlertTriangle, Archive, Bell, Check, X, Ban, Printer, ArrowRight, Plus, CalendarIcon,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -15,9 +18,16 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format, getDay } from "date-fns";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useShopOrders } from "@/hooks/useShopOrders";
 import { useStores } from "@/hooks/useStores";
+import { useCustomers } from "@/hooks/useCustomers";
+import { useProducts } from "@/hooks/useProducts";
+import { useTransportSchedules } from "@/hooks/useTransportSchedules";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useAllPendingChangeRequests, useResolveChangeRequest, useCreateChangeRequest } from "@/hooks/useOrderChangeRequests";
@@ -26,6 +36,21 @@ import DeliveryNote from "@/components/DeliveryNote";
 import { moveStockToTransport } from "@/lib/stockTransfer";
 import { useUpdateOrderLineStatus, STATUS_FLOW } from "@/hooks/useUpdateOrderLineStatus";
 import { useAllStockByLocation } from "@/hooks/useStorageLocations";
+
+type WholesaleOrderLine = {
+  product_id: string;
+  product_name: string;
+  unit: string;
+  quantity: string;
+};
+
+function getStoreZoneKey(store: { city: string; name: string }): string {
+  const city = (store.city || "").toLowerCase();
+  const name = (store.name || "").toLowerCase();
+  if (city.includes("göteborg") || city.includes("gothenburg") || name.includes("göteborg") || name.includes("amhult") || name.includes("särö")) return "gothenburg";
+  if (city.includes("stockholm") || name.includes("stockholm") || name.includes("kungsholmen") || name.includes("ålsten")) return "stockholm";
+  return "international";
+}
 
 const statusColor: Record<string, string> = {
   Ny: "",
