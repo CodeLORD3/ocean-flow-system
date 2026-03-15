@@ -278,7 +278,7 @@ export default function ProductionSchedule() {
           totalQuantity: item.quantity,
           shops: [{ name: item.storeName, zoneKey: item.zoneKey, quantity: item.quantity, deliveryDate: item.deliveryDate }],
           departureDate: item.departureDate,
-          earliestDelivery: item.deliveryDate,
+          productionDate: item.productionDate,
           departureTime: item.departureTime,
           category: item.category,
           lineIds: [item.lineId],
