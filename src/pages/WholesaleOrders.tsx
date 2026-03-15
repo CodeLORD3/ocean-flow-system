@@ -689,10 +689,10 @@ export default function WholesaleOrders() {
                            </td>
                          </tr>
                          {/* Inline expandable order detail */}
-                         {expandedOrderId === o.id && (
-                           <tr>
-                             <td colSpan={15} className="p-0">
-                               <div className="border-b-2 border-primary/20 bg-muted/20 px-4 py-3">
+                          {expandedOrderIds.has(o.id) && (
+                            <tr>
+                              <td colSpan={15} className="p-0">
+                                <div className="border-l-2 border-l-primary border-b-2 border-b-primary/20 bg-primary/5 px-4 py-3">
                                  <div className="flex items-center justify-between mb-3">
                                    <div className="flex items-center gap-2">
                                      <h3 className="font-heading text-sm font-semibold">
