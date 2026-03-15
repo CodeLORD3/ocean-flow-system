@@ -347,6 +347,16 @@ export default function ShopOrders() {
       return;
     }
 
+    await logActivity({
+      action_type: "create",
+      description: `Ny butiksorder skapad (${weekNum}, ${validLines.length} rader)`,
+      portal: "shop",
+      store_id: activeStoreId,
+      entity_type: "shop_order",
+      entity_id: order.id,
+      performed_by: activeUser?.name || undefined,
+    });
+
     toast({ title: "Beställning skickad!", description: `${validLines.length} produkter beställda` });
     qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
     setDialogOpen(false);
