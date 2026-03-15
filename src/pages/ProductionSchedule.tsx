@@ -507,6 +507,7 @@ export default function ProductionSchedule() {
       }
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
       toast.success(`"${productName}" markerad som producerad.`);
+      await logActivity({ action_type: "status_change", description: `"${productName}" markerad som producerad`, portal: "production", entity_type: "production_schedule" });
     } catch (err) {
       toast.error("Kunde inte uppdatera.");
     } finally {
