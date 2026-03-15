@@ -7,6 +7,7 @@ import Login from "./pages/Login";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { SiteProvider } from "@/contexts/SiteContext";
+import { TabsProvider } from "@/contexts/TabsContext";
 import Dashboard from "./pages/Dashboard";
 import Inventory from "./pages/Inventory";
 import OrdersRouter from "./pages/OrdersRouter";
@@ -35,33 +36,35 @@ const AppContent = () => {
   return (
     <BrowserRouter>
       <SiteProvider>
-        <AppLayout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/inventory" element={<Inventory />} />
-            <Route path="/orders" element={<OrdersRouter />} />
-            <Route path="/suppliers" element={<Suppliers />} />
-            <Route path="/customers" element={<Customers />} />
-            <Route path="/stores" element={<Stores />} />
-            <Route path="/organisation" element={<OrganisationOverview />} />
-            <Route path="/staff" element={<Staff />} />
-            <Route path="/reports" element={<ReportsRouter />} />
-            <Route path="/finance" element={<PlaceholderPage title="Ekonomi" />} />
-            <Route path="/forecasts" element={<PlaceholderPage title="Prognoser" />} />
-            <Route path="/invoices" element={<Invoices />} />
-            <Route path="/purchase-reporting" element={<PurchaseReporting />} />
-            <Route path="/receiving" element={<Receiving />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/barcodes" element={<Barcodes />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/purchase-schedule" element={<PurchaseSchedule />} />
-            <Route path="/production-schedule" element={<ProductionSchedule />} />
-            <Route path="/production-reporting" element={<ProductionReporting />} />
-            <Route path="/audit" element={<PlaceholderPage title="Revision & Logg" />} />
-            <Route path="/settings" element={<PlaceholderPage title="Systeminställningar" />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AppLayout>
+        <TabsProvider>
+          <AppLayout>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/inventory" element={<Inventory />} />
+              <Route path="/orders" element={<OrdersRouter />} />
+              <Route path="/suppliers" element={<Suppliers />} />
+              <Route path="/customers" element={<Customers />} />
+              <Route path="/stores" element={<Stores />} />
+              <Route path="/organisation" element={<OrganisationOverview />} />
+              <Route path="/staff" element={<Staff />} />
+              <Route path="/reports" element={<ReportsRouter />} />
+              <Route path="/finance" element={<PlaceholderPage title="Ekonomi" />} />
+              <Route path="/forecasts" element={<PlaceholderPage title="Prognoser" />} />
+              <Route path="/invoices" element={<Invoices />} />
+              <Route path="/purchase-reporting" element={<PurchaseReporting />} />
+              <Route path="/receiving" element={<Receiving />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/barcodes" element={<Barcodes />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/purchase-schedule" element={<PurchaseSchedule />} />
+              <Route path="/production-schedule" element={<ProductionSchedule />} />
+              <Route path="/production-reporting" element={<ProductionReporting />} />
+              <Route path="/audit" element={<PlaceholderPage title="Revision & Logg" />} />
+              <Route path="/settings" element={<PlaceholderPage title="Systeminställningar" />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AppLayout>
+        </TabsProvider>
       </SiteProvider>
     </BrowserRouter>
   );
