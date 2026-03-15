@@ -214,6 +214,7 @@ export default function Inventory() {
       invalidateStock();
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
       toast({ title: "Raderat", description: `${items.length} produkt(er) raderade` });
+      await logActivity({ action_type: "delete", description: `Lager raderat: ${items.length} produkt(er) — ${deleteReason.trim()}`, entity_type: "stock_delete", details: { count: items.length, reason: deleteReason.trim() } });
       setDeleteDialogOpen(false);
       setDeleteReason("");
     } catch (err: any) {
