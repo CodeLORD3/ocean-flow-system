@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, DragEvent } from "react";
 import { useShopOrders } from "@/hooks/useShopOrders";
 import { useStores } from "@/hooks/useStores";
 import { useTransportSchedules } from "@/hooks/useTransportSchedules";
@@ -10,7 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, startOfWeek, addDays, isSameDay, parseISO, getISOWeek, getYear, getDay } from "date-fns";
 import { sv } from "date-fns/locale";
-import { CalendarDays, ChevronLeft, ChevronRight, AlertTriangle, Truck, ChevronDown, ListChecks, Factory, PackageCheck } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, AlertTriangle, Truck, ChevronDown, ListChecks, Factory, PackageCheck, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -86,6 +86,8 @@ export default function ProductionSchedule() {
   const [tab, setTab] = useState<"daily" | "total">("daily");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [useStockLoading, setUseStockLoading] = useState<string | null>(null);
+  const [dragOverDay, setDragOverDay] = useState<number | null>(null);
+  const [boughtLoading, setBoughtLoading] = useState<string | null>(null);
 
   const handleUseStock = async (lineIds: string[], shopOrderIds: string[], productName: string) => {
     setUseStockLoading(productName);
@@ -145,6 +147,31 @@ export default function ProductionSchedule() {
     });
     return m;
   }, [transportSchedules]);
+
+  // Fetch production report lines for current week
+  const { data: productionReportLines } = useQuery({
+    queryKey: ["production_report_lines_week", format(weekStart, "yyyy-MM-dd")],
+    queryFn: async () => {
+      const weekEnd = addDays(weekStart, 6);
+      const { data, error } = await supabase
+        .from("production_report_lines")
+        .select("product_id, quantity, status")
+        .gte("production_date", format(weekStart, "yyyy-MM-dd"))
+        .lte("production_date", format(weekEnd, "yyyy-MM-dd"));
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const producedMap = useMemo(() => {
+    const m = new Map<string, number>();
+    productionReportLines?.forEach((line) => {
+      if (line.product_id) {
+        m.set(line.product_id, (m.get(line.product_id) || 0) + line.quantity);
+      }
+    });
+    return m;
+  }, [productionReportLines]);
 
   const schedule = useMemo(() => {
     if (!orders || !stores || !transportSchedules) return [];
@@ -340,6 +367,72 @@ export default function ProductionSchedule() {
     return map;
   }, [weeklyTotals]);
 
+  // ── Drag & Drop handlers ──
+  const handleDragStart = (e: DragEvent<HTMLTableRowElement>, item: (typeof filteredSchedule)[0]) => {
+    e.dataTransfer.setData("application/json", JSON.stringify({
+      lineIds: item.lineIds,
+      productName: item.productName,
+    }));
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>, dayIndex: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverDay(dayIndex);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverDay(null);
+  };
+
+  const handleDrop = async (e: DragEvent<HTMLDivElement>, dayIndex: number) => {
+    e.preventDefault();
+    setDragOverDay(null);
+    try {
+      const data = JSON.parse(e.dataTransfer.getData("application/json"));
+      const targetDate = format(weekDates[dayIndex], "yyyy-MM-dd");
+      
+      for (const lineId of data.lineIds) {
+        await supabase.from("shop_order_lines").update({ delivery_date: targetDate }).eq("id", lineId);
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
+      toast.success(`"${data.productName}" flyttad till ${WEEKDAYS[dayIndex]}.`);
+    } catch (err) {
+      toast.error("Kunde inte flytta produktraden.");
+    }
+  };
+
+  // ── "Producerad" / mark done handler ──
+  const handleMarkProduced = async (lineIds: string[], shopOrderIds: string[], productName: string) => {
+    setBoughtLoading(productName);
+    try {
+      for (const lineId of lineIds) {
+        await supabase.from("shop_order_lines").update({ status: "Packad" }).eq("id", lineId);
+      }
+      const uniqueOrderIds = [...new Set(shopOrderIds)];
+      for (const orderId of uniqueOrderIds) {
+        const { data: allLines } = await supabase.from("shop_order_lines").select("status").eq("shop_order_id", orderId);
+        if (allLines) {
+          const allPacked = allLines.every((l) => l.status === "Packad");
+          const anyPacked = allLines.some((l) => l.status === "Packad");
+          if (allPacked) {
+            await supabase.from("shop_orders").update({ status: "Packad" }).eq("id", orderId);
+          } else if (anyPacked) {
+            await supabase.from("shop_orders").update({ status: "Pågående" }).eq("id", orderId);
+          }
+        }
+      }
+      queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
+      toast.success(`"${productName}" markerad som producerad.`);
+    } catch (err) {
+      toast.error("Kunde inte uppdatera.");
+    } finally {
+      setBoughtLoading(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -455,110 +548,152 @@ export default function ProductionSchedule() {
                 const isToday = isSameDay(date, new Date());
                 const isPast = date < new Date() && !isToday;
                 const dayLabel = `${WEEKDAYS[dayIndex]} ${format(date, "d/M")}`;
+                const isDragTarget = dragOverDay === dayIndex;
 
                 return (
-                  <Collapsible key={dayIndex} defaultOpen={isToday || items.length > 0}>
-                    <CollapsibleTrigger className={`flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm font-medium hover:bg-muted/50 transition-colors ${isToday ? "bg-primary/10 text-primary" : isPast ? "opacity-50 text-muted-foreground" : "text-foreground"}`}>
-                      <ChevronDown className="h-3.5 w-3.5 shrink-0 transition-transform [[data-state=open]>&]:rotate-0 [[data-state=closed]>&]:-rotate-90" />
-                      <CalendarDays className="h-3.5 w-3.5" />
-                      <span>{dayLabel}</span>
-                      {items.length > 0 && (
-                        <Badge variant="outline" className="text-[9px] ml-auto py-0 h-4">
-                          {items.length} {items.length === 1 ? "produkt" : "produkter"}
-                        </Badge>
-                      )}
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      {items.length === 0 ? (
-                        <p className="pl-10 py-1 text-[10px] text-muted-foreground italic">Inga produkter att producera</p>
-                      ) : (
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead className="h-6 px-2 pl-10 text-[10px]">Produkt</TableHead>
-                              <TableHead className="h-6 px-2 text-[10px] text-right w-[80px]">Totalt</TableHead>
-                              <TableHead className="h-6 px-2 text-[10px] text-right w-[70px]">Lager</TableHead>
-                              <TableHead className="h-6 px-2 text-[10px] w-[80px]">Butiker</TableHead>
-                              <TableHead className="h-6 px-2 text-[10px] w-[120px]">
-                                {view === "production" ? "Avgång" : "Senast producerat"}
-                              </TableHead>
-                              <TableHead className="h-6 px-2 text-[10px] w-[110px]"></TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {items.map((item, i) => {
-                              const isUrgent = view === "production" && isSameDay(item.departureDate, new Date());
-                              const stock = stockMap.get(item.productId) || 0;
-                              const hasSufficientStock = stock >= item.totalQuantity;
-                              return (
-                                <Collapsible key={`${dayIndex}-${item.productName}-${i}`} asChild>
-                                  <>
-                                    <CollapsibleTrigger asChild>
-                                      <TableRow className={`cursor-pointer hover:bg-muted/50 ${hasSufficientStock ? "bg-yellow-100 dark:bg-yellow-900/30" : isUrgent ? "bg-destructive/5" : ""}`}>
-                                        <TableCell className="px-2 pl-10 py-0.5 text-xs">
-                                          <span className="flex items-center gap-1">
-                                            <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
-                                            {item.productName}
-                                          </span>
-                                        </TableCell>
-                                        <TableCell className="px-2 py-0.5 text-xs text-right font-medium">{item.totalQuantity} {item.unit}</TableCell>
-                                        <TableCell className={`px-2 py-0.5 text-xs text-right ${hasSufficientStock ? "font-semibold text-green-700 dark:text-green-400" : "text-muted-foreground"}`}>{stock} {item.unit}</TableCell>
-                                        <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">{item.shops.length} butik{item.shops.length > 1 ? "er" : ""}</TableCell>
-                                        <TableCell className="px-2 py-0.5">
-                                          <span className="text-[10px] text-muted-foreground">
-                                            {view === "production"
-                                              ? `${format(item.departureDate, "EEE d/M", { locale: sv })} ${item.departureTime}`
-                                              : format(item.departureDate, "EEE d/M", { locale: sv })}
-                                          </span>
-                                        </TableCell>
-                                        <TableCell className="px-2 py-0.5" onClick={(e) => e.stopPropagation()}>
-                                          {hasSufficientStock && (
-                                            <Button
-                                              variant="outline"
-                                              size="sm"
-                                              className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
-                                              onClick={() => handleUseStock(item.lineIds, item.shopOrderIds, item.productName)}
-                                              disabled={useStockLoading === item.productName}
-                                            >
-                                              <PackageCheck className="h-3 w-3" /> Använd lager
-                                            </Button>
-                                          )}
-                                        </TableCell>
-                                      </TableRow>
-                                    </CollapsibleTrigger>
-                                    <CollapsibleContent asChild>
-                                      <>
-                                        {item.shops.map((shop) => {
-                                          const zoneScheds = zoneSchedules.get(shop.zoneKey);
-                                          const zone = zoneScheds?.[0];
-                                          return (
-                                            <TableRow key={shop.name} className="bg-muted/30 border-0">
-                                              <TableCell className="px-2 pl-14 py-0.5 text-[10px] text-muted-foreground">
-                                                <Badge variant={(zone?.badge_color || "default") as any} className="text-[9px] py-0">
-                                                  {shop.name}
-                                                </Badge>
-                                              </TableCell>
-                                              <TableCell className="px-2 py-0.5 text-[10px] text-right text-muted-foreground">{shop.quantity} {item.unit}</TableCell>
-                                              <TableCell className="px-2 py-0.5" />
-                                              <TableCell className="px-2 py-0.5" />
-                                              <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">
-                                                {format(item.departureDate, "EEE d/M", { locale: sv })} {zone?.departure_time || item.departureTime}
-                                              </TableCell>
-                                              <TableCell className="px-2 py-0.5" />
-                                            </TableRow>
-                                          );
-                                        })}
-                                      </>
-                                    </CollapsibleContent>
-                                  </>
-                                </Collapsible>
-                              );
-                            })}
-                          </TableBody>
-                        </Table>
-                      )}
-                    </CollapsibleContent>
-                  </Collapsible>
+                  <div
+                    key={dayIndex}
+                    onDragOver={(e) => handleDragOver(e, dayIndex)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, dayIndex)}
+                    className={`rounded-md transition-colors ${isDragTarget ? "ring-2 ring-primary/50 bg-primary/5" : ""}`}
+                  >
+                    <Collapsible defaultOpen={isToday || items.length > 0}>
+                      <CollapsibleTrigger className={`flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm font-medium hover:bg-muted/50 transition-colors ${isToday ? "bg-primary/10 text-primary" : isPast ? "opacity-50 text-muted-foreground" : "text-foreground"}`}>
+                        <ChevronDown className="h-3.5 w-3.5 shrink-0 transition-transform [[data-state=open]>&]:rotate-0 [[data-state=closed]>&]:-rotate-90" />
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        <span>{dayLabel}</span>
+                        {items.length > 0 && (
+                          <Badge variant="outline" className="text-[9px] ml-auto py-0 h-4">
+                            {items.length} {items.length === 1 ? "produkt" : "produkter"}
+                          </Badge>
+                        )}
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        {items.length === 0 ? (
+                          <p className="pl-10 py-1 text-[10px] text-muted-foreground italic">Inga produkter att producera</p>
+                        ) : (
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="h-6 px-2 pl-10 text-[10px]">Produkt</TableHead>
+                                <TableHead className="h-6 px-2 text-[10px] text-right w-[80px]">Totalt</TableHead>
+                                <TableHead className="h-6 px-2 text-[10px] text-right w-[70px]">Lager</TableHead>
+                                <TableHead className="h-6 px-2 text-[10px] text-right w-[70px]">Prod.</TableHead>
+                                <TableHead className="h-6 px-2 text-[10px] w-[80px]">Butiker</TableHead>
+                                <TableHead className="h-6 px-2 text-[10px] w-[120px]">
+                                  {view === "production" ? "Avgång" : "Senast producerat"}
+                                </TableHead>
+                                <TableHead className="h-6 px-2 text-[10px] w-[110px]"></TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {items.map((item, i) => {
+                                const isUrgent = view === "production" && isSameDay(item.departureDate, new Date());
+                                const stock = stockMap.get(item.productId) || 0;
+                                const hasSufficientStock = stock >= item.totalQuantity;
+                                const produced = producedMap.get(item.productId) || 0;
+                                const isProduced = produced >= item.totalQuantity;
+
+                                const rowBg = isProduced
+                                  ? "bg-green-100 dark:bg-green-900/30"
+                                  : hasSufficientStock
+                                  ? "bg-yellow-100 dark:bg-yellow-900/30"
+                                  : isUrgent
+                                  ? "bg-destructive/5"
+                                  : "";
+
+                                return (
+                                  <Collapsible key={`${dayIndex}-${item.productName}-${i}`} asChild>
+                                    <>
+                                      <CollapsibleTrigger asChild>
+                                        <TableRow
+                                          draggable
+                                          onDragStart={(e) => handleDragStart(e, item)}
+                                          className={`cursor-grab active:cursor-grabbing hover:bg-muted/50 ${rowBg}`}
+                                        >
+                                          <TableCell className="px-2 pl-10 py-0.5 text-xs">
+                                            <span className="flex items-center gap-1">
+                                              <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
+                                              {item.productName}
+                                            </span>
+                                          </TableCell>
+                                          <TableCell className="px-2 py-0.5 text-xs text-right font-medium">{item.totalQuantity} {item.unit}</TableCell>
+                                          <TableCell className={`px-2 py-0.5 text-xs text-right ${hasSufficientStock ? "font-semibold text-green-700 dark:text-green-400" : "text-muted-foreground"}`}>{stock} {item.unit}</TableCell>
+                                          <TableCell className={`px-2 py-0.5 text-xs text-right ${isProduced ? "font-semibold text-green-700 dark:text-green-400" : "text-muted-foreground"}`}>
+                                            {produced > 0 ? `${produced} ${item.unit}` : "—"}
+                                          </TableCell>
+                                          <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">{item.shops.length} butik{item.shops.length > 1 ? "er" : ""}</TableCell>
+                                          <TableCell className="px-2 py-0.5">
+                                            <span className="text-[10px] text-muted-foreground">
+                                              {view === "production"
+                                                ? `${format(item.departureDate, "EEE d/M", { locale: sv })} ${item.departureTime}`
+                                                : format(item.departureDate, "EEE d/M", { locale: sv })}
+                                            </span>
+                                          </TableCell>
+                                          <TableCell className="px-2 py-0.5" onClick={(e) => e.stopPropagation()}>
+                                            <div className="flex items-center gap-1">
+                                              {isProduced && (
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
+                                                  onClick={() => handleMarkProduced(item.lineIds, item.shopOrderIds, item.productName)}
+                                                  disabled={boughtLoading === item.productName}
+                                                >
+                                                  <Check className="h-3 w-3" /> Producerad
+                                                </Button>
+                                              )}
+                                              {hasSufficientStock && !isProduced && (
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
+                                                  onClick={() => handleUseStock(item.lineIds, item.shopOrderIds, item.productName)}
+                                                  disabled={useStockLoading === item.productName}
+                                                >
+                                                  <PackageCheck className="h-3 w-3" /> Använd lager
+                                                </Button>
+                                              )}
+                                            </div>
+                                          </TableCell>
+                                        </TableRow>
+                                      </CollapsibleTrigger>
+                                      <CollapsibleContent asChild>
+                                        <>
+                                          {item.shops.map((shop) => {
+                                            const zoneScheds = zoneSchedules.get(shop.zoneKey);
+                                            const zone = zoneScheds?.[0];
+                                            return (
+                                              <TableRow key={shop.name} className="bg-muted/30 border-0">
+                                                <TableCell className="px-2 pl-14 py-0.5 text-[10px] text-muted-foreground">
+                                                  <Badge variant={(zone?.badge_color || "default") as any} className="text-[9px] py-0">
+                                                    {shop.name}
+                                                  </Badge>
+                                                </TableCell>
+                                                <TableCell className="px-2 py-0.5 text-[10px] text-right text-muted-foreground">{shop.quantity} {item.unit}</TableCell>
+                                                <TableCell className="px-2 py-0.5" />
+                                                <TableCell className="px-2 py-0.5" />
+                                                <TableCell className="px-2 py-0.5" />
+                                                <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">
+                                                  {format(item.departureDate, "EEE d/M", { locale: sv })} {zone?.departure_time || item.departureTime}
+                                                </TableCell>
+                                                <TableCell className="px-2 py-0.5" />
+                                              </TableRow>
+                                            );
+                                          })}
+                                        </>
+                                      </CollapsibleContent>
+                                    </>
+                                  </Collapsible>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        )}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </div>
                 );
               })}
             </div>
@@ -589,6 +724,7 @@ export default function ProductionSchedule() {
                           <TableHead className="h-6 px-2 pl-10 text-[10px]">Produkt</TableHead>
                           <TableHead className="h-6 px-2 text-[10px] text-right w-[100px]">Total vecka</TableHead>
                           <TableHead className="h-6 px-2 text-[10px] text-right w-[70px]">Lager</TableHead>
+                          <TableHead className="h-6 px-2 text-[10px] text-right w-[70px]">Prod.</TableHead>
                           <TableHead className="h-6 px-2 text-[10px] w-[80px]">Butiker</TableHead>
                           <TableHead className="h-6 px-2 text-[10px] w-[110px]"></TableHead>
                         </TableRow>
@@ -597,11 +733,20 @@ export default function ProductionSchedule() {
                         {items.map((item) => {
                           const stock = stockMap.get(item.productId) || 0;
                           const hasSufficientStock = stock >= item.totalQuantity;
+                          const produced = producedMap.get(item.productId) || 0;
+                          const isProduced = produced >= item.totalQuantity;
+
+                          const rowBg = isProduced
+                            ? "bg-green-100 dark:bg-green-900/30"
+                            : hasSufficientStock
+                            ? "bg-yellow-100 dark:bg-yellow-900/30"
+                            : "";
+
                           return (
                           <Collapsible key={item.productName} asChild>
                             <>
                               <CollapsibleTrigger asChild>
-                                <TableRow className={`cursor-pointer hover:bg-muted/50 ${hasSufficientStock ? "bg-yellow-100 dark:bg-yellow-900/30" : ""}`}>
+                                <TableRow className={`cursor-pointer hover:bg-muted/50 ${rowBg}`}>
                                   <TableCell className="px-2 pl-10 py-0.5 text-xs">
                                     <span className="flex items-center gap-1">
                                       <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
@@ -610,19 +755,35 @@ export default function ProductionSchedule() {
                                   </TableCell>
                                   <TableCell className="px-2 py-0.5 text-xs text-right font-medium">{item.totalQuantity} {item.unit}</TableCell>
                                   <TableCell className={`px-2 py-0.5 text-xs text-right ${hasSufficientStock ? "font-semibold text-green-700 dark:text-green-400" : "text-muted-foreground"}`}>{stock} {item.unit}</TableCell>
+                                  <TableCell className={`px-2 py-0.5 text-xs text-right ${isProduced ? "font-semibold text-green-700 dark:text-green-400" : "text-muted-foreground"}`}>
+                                    {produced > 0 ? `${produced} ${item.unit}` : "—"}
+                                  </TableCell>
                                   <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">{item.shops.length} butik{item.shops.length > 1 ? "er" : ""}</TableCell>
                                   <TableCell className="px-2 py-0.5" onClick={(e) => e.stopPropagation()}>
-                                    {hasSufficientStock && (
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
-                                        onClick={() => handleUseStock(item.lineIds, item.shopOrderIds, item.productName)}
-                                        disabled={useStockLoading === item.productName}
-                                      >
-                                        <PackageCheck className="h-3 w-3" /> Använd lager
-                                      </Button>
-                                    )}
+                                    <div className="flex items-center gap-1">
+                                      {isProduced && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
+                                          onClick={() => handleMarkProduced(item.lineIds, item.shopOrderIds, item.productName)}
+                                          disabled={boughtLoading === item.productName}
+                                        >
+                                          <Check className="h-3 w-3" /> Producerad
+                                        </Button>
+                                      )}
+                                      {hasSufficientStock && !isProduced && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
+                                          onClick={() => handleUseStock(item.lineIds, item.shopOrderIds, item.productName)}
+                                          disabled={useStockLoading === item.productName}
+                                        >
+                                          <PackageCheck className="h-3 w-3" /> Använd lager
+                                        </Button>
+                                      )}
+                                    </div>
                                   </TableCell>
                                 </TableRow>
                               </CollapsibleTrigger>
@@ -639,6 +800,7 @@ export default function ProductionSchedule() {
                                           </Badge>
                                         </TableCell>
                                         <TableCell className="px-2 py-0.5 text-[10px] text-right text-muted-foreground">{shop.quantity} {item.unit}</TableCell>
+                                        <TableCell className="px-2 py-0.5" />
                                         <TableCell className="px-2 py-0.5" />
                                         <TableCell className="px-2 py-0.5" />
                                         <TableCell className="px-2 py-0.5" />
