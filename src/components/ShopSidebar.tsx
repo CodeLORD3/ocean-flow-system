@@ -30,6 +30,7 @@ const inventoryNav = [
 
 const orgNav = [
   { title: "Personal", url: "/staff", icon: UserCheck },
+  { title: "Aktivitetslogg", url: "/audit", icon: ClipboardList },
 ];
 
 const financeNav = [

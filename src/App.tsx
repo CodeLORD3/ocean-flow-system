@@ -62,7 +62,7 @@ const AppContent = () => {
               <Route path="/purchase-schedule" element={<PurchaseSchedule />} />
               <Route path="/production-schedule" element={<ProductionSchedule />} />
               <Route path="/production-reporting" element={<ProductionReporting />} />
-              <Route path="/audit" element={<PlaceholderPage title="Revision & Logg" />} />
+              <Route path="/audit" element={<AuditLog />} />
               <Route path="/settings" element={<PlaceholderPage title="Systeminställningar" />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
