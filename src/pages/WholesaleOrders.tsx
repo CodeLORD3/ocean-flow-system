@@ -718,7 +718,7 @@ export default function WholesaleOrders() {
                                      <span className="font-medium text-foreground">Anteckning:</span> {o.notes}
                                    </div>
                                  )}
-                                 <WholesaleOrderDetail order={o} onClose={() => setExpandedOrderId(null)} stores={stores} />
+                                  <WholesaleOrderDetail order={o} onClose={() => collapseOrder(o.id)} stores={stores} />
                                </div>
                              </td>
                            </tr>
