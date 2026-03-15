@@ -30,6 +30,7 @@ import ProductionSchedule from "./pages/ProductionSchedule";
 import ProductionReporting from "./pages/ProductionReporting";
 import ReportsRouter from "./pages/ReportsRouter";
 import NotFound from "./pages/NotFound";
+import AuditLog from "./pages/AuditLog";
 
 const queryClient = new QueryClient();
 
