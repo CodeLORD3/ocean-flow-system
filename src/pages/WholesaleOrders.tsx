@@ -437,7 +437,7 @@ export default function WholesaleOrders() {
                           <tr><td colSpan={15} className="px-2.5 py-6 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
                        )}
                        {filteredOrders.map((o: any) => (
-                         <tr key={o.id} className={`border-b border-border h-9 transition-colors cursor-pointer hover:bg-muted/30 ${o.status === "Pågående" ? "bg-warning/10" : o.status === "Packad" ? "bg-success/10" : o.status === "Skickad" ? "bg-primary/10" : ""}`} onClick={() => setSelectedOrderId(o.id)}>
+                         <tr key={o.id} className={`border-b border-border h-9 transition-colors cursor-pointer hover:bg-muted/30 ${o.status === "Pågående" ? "bg-warning/10" : o.status === "Packad" ? "bg-success/10" : o.status === "Skickad" ? "bg-primary/10" : o.status === "Levererad" || o.status === "Klar / Levererad" ? "bg-primary/25" : ""}`} onClick={() => setSelectedOrderId(o.id)}>
                            <td className="px-2.5 py-1" onClick={e => e.stopPropagation()}>
                              {o.status === "Ny" && (
                                <Button
