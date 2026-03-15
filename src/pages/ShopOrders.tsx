@@ -183,6 +183,7 @@ export default function ShopOrders() {
   const { toast } = useToast();
   const qc = useQueryClient();
   const { activeStoreId } = useSite();
+  const { activeUser } = useActiveUser();
   const { data: products = [] } = useProducts();
   const { data: transportSchedules = [] } = useTransportSchedules();
   const [dialogOpen, setDialogOpen] = useState(false);
