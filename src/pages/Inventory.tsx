@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/hooks/useActivityLog";
 import { markOrderLinesPackad, revertOrderLinesIfStockGone } from "@/lib/orderStatusSync";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
