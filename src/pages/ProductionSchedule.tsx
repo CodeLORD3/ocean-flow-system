@@ -43,6 +43,7 @@ export default function ProductionSchedule() {
   const { data: stores, isLoading: storesLoading } = useStores();
   const { data: transportSchedules, isLoading: schedulesLoading } = useTransportSchedules();
   const queryClient = useQueryClient();
+  const { entries: manualEntries, addEntry: addManualEntry, deleteEntry: deleteManualEntry } = useManualScheduleEntries("production");
 
   // Fetch products with producer info to filter production products
   const { data: productsWithProducer } = useQuery({
@@ -50,7 +51,7 @@ export default function ProductionSchedule() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, unit, producer")
+        .select("id, name, unit, producer, category")
         .eq("active", true);
       if (error) throw error;
       return data;
@@ -96,28 +97,61 @@ export default function ProductionSchedule() {
   const [dragOverDay, setDragOverDay] = useState<number | null>(null);
   const [boughtLoading, setBoughtLoading] = useState<string | null>(null);
 
+  // Manual entry dialog state
+  const [manualDialogOpen, setManualDialogOpen] = useState(false);
+  const [manualProductSearch, setManualProductSearch] = useState("");
+  const [manualProductId, setManualProductId] = useState("");
+  const [manualQuantity, setManualQuantity] = useState("");
+  const [manualDate, setManualDate] = useState<Date | undefined>(undefined);
+  const [manualTime, setManualTime] = useState("06:00");
+  const [manualNotes, setManualNotes] = useState("");
+
+  const filteredManualProducts = useMemo(() => {
+    if (!productsWithProducer) return [];
+    const s = manualProductSearch.toLowerCase();
+    return productsWithProducer.filter((p: any) => p.name.toLowerCase().includes(s) || !s).slice(0, 20);
+  }, [productsWithProducer, manualProductSearch]);
+
+  const handleAddManualEntry = async () => {
+    if (!manualProductId || !manualQuantity || !manualDate) return;
+    try {
+      await addManualEntry.mutateAsync({
+        product_id: manualProductId,
+        quantity: Number(manualQuantity),
+        departure_date: format(manualDate, "yyyy-MM-dd"),
+        departure_time: manualTime,
+        notes: manualNotes || undefined,
+      });
+      toast.success("Produkt tillagd i produktionsschemat.");
+      setManualDialogOpen(false);
+      setManualProductId("");
+      setManualQuantity("");
+      setManualDate(undefined);
+      setManualTime("06:00");
+      setManualNotes("");
+      setManualProductSearch("");
+    } catch {
+      toast.error("Kunde inte lägga till produkt.");
+    }
+  };
+
+  const handleDeleteManualEntry = async (id: string, productName: string) => {
+    try {
+      await deleteManualEntry.mutateAsync(id);
+      toast.success(`"${productName}" borttagen.`);
+    } catch {
+      toast.error("Kunde inte ta bort.");
+    }
+  };
+
   const handleUseStock = async (lineIds: string[], shopOrderIds: string[], productName: string) => {
     setUseStockLoading(productName);
     try {
       for (const lineId of lineIds) {
-        await supabase.from("shop_order_lines").update({ status: "Packad" }).eq("id", lineId);
-      }
-      const uniqueOrderIds = [...new Set(shopOrderIds)];
-      for (const orderId of uniqueOrderIds) {
-        const { data: allLines } = await supabase.from("shop_order_lines").select("status").eq("shop_order_id", orderId);
-        if (allLines) {
-          const allPacked = allLines.every((l) => l.status === "Packad");
-          const anyPacked = allLines.some((l) => l.status === "Packad");
-          if (allPacked) {
-            await supabase.from("shop_orders").update({ status: "Packad" }).eq("id", orderId);
-          } else if (anyPacked) {
-            await supabase.from("shop_orders").update({ status: "Pågående" }).eq("id", orderId);
-          }
-        }
+        await supabase.from("shop_order_lines").update({ ordered_elsewhere: "Lager" }).eq("id", lineId);
       }
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
-      queryClient.invalidateQueries({ queryKey: ["grossist_flytande_stock"] });
-      toast.success(`"${productName}" markerad som packad från befintligt lager.`);
+      toast.success(`"${productName}" borttagen från produktionsschema (använder befintligt lager).`);
     } catch (err) {
       toast.error("Kunde inte uppdatera orderrader.");
     } finally {
