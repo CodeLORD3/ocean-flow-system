@@ -607,20 +607,7 @@ export default function PurchaseSchedule() {
     setBoughtLoading(productName);
     try {
       for (const lineId of lineIds) {
-        await supabase.from("shop_order_lines").update({ status: "Packad" }).eq("id", lineId);
-      }
-      const uniqueOrderIds = [...new Set(shopOrderIds)];
-      for (const orderId of uniqueOrderIds) {
-        const { data: allLines } = await supabase.from("shop_order_lines").select("status").eq("shop_order_id", orderId);
-        if (allLines) {
-          const allPacked = allLines.every((l) => l.status === "Packad");
-          const anyPacked = allLines.some((l) => l.status === "Packad");
-          if (allPacked) {
-            await supabase.from("shop_orders").update({ status: "Packad" }).eq("id", orderId);
-          } else if (anyPacked) {
-            await supabase.from("shop_orders").update({ status: "Pågående" }).eq("id", orderId);
-          }
-        }
+        await supabase.from("shop_order_lines").update({ ordered_elsewhere: "Köpt" }).eq("id", lineId);
       }
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
       toast.success(`"${productName}" markerad som köpt.`);
