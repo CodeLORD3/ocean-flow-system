@@ -183,8 +183,9 @@ export default function Orders() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="pb-2 text-left font-medium text-muted-foreground w-6"></th>
-                    <th className="pb-2 text-left font-medium text-muted-foreground">Butik</th>
+                     {isGrossist && <th className="pb-2 text-left font-medium text-muted-foreground w-28"></th>}
+                     <th className="pb-2 text-left font-medium text-muted-foreground w-6"></th>
+                     <th className="pb-2 text-left font-medium text-muted-foreground">Butik</th>
                     <th className="pb-2 text-left font-medium text-muted-foreground">Vecka</th>
                     <th className="pb-2 text-left font-medium text-muted-foreground">Önskat leveransdatum</th>
                     <th className="pb-2 text-left font-medium text-muted-foreground">Skapad</th>
