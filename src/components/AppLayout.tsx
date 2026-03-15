@@ -155,26 +155,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 gap-2 px-2">
-                    <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
-                      <User className="h-3.5 w-3.5 text-primary" />
-                    </div>
-                    <span className="hidden sm:inline text-xs font-medium">
-                      {site === "shop" ? "Butikschef" : site === "production" ? "Produktionschef" : "Admin"}
-                    </span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Johan Eriksson</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>Min profil</DropdownMenuItem>
-                  <DropdownMenuItem>Inställningar</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>Logga ut</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <AccountSwitcher />
             </div>
           </header>
 
