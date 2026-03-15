@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/hooks/useActivityLog";
 
 export type Customer = {
   id: string;
@@ -59,6 +60,12 @@ export function useCreateCustomer() {
         store_id: store.id,
       });
       if (error) throw error;
+      await logActivity({
+        action_type: "create",
+        description: `Kund skapad: ${customer.name}`,
+        entity_type: "customer",
+        store_id: store.id,
+      });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["customers"] });
@@ -84,6 +91,12 @@ export function useDeleteCustomer() {
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("customers").delete().eq("id", id);
       if (error) throw error;
+      await logActivity({
+        action_type: "delete",
+        description: `Kund borttagen`,
+        entity_type: "customer",
+        entity_id: id,
+      });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["customers"] }),
   });

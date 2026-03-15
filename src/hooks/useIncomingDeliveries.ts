@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/hooks/useActivityLog";
 
 export function useIncomingDeliveries() {
   return useQuery({
@@ -61,6 +62,12 @@ export function useCreateIncomingDelivery() {
         }
       }
 
+      await logActivity({
+        action_type: "create",
+        description: `Inleverans registrerad: ${deliveryNumber}`,
+        entity_type: "incoming_delivery",
+        entity_id: del.id,
+      });
       return del;
     },
     onSuccess: () => {

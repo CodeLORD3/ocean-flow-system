@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables } from "@/integrations/supabase/types";
+import { logActivity } from "@/hooks/useActivityLog";
 
 export type Product = Tables<"products">;
 
@@ -71,6 +72,13 @@ export function useUpdateProduct() {
         retail_suggested: prices.retail_suggested,
         reason: reason || "Manuell ändring",
         changed_by: "Admin",
+      });
+      await logActivity({
+        action_type: "update",
+        description: `Pris uppdaterat: ${reason || "Manuell ändring"}`,
+        entity_type: "product",
+        entity_id: id,
+        details: prices,
       });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["products"] }),

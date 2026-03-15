@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { moveStockToTransport } from "@/lib/stockTransfer";
+import { logActivity } from "@/hooks/useActivityLog";
 
 const STATUS_FLOW = ["Ny", "Pågående", "Packad", "Skickad"] as const;
 
@@ -195,6 +196,14 @@ export function useUpdateOrderLineStatus() {
         .from("shop_orders")
         .update({ status: newOrderStatus })
         .eq("id", params.orderId);
+
+      await logActivity({
+        action_type: "status_change",
+        description: `Orderrad status ändrad till: ${params.newStatus}`,
+        entity_type: "shop_order_line",
+        entity_id: params.lineId,
+        details: { order_id: params.orderId, new_status: params.newStatus, order_status: newOrderStatus },
+      });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["shop_orders"] });

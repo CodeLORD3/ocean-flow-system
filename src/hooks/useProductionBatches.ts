@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/hooks/useActivityLog";
 
 export function useProductionBatches(date?: string) {
   return useQuery({
@@ -35,6 +36,13 @@ export function useCreateBatch() {
         ...params,
       }).select().single();
       if (error) throw error;
+      await logActivity({
+        action_type: "create",
+        description: `Produktionsbatch skapad: ${batchNumber}`,
+        portal: "production",
+        entity_type: "production_batch",
+        entity_id: data.id,
+      });
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["production_batches"] }),
@@ -47,6 +55,13 @@ export function useUpdateBatchStatus() {
     mutationFn: async (params: { id: string; status: string; waste_kg?: number }) => {
       const { error } = await supabase.from("production_batches").update(params).eq("id", params.id);
       if (error) throw error;
+      await logActivity({
+        action_type: "status_change",
+        description: `Produktionsbatch status ändrad till: ${params.status}`,
+        portal: "production",
+        entity_type: "production_batch",
+        entity_id: params.id,
+      });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["production_batches"] }),
   });

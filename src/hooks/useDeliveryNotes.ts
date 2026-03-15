@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/hooks/useActivityLog";
 
 export function useDeliveryNotes() {
   return useQuery({
@@ -61,6 +62,13 @@ export function useCreateDeliveryNote() {
         }
       }
 
+      await logActivity({
+        action_type: "create",
+        description: `Följesedel skapad: ${noteNumber}`,
+        entity_type: "delivery_note",
+        entity_id: dn.id,
+        store_id: params.store_id,
+      });
       return dn;
     },
     onSuccess: () => {
