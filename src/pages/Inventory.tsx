@@ -186,6 +186,7 @@ export default function Inventory() {
       invalidateStock();
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
       toast({ title: "Flyttat", description: `${items.length} produkt(er) flyttade` });
+      await logActivity({ action_type: "update", description: `Lager flyttat: ${items.length} produkt(er)`, entity_type: "stock_transfer", details: { count: items.length, target_location: targetLocationId } });
       setMoveDialogOpen(false);
     } catch (err: any) {
       toast({ title: "Fel", description: err.message, variant: "destructive" });
