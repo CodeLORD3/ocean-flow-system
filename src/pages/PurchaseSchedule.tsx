@@ -980,22 +980,20 @@ export default function PurchaseSchedule() {
                                         </Button>
                                       ) : (
                                         <>
-                                          {isPurchased && (
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
+                                            onClick={() => handleMarkBought(item.lines.map(l => l.lineId), item.lines.map(l => l.shopOrderId), item.productName)}
+                                            disabled={boughtLoading === item.productName}
+                                          >
+                                            <Check className="h-3 w-3" /> Köpt
+                                          </Button>
+                                          {hasSufficientStock && (
                                             <Button
                                               variant="outline"
                                               size="sm"
-                                              className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
-                                              onClick={() => handleMarkBought(item.lines.map(l => l.lineId), item.lines.map(l => l.shopOrderId), item.productName)}
-                                              disabled={boughtLoading === item.productName}
-                                            >
-                                              <Check className="h-3 w-3" /> Köpt
-                                            </Button>
-                                          )}
-                                          {hasSufficientStock && !isPurchased && (
-                                            <Button
-                                              variant="outline"
-                                              size="sm"
-                                              className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
+                                              className="h-6 text-[10px] gap-1 text-yellow-700 dark:text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/10"
                                               onClick={() => handleUseStock(item.lines.map(l => l.lineId), item.lines.map(l => l.shopOrderId), item.productName)}
                                               disabled={useStockLoading === item.productName}
                                             >
