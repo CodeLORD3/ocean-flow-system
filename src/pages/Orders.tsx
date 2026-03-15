@@ -221,6 +221,7 @@ export default function Orders() {
                         onToggle={() => toggleExpand(order.id)}
                         isGrossist={isGrossist}
                         onStatusChange={handleStatusChange}
+                        onPackOrder={handlePackOrder}
                         isPending={updateLineStatus.isPending}
                       />
                     );
