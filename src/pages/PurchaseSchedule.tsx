@@ -263,6 +263,7 @@ export default function PurchaseSchedule() {
       unit: string;
       deliveryDate: Date;
       departureDate: Date;
+      purchaseDate: Date;
       departureTime: string;
       category: string;
       lineId: string;
@@ -293,6 +294,8 @@ export default function PurchaseSchedule() {
         const isoDay = jsDay === 0 ? 7 : jsDay; // 1=Mon..7=Sun
         const matchingSchedule = schedules.find(s => s.departure_weekday === isoDay) || schedules[0];
         const departureDate = deliveryDate;
+        // order_date is the planned purchase date (set by drag & drop), defaults to departure date
+        const purchaseDate = line.order_date ? parseISO(line.order_date) : departureDate;
 
         rawItems.push({
           storeName: store.name,
@@ -303,6 +306,7 @@ export default function PurchaseSchedule() {
           unit: line.unit || line.products?.unit || "kg",
           deliveryDate,
           departureDate,
+          purchaseDate,
           departureTime: matchingSchedule.departure_time,
           category: line.products?.category || "Övrigt",
           lineId: line.id,
@@ -312,7 +316,7 @@ export default function PurchaseSchedule() {
     }
 
     const key = (item: RawItem) =>
-      `${item.productName}|${item.unit}|${format(item.departureDate, "yyyy-MM-dd")}`;
+      `${item.productName}|${item.unit}|${format(item.purchaseDate, "yyyy-MM-dd")}`;
 
     const grouped = new Map<string, {
       productId: string;
@@ -321,6 +325,7 @@ export default function PurchaseSchedule() {
       totalQuantity: number;
       shops: { name: string; zoneKey: string; quantity: number; deliveryDate: Date }[];
       departureDate: Date;
+      purchaseDate: Date;
       earliestDelivery: Date;
       departureTime: string;
       category: string;
@@ -350,6 +355,7 @@ export default function PurchaseSchedule() {
           totalQuantity: item.quantity,
           shops: [{ name: item.storeName, zoneKey: item.zoneKey, quantity: item.quantity, deliveryDate: item.deliveryDate }],
           departureDate: item.departureDate,
+          purchaseDate: item.purchaseDate,
           earliestDelivery: item.deliveryDate,
           departureTime: item.departureTime,
           category: item.category,
@@ -429,7 +435,7 @@ export default function PurchaseSchedule() {
   };
 
   const byDeliveryDay = useMemo(() => groupByDay((i) => i.earliestDelivery), [filteredSchedule, weekDates]);
-  const byPurchaseDay = useMemo(() => groupByDay((i) => i.departureDate), [filteredSchedule, weekDates]);
+  const byPurchaseDay = useMemo(() => groupByDay((i) => i.purchaseDate), [filteredSchedule, weekDates]);
 
   const activeMap = view === "purchase" ? byPurchaseDay : byDeliveryDay;
   const isLoading = ordersLoading || storesLoading || schedulesLoading;
@@ -518,7 +524,7 @@ export default function PurchaseSchedule() {
       const targetDate = format(weekDates[dayIndex], "yyyy-MM-dd");
       
       for (const lineId of data.lineIds) {
-        await supabase.from("shop_order_lines").update({ delivery_date: targetDate }).eq("id", lineId);
+        await supabase.from("shop_order_lines").update({ order_date: targetDate }).eq("id", lineId);
       }
       
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });

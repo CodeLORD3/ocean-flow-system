@@ -185,6 +185,7 @@ export default function ProductionSchedule() {
       unit: string;
       deliveryDate: Date;
       departureDate: Date;
+      productionDate: Date;
       departureTime: string;
       category: string;
       lineId: string;
@@ -216,6 +217,8 @@ export default function ProductionSchedule() {
         const isoDay = jsDay === 0 ? 7 : jsDay;
         const matchingSchedule = schedules.find(s => s.departure_weekday === isoDay) || schedules[0];
         const departureDate = deliveryDate;
+        // order_date is the planned production date (set by drag & drop), defaults to departure date
+        const productionDate = line.order_date ? parseISO(line.order_date) : departureDate;
 
         rawItems.push({
           storeName: store.name,
@@ -226,6 +229,7 @@ export default function ProductionSchedule() {
           unit: line.unit || line.products?.unit || "kg",
           deliveryDate,
           departureDate,
+          productionDate,
           departureTime: matchingSchedule.departure_time,
           category: line.products?.category || "Övrigt",
           lineId: line.id,
@@ -235,7 +239,7 @@ export default function ProductionSchedule() {
     }
 
     const key = (item: RawItem) =>
-      `${item.productName}|${item.unit}|${format(item.departureDate, "yyyy-MM-dd")}`;
+      `${item.productName}|${item.unit}|${format(item.productionDate, "yyyy-MM-dd")}`;
 
     const grouped = new Map<string, {
       productId: string;
@@ -244,6 +248,7 @@ export default function ProductionSchedule() {
       totalQuantity: number;
       shops: { name: string; zoneKey: string; quantity: number; deliveryDate: Date }[];
       departureDate: Date;
+      productionDate: Date;
       earliestDelivery: Date;
       departureTime: string;
       category: string;
@@ -273,6 +278,7 @@ export default function ProductionSchedule() {
           totalQuantity: item.quantity,
           shops: [{ name: item.storeName, zoneKey: item.zoneKey, quantity: item.quantity, deliveryDate: item.deliveryDate }],
           departureDate: item.departureDate,
+          productionDate: item.productionDate,
           earliestDelivery: item.deliveryDate,
           departureTime: item.departureTime,
           category: item.category,
@@ -352,7 +358,7 @@ export default function ProductionSchedule() {
   };
 
   const byDeliveryDay = useMemo(() => groupByDay((i) => i.earliestDelivery), [filteredSchedule, weekDates]);
-  const byProductionDay = useMemo(() => groupByDay((i) => i.departureDate), [filteredSchedule, weekDates]);
+  const byProductionDay = useMemo(() => groupByDay((i) => i.productionDate), [filteredSchedule, weekDates]);
 
   const activeMap = view === "production" ? byProductionDay : byDeliveryDay;
   const isLoading = ordersLoading || storesLoading || schedulesLoading;
@@ -394,7 +400,7 @@ export default function ProductionSchedule() {
       const targetDate = format(weekDates[dayIndex], "yyyy-MM-dd");
       
       for (const lineId of data.lineIds) {
-        await supabase.from("shop_order_lines").update({ delivery_date: targetDate }).eq("id", lineId);
+        await supabase.from("shop_order_lines").update({ order_date: targetDate }).eq("id", lineId);
       }
       
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
