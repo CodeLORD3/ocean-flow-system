@@ -358,7 +358,7 @@ export default function ProductionSchedule() {
   };
 
   const byDeliveryDay = useMemo(() => groupByDay((i) => i.earliestDelivery), [filteredSchedule, weekDates]);
-  const byProductionDay = useMemo(() => groupByDay((i) => i.departureDate), [filteredSchedule, weekDates]);
+  const byProductionDay = useMemo(() => groupByDay((i) => i.productionDate), [filteredSchedule, weekDates]);
 
   const activeMap = view === "production" ? byProductionDay : byDeliveryDay;
   const isLoading = ordersLoading || storesLoading || schedulesLoading;
