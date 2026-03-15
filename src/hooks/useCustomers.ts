@@ -60,6 +60,12 @@ export function useCreateCustomer() {
         store_id: store.id,
       });
       if (error) throw error;
+      await logActivity({
+        action_type: "create",
+        description: `Kund skapad: ${customer.name}`,
+        entity_type: "customer",
+        store_id: store.id,
+      });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["customers"] });
