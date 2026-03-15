@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tables, TablesUpdate } from "@/integrations/supabase/types";
+import { logActivity } from "@/hooks/useActivityLog";
 
 export type Store = Tables<"stores">;
 
@@ -23,6 +24,13 @@ export function useUpdateStore() {
     mutationFn: async ({ id, ...updates }: TablesUpdate<"stores"> & { id: string }) => {
       const { data, error } = await supabase.from("stores").update(updates).eq("id", id).select().single();
       if (error) throw error;
+      await logActivity({
+        action_type: "update",
+        description: `Butik uppdaterad: ${data.name}`,
+        entity_type: "store",
+        entity_id: id,
+        store_id: id,
+      });
       return data;
     },
     onSuccess: () => {

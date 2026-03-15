@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/hooks/useActivityLog";
 
 export type ManualScheduleEntry = {
   id: string;
@@ -42,6 +43,12 @@ export function useManualScheduleEntries(scheduleType: "purchase" | "production"
         schedule_type: scheduleType,
       });
       if (error) throw error;
+      await logActivity({
+        action_type: "create",
+        description: `Schemapost tillagd (${scheduleType === "purchase" ? "inköp" : "produktion"})`,
+        portal: scheduleType === "production" ? "production" : "wholesale",
+        entity_type: "schedule_entry",
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["manual_schedule_entries", scheduleType] });
@@ -52,6 +59,13 @@ export function useManualScheduleEntries(scheduleType: "purchase" | "production"
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("manual_schedule_entries").delete().eq("id", id);
       if (error) throw error;
+      await logActivity({
+        action_type: "delete",
+        description: `Schemapost borttagen (${scheduleType === "purchase" ? "inköp" : "produktion"})`,
+        portal: scheduleType === "production" ? "production" : "wholesale",
+        entity_type: "schedule_entry",
+        entity_id: id,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["manual_schedule_entries", scheduleType] });

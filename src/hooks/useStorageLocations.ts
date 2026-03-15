@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/hooks/useActivityLog";
 
 export function useStorageLocations(storeId?: string) {
   return useQuery({
@@ -54,6 +55,13 @@ export function useCreateStorageLocation() {
     mutationFn: async (params: { name: string; store_id: string; zone?: string; description?: string }) => {
       const { data, error } = await supabase.from("storage_locations").insert(params).select().single();
       if (error) throw error;
+      await logActivity({
+        action_type: "create",
+        description: `Lagerplats skapad: ${params.name}`,
+        entity_type: "storage_location",
+        entity_id: data.id,
+        store_id: params.store_id,
+      });
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["storage_locations"] }),
@@ -75,10 +83,16 @@ export function useUpsertStockLocation() {
         }, { onConflict: "product_id,location_id" });
       if (error) throw error;
       
-      // Reverse sync FIRST, then pack — so Pre-location packing wins
       const { markOrderLinesPackad, revertOrderLinesIfStockGone } = await import("@/lib/orderStatusSync");
       await revertOrderLinesIfStockGone();
       await markOrderLinesPackad([params.product_id], params.location_id);
+
+      await logActivity({
+        action_type: "update",
+        description: `Lagersaldo uppdaterat: ${params.quantity} st`,
+        entity_type: "stock_location",
+        details: { product_id: params.product_id, location_id: params.location_id, quantity: params.quantity },
+      });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["product_stock_locations"] });

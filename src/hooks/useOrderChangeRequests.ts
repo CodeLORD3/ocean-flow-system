@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/hooks/useActivityLog";
 
 export function useOrderChangeRequests(shopOrderId?: string) {
   return useQuery({
@@ -45,7 +46,6 @@ export function usePendingWholesaleRequests(storeId?: string) {
         .eq("requested_by", "grossist")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      // Filter by store if needed
       if (storeId) {
         return (data || []).filter((cr: any) => cr.shop_orders?.store_id === storeId);
       }
@@ -72,6 +72,14 @@ export function useCreateChangeRequest() {
         .from("shop_order_change_requests")
         .insert(params as any);
       if (error) throw error;
+      await logActivity({
+        action_type: "create",
+        description: `Ändringsförfrågan skapad: ${params.change_type}`,
+        portal: params.requested_by === "grossist" ? "wholesale" : "shop",
+        entity_type: "change_request",
+        entity_id: params.shop_order_id,
+        details: { change_type: params.change_type, new_value: params.new_value },
+      });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["order_change_requests"] });
@@ -85,7 +93,6 @@ export function useResolveChangeRequest() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (params: { id: string; status: "Godkänd" | "Nekad" }) => {
-      // Get the change request first
       const { data: cr, error: fetchErr } = await supabase
         .from("shop_order_change_requests")
         .select("*")
@@ -93,7 +100,6 @@ export function useResolveChangeRequest() {
         .single();
       if (fetchErr) throw fetchErr;
 
-      // Update the change request status
       const { error } = await supabase
         .from("shop_order_change_requests")
         .update({
@@ -126,7 +132,6 @@ export function useResolveChangeRequest() {
           }
         } else if (cr.change_type === "product_alternative") {
           if (params.status === "Godkänd") {
-            // Shop accepts: swap product on the order line
             if (cr.order_line_id && cr.product_id) {
               const { error: upErr } = await supabase
                 .from("shop_order_lines")
@@ -138,7 +143,6 @@ export function useResolveChangeRequest() {
               if (upErr) throw upErr;
             }
           } else {
-            // Shop denies alternative: remove the line
             if (cr.order_line_id) {
               const { error: delErr } = await supabase
                 .from("shop_order_lines")
@@ -149,7 +153,6 @@ export function useResolveChangeRequest() {
           }
         }
       } else {
-        // Shop-initiated changes (existing logic)
         if (params.status === "Godkänd") {
           if (cr.change_type === "quantity_change" && cr.order_line_id) {
             const { error: upErr } = await supabase
@@ -177,6 +180,14 @@ export function useResolveChangeRequest() {
           }
         }
       }
+
+      await logActivity({
+        action_type: params.status === "Godkänd" ? "approve" : "status_change",
+        description: `Ändringsförfrågan ${params.status.toLowerCase()}: ${cr.change_type}`,
+        entity_type: "change_request",
+        entity_id: params.id,
+        details: { resolution: params.status, change_type: cr.change_type },
+      });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["order_change_requests"] });

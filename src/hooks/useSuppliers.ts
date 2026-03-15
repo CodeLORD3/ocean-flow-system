@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/hooks/useActivityLog";
 
 export type Supplier = {
   id: string;
@@ -31,8 +32,15 @@ export function useCreateSupplier() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (supplier: Omit<Supplier, "id" | "created_at">) => {
-      const { error } = await supabase.from("suppliers").insert(supplier);
+      const { data, error } = await supabase.from("suppliers").insert(supplier).select().single();
       if (error) throw error;
+      await logActivity({
+        action_type: "create",
+        description: `Leverantör skapad: ${supplier.name}`,
+        entity_type: "supplier",
+        entity_id: data.id,
+      });
+      return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["suppliers"] }),
   });
@@ -44,6 +52,12 @@ export function useUpdateSupplier() {
     mutationFn: async ({ id, ...data }: Partial<Supplier> & { id: string }) => {
       const { error } = await supabase.from("suppliers").update(data).eq("id", id);
       if (error) throw error;
+      await logActivity({
+        action_type: "update",
+        description: `Leverantör uppdaterad: ${data.name || id}`,
+        entity_type: "supplier",
+        entity_id: id,
+      });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["suppliers"] }),
   });
@@ -53,7 +67,6 @@ export function useDeleteSupplier() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      // Unlink products that reference this supplier
       const { error: unlinkErr } = await supabase
         .from("products")
         .update({ supplier_id: null })
@@ -62,6 +75,12 @@ export function useDeleteSupplier() {
 
       const { error } = await supabase.from("suppliers").delete().eq("id", id);
       if (error) throw error;
+      await logActivity({
+        action_type: "delete",
+        description: `Leverantör borttagen`,
+        entity_type: "supplier",
+        entity_id: id,
+      });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["suppliers"] });
