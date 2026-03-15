@@ -239,7 +239,7 @@ export default function ProductionSchedule() {
     }
 
     const key = (item: RawItem) =>
-      `${item.productName}|${item.unit}|${format(item.departureDate, "yyyy-MM-dd")}`;
+      `${item.productName}|${item.unit}|${format(item.productionDate, "yyyy-MM-dd")}`;
 
     const grouped = new Map<string, {
       productId: string;
