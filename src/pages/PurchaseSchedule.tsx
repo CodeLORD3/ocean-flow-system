@@ -320,7 +320,7 @@ export default function PurchaseSchedule() {
       for (const line of order.shop_order_lines || []) {
         // Skip lines already being processed or marked as "Använd lager"
         if (line.status && !["", "Ny", "Pågående"].includes(line.status)) continue;
-        if (line.ordered_elsewhere === "Lager") continue;
+        if (line.ordered_elsewhere === "Lager" || line.ordered_elsewhere === "Köpt") continue;
 
         const deliveryDateStr = line.delivery_date || order.desired_delivery_date;
         if (!deliveryDateStr) continue;
@@ -607,20 +607,7 @@ export default function PurchaseSchedule() {
     setBoughtLoading(productName);
     try {
       for (const lineId of lineIds) {
-        await supabase.from("shop_order_lines").update({ status: "Packad" }).eq("id", lineId);
-      }
-      const uniqueOrderIds = [...new Set(shopOrderIds)];
-      for (const orderId of uniqueOrderIds) {
-        const { data: allLines } = await supabase.from("shop_order_lines").select("status").eq("shop_order_id", orderId);
-        if (allLines) {
-          const allPacked = allLines.every((l) => l.status === "Packad");
-          const anyPacked = allLines.some((l) => l.status === "Packad");
-          if (allPacked) {
-            await supabase.from("shop_orders").update({ status: "Packad" }).eq("id", orderId);
-          } else if (anyPacked) {
-            await supabase.from("shop_orders").update({ status: "Pågående" }).eq("id", orderId);
-          }
-        }
+        await supabase.from("shop_order_lines").update({ ordered_elsewhere: "Köpt" }).eq("id", lineId);
       }
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
       toast.success(`"${productName}" markerad som köpt.`);
@@ -847,22 +834,20 @@ export default function PurchaseSchedule() {
                                                 </Button>
                                               ) : (
                                                 <>
-                                                  {isPurchased && (
+                                                  <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
+                                                    onClick={() => handleMarkBought(item.lineIds, item.shopOrderIds, item.productName)}
+                                                    disabled={boughtLoading === item.productName}
+                                                  >
+                                                    <Check className="h-3 w-3" /> Köpt
+                                                  </Button>
+                                                  {hasSufficientStock && (
                                                     <Button
                                                       variant="outline"
                                                       size="sm"
-                                                      className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
-                                                      onClick={() => handleMarkBought(item.lineIds, item.shopOrderIds, item.productName)}
-                                                      disabled={boughtLoading === item.productName}
-                                                    >
-                                                      <Check className="h-3 w-3" /> Köpt
-                                                    </Button>
-                                                  )}
-                                                  {hasSufficientStock && !isPurchased && (
-                                                    <Button
-                                                      variant="outline"
-                                                      size="sm"
-                                                      className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
+                                                      className="h-6 text-[10px] gap-1 text-yellow-700 dark:text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/10"
                                                       onClick={() => handleUseStock(item.lineIds, item.shopOrderIds, item.productName)}
                                                       disabled={useStockLoading === item.productName}
                                                     >
@@ -995,22 +980,20 @@ export default function PurchaseSchedule() {
                                         </Button>
                                       ) : (
                                         <>
-                                          {isPurchased && (
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
+                                            onClick={() => handleMarkBought(item.lines.map(l => l.lineId), item.lines.map(l => l.shopOrderId), item.productName)}
+                                            disabled={boughtLoading === item.productName}
+                                          >
+                                            <Check className="h-3 w-3" /> Köpt
+                                          </Button>
+                                          {hasSufficientStock && (
                                             <Button
                                               variant="outline"
                                               size="sm"
-                                              className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
-                                              onClick={() => handleMarkBought(item.lines.map(l => l.lineId), item.lines.map(l => l.shopOrderId), item.productName)}
-                                              disabled={boughtLoading === item.productName}
-                                            >
-                                              <Check className="h-3 w-3" /> Köpt
-                                            </Button>
-                                          )}
-                                          {hasSufficientStock && !isPurchased && (
-                                            <Button
-                                              variant="outline"
-                                              size="sm"
-                                              className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
+                                              className="h-6 text-[10px] gap-1 text-yellow-700 dark:text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/10"
                                               onClick={() => handleUseStock(item.lines.map(l => l.lineId), item.lines.map(l => l.shopOrderId), item.productName)}
                                               disabled={useStockLoading === item.productName}
                                             >
