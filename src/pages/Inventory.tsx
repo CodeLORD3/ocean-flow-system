@@ -4,7 +4,7 @@ import { markOrderLinesPackad, revertOrderLinesIfStockGone } from "@/lib/orderSt
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
-  Warehouse, Search, Plus, Package, AlertTriangle, MapPin,
+  Warehouse, Search, Plus, Package, AlertTriangle, MapPin, Truck,
   Edit, ArrowRightLeft, ScanLine, Camera, ClipboardList, X, CheckCircle2,
   ChevronDown, ChevronRight, Trash2, Scissors, Move, RefreshCw,
 } from "lucide-react";
