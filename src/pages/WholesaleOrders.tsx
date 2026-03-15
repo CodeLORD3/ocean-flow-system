@@ -703,7 +703,7 @@ export default function WholesaleOrders() {
                                        {o.status}
                                      </Badge>
                                    </div>
-                                   <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={(e) => { e.stopPropagation(); setExpandedOrderId(null); }}>
+                                    <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={(e) => { e.stopPropagation(); collapseOrder(o.id); }}>
                                      <X className="h-3 w-3 mr-1" /> Stäng
                                    </Button>
                                  </div>
