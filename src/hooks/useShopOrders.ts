@@ -70,6 +70,13 @@ export function useUpdateOrderLineDelivered() {
         .update({ quantity_delivered: params.quantity_delivered, status: params.status || "Klar / Levererad" })
         .eq("id", params.id);
       if (error) throw error;
+      await logActivity({
+        action_type: "update",
+        description: `Orderrad levererad: ${params.quantity_delivered} st`,
+        entity_type: "shop_order_line",
+        entity_id: params.id,
+        details: { quantity_delivered: params.quantity_delivered, status: params.status || "Klar / Levererad" },
+      });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["shop_orders"] }),
   });

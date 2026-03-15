@@ -100,6 +100,13 @@ export function useUpdateStock() {
       const newStock = Number(product.stock) + params.delta;
       const { error } = await supabase.from("products").update({ stock: newStock }).eq("id", params.id);
       if (error) throw error;
+      await logActivity({
+        action_type: "update",
+        description: `Lagersaldo ändrat: ${params.delta > 0 ? "+" : ""}${params.delta}`,
+        entity_type: "product",
+        entity_id: params.id,
+        details: { delta: params.delta, new_stock: newStock },
+      });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["products"] }),
   });
