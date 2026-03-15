@@ -354,7 +354,7 @@ export default function ShopOrders() {
       store_id: activeStoreId,
       entity_type: "shop_order",
       entity_id: order.id,
-      performed_by: activeUser?.name || undefined,
+      performed_by: undefined,
     });
 
     toast({ title: "Beställning skickad!", description: `${validLines.length} produkter beställda` });
