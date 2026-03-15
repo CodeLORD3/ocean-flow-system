@@ -778,6 +778,8 @@ export default function Inventory() {
                   // For general locations (Transportlager, Grossist Flytande), render as a single expandable row
                   if (isGeneral) {
                     const isExpanded = expandedLocations.has(singleLoc.id);
+                    const isTransportlager = singleLoc.name === "Transportlager";
+
                     return (
                       <div key={singleLoc.id} className="border border-border/50 rounded-md overflow-hidden">
                         <div className="flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors">
@@ -796,7 +798,9 @@ export default function Inventory() {
                             <span className="text-xs font-medium text-foreground">{fmt(singleLoc.totalValue)}</span>
                           </div>
                         </div>
-                        {isExpanded && renderLocationTable(singleLoc)}
+                        {isExpanded && (
+                          isTransportlager ? renderTransportlagerGrouped(singleLoc) : renderLocationTable(singleLoc)
+                        )}
                       </div>
                     );
                   }
