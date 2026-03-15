@@ -3,11 +3,12 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { ShopSidebar } from "@/components/ShopSidebar";
 import { ProductionSidebar } from "@/components/ProductionSidebar";
 import { useLocation } from "react-router-dom";
-import { Bell, ChevronRight, Search, User, ArrowLeftRight, Factory, Store, ChevronDown } from "lucide-react";
+import { Bell, ChevronRight, Search, User, ArrowLeftRight, Factory, Store, ChevronDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useSite } from "@/contexts/SiteContext";
+import { useTabs } from "@/contexts/TabsContext";
 import { useStores } from "@/hooks/useStores";
 import {
   DropdownMenu,
@@ -38,6 +39,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const page = pageTitles[location.pathname] || { title: "Sida", breadcrumb: ["Hem"] };
   const { site, setSite, activeStoreName, setActiveStore } = useSite();
+  const { tabs, activeTab, closeTab, switchTab } = useTabs();
   const { data: allStores = [] } = useStores();
   const retailStores = allStores.filter(s => !s.is_wholesale);
   return (
@@ -174,17 +176,39 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           </header>
 
-          {/* Page title bar */}
-          <div className="h-11 flex items-center justify-between border-b border-border bg-card/50 px-6 shrink-0">
-            <div className="flex items-center gap-2">
-              <h1 className="font-heading text-sm font-semibold text-foreground">{page.title}</h1>
-              <Badge variant="outline" className="text-[9px] h-4">
-                {site === "shop" ? (activeStoreName || "Butik") : site === "production" ? "Produktion" : "Grossist"}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-              <span>{new Date().toLocaleDateString("sv-SE", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
-            </div>
+          {/* Tab bar */}
+          <div className="h-9 flex items-end bg-card border-b border-border px-2 shrink-0 overflow-x-auto scrollbar-none">
+            {tabs.map((tab) => {
+              const isActive = tab.path === activeTab;
+              return (
+                <div
+                  key={tab.path}
+                  className={`group relative flex items-center gap-1.5 h-8 px-3 cursor-pointer text-xs border border-b-0 rounded-t-md transition-colors select-none ${
+                    isActive
+                      ? "bg-background border-border text-foreground font-medium -mb-px z-10"
+                      : "bg-muted/40 border-transparent text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                  }`}
+                  onClick={() => switchTab(tab.path)}
+                >
+                  <span className="truncate max-w-[120px]">{tab.title}</span>
+                  {tabs.length > 1 && (
+                    <button
+                      className={`flex items-center justify-center h-4 w-4 rounded-sm transition-opacity ${
+                        isActive
+                          ? "opacity-60 hover:opacity-100 hover:bg-muted"
+                          : "opacity-0 group-hover:opacity-60 hover:!opacity-100 hover:bg-muted"
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        closeTab(tab.path);
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           <main className="flex-1 overflow-auto p-4 lg:p-6">
