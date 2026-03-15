@@ -73,6 +73,13 @@ export function useUpdateProduct() {
         reason: reason || "Manuell ändring",
         changed_by: "Admin",
       });
+      await logActivity({
+        action_type: "update",
+        description: `Pris uppdaterat: ${reason || "Manuell ändring"}`,
+        entity_type: "product",
+        entity_id: id,
+        details: prices,
+      });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["products"] }),
   });

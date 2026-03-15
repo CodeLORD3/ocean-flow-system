@@ -68,6 +68,12 @@ export function useDeleteStaff() {
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("staff").delete().eq("id", id);
       if (error) throw error;
+      await logActivity({
+        action_type: "delete",
+        description: `Personal borttagen`,
+        entity_type: "staff",
+        entity_id: id,
+      });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["staff"] }),
   });

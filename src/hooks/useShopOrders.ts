@@ -47,6 +47,14 @@ export function useCreateShopOrder() {
       if (lineErr) throw lineErr;
       // After creating the order, sync statuses with existing stock
       await syncBehandlasFromStock();
+      await logActivity({
+        action_type: "create",
+        description: `Ny butiksorder skapad (vecka ${params.order_week})`,
+        portal: "shop",
+        store_id: params.store_id,
+        entity_type: "shop_order",
+        entity_id: order.id,
+      });
       return order;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["shop_orders"] }),

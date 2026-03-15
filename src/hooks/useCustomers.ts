@@ -91,6 +91,12 @@ export function useDeleteCustomer() {
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("customers").delete().eq("id", id);
       if (error) throw error;
+      await logActivity({
+        action_type: "delete",
+        description: `Kund borttagen`,
+        entity_type: "customer",
+        entity_id: id,
+      });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["customers"] }),
   });

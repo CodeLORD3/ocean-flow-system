@@ -62,6 +62,12 @@ export function useCreateIncomingDelivery() {
         }
       }
 
+      await logActivity({
+        action_type: "create",
+        description: `Inleverans registrerad: ${deliveryNumber}`,
+        entity_type: "incoming_delivery",
+        entity_id: del.id,
+      });
       return del;
     },
     onSuccess: () => {
