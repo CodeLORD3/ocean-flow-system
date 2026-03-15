@@ -454,16 +454,18 @@ export default function PurchaseSchedule() {
       category: string;
       shops: { name: string; zoneKey: string; quantity: number }[];
       lines: { lineId: string; shopOrderId: string }[];
+      isManual?: boolean;
+      manualEntryId?: string;
     }>();
 
     for (const item of filteredSchedule) {
       const inWeek = weekDates.some((d) => isSameDay(d, item.departureDate));
       if (!inWeek) continue;
 
-      const k = `${item.productName}|${item.unit}`;
+      const k = item.isManual ? `manual-${item.manualEntryId}` : `${item.productName}|${item.unit}`;
       const existing = map.get(k);
       const itemLines = item.lineIds.map((lid, idx) => ({ lineId: lid, shopOrderId: item.shopOrderIds[Math.min(idx, item.shopOrderIds.length - 1)] }));
-      if (existing) {
+      if (existing && !item.isManual) {
         existing.totalQuantity += item.totalQuantity;
         existing.lines.push(...itemLines);
         for (const shop of item.shops) {
@@ -480,6 +482,8 @@ export default function PurchaseSchedule() {
           category: item.category,
           shops: item.shops.map((s) => ({ name: s.name, zoneKey: s.zoneKey, quantity: s.quantity })),
           lines: [...itemLines],
+          isManual: item.isManual,
+          manualEntryId: item.manualEntryId,
         });
       }
     }
