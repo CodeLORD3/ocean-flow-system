@@ -325,6 +325,7 @@ export default function PurchaseSchedule() {
       totalQuantity: number;
       shops: { name: string; zoneKey: string; quantity: number; deliveryDate: Date }[];
       departureDate: Date;
+      purchaseDate: Date;
       earliestDelivery: Date;
       departureTime: string;
       category: string;
