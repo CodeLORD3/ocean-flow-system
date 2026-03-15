@@ -159,6 +159,14 @@ export function useUpdateWeeklyReport() {
         const { error: lineErr } = await supabase.from("shop_report_lines").insert(lines);
         if (lineErr) throw lineErr;
       }
+      await logActivity({
+        action_type: "update",
+        description: `Veckorapport uppdaterad`,
+        portal: "shop",
+        store_id: params.store_id,
+        entity_type: "shop_report",
+        entity_id: params.id,
+      });
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["shop_reports", "weekly", vars.store_id] });
