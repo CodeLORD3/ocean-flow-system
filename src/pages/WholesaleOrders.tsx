@@ -778,7 +778,7 @@ export default function WholesaleOrders() {
                                   <h3 className="font-heading text-sm font-semibold">
                                     Order {o.order_week} — {o.stores?.name || "Okänd butik"}
                                   </h3>
-                                  <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={(e) => { e.stopPropagation(); setExpandedOrderId(null); }}>
+                                  <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={(e) => { e.stopPropagation(); collapseOrder(o.id); }}>
                                     <X className="h-3 w-3 mr-1" /> Stäng
                                   </Button>
                                 </div>
