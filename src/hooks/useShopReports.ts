@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/hooks/useActivityLog";
 
 export const SALES_CATEGORIES = [
   "Grossistförsäljning",
@@ -104,6 +105,14 @@ export function useCreateWeeklyReport() {
         }
       }
 
+      await logActivity({
+        action_type: "create",
+        description: `Veckorapport skapad: V${params.week_number} ${params.year}`,
+        portal: "shop",
+        store_id: params.store_id,
+        entity_type: "shop_report",
+        entity_id: report.id,
+      });
       return report;
     },
     onSuccess: (_d, vars) => {
@@ -150,6 +159,14 @@ export function useUpdateWeeklyReport() {
         const { error: lineErr } = await supabase.from("shop_report_lines").insert(lines);
         if (lineErr) throw lineErr;
       }
+      await logActivity({
+        action_type: "update",
+        description: `Veckorapport uppdaterad`,
+        portal: "shop",
+        store_id: params.store_id,
+        entity_type: "shop_report",
+        entity_id: params.id,
+      });
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["shop_reports", "weekly", vars.store_id] });

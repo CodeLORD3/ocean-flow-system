@@ -80,6 +80,12 @@ export function useUpdateCustomer() {
     mutationFn: async ({ id, ...data }: Partial<Customer> & { id: string }) => {
       const { error } = await supabase.from("customers").update(data).eq("id", id);
       if (error) throw error;
+      await logActivity({
+        action_type: "update",
+        description: `Kund uppdaterad: ${data.name || id}`,
+        entity_type: "customer",
+        entity_id: id,
+      });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["customers"] }),
   });

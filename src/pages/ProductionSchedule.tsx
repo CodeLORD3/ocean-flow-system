@@ -19,6 +19,7 @@ import { sv } from "date-fns/locale";
 import { CalendarDays, ChevronLeft, ChevronRight, AlertTriangle, Truck, ChevronDown, ListChecks, Factory, PackageCheck, Check, Plus, User, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/hooks/useActivityLog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useManualScheduleEntries } from "@/hooks/useManualScheduleEntries";
@@ -152,6 +153,7 @@ export default function ProductionSchedule() {
       }
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
       toast.success(`"${productName}" borttagen från produktionsschema (använder befintligt lager).`);
+      await logActivity({ action_type: "update", description: `"${productName}" markerad: använder befintligt lager`, portal: "production", entity_type: "production_schedule" });
     } catch (err) {
       toast.error("Kunde inte uppdatera orderrader.");
     } finally {
@@ -505,6 +507,7 @@ export default function ProductionSchedule() {
       }
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
       toast.success(`"${productName}" markerad som producerad.`);
+      await logActivity({ action_type: "status_change", description: `"${productName}" markerad som producerad`, portal: "production", entity_type: "production_schedule" });
     } catch (err) {
       toast.error("Kunde inte uppdatera.");
     } finally {

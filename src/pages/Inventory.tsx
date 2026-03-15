@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/hooks/useActivityLog";
 import { markOrderLinesPackad, revertOrderLinesIfStockGone } from "@/lib/orderStatusSync";
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -185,6 +186,7 @@ export default function Inventory() {
       invalidateStock();
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
       toast({ title: "Flyttat", description: `${items.length} produkt(er) flyttade` });
+      await logActivity({ action_type: "update", description: `Lager flyttat: ${items.length} produkt(er)`, entity_type: "stock_transfer", details: { count: items.length, target_location: targetLocationId } });
       setMoveDialogOpen(false);
     } catch (err: any) {
       toast({ title: "Fel", description: err.message, variant: "destructive" });
@@ -212,6 +214,7 @@ export default function Inventory() {
       invalidateStock();
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
       toast({ title: "Raderat", description: `${items.length} produkt(er) raderade` });
+      await logActivity({ action_type: "delete", description: `Lager raderat: ${items.length} produkt(er) — ${deleteReason.trim()}`, entity_type: "stock_delete", details: { count: items.length, reason: deleteReason.trim() } });
       setDeleteDialogOpen(false);
       setDeleteReason("");
     } catch (err: any) {

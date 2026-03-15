@@ -57,6 +57,13 @@ export function useUpdateStaff() {
       const { id, ...rest } = params;
       const { error } = await supabase.from("staff").update(rest as any).eq("id", id);
       if (error) throw error;
+      await logActivity({
+        action_type: "update",
+        description: `Personal uppdaterad: ${rest.first_name || ""} ${rest.last_name || ""}`.trim(),
+        entity_type: "staff",
+        entity_id: id,
+        store_id: rest.store_id,
+      });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["staff"] }),
   });
