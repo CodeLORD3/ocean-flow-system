@@ -80,6 +80,7 @@ export default function WholesaleOrders() {
   const { data: stores = [] } = useStores();
   const { data: customers = [] } = useCustomers();
   const { data: products = [] } = useProducts();
+  const { data: staffList = [] } = useStaff();
   const { data: transportSchedules = [] } = useTransportSchedules();
   const retailStores = stores.filter(s => !s.is_wholesale);
 
