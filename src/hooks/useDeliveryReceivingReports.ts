@@ -35,6 +35,16 @@ export function useSubmitReceivingReport() {
         .from("delivery_receiving_reports")
         .insert(reports);
       if (error) throw error;
+      if (reports.length > 0) {
+        await logActivity({
+          action_type: "approve",
+          description: `Inleverans godkänd (${reports.length} rader)`,
+          portal: "shop",
+          store_id: reports[0].store_id,
+          entity_type: "delivery_receiving",
+          entity_id: reports[0].shop_order_id,
+        });
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["delivery_receiving_reports"] });
