@@ -480,6 +480,47 @@ export type Database = {
           },
         ]
       }
+      manual_schedule_entries: {
+        Row: {
+          created_at: string
+          departure_date: string
+          departure_time: string
+          id: string
+          notes: string | null
+          product_id: string
+          quantity: number
+          schedule_type: string
+        }
+        Insert: {
+          created_at?: string
+          departure_date: string
+          departure_time?: string
+          id?: string
+          notes?: string | null
+          product_id: string
+          quantity?: number
+          schedule_type?: string
+        }
+        Update: {
+          created_at?: string
+          departure_date?: string
+          departure_time?: string
+          id?: string
+          notes?: string | null
+          product_id?: string
+          quantity?: number
+          schedule_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_schedule_entries_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_settings: {
         Row: {
           display_name: string | null
