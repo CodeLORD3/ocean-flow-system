@@ -114,6 +114,7 @@ export default function PurchaseSchedule() {
   const { data: transportSchedules, isLoading: schedulesLoading } = useTransportSchedules();
   const updateSchedule = useUpdateTransportSchedule();
   const createChange = useCreateChangeRequest();
+  const queryClient = useQueryClient();
   const { data: allProducts } = useQuery({
     queryKey: ["products_active"],
     queryFn: async () => {
@@ -122,6 +123,60 @@ export default function PurchaseSchedule() {
       return data;
     },
   });
+
+  // Fetch stock from Grossist Flytande
+  const { data: grossistStock } = useQuery({
+    queryKey: ["grossist_flytande_stock"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_stock_locations")
+        .select("product_id, quantity, storage_locations!inner(name)")
+        .eq("storage_locations.name", "Grossist Flytande")
+        .gt("quantity", 0);
+      if (error) throw error;
+      return data as { product_id: string; quantity: number }[];
+    },
+  });
+
+  const stockMap = useMemo(() => {
+    const m = new Map<string, number>();
+    grossistStock?.forEach((s) => {
+      m.set(s.product_id, (m.get(s.product_id) || 0) + s.quantity);
+    });
+    return m;
+  }, [grossistStock]);
+
+  const [useStockLoading, setUseStockLoading] = useState<string | null>(null);
+
+  const handleUseStock = async (lineIds: string[], shopOrderIds: string[], productName: string) => {
+    setUseStockLoading(productName);
+    try {
+      for (const lineId of lineIds) {
+        await supabase.from("shop_order_lines").update({ status: "Packad" }).eq("id", lineId);
+      }
+      // Update parent order statuses
+      const uniqueOrderIds = [...new Set(shopOrderIds)];
+      for (const orderId of uniqueOrderIds) {
+        const { data: allLines } = await supabase.from("shop_order_lines").select("status").eq("shop_order_id", orderId);
+        if (allLines) {
+          const allPacked = allLines.every((l) => l.status === "Packad");
+          const anyPacked = allLines.some((l) => l.status === "Packad");
+          if (allPacked) {
+            await supabase.from("shop_orders").update({ status: "Packad" }).eq("id", orderId);
+          } else if (anyPacked) {
+            await supabase.from("shop_orders").update({ status: "Pågående" }).eq("id", orderId);
+          }
+        }
+      }
+      queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
+      queryClient.invalidateQueries({ queryKey: ["grossist_flytande_stock"] });
+      toast.success(`"${productName}" markerad som packad från befintligt lager.`);
+    } catch (err) {
+      toast.error("Kunde inte uppdatera orderrader.");
+    } finally {
+      setUseStockLoading(null);
+    }
+  };
   const [weekOffset, setWeekOffset] = useState(0);
   const [view, setView] = useState<"purchase" | "delivery">("purchase");
   const [tab, setTab] = useState<"daily" | "total">("daily");
