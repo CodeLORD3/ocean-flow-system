@@ -617,10 +617,7 @@ export default function ProductionSchedule() {
                                         variant="outline"
                                         size="sm"
                                         className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
-                                        onClick={() => handleUseStock(
-                                          /* Production total view doesn't have lineIds on the item type — we need to add them */
-                                          [], [], item.productName
-                                        )}
+                                        onClick={() => handleUseStock(item.lineIds, item.shopOrderIds, item.productName)}
                                         disabled={useStockLoading === item.productName}
                                       >
                                         <PackageCheck className="h-3 w-3" /> Använd lager
