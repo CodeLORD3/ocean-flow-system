@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { syncBehandlasFromStock } from "@/lib/orderStatusSync";
+import { logActivity } from "@/hooks/useActivityLog";
 
 export function useShopOrders(storeId?: string) {
   return useQuery({
