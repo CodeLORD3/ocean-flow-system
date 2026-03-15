@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action_type: string
+          created_at: string
+          description: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          performed_by: string | null
+          portal: string
+          store_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          description: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          performed_by?: string | null
+          portal?: string
+          store_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          description?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          performed_by?: string | null
+          portal?: string
+          store_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_logs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string | null
