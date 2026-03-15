@@ -380,15 +380,17 @@ export default function ProductionSchedule() {
       shops: { name: string; zoneKey: string; quantity: number }[];
       lineIds: string[];
       shopOrderIds: string[];
+      isManual?: boolean;
+      manualEntryId?: string;
     }>();
 
     for (const item of filteredSchedule) {
       const inWeek = weekDates.some((d) => isSameDay(d, item.departureDate));
       if (!inWeek) continue;
 
-      const k = `${item.productName}|${item.unit}`;
+      const k = item.isManual ? `manual-${item.manualEntryId}` : `${item.productName}|${item.unit}`;
       const existing = map.get(k);
-      if (existing) {
+      if (existing && !item.isManual) {
         existing.totalQuantity += item.totalQuantity;
         existing.lineIds.push(...item.lineIds);
         for (const oid of item.shopOrderIds) {
@@ -409,6 +411,8 @@ export default function ProductionSchedule() {
           shops: item.shops.map((s) => ({ name: s.name, zoneKey: s.zoneKey, quantity: s.quantity })),
           lineIds: [...item.lineIds],
           shopOrderIds: [...item.shopOrderIds],
+          isManual: item.isManual,
+          manualEntryId: item.manualEntryId,
         });
       }
     }
