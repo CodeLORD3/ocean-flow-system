@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Search, Clock, CheckCircle2, Truck, XCircle, Package,
@@ -18,9 +18,6 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
-} from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format, getDay } from "date-fns";
@@ -87,7 +84,11 @@ export default function WholesaleOrders() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Alla");
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const toggleExpandOrder = (id: string) => setExpandedOrderId(prev => prev === id ? null : id);
+  // Keep selectedOrder for compatibility with other dialogs that reference it
+  const selectedOrderId = expandedOrderId;
+  const setSelectedOrderId = setExpandedOrderId;
   const selectedOrder = useMemo(() => selectedOrderId ? orders.find((o: any) => o.id === selectedOrderId) || null : null, [selectedOrderId, orders]);
   const [reportViewOrder, setReportViewOrder] = useState<any>(null);
   const [archiveConfirmOrder, setArchiveConfirmOrder] = useState<any>(null);
@@ -583,101 +584,137 @@ export default function WholesaleOrders() {
                           <tr><td colSpan={15} className="px-2.5 py-6 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
                        )}
                        {filteredOrders.map((o: any) => (
-                         <tr key={o.id} className={`border-b border-border h-9 transition-colors cursor-pointer hover:bg-muted/30 ${o.status === "Pågående" ? "bg-warning/10" : o.status === "Packad" ? "bg-success/10" : o.status === "Skickad" ? "bg-primary/10" : o.status === "Levererad" || o.status === "Klar / Levererad" ? "bg-primary/25" : ""}`} onClick={() => setSelectedOrderId(o.id)}>
-                           <td className="px-2.5 py-1" onClick={e => e.stopPropagation()}>
-                             {o.status === "Ny" && (
-                               <Button
-                                 size="sm"
-                                 variant="outline"
-                                 className="h-6 px-2 text-[10px] gap-1 bg-warning/10 border-warning/30 text-warning hover:bg-warning/20"
-                                 onClick={() => handleOrderStatusChange(o.id, "Pågående")}
-                               >
-                                 <Package className="h-3 w-3" />
-                                 Packa order
-                               </Button>
-                             )}
-                           </td>
-                           <td className="px-2.5 py-1 font-mono font-medium text-foreground">{o.order_week}</td>
-                           <td className="px-2.5 py-1 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
-                           <td className="px-2.5 py-1 text-muted-foreground">{o.stores?.name || "–"}</td>
-                           <td className="px-2.5 py-1 text-muted-foreground">{(o as any).desired_delivery_date || "–"}</td>
-                           <td className="px-2.5 py-1 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
-                           <td className="px-2.5 py-1 text-muted-foreground text-[10px] max-w-48 truncate">
-                             {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
-                           </td>
-                           <td className="px-2.5 py-1 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
-                           <td className="px-2.5 py-1" onClick={e => e.stopPropagation()}>
-                            <Select value={o.status} onValueChange={(val) => handleOrderStatusChange(o.id, val)}>
-                              <SelectTrigger className="h-7 text-[10px] w-[110px]">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {["Ny", "Pågående", "Packad", "Skickad", "Levererad", "Avbruten"].map(s =>
-                                  <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
-                                )}
-                              </SelectContent>
-                            </Select>
-                          </td>
-                          <td className="px-2.5 py-1 text-right font-mono text-foreground text-[10px]">
-                            {(o.shop_order_lines || []).reduce((sum: number, l: any) => sum + (l.quantity_delivered || l.quantity_ordered || 0) * (l.products?.wholesale_price || 0), 0).toFixed(2)} kr
-                          </td>
-                          <td className="px-2.5 py-1 text-muted-foreground text-[10px]">{o.packer_name || "–"}</td>
-                          <td className="px-2.5 py-1" onClick={e => e.stopPropagation()}>
-                            {(() => {
-                              const reports = reportsByOrder.get(o.id);
-                              if (!reports || reports.length === 0) {
-                                return <span className="text-[10px] text-muted-foreground/40">–</span>;
-                              }
-                              const hasIssues = reports.some((r: any) => r.status === "Rapporterad");
-                              return (
+                         <React.Fragment key={o.id}>
+                          <tr className={`border-b border-border h-9 transition-colors cursor-pointer hover:bg-muted/30 ${o.status === "Pågående" ? "bg-warning/10" : o.status === "Packad" ? "bg-success/10" : o.status === "Skickad" ? "bg-primary/10" : o.status === "Levererad" || o.status === "Klar / Levererad" ? "bg-primary/25" : ""}`} onClick={() => toggleExpandOrder(o.id)}>
+                            <td className="px-2.5 py-1" onClick={e => e.stopPropagation()}>
+                              {o.status === "Ny" && (
                                 <Button
-                                  variant="ghost"
                                   size="sm"
-                                  className={`h-6 text-[10px] gap-1 ${hasIssues ? "text-warning" : "text-success"}`}
-                                  onClick={() => setReportViewOrder(o)}
+                                  variant="outline"
+                                  className="h-6 px-2 text-[10px] gap-1 bg-warning/10 border-warning/30 text-warning hover:bg-warning/20"
+                                  onClick={() => handleOrderStatusChange(o.id, "Pågående")}
                                 >
-                                  {hasIssues ? <AlertTriangle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
-                                  {hasIssues ? "Avvikelse" : "Godkänd"}
+                                  <Package className="h-3 w-3" />
+                                  Packa order
                                 </Button>
-                              );
-                            })()}
-                          </td>
-                          <td className="px-2.5 py-1 text-center" onClick={e => e.stopPropagation()}>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
-                              onClick={() => setPackingSlipOrder(o)}
-                            >
-                              <Printer className="h-3 w-3" /> Packsedel
-                            </Button>
-                          </td>
-                          <td className="px-2.5 py-1 text-center" onClick={e => e.stopPropagation()}>
-                            {["Packad", "Skickad", "Levererad"].includes(o.status) ? (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
-                                onClick={() => setDeliveryNoteOrder(o)}
-                              >
-                                <Printer className="h-3 w-3" /> Följesedel
-                              </Button>
-                            ) : (
-                              <span className="text-[10px] text-muted-foreground/40">–</span>
-                            )}
-                          </td>
-                          <td className="px-2.5 py-1 text-center" onClick={e => e.stopPropagation()}>
+                              )}
+                            </td>
+                            <td className="px-2.5 py-1 font-mono font-medium text-foreground">{o.order_week}</td>
+                            <td className="px-2.5 py-1 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
+                            <td className="px-2.5 py-1 text-muted-foreground">{o.stores?.name || "–"}</td>
+                            <td className="px-2.5 py-1 text-muted-foreground">{(o as any).desired_delivery_date || "–"}</td>
+                            <td className="px-2.5 py-1 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
+                            <td className="px-2.5 py-1 text-muted-foreground text-[10px] max-w-48 truncate">
+                              {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
+                            </td>
+                            <td className="px-2.5 py-1 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
+                            <td className="px-2.5 py-1" onClick={e => e.stopPropagation()}>
+                             <Select value={o.status} onValueChange={(val) => handleOrderStatusChange(o.id, val)}>
+                               <SelectTrigger className="h-7 text-[10px] w-[110px]">
+                                 <SelectValue />
+                               </SelectTrigger>
+                               <SelectContent>
+                                 {["Ny", "Pågående", "Packad", "Skickad", "Levererad", "Avbruten"].map(s =>
+                                   <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
+                                 )}
+                               </SelectContent>
+                             </Select>
+                           </td>
+                           <td className="px-2.5 py-1 text-right font-mono text-foreground text-[10px]">
+                             {(o.shop_order_lines || []).reduce((sum: number, l: any) => sum + (l.quantity_delivered || l.quantity_ordered || 0) * (l.products?.wholesale_price || 0), 0).toFixed(2)} kr
+                           </td>
+                           <td className="px-2.5 py-1 text-muted-foreground text-[10px]">{o.packer_name || "–"}</td>
+                           <td className="px-2.5 py-1" onClick={e => e.stopPropagation()}>
+                             {(() => {
+                               const reports = reportsByOrder.get(o.id);
+                               if (!reports || reports.length === 0) {
+                                 return <span className="text-[10px] text-muted-foreground/40">–</span>;
+                               }
+                               const hasIssues = reports.some((r: any) => r.status === "Rapporterad");
+                               return (
+                                 <Button
+                                   variant="ghost"
+                                   size="sm"
+                                   className={`h-6 text-[10px] gap-1 ${hasIssues ? "text-warning" : "text-success"}`}
+                                   onClick={() => setReportViewOrder(o)}
+                                 >
+                                   {hasIssues ? <AlertTriangle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
+                                   {hasIssues ? "Avvikelse" : "Godkänd"}
+                                 </Button>
+                               );
+                             })()}
+                           </td>
+                           <td className="px-2.5 py-1 text-center" onClick={e => e.stopPropagation()}>
                              <Button
                                variant="ghost"
                                size="sm"
                                className="h-6 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
-                               onClick={() => setArchiveConfirmOrder(o)}
+                               onClick={() => setPackingSlipOrder(o)}
                              >
-                               <Archive className="h-3 w-3" /> Arkivera
+                               <Printer className="h-3 w-3" /> Packsedel
                              </Button>
-                          </td>
-                        </tr>
-                      ))}
+                           </td>
+                           <td className="px-2.5 py-1 text-center" onClick={e => e.stopPropagation()}>
+                             {["Packad", "Skickad", "Levererad"].includes(o.status) ? (
+                               <Button
+                                 variant="ghost"
+                                 size="sm"
+                                 className="h-6 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
+                                 onClick={() => setDeliveryNoteOrder(o)}
+                               >
+                                 <Printer className="h-3 w-3" /> Följesedel
+                               </Button>
+                             ) : (
+                               <span className="text-[10px] text-muted-foreground/40">–</span>
+                             )}
+                           </td>
+                           <td className="px-2.5 py-1 text-center" onClick={e => e.stopPropagation()}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
+                                onClick={() => setArchiveConfirmOrder(o)}
+                              >
+                                <Archive className="h-3 w-3" /> Arkivera
+                              </Button>
+                           </td>
+                         </tr>
+                         {/* Inline expandable order detail */}
+                         {expandedOrderId === o.id && (
+                           <tr>
+                             <td colSpan={15} className="p-0">
+                               <div className="border-b-2 border-primary/20 bg-muted/20 px-4 py-3">
+                                 <div className="flex items-center justify-between mb-3">
+                                   <div className="flex items-center gap-2">
+                                     <h3 className="font-heading text-sm font-semibold">
+                                       Order {o.order_week} — {o.stores?.name || "Okänd butik"}
+                                     </h3>
+                                     <Badge variant="outline" className={`${statusColor[o.status] || ""} text-[10px] gap-1`}>
+                                       {statusIcon[o.status]}
+                                       {o.status}
+                                     </Badge>
+                                   </div>
+                                   <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={(e) => { e.stopPropagation(); setExpandedOrderId(null); }}>
+                                     <X className="h-3 w-3 mr-1" /> Stäng
+                                   </Button>
+                                 </div>
+                                 <div className="text-xs text-muted-foreground mb-2">
+                                   Skapad {new Date(o.created_at).toLocaleDateString("sv-SE")}
+                                   {(o as any).desired_delivery_date && (
+                                     <> · Önskat leveransdatum: <span className="font-medium text-foreground">{(o as any).desired_delivery_date}</span></>
+                                   )}
+                                 </div>
+                                 {o.notes && (
+                                   <div className="bg-muted/30 rounded-md p-2 text-xs text-muted-foreground mb-3">
+                                     <span className="font-medium text-foreground">Anteckning:</span> {o.notes}
+                                   </div>
+                                 )}
+                                 <WholesaleOrderDetail order={o} onClose={() => setExpandedOrderId(null)} stores={stores} />
+                               </div>
+                             </td>
+                           </tr>
+                         )}
+                       </React.Fragment>))}
                     </tbody>
                   </table>
                 </div>
@@ -712,17 +749,36 @@ export default function WholesaleOrders() {
                       <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">Inga arkiverade ordrar.</td></tr>
                     )}
                     {archivedOrders.map((o: any) => (
-                      <tr key={o.id} className="border-b border-border/40 cursor-pointer hover:bg-muted/20" onClick={() => setSelectedOrderId(o.id)}>
-                        <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
-                        <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
-                        <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
-                        <td className="p-3 text-muted-foreground">{(o as any).desired_delivery_date || "–"}</td>
-                        <td className="p-3 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
-                        <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
-                          {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
-                        </td>
-                        <td className="p-3 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
-                      </tr>
+                      <React.Fragment key={o.id}>
+                        <tr className="border-b border-border/40 cursor-pointer hover:bg-muted/20" onClick={() => toggleExpandOrder(o.id)}>
+                          <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
+                          <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
+                          <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
+                          <td className="p-3 text-muted-foreground">{(o as any).desired_delivery_date || "–"}</td>
+                          <td className="p-3 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
+                          <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
+                            {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
+                          </td>
+                          <td className="p-3 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
+                        </tr>
+                        {expandedOrderId === o.id && (
+                          <tr>
+                            <td colSpan={7} className="p-0">
+                              <div className="border-b-2 border-primary/20 bg-muted/20 px-4 py-3">
+                                <div className="flex items-center justify-between mb-3">
+                                  <h3 className="font-heading text-sm font-semibold">
+                                    Order {o.order_week} — {o.stores?.name || "Okänd butik"}
+                                  </h3>
+                                  <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={(e) => { e.stopPropagation(); setExpandedOrderId(null); }}>
+                                    <X className="h-3 w-3 mr-1" /> Stäng
+                                  </Button>
+                                </div>
+                                <WholesaleOrderDetail order={o} onClose={() => setExpandedOrderId(null)} stores={stores} />
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
@@ -795,40 +851,8 @@ export default function WholesaleOrders() {
         </TabsContent>
       </Tabs>
 
-      {/* Order detail panel */}
-      <Sheet open={!!selectedOrder} onOpenChange={open => { if (!open) setSelectedOrderId(null); }}>
-        <SheetContent side="right" className="w-full sm:max-w-5xl max-h-screen overflow-y-auto p-6">
-          {selectedOrder && (
-            <>
-              <SheetHeader>
-                <SheetTitle className="font-heading flex items-center gap-2">
-                  Order {selectedOrder.order_week} — {selectedOrder.stores?.name || "Okänd butik"}
-                  <Badge variant="outline" className={`${statusColor[selectedOrder.status] || ""} text-[10px] gap-1 ml-2`}>
-                    {statusIcon[selectedOrder.status]}
-                    {selectedOrder.status}
-                  </Badge>
-                </SheetTitle>
-                <SheetDescription className="text-xs">
-                  Skapad {new Date(selectedOrder.created_at).toLocaleDateString("sv-SE")}
-                  {(selectedOrder as any).desired_delivery_date && (
-                    <> · Önskat leveransdatum: <span className="font-medium text-foreground">{(selectedOrder as any).desired_delivery_date}</span></>
-                  )}
-                </SheetDescription>
-              </SheetHeader>
 
-              {selectedOrder.notes && (
-                <div className="bg-muted/30 rounded-md p-3 text-xs text-muted-foreground mt-4">
-                  <span className="font-medium text-foreground">Anteckning:</span> {selectedOrder.notes}
-                </div>
-              )}
 
-              <div className="mt-4">
-                <WholesaleOrderDetail order={selectedOrder} onClose={() => setSelectedOrderId(null)} stores={stores} />
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
       <Dialog open={!!reportViewOrder} onOpenChange={open => { if (!open) setReportViewOrder(null); }}>
         <DialogContent className="max-w-lg">
           {reportViewOrder && (() => {
