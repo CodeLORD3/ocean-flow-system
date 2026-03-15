@@ -825,27 +825,40 @@ export default function PurchaseSchedule() {
                                           </TableCell>
                                           <TableCell className="px-2 py-0.5" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex items-center gap-1">
-                                              {isPurchased && (
+                                              {item.isManual ? (
                                                 <Button
                                                   variant="outline"
                                                   size="sm"
-                                                  className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
-                                                  onClick={() => handleMarkBought(item.lineIds, item.shopOrderIds, item.productName)}
-                                                  disabled={boughtLoading === item.productName}
+                                                  className="h-6 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+                                                  onClick={() => handleDeleteManualEntry(item.manualEntryId!, item.productName)}
                                                 >
-                                                  <Check className="h-3 w-3" /> Köpt
+                                                  <Trash2 className="h-3 w-3" /> Ta bort
                                                 </Button>
-                                              )}
-                                              {hasSufficientStock && !isPurchased && (
-                                                <Button
-                                                  variant="outline"
-                                                  size="sm"
-                                                  className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
-                                                  onClick={() => handleUseStock(item.lineIds, item.shopOrderIds, item.productName)}
-                                                  disabled={useStockLoading === item.productName}
-                                                >
-                                                  <PackageCheck className="h-3 w-3" /> Använd lager
-                                                </Button>
+                                              ) : (
+                                                <>
+                                                  {isPurchased && (
+                                                    <Button
+                                                      variant="outline"
+                                                      size="sm"
+                                                      className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
+                                                      onClick={() => handleMarkBought(item.lineIds, item.shopOrderIds, item.productName)}
+                                                      disabled={boughtLoading === item.productName}
+                                                    >
+                                                      <Check className="h-3 w-3" /> Köpt
+                                                    </Button>
+                                                  )}
+                                                  {hasSufficientStock && !isPurchased && (
+                                                    <Button
+                                                      variant="outline"
+                                                      size="sm"
+                                                      className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
+                                                      onClick={() => handleUseStock(item.lineIds, item.shopOrderIds, item.productName)}
+                                                      disabled={useStockLoading === item.productName}
+                                                    >
+                                                      <PackageCheck className="h-3 w-3" /> Använd lager
+                                                    </Button>
+                                                  )}
+                                                </>
                                               )}
                                             </div>
                                           </TableCell>
