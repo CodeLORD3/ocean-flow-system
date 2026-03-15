@@ -7,6 +7,7 @@ import Login from "./pages/Login";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { SiteProvider } from "@/contexts/SiteContext";
+import { ActiveUserProvider } from "@/contexts/ActiveUserContext";
 import { TabsProvider } from "@/contexts/TabsContext";
 import Dashboard from "./pages/Dashboard";
 import Inventory from "./pages/Inventory";
