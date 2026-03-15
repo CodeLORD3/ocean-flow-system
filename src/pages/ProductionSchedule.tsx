@@ -580,15 +580,20 @@ export default function ProductionSchedule() {
                         <TableRow>
                           <TableHead className="h-6 px-2 pl-10 text-[10px]">Produkt</TableHead>
                           <TableHead className="h-6 px-2 text-[10px] text-right w-[100px]">Total vecka</TableHead>
+                          <TableHead className="h-6 px-2 text-[10px] text-right w-[70px]">Lager</TableHead>
                           <TableHead className="h-6 px-2 text-[10px] w-[80px]">Butiker</TableHead>
+                          <TableHead className="h-6 px-2 text-[10px] w-[110px]"></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {items.map((item) => (
+                        {items.map((item) => {
+                          const stock = stockMap.get(item.productId) || 0;
+                          const hasSufficientStock = stock >= item.totalQuantity;
+                          return (
                           <Collapsible key={item.productName} asChild>
                             <>
                               <CollapsibleTrigger asChild>
-                                <TableRow className="cursor-pointer hover:bg-muted/50">
+                                <TableRow className={`cursor-pointer hover:bg-muted/50 ${hasSufficientStock ? "bg-yellow-100 dark:bg-yellow-900/30" : ""}`}>
                                   <TableCell className="px-2 pl-10 py-0.5 text-xs">
                                     <span className="flex items-center gap-1">
                                       <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
@@ -596,7 +601,24 @@ export default function ProductionSchedule() {
                                     </span>
                                   </TableCell>
                                   <TableCell className="px-2 py-0.5 text-xs text-right font-medium">{item.totalQuantity} {item.unit}</TableCell>
+                                  <TableCell className={`px-2 py-0.5 text-xs text-right ${hasSufficientStock ? "font-semibold text-green-700 dark:text-green-400" : "text-muted-foreground"}`}>{stock} {item.unit}</TableCell>
                                   <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">{item.shops.length} butik{item.shops.length > 1 ? "er" : ""}</TableCell>
+                                  <TableCell className="px-2 py-0.5" onClick={(e) => e.stopPropagation()}>
+                                    {hasSufficientStock && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
+                                        onClick={() => handleUseStock(
+                                          /* Production total view doesn't have lineIds on the item type — we need to add them */
+                                          [], [], item.productName
+                                        )}
+                                        disabled={useStockLoading === item.productName}
+                                      >
+                                        <PackageCheck className="h-3 w-3" /> Använd lager
+                                      </Button>
+                                    )}
+                                  </TableCell>
                                 </TableRow>
                               </CollapsibleTrigger>
                               <CollapsibleContent asChild>
@@ -613,6 +635,8 @@ export default function ProductionSchedule() {
                                         </TableCell>
                                         <TableCell className="px-2 py-0.5 text-[10px] text-right text-muted-foreground">{shop.quantity} {item.unit}</TableCell>
                                         <TableCell className="px-2 py-0.5" />
+                                        <TableCell className="px-2 py-0.5" />
+                                        <TableCell className="px-2 py-0.5" />
                                       </TableRow>
                                     );
                                   })}
@@ -620,7 +644,8 @@ export default function ProductionSchedule() {
                               </CollapsibleContent>
                             </>
                           </Collapsible>
-                        ))}
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </CollapsibleContent>
