@@ -37,6 +37,49 @@ const pageTitles: Record<string, { title: string; breadcrumb: string[] }> = {
   "/barcodes": { title: "Streckkoder", breadcrumb: ["Hem", "Lagerstyrning", "Streckkoder"] },
 };
 
+function AccountSwitcher() {
+  const { activeUser, staff, switchUser } = useActiveUser();
+  const initials = activeUser ? `${activeUser.first_name[0]}${activeUser.last_name[0]}` : "?";
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 gap-2 px-2">
+          <Avatar className="h-6 w-6">
+            {activeUser?.profile_image_url && <AvatarImage src={activeUser.profile_image_url} />}
+            <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{initials}</AvatarFallback>
+          </Avatar>
+          <span className="hidden sm:inline text-xs font-medium">
+            {activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : "Välj konto"}
+          </span>
+          <ChevronDown className="h-3 w-3 text-muted-foreground" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel className="text-xs text-muted-foreground">Byt konto</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {staff.map((s) => (
+          <DropdownMenuItem
+            key={s.id}
+            onClick={() => switchUser(s.id)}
+            className="gap-2 cursor-pointer"
+          >
+            <Avatar className="h-6 w-6">
+              {s.profile_image_url && <AvatarImage src={s.profile_image_url} />}
+              <AvatarFallback className="text-[9px] bg-muted">{s.first_name[0]}{s.last_name[0]}</AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col flex-1 min-w-0">
+              <span className="text-xs font-medium truncate">{s.first_name} {s.last_name}</span>
+              <span className="text-[10px] text-muted-foreground truncate">{s.workplace || "–"}</span>
+            </div>
+            {activeUser?.id === s.id && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const page = pageTitles[location.pathname] || { title: "Sida", breadcrumb: ["Hem"] };
