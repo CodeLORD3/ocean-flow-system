@@ -27,6 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useProducts } from "@/hooks/useProducts";
 import { useTransportSchedules } from "@/hooks/useTransportSchedules";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/hooks/useActivityLog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSite } from "@/contexts/SiteContext";
 import { useCreateChangeRequest, useOrderChangeRequests, useResolveChangeRequest } from "@/hooks/useOrderChangeRequests";
@@ -345,6 +346,16 @@ export default function ShopOrders() {
       toast({ title: "Fel vid orderrader", description: lineError.message, variant: "destructive" });
       return;
     }
+
+    await logActivity({
+      action_type: "create",
+      description: `Ny butiksorder skapad (${weekNum}, ${validLines.length} rader)`,
+      portal: "shop",
+      store_id: activeStoreId,
+      entity_type: "shop_order",
+      entity_id: order.id,
+      performed_by: undefined,
+    });
 
     toast({ title: "Beställning skickad!", description: `${validLines.length} produkter beställda` });
     qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
