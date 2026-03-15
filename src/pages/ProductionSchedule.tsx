@@ -10,10 +10,11 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, startOfWeek, addDays, isSameDay, parseISO, getISOWeek, getYear, getDay } from "date-fns";
 import { sv } from "date-fns/locale";
-import { CalendarDays, ChevronLeft, ChevronRight, AlertTriangle, Truck, ChevronDown, ListChecks, Factory } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, AlertTriangle, Truck, ChevronDown, ListChecks, Factory, PackageCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const WEEKDAYS = ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag", "Söndag"];
 
@@ -34,6 +35,7 @@ export default function ProductionSchedule() {
   const { data: orders, isLoading: ordersLoading } = useShopOrders();
   const { data: stores, isLoading: storesLoading } = useStores();
   const { data: transportSchedules, isLoading: schedulesLoading } = useTransportSchedules();
+  const queryClient = useQueryClient();
 
   // Fetch products with producer info to filter production products
   const { data: productsWithProducer } = useQuery({
@@ -48,6 +50,28 @@ export default function ProductionSchedule() {
     },
   });
 
+  // Fetch stock from Grossist Flytande
+  const { data: grossistStock } = useQuery({
+    queryKey: ["grossist_flytande_stock"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_stock_locations")
+        .select("product_id, quantity, storage_locations!inner(name)")
+        .eq("storage_locations.name", "Grossist Flytande")
+        .gt("quantity", 0);
+      if (error) throw error;
+      return data as { product_id: string; quantity: number }[];
+    },
+  });
+
+  const stockMap = useMemo(() => {
+    const m = new Map<string, number>();
+    grossistStock?.forEach((s) => {
+      m.set(s.product_id, (m.get(s.product_id) || 0) + s.quantity);
+    });
+    return m;
+  }, [grossistStock]);
+
   const productionProductIds = useMemo(() => {
     if (!productsWithProducer) return new Set<string>();
     return new Set(
@@ -61,6 +85,36 @@ export default function ProductionSchedule() {
   const [view, setView] = useState<"production" | "delivery">("production");
   const [tab, setTab] = useState<"daily" | "total">("daily");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [useStockLoading, setUseStockLoading] = useState<string | null>(null);
+
+  const handleUseStock = async (lineIds: string[], shopOrderIds: string[], productName: string) => {
+    setUseStockLoading(productName);
+    try {
+      for (const lineId of lineIds) {
+        await supabase.from("shop_order_lines").update({ status: "Packad" }).eq("id", lineId);
+      }
+      const uniqueOrderIds = [...new Set(shopOrderIds)];
+      for (const orderId of uniqueOrderIds) {
+        const { data: allLines } = await supabase.from("shop_order_lines").select("status").eq("shop_order_id", orderId);
+        if (allLines) {
+          const allPacked = allLines.every((l) => l.status === "Packad");
+          const anyPacked = allLines.some((l) => l.status === "Packad");
+          if (allPacked) {
+            await supabase.from("shop_orders").update({ status: "Packad" }).eq("id", orderId);
+          } else if (anyPacked) {
+            await supabase.from("shop_orders").update({ status: "Pågående" }).eq("id", orderId);
+          }
+        }
+      }
+      queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
+      queryClient.invalidateQueries({ queryKey: ["grossist_flytande_stock"] });
+      toast.success(`"${productName}" markerad som packad från befintligt lager.`);
+    } catch (err) {
+      toast.error("Kunde inte uppdatera orderrader.");
+    } finally {
+      setUseStockLoading(null);
+    }
+  };
 
   const weekStart = useMemo(() => {
     const now = new Date();
@@ -222,6 +276,8 @@ export default function ProductionSchedule() {
       totalQuantity: number;
       category: string;
       shops: { name: string; zoneKey: string; quantity: number }[];
+      lineIds: string[];
+      shopOrderIds: string[];
     }>();
 
     for (const item of filteredSchedule) {
@@ -232,6 +288,10 @@ export default function ProductionSchedule() {
       const existing = map.get(k);
       if (existing) {
         existing.totalQuantity += item.totalQuantity;
+        existing.lineIds.push(...item.lineIds);
+        for (const oid of item.shopOrderIds) {
+          if (!existing.shopOrderIds.includes(oid)) existing.shopOrderIds.push(oid);
+        }
         for (const shop of item.shops) {
           const s = existing.shops.find((e) => e.name === shop.name);
           if (s) s.quantity += shop.quantity;
@@ -245,6 +305,8 @@ export default function ProductionSchedule() {
           totalQuantity: item.totalQuantity,
           category: item.category,
           shops: item.shops.map((s) => ({ name: s.name, zoneKey: s.zoneKey, quantity: s.quantity })),
+          lineIds: [...item.lineIds],
+          shopOrderIds: [...item.shopOrderIds],
         });
       }
     }
@@ -415,20 +477,24 @@ export default function ProductionSchedule() {
                             <TableRow>
                               <TableHead className="h-6 px-2 pl-10 text-[10px]">Produkt</TableHead>
                               <TableHead className="h-6 px-2 text-[10px] text-right w-[80px]">Totalt</TableHead>
+                              <TableHead className="h-6 px-2 text-[10px] text-right w-[70px]">Lager</TableHead>
                               <TableHead className="h-6 px-2 text-[10px] w-[80px]">Butiker</TableHead>
                               <TableHead className="h-6 px-2 text-[10px] w-[120px]">
                                 {view === "production" ? "Avgång" : "Senast producerat"}
                               </TableHead>
+                              <TableHead className="h-6 px-2 text-[10px] w-[110px]"></TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {items.map((item, i) => {
                               const isUrgent = view === "production" && isSameDay(item.departureDate, new Date());
+                              const stock = stockMap.get(item.productId) || 0;
+                              const hasSufficientStock = stock >= item.totalQuantity;
                               return (
                                 <Collapsible key={`${dayIndex}-${item.productName}-${i}`} asChild>
                                   <>
                                     <CollapsibleTrigger asChild>
-                                      <TableRow className={`cursor-pointer hover:bg-muted/50 ${isUrgent ? "bg-destructive/5" : ""}`}>
+                                      <TableRow className={`cursor-pointer hover:bg-muted/50 ${hasSufficientStock ? "bg-yellow-100 dark:bg-yellow-900/30" : isUrgent ? "bg-destructive/5" : ""}`}>
                                         <TableCell className="px-2 pl-10 py-0.5 text-xs">
                                           <span className="flex items-center gap-1">
                                             <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
@@ -436,6 +502,7 @@ export default function ProductionSchedule() {
                                           </span>
                                         </TableCell>
                                         <TableCell className="px-2 py-0.5 text-xs text-right font-medium">{item.totalQuantity} {item.unit}</TableCell>
+                                        <TableCell className={`px-2 py-0.5 text-xs text-right ${hasSufficientStock ? "font-semibold text-green-700 dark:text-green-400" : "text-muted-foreground"}`}>{stock} {item.unit}</TableCell>
                                         <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">{item.shops.length} butik{item.shops.length > 1 ? "er" : ""}</TableCell>
                                         <TableCell className="px-2 py-0.5">
                                           <span className="text-[10px] text-muted-foreground">
@@ -443,6 +510,19 @@ export default function ProductionSchedule() {
                                               ? `${format(item.departureDate, "EEE d/M", { locale: sv })} ${item.departureTime}`
                                               : format(item.departureDate, "EEE d/M", { locale: sv })}
                                           </span>
+                                        </TableCell>
+                                        <TableCell className="px-2 py-0.5" onClick={(e) => e.stopPropagation()}>
+                                          {hasSufficientStock && (
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
+                                              onClick={() => handleUseStock(item.lineIds, item.shopOrderIds, item.productName)}
+                                              disabled={useStockLoading === item.productName}
+                                            >
+                                              <PackageCheck className="h-3 w-3" /> Använd lager
+                                            </Button>
+                                          )}
                                         </TableCell>
                                       </TableRow>
                                     </CollapsibleTrigger>
@@ -460,9 +540,11 @@ export default function ProductionSchedule() {
                                               </TableCell>
                                               <TableCell className="px-2 py-0.5 text-[10px] text-right text-muted-foreground">{shop.quantity} {item.unit}</TableCell>
                                               <TableCell className="px-2 py-0.5" />
+                                              <TableCell className="px-2 py-0.5" />
                                               <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">
                                                 {format(item.departureDate, "EEE d/M", { locale: sv })} {zone?.departure_time || item.departureTime}
                                               </TableCell>
+                                              <TableCell className="px-2 py-0.5" />
                                             </TableRow>
                                           );
                                         })}
@@ -506,15 +588,20 @@ export default function ProductionSchedule() {
                         <TableRow>
                           <TableHead className="h-6 px-2 pl-10 text-[10px]">Produkt</TableHead>
                           <TableHead className="h-6 px-2 text-[10px] text-right w-[100px]">Total vecka</TableHead>
+                          <TableHead className="h-6 px-2 text-[10px] text-right w-[70px]">Lager</TableHead>
                           <TableHead className="h-6 px-2 text-[10px] w-[80px]">Butiker</TableHead>
+                          <TableHead className="h-6 px-2 text-[10px] w-[110px]"></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {items.map((item) => (
+                        {items.map((item) => {
+                          const stock = stockMap.get(item.productId) || 0;
+                          const hasSufficientStock = stock >= item.totalQuantity;
+                          return (
                           <Collapsible key={item.productName} asChild>
                             <>
                               <CollapsibleTrigger asChild>
-                                <TableRow className="cursor-pointer hover:bg-muted/50">
+                                <TableRow className={`cursor-pointer hover:bg-muted/50 ${hasSufficientStock ? "bg-yellow-100 dark:bg-yellow-900/30" : ""}`}>
                                   <TableCell className="px-2 pl-10 py-0.5 text-xs">
                                     <span className="flex items-center gap-1">
                                       <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
@@ -522,7 +609,21 @@ export default function ProductionSchedule() {
                                     </span>
                                   </TableCell>
                                   <TableCell className="px-2 py-0.5 text-xs text-right font-medium">{item.totalQuantity} {item.unit}</TableCell>
+                                  <TableCell className={`px-2 py-0.5 text-xs text-right ${hasSufficientStock ? "font-semibold text-green-700 dark:text-green-400" : "text-muted-foreground"}`}>{stock} {item.unit}</TableCell>
                                   <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">{item.shops.length} butik{item.shops.length > 1 ? "er" : ""}</TableCell>
+                                  <TableCell className="px-2 py-0.5" onClick={(e) => e.stopPropagation()}>
+                                    {hasSufficientStock && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
+                                        onClick={() => handleUseStock(item.lineIds, item.shopOrderIds, item.productName)}
+                                        disabled={useStockLoading === item.productName}
+                                      >
+                                        <PackageCheck className="h-3 w-3" /> Använd lager
+                                      </Button>
+                                    )}
+                                  </TableCell>
                                 </TableRow>
                               </CollapsibleTrigger>
                               <CollapsibleContent asChild>
@@ -539,6 +640,8 @@ export default function ProductionSchedule() {
                                         </TableCell>
                                         <TableCell className="px-2 py-0.5 text-[10px] text-right text-muted-foreground">{shop.quantity} {item.unit}</TableCell>
                                         <TableCell className="px-2 py-0.5" />
+                                        <TableCell className="px-2 py-0.5" />
+                                        <TableCell className="px-2 py-0.5" />
                                       </TableRow>
                                     );
                                   })}
@@ -546,7 +649,8 @@ export default function ProductionSchedule() {
                               </CollapsibleContent>
                             </>
                           </Collapsible>
-                        ))}
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </CollapsibleContent>
