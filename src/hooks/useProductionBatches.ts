@@ -36,6 +36,13 @@ export function useCreateBatch() {
         ...params,
       }).select().single();
       if (error) throw error;
+      await logActivity({
+        action_type: "create",
+        description: `Produktionsbatch skapad: ${batchNumber}`,
+        portal: "production",
+        entity_type: "production_batch",
+        entity_id: data.id,
+      });
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["production_batches"] }),
