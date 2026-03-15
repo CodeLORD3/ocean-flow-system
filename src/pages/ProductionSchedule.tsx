@@ -213,10 +213,9 @@ export default function ProductionSchedule() {
         if (!deliveryDateStr) continue;
 
         const deliveryDate = parseISO(deliveryDateStr);
-        const jsDay = getDay(deliveryDate);
-        const isoDay = jsDay === 0 ? 7 : jsDay;
-        const matchingSchedule = schedules.find(s => s.departure_weekday === isoDay) || schedules[0];
-        const departureDate = deliveryDate;
+        const matchingSchedule = schedules[0];
+        // Calculate departure date from the transport zone's departure weekday
+        const departureDate = getDepartureDate(deliveryDate, matchingSchedule.departure_weekday);
         // order_date is the planned production date (set by drag & drop), defaults to departure date
         const productionDate = line.order_date ? parseISO(line.order_date) : departureDate;
 
