@@ -19,6 +19,7 @@ import { sv } from "date-fns/locale";
 import { CalendarDays, ChevronLeft, ChevronRight, AlertTriangle, Truck, ChevronDown, ListChecks, Factory, PackageCheck, Check, Plus, User, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/hooks/useActivityLog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useManualScheduleEntries } from "@/hooks/useManualScheduleEntries";
