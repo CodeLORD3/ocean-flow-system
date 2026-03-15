@@ -803,6 +803,11 @@ export default function PurchaseSchedule() {
                                             <span className="flex items-center gap-1">
                                               <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
                                               {item.productName}
+                                              {item.isManual && (
+                                                <Badge variant="outline" className="text-[8px] py-0 px-1 border-primary/40 text-primary bg-primary/5">
+                                                  <User className="h-2.5 w-2.5 mr-0.5" />Manuell
+                                                </Badge>
+                                              )}
                                             </span>
                                           </TableCell>
                                           <TableCell className="px-2 py-0.5 text-xs text-right font-medium">{item.totalQuantity} {item.unit}</TableCell>
