@@ -797,38 +797,39 @@ export default function WholesaleOrders() {
 
       {/* Order detail dialog */}
       <Dialog open={!!selectedOrder} onOpenChange={open => { if (!open) setSelectedOrderId(null); }}>
-        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
+      <Sheet open={!!selectedOrder} onOpenChange={open => { if (!open) setSelectedOrderId(null); }}>
+        <SheetContent side="right" className="w-full sm:max-w-5xl max-h-screen overflow-y-auto p-6">
           {selectedOrder && (
             <>
-              <DialogHeader>
-                <DialogTitle className="font-heading flex items-center gap-2">
+              <SheetHeader>
+                <SheetTitle className="font-heading flex items-center gap-2">
                   Order {selectedOrder.order_week} — {selectedOrder.stores?.name || "Okänd butik"}
                   <Badge variant="outline" className={`${statusColor[selectedOrder.status] || ""} text-[10px] gap-1 ml-2`}>
                     {statusIcon[selectedOrder.status]}
                     {selectedOrder.status}
                   </Badge>
-                </DialogTitle>
-                <DialogDescription className="text-xs">
+                </SheetTitle>
+                <SheetDescription className="text-xs">
                   Skapad {new Date(selectedOrder.created_at).toLocaleDateString("sv-SE")}
                   {(selectedOrder as any).desired_delivery_date && (
                     <> · Önskat leveransdatum: <span className="font-medium text-foreground">{(selectedOrder as any).desired_delivery_date}</span></>
                   )}
-                </DialogDescription>
-              </DialogHeader>
+                </SheetDescription>
+              </SheetHeader>
 
               {selectedOrder.notes && (
-                <div className="bg-muted/30 rounded-md p-3 text-xs text-muted-foreground">
+                <div className="bg-muted/30 rounded-md p-3 text-xs text-muted-foreground mt-4">
                   <span className="font-medium text-foreground">Anteckning:</span> {selectedOrder.notes}
                 </div>
               )}
 
-              <WholesaleOrderDetail order={selectedOrder} onClose={() => setSelectedOrderId(null)} stores={stores} />
+              <div className="mt-4">
+                <WholesaleOrderDetail order={selectedOrder} onClose={() => setSelectedOrderId(null)} stores={stores} />
+              </div>
             </>
           )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Delivery report view dialog */}
+        </SheetContent>
+      </Sheet>
       <Dialog open={!!reportViewOrder} onOpenChange={open => { if (!open) setReportViewOrder(null); }}>
         <DialogContent className="max-w-lg">
           {reportViewOrder && (() => {
