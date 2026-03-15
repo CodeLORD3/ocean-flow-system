@@ -759,7 +759,7 @@ export default function WholesaleOrders() {
                     )}
                     {archivedOrders.map((o: any) => (
                       <React.Fragment key={o.id}>
-                        <tr className={`border-b border-border/40 cursor-pointer hover:bg-muted/20 ${expandedOrderId === o.id ? "bg-primary/15 border-l-2 border-l-primary shadow-sm" : ""}`} onClick={() => toggleExpandOrder(o.id)}>
+                        <tr className={`border-b border-border/40 cursor-pointer hover:bg-muted/20 ${expandedOrderIds.has(o.id) ? "bg-primary/10 border-l-2 border-l-primary border-b-0" : ""}`} onClick={() => toggleExpandOrder(o.id)}>
                           <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
                           <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                           <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
