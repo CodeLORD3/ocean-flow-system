@@ -37,6 +37,13 @@ export function useCreateStaff() {
     mutationFn: async (params: Omit<StaffMember, "id" | "created_at">) => {
       const { data, error } = await supabase.from("staff").insert(params as any).select().single();
       if (error) throw error;
+      await logActivity({
+        action_type: "create",
+        description: `Personal skapad: ${params.first_name} ${params.last_name}`,
+        entity_type: "staff",
+        entity_id: data.id,
+        store_id: params.store_id,
+      });
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["staff"] }),
