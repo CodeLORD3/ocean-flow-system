@@ -400,7 +400,7 @@ export default function ProductionSchedule() {
       const targetDate = format(weekDates[dayIndex], "yyyy-MM-dd");
       
       for (const lineId of data.lineIds) {
-        await supabase.from("shop_order_lines").update({ delivery_date: targetDate }).eq("id", lineId);
+        await supabase.from("shop_order_lines").update({ order_date: targetDate }).eq("id", lineId);
       }
       
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
