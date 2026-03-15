@@ -30,6 +30,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { logActivity } from "@/hooks/useActivityLog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSite } from "@/contexts/SiteContext";
+import { useActiveUser } from "@/contexts/ActiveUserContext";
 import { useCreateChangeRequest, useOrderChangeRequests, useResolveChangeRequest } from "@/hooks/useOrderChangeRequests";
 
 type OrderLine = {

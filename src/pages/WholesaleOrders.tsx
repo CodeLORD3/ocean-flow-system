@@ -191,7 +191,7 @@ export default function WholesaleOrders() {
         order_week: weekNum,
         notes: newOrderNote || null,
         status: "Ny",
-        created_by: "Grossist",
+        created_by: activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : "Grossist",
         desired_delivery_date: format(newOrderDeliveryDate, "yyyy-MM-dd"),
       } as any)
       .select()
