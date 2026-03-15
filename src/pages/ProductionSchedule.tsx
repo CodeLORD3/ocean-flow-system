@@ -526,6 +526,9 @@ export default function ProductionSchedule() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <Button size="sm" variant="outline" className="gap-1" onClick={() => setManualDialogOpen(true)}>
+            <Plus className="h-3.5 w-3.5" /> Lägg till produkt
+          </Button>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="w-[160px]">
               <SelectValue placeholder="Alla kategorier" />
