@@ -77,6 +77,9 @@ export default function WholesaleOrders() {
   const qc = useQueryClient();
   const { data: orders = [], isLoading } = useShopOrders();
   const { data: stores = [] } = useStores();
+  const { data: customers = [] } = useCustomers();
+  const { data: products = [] } = useProducts();
+  const { data: transportSchedules = [] } = useTransportSchedules();
   const retailStores = stores.filter(s => !s.is_wholesale);
 
   const [search, setSearch] = useState("");
@@ -93,6 +96,118 @@ export default function WholesaleOrders() {
   const [pendingPackerOrderId, setPendingPackerOrderId] = useState<string | null>(null);
   const { data: pendingChanges = [] } = useAllPendingChangeRequests();
   const resolveChange = useResolveChangeRequest();
+
+  // Wholesale order creation state
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
+  const [newOrderLines, setNewOrderLines] = useState<WholesaleOrderLine[]>([]);
+  const [newOrderNote, setNewOrderNote] = useState("");
+  const [newOrderDeliveryDate, setNewOrderDeliveryDate] = useState<Date | undefined>(undefined);
+  const [newProductSearch, setNewProductSearch] = useState("");
+  const [newHighlightedIndex, setNewHighlightedIndex] = useState(-1);
+  const [confirmCreateOpen, setConfirmCreateOpen] = useState(false);
+
+  // Determine the selected customer's store for zone/date filtering
+  const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
+  const selectedStore = selectedCustomer?.store_id ? stores.find(s => s.id === selectedCustomer.store_id) : null;
+
+  const allowedWeekdays = useMemo(() => {
+    if (!selectedStore) return null;
+    const zoneKey = getStoreZoneKey(selectedStore as any);
+    const days = transportSchedules.filter(s => s.zone_key === zoneKey).map(s => s.departure_weekday);
+    return days.length > 0 ? new Set(days) : null;
+  }, [selectedStore, transportSchedules]);
+
+  const isNewOrderDateDisabled = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (date < today) return true;
+    if (!allowedWeekdays) return false;
+    const jsDay = getDay(date);
+    const isoDay = jsDay === 0 ? 7 : jsDay;
+    return !allowedWeekdays.has(isoDay);
+  };
+
+  const filteredNewProducts = products.filter(p =>
+    newProductSearch &&
+    (p.name.toLowerCase().includes(newProductSearch.toLowerCase()) ||
+     p.sku.toLowerCase().includes(newProductSearch.toLowerCase())) &&
+    !newOrderLines.find(l => l.product_id === p.id)
+  ).slice(0, 8);
+
+  const addNewProduct = (p: any) => {
+    setNewOrderLines(prev => [...prev, {
+      product_id: p.id, product_name: p.name, unit: p.unit, quantity: "",
+    }]);
+    setNewProductSearch("");
+    setNewHighlightedIndex(-1);
+  };
+
+  const updateNewLine = (idx: number, qty: string) => {
+    setNewOrderLines(prev => prev.map((l, i) => i === idx ? { ...l, quantity: qty } : l));
+  };
+
+  const removeNewLine = (idx: number) => {
+    setNewOrderLines(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const resetCreateDialog = () => {
+    setSelectedCustomerId("");
+    setNewOrderLines([]);
+    setNewOrderNote("");
+    setNewOrderDeliveryDate(undefined);
+    setNewProductSearch("");
+    setNewHighlightedIndex(-1);
+  };
+
+  const handleCreateWholesaleOrder = async () => {
+    const validLines = newOrderLines.filter(l => l.quantity && Number(l.quantity) > 0);
+    if (validLines.length === 0 || !selectedCustomer?.store_id || !newOrderDeliveryDate) return;
+
+    const weekNum = `V${Math.ceil((new Date().getTime() - new Date(new Date().getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000))}`;
+
+    const { data: order, error } = await supabase
+      .from("shop_orders")
+      .insert({
+        store_id: selectedCustomer.store_id,
+        order_week: weekNum,
+        notes: newOrderNote || null,
+        status: "Ny",
+        created_by: "Grossist",
+        desired_delivery_date: format(newOrderDeliveryDate, "yyyy-MM-dd"),
+      } as any)
+      .select()
+      .single();
+
+    if (error) {
+      toast({ title: "Fel", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    const deliveryDateStr = format(newOrderDeliveryDate, "yyyy-MM-dd");
+    const lines = validLines.map(l => ({
+      shop_order_id: order.id,
+      product_id: l.product_id,
+      quantity_ordered: Number(l.quantity),
+      unit: l.unit,
+      delivery_date: deliveryDateStr,
+    }));
+
+    const { error: lineError } = await supabase.from("shop_order_lines").insert(lines);
+    if (lineError) {
+      toast({ title: "Fel vid orderrader", description: lineError.message, variant: "destructive" });
+      return;
+    }
+
+    toast({ title: "Order skapad!", description: `${validLines.length} produkter beställda åt ${selectedCustomer.name}` });
+    qc.invalidateQueries({ queryKey: ["shop_orders"] });
+    qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
+    setCreateDialogOpen(false);
+    resetCreateDialog();
+  };
+
+  // Customers with store_id (linked to a shop)
+  const linkedCustomers = customers.filter(c => c.store_id);
 
   // Fetch all receiving reports
   const { data: allReports = [] } = useQuery({
