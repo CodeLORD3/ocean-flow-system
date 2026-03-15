@@ -148,29 +148,14 @@ export default function PurchaseSchedule() {
 
   const [useStockLoading, setUseStockLoading] = useState<string | null>(null);
 
-  const handleUseStock = async (lineIds: string[], shopOrderIds: string[], productName: string) => {
+  const handleUseStock = async (lineIds: string[], _shopOrderIds: string[], productName: string) => {
     setUseStockLoading(productName);
     try {
       for (const lineId of lineIds) {
-        await supabase.from("shop_order_lines").update({ status: "Packad" }).eq("id", lineId);
-      }
-      // Update parent order statuses
-      const uniqueOrderIds = [...new Set(shopOrderIds)];
-      for (const orderId of uniqueOrderIds) {
-        const { data: allLines } = await supabase.from("shop_order_lines").select("status").eq("shop_order_id", orderId);
-        if (allLines) {
-          const allPacked = allLines.every((l) => l.status === "Packad");
-          const anyPacked = allLines.some((l) => l.status === "Packad");
-          if (allPacked) {
-            await supabase.from("shop_orders").update({ status: "Packad" }).eq("id", orderId);
-          } else if (anyPacked) {
-            await supabase.from("shop_orders").update({ status: "Pågående" }).eq("id", orderId);
-          }
-        }
+        await supabase.from("shop_order_lines").update({ ordered_elsewhere: "Lager" }).eq("id", lineId);
       }
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
-      queryClient.invalidateQueries({ queryKey: ["grossist_flytande_stock"] });
-      toast.success(`"${productName}" markerad som packad från befintligt lager.`);
+      toast.success(`"${productName}" borttagen från inköpsschema (använder befintligt lager).`);
     } catch (err) {
       toast.error("Kunde inte uppdatera orderrader.");
     } finally {
