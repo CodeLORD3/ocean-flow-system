@@ -85,6 +85,7 @@ export default function WholesaleOrders() {
   const { data: staffList = [] } = useStaff();
   const { data: transportSchedules = [] } = useTransportSchedules();
   const retailStores = stores.filter(s => !s.is_wholesale);
+  const { activeUser } = useActiveUser();
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Alla");
