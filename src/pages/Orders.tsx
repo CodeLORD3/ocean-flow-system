@@ -296,7 +296,7 @@ function OrderRow({
       <AnimatePresence>
         {isExpanded && (
           <tr>
-            <td colSpan={7} className="p-0">
+            <td colSpan={isGrossist ? 8 : 7} className="p-0">
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
