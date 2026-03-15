@@ -350,14 +350,15 @@ export default function ShopOrders() {
       return;
     }
 
+    const userName = activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : undefined;
     await logActivity({
       action_type: "create",
-      description: `Ny butiksorder skapad (${weekNum}, ${validLines.length} rader)`,
+      description: `Ny butiksorder skapad av ${userName || "okänd"} (${weekNum}, ${validLines.length} rader)`,
       portal: "shop",
       store_id: activeStoreId,
       entity_type: "shop_order",
       entity_id: order.id,
-      performed_by: undefined,
+      performed_by: userName,
     });
 
     toast({ title: "Beställning skickad!", description: `${validLines.length} produkter beställda` });
