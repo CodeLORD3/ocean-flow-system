@@ -37,6 +37,7 @@ const AppContent = () => {
   return (
     <BrowserRouter>
       <SiteProvider>
+        <ActiveUserProvider>
         <TabsProvider>
           <AppLayout>
             <Routes>
