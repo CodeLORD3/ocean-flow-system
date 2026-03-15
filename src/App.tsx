@@ -67,6 +67,7 @@ const AppContent = () => {
             </Routes>
           </AppLayout>
         </TabsProvider>
+        </ActiveUserProvider>
       </SiteProvider>
     </BrowserRouter>
   );
