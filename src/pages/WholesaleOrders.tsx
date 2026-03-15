@@ -84,11 +84,20 @@ export default function WholesaleOrders() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Alla");
-  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
-  const toggleExpandOrder = (id: string) => setExpandedOrderId(prev => prev === id ? null : id);
+  const [expandedOrderIds, setExpandedOrderIds] = useState<Set<string>>(new Set());
+  const toggleExpandOrder = (id: string) => setExpandedOrderIds(prev => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+  const collapseOrder = (id: string) => setExpandedOrderIds(prev => {
+    const next = new Set(prev);
+    next.delete(id);
+    return next;
+  });
   // Keep selectedOrder for compatibility with other dialogs that reference it
-  const selectedOrderId = expandedOrderId;
-  const setSelectedOrderId = setExpandedOrderId;
+  const selectedOrderId = expandedOrderIds.size > 0 ? Array.from(expandedOrderIds)[0] : null;
+  const setSelectedOrderId = (id: string | null) => { if (id) setExpandedOrderIds(new Set([id])); else setExpandedOrderIds(new Set()); };
   const selectedOrder = useMemo(() => selectedOrderId ? orders.find((o: any) => o.id === selectedOrderId) || null : null, [selectedOrderId, orders]);
   const [reportViewOrder, setReportViewOrder] = useState<any>(null);
   const [archiveConfirmOrder, setArchiveConfirmOrder] = useState<any>(null);
@@ -585,7 +594,7 @@ export default function WholesaleOrders() {
                        )}
                        {filteredOrders.map((o: any) => (
                          <React.Fragment key={o.id}>
-                          <tr className={`border-b border-border h-9 transition-colors cursor-pointer hover:bg-muted/30 ${expandedOrderId === o.id ? "bg-primary/15 border-l-2 border-l-primary shadow-sm" : ""} ${o.status === "Pågående" ? "bg-warning/10" : o.status === "Packad" ? "bg-success/10" : o.status === "Skickad" ? "bg-primary/10" : o.status === "Levererad" || o.status === "Klar / Levererad" ? "bg-primary/25" : ""}`} onClick={() => toggleExpandOrder(o.id)}>
+                          <tr className={`border-b h-9 transition-colors cursor-pointer hover:bg-muted/30 ${expandedOrderIds.has(o.id) ? "bg-primary/10 border-l-2 border-l-primary border-b-0" : "border-border"} ${o.status === "Pågående" ? "bg-warning/10" : o.status === "Packad" ? "bg-success/10" : o.status === "Skickad" ? "bg-primary/10" : o.status === "Levererad" || o.status === "Klar / Levererad" ? "bg-primary/25" : ""}`} onClick={() => toggleExpandOrder(o.id)}>
                             <td className="px-2.5 py-1" onClick={e => e.stopPropagation()}>
                               {o.status === "Ny" && (
                                 <Button
@@ -680,10 +689,10 @@ export default function WholesaleOrders() {
                            </td>
                          </tr>
                          {/* Inline expandable order detail */}
-                         {expandedOrderId === o.id && (
-                           <tr>
-                             <td colSpan={15} className="p-0">
-                               <div className="border-b-2 border-primary/20 bg-muted/20 px-4 py-3">
+                          {expandedOrderIds.has(o.id) && (
+                            <tr>
+                              <td colSpan={15} className="p-0">
+                                <div className="border-l-2 border-l-primary border-b-2 border-b-primary/20 bg-primary/5 px-4 py-3">
                                  <div className="flex items-center justify-between mb-3">
                                    <div className="flex items-center gap-2">
                                      <h3 className="font-heading text-sm font-semibold">
@@ -694,7 +703,7 @@ export default function WholesaleOrders() {
                                        {o.status}
                                      </Badge>
                                    </div>
-                                   <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={(e) => { e.stopPropagation(); setExpandedOrderId(null); }}>
+                                    <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={(e) => { e.stopPropagation(); collapseOrder(o.id); }}>
                                      <X className="h-3 w-3 mr-1" /> Stäng
                                    </Button>
                                  </div>
@@ -709,7 +718,7 @@ export default function WholesaleOrders() {
                                      <span className="font-medium text-foreground">Anteckning:</span> {o.notes}
                                    </div>
                                  )}
-                                 <WholesaleOrderDetail order={o} onClose={() => setExpandedOrderId(null)} stores={stores} />
+                                  <WholesaleOrderDetail order={o} onClose={() => collapseOrder(o.id)} stores={stores} />
                                </div>
                              </td>
                            </tr>
@@ -750,7 +759,7 @@ export default function WholesaleOrders() {
                     )}
                     {archivedOrders.map((o: any) => (
                       <React.Fragment key={o.id}>
-                        <tr className={`border-b border-border/40 cursor-pointer hover:bg-muted/20 ${expandedOrderId === o.id ? "bg-primary/15 border-l-2 border-l-primary shadow-sm" : ""}`} onClick={() => toggleExpandOrder(o.id)}>
+                        <tr className={`border-b border-border/40 cursor-pointer hover:bg-muted/20 ${expandedOrderIds.has(o.id) ? "bg-primary/10 border-l-2 border-l-primary border-b-0" : ""}`} onClick={() => toggleExpandOrder(o.id)}>
                           <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
                           <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                           <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
@@ -761,19 +770,19 @@ export default function WholesaleOrders() {
                           </td>
                           <td className="p-3 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
                         </tr>
-                        {expandedOrderId === o.id && (
+                        {expandedOrderIds.has(o.id) && (
                           <tr>
                             <td colSpan={7} className="p-0">
-                              <div className="border-b-2 border-primary/20 bg-muted/20 px-4 py-3">
+                              <div className="border-l-2 border-l-primary border-b-2 border-b-primary/20 bg-primary/5 px-4 py-3">
                                 <div className="flex items-center justify-between mb-3">
                                   <h3 className="font-heading text-sm font-semibold">
                                     Order {o.order_week} — {o.stores?.name || "Okänd butik"}
                                   </h3>
-                                  <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={(e) => { e.stopPropagation(); setExpandedOrderId(null); }}>
+                                  <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={(e) => { e.stopPropagation(); collapseOrder(o.id); }}>
                                     <X className="h-3 w-3 mr-1" /> Stäng
                                   </Button>
                                 </div>
-                                <WholesaleOrderDetail order={o} onClose={() => setExpandedOrderId(null)} stores={stores} />
+                                <WholesaleOrderDetail order={o} onClose={() => collapseOrder(o.id)} stores={stores} />
                               </div>
                             </td>
                           </tr>
