@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, lazy, Suspense, ComponentType } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export interface TabItem {
@@ -30,9 +30,10 @@ const PAGE_TITLES: Record<string, string> = {
   "/production-reporting": "Produktionsrapporter",
   "/audit": "Revision & Logg",
   "/settings": "Inställningar",
+  "/shop-reports": "Butiksrapporter",
 };
 
-function getTitleForPath(path: string): string {
+export function getTitleForPath(path: string): string {
   return PAGE_TITLES[path] || "Sida";
 }
 
@@ -66,10 +67,9 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
   const closeTab = useCallback(
     (path: string) => {
       setTabs((prev) => {
-        if (prev.length <= 1) return prev; // Don't close last tab
+        if (prev.length <= 1) return prev;
         const idx = prev.findIndex((t) => t.path === path);
         const next = prev.filter((t) => t.path !== path);
-        // If closing active tab, navigate to nearest
         if (path === activeTab) {
           const newIdx = Math.min(idx, next.length - 1);
           navigate(next[newIdx].path);
