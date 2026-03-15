@@ -118,6 +118,20 @@ export default function Orders() {
     );
   };
 
+  const handlePackOrder = (order: any, lines: any[]) => {
+    const nyLines = lines.filter((l: any) => !l.status || l.status === "Ny" || l.status === "");
+    if (nyLines.length === 0) return;
+    nyLines.forEach((line: any) => {
+      updateLineStatus.mutate(
+        { lineId: line.id, newStatus: "Pågående", orderId: order.id },
+        {
+          onError: () => toast.error("Kunde inte ändra status"),
+        }
+      );
+    });
+    toast.success(`Order satt till Pågående (${nyLines.length} rader)`);
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -183,8 +197,9 @@ export default function Orders() {
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="pb-2 text-left font-medium text-muted-foreground w-6"></th>
-                    <th className="pb-2 text-left font-medium text-muted-foreground">Butik</th>
+                     {isGrossist && <th className="pb-2 text-left font-medium text-muted-foreground w-28"></th>}
+                     <th className="pb-2 text-left font-medium text-muted-foreground w-6"></th>
+                     <th className="pb-2 text-left font-medium text-muted-foreground">Butik</th>
                     <th className="pb-2 text-left font-medium text-muted-foreground">Vecka</th>
                     <th className="pb-2 text-left font-medium text-muted-foreground">Önskat leveransdatum</th>
                     <th className="pb-2 text-left font-medium text-muted-foreground">Skapad</th>
@@ -206,12 +221,13 @@ export default function Orders() {
                         onToggle={() => toggleExpand(order.id)}
                         isGrossist={isGrossist}
                         onStatusChange={handleStatusChange}
+                        onPackOrder={handlePackOrder}
                         isPending={updateLineStatus.isPending}
                       />
                     );
                   })}
                   {filtered.length === 0 && (
-                    <tr><td colSpan={7} className="text-center py-8 text-muted-foreground">Inga beställningar hittades</td></tr>
+                    <tr><td colSpan={isGrossist ? 8 : 7} className="text-center py-8 text-muted-foreground">Inga beställningar hittades</td></tr>
                   )}
                 </tbody>
               </table>
@@ -233,6 +249,7 @@ function OrderRow({
   onToggle,
   isGrossist,
   onStatusChange,
+  onPackOrder,
   isPending,
 }: {
   order: any;
@@ -241,14 +258,33 @@ function OrderRow({
   onToggle: () => void;
   isGrossist: boolean;
   onStatusChange: (lineId: string, orderId: string, newStatus: string) => void;
+  onPackOrder: (order: any, lines: any[]) => void;
   isPending: boolean;
 }) {
+  const canPack = order.status === "Ny" || order.status === "";
+
   return (
     <>
       <tr
         className="border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors h-9 cursor-pointer"
         onClick={onToggle}
       >
+        {isGrossist && (
+          <td className="px-1 py-1" onClick={(e) => e.stopPropagation()}>
+            {canPack && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 px-2 text-[10px] gap-1 bg-warning/10 border-warning/30 text-warning hover:bg-warning/20"
+                disabled={isPending}
+                onClick={() => onPackOrder(order, lines)}
+              >
+                <Package className="h-3 w-3" />
+                Packa order
+              </Button>
+            )}
+          </td>
+        )}
         <td className="px-1 py-1">
           {isExpanded ? (
             <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
@@ -275,7 +311,7 @@ function OrderRow({
       <AnimatePresence>
         {isExpanded && (
           <tr>
-            <td colSpan={7} className="p-0">
+            <td colSpan={isGrossist ? 8 : 7} className="p-0">
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
