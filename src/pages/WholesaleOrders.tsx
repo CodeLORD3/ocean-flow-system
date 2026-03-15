@@ -217,6 +217,17 @@ export default function WholesaleOrders() {
       return;
     }
 
+    await logActivity({
+      action_type: "create",
+      description: `Ny grossistorder skapad för ${selectedCustomer.name} (${validLines.length} rader)`,
+      portal: "wholesale",
+      store_id: selectedCustomer.store_id,
+      entity_type: "shop_order",
+      entity_id: order.id,
+      performed_by: activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : "Grossist",
+      details: { line_count: validLines.length, week: weekNum },
+    });
+
     toast({ title: "Order skapad!", description: `${validLines.length} produkter beställda åt ${selectedCustomer.name}` });
     qc.invalidateQueries({ queryKey: ["shop_orders"] });
     qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
