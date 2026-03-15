@@ -248,6 +248,7 @@ export default function ProductionSchedule() {
       totalQuantity: number;
       shops: { name: string; zoneKey: string; quantity: number; deliveryDate: Date }[];
       departureDate: Date;
+      productionDate: Date;
       earliestDelivery: Date;
       departureTime: string;
       category: string;
