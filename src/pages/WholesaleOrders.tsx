@@ -434,10 +434,23 @@ export default function WholesaleOrders() {
                     </thead>
                     <tbody>
                       {filteredOrders.length === 0 && (
-                         <tr><td colSpan={14} className="px-2.5 py-6 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
+                          <tr><td colSpan={15} className="px-2.5 py-6 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
                        )}
                        {filteredOrders.map((o: any) => (
                          <tr key={o.id} className="border-b border-border h-9 transition-colors cursor-pointer hover:bg-muted/30" onClick={() => setSelectedOrderId(o.id)}>
+                           <td className="px-2.5 py-1" onClick={e => e.stopPropagation()}>
+                             {o.status === "Ny" && (
+                               <Button
+                                 size="sm"
+                                 variant="outline"
+                                 className="h-6 px-2 text-[10px] gap-1 bg-warning/10 border-warning/30 text-warning hover:bg-warning/20"
+                                 onClick={() => handleOrderStatusChange(o.id, "Pågående")}
+                               >
+                                 <Package className="h-3 w-3" />
+                                 Packa order
+                               </Button>
+                             )}
+                           </td>
                            <td className="px-2.5 py-1 font-mono font-medium text-foreground">{o.order_week}</td>
                            <td className="px-2.5 py-1 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                            <td className="px-2.5 py-1 text-muted-foreground">{o.stores?.name || "–"}</td>
