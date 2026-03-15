@@ -37,6 +37,8 @@ import DeliveryNote from "@/components/DeliveryNote";
 import { moveStockToTransport } from "@/lib/stockTransfer";
 import { useUpdateOrderLineStatus, STATUS_FLOW } from "@/hooks/useUpdateOrderLineStatus";
 import { useAllStockByLocation } from "@/hooks/useStorageLocations";
+import { logActivity } from "@/hooks/useActivityLog";
+import { useActiveUser } from "@/contexts/ActiveUserContext";
 
 type WholesaleOrderLine = {
   product_id: string;
@@ -83,6 +85,7 @@ export default function WholesaleOrders() {
   const { data: staffList = [] } = useStaff();
   const { data: transportSchedules = [] } = useTransportSchedules();
   const retailStores = stores.filter(s => !s.is_wholesale);
+  const { activeUser } = useActiveUser();
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Alla");
@@ -213,6 +216,17 @@ export default function WholesaleOrders() {
       toast({ title: "Fel vid orderrader", description: lineError.message, variant: "destructive" });
       return;
     }
+
+    await logActivity({
+      action_type: "create",
+      description: `Ny grossistorder skapad för ${selectedCustomer.name} (${validLines.length} rader)`,
+      portal: "wholesale",
+      store_id: selectedCustomer.store_id,
+      entity_type: "shop_order",
+      entity_id: order.id,
+      performed_by: activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : "Grossist",
+      details: { line_count: validLines.length, week: weekNum },
+    });
 
     toast({ title: "Order skapad!", description: `${validLines.length} produkter beställda åt ${selectedCustomer.name}` });
     qc.invalidateQueries({ queryKey: ["shop_orders"] });
