@@ -2,12 +2,15 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Search, Clock, CheckCircle2, Truck, XCircle, Package,
-  Eye, ListChecks, ChefHat, AlertTriangle, Archive, Bell, Check, X, Ban, Printer, ArrowRight,
+  Eye, ListChecks, ChefHat, AlertTriangle, Archive, Bell, Check, X, Ban, Printer, ArrowRight, Plus, CalendarIcon,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -15,9 +18,16 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format, getDay } from "date-fns";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useShopOrders } from "@/hooks/useShopOrders";
 import { useStores } from "@/hooks/useStores";
+import { useCustomers } from "@/hooks/useCustomers";
+import { useProducts } from "@/hooks/useProducts";
+import { useTransportSchedules } from "@/hooks/useTransportSchedules";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useAllPendingChangeRequests, useResolveChangeRequest, useCreateChangeRequest } from "@/hooks/useOrderChangeRequests";
@@ -26,6 +36,21 @@ import DeliveryNote from "@/components/DeliveryNote";
 import { moveStockToTransport } from "@/lib/stockTransfer";
 import { useUpdateOrderLineStatus, STATUS_FLOW } from "@/hooks/useUpdateOrderLineStatus";
 import { useAllStockByLocation } from "@/hooks/useStorageLocations";
+
+type WholesaleOrderLine = {
+  product_id: string;
+  product_name: string;
+  unit: string;
+  quantity: string;
+};
+
+function getStoreZoneKey(store: { city: string; name: string }): string {
+  const city = (store.city || "").toLowerCase();
+  const name = (store.name || "").toLowerCase();
+  if (city.includes("göteborg") || city.includes("gothenburg") || name.includes("göteborg") || name.includes("amhult") || name.includes("särö")) return "gothenburg";
+  if (city.includes("stockholm") || name.includes("stockholm") || name.includes("kungsholmen") || name.includes("ålsten")) return "stockholm";
+  return "international";
+}
 
 const statusColor: Record<string, string> = {
   Ny: "",
@@ -52,6 +77,9 @@ export default function WholesaleOrders() {
   const qc = useQueryClient();
   const { data: orders = [], isLoading } = useShopOrders();
   const { data: stores = [] } = useStores();
+  const { data: customers = [] } = useCustomers();
+  const { data: products = [] } = useProducts();
+  const { data: transportSchedules = [] } = useTransportSchedules();
   const retailStores = stores.filter(s => !s.is_wholesale);
 
   const [search, setSearch] = useState("");
@@ -68,6 +96,118 @@ export default function WholesaleOrders() {
   const [pendingPackerOrderId, setPendingPackerOrderId] = useState<string | null>(null);
   const { data: pendingChanges = [] } = useAllPendingChangeRequests();
   const resolveChange = useResolveChangeRequest();
+
+  // Wholesale order creation state
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
+  const [newOrderLines, setNewOrderLines] = useState<WholesaleOrderLine[]>([]);
+  const [newOrderNote, setNewOrderNote] = useState("");
+  const [newOrderDeliveryDate, setNewOrderDeliveryDate] = useState<Date | undefined>(undefined);
+  const [newProductSearch, setNewProductSearch] = useState("");
+  const [newHighlightedIndex, setNewHighlightedIndex] = useState(-1);
+  const [confirmCreateOpen, setConfirmCreateOpen] = useState(false);
+
+  // Determine the selected customer's store for zone/date filtering
+  const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
+  const selectedStore = selectedCustomer?.store_id ? stores.find(s => s.id === selectedCustomer.store_id) : null;
+
+  const allowedWeekdays = useMemo(() => {
+    if (!selectedStore) return null;
+    const zoneKey = getStoreZoneKey(selectedStore as any);
+    const days = transportSchedules.filter(s => s.zone_key === zoneKey).map(s => s.departure_weekday);
+    return days.length > 0 ? new Set(days) : null;
+  }, [selectedStore, transportSchedules]);
+
+  const isNewOrderDateDisabled = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (date < today) return true;
+    if (!allowedWeekdays) return false;
+    const jsDay = getDay(date);
+    const isoDay = jsDay === 0 ? 7 : jsDay;
+    return !allowedWeekdays.has(isoDay);
+  };
+
+  const filteredNewProducts = products.filter(p =>
+    newProductSearch &&
+    (p.name.toLowerCase().includes(newProductSearch.toLowerCase()) ||
+     p.sku.toLowerCase().includes(newProductSearch.toLowerCase())) &&
+    !newOrderLines.find(l => l.product_id === p.id)
+  ).slice(0, 8);
+
+  const addNewProduct = (p: any) => {
+    setNewOrderLines(prev => [...prev, {
+      product_id: p.id, product_name: p.name, unit: p.unit, quantity: "",
+    }]);
+    setNewProductSearch("");
+    setNewHighlightedIndex(-1);
+  };
+
+  const updateNewLine = (idx: number, qty: string) => {
+    setNewOrderLines(prev => prev.map((l, i) => i === idx ? { ...l, quantity: qty } : l));
+  };
+
+  const removeNewLine = (idx: number) => {
+    setNewOrderLines(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const resetCreateDialog = () => {
+    setSelectedCustomerId("");
+    setNewOrderLines([]);
+    setNewOrderNote("");
+    setNewOrderDeliveryDate(undefined);
+    setNewProductSearch("");
+    setNewHighlightedIndex(-1);
+  };
+
+  const handleCreateWholesaleOrder = async () => {
+    const validLines = newOrderLines.filter(l => l.quantity && Number(l.quantity) > 0);
+    if (validLines.length === 0 || !selectedCustomer?.store_id || !newOrderDeliveryDate) return;
+
+    const weekNum = `V${Math.ceil((new Date().getTime() - new Date(new Date().getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000))}`;
+
+    const { data: order, error } = await supabase
+      .from("shop_orders")
+      .insert({
+        store_id: selectedCustomer.store_id,
+        order_week: weekNum,
+        notes: newOrderNote || null,
+        status: "Ny",
+        created_by: "Grossist",
+        desired_delivery_date: format(newOrderDeliveryDate, "yyyy-MM-dd"),
+      } as any)
+      .select()
+      .single();
+
+    if (error) {
+      toast({ title: "Fel", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    const deliveryDateStr = format(newOrderDeliveryDate, "yyyy-MM-dd");
+    const lines = validLines.map(l => ({
+      shop_order_id: order.id,
+      product_id: l.product_id,
+      quantity_ordered: Number(l.quantity),
+      unit: l.unit,
+      delivery_date: deliveryDateStr,
+    }));
+
+    const { error: lineError } = await supabase.from("shop_order_lines").insert(lines);
+    if (lineError) {
+      toast({ title: "Fel vid orderrader", description: lineError.message, variant: "destructive" });
+      return;
+    }
+
+    toast({ title: "Order skapad!", description: `${validLines.length} produkter beställda åt ${selectedCustomer.name}` });
+    qc.invalidateQueries({ queryKey: ["shop_orders"] });
+    qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
+    setCreateDialogOpen(false);
+    resetCreateDialog();
+  };
+
+  // Customers with store_id (linked to a shop)
+  const linkedCustomers = customers.filter(c => c.store_id);
 
   // Fetch all receiving reports
   const { data: allReports = [] } = useQuery({
@@ -264,6 +404,9 @@ export default function WholesaleOrders() {
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">Hantera inkomna beställningar från alla butiker. Uppdatera produktstatus i totalvyn.</p>
         </div>
+        <Button size="sm" className="gap-1.5 text-xs" onClick={() => setCreateDialogOpen(true)}>
+          <Plus className="h-3.5 w-3.5" /> Skapa order åt butik
+        </Button>
       </div>
 
       {/* KPIs */}
@@ -781,6 +924,203 @@ export default function WholesaleOrders() {
       {/* Packing slip dialog */}
       <PackingSlip order={packingSlipOrder} open={!!packingSlipOrder} onOpenChange={(open) => { if (!open) setPackingSlipOrder(null); }} />
       <DeliveryNote order={deliveryNoteOrder} open={!!deliveryNoteOrder} onOpenChange={(open) => { if (!open) setDeliveryNoteOrder(null); }} />
+
+      {/* Create order on behalf of shop dialog */}
+      <Dialog open={createDialogOpen} onOpenChange={open => { setCreateDialogOpen(open); if (!open) resetCreateDialog(); }}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-heading">Skapa order åt butik</DialogTitle>
+            <DialogDescription className="text-xs">
+              Välj en kund/butik och lägg till produkter. Ordern visas direkt i butikens ordervy.
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Customer selection */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">Välj kund / butik <span className="text-destructive">*</span></Label>
+            <Select value={selectedCustomerId} onValueChange={v => { setSelectedCustomerId(v); setNewOrderDeliveryDate(undefined); }}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Välj kund..." />
+              </SelectTrigger>
+              <SelectContent>
+                {linkedCustomers.map(c => {
+                  const store = stores.find(s => s.id === c.store_id);
+                  return (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name} {store ? `(${store.name})` : ""}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+            {linkedCustomers.length === 0 && (
+              <p className="text-[10px] text-warning">Inga kunder är kopplade till butiker. Koppla kunder via Kunder-modulen.</p>
+            )}
+          </div>
+
+          {/* Product search */}
+          {selectedCustomerId && (
+            <>
+              <div className="relative">
+                <Label className="text-xs font-medium mb-1.5 block">Lägg till produkter</Label>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    placeholder="Sök produkt (namn eller SKU)..."
+                    value={newProductSearch}
+                    onChange={e => { setNewProductSearch(e.target.value); setNewHighlightedIndex(-1); }}
+                    onKeyDown={e => {
+                      if (filteredNewProducts.length === 0) return;
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        setNewHighlightedIndex(prev => (prev + 1) % filteredNewProducts.length);
+                      } else if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        setNewHighlightedIndex(prev => (prev <= 0 ? filteredNewProducts.length - 1 : prev - 1));
+                      } else if (e.key === "Enter" && newHighlightedIndex >= 0 && newHighlightedIndex < filteredNewProducts.length) {
+                        e.preventDefault();
+                        addNewProduct(filteredNewProducts[newHighlightedIndex]);
+                      }
+                    }}
+                    className="pl-8 h-8 text-xs"
+                  />
+                </div>
+                {filteredNewProducts.length > 0 && (
+                  <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                    {filteredNewProducts.map((p, idx) => (
+                      <button
+                        key={p.id}
+                        className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between ${idx === newHighlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
+                        onClick={() => addNewProduct(p)}
+                        onMouseEnter={() => setNewHighlightedIndex(idx)}
+                      >
+                        <span className="font-medium text-foreground">{p.name}</span>
+                        <span className="text-muted-foreground font-mono text-[10px]">{p.sku} · {p.unit}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Order lines */}
+              {newOrderLines.length > 0 && (
+                <div className="space-y-2">
+                  <Separator />
+                  <div className="text-xs font-medium text-muted-foreground">
+                    {newOrderLines.length} produkt{newOrderLines.length > 1 ? "er" : ""} tillagda
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="pb-2 text-left font-medium text-muted-foreground">Produkt</th>
+                          <th className="pb-2 text-left font-medium text-muted-foreground">Enhet</th>
+                          <th className="pb-2 text-right font-medium text-muted-foreground w-32">Antal</th>
+                          <th className="pb-2 w-8"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {newOrderLines.map((line, idx) => (
+                          <tr key={line.product_id} className="border-b border-border/30">
+                            <td className="py-2 font-medium text-foreground">{line.product_name}</td>
+                            <td className="py-2 text-muted-foreground">{line.unit}</td>
+                            <td className="py-2 text-right">
+                              <Input
+                                type="number"
+                                step="0.1"
+                                value={line.quantity}
+                                onChange={e => updateNewLine(idx, e.target.value)}
+                                className="h-7 text-xs w-24 ml-auto text-right"
+                                placeholder="0"
+                                autoFocus={idx === newOrderLines.length - 1}
+                              />
+                            </td>
+                            <td className="py-2">
+                              <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeNewLine(idx)}>
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">Önskat avgångsdatum <span className="text-destructive">*</span></Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left text-xs h-8 font-normal",
+                        !newOrderDeliveryDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                      {newOrderDeliveryDate ? format(newOrderDeliveryDate, "yyyy-MM-dd") : "Välj datum..."}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={newOrderDeliveryDate}
+                      onSelect={setNewOrderDeliveryDate}
+                      disabled={isNewOrderDateDisabled}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                      modifiers={allowedWeekdays ? { allowed: (date: Date) => !isNewOrderDateDisabled(date) } : {}}
+                      modifiersClassNames={allowedWeekdays ? { allowed: "!bg-primary/10 !text-primary font-medium" } : {}}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">Anteckning (valfritt)</Label>
+                <Textarea
+                  value={newOrderNote}
+                  onChange={e => setNewOrderNote(e.target.value)}
+                  placeholder="T.ex. brådskande leverans, specialförpackning..."
+                  className="text-xs min-h-[50px]"
+                />
+              </div>
+            </>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => { setCreateDialogOpen(false); resetCreateDialog(); }}>Avbryt</Button>
+            <Button
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setConfirmCreateOpen(true)}
+              disabled={!selectedCustomerId || newOrderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0 || !newOrderDeliveryDate}
+            >
+              <ShoppingCart className="h-3.5 w-3.5" /> Skapa order
+            </Button>
+          </DialogFooter>
+
+          {/* Confirmation dialog */}
+          <Dialog open={confirmCreateOpen} onOpenChange={setConfirmCreateOpen}>
+            <DialogContent className="max-w-sm">
+              <DialogHeader>
+                <DialogTitle className="font-heading">Bekräfta order</DialogTitle>
+                <DialogDescription className="text-xs">
+                  Skapa order med {newOrderLines.filter(l => l.quantity && Number(l.quantity) > 0).length} produkt(er) åt {selectedCustomer?.name}?
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button variant="outline" size="sm" onClick={() => setConfirmCreateOpen(false)}>Avbryt</Button>
+                <Button size="sm" className="gap-1.5" onClick={() => { setConfirmCreateOpen(false); handleCreateWholesaleOrder(); }}>
+                  <CheckCircle2 className="h-3.5 w-3.5" /> Ja, skapa
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
