@@ -30,6 +30,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { logActivity } from "@/hooks/useActivityLog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSite } from "@/contexts/SiteContext";
+import { useActiveUser } from "@/contexts/ActiveUserContext";
 import { useCreateChangeRequest, useOrderChangeRequests, useResolveChangeRequest } from "@/hooks/useOrderChangeRequests";
 
 type OrderLine = {
@@ -182,6 +183,7 @@ export default function ShopOrders() {
   const { toast } = useToast();
   const qc = useQueryClient();
   const { activeStoreId } = useSite();
+  const { activeUser } = useActiveUser();
   const { data: products = [] } = useProducts();
   const { data: transportSchedules = [] } = useTransportSchedules();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -321,6 +323,7 @@ export default function ShopOrders() {
         order_week: weekNum,
         notes: orderNote || null,
         status: "Ny",
+        created_by: activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : null,
         desired_delivery_date: desiredDeliveryDate ? format(desiredDeliveryDate, "yyyy-MM-dd") : null,
       } as any)
       .select()
@@ -347,14 +350,15 @@ export default function ShopOrders() {
       return;
     }
 
+    const userName = activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : undefined;
     await logActivity({
       action_type: "create",
-      description: `Ny butiksorder skapad (${weekNum}, ${validLines.length} rader)`,
+      description: `Ny butiksorder skapad av ${userName || "okänd"} (${weekNum}, ${validLines.length} rader)`,
       portal: "shop",
       store_id: activeStoreId,
       entity_type: "shop_order",
       entity_id: order.id,
-      performed_by: undefined,
+      performed_by: userName,
     });
 
     toast({ title: "Beställning skickad!", description: `${validLines.length} produkter beställda` });

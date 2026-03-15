@@ -191,7 +191,7 @@ export default function WholesaleOrders() {
         order_week: weekNum,
         notes: newOrderNote || null,
         status: "Ny",
-        created_by: "Grossist",
+        created_by: activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : "Grossist",
         desired_delivery_date: format(newOrderDeliveryDate, "yyyy-MM-dd"),
       } as any)
       .select()
@@ -219,7 +219,7 @@ export default function WholesaleOrders() {
 
     await logActivity({
       action_type: "create",
-      description: `Ny grossistorder skapad för ${selectedCustomer.name} (${validLines.length} rader)`,
+      description: `Ny grossistorder skapad av ${activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : "Grossist"} för ${selectedCustomer.name} (${validLines.length} rader)`,
       portal: "wholesale",
       store_id: selectedCustomer.store_id,
       entity_type: "shop_order",
