@@ -118,6 +118,20 @@ export default function Orders() {
     );
   };
 
+  const handlePackOrder = (order: any, lines: any[]) => {
+    const nyLines = lines.filter((l: any) => !l.status || l.status === "Ny" || l.status === "");
+    if (nyLines.length === 0) return;
+    nyLines.forEach((line: any) => {
+      updateLineStatus.mutate(
+        { lineId: line.id, newStatus: "Pågående", orderId: order.id },
+        {
+          onError: () => toast.error("Kunde inte ändra status"),
+        }
+      );
+    });
+    toast.success(`Order satt till Pågående (${nyLines.length} rader)`);
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
