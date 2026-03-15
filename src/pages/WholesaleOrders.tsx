@@ -28,6 +28,7 @@ import { useStores } from "@/hooks/useStores";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useProducts } from "@/hooks/useProducts";
 import { useTransportSchedules } from "@/hooks/useTransportSchedules";
+import { useStaff } from "@/hooks/useStaff";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useAllPendingChangeRequests, useResolveChangeRequest, useCreateChangeRequest } from "@/hooks/useOrderChangeRequests";
@@ -79,6 +80,7 @@ export default function WholesaleOrders() {
   const { data: stores = [] } = useStores();
   const { data: customers = [] } = useCustomers();
   const { data: products = [] } = useProducts();
+  const { data: staffList = [] } = useStaff();
   const { data: transportSchedules = [] } = useTransportSchedules();
   const retailStores = stores.filter(s => !s.is_wholesale);
 
@@ -939,17 +941,21 @@ export default function WholesaleOrders() {
           <DialogHeader>
             <DialogTitle className="font-heading text-sm">Vem packar ordern?</DialogTitle>
             <DialogDescription className="text-xs">
-              Ange namnet på personen som packar denna order.
+              Välj den anställda som packar denna order.
             </DialogDescription>
           </DialogHeader>
-          <Input
-            placeholder="Packarens namn..."
-            value={packerName}
-            onChange={(e) => setPackerName(e.target.value)}
-            className="text-sm"
-            autoFocus
-            onKeyDown={(e) => { if (e.key === "Enter" && packerName.trim()) handlePackerConfirm(); }}
-          />
+          <Select value={packerName} onValueChange={setPackerName}>
+            <SelectTrigger className="text-sm">
+              <SelectValue placeholder="Välj packare..." />
+            </SelectTrigger>
+            <SelectContent>
+              {staffList.map((s: any) => (
+                <SelectItem key={s.id} value={`${s.first_name} ${s.last_name}`}>
+                  {s.first_name} {s.last_name} {s.workplace ? `(${s.workplace})` : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <DialogFooter className="gap-2">
             <Button variant="outline" size="sm" className="text-xs" onClick={() => { setPackerDialogOpen(false); setPendingPackerOrderId(null); }}>Avbryt</Button>
             <Button size="sm" className="text-xs" disabled={!packerName.trim()} onClick={handlePackerConfirm}>Bekräfta</Button>
