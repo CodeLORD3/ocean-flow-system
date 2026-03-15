@@ -174,29 +174,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 <Input placeholder="Sök i hela systemet... (Ctrl+K)" className="h-8 w-64 pl-8 text-xs bg-muted/50" />
               </div>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 relative">
-                    <Bell className="h-4 w-4" />
-                    <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center font-bold">3</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-80">
-                  <DropdownMenuLabel className="flex items-center justify-between">
-                    <span>Aviseringar</span>
-                    <Badge variant="destructive" className="text-[10px]">3 nya</Badge>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="flex flex-col items-start gap-1 py-2">
-                    <span className="text-xs font-medium">⚠️ Lågt lager: Jätteräkor</span>
-                    <span className="text-[10px] text-muted-foreground">80 kg kvar — för 5 min sedan</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="flex flex-col items-start gap-1 py-2">
-                    <span className="text-xs font-medium">📦 Beställning bekräftad</span>
-                    <span className="text-[10px] text-muted-foreground">för 23 min sedan</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Bell className="h-4 w-4" />
+              </Button>
 
               <AccountSwitcher />
             </div>

@@ -124,10 +124,29 @@ export default function OrganisationOverview() {
     },
   });
 
+  // Fetch real stock from product_stock_locations
+  const { data: stockLocations = [] } = useQuery({
+    queryKey: ["stock-locations-overview"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_stock_locations")
+        .select("product_id, quantity, unit_cost, location_id, storage_locations(name, zone)");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // --- Computed KPIs ---
-  const totalInventoryValue = products.reduce((sum, p) => sum + (p.stock * p.cost_price), 0);
-  const totalInventoryWholesale = products.reduce((sum, p) => sum + (p.stock * p.wholesale_price), 0);
-  const totalStock = products.reduce((sum, p) => sum + p.stock, 0);
+  const totalInventoryValue = stockLocations.reduce((sum, sl: any) => {
+    const product = products.find(p => p.id === sl.product_id);
+    const unitCost = sl.unit_cost ?? product?.cost_price ?? 0;
+    return sum + (sl.quantity * unitCost);
+  }, 0);
+  const totalInventoryWholesale = stockLocations.reduce((sum, sl: any) => {
+    const product = products.find(p => p.id === sl.product_id);
+    return sum + (sl.quantity * (product?.wholesale_price ?? 0));
+  }, 0);
+  const totalStock = stockLocations.reduce((sum, sl: any) => sum + sl.quantity, 0);
   const activeProducts = products.filter(p => p.active).length;
 
   // Sales = sum of delivered value from shop orders (primary source of truth)
