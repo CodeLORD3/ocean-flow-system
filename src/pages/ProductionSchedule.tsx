@@ -853,6 +853,11 @@ export default function ProductionSchedule() {
                                     <span className="flex items-center gap-1">
                                       <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
                                       {item.productName}
+                                      {item.isManual && (
+                                        <Badge variant="outline" className="text-[8px] py-0 px-1 border-primary/40 text-primary bg-primary/5">
+                                          <User className="h-2.5 w-2.5 mr-0.5" />Manuell
+                                        </Badge>
+                                      )}
                                     </span>
                                   </TableCell>
                                   <TableCell className="px-2 py-0.5 text-xs text-right font-medium">{item.totalQuantity} {item.unit}</TableCell>
@@ -860,30 +865,45 @@ export default function ProductionSchedule() {
                                   <TableCell className={`px-2 py-0.5 text-xs text-right ${isProduced ? "font-semibold text-green-700 dark:text-green-400" : "text-muted-foreground"}`}>
                                     {produced > 0 ? `${produced} ${item.unit}` : "—"}
                                   </TableCell>
-                                  <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">{item.shops.length} butik{item.shops.length > 1 ? "er" : ""}</TableCell>
+                                  <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">
+                                    {item.isManual ? "—" : `${item.shops.length} butik${item.shops.length > 1 ? "er" : ""}`}
+                                  </TableCell>
                                   <TableCell className="px-2 py-0.5" onClick={(e) => e.stopPropagation()}>
                                     <div className="flex items-center gap-1">
-                                      {isProduced && (
+                                      {item.isManual ? (
                                         <Button
                                           variant="outline"
                                           size="sm"
-                                          className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
-                                          onClick={() => handleMarkProduced(item.lineIds, item.shopOrderIds, item.productName)}
-                                          disabled={boughtLoading === item.productName}
+                                          className="h-6 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+                                          onClick={() => handleDeleteManualEntry(item.manualEntryId!, item.productName)}
                                         >
-                                          <Check className="h-3 w-3" /> Producerad
+                                          <Trash2 className="h-3 w-3" /> Ta bort
                                         </Button>
-                                      )}
-                                      {hasSufficientStock && !isProduced && (
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
-                                          onClick={() => handleUseStock(item.lineIds, item.shopOrderIds, item.productName)}
-                                          disabled={useStockLoading === item.productName}
-                                        >
-                                          <PackageCheck className="h-3 w-3" /> Använd lager
-                                        </Button>
+                                      ) : (
+                                        <>
+                                          {isProduced && (
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
+                                              onClick={() => handleMarkProduced(item.lineIds, item.shopOrderIds, item.productName)}
+                                              disabled={boughtLoading === item.productName}
+                                            >
+                                              <Check className="h-3 w-3" /> Producerad
+                                            </Button>
+                                          )}
+                                          {hasSufficientStock && !isProduced && (
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              className="h-6 text-[10px] gap-1 text-green-700 dark:text-green-400 border-green-500/30 hover:bg-green-500/10"
+                                              onClick={() => handleUseStock(item.lineIds, item.shopOrderIds, item.productName)}
+                                              disabled={useStockLoading === item.productName}
+                                            >
+                                              <PackageCheck className="h-3 w-3" /> Använd lager
+                                            </Button>
+                                          )}
+                                        </>
                                       )}
                                     </div>
                                   </TableCell>
