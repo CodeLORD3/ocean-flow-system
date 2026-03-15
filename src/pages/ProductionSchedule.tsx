@@ -248,7 +248,7 @@ export default function ProductionSchedule() {
         // Only include production products
         if (!productionProductIds.has(line.product_id)) continue;
         // Skip lines already being processed or marked as "Använd lager"
-        if (line.status && !["", "Ny"].includes(line.status)) continue;
+        if (line.status && !["", "Ny", "Pågående"].includes(line.status)) continue;
         if (line.ordered_elsewhere === "Lager") continue;
 
         const deliveryDateStr = line.delivery_date || order.desired_delivery_date;
