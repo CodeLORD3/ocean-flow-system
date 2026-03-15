@@ -782,7 +782,7 @@ export default function WholesaleOrders() {
                                     <X className="h-3 w-3 mr-1" /> Stäng
                                   </Button>
                                 </div>
-                                <WholesaleOrderDetail order={o} onClose={() => setExpandedOrderId(null)} stores={stores} />
+                                <WholesaleOrderDetail order={o} onClose={() => collapseOrder(o.id)} stores={stores} />
                               </div>
                             </td>
                           </tr>
