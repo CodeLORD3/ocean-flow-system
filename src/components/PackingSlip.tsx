@@ -155,8 +155,8 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
                         <td style={{ padding: 0, borderBottom: "1px solid #ddd", textAlign: "center", border: "2px solid #333", fontVariantNumeric: "tabular-nums", fontSize: 15, minWidth: 36 }}>
                           {line.quantity_ordered}
                         </td>
-                        <td style={{ padding: 0, borderBottom: "1px solid #ddd", textAlign: "center", border: "2px solid #333", fontSize: 15, minWidth: 36, minHeight: 20 }}>
-                          &nbsp;
+                        <td style={{ padding: 0, borderBottom: "1px solid #ddd", textAlign: "center", border: "2px solid #333", fontSize: 15, minWidth: 36, minHeight: 20, fontVariantNumeric: "tabular-nums" }}>
+                          {line.quantity_delivered ? line.quantity_delivered : "\u00A0"}
                         </td>
                         <td style={{ padding: 0, borderBottom: "1px solid #ddd", textAlign: "center", border: "2px solid #333", fontSize: 14, minWidth: 32 }}>
                           {line.unit || line.products?.unit || "kg"}
