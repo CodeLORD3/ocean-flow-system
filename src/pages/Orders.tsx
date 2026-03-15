@@ -12,6 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useShopOrders } from "@/hooks/useShopOrders";
 import { useStores } from "@/hooks/useStores";
@@ -19,6 +23,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { syncBehandlasFromStock } from "@/lib/orderStatusSync";
 import { useUpdateOrderLineStatus, STATUS_FLOW } from "@/hooks/useUpdateOrderLineStatus";
 import { useSite } from "@/contexts/SiteContext";
+import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -62,6 +67,16 @@ export default function Orders() {
   const [storeFilter, setStoreFilter] = useState("Alla butiker");
   const [statusFilterVal, setStatusFilterVal] = useState("Alla");
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
+
+  // Packer dialog state
+  const [packerDialogOpen, setPackerDialogOpen] = useState(false);
+  const [packerName, setPackerName] = useState("");
+  const [pendingPackAction, setPendingPackAction] = useState<{
+    order: any;
+    lines: any[];
+    // If a specific line triggered it, store the pending change
+    pendingLineChange?: { lineId: string; orderId: string; newStatus: string };
+  } | null>(null);
 
   const { data: orders = [], isLoading } = useShopOrders();
   const { data: stores = [] } = useStores();
@@ -108,7 +123,52 @@ export default function Orders() {
     });
   };
 
+  const startPackProcess = async (packerNameVal: string, order: any, lines: any[], pendingLineChange?: { lineId: string; orderId: string; newStatus: string }) => {
+    // Save packer name to order
+    await supabase.from("shop_orders").update({ packer_name: packerNameVal }).eq("id", order.id);
+
+    // Set all Ny lines to Pågående
+    const nyLines = lines.filter((l: any) => !l.status || l.status === "Ny" || l.status === "");
+    for (const line of nyLines) {
+      updateLineStatus.mutate({ lineId: line.id, newStatus: "Pågående", orderId: order.id });
+    }
+
+    // If there was a pending line change beyond just "Pågående", apply it
+    if (pendingLineChange) {
+      const alreadyHandled = nyLines.some((l: any) => l.id === pendingLineChange.lineId) && pendingLineChange.newStatus === "Pågående";
+      if (!alreadyHandled) {
+        updateLineStatus.mutate(
+          { lineId: pendingLineChange.lineId, newStatus: pendingLineChange.newStatus, orderId: pendingLineChange.orderId },
+          { onSuccess: () => toast.success(`Status ändrad till ${pendingLineChange.newStatus}`) }
+        );
+      }
+    }
+
+    toast.success(`Packprocess startad av ${packerNameVal} (${nyLines.length} rader → Pågående)`);
+    queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
+  };
+
+  const handlePackerConfirm = () => {
+    if (!packerName.trim() || !pendingPackAction) return;
+    startPackProcess(packerName.trim(), pendingPackAction.order, pendingPackAction.lines, pendingPackAction.pendingLineChange);
+    setPackerDialogOpen(false);
+    setPackerName("");
+    setPendingPackAction(null);
+  };
+
   const handleStatusChange = (lineId: string, orderId: string, newStatus: string) => {
+    // Find the order to check if packer_name is set
+    const order = orders.find((o: any) => o.id === orderId);
+    if (!order) return;
+
+    // If order has no packer_name, show the packer dialog first
+    if (!order.packer_name) {
+      const lines = order.shop_order_lines || [];
+      setPendingPackAction({ order, lines, pendingLineChange: { lineId, orderId, newStatus } });
+      setPackerDialogOpen(true);
+      return;
+    }
+
     updateLineStatus.mutate(
       { lineId, newStatus, orderId },
       {
@@ -121,12 +181,18 @@ export default function Orders() {
   const handlePackOrder = (order: any, lines: any[]) => {
     const nyLines = lines.filter((l: any) => !l.status || l.status === "Ny" || l.status === "");
     if (nyLines.length === 0) return;
+
+    if (!order.packer_name) {
+      setPendingPackAction({ order, lines });
+      setPackerDialogOpen(true);
+      return;
+    }
+
+    // Already has packer, just transition
     nyLines.forEach((line: any) => {
       updateLineStatus.mutate(
         { lineId: line.id, newStatus: "Pågående", orderId: order.id },
-        {
-          onError: () => toast.error("Kunde inte ändra status"),
-        }
+        { onError: () => toast.error("Kunde inte ändra status") }
       );
     });
     toast.success(`Order satt till Pågående (${nyLines.length} rader)`);
@@ -238,6 +304,49 @@ export default function Orders() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Packer name dialog */}
+      <Dialog open={packerDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          setPackerDialogOpen(false);
+          setPackerName("");
+          setPendingPackAction(null);
+        }
+      }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-sm font-heading flex items-center gap-2">
+              <Package className="h-4 w-4" /> Starta packprocess
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-xs text-muted-foreground">
+              Ange vem som packar denna order. Alla produkter sätts automatiskt till <Badge variant="outline" className="bg-warning/15 text-warning border-warning/20 text-[10px] mx-1">Pågående</Badge>.
+            </p>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Packare</Label>
+              <Input
+                placeholder="Namn på packare..."
+                value={packerName}
+                onChange={(e) => setPackerName(e.target.value)}
+                className="h-8 text-xs"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handlePackerConfirm();
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" className="text-xs" onClick={() => { setPackerDialogOpen(false); setPackerName(""); setPendingPackAction(null); }}>
+              Avbryt
+            </Button>
+            <Button size="sm" className="text-xs gap-1.5" disabled={!packerName.trim()} onClick={handlePackerConfirm}>
+              <Package className="h-3.5 w-3.5" /> Starta packning
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
@@ -320,6 +429,11 @@ function OrderRow({
                 className="overflow-hidden"
               >
                 <div className="bg-muted/20 border-b border-border px-4 py-2">
+                  {order.packer_name && (
+                    <div className="mb-2 text-[10px] text-muted-foreground">
+                      Packare: <span className="font-medium text-foreground">{order.packer_name}</span>
+                    </div>
+                  )}
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="border-b border-border/50">
