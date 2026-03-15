@@ -118,10 +118,11 @@ export default function PurchaseSchedule() {
   const updateSchedule = useUpdateTransportSchedule();
   const createChange = useCreateChangeRequest();
   const queryClient = useQueryClient();
+  const { entries: manualEntries, addEntry: addManualEntry, deleteEntry: deleteManualEntry } = useManualScheduleEntries("purchase");
   const { data: allProducts } = useQuery({
     queryKey: ["products_active"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("id, name, unit").eq("active", true).order("name");
+      const { data, error } = await supabase.from("products").select("id, name, unit, category").eq("active", true).order("name");
       if (error) throw error;
       return data;
     },
@@ -174,6 +175,53 @@ export default function PurchaseSchedule() {
   const [altSearch, setAltSearch] = useState("");
   const [dragOverDay, setDragOverDay] = useState<number | null>(null);
   const [boughtLoading, setBoughtLoading] = useState<string | null>(null);
+
+  // Manual entry dialog state
+  const [manualDialogOpen, setManualDialogOpen] = useState(false);
+  const [manualProductSearch, setManualProductSearch] = useState("");
+  const [manualProductId, setManualProductId] = useState("");
+  const [manualQuantity, setManualQuantity] = useState("");
+  const [manualDate, setManualDate] = useState<Date | undefined>(undefined);
+  const [manualTime, setManualTime] = useState("06:00");
+  const [manualNotes, setManualNotes] = useState("");
+
+  const filteredManualProducts = useMemo(() => {
+    if (!allProducts) return [];
+    const s = manualProductSearch.toLowerCase();
+    return allProducts.filter((p: any) => p.name.toLowerCase().includes(s) || !s).slice(0, 20);
+  }, [allProducts, manualProductSearch]);
+
+  const handleAddManualEntry = async () => {
+    if (!manualProductId || !manualQuantity || !manualDate) return;
+    try {
+      await addManualEntry.mutateAsync({
+        product_id: manualProductId,
+        quantity: Number(manualQuantity),
+        departure_date: format(manualDate, "yyyy-MM-dd"),
+        departure_time: manualTime,
+        notes: manualNotes || undefined,
+      });
+      toast.success("Produkt tillagd i inköpsschema.");
+      setManualDialogOpen(false);
+      setManualProductId("");
+      setManualQuantity("");
+      setManualDate(undefined);
+      setManualTime("06:00");
+      setManualNotes("");
+      setManualProductSearch("");
+    } catch {
+      toast.error("Kunde inte lägga till produkt.");
+    }
+  };
+
+  const handleDeleteManualEntry = async (id: string, productName: string) => {
+    try {
+      await deleteManualEntry.mutateAsync(id);
+      toast.success(`"${productName}" borttagen.`);
+    } catch {
+      toast.error("Kunde inte ta bort.");
+    }
+  };
 
   const weekStart = useMemo(() => {
     const now = new Date();
