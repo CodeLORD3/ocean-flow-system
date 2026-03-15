@@ -28,54 +28,37 @@ async function getRawLagerId(storeId: string): Promise<string | null> {
 }
 
 /**
- * Transfer stock: deduct from source, add to destination.
- * Uses upsert for destination.
+ * Add quantity to a destination location, handling multiple existing rows safely.
  */
-async function transferStock(
-  productId: string,
-  quantity: number,
-  sourceLocationId: string,
-  destLocationId: string
-) {
-  // 1) Get current source stock
-  const { data: sourceStock } = await supabase
+async function addToLocation(productId: string, locationId: string, quantity: number, shopOrderId?: string) {
+  // Find existing row(s) — use limit(1) to avoid maybeSingle errors with split rows
+  const q = supabase
     .from("product_stock_locations")
     .select("id, quantity")
     .eq("product_id", productId)
-    .eq("location_id", sourceLocationId)
-    .single();
+    .eq("location_id", locationId);
 
-  if (!sourceStock) return;
+  // If shopOrderId specified, filter by it; otherwise only look at untagged rows
+  if (shopOrderId) {
+    q.eq("shop_order_id", shopOrderId);
+  } else {
+    q.is("shop_order_id", null);
+  }
 
-  const newSourceQty = Math.max(0, Number(sourceStock.quantity) - quantity);
+  const { data: existing } = await q.limit(1);
+  const row = existing?.[0];
 
-  // 2) Update source
-  await supabase
-    .from("product_stock_locations")
-    .update({ quantity: newSourceQty, updated_at: new Date().toISOString() })
-    .eq("id", sourceStock.id);
-
-  // 3) Upsert destination
-  const { data: destStock } = await supabase
-    .from("product_stock_locations")
-    .select("id, quantity")
-    .eq("product_id", productId)
-    .eq("location_id", destLocationId)
-    .maybeSingle();
-
-  if (destStock) {
+  if (row) {
     await supabase
       .from("product_stock_locations")
-      .update({
-        quantity: Number(destStock.quantity) + quantity,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", destStock.id);
+      .update({ quantity: Number(row.quantity) + quantity, updated_at: new Date().toISOString() })
+      .eq("id", row.id);
   } else {
     await supabase.from("product_stock_locations").insert({
       product_id: productId,
-      location_id: destLocationId,
+      location_id: locationId,
       quantity: quantity,
+      shop_order_id: shopOrderId || null,
       updated_at: new Date().toISOString(),
     });
   }
@@ -84,6 +67,7 @@ async function transferStock(
 /**
  * When an order is marked as "Skickad", move all ordered products
  * from Pre-{store} locations to Transportlager.
+ * Also checks Grossist Flytande as fallback if Pre-locations don't have enough stock.
  * Each product gets its own row tagged with shop_order_id.
  */
 export async function moveStockToTransport(orderId: string) {
@@ -96,7 +80,7 @@ export async function moveStockToTransport(orderId: string) {
   // Get order with lines and store info
   const { data: order } = await supabase
     .from("shop_orders")
-    .select("store_id, shop_order_lines(product_id, quantity_delivered)")
+    .select("store_id, shop_order_lines(product_id, quantity_delivered, quantity_ordered)")
     .eq("id", orderId)
     .single();
 
@@ -109,61 +93,73 @@ export async function moveStockToTransport(orderId: string) {
     .eq("store_id", order.store_id)
     .ilike("name", "Pre-%");
 
-  if (!preLocations?.length) return;
+  const preLocationIds = (preLocations || []).map((l) => l.id);
 
-  const preLocationIds = preLocations.map((l) => l.id);
+  // Find Grossist Flytande as fallback source
+  const { data: gfLoc } = await supabase
+    .from("storage_locations")
+    .select("id")
+    .ilike("name", "Grossist Flytande")
+    .single();
 
-  // For each order line, deduct from Pre- locations and create tagged Transportlager entry
+  // For each order line, deduct from Pre- locations (then Grossist Flytande as fallback) and create tagged Transportlager entry
   for (const line of order.shop_order_lines) {
-    let remaining = Number(line.quantity_delivered) || 0;
+    let remaining = Number(line.quantity_delivered || line.quantity_ordered) || 0;
     if (remaining <= 0) continue;
 
-    // Deduct from Pre- locations
-    const { data: stocks } = await supabase
-      .from("product_stock_locations")
-      .select("id, location_id, quantity")
-      .eq("product_id", line.product_id)
-      .in("location_id", preLocationIds)
-      .gt("quantity", 0);
-
     let totalDeducted = 0;
-    for (const stock of stocks || []) {
-      if (remaining <= 0) break;
-      const moveQty = Math.min(remaining, Number(stock.quantity));
-      const newQty = Math.max(0, Number(stock.quantity) - moveQty);
-      await supabase
+
+    // 1) Try deducting from Pre- locations first
+    if (preLocationIds.length) {
+      const { data: preStocks } = await supabase
         .from("product_stock_locations")
-        .update({ quantity: newQty, updated_at: new Date().toISOString() })
-        .eq("id", stock.id);
-      remaining -= moveQty;
-      totalDeducted += moveQty;
+        .select("id, location_id, quantity")
+        .eq("product_id", line.product_id)
+        .in("location_id", preLocationIds)
+        .gt("quantity", 0);
+
+      for (const stock of preStocks || []) {
+        if (remaining <= 0) break;
+        const moveQty = Math.min(remaining, Number(stock.quantity));
+        const newQty = Math.max(0, Number(stock.quantity) - moveQty);
+        await supabase
+          .from("product_stock_locations")
+          .update({ quantity: newQty, updated_at: new Date().toISOString() })
+          .eq("id", stock.id);
+        remaining -= moveQty;
+        totalDeducted += moveQty;
+      }
+    }
+
+    // 2) If still remaining, deduct from Grossist Flytande
+    if (remaining > 0 && gfLoc) {
+      const { data: gfStocks } = await supabase
+        .from("product_stock_locations")
+        .select("id, quantity")
+        .eq("product_id", line.product_id)
+        .eq("location_id", gfLoc.id)
+        .gt("quantity", 0);
+
+      for (const stock of gfStocks || []) {
+        if (remaining <= 0) break;
+        const moveQty = Math.min(remaining, Number(stock.quantity));
+        const newQty = Math.max(0, Number(stock.quantity) - moveQty);
+        await supabase
+          .from("product_stock_locations")
+          .update({ quantity: newQty, updated_at: new Date().toISOString() })
+          .eq("id", stock.id);
+        remaining -= moveQty;
+        totalDeducted += moveQty;
+      }
     }
 
     // Create a dedicated Transportlager entry tagged with this order
     if (totalDeducted > 0) {
-      // Check if there's already an entry for this product+location+order
-      const { data: existing } = await supabase
-        .from("product_stock_locations")
-        .select("id, quantity")
-        .eq("product_id", line.product_id)
-        .eq("location_id", transportId)
-        .eq("shop_order_id", orderId)
-        .maybeSingle();
+      await addToLocation(line.product_id, transportId, totalDeducted, orderId);
+    }
 
-      if (existing) {
-        await supabase
-          .from("product_stock_locations")
-          .update({ quantity: Number(existing.quantity) + totalDeducted, updated_at: new Date().toISOString() })
-          .eq("id", existing.id);
-      } else {
-        await supabase.from("product_stock_locations").insert({
-          product_id: line.product_id,
-          location_id: transportId,
-          quantity: totalDeducted,
-          shop_order_id: orderId,
-          updated_at: new Date().toISOString(),
-        } as any);
-      }
+    if (remaining > 0) {
+      console.warn(`moveStockToTransport: Could not find enough stock for product ${line.product_id}. Missing: ${remaining}`);
     }
   }
 }
@@ -193,20 +189,8 @@ export async function moveStockToRawLager(orderId: string, storeId: string) {
     .eq("shop_order_id", orderId);
 
   if (!transportEntries?.length) {
-    // Fallback: use order lines if no tagged entries found
-    const { data: orderLines } = await supabase
-      .from("shop_order_lines")
-      .select("product_id, quantity_delivered")
-      .eq("shop_order_id", orderId);
-
-    if (!orderLines?.length) return;
-
-    for (const line of orderLines) {
-      const qty = Number(line.quantity_delivered) || 0;
-      if (qty <= 0) continue;
-      await transferStock(line.product_id, qty, transportId, rawLagerId);
-    }
-    return;
+    console.warn(`moveStockToRawLager: No tagged Transportlager entries found for order ${orderId}. Stock may not have been transferred to Transportlager.`);
+    return; // Do NOT use fallback — it causes duplicates
   }
 
   // Move each tagged entry to Raw-lager and then delete the Transportlager row
@@ -214,28 +198,8 @@ export async function moveStockToRawLager(orderId: string, storeId: string) {
     const qty = Number(entry.quantity) || 0;
     if (qty <= 0) continue;
 
-    // Add to Raw-lager
-    const { data: destStock } = await supabase
-      .from("product_stock_locations")
-      .select("id, quantity")
-      .eq("product_id", entry.product_id)
-      .eq("location_id", rawLagerId)
-      .is("shop_order_id", null)
-      .maybeSingle();
-
-    if (destStock) {
-      await supabase
-        .from("product_stock_locations")
-        .update({ quantity: Number(destStock.quantity) + qty, updated_at: new Date().toISOString() })
-        .eq("id", destStock.id);
-    } else {
-      await supabase.from("product_stock_locations").insert({
-        product_id: entry.product_id,
-        location_id: rawLagerId,
-        quantity: qty,
-        updated_at: new Date().toISOString(),
-      });
-    }
+    // Add to Raw-lager (untagged)
+    await addToLocation(entry.product_id, rawLagerId, qty);
 
     // Delete the Transportlager entry
     await supabase
