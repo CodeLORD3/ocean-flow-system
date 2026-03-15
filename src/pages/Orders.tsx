@@ -234,6 +234,7 @@ function OrderRow({
   onToggle,
   isGrossist,
   onStatusChange,
+  onPackOrder,
   isPending,
 }: {
   order: any;
@@ -242,14 +243,33 @@ function OrderRow({
   onToggle: () => void;
   isGrossist: boolean;
   onStatusChange: (lineId: string, orderId: string, newStatus: string) => void;
+  onPackOrder: (order: any, lines: any[]) => void;
   isPending: boolean;
 }) {
+  const canPack = order.status === "Ny" || order.status === "";
+
   return (
     <>
       <tr
         className="border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors h-9 cursor-pointer"
         onClick={onToggle}
       >
+        {isGrossist && (
+          <td className="px-1 py-1" onClick={(e) => e.stopPropagation()}>
+            {canPack && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 px-2 text-[10px] gap-1 bg-warning/10 border-warning/30 text-warning hover:bg-warning/20"
+                disabled={isPending}
+                onClick={() => onPackOrder(order, lines)}
+              >
+                <Package className="h-3 w-3" />
+                Packa order
+              </Button>
+            )}
+          </td>
+        )}
         <td className="px-1 py-1">
           {isExpanded ? (
             <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
