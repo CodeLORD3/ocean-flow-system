@@ -153,6 +153,7 @@ export default function ProductionSchedule() {
       }
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
       toast.success(`"${productName}" borttagen från produktionsschema (använder befintligt lager).`);
+      await logActivity({ action_type: "update", description: `"${productName}" markerad: använder befintligt lager`, portal: "production", entity_type: "production_schedule" });
     } catch (err) {
       toast.error("Kunde inte uppdatera orderrader.");
     } finally {
