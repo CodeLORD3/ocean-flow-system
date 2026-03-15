@@ -393,6 +393,16 @@ export default function WholesaleOrders() {
       }
     }
 
+    const userName = activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : undefined;
+    await logActivity({
+      action_type: "status_change",
+      description: `Orderstatus ändrad till "${newStatus}"${packer ? ` (packare: ${packer})` : ""}`,
+      entity_type: "shop_order",
+      entity_id: orderId,
+      performed_by: userName,
+      details: { new_status: newStatus, packer },
+    });
+
     toast({ title: "Orderstatus uppdaterad", description: newStatus });
     qc.invalidateQueries({ queryKey: ["shop_orders"] });
     qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
