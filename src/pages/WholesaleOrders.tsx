@@ -252,7 +252,7 @@ export default function WholesaleOrders() {
 
   // Filter orders (active only)
   const filteredOrders = activeOrders.filter((o: any) => {
-    const matchSearch = !search || o.order_week?.includes(search) || o.stores?.name?.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = !search || (o.order_week || "").includes(search) || (o.stores?.name || "").toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "Alla" || o.status === statusFilter;
     return matchSearch && matchStatus;
   });
