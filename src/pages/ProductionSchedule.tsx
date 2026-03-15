@@ -979,6 +979,100 @@ export default function ProductionSchedule() {
           </CardContent>
         </Card>
       )}
+
+      {/* Manual entry dialog */}
+      <Dialog open={manualDialogOpen} onOpenChange={setManualDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-sm">Lägg till produkt manuellt</DialogTitle>
+            <DialogDescription className="text-xs">
+              Lägg till en produkt i produktionsschemat för egen bevakning. Denna visas med en "Manuell"-märkning.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Produkt</Label>
+              <Input
+                placeholder="Sök produkt..."
+                value={manualProductSearch}
+                onChange={(e) => setManualProductSearch(e.target.value)}
+                className="h-8 text-xs"
+              />
+              <div className="max-h-36 overflow-y-auto border rounded-md mt-1">
+                {filteredManualProducts.map((p: any) => (
+                  <div
+                    key={p.id}
+                    className={`px-3 py-1.5 text-xs cursor-pointer hover:bg-muted/50 flex items-center justify-between ${manualProductId === p.id ? "bg-primary/10 font-medium" : ""}`}
+                    onClick={() => { setManualProductId(p.id); setManualProductSearch(p.name); }}
+                  >
+                    <span>{p.name}</span>
+                    <span className="text-muted-foreground">{p.unit}</span>
+                  </div>
+                ))}
+                {filteredManualProducts.length === 0 && (
+                  <p className="text-xs text-muted-foreground p-3">Inga produkter hittades.</p>
+                )}
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Antal</Label>
+              <Input
+                type="number"
+                min="0"
+                step="0.1"
+                value={manualQuantity}
+                onChange={(e) => setManualQuantity(e.target.value)}
+                className="h-8 text-xs"
+                placeholder="0"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Avgångsdag</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full justify-start text-left text-xs h-8", !manualDate && "text-muted-foreground")}>
+                    <CalendarDays className="h-3.5 w-3.5 mr-1" />
+                    {manualDate ? format(manualDate, "EEE d MMM yyyy", { locale: sv }) : "Välj datum"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={manualDate}
+                    onSelect={setManualDate}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div>
+              <Label className="text-xs">Avgångstid</Label>
+              <Input
+                type="time"
+                value={manualTime}
+                onChange={(e) => setManualTime(e.target.value)}
+                className="h-8 text-xs"
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Anteckning (valfritt)</Label>
+              <Input
+                value={manualNotes}
+                onChange={(e) => setManualNotes(e.target.value)}
+                className="h-8 text-xs"
+                placeholder="T.ex. anledning"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setManualDialogOpen(false)}>Avbryt</Button>
+            <Button size="sm" disabled={!manualProductId || !manualQuantity || !manualDate || addManualEntry.isPending} onClick={handleAddManualEntry}>
+              Lägg till
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
