@@ -367,6 +367,8 @@ export default function PurchaseSchedule() {
       category: string;
       lineIds: string[];
       shopOrderIds: string[];
+      isManual?: boolean;
+      manualEntryId?: string;
     }>();
 
     for (const item of rawItems) {
@@ -401,8 +403,34 @@ export default function PurchaseSchedule() {
       }
     }
 
+    // Add manual entries
+    for (const entry of manualEntries) {
+      const depDate = parseISO(entry.departure_date);
+      const product = allProducts?.find((p: any) => p.id === entry.product_id);
+      const productName = entry.products?.name || product?.name || "Okänd produkt";
+      const unit = entry.products?.unit || product?.unit || "kg";
+      const category = entry.products?.category || product?.category || "Övrigt";
+      
+      grouped.set(`manual-${entry.id}`, {
+        productId: entry.product_id,
+        productName,
+        unit,
+        totalQuantity: entry.quantity,
+        shops: [],
+        departureDate: depDate,
+        purchaseDate: depDate,
+        earliestDelivery: depDate,
+        departureTime: entry.departure_time,
+        category,
+        lineIds: [],
+        shopOrderIds: [],
+        isManual: true,
+        manualEntryId: entry.id,
+      });
+    }
+
     return Array.from(grouped.values());
-  }, [orders, stores, transportSchedules, storeMap, zoneSchedules]);
+  }, [orders, stores, transportSchedules, storeMap, zoneSchedules, manualEntries, allProducts]);
 
   // All unique categories
   const allCategories = useMemo(() => {
