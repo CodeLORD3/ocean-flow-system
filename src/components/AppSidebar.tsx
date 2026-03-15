@@ -21,7 +21,10 @@ import {
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
+import { NotificationBadge } from "@/components/NotificationBadge";
+import { useNotifications } from "@/hooks/useNotifications";
 import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -97,6 +100,15 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
+  const { getCount, markAsRead } = useNotifications();
+
+  // Auto-mark as read when navigating
+  useEffect(() => {
+    const count = getCount(location.pathname);
+    if (count > 0) {
+      markAsRead.mutate(location.pathname);
+    }
+  }, [location.pathname]);
 
   return (
     <Sidebar collapsible="icon" className="border-r-2 border-r-sky-700/30 bg-gradient-to-b from-sidebar-background to-sky-950/10">
@@ -124,6 +136,7 @@ export function AppSidebar() {
                       <NavLink to={item.url} end>
                         <item.icon className="h-4 w-4" />
                         {!collapsed && <span>{item.title}</span>}
+                        {!collapsed && <NotificationBadge count={getCount(item.url)} />}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
