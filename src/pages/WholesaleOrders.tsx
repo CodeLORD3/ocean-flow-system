@@ -87,7 +87,11 @@ export default function WholesaleOrders() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Alla");
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const toggleExpandOrder = (id: string) => setExpandedOrderId(prev => prev === id ? null : id);
+  // Keep selectedOrder for compatibility with other dialogs that reference it
+  const selectedOrderId = expandedOrderId;
+  const setSelectedOrderId = setExpandedOrderId;
   const selectedOrder = useMemo(() => selectedOrderId ? orders.find((o: any) => o.id === selectedOrderId) || null : null, [selectedOrderId, orders]);
   const [reportViewOrder, setReportViewOrder] = useState<any>(null);
   const [archiveConfirmOrder, setArchiveConfirmOrder] = useState<any>(null);
