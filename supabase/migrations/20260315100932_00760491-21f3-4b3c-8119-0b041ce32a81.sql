@@ -1,0 +1,1 @@
+ALTER TABLE public.product_stock_locations ADD COLUMN shop_order_id uuid REFERENCES public.shop_orders(id) ON DELETE SET NULL DEFAULT NULL;

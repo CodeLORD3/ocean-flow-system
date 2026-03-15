@@ -4,7 +4,7 @@ import { markOrderLinesPackad, revertOrderLinesIfStockGone } from "@/lib/orderSt
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
-  Warehouse, Search, Plus, Package, AlertTriangle, MapPin,
+  Warehouse, Search, Plus, Package, AlertTriangle, MapPin, Truck,
   Edit, ArrowRightLeft, ScanLine, Camera, ClipboardList, X, CheckCircle2,
   ChevronDown, ChevronRight, Trash2, Scissors, Move, RefreshCw,
 } from "lucide-react";
@@ -707,6 +707,106 @@ export default function Inventory() {
     </div>
   );
 
+  // Helper: render Transportlager grouped by order
+  const renderTransportlagerGrouped = (loc: any) => {
+    // Group items by shop_order_id
+    const orderGroups = new Map<string, { orderInfo: any; items: any[]; totalQty: number; totalValue: number }>();
+    const untagged: any[] = [];
+
+    for (const item of loc.items) {
+      const orderId = item.shop_order_id;
+      if (!orderId) {
+        untagged.push(item);
+        continue;
+      }
+      if (!orderGroups.has(orderId)) {
+        orderGroups.set(orderId, {
+          orderInfo: item.shop_orders,
+          items: [],
+          totalQty: 0,
+          totalValue: 0,
+        });
+      }
+      const group = orderGroups.get(orderId)!;
+      group.items.push(item);
+      const qty = Number(item.quantity) || 0;
+      const price = Number(item.unit_cost) || Number(item.products?.cost_price) || 0;
+      group.totalQty += qty;
+      group.totalValue += qty * price;
+    }
+
+    return (
+      <div className="border-t border-border/50">
+        {orderGroups.size === 0 && untagged.length === 0 && (
+          <div className="px-3 py-4 text-center text-xs text-muted-foreground">Tomt transportlager</div>
+        )}
+        {Array.from(orderGroups.entries()).map(([orderId, group]) => {
+          const storeName = group.orderInfo?.stores?.name || "Okänd butik";
+          const orderWeek = group.orderInfo?.order_week || "–";
+          return (
+            <div key={orderId} className="border-b border-border/30 last:border-0">
+              <div className="flex items-center justify-between px-3 py-2 bg-primary/5">
+                <div className="flex items-center gap-2">
+                  <Truck className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-xs font-medium text-foreground">{storeName}</span>
+                  <Badge variant="outline" className="text-[10px] h-5 border-primary/20 text-primary">V.{orderWeek}</Badge>
+                  <Badge variant="secondary" className="text-[10px] h-5">{group.items.length} produkter</Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">{group.totalQty.toLocaleString("sv-SE")} kg</span>
+                  <span className="text-xs font-medium text-foreground">{fmt(group.totalValue)}</span>
+                </div>
+              </div>
+              <table className="w-full text-xs">
+                <tbody>
+                  {group.items.map((s: any) => {
+                    const unitPrice = Number(s.unit_cost) || Number(s.products?.cost_price) || 0;
+                    const value = Number(s.quantity) * unitPrice;
+                    return (
+                      <tr key={s.id} className="border-b border-border/20 last:border-0 hover:bg-muted/20">
+                        <td className="px-3 py-1.5 font-medium text-foreground">{s.products?.name}</td>
+                        <td className="px-3 py-1.5 text-muted-foreground">{s.products?.category}</td>
+                        <td className="px-3 py-1.5 text-right font-medium text-foreground">
+                          {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
+                        </td>
+                        <td className="px-3 py-1.5 text-right text-muted-foreground">{fmt(value)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          );
+        })}
+        {untagged.length > 0 && (
+          <div>
+            <div className="px-3 py-2 bg-muted/20">
+              <span className="text-xs text-muted-foreground">Ej orderkopplade</span>
+            </div>
+            <table className="w-full text-xs">
+              <tbody>
+                {untagged.map((s: any) => {
+                  const unitPrice = Number(s.unit_cost) || Number(s.products?.cost_price) || 0;
+                  const value = Number(s.quantity) * unitPrice;
+                  return (
+                    <tr key={s.id} className="border-b border-border/20 last:border-0 hover:bg-muted/20">
+                      <td className="px-3 py-1.5 font-medium text-foreground">{s.products?.name}</td>
+                      <td className="px-3 py-1.5 text-muted-foreground">{s.products?.category}</td>
+                      <td className="px-3 py-1.5 text-right font-medium text-foreground">
+                        {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
+                      </td>
+                      <td className="px-3 py-1.5 text-right text-muted-foreground">{fmt(value)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -778,6 +878,8 @@ export default function Inventory() {
                   // For general locations (Transportlager, Grossist Flytande), render as a single expandable row
                   if (isGeneral) {
                     const isExpanded = expandedLocations.has(singleLoc.id);
+                    const isTransportlager = singleLoc.name === "Transportlager";
+
                     return (
                       <div key={singleLoc.id} className="border border-border/50 rounded-md overflow-hidden">
                         <div className="flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors">
@@ -796,7 +898,9 @@ export default function Inventory() {
                             <span className="text-xs font-medium text-foreground">{fmt(singleLoc.totalValue)}</span>
                           </div>
                         </div>
-                        {isExpanded && renderLocationTable(singleLoc)}
+                        {isExpanded && (
+                          isTransportlager ? renderTransportlagerGrouped(singleLoc) : renderLocationTable(singleLoc)
+                        )}
                       </div>
                     );
                   }
