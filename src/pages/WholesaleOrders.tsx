@@ -37,6 +37,8 @@ import DeliveryNote from "@/components/DeliveryNote";
 import { moveStockToTransport } from "@/lib/stockTransfer";
 import { useUpdateOrderLineStatus, STATUS_FLOW } from "@/hooks/useUpdateOrderLineStatus";
 import { useAllStockByLocation } from "@/hooks/useStorageLocations";
+import { logActivity } from "@/hooks/useActivityLog";
+import { useActiveUser } from "@/contexts/ActiveUserContext";
 
 type WholesaleOrderLine = {
   product_id: string;
