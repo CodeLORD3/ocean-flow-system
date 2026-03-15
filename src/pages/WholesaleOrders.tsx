@@ -428,6 +428,13 @@ export default function WholesaleOrders() {
       return;
     }
     toast({ title: "Order arkiverad" });
+    await logActivity({
+      action_type: "status_change",
+      description: `Order arkiverad`,
+      entity_type: "shop_order",
+      entity_id: orderId,
+      performed_by: activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : undefined,
+    });
     qc.invalidateQueries({ queryKey: ["shop_orders"] });
     qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
     setArchiveConfirmOrder(null);
