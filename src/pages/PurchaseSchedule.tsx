@@ -267,8 +267,9 @@ export default function PurchaseSchedule() {
       if (!schedules || schedules.length === 0) continue;
 
       for (const line of order.shop_order_lines || []) {
-        // Skip lines already being processed (in Grossist Flytande or beyond)
+        // Skip lines already being processed or marked as "Använd lager"
         if (line.status && !["", "Ny"].includes(line.status)) continue;
+        if (line.ordered_elsewhere === "Lager") continue;
 
         const deliveryDateStr = line.delivery_date || order.desired_delivery_date;
         if (!deliveryDateStr) continue;
