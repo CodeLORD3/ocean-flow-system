@@ -678,6 +678,7 @@ export default function PurchaseSchedule() {
     } finally {
       setBoughtLoading(null);
     }
+  };
 
   // ── "Ångra köpt" handler ──
   const [undoBoughtLoading, setUndoBoughtLoading] = useState<string | null>(null);
