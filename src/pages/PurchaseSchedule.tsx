@@ -433,6 +433,67 @@ export default function PurchaseSchedule() {
     return Array.from(grouped.values());
   }, [orders, stores, transportSchedules, storeMap, zoneSchedules, manualEntries, allProducts]);
 
+  // ── Bought items for "Köpt vecka" tab ──
+  const boughtItems = useMemo(() => {
+    if (!orders || !stores || !transportSchedules) return [];
+
+    const items: {
+      productId: string;
+      productName: string;
+      unit: string;
+      totalQuantity: number;
+      category: string;
+      shops: { name: string; quantity: number }[];
+      lineIds: string[];
+      shopOrderIds: string[];
+    }[] = [];
+
+    const grouped = new Map<string, typeof items[number]>();
+
+    for (const order of orders) {
+      if (order.status === "Arkiverad") continue;
+      const store = storeMap.get(order.store_id);
+      if (!store) continue;
+
+      for (const line of order.shop_order_lines || []) {
+        if (line.ordered_elsewhere !== "Köpt") continue;
+
+        const deliveryDateStr = line.delivery_date || order.desired_delivery_date;
+        if (!deliveryDateStr) continue;
+        const deliveryDate = parseISO(deliveryDateStr);
+        const inWeek = weekDates.some((d) => isSameDay(d, deliveryDate));
+        if (!inWeek) continue;
+
+        const productName = line.products?.name || "Okänd produkt";
+        const unit = line.unit || line.products?.unit || "kg";
+        const k = `${productName}|${unit}`;
+        const existing = grouped.get(k);
+
+        if (existing) {
+          existing.totalQuantity += line.quantity_ordered;
+          existing.lineIds.push(line.id);
+          if (!existing.shopOrderIds.includes(order.id)) existing.shopOrderIds.push(order.id);
+          const shopEntry = existing.shops.find(s => s.name === store.name);
+          if (shopEntry) shopEntry.quantity += line.quantity_ordered;
+          else existing.shops.push({ name: store.name, quantity: line.quantity_ordered });
+        } else {
+          grouped.set(k, {
+            productId: line.product_id,
+            productName,
+            unit,
+            totalQuantity: line.quantity_ordered,
+            category: line.products?.category || "Övrigt",
+            shops: [{ name: store.name, quantity: line.quantity_ordered }],
+            lineIds: [line.id],
+            shopOrderIds: [order.id],
+          });
+        }
+      }
+    }
+
+    return Array.from(grouped.values()).sort((a, b) => a.category.localeCompare(b.category) || a.productName.localeCompare(b.productName));
+  }, [orders, stores, transportSchedules, storeMap, weekDates]);
+
   // All unique categories
   const allCategories = useMemo(() => {
     const cats = new Set(schedule.map((s) => s.category));
