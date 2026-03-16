@@ -176,6 +176,80 @@ export default function PurchaseSchedule() {
   const [altSearch, setAltSearch] = useState("");
   const [dragOverDay, setDragOverDay] = useState<number | null>(null);
   const [boughtLoading, setBoughtLoading] = useState<string | null>(null);
+  
+  // Multi-select state
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+  const [bulkMoveLoading, setBulkMoveLoading] = useState(false);
+
+  const toggleSelect = useCallback((key: string) => {
+    setSelectedKeys(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback((dayIndex: number, items: typeof filteredSchedule) => {
+    const dayItems = items.filter((_, i) => {
+      // We use the key format to identify items
+      return true;
+    });
+    setSelectedKeys(prev => {
+      const next = new Set(prev);
+      const dayKeys = items.map(item => `${dayIndex}-${item.productName}-${item.productId}`);
+      const allSelected = dayKeys.every(k => next.has(k));
+      if (allSelected) {
+        dayKeys.forEach(k => next.delete(k));
+      } else {
+        dayKeys.forEach(k => next.add(k));
+      }
+      return next;
+    });
+  }, []);
+
+  const getSelectedItems = useCallback(() => {
+    const result: { lineIds: string[]; productName: string; isManual?: boolean; manualEntryId?: string }[] = [];
+    for (const [dayIndex, items] of activeMap.entries()) {
+      for (const item of items) {
+        const key = `${dayIndex}-${item.productName}-${item.productId}`;
+        if (selectedKeys.has(key)) {
+          result.push({ lineIds: item.lineIds, productName: item.productName, isManual: item.isManual, manualEntryId: item.manualEntryId });
+        }
+      }
+    }
+    return result;
+  }, [selectedKeys, activeMap]);
+
+  const handleBulkMove = async (targetDayIndex: number) => {
+    setBulkMoveLoading(true);
+    try {
+      const selected = getSelectedItems();
+      const targetDate = format(weekDates[targetDayIndex], "yyyy-MM-dd");
+      let movedCount = 0;
+
+      for (const item of selected) {
+        if (item.isManual && item.manualEntryId) {
+          await supabase.from("manual_schedule_entries").update({ departure_date: targetDate }).eq("id", item.manualEntryId);
+          movedCount++;
+        } else if (item.lineIds.length > 0) {
+          for (const lineId of item.lineIds) {
+            await supabase.from("shop_order_lines").update({ order_date: targetDate }).eq("id", lineId);
+          }
+          movedCount++;
+        }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
+      queryClient.invalidateQueries({ queryKey: ["manual_schedule_entries"] });
+      setSelectedKeys(new Set());
+      toast.success(`${movedCount} produkt${movedCount > 1 ? "er" : ""} flyttade till ${WEEKDAYS[targetDayIndex]}.`);
+    } catch (err) {
+      toast.error("Kunde inte flytta produkterna.");
+    } finally {
+      setBulkMoveLoading(false);
+    }
+  };
 
   // Manual entry dialog state
   const [manualDialogOpen, setManualDialogOpen] = useState(false);
