@@ -263,6 +263,7 @@ export default function WholesaleOrders() {
   // Split active vs archived
   const activeOrders = orders.filter((o: any) => o.status !== "Arkiverad");
   const archivedOrders = orders.filter((o: any) => o.status === "Arkiverad");
+  const deliveredOrders = activeOrders.filter((o: any) => o.status === "Levererad" || o.status === "Klar / Levererad");
 
   // Filter orders (active only)
   const filteredOrders = activeOrders.filter((o: any) => {
