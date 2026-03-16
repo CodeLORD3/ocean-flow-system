@@ -714,7 +714,7 @@ export default function Products() {
               <Label className="text-xs">Namn på delprodukt *</Label>
               <Input value={subForm.name} onChange={e => setSubForm(f => ({ ...f, name: e.target.value }))} placeholder="T.ex. Räkor 1" className="h-8 text-xs" />
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">Prod.pris (SEK)</Label>
                 <Input value={subForm.cost_price} onChange={e => setSubForm(f => ({ ...f, cost_price: e.target.value }))} type="number" step="0.01" className="h-8 text-xs" />
@@ -726,6 +726,10 @@ export default function Products() {
               <div className="space-y-1.5">
                 <Label className="text-xs">Rek. butik (SEK)</Label>
                 <Input value={subForm.retail_suggested} onChange={e => setSubForm(f => ({ ...f, retail_suggested: e.target.value }))} type="number" step="0.01" className="h-8 text-xs" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Vikt per styck (kg)</Label>
+                <Input value={subForm.weight_per_piece} onChange={e => setSubForm(f => ({ ...f, weight_per_piece: e.target.value }))} type="number" step="0.01" className="h-8 text-xs" placeholder="0.00" />
               </div>
             </div>
           </div>
