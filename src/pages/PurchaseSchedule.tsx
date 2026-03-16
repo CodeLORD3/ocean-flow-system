@@ -790,7 +790,7 @@ export default function PurchaseSchedule() {
         </Card>
       </Collapsible>
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as "daily" | "total")}>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as "daily" | "total" | "bought")}>
         <TabsList>
           <TabsTrigger value="daily" className="gap-1.5">
             <CalendarDays className="h-3.5 w-3.5" />
@@ -799,6 +799,10 @@ export default function PurchaseSchedule() {
           <TabsTrigger value="total" className="gap-1.5">
             <ListChecks className="h-3.5 w-3.5" />
             Totalvy vecka
+          </TabsTrigger>
+          <TabsTrigger value="bought" className="gap-1.5">
+            <PackageCheck className="h-3.5 w-3.5" />
+            Köpt vecka {boughtItems.length > 0 && <Badge variant="secondary" className="ml-1 text-[9px] px-1.5 py-0">{boughtItems.length}</Badge>}
           </TabsTrigger>
         </TabsList>
 
