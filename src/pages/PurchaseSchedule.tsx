@@ -208,9 +208,9 @@ export default function PurchaseSchedule() {
     });
   }, []);
 
-  const getSelectedItems = useCallback(() => {
+  const getSelectedItems = useCallback((map: Map<number, typeof filteredSchedule>) => {
     const result: { lineIds: string[]; productName: string; isManual?: boolean; manualEntryId?: string }[] = [];
-    for (const [dayIndex, items] of activeMap.entries()) {
+    for (const [dayIndex, items] of map.entries()) {
       for (const item of items) {
         const key = `${dayIndex}-${item.productName}-${item.productId}`;
         if (selectedKeys.has(key)) {
@@ -219,12 +219,12 @@ export default function PurchaseSchedule() {
       }
     }
     return result;
-  }, [selectedKeys, activeMap]);
+  }, [selectedKeys]);
 
-  const handleBulkMove = async (targetDayIndex: number) => {
+  const handleBulkMove = async (targetDayIndex: number, map: Map<number, typeof filteredSchedule>) => {
     setBulkMoveLoading(true);
     try {
-      const selected = getSelectedItems();
+      const selected = getSelectedItems(map);
       const targetDate = format(weekDates[targetDayIndex], "yyyy-MM-dd");
       let movedCount = 0;
 
