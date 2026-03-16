@@ -168,7 +168,7 @@ export default function PurchaseSchedule() {
   };
   const [weekOffset, setWeekOffset] = useState(0);
   const [view, setView] = useState<"purchase" | "delivery">("purchase");
-  const [tab, setTab] = useState<"daily" | "total">("daily");
+  const [tab, setTab] = useState<"daily" | "total" | "bought">("daily");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [altDialogItem, setAltDialogItem] = useState<any>(null);
   const [altProductId, setAltProductId] = useState<string>("");
@@ -433,6 +433,67 @@ export default function PurchaseSchedule() {
     return Array.from(grouped.values());
   }, [orders, stores, transportSchedules, storeMap, zoneSchedules, manualEntries, allProducts]);
 
+  // ── Bought items for "Köpt vecka" tab ──
+  const boughtItems = useMemo(() => {
+    if (!orders || !stores || !transportSchedules) return [];
+
+    const items: {
+      productId: string;
+      productName: string;
+      unit: string;
+      totalQuantity: number;
+      category: string;
+      shops: { name: string; quantity: number }[];
+      lineIds: string[];
+      shopOrderIds: string[];
+    }[] = [];
+
+    const grouped = new Map<string, typeof items[number]>();
+
+    for (const order of orders) {
+      if (order.status === "Arkiverad") continue;
+      const store = storeMap.get(order.store_id);
+      if (!store) continue;
+
+      for (const line of order.shop_order_lines || []) {
+        if (line.ordered_elsewhere !== "Köpt") continue;
+
+        const deliveryDateStr = line.delivery_date || order.desired_delivery_date;
+        if (!deliveryDateStr) continue;
+        const deliveryDate = parseISO(deliveryDateStr);
+        const inWeek = weekDates.some((d) => isSameDay(d, deliveryDate));
+        if (!inWeek) continue;
+
+        const productName = line.products?.name || "Okänd produkt";
+        const unit = line.unit || line.products?.unit || "kg";
+        const k = `${productName}|${unit}`;
+        const existing = grouped.get(k);
+
+        if (existing) {
+          existing.totalQuantity += line.quantity_ordered;
+          existing.lineIds.push(line.id);
+          if (!existing.shopOrderIds.includes(order.id)) existing.shopOrderIds.push(order.id);
+          const shopEntry = existing.shops.find(s => s.name === store.name);
+          if (shopEntry) shopEntry.quantity += line.quantity_ordered;
+          else existing.shops.push({ name: store.name, quantity: line.quantity_ordered });
+        } else {
+          grouped.set(k, {
+            productId: line.product_id,
+            productName,
+            unit,
+            totalQuantity: line.quantity_ordered,
+            category: line.products?.category || "Övrigt",
+            shops: [{ name: store.name, quantity: line.quantity_ordered }],
+            lineIds: [line.id],
+            shopOrderIds: [order.id],
+          });
+        }
+      }
+    }
+
+    return Array.from(grouped.values()).sort((a, b) => a.category.localeCompare(b.category) || a.productName.localeCompare(b.productName));
+  }, [orders, stores, transportSchedules, storeMap, weekDates]);
+
   // All unique categories
   const allCategories = useMemo(() => {
     const cats = new Set(schedule.map((s) => s.category));
@@ -619,6 +680,24 @@ export default function PurchaseSchedule() {
     }
   };
 
+  // ── "Ångra köpt" handler ──
+  const [undoBoughtLoading, setUndoBoughtLoading] = useState<string | null>(null);
+  const handleUndoBought = async (lineIds: string[], productName: string) => {
+    setUndoBoughtLoading(productName);
+    try {
+      for (const lineId of lineIds) {
+        await supabase.from("shop_order_lines").update({ ordered_elsewhere: null }).eq("id", lineId);
+      }
+      queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
+      toast.success(`"${productName}" återställd till inköpsschema.`);
+    } catch (err) {
+      toast.error("Kunde inte ångra.");
+    } finally {
+      setUndoBoughtLoading(null);
+    }
+  };
+
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -711,7 +790,7 @@ export default function PurchaseSchedule() {
         </Card>
       </Collapsible>
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as "daily" | "total")}>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as "daily" | "total" | "bought")}>
         <TabsList>
           <TabsTrigger value="daily" className="gap-1.5">
             <CalendarDays className="h-3.5 w-3.5" />
@@ -720,6 +799,10 @@ export default function PurchaseSchedule() {
           <TabsTrigger value="total" className="gap-1.5">
             <ListChecks className="h-3.5 w-3.5" />
             Totalvy vecka
+          </TabsTrigger>
+          <TabsTrigger value="bought" className="gap-1.5">
+            <PackageCheck className="h-3.5 w-3.5" />
+            Köpt vecka {boughtItems.length > 0 && <Badge variant="secondary" className="ml-1 text-[9px] px-1.5 py-0">{boughtItems.length}</Badge>}
           </TabsTrigger>
         </TabsList>
 
@@ -1059,6 +1142,58 @@ export default function PurchaseSchedule() {
             </div>
           )}
         </TabsContent>
+        {/* ── BOUGHT WEEK VIEW ── */}
+        <TabsContent value="bought">
+          {boughtItems.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-2">
+              <PackageCheck className="h-8 w-8 text-muted-foreground/40" />
+              <p className="text-sm">Inga produkter markerade som köpta denna vecka.</p>
+            </div>
+          ) : (
+            <Card className="shadow-card">
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/30 h-7">
+                      <TableHead className="h-7 px-2 text-[10px]">Produkt</TableHead>
+                      <TableHead className="h-7 px-2 text-[10px]">Kategori</TableHead>
+                      <TableHead className="h-7 px-2 text-[10px] text-right">Antal</TableHead>
+                      <TableHead className="h-7 px-2 text-[10px]">Enhet</TableHead>
+                      <TableHead className="h-7 px-2 text-[10px]">Butiker</TableHead>
+                      <TableHead className="h-7 px-2 text-[10px] text-right">Åtgärd</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {boughtItems.map((item) => (
+                      <TableRow key={`${item.productName}-${item.unit}`} className="h-8 bg-success/5">
+                        <TableCell className="px-2 py-0.5 text-[11px] font-medium text-foreground">{item.productName}</TableCell>
+                        <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">{item.category}</TableCell>
+                        <TableCell className="px-2 py-0.5 text-[11px] text-right font-mono text-foreground">{item.totalQuantity}</TableCell>
+                        <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">{item.unit}</TableCell>
+                        <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">
+                          {item.shops.map(s => `${s.name} (${s.quantity})`).join(", ")}
+                        </TableCell>
+                        <TableCell className="px-2 py-0.5 text-right">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-6 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+                            onClick={() => handleUndoBought(item.lineIds, item.productName)}
+                            disabled={undoBoughtLoading === item.productName}
+                          >
+                            <Ban className="h-3 w-3" />
+                            Ångra
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
       </Tabs>
 
       {/* Alternative product dialog */}
