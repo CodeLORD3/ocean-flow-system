@@ -46,7 +46,7 @@ export function useProductsWithChildren() {
 export function useAddSubproduct() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (params: { parent_id: string; name: string; sku: string; category: string; unit: string; cost_price: number; wholesale_price: number; retail_suggested: number }) => {
+    mutationFn: async (params: { parent_id: string; name: string; sku: string; category: string; unit: string; cost_price: number; wholesale_price: number; retail_suggested: number; weight_per_piece?: number }) => {
       const { parent_id, ...rest } = params;
       const { data, error } = await supabase.from("products").insert({
         ...rest,
