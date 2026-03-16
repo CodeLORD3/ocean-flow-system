@@ -920,7 +920,14 @@ export default function PurchaseSchedule() {
                           <Table>
                             <TableHeader>
                               <TableRow>
-                                <TableHead className="h-6 px-2 pl-10 text-[10px]">Produkt</TableHead>
+                                <TableHead className="h-6 px-2 w-[32px]">
+                                  <Checkbox
+                                    checked={items.length > 0 && items.every(item => selectedKeys.has(`${dayIndex}-${item.productName}-${item.productId}`))}
+                                    onCheckedChange={() => toggleSelectAll(dayIndex, items)}
+                                    className="h-3.5 w-3.5"
+                                  />
+                                </TableHead>
+                                <TableHead className="h-6 px-2 text-[10px]">Produkt</TableHead>
                                 <TableHead className="h-6 px-2 text-[10px] text-right w-[80px]">Totalt</TableHead>
                                 <TableHead className="h-6 px-2 text-[10px] text-right w-[70px]">Lager</TableHead>
                                 <TableHead className="h-6 px-2 text-[10px] text-right w-[70px]">Köpt</TableHead>
