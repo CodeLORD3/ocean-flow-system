@@ -260,17 +260,17 @@ export default function Orders() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-xs">
+              <table className="w-full text-[11px]">
                 <thead>
                   <tr className="border-b border-border">
-                     {isGrossist && <th className="pb-2 text-left font-medium text-muted-foreground w-28"></th>}
-                     <th className="pb-2 text-left font-medium text-muted-foreground w-6"></th>
-                     <th className="pb-2 text-left font-medium text-muted-foreground">Butik</th>
-                    <th className="pb-2 text-left font-medium text-muted-foreground">Vecka</th>
-                    <th className="pb-2 text-left font-medium text-muted-foreground">Önskat leveransdatum</th>
-                    <th className="pb-2 text-left font-medium text-muted-foreground">Skapad</th>
-                    <th className="pb-2 text-right font-medium text-muted-foreground">Artiklar</th>
-                    <th className="pb-2 text-right font-medium text-muted-foreground">Status</th>
+                     {isGrossist && <th className="pb-1.5 text-left font-medium text-muted-foreground w-24"></th>}
+                     <th className="pb-1.5 text-left font-medium text-muted-foreground w-5"></th>
+                     <th className="pb-1.5 text-left font-medium text-muted-foreground">Butik</th>
+                    <th className="pb-1.5 text-left font-medium text-muted-foreground">Vecka</th>
+                    <th className="pb-1.5 text-left font-medium text-muted-foreground">Önskat lev.datum</th>
+                    <th className="pb-1.5 text-left font-medium text-muted-foreground">Skapad</th>
+                    <th className="pb-1.5 text-right font-medium text-muted-foreground">Art.</th>
+                    <th className="pb-1.5 text-right font-medium text-muted-foreground">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -401,17 +401,17 @@ function OrderRow({
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
           )}
         </td>
-        <td className="px-2 py-1 font-medium text-foreground">{order.stores?.name || "—"}</td>
-        <td className="px-2 py-1 text-muted-foreground">{order.order_week}</td>
-        <td className="px-2 py-1 text-muted-foreground">
-          {order.desired_delivery_date ? format(new Date(order.desired_delivery_date), "yyyy-MM-dd") : "—"}
+        <td className="px-1.5 py-1 font-medium text-foreground whitespace-nowrap">{order.stores?.name || "—"}</td>
+        <td className="px-1.5 py-1 text-muted-foreground">{order.order_week}</td>
+        <td className="px-1.5 py-1 text-muted-foreground whitespace-nowrap">
+          {order.desired_delivery_date ? format(new Date(order.desired_delivery_date), "yy-MM-dd") : "—"}
         </td>
-        <td className="px-2 py-1 text-muted-foreground">
-          {order.created_at ? format(new Date(order.created_at), "yyyy-MM-dd HH:mm") : "—"}
+        <td className="px-1.5 py-1 text-muted-foreground whitespace-nowrap">
+          {order.created_at ? format(new Date(order.created_at), "yy-MM-dd HH:mm") : "—"}
         </td>
-        <td className="px-2 py-1 text-right text-foreground">{lines.length}</td>
-        <td className="px-2 py-1 text-right">
-          <Badge variant="outline" className={`${statusColor[order.status] || ""} text-[10px] gap-1`}>
+        <td className="px-1.5 py-1 text-right text-foreground">{lines.length}</td>
+        <td className="px-1.5 py-1 text-right">
+          <Badge variant="outline" className={`${statusColor[order.status] || ""} text-[10px] gap-0.5`}>
             {statusIcon[order.status] || null}
             {order.status}
           </Badge>
