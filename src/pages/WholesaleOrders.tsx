@@ -666,58 +666,58 @@ export default function WholesaleOrders() {
                              {(o.shop_order_lines || []).reduce((sum: number, l: any) => sum + (l.quantity_delivered || l.quantity_ordered || 0) * (l.products?.wholesale_price || 0), 0).toFixed(0)}kr
                            </td>
                            <td className="px-1.5 py-0.5 text-muted-foreground text-[9px] whitespace-nowrap">{o.packer_name || "–"}</td>
-                           <td className="px-2.5 py-1" onClick={e => e.stopPropagation()}>
+                           <td className="px-1.5 py-0.5" onClick={e => e.stopPropagation()}>
                              {(() => {
                                const reports = reportsByOrder.get(o.id);
                                if (!reports || reports.length === 0) {
-                                 return <span className="text-[10px] text-muted-foreground/40">–</span>;
+                                 return <span className="text-[9px] text-muted-foreground/40">–</span>;
                                }
                                const hasIssues = reports.some((r: any) => r.status === "Rapporterad");
                                return (
                                  <Button
                                    variant="ghost"
                                    size="sm"
-                                   className={`h-6 text-[10px] gap-1 ${hasIssues ? "text-warning" : "text-success"}`}
+                                   className={`h-5 text-[9px] gap-0.5 px-1 ${hasIssues ? "text-warning" : "text-success"}`}
                                    onClick={() => setReportViewOrder(o)}
                                  >
-                                   {hasIssues ? <AlertTriangle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
-                                   {hasIssues ? "Avvikelse" : "Godkänd"}
+                                   {hasIssues ? <AlertTriangle className="h-2.5 w-2.5" /> : <CheckCircle2 className="h-2.5 w-2.5" />}
+                                   {hasIssues ? "Avv." : "OK"}
                                  </Button>
                                );
                              })()}
                            </td>
-                           <td className="px-2.5 py-1 text-center" onClick={e => e.stopPropagation()}>
+                           <td className="px-1.5 py-0.5 text-center" onClick={e => e.stopPropagation()}>
                              <Button
                                variant="ghost"
                                size="sm"
-                               className="h-6 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
+                               className="h-5 text-[9px] px-1 text-muted-foreground hover:text-foreground"
                                onClick={() => setPackingSlipOrder(o)}
                              >
-                               <Printer className="h-3 w-3" /> Packsedel
+                               <Printer className="h-2.5 w-2.5" />
                              </Button>
                            </td>
-                           <td className="px-2.5 py-1 text-center" onClick={e => e.stopPropagation()}>
+                           <td className="px-1.5 py-0.5 text-center" onClick={e => e.stopPropagation()}>
                              {["Packad", "Skickad", "Levererad"].includes(o.status) ? (
                                <Button
                                  variant="ghost"
                                  size="sm"
-                                 className="h-6 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
+                                 className="h-5 text-[9px] px-1 text-muted-foreground hover:text-foreground"
                                  onClick={() => setDeliveryNoteOrder(o)}
                                >
-                                 <Printer className="h-3 w-3" /> Följesedel
+                                 <Printer className="h-2.5 w-2.5" />
                                </Button>
                              ) : (
-                               <span className="text-[10px] text-muted-foreground/40">–</span>
+                               <span className="text-[9px] text-muted-foreground/40">–</span>
                              )}
                            </td>
-                           <td className="px-2.5 py-1 text-center" onClick={e => e.stopPropagation()}>
+                           <td className="px-1.5 py-0.5 text-center" onClick={e => e.stopPropagation()}>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-6 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
+                                className="h-5 text-[9px] px-1 text-muted-foreground hover:text-foreground"
                                 onClick={() => setArchiveConfirmOrder(o)}
                               >
-                                <Archive className="h-3 w-3" /> Arkivera
+                                <Archive className="h-2.5 w-2.5" />
                               </Button>
                            </td>
                          </tr>
