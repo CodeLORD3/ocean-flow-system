@@ -609,6 +609,7 @@ export default function WholesaleOrders() {
                           <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">DATUM</th>
                           <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">BUTIK</th>
                           <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">ÖN.LEV.</th>
+                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">BEST.AV</th>
                           <th className="px-1.5 py-0.5 text-right font-medium text-muted-foreground">RAD</th>
                           <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">PRODUKTER</th>
                           <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">ANT.</th>
@@ -623,7 +624,7 @@ export default function WholesaleOrders() {
                     </thead>
                     <tbody>
                       {filteredOrders.length === 0 && (
-                          <tr><td colSpan={15} className="px-2.5 py-6 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
+                          <tr><td colSpan={16} className="px-2.5 py-6 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
                        )}
                        {filteredOrders.map((o: any) => (
                          <React.Fragment key={o.id}>
@@ -645,6 +646,7 @@ export default function WholesaleOrders() {
                             <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                             <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">{o.stores?.name || "–"}</td>
                             <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">{(o as any).desired_delivery_date || "–"}</td>
+                            <td className="px-1.5 py-0.5 text-muted-foreground text-[9px] whitespace-nowrap">{o.created_by || "–"}</td>
                             <td className="px-1.5 py-0.5 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
                             <td className="px-1.5 py-0.5 text-muted-foreground text-[9px] max-w-32 truncate">
                               {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered}${l.unit || ""})`).join(", ") || "–"}
