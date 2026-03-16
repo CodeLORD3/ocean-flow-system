@@ -480,6 +480,7 @@ export default function WholesaleOrders() {
         <TabsList className="h-8">
           <TabsTrigger value="per-order" className="text-xs h-7 gap-1"><Eye className="h-3 w-3" /> Per order</TabsTrigger>
           <TabsTrigger value="total" className="text-xs h-7 gap-1"><ListChecks className="h-3 w-3" /> Totalvy</TabsTrigger>
+          <TabsTrigger value="delivered" className="text-xs h-7 gap-1"><Truck className="h-3 w-3" /> Levererade ({deliveredOrders.length})</TabsTrigger>
           <TabsTrigger value="archived" className="text-xs h-7 gap-1"><Archive className="h-3 w-3" /> Arkiverade ({archivedOrders.length})</TabsTrigger>
           <TabsTrigger value="changes" className="text-xs h-7 gap-1 relative">
             <Bell className="h-3 w-3" /> Ändringar ({pendingChanges.filter((cr: any) => cr.requested_by !== "grossist").length})
