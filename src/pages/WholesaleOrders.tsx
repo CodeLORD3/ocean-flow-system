@@ -601,24 +601,24 @@ export default function WholesaleOrders() {
             <Card className="shadow-card">
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
+                  <table className="w-full text-[10px]">
                     <thead>
-                       <tr className="border-b border-border bg-muted/30 h-9">
-                          <th className="px-2.5 py-1 text-left font-medium text-muted-foreground w-28"></th>
-                          <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">VECKA</th>
-                          <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">DATUM</th>
-                          <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">BUTIK</th>
-                          <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">ÖNSKAD LEV.</th>
-                          <th className="px-2.5 py-1 text-right font-medium text-muted-foreground">RADER</th>
-                          <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">PRODUKTER</th>
-                          <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">ANTECKNING</th>
-                          <th className="px-2.5 py-1 text-left font-medium text-muted-foreground min-w-[120px]">STATUS</th>
-                          <th className="px-2.5 py-1 text-right font-medium text-muted-foreground">ORDERVÄRDE</th>
-                          <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">PACKARE</th>
-                          <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">LEVERANSRAPPORT</th>
-                          <th className="px-2.5 py-1 text-center font-medium text-muted-foreground">PACKSEDEL</th>
-                          <th className="px-2.5 py-1 text-center font-medium text-muted-foreground">FÖLJESEDEL</th>
-                          <th className="px-2.5 py-1 text-center font-medium text-muted-foreground">ARKIVERA</th>
+                       <tr className="border-b border-border bg-muted/30 h-7">
+                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground w-20"></th>
+                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">V.</th>
+                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">DATUM</th>
+                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">BUTIK</th>
+                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">ÖN.LEV.</th>
+                          <th className="px-1.5 py-0.5 text-right font-medium text-muted-foreground">RAD</th>
+                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">PRODUKTER</th>
+                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">ANT.</th>
+                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">STATUS</th>
+                          <th className="px-1.5 py-0.5 text-right font-medium text-muted-foreground">VÄRDE</th>
+                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">PACK.</th>
+                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">LEV.R.</th>
+                          <th className="px-1.5 py-0.5 text-center font-medium text-muted-foreground">PS</th>
+                          <th className="px-1.5 py-0.5 text-center font-medium text-muted-foreground">FS</th>
+                          <th className="px-1.5 py-0.5 text-center font-medium text-muted-foreground">ARK.</th>
                       </tr>
                     </thead>
                     <tbody>
