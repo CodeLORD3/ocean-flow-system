@@ -1,4 +1,4 @@
-import { useMemo, useState, DragEvent } from "react";
+import { useMemo, useState, useCallback, DragEvent } from "react";
 import { useShopOrders } from "@/hooks/useShopOrders";
 import { useStores } from "@/hooks/useStores";
 import { useTransportSchedules, useUpdateTransportSchedule } from "@/hooks/useTransportSchedules";
@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
@@ -175,6 +176,80 @@ export default function PurchaseSchedule() {
   const [altSearch, setAltSearch] = useState("");
   const [dragOverDay, setDragOverDay] = useState<number | null>(null);
   const [boughtLoading, setBoughtLoading] = useState<string | null>(null);
+  
+  // Multi-select state
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+  const [bulkMoveLoading, setBulkMoveLoading] = useState(false);
+
+  const toggleSelect = useCallback((key: string) => {
+    setSelectedKeys(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback((dayIndex: number, items: typeof filteredSchedule) => {
+    const dayItems = items.filter((_, i) => {
+      // We use the key format to identify items
+      return true;
+    });
+    setSelectedKeys(prev => {
+      const next = new Set(prev);
+      const dayKeys = items.map(item => `${dayIndex}-${item.productName}-${item.productId}`);
+      const allSelected = dayKeys.every(k => next.has(k));
+      if (allSelected) {
+        dayKeys.forEach(k => next.delete(k));
+      } else {
+        dayKeys.forEach(k => next.add(k));
+      }
+      return next;
+    });
+  }, []);
+
+  const getSelectedItems = useCallback((map: Map<number, typeof filteredSchedule>) => {
+    const result: { lineIds: string[]; productName: string; isManual?: boolean; manualEntryId?: string }[] = [];
+    for (const [dayIndex, items] of map.entries()) {
+      for (const item of items) {
+        const key = `${dayIndex}-${item.productName}-${item.productId}`;
+        if (selectedKeys.has(key)) {
+          result.push({ lineIds: item.lineIds, productName: item.productName, isManual: item.isManual, manualEntryId: item.manualEntryId });
+        }
+      }
+    }
+    return result;
+  }, [selectedKeys]);
+
+  const handleBulkMove = async (targetDayIndex: number, map: Map<number, typeof filteredSchedule>) => {
+    setBulkMoveLoading(true);
+    try {
+      const selected = getSelectedItems(map);
+      const targetDate = format(weekDates[targetDayIndex], "yyyy-MM-dd");
+      let movedCount = 0;
+
+      for (const item of selected) {
+        if (item.isManual && item.manualEntryId) {
+          await supabase.from("manual_schedule_entries").update({ departure_date: targetDate }).eq("id", item.manualEntryId);
+          movedCount++;
+        } else if (item.lineIds.length > 0) {
+          for (const lineId of item.lineIds) {
+            await supabase.from("shop_order_lines").update({ order_date: targetDate }).eq("id", lineId);
+          }
+          movedCount++;
+        }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
+      queryClient.invalidateQueries({ queryKey: ["manual_schedule_entries"] });
+      setSelectedKeys(new Set());
+      toast.success(`${movedCount} produkt${movedCount > 1 ? "er" : ""} flyttade till ${WEEKDAYS[targetDayIndex]}.`);
+    } catch (err) {
+      toast.error("Kunde inte flytta produkterna.");
+    } finally {
+      setBulkMoveLoading(false);
+    }
+  };
 
   // Manual entry dialog state
   const [manualDialogOpen, setManualDialogOpen] = useState(false);
@@ -845,7 +920,14 @@ export default function PurchaseSchedule() {
                           <Table>
                             <TableHeader>
                               <TableRow>
-                                <TableHead className="h-6 px-2 pl-10 text-[10px]">Produkt</TableHead>
+                                <TableHead className="h-6 px-2 w-[32px]">
+                                  <Checkbox
+                                    checked={items.length > 0 && items.every(item => selectedKeys.has(`${dayIndex}-${item.productName}-${item.productId}`))}
+                                    onCheckedChange={() => toggleSelectAll(dayIndex, items)}
+                                    className="h-3.5 w-3.5"
+                                  />
+                                </TableHead>
+                                <TableHead className="h-6 px-2 text-[10px]">Produkt</TableHead>
                                 <TableHead className="h-6 px-2 text-[10px] text-right w-[80px]">Totalt</TableHead>
                                 <TableHead className="h-6 px-2 text-[10px] text-right w-[70px]">Lager</TableHead>
                                 <TableHead className="h-6 px-2 text-[10px] text-right w-[70px]">Köpt</TableHead>
@@ -879,9 +961,16 @@ export default function PurchaseSchedule() {
                                         <TableRow
                                           draggable
                                           onDragStart={(e) => handleDragStart(e, item)}
-                                          className={`cursor-grab active:cursor-grabbing hover:bg-muted/50 ${rowBg}`}
+                                          className={`cursor-grab active:cursor-grabbing hover:bg-muted/50 ${rowBg} ${selectedKeys.has(`${dayIndex}-${item.productName}-${item.productId}`) ? "ring-1 ring-inset ring-primary/40" : ""}`}
                                         >
-                                          <TableCell className="px-2 pl-10 py-0.5 text-xs">
+                                          <TableCell className="px-2 py-0.5" onClick={(e) => e.stopPropagation()}>
+                                            <Checkbox
+                                              checked={selectedKeys.has(`${dayIndex}-${item.productName}-${item.productId}`)}
+                                              onCheckedChange={() => toggleSelect(`${dayIndex}-${item.productName}-${item.productId}`)}
+                                              className="h-3.5 w-3.5"
+                                            />
+                                          </TableCell>
+                                          <TableCell className="px-2 py-0.5 text-xs">
                                             <span className="flex items-center gap-1">
                                               <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
                                               {item.productName}
@@ -951,7 +1040,8 @@ export default function PurchaseSchedule() {
                                             const zone = zoneScheds?.[0];
                                             return (
                                               <TableRow key={shop.name} className="bg-muted/30 border-0">
-                                                <TableCell className="px-2 pl-14 py-0.5 text-[10px] text-muted-foreground">
+                                                <TableCell className="px-2 py-0.5" />
+                                                <TableCell className="px-2 pl-4 py-0.5 text-[10px] text-muted-foreground">
                                                   <Badge variant={(zone?.badge_color || "default") as any} className="text-[9px] py-0">
                                                     {shop.name}
                                                   </Badge>
@@ -984,6 +1074,40 @@ export default function PurchaseSchedule() {
             </div>
           )}
         </TabsContent>
+
+        {/* ── Floating bulk move bar ── */}
+        {selectedKeys.size > 0 && tab === "daily" && (
+          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-card border shadow-lg rounded-lg px-4 py-3 flex items-center gap-3 max-w-[95vw]">
+            <span className="text-sm font-medium text-foreground whitespace-nowrap">
+              {selectedKeys.size} markerade
+            </span>
+            <div className="h-4 w-px bg-border" />
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Flytta till:</span>
+            <div className="flex items-center gap-1 flex-wrap">
+              {WEEKDAYS.map((day, idx) => (
+                <Button
+                  key={idx}
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-[11px] px-2"
+                  disabled={bulkMoveLoading}
+                  onClick={() => handleBulkMove(idx, activeMap)}
+                >
+                  {day.slice(0, 3)}
+                </Button>
+              ))}
+            </div>
+            <div className="h-4 w-px bg-border" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-[11px]"
+              onClick={() => setSelectedKeys(new Set())}
+            >
+              Avmarkera
+            </Button>
+          </div>
+        )}
 
         {/* ── TOTAL WEEK VIEW ── */}
         <TabsContent value="total">
