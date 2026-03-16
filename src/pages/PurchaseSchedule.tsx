@@ -1074,6 +1074,40 @@ export default function PurchaseSchedule() {
           )}
         </TabsContent>
 
+        {/* ── Floating bulk move bar ── */}
+        {selectedKeys.size > 0 && tab === "daily" && (
+          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-card border shadow-lg rounded-lg px-4 py-3 flex items-center gap-3 max-w-[95vw]">
+            <span className="text-sm font-medium text-foreground whitespace-nowrap">
+              {selectedKeys.size} markerade
+            </span>
+            <div className="h-4 w-px bg-border" />
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Flytta till:</span>
+            <div className="flex items-center gap-1 flex-wrap">
+              {WEEKDAYS.map((day, idx) => (
+                <Button
+                  key={idx}
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-[11px] px-2"
+                  disabled={bulkMoveLoading}
+                  onClick={() => handleBulkMove(idx, activeMap)}
+                >
+                  {day.slice(0, 3)}
+                </Button>
+              ))}
+            </div>
+            <div className="h-4 w-px bg-border" />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-[11px]"
+              onClick={() => setSelectedKeys(new Set())}
+            >
+              Avmarkera
+            </Button>
+          </div>
+        )}
+
         {/* ── TOTAL WEEK VIEW ── */}
         <TabsContent value="total">
           {isLoading ? (
