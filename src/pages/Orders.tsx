@@ -260,17 +260,17 @@ export default function Orders() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-xs">
+              <table className="w-full text-[11px]">
                 <thead>
                   <tr className="border-b border-border">
-                     {isGrossist && <th className="pb-2 text-left font-medium text-muted-foreground w-28"></th>}
-                     <th className="pb-2 text-left font-medium text-muted-foreground w-6"></th>
-                     <th className="pb-2 text-left font-medium text-muted-foreground">Butik</th>
-                    <th className="pb-2 text-left font-medium text-muted-foreground">Vecka</th>
-                    <th className="pb-2 text-left font-medium text-muted-foreground">Önskat leveransdatum</th>
-                    <th className="pb-2 text-left font-medium text-muted-foreground">Skapad</th>
-                    <th className="pb-2 text-right font-medium text-muted-foreground">Artiklar</th>
-                    <th className="pb-2 text-right font-medium text-muted-foreground">Status</th>
+                     {isGrossist && <th className="pb-1.5 text-left font-medium text-muted-foreground w-24"></th>}
+                     <th className="pb-1.5 text-left font-medium text-muted-foreground w-5"></th>
+                     <th className="pb-1.5 text-left font-medium text-muted-foreground">Butik</th>
+                    <th className="pb-1.5 text-left font-medium text-muted-foreground">Vecka</th>
+                    <th className="pb-1.5 text-left font-medium text-muted-foreground">Önskat lev.datum</th>
+                    <th className="pb-1.5 text-left font-medium text-muted-foreground">Skapad</th>
+                    <th className="pb-1.5 text-right font-medium text-muted-foreground">Art.</th>
+                    <th className="pb-1.5 text-right font-medium text-muted-foreground">Status</th>
                   </tr>
                 </thead>
                 <tbody>
