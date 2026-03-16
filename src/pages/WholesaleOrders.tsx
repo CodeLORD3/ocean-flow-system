@@ -601,24 +601,24 @@ export default function WholesaleOrders() {
             <Card className="shadow-card">
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
+                  <table className="w-full text-[10px]">
                     <thead>
-                       <tr className="border-b border-border bg-muted/30 h-9">
-                          <th className="px-2.5 py-1 text-left font-medium text-muted-foreground w-28"></th>
-                          <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">VECKA</th>
-                          <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">DATUM</th>
-                          <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">BUTIK</th>
-                          <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">ÖNSKAD LEV.</th>
-                          <th className="px-2.5 py-1 text-right font-medium text-muted-foreground">RADER</th>
-                          <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">PRODUKTER</th>
-                          <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">ANTECKNING</th>
-                          <th className="px-2.5 py-1 text-left font-medium text-muted-foreground min-w-[120px]">STATUS</th>
-                          <th className="px-2.5 py-1 text-right font-medium text-muted-foreground">ORDERVÄRDE</th>
-                          <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">PACKARE</th>
-                          <th className="px-2.5 py-1 text-left font-medium text-muted-foreground">LEVERANSRAPPORT</th>
-                          <th className="px-2.5 py-1 text-center font-medium text-muted-foreground">PACKSEDEL</th>
-                          <th className="px-2.5 py-1 text-center font-medium text-muted-foreground">FÖLJESEDEL</th>
-                          <th className="px-2.5 py-1 text-center font-medium text-muted-foreground">ARKIVERA</th>
+                       <tr className="border-b border-border bg-muted/30 h-7">
+                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground w-20"></th>
+                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">V.</th>
+                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">DATUM</th>
+                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">BUTIK</th>
+                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">ÖN.LEV.</th>
+                          <th className="px-1.5 py-0.5 text-right font-medium text-muted-foreground">RAD</th>
+                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">PRODUKTER</th>
+                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">ANT.</th>
+                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">STATUS</th>
+                          <th className="px-1.5 py-0.5 text-right font-medium text-muted-foreground">VÄRDE</th>
+                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">PACK.</th>
+                          <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">LEV.R.</th>
+                          <th className="px-1.5 py-0.5 text-center font-medium text-muted-foreground">PS</th>
+                          <th className="px-1.5 py-0.5 text-center font-medium text-muted-foreground">FS</th>
+                          <th className="px-1.5 py-0.5 text-center font-medium text-muted-foreground">ARK.</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -627,97 +627,97 @@ export default function WholesaleOrders() {
                        )}
                        {filteredOrders.map((o: any) => (
                          <React.Fragment key={o.id}>
-                          <tr className={`border-b h-9 transition-colors cursor-pointer hover:bg-muted/30 ${expandedOrderIds.has(o.id) ? "bg-primary/10 border-l-2 border-l-primary border-b-0" : "border-border"} ${o.status === "Pågående" ? "bg-warning/10" : o.status === "Packad" ? "bg-success/10" : o.status === "Skickad" ? "bg-primary/10" : o.status === "Levererad" || o.status === "Klar / Levererad" ? "bg-primary/25" : ""}`} onClick={() => toggleExpandOrder(o.id)}>
-                            <td className="px-2.5 py-1" onClick={e => e.stopPropagation()}>
+                          <tr className={`border-b h-7 transition-colors cursor-pointer hover:bg-muted/30 ${expandedOrderIds.has(o.id) ? "bg-primary/10 border-l-2 border-l-primary border-b-0" : "border-border"} ${o.status === "Pågående" ? "bg-warning/10" : o.status === "Packad" ? "bg-success/10" : o.status === "Skickad" ? "bg-primary/10" : o.status === "Levererad" || o.status === "Klar / Levererad" ? "bg-primary/25" : ""}`} onClick={() => toggleExpandOrder(o.id)}>
+                            <td className="px-1.5 py-0.5" onClick={e => e.stopPropagation()}>
                               {o.status === "Ny" && (
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="h-6 px-2 text-[10px] gap-1 bg-warning/10 border-warning/30 text-warning hover:bg-warning/20"
+                                  className="h-5 px-1.5 text-[9px] gap-0.5 bg-warning/10 border-warning/30 text-warning hover:bg-warning/20"
                                   onClick={() => handleOrderStatusChange(o.id, "Pågående")}
                                 >
-                                  <Package className="h-3 w-3" />
-                                  Packa order
+                                  <Package className="h-2.5 w-2.5" />
+                                  Packa
                                 </Button>
                               )}
                             </td>
-                            <td className="px-2.5 py-1 font-mono font-medium text-foreground">{o.order_week}</td>
-                            <td className="px-2.5 py-1 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
-                            <td className="px-2.5 py-1 text-muted-foreground">{o.stores?.name || "–"}</td>
-                            <td className="px-2.5 py-1 text-muted-foreground">{(o as any).desired_delivery_date || "–"}</td>
-                            <td className="px-2.5 py-1 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
-                            <td className="px-2.5 py-1 text-muted-foreground text-[10px] max-w-48 truncate">
-                              {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
+                            <td className="px-1.5 py-0.5 font-mono font-medium text-foreground">{o.order_week}</td>
+                            <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
+                            <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">{o.stores?.name || "–"}</td>
+                            <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">{(o as any).desired_delivery_date || "–"}</td>
+                            <td className="px-1.5 py-0.5 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
+                            <td className="px-1.5 py-0.5 text-muted-foreground text-[9px] max-w-32 truncate">
+                              {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered}${l.unit || ""})`).join(", ") || "–"}
                             </td>
-                            <td className="px-2.5 py-1 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
-                            <td className="px-2.5 py-1" onClick={e => e.stopPropagation()}>
+                            <td className="px-1.5 py-0.5 text-muted-foreground text-[9px] max-w-20 truncate">{o.notes || "–"}</td>
+                            <td className="px-1.5 py-0.5" onClick={e => e.stopPropagation()}>
                              <Select value={o.status} onValueChange={(val) => handleOrderStatusChange(o.id, val)}>
-                               <SelectTrigger className="h-7 text-[10px] w-[110px]">
+                               <SelectTrigger className="h-5 text-[9px] w-[80px]">
                                  <SelectValue />
                                </SelectTrigger>
                                <SelectContent>
                                  {["Ny", "Pågående", "Packad", "Skickad", "Levererad", "Avbruten"].map(s =>
-                                   <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
+                                   <SelectItem key={s} value={s} className="text-[10px]">{s}</SelectItem>
                                  )}
                                </SelectContent>
                              </Select>
                            </td>
-                           <td className="px-2.5 py-1 text-right font-mono text-foreground text-[10px]">
-                             {(o.shop_order_lines || []).reduce((sum: number, l: any) => sum + (l.quantity_delivered || l.quantity_ordered || 0) * (l.products?.wholesale_price || 0), 0).toFixed(2)} kr
+                           <td className="px-1.5 py-0.5 text-right font-mono text-foreground text-[9px] whitespace-nowrap">
+                             {(o.shop_order_lines || []).reduce((sum: number, l: any) => sum + (l.quantity_delivered || l.quantity_ordered || 0) * (l.products?.wholesale_price || 0), 0).toFixed(0)}kr
                            </td>
-                           <td className="px-2.5 py-1 text-muted-foreground text-[10px]">{o.packer_name || "–"}</td>
-                           <td className="px-2.5 py-1" onClick={e => e.stopPropagation()}>
+                           <td className="px-1.5 py-0.5 text-muted-foreground text-[9px] whitespace-nowrap">{o.packer_name || "–"}</td>
+                           <td className="px-1.5 py-0.5" onClick={e => e.stopPropagation()}>
                              {(() => {
                                const reports = reportsByOrder.get(o.id);
                                if (!reports || reports.length === 0) {
-                                 return <span className="text-[10px] text-muted-foreground/40">–</span>;
+                                 return <span className="text-[9px] text-muted-foreground/40">–</span>;
                                }
                                const hasIssues = reports.some((r: any) => r.status === "Rapporterad");
                                return (
                                  <Button
                                    variant="ghost"
                                    size="sm"
-                                   className={`h-6 text-[10px] gap-1 ${hasIssues ? "text-warning" : "text-success"}`}
+                                   className={`h-5 text-[9px] gap-0.5 px-1 ${hasIssues ? "text-warning" : "text-success"}`}
                                    onClick={() => setReportViewOrder(o)}
                                  >
-                                   {hasIssues ? <AlertTriangle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
-                                   {hasIssues ? "Avvikelse" : "Godkänd"}
+                                   {hasIssues ? <AlertTriangle className="h-2.5 w-2.5" /> : <CheckCircle2 className="h-2.5 w-2.5" />}
+                                   {hasIssues ? "Avv." : "OK"}
                                  </Button>
                                );
                              })()}
                            </td>
-                           <td className="px-2.5 py-1 text-center" onClick={e => e.stopPropagation()}>
+                           <td className="px-1.5 py-0.5 text-center" onClick={e => e.stopPropagation()}>
                              <Button
                                variant="ghost"
                                size="sm"
-                               className="h-6 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
+                               className="h-5 text-[9px] px-1 text-muted-foreground hover:text-foreground"
                                onClick={() => setPackingSlipOrder(o)}
                              >
-                               <Printer className="h-3 w-3" /> Packsedel
+                               <Printer className="h-2.5 w-2.5" />
                              </Button>
                            </td>
-                           <td className="px-2.5 py-1 text-center" onClick={e => e.stopPropagation()}>
+                           <td className="px-1.5 py-0.5 text-center" onClick={e => e.stopPropagation()}>
                              {["Packad", "Skickad", "Levererad"].includes(o.status) ? (
                                <Button
                                  variant="ghost"
                                  size="sm"
-                                 className="h-6 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
+                                 className="h-5 text-[9px] px-1 text-muted-foreground hover:text-foreground"
                                  onClick={() => setDeliveryNoteOrder(o)}
                                >
-                                 <Printer className="h-3 w-3" /> Följesedel
+                                 <Printer className="h-2.5 w-2.5" />
                                </Button>
                              ) : (
-                               <span className="text-[10px] text-muted-foreground/40">–</span>
+                               <span className="text-[9px] text-muted-foreground/40">–</span>
                              )}
                            </td>
-                           <td className="px-2.5 py-1 text-center" onClick={e => e.stopPropagation()}>
+                           <td className="px-1.5 py-0.5 text-center" onClick={e => e.stopPropagation()}>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-6 text-[10px] gap-1 text-muted-foreground hover:text-foreground"
+                                className="h-5 text-[9px] px-1 text-muted-foreground hover:text-foreground"
                                 onClick={() => setArchiveConfirmOrder(o)}
                               >
-                                <Archive className="h-3 w-3" /> Arkivera
+                                <Archive className="h-2.5 w-2.5" />
                               </Button>
                            </td>
                          </tr>
@@ -776,14 +776,14 @@ export default function WholesaleOrders() {
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                     <tr className="border-b border-border bg-muted/30">
-                       <th className="p-3 text-left font-medium text-muted-foreground">VECKA</th>
-                       <th className="p-3 text-left font-medium text-muted-foreground">DATUM</th>
-                       <th className="p-3 text-left font-medium text-muted-foreground">BUTIK</th>
-                       <th className="p-3 text-left font-medium text-muted-foreground">ÖNSKAD LEV.</th>
-                       <th className="p-3 text-right font-medium text-muted-foreground">RADER</th>
-                       <th className="p-3 text-left font-medium text-muted-foreground">PRODUKTER</th>
-                       <th className="p-3 text-left font-medium text-muted-foreground">ANTECKNING</th>
+                     <tr className="border-b border-border bg-muted/30 h-7">
+                       <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">V.</th>
+                       <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">DATUM</th>
+                       <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">BUTIK</th>
+                       <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">ÖN.LEV.</th>
+                       <th className="px-1.5 py-0.5 text-right font-medium text-muted-foreground">RAD</th>
+                       <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">PRODUKTER</th>
+                       <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">ANT.</th>
                      </tr>
                   </thead>
                   <tbody>
