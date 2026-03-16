@@ -1071,7 +1071,7 @@ export default function PurchaseSchedule() {
                                             onClick={() => handleMarkBought(item.lines.map(l => l.lineId), item.lines.map(l => l.shopOrderId), item.productName)}
                                             disabled={boughtLoading === item.productName}
                                           >
-                                            <Check className="h-3 w-3" /> Köpt
+                                            <Check className="h-3 w-3" /> Bekräfta
                                           </Button>
                                           {hasSufficientStock && (
                                             <Button
