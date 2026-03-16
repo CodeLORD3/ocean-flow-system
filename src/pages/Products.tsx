@@ -192,6 +192,7 @@ export default function Products() {
       cost_price: subForm.cost_price ? Number(subForm.cost_price) : 0,
       wholesale_price: subForm.wholesale_price ? Number(subForm.wholesale_price) : 0,
       retail_suggested: subForm.retail_suggested ? Number(subForm.retail_suggested) : 0,
+      weight_per_piece: subForm.weight_per_piece ? Number(subForm.weight_per_piece) : 0,
     }, {
       onSuccess: () => {
         toast({ title: "Delprodukt tillagd", description: subForm.name });
