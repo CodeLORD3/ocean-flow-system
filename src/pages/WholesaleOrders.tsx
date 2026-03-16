@@ -627,45 +627,45 @@ export default function WholesaleOrders() {
                        )}
                        {filteredOrders.map((o: any) => (
                          <React.Fragment key={o.id}>
-                          <tr className={`border-b h-9 transition-colors cursor-pointer hover:bg-muted/30 ${expandedOrderIds.has(o.id) ? "bg-primary/10 border-l-2 border-l-primary border-b-0" : "border-border"} ${o.status === "Pågående" ? "bg-warning/10" : o.status === "Packad" ? "bg-success/10" : o.status === "Skickad" ? "bg-primary/10" : o.status === "Levererad" || o.status === "Klar / Levererad" ? "bg-primary/25" : ""}`} onClick={() => toggleExpandOrder(o.id)}>
-                            <td className="px-2.5 py-1" onClick={e => e.stopPropagation()}>
+                          <tr className={`border-b h-7 transition-colors cursor-pointer hover:bg-muted/30 ${expandedOrderIds.has(o.id) ? "bg-primary/10 border-l-2 border-l-primary border-b-0" : "border-border"} ${o.status === "Pågående" ? "bg-warning/10" : o.status === "Packad" ? "bg-success/10" : o.status === "Skickad" ? "bg-primary/10" : o.status === "Levererad" || o.status === "Klar / Levererad" ? "bg-primary/25" : ""}`} onClick={() => toggleExpandOrder(o.id)}>
+                            <td className="px-1.5 py-0.5" onClick={e => e.stopPropagation()}>
                               {o.status === "Ny" && (
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="h-6 px-2 text-[10px] gap-1 bg-warning/10 border-warning/30 text-warning hover:bg-warning/20"
+                                  className="h-5 px-1.5 text-[9px] gap-0.5 bg-warning/10 border-warning/30 text-warning hover:bg-warning/20"
                                   onClick={() => handleOrderStatusChange(o.id, "Pågående")}
                                 >
-                                  <Package className="h-3 w-3" />
-                                  Packa order
+                                  <Package className="h-2.5 w-2.5" />
+                                  Packa
                                 </Button>
                               )}
                             </td>
-                            <td className="px-2.5 py-1 font-mono font-medium text-foreground">{o.order_week}</td>
-                            <td className="px-2.5 py-1 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
-                            <td className="px-2.5 py-1 text-muted-foreground">{o.stores?.name || "–"}</td>
-                            <td className="px-2.5 py-1 text-muted-foreground">{(o as any).desired_delivery_date || "–"}</td>
-                            <td className="px-2.5 py-1 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
-                            <td className="px-2.5 py-1 text-muted-foreground text-[10px] max-w-48 truncate">
-                              {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
+                            <td className="px-1.5 py-0.5 font-mono font-medium text-foreground">{o.order_week}</td>
+                            <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
+                            <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">{o.stores?.name || "–"}</td>
+                            <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">{(o as any).desired_delivery_date || "–"}</td>
+                            <td className="px-1.5 py-0.5 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
+                            <td className="px-1.5 py-0.5 text-muted-foreground text-[9px] max-w-32 truncate">
+                              {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered}${l.unit || ""})`).join(", ") || "–"}
                             </td>
-                            <td className="px-2.5 py-1 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
-                            <td className="px-2.5 py-1" onClick={e => e.stopPropagation()}>
+                            <td className="px-1.5 py-0.5 text-muted-foreground text-[9px] max-w-20 truncate">{o.notes || "–"}</td>
+                            <td className="px-1.5 py-0.5" onClick={e => e.stopPropagation()}>
                              <Select value={o.status} onValueChange={(val) => handleOrderStatusChange(o.id, val)}>
-                               <SelectTrigger className="h-7 text-[10px] w-[110px]">
+                               <SelectTrigger className="h-5 text-[9px] w-[80px]">
                                  <SelectValue />
                                </SelectTrigger>
                                <SelectContent>
                                  {["Ny", "Pågående", "Packad", "Skickad", "Levererad", "Avbruten"].map(s =>
-                                   <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
+                                   <SelectItem key={s} value={s} className="text-[10px]">{s}</SelectItem>
                                  )}
                                </SelectContent>
                              </Select>
                            </td>
-                           <td className="px-2.5 py-1 text-right font-mono text-foreground text-[10px]">
-                             {(o.shop_order_lines || []).reduce((sum: number, l: any) => sum + (l.quantity_delivered || l.quantity_ordered || 0) * (l.products?.wholesale_price || 0), 0).toFixed(2)} kr
+                           <td className="px-1.5 py-0.5 text-right font-mono text-foreground text-[9px] whitespace-nowrap">
+                             {(o.shop_order_lines || []).reduce((sum: number, l: any) => sum + (l.quantity_delivered || l.quantity_ordered || 0) * (l.products?.wholesale_price || 0), 0).toFixed(0)}kr
                            </td>
-                           <td className="px-2.5 py-1 text-muted-foreground text-[10px]">{o.packer_name || "–"}</td>
+                           <td className="px-1.5 py-0.5 text-muted-foreground text-[9px] whitespace-nowrap">{o.packer_name || "–"}</td>
                            <td className="px-2.5 py-1" onClick={e => e.stopPropagation()}>
                              {(() => {
                                const reports = reportsByOrder.get(o.id);
