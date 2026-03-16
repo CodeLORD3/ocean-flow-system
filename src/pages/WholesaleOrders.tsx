@@ -263,6 +263,7 @@ export default function WholesaleOrders() {
   // Split active vs archived
   const activeOrders = orders.filter((o: any) => o.status !== "Arkiverad");
   const archivedOrders = orders.filter((o: any) => o.status === "Arkiverad");
+  const deliveredOrders = activeOrders.filter((o: any) => o.status === "Levererad" || o.status === "Klar / Levererad");
 
   // Filter orders (active only)
   const filteredOrders = activeOrders.filter((o: any) => {
@@ -479,6 +480,7 @@ export default function WholesaleOrders() {
         <TabsList className="h-8">
           <TabsTrigger value="per-order" className="text-xs h-7 gap-1"><Eye className="h-3 w-3" /> Per order</TabsTrigger>
           <TabsTrigger value="total" className="text-xs h-7 gap-1"><ListChecks className="h-3 w-3" /> Totalvy</TabsTrigger>
+          <TabsTrigger value="delivered" className="text-xs h-7 gap-1"><Truck className="h-3 w-3" /> Levererade ({deliveredOrders.length})</TabsTrigger>
           <TabsTrigger value="archived" className="text-xs h-7 gap-1"><Archive className="h-3 w-3" /> Arkiverade ({archivedOrders.length})</TabsTrigger>
           <TabsTrigger value="changes" className="text-xs h-7 gap-1 relative">
             <Bell className="h-3 w-3" /> Ändringar ({pendingChanges.filter((cr: any) => cr.requested_by !== "grossist").length})
@@ -765,6 +767,85 @@ export default function WholesaleOrders() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* DELIVERED ORDERS */}
+        <TabsContent value="delivered">
+          <Card className="shadow-card">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-heading">Levererade ordrar</CardTitle>
+              <CardDescription className="text-xs">Ordrar som levererats till butik. Arkivera för att ta bort från Per order-vyn.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-[10px]">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30 h-7">
+                      <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">V.</th>
+                      <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">DATUM</th>
+                      <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">BUTIK</th>
+                      <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">ÖN.LEV.</th>
+                      <th className="px-1.5 py-0.5 text-right font-medium text-muted-foreground">RAD</th>
+                      <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">PRODUKTER</th>
+                      <th className="px-1.5 py-0.5 text-right font-medium text-muted-foreground">VÄRDE</th>
+                      <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">PACK.</th>
+                      <th className="px-1.5 py-0.5 text-center font-medium text-muted-foreground">ARK.</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {deliveredOrders.length === 0 && (
+                      <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">Inga levererade ordrar.</td></tr>
+                    )}
+                    {deliveredOrders.map((o: any) => (
+                      <React.Fragment key={o.id}>
+                        <tr className={`border-b border-border/40 h-7 cursor-pointer hover:bg-muted/20 bg-primary/5 ${expandedOrderIds.has(o.id) ? "bg-primary/10 border-l-2 border-l-primary border-b-0" : ""}`} onClick={() => toggleExpandOrder(o.id)}>
+                          <td className="px-1.5 py-0.5 font-mono font-medium text-foreground">{o.order_week}</td>
+                          <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
+                          <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">{o.stores?.name || "–"}</td>
+                          <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">{(o as any).desired_delivery_date || "–"}</td>
+                          <td className="px-1.5 py-0.5 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
+                          <td className="px-1.5 py-0.5 text-muted-foreground text-[9px] max-w-32 truncate">
+                            {o.shop_order_lines?.map((l: any) => `${l.products?.name} (${l.quantity_ordered}${l.unit || ""})`).join(", ") || "–"}
+                          </td>
+                          <td className="px-1.5 py-0.5 text-right font-mono text-foreground text-[9px] whitespace-nowrap">
+                            {(o.shop_order_lines || []).reduce((sum: number, l: any) => sum + (l.quantity_delivered || l.quantity_ordered || 0) * (l.products?.wholesale_price || 0), 0).toFixed(0)}kr
+                          </td>
+                          <td className="px-1.5 py-0.5 text-muted-foreground text-[9px] whitespace-nowrap">{o.packer_name || "–"}</td>
+                          <td className="px-1.5 py-0.5 text-center" onClick={e => e.stopPropagation()}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-5 text-[9px] px-1 text-muted-foreground hover:text-foreground"
+                              onClick={() => setArchiveConfirmOrder(o)}
+                            >
+                              <Archive className="h-2.5 w-2.5" />
+                            </Button>
+                          </td>
+                        </tr>
+                        {expandedOrderIds.has(o.id) && (
+                          <tr>
+                            <td colSpan={9} className="p-0">
+                              <div className="border-l-2 border-l-primary border-b-2 border-b-primary/20 bg-primary/5 px-4 py-3">
+                                <div className="flex items-center justify-between mb-3">
+                                  <h3 className="font-heading text-sm font-semibold">
+                                    Order {o.order_week} — {o.stores?.name || "Okänd butik"}
+                                  </h3>
+                                  <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={(e) => { e.stopPropagation(); collapseOrder(o.id); }}>
+                                    <X className="h-3 w-3 mr-1" /> Stäng
+                                  </Button>
+                                </div>
+                                <WholesaleOrderDetail order={o} onClose={() => collapseOrder(o.id)} stores={stores} />
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* ARCHIVED ORDERS */}
