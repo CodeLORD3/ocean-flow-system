@@ -1040,7 +1040,8 @@ export default function PurchaseSchedule() {
                                             const zone = zoneScheds?.[0];
                                             return (
                                               <TableRow key={shop.name} className="bg-muted/30 border-0">
-                                                <TableCell className="px-2 pl-14 py-0.5 text-[10px] text-muted-foreground">
+                                                <TableCell className="px-2 py-0.5" />
+                                                <TableCell className="px-2 pl-4 py-0.5 text-[10px] text-muted-foreground">
                                                   <Badge variant={(zone?.badge_color || "default") as any} className="text-[9px] py-0">
                                                     {shop.name}
                                                   </Badge>
