@@ -678,7 +678,24 @@ export default function PurchaseSchedule() {
     } finally {
       setBoughtLoading(null);
     }
+
+  // ── "Ångra köpt" handler ──
+  const [undoBoughtLoading, setUndoBoughtLoading] = useState<string | null>(null);
+  const handleUndoBought = async (lineIds: string[], productName: string) => {
+    setUndoBoughtLoading(productName);
+    try {
+      for (const lineId of lineIds) {
+        await supabase.from("shop_order_lines").update({ ordered_elsewhere: null }).eq("id", lineId);
+      }
+      queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
+      toast.success(`"${productName}" återställd till inköpsschema.`);
+    } catch (err) {
+      toast.error("Kunde inte ångra.");
+    } finally {
+      setUndoBoughtLoading(null);
+    }
   };
+
 
   return (
     <div className="space-y-6">
