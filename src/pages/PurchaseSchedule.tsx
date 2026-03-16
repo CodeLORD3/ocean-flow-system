@@ -168,7 +168,7 @@ export default function PurchaseSchedule() {
   };
   const [weekOffset, setWeekOffset] = useState(0);
   const [view, setView] = useState<"purchase" | "delivery">("purchase");
-  const [tab, setTab] = useState<"daily" | "total">("daily");
+  const [tab, setTab] = useState<"daily" | "total" | "bought">("daily");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [altDialogItem, setAltDialogItem] = useState<any>(null);
   const [altProductId, setAltProductId] = useState<string>("");
