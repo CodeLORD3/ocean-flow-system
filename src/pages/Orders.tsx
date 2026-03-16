@@ -401,15 +401,15 @@ function OrderRow({
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
           )}
         </td>
-        <td className="px-2 py-1 font-medium text-foreground">{order.stores?.name || "—"}</td>
-        <td className="px-2 py-1 text-muted-foreground">{order.order_week}</td>
-        <td className="px-2 py-1 text-muted-foreground">
-          {order.desired_delivery_date ? format(new Date(order.desired_delivery_date), "yyyy-MM-dd") : "—"}
+        <td className="px-1.5 py-1 font-medium text-foreground whitespace-nowrap">{order.stores?.name || "—"}</td>
+        <td className="px-1.5 py-1 text-muted-foreground">{order.order_week}</td>
+        <td className="px-1.5 py-1 text-muted-foreground whitespace-nowrap">
+          {order.desired_delivery_date ? format(new Date(order.desired_delivery_date), "yy-MM-dd") : "—"}
         </td>
-        <td className="px-2 py-1 text-muted-foreground">
-          {order.created_at ? format(new Date(order.created_at), "yyyy-MM-dd HH:mm") : "—"}
+        <td className="px-1.5 py-1 text-muted-foreground whitespace-nowrap">
+          {order.created_at ? format(new Date(order.created_at), "yy-MM-dd HH:mm") : "—"}
         </td>
-        <td className="px-2 py-1 text-right text-foreground">{lines.length}</td>
+        <td className="px-1.5 py-1 text-right text-foreground">{lines.length}</td>
         <td className="px-2 py-1 text-right">
           <Badge variant="outline" className={`${statusColor[order.status] || ""} text-[10px] gap-1`}>
             {statusIcon[order.status] || null}
