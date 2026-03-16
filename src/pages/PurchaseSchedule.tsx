@@ -961,9 +961,16 @@ export default function PurchaseSchedule() {
                                         <TableRow
                                           draggable
                                           onDragStart={(e) => handleDragStart(e, item)}
-                                          className={`cursor-grab active:cursor-grabbing hover:bg-muted/50 ${rowBg}`}
+                                          className={`cursor-grab active:cursor-grabbing hover:bg-muted/50 ${rowBg} ${selectedKeys.has(`${dayIndex}-${item.productName}-${item.productId}`) ? "ring-1 ring-inset ring-primary/40" : ""}`}
                                         >
-                                          <TableCell className="px-2 pl-10 py-0.5 text-xs">
+                                          <TableCell className="px-2 py-0.5" onClick={(e) => e.stopPropagation()}>
+                                            <Checkbox
+                                              checked={selectedKeys.has(`${dayIndex}-${item.productName}-${item.productId}`)}
+                                              onCheckedChange={() => toggleSelect(`${dayIndex}-${item.productName}-${item.productId}`)}
+                                              className="h-3.5 w-3.5"
+                                            />
+                                          </TableCell>
+                                          <TableCell className="px-2 py-0.5 text-xs">
                                             <span className="flex items-center gap-1">
                                               <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0 transition-transform [[data-state=open]_&]:rotate-180" />
                                               {item.productName}
