@@ -326,10 +326,11 @@ export default function PurchaseSchedule() {
         if (!deliveryDateStr) continue;
 
         const deliveryDate = parseISO(deliveryDateStr);
-        // Find the matching transport schedule for this zone
-        const matchingSchedule = schedules[0];
-        // Calculate departure date from the transport zone's departure weekday
-        const departureDate = getDepartureDate(deliveryDate, matchingSchedule.departure_weekday);
+        // delivery_date IS the departure date (user picks from allowed departure weekdays)
+        const departureDate = deliveryDate;
+        // Find matching schedule for departure time display
+        const isoWeekday = deliveryDate.getDay() === 0 ? 7 : deliveryDate.getDay(); // 1=Mon..7=Sun
+        const matchingSchedule = schedules.find(s => s.departure_weekday === isoWeekday) || schedules[0];
         // order_date is the planned purchase date (set by drag & drop), defaults to departure date
         const purchaseDate = line.order_date ? parseISO(line.order_date) : departureDate;
 
