@@ -175,7 +175,7 @@ export default function Products() {
 
   const openAddSubproduct = (parentId: string) => {
     setSubproductParentId(parentId);
-    setSubForm({ name: "", cost_price: "", wholesale_price: "", retail_suggested: "" });
+    setSubForm({ name: "", cost_price: "", wholesale_price: "", retail_suggested: "", weight_per_piece: "" });
     setSubproductDialogOpen(true);
   };
 
