@@ -1142,6 +1142,58 @@ export default function PurchaseSchedule() {
             </div>
           )}
         </TabsContent>
+        {/* ── BOUGHT WEEK VIEW ── */}
+        <TabsContent value="bought">
+          {boughtItems.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground gap-2">
+              <PackageCheck className="h-8 w-8 text-muted-foreground/40" />
+              <p className="text-sm">Inga produkter markerade som köpta denna vecka.</p>
+            </div>
+          ) : (
+            <Card className="shadow-card">
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/30 h-7">
+                      <TableHead className="h-7 px-2 text-[10px]">Produkt</TableHead>
+                      <TableHead className="h-7 px-2 text-[10px]">Kategori</TableHead>
+                      <TableHead className="h-7 px-2 text-[10px] text-right">Antal</TableHead>
+                      <TableHead className="h-7 px-2 text-[10px]">Enhet</TableHead>
+                      <TableHead className="h-7 px-2 text-[10px]">Butiker</TableHead>
+                      <TableHead className="h-7 px-2 text-[10px] text-right">Åtgärd</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {boughtItems.map((item) => (
+                      <TableRow key={`${item.productName}-${item.unit}`} className="h-8 bg-success/5">
+                        <TableCell className="px-2 py-0.5 text-[11px] font-medium text-foreground">{item.productName}</TableCell>
+                        <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">{item.category}</TableCell>
+                        <TableCell className="px-2 py-0.5 text-[11px] text-right font-mono text-foreground">{item.totalQuantity}</TableCell>
+                        <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">{item.unit}</TableCell>
+                        <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">
+                          {item.shops.map(s => `${s.name} (${s.quantity})`).join(", ")}
+                        </TableCell>
+                        <TableCell className="px-2 py-0.5 text-right">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-6 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+                            onClick={() => handleUndoBought(item.lineIds, item.productName)}
+                            disabled={undoBoughtLoading === item.productName}
+                          >
+                            <Ban className="h-3 w-3" />
+                            Ångra
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
       </Tabs>
 
       {/* Alternative product dialog */}
