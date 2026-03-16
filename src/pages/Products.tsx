@@ -58,7 +58,7 @@ export default function Products() {
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set());
   const [subproductDialogOpen, setSubproductDialogOpen] = useState(false);
   const [subproductParentId, setSubproductParentId] = useState<string | null>(null);
-  const [subForm, setSubForm] = useState({ name: "", cost_price: "", wholesale_price: "", retail_suggested: "" });
+  const [subForm, setSubForm] = useState({ name: "", cost_price: "", wholesale_price: "", retail_suggested: "", weight_per_piece: "" });
   const [historyProduct, setHistoryProduct] = useState<string | null>(null);
 
   // Inline price editing state (wholesale only)
