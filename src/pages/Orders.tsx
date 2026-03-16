@@ -410,8 +410,8 @@ function OrderRow({
           {order.created_at ? format(new Date(order.created_at), "yy-MM-dd HH:mm") : "—"}
         </td>
         <td className="px-1.5 py-1 text-right text-foreground">{lines.length}</td>
-        <td className="px-2 py-1 text-right">
-          <Badge variant="outline" className={`${statusColor[order.status] || ""} text-[10px] gap-1`}>
+        <td className="px-1.5 py-1 text-right">
+          <Badge variant="outline" className={`${statusColor[order.status] || ""} text-[10px] gap-0.5`}>
             {statusIcon[order.status] || null}
             {order.status}
           </Badge>
