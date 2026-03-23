@@ -68,8 +68,8 @@ export default function PortalOfferDetail() {
   const funded = Number(offer.funded_amount);
   const rate = Number(offer.interest_rate);
   const progress = target > 0 ? Math.min(100, (funded / target) * 100) : 0;
-  const profitKr = Math.round(funded * (rate / 100));
-  const totalPayout = funded + profitKr;
+  const profitKr = Math.round(target * (rate / 100));
+  const totalPayout = target + profitKr;
   const calcResult = calcAmount ? Number(calcAmount) * (1 + rate / 100) : 0;
   const minPledge = Number(o.min_pledge) || 0;
   const maxPledge = o.max_pledge ? Number(o.max_pledge) : null;
@@ -155,7 +155,7 @@ export default function PortalOfferDetail() {
         <h3 className="text-[10px] text-[#0066ff] tracking-wider font-bold mb-3">RETURN — INVESTOR VIEW</h3>
         <div className="grid grid-cols-4 gap-4 text-center">
           <div>
-            <div className="text-lg font-bold text-[#c8d6e5]">{funded.toLocaleString()} kr</div>
+            <div className="text-lg font-bold text-[#c8d6e5]">{target.toLocaleString()} kr</div>
             <div className="text-[9px] text-[#5a6a7a]">Investment</div>
           </div>
           <div>
