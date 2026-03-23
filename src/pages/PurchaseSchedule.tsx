@@ -112,7 +112,7 @@ function TransportZoneBadge({
   );
 }
 
-export default function PurchaseSchedule() {
+export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: string } = {}) {
   const { data: orders, isLoading: ordersLoading } = useShopOrders();
   const { data: stores, isLoading: storesLoading } = useStores();
   const { data: transportSchedules, isLoading: schedulesLoading } = useTransportSchedules();
@@ -783,7 +783,7 @@ export default function PurchaseSchedule() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Inköpsschema</h1>
+          <h1 className="text-2xl font-bold text-foreground">{title}</h1>
           <p className="text-sm text-muted-foreground">
             Vecka {currentWeek}, {currentYear} — {format(weekDates[0], "d MMM", { locale: sv })} –{" "}
             {format(weekDates[6], "d MMM", { locale: sv })}
