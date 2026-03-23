@@ -436,175 +436,183 @@ export default function ShopOrders() {
         </TabsContent>
       </Tabs>
 
-      {/* Create order dialog */}
-      <Dialog open={dialogOpen} onOpenChange={open => { setDialogOpen(open); if (!open) { setOrderLines([]); setOrderNote(""); setDesiredDeliveryDate(undefined); } }}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="font-heading">Ny beställning till grossist</DialogTitle>
-            <DialogDescription className="text-xs">
-              Sök och lägg till produkter från produktbanken. Ange önskat antal och skicka beställningen.
-            </DialogDescription>
-          </DialogHeader>
-
-          {/* Product search */}
-          <div className="relative">
-            <Label className="text-xs font-medium mb-1.5 block">Lägg till produkter</Label>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input
-                placeholder="Sök produkt (namn eller SKU)..."
-                value={productSearch}
-                onChange={e => { setProductSearch(e.target.value); setHighlightedIndex(-1); }}
-                onKeyDown={e => {
-                  if (filteredProducts.length === 0) return;
-                  if (e.key === "ArrowDown") {
-                    e.preventDefault();
-                    setHighlightedIndex(prev => (prev + 1) % filteredProducts.length);
-                  } else if (e.key === "ArrowUp") {
-                    e.preventDefault();
-                    setHighlightedIndex(prev => (prev <= 0 ? filteredProducts.length - 1 : prev - 1));
-                  } else if (e.key === "Enter" && highlightedIndex >= 0 && highlightedIndex < filteredProducts.length) {
-                    e.preventDefault();
-                    addProduct(filteredProducts[highlightedIndex]);
-                  }
-                }}
-                className="pl-8 h-8 text-xs"
-              />
+      {/* Inline order creation view */}
+      {creatingOrder && (
+        <Card className="shadow-card">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="font-heading text-base">Ny beställning till grossist</CardTitle>
+                <CardDescription className="text-xs">
+                  Sök och lägg till produkter från produktbanken. Ange önskat antal och skicka beställningen.
+                </CardDescription>
+              </div>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCreatingOrder(false)}>
+                <X className="h-4 w-4" />
+              </Button>
             </div>
-            {filteredProducts.length > 0 && (
-              <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
-                {filteredProducts.map((p, idx) => (
-                  <button
-                    key={p.id}
-                    className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between ${idx === highlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
-                    onClick={() => addProduct(p)}
-                    onMouseEnter={() => setHighlightedIndex(idx)}
-                  >
-                    <span className="font-medium text-foreground">{p.name}</span>
-                    <span className="text-muted-foreground font-mono text-[10px]">{p.sku} · {p.unit}</span>
-                  </button>
-                ))}
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Product search */}
+            <div className="relative">
+              <Label className="text-xs font-medium mb-1.5 block">Lägg till produkter</Label>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  placeholder="Sök produkt (namn eller SKU)..."
+                  value={productSearch}
+                  onChange={e => { setProductSearch(e.target.value); setHighlightedIndex(-1); }}
+                  onKeyDown={e => {
+                    if (filteredProducts.length === 0) return;
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      setHighlightedIndex(prev => (prev + 1) % filteredProducts.length);
+                    } else if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      setHighlightedIndex(prev => (prev <= 0 ? filteredProducts.length - 1 : prev - 1));
+                    } else if (e.key === "Enter" && highlightedIndex >= 0 && highlightedIndex < filteredProducts.length) {
+                      e.preventDefault();
+                      addProduct(filteredProducts[highlightedIndex]);
+                    }
+                  }}
+                  className="pl-8 h-8 text-xs"
+                />
+              </div>
+              {filteredProducts.length > 0 && (
+                <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                  {filteredProducts.map((p, idx) => (
+                    <button
+                      key={p.id}
+                      className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between ${idx === highlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
+                      onClick={() => addProduct(p)}
+                      onMouseEnter={() => setHighlightedIndex(idx)}
+                    >
+                      <span className="font-medium text-foreground">{p.name}</span>
+                      <span className="text-muted-foreground font-mono text-[10px]">{p.sku} · {p.unit}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Order lines */}
+            {orderLines.length > 0 && (
+              <div className="space-y-2">
+                <Separator />
+                <div className="text-xs font-medium text-muted-foreground">
+                  {orderLines.length} produkt{orderLines.length > 1 ? "er" : ""} tillagda
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="pb-2 text-left font-medium text-muted-foreground">Produkt</th>
+                        <th className="pb-2 text-left font-medium text-muted-foreground">Enhet</th>
+                        <th className="pb-2 text-right font-medium text-muted-foreground w-32">Antal</th>
+                        <th className="pb-2 w-8"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {orderLines.map((line, idx) => (
+                        <tr key={line.product_id} className="border-b border-border/30">
+                          <td className="py-2 font-medium text-foreground">{line.product_name}</td>
+                          <td className="py-2 text-muted-foreground">{line.unit}</td>
+                          <td className="py-2 text-right">
+                            <Input
+                              type="number"
+                              step="0.1"
+                              value={line.quantity}
+                              onChange={e => updateLine(idx, e.target.value)}
+                              className="h-7 text-xs w-24 ml-auto text-right"
+                              placeholder="0"
+                              autoFocus={idx === orderLines.length - 1}
+                            />
+                          </td>
+                          <td className="py-2">
+                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeLine(idx)}>
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
-          </div>
 
-          {/* Order lines */}
-          {orderLines.length > 0 && (
-            <div className="space-y-2">
-              <Separator />
-              <div className="text-xs font-medium text-muted-foreground">
-                {orderLines.length} produkt{orderLines.length > 1 ? "er" : ""} tillagda
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="pb-2 text-left font-medium text-muted-foreground">Produkt</th>
-                      <th className="pb-2 text-left font-medium text-muted-foreground">Enhet</th>
-                      <th className="pb-2 text-right font-medium text-muted-foreground w-32">Antal</th>
-                      <th className="pb-2 w-8"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orderLines.map((line, idx) => (
-                      <tr key={line.product_id} className="border-b border-border/30">
-                        <td className="py-2 font-medium text-foreground">{line.product_name}</td>
-                        <td className="py-2 text-muted-foreground">{line.unit}</td>
-                        <td className="py-2 text-right">
-                          <Input
-                            type="number"
-                            step="0.1"
-                            value={line.quantity}
-                            onChange={e => updateLine(idx, e.target.value)}
-                            className="h-7 text-xs w-24 ml-auto text-right"
-                            placeholder="0"
-                            autoFocus={idx === orderLines.length - 1}
-                          />
-                        </td>
-                        <td className="py-2">
-                          <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeLine(idx)}>
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Önskat avgångsdatum <span className="text-destructive">*</span></Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left text-xs h-8 font-normal",
+                      !desiredDeliveryDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                    {desiredDeliveryDate ? format(desiredDeliveryDate, "yyyy-MM-dd") : "Välj datum..."}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={desiredDeliveryDate}
+                    onSelect={setDesiredDeliveryDate}
+                    disabled={isDateDisabled}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                    modifiers={allowedWeekdays ? { allowed: (date: Date) => !isDateDisabled(date) } : {}}
+                    modifiersClassNames={allowedWeekdays ? { allowed: "!bg-primary/10 !text-primary font-medium" } : {}}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
-          )}
 
-          <div className="space-y-1.5">
-            <Label className="text-xs">Önskat avgångsdatum <span className="text-destructive">*</span></Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left text-xs h-8 font-normal",
-                    !desiredDeliveryDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                  {desiredDeliveryDate ? format(desiredDeliveryDate, "yyyy-MM-dd") : "Välj datum..."}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={desiredDeliveryDate}
-                  onSelect={setDesiredDeliveryDate}
-                  disabled={isDateDisabled}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
-                  modifiers={allowedWeekdays ? { allowed: (date: Date) => !isDateDisabled(date) } : {}}
-                  modifiersClassNames={allowedWeekdays ? { allowed: "!bg-primary/10 !text-primary font-medium" } : {}}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Anteckning (valfritt)</Label>
+              <Textarea
+                value={orderNote}
+                onChange={e => setOrderNote(e.target.value)}
+                placeholder="T.ex. brådskande leverans, specialförpackning..."
+                className="text-xs min-h-[50px]"
+              />
+            </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs">Anteckning (valfritt)</Label>
-            <Textarea
-              value={orderNote}
-              onChange={e => setOrderNote(e.target.value)}
-              placeholder="T.ex. brådskande leverans, specialförpackning..."
-              className="text-xs min-h-[50px]"
-            />
-          </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" size="sm" onClick={() => setCreatingOrder(false)}>Avbryt</Button>
+              <Button
+                size="sm"
+                className="gap-1.5"
+                onClick={() => setConfirmSendOpen(true)}
+                disabled={orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0 || !desiredDeliveryDate}
+              >
+                <ShoppingCart className="h-3.5 w-3.5" /> Skicka beställning
+              </Button>
+            </div>
 
-          <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setDialogOpen(false)}>Avbryt</Button>
-            <Button
-              size="sm"
-              className="gap-1.5"
-              onClick={() => setConfirmSendOpen(true)}
-              disabled={orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0 || !desiredDeliveryDate}
-            >
-              <ShoppingCart className="h-3.5 w-3.5" /> Skicka beställning
-            </Button>
-          </DialogFooter>
-
-          {/* Confirmation dialog */}
-          <Dialog open={confirmSendOpen} onOpenChange={setConfirmSendOpen}>
-            <DialogContent className="max-w-sm">
-              <DialogHeader>
-                <DialogTitle className="font-heading">Bekräfta beställning</DialogTitle>
-                <DialogDescription className="text-xs">
-                  Är du säker på att du vill skicka beställningen med {orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length} produkt(er)? Ordern kan inte ändras efter att den skickats.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <Button variant="outline" size="sm" onClick={() => setConfirmSendOpen(false)}>Avbryt</Button>
-                <Button size="sm" className="gap-1.5" onClick={() => { setConfirmSendOpen(false); handleCreateOrder(); }}>
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Ja, skicka
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </DialogContent>
-      </Dialog>
+            {/* Confirmation dialog */}
+            <Dialog open={confirmSendOpen} onOpenChange={setConfirmSendOpen}>
+              <DialogContent className="max-w-sm">
+                <DialogHeader>
+                  <DialogTitle className="font-heading">Bekräfta beställning</DialogTitle>
+                  <DialogDescription className="text-xs">
+                    Är du säker på att du vill skicka beställningen med {orderLines.filter(l => l.quantity && Number(l.quantity) > 0).length} produkt(er)? Ordern kan inte ändras efter att den skickats.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" size="sm" onClick={() => setConfirmSendOpen(false)}>Avbryt</Button>
+                  <Button size="sm" className="gap-1.5" onClick={() => { setConfirmSendOpen(false); handleCreateOrder(); }}>
+                    <CheckCircle2 className="h-3.5 w-3.5" /> Ja, skicka
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Order detail dialog with edit capability */}
       <Dialog open={!!selectedOrder} onOpenChange={open => { if (!open) setSelectedOrder(null); }}>
