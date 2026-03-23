@@ -7,15 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, TrendingUp, Upload } from "lucide-react";
+import { Plus, TrendingUp, Upload, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function TradeOffers() {
   const queryClient = useQueryClient();
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const imageRef = useRef<HTMLInputElement>(null);
   const docRef = useRef<HTMLInputElement>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -89,7 +87,7 @@ export default function TradeOffers() {
     },
     onSuccess: () => {
       toast.success("Erbjudande skapat");
-      setDialogOpen(false);
+      setIsCreating(false);
       setForm({ title: "", description: "", quantity: "", target_amount: "", interest_rate: "", maturity_date: "", visibility: "all", min_pledge: "", max_pledge: "", purchase_date: "", repayment_type: "lump_sum", supplier_name: "", risk_note: "" });
       setImageFile(null);
       setDocFile(null);
@@ -119,6 +117,109 @@ export default function TradeOffers() {
     return map[status] || "";
   };
 
+  // ── Creating view (inline, not a dialog) ──
+  if (isCreating) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1" onClick={() => setIsCreating(false)}>
+            <ArrowLeft className="h-3 w-3" /> Tillbaka
+          </Button>
+          <h1 className="text-lg font-bold">Skapa Trade Offer</h1>
+        </div>
+
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1 col-span-2">
+                <label className="text-[10px] text-muted-foreground">Titel</label>
+                <Input value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="h-8 text-xs" />
+              </div>
+              <div className="space-y-1 col-span-2">
+                <label className="text-[10px] text-muted-foreground">Beskrivning</label>
+                <Input value={form.description} onChange={e => setForm({...form, description: e.target.value})} className="h-8 text-xs" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">Kvantitet</label>
+                <Input type="number" value={form.quantity} onChange={e => setForm({...form, quantity: e.target.value})} className="h-8 text-xs" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">Målbelopp (kr)</label>
+                <Input type="number" value={form.target_amount} onChange={e => setForm({...form, target_amount: e.target.value})} className="h-8 text-xs" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">Ränta (%)</label>
+                <Input type="number" step="0.1" value={form.interest_rate} onChange={e => setForm({...form, interest_rate: e.target.value})} className="h-8 text-xs" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">Förfallodag</label>
+                <Input type="date" value={form.maturity_date} onChange={e => setForm({...form, maturity_date: e.target.value})} className="h-8 text-xs" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">Minsta insats (kr)</label>
+                <Input type="number" value={form.min_pledge} onChange={e => setForm({...form, min_pledge: e.target.value})} className="h-8 text-xs" placeholder="0" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">Högsta insats (kr, valfri)</label>
+                <Input type="number" value={form.max_pledge} onChange={e => setForm({...form, max_pledge: e.target.value})} className="h-8 text-xs" placeholder="Ingen gräns" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">Inköpsdatum</label>
+                <Input type="date" value={form.purchase_date} onChange={e => setForm({...form, purchase_date: e.target.value})} className="h-8 text-xs" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">Återbetalningstyp</label>
+                <Select value={form.repayment_type} onValueChange={v => setForm({...form, repayment_type: v})}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lump_sum">Klumpsumma vid förfall</SelectItem>
+                    <SelectItem value="rolling">Löpande när produkter säljs</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">Leverantör</label>
+                <Input value={form.supplier_name} onChange={e => setForm({...form, supplier_name: e.target.value})} className="h-8 text-xs" placeholder="t.ex. Mondi AB" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">Synlighet</label>
+                <Select value={form.visibility} onValueChange={v => setForm({...form, visibility: v})}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alla klienter</SelectItem>
+                    <SelectItem value="specific">Specifika klienter</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1 col-span-2">
+                <label className="text-[10px] text-muted-foreground">Risknotering</label>
+                <Input value={form.risk_note} onChange={e => setForm({...form, risk_note: e.target.value})} className="h-8 text-xs" placeholder="T.ex. vad händer om produkter ej säljs" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">Produktbild</label>
+                <input ref={imageRef} type="file" accept="image/*" className="hidden" onChange={e => setImageFile(e.target.files?.[0] || null)} />
+                <Button type="button" variant="outline" className="w-full h-8 text-xs gap-1" onClick={() => imageRef.current?.click()}>
+                  <Upload className="h-3 w-3" /> {imageFile ? imageFile.name.slice(0, 20) : "Välj bild"}
+                </Button>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">Bifoga dokument</label>
+                <input ref={docRef} type="file" accept=".pdf" className="hidden" onChange={e => setDocFile(e.target.files?.[0] || null)} />
+                <Button type="button" variant="outline" className="w-full h-8 text-xs gap-1" onClick={() => docRef.current?.click()}>
+                  <Upload className="h-3 w-3" /> {docFile ? docFile.name.slice(0, 20) : "Välj PDF"}
+                </Button>
+              </div>
+            </div>
+            <Button onClick={() => createMutation.mutate()} disabled={!form.title || !form.maturity_date || createMutation.isPending} className="w-full h-8 text-xs mt-2">
+              {createMutation.isPending ? "Skapar..." : "Skapa erbjudande"}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // ── List view ──
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -126,107 +227,9 @@ export default function TradeOffers() {
           <TrendingUp className="h-5 w-5 text-primary" />
           <h1 className="text-lg font-bold">Trade Offers</h1>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" className="h-7 text-[10px] gap-1">
-              <Plus className="h-3 w-3" /> Nytt erbjudande
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg max-h-[85vh]">
-            <DialogHeader>
-              <DialogTitle className="text-sm">Skapa Trade Offer</DialogTitle>
-            </DialogHeader>
-            <ScrollArea className="max-h-[70vh] pr-3">
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <label className="text-[10px] text-muted-foreground">Titel</label>
-                  <Input value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="h-8 text-xs" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] text-muted-foreground">Beskrivning</label>
-                  <Input value={form.description} onChange={e => setForm({...form, description: e.target.value})} className="h-8 text-xs" />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[10px] text-muted-foreground">Kvantitet</label>
-                    <Input type="number" value={form.quantity} onChange={e => setForm({...form, quantity: e.target.value})} className="h-8 text-xs" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] text-muted-foreground">Målbelopp (kr)</label>
-                    <Input type="number" value={form.target_amount} onChange={e => setForm({...form, target_amount: e.target.value})} className="h-8 text-xs" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] text-muted-foreground">Ränta (%)</label>
-                    <Input type="number" step="0.1" value={form.interest_rate} onChange={e => setForm({...form, interest_rate: e.target.value})} className="h-8 text-xs" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] text-muted-foreground">Förfallodag</label>
-                    <Input type="date" value={form.maturity_date} onChange={e => setForm({...form, maturity_date: e.target.value})} className="h-8 text-xs" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] text-muted-foreground">Minsta insats (kr)</label>
-                    <Input type="number" value={form.min_pledge} onChange={e => setForm({...form, min_pledge: e.target.value})} className="h-8 text-xs" placeholder="0" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] text-muted-foreground">Högsta insats (kr, valfri)</label>
-                    <Input type="number" value={form.max_pledge} onChange={e => setForm({...form, max_pledge: e.target.value})} className="h-8 text-xs" placeholder="Ingen gräns" />
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] text-muted-foreground">Inköpsdatum</label>
-                  <Input type="date" value={form.purchase_date} onChange={e => setForm({...form, purchase_date: e.target.value})} className="h-8 text-xs" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] text-muted-foreground">Återbetalningstyp</label>
-                  <Select value={form.repayment_type} onValueChange={v => setForm({...form, repayment_type: v})}>
-                    <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="lump_sum">Klumpsumma vid förfall</SelectItem>
-                      <SelectItem value="rolling">Löpande när produkter säljs</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] text-muted-foreground">Leverantör</label>
-                  <Input value={form.supplier_name} onChange={e => setForm({...form, supplier_name: e.target.value})} className="h-8 text-xs" placeholder="t.ex. Mondi AB" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] text-muted-foreground">Risknotering</label>
-                  <Input value={form.risk_note} onChange={e => setForm({...form, risk_note: e.target.value})} className="h-8 text-xs" placeholder="T.ex. vad händer om produkter ej säljs" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] text-muted-foreground">Synlighet</label>
-                  <Select value={form.visibility} onValueChange={v => setForm({...form, visibility: v})}>
-                    <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Alla klienter</SelectItem>
-                      <SelectItem value="specific">Specifika klienter</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[10px] text-muted-foreground">Produktbild</label>
-                    <input ref={imageRef} type="file" accept="image/*" className="hidden" onChange={e => setImageFile(e.target.files?.[0] || null)} />
-                    <Button type="button" variant="outline" className="w-full h-8 text-xs gap-1" onClick={() => imageRef.current?.click()}>
-                      <Upload className="h-3 w-3" /> {imageFile ? imageFile.name.slice(0, 20) : "Välj bild"}
-                    </Button>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] text-muted-foreground">Bifoga dokument</label>
-                    <input ref={docRef} type="file" accept=".pdf" className="hidden" onChange={e => setDocFile(e.target.files?.[0] || null)} />
-                    <Button type="button" variant="outline" className="w-full h-8 text-xs gap-1" onClick={() => docRef.current?.click()}>
-                      <Upload className="h-3 w-3" /> {docFile ? docFile.name.slice(0, 20) : "Välj PDF"}
-                    </Button>
-                  </div>
-                </div>
-                <Button onClick={() => createMutation.mutate()} disabled={!form.title || !form.maturity_date || createMutation.isPending} className="w-full h-8 text-xs">
-                  {createMutation.isPending ? "Skapar..." : "Skapa erbjudande"}
-                </Button>
-              </div>
-            </ScrollArea>
-          </DialogContent>
-        </Dialog>
+        <Button size="sm" className="h-7 text-[10px] gap-1" onClick={() => setIsCreating(true)}>
+          <Plus className="h-3 w-3" /> Nytt erbjudande
+        </Button>
       </div>
 
       <Card>
