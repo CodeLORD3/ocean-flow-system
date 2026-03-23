@@ -454,14 +454,16 @@ export default function PurchaseSchedule() {
       const k = key(item);
       const existing = grouped.get(k);
       if (existing) {
-        existing.totalQuantity += item.quantity;
-        existing.lineIds.push(item.lineId);
-        if (!existing.shopOrderIds.includes(item.shopOrderId)) existing.shopOrderIds.push(item.shopOrderId);
-        const shopEntry = existing.shops.find((s) => s.name === item.storeName);
+        if (!item.packed) {
+          existing.totalQuantity += item.quantity;
+          existing.lineIds.push(item.lineId);
+          if (!existing.shopOrderIds.includes(item.shopOrderId)) existing.shopOrderIds.push(item.shopOrderId);
+        }
+        const shopEntry = existing.shops.find((s) => s.name === item.storeName && s.packed === item.packed);
         if (shopEntry) {
           shopEntry.quantity += item.quantity;
         } else {
-          existing.shops.push({ name: item.storeName, zoneKey: item.zoneKey, quantity: item.quantity, deliveryDate: item.deliveryDate });
+          existing.shops.push({ name: item.storeName, zoneKey: item.zoneKey, quantity: item.quantity, deliveryDate: item.deliveryDate, packed: item.packed });
         }
         if (item.deliveryDate < existing.earliestDelivery) existing.earliestDelivery = item.deliveryDate;
       } else {
@@ -469,15 +471,15 @@ export default function PurchaseSchedule() {
           productId: item.productId,
           productName: item.productName,
           unit: item.unit,
-          totalQuantity: item.quantity,
-          shops: [{ name: item.storeName, zoneKey: item.zoneKey, quantity: item.quantity, deliveryDate: item.deliveryDate }],
+          totalQuantity: item.packed ? 0 : item.quantity,
+          shops: [{ name: item.storeName, zoneKey: item.zoneKey, quantity: item.quantity, deliveryDate: item.deliveryDate, packed: item.packed }],
           departureDate: item.departureDate,
           purchaseDate: item.purchaseDate,
           earliestDelivery: item.deliveryDate,
           departureTime: item.departureTime,
           category: item.category,
-          lineIds: [item.lineId],
-          shopOrderIds: [item.shopOrderId],
+          lineIds: item.packed ? [] : [item.lineId],
+          shopOrderIds: item.packed ? [] : [item.shopOrderId],
         });
       }
     }
