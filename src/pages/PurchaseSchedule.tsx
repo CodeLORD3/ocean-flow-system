@@ -510,7 +510,8 @@ export default function PurchaseSchedule() {
       });
     }
 
-    return Array.from(grouped.values());
+    // Filter out items that have no pending lines (only packed shops)
+    return Array.from(grouped.values()).filter(item => item.totalQuantity > 0 || item.isManual);
   }, [orders, stores, transportSchedules, storeMap, zoneSchedules, manualEntries, allProducts]);
 
   // ── Bought items for "Köpt vecka" tab ──
