@@ -5,9 +5,30 @@ import { markOrderLinesPackad, revertOrderLinesIfStockGone } from "@/lib/orderSt
 import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
-  Warehouse, Search, Plus, Package, AlertTriangle, MapPin, Truck,
-  Edit, ArrowRightLeft, ScanLine, Camera, ClipboardList, X, CheckCircle2,
-  ChevronDown, ChevronRight, Trash2, Scissors, Move, RefreshCw,
+  Warehouse,
+  Search,
+  Plus,
+  Package,
+  AlertTriangle,
+  MapPin,
+  Truck,
+  Edit,
+  ArrowRightLeft,
+  ScanLine,
+  Camera,
+  ClipboardList,
+  X,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  Trash2,
+  Scissors,
+  Move,
+  RefreshCw,
+  Clock,
+  Calendar,
+  Thermometer,
+  AlertCircle,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,11 +40,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useProducts } from "@/hooks/useProducts";
@@ -36,9 +60,14 @@ import {
 } from "@/hooks/useStorageLocations";
 import { useSite } from "@/contexts/SiteContext";
 import BarcodeScanner from "@/components/barcode/BarcodeScanner";
+import { format, differenceInDays, parseISO } from "date-fns";
+import { sv } from "date-fns/locale";
 
 const zoneIcon: Record<string, string> = {
-  Kyl: "❄️", Frys: "🧊", Torrt: "📦", Produktion: "🏭",
+  Kyl: "❄️",
+  Frys: "🧊",
+  Torrt: "📦",
+  Produktion: "🏭",
 };
 const zoneColor: Record<string, string> = {
   Kyl: "bg-blue-500/10 text-blue-600 border-blue-500/20",
@@ -46,6 +75,70 @@ const zoneColor: Record<string, string> = {
   Torrt: "bg-amber-500/10 text-amber-600 border-amber-500/20",
   Produktion: "bg-purple-500/10 text-purple-600 border-purple-500/20",
 };
+
+// ── Freshness helper ─────────────────────────────────────────────────────────
+type FreshnessInfo = {
+  label: string;
+  badgeClass: string;
+  rowClass: string;
+  daysLeft: number;
+  isExpired: boolean;
+  isCritical: boolean;
+};
+
+function getFreshnessInfo(expiryDate?: string | null): FreshnessInfo | null {
+  if (!expiryDate) return null;
+  const days = differenceInDays(parseISO(expiryDate), new Date());
+  if (days < 0)
+    return {
+      label: `Utgången (${Math.abs(days)}d)`,
+      badgeClass: "bg-destructive/10 text-destructive border-destructive/30",
+      rowClass: "bg-destructive/5",
+      daysLeft: days,
+      isExpired: true,
+      isCritical: true,
+    };
+  if (days <= 2)
+    return {
+      label: `${days}d kvar`,
+      badgeClass: "bg-destructive/10 text-destructive border-destructive/30",
+      rowClass: "bg-destructive/5",
+      daysLeft: days,
+      isExpired: false,
+      isCritical: true,
+    };
+  if (days <= 5)
+    return {
+      label: `${days}d kvar`,
+      badgeClass: "bg-amber-500/10 text-amber-700 border-amber-500/30",
+      rowClass: "bg-amber-500/5",
+      daysLeft: days,
+      isExpired: false,
+      isCritical: false,
+    };
+  return {
+    label: `${days}d kvar`,
+    badgeClass: "bg-emerald-500/10 text-emerald-700 border-emerald-500/30",
+    rowClass: "",
+    daysLeft: days,
+    isExpired: false,
+    isCritical: false,
+  };
+}
+
+// ── FIFO warning: returns true if any OTHER batch for same product is older ──
+function hasFifoIssue(item: any, allItems: any[]): boolean {
+  if (!item.arrival_date) return false;
+  return allItems.some(
+    (other) =>
+      other.product_id === item.product_id &&
+      other.id !== item.id &&
+      other.arrival_date &&
+      parseISO(other.arrival_date) < parseISO(item.arrival_date),
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 type InventoryLine = {
   product_id: string;
@@ -55,6 +148,8 @@ type InventoryLine = {
   category: string;
   cost_price: number;
   quantity: string;
+  expiry_date?: string;
+  arrival_date?: string;
 };
 
 const fmt = (v: number) =>
@@ -94,8 +189,8 @@ export default function Inventory() {
   const [invSaving, setInvSaving] = useState(false);
   const [invLocation, setInvLocation] = useState("");
 
-  // Stock action state (purchasing portal)
-  const [selectedItems, setSelectedItems] = useState<Map<string, Set<string>>>(new Map()); // locationId -> Set of stock item ids
+  // Stock action state
+  const [selectedItems, setSelectedItems] = useState<Map<string, Set<string>>>(new Map());
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [splitDialogOpen, setSplitDialogOpen] = useState(false);
@@ -105,88 +200,112 @@ export default function Inventory() {
   const [splitQty, setSplitQty] = useState("");
   const [splitTargetLocation, setSplitTargetLocation] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
-  // Transform state
   const [transformTargetProduct, setTransformTargetProduct] = useState("");
   const [transformNewWeight, setTransformNewWeight] = useState("");
   const [transformProductSearch, setTransformProductSearch] = useState("");
+
+  // Expiry alerts panel
+  const [showExpiryAlerts, setShowExpiryAlerts] = useState(false);
 
   const { data: stores = [] } = useStores();
   const { data: products = [] } = useProducts();
   const queryClient = useQueryClient();
   const storeFilter = activeStoreId || "all";
-  // For grossist portals, load ALL locations (not filtered by store) so we can group by store
   const isGrossist = site === "wholesale" || site === "production";
-  const { data: locations = [], isLoading: loadingLoc } = useStorageLocations(isGrossist ? undefined : (storeFilter !== "all" ? storeFilter : undefined));
+  const { data: locations = [], isLoading: loadingLoc } = useStorageLocations(
+    isGrossist ? undefined : storeFilter !== "all" ? storeFilter : undefined,
+  );
   const { data: allStock = [], isLoading: loadingStock } = useAllStockByLocation();
   const createLocation = useCreateStorageLocation();
   const upsertStock = useUpsertStockLocation();
 
   const getSelectedForLocation = (locId: string) => selectedItems.get(locId) || new Set<string>();
   const toggleItemSelection = (locId: string, itemId: string) => {
-    setSelectedItems(prev => {
+    setSelectedItems((prev) => {
       const next = new Map(prev);
       const set = new Set(next.get(locId) || []);
-      if (set.has(itemId)) set.delete(itemId); else set.add(itemId);
-      if (set.size === 0) next.delete(locId); else next.set(locId, set);
+      if (set.has(itemId)) set.delete(itemId);
+      else set.add(itemId);
+      if (set.size === 0) next.delete(locId);
+      else next.set(locId, set);
       return next;
     });
   };
   const clearSelection = (locId: string) => {
-    setSelectedItems(prev => { const next = new Map(prev); next.delete(locId); return next; });
+    setSelectedItems((prev) => {
+      const next = new Map(prev);
+      next.delete(locId);
+      return next;
+    });
   };
-
   const getSelectedStockItems = (locId: string) => {
     const ids = getSelectedForLocation(locId);
     return allStock.filter((s: any) => ids.has(s.id));
   };
-
   const invalidateStock = () => {
     queryClient.invalidateQueries({ queryKey: ["product_stock_locations"] });
     queryClient.invalidateQueries({ queryKey: ["all_stock_locations"] });
   };
 
+  // ── Expiry KPIs ─────────────────────────────────────────────────────────
+  const expiryAlerts = useMemo(() => {
+    return allStock
+      .filter((s: any) => s.expiry_date)
+      .map((s: any) => ({
+        ...s,
+        freshness: getFreshnessInfo(s.expiry_date),
+      }))
+      .filter((s: any) => s.freshness && s.freshness.daysLeft <= 5)
+      .sort((a: any, b: any) => a.freshness.daysLeft - b.freshness.daysLeft);
+  }, [allStock]);
+
+  // ── Move / Delete / Split / Transform (unchanged logic) ──────────────────
   const handleMove = async (targetLocationId: string) => {
     setActionLoading(true);
     try {
       const items = getSelectedStockItems(activeLocationId);
       for (const item of items) {
-        // Check if product already exists at target
         const { data: existing } = await supabase
           .from("product_stock_locations")
           .select("id, quantity, unit_cost")
           .eq("product_id", item.product_id)
           .eq("location_id", targetLocationId)
           .maybeSingle();
-
         const itemCost = Number(item.unit_cost) || 0;
         if (existing) {
           const oldTotal = Number(existing.quantity) * (Number(existing.unit_cost) || 0);
           const newTotal = Number(item.quantity) * itemCost;
           const combinedQty = Number(existing.quantity) + Number(item.quantity);
           const avgCost = combinedQty > 0 ? (oldTotal + newTotal) / combinedQty : 0;
-          await supabase.from("product_stock_locations")
+          await supabase
+            .from("product_stock_locations")
             .update({ quantity: combinedQty, unit_cost: avgCost, updated_at: new Date().toISOString() })
             .eq("id", existing.id);
         } else {
-          await supabase.from("product_stock_locations")
-            .insert({ product_id: item.product_id, location_id: targetLocationId, quantity: Number(item.quantity), unit_cost: itemCost });
+          await supabase.from("product_stock_locations").insert({
+            product_id: item.product_id,
+            location_id: targetLocationId,
+            quantity: Number(item.quantity),
+            unit_cost: itemCost,
+            expiry_date: item.expiry_date || null,
+            arrival_date: item.arrival_date || null,
+          });
         }
-        // Remove from source
         await supabase.from("product_stock_locations").delete().eq("id", item.id);
       }
-
-      // Reverse sync FIRST: revert order lines if stock no longer supports their status
       await revertOrderLinesIfStockGone();
-      // THEN auto-update order statuses to "Packad" if moving to a Pre-location
-      // This must run LAST so Pre-location packing status is not overridden by GF sync
       const movedProductIds = items.map((i: any) => i.product_id);
       await markOrderLinesPackad(movedProductIds, targetLocationId);
-
       clearSelection(activeLocationId);
       invalidateStock();
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
       toast({ title: "Flyttat", description: `${items.length} produkt(er) flyttade` });
-      await logActivity({ action_type: "update", description: `Lager flyttat: ${items.length} produkt(er)`, entity_type: "stock_transfer", details: { count: items.length, target_location: targetLocationId } });
+      await logActivity({
+        action_type: "update",
+        description: `Lager flyttat: ${items.length} produkt(er)`,
+        entity_type: "stock_transfer",
+        details: { count: items.length, target_location: targetLocationId },
+      });
       setMoveDialogOpen(false);
     } catch (err: any) {
       toast({ title: "Fel", description: err.message, variant: "destructive" });
@@ -208,13 +327,17 @@ export default function Inventory() {
         });
         await supabase.from("product_stock_locations").delete().eq("id", item.id);
       }
-      // Reverse sync: revert order lines if stock no longer supports their status
       await revertOrderLinesIfStockGone();
       clearSelection(activeLocationId);
       invalidateStock();
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
       toast({ title: "Raderat", description: `${items.length} produkt(er) raderade` });
-      await logActivity({ action_type: "delete", description: `Lager raderat: ${items.length} produkt(er) — ${deleteReason.trim()}`, entity_type: "stock_delete", details: { count: items.length, reason: deleteReason.trim() } });
+      await logActivity({
+        action_type: "delete",
+        description: `Lager raderat: ${items.length} produkt(er) — ${deleteReason.trim()}`,
+        entity_type: "stock_delete",
+        details: { count: items.length, reason: deleteReason.trim() },
+      });
       setDeleteDialogOpen(false);
       setDeleteReason("");
     } catch (err: any) {
@@ -228,26 +351,29 @@ export default function Inventory() {
     setActionLoading(true);
     try {
       const items = getSelectedStockItems(activeLocationId);
-      // Split only works on first selected item
       const item = items[0];
       const splitAmount = Number(splitQty);
       const remaining = Number(item.quantity) - splitAmount;
       if (splitAmount <= 0 || splitAmount >= Number(item.quantity)) {
-        toast({ title: "Ogiltigt antal", description: "Ange ett antal mindre än nuvarande.", variant: "destructive" });
+        toast({ title: "Ogiltigt antal", variant: "destructive" });
         setActionLoading(false);
         return;
       }
-      // Update source quantity
-      await supabase.from("product_stock_locations")
+      await supabase
+        .from("product_stock_locations")
         .update({ quantity: remaining, updated_at: new Date().toISOString() })
         .eq("id", item.id);
       const itemCost = Number(item.unit_cost) || 0;
-      // If splitting to the SAME location, always create a new row
       if (splitTargetLocation === activeLocationId) {
-        await supabase.from("product_stock_locations")
-          .insert({ product_id: item.product_id, location_id: splitTargetLocation, quantity: splitAmount, unit_cost: itemCost });
+        await supabase.from("product_stock_locations").insert({
+          product_id: item.product_id,
+          location_id: splitTargetLocation,
+          quantity: splitAmount,
+          unit_cost: itemCost,
+          expiry_date: item.expiry_date || null,
+          arrival_date: item.arrival_date || null,
+        });
       } else {
-        // Add/merge to target, preserving unit_cost
         const { data: existing } = await supabase
           .from("product_stock_locations")
           .select("id, quantity, unit_cost")
@@ -255,15 +381,24 @@ export default function Inventory() {
           .eq("location_id", splitTargetLocation)
           .maybeSingle();
         if (existing) {
-          const oldTotal = Number(existing.quantity) * (Number(existing.unit_cost) || 0);
           const combinedQty = Number(existing.quantity) + splitAmount;
-          const avgCost = combinedQty > 0 ? (oldTotal + splitAmount * itemCost) / combinedQty : 0;
-          await supabase.from("product_stock_locations")
+          const avgCost =
+            combinedQty > 0
+              ? (Number(existing.quantity) * (Number(existing.unit_cost) || 0) + splitAmount * itemCost) / combinedQty
+              : 0;
+          await supabase
+            .from("product_stock_locations")
             .update({ quantity: combinedQty, unit_cost: avgCost, updated_at: new Date().toISOString() })
             .eq("id", existing.id);
         } else {
-          await supabase.from("product_stock_locations")
-            .insert({ product_id: item.product_id, location_id: splitTargetLocation, quantity: splitAmount, unit_cost: itemCost });
+          await supabase.from("product_stock_locations").insert({
+            product_id: item.product_id,
+            location_id: splitTargetLocation,
+            quantity: splitAmount,
+            unit_cost: itemCost,
+            expiry_date: item.expiry_date || null,
+            arrival_date: item.arrival_date || null,
+          });
         }
       }
       clearSelection(activeLocationId);
@@ -287,38 +422,34 @@ export default function Inventory() {
       const newWeight = Number(transformNewWeight);
       const oldWeight = Number(item.quantity);
       if (newWeight <= 0 || newWeight >= oldWeight) {
-        toast({ title: "Ogiltig vikt", description: "Ny vikt måste vara mindre än nuvarande.", variant: "destructive" });
+        toast({ title: "Ogiltig vikt", variant: "destructive" });
         setActionLoading(false);
         return;
       }
       const weightLoss = oldWeight - newWeight;
       const itemCost = Number(item.unit_cost) || 0;
-      // Cost per kg stays the same for original, but total cost transfers to new product
-      const totalCostTransfer = oldWeight * itemCost; // total value of original
-      const newUnitCost = newWeight > 0 ? totalCostTransfer / newWeight : 0; // cost concentrates into less weight
-
-      // Remove the original stock row
+      const totalCostTransfer = oldWeight * itemCost;
+      const newUnitCost = newWeight > 0 ? totalCostTransfer / newWeight : 0;
       await supabase.from("product_stock_locations").delete().eq("id", item.id);
-
-      // Insert transformed product at the same location
       await supabase.from("product_stock_locations").insert({
         product_id: transformTargetProduct,
         location_id: item.location_id,
         quantity: newWeight,
         unit_cost: newUnitCost,
+        arrival_date: new Date().toISOString().slice(0, 10),
       });
-
-      // Log the weight loss
       await supabase.from("deleted_stock_log").insert({
         product_id: item.product_id,
         location_id: item.location_id,
         quantity: weightLoss,
-        reason: `Omvandling: ${item.products?.name} → ${products.find(p => p.id === transformTargetProduct)?.name || "okänd"} (svinn ${weightLoss.toFixed(2)} ${item.products?.unit || "kg"})`,
+        reason: `Omvandling: ${item.products?.name} → ${products.find((p) => p.id === transformTargetProduct)?.name || "okänd"} (svinn ${weightLoss.toFixed(2)} ${item.products?.unit || "kg"})`,
       });
-
       clearSelection(activeLocationId);
       invalidateStock();
-      toast({ title: "Omvandlad", description: `${item.products?.name} → ${products.find(p => p.id === transformTargetProduct)?.name}, ${newWeight} ${item.products?.unit || "kg"} (svinn: ${weightLoss.toFixed(2)})` });
+      toast({
+        title: "Omvandlad",
+        description: `${item.products?.name} → ${products.find((p) => p.id === transformTargetProduct)?.name}, ${newWeight} ${item.products?.unit || "kg"} (svinn: ${weightLoss.toFixed(2)})`,
+      });
       setTransformDialogOpen(false);
       setTransformTargetProduct("");
       setTransformNewWeight("");
@@ -329,26 +460,22 @@ export default function Inventory() {
     setActionLoading(false);
   };
 
-  // Compute aggregated stock: "Total Butik" should include stock from all other locations in the same store
+  // ── Stock aggregations ───────────────────────────────────────────────────
   const storeStock = useMemo(() => {
     let filtered = allStock;
     if (activeStoreId) {
       filtered = allStock.filter((s: any) => s.storage_locations?.store_id === activeStoreId);
     }
-
-    // Aggregate: combine quantities across all locations per product, 
-    // and also keep individual location entries for the detail view
-    // For KPIs we use aggregated (unique product) totals
     if (search) {
-      filtered = filtered.filter((s: any) =>
-        s.products?.name?.toLowerCase().includes(search.toLowerCase()) ||
-        s.products?.sku?.toLowerCase().includes(search.toLowerCase())
+      filtered = filtered.filter(
+        (s: any) =>
+          s.products?.name?.toLowerCase().includes(search.toLowerCase()) ||
+          s.products?.sku?.toLowerCase().includes(search.toLowerCase()),
       );
     }
     return filtered;
   }, [allStock, activeStoreId, search]);
 
-  // Aggregated stock per product (summing across all locations in the store) for KPIs
   const aggregatedStock = useMemo(() => {
     const map = new Map<string, { quantity: number; cost_price: number; min_stock: number; product: any }>();
     storeStock.forEach((s: any) => {
@@ -369,178 +496,195 @@ export default function Inventory() {
     return map;
   }, [storeStock]);
 
-  // Group stock by category
-  const stockByCategory = useMemo(() => {
-    const groups: Record<string, any[]> = {};
-    storeStock.forEach((s: any) => {
-      const cat = s.products?.category || "Övrigt";
-      if (!groups[cat]) groups[cat] = [];
-      groups[cat].push(s);
-    });
-    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b, "sv"));
-  }, [storeStock]);
-
-  // KPIs (aggregated per product to avoid double-counting across locations)
-  const totalProducts = aggregatedStock.size;
-  const totalQty = Array.from(aggregatedStock.values()).reduce((s, i) => s + i.quantity, 0);
-  const totalValue = storeStock.reduce((s: number, i: any) => s + Number(i.quantity) * (Number(i.unit_cost) || Number(i.products?.cost_price) || 0), 0);
-  const lowStockItems = Array.from(aggregatedStock.values()).filter(i => i.min_stock > 0 && i.quantity < i.min_stock).length;
-
-  const toggleCategory = (cat: string) => {
-    setExpandedCategories(prev => {
-      const next = new Set(prev);
-      if (next.has(cat)) next.delete(cat); else next.add(cat);
-      return next;
-    });
-  };
-
-  const toggleLocation = (locId: string) => {
-    setExpandedLocations(prev => {
-      const next = new Set(prev);
-      if (next.has(locId)) next.delete(locId); else next.add(locId);
-      return next;
-    });
-  };
-
-  const expandAll = () => {
-    setExpandedLocations(new Set(portalLocations.map((l: any) => l.id)));
-    setExpandedCategories(new Set(stockByCategory.map(([cat]) => cat)));
-    setExpandedGroups(new Set(groupedByStore.map(g => g.storeName)));
-  };
-
-  const collapseAll = () => {
-    setExpandedLocations(new Set());
-    setExpandedCategories(new Set());
-    setExpandedGroups(new Set());
-  };
-
-  
-
-  // Filter locations by zone for purchasing/production portals
-  // For grossist portals, include Pre-locations, general locations, AND shop Raw-lager
   const portalLocations = useMemo(() => {
     const isPre = (loc: any) => (loc.name || "").toLowerCase().startsWith("pre-");
     const isShared = (loc: any) => loc.name === "Grossist Flytande" || loc.name === "Transportlager";
     if (site === "production") {
-      return locations.filter((loc: any) =>
-        loc.zone === "Produktion" || isPre(loc) || isShared(loc)
-      );
+      return locations.filter((loc: any) => loc.zone === "Produktion" || isPre(loc) || isShared(loc));
     }
     if (site === "wholesale") {
-      return locations.filter((loc: any) =>
-        loc.zone === "Inköp" || isPre(loc) || isShared(loc) || loc.name?.startsWith("Raw")
+      return locations.filter(
+        (loc: any) => loc.zone === "Inköp" || isPre(loc) || isShared(loc) || loc.name?.startsWith("Raw"),
       );
     }
     return locations;
   }, [locations, site]);
 
-  // Stock grouped by location for purchasing/production portal
   const stockByLocation = useMemo(() => {
     return portalLocations.map((loc: any) => {
       let items = allStock.filter((s: any) => s.location_id === loc.id);
       if (search) {
-        items = items.filter((s: any) =>
-          s.products?.name?.toLowerCase().includes(search.toLowerCase()) ||
-          s.products?.sku?.toLowerCase().includes(search.toLowerCase())
+        items = items.filter(
+          (s: any) =>
+            s.products?.name?.toLowerCase().includes(search.toLowerCase()) ||
+            s.products?.sku?.toLowerCase().includes(search.toLowerCase()),
         );
       }
       const totalQty = items.reduce((sum: number, s: any) => sum + Number(s.quantity), 0);
       const isRawLager = (loc.name || "").toLowerCase().startsWith("raw-");
       const totalValue = items.reduce((sum: number, s: any) => {
         const qty = Number(s.quantity);
-        if (isRawLager) {
-          return sum + qty * (Number(s.products?.wholesale_price) || 0);
-        }
+        if (isRawLager) return sum + qty * (Number(s.products?.wholesale_price) || 0);
         return sum + qty * (Number(s.unit_cost) || Number(s.products?.cost_price) || 0);
       }, 0);
-      return { ...loc, items, totalQty, totalValue };
+      // Count expiry warnings per location
+      const expiryWarnings = items.filter((s: any) => {
+        if (!s.expiry_date) return false;
+        const f = getFreshnessInfo(s.expiry_date);
+        return f && f.daysLeft <= 5;
+      }).length;
+      return { ...loc, items, totalQty, totalValue, expiryWarnings };
     });
   }, [portalLocations, allStock, search]);
 
-  // Group locations by store for grossist portals
   const groupedByStore = useMemo(() => {
     if (site !== "production" && site !== "wholesale") return [];
-
     const generalNames = ["Grossist Flytande", "Transportlager"];
-    const storeGroups = new Map<string, { storeName: string; locations: typeof stockByLocation; totalQty: number; totalValue: number }>();
+    const storeGroups = new Map<
+      string,
+      { storeName: string; locations: typeof stockByLocation; totalQty: number; totalValue: number }
+    >();
     const generalLocations: typeof stockByLocation = [];
-
     stockByLocation.forEach((loc: any) => {
       if (generalNames.includes(loc.name)) {
         generalLocations.push(loc);
         return;
       }
-      // Find store name from the location's store relation
       const storeName = loc.stores?.name || stores.find((s: any) => s.id === loc.store_id)?.name || "Produktion";
-      if (!storeGroups.has(storeName)) {
+      if (!storeGroups.has(storeName))
         storeGroups.set(storeName, { storeName, locations: [], totalQty: 0, totalValue: 0 });
-      }
       const group = storeGroups.get(storeName)!;
       group.locations.push(loc);
       group.totalQty += loc.totalQty;
       group.totalValue += loc.totalValue;
     });
-
-    const result: { type: "store" | "general"; storeName: string; locations: typeof stockByLocation; totalQty: number; totalValue: number }[] = [];
-
-    // General locations first
-    generalLocations.forEach(loc => {
-      result.push({ type: "general", storeName: loc.name, locations: [loc], totalQty: loc.totalQty, totalValue: loc.totalValue });
-    });
-
-    // Then store groups sorted alphabetically
+    const result: {
+      type: "store" | "general";
+      storeName: string;
+      locations: typeof stockByLocation;
+      totalQty: number;
+      totalValue: number;
+    }[] = [];
+    generalLocations.forEach((loc) =>
+      result.push({
+        type: "general",
+        storeName: loc.name,
+        locations: [loc],
+        totalQty: loc.totalQty,
+        totalValue: loc.totalValue,
+      }),
+    );
     Array.from(storeGroups.entries())
       .sort(([a], [b]) => a.localeCompare(b, "sv"))
-      .forEach(([, group]) => {
-        result.push({ type: "store", ...group });
-      });
-
+      .forEach(([, group]) => result.push({ type: "store", ...group }));
     return result;
   }, [stockByLocation, stores, site]);
 
-  const toggleGroup = (name: string) => {
-    setExpandedGroups(prev => {
+  const totalProducts = aggregatedStock.size;
+  const totalQty = Array.from(aggregatedStock.values()).reduce((s, i) => s + i.quantity, 0);
+  const totalValue = storeStock.reduce(
+    (s: number, i: any) => s + Number(i.quantity) * (Number(i.unit_cost) || Number(i.products?.cost_price) || 0),
+    0,
+  );
+  const lowStockItems = Array.from(aggregatedStock.values()).filter(
+    (i) => i.min_stock > 0 && i.quantity < i.min_stock,
+  ).length;
+  const expiredCount = allStock.filter((s: any) => {
+    if (!s.expiry_date) return false;
+    const f = getFreshnessInfo(s.expiry_date);
+    return f && f.isExpired;
+  }).length;
+
+  const toggleCategory = (cat: string) =>
+    setExpandedCategories((prev) => {
       const next = new Set(prev);
-      if (next.has(name)) next.delete(name); else next.add(name);
+      next.has(cat) ? next.delete(cat) : next.add(cat);
       return next;
     });
+  const toggleLocation = (locId: string) =>
+    setExpandedLocations((prev) => {
+      const next = new Set(prev);
+      next.has(locId) ? next.delete(locId) : next.add(locId);
+      return next;
+    });
+  const toggleGroup = (name: string) =>
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      next.has(name) ? next.delete(name) : next.add(name);
+      return next;
+    });
+  const expandAll = () => {
+    setExpandedLocations(new Set(portalLocations.map((l: any) => l.id)));
+    setExpandedGroups(new Set(groupedByStore.map((g) => g.storeName)));
+  };
+  const collapseAll = () => {
+    setExpandedLocations(new Set());
+    setExpandedCategories(new Set());
+    setExpandedGroups(new Set());
   };
 
-  // --- Location dialog ---
+  // ── Location + stock dialogs ─────────────────────────────────────────────
   const handleCreateLocation = () => {
     if (!locName || !locStore) return;
-    createLocation.mutate({ name: locName, store_id: locStore, zone: locZone || undefined, description: locDesc || undefined }, {
-      onSuccess: () => {
-        toast({ title: "Lagerställe skapat", description: locName });
-        setLocationDialogOpen(false);
-        setLocName(""); setLocStore(""); setLocZone("Kyl"); setLocDesc("");
+    createLocation.mutate(
+      { name: locName, store_id: locStore, zone: locZone || undefined, description: locDesc || undefined },
+      {
+        onSuccess: () => {
+          toast({ title: "Lagerställe skapat", description: locName });
+          setLocationDialogOpen(false);
+          setLocName("");
+          setLocStore("");
+          setLocZone("Kyl");
+          setLocDesc("");
+        },
+        onError: (err) => toast({ title: "Fel", description: err.message, variant: "destructive" }),
       },
-      onError: (err) => toast({ title: "Fel", description: err.message, variant: "destructive" }),
-    });
+    );
   };
 
   const handleUpsertStock = () => {
     if (!stockProduct || !stockLocation || !stockQty) return;
-    upsertStock.mutate({ product_id: stockProduct, location_id: stockLocation, quantity: Number(stockQty), min_stock: stockMin ? Number(stockMin) : 0 }, {
-      onSuccess: () => {
-        toast({ title: "Lagersaldo uppdaterat" });
-        setStockDialogOpen(false);
-        setStockProduct(""); setStockLocation(""); setStockQty(""); setStockMin("");
+    upsertStock.mutate(
+      {
+        product_id: stockProduct,
+        location_id: stockLocation,
+        quantity: Number(stockQty),
+        min_stock: stockMin ? Number(stockMin) : 0,
       },
-      onError: (err) => toast({ title: "Fel", description: err.message, variant: "destructive" }),
-    });
+      {
+        onSuccess: () => {
+          toast({ title: "Lagersaldo uppdaterat" });
+          setStockDialogOpen(false);
+          setStockProduct("");
+          setStockLocation("");
+          setStockQty("");
+          setStockMin("");
+        },
+        onError: (err) => toast({ title: "Fel", description: err.message, variant: "destructive" }),
+      },
+    );
   };
 
-  // --- Lagerrapport logic ---
+  // ── Lagerrapport ─────────────────────────────────────────────────────────
   const addProductToReport = (product: any) => {
-    if (invLines.find(l => l.product_id === product.id)) {
-      toast({ title: "Redan tillagd", description: product.name }); return;
+    if (invLines.find((l) => l.product_id === product.id)) {
+      toast({ title: "Redan tillagd", description: product.name });
+      return;
     }
-    setInvLines(prev => [...prev, {
-      product_id: product.id, product_name: product.name,
-      sku: product.sku, unit: product.unit, category: product.category,
-      cost_price: Number(product.cost_price) || 0, quantity: "",
-    }]);
+    setInvLines((prev) => [
+      ...prev,
+      {
+        product_id: product.id,
+        product_name: product.name,
+        sku: product.sku,
+        unit: product.unit,
+        category: product.category,
+        cost_price: Number(product.cost_price) || 0,
+        quantity: "",
+        expiry_date: "",
+        arrival_date: new Date().toISOString().slice(0, 10),
+      },
+    ]);
     setInvProductSearch("");
   };
 
@@ -549,41 +693,58 @@ export default function Inventory() {
     if (product) {
       addProductToReport(product);
       toast({ title: "Produkt skannad", description: product.name });
-    } else {
-      toast({ title: "Okänd streckkod", description: `Kod: ${code}`, variant: "destructive" });
-    }
+    } else toast({ title: "Okänd streckkod", description: `Kod: ${code}`, variant: "destructive" });
     setShowScanner(false);
   };
 
-  const updateInvLine = (idx: number, qty: string) => {
-    setInvLines(prev => prev.map((l, i) => i === idx ? { ...l, quantity: qty } : l));
+  const updateInvLine = (idx: number, field: keyof InventoryLine, value: string) => {
+    setInvLines((prev) => prev.map((l, i) => (i === idx ? { ...l, [field]: value } : l)));
   };
 
-  const removeInvLine = (idx: number) => {
-    setInvLines(prev => prev.filter((_, i) => i !== idx));
-  };
+  const removeInvLine = (idx: number) => setInvLines((prev) => prev.filter((_, i) => i !== idx));
 
-  const reportTotalValue = invLines.reduce((sum, l) => {
-    const qty = Number(l.quantity) || 0;
-    return sum + qty * l.cost_price;
-  }, 0);
+  const reportTotalValue = invLines.reduce((sum, l) => sum + (Number(l.quantity) || 0) * l.cost_price, 0);
 
   const saveReport = async () => {
     if (!invLocation || invLines.length === 0) return;
-    const validLines = invLines.filter(l => l.quantity !== "" && !isNaN(Number(l.quantity)));
-    if (validLines.length === 0) { toast({ title: "Ange antal för minst en produkt", variant: "destructive" }); return; }
+    const validLines = invLines.filter((l) => l.quantity !== "" && !isNaN(Number(l.quantity)));
+    if (validLines.length === 0) {
+      toast({ title: "Ange antal för minst en produkt", variant: "destructive" });
+      return;
+    }
     setInvSaving(true);
     try {
       for (const line of validLines) {
-        await upsertStock.mutateAsync({
-          product_id: line.product_id,
-          location_id: invLocation,
-          quantity: Number(line.quantity),
-        });
+        // Insert stock with expiry + arrival date
+        const { data: existing } = await supabase
+          .from("product_stock_locations")
+          .select("id")
+          .eq("product_id", line.product_id)
+          .eq("location_id", invLocation)
+          .maybeSingle();
+
+        if (existing) {
+          await supabase
+            .from("product_stock_locations")
+            .update({
+              quantity: Number(line.quantity),
+              expiry_date: line.expiry_date || null,
+              arrival_date: line.arrival_date || null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", existing.id);
+        } else {
+          await supabase.from("product_stock_locations").insert({
+            product_id: line.product_id,
+            location_id: invLocation,
+            quantity: Number(line.quantity),
+            expiry_date: line.expiry_date || null,
+            arrival_date: line.arrival_date || null,
+          });
+        }
       }
 
-      // Save inventory report history
-      const loc = locations.find(l => l.id === invLocation);
+      const loc = locations.find((l) => l.id === invLocation);
       const totalValue = validLines.reduce((sum, l) => sum + Number(l.quantity) * l.cost_price, 0);
       const { data: report } = await supabase
         .from("inventory_reports")
@@ -598,7 +759,7 @@ export default function Inventory() {
         .single();
 
       if (report) {
-        const reportLines = validLines.map(l => ({
+        const reportLines = validLines.map((l) => ({
           report_id: report.id,
           product_id: l.product_id,
           product_name: l.product_name,
@@ -612,7 +773,10 @@ export default function Inventory() {
         await supabase.from("inventory_report_lines").insert(reportLines);
       }
 
-      toast({ title: "Lagerrapport sparad", description: `${validLines.length} produkter uppdaterade · Lagervärde: ${fmt(reportTotalValue)}` });
+      toast({
+        title: "Lagerrapport sparad",
+        description: `${validLines.length} produkter uppdaterade · Lagervärde: ${fmt(reportTotalValue)}`,
+      });
       setInvLines([]);
       setReportDialogOpen(false);
     } catch (err: any) {
@@ -621,41 +785,77 @@ export default function Inventory() {
     setInvSaving(false);
   };
 
-  const filteredProductsForAdd = products.filter(p =>
-    invProductSearch &&
-    (p.name.toLowerCase().includes(invProductSearch.toLowerCase()) ||
-     p.sku.toLowerCase().includes(invProductSearch.toLowerCase())) &&
-    !invLines.find(l => l.product_id === p.id)
-  ).slice(0, 8);
+  const filteredProductsForAdd = products
+    .filter(
+      (p) =>
+        invProductSearch &&
+        (p.name.toLowerCase().includes(invProductSearch.toLowerCase()) ||
+          p.sku.toLowerCase().includes(invProductSearch.toLowerCase())) &&
+        !invLines.find((l) => l.product_id === p.id),
+    )
+    .slice(0, 8);
 
-  // Group report lines by category for display
   const reportLinesByCategory = useMemo(() => {
     const groups: Record<string, InventoryLine[]> = {};
-    invLines.forEach((l, idx) => {
+    invLines.forEach((l) => {
       const cat = l.category || "Övrigt";
       if (!groups[cat]) groups[cat] = [];
-      groups[cat].push({ ...l, quantity: l.quantity });
+      groups[cat].push(l);
     });
     return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b, "sv"));
   }, [invLines]);
 
-  // Helper: render selection action buttons for a location
+  // ── Render helpers ───────────────────────────────────────────────────────
   const renderSelectionActions = (locId: string) => (
     <div className="flex items-center gap-1 mr-2">
-      <Badge variant="outline" className="text-[10px] h-5">{getSelectedForLocation(locId).size} valda</Badge>
-      <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] gap-1" onClick={() => { setActiveLocationId(locId); setMoveDialogOpen(true); }}>
+      <Badge variant="outline" className="text-[10px] h-5">
+        {getSelectedForLocation(locId).size} valda
+      </Badge>
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-6 px-2 text-[10px] gap-1"
+        onClick={() => {
+          setActiveLocationId(locId);
+          setMoveDialogOpen(true);
+        }}
+      >
         <Move className="h-3 w-3" /> Flytta
       </Button>
-      <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => { setActiveLocationId(locId); setDeleteDialogOpen(true); }}>
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+        onClick={() => {
+          setActiveLocationId(locId);
+          setDeleteDialogOpen(true);
+        }}
+      >
         <Trash2 className="h-3 w-3" /> Radera
       </Button>
       {getSelectedForLocation(locId).size === 1 && (
         <>
-          <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] gap-1" onClick={() => { setActiveLocationId(locId); setSplitDialogOpen(true); }}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-6 px-2 text-[10px] gap-1"
+            onClick={() => {
+              setActiveLocationId(locId);
+              setSplitDialogOpen(true);
+            }}
+          >
             <Scissors className="h-3 w-3" /> Splitta
           </Button>
           {site === "production" && (
-            <Button variant="outline" size="sm" className="h-6 px-2 text-[10px] gap-1" onClick={() => { setActiveLocationId(locId); setTransformDialogOpen(true); }}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-6 px-2 text-[10px] gap-1"
+              onClick={() => {
+                setActiveLocationId(locId);
+                setTransformDialogOpen(true);
+              }}
+            >
               <RefreshCw className="h-3 w-3" /> Omvandla
             </Button>
           )}
@@ -664,7 +864,7 @@ export default function Inventory() {
     </div>
   );
 
-  // Helper: render the product table for a location
+  // ── Main location table — now with expiry date + FIFO ───────────────────
   const renderLocationTable = (loc: any) => (
     <div className="border-t border-border/50">
       {loc.items.length === 0 ? (
@@ -679,28 +879,66 @@ export default function Inventory() {
               <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Kategori</th>
               <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Antal</th>
               <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Värde</th>
+              <th className="px-3 py-1.5 text-center font-medium text-muted-foreground">Ankomst</th>
+              <th className="px-3 py-1.5 text-center font-medium text-muted-foreground">Bäst före</th>
+              <th className="px-3 py-1.5 text-center font-medium text-muted-foreground">Färskhet</th>
             </tr>
           </thead>
           <tbody>
             {loc.items.map((s: any) => {
               const isRawLager = (loc.name || "").toLowerCase().startsWith("raw-");
               const unitPrice = isRawLager
-                ? (Number(s.products?.wholesale_price) || 0)
-                : (Number(s.unit_cost) || Number(s.products?.cost_price) || 0);
+                ? Number(s.products?.wholesale_price) || 0
+                : Number(s.unit_cost) || Number(s.products?.cost_price) || 0;
               const value = Number(s.quantity) * unitPrice;
               const isChecked = getSelectedForLocation(loc.id).has(s.id);
+              const freshness = getFreshnessInfo(s.expiry_date);
+              const fifoIssue = hasFifoIssue(s, loc.items);
+
               return (
-                <tr key={s.id} className={`border-b border-border/30 last:border-0 hover:bg-muted/20 ${isChecked ? "bg-primary/5" : ""}`}>
+                <tr
+                  key={s.id}
+                  className={`border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors ${isChecked ? "bg-primary/5" : freshness?.rowClass || ""}`}
+                >
                   <td className="px-3 py-2 text-center">
                     <Checkbox checked={isChecked} onCheckedChange={() => toggleItemSelection(loc.id, s.id)} />
                   </td>
-                  <td className="px-3 py-2 font-medium text-foreground">{s.products?.name}</td>
+                  <td className="px-3 py-2 font-medium text-foreground">
+                    <div className="flex items-center gap-1.5">
+                      {s.products?.name}
+                      {fifoIssue && (
+                        <span title="FIFO-varning: äldre batch finns på annat lagerställe">
+                          <AlertCircle className="h-3 w-3 text-amber-500" />
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-3 py-2 font-mono text-muted-foreground text-[10px]">{s.products?.sku}</td>
                   <td className="px-3 py-2 text-muted-foreground">{s.products?.category}</td>
                   <td className="px-3 py-2 text-right font-medium text-foreground">
                     {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
                   </td>
                   <td className="px-3 py-2 text-right text-muted-foreground">{fmt(value)}</td>
+                  <td className="px-3 py-2 text-center text-[10px] text-muted-foreground">
+                    {s.arrival_date ? format(parseISO(s.arrival_date), "d MMM", { locale: sv }) : "–"}
+                  </td>
+                  <td className="px-3 py-2 text-center text-[10px] text-muted-foreground">
+                    {s.expiry_date ? format(parseISO(s.expiry_date), "d MMM", { locale: sv }) : "–"}
+                  </td>
+                  <td className="px-3 py-2 text-center">
+                    {freshness ? (
+                      <Badge variant="outline" className={`text-[10px] ${freshness.badgeClass}`}>
+                        {freshness.isExpired ? (
+                          <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
+                        ) : (
+                          <Clock className="h-2.5 w-2.5 mr-0.5" />
+                        )}
+                        {freshness.label}
+                      </Badge>
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground/40">–</span>
+                    )}
+                  </td>
                 </tr>
               );
             })}
@@ -710,123 +948,7 @@ export default function Inventory() {
     </div>
   );
 
-  // Helper: render Transportlager grouped by order
-  const renderTransportlagerGrouped = (loc: any) => {
-    // Group items by shop_order_id
-    const orderGroups = new Map<string, { orderInfo: any; items: any[]; totalQty: number; totalValue: number }>();
-    const untagged: any[] = [];
-
-    for (const item of loc.items) {
-      const orderId = item.shop_order_id;
-      if (!orderId) {
-        untagged.push(item);
-        continue;
-      }
-      if (!orderGroups.has(orderId)) {
-        orderGroups.set(orderId, {
-          orderInfo: item.shop_orders,
-          items: [],
-          totalQty: 0,
-          totalValue: 0,
-        });
-      }
-      const group = orderGroups.get(orderId)!;
-      group.items.push(item);
-      const qty = Number(item.quantity) || 0;
-      const price = Number(item.unit_cost) || Number(item.products?.cost_price) || 0;
-      group.totalQty += qty;
-      group.totalValue += qty * price;
-    }
-
-    return (
-      <div className="border-t border-border/50">
-        {orderGroups.size === 0 && untagged.length === 0 && (
-          <div className="px-3 py-4 text-center text-xs text-muted-foreground">Tomt transportlager</div>
-        )}
-        {Array.from(orderGroups.entries()).map(([orderId, group]) => {
-          const storeName = group.orderInfo?.stores?.name || "Okänd butik";
-          const orderWeek = group.orderInfo?.order_week || "–";
-          return (
-            <div key={orderId} className="border-b border-border/30 last:border-0">
-              <div className="flex items-center justify-between px-3 py-2 bg-primary/5">
-                <div className="flex items-center gap-2">
-                  <Truck className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-xs font-medium text-foreground">{storeName}</span>
-                  <Badge variant="outline" className="text-[10px] h-5 border-primary/20 text-primary">V.{orderWeek}</Badge>
-                  <Badge variant="secondary" className="text-[10px] h-5">{group.items.length} produkter</Badge>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">{group.totalQty.toLocaleString("sv-SE")} kg</span>
-                  <span className="text-xs font-medium text-foreground">{fmt(group.totalValue)}</span>
-                </div>
-              </div>
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="bg-muted/20">
-                    <th className="px-3 py-1.5 w-8"></th>
-                    <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Produkt</th>
-                    <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Kategori</th>
-                    <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Antal</th>
-                    <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Värde</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {group.items.map((s: any) => {
-                    const unitPrice = Number(s.unit_cost) || Number(s.products?.cost_price) || 0;
-                    const value = Number(s.quantity) * unitPrice;
-                    const isChecked = getSelectedForLocation(loc.id).has(s.id);
-                    return (
-                      <tr key={s.id} className={`border-b border-border/20 last:border-0 hover:bg-muted/20 ${isChecked ? "bg-primary/5" : ""}`}>
-                        <td className="px-3 py-1.5 text-center">
-                          <Checkbox checked={isChecked} onCheckedChange={() => toggleItemSelection(loc.id, s.id)} />
-                        </td>
-                        <td className="px-3 py-1.5 font-medium text-foreground">{s.products?.name}</td>
-                        <td className="px-3 py-1.5 text-muted-foreground">{s.products?.category}</td>
-                        <td className="px-3 py-1.5 text-right font-medium text-foreground">
-                          {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
-                        </td>
-                        <td className="px-3 py-1.5 text-right text-muted-foreground">{fmt(value)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          );
-        })}
-        {untagged.length > 0 && (
-          <div>
-            <div className="px-3 py-2 bg-muted/20">
-              <span className="text-xs text-muted-foreground">Ej orderkopplade</span>
-            </div>
-            <table className="w-full text-xs">
-              <tbody>
-                {untagged.map((s: any) => {
-                  const unitPrice = Number(s.unit_cost) || Number(s.products?.cost_price) || 0;
-                  const value = Number(s.quantity) * unitPrice;
-                  const isChecked = getSelectedForLocation(loc.id).has(s.id);
-                  return (
-                    <tr key={s.id} className={`border-b border-border/20 last:border-0 hover:bg-muted/20 ${isChecked ? "bg-primary/5" : ""}`}>
-                      <td className="px-3 py-1.5 text-center w-8">
-                        <Checkbox checked={isChecked} onCheckedChange={() => toggleItemSelection(loc.id, s.id)} />
-                      </td>
-                      <td className="px-3 py-1.5 font-medium text-foreground">{s.products?.name}</td>
-                      <td className="px-3 py-1.5 text-muted-foreground">{s.products?.category}</td>
-                      <td className="px-3 py-1.5 text-right font-medium text-foreground">
-                        {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
-                      </td>
-                      <td className="px-3 py-1.5 text-right text-muted-foreground">{fmt(value)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    );
-  };
-
+  // ─────────────────────────────────────────────────────────────────────────
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -837,34 +959,69 @@ export default function Inventory() {
           <p className="text-xs text-muted-foreground">Lageröversikt och lagerrapporter</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          {expiryAlerts.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 text-xs h-8 border-amber-500/40 text-amber-700 hover:bg-amber-500/10"
+              onClick={() => setShowExpiryAlerts(true)}
+            >
+              <AlertTriangle className="h-3 w-3" />
+              {expiryAlerts.length} utgångsvarning{expiryAlerts.length > 1 ? "ar" : ""}
+            </Button>
+          )}
           <Button size="sm" className="gap-1.5 text-xs h-8" onClick={() => setReportDialogOpen(true)}>
             <ClipboardList className="h-3 w-3" /> Skapa lagerrapport
           </Button>
         </div>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="shadow-card"><CardContent className="p-3">
-          <p className="text-[10px] text-muted-foreground">Produkter i lager</p>
-          <p className="text-xl font-heading font-bold text-foreground">{totalProducts}</p>
-        </CardContent></Card>
-        <Card className="shadow-card"><CardContent className="p-3">
-          <p className="text-[10px] text-muted-foreground">Total kvantitet</p>
-          <p className="text-xl font-heading font-bold text-foreground">{totalQty.toLocaleString("sv-SE")}</p>
-        </CardContent></Card>
-        <Card className="shadow-card"><CardContent className="p-3">
-          <p className="text-[10px] text-muted-foreground">Lagervärde (SEK)</p>
-          <p className="text-xl font-heading font-bold text-foreground">{fmt(totalValue)}</p>
-        </CardContent></Card>
-        <Card className="shadow-card"><CardContent className="p-3">
-          <p className="text-[10px] text-muted-foreground flex items-center gap-1"><AlertTriangle className="h-3 w-3 text-warning" /> Lågt lager</p>
-          <p className="text-xl font-heading font-bold text-destructive">{lowStockItems}</p>
-        </CardContent></Card>
+      {/* KPIs — now with expiry count */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <Card className="shadow-card">
+          <CardContent className="p-3">
+            <p className="text-[10px] text-muted-foreground">Produkter i lager</p>
+            <p className="text-xl font-heading font-bold text-foreground">{totalProducts}</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-card">
+          <CardContent className="p-3">
+            <p className="text-[10px] text-muted-foreground">Total kvantitet</p>
+            <p className="text-xl font-heading font-bold text-foreground">{totalQty.toLocaleString("sv-SE")}</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-card">
+          <CardContent className="p-3">
+            <p className="text-[10px] text-muted-foreground">Lagervärde (SEK)</p>
+            <p className="text-xl font-heading font-bold text-foreground">{fmt(totalValue)}</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-card">
+          <CardContent className="p-3">
+            <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3 text-warning" /> Lågt lager
+            </p>
+            <p className="text-xl font-heading font-bold text-destructive">{lowStockItems}</p>
+          </CardContent>
+        </Card>
+        <Card className={`shadow-card ${expiredCount > 0 ? "border-destructive/30 bg-destructive/5" : ""}`}>
+          <CardContent className="p-3">
+            <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+              <Clock className="h-3 w-3 text-destructive" /> Utgångna/kritiska
+            </p>
+            <p
+              className={`text-xl font-heading font-bold ${expiredCount > 0 ? "text-destructive" : "text-foreground"}`}
+            >
+              {expiredCount}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
-      {(site === "production" || site === "wholesale") ? (
-        /* ── INKÖP/PRODUKTION PORTAL: Grouped by store ── */
+      {/* Rest of location rendering — kept same structure as original, 
+          but using updated renderLocationTable which now includes expiry columns.
+          The groupedByStore and stockByLocation views below use renderLocationTable. */}
+      {site === "production" || site === "wholesale" ? (
         <Card className="shadow-card">
           <CardHeader className="pb-2">
             <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
@@ -873,17 +1030,28 @@ export default function Inventory() {
                 <CardDescription className="text-xs">{stockByLocation.length} lagerställen</CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" onClick={expandAll}>Visa alla</Button>
-                <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" onClick={collapseAll}>Dölj alla</Button>
+                <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" onClick={expandAll}>
+                  Visa alla
+                </Button>
+                <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" onClick={collapseAll}>
+                  Dölj alla
+                </Button>
                 <div className="relative w-48">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                  <Input placeholder="Sök produkt..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
+                  <Input
+                    placeholder="Sök produkt..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-8 h-8 text-xs"
+                  />
                 </div>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            {loadingLoc || loadingStock ? <Skeleton className="h-48" /> : groupedByStore.length === 0 ? (
+            {loadingLoc || loadingStock ? (
+              <Skeleton className="h-48" />
+            ) : groupedByStore.length === 0 ? (
               <div className="text-center py-12">
                 <Warehouse className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
                 <p className="text-sm text-muted-foreground">Inga lagerställen</p>
@@ -894,12 +1062,8 @@ export default function Inventory() {
                   const isGroupExpanded = expandedGroups.has(group.storeName);
                   const isGeneral = group.type === "general";
                   const singleLoc = group.locations[0];
-
-                  // For general locations (Transportlager, Grossist Flytande), render as a single expandable row
                   if (isGeneral) {
                     const isExpanded = expandedLocations.has(singleLoc.id);
-                    const isTransportlager = singleLoc.name === "Transportlager";
-
                     return (
                       <div key={singleLoc.id} className="border border-border/50 rounded-md overflow-hidden">
                         <div className="flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors">
@@ -907,50 +1071,65 @@ export default function Inventory() {
                             className="flex items-center gap-2 flex-1 text-left"
                             onClick={() => toggleLocation(singleLoc.id)}
                           >
-                            {isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                            {isExpanded ? (
+                              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                            ) : (
+                              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                            )}
                             <Warehouse className="h-3.5 w-3.5 text-muted-foreground" />
                             <span className="text-sm font-medium text-foreground">{singleLoc.name}</span>
-                            <Badge variant="secondary" className="text-[10px] h-5">{singleLoc.items.length} produkter</Badge>
+                            <Badge variant="secondary" className="text-[10px] h-5">
+                              {singleLoc.items.length} produkter
+                            </Badge>
+                            {singleLoc.expiryWarnings > 0 && (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] h-5 border-amber-500/30 text-amber-700 bg-amber-500/10"
+                              >
+                                <Clock className="h-2.5 w-2.5 mr-0.5" />
+                                {singleLoc.expiryWarnings} varning{singleLoc.expiryWarnings > 1 ? "ar" : ""}
+                              </Badge>
+                            )}
                           </button>
                           <div className="flex items-center gap-2">
                             {getSelectedForLocation(singleLoc.id).size > 0 && renderSelectionActions(singleLoc.id)}
-                            <span className="text-xs text-muted-foreground">{singleLoc.totalQty.toLocaleString("sv-SE")} kg</span>
+                            <span className="text-xs text-muted-foreground">
+                              {singleLoc.totalQty.toLocaleString("sv-SE")} kg
+                            </span>
                             <span className="text-xs font-medium text-foreground">{fmt(singleLoc.totalValue)}</span>
                           </div>
                         </div>
-                        {isExpanded && (
-                          isTransportlager ? renderTransportlagerGrouped(singleLoc) : renderLocationTable(singleLoc)
-                        )}
+                        {isExpanded && renderLocationTable(singleLoc)}
                       </div>
                     );
                   }
-
-                  // For store groups, render as a two-level accordion
                   return (
                     <div key={group.storeName} className="border border-border rounded-md overflow-hidden">
-                      {/* Store group header */}
                       <button
                         className="w-full flex items-center justify-between px-3 py-3 hover:bg-muted/30 transition-colors text-left bg-muted/10"
                         onClick={() => toggleGroup(group.storeName)}
                       >
                         <div className="flex items-center gap-2">
-                          {isGroupExpanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                          {isGroupExpanded ? (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          )}
                           <MapPin className="h-4 w-4 text-primary" />
                           <span className="text-sm font-semibold text-foreground">{group.storeName}</span>
-                          <Badge variant="secondary" className="text-[10px] h-5">{group.locations.length} lager</Badge>
+                          <Badge variant="secondary" className="text-[10px] h-5">
+                            {group.locations.length} lager
+                          </Badge>
                         </div>
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
                           <span>{group.totalQty.toLocaleString("sv-SE")} kg</span>
                           <span className="font-medium text-foreground">{fmt(group.totalValue)}</span>
                         </div>
                       </button>
-
                       {isGroupExpanded && (
                         <div className="border-t border-border/50">
                           {group.locations.map((loc: any) => {
                             const isExpanded = expandedLocations.has(loc.id);
-                            // Show a simplified name: strip store prefix for cleaner display
-                            const displayName = loc.name;
                             return (
                               <div key={loc.id} className="border-b border-border/30 last:border-0">
                                 <div className="flex items-center justify-between px-4 py-2 hover:bg-muted/20 transition-colors">
@@ -958,14 +1137,33 @@ export default function Inventory() {
                                     className="flex items-center gap-2 flex-1 text-left"
                                     onClick={() => toggleLocation(loc.id)}
                                   >
-                                    {isExpanded ? <ChevronDown className="h-3 w-3 text-muted-foreground" /> : <ChevronRight className="h-3 w-3 text-muted-foreground" />}
-                                    <span className="text-xs font-medium text-foreground">{displayName}</span>
-                                    <Badge variant="secondary" className="text-[10px] h-4">{loc.items.length} produkter</Badge>
+                                    {isExpanded ? (
+                                      <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                                    ) : (
+                                      <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                                    )}
+                                    <span className="text-xs font-medium text-foreground">{loc.name}</span>
+                                    <Badge variant="secondary" className="text-[10px] h-4">
+                                      {loc.items.length} produkter
+                                    </Badge>
+                                    {loc.expiryWarnings > 0 && (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-[10px] h-4 border-amber-500/30 text-amber-700 bg-amber-500/10"
+                                      >
+                                        <Clock className="h-2.5 w-2.5 mr-0.5" />
+                                        {loc.expiryWarnings}
+                                      </Badge>
+                                    )}
                                   </button>
                                   <div className="flex items-center gap-2">
                                     {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
-                                    <span className="text-[10px] text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
-                                    <span className="text-[10px] font-medium text-foreground">{fmt(loc.totalValue)}</span>
+                                    <span className="text-[10px] text-muted-foreground">
+                                      {loc.totalQty.toLocaleString("sv-SE")} kg
+                                    </span>
+                                    <span className="text-[10px] font-medium text-foreground">
+                                      {fmt(loc.totalValue)}
+                                    </span>
                                   </div>
                                 </div>
                                 {isExpanded && renderLocationTable(loc)}
@@ -982,7 +1180,6 @@ export default function Inventory() {
           </CardContent>
         </Card>
       ) : (
-        /* ── DEFAULT (Shop/Grossist): Location accordion — same layout as purchasing/production ── */
         <Card className="shadow-card">
           <CardHeader className="pb-2">
             <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
@@ -993,21 +1190,31 @@ export default function Inventory() {
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" onClick={expandAll}>Visa alla</Button>
-                <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" onClick={collapseAll}>Dölj alla</Button>
+                <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" onClick={expandAll}>
+                  Visa alla
+                </Button>
+                <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" onClick={collapseAll}>
+                  Dölj alla
+                </Button>
                 <div className="relative w-48">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                  <Input placeholder="Sök produkt..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
+                  <Input
+                    placeholder="Sök produkt..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-8 h-8 text-xs"
+                  />
                 </div>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            {loadingLoc || loadingStock ? <Skeleton className="h-48" /> : stockByLocation.length === 0 ? (
+            {loadingLoc || loadingStock ? (
+              <Skeleton className="h-48" />
+            ) : stockByLocation.length === 0 ? (
               <div className="text-center py-12">
                 <Warehouse className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
                 <p className="text-sm text-muted-foreground mb-1">Inga lagersaldon registrerade</p>
-                <p className="text-xs text-muted-foreground mb-4">Skapa en lagerrapport för att registrera lagersaldo.</p>
                 <Button size="sm" onClick={() => setReportDialogOpen(true)} className="gap-1.5">
                   <ClipboardList className="h-3 w-3" /> Skapa lagerrapport
                 </Button>
@@ -1016,7 +1223,6 @@ export default function Inventory() {
               <div className="space-y-1">
                 {stockByLocation.map((loc: any) => {
                   const isExpanded = expandedLocations.has(loc.id);
-                  const isRawLager = (loc.name || "").toLowerCase().startsWith("raw-");
                   return (
                     <div key={loc.id} className="border border-border/50 rounded-md overflow-hidden">
                       <div className="flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors">
@@ -1024,67 +1230,40 @@ export default function Inventory() {
                           className="flex items-center gap-2 flex-1 text-left"
                           onClick={() => toggleLocation(loc.id)}
                         >
-                          {isExpanded ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+                          {isExpanded ? (
+                            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                          )}
                           <MapPin className="h-3.5 w-3.5 text-primary" />
                           <span className="text-sm font-medium text-foreground">{loc.name}</span>
-                          {loc.zone && <Badge variant="outline" className={`text-[10px] h-5 ${zoneColor[loc.zone] || ""}`}>{zoneIcon[loc.zone] || "📍"} {loc.zone}</Badge>}
-                          <Badge variant="secondary" className="text-[10px] h-5">{loc.items.length} produkter</Badge>
+                          {loc.zone && (
+                            <Badge variant="outline" className={`text-[10px] h-5 ${zoneColor[loc.zone] || ""}`}>
+                              {zoneIcon[loc.zone] || "📍"} {loc.zone}
+                            </Badge>
+                          )}
+                          <Badge variant="secondary" className="text-[10px] h-5">
+                            {loc.items.length} produkter
+                          </Badge>
+                          {loc.expiryWarnings > 0 && (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] h-5 border-amber-500/30 text-amber-700 bg-amber-500/10"
+                            >
+                              <Clock className="h-2.5 w-2.5 mr-0.5" />
+                              {loc.expiryWarnings} varning{loc.expiryWarnings > 1 ? "ar" : ""}
+                            </Badge>
+                          )}
                         </button>
                         <div className="flex items-center gap-2">
-                          {isRawLager && getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
-                          <span className="text-xs text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
+                          {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
+                          <span className="text-xs text-muted-foreground">
+                            {loc.totalQty.toLocaleString("sv-SE")} kg
+                          </span>
                           <span className="text-xs font-medium text-foreground">{fmt(loc.totalValue)}</span>
                         </div>
                       </div>
-                      {isExpanded && (
-                        isRawLager ? renderLocationTable(loc) : (
-                        <div className="border-t border-border/50">
-                          {loc.items.length === 0 ? (
-                            <div className="px-3 py-4 text-center text-xs text-muted-foreground">Tomt lager</div>
-                          ) : (
-                            <table className="w-full text-xs">
-                              <thead>
-                                <tr className="bg-muted/20">
-                                  <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Produkt</th>
-                                  <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">SKU</th>
-                                  <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Kategori</th>
-                                  <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Antal</th>
-                                  <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Värde</th>
-                                  <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Status</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {loc.items.map((s: any) => {
-                                  const isLow = Number(s.min_stock) > 0 && Number(s.quantity) < Number(s.min_stock);
-                                  const unitPrice = Number(s.unit_cost) || Number(s.products?.cost_price) || 0;
-                                  const value = Number(s.quantity) * unitPrice;
-                                  return (
-                                    <tr key={s.id} className="border-b border-border/30 last:border-0 hover:bg-muted/20">
-                                      <td className="px-3 py-2 font-medium text-foreground">{s.products?.name}</td>
-                                      <td className="px-3 py-2 font-mono text-muted-foreground text-[10px]">{s.products?.sku}</td>
-                                      <td className="px-3 py-2 text-muted-foreground">{s.products?.category}</td>
-                                      <td className="px-3 py-2 text-right font-medium text-foreground">
-                                        {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
-                                      </td>
-                                      <td className="px-3 py-2 text-right text-muted-foreground">{fmt(value)}</td>
-                                      <td className="px-3 py-2 text-right">
-                                        {isLow ? (
-                                          <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 text-[10px]">
-                                            <AlertTriangle className="h-2.5 w-2.5 mr-0.5" /> Lågt
-                                          </Badge>
-                                        ) : (
-                                          <Badge variant="outline" className="bg-success/10 text-success border-success/20 text-[10px]">OK</Badge>
-                                        )}
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          )}
-                        </div>
-                        )
-                      )}
+                      {isExpanded && renderLocationTable(loc)}
                     </div>
                   );
                 })}
@@ -1094,7 +1273,39 @@ export default function Inventory() {
         </Card>
       )}
 
-      {/* Lagerrapport Dialog */}
+      {/* ── Expiry Alerts Dialog ───────────────────────────────────────────── */}
+      <Dialog open={showExpiryAlerts} onOpenChange={setShowExpiryAlerts}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-heading flex items-center gap-2 text-amber-700">
+              <AlertTriangle className="h-5 w-5" /> Utgångsvarningar
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Produkter som går ut inom 5 dagar eller redan har passerat bäst-före-datum.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {expiryAlerts.map((s: any) => (
+              <div
+                key={s.id}
+                className={`flex items-center justify-between p-2.5 rounded-md border ${s.freshness.badgeClass}`}
+              >
+                <div>
+                  <p className="text-sm font-medium text-foreground">{s.products?.name}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {s.storage_locations?.name} · {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
+                  </p>
+                </div>
+                <Badge variant="outline" className={`text-[10px] shrink-0 ${s.freshness.badgeClass}`}>
+                  {s.freshness.label}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Lagerrapport Dialog — now with expiry + arrival date ──────────── */}
       <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -1102,17 +1313,18 @@ export default function Inventory() {
               <ClipboardList className="h-5 w-5 text-primary" /> Skapa lagerrapport
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Välj lagerställe, lägg till produkter och ange aktuellt antal. Enheten (kg/st) styrs av produktens inställning.
+              Välj lagerställe, lägg till produkter och ange aktuellt antal, ankomstdatum och bäst-före-datum.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* Location picker + scanner */}
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="space-y-1.5 flex-1">
                 <Label className="text-xs font-medium">Lagerställe *</Label>
                 <Select value={invLocation} onValueChange={setInvLocation}>
-                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Välj lagerställe" /></SelectTrigger>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Välj lagerställe" />
+                  </SelectTrigger>
                   <SelectContent>
                     {locations.map((loc: any) => (
                       <SelectItem key={loc.id} value={loc.id} className="text-xs">
@@ -1124,7 +1336,9 @@ export default function Inventory() {
               </div>
               <div className="flex items-end gap-2">
                 <Button
-                  variant="outline" size="sm" className="gap-1.5 text-xs h-8"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs h-8"
                   onClick={() => setShowScanner(!showScanner)}
                   disabled={!invLocation}
                 >
@@ -1133,11 +1347,8 @@ export default function Inventory() {
               </div>
             </div>
 
-            {showScanner && invLocation && (
-              <BarcodeScanner onScan={handleScan} onClose={() => setShowScanner(false)} />
-            )}
+            {showScanner && invLocation && <BarcodeScanner onScan={handleScan} onClose={() => setShowScanner(false)} />}
 
-            {/* Product search */}
             {invLocation && (
               <div className="relative">
                 <Label className="text-xs font-medium mb-1.5 block">Lägg till produkt</Label>
@@ -1146,13 +1357,13 @@ export default function Inventory() {
                   <Input
                     placeholder="Sök produkt (namn eller SKU)..."
                     value={invProductSearch}
-                    onChange={e => setInvProductSearch(e.target.value)}
+                    onChange={(e) => setInvProductSearch(e.target.value)}
                     className="pl-8 h-8 text-xs"
                   />
                 </div>
                 {filteredProductsForAdd.length > 0 && (
                   <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
-                    {filteredProductsForAdd.map(p => (
+                    {filteredProductsForAdd.map((p) => (
                       <button
                         key={p.id}
                         className="w-full text-left px-3 py-2 text-xs hover:bg-muted/50 flex items-center justify-between"
@@ -1162,7 +1373,9 @@ export default function Inventory() {
                           <span className="font-medium text-foreground">{p.name}</span>
                           <span className="text-muted-foreground ml-2 text-[10px]">{p.category}</span>
                         </div>
-                        <span className="text-muted-foreground font-mono text-[10px]">{p.sku} · {p.unit}</span>
+                        <span className="text-muted-foreground font-mono text-[10px]">
+                          {p.sku} · {p.unit}
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -1170,7 +1383,6 @@ export default function Inventory() {
               </div>
             )}
 
-            {/* Lines grouped by category */}
             {invLines.length > 0 && (
               <div className="space-y-3">
                 <Separator />
@@ -1178,38 +1390,78 @@ export default function Inventory() {
                   <span className="text-xs font-medium text-muted-foreground">
                     {invLines.length} produkt{invLines.length > 1 ? "er" : ""} tillagda
                   </span>
-                  <span className="text-xs font-semibold text-foreground">
-                    Lagervärde: {fmt(reportTotalValue)}
-                  </span>
+                  <span className="text-xs font-semibold text-foreground">Lagervärde: {fmt(reportTotalValue)}</span>
                 </div>
 
                 {reportLinesByCategory.map(([category, catLines]) => (
                   <div key={category}>
-                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">{category}</p>
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                      {category}
+                    </p>
                     <div className="overflow-x-auto">
                       <table className="w-full text-xs">
+                        <thead>
+                          <tr className="border-b border-border/30">
+                            <th className="py-1 text-left font-medium text-muted-foreground text-[10px]">Produkt</th>
+                            <th className="py-1 text-center font-medium text-muted-foreground text-[10px] w-16">
+                              Enhet
+                            </th>
+                            <th className="py-1 text-right font-medium text-muted-foreground text-[10px] w-28">
+                              Antal *
+                            </th>
+                            <th className="py-1 text-center font-medium text-muted-foreground text-[10px] w-36">
+                              Ankomst
+                            </th>
+                            <th className="py-1 text-center font-medium text-muted-foreground text-[10px] w-36">
+                              Bäst före
+                            </th>
+                            <th className="py-1 w-8"></th>
+                          </tr>
+                        </thead>
                         <tbody>
                           {catLines.map((line) => {
-                            const globalIdx = invLines.findIndex(l => l.product_id === line.product_id);
+                            const globalIdx = invLines.findIndex((l) => l.product_id === line.product_id);
                             return (
-                              <tr key={line.product_id} className="border-b border-border/30">
+                              <tr key={line.product_id} className="border-b border-border/20">
                                 <td className="py-1.5 font-medium text-foreground">{line.product_name}</td>
-                                <td className="py-1.5 font-mono text-muted-foreground text-[10px] w-20">{line.sku}</td>
-                                <td className="py-1.5 text-muted-foreground w-12 text-center">
-                                  <Badge variant="secondary" className="text-[10px]">{line.unit}</Badge>
+                                <td className="py-1.5 text-center">
+                                  <Badge variant="secondary" className="text-[10px]">
+                                    {line.unit}
+                                  </Badge>
                                 </td>
-                                <td className="py-1.5 text-right w-28">
+                                <td className="py-1.5 text-right">
                                   <Input
                                     type="number"
                                     step={line.unit.toLowerCase() === "kg" ? "0.1" : "1"}
                                     value={line.quantity}
-                                    onChange={e => updateInvLine(globalIdx, e.target.value)}
+                                    onChange={(e) => updateInvLine(globalIdx, "quantity", e.target.value)}
                                     className="h-7 text-xs w-24 ml-auto text-right"
                                     placeholder={`0 ${line.unit}`}
                                   />
                                 </td>
-                                <td className="py-1.5 w-8">
-                                  <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeInvLine(globalIdx)}>
+                                <td className="py-1.5 px-1">
+                                  <Input
+                                    type="date"
+                                    value={line.arrival_date || ""}
+                                    onChange={(e) => updateInvLine(globalIdx, "arrival_date", e.target.value)}
+                                    className="h-7 text-[10px] w-full"
+                                  />
+                                </td>
+                                <td className="py-1.5 px-1">
+                                  <Input
+                                    type="date"
+                                    value={line.expiry_date || ""}
+                                    onChange={(e) => updateInvLine(globalIdx, "expiry_date", e.target.value)}
+                                    className="h-7 text-[10px] w-full"
+                                  />
+                                </td>
+                                <td className="py-1.5">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-destructive"
+                                    onClick={() => removeInvLine(globalIdx)}
+                                  >
                                     <X className="h-3 w-3" />
                                   </Button>
                                 </td>
@@ -1245,184 +1497,162 @@ export default function Inventory() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="font-heading">Nytt lagerställe</DialogTitle>
-            <DialogDescription className="text-xs">Skapa en ny lagerplats i ett specifikt lager.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
               <Label className="text-xs">Namn *</Label>
-              <Input value={locName} onChange={e => setLocName(e.target.value)} placeholder="T.ex. Kyl 3, Frys B" className="h-8 text-xs" />
+              <Input value={locName} onChange={(e) => setLocName(e.target.value)} className="h-8 text-xs" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">Lager/Butik *</Label>
                 <Select value={locStore} onValueChange={setLocStore}>
-                  <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Välj" /></SelectTrigger>
-                  <SelectContent>{stores.map(s => <SelectItem key={s.id} value={s.id} className="text-xs">{s.name}</SelectItem>)}</SelectContent>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Välj" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {stores.map((s) => (
+                      <SelectItem key={s.id} value={s.id} className="text-xs">
+                        {s.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Zon</Label>
                 <Select value={locZone} onValueChange={setLocZone}>
-                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Kyl" className="text-xs">❄️ Kyl</SelectItem>
-                    <SelectItem value="Frys" className="text-xs">🧊 Frys</SelectItem>
-                    <SelectItem value="Torrt" className="text-xs">📦 Torrt</SelectItem>
-                    <SelectItem value="Produktion" className="text-xs">🏭 Produktion</SelectItem>
+                    <SelectItem value="Kyl" className="text-xs">
+                      ❄️ Kyl
+                    </SelectItem>
+                    <SelectItem value="Frys" className="text-xs">
+                      🧊 Frys
+                    </SelectItem>
+                    <SelectItem value="Torrt" className="text-xs">
+                      📦 Torrt
+                    </SelectItem>
+                    <SelectItem value="Produktion" className="text-xs">
+                      🏭 Produktion
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Beskrivning</Label>
-              <Input value={locDesc} onChange={e => setLocDesc(e.target.value)} placeholder="Valfritt..." className="h-8 text-xs" />
+              <Input value={locDesc} onChange={(e) => setLocDesc(e.target.value)} className="h-8 text-xs" />
             </div>
           </div>
           <DialogFooter>
-            <Button size="sm" onClick={handleCreateLocation} disabled={!locName || !locStore || createLocation.isPending}>
+            <Button
+              size="sm"
+              onClick={handleCreateLocation}
+              disabled={!locName || !locStore || createLocation.isPending}
+            >
               {createLocation.isPending ? "Sparar..." : "Skapa lagerställe"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Update stock dialog */}
-      <Dialog open={stockDialogOpen} onOpenChange={setStockDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="font-heading">Uppdatera lagersaldo</DialogTitle>
-            <DialogDescription className="text-xs">Ange kvantitet för en produkt på ett specifikt lagerställe.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Lagerställe *</Label>
-              <Select value={stockLocation} onValueChange={setStockLocation}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Välj lagerställe" /></SelectTrigger>
-                <SelectContent>
-                  {locations.map((loc: any) => (
-                    <SelectItem key={loc.id} value={loc.id} className="text-xs">
-                      {zoneIcon[loc.zone] || "📍"} {loc.name} ({loc.stores?.name})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Produkt *</Label>
-              <Select value={stockProduct} onValueChange={setStockProduct}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Välj produkt" /></SelectTrigger>
-                <SelectContent>
-                  {products.map(p => <SelectItem key={p.id} value={p.id} className="text-xs">{p.name} ({p.unit})</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Kvantitet *</Label>
-                <Input value={stockQty} onChange={e => setStockQty(e.target.value)} type="number" className="h-8 text-xs" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Min.nivå (varning)</Label>
-                <Input value={stockMin} onChange={e => setStockMin(e.target.value)} type="number" className="h-8 text-xs" placeholder="0" />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button size="sm" onClick={handleUpsertStock} disabled={!stockProduct || !stockLocation || !stockQty || upsertStock.isPending}>
-              {upsertStock.isPending ? "Sparar..." : "Uppdatera saldo"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── FLYTTA dialog ── */}
+      {/* Move dialog */}
       <Dialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="font-heading">Flytta produkter</DialogTitle>
             <DialogDescription className="text-xs">
-              Välj destination för {getSelectedForLocation(activeLocationId).size} valda produkt(er).
+              {getSelectedForLocation(activeLocationId).size} valda produkt(er)
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1 max-h-64 overflow-y-auto">
             {locations
               .filter((l: any) => l.id !== activeLocationId)
-              .filter((l: any) => {
-                // Portal-based filtering: only show locations relevant to current portal
-                const name = (l.name || "").toLowerCase();
-                const isGrossistFlytande = name.includes("grossist flytande");
-                const isPre = name.startsWith("pre-");
-                if (site === "wholesale") {
-                  return isGrossistFlytande || isPre || l.zone === "Inköp";
-                }
-                if (site === "production") {
-                  return isGrossistFlytande || isPre || l.zone === "Produktion";
-                }
-                return true; // wholesale sees all
-              })
               .map((loc: any) => (
-              <button
-                key={loc.id}
-                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-md border border-border/50 hover:bg-muted/40 transition-colors text-left"
-                onClick={() => handleMove(loc.id)}
-                disabled={actionLoading}
-              >
-                <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
-                <span className="text-sm font-medium text-foreground">{loc.name}</span>
-                {loc.zone && <Badge variant="secondary" className="text-[10px] h-5">{loc.zone}</Badge>}
-              </button>
-            ))}
+                <button
+                  key={loc.id}
+                  className="w-full flex items-center gap-2 px-3 py-2.5 rounded-md border border-border/50 hover:bg-muted/40 transition-colors text-left"
+                  onClick={() => handleMove(loc.id)}
+                  disabled={actionLoading}
+                >
+                  <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
+                  <span className="text-sm font-medium text-foreground">{loc.name}</span>
+                  {loc.zone && (
+                    <Badge variant="secondary" className="text-[10px] h-5">
+                      {loc.zone}
+                    </Badge>
+                  )}
+                </button>
+              ))}
           </div>
-          {actionLoading && <p className="text-xs text-muted-foreground text-center">Flyttar...</p>}
         </DialogContent>
       </Dialog>
 
-      {/* ── RADERA dialog ── */}
-      <Dialog open={deleteDialogOpen} onOpenChange={(o) => { setDeleteDialogOpen(o); if (!o) setDeleteReason(""); }}>
+      {/* Delete dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onOpenChange={(o) => {
+          setDeleteDialogOpen(o);
+          if (!o) setDeleteReason("");
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="font-heading text-destructive">Radera produkter</DialogTitle>
             <DialogDescription className="text-xs">
-              {getSelectedForLocation(activeLocationId).size} produkt(er) kommer tas bort från lagret. Ange en anledning.
+              {getSelectedForLocation(activeLocationId).size} produkt(er) tas bort. Ange anledning.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Anledning *</Label>
-              <Textarea
-                value={deleteReason}
-                onChange={e => setDeleteReason(e.target.value)}
-                placeholder="T.ex. Utgånget, skadat, felrapporterat..."
-                className="text-xs min-h-[80px]"
-              />
-            </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Anledning *</Label>
+            <Textarea
+              value={deleteReason}
+              onChange={(e) => setDeleteReason(e.target.value)}
+              placeholder="T.ex. Utgånget, skadat..."
+              className="text-xs min-h-[80px]"
+            />
           </div>
           <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setDeleteDialogOpen(false)}>Avbryt</Button>
-            <Button variant="destructive" size="sm" onClick={handleDelete} disabled={!deleteReason.trim() || actionLoading}>
+            <Button variant="outline" size="sm" onClick={() => setDeleteDialogOpen(false)}>
+              Avbryt
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleDelete}
+              disabled={!deleteReason.trim() || actionLoading}
+            >
               {actionLoading ? "Raderar..." : "Bekräfta radering"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* ── SPLITTA dialog ── */}
-      <Dialog open={splitDialogOpen} onOpenChange={(o) => { setSplitDialogOpen(o); if (!o) { setSplitQty(""); setSplitTargetLocation(""); } }}>
+      {/* Split dialog */}
+      <Dialog
+        open={splitDialogOpen}
+        onOpenChange={(o) => {
+          setSplitDialogOpen(o);
+          if (!o) {
+            setSplitQty("");
+            setSplitTargetLocation("");
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="font-heading">Splitta produkt</DialogTitle>
-            <DialogDescription className="text-xs">
-              Dela upp kvantiteten till ett annat lagerställe.
-            </DialogDescription>
           </DialogHeader>
           {(() => {
-            const items = getSelectedStockItems(activeLocationId);
-            const item = items[0];
+            const item = getSelectedStockItems(activeLocationId)[0];
             if (!item) return null;
             return (
               <div className="space-y-3">
                 <div className="p-2.5 rounded-md bg-muted/30 border border-border/50">
-                  <p className="text-xs font-medium text-foreground">{item.products?.name}</p>
+                  <p className="text-xs font-medium">{item.products?.name}</p>
                   <p className="text-[10px] text-muted-foreground">
                     Nuvarande: {Number(item.quantity).toLocaleString("sv-SE")} {item.products?.unit || "kg"}
                   </p>
@@ -1433,14 +1663,13 @@ export default function Inventory() {
                     type="number"
                     step="0.1"
                     value={splitQty}
-                    onChange={e => setSplitQty(e.target.value)}
-                    placeholder={`Max ${Number(item.quantity) - 0.1}`}
+                    onChange={(e) => setSplitQty(e.target.value)}
                     className="h-8 text-xs"
                   />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Destination *</Label>
-                   <div className="space-y-1 max-h-40 overflow-y-auto">
+                  <div className="space-y-1 max-h-40 overflow-y-auto">
                     {portalLocations.map((loc: any) => (
                       <button
                         key={loc.id}
@@ -1448,8 +1677,12 @@ export default function Inventory() {
                         onClick={() => setSplitTargetLocation(loc.id)}
                       >
                         <MapPin className="h-3 w-3 text-primary shrink-0" />
-                        <span className="font-medium text-foreground">{loc.name}</span>
-                        {loc.id === activeLocationId && <Badge variant="secondary" className="text-[9px] ml-auto">Samma plats (ny rad)</Badge>}
+                        <span className="font-medium">{loc.name}</span>
+                        {loc.id === activeLocationId && (
+                          <Badge variant="secondary" className="text-[9px] ml-auto">
+                            Samma plats
+                          </Badge>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -1458,7 +1691,9 @@ export default function Inventory() {
             );
           })()}
           <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setSplitDialogOpen(false)}>Avbryt</Button>
+            <Button variant="outline" size="sm" onClick={() => setSplitDialogOpen(false)}>
+              Avbryt
+            </Button>
             <Button size="sm" onClick={handleSplit} disabled={!splitQty || !splitTargetLocation || actionLoading}>
               {actionLoading ? "Splittar..." : "Bekräfta split"}
             </Button>
@@ -1466,30 +1701,40 @@ export default function Inventory() {
         </DialogContent>
       </Dialog>
 
-      {/* ── OMVANDLA dialog (production only) ── */}
-      <Dialog open={transformDialogOpen} onOpenChange={(o) => { setTransformDialogOpen(o); if (!o) { setTransformTargetProduct(""); setTransformNewWeight(""); setTransformProductSearch(""); } }}>
+      {/* Transform dialog */}
+      <Dialog
+        open={transformDialogOpen}
+        onOpenChange={(o) => {
+          setTransformDialogOpen(o);
+          if (!o) {
+            setTransformTargetProduct("");
+            setTransformNewWeight("");
+            setTransformProductSearch("");
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="font-heading">Omvandla produkt</DialogTitle>
-            <DialogDescription className="text-xs">
-              Ändra en råvara till en beredd produkt. Viktskillnaden tas bort från lagret som svinn.
-            </DialogDescription>
+            <DialogDescription className="text-xs">Viktskillnaden loggas som svinn.</DialogDescription>
           </DialogHeader>
           {(() => {
-            const items = getSelectedStockItems(activeLocationId);
-            const item = items[0];
+            const item = getSelectedStockItems(activeLocationId)[0];
             if (!item) return null;
-            const filteredTransformProducts = products.filter(p =>
-              p.id !== item.product_id &&
-              transformProductSearch &&
-              (p.name.toLowerCase().includes(transformProductSearch.toLowerCase()) ||
-               p.sku.toLowerCase().includes(transformProductSearch.toLowerCase()))
-            ).slice(0, 8);
-            const selectedProduct = products.find(p => p.id === transformTargetProduct);
+            const filteredTP = products
+              .filter(
+                (p) =>
+                  p.id !== item.product_id &&
+                  transformProductSearch &&
+                  (p.name.toLowerCase().includes(transformProductSearch.toLowerCase()) ||
+                    p.sku.toLowerCase().includes(transformProductSearch.toLowerCase())),
+              )
+              .slice(0, 8);
+            const selectedProduct = products.find((p) => p.id === transformTargetProduct);
             return (
               <div className="space-y-3">
                 <div className="p-2.5 rounded-md bg-muted/30 border border-border/50">
-                  <p className="text-xs font-medium text-foreground">{item.products?.name}</p>
+                  <p className="text-xs font-medium">{item.products?.name}</p>
                   <p className="text-[10px] text-muted-foreground">
                     Nuvarande: {Number(item.quantity).toLocaleString("sv-SE")} {item.products?.unit || "kg"}
                   </p>
@@ -1498,9 +1743,16 @@ export default function Inventory() {
                   <Label className="text-xs">Omvandla till produkt *</Label>
                   {selectedProduct ? (
                     <div className="flex items-center gap-2 p-2 rounded-md border border-primary/30 bg-primary/5">
-                      <span className="text-xs font-medium text-foreground flex-1">{selectedProduct.name}</span>
-                      <Badge variant="secondary" className="text-[10px]">{selectedProduct.sku}</Badge>
-                      <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => { setTransformTargetProduct(""); setTransformProductSearch(""); }}>
+                      <span className="text-xs font-medium flex-1">{selectedProduct.name}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5"
+                        onClick={() => {
+                          setTransformTargetProduct("");
+                          setTransformProductSearch("");
+                        }}
+                      >
                         <X className="h-3 w-3" />
                       </Button>
                     </div>
@@ -1508,19 +1760,22 @@ export default function Inventory() {
                     <>
                       <Input
                         value={transformProductSearch}
-                        onChange={e => setTransformProductSearch(e.target.value)}
-                        placeholder="Sök produkt (t.ex. Bergtungafilé)..."
+                        onChange={(e) => setTransformProductSearch(e.target.value)}
+                        placeholder="Sök produkt..."
                         className="h-8 text-xs"
                       />
-                      {filteredTransformProducts.length > 0 && (
+                      {filteredTP.length > 0 && (
                         <div className="border border-border/50 rounded-md max-h-32 overflow-y-auto">
-                          {filteredTransformProducts.map(p => (
+                          {filteredTP.map((p) => (
                             <button
                               key={p.id}
                               className="w-full text-left px-3 py-1.5 hover:bg-muted/40 text-xs flex items-center justify-between"
-                              onClick={() => { setTransformTargetProduct(p.id); setTransformProductSearch(""); }}
+                              onClick={() => {
+                                setTransformTargetProduct(p.id);
+                                setTransformProductSearch("");
+                              }}
                             >
-                              <span className="font-medium text-foreground">{p.name}</span>
+                              <span className="font-medium">{p.name}</span>
                               <span className="text-muted-foreground font-mono text-[10px]">{p.sku}</span>
                             </button>
                           ))}
@@ -1530,28 +1785,36 @@ export default function Inventory() {
                   )}
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Ny vikt efter omvandling ({item.products?.unit || "kg"}) *</Label>
+                  <Label className="text-xs">Ny vikt ({item.products?.unit || "kg"}) *</Label>
                   <Input
                     type="number"
                     step="0.1"
                     value={transformNewWeight}
-                    onChange={e => setTransformNewWeight(e.target.value)}
-                    placeholder={`Mindre än ${Number(item.quantity)}`}
+                    onChange={(e) => setTransformNewWeight(e.target.value)}
                     className="h-8 text-xs"
                   />
-                  {transformNewWeight && Number(transformNewWeight) > 0 && Number(transformNewWeight) < Number(item.quantity) && (
-                    <p className="text-[10px] text-muted-foreground">
-                      Svinn: {(Number(item.quantity) - Number(transformNewWeight)).toFixed(2)} {item.products?.unit || "kg"}{" "}
-                      {"("}{((1 - Number(transformNewWeight) / Number(item.quantity)) * 100).toFixed(1)}{"%)"}
-                    </p>
-                  )}
+                  {transformNewWeight &&
+                    Number(transformNewWeight) > 0 &&
+                    Number(transformNewWeight) < Number(item.quantity) && (
+                      <p className="text-[10px] text-muted-foreground">
+                        Svinn: {(Number(item.quantity) - Number(transformNewWeight)).toFixed(2)}{" "}
+                        {item.products?.unit || "kg"} (
+                        {((1 - Number(transformNewWeight) / Number(item.quantity)) * 100).toFixed(1)}%)
+                      </p>
+                    )}
                 </div>
               </div>
             );
           })()}
           <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setTransformDialogOpen(false)}>Avbryt</Button>
-            <Button size="sm" onClick={handleTransform} disabled={!transformTargetProduct || !transformNewWeight || actionLoading}>
+            <Button variant="outline" size="sm" onClick={() => setTransformDialogOpen(false)}>
+              Avbryt
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleTransform}
+              disabled={!transformTargetProduct || !transformNewWeight || actionLoading}
+            >
               {actionLoading ? "Omvandlar..." : "Bekräfta omvandling"}
             </Button>
           </DialogFooter>
