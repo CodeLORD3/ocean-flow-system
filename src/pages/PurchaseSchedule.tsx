@@ -1056,18 +1056,26 @@ export default function PurchaseSchedule() {
                                       </CollapsibleTrigger>
                                       <CollapsibleContent asChild>
                                         <>
-                                          {item.shops.map((shop) => {
+                                          {/* Sort: packed shops last */}
+                                          {[...item.shops].sort((a, b) => (a.packed ? 1 : 0) - (b.packed ? 1 : 0)).map((shop, si) => {
                                             const zoneScheds = zoneSchedules.get(shop.zoneKey);
                                             const zone = zoneScheds?.[0];
                                             return (
-                                              <TableRow key={shop.name} className="bg-muted/30 border-0">
+                                              <TableRow key={`${shop.name}-${shop.packed ? 'p' : 'n'}-${si}`} className={shop.packed ? "bg-green-50/50 dark:bg-green-900/10 border-0" : "bg-muted/30 border-0"}>
                                                 <TableCell className="px-2 py-0.5" />
                                                 <TableCell className="px-2 pl-4 py-0.5 text-[10px] text-muted-foreground">
-                                                  <Badge variant={(zone?.badge_color || "default") as any} className="text-[9px] py-0">
-                                                    {shop.name}
-                                                  </Badge>
+                                                  <span className="flex items-center gap-1">
+                                                    <Badge variant={(zone?.badge_color || "default") as any} className={`text-[9px] py-0 ${shop.packed ? "opacity-60" : ""}`}>
+                                                      {shop.name}
+                                                    </Badge>
+                                                    {shop.packed && (
+                                                      <Badge variant="outline" className="text-[8px] py-0 px-1 border-green-500/40 text-green-700 dark:text-green-400 bg-green-500/10">
+                                                        <PackageCheck className="h-2.5 w-2.5 mr-0.5" />Packad
+                                                      </Badge>
+                                                    )}
+                                                  </span>
                                                 </TableCell>
-                                                <TableCell className="px-2 py-0.5 text-[10px] text-right text-muted-foreground">{shop.quantity} {item.unit}</TableCell>
+                                                <TableCell className={`px-2 py-0.5 text-[10px] text-right ${shop.packed ? "line-through text-green-700/60 dark:text-green-400/60" : "text-muted-foreground"}`}>{shop.quantity} {item.unit}</TableCell>
                                                 <TableCell className="px-2 py-0.5" />
                                                 <TableCell className="px-2 py-0.5" />
                                                 <TableCell className="px-2 py-0.5" />
