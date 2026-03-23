@@ -239,7 +239,7 @@ export default function Receiving() {
             .update({
               arrival_date: report.arrival_date || null,
               expiry_date: report.expiry_date || null,
-            })
+            } as any)
             .eq("product_id", line.product_id)
             .eq("location_id", rawLocation.id);
         }
