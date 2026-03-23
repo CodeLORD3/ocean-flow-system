@@ -155,7 +155,7 @@ export default function PortalOfferDetail() {
         <h3 className="text-[10px] text-[#0066ff] tracking-wider font-bold mb-3">RETURN — INVESTOR VIEW</h3>
         <div className="grid grid-cols-4 gap-4 text-center">
           <div>
-            <div className="text-lg font-bold text-[#c8d6e5]">{funded.toLocaleString()} kr</div>
+            <div className="text-lg font-bold text-[#c8d6e5]">{target.toLocaleString()} kr</div>
             <div className="text-[9px] text-[#5a6a7a]">Investment</div>
           </div>
           <div>
