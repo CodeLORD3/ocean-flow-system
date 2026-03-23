@@ -286,9 +286,9 @@ export default function ShopOrders() {
   ).slice(0, 8);
 
   const addProduct = (p: any) => {
-    setOrderLines(prev => [...prev, {
+    setOrderLines(prev => [{
       product_id: p.id, product_name: p.name, unit: p.unit, quantity: "",
-    }]);
+    }, ...prev]);
     setProductSearch("");
     setHighlightedIndex(-1);
   };
