@@ -451,7 +451,7 @@ export default function WholesaleOrders() {
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">Hantera inkomna beställningar från alla butiker. Uppdatera produktstatus i totalvyn.</p>
         </div>
-        <Button size="sm" className="gap-1.5 text-xs" onClick={() => setCreateDialogOpen(true)}>
+        <Button size="sm" className="gap-1.5 text-xs" onClick={() => setCreatingOrder(true)}>
           <Plus className="h-3.5 w-3.5" /> Skapa order åt butik
         </Button>
       </div>
