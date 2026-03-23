@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { TrendingUp, Clock, DollarSign, Target } from "lucide-react";
+import { TrendingUp, Clock, DollarSign, Target, CheckCircle } from "lucide-react";
 
 export default function PortalDashboard() {
   const navigate = useNavigate();
@@ -19,11 +19,26 @@ export default function PortalDashboard() {
     },
   });
 
+  const { data: pastOffers = [] } = useQuery({
+    queryKey: ["portal-past-offers"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("trade_offers")
+        .select("*")
+        .in("status", ["Closed", "Repaid"])
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const statusColor = (status: string) => {
     switch (status) {
       case "Open": return "text-green-400 bg-green-400/10 border-green-400/30";
       case "Funded": return "text-[#0066ff] bg-[#0066ff]/10 border-[#0066ff]/30";
       case "Closed": return "text-red-400 bg-red-400/10 border-red-400/30";
+      case "Repaid": return "text-green-400 bg-green-400/10 border-green-400/30";
       default: return "text-[#5a6a7a] bg-[#1a2035] border-[#1a2035]";
     }
   };
@@ -52,7 +67,7 @@ export default function PortalDashboard() {
         ))}
       </div>
 
-      {/* Offers table */}
+      {/* Active Offers table */}
       <div className="border border-[#1a2035] bg-[#0d1220]">
         <div className="h-8 flex items-center px-3 border-b border-[#1a2035]">
           <span className="text-[10px] text-[#0066ff] tracking-wider font-bold">ACTIVE TRADE OFFERS</span>
@@ -88,10 +103,7 @@ export default function PortalDashboard() {
                   <td className="p-2">
                     <div className="flex items-center gap-2">
                       <div className="flex-1 h-1.5 bg-[#1a2035] overflow-hidden">
-                        <div
-                          className="h-full bg-[#0066ff] transition-all"
-                          style={{ width: `${progress}%` }}
-                        />
+                        <div className="h-full bg-[#0066ff] transition-all" style={{ width: `${progress}%` }} />
                       </div>
                       <span className="text-[9px] text-[#5a6a7a] w-8 text-right">{progress.toFixed(0)}%</span>
                     </div>
@@ -114,6 +126,46 @@ export default function PortalDashboard() {
           </tbody>
         </table>
       </div>
+
+      {/* Past offers - Tidigare erbjudanden */}
+      {pastOffers.length > 0 && (
+        <div className="border border-[#1a2035] bg-[#0d1220]">
+          <div className="h-8 flex items-center px-3 border-b border-[#1a2035]">
+            <CheckCircle className="h-3 w-3 text-green-400 mr-1.5" />
+            <span className="text-[10px] text-[#5a6a7a] tracking-wider font-bold">TIDIGARE ERBJUDANDEN</span>
+          </div>
+          <table className="w-full text-[11px]">
+            <thead>
+              <tr className="border-b border-[#1a2035] text-[9px] text-[#5a6a7a] tracking-wider">
+                <th className="text-left p-2 pl-3">PRODUCT</th>
+                <th className="text-right p-2">TARGET</th>
+                <th className="text-right p-2">RATE</th>
+                <th className="text-left p-2">MATURITY</th>
+                <th className="text-center p-2 pr-3">STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pastOffers.map((offer) => (
+                <tr
+                  key={offer.id}
+                  onClick={() => navigate(`/portal/offer/${offer.id}`)}
+                  className="border-b border-[#1a2035]/50 hover:bg-[#0066ff]/5 cursor-pointer transition-colors"
+                >
+                  <td className="p-2 pl-3 text-[#c8d6e5] font-medium">{offer.title}</td>
+                  <td className="p-2 text-right text-[#c8d6e5]">{Number(offer.target_amount).toLocaleString()} kr</td>
+                  <td className="p-2 text-right text-green-400 font-bold">{Number(offer.interest_rate).toFixed(1)}%</td>
+                  <td className="p-2 text-[#5a6a7a]">{offer.maturity_date}</td>
+                  <td className="p-2 pr-3 text-center">
+                    <span className={`inline-block px-2 py-0.5 text-[9px] tracking-wider border ${statusColor(offer.status)}`}>
+                      {offer.status === "Repaid" ? "ÅTERBETALD" : offer.status.toUpperCase()}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
