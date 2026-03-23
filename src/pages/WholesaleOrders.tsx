@@ -1094,13 +1094,6 @@ export default function WholesaleOrders() {
       </Tabs>
 
 
-                <CardDescription className="text-xs">Välj en kund/butik och lägg till produkter. Ordern visas direkt i butikens ordervy.</CardDescription>
-              </div>
-              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => { setCreatingOrder(false); resetCreateForm(); }}>
-                <X className="h-3.5 w-3.5 mr-1" /> Stäng
-              </Button>
-            </div>
-          </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">Välj kund / butik <span className="text-destructive">*</span></Label>
