@@ -52,6 +52,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/production-reporting": { component: <ProductionReporting /> },
   "/audit": { component: <AuditLog /> },
   "/settings": { component: <PlaceholderPage title="Systeminställningar" /> },
+  "/trade-offers": { component: <TradeOffers /> },
 };
 
 /**

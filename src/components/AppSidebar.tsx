@@ -96,6 +96,7 @@ const sections: NavSection[] = [
   { label: "Produktion", items: productionNav },
   { label: "Lagerstyrning", items: inventoryNav },
   { label: "Organisation", items: orgNav },
+  { label: "Trading", items: tradeNav },
   { label: "Ekonomi & Rapporter", items: financeNav },
 ];
 
