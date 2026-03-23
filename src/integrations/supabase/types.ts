@@ -1532,73 +1532,118 @@ export type Database = {
       }
       trade_offers: {
         Row: {
+          annual_return: number | null
+          collateral: string | null
           created_at: string
           created_by: string | null
           description: string | null
           document_url: string | null
+          downside: string | null
           funded_amount: number
+          gross_margin: number | null
           id: string
           interest_rate: number
+          ltv: number | null
           maturity_date: string
           max_pledge: number | null
           min_pledge: number | null
+          origin: string | null
+          primary_exit: string | null
+          product_id_display: string | null
           product_image_url: string | null
           purchase_date: string | null
+          purchase_price: number | null
           quantity: number
           repayment_type: string | null
           risk_note: string | null
+          sales_value: number | null
+          secondary_exit: string | null
+          sector: string | null
           status: string
+          structure: string | null
           supplier_name: string | null
           target_amount: number
+          tenor_days: number | null
           title: string
           updated_at: string
           visibility: string
+          volume: string | null
         }
         Insert: {
+          annual_return?: number | null
+          collateral?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           document_url?: string | null
+          downside?: string | null
           funded_amount?: number
+          gross_margin?: number | null
           id?: string
           interest_rate?: number
+          ltv?: number | null
           maturity_date: string
           max_pledge?: number | null
           min_pledge?: number | null
+          origin?: string | null
+          primary_exit?: string | null
+          product_id_display?: string | null
           product_image_url?: string | null
           purchase_date?: string | null
+          purchase_price?: number | null
           quantity?: number
           repayment_type?: string | null
           risk_note?: string | null
+          sales_value?: number | null
+          secondary_exit?: string | null
+          sector?: string | null
           status?: string
+          structure?: string | null
           supplier_name?: string | null
           target_amount?: number
+          tenor_days?: number | null
           title: string
           updated_at?: string
           visibility?: string
+          volume?: string | null
         }
         Update: {
+          annual_return?: number | null
+          collateral?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           document_url?: string | null
+          downside?: string | null
           funded_amount?: number
+          gross_margin?: number | null
           id?: string
           interest_rate?: number
+          ltv?: number | null
           maturity_date?: string
           max_pledge?: number | null
           min_pledge?: number | null
+          origin?: string | null
+          primary_exit?: string | null
+          product_id_display?: string | null
           product_image_url?: string | null
           purchase_date?: string | null
+          purchase_price?: number | null
           quantity?: number
           repayment_type?: string | null
           risk_note?: string | null
+          sales_value?: number | null
+          secondary_exit?: string | null
+          sector?: string | null
           status?: string
+          structure?: string | null
           supplier_name?: string | null
           target_amount?: number
+          tenor_days?: number | null
           title?: string
           updated_at?: string
           visibility?: string
+          volume?: string | null
         }
         Relationships: []
       }
