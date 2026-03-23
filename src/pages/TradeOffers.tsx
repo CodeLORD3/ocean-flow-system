@@ -233,10 +233,20 @@ export default function TradeOffers() {
               <div className="grid grid-cols-2 gap-3">
                 <FormField label="Leverantör" value={form.supplier_name} onChange={v => setForm({...form, supplier_name: v})} placeholder="t.ex. Mondi AB" />
                 <FormField label="Origin" value={form.origin} onChange={v => setForm({...form, origin: v})} placeholder="t.ex. Norway" />
-                <FormField label="Volume" value={form.volume} onChange={v => setForm({...form, volume: v})} placeholder="t.ex. 5,000 kg" />
-                <FormField label="Purchase Price (kr)" value={form.purchase_price} onChange={v => setForm({...form, purchase_price: v})} type="number" />
-                <FormField label="Sales Value (kr)" value={form.sales_value} onChange={v => setForm({...form, sales_value: v})} type="number" />
-                <FormField label="Gross Margin (%)" value={form.gross_margin} onChange={v => setForm({...form, gross_margin: v})} type="number" step="0.1" />
+                <FormField label="Volume (antal/kg)" value={form.volume} onChange={v => setForm({...form, volume: v})} placeholder="t.ex. 5 000 kg" />
+                <FormField label="Purchase Price (kr)" value={form.purchase_price} onChange={v => {
+                  const newForm = {...form, purchase_price: v};
+                  const pp = Number(v); const sv = Number(form.sales_value);
+                  if (pp > 0 && sv > 0) newForm.gross_margin = (((sv - pp) / sv) * 100).toFixed(1);
+                  setForm(newForm);
+                }} type="number" />
+                <FormField label="Sales Value (kr)" value={form.sales_value} onChange={v => {
+                  const newForm = {...form, sales_value: v};
+                  const pp = Number(form.purchase_price); const sv = Number(v);
+                  if (pp > 0 && sv > 0) newForm.gross_margin = (((sv - pp) / sv) * 100).toFixed(1);
+                  setForm(newForm);
+                }} type="number" />
+                <FormField label="Gross Margin (%) — auto" value={form.gross_margin} onChange={v => setForm({...form, gross_margin: v})} type="number" step="0.1" />
               </div>
             </div>
 
@@ -335,8 +345,8 @@ export default function TradeOffers() {
                 const funded = Number(offer.funded_amount);
                 const rate = Number(offer.interest_rate);
                 const progress = target > 0 ? Math.min(100, (funded / target) * 100) : 0;
-                const profitKr = Math.round(funded * (rate / 100));
-                const totalPayout = funded + profitKr;
+                const profitKr = Math.round(target * (rate / 100));
+                const totalPayout = target + profitKr;
 
                 // Days left
                 const now = new Date();

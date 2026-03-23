@@ -26,8 +26,8 @@ export default function TradeOfferDetail({ offer, pledges, onBack, onStatusChang
   const funded = Number(offer.funded_amount);
   const rate = Number(offer.interest_rate);
   const progress = target > 0 ? Math.min(100, (funded / target) * 100) : 0;
-  const profitKr = Math.round(funded * (rate / 100));
-  const totalPayout = funded + profitKr;
+  const profitKr = Math.round(target * (rate / 100));
+  const totalPayout = target + profitKr;
 
   const now = new Date();
   const maturity = new Date(offer.maturity_date);
@@ -122,7 +122,7 @@ export default function TradeOfferDetail({ offer, pledges, onBack, onStatusChang
           <h3 className="text-xs font-bold text-primary tracking-wider mb-3">RETURN — INVESTOR VIEW</h3>
           <div className="grid grid-cols-4 gap-4">
             <div className="text-center">
-              <div className="text-lg font-bold">{funded.toLocaleString()} kr</div>
+              <div className="text-lg font-bold">{target.toLocaleString()} kr</div>
               <div className="text-[9px] text-muted-foreground">Investment</div>
             </div>
             <div className="text-center">
@@ -148,7 +148,7 @@ export default function TradeOfferDetail({ offer, pledges, onBack, onStatusChang
             <h3 className="text-[11px] font-bold text-primary tracking-wider mb-2">UNDERLYING TRANSACTION</h3>
             <InfoRow label="Product" value={offer.title} />
             <InfoRow label="Origin" value={offer.origin} />
-            <InfoRow label="Volume" value={offer.volume} />
+            <InfoRow label="Volume" value={offer.volume || "—"} />
             <InfoRow label="Purchase Price" value={offer.purchase_price ? `${Number(offer.purchase_price).toLocaleString()} kr` : "—"} />
             <InfoRow label="Sales Value" value={offer.sales_value ? `${Number(offer.sales_value).toLocaleString()} kr` : "—"} />
             <InfoRow label="Gross Margin" value={offer.gross_margin ? `${Number(offer.gross_margin).toFixed(1)}%` : "—"} />
