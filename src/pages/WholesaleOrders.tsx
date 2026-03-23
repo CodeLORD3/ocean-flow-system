@@ -1081,200 +1081,21 @@ export default function WholesaleOrders() {
       <PackingSlip order={packingSlipOrder} open={!!packingSlipOrder} onOpenChange={(open) => { if (!open) setPackingSlipOrder(null); }} />
       <DeliveryNote order={deliveryNoteOrder} open={!!deliveryNoteOrder} onOpenChange={(open) => { if (!open) setDeliveryNoteOrder(null); }} />
 
-      {/* Create order on behalf of shop dialog */}
-      <Dialog open={createDialogOpen} onOpenChange={open => { setCreateDialogOpen(open); if (!open) resetCreateDialog(); }}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      {/* Confirmation dialog for creating order */}
+      <Dialog open={confirmCreateOpen} onOpenChange={setConfirmCreateOpen}>
+        <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="font-heading">Skapa order åt butik</DialogTitle>
+            <DialogTitle className="font-heading">Bekräfta order</DialogTitle>
             <DialogDescription className="text-xs">
-              Välj en kund/butik och lägg till produkter. Ordern visas direkt i butikens ordervy.
+              Skapa order med {newOrderLines.filter(l => l.quantity && Number(l.quantity) > 0).length} produkt(er) åt {selectedCustomer?.name}?
             </DialogDescription>
           </DialogHeader>
-
-          {/* Customer selection */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium">Välj kund / butik <span className="text-destructive">*</span></Label>
-            <Select value={selectedCustomerId} onValueChange={v => { setSelectedCustomerId(v); setNewOrderDeliveryDate(undefined); }}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Välj kund..." />
-              </SelectTrigger>
-              <SelectContent>
-                {linkedCustomers.map(c => {
-                  const store = stores.find(s => s.id === c.store_id);
-                  return (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name} {store ? `(${store.name})` : ""}
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-            {linkedCustomers.length === 0 && (
-              <p className="text-[10px] text-warning">Inga kunder är kopplade till butiker. Koppla kunder via Kunder-modulen.</p>
-            )}
-          </div>
-
-          {/* Product search */}
-          {selectedCustomerId && (
-            <>
-              <div className="relative">
-                <Label className="text-xs font-medium mb-1.5 block">Lägg till produkter</Label>
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                  <Input
-                    placeholder="Sök produkt (namn eller SKU)..."
-                    value={newProductSearch}
-                    onChange={e => { setNewProductSearch(e.target.value); setNewHighlightedIndex(-1); }}
-                    onKeyDown={e => {
-                      if (filteredNewProducts.length === 0) return;
-                      if (e.key === "ArrowDown") {
-                        e.preventDefault();
-                        setNewHighlightedIndex(prev => (prev + 1) % filteredNewProducts.length);
-                      } else if (e.key === "ArrowUp") {
-                        e.preventDefault();
-                        setNewHighlightedIndex(prev => (prev <= 0 ? filteredNewProducts.length - 1 : prev - 1));
-                      } else if (e.key === "Enter" && newHighlightedIndex >= 0 && newHighlightedIndex < filteredNewProducts.length) {
-                        e.preventDefault();
-                        addNewProduct(filteredNewProducts[newHighlightedIndex]);
-                      }
-                    }}
-                    className="pl-8 h-8 text-xs"
-                  />
-                </div>
-                {filteredNewProducts.length > 0 && (
-                  <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
-                    {filteredNewProducts.map((p, idx) => (
-                      <button
-                        key={p.id}
-                        className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between ${idx === newHighlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
-                        onClick={() => addNewProduct(p)}
-                        onMouseEnter={() => setNewHighlightedIndex(idx)}
-                      >
-                        <span className="font-medium text-foreground">{p.name}</span>
-                        <span className="text-muted-foreground font-mono text-[10px]">{p.sku} · {p.unit}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Order lines */}
-              {newOrderLines.length > 0 && (
-                <div className="space-y-2">
-                  <Separator />
-                  <div className="text-xs font-medium text-muted-foreground">
-                    {newOrderLines.length} produkt{newOrderLines.length > 1 ? "er" : ""} tillagda
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr className="border-b border-border">
-                          <th className="pb-2 text-left font-medium text-muted-foreground">Produkt</th>
-                          <th className="pb-2 text-left font-medium text-muted-foreground">Enhet</th>
-                          <th className="pb-2 text-right font-medium text-muted-foreground w-32">Antal</th>
-                          <th className="pb-2 w-8"></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {newOrderLines.map((line, idx) => (
-                          <tr key={line.product_id} className="border-b border-border/30">
-                            <td className="py-2 font-medium text-foreground">{line.product_name}</td>
-                            <td className="py-2 text-muted-foreground">{line.unit}</td>
-                            <td className="py-2 text-right">
-                              <Input
-                                type="number"
-                                step="0.1"
-                                value={line.quantity}
-                                onChange={e => updateNewLine(idx, e.target.value)}
-                                className="h-7 text-xs w-24 ml-auto text-right"
-                                placeholder="0"
-                                autoFocus={idx === newOrderLines.length - 1}
-                              />
-                            </td>
-                            <td className="py-2">
-                              <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeNewLine(idx)}>
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-1.5">
-                <Label className="text-xs">Önskat avgångsdatum <span className="text-destructive">*</span></Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left text-xs h-8 font-normal",
-                        !newOrderDeliveryDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                      {newOrderDeliveryDate ? format(newOrderDeliveryDate, "yyyy-MM-dd") : "Välj datum..."}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={newOrderDeliveryDate}
-                      onSelect={setNewOrderDeliveryDate}
-                      disabled={isNewOrderDateDisabled}
-                      initialFocus
-                      className={cn("p-3 pointer-events-auto")}
-                      modifiers={allowedWeekdays ? { allowed: (date: Date) => !isNewOrderDateDisabled(date) } : {}}
-                      modifiersClassNames={allowedWeekdays ? { allowed: "!bg-primary/10 !text-primary font-medium" } : {}}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs">Anteckning (valfritt)</Label>
-                <Textarea
-                  value={newOrderNote}
-                  onChange={e => setNewOrderNote(e.target.value)}
-                  placeholder="T.ex. brådskande leverans, specialförpackning..."
-                  className="text-xs min-h-[50px]"
-                />
-              </div>
-            </>
-          )}
-
           <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => { setCreateDialogOpen(false); resetCreateDialog(); }}>Avbryt</Button>
-            <Button
-              size="sm"
-              className="gap-1.5"
-              onClick={() => setConfirmCreateOpen(true)}
-              disabled={!selectedCustomerId || newOrderLines.filter(l => l.quantity && Number(l.quantity) > 0).length === 0 || !newOrderDeliveryDate}
-            >
-              <ShoppingCart className="h-3.5 w-3.5" /> Skapa order
+            <Button variant="outline" size="sm" onClick={() => setConfirmCreateOpen(false)}>Avbryt</Button>
+            <Button size="sm" className="gap-1.5" onClick={() => { setConfirmCreateOpen(false); handleCreateWholesaleOrder(); }}>
+              <CheckCircle2 className="h-3.5 w-3.5" /> Ja, skapa
             </Button>
           </DialogFooter>
-
-          {/* Confirmation dialog */}
-          <Dialog open={confirmCreateOpen} onOpenChange={setConfirmCreateOpen}>
-            <DialogContent className="max-w-sm">
-              <DialogHeader>
-                <DialogTitle className="font-heading">Bekräfta order</DialogTitle>
-                <DialogDescription className="text-xs">
-                  Skapa order med {newOrderLines.filter(l => l.quantity && Number(l.quantity) > 0).length} produkt(er) åt {selectedCustomer?.name}?
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <Button variant="outline" size="sm" onClick={() => setConfirmCreateOpen(false)}>Avbryt</Button>
-                <Button size="sm" className="gap-1.5" onClick={() => { setConfirmCreateOpen(false); handleCreateWholesaleOrder(); }}>
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Ja, skapa
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
         </DialogContent>
       </Dialog>
     </motion.div>
