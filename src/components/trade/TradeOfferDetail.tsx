@@ -148,7 +148,7 @@ export default function TradeOfferDetail({ offer, pledges, onBack, onStatusChang
             <h3 className="text-[11px] font-bold text-primary tracking-wider mb-2">UNDERLYING TRANSACTION</h3>
             <InfoRow label="Product" value={offer.title} />
             <InfoRow label="Origin" value={offer.origin} />
-            <InfoRow label="Volume" value={offer.volume} />
+            <InfoRow label="Volume" value={offer.volume || "—"} />
             <InfoRow label="Purchase Price" value={offer.purchase_price ? `${Number(offer.purchase_price).toLocaleString()} kr` : "—"} />
             <InfoRow label="Sales Value" value={offer.sales_value ? `${Number(offer.sales_value).toLocaleString()} kr` : "—"} />
             <InfoRow label="Gross Margin" value={offer.gross_margin ? `${Number(offer.gross_margin).toFixed(1)}%` : "—"} />

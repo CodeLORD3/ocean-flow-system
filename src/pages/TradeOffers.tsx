@@ -345,8 +345,8 @@ export default function TradeOffers() {
                 const funded = Number(offer.funded_amount);
                 const rate = Number(offer.interest_rate);
                 const progress = target > 0 ? Math.min(100, (funded / target) * 100) : 0;
-                const profitKr = Math.round(funded * (rate / 100));
-                const totalPayout = funded + profitKr;
+                const profitKr = Math.round(target * (rate / 100));
+                const totalPayout = target + profitKr;
 
                 // Days left
                 const now = new Date();
