@@ -37,6 +37,7 @@ const pageTitles: Record<string, { title: string; breadcrumb: string[] }> = {
   "/receiving": { title: "Inleveranser", breadcrumb: ["Hem", "Lagerstyrning", "Inleveranser"] },
   "/barcodes": { title: "Streckkoder", breadcrumb: ["Hem", "Lagerstyrning", "Streckkoder"] },
   "/trade-offers": { title: "Trade Offers", breadcrumb: ["Hem", "Trading", "Trade Offers"] },
+  "/trade-history": { title: "Trade History", breadcrumb: ["Hem", "Trading", "History"] },
 };
 
 function AccountSwitcher() {
