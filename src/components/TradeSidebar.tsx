@@ -26,6 +26,7 @@ import {
 const tradeNav = [
   { title: "Trade Offers", url: "/trade-offers", icon: TrendingUp },
   { title: "History", url: "/trade-history", icon: History },
+  { title: "Investor List", url: "/investor-list", icon: Users },
   { title: "Investor Portal", url: "/investor-portal", icon: Eye },
 ];
 
