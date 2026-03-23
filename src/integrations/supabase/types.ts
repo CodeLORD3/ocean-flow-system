@@ -1535,12 +1535,20 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          document_url: string | null
           funded_amount: number
           id: string
           interest_rate: number
           maturity_date: string
+          max_pledge: number | null
+          min_pledge: number | null
+          product_image_url: string | null
+          purchase_date: string | null
           quantity: number
+          repayment_type: string | null
+          risk_note: string | null
           status: string
+          supplier_name: string | null
           target_amount: number
           title: string
           updated_at: string
@@ -1550,12 +1558,20 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          document_url?: string | null
           funded_amount?: number
           id?: string
           interest_rate?: number
           maturity_date: string
+          max_pledge?: number | null
+          min_pledge?: number | null
+          product_image_url?: string | null
+          purchase_date?: string | null
           quantity?: number
+          repayment_type?: string | null
+          risk_note?: string | null
           status?: string
+          supplier_name?: string | null
           target_amount?: number
           title: string
           updated_at?: string
@@ -1565,12 +1581,20 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          document_url?: string | null
           funded_amount?: number
           id?: string
           interest_rate?: number
           maturity_date?: string
+          max_pledge?: number | null
+          min_pledge?: number | null
+          product_image_url?: string | null
+          purchase_date?: string | null
           quantity?: number
+          repayment_type?: string | null
+          risk_note?: string | null
           status?: string
+          supplier_name?: string | null
           target_amount?: number
           title?: string
           updated_at?: string
