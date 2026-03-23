@@ -24,6 +24,7 @@ import ProductionReporting from "@/pages/ProductionReporting";
 import ReportsRouter from "@/pages/ReportsRouter";
 import AuditLog from "@/pages/AuditLog";
 import TradeOffers from "@/pages/TradeOffers";
+import TradeHistory from "@/pages/TradeHistory";
 
 interface RouteEntry {
   component: React.ReactNode;
@@ -53,6 +54,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/audit": { component: <AuditLog /> },
   "/settings": { component: <PlaceholderPage title="Systeminställningar" /> },
   "/trade-offers": { component: <TradeOffers /> },
+  "/trade-history": { component: <TradeHistory /> },
 };
 
 /**

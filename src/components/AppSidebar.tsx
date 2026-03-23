@@ -72,9 +72,6 @@ const orgNav = [
   { title: "Personal", url: "/staff", icon: UserCheck },
 ];
 
-const tradeNav = [
-  { title: "Trade Offers", url: "/trade-offers", icon: TrendingUp },
-];
 
 const financeNav = [
   { title: "Rapporter", url: "/reports", icon: BarChart3 },
@@ -96,7 +93,7 @@ const sections: NavSection[] = [
   { label: "Produktion", items: productionNav },
   { label: "Lagerstyrning", items: inventoryNav },
   { label: "Organisation", items: orgNav },
-  { label: "Trading", items: tradeNav },
+  
   { label: "Ekonomi & Rapporter", items: financeNav },
 ];
 
