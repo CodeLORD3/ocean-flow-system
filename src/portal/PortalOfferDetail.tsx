@@ -68,8 +68,8 @@ export default function PortalOfferDetail() {
   const funded = Number(offer.funded_amount);
   const rate = Number(offer.interest_rate);
   const progress = target > 0 ? Math.min(100, (funded / target) * 100) : 0;
-  const profitKr = Math.round(funded * (rate / 100));
-  const totalPayout = funded + profitKr;
+  const profitKr = Math.round(target * (rate / 100));
+  const totalPayout = target + profitKr;
   const calcResult = calcAmount ? Number(calcAmount) * (1 + rate / 100) : 0;
   const minPledge = Number(o.min_pledge) || 0;
   const maxPledge = o.max_pledge ? Number(o.max_pledge) : null;
