@@ -154,9 +154,9 @@ export default function WholesaleOrders() {
   ).slice(0, 8);
 
   const addNewProduct = (p: any) => {
-    setNewOrderLines(prev => [...prev, {
+    setNewOrderLines(prev => [{
       product_id: p.id, product_name: p.name, unit: p.unit, quantity: "",
-    }]);
+    }, ...prev]);
     setNewProductSearch("");
     setNewHighlightedIndex(-1);
   };
