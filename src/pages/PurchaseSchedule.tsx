@@ -368,6 +368,7 @@ export default function PurchaseSchedule() {
     type RawItem = {
       storeName: string;
       zoneKey: string;
+      packed: boolean;
       productId: string;
       productName: string;
       quantity: number;
