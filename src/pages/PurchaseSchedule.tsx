@@ -368,6 +368,7 @@ export default function PurchaseSchedule() {
     type RawItem = {
       storeName: string;
       zoneKey: string;
+      packed: boolean;
       productId: string;
       productName: string;
       quantity: number;
@@ -393,25 +394,27 @@ export default function PurchaseSchedule() {
       if (!schedules || schedules.length === 0) continue;
 
       for (const line of order.shop_order_lines || []) {
-        // Skip lines already being processed or marked as "Använd lager"
-        if (line.status && !["", "Ny", "Pågående"].includes(line.status)) continue;
         if (line.ordered_elsewhere === "Lager" || line.ordered_elsewhere === "Köpt") continue;
+
+        const isPacked = !!line.status && ["Packad", "Skickad", "Klar / Levererad"].includes(line.status);
+        const isPending = !line.status || ["", "Ny", "Pågående"].includes(line.status);
+        
+        // Skip lines that are neither pending nor packed (e.g. "Ej tillgänglig")
+        if (!isPacked && !isPending) continue;
 
         const deliveryDateStr = line.delivery_date || order.desired_delivery_date;
         if (!deliveryDateStr) continue;
 
         const deliveryDate = parseISO(deliveryDateStr);
-        // delivery_date IS the departure date (user picks from allowed departure weekdays)
         const departureDate = deliveryDate;
-        // Find matching schedule for departure time display
-        const isoWeekday = deliveryDate.getDay() === 0 ? 7 : deliveryDate.getDay(); // 1=Mon..7=Sun
+        const isoWeekday = deliveryDate.getDay() === 0 ? 7 : deliveryDate.getDay();
         const matchingSchedule = schedules.find(s => s.departure_weekday === isoWeekday) || schedules[0];
-        // order_date is the planned purchase date (set by drag & drop), defaults to departure date
         const purchaseDate = line.order_date ? parseISO(line.order_date) : departureDate;
 
         rawItems.push({
           storeName: store.name,
           zoneKey,
+          packed: isPacked,
           productId: line.product_id,
           productName: line.products?.name || "Okänd produkt",
           quantity: line.quantity_ordered,
@@ -435,7 +438,7 @@ export default function PurchaseSchedule() {
       productName: string;
       unit: string;
       totalQuantity: number;
-      shops: { name: string; zoneKey: string; quantity: number; deliveryDate: Date }[];
+      shops: { name: string; zoneKey: string; quantity: number; deliveryDate: Date; packed?: boolean }[];
       departureDate: Date;
       purchaseDate: Date;
       earliestDelivery: Date;
@@ -451,14 +454,16 @@ export default function PurchaseSchedule() {
       const k = key(item);
       const existing = grouped.get(k);
       if (existing) {
-        existing.totalQuantity += item.quantity;
-        existing.lineIds.push(item.lineId);
-        if (!existing.shopOrderIds.includes(item.shopOrderId)) existing.shopOrderIds.push(item.shopOrderId);
-        const shopEntry = existing.shops.find((s) => s.name === item.storeName);
+        if (!item.packed) {
+          existing.totalQuantity += item.quantity;
+          existing.lineIds.push(item.lineId);
+          if (!existing.shopOrderIds.includes(item.shopOrderId)) existing.shopOrderIds.push(item.shopOrderId);
+        }
+        const shopEntry = existing.shops.find((s) => s.name === item.storeName && s.packed === item.packed);
         if (shopEntry) {
           shopEntry.quantity += item.quantity;
         } else {
-          existing.shops.push({ name: item.storeName, zoneKey: item.zoneKey, quantity: item.quantity, deliveryDate: item.deliveryDate });
+          existing.shops.push({ name: item.storeName, zoneKey: item.zoneKey, quantity: item.quantity, deliveryDate: item.deliveryDate, packed: item.packed });
         }
         if (item.deliveryDate < existing.earliestDelivery) existing.earliestDelivery = item.deliveryDate;
       } else {
@@ -466,15 +471,15 @@ export default function PurchaseSchedule() {
           productId: item.productId,
           productName: item.productName,
           unit: item.unit,
-          totalQuantity: item.quantity,
-          shops: [{ name: item.storeName, zoneKey: item.zoneKey, quantity: item.quantity, deliveryDate: item.deliveryDate }],
+          totalQuantity: item.packed ? 0 : item.quantity,
+          shops: [{ name: item.storeName, zoneKey: item.zoneKey, quantity: item.quantity, deliveryDate: item.deliveryDate, packed: item.packed }],
           departureDate: item.departureDate,
           purchaseDate: item.purchaseDate,
           earliestDelivery: item.deliveryDate,
           departureTime: item.departureTime,
           category: item.category,
-          lineIds: [item.lineId],
-          shopOrderIds: [item.shopOrderId],
+          lineIds: item.packed ? [] : [item.lineId],
+          shopOrderIds: item.packed ? [] : [item.shopOrderId],
         });
       }
     }
@@ -505,7 +510,8 @@ export default function PurchaseSchedule() {
       });
     }
 
-    return Array.from(grouped.values());
+    // Filter out items that have no pending lines (only packed shops)
+    return Array.from(grouped.values()).filter(item => item.totalQuantity > 0 || item.isManual);
   }, [orders, stores, transportSchedules, storeMap, zoneSchedules, manualEntries, allProducts]);
 
   // ── Bought items for "Köpt vecka" tab ──
@@ -986,7 +992,22 @@ export default function PurchaseSchedule() {
                                           <TableCell className={`px-2 py-0.5 text-xs text-right ${isPurchased ? "font-semibold text-green-700 dark:text-green-400" : "text-muted-foreground"}`}>
                                             {purchased > 0 ? `${purchased} ${item.unit}` : "—"}
                                           </TableCell>
-                                          <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">{item.shops.length} butik{item.shops.length > 1 ? "er" : ""}</TableCell>
+                                          <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">
+                                            {item.isManual ? "—" : (() => {
+                                              const pendingShops = item.shops.filter(s => !s.packed);
+                                              const packedShops = item.shops.filter(s => s.packed);
+                                              return (
+                                                <span className="flex items-center gap-1">
+                                                  {pendingShops.length} butik{pendingShops.length !== 1 ? "er" : ""}
+                                                  {packedShops.length > 0 && (
+                                                    <Badge variant="outline" className="text-[8px] py-0 px-1 border-green-500/40 text-green-700 dark:text-green-400 bg-green-500/10">
+                                                      <PackageCheck className="h-2.5 w-2.5 mr-0.5" />{packedShops.length}
+                                                    </Badge>
+                                                  )}
+                                                </span>
+                                              );
+                                            })()}
+                                          </TableCell>
                                           <TableCell className="px-2 py-0.5">
                                             <span className="text-[10px] text-muted-foreground">
                                               {view === "purchase"
@@ -1035,18 +1056,26 @@ export default function PurchaseSchedule() {
                                       </CollapsibleTrigger>
                                       <CollapsibleContent asChild>
                                         <>
-                                          {item.shops.map((shop) => {
+                                          {/* Sort: packed shops last */}
+                                          {[...item.shops].sort((a, b) => (a.packed ? 1 : 0) - (b.packed ? 1 : 0)).map((shop, si) => {
                                             const zoneScheds = zoneSchedules.get(shop.zoneKey);
                                             const zone = zoneScheds?.[0];
                                             return (
-                                              <TableRow key={shop.name} className="bg-muted/30 border-0">
+                                              <TableRow key={`${shop.name}-${shop.packed ? 'p' : 'n'}-${si}`} className={shop.packed ? "bg-green-50/50 dark:bg-green-900/10 border-0" : "bg-muted/30 border-0"}>
                                                 <TableCell className="px-2 py-0.5" />
                                                 <TableCell className="px-2 pl-4 py-0.5 text-[10px] text-muted-foreground">
-                                                  <Badge variant={(zone?.badge_color || "default") as any} className="text-[9px] py-0">
-                                                    {shop.name}
-                                                  </Badge>
+                                                  <span className="flex items-center gap-1">
+                                                    <Badge variant={(zone?.badge_color || "default") as any} className={`text-[9px] py-0 ${shop.packed ? "opacity-60" : ""}`}>
+                                                      {shop.name}
+                                                    </Badge>
+                                                    {shop.packed && (
+                                                      <Badge variant="outline" className="text-[8px] py-0 px-1 border-green-500/40 text-green-700 dark:text-green-400 bg-green-500/10">
+                                                        <PackageCheck className="h-2.5 w-2.5 mr-0.5" />Packad
+                                                      </Badge>
+                                                    )}
+                                                  </span>
                                                 </TableCell>
-                                                <TableCell className="px-2 py-0.5 text-[10px] text-right text-muted-foreground">{shop.quantity} {item.unit}</TableCell>
+                                                <TableCell className={`px-2 py-0.5 text-[10px] text-right ${shop.packed ? "line-through text-green-700/60 dark:text-green-400/60" : "text-muted-foreground"}`}>{shop.quantity} {item.unit}</TableCell>
                                                 <TableCell className="px-2 py-0.5" />
                                                 <TableCell className="px-2 py-0.5" />
                                                 <TableCell className="px-2 py-0.5" />
