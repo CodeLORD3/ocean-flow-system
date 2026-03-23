@@ -112,7 +112,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     className="h-6 text-[10px] gap-1 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
                   >
                     <ArrowLeftRight className="h-3 w-3" />
-                    {site === "shop" ? activeStoreName || "Butik" : site === "production" ? "Produktion" : "Grossist"}
+                    {site === "shop" ? activeStoreName || "Butik" : site === "production" ? "Produktion" : site === "trade" ? "Trade" : "Grossist"}
                     <ChevronDown className="h-2.5 w-2.5" />
                   </Button>
                 </DropdownMenuTrigger>
