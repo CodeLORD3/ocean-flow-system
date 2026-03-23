@@ -362,7 +362,7 @@ export default function ShopOrders() {
 
     toast({ title: "Beställning skickad!", description: `${validLines.length} produkter beställda` });
     qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
-    setDialogOpen(false);
+    setCreatingOrder(false);
     setOrderLines([]);
     setOrderNote("");
     setDesiredDeliveryDate(undefined);
