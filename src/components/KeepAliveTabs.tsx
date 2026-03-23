@@ -23,6 +23,7 @@ import ProductionSchedule from "@/pages/ProductionSchedule";
 import ProductionReporting from "@/pages/ProductionReporting";
 import ReportsRouter from "@/pages/ReportsRouter";
 import AuditLog from "@/pages/AuditLog";
+import TradeOffers from "@/pages/TradeOffers";
 
 interface RouteEntry {
   component: React.ReactNode;
