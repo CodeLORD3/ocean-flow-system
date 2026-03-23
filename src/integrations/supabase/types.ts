@@ -676,6 +676,8 @@ export type Database = {
       }
       product_stock_locations: {
         Row: {
+          arrival_date: string | null
+          expiry_date: string | null
           id: string
           location_id: string
           min_stock: number | null
@@ -686,6 +688,8 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          arrival_date?: string | null
+          expiry_date?: string | null
           id?: string
           location_id: string
           min_stock?: number | null
@@ -696,6 +700,8 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          arrival_date?: string | null
+          expiry_date?: string | null
           id?: string
           location_id?: string
           min_stock?: number | null
@@ -800,7 +806,9 @@ export type Database = {
           quantity: number
           report_id: string
           status: string
+          target_quantity: number | null
           unit: string | null
+          yield_percent: number | null
         }
         Insert: {
           created_at?: string | null
@@ -813,7 +821,9 @@ export type Database = {
           quantity?: number
           report_id: string
           status?: string
+          target_quantity?: number | null
           unit?: string | null
+          yield_percent?: number | null
         }
         Update: {
           created_at?: string | null
@@ -826,7 +836,9 @@ export type Database = {
           quantity?: number
           report_id?: string
           status?: string
+          target_quantity?: number | null
           unit?: string | null
+          yield_percent?: number | null
         }
         Relationships: [
           {
@@ -892,6 +904,7 @@ export type Database = {
           parent_product_id: string | null
           producer: string | null
           retail_suggested: number | null
+          shelf_life_days: number | null
           sku: string
           stock: number
           supplier_id: string | null
@@ -913,6 +926,7 @@ export type Database = {
           parent_product_id?: string | null
           producer?: string | null
           retail_suggested?: number | null
+          shelf_life_days?: number | null
           sku: string
           stock?: number
           supplier_id?: string | null
@@ -934,6 +948,7 @@ export type Database = {
           parent_product_id?: string | null
           producer?: string | null
           retail_suggested?: number | null
+          shelf_life_days?: number | null
           sku?: string
           stock?: number
           supplier_id?: string | null
