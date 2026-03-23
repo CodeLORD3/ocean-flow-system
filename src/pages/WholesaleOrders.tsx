@@ -231,8 +231,8 @@ export default function WholesaleOrders() {
     toast({ title: "Order skapad!", description: `${validLines.length} produkter beställda åt ${selectedCustomer.name}` });
     qc.invalidateQueries({ queryKey: ["shop_orders"] });
     qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });
-    setCreateDialogOpen(false);
-    resetCreateDialog();
+    setCreatingOrder(false);
+    resetCreateForm();
   };
 
   // Customers with store_id (linked to a shop)
