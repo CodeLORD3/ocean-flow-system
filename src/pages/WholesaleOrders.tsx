@@ -116,7 +116,7 @@ export default function WholesaleOrders() {
   const resolveChange = useResolveChangeRequest();
 
   // Wholesale order creation state
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [creatingOrder, setCreatingOrder] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [newOrderLines, setNewOrderLines] = useState<WholesaleOrderLine[]>([]);
   const [newOrderNote, setNewOrderNote] = useState("");
