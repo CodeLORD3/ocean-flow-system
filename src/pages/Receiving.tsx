@@ -1,8 +1,18 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
-  Package, Search, CheckCircle2, Clock, Truck, AlertTriangle, X,
-  ThumbsUp, Flag, Eye,
+  Package,
+  Search,
+  CheckCircle2,
+  Clock,
+  Truck,
+  AlertTriangle,
+  X,
+  ThumbsUp,
+  Flag,
+  Eye,
+  Calendar,
+  CalendarCheck,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,11 +20,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useSite } from "@/contexts/SiteContext";
@@ -22,6 +35,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSubmitReceivingReport } from "@/hooks/useDeliveryReceivingReports";
 import { moveStockToRawLager } from "@/lib/stockTransfer";
+import { format, differenceInDays, parseISO } from "date-fns";
+import { sv } from "date-fns/locale";
 
 const REPORT_TYPES = ["Skadad", "Fel kvantitet", "Dålig kvalitet", "Saknas", "Annat"];
 
@@ -31,6 +46,28 @@ interface LineReport {
   notes?: string;
   quantity_received?: string;
   confirmed?: boolean;
+  // NEW: freshness fields captured at receiving
+  arrival_date?: string;
+  expiry_date?: string;
+}
+
+// Helper: color-code expiry dates entered during receiving
+function getExpiryColor(expiryDate: string): string {
+  if (!expiryDate) return "";
+  const days = differenceInDays(parseISO(expiryDate), new Date());
+  if (days < 0) return "border-destructive/50 bg-destructive/5";
+  if (days <= 2) return "border-destructive/30 bg-destructive/5";
+  if (days <= 5) return "border-amber-500/30 bg-amber-500/5";
+  return "border-emerald-500/30 bg-emerald-500/5";
+}
+
+function getExpiryLabel(expiryDate: string): { text: string; class: string } | null {
+  if (!expiryDate) return null;
+  const days = differenceInDays(parseISO(expiryDate), new Date());
+  if (days < 0) return { text: `Utgången`, class: "text-destructive" };
+  if (days <= 2) return { text: `${days}d kvar – kritisk!`, class: "text-destructive" };
+  if (days <= 5) return { text: `${days}d kvar – kort hållbarhet`, class: "text-amber-600" };
+  return { text: `${days}d kvar`, class: "text-emerald-600" };
 }
 
 export default function Receiving() {
@@ -40,10 +77,9 @@ export default function Receiving() {
   const [search, setSearch] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const submitReport = useSubmitReceivingReport();
-
   const [lineReports, setLineReports] = useState<Record<string, LineReport>>({});
 
-  // Only fetch orders with status "Skickad" — these are shipped and ready for receiving
+  // Only fetch orders with status "Skickad"
   const { data: pendingOrders = [] } = useQuery({
     queryKey: ["pending-deliveries", activeStoreId],
     queryFn: async () => {
@@ -59,7 +95,6 @@ export default function Receiving() {
     },
   });
 
-  // Fetch existing reports for this store
   const { data: existingReports = [] } = useQuery({
     queryKey: ["delivery_receiving_reports", activeStoreId],
     queryFn: async () => {
@@ -73,7 +108,6 @@ export default function Receiving() {
     },
   });
 
-  // Fetch completed reports (orders that have been fully reported on)
   const { data: completedOrders = [] } = useQuery({
     queryKey: ["completed-deliveries", activeStoreId],
     queryFn: async () => {
@@ -102,17 +136,34 @@ export default function Receiving() {
   const unreportedOrders = pendingOrders.filter((o: any) => !reportedOrderIds.has(o.id));
   const reportedPendingOrders = pendingOrders.filter((o: any) => reportedOrderIds.has(o.id));
 
+  // Auto-calculate expiry date from arrival date + product shelf_life_days
+  const calcExpiry = (arrivalDate: string, shelfLifeDays: number | null): string => {
+    if (!arrivalDate || !shelfLifeDays) return "";
+    const d = new Date(arrivalDate);
+    d.setDate(d.getDate() + shelfLifeDays);
+    return d.toISOString().slice(0, 10);
+  };
+
   const openOrder = (order: any) => {
     setSelectedOrder(order);
+    const today = new Date().toISOString().slice(0, 10);
     const initial: Record<string, LineReport> = {};
     (order.shop_order_lines || []).forEach((line: any) => {
-      initial[line.id] = { status: "Godkänd", quantity_received: String(line.quantity_delivered || line.quantity_ordered), confirmed: false };
+      const shelfLife = line.products?.shelf_life_days || null;
+      initial[line.id] = {
+        status: "Godkänd",
+        quantity_received: String(line.quantity_delivered || line.quantity_ordered),
+        confirmed: false,
+        arrival_date: today,
+        // Auto-fill expiry if product has shelf_life_days set
+        expiry_date: calcExpiry(today, shelfLife),
+      };
     });
     setLineReports(initial);
   };
 
   const updateLineReport = (lineId: string, field: string, value: string) => {
-    setLineReports(prev => ({
+    setLineReports((prev) => ({
       ...prev,
       [lineId]: { ...prev[lineId], [field]: value },
     }));
@@ -120,6 +171,18 @@ export default function Receiving() {
 
   const handleSubmit = async () => {
     if (!selectedOrder || !activeStoreId) return;
+
+    // Warn if any line has a very short expiry
+    const criticalLines = Object.entries(lineReports).filter(([, r]) => {
+      if (!r.expiry_date) return false;
+      return differenceInDays(parseISO(r.expiry_date), new Date()) <= 2;
+    });
+    if (criticalLines.length > 0) {
+      const confirmed = window.confirm(
+        `⚠️ ${criticalLines.length} produkt(er) har kritiskt kort hållbarhet (≤2 dagar). Vill du ändå godkänna leveransen?`,
+      );
+      if (!confirmed) return;
+    }
 
     const reports = Object.entries(lineReports).map(([lineId, report]) => ({
       shop_order_id: selectedOrder.id,
@@ -135,10 +198,7 @@ export default function Receiving() {
     try {
       await submitReport.mutateAsync(reports);
 
-      await supabase
-        .from("shop_orders")
-        .update({ status: "Levererad" })
-        .eq("id", selectedOrder.id);
+      await supabase.from("shop_orders").update({ status: "Levererad" }).eq("id", selectedOrder.id);
 
       for (const [lineId, report] of Object.entries(lineReports)) {
         await supabase
@@ -146,7 +206,7 @@ export default function Receiving() {
           .update({
             quantity_delivered: report.quantity_received ? Number(report.quantity_received) : 0,
             status: "Klar / Levererad",
-            deviation: report.status === "Rapporterad" ? (report.report_type || "Rapporterad") : null,
+            deviation: report.status === "Rapporterad" ? report.report_type || "Rapporterad" : null,
           })
           .eq("id", lineId);
       }
@@ -158,7 +218,34 @@ export default function Receiving() {
         console.error("Stock transfer to Raw-lager error:", err);
       }
 
-      const hasIssues = Object.values(lineReports).some(r => r.status === "Rapporterad");
+      // NEW: Update stock with expiry + arrival dates for each line
+      for (const [lineId, report] of Object.entries(lineReports)) {
+        if (!report.arrival_date && !report.expiry_date) continue;
+        // Find the product_id for this line
+        const line = (selectedOrder.shop_order_lines || []).find((l: any) => l.id === lineId);
+        if (!line) continue;
+
+        // Find the raw-lager location for this store
+        const { data: rawLocation } = await supabase
+          .from("storage_locations")
+          .select("id")
+          .eq("store_id", activeStoreId)
+          .ilike("name", "Raw-%")
+          .maybeSingle();
+
+        if (rawLocation) {
+          await supabase
+            .from("product_stock_locations")
+            .update({
+              arrival_date: report.arrival_date || null,
+              expiry_date: report.expiry_date || null,
+            })
+            .eq("product_id", line.product_id)
+            .eq("location_id", rawLocation.id);
+        }
+      }
+
+      const hasIssues = Object.values(lineReports).some((r) => r.status === "Rapporterad");
       toast({
         title: hasIssues ? "Inleverans rapporterad med avvikelser" : "Inleverans godkänd",
         description: `Order ${selectedOrder.order_week} har ${hasIssues ? "rapporterats" : "godkänts"}.`,
@@ -179,12 +266,35 @@ export default function Receiving() {
 
   const approveAll = () => {
     if (!selectedOrder) return;
+    const today = new Date().toISOString().slice(0, 10);
     const updated: Record<string, LineReport> = {};
     (selectedOrder.shop_order_lines || []).forEach((line: any) => {
-      updated[line.id] = { status: "Godkänd", quantity_received: String(line.quantity_ordered), confirmed: true };
+      const shelfLife = line.products?.shelf_life_days || null;
+      updated[line.id] = {
+        status: "Godkänd",
+        quantity_received: String(line.quantity_ordered),
+        confirmed: true,
+        arrival_date: today,
+        // Auto-fill expiry from shelf_life_days if available
+        expiry_date: lineReports[line.id]?.expiry_date || calcExpiry(today, shelfLife),
+      };
     });
     setLineReports(updated);
-    toast({ title: "Alla produkter godkända", description: "Klicka 'Godkänn leverans' för att bekräfta." });
+    toast({
+      title: "Alla produkter godkända",
+      description: "Kontrollera bäst-före-datumen och klicka 'Godkänn leverans'.",
+    });
+  };
+
+  // Set same expiry date for all lines at once
+  const setAllExpiryDates = (date: string) => {
+    setLineReports((prev) => {
+      const next = { ...prev };
+      Object.keys(next).forEach((id) => {
+        next[id] = { ...next[id], expiry_date: date };
+      });
+      return next;
+    });
   };
 
   const [viewReportOrder, setViewReportOrder] = useState<any>(null);
@@ -193,10 +303,11 @@ export default function Receiving() {
     return existingReports.filter((r: any) => r.shop_order_id === viewReportOrder.id);
   }, [viewReportOrder, existingReports]);
 
-  const hasIssuesInReport = Object.values(lineReports).some(r => r.status === "Rapporterad");
+  const hasIssuesInReport = Object.values(lineReports).some((r) => r.status === "Rapporterad");
+  const missingExpiryCount = Object.values(lineReports).filter((r) => !r.expiry_date).length;
 
-  const filteredUnreported = unreportedOrders.filter((o: any) =>
-    !search || o.order_week?.toLowerCase().includes(search.toLowerCase())
+  const filteredUnreported = unreportedOrders.filter(
+    (o: any) => !search || o.order_week?.toLowerCase().includes(search.toLowerCase()),
   );
 
   const allHistoryOrders = [...reportedPendingOrders, ...completedOrders];
@@ -214,32 +325,50 @@ export default function Receiving() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="shadow-card"><CardContent className="p-3">
-          <p className="text-[10px] text-muted-foreground">Väntande leveranser</p>
-          <p className="text-xl font-heading font-bold text-warning">{unreportedOrders.length}</p>
-        </CardContent></Card>
-        <Card className="shadow-card"><CardContent className="p-3">
-          <p className="text-[10px] text-muted-foreground">Rapporterade</p>
-          <p className="text-xl font-heading font-bold text-foreground">{reportedOrderIds.size}</p>
-        </CardContent></Card>
-        <Card className="shadow-card"><CardContent className="p-3">
-          <p className="text-[10px] text-muted-foreground flex items-center gap-1"><AlertTriangle className="h-3 w-3 text-warning" />Med avvikelser</p>
-          <p className="text-xl font-heading font-bold text-warning">
-            {existingReports.filter((r: any) => r.status === "Rapporterad").length > 0
-              ? new Set(existingReports.filter((r: any) => r.status === "Rapporterad").map((r: any) => r.shop_order_id)).size
-              : 0}
-          </p>
-        </CardContent></Card>
-        <Card className="shadow-card"><CardContent className="p-3">
-          <p className="text-[10px] text-muted-foreground">Totalt godkända</p>
-          <p className="text-xl font-heading font-bold text-success">{completedOrders.length}</p>
-        </CardContent></Card>
+        <Card className="shadow-card">
+          <CardContent className="p-3">
+            <p className="text-[10px] text-muted-foreground">Väntande leveranser</p>
+            <p className="text-xl font-heading font-bold text-warning">{unreportedOrders.length}</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-card">
+          <CardContent className="p-3">
+            <p className="text-[10px] text-muted-foreground">Rapporterade</p>
+            <p className="text-xl font-heading font-bold text-foreground">{reportedOrderIds.size}</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-card">
+          <CardContent className="p-3">
+            <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+              <AlertTriangle className="h-3 w-3 text-warning" />
+              Med avvikelser
+            </p>
+            <p className="text-xl font-heading font-bold text-warning">
+              {existingReports.filter((r: any) => r.status === "Rapporterad").length > 0
+                ? new Set(
+                    existingReports.filter((r: any) => r.status === "Rapporterad").map((r: any) => r.shop_order_id),
+                  ).size
+                : 0}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-card">
+          <CardContent className="p-3">
+            <p className="text-[10px] text-muted-foreground">Totalt godkända</p>
+            <p className="text-xl font-heading font-bold text-success">{completedOrders.length}</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Search */}
       <div className="relative max-w-xs">
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-        <Input placeholder="Sök vecka..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
+        <Input
+          placeholder="Sök vecka..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-8 h-8 text-xs"
+        />
       </div>
 
       {/* Pending deliveries */}
@@ -276,7 +405,8 @@ export default function Receiving() {
                           Order {order.order_week} — {order.stores?.name || "Okänd"}
                         </p>
                         <p className="text-[10px] text-muted-foreground">
-                          {lines.length} produkt{lines.length !== 1 ? "er" : ""} · {new Date(order.created_at).toLocaleDateString("sv-SE")}
+                          {lines.length} produkt{lines.length !== 1 ? "er" : ""} ·{" "}
+                          {new Date(order.created_at).toLocaleDateString("sv-SE")}
                         </p>
                       </div>
                     </div>
@@ -322,17 +452,27 @@ export default function Receiving() {
                     return (
                       <tr key={o.id} className="border-b border-border/50 hover:bg-muted/30">
                         <td className="py-2 font-mono font-medium text-foreground">{o.order_week}</td>
-                        <td className="py-2 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
+                        <td className="py-2 text-muted-foreground">
+                          {new Date(o.created_at).toLocaleDateString("sv-SE")}
+                        </td>
                         <td className="py-2 text-right text-foreground">{o.shop_order_lines?.length || 0}</td>
                         <td className="py-2 text-right">
-                          <Badge variant="outline" className={`text-[10px] gap-1 ${hasIssues ? "bg-warning/10 text-warning border-warning/20" : "bg-success/10 text-success border-success/20"}`}>
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] gap-1 ${hasIssues ? "bg-warning/10 text-warning border-warning/20" : "bg-success/10 text-success border-success/20"}`}
+                          >
                             {hasIssues && <AlertTriangle className="h-2.5 w-2.5" />}
                             {hasIssues ? "Avvikelse" : "Godkänd"}
                           </Badge>
                         </td>
                         <td className="py-2 text-right">
                           {orderReports.length > 0 && (
-                            <Button variant="ghost" size="sm" className="h-6 text-[10px] gap-1" onClick={() => setViewReportOrder(o)}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 text-[10px] gap-1"
+                              onClick={() => setViewReportOrder(o)}
+                            >
                               <Eye className="h-3 w-3" /> Visa
                             </Button>
                           )}
@@ -347,31 +487,60 @@ export default function Receiving() {
         </Card>
       )}
 
-      {/* Report dialog */}
-      <Dialog open={!!selectedOrder} onOpenChange={open => { if (!open) setSelectedOrder(null); }}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      {/* ── Receiving dialog — now with expiry + arrival date ── */}
+      <Dialog
+        open={!!selectedOrder}
+        onOpenChange={(open) => {
+          if (!open) setSelectedOrder(null);
+        }}
+      >
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           {selectedOrder && (
             <>
               <DialogHeader>
-                <DialogTitle className="font-heading">
+                <DialogTitle className="font-heading flex items-center gap-2">
+                  <Truck className="h-5 w-5 text-primary" />
                   Ta emot leverans — {selectedOrder.order_week}
                 </DialogTitle>
                 <DialogDescription className="text-xs">
-                  Godkänn varje produkt eller rapportera avvikelser. Du kan godkänna alla direkt.
+                  Godkänn varje produkt, ange mottagen kvantitet och fyll i bäst-före-datum för spårbarhet.
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="flex gap-2 mb-2">
+              {/* Quick actions */}
+              <div className="flex flex-wrap gap-2 mb-1">
                 <Button size="sm" variant="outline" className="text-xs gap-1 h-7" onClick={approveAll}>
                   <ThumbsUp className="h-3 w-3" /> Godkänn alla
                 </Button>
+                {/* Set same expiry for all */}
+                <div className="flex items-center gap-1.5">
+                  <CalendarCheck className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-[10px] text-muted-foreground">Samma bäst-före för alla:</span>
+                  <Input
+                    type="date"
+                    className="h-7 text-[10px] w-36"
+                    onChange={(e) => setAllExpiryDates(e.target.value)}
+                  />
+                </div>
               </div>
+
+              {/* Warning if expiry dates are missing */}
+              {missingExpiryCount > 0 && (
+                <div className="flex items-center gap-2 p-2 rounded-md bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700">
+                  <Calendar className="h-3.5 w-3.5 shrink-0" />
+                  <span>
+                    {missingExpiryCount} produkt(er) saknar bäst-före-datum — rekommenderas för fiskspårbarhet.
+                  </span>
+                </div>
+              )}
 
               <div className="space-y-2">
                 {(selectedOrder.shop_order_lines || []).map((line: any) => {
                   const report = lineReports[line.id] || { status: "Godkänd" };
                   const isReported = report.status === "Rapporterad";
                   const isConfirmed = report.confirmed && !isReported;
+                  const expiryLabel = report.expiry_date ? getExpiryLabel(report.expiry_date) : null;
+
                   return (
                     <div
                       key={line.id}
@@ -383,10 +552,14 @@ export default function Receiving() {
                             : "border-border bg-card"
                       }`}
                     >
+                      {/* Product header row */}
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          {isConfirmed && <CheckCircle2 className="h-3.5 w-3.5 text-success" />}
+                          {isConfirmed && <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" />}
                           <span className="text-xs font-medium text-foreground">{line.products?.name || "Okänd"}</span>
+                          <Badge variant="secondary" className="text-[9px] h-4">
+                            {line.products?.category}
+                          </Badge>
                           <span className="text-[10px] text-muted-foreground">
                             {line.quantity_ordered} {line.unit || line.products?.unit || ""}
                           </span>
@@ -396,32 +569,99 @@ export default function Receiving() {
                             size="sm"
                             variant={isConfirmed ? "default" : "outline"}
                             className={`h-6 text-[10px] gap-1 px-2 ${isConfirmed ? "bg-success hover:bg-success/90 text-white" : ""}`}
-                            onClick={() => {
-                              setLineReports(prev => ({
+                            onClick={() =>
+                              setLineReports((prev) => ({
                                 ...prev,
-                                [line.id]: { ...prev[line.id], status: "Godkänd", confirmed: true, quantity_received: String(line.quantity_delivered || line.quantity_ordered) },
-                              }));
-                            }}
+                                [line.id]: {
+                                  ...prev[line.id],
+                                  status: "Godkänd",
+                                  confirmed: true,
+                                  quantity_received: String(line.quantity_delivered || line.quantity_ordered),
+                                },
+                              }))
+                            }
                           >
-                            {isConfirmed ? <CheckCircle2 className="h-2.5 w-2.5" /> : <ThumbsUp className="h-2.5 w-2.5" />}
+                            {isConfirmed ? (
+                              <CheckCircle2 className="h-2.5 w-2.5" />
+                            ) : (
+                              <ThumbsUp className="h-2.5 w-2.5" />
+                            )}
                             {isConfirmed ? "Godkänd ✓" : "OK"}
                           </Button>
                           <Button
                             size="sm"
                             variant={isReported ? "destructive" : "outline"}
                             className="h-6 text-[10px] gap-1 px-2"
-                            onClick={() => {
-                              setLineReports(prev => ({
+                            onClick={() =>
+                              setLineReports((prev) => ({
                                 ...prev,
                                 [line.id]: { ...prev[line.id], status: "Rapporterad", confirmed: false },
-                              }));
-                            }}
+                              }))
+                            }
                           >
                             <Flag className="h-2.5 w-2.5" /> Rapportera
                           </Button>
                         </div>
                       </div>
 
+                      {/* ── NEW: Freshness fields (always visible) ── */}
+                      <div
+                        className={`grid grid-cols-3 gap-2 p-2 rounded-md border mt-1 ${report.expiry_date ? getExpiryColor(report.expiry_date) : "border-border/30 bg-muted/10"}`}
+                      >
+                        <div className="space-y-0.5">
+                          <Label className="text-[9px] text-muted-foreground uppercase tracking-wide">
+                            Mottagen mängd
+                          </Label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            value={report.quantity_received || ""}
+                            onChange={(e) => updateLineReport(line.id, "quantity_received", e.target.value)}
+                            className="h-6 text-[10px] bg-background"
+                            placeholder={String(line.quantity_ordered)}
+                          />
+                        </div>
+                        <div className="space-y-0.5">
+                          <Label className="text-[9px] text-muted-foreground uppercase tracking-wide flex items-center gap-0.5">
+                            <Calendar className="h-2.5 w-2.5" /> Ankomst
+                          </Label>
+                          <Input
+                            type="date"
+                            value={report.arrival_date || ""}
+                            onChange={(e) => {
+                              const newArrival = e.target.value;
+                              const shelfLife = line.products?.shelf_life_days || null;
+                              setLineReports((prev) => ({
+                                ...prev,
+                                [line.id]: {
+                                  ...prev[line.id],
+                                  arrival_date: newArrival,
+                                  expiry_date: prev[line.id]?.expiry_date || calcExpiry(newArrival, shelfLife),
+                                },
+                              }));
+                            }}
+                            className="h-6 text-[10px] bg-background"
+                          />
+                        </div>
+                        <div className="space-y-0.5">
+                          <Label className="text-[9px] text-muted-foreground uppercase tracking-wide flex items-center gap-0.5">
+                            <CalendarCheck className="h-2.5 w-2.5" /> Bäst före *
+                          </Label>
+                          <Input
+                            type="date"
+                            value={report.expiry_date || ""}
+                            onChange={(e) => updateLineReport(line.id, "expiry_date", e.target.value)}
+                            className="h-6 text-[10px] bg-background"
+                          />
+                        </div>
+                        {expiryLabel && (
+                          <div className="col-span-3">
+                            <p className={`text-[9px] font-medium ${expiryLabel.class}`}>{expiryLabel.text}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Deviation fields */}
                       {isReported && (
                         <div className="space-y-2 mt-2 pt-2 border-t border-warning/20">
                           <div className="grid grid-cols-2 gap-2">
@@ -429,31 +669,26 @@ export default function Receiving() {
                               <Label className="text-[10px]">Typ av problem</Label>
                               <Select
                                 value={report.report_type || ""}
-                                onValueChange={v => updateLineReport(line.id, "report_type", v)}
+                                onValueChange={(v) => updateLineReport(line.id, "report_type", v)}
                               >
-                                <SelectTrigger className="h-7 text-[10px]"><SelectValue placeholder="Välj..." /></SelectTrigger>
+                                <SelectTrigger className="h-7 text-[10px]">
+                                  <SelectValue placeholder="Välj..." />
+                                </SelectTrigger>
                                 <SelectContent>
-                                  {REPORT_TYPES.map(t => <SelectItem key={t} value={t} className="text-xs">{t}</SelectItem>)}
+                                  {REPORT_TYPES.map((t) => (
+                                    <SelectItem key={t} value={t} className="text-xs">
+                                      {t}
+                                    </SelectItem>
+                                  ))}
                                 </SelectContent>
                               </Select>
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-[10px]">Mottagen kvantitet</Label>
-                              <Input
-                                type="number"
-                                step="0.1"
-                                value={report.quantity_received || ""}
-                                onChange={e => updateLineReport(line.id, "quantity_received", e.target.value)}
-                                className="h-7 text-[10px]"
-                                placeholder={String(line.quantity_ordered)}
-                              />
                             </div>
                           </div>
                           <div className="space-y-1">
                             <Label className="text-[10px]">Anteckning</Label>
                             <Textarea
                               value={report.notes || ""}
-                              onChange={e => updateLineReport(line.id, "notes", e.target.value)}
+                              onChange={(e) => updateLineReport(line.id, "notes", e.target.value)}
                               placeholder="Beskriv problemet..."
                               className="text-[10px] min-h-[40px]"
                             />
@@ -476,12 +711,7 @@ export default function Receiving() {
                 <Button variant="outline" size="sm" className="text-xs" onClick={() => setSelectedOrder(null)}>
                   Avbryt
                 </Button>
-                <Button
-                  size="sm"
-                  className="text-xs gap-1.5"
-                  onClick={handleSubmit}
-                  disabled={submitReport.isPending}
-                >
+                <Button size="sm" className="text-xs gap-1.5" onClick={handleSubmit} disabled={submitReport.isPending}>
                   <CheckCircle2 className="h-3 w-3" />
                   {hasIssuesInReport ? "Skicka rapport" : "Godkänn leverans"}
                 </Button>
@@ -492,37 +722,59 @@ export default function Receiving() {
       </Dialog>
 
       {/* View report detail dialog */}
-      <Dialog open={!!viewReportOrder} onOpenChange={open => { if (!open) setViewReportOrder(null); }}>
+      <Dialog
+        open={!!viewReportOrder}
+        onOpenChange={(open) => {
+          if (!open) setViewReportOrder(null);
+        }}
+      >
         <DialogContent className="max-w-lg">
           {viewReportOrder && (
             <>
               <DialogHeader>
-                <DialogTitle className="font-heading text-sm">
-                  Rapport — {viewReportOrder.order_week}
-                </DialogTitle>
+                <DialogTitle className="font-heading text-sm">Rapport — {viewReportOrder.order_week}</DialogTitle>
               </DialogHeader>
               <div className="space-y-2">
                 {(viewReportOrder.shop_order_lines || []).map((line: any) => {
                   const report = viewReportLines.find((r: any) => r.order_line_id === line.id);
                   return (
-                    <div key={line.id} className={`p-2 rounded-md border text-xs ${
-                      report?.status === "Rapporterad" ? "border-warning/40 bg-warning/5" : "border-border"
-                    }`}>
+                    <div
+                      key={line.id}
+                      className={`p-2 rounded-md border text-xs ${
+                        report?.status === "Rapporterad" ? "border-warning/40 bg-warning/5" : "border-border"
+                      }`}
+                    >
                       <div className="flex items-center justify-between">
                         <span className="font-medium">{line.products?.name}</span>
-                        <Badge variant="outline" className={`text-[10px] ${
-                          report?.status === "Rapporterad" ? "text-warning border-warning/30" : "text-success border-success/30"
-                        }`}>
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] ${
+                            report?.status === "Rapporterad"
+                              ? "text-warning border-warning/30"
+                              : "text-success border-success/30"
+                          }`}
+                        >
                           {report?.status || "–"}
                         </Badge>
                       </div>
                       {report?.status === "Rapporterad" && (
                         <div className="mt-1 text-[10px] text-muted-foreground space-y-0.5">
-                          {report.report_type && <p><span className="font-medium text-foreground">Typ:</span> {report.report_type}</p>}
-                          {report.quantity_received != null && (
-                            <p><span className="font-medium text-foreground">Mottaget:</span> {report.quantity_received} (beställt: {line.quantity_ordered})</p>
+                          {report.report_type && (
+                            <p>
+                              <span className="font-medium text-foreground">Typ:</span> {report.report_type}
+                            </p>
                           )}
-                          {report.notes && <p><span className="font-medium text-foreground">Not:</span> {report.notes}</p>}
+                          {report.quantity_received != null && (
+                            <p>
+                              <span className="font-medium text-foreground">Mottaget:</span> {report.quantity_received}{" "}
+                              (beställt: {line.quantity_ordered})
+                            </p>
+                          )}
+                          {report.notes && (
+                            <p>
+                              <span className="font-medium text-foreground">Not:</span> {report.notes}
+                            </p>
+                          )}
                         </div>
                       )}
                     </div>
@@ -530,7 +782,9 @@ export default function Receiving() {
                 })}
               </div>
               <DialogFooter>
-                <Button variant="outline" size="sm" className="text-xs" onClick={() => setViewReportOrder(null)}>Stäng</Button>
+                <Button variant="outline" size="sm" className="text-xs" onClick={() => setViewReportOrder(null)}>
+                  Stäng
+                </Button>
               </DialogFooter>
             </>
           )}
