@@ -4,7 +4,7 @@ import { ShopSidebar } from "@/components/ShopSidebar";
 import { ProductionSidebar } from "@/components/ProductionSidebar";
 import { TradeSidebar } from "@/components/TradeSidebar";
 import { useLocation } from "react-router-dom";
-import { Bell, ChevronRight, Search, User, ArrowLeftRight, Factory, Store, ChevronDown, X, Check } from "lucide-react";
+import { Bell, ChevronRight, Search, User, ArrowLeftRight, Factory, Store, ChevronDown, X, Check, TrendingUp } from "lucide-react";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
