@@ -26,6 +26,7 @@ import AuditLog from "@/pages/AuditLog";
 import TradeOffers from "@/pages/TradeOffers";
 import TradeHistory from "@/pages/TradeHistory";
 import InvestorPortal from "@/pages/InvestorPortal";
+import InvestorList from "@/pages/InvestorList";
 
 interface RouteEntry {
   component: React.ReactNode;
