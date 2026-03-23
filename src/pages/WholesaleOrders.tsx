@@ -1092,9 +1092,6 @@ export default function WholesaleOrders() {
           </Card>
         </TabsContent>
       </Tabs>
-
-      {/* Inline order creation form */}
-      {creatingOrder && (
         <Card className="shadow-card">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
