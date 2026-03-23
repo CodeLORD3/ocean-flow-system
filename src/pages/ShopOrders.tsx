@@ -286,9 +286,9 @@ export default function ShopOrders() {
   ).slice(0, 8);
 
   const addProduct = (p: any) => {
-    setOrderLines(prev => [...prev, {
+    setOrderLines(prev => [{
       product_id: p.id, product_name: p.name, unit: p.unit, quantity: "",
-    }]);
+    }, ...prev]);
     setProductSearch("");
     setHighlightedIndex(-1);
   };
@@ -684,7 +684,7 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
   ).slice(0, 8);
 
   const addNewProduct = (p: any) => {
-    setNewProducts(prev => [...prev, { product_id: p.id, product_name: p.name, unit: p.unit, quantity: "" }]);
+    setNewProducts(prev => [{ product_id: p.id, product_name: p.name, unit: p.unit, quantity: "" }, ...prev]);
     setEditProductSearch("");
     setEditHighlightedIndex(-1);
   };
