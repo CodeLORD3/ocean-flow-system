@@ -612,6 +612,41 @@ export type Database = {
           },
         ]
       }
+      pledges: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          offer_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          offer_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          offer_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pledges_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "trade_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_settings: {
         Row: {
           display_name: string | null
@@ -1495,6 +1530,54 @@ export type Database = {
         }
         Relationships: []
       }
+      trade_offers: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          funded_amount: number
+          id: string
+          interest_rate: number
+          maturity_date: string
+          quantity: number
+          status: string
+          target_amount: number
+          title: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          funded_amount?: number
+          id?: string
+          interest_rate?: number
+          maturity_date: string
+          quantity?: number
+          status?: string
+          target_amount?: number
+          title: string
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          funded_amount?: number
+          id?: string
+          interest_rate?: number
+          maturity_date?: string
+          quantity?: number
+          status?: string
+          target_amount?: number
+          title?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: []
+      }
       transport_schedules: {
         Row: {
           badge_color: string
@@ -1528,15 +1611,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "client"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1663,6 +1770,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "client"],
+    },
   },
 } as const
