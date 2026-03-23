@@ -527,6 +527,54 @@ export type Database = {
           },
         ]
       }
+      investor_profiles: {
+        Row: {
+          account_type: string
+          address: string
+          created_at: string
+          date_of_birth: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          telephone: string
+          user_id: string
+        }
+        Insert: {
+          account_type?: string
+          address: string
+          created_at?: string
+          date_of_birth: string
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          telephone: string
+          user_id: string
+        }
+        Update: {
+          account_type?: string
+          address?: string
+          created_at?: string
+          date_of_birth?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          telephone?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       manual_schedule_entries: {
         Row: {
           created_at: string
