@@ -1093,10 +1093,6 @@ export default function WholesaleOrders() {
         </TabsContent>
       </Tabs>
 
-
-          <CardContent className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium">Välj kund / butik <span className="text-destructive">*</span></Label>
               <Select value={selectedCustomerId} onValueChange={v => { setSelectedCustomerId(v); setNewOrderDeliveryDate(undefined); }}>
                 <SelectTrigger className="h-8 text-xs">
                   <SelectValue placeholder="Välj kund..." />
