@@ -122,7 +122,7 @@ export default function TradeOfferDetail({ offer, pledges, onBack, onStatusChang
           <h3 className="text-xs font-bold text-primary tracking-wider mb-3">RETURN — INVESTOR VIEW</h3>
           <div className="grid grid-cols-4 gap-4">
             <div className="text-center">
-              <div className="text-lg font-bold">{funded.toLocaleString()} kr</div>
+              <div className="text-lg font-bold">{target.toLocaleString()} kr</div>
               <div className="text-[9px] text-muted-foreground">Investment</div>
             </div>
             <div className="text-center">
