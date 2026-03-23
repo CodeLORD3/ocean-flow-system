@@ -72,6 +72,10 @@ const orgNav = [
   { title: "Personal", url: "/staff", icon: UserCheck },
 ];
 
+const tradeNav = [
+  { title: "Trade Offers", url: "/trade-offers", icon: TrendingUp },
+];
+
 const financeNav = [
   { title: "Rapporter", url: "/reports", icon: BarChart3 },
   { title: "Ekonomi", url: "/finance", icon: CreditCard },
