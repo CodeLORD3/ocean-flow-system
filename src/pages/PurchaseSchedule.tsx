@@ -394,25 +394,27 @@ export default function PurchaseSchedule() {
       if (!schedules || schedules.length === 0) continue;
 
       for (const line of order.shop_order_lines || []) {
-        // Skip lines already being processed or marked as "Använd lager"
-        if (line.status && !["", "Ny", "Pågående"].includes(line.status)) continue;
         if (line.ordered_elsewhere === "Lager" || line.ordered_elsewhere === "Köpt") continue;
+
+        const isPacked = !!line.status && ["Packad", "Skickad", "Klar / Levererad"].includes(line.status);
+        const isPending = !line.status || ["", "Ny", "Pågående"].includes(line.status);
+        
+        // Skip lines that are neither pending nor packed (e.g. "Ej tillgänglig")
+        if (!isPacked && !isPending) continue;
 
         const deliveryDateStr = line.delivery_date || order.desired_delivery_date;
         if (!deliveryDateStr) continue;
 
         const deliveryDate = parseISO(deliveryDateStr);
-        // delivery_date IS the departure date (user picks from allowed departure weekdays)
         const departureDate = deliveryDate;
-        // Find matching schedule for departure time display
-        const isoWeekday = deliveryDate.getDay() === 0 ? 7 : deliveryDate.getDay(); // 1=Mon..7=Sun
+        const isoWeekday = deliveryDate.getDay() === 0 ? 7 : deliveryDate.getDay();
         const matchingSchedule = schedules.find(s => s.departure_weekday === isoWeekday) || schedules[0];
-        // order_date is the planned purchase date (set by drag & drop), defaults to departure date
         const purchaseDate = line.order_date ? parseISO(line.order_date) : departureDate;
 
         rawItems.push({
           storeName: store.name,
           zoneKey,
+          packed: isPacked,
           productId: line.product_id,
           productName: line.products?.name || "Okänd produkt",
           quantity: line.quantity_ordered,
