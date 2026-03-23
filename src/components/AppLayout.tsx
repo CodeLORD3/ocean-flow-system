@@ -100,7 +100,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <span>FiskHandel ERP v2.4.1</span>
               <span className="hidden sm:inline">•</span>
               <span className="hidden sm:inline">
-                {site === "shop" ? `Butik: ${activeStoreName || "–"}` : site === "production" ? "Produktion" : "Grossist"}
+                {site === "shop" ? `Butik: ${activeStoreName || "–"}` : site === "production" ? "Produktion" : site === "trade" ? "Trade" : "Grossist"}
               </span>
             </div>
             <div className="flex items-center gap-3">
