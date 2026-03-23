@@ -992,7 +992,22 @@ export default function PurchaseSchedule() {
                                           <TableCell className={`px-2 py-0.5 text-xs text-right ${isPurchased ? "font-semibold text-green-700 dark:text-green-400" : "text-muted-foreground"}`}>
                                             {purchased > 0 ? `${purchased} ${item.unit}` : "—"}
                                           </TableCell>
-                                          <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">{item.shops.length} butik{item.shops.length > 1 ? "er" : ""}</TableCell>
+                                          <TableCell className="px-2 py-0.5 text-[10px] text-muted-foreground">
+                                            {item.isManual ? "—" : (() => {
+                                              const pendingShops = item.shops.filter(s => !s.packed);
+                                              const packedShops = item.shops.filter(s => s.packed);
+                                              return (
+                                                <span className="flex items-center gap-1">
+                                                  {pendingShops.length} butik{pendingShops.length !== 1 ? "er" : ""}
+                                                  {packedShops.length > 0 && (
+                                                    <Badge variant="outline" className="text-[8px] py-0 px-1 border-green-500/40 text-green-700 dark:text-green-400 bg-green-500/10">
+                                                      <PackageCheck className="h-2.5 w-2.5 mr-0.5" />{packedShops.length}
+                                                    </Badge>
+                                                  )}
+                                                </span>
+                                              );
+                                            })()}
+                                          </TableCell>
                                           <TableCell className="px-2 py-0.5">
                                             <span className="text-[10px] text-muted-foreground">
                                               {view === "purchase"
