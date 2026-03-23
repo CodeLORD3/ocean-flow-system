@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, TrendingUp, Calendar, Target, DollarSign, Clock, Calculator, FileText, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Clock, Calculator, FileText, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 export default function PortalOfferDetail() {
@@ -46,15 +46,13 @@ export default function PortalOfferDetail() {
     onError: (err: any) => toast.error(err.message),
   });
 
-  // Countdown
   const [daysLeft, setDaysLeft] = useState<number | null>(null);
   useEffect(() => {
     if (!offer) return;
     const calc = () => {
       const now = new Date();
       const maturity = new Date(offer.maturity_date);
-      const diff = Math.ceil((maturity.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      setDaysLeft(diff);
+      setDaysLeft(Math.ceil((maturity.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
     };
     calc();
     const interval = setInterval(calc, 60000);
@@ -65,17 +63,28 @@ export default function PortalOfferDetail() {
     return <div className="text-[#0066ff] text-xs animate-pulse">LOADING...</div>;
   }
 
-  const progress = Number(offer.target_amount) > 0
-    ? Math.min(100, (Number(offer.funded_amount) / Number(offer.target_amount)) * 100)
-    : 0;
+  const o = offer as any;
+  const target = Number(offer.target_amount);
+  const funded = Number(offer.funded_amount);
+  const rate = Number(offer.interest_rate);
+  const progress = target > 0 ? Math.min(100, (funded / target) * 100) : 0;
+  const profitKr = Math.round(funded * (rate / 100));
+  const totalPayout = funded + profitKr;
+  const calcResult = calcAmount ? Number(calcAmount) * (1 + rate / 100) : 0;
+  const minPledge = Number(o.min_pledge) || 0;
+  const maxPledge = o.max_pledge ? Number(o.max_pledge) : null;
 
-  const interestRate = Number(offer.interest_rate);
-  const calcResult = calcAmount ? Number(calcAmount) * (1 + interestRate / 100) : 0;
+  const maturityDate = new Date(offer.maturity_date);
+  const tenorDays = o.tenor_days ?? (o.purchase_date
+    ? Math.ceil((maturityDate.getTime() - new Date(o.purchase_date).getTime()) / (1000 * 60 * 60 * 24))
+    : null);
 
-  const offerAny = offer as any;
-  const minPledge = Number(offerAny.min_pledge) || 0;
-  const maxPledge = offerAny.max_pledge ? Number(offerAny.max_pledge) : null;
-  const repaymentLabel = offerAny.repayment_type === "rolling" ? "Löpande när produkter säljs" : "Klumpsumma vid förfall";
+  let annualReturn = o.annual_return ? Number(o.annual_return) : null;
+  if (!annualReturn && tenorDays && tenorDays > 0) {
+    annualReturn = Math.round((rate / tenorDays) * 365 * 100) / 100;
+  }
+
+  const repaymentLabel = o.repayment_type === "rolling" ? "Löpande" : "Bullet";
 
   return (
     <div className="max-w-3xl mx-auto space-y-4">
@@ -86,7 +95,7 @@ export default function PortalOfferDetail() {
         <ArrowLeft className="h-3 w-3" /> BACK TO OFFERS
       </button>
 
-      {/* Countdown banner */}
+      {/* Countdown */}
       {offer.status === "Open" && daysLeft !== null && (
         <div className={`border p-3 flex items-center justify-between ${daysLeft > 0 ? "border-[#0066ff]/30 bg-[#0066ff]/5" : "border-red-400/30 bg-red-400/5"}`}>
           <div className="flex items-center gap-2">
@@ -99,105 +108,110 @@ export default function PortalOfferDetail() {
         </div>
       )}
 
-      {/* Header with image */}
-      <div className="border border-[#1a2035] bg-[#0d1220]">
-        <div className="h-8 flex items-center justify-between px-3 border-b border-[#1a2035]">
-          <span className="text-[10px] text-[#0066ff] tracking-wider font-bold">OFFER DETAIL</span>
-          <span className={`px-2 py-0.5 text-[9px] tracking-wider border ${
-            offer.status === "Open" ? "text-green-400 border-green-400/30 bg-green-400/10" :
-            offer.status === "Funded" ? "text-[#0066ff] border-[#0066ff]/30 bg-[#0066ff]/10" :
-            "text-red-400 border-red-400/30 bg-red-400/10"
-          }`}>
-            {offer.status.toUpperCase()}
-          </span>
+      {/* Funding Progress */}
+      <div className="border border-[#1a2035] bg-[#0d1220] p-3 space-y-1">
+        <div className="flex justify-between text-[9px] text-[#5a6a7a] tracking-wider">
+          <span>FUNDING PROGRESS</span>
+          <span>{funded.toLocaleString()} / {target.toLocaleString()} kr ({progress.toFixed(1)}%)</span>
         </div>
-
-        <div className="p-4 space-y-4">
-          {offerAny.product_image_url && (
-            <div className="w-full h-40 overflow-hidden border border-[#1a2035]">
-              <img src={offerAny.product_image_url} alt={offer.title} className="w-full h-full object-cover" />
-            </div>
-          )}
-
-          <h2 className="text-base font-bold text-[#c8d6e5]">{offer.title}</h2>
-          {offer.description && (
-            <p className="text-[11px] text-[#5a6a7a] leading-relaxed">{offer.description}</p>
-          )}
-
-          {offerAny.supplier_name && (
-            <div className="text-[10px] text-[#5a6a7a]">
-              <span className="tracking-wider">LEVERANTÖR: </span>
-              <span className="text-[#c8d6e5] font-medium">{offerAny.supplier_name}</span>
-            </div>
-          )}
-
-          <div className="grid grid-cols-4 gap-3">
-            {[
-              { icon: Target, label: "TARGET", value: `${Number(offer.target_amount).toLocaleString()} kr` },
-              { icon: TrendingUp, label: "RATE", value: `${interestRate.toFixed(1)}%` },
-              { icon: Calendar, label: "MATURITY", value: offer.maturity_date },
-              { icon: DollarSign, label: "FUNDED", value: `${Number(offer.funded_amount).toLocaleString()} kr` },
-            ].map((s) => (
-              <div key={s.label} className="border border-[#1a2035] p-2">
-                <div className="flex items-center gap-1 mb-0.5">
-                  <s.icon className="h-3 w-3 text-[#0066ff]" />
-                  <span className="text-[9px] text-[#5a6a7a] tracking-wider">{s.label}</span>
-                </div>
-                <span className="text-sm font-bold text-[#c8d6e5]">{s.value}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Extra info row */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="border border-[#1a2035] p-2">
-              <span className="text-[9px] text-[#5a6a7a] tracking-wider block mb-0.5">ÅTERBETALNING</span>
-              <span className="text-[10px] text-[#c8d6e5]">{repaymentLabel}</span>
-            </div>
-            <div className="border border-[#1a2035] p-2">
-              <span className="text-[9px] text-[#5a6a7a] tracking-wider block mb-0.5">MIN INSATS</span>
-              <span className="text-[10px] text-[#c8d6e5] font-bold">{minPledge > 0 ? `${minPledge.toLocaleString()} kr` : "—"}</span>
-            </div>
-            <div className="border border-[#1a2035] p-2">
-              <span className="text-[9px] text-[#5a6a7a] tracking-wider block mb-0.5">MAX INSATS</span>
-              <span className="text-[10px] text-[#c8d6e5] font-bold">{maxPledge ? `${maxPledge.toLocaleString()} kr` : "Ingen gräns"}</span>
-            </div>
-          </div>
-
-          {/* Risk note */}
-          {offerAny.risk_note && (
-            <div className="border border-yellow-500/20 bg-yellow-500/5 p-3 flex items-start gap-2">
-              <AlertTriangle className="h-3.5 w-3.5 text-yellow-500 mt-0.5 shrink-0" />
-              <div>
-                <span className="text-[9px] text-yellow-500 tracking-wider font-bold block mb-0.5">RISKNOTERING</span>
-                <span className="text-[10px] text-[#c8d6e5]">{offerAny.risk_note}</span>
-              </div>
-            </div>
-          )}
-
-          {/* Document link */}
-          {offerAny.document_url && (
-            <a href={offerAny.document_url} target="_blank" rel="noreferrer"
-              className="flex items-center gap-2 text-[10px] text-[#0066ff] hover:underline tracking-wider">
-              <FileText className="h-3 w-3" /> VISA BIFOGAT DOKUMENT (PDF)
-            </a>
-          )}
-
-          {/* Funding Progress */}
-          <div className="space-y-1">
-            <div className="flex justify-between text-[9px] text-[#5a6a7a] tracking-wider">
-              <span>FUNDING PROGRESS</span>
-              <span>{Number(offer.funded_amount).toLocaleString()} / {Number(offer.target_amount).toLocaleString()} kr ({progress.toFixed(1)}%)</span>
-            </div>
-            <div className="h-3 bg-[#1a2035] overflow-hidden relative">
-              <div className="h-full bg-[#0066ff] transition-all" style={{ width: `${progress}%` }} />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[8px] font-bold text-white mix-blend-difference">{progress.toFixed(0)}%</span>
-              </div>
-            </div>
+        <div className="h-3 bg-[#1a2035] overflow-hidden relative">
+          <div className="h-full bg-[#0066ff] transition-all" style={{ width: `${progress}%` }} />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-[8px] font-bold text-white mix-blend-difference">{progress.toFixed(0)}%</span>
           </div>
         </div>
       </div>
+
+      {/* Product image */}
+      {o.product_image_url && (
+        <div className="w-full h-40 overflow-hidden border border-[#1a2035]">
+          <img src={o.product_image_url} alt={offer.title} className="w-full h-full object-cover" />
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Deal Summary */}
+        <Section title="DEAL SUMMARY">
+          <InfoRow label="Product" value={offer.title} />
+          <InfoRow label="Product-ID" value={o.product_id_display} />
+          <InfoRow label="Status" value={offer.status} />
+          <InfoRow label="Sector" value={o.sector || "Seafood Trading"} />
+          <InfoRow label="Structure" value={o.structure || "Trade Finance"} />
+        </Section>
+
+        {/* Investment Terms */}
+        <Section title="INVESTMENT TERMS">
+          <InfoRow label="Total Investment" value={`${target.toLocaleString()} kr`} />
+          <InfoRow label="Minimum Ticket" value={minPledge > 0 ? `${minPledge.toLocaleString()} kr` : "—"} />
+          <InfoRow label="Tenor" value={tenorDays ? `${tenorDays} days` : "—"} />
+          <InfoRow label="Expected Return" value={`${rate.toFixed(1)}%`} />
+          <InfoRow label="Annual Return" value={annualReturn ? `${annualReturn.toFixed(1)}%` : "—"} />
+          <InfoRow label="Repayment" value={repaymentLabel} />
+        </Section>
+      </div>
+
+      {/* Return - Investor View */}
+      <div className="border border-[#0066ff]/30 bg-[#0066ff]/5 p-4">
+        <h3 className="text-[10px] text-[#0066ff] tracking-wider font-bold mb-3">RETURN — INVESTOR VIEW</h3>
+        <div className="grid grid-cols-4 gap-4 text-center">
+          <div>
+            <div className="text-lg font-bold text-[#c8d6e5]">{funded.toLocaleString()} kr</div>
+            <div className="text-[9px] text-[#5a6a7a]">Investment</div>
+          </div>
+          <div>
+            <div className="text-lg font-bold text-green-400">{rate.toFixed(1)}%</div>
+            <div className="text-[9px] text-[#5a6a7a]">Return %</div>
+          </div>
+          <div>
+            <div className="text-lg font-bold text-green-400">+{profitKr.toLocaleString()} kr</div>
+            <div className="text-[9px] text-[#5a6a7a]">Profit</div>
+          </div>
+          <div>
+            <div className="text-lg font-bold text-[#c8d6e5]">{totalPayout.toLocaleString()} kr</div>
+            <div className="text-[9px] text-[#5a6a7a]">Total Payout</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Underlying Transaction */}
+        <Section title="UNDERLYING TRANSACTION">
+          <InfoRow label="Product" value={offer.title} />
+          <InfoRow label="Origin" value={o.origin} />
+          <InfoRow label="Volume" value={o.volume} />
+          <InfoRow label="Purchase Price" value={o.purchase_price ? `${Number(o.purchase_price).toLocaleString()} kr` : "—"} />
+          <InfoRow label="Sales Value" value={o.sales_value ? `${Number(o.sales_value).toLocaleString()} kr` : "—"} />
+          <InfoRow label="Gross Margin" value={o.gross_margin ? `${Number(o.gross_margin).toFixed(1)}%` : "—"} />
+        </Section>
+
+        {/* Risk & Security */}
+        <Section title="RISK & SECURITY">
+          <InfoRow label="Collateral" value={o.collateral || "Inventory"} />
+          <InfoRow label="LTV" value={o.ltv ? `${Number(o.ltv).toFixed(1)}%` : "—"} />
+          <InfoRow label="Primary Exit" value={o.primary_exit} />
+          <InfoRow label="Secondary Exit" value={o.secondary_exit} />
+          <InfoRow label="Downside" value={o.downside || o.risk_note} />
+        </Section>
+      </div>
+
+      {/* Risk note warning */}
+      {(o.risk_note || o.downside) && (
+        <div className="border border-yellow-500/20 bg-yellow-500/5 p-3 flex items-start gap-2">
+          <AlertTriangle className="h-3.5 w-3.5 text-yellow-500 mt-0.5 shrink-0" />
+          <div>
+            <span className="text-[9px] text-yellow-500 tracking-wider font-bold block mb-0.5">RISKNOTERING</span>
+            <span className="text-[10px] text-[#c8d6e5]">{o.downside || o.risk_note}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Document */}
+      {o.document_url && (
+        <a href={o.document_url} target="_blank" rel="noreferrer"
+          className="flex items-center gap-2 text-[10px] text-[#0066ff] hover:underline tracking-wider">
+          <FileText className="h-3 w-3" /> VISA BIFOGAT DOKUMENT (PDF)
+        </a>
+      )}
 
       {/* ROI Calculator */}
       <div className="border border-[#1a2035] bg-[#0d1220]">
@@ -210,11 +224,8 @@ export default function PortalOfferDetail() {
             <div className="flex-1 space-y-1">
               <label className="text-[9px] text-[#5a6a7a] tracking-wider">ANGE BELOPP (KR)</label>
               <input
-                type="number"
-                value={calcAmount}
-                onChange={(e) => setCalcAmount(e.target.value)}
-                min={1}
-                placeholder="0"
+                type="number" value={calcAmount} onChange={e => setCalcAmount(e.target.value)}
+                min={1} placeholder="0"
                 className="w-full h-9 bg-[#0a0e1a] border border-[#1a2035] px-3 text-sm text-[#c8d6e5] font-bold focus:border-[#0066ff] focus:outline-none font-mono"
               />
             </div>
@@ -222,7 +233,6 @@ export default function PortalOfferDetail() {
               {calcResult > 0 ? (
                 <span className="text-sm font-bold text-green-400">
                   Du får tillbaka: {calcResult.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kr
-                  <span className="text-[9px] text-[#5a6a7a] ml-1">på {offer.maturity_date}</span>
                 </span>
               ) : (
                 <span className="text-[10px] text-[#3a4a5a]">Ange belopp för att beräkna</span>
@@ -231,7 +241,7 @@ export default function PortalOfferDetail() {
           </div>
           {calcResult > 0 && (
             <div className="mt-2 text-[9px] text-[#5a6a7a]">
-              Vinst: <span className="text-green-400 font-bold">{(calcResult - Number(calcAmount)).toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kr</span> ({interestRate.toFixed(1)}% ränta)
+              Vinst: <span className="text-green-400 font-bold">{(calcResult - Number(calcAmount)).toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kr</span> ({rate.toFixed(1)}% ränta)
             </div>
           )}
         </div>
@@ -248,11 +258,8 @@ export default function PortalOfferDetail() {
               <div className="flex-1 space-y-1">
                 <label className="text-[9px] text-[#5a6a7a] tracking-wider">AMOUNT (KR)</label>
                 <input
-                  type="number"
-                  value={pledgeAmount}
-                  onChange={(e) => setPledgeAmount(e.target.value)}
-                  min={minPledge || 1}
-                  max={maxPledge || undefined}
+                  type="number" value={pledgeAmount} onChange={e => setPledgeAmount(e.target.value)}
+                  min={minPledge || 1} max={maxPledge || undefined}
                   placeholder={minPledge > 0 ? `Min ${minPledge.toLocaleString()} kr` : "0"}
                   className="w-full h-9 bg-[#0a0e1a] border border-[#1a2035] px-3 text-sm text-[#c8d6e5] font-bold focus:border-[#0066ff] focus:outline-none font-mono"
                 />
@@ -261,14 +268,8 @@ export default function PortalOfferDetail() {
                 <button
                   onClick={() => {
                     const amt = Number(pledgeAmount);
-                    if (minPledge > 0 && amt < minPledge) {
-                      toast.error(`Minsta insats är ${minPledge.toLocaleString()} kr`);
-                      return;
-                    }
-                    if (maxPledge && amt > maxPledge) {
-                      toast.error(`Högsta insats är ${maxPledge.toLocaleString()} kr`);
-                      return;
-                    }
+                    if (minPledge > 0 && amt < minPledge) { toast.error(`Minsta insats är ${minPledge.toLocaleString()} kr`); return; }
+                    if (maxPledge && amt > maxPledge) { toast.error(`Högsta insats är ${maxPledge.toLocaleString()} kr`); return; }
                     if (amt > 0) pledgeMutation.mutate(amt);
                   }}
                   disabled={pledgeMutation.isPending || !pledgeAmount || Number(pledgeAmount) <= 0}
@@ -278,16 +279,27 @@ export default function PortalOfferDetail() {
                 </button>
               </div>
             </div>
-            {(minPledge > 0 || maxPledge) && (
-              <div className="text-[9px] text-[#5a6a7a]">
-                {minPledge > 0 && <span>Min: {minPledge.toLocaleString()} kr</span>}
-                {minPledge > 0 && maxPledge && <span> · </span>}
-                {maxPledge && <span>Max: {maxPledge.toLocaleString()} kr</span>}
-              </div>
-            )}
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="border border-[#1a2035] bg-[#0d1220] p-3">
+      <h3 className="text-[10px] text-[#0066ff] tracking-wider font-bold mb-2">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function InfoRow({ label, value }: { label: string; value: string | number | null | undefined }) {
+  return (
+    <div className="flex justify-between py-1.5 border-b border-[#1a2035] last:border-0">
+      <span className="text-[10px] text-[#5a6a7a]">{label}</span>
+      <span className="text-[11px] font-medium text-[#c8d6e5]">{value ?? "—"}</span>
     </div>
   );
 }
