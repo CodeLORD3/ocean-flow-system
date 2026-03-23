@@ -169,7 +169,7 @@ export default function WholesaleOrders() {
     setNewOrderLines(prev => prev.filter((_, i) => i !== idx));
   };
 
-  const resetCreateDialog = () => {
+  const resetCreateForm = () => {
     setSelectedCustomerId("");
     setNewOrderLines([]);
     setNewOrderNote("");
