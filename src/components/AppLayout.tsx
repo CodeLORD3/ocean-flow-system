@@ -92,7 +92,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
-        {site === "shop" ? <ShopSidebar /> : site === "production" ? <ProductionSidebar /> : <AppSidebar />}
+        {site === "shop" ? <ShopSidebar /> : site === "production" ? <ProductionSidebar /> : site === "trade" ? <TradeSidebar /> : <AppSidebar />}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Top status bar */}
           <div className="h-8 flex items-center justify-between bg-sidebar-background px-4 text-xs text-sidebar-foreground/70 shrink-0">
