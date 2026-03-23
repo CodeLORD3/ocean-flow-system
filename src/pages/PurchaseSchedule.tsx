@@ -112,7 +112,7 @@ function TransportZoneBadge({
   );
 }
 
-export default function PurchaseSchedule() {
+export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: string } = {}) {
   const { data: orders, isLoading: ordersLoading } = useShopOrders();
   const { data: stores, isLoading: storesLoading } = useStores();
   const { data: transportSchedules, isLoading: schedulesLoading } = useTransportSchedules();
