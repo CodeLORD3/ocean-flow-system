@@ -63,6 +63,16 @@ import BarcodeScanner from "@/components/barcode/BarcodeScanner";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { sv } from "date-fns/locale";
 
+/** Convert a stock item's quantity to kg, using weight_per_piece for ST products */
+function qtyToKg(quantity: number, product: any): number {
+  if (!product) return quantity;
+  const unit = (product.unit || "kg").toLowerCase();
+  if (unit === "st" && Number(product.weight_per_piece) > 0) {
+    return quantity * Number(product.weight_per_piece);
+  }
+  return quantity;
+}
+
 const zoneIcon: Record<string, string> = {
   Kyl: "❄️",
   Frys: "🧊",
