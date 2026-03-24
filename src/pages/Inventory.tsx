@@ -591,7 +591,7 @@ export default function Inventory() {
   }, [stockByLocation, stores, site]);
 
   const totalProducts = aggregatedStock.size;
-  const totalQty = Array.from(aggregatedStock.values()).reduce((s, i) => s + i.quantity, 0);
+  const totalQty = Array.from(aggregatedStock.values()).reduce((s, i) => s + qtyToKg(i.quantity, i.product), 0);
   const totalValue = storeStock.reduce(
     (s: number, i: any) => s + Number(i.quantity) * (Number(i.unit_cost) || Number(i.products?.cost_price) || 0),
     0,
