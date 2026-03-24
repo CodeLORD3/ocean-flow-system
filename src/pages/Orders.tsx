@@ -13,19 +13,28 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { useShopOrders } from "@/hooks/useShopOrders";
 import { useStores } from "@/hooks/useStores";
+import { useProducts } from "@/hooks/useProducts";
 import { useQueryClient } from "@tanstack/react-query";
 import { syncBehandlasFromStock } from "@/lib/orderStatusSync";
 import { useUpdateOrderLineStatus, STATUS_FLOW } from "@/hooks/useUpdateOrderLineStatus";
+import { useAllPendingChangeRequests, useOrderChangeRequests, useResolveChangeRequest } from "@/hooks/useOrderChangeRequests";
 import { useSite } from "@/contexts/SiteContext";
+import { useActiveUser } from "@/contexts/ActiveUserContext";
+import { logActivity } from "@/hooks/useActivityLog";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { format, getDay } from "date-fns";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useTransportSchedules } from "@/hooks/useTransportSchedules";
 
 const statusColor: Record<string, string> = {
   "": "bg-muted text-muted-foreground border-border",
