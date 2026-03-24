@@ -80,21 +80,34 @@ export default function Orders() {
   // Packer dialog state
   const [packerDialogOpen, setPackerDialogOpen] = useState(false);
   const [packerName, setPackerName] = useState("");
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [pendingPackAction, setPendingPackAction] = useState<{
     order: any;
     lines: any[];
-    // If a specific line triggered it, store the pending change
     pendingLineChange?: { lineId: string; orderId: string; newStatus: string };
   } | null>(null);
 
   const { data: orders = [], isLoading } = useShopOrders();
   const { data: stores = [] } = useStores();
+  const { data: products = [] } = useProducts();
+  const { data: transportSchedules = [] } = useTransportSchedules();
   const queryClient = useQueryClient();
   const syncRan = useRef(false);
   const { site } = useSite();
+  const { activeUser } = useActiveUser();
   const updateLineStatus = useUpdateOrderLineStatus();
 
   const isGrossist = site === "wholesale";
+
+  // Keep selectedOrder in sync with fetched data
+  useEffect(() => {
+    if (selectedOrder && orders.length > 0) {
+      const updated = orders.find((o: any) => o.id === selectedOrder.id);
+      if (updated && JSON.stringify(updated) !== JSON.stringify(selectedOrder)) {
+        setSelectedOrder(updated);
+      }
+    }
+  }, [orders]);
 
   useEffect(() => {
     if (syncRan.current) return;
