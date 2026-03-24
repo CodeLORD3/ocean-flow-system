@@ -63,6 +63,16 @@ import BarcodeScanner from "@/components/barcode/BarcodeScanner";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { sv } from "date-fns/locale";
 
+/** Convert a stock item's quantity to kg, using weight_per_piece for ST products */
+function qtyToKg(quantity: number, product: any): number {
+  if (!product) return quantity;
+  const unit = (product.unit || "kg").toLowerCase();
+  if (unit === "st" && Number(product.weight_per_piece) > 0) {
+    return quantity * Number(product.weight_per_piece);
+  }
+  return quantity;
+}
+
 const zoneIcon: Record<string, string> = {
   Kyl: "❄️",
   Frys: "🧊",
@@ -520,7 +530,7 @@ export default function Inventory() {
             s.products?.sku?.toLowerCase().includes(search.toLowerCase()),
         );
       }
-      const totalQty = items.reduce((sum: number, s: any) => sum + Number(s.quantity), 0);
+      const totalQty = items.reduce((sum: number, s: any) => sum + qtyToKg(Number(s.quantity), s.products), 0);
       const isRawLager = (loc.name || "").toLowerCase().startsWith("raw-");
       const totalValue = items.reduce((sum: number, s: any) => {
         const qty = Number(s.quantity);
@@ -581,7 +591,7 @@ export default function Inventory() {
   }, [stockByLocation, stores, site]);
 
   const totalProducts = aggregatedStock.size;
-  const totalQty = Array.from(aggregatedStock.values()).reduce((s, i) => s + i.quantity, 0);
+  const totalQty = Array.from(aggregatedStock.values()).reduce((s, i) => s + qtyToKg(i.quantity, i.product), 0);
   const totalValue = storeStock.reduce(
     (s: number, i: any) => s + Number(i.quantity) * (Number(i.unit_cost) || Number(i.products?.cost_price) || 0),
     0,
