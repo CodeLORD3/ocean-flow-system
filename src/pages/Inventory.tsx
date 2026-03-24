@@ -530,7 +530,7 @@ export default function Inventory() {
             s.products?.sku?.toLowerCase().includes(search.toLowerCase()),
         );
       }
-      const totalQty = items.reduce((sum: number, s: any) => sum + Number(s.quantity), 0);
+      const totalQty = items.reduce((sum: number, s: any) => sum + qtyToKg(Number(s.quantity), s.products), 0);
       const isRawLager = (loc.name || "").toLowerCase().startsWith("raw-");
       const totalValue = items.reduce((sum: number, s: any) => {
         const qty = Number(s.quantity);
