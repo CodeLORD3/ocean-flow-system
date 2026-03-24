@@ -172,6 +172,12 @@ function EditableRow({
     setProductOpen(false);
     setProductSearch("");
     if (productInputRef.current) productInputRef.current.value = p.name;
+    setTimeout(() => {
+      if (qtyInputRef.current) {
+        qtyInputRef.current.focus();
+        qtyInputRef.current.select();
+      }
+    }, 0);
   };
 
   const selectSupplier = (s: any) => {

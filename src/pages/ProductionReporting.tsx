@@ -93,6 +93,12 @@ function EditableRow({
     setProductOpen(false);
     setProductSearch("");
     if (productInputRef.current) productInputRef.current.value = p.name;
+    setTimeout(() => {
+      if (qtyInputRef.current) {
+        qtyInputRef.current.focus();
+        qtyInputRef.current.select();
+      }
+    }, 0);
   };
 
   const handleProductKeyDown = (e: React.KeyboardEvent) => {
