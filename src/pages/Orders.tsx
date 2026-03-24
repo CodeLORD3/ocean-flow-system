@@ -370,15 +370,46 @@ export default function Orders() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Order detail dialog for wholesale editing */}
+      {isGrossist && (
+        <Dialog open={!!selectedOrder} onOpenChange={open => { if (!open) setSelectedOrder(null); }}>
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+            {selectedOrder && (
+              <WholesaleOrderDetail
+                order={selectedOrder}
+                products={products}
+                transportSchedules={transportSchedules}
+                stores={stores}
+                onClose={() => setSelectedOrder(null)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
     </motion.div>
   );
 }
+
+const LIVE_STATUSES = ["Ny", "Pågående", "Packad", "Skickad"];
+
+const rowBgByStatus: Record<string, string> = {
+  "": "",
+  "Ny": "",
+  "Pågående": "bg-amber-50 dark:bg-amber-950/20",
+  "Packad": "bg-emerald-50 dark:bg-emerald-950/20",
+  "Skickad": "bg-green-50 dark:bg-green-950/20",
+  "Levererad": "bg-green-50 dark:bg-green-950/20",
+  "Klar / Levererad": "bg-green-50 dark:bg-green-950/20",
+  "Ej tillgänglig": "bg-red-50 dark:bg-red-950/20",
+};
 
 function OrderRow({
   order,
   lines,
   isExpanded,
   onToggle,
+  onSelectOrder,
   isGrossist,
   onStatusChange,
   onPackOrder,
@@ -388,6 +419,7 @@ function OrderRow({
   lines: any[];
   isExpanded: boolean;
   onToggle: () => void;
+  onSelectOrder?: () => void;
   isGrossist: boolean;
   onStatusChange: (lineId: string, orderId: string, newStatus: string) => void;
   onPackOrder: (order: any, lines: any[]) => void;
@@ -403,18 +435,29 @@ function OrderRow({
       >
         {isGrossist && (
           <td className="px-1 py-1" onClick={(e) => e.stopPropagation()}>
-            {canPack && (
+            <div className="flex items-center gap-1">
+              {canPack && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-6 px-2 text-[10px] gap-1 bg-warning/10 border-warning/30 text-warning hover:bg-warning/20"
+                  disabled={isPending}
+                  onClick={() => onPackOrder(order, lines)}
+                >
+                  <Package className="h-3 w-3" />
+                  Packa
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant="outline"
-                className="h-6 px-2 text-[10px] gap-1 bg-warning/10 border-warning/30 text-warning hover:bg-warning/20"
-                disabled={isPending}
-                onClick={() => onPackOrder(order, lines)}
+                className="h-6 px-2 text-[10px] gap-1"
+                onClick={() => onSelectOrder?.()}
               >
-                <Package className="h-3 w-3" />
-                Packa order
+                <Pencil className="h-3 w-3" />
+                Redigera
               </Button>
-            )}
+            </div>
           </td>
         )}
         <td className="px-1 py-1">
@@ -531,6 +574,462 @@ function OrderRow({
           </tr>
         )}
       </AnimatePresence>
+    </>
+  );
+}
+
+/* ---- Wholesale Order Detail with Direct Edit ---- */
+function WholesaleOrderDetail({ order, products, transportSchedules, stores, onClose }: {
+  order: any;
+  products: any[];
+  transportSchedules: any[];
+  stores: any[];
+  onClose: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const resolveChange = useResolveChangeRequest();
+  const { data: pendingChanges = [] } = useOrderChangeRequests(order.id);
+  const { activeUser } = useActiveUser();
+  const isEditable = LIVE_STATUSES.includes(order.status);
+
+  const [editMode, setEditMode] = useState(false);
+  const [editLines, setEditLines] = useState<{ line_id: string; product_name: string; unit: string; old_qty: number; new_qty: string }[]>([]);
+  const [newProducts, setNewProducts] = useState<{ product_id: string; product_name: string; unit: string; quantity: string }[]>([]);
+  const [editProductSearch, setEditProductSearch] = useState("");
+  const [editHighlightedIndex, setEditHighlightedIndex] = useState(-1);
+  const [editDeliveryDate, setEditDeliveryDate] = useState<Date | undefined>(
+    order.desired_delivery_date ? new Date(order.desired_delivery_date + "T00:00:00") : undefined
+  );
+  const [origDeliveryDate] = useState(order.desired_delivery_date || null);
+  const [saving, setSaving] = useState(false);
+
+  // Determine allowed weekdays for this store's transport zone
+  const orderStore = stores.find((s: any) => s.id === order.store_id);
+  const allowedWeekdays = (() => {
+    if (!orderStore) return null;
+    const city = (orderStore.city || "").toLowerCase();
+    const name = (orderStore.name || "").toLowerCase();
+    let zoneKey = "international";
+    if (city.includes("göteborg") || city.includes("gothenburg") || name.includes("göteborg") || name.includes("amhult") || name.includes("särö")) zoneKey = "gothenburg";
+    else if (city.includes("stockholm") || name.includes("stockholm") || name.includes("kungsholmen") || name.includes("ålsten")) zoneKey = "stockholm";
+    const days = transportSchedules.filter((s: any) => s.zone_key === zoneKey).map((s: any) => s.departure_weekday);
+    return days.length > 0 ? new Set(days) : null;
+  })();
+
+  const isDateDisabled = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (date < today) return true;
+    if (!allowedWeekdays) return false;
+    const jsDay = getDay(date);
+    const isoDay = jsDay === 0 ? 7 : jsDay;
+    return !allowedWeekdays.has(isoDay);
+  };
+
+  const startEdit = () => {
+    setEditMode(true);
+    setEditLines(
+      (order.shop_order_lines || []).map((l: any) => ({
+        line_id: l.id,
+        product_name: l.products?.name || "–",
+        unit: l.unit || l.products?.unit || "kg",
+        old_qty: l.quantity_ordered,
+        new_qty: String(l.quantity_ordered),
+      }))
+    );
+    setNewProducts([]);
+  };
+
+  const existingProductIds = new Set([
+    ...(order.shop_order_lines || []).map((l: any) => l.product_id),
+    ...newProducts.map(p => p.product_id),
+  ]);
+
+  const filteredEditProducts = products.filter(p =>
+    editProductSearch &&
+    (p.name.toLowerCase().includes(editProductSearch.toLowerCase()) ||
+      p.sku.toLowerCase().includes(editProductSearch.toLowerCase())) &&
+    !existingProductIds.has(p.id)
+  ).slice(0, 8);
+
+  const addNewProduct = (p: any) => {
+    setNewProducts(prev => [{ product_id: p.id, product_name: p.name, unit: p.unit, quantity: "" }, ...prev]);
+    setEditProductSearch("");
+    setEditHighlightedIndex(-1);
+  };
+
+  const handleSaveChanges = async () => {
+    setSaving(true);
+    const userName = activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : "Grossist";
+    let changeCount = 0;
+
+    try {
+      // Update quantities directly
+      for (const line of editLines) {
+        const newQty = Number(line.new_qty);
+        if (newQty !== line.old_qty && newQty > 0) {
+          const { error } = await supabase
+            .from("shop_order_lines")
+            .update({ quantity_ordered: newQty })
+            .eq("id", line.line_id);
+          if (error) throw error;
+          changeCount++;
+        }
+        // If qty is 0 or removed, delete the line
+        if (newQty <= 0) {
+          const { error } = await supabase
+            .from("shop_order_lines")
+            .delete()
+            .eq("id", line.line_id);
+          if (error) throw error;
+          changeCount++;
+        }
+      }
+
+      // Add new product lines directly
+      const deliveryDateStr = editDeliveryDate ? format(editDeliveryDate, "yyyy-MM-dd") : order.desired_delivery_date;
+      for (const np of newProducts) {
+        const qty = Number(np.quantity);
+        if (qty > 0) {
+          const { error } = await supabase
+            .from("shop_order_lines")
+            .insert({
+              shop_order_id: order.id,
+              product_id: np.product_id,
+              quantity_ordered: qty,
+              unit: np.unit,
+              delivery_date: deliveryDateStr,
+            });
+          if (error) throw error;
+          changeCount++;
+        }
+      }
+
+      // Update delivery date if changed
+      const newDateStr = editDeliveryDate ? format(editDeliveryDate, "yyyy-MM-dd") : null;
+      if (newDateStr !== origDeliveryDate) {
+        const { error } = await supabase
+          .from("shop_orders")
+          .update({ desired_delivery_date: newDateStr } as any)
+          .eq("id", order.id);
+        if (error) throw error;
+
+        // Also update delivery_date on all existing lines
+        if (newDateStr) {
+          await supabase
+            .from("shop_order_lines")
+            .update({ delivery_date: newDateStr })
+            .eq("shop_order_id", order.id);
+        }
+        changeCount++;
+      }
+
+      if (changeCount > 0) {
+        await logActivity({
+          action_type: "update",
+          description: `Grossist redigerade order (${changeCount} ändring${changeCount > 1 ? "ar" : ""})`,
+          portal: "wholesale",
+          entity_type: "shop_order",
+          entity_id: order.id,
+          performed_by: userName,
+        });
+        toast.success(`${changeCount} ändring${changeCount > 1 ? "ar" : ""} sparade`);
+      } else {
+        toast.info("Inga ändringar gjordes");
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
+      setEditMode(false);
+    } catch (err: any) {
+      toast.error("Fel vid sparning: " + (err.message || "Okänt fel"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteLine = async (lineId: string) => {
+    const { error } = await supabase.from("shop_order_lines").delete().eq("id", lineId);
+    if (error) {
+      toast.error("Kunde inte ta bort rad");
+      return;
+    }
+    toast.success("Orderrad borttagen");
+    queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
+  };
+
+  // Shop-initiated pending change requests
+  const shopPendingRequests = pendingChanges.filter((c: any) => c.status === "Väntande" && c.requested_by !== "grossist");
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle className="font-heading flex items-center gap-2">
+          Order {order.order_week} · {order.stores?.name || "–"}
+          <Badge variant="outline" className={`${statusColor[order.status] || ""} text-[10px] gap-1 ml-2`}>
+            {statusIcon[order.status]}
+            {order.status}
+          </Badge>
+          {isEditable && !editMode && (
+            <Button variant="outline" size="sm" className="ml-auto h-7 text-[10px] gap-1" onClick={startEdit}>
+              <Pencil className="h-3 w-3" /> Redigera
+            </Button>
+          )}
+        </DialogTitle>
+        <DialogDescription className="text-xs">
+          Skapad {new Date(order.created_at).toLocaleDateString("sv-SE")}
+          {order.created_by && <> · Best.av: <span className="font-medium text-foreground">{order.created_by}</span></>}
+          {order.desired_delivery_date && (
+            <> · Önskat lev.datum: <span className="font-medium text-foreground">{order.desired_delivery_date}</span></>
+          )}
+          {order.packer_name && (
+            <> · Packare: <span className="font-medium text-foreground">{order.packer_name}</span></>
+          )}
+        </DialogDescription>
+      </DialogHeader>
+
+      {order.notes && (
+        <div className="bg-muted/30 rounded-md p-3 text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">Anteckning:</span> {order.notes}
+        </div>
+      )}
+
+      {/* Shop-initiated pending change requests for wholesale to approve */}
+      {shopPendingRequests.length > 0 && !editMode && (
+        <div className="bg-warning/10 border border-warning/30 rounded-md p-3 text-xs space-y-2">
+          <span className="font-medium text-warning">⏳ {shopPendingRequests.length} ändringsförfrågan/-or från butik väntar på godkännande:</span>
+          {shopPendingRequests.map((cr: any) => (
+            <div key={cr.id} className="flex items-center justify-between gap-3 bg-background/50 rounded p-2">
+              <div className="flex-1 text-[10px]">
+                {cr.change_type === "quantity_change" && (
+                  <><span className="font-medium text-foreground">{cr.products?.name || "–"}</span>: {cr.old_value} → <span className="font-semibold text-foreground">{cr.new_value}</span> {cr.unit}</>
+                )}
+                {cr.change_type === "add_line" && (
+                  <>Ny produkt: <span className="font-medium text-foreground">{cr.products?.name || "–"}</span> ({cr.new_value} {cr.unit})</>
+                )}
+                {cr.change_type === "delivery_date" && (
+                  <>Leveransdatum: {cr.old_value} → <span className="font-semibold text-foreground">{cr.new_value}</span></>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-[10px] gap-1 text-success border-success/30 hover:bg-success/10"
+                  onClick={() => resolveChange.mutate({ id: cr.id, status: "Godkänd" })}
+                  disabled={resolveChange.isPending}
+                >
+                  <CheckCircle2 className="h-3 w-3" /> Godkänn
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+                  onClick={() => resolveChange.mutate({ id: cr.id, status: "Nekad" })}
+                  disabled={resolveChange.isPending}
+                >
+                  <XCircle className="h-3 w-3" /> Neka
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* View mode */}
+      {!editMode && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-border bg-muted/30">
+                <th className="p-2.5 text-left font-medium text-muted-foreground">Produkt</th>
+                <th className="p-2.5 text-left font-medium text-muted-foreground">Kategori</th>
+                <th className="p-2.5 text-left font-medium text-muted-foreground">Enhet</th>
+                <th className="p-2.5 text-right font-medium text-muted-foreground">Beställt</th>
+                <th className="p-2.5 text-right font-medium text-muted-foreground">Levererat</th>
+                <th className="p-2.5 text-left font-medium text-muted-foreground">Avvikelse</th>
+                <th className="p-2.5 text-left font-medium text-muted-foreground">Status</th>
+                <th className="p-2.5 w-8"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {order.shop_order_lines?.map((line: any) => {
+                const lineStatus = line.status || "Ny";
+                return (
+                  <tr key={line.id} className={`border-b border-border/30 transition-colors ${rowBgByStatus[lineStatus] || ""}`}>
+                    <td className="p-2.5 font-medium text-foreground">{line.products?.name || "–"}</td>
+                    <td className="p-2.5 text-muted-foreground">{line.products?.category || "–"}</td>
+                    <td className="p-2.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
+                    <td className="p-2.5 text-right font-mono text-foreground">{line.quantity_ordered}</td>
+                    <td className="p-2.5 text-right font-mono text-muted-foreground">{line.quantity_delivered || "–"}</td>
+                    <td className="p-2.5 text-muted-foreground">{line.deviation || "–"}</td>
+                    <td className="p-2.5">
+                      <Badge variant="outline" className={`${statusColor[lineStatus] || statusColor["Ny"]} text-[10px] gap-1`}>
+                        {statusIcon[lineStatus] || statusIcon["Ny"]}
+                        {lineStatus}
+                      </Badge>
+                    </td>
+                    <td className="p-2.5">
+                      {isEditable && (
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteLine(line.id)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Edit mode */}
+      {editMode && (
+        <div className="space-y-3">
+          <div className="text-xs font-medium text-muted-foreground">Ändra antal på befintliga produkter (sätt till 0 för att ta bort):</div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="pb-2 text-left font-medium text-muted-foreground">Produkt</th>
+                  <th className="pb-2 text-left font-medium text-muted-foreground">Enhet</th>
+                  <th className="pb-2 text-right font-medium text-muted-foreground">Nuvarande</th>
+                  <th className="pb-2 text-right font-medium text-muted-foreground w-28">Nytt antal</th>
+                </tr>
+              </thead>
+              <tbody>
+                {editLines.map((line, idx) => (
+                  <tr key={line.line_id} className="border-b border-border/30">
+                    <td className="py-2 font-medium text-foreground">{line.product_name}</td>
+                    <td className="py-2 text-muted-foreground">{line.unit}</td>
+                    <td className="py-2 text-right font-mono text-muted-foreground">{line.old_qty}</td>
+                    <td className="py-2 text-right">
+                      <Input
+                        type="number"
+                        step="0.1"
+                        value={line.new_qty}
+                        onChange={e => setEditLines(prev => prev.map((l, i) => i === idx ? { ...l, new_qty: e.target.value } : l))}
+                        className={cn("h-7 text-xs w-24 ml-auto text-right", Number(line.new_qty) !== line.old_qty && "border-warning ring-1 ring-warning/30")}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <Separator />
+
+          {/* Add new products */}
+          <div className="relative">
+            <Label className="text-xs font-medium mb-1.5 block">Lägg till nya produkter</Label>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                placeholder="Sök produkt..."
+                value={editProductSearch}
+                onChange={e => { setEditProductSearch(e.target.value); setEditHighlightedIndex(-1); }}
+                onKeyDown={e => {
+                  if (filteredEditProducts.length === 0) return;
+                  if (e.key === "ArrowDown") { e.preventDefault(); setEditHighlightedIndex(prev => (prev + 1) % filteredEditProducts.length); }
+                  else if (e.key === "ArrowUp") { e.preventDefault(); setEditHighlightedIndex(prev => (prev <= 0 ? filteredEditProducts.length - 1 : prev - 1)); }
+                  else if (e.key === "Enter" && editHighlightedIndex >= 0) { e.preventDefault(); addNewProduct(filteredEditProducts[editHighlightedIndex]); }
+                }}
+                className="pl-8 h-8 text-xs"
+              />
+            </div>
+            {filteredEditProducts.length > 0 && (
+              <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                {filteredEditProducts.map((p, idx) => (
+                  <button
+                    key={p.id}
+                    className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between ${idx === editHighlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
+                    onClick={() => addNewProduct(p)}
+                    onMouseEnter={() => setEditHighlightedIndex(idx)}
+                  >
+                    <span className="font-medium text-foreground">{p.name}</span>
+                    <span className="text-muted-foreground font-mono text-[10px]">{p.sku} · {p.unit}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {newProducts.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <tbody>
+                  {newProducts.map((np, idx) => (
+                    <tr key={np.product_id} className="border-b border-border/30 bg-primary/5">
+                      <td className="py-2 font-medium text-foreground">{np.product_name} <Badge className="text-[8px] ml-1" variant="outline">NY</Badge></td>
+                      <td className="py-2 text-muted-foreground">{np.unit}</td>
+                      <td className="py-2 text-right">
+                        <Input
+                          type="number"
+                          step="0.1"
+                          value={np.quantity}
+                          onChange={e => setNewProducts(prev => prev.map((p, i) => i === idx ? { ...p, quantity: e.target.value } : p))}
+                          className="h-7 text-xs w-24 ml-auto text-right"
+                          placeholder="0"
+                          autoFocus={idx === 0}
+                        />
+                      </td>
+                      <td className="py-2">
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => setNewProducts(prev => prev.filter((_, i) => i !== idx))}>
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <Separator />
+
+          {/* Delivery date change */}
+          <div className="space-y-1.5">
+            <Label className="text-xs">Önskat leveransdatum</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn("w-full justify-start text-left text-xs h-8 font-normal", !editDeliveryDate && "text-muted-foreground")}
+                >
+                  <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                  {editDeliveryDate ? format(editDeliveryDate, "yyyy-MM-dd") : "Välj datum..."}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={editDeliveryDate}
+                  onSelect={setEditDeliveryDate}
+                  disabled={isDateDisabled}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                  modifiers={allowedWeekdays ? { allowed: (date: Date) => !isDateDisabled(date) } : {}}
+                  modifiersClassNames={allowedWeekdays ? { allowed: "!bg-primary/10 !text-primary font-medium" } : {}}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
+      )}
+
+      <DialogFooter className="gap-2">
+        {editMode ? (
+          <>
+            <Button variant="outline" size="sm" onClick={() => setEditMode(false)}>Avbryt</Button>
+            <Button size="sm" className="gap-1.5" onClick={handleSaveChanges} disabled={saving}>
+              <CheckCircle2 className="h-3.5 w-3.5" /> Spara ändringar
+            </Button>
+          </>
+        ) : (
+          <Button variant="outline" size="sm" onClick={onClose}>Stäng</Button>
+        )}
+      </DialogFooter>
     </>
   );
 }
