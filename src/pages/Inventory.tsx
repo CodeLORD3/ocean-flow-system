@@ -856,7 +856,7 @@ export default function Inventory() {
           >
             <Scissors className="h-3 w-3" /> Splitta
           </Button>
-          {site === "production" && (
+          {(site === "production" || site === "wholesale") && (
             <Button
               variant="outline"
               size="sm"
