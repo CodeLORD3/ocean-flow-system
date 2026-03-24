@@ -307,6 +307,7 @@ export default function Orders() {
                         lines={lines}
                         isExpanded={isExpanded}
                         onToggle={() => toggleExpand(order.id)}
+                        onSelectOrder={() => setSelectedOrder(order)}
                         isGrossist={isGrossist}
                         onStatusChange={handleStatusChange}
                         onPackOrder={handlePackOrder}
