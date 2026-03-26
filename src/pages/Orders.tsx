@@ -394,7 +394,13 @@ export default function Orders() {
             )}
           </DialogContent>
         </Dialog>
-      )}
+       )}
+
+      {/* Följesedel print dialog */}
+      <DeliveryNote order={printFolljesedel} open={!!printFolljesedel} onOpenChange={(open) => { if (!open) setPrintFolljesedel(null); }} />
+
+      {/* Packsedel print dialog */}
+      <PackingSlip order={printPacksedel} open={!!printPacksedel} onOpenChange={(open) => { if (!open) setPrintPacksedel(null); }} />
     </motion.div>
   );
 }
