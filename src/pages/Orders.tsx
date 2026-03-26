@@ -89,6 +89,10 @@ export default function Orders() {
     pendingLineChange?: { lineId: string; orderId: string; newStatus: string };
   } | null>(null);
 
+  // Print state
+  const [printFolljesedel, setPrintFolljesedel] = useState<any>(null);
+  const [printPacksedel, setPrintPacksedel] = useState<any>(null);
+
   const { data: orders = [], isLoading } = useShopOrders();
   const { data: stores = [] } = useStores();
   const { data: products = [] } = useProducts();
