@@ -88,10 +88,9 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
                     <tbody>
                       {([
                         ["Kund / Customer", storeName],
-                        ["Adress / Address", ""],
-                        ["Leveransadress", ""],
-                        ["Telefon / Phone", ""],
-                        ["Kundnr / Customer No.", ""],
+                        ["Adress / Address", storeAddress],
+                        ["Stad / City", storeCity],
+                        ["Telefon / Phone", storePhone],
                       ] as [string, string][]).map(([label, value]) => (
                         <tr key={label}>
                           <td style={{ padding: "3px 6px 3px 0", fontWeight: 600, fontSize: 15, color: "#444", whiteSpace: "nowrap", width: 140 }}>{label}</td>
