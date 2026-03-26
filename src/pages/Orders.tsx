@@ -506,6 +506,7 @@ function OrderRow({
                         <th className="pb-1.5 text-left font-medium text-muted-foreground">Produkt</th>
                         <th className="pb-1.5 text-left font-medium text-muted-foreground">Kategori</th>
                         <th className="pb-1.5 text-right font-medium text-muted-foreground">Beställt</th>
+                        <th className="pb-1.5 text-right font-medium text-muted-foreground">Packat</th>
                         <th className="pb-1.5 text-left font-medium text-muted-foreground">Enhet</th>
                         <th className="pb-1.5 text-right font-medium text-muted-foreground">Status</th>
                         {isGrossist && <th className="pb-1.5 text-right font-medium text-muted-foreground">Åtgärd</th>}
@@ -522,6 +523,7 @@ function OrderRow({
                             <td className="py-1 font-medium text-foreground">{line.products?.name || "—"}</td>
                             <td className="py-1 text-muted-foreground">{line.products?.category || "—"}</td>
                             <td className="py-1 text-right text-foreground">{line.quantity_ordered}</td>
+                            <td className="py-1 text-right text-muted-foreground">{Number(line.quantity_delivered || 0) > 0 ? line.quantity_delivered : "–"}</td>
                             <td className="py-1 text-muted-foreground">{line.unit || line.products?.unit || "kg"}</td>
                             <td className="py-1 text-right">
                               <Badge variant="outline" className={`${statusColor[lineStatus] || statusColor["Ny"]} text-[10px] gap-1`}>
