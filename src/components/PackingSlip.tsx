@@ -18,6 +18,9 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
 
   const lines = order.shop_order_lines || [];
   const storeName = order.stores?.name || "—";
+  const storeAddress = order.stores?.address || "";
+  const storePhone = order.stores?.phone || "";
+  const storeCity = order.stores?.city || "";
   const orderDate = order.created_at
     ? new Date(order.created_at).toLocaleDateString("sv-SE")
     : "—";
