@@ -506,6 +506,7 @@ function OrderRow({
                         <th className="pb-1.5 text-left font-medium text-muted-foreground">Produkt</th>
                         <th className="pb-1.5 text-left font-medium text-muted-foreground">Kategori</th>
                         <th className="pb-1.5 text-right font-medium text-muted-foreground">Beställt</th>
+                        <th className="pb-1.5 text-right font-medium text-muted-foreground">Packat</th>
                         <th className="pb-1.5 text-left font-medium text-muted-foreground">Enhet</th>
                         <th className="pb-1.5 text-right font-medium text-muted-foreground">Status</th>
                         {isGrossist && <th className="pb-1.5 text-right font-medium text-muted-foreground">Åtgärd</th>}
