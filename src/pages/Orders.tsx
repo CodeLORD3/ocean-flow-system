@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Clock, CheckCircle2, Truck, XCircle, Package, ShoppingCart, ChevronDown, ChevronRight, ArrowRight, Pencil, Plus, X, Send, Trash2, CalendarIcon } from "lucide-react";
+import { Search, Clock, CheckCircle2, Truck, XCircle, Package, ShoppingCart, ChevronDown, ChevronRight, ArrowRight, Pencil, Plus, X, Send, Trash2, CalendarIcon, FileText, Printer } from "lucide-react";
+import DeliveryNote from "@/components/DeliveryNote";
+import PackingSlip from "@/components/PackingSlip";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -86,6 +88,10 @@ export default function Orders() {
     lines: any[];
     pendingLineChange?: { lineId: string; orderId: string; newStatus: string };
   } | null>(null);
+
+  // Print state
+  const [printFolljesedel, setPrintFolljesedel] = useState<any>(null);
+  const [printPacksedel, setPrintPacksedel] = useState<any>(null);
 
   const { data: orders = [], isLoading } = useShopOrders();
   const { data: stores = [] } = useStores();
@@ -311,6 +317,8 @@ export default function Orders() {
                         isGrossist={isGrossist}
                         onStatusChange={handleStatusChange}
                         onPackOrder={handlePackOrder}
+                        onPrintFolljesedel={(o) => setPrintFolljesedel(o)}
+                        onPrintPacksedel={(o) => setPrintPacksedel(o)}
                         isPending={updateLineStatus.isPending}
                       />
                     );
@@ -386,7 +394,13 @@ export default function Orders() {
             )}
           </DialogContent>
         </Dialog>
-      )}
+       )}
+
+      {/* Följesedel print dialog */}
+      <DeliveryNote order={printFolljesedel} open={!!printFolljesedel} onOpenChange={(open) => { if (!open) setPrintFolljesedel(null); }} />
+
+      {/* Packsedel print dialog */}
+      <PackingSlip order={printPacksedel} open={!!printPacksedel} onOpenChange={(open) => { if (!open) setPrintPacksedel(null); }} />
     </motion.div>
   );
 }
@@ -413,6 +427,8 @@ function OrderRow({
   isGrossist,
   onStatusChange,
   onPackOrder,
+  onPrintFolljesedel,
+  onPrintPacksedel,
   isPending,
 }: {
   order: any;
@@ -423,6 +439,8 @@ function OrderRow({
   isGrossist: boolean;
   onStatusChange: (lineId: string, orderId: string, newStatus: string) => void;
   onPackOrder: (order: any, lines: any[]) => void;
+  onPrintFolljesedel: (order: any) => void;
+  onPrintPacksedel: (order: any) => void;
   isPending: boolean;
 }) {
   const canPack = order.status === "Ny" || order.status === "";
@@ -456,6 +474,24 @@ function OrderRow({
               >
                 <Pencil className="h-3 w-3" />
                 Redigera
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 px-2 text-[10px] gap-1"
+                onClick={() => onPrintFolljesedel(order)}
+              >
+                <FileText className="h-3 w-3" />
+                Följesedel
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 px-2 text-[10px] gap-1"
+                onClick={() => onPrintPacksedel(order)}
+              >
+                <Printer className="h-3 w-3" />
+                Packsedel
               </Button>
             </div>
           </td>
