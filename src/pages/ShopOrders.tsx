@@ -240,7 +240,7 @@ export default function ShopOrders() {
       if (!activeStoreId) return [];
       const { data, error } = await supabase
         .from("shop_orders")
-        .select("*, stores(name), shop_order_lines(*, products(name, unit, category, hs_code, weight_per_piece, wholesale_price))")
+        .select("*, stores(name, address, phone, city), shop_order_lines(*, products(name, unit, category, hs_code, weight_per_piece, wholesale_price))")
         .eq("store_id", activeStoreId)
         .order("created_at", { ascending: false });
       if (error) throw error;
