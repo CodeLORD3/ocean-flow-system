@@ -415,6 +415,8 @@ function OrderRow({
   isGrossist,
   onStatusChange,
   onPackOrder,
+  onPrintFolljesedel,
+  onPrintPacksedel,
   isPending,
 }: {
   order: any;
@@ -425,6 +427,8 @@ function OrderRow({
   isGrossist: boolean;
   onStatusChange: (lineId: string, orderId: string, newStatus: string) => void;
   onPackOrder: (order: any, lines: any[]) => void;
+  onPrintFolljesedel: (order: any) => void;
+  onPrintPacksedel: (order: any) => void;
   isPending: boolean;
 }) {
   const canPack = order.status === "Ny" || order.status === "";
