@@ -9,7 +9,7 @@ export function useShopOrders(storeId?: string) {
     queryFn: async () => {
       let q = supabase
         .from("shop_orders")
-        .select("*, desired_delivery_date, packer_name, invoice_status, stores(name), shop_order_lines(*, products(name, unit, category, hs_code, weight_per_piece, wholesale_price))")
+        .select("*, desired_delivery_date, packer_name, invoice_status, stores(name, address, phone, city), shop_order_lines(*, products(name, unit, category, hs_code, weight_per_piece, wholesale_price))")
         .order("created_at", { ascending: false });
       if (storeId) q = q.eq("store_id", storeId);
       const { data, error } = await q;
