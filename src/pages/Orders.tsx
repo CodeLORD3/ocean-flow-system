@@ -317,6 +317,8 @@ export default function Orders() {
                         isGrossist={isGrossist}
                         onStatusChange={handleStatusChange}
                         onPackOrder={handlePackOrder}
+                        onPrintFolljesedel={(o) => setPrintFolljesedel(o)}
+                        onPrintPacksedel={(o) => setPrintPacksedel(o)}
                         isPending={updateLineStatus.isPending}
                       />
                     );
