@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Clock, CheckCircle2, Truck, XCircle, Package, ShoppingCart, ChevronDown, ChevronRight, ArrowRight, Pencil, Plus, X, Send, Trash2, CalendarIcon } from "lucide-react";
+import { Search, Clock, CheckCircle2, Truck, XCircle, Package, ShoppingCart, ChevronDown, ChevronRight, ArrowRight, Pencil, Plus, X, Send, Trash2, CalendarIcon, FileText, Printer } from "lucide-react";
+import DeliveryNote from "@/components/DeliveryNote";
+import PackingSlip from "@/components/PackingSlip";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
