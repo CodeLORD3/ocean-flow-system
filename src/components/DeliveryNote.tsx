@@ -16,8 +16,11 @@ export default function DeliveryNote({ order, open, onOpenChange }: DeliveryNote
 
   if (!order) return null;
 
-  const lines = (order.shop_order_lines || []).filter((l: any) => l.quantity_delivered > 0);
+  const lines = order.shop_order_lines || [];
   const storeName = order.stores?.name || "—";
+  const storeAddress = order.stores?.address || "";
+  const storePhone = order.stores?.phone || "";
+  const storeCity = order.stores?.city || "";
   const orderDate = order.created_at
     ? new Date(order.created_at).toLocaleDateString("sv-SE")
     : "—";
