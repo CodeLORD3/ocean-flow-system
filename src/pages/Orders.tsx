@@ -469,6 +469,24 @@ function OrderRow({
                 <Pencil className="h-3 w-3" />
                 Redigera
               </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 px-2 text-[10px] gap-1"
+                onClick={() => onPrintFolljesedel(order)}
+              >
+                <FileText className="h-3 w-3" />
+                Följesedel
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 px-2 text-[10px] gap-1"
+                onClick={() => onPrintPacksedel(order)}
+              >
+                <Printer className="h-3 w-3" />
+                Packsedel
+              </Button>
             </div>
           </td>
         )}
