@@ -458,10 +458,10 @@ export default function Products() {
     return (
       <tr
         key={p.id}
-        className={`border-b border-border/40 hover:bg-muted/20 transition-colors h-9 ${isSubproduct ? "bg-muted/10" : ""}`}
+        className={`border-b border-border/40 hover:bg-muted/20 transition-colors h-7 ${isSubproduct ? "bg-muted/10" : ""}`}
       >
         {/* Name */}
-        <td className="px-3 py-1 font-medium text-foreground">
+        <td className="px-2 py-0 font-medium text-foreground">
           <div className="flex items-center gap-1.5">
             {!isSubproduct && hasChildren && (
               <button onClick={() => toggleExpand(p.id)} className="p-0.5 rounded hover:bg-muted">
