@@ -818,30 +818,30 @@ function WholesaleOrderDetail({ order, products, transportSchedules, stores, onC
 
   return (
     <>
-      <DialogHeader>
-        <DialogTitle className="font-heading flex items-center gap-2">
-          Order {order.order_week} · {order.stores?.name || "–"}
-          <Badge variant="outline" className={`${statusColor[order.status] || ""} text-[10px] gap-1 ml-2`}>
+      <div className="flex items-center gap-2 mb-2">
+        <h3 className="font-heading text-sm font-semibold flex items-center gap-2">
+          Redigera order {order.order_week} · {order.stores?.name || "–"}
+          <Badge variant="outline" className={`${statusColor[order.status] || ""} text-[10px] gap-1`}>
             {statusIcon[order.status]}
             {order.status}
           </Badge>
-          {isEditable && !editMode && (
-            <Button variant="outline" size="sm" className="ml-auto h-7 text-[10px] gap-1" onClick={startEdit}>
-              <Pencil className="h-3 w-3" /> Redigera
-            </Button>
-          )}
-        </DialogTitle>
-        <DialogDescription className="text-xs">
-          Skapad {new Date(order.created_at).toLocaleDateString("sv-SE")}
-          {order.created_by && <> · Best.av: <span className="font-medium text-foreground">{order.created_by}</span></>}
-          {order.desired_delivery_date && (
-            <> · Önskat lev.datum: <span className="font-medium text-foreground">{order.desired_delivery_date}</span></>
-          )}
-          {order.packer_name && (
-            <> · Packare: <span className="font-medium text-foreground">{order.packer_name}</span></>
-          )}
-        </DialogDescription>
-      </DialogHeader>
+        </h3>
+        {isEditable && !editMode && (
+          <Button variant="outline" size="sm" className="ml-auto h-7 text-[10px] gap-1" onClick={startEdit}>
+            <Pencil className="h-3 w-3" /> Redigera
+          </Button>
+        )}
+      </div>
+      <div className="text-[10px] text-muted-foreground mb-2">
+        Skapad {new Date(order.created_at).toLocaleDateString("sv-SE")}
+        {order.created_by && <> · Best.av: <span className="font-medium text-foreground">{order.created_by}</span></>}
+        {order.desired_delivery_date && (
+          <> · Önskat lev.datum: <span className="font-medium text-foreground">{order.desired_delivery_date}</span></>
+        )}
+        {order.packer_name && (
+          <> · Packare: <span className="font-medium text-foreground">{order.packer_name}</span></>
+        )}
+      </div>
 
       {order.notes && (
         <div className="bg-muted/30 rounded-md p-3 text-xs text-muted-foreground">
