@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -78,11 +78,12 @@ export default function Orders() {
   const [storeFilter, setStoreFilter] = useState("Alla butiker");
   const [statusFilterVal, setStatusFilterVal] = useState("Alla");
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
 
   // Packer dialog state
   const [packerDialogOpen, setPackerDialogOpen] = useState(false);
   const [packerName, setPackerName] = useState("");
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null); // kept for sync
   const [pendingPackAction, setPendingPackAction] = useState<{
     order: any;
     lines: any[];
@@ -313,13 +314,22 @@ export default function Orders() {
                         lines={lines}
                         isExpanded={isExpanded}
                         onToggle={() => toggleExpand(order.id)}
-                        onSelectOrder={() => setSelectedOrder(order)}
+                        onSelectOrder={() => {
+                          // Expand the order and enter edit mode inline
+                          if (!expandedOrders.has(order.id)) toggleExpand(order.id);
+                          setEditingOrderId(order.id);
+                        }}
                         isGrossist={isGrossist}
                         onStatusChange={handleStatusChange}
                         onPackOrder={handlePackOrder}
                         onPrintFolljesedel={(o) => setPrintFolljesedel(o)}
                         onPrintPacksedel={(o) => setPrintPacksedel(o)}
                         isPending={updateLineStatus.isPending}
+                        editingOrderId={editingOrderId}
+                        setEditingOrderId={setEditingOrderId}
+                        products={products}
+                        transportSchedules={transportSchedules}
+                        stores={stores}
                       />
                     );
                   })}
@@ -379,22 +389,7 @@ export default function Orders() {
         </DialogContent>
       </Dialog>
 
-      {/* Order detail dialog for wholesale editing */}
-      {isGrossist && (
-        <Dialog open={!!selectedOrder} onOpenChange={open => { if (!open) setSelectedOrder(null); }}>
-          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-            {selectedOrder && (
-              <WholesaleOrderDetail
-                order={selectedOrder}
-                products={products}
-                transportSchedules={transportSchedules}
-                stores={stores}
-                onClose={() => setSelectedOrder(null)}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
-       )}
+      {/* Wholesale editing is now inline — no dialog needed */}
 
       {/* Följesedel print dialog */}
       <DeliveryNote order={printFolljesedel} open={!!printFolljesedel} onOpenChange={(open) => { if (!open) setPrintFolljesedel(null); }} />
@@ -430,6 +425,11 @@ function OrderRow({
   onPrintFolljesedel,
   onPrintPacksedel,
   isPending,
+  editingOrderId,
+  setEditingOrderId,
+  products,
+  transportSchedules,
+  stores,
 }: {
   order: any;
   lines: any[];
@@ -442,6 +442,11 @@ function OrderRow({
   onPrintFolljesedel: (order: any) => void;
   onPrintPacksedel: (order: any) => void;
   isPending: boolean;
+  editingOrderId?: string | null;
+  setEditingOrderId?: (id: string | null) => void;
+  products?: any[];
+  transportSchedules?: any[];
+  stores?: any[];
 }) {
   const canPack = order.status === "Ny" || order.status === "";
 
@@ -606,6 +611,19 @@ function OrderRow({
                       })}
                     </tbody>
                   </table>
+
+                  {/* Inline wholesale editing panel */}
+                  {isGrossist && editingOrderId === order.id && (
+                    <div className="mt-3 border-t border-border pt-3">
+                      <WholesaleOrderDetail
+                        order={order}
+                        products={products || []}
+                        transportSchedules={transportSchedules || []}
+                        stores={stores || []}
+                        onClose={() => setEditingOrderId?.(null)}
+                      />
+                    </div>
+                  )}
                 </div>
               </motion.div>
             </td>
@@ -800,30 +818,30 @@ function WholesaleOrderDetail({ order, products, transportSchedules, stores, onC
 
   return (
     <>
-      <DialogHeader>
-        <DialogTitle className="font-heading flex items-center gap-2">
-          Order {order.order_week} · {order.stores?.name || "–"}
-          <Badge variant="outline" className={`${statusColor[order.status] || ""} text-[10px] gap-1 ml-2`}>
+      <div className="flex items-center gap-2 mb-2">
+        <h3 className="font-heading text-sm font-semibold flex items-center gap-2">
+          Redigera order {order.order_week} · {order.stores?.name || "–"}
+          <Badge variant="outline" className={`${statusColor[order.status] || ""} text-[10px] gap-1`}>
             {statusIcon[order.status]}
             {order.status}
           </Badge>
-          {isEditable && !editMode && (
-            <Button variant="outline" size="sm" className="ml-auto h-7 text-[10px] gap-1" onClick={startEdit}>
-              <Pencil className="h-3 w-3" /> Redigera
-            </Button>
-          )}
-        </DialogTitle>
-        <DialogDescription className="text-xs">
-          Skapad {new Date(order.created_at).toLocaleDateString("sv-SE")}
-          {order.created_by && <> · Best.av: <span className="font-medium text-foreground">{order.created_by}</span></>}
-          {order.desired_delivery_date && (
-            <> · Önskat lev.datum: <span className="font-medium text-foreground">{order.desired_delivery_date}</span></>
-          )}
-          {order.packer_name && (
-            <> · Packare: <span className="font-medium text-foreground">{order.packer_name}</span></>
-          )}
-        </DialogDescription>
-      </DialogHeader>
+        </h3>
+        {isEditable && !editMode && (
+          <Button variant="outline" size="sm" className="ml-auto h-7 text-[10px] gap-1" onClick={startEdit}>
+            <Pencil className="h-3 w-3" /> Redigera
+          </Button>
+        )}
+      </div>
+      <div className="text-[10px] text-muted-foreground mb-2">
+        Skapad {new Date(order.created_at).toLocaleDateString("sv-SE")}
+        {order.created_by && <> · Best.av: <span className="font-medium text-foreground">{order.created_by}</span></>}
+        {order.desired_delivery_date && (
+          <> · Önskat lev.datum: <span className="font-medium text-foreground">{order.desired_delivery_date}</span></>
+        )}
+        {order.packer_name && (
+          <> · Packare: <span className="font-medium text-foreground">{order.packer_name}</span></>
+        )}
+      </div>
 
       {order.notes && (
         <div className="bg-muted/30 rounded-md p-3 text-xs text-muted-foreground">
@@ -1056,7 +1074,7 @@ function WholesaleOrderDetail({ order, products, transportSchedules, stores, onC
         </div>
       )}
 
-      <DialogFooter className="gap-2">
+      <div className="flex items-center gap-2 mt-3">
         {editMode ? (
           <>
             <Button variant="outline" size="sm" onClick={() => setEditMode(false)}>Avbryt</Button>
@@ -1067,7 +1085,7 @@ function WholesaleOrderDetail({ order, products, transportSchedules, stores, onC
         ) : (
           <Button variant="outline" size="sm" onClick={onClose}>Stäng</Button>
         )}
-      </DialogFooter>
+      </div>
     </>
   );
 }
