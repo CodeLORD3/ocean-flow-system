@@ -878,20 +878,20 @@ export default function Inventory() {
   const renderLocationTable = (loc: any) => (
     <div className="border-t border-border/50">
       {loc.items.length === 0 ? (
-        <div className="px-3 py-4 text-center text-xs text-muted-foreground">Tomt lager</div>
+        <div className="px-2 py-2 text-center text-xs text-muted-foreground">Tomt lager</div>
       ) : (
         <table className="w-full text-xs">
           <thead>
             <tr className="bg-muted/20">
-              <th className="px-3 py-1.5 w-8"></th>
-              <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Produkt</th>
-              <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">SKU</th>
-              <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">Kategori</th>
-              <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Antal</th>
-              <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">Värde</th>
-              <th className="px-3 py-1.5 text-center font-medium text-muted-foreground">Ankomst</th>
-              <th className="px-3 py-1.5 text-center font-medium text-muted-foreground">Bäst före</th>
-              <th className="px-3 py-1.5 text-center font-medium text-muted-foreground">Färskhet</th>
+              <th className="px-2 py-0 w-8"></th>
+              <th className="px-2 py-0 text-left font-medium text-muted-foreground">Produkt</th>
+              <th className="px-2 py-0 text-left font-medium text-muted-foreground">SKU</th>
+              <th className="px-2 py-0 text-left font-medium text-muted-foreground">Kategori</th>
+              <th className="px-2 py-0 text-right font-medium text-muted-foreground">Antal</th>
+              <th className="px-2 py-0 text-right font-medium text-muted-foreground">Värde</th>
+              <th className="px-2 py-0 text-center font-medium text-muted-foreground">Ankomst</th>
+              <th className="px-2 py-0 text-center font-medium text-muted-foreground">Bäst före</th>
+              <th className="px-2 py-0 text-center font-medium text-muted-foreground">Färskhet</th>
             </tr>
           </thead>
           <tbody>
@@ -910,10 +910,10 @@ export default function Inventory() {
                   key={s.id}
                   className={`border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors ${isChecked ? "bg-primary/5" : freshness?.rowClass || ""}`}
                 >
-                  <td className="px-3 py-2 text-center">
+                  <td className="px-2 py-0.5 text-center">
                     <Checkbox checked={isChecked} onCheckedChange={() => toggleItemSelection(loc.id, s.id)} />
                   </td>
-                  <td className="px-3 py-2 font-medium text-foreground">
+                  <td className="px-2 py-0.5 font-medium text-foreground">
                     <div className="flex items-center gap-1.5">
                       {s.products?.name}
                       {fifoIssue && (
@@ -923,19 +923,19 @@ export default function Inventory() {
                       )}
                     </div>
                   </td>
-                  <td className="px-3 py-2 font-mono text-muted-foreground text-[10px]">{s.products?.sku}</td>
-                  <td className="px-3 py-2 text-muted-foreground">{s.products?.category}</td>
-                  <td className="px-3 py-2 text-right font-medium text-foreground">
+                  <td className="px-2 py-0.5 font-mono text-muted-foreground text-[10px]">{s.products?.sku}</td>
+                  <td className="px-2 py-0.5 text-muted-foreground">{s.products?.category}</td>
+                  <td className="px-2 py-0.5 text-right font-medium text-foreground">
                     {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
                   </td>
-                  <td className="px-3 py-2 text-right text-muted-foreground">{fmt(value)}</td>
-                  <td className="px-3 py-2 text-center text-[10px] text-muted-foreground">
+                  <td className="px-2 py-0.5 text-right text-muted-foreground">{fmt(value)}</td>
+                  <td className="px-2 py-0.5 text-center text-[10px] text-muted-foreground">
                     {s.arrival_date ? format(parseISO(s.arrival_date), "d MMM", { locale: sv }) : "–"}
                   </td>
-                  <td className="px-3 py-2 text-center text-[10px] text-muted-foreground">
+                  <td className="px-2 py-0.5 text-center text-[10px] text-muted-foreground">
                     {s.expiry_date ? format(parseISO(s.expiry_date), "d MMM", { locale: sv }) : "–"}
                   </td>
-                  <td className="px-3 py-2 text-center">
+                  <td className="px-2 py-0.5 text-center">
                     {freshness ? (
                       <Badge variant="outline" className={`text-[10px] ${freshness.badgeClass}`}>
                         {freshness.isExpired ? (

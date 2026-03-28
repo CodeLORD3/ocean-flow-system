@@ -482,15 +482,15 @@ export default function Products() {
             )}
           </div>
         </td>
-        <td className="px-3 py-1 font-mono text-muted-foreground text-[10px]">{p.sku}</td>
-        <td className="px-3 py-1">
+        <td className="px-2 py-0 font-mono text-muted-foreground text-[10px]">{p.sku}</td>
+        <td className="px-2 py-0">
           <Badge variant="outline" className="text-[10px]">
             {p.category}
           </Badge>
         </td>
-        <td className="px-3 py-1 text-muted-foreground">{p.unit}</td>
-        <td className="px-3 py-1 font-mono text-muted-foreground">{(p as any).hs_code || "–"}</td>
-        <td className="px-3 py-1">
+        <td className="px-2 py-0 text-muted-foreground">{p.unit}</td>
+        <td className="px-2 py-0 font-mono text-muted-foreground">{(p as any).hs_code || "–"}</td>
+        <td className="px-2 py-0">
           <Select
             value={(p as any).producer || "__none__"}
             onValueChange={async (val) => {
@@ -519,7 +519,7 @@ export default function Products() {
         </td>
 
         {/* ── NEW: Hållbarhet column ── */}
-        <td className="px-3 py-1 text-center">
+        <td className="px-2 py-0 text-center">
           {isAggregatedParent ? (
             <span className="text-[10px] text-muted-foreground">–</span>
           ) : (
@@ -554,7 +554,7 @@ export default function Products() {
 
         {/* Prices */}
         {isWholesale && (
-          <td className="px-3 py-1 text-right">
+          <td className="px-2 py-0 text-right">
             {isAggregatedParent ? (
               <span className="font-medium text-foreground">{agg!.cost_price.toFixed(2)}</span>
             ) : (
@@ -574,7 +574,7 @@ export default function Products() {
             )}
           </td>
         )}
-        <td className="px-3 py-1 text-right">
+        <td className="px-2 py-0 text-right">
           {isAggregatedParent ? (
             <span className="font-medium text-foreground">
               {(agg ? agg.wholesale_price : Number(p.wholesale_price)).toFixed(2)}
@@ -598,7 +598,7 @@ export default function Products() {
           )}
         </td>
         {isWholesale && (
-          <td className="px-3 py-1 text-right">
+          <td className="px-2 py-0 text-right">
             <div className="flex items-center justify-end gap-0.5">
               {isAggregatedParent ? (
                 <span className="text-muted-foreground text-xs">
@@ -626,13 +626,13 @@ export default function Products() {
           </td>
         )}
         {isWholesale && (
-          <td className="px-3 py-1 text-right text-muted-foreground">
+          <td className="px-2 py-0 text-right text-muted-foreground">
             {agg ? agg.retail_suggested.toFixed(2) : p.retail_suggested ? Number(p.retail_suggested).toFixed(2) : "–"}
           </td>
         )}
 
         {/* Barcode */}
-        <td className="px-3 py-1">
+        <td className="px-2 py-0">
           {barcode ? (
             <div className="flex items-center gap-1.5">
               <button
@@ -658,14 +658,14 @@ export default function Products() {
         </td>
 
         {/* Stock */}
-        <td className="px-3 py-1 text-right font-medium">
+        <td className="px-2 py-0 text-right font-medium">
           <span className={Number(agg ? agg.stock : p.stock) <= 0 ? "text-destructive" : "text-foreground"}>
             {Number(agg ? agg.stock : p.stock).toFixed(1)}
           </span>
         </td>
 
         {/* Actions */}
-        <td className="px-3 py-1 text-center">
+        <td className="px-2 py-0 text-center">
           <div className="flex items-center justify-center gap-1">
             {isWholesale && hasChanges && (
               <>
