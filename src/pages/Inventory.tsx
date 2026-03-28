@@ -1034,28 +1034,25 @@ export default function Inventory() {
           but using updated renderLocationTable which now includes expiry columns.
           The groupedByStore and stockByLocation views below use renderLocationTable. */}
       {(() => {
-        // Build flat tab list from all locations
+        // Build tab list — group Pre-lager + Raw-lager per store, standalone for general locations
         const allTabs: { key: string; label: string; badge?: string; locations: any[] }[] = [];
+        const allItemCount = stockByLocation.reduce((s: number, l: any) => s + l.items.length, 0);
+        allTabs.push({ key: "__all__", label: "Alla", badge: `${allItemCount}`, locations: stockByLocation });
         
         if (site === "production" || site === "wholesale") {
-          // Add an "Alla" (All) tab first
-          allTabs.push({ key: "__all__", label: "Alla", badge: `${stockByLocation.reduce((s: number, l: any) => s + l.items.length, 0)}`, locations: stockByLocation });
-          
           groupedByStore.forEach((group) => {
             if (group.type === "general") {
+              // Standalone tabs (Grossist Flytande, Transportlager)
               const loc = group.locations[0];
               allTabs.push({ key: loc.id, label: loc.name, badge: `${loc.items.length}`, locations: [loc] });
             } else {
-              // Store group — each sub-location gets its own tab
-              group.locations.forEach((loc: any) => {
-                const shortLabel = loc.name;
-                allTabs.push({ key: loc.id, label: shortLabel, badge: `${loc.items.length}`, locations: [loc] });
-              });
+              // Group all locations for this store into ONE tab
+              const totalItems = group.locations.reduce((s: number, l: any) => s + l.items.length, 0);
+              allTabs.push({ key: `store_${group.storeName}`, label: group.storeName, badge: `${totalItems}`, locations: group.locations });
             }
           });
         } else {
           // Shop view
-          allTabs.push({ key: "__all__", label: "Alla", badge: `${stockByLocation.reduce((s: number, l: any) => s + l.items.length, 0)}`, locations: stockByLocation });
           stockByLocation.forEach((loc: any) => {
             allTabs.push({ key: loc.id, label: loc.name, badge: `${loc.items.length}`, locations: [loc] });
           });
@@ -1121,36 +1118,39 @@ export default function Inventory() {
                   </div>
 
                   {/* Tab content */}
-                  {currentTab && currentTab.locations.map((loc: any) => (
-                    <div key={loc.id} className="mb-3">
-                      {currentTab.key === "__all__" && (
-                        <div className="flex items-center justify-between px-2 py-1.5 bg-muted/20 rounded-t-md border border-b-0 border-border/50">
-                          <div className="flex items-center gap-2">
-                            <Warehouse className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-xs font-medium text-foreground">{loc.name}</span>
-                            <Badge variant="secondary" className="text-[9px] h-4">{loc.items.length}</Badge>
+                  {currentTab && currentTab.locations.map((loc: any) => {
+                    const showHeader = currentTab.key === "__all__" || currentTab.locations.length > 1;
+                    return (
+                      <div key={loc.id} className="mb-3">
+                        {showHeader && (
+                          <div className="flex items-center justify-between px-2 py-1.5 bg-muted/20 rounded-t-md border border-b-0 border-border/50">
+                            <div className="flex items-center gap-2">
+                              <Warehouse className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-xs font-medium text-foreground">{loc.name}</span>
+                              <Badge variant="secondary" className="text-[9px] h-4">{loc.items.length}</Badge>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
+                              <span className="text-[10px] text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
+                              <span className="text-[10px] font-medium text-foreground">{fmt(loc.totalValue)}</span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
-                            <span className="text-[10px] text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
-                            <span className="text-[10px] font-medium text-foreground">{fmt(loc.totalValue)}</span>
+                        )}
+                        {!showHeader && (
+                          <div className="flex items-center justify-between px-2 py-1.5 mb-1">
+                            <div className="flex items-center gap-2">
+                              {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
+                              <span className="text-[10px] font-medium text-foreground">{fmt(loc.totalValue)}</span>
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      {currentTab.key !== "__all__" && (
-                        <div className="flex items-center justify-between px-2 py-1.5 mb-1">
-                          <div className="flex items-center gap-2">
-                            {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
-                            <span className="text-[10px] font-medium text-foreground">{fmt(loc.totalValue)}</span>
-                          </div>
-                        </div>
-                      )}
-                      {renderLocationTable(loc)}
-                    </div>
-                  ))}
+                        )}
+                        {renderLocationTable(loc)}
+                      </div>
+                    );
+                  })}
                 </>
               )}
             </CardContent>
