@@ -458,10 +458,10 @@ export default function Products() {
     return (
       <tr
         key={p.id}
-        className={`border-b border-border/40 hover:bg-muted/20 transition-colors h-9 ${isSubproduct ? "bg-muted/10" : ""}`}
+        className={`border-b border-border/40 hover:bg-muted/20 transition-colors h-7 ${isSubproduct ? "bg-muted/10" : ""}`}
       >
         {/* Name */}
-        <td className="px-3 py-1 font-medium text-foreground">
+        <td className="px-2 py-0 font-medium text-foreground">
           <div className="flex items-center gap-1.5">
             {!isSubproduct && hasChildren && (
               <button onClick={() => toggleExpand(p.id)} className="p-0.5 rounded hover:bg-muted">
@@ -482,15 +482,15 @@ export default function Products() {
             )}
           </div>
         </td>
-        <td className="px-3 py-1 font-mono text-muted-foreground text-[10px]">{p.sku}</td>
-        <td className="px-3 py-1">
+        <td className="px-2 py-0 font-mono text-muted-foreground text-[10px]">{p.sku}</td>
+        <td className="px-2 py-0">
           <Badge variant="outline" className="text-[10px]">
             {p.category}
           </Badge>
         </td>
-        <td className="px-3 py-1 text-muted-foreground">{p.unit}</td>
-        <td className="px-3 py-1 font-mono text-muted-foreground">{(p as any).hs_code || "–"}</td>
-        <td className="px-3 py-1">
+        <td className="px-2 py-0 text-muted-foreground">{p.unit}</td>
+        <td className="px-2 py-0 font-mono text-muted-foreground">{(p as any).hs_code || "–"}</td>
+        <td className="px-2 py-0">
           <Select
             value={(p as any).producer || "__none__"}
             onValueChange={async (val) => {
@@ -519,7 +519,7 @@ export default function Products() {
         </td>
 
         {/* ── NEW: Hållbarhet column ── */}
-        <td className="px-3 py-1 text-center">
+        <td className="px-2 py-0 text-center">
           {isAggregatedParent ? (
             <span className="text-[10px] text-muted-foreground">–</span>
           ) : (
@@ -554,7 +554,7 @@ export default function Products() {
 
         {/* Prices */}
         {isWholesale && (
-          <td className="px-3 py-1 text-right">
+          <td className="px-2 py-0 text-right">
             {isAggregatedParent ? (
               <span className="font-medium text-foreground">{agg!.cost_price.toFixed(2)}</span>
             ) : (
@@ -574,7 +574,7 @@ export default function Products() {
             )}
           </td>
         )}
-        <td className="px-3 py-1 text-right">
+        <td className="px-2 py-0 text-right">
           {isAggregatedParent ? (
             <span className="font-medium text-foreground">
               {(agg ? agg.wholesale_price : Number(p.wholesale_price)).toFixed(2)}
@@ -598,7 +598,7 @@ export default function Products() {
           )}
         </td>
         {isWholesale && (
-          <td className="px-3 py-1 text-right">
+          <td className="px-2 py-0 text-right">
             <div className="flex items-center justify-end gap-0.5">
               {isAggregatedParent ? (
                 <span className="text-muted-foreground text-xs">
@@ -626,13 +626,13 @@ export default function Products() {
           </td>
         )}
         {isWholesale && (
-          <td className="px-3 py-1 text-right text-muted-foreground">
+          <td className="px-2 py-0 text-right text-muted-foreground">
             {agg ? agg.retail_suggested.toFixed(2) : p.retail_suggested ? Number(p.retail_suggested).toFixed(2) : "–"}
           </td>
         )}
 
         {/* Barcode */}
-        <td className="px-3 py-1">
+        <td className="px-2 py-0">
           {barcode ? (
             <div className="flex items-center gap-1.5">
               <button
@@ -658,14 +658,14 @@ export default function Products() {
         </td>
 
         {/* Stock */}
-        <td className="px-3 py-1 text-right font-medium">
+        <td className="px-2 py-0 text-right font-medium">
           <span className={Number(agg ? agg.stock : p.stock) <= 0 ? "text-destructive" : "text-foreground"}>
             {Number(agg ? agg.stock : p.stock).toFixed(1)}
           </span>
         </td>
 
         {/* Actions */}
-        <td className="px-3 py-1 text-center">
+        <td className="px-2 py-0 text-center">
           <div className="flex items-center justify-center gap-1">
             {isWholesale && hasChanges && (
               <>
@@ -803,28 +803,25 @@ export default function Products() {
       <Card className="shadow-card">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+            <table className="w-full text-[10px]">
               <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="p-3 text-left font-medium text-muted-foreground">PRODUKTNAMN</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">SKU</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">KATEGORI</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">ENHET</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">HS-KOD</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">PRODUCENT</th>
-                  {/* NEW column */}
-                  <th className="p-3 text-center font-medium text-muted-foreground flex items-center justify-center gap-1">
-                    <Clock className="h-3 w-3" /> HÅLLBARHET
+                <tr className="border-b border-border bg-muted/30 h-6">
+                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Produkt</th>
+                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">SKU</th>
+                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Kat.</th>
+                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Enh.</th>
+                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">HS</th>
+                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Prod.</th>
+                  <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Håll.</th>
+                  {isWholesale && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Ink.pris</th>}
+                  <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">
+                    {isWholesale ? "Gr.pris" : "Pris"}
                   </th>
-                  {isWholesale && <th className="p-3 text-right font-medium text-muted-foreground">PROD.PRIS</th>}
-                  <th className="p-3 text-right font-medium text-muted-foreground">
-                    {isWholesale ? "GROSSISTPRIS" : "PRIS"}
-                  </th>
-                  {isWholesale && <th className="p-3 text-right font-medium text-muted-foreground">MARGINAL</th>}
-                  {isWholesale && <th className="p-3 text-right font-medium text-muted-foreground">REK. BUTIK</th>}
-                  <th className="p-3 text-left font-medium text-muted-foreground">STRECKKOD</th>
-                  <th className="p-3 text-right font-medium text-muted-foreground">LAGER</th>
-                  <th className="p-3 text-center font-medium text-muted-foreground">ÅTGÄRD</th>
+                  {isWholesale && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Marg.</th>}
+                  {isWholesale && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Rek.but.</th>}
+                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">EAN</th>
+                  <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Lager</th>
+                  <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Åtg.</th>
                 </tr>
               </thead>
               <tbody>
