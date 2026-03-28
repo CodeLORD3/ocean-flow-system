@@ -880,7 +880,7 @@ export default function Inventory() {
       {loc.items.length === 0 ? (
         <div className="px-2 py-2 text-center text-xs text-muted-foreground">Tomt lager</div>
       ) : (
-        <table className="w-full text-xs">
+        <table className="w-full text-[10px]">
           <thead>
             <tr className="bg-muted/20 h-6">
               <th className="px-2 py-0 w-6"></th>

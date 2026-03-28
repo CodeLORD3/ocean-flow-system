@@ -803,7 +803,7 @@ export default function Products() {
       <Card className="shadow-card">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+            <table className="w-full text-[10px]">
               <thead>
                 <tr className="border-b border-border bg-muted/30 h-6">
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Produkt</th>
