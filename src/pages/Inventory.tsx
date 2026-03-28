@@ -908,7 +908,7 @@ export default function Inventory() {
               return (
                 <tr
                   key={s.id}
-                  className={`border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors ${isChecked ? "bg-primary/5" : freshness?.rowClass || ""}`}
+                  className={`border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors h-7 ${isChecked ? "bg-primary/5" : freshness?.rowClass || ""}`}
                 >
                   <td className="px-2 py-0.5 text-center">
                     <Checkbox checked={isChecked} onCheckedChange={() => toggleItemSelection(loc.id, s.id)} />
