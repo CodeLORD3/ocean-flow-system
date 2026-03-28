@@ -882,16 +882,16 @@ export default function Inventory() {
       ) : (
         <table className="w-full text-xs">
           <thead>
-            <tr className="bg-muted/20">
-              <th className="px-2 py-0 w-8"></th>
-              <th className="px-2 py-0 text-left font-medium text-muted-foreground">Produkt</th>
-              <th className="px-2 py-0 text-left font-medium text-muted-foreground">SKU</th>
-              <th className="px-2 py-0 text-left font-medium text-muted-foreground">Kategori</th>
-              <th className="px-2 py-0 text-right font-medium text-muted-foreground">Antal</th>
-              <th className="px-2 py-0 text-right font-medium text-muted-foreground">Värde</th>
-              <th className="px-2 py-0 text-center font-medium text-muted-foreground">Ankomst</th>
-              <th className="px-2 py-0 text-center font-medium text-muted-foreground">Bäst före</th>
-              <th className="px-2 py-0 text-center font-medium text-muted-foreground">Färskhet</th>
+            <tr className="bg-muted/20 h-6">
+              <th className="px-2 py-0 w-6"></th>
+              <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Produkt</th>
+              <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">SKU</th>
+              <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Kat.</th>
+              <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Antal</th>
+              <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Värde</th>
+              <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Ank.</th>
+              <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">B.före</th>
+              <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Färskh.</th>
             </tr>
           </thead>
           <tbody>
