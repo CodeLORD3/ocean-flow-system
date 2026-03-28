@@ -42,7 +42,7 @@ function getEventTypeInfo(type: string) {
 }
 
 export default function ScheduleCalendar() {
-  const { site } = useSite();
+  const { site, activeStoreId } = useSite();
   const [year, setYear] = useState(new Date().getFullYear());
   const [expandedMonth, setExpandedMonth] = useState<number | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -50,7 +50,7 @@ export default function ScheduleCalendar() {
   const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
   const [showDayDetail, setShowDayDetail] = useState(false);
 
-  const { events, isLoading, addEvent, deleteEvent } = useScheduleEvents(site, year);
+  const { events, isLoading, addEvent, deleteEvent } = useScheduleEvents(site, year, site === "shop" ? activeStoreId : null);
 
   // Form state
   const [formTitle, setFormTitle] = useState("");
@@ -87,6 +87,7 @@ export default function ScheduleCalendar() {
         event_type: formType,
         severity: formSeverity,
         portal: site,
+        store_id: site === "shop" ? activeStoreId : null,
       });
       toast({ title: "Händelse tillagd" });
       setShowAddDialog(false);
