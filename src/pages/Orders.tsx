@@ -425,6 +425,11 @@ function OrderRow({
   onPrintFolljesedel,
   onPrintPacksedel,
   isPending,
+  editingOrderId,
+  setEditingOrderId,
+  products,
+  transportSchedules,
+  stores,
 }: {
   order: any;
   lines: any[];
@@ -437,6 +442,11 @@ function OrderRow({
   onPrintFolljesedel: (order: any) => void;
   onPrintPacksedel: (order: any) => void;
   isPending: boolean;
+  editingOrderId?: string | null;
+  setEditingOrderId?: (id: string | null) => void;
+  products?: any[];
+  transportSchedules?: any[];
+  stores?: any[];
 }) {
   const canPack = order.status === "Ny" || order.status === "";
 
