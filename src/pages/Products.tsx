@@ -828,15 +828,18 @@ export default function Products() {
                     </td>
                   </tr>
                 )}
-                {filtered.map((p) => {
-                  const isExpanded = expandedProducts.has(p.id);
-                  return (
-                    <>
-                      {renderProductRow(p, false)}
-                      {isExpanded && p.subproducts.map((sp) => renderProductRow(sp, true))}
-                    </>
-                  );
-                })}
+                {(() => {
+                  let rowIdx = 0;
+                  return filtered.map((p) => {
+                    const isExpanded = expandedProducts.has(p.id);
+                    const currentIdx = rowIdx++;
+                    return (
+                      <>{renderProductRow(p, false, currentIdx)}
+                        {isExpanded && p.subproducts.map((sp) => renderProductRow(sp, true, rowIdx++))}
+                      </>
+                    );
+                  });
+                })()}
               </tbody>
             </table>
           </div>
