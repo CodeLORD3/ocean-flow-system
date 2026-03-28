@@ -1033,257 +1033,129 @@ export default function Inventory() {
       {/* Rest of location rendering — kept same structure as original, 
           but using updated renderLocationTable which now includes expiry columns.
           The groupedByStore and stockByLocation views below use renderLocationTable. */}
-      {site === "production" || site === "wholesale" ? (
-        <Card className="shadow-card">
-          <CardHeader className="pb-2">
-            <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
-              <div>
-                <CardTitle className="text-sm font-heading">Lager per destination</CardTitle>
-                <CardDescription className="text-xs">{stockByLocation.length} lagerställen</CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" onClick={expandAll}>
-                  Visa alla
-                </Button>
-                <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" onClick={collapseAll}>
-                  Dölj alla
-                </Button>
-                <div className="relative w-48">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                  <Input
-                    placeholder="Sök produkt..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-8 h-8 text-xs"
-                  />
+      {(() => {
+        // Build flat tab list from all locations
+        const allTabs: { key: string; label: string; badge?: string; locations: any[] }[] = [];
+        
+        if (site === "production" || site === "wholesale") {
+          // Add an "Alla" (All) tab first
+          allTabs.push({ key: "__all__", label: "Alla", badge: `${stockByLocation.reduce((s: number, l: any) => s + l.items.length, 0)}`, locations: stockByLocation });
+          
+          groupedByStore.forEach((group) => {
+            if (group.type === "general") {
+              const loc = group.locations[0];
+              allTabs.push({ key: loc.id, label: loc.name, badge: `${loc.items.length}`, locations: [loc] });
+            } else {
+              // Store group — each sub-location gets its own tab
+              group.locations.forEach((loc: any) => {
+                const shortLabel = loc.name;
+                allTabs.push({ key: loc.id, label: shortLabel, badge: `${loc.items.length}`, locations: [loc] });
+              });
+            }
+          });
+        } else {
+          // Shop view
+          allTabs.push({ key: "__all__", label: "Alla", badge: `${stockByLocation.reduce((s: number, l: any) => s + l.items.length, 0)}`, locations: stockByLocation });
+          stockByLocation.forEach((loc: any) => {
+            allTabs.push({ key: loc.id, label: loc.name, badge: `${loc.items.length}`, locations: [loc] });
+          });
+        }
+
+        const resolvedTab = activeTab && allTabs.some(t => t.key === activeTab) ? activeTab : (allTabs[0]?.key || "");
+        const currentTab = allTabs.find(t => t.key === resolvedTab);
+
+        return (
+          <Card className="shadow-card">
+            <CardHeader className="pb-2">
+              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
+                <div>
+                  <CardTitle className="text-sm font-heading">Lager per destination</CardTitle>
+                  <CardDescription className="text-xs">{stockByLocation.length} lagerställen</CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="relative w-48">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input
+                      placeholder="Sök produkt..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="pl-8 h-8 text-xs"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loadingLoc || loadingStock ? (
-              <Skeleton className="h-48" />
-            ) : groupedByStore.length === 0 ? (
-              <div className="text-center py-12">
-                <Warehouse className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">Inga lagerställen</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {groupedByStore.map((group) => {
-                  const isGroupExpanded = expandedGroups.has(group.storeName);
-                  const isGeneral = group.type === "general";
-                  const singleLoc = group.locations[0];
-                  if (isGeneral) {
-                    const isExpanded = expandedLocations.has(singleLoc.id);
-                    return (
-                      <div key={singleLoc.id} className="border border-border/50 rounded-md overflow-hidden">
-                        <div className="flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors">
-                          <button
-                            className="flex items-center gap-2 flex-1 text-left"
-                            onClick={() => toggleLocation(singleLoc.id)}
-                          >
-                            {isExpanded ? (
-                              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                            ) : (
-                              <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                            )}
-                            <Warehouse className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="text-sm font-medium text-foreground">{singleLoc.name}</span>
-                            <Badge variant="secondary" className="text-[10px] h-5">
-                              {singleLoc.items.length} produkter
-                            </Badge>
-                            {singleLoc.expiryWarnings > 0 && (
-                              <Badge
-                                variant="outline"
-                                className="text-[10px] h-5 border-amber-500/30 text-amber-700 bg-amber-500/10"
-                              >
-                                <Clock className="h-2.5 w-2.5 mr-0.5" />
-                                {singleLoc.expiryWarnings} varning{singleLoc.expiryWarnings > 1 ? "ar" : ""}
-                              </Badge>
-                            )}
-                          </button>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {loadingLoc || loadingStock ? (
+                <Skeleton className="h-48" />
+              ) : allTabs.length <= 1 ? (
+                <div className="text-center py-12">
+                  <Warehouse className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground">Inga lagerställen</p>
+                </div>
+              ) : (
+                <>
+                  {/* Tab bar */}
+                  <div className="flex items-center gap-0 border-b border-border mb-3 overflow-x-auto scrollbar-thin">
+                    {allTabs.map((tab) => (
+                      <button
+                        key={tab.key}
+                        onClick={() => setActiveTab(tab.key)}
+                        className={`px-3 py-1.5 text-[10px] font-medium whitespace-nowrap border-b-2 transition-colors ${
+                          resolvedTab === tab.key
+                            ? "border-primary text-primary"
+                            : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                        }`}
+                      >
+                        {tab.label}
+                        {tab.badge && (
+                          <span className={`ml-1 text-[9px] px-1 py-0 rounded-full ${
+                            resolvedTab === tab.key ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                          }`}>
+                            {tab.badge}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Tab content */}
+                  {currentTab && currentTab.locations.map((loc: any) => (
+                    <div key={loc.id} className="mb-3">
+                      {currentTab.key === "__all__" && (
+                        <div className="flex items-center justify-between px-2 py-1.5 bg-muted/20 rounded-t-md border border-b-0 border-border/50">
                           <div className="flex items-center gap-2">
-                            {getSelectedForLocation(singleLoc.id).size > 0 && renderSelectionActions(singleLoc.id)}
-                            <span className="text-xs text-muted-foreground">
-                              {singleLoc.totalQty.toLocaleString("sv-SE")} kg
-                            </span>
-                            <span className="text-xs font-medium text-foreground">{fmt(singleLoc.totalValue)}</span>
+                            <Warehouse className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-xs font-medium text-foreground">{loc.name}</span>
+                            <Badge variant="secondary" className="text-[9px] h-4">{loc.items.length}</Badge>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
+                            <span className="text-[10px] text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
+                            <span className="text-[10px] font-medium text-foreground">{fmt(loc.totalValue)}</span>
                           </div>
                         </div>
-                        {isExpanded && renderLocationTable(singleLoc)}
-                      </div>
-                    );
-                  }
-                  return (
-                    <div key={group.storeName} className="border border-border rounded-md overflow-hidden">
-                      <button
-                        className="w-full flex items-center justify-between px-3 py-3 hover:bg-muted/30 transition-colors text-left bg-muted/10"
-                        onClick={() => toggleGroup(group.storeName)}
-                      >
-                        <div className="flex items-center gap-2">
-                          {isGroupExpanded ? (
-                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                          )}
-                          <MapPin className="h-4 w-4 text-primary" />
-                          <span className="text-sm font-semibold text-foreground">{group.storeName}</span>
-                          <Badge variant="secondary" className="text-[10px] h-5">
-                            {group.locations.length} lager
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span>{group.totalQty.toLocaleString("sv-SE")} kg</span>
-                          <span className="font-medium text-foreground">{fmt(group.totalValue)}</span>
-                        </div>
-                      </button>
-                      {isGroupExpanded && (
-                        <div className="border-t border-border/50">
-                          {group.locations.map((loc: any) => {
-                            const isExpanded = expandedLocations.has(loc.id);
-                            return (
-                              <div key={loc.id} className="border-b border-border/30 last:border-0">
-                                <div className="flex items-center justify-between px-4 py-2 hover:bg-muted/20 transition-colors">
-                                  <button
-                                    className="flex items-center gap-2 flex-1 text-left"
-                                    onClick={() => toggleLocation(loc.id)}
-                                  >
-                                    {isExpanded ? (
-                                      <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                                    ) : (
-                                      <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                                    )}
-                                    <span className="text-xs font-medium text-foreground">{loc.name}</span>
-                                    <Badge variant="secondary" className="text-[10px] h-4">
-                                      {loc.items.length} produkter
-                                    </Badge>
-                                    {loc.expiryWarnings > 0 && (
-                                      <Badge
-                                        variant="outline"
-                                        className="text-[10px] h-4 border-amber-500/30 text-amber-700 bg-amber-500/10"
-                                      >
-                                        <Clock className="h-2.5 w-2.5 mr-0.5" />
-                                        {loc.expiryWarnings}
-                                      </Badge>
-                                    )}
-                                  </button>
-                                  <div className="flex items-center gap-2">
-                                    {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
-                                    <span className="text-[10px] text-muted-foreground">
-                                      {loc.totalQty.toLocaleString("sv-SE")} kg
-                                    </span>
-                                    <span className="text-[10px] font-medium text-foreground">
-                                      {fmt(loc.totalValue)}
-                                    </span>
-                                  </div>
-                                </div>
-                                {isExpanded && renderLocationTable(loc)}
-                              </div>
-                            );
-                          })}
+                      )}
+                      {currentTab.key !== "__all__" && (
+                        <div className="flex items-center justify-between px-2 py-1.5 mb-1">
+                          <div className="flex items-center gap-2">
+                            {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
+                            <span className="text-[10px] font-medium text-foreground">{fmt(loc.totalValue)}</span>
+                          </div>
                         </div>
                       )}
+                      {renderLocationTable(loc)}
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="shadow-card">
-          <CardHeader className="pb-2">
-            <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
-              <div>
-                <CardTitle className="text-sm font-heading">Lager per plats</CardTitle>
-                <CardDescription className="text-xs">
-                  {activeStoreName || "Alla butiker"} · {stockByLocation.length} lagerställen
-                </CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" onClick={expandAll}>
-                  Visa alla
-                </Button>
-                <Button variant="ghost" size="sm" className="text-[10px] h-6 px-2" onClick={collapseAll}>
-                  Dölj alla
-                </Button>
-                <div className="relative w-48">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                  <Input
-                    placeholder="Sök produkt..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-8 h-8 text-xs"
-                  />
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loadingLoc || loadingStock ? (
-              <Skeleton className="h-48" />
-            ) : stockByLocation.length === 0 ? (
-              <div className="text-center py-12">
-                <Warehouse className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground mb-1">Inga lagersaldon registrerade</p>
-                <Button size="sm" onClick={() => setReportDialogOpen(true)} className="gap-1.5">
-                  <ClipboardList className="h-3 w-3" /> Skapa lagerrapport
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                {stockByLocation.map((loc: any) => {
-                  const isExpanded = expandedLocations.has(loc.id);
-                  return (
-                    <div key={loc.id} className="border border-border/50 rounded-md overflow-hidden">
-                      <div className="flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors">
-                        <button
-                          className="flex items-center gap-2 flex-1 text-left"
-                          onClick={() => toggleLocation(loc.id)}
-                        >
-                          {isExpanded ? (
-                            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                          ) : (
-                            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                          )}
-                          <MapPin className="h-3.5 w-3.5 text-primary" />
-                          <span className="text-sm font-medium text-foreground">{loc.name}</span>
-                          {loc.zone && (
-                            <Badge variant="outline" className={`text-[10px] h-5 ${zoneColor[loc.zone] || ""}`}>
-                              {zoneIcon[loc.zone] || "📍"} {loc.zone}
-                            </Badge>
-                          )}
-                          <Badge variant="secondary" className="text-[10px] h-5">
-                            {loc.items.length} produkter
-                          </Badge>
-                          {loc.expiryWarnings > 0 && (
-                            <Badge
-                              variant="outline"
-                              className="text-[10px] h-5 border-amber-500/30 text-amber-700 bg-amber-500/10"
-                            >
-                              <Clock className="h-2.5 w-2.5 mr-0.5" />
-                              {loc.expiryWarnings} varning{loc.expiryWarnings > 1 ? "ar" : ""}
-                            </Badge>
-                          )}
-                        </button>
-                        <div className="flex items-center gap-2">
-                          {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
-                          <span className="text-xs text-muted-foreground">
-                            {loc.totalQty.toLocaleString("sv-SE")} kg
-                          </span>
-                          <span className="text-xs font-medium text-foreground">{fmt(loc.totalValue)}</span>
-                        </div>
-                      </div>
-                      {isExpanded && renderLocationTable(loc)}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+                  ))}
+                </>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* ── Expiry Alerts Dialog ───────────────────────────────────────────── */}
       <Dialog open={showExpiryAlerts} onOpenChange={setShowExpiryAlerts}>
