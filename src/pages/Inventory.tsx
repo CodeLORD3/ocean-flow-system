@@ -1096,21 +1096,22 @@ export default function Inventory() {
               ) : (
                 <>
                   {/* Tab bar */}
-                  <div className="flex items-center gap-0 border-b border-border mb-3 overflow-x-auto scrollbar-thin">
+                  <div className="flex items-center gap-1.5 mb-3 overflow-x-auto scrollbar-thin pb-1">
                     {allTabs.map((tab) => (
                       <button
                         key={tab.key}
                         onClick={() => setActiveTab(tab.key)}
-                        className={`px-3 py-1.5 text-[10px] font-medium whitespace-nowrap border-b-2 transition-colors ${
+                        className={`flex items-center gap-1.5 px-3 py-2 text-[10px] font-medium whitespace-nowrap rounded-md border transition-all ${
                           resolvedTab === tab.key
-                            ? "border-primary text-primary"
-                            : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                            ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                            : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground hover:border-border"
                         }`}
                       >
+                        <Warehouse className="h-3 w-3" />
                         {tab.label}
                         {tab.badge && (
-                          <span className={`ml-1 text-[9px] px-1 py-0 rounded-full ${
-                            resolvedTab === tab.key ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-semibold ${
+                            resolvedTab === tab.key ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
                           }`}>
                             {tab.badge}
                           </span>
