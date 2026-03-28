@@ -37,12 +37,12 @@ export const SEVERITY_LEVELS = [
   { value: "critical", label: "Kritisk", color: "bg-red-500" },
 ] as const;
 
-export function useScheduleEvents(portal?: string, year?: number) {
+export function useScheduleEvents(portal?: string, year?: number, storeId?: string | null) {
   const queryClient = useQueryClient();
   const currentYear = year || new Date().getFullYear();
 
   const query = useQuery({
-    queryKey: ["schedule_events", portal, currentYear],
+    queryKey: ["schedule_events", portal, currentYear, storeId],
     queryFn: async () => {
       let q = supabase
         .from("schedule_events" as any)
@@ -51,7 +51,12 @@ export function useScheduleEvents(portal?: string, year?: number) {
         .lte("event_date", `${currentYear}-12-31`)
         .order("event_date");
       if (portal && portal !== "all") {
-        q = q.or(`portal.eq.${portal},portal.eq.all`);
+        q = q.eq("portal", portal);
+      }
+      if (storeId) {
+        q = q.eq("store_id", storeId);
+      } else if (portal !== "shop") {
+        q = q.is("store_id", null);
       }
       const { data, error } = await q;
       if (error) throw error;
