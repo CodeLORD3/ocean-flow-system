@@ -439,7 +439,7 @@ export default function Products() {
       </div>
     );
 
-  const renderProductRow = (p: any, isSubproduct: boolean = false) => {
+  const renderProductRow = (p: any, isSubproduct: boolean = false, rowIndex: number = 0) => {
     const barcode = (p as any).barcode;
     const hasChildren = p.subproducts && p.subproducts.length > 0;
     const isExpanded = expandedProducts.has(p.id);
