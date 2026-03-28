@@ -78,6 +78,7 @@ export default function Orders() {
   const [storeFilter, setStoreFilter] = useState("Alla butiker");
   const [statusFilterVal, setStatusFilterVal] = useState("Alla");
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
 
   // Packer dialog state
   const [packerDialogOpen, setPackerDialogOpen] = useState(false);
