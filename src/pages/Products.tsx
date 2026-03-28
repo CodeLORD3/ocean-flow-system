@@ -439,7 +439,7 @@ export default function Products() {
       </div>
     );
 
-  const renderProductRow = (p: any, isSubproduct: boolean = false) => {
+  const renderProductRow = (p: any, isSubproduct: boolean = false, rowIndex: number = 0) => {
     const barcode = (p as any).barcode;
     const hasChildren = p.subproducts && p.subproducts.length > 0;
     const isExpanded = expandedProducts.has(p.id);
@@ -458,7 +458,7 @@ export default function Products() {
     return (
       <tr
         key={p.id}
-        className={`border-b border-border/40 hover:bg-muted/20 transition-colors h-7 ${isSubproduct ? "bg-muted/10" : ""}`}
+        className={`border-b border-border/40 hover:bg-muted/40 transition-colors h-7 ${isSubproduct ? "bg-muted/10" : rowIndex % 2 === 1 ? "bg-muted/30" : ""}`}
       >
         {/* Name */}
         <td className="px-2 py-0 font-medium text-foreground">
@@ -828,15 +828,18 @@ export default function Products() {
                     </td>
                   </tr>
                 )}
-                {filtered.map((p) => {
-                  const isExpanded = expandedProducts.has(p.id);
-                  return (
-                    <>
-                      {renderProductRow(p, false)}
-                      {isExpanded && p.subproducts.map((sp) => renderProductRow(sp, true))}
-                    </>
-                  );
-                })}
+                {(() => {
+                  let rowIdx = 0;
+                  return filtered.map((p) => {
+                    const isExpanded = expandedProducts.has(p.id);
+                    const currentIdx = rowIdx++;
+                    return (
+                      <>{renderProductRow(p, false, currentIdx)}
+                        {isExpanded && p.subproducts.map((sp) => renderProductRow(sp, true, rowIdx++))}
+                      </>
+                    );
+                  });
+                })()}
               </tbody>
             </table>
           </div>

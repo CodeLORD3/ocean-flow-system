@@ -895,7 +895,7 @@ export default function Inventory() {
             </tr>
           </thead>
           <tbody>
-            {loc.items.map((s: any) => {
+            {loc.items.map((s: any, idx: number) => {
               const isRawLager = (loc.name || "").toLowerCase().startsWith("raw-");
               const unitPrice = isRawLager
                 ? Number(s.products?.wholesale_price) || 0
@@ -904,11 +904,12 @@ export default function Inventory() {
               const isChecked = getSelectedForLocation(loc.id).has(s.id);
               const freshness = getFreshnessInfo(s.expiry_date);
               const fifoIssue = hasFifoIssue(s, loc.items);
+              const zebra = idx % 2 === 1 ? "bg-muted/30" : "";
 
               return (
                 <tr
                   key={s.id}
-                  className={`border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors h-7 ${isChecked ? "bg-primary/5" : freshness?.rowClass || ""}`}
+                  className={`border-b border-border/30 last:border-0 hover:bg-muted/40 transition-colors h-7 ${isChecked ? "bg-primary/5" : freshness?.rowClass || zebra}`}
                 >
                   <td className="px-2 py-0.5 text-center">
                     <Checkbox checked={isChecked} onCheckedChange={() => toggleItemSelection(loc.id, s.id)} />
