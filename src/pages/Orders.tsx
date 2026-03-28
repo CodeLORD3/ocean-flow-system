@@ -314,13 +314,22 @@ export default function Orders() {
                         lines={lines}
                         isExpanded={isExpanded}
                         onToggle={() => toggleExpand(order.id)}
-                        onSelectOrder={() => setSelectedOrder(order)}
+                        onSelectOrder={() => {
+                          // Expand the order and enter edit mode inline
+                          if (!expandedOrders.has(order.id)) toggleExpand(order.id);
+                          setEditingOrderId(order.id);
+                        }}
                         isGrossist={isGrossist}
                         onStatusChange={handleStatusChange}
                         onPackOrder={handlePackOrder}
                         onPrintFolljesedel={(o) => setPrintFolljesedel(o)}
                         onPrintPacksedel={(o) => setPrintPacksedel(o)}
                         isPending={updateLineStatus.isPending}
+                        editingOrderId={editingOrderId}
+                        setEditingOrderId={setEditingOrderId}
+                        products={products}
+                        transportSchedules={transportSchedules}
+                        stores={stores}
                       />
                     );
                   })}
