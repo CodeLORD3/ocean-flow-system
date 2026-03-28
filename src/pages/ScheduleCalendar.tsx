@@ -87,6 +87,7 @@ export default function ScheduleCalendar() {
         event_type: formType,
         severity: formSeverity,
         portal: site,
+        store_id: site === "shop" ? activeStoreId : null,
       });
       toast({ title: "Händelse tillagd" });
       setShowAddDialog(false);
