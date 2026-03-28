@@ -805,26 +805,23 @@ export default function Products() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="p-3 text-left font-medium text-muted-foreground">PRODUKTNAMN</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">SKU</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">KATEGORI</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">ENHET</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">HS-KOD</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">PRODUCENT</th>
-                  {/* NEW column */}
-                  <th className="p-3 text-center font-medium text-muted-foreground flex items-center justify-center gap-1">
-                    <Clock className="h-3 w-3" /> HÅLLBARHET
+                <tr className="border-b border-border bg-muted/30 h-6">
+                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Produkt</th>
+                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">SKU</th>
+                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Kat.</th>
+                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Enh.</th>
+                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">HS</th>
+                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Prod.</th>
+                  <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Håll.</th>
+                  {isWholesale && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Ink.pris</th>}
+                  <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">
+                    {isWholesale ? "Gr.pris" : "Pris"}
                   </th>
-                  {isWholesale && <th className="p-3 text-right font-medium text-muted-foreground">PROD.PRIS</th>}
-                  <th className="p-3 text-right font-medium text-muted-foreground">
-                    {isWholesale ? "GROSSISTPRIS" : "PRIS"}
-                  </th>
-                  {isWholesale && <th className="p-3 text-right font-medium text-muted-foreground">MARGINAL</th>}
-                  {isWholesale && <th className="p-3 text-right font-medium text-muted-foreground">REK. BUTIK</th>}
-                  <th className="p-3 text-left font-medium text-muted-foreground">STRECKKOD</th>
-                  <th className="p-3 text-right font-medium text-muted-foreground">LAGER</th>
-                  <th className="p-3 text-center font-medium text-muted-foreground">ÅTGÄRD</th>
+                  {isWholesale && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Marg.</th>}
+                  {isWholesale && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Rek.but.</th>}
+                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">EAN</th>
+                  <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Lager</th>
+                  <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Åtg.</th>
                 </tr>
               </thead>
               <tbody>
