@@ -611,6 +611,19 @@ function OrderRow({
                       })}
                     </tbody>
                   </table>
+
+                  {/* Inline wholesale editing panel */}
+                  {isGrossist && editingOrderId === order.id && (
+                    <div className="mt-3 border-t border-border pt-3">
+                      <WholesaleOrderDetail
+                        order={order}
+                        products={products || []}
+                        transportSchedules={transportSchedules || []}
+                        stores={stores || []}
+                        onClose={() => setEditingOrderId?.(null)}
+                      />
+                    </div>
+                  )}
                 </div>
               </motion.div>
             </td>
