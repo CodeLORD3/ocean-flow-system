@@ -41,6 +41,7 @@ import {
 
 const overviewNav = [
   { title: "Översikt", url: "/organisation", icon: BarChart3 },
+  { title: "Kalender", url: "/schedule", icon: CalendarDays },
 ];
 
 const salesNav = [
