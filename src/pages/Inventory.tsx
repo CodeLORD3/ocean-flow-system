@@ -1118,36 +1118,39 @@ export default function Inventory() {
                   </div>
 
                   {/* Tab content */}
-                  {currentTab && currentTab.locations.map((loc: any) => (
-                    <div key={loc.id} className="mb-3">
-                      {currentTab.key === "__all__" && (
-                        <div className="flex items-center justify-between px-2 py-1.5 bg-muted/20 rounded-t-md border border-b-0 border-border/50">
-                          <div className="flex items-center gap-2">
-                            <Warehouse className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-xs font-medium text-foreground">{loc.name}</span>
-                            <Badge variant="secondary" className="text-[9px] h-4">{loc.items.length}</Badge>
+                  {currentTab && currentTab.locations.map((loc: any) => {
+                    const showHeader = currentTab.key === "__all__" || currentTab.locations.length > 1;
+                    return (
+                      <div key={loc.id} className="mb-3">
+                        {showHeader && (
+                          <div className="flex items-center justify-between px-2 py-1.5 bg-muted/20 rounded-t-md border border-b-0 border-border/50">
+                            <div className="flex items-center gap-2">
+                              <Warehouse className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-xs font-medium text-foreground">{loc.name}</span>
+                              <Badge variant="secondary" className="text-[9px] h-4">{loc.items.length}</Badge>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
+                              <span className="text-[10px] text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
+                              <span className="text-[10px] font-medium text-foreground">{fmt(loc.totalValue)}</span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
-                            <span className="text-[10px] text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
-                            <span className="text-[10px] font-medium text-foreground">{fmt(loc.totalValue)}</span>
+                        )}
+                        {!showHeader && (
+                          <div className="flex items-center justify-between px-2 py-1.5 mb-1">
+                            <div className="flex items-center gap-2">
+                              {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
+                              <span className="text-[10px] font-medium text-foreground">{fmt(loc.totalValue)}</span>
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      {currentTab.key !== "__all__" && (
-                        <div className="flex items-center justify-between px-2 py-1.5 mb-1">
-                          <div className="flex items-center gap-2">
-                            {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
-                            <span className="text-[10px] font-medium text-foreground">{fmt(loc.totalValue)}</span>
-                          </div>
-                        </div>
-                      )}
-                      {renderLocationTable(loc)}
-                    </div>
-                  ))}
+                        )}
+                        {renderLocationTable(loc)}
+                      </div>
+                    );
+                  })}
                 </>
               )}
             </CardContent>
