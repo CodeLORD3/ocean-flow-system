@@ -5,6 +5,7 @@ import {
   ClipboardList,
   Eye,
   Users,
+  CalendarDays,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
