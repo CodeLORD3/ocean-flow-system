@@ -483,11 +483,7 @@ export default function Products() {
           </div>
         </td>
         <td className="px-2 py-0 font-mono text-muted-foreground text-[10px]">{p.sku}</td>
-        <td className="px-2 py-0">
-          <Badge variant="outline" className="text-[10px]">
-            {p.category}
-          </Badge>
-        </td>
+        <td className="px-2 py-0 text-[9px] text-muted-foreground whitespace-nowrap">{p.category}</td>
         <td className="px-2 py-0 text-muted-foreground">{p.unit}</td>
         <td className="px-2 py-0 font-mono text-muted-foreground">{(p as any).hs_code || "–"}</td>
         <td className="px-2 py-0">
