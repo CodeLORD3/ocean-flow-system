@@ -389,22 +389,7 @@ export default function Orders() {
         </DialogContent>
       </Dialog>
 
-      {/* Order detail dialog for wholesale editing */}
-      {isGrossist && (
-        <Dialog open={!!selectedOrder} onOpenChange={open => { if (!open) setSelectedOrder(null); }}>
-          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-            {selectedOrder && (
-              <WholesaleOrderDetail
-                order={selectedOrder}
-                products={products}
-                transportSchedules={transportSchedules}
-                stores={stores}
-                onClose={() => setSelectedOrder(null)}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
-       )}
+      {/* Wholesale editing is now inline — no dialog needed */}
 
       {/* Följesedel print dialog */}
       <DeliveryNote order={printFolljesedel} open={!!printFolljesedel} onOpenChange={(open) => { if (!open) setPrintFolljesedel(null); }} />
