@@ -1034,28 +1034,25 @@ export default function Inventory() {
           but using updated renderLocationTable which now includes expiry columns.
           The groupedByStore and stockByLocation views below use renderLocationTable. */}
       {(() => {
-        // Build flat tab list from all locations
+        // Build tab list — group Pre-lager + Raw-lager per store, standalone for general locations
         const allTabs: { key: string; label: string; badge?: string; locations: any[] }[] = [];
+        const allItemCount = stockByLocation.reduce((s: number, l: any) => s + l.items.length, 0);
+        allTabs.push({ key: "__all__", label: "Alla", badge: `${allItemCount}`, locations: stockByLocation });
         
         if (site === "production" || site === "wholesale") {
-          // Add an "Alla" (All) tab first
-          allTabs.push({ key: "__all__", label: "Alla", badge: `${stockByLocation.reduce((s: number, l: any) => s + l.items.length, 0)}`, locations: stockByLocation });
-          
           groupedByStore.forEach((group) => {
             if (group.type === "general") {
+              // Standalone tabs (Grossist Flytande, Transportlager)
               const loc = group.locations[0];
               allTabs.push({ key: loc.id, label: loc.name, badge: `${loc.items.length}`, locations: [loc] });
             } else {
-              // Store group — each sub-location gets its own tab
-              group.locations.forEach((loc: any) => {
-                const shortLabel = loc.name;
-                allTabs.push({ key: loc.id, label: shortLabel, badge: `${loc.items.length}`, locations: [loc] });
-              });
+              // Group all locations for this store into ONE tab
+              const totalItems = group.locations.reduce((s: number, l: any) => s + l.items.length, 0);
+              allTabs.push({ key: `store_${group.storeName}`, label: group.storeName, badge: `${totalItems}`, locations: group.locations });
             }
           });
         } else {
           // Shop view
-          allTabs.push({ key: "__all__", label: "Alla", badge: `${stockByLocation.reduce((s: number, l: any) => s + l.items.length, 0)}`, locations: stockByLocation });
           stockByLocation.forEach((loc: any) => {
             allTabs.push({ key: loc.id, label: loc.name, badge: `${loc.items.length}`, locations: [loc] });
           });
