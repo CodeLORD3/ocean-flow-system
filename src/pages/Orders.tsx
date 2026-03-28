@@ -83,7 +83,7 @@ export default function Orders() {
   // Packer dialog state
   const [packerDialogOpen, setPackerDialogOpen] = useState(false);
   const [packerName, setPackerName] = useState("");
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null); // kept for sync
   const [pendingPackAction, setPendingPackAction] = useState<{
     order: any;
     lines: any[];
