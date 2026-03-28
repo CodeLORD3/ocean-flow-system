@@ -400,6 +400,47 @@ export default function Orders() {
   );
 }
 
+/* ---- Packed quantity inline input ---- */
+function PackedInput({ lineId, orderId, defaultValue, currentDelivered, onStatusChange }: {
+  lineId: string;
+  orderId: string;
+  defaultValue: number;
+  currentDelivered: number | null;
+  onStatusChange: (lineId: string, orderId: string, newStatus: string) => void;
+}) {
+  const [val, setVal] = useState(String(currentDelivered || defaultValue || ""));
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async () => {
+    const qty = parseFloat(val);
+    if (isNaN(qty) || qty < 0) { toast.error("Ange ett giltigt antal"); return; }
+    setSaving(true);
+    // Save quantity_delivered first, then trigger status change to Packad
+    const { error } = await supabase
+      .from("shop_order_lines")
+      .update({ quantity_delivered: qty })
+      .eq("id", lineId);
+    if (error) { toast.error("Kunde inte spara"); setSaving(false); return; }
+    // Calculate deviation
+    const deviation = qty !== defaultValue ? `Avvikelse: beställt ${defaultValue}, packat ${qty}` : null;
+    await supabase.from("shop_order_lines").update({ deviation }).eq("id", lineId);
+    onStatusChange(lineId, orderId, "Packad");
+    setSaving(false);
+  };
+
+  return (
+    <Input
+      type="number"
+      step="any"
+      value={val}
+      onChange={(e) => setVal(e.target.value)}
+      onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSubmit(); } }}
+      className="h-6 w-20 text-[11px] text-right ml-auto"
+      disabled={saving}
+    />
+  );
+}
+
 const LIVE_STATUSES = ["Ny", "Pågående", "Packad", "Skickad"];
 
 const rowBgByStatus: Record<string, string> = {
