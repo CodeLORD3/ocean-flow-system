@@ -1153,6 +1153,62 @@ export type Database = {
         }
         Relationships: []
       }
+      schedule_events: {
+        Row: {
+          all_day: boolean
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_time: string | null
+          event_date: string
+          event_type: string
+          id: string
+          portal: string
+          severity: string
+          start_time: string | null
+          store_id: string | null
+          title: string
+        }
+        Insert: {
+          all_day?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time?: string | null
+          event_date: string
+          event_type?: string
+          id?: string
+          portal?: string
+          severity?: string
+          start_time?: string | null
+          store_id?: string | null
+          title: string
+        }
+        Update: {
+          all_day?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time?: string | null
+          event_date?: string
+          event_type?: string
+          id?: string
+          portal?: string
+          severity?: string
+          start_time?: string | null
+          store_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_events_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shop_order_change_requests: {
         Row: {
           change_type: string

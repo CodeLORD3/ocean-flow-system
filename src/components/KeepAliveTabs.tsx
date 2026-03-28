@@ -27,6 +27,7 @@ import TradeOffers from "@/pages/TradeOffers";
 import TradeHistory from "@/pages/TradeHistory";
 import InvestorPortal from "@/pages/InvestorPortal";
 import InvestorList from "@/pages/InvestorList";
+import ScheduleCalendar from "@/pages/ScheduleCalendar";
 
 interface RouteEntry {
   component: React.ReactNode;
@@ -59,6 +60,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/trade-history": { component: <TradeHistory /> },
   "/investor-portal": { component: <InvestorPortal /> },
   "/investor-list": { component: <InvestorList /> },
+  "/schedule": { component: <ScheduleCalendar /> },
 };
 
 /**

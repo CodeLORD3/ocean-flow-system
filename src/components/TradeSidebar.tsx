@@ -5,6 +5,7 @@ import {
   ClipboardList,
   Eye,
   Users,
+  CalendarDays,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -28,6 +29,7 @@ const tradeNav = [
   { title: "History", url: "/trade-history", icon: History },
   { title: "Investor List", url: "/investor-list", icon: Users },
   { title: "Investor Portal", url: "/investor-portal", icon: Eye },
+  { title: "Kalender", url: "/schedule", icon: CalendarDays },
 ];
 
 const bottomNav = [
