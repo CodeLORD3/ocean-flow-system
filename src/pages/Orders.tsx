@@ -1074,7 +1074,7 @@ function WholesaleOrderDetail({ order, products, transportSchedules, stores, onC
         </div>
       )}
 
-      <DialogFooter className="gap-2">
+      <div className="flex items-center gap-2 mt-3">
         {editMode ? (
           <>
             <Button variant="outline" size="sm" onClick={() => setEditMode(false)}>Avbryt</Button>
@@ -1085,7 +1085,7 @@ function WholesaleOrderDetail({ order, products, transportSchedules, stores, onC
         ) : (
           <Button variant="outline" size="sm" onClick={onClose}>Stäng</Button>
         )}
-      </DialogFooter>
+      </div>
     </>
   );
 }
