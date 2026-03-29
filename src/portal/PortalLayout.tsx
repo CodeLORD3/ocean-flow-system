@@ -14,6 +14,7 @@ import PortalArchive from "./PortalArchive";
 import PortalOfferDetail from "./PortalOfferDetail";
 import PortalAbout from "./PortalAbout";
 import PortalHowItWorks from "./PortalHowItWorks";
+import PortalContact from "./PortalContact";
 
 function PortalTabBar() {
   const { tabs, activeTab, switchTab, closeTab } = usePortalTabs();
@@ -67,6 +68,7 @@ function PortalKeepAlive() {
       else if (tab.path === "/portal/archive") component = <PortalArchive />;
       else if (tab.path === "/portal/about") component = <PortalAbout />;
       else if (tab.path === "/portal/how-it-works") component = <PortalHowItWorks />;
+      else if (tab.path === "/portal/contact") component = <PortalContact />;
       else if (tab.path.startsWith("/portal/offer/")) {
         const offerId = tab.path.replace("/portal/offer/", "");
         component = <PortalOfferDetail key={tab.path} overrideId={offerId} />;
@@ -180,9 +182,6 @@ function PortalInner() {
     { to: "/portal", icon: LayoutDashboard, label: "Overview" },
     { to: "/portal/opportunities", icon: Search, label: "Opportunities" },
     { to: "/portal/portfolio", icon: Briefcase, label: "My Investments" },
-    { to: "/portal/documents", icon: FileText, label: "Documents" },
-    { to: "/portal/how-it-works", icon: BookOpen, label: "How It Works" },
-    { to: "/portal/about", icon: Info, label: "About Us" },
     { to: "/portal/archive", icon: Archive, label: "Archive" },
   ];
 
@@ -250,11 +249,35 @@ function PortalInner() {
         )}
       </main>
 
-      <footer className="h-8 flex items-center justify-between border-t border-border px-6 text-[10px] text-muted-foreground bg-white">
-        <span>Ocean Trade Platform</span>
-        <div className="flex items-center gap-1.5">
-          <div className="h-2 w-2 rounded-full bg-green-500" />
-          <span>System Online</span>
+      <footer className="border-t border-border bg-white px-6 py-4">
+        <div className="max-w-[1400px] mx-auto flex items-start justify-between gap-8">
+          <div className="flex items-center gap-2">
+            <div className="h-5 w-5 bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-[8px]">OT</span>
+            </div>
+            <span className="text-xs font-semibold text-foreground">Ocean Trade</span>
+          </div>
+
+          <div className="flex gap-10">
+            <div className="space-y-1.5">
+              <div className="text-[10px] font-semibold text-foreground uppercase tracking-wider">Resources</div>
+              <button onClick={() => switchTab("/portal/documents")} className="block text-[11px] text-muted-foreground hover:text-primary transition-colors">Documents</button>
+              <button onClick={() => switchTab("/portal/how-it-works")} className="block text-[11px] text-muted-foreground hover:text-primary transition-colors">How It Works</button>
+            </div>
+            <div className="space-y-1.5">
+              <div className="text-[10px] font-semibold text-foreground uppercase tracking-wider">Company</div>
+              <button onClick={() => switchTab("/portal/about")} className="block text-[11px] text-muted-foreground hover:text-primary transition-colors">About Us</button>
+              <button onClick={() => switchTab("/portal/contact")} className="block text-[11px] text-muted-foreground hover:text-primary transition-colors">Contact & Support</button>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+            <div className="h-2 w-2 rounded-full bg-green-500" />
+            <span>System Online</span>
+          </div>
+        </div>
+        <div className="max-w-[1400px] mx-auto mt-3 pt-2 border-t border-border">
+          <p className="text-[10px] text-muted-foreground">© {new Date().getFullYear()} Ocean Trade. All rights reserved.</p>
         </div>
       </footer>
     </div>

@@ -121,6 +121,36 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_settings: {
+        Row: {
+          additional_info: string | null
+          address: string | null
+          email: string | null
+          id: string
+          opening_hours: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          additional_info?: string | null
+          address?: string | null
+          email?: string | null
+          id?: string
+          opening_hours?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          additional_info?: string | null
+          address?: string | null
+          email?: string | null
+          id?: string
+          opening_hours?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           address: string | null
