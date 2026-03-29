@@ -132,11 +132,10 @@ export default function PortalOpportunities() {
                 </div>
 
                 {offer.description && (
-                  <p className="text-xs text-muted-foreground line-clamp-2 mb-4 leading-relaxed">{offer.description}</p>
+                  <p className="text-[11px] text-muted-foreground line-clamp-2 mb-3 leading-relaxed">{offer.description}</p>
                 )}
 
-                {/* Funding progress */}
-                <div className="space-y-2 mb-4">
+                <div className="space-y-1.5 mb-3">
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground">Funding</span>
                     <span className="text-foreground font-medium font-mono">{funded.toLocaleString()} / {target.toLocaleString()} kr</span>
