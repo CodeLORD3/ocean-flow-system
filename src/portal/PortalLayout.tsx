@@ -181,8 +181,7 @@ function PortalInner() {
   }
 
   const navItems = [
-    { to: "/portal", icon: LayoutDashboard, label: "Overview" },
-    { to: "/portal/opportunities", icon: Search, label: "Opportunities" },
+    { to: "/portal", icon: Search, label: "Opportunities" },
     { to: "/portal/portfolio", icon: Briefcase, label: "My Investments" },
     { to: "/portal/archive", icon: Archive, label: "Archive" },
     { to: "/portal/team", icon: Users, label: "Team" },

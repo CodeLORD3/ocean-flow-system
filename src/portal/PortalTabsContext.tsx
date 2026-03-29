@@ -39,7 +39,7 @@ export function PortalTabsProvider({ children }: { children: React.ReactNode }) 
   const location = useLocation();
   const navigate = useNavigate();
   const [tabs, setTabs] = useState<PortalTab[]>([
-    { path: "/portal", title: "Dashboard" },
+    { path: "/portal", title: "Opportunities" },
   ]);
   const [activeTab, setActiveTab] = useState(location.pathname);
 
