@@ -6,6 +6,7 @@ import {
   Eye,
   Users,
   CalendarDays,
+  Building2,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
