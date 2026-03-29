@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
 import { TrendingUp, Clock, DollarSign, Target, CheckCircle } from "lucide-react";
 import { differenceInDays, parseISO } from "date-fns";
+import { usePortalTabs } from "./PortalTabsContext";
 
 export default function PortalDashboard() {
-  const navigate = useNavigate();
+  const { openOfferTab } = usePortalTabs();
 
   const { data: offers = [], isLoading } = useQuery({
     queryKey: ["portal-offers"],
