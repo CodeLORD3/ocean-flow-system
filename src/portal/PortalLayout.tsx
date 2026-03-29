@@ -182,9 +182,6 @@ function PortalInner() {
     { to: "/portal", icon: LayoutDashboard, label: "Overview" },
     { to: "/portal/opportunities", icon: Search, label: "Opportunities" },
     { to: "/portal/portfolio", icon: Briefcase, label: "My Investments" },
-    { to: "/portal/documents", icon: FileText, label: "Documents" },
-    { to: "/portal/how-it-works", icon: BookOpen, label: "How It Works" },
-    { to: "/portal/about", icon: Info, label: "About Us" },
     { to: "/portal/archive", icon: Archive, label: "Archive" },
   ];
 
