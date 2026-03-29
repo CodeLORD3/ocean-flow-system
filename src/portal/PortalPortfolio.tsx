@@ -125,7 +125,17 @@ export default function PortalPortfolio() {
                   onClick={() => offer && openOfferTab(offer.id, offer.title)}
                   className="border-b border-border/50 hover:bg-muted/30 cursor-pointer transition-colors h-8"
                 >
-                  <td className="p-2 pl-3 text-foreground font-medium">{offer?.title || "—"}</td>
+                  <td className="p-2 pl-3 text-foreground font-medium">
+                    <div className="flex items-center gap-1.5">
+                      {offer?.company_id && companyMap[offer.company_id] && (
+                        <CountryFlag country={companyMap[offer.company_id].country} size={14} />
+                      )}
+                      <span>{offer?.title || "—"}</span>
+                      {offer?.company_id && companyMap[offer.company_id] && (
+                        <span className="text-[10px] text-muted-foreground font-normal">· {companyMap[offer.company_id].name}</span>
+                      )}
+                    </div>
+                  </td>
                   <td className="p-2 text-right text-foreground font-mono">{Number(p.amount).toLocaleString()} kr</td>
                   <td className="p-2 text-right text-green-600 font-semibold">{rate.toFixed(1)}%</td>
                   <td className="p-2 text-right text-foreground font-semibold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</td>
