@@ -210,7 +210,7 @@ export default function TradeOffers() {
                     <SelectContent>
                       {companies.map((c: any) => (
                         <SelectItem key={c.id} value={c.id} className="text-xs">
-                          {getCountryFlag(c.country)} {c.name}
+                          <span className="flex items-center gap-1.5"><CountryFlag country={c.country} size={14} /> {c.name}</span>
                         </SelectItem>
                       ))}
                     </SelectContent>
