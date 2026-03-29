@@ -184,6 +184,7 @@ function PortalInner() {
     { to: "/portal/opportunities", icon: Search, label: "Opportunities" },
     { to: "/portal/portfolio", icon: Briefcase, label: "My Investments" },
     { to: "/portal/archive", icon: Archive, label: "Archive" },
+    { to: "/portal/team", icon: Users, label: "Team" },
   ];
 
   return (
