@@ -68,6 +68,35 @@ export default function PortalAbout() {
         <p className="text-sm text-muted-foreground leading-relaxed">{missionText}</p>
       </div>
 
+      {/* Leadership Team */}
+      <div className="border border-border bg-white p-8 space-y-5">
+        <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+          <Users className="h-4 w-4 text-primary" /> Leadership Team
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {team.map((person: any, i: number) => (
+            <div key={i} className="border border-border p-4 text-center space-y-2">
+              {person.image_url ? (
+                <img
+                  src={person.image_url}
+                  alt={person.name}
+                  className="h-14 w-14 rounded-full object-cover mx-auto border border-border"
+                  style={{ objectPosition: person.image_position || "center" }}
+                />
+              ) : (
+                <div className="h-14 w-14 bg-muted mx-auto flex items-center justify-center rounded-full">
+                  <Users className="h-6 w-6 text-muted-foreground" />
+                </div>
+              )}
+              <h3 className="text-sm font-semibold text-foreground">{person.name}</h3>
+              <p className="text-[11px] text-primary font-medium">{person.role}</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">{person.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Values */}
       <div className="border border-border bg-white p-8 space-y-5">
         <h2 className="text-base font-bold text-foreground">Our Values</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
