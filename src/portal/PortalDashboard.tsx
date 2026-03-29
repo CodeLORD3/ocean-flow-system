@@ -83,13 +83,12 @@ export default function PortalDashboard() {
         ))}
       </div>
 
-      {/* Empty state if no investments */}
       {!hasInvestments && (
-        <div className="border border-primary/20 bg-primary/5 p-8 text-center space-y-4">
-          <Search className="h-10 w-10 text-primary mx-auto opacity-60" />
+        <div className="border border-primary/20 bg-primary/5 p-5 text-center space-y-3">
+          <Search className="h-8 w-8 text-primary mx-auto opacity-60" />
           <div>
-            <h2 className="text-lg font-semibold text-foreground">Start Your First Investment</h2>
-            <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
+            <h2 className="text-sm font-semibold text-foreground">Start Your First Investment</h2>
+            <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
               Browse our curated trade finance opportunities and earn attractive returns on short-term investments backed by real goods.
             </p>
           </div>
