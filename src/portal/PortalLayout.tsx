@@ -111,8 +111,8 @@ export default function PortalLayout() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0e1a] text-[#c8d6e5] font-mono flex flex-col">
-      <header className="h-10 flex items-center justify-between border-b border-[#1a2035] px-4 bg-[#0d1220]">
+    <div className="min-h-screen bg-[#f4f6f9] text-[#1a2035] font-mono flex flex-col">
+      <header className="h-10 flex items-center justify-between border-b border-[#d0d7e2] px-4 bg-white">
         <div className="flex items-center gap-6">
           <span className="text-[#0066ff] font-bold text-xs tracking-[0.2em]">TRADE PORTAL</span>
           <nav className="flex items-center gap-1">
@@ -125,7 +125,7 @@ export default function PortalLayout() {
                   `flex items-center gap-1.5 px-3 py-1.5 text-[10px] tracking-wider transition-colors ${
                     isActive
                       ? "text-[#0066ff] bg-[#0066ff]/10 border-b-2 border-[#0066ff]"
-                      : "text-[#5a6a7a] hover:text-[#c8d6e5]"
+                      : "text-[#6b7a8d] hover:text-[#1a2035]"
                   }`
                 }
               >
@@ -136,10 +136,10 @@ export default function PortalLayout() {
           </nav>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-[10px] text-[#5a6a7a]">{user.email}</span>
+          <span className="text-[10px] text-[#6b7a8d]">{user.email}</span>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1 text-[10px] text-[#5a6a7a] hover:text-red-400 transition-colors"
+            className="flex items-center gap-1 text-[10px] text-[#6b7a8d] hover:text-red-500 transition-colors"
           >
             <LogOut className="h-3 w-3" />
             EXIT
@@ -151,7 +151,7 @@ export default function PortalLayout() {
         <Outlet />
       </main>
 
-      <footer className="h-6 flex items-center justify-between border-t border-[#1a2035] px-4 text-[9px] text-[#3a4a5a]">
+      <footer className="h-6 flex items-center justify-between border-t border-[#d0d7e2] px-4 text-[9px] text-[#8a95a5] bg-white">
         <span>TRADE PORTAL v1.0</span>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1">

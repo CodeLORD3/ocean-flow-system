@@ -90,7 +90,7 @@ export default function PortalOfferDetail() {
     <div className="max-w-3xl mx-auto space-y-4">
       <button
         onClick={() => navigate("/portal")}
-        className="flex items-center gap-1 text-[10px] text-[#5a6a7a] hover:text-[#0066ff] tracking-wider transition-colors"
+        className="flex items-center gap-1 text-[10px] text-[#6b7a8d] hover:text-[#0066ff] tracking-wider transition-colors"
       >
         <ArrowLeft className="h-3 w-3" /> BACK TO OFFERS
       </button>
@@ -100,17 +100,17 @@ export default function PortalOfferDetail() {
         <div className={`border p-3 flex items-center justify-between ${daysLeft > 0 ? "border-[#0066ff]/30 bg-[#0066ff]/5" : "border-red-400/30 bg-red-400/5"}`}>
           <div className="flex items-center gap-2">
             <Clock className={`h-4 w-4 ${daysLeft > 0 ? "text-[#0066ff]" : "text-red-400"}`} />
-            <span className="text-[11px] text-[#c8d6e5] font-bold tracking-wider">
+            <span className="text-[11px] text-[#1a2035] font-bold tracking-wider">
               {daysLeft > 0 ? `${daysLeft} DAGAR KVAR` : "ERBJUDANDET HAR LÖPT UT"}
             </span>
           </div>
-          <span className="text-[9px] text-[#5a6a7a]">{offer.maturity_date}</span>
+          <span className="text-[9px] text-[#6b7a8d]">{offer.maturity_date}</span>
         </div>
       )}
 
       {/* Funding Progress */}
-      <div className="border border-[#1a2035] bg-[#0d1220] p-3 space-y-1">
-        <div className="flex justify-between text-[9px] text-[#5a6a7a] tracking-wider">
+      <div className="border border-[#d0d7e2] bg-white p-3 space-y-1">
+        <div className="flex justify-between text-[9px] text-[#6b7a8d] tracking-wider">
           <span>FUNDING PROGRESS</span>
           <span>{funded.toLocaleString()} / {target.toLocaleString()} kr ({progress.toFixed(1)}%)</span>
         </div>
@@ -124,7 +124,7 @@ export default function PortalOfferDetail() {
 
       {/* Product image */}
       {o.product_image_url && (
-        <div className="w-full h-40 overflow-hidden border border-[#1a2035]">
+        <div className="w-full h-40 overflow-hidden border border-[#d0d7e2]">
           <img src={o.product_image_url} alt={offer.title} className="w-full h-full object-cover" />
         </div>
       )}
@@ -155,20 +155,20 @@ export default function PortalOfferDetail() {
         <h3 className="text-[10px] text-[#0066ff] tracking-wider font-bold mb-3">RETURN — INVESTOR VIEW</h3>
         <div className="grid grid-cols-4 gap-4 text-center">
           <div>
-            <div className="text-lg font-bold text-[#c8d6e5]">{target.toLocaleString()} kr</div>
-            <div className="text-[9px] text-[#5a6a7a]">Investment</div>
+            <div className="text-lg font-bold text-[#1a2035]">{target.toLocaleString()} kr</div>
+            <div className="text-[9px] text-[#6b7a8d]">Investment</div>
           </div>
           <div>
             <div className="text-lg font-bold text-green-400">{rate.toFixed(1)}%</div>
-            <div className="text-[9px] text-[#5a6a7a]">Return %</div>
+            <div className="text-[9px] text-[#6b7a8d]">Return %</div>
           </div>
           <div>
             <div className="text-lg font-bold text-green-400">+{profitKr.toLocaleString()} kr</div>
-            <div className="text-[9px] text-[#5a6a7a]">Profit</div>
+            <div className="text-[9px] text-[#6b7a8d]">Profit</div>
           </div>
           <div>
-            <div className="text-lg font-bold text-[#c8d6e5]">{totalPayout.toLocaleString()} kr</div>
-            <div className="text-[9px] text-[#5a6a7a]">Total Payout</div>
+            <div className="text-lg font-bold text-[#1a2035]">{totalPayout.toLocaleString()} kr</div>
+            <div className="text-[9px] text-[#6b7a8d]">Total Payout</div>
           </div>
         </div>
       </div>
@@ -200,7 +200,7 @@ export default function PortalOfferDetail() {
           <AlertTriangle className="h-3.5 w-3.5 text-yellow-500 mt-0.5 shrink-0" />
           <div>
             <span className="text-[9px] text-yellow-500 tracking-wider font-bold block mb-0.5">RISKNOTERING</span>
-            <span className="text-[10px] text-[#c8d6e5]">{o.downside || o.risk_note}</span>
+            <span className="text-[10px] text-[#1a2035]">{o.downside || o.risk_note}</span>
           </div>
         </div>
       )}
@@ -214,33 +214,33 @@ export default function PortalOfferDetail() {
       )}
 
       {/* ROI Calculator */}
-      <div className="border border-[#1a2035] bg-[#0d1220]">
-        <div className="h-8 flex items-center px-3 border-b border-[#1a2035]">
+      <div className="border border-[#d0d7e2] bg-white">
+        <div className="h-8 flex items-center px-3 border-b border-[#d0d7e2]">
           <Calculator className="h-3 w-3 text-[#0066ff] mr-1.5" />
           <span className="text-[10px] text-[#0066ff] tracking-wider font-bold">AVKASTNINGSKALKYLATOR</span>
         </div>
         <div className="p-4">
           <div className="flex gap-3 items-end">
             <div className="flex-1 space-y-1">
-              <label className="text-[9px] text-[#5a6a7a] tracking-wider">ANGE BELOPP (KR)</label>
+              <label className="text-[9px] text-[#6b7a8d] tracking-wider">ANGE BELOPP (KR)</label>
               <input
                 type="number" value={calcAmount} onChange={e => setCalcAmount(e.target.value)}
                 min={1} placeholder="0"
-                className="w-full h-9 bg-[#0a0e1a] border border-[#1a2035] px-3 text-sm text-[#c8d6e5] font-bold focus:border-[#0066ff] focus:outline-none font-mono"
+                className="w-full h-9 bg-[#f4f6f9] border border-[#d0d7e2] px-3 text-sm text-[#1a2035] font-bold focus:border-[#0066ff] focus:outline-none font-mono"
               />
             </div>
-            <div className="flex-1 border border-[#1a2035] p-2 h-9 flex items-center">
+            <div className="flex-1 border border-[#d0d7e2] p-2 h-9 flex items-center">
               {calcResult > 0 ? (
                 <span className="text-sm font-bold text-green-400">
                   Du får tillbaka: {calcResult.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kr
                 </span>
               ) : (
-                <span className="text-[10px] text-[#3a4a5a]">Ange belopp för att beräkna</span>
+                <span className="text-[10px] text-[#8a95a5]">Ange belopp för att beräkna</span>
               )}
             </div>
           </div>
           {calcResult > 0 && (
-            <div className="mt-2 text-[9px] text-[#5a6a7a]">
+            <div className="mt-2 text-[9px] text-[#6b7a8d]">
               Vinst: <span className="text-green-400 font-bold">{(calcResult - Number(calcAmount)).toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kr</span> ({rate.toFixed(1)}% ränta)
             </div>
           )}
@@ -249,19 +249,19 @@ export default function PortalOfferDetail() {
 
       {/* Pledge form */}
       {offer.status === "Open" && (
-        <div className="border border-[#1a2035] bg-[#0d1220]">
-          <div className="h-8 flex items-center px-3 border-b border-[#1a2035]">
+        <div className="border border-[#d0d7e2] bg-white">
+          <div className="h-8 flex items-center px-3 border-b border-[#d0d7e2]">
             <span className="text-[10px] text-[#0066ff] tracking-wider font-bold">SUBMIT PLEDGE</span>
           </div>
           <div className="p-4 space-y-3">
             <div className="flex gap-3">
               <div className="flex-1 space-y-1">
-                <label className="text-[9px] text-[#5a6a7a] tracking-wider">AMOUNT (KR)</label>
+                <label className="text-[9px] text-[#6b7a8d] tracking-wider">AMOUNT (KR)</label>
                 <input
                   type="number" value={pledgeAmount} onChange={e => setPledgeAmount(e.target.value)}
                   min={minPledge || 1} max={maxPledge || undefined}
                   placeholder={minPledge > 0 ? `Min ${minPledge.toLocaleString()} kr` : "0"}
-                  className="w-full h-9 bg-[#0a0e1a] border border-[#1a2035] px-3 text-sm text-[#c8d6e5] font-bold focus:border-[#0066ff] focus:outline-none font-mono"
+                  className="w-full h-9 bg-[#f4f6f9] border border-[#d0d7e2] px-3 text-sm text-[#1a2035] font-bold focus:border-[#0066ff] focus:outline-none font-mono"
                 />
               </div>
               <div className="flex items-end">
@@ -288,7 +288,7 @@ export default function PortalOfferDetail() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="border border-[#1a2035] bg-[#0d1220] p-3">
+    <div className="border border-[#d0d7e2] bg-white p-3">
       <h3 className="text-[10px] text-[#0066ff] tracking-wider font-bold mb-2">{title}</h3>
       {children}
     </div>
@@ -297,9 +297,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function InfoRow({ label, value }: { label: string; value: string | number | null | undefined }) {
   return (
-    <div className="flex justify-between py-1.5 border-b border-[#1a2035] last:border-0">
-      <span className="text-[10px] text-[#5a6a7a]">{label}</span>
-      <span className="text-[11px] font-medium text-[#c8d6e5]">{value ?? "—"}</span>
+    <div className="flex justify-between py-1.5 border-b border-[#d0d7e2] last:border-0">
+      <span className="text-[10px] text-[#6b7a8d]">{label}</span>
+      <span className="text-[11px] font-medium text-[#1a2035]">{value ?? "—"}</span>
     </div>
   );
 }
