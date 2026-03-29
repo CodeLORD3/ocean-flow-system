@@ -220,7 +220,7 @@ export default function TradeOffers() {
                       {companyMap[form.company_id].logo_url && (
                         <img src={companyMap[form.company_id].logo_url} alt="" className="h-6 w-6 object-contain rounded" />
                       )}
-                      <span className="font-medium">{getCountryFlag(companyMap[form.company_id].country)} {companyMap[form.company_id].name}</span>
+                      <span className="font-medium flex items-center gap-1.5"><CountryFlag country={companyMap[form.company_id].country} size={14} /> {companyMap[form.company_id].name}</span>
                     </div>
                   )}
                 </div>
