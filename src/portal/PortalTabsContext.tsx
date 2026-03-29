@@ -7,7 +7,7 @@ export interface PortalTab {
 }
 
 const PORTAL_TITLES: Record<string, string> = {
-  "/portal": "Dashboard",
+  "/portal": "Opportunities",
   "/portal/opportunities": "Opportunities",
   "/portal/portfolio": "Portfolio",
   "/portal/commitments": "My Commitments",
@@ -16,6 +16,7 @@ const PORTAL_TITLES: Record<string, string> = {
   "/portal/about": "About Us",
   "/portal/how-it-works": "How It Works",
   "/portal/contact": "Contact & Support",
+  "/portal/team": "Team",
 };
 
 export function getPortalTitle(path: string): string {
@@ -38,7 +39,7 @@ export function PortalTabsProvider({ children }: { children: React.ReactNode }) 
   const location = useLocation();
   const navigate = useNavigate();
   const [tabs, setTabs] = useState<PortalTab[]>([
-    { path: "/portal", title: "Dashboard" },
+    { path: "/portal", title: "Opportunities" },
   ]);
   const [activeTab, setActiveTab] = useState(location.pathname);
 
