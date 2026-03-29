@@ -11,53 +11,15 @@ export default function PortalLayout() {
   const [profileLoading, setProfileLoading] = useState(true);
   const navigate = useNavigate();
 
-  const searchDevMode = new URLSearchParams(window.location.search).get("dev") === "1";
-  if (searchDevMode) sessionStorage.setItem("portal_dev", "1");
-  const isDevMode = searchDevMode || sessionStorage.getItem("portal_dev") === "1";
-
   useEffect(() => {
-    if (isDevMode) {
-      setUser({ id: "dev-user", email: "dev@localhost" } as any);
-      setLoading(false);
-      setProfileStatus("approved");
-      setProfileLoading(false);
-      return;
-    }
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-      if (!session?.user) navigate("/portal/login");
-    });
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-      if (!session?.user) navigate("/portal/login");
-    });
-    return () => subscription.unsubscribe();
-  }, [navigate, isDevMode]);
+    // Dev mode: skip auth entirely
+    setUser({ id: "dev-user", email: "dev@localhost" } as any);
+    setLoading(false);
+    setProfileStatus("approved");
+    setProfileLoading(false);
+  }, []);
 
-  // Check investor profile status
-  useEffect(() => {
-    if (!user || isDevMode) return;
-    const checkProfile = async () => {
-      setProfileLoading(true);
-      const { data, error } = await supabase
-        .from("investor_profiles" as any)
-        .select("status")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (error) {
-        console.error("Profile check error:", error);
-        setProfileStatus(null);
-      } else if (data) {
-        setProfileStatus((data as any).status);
-      } else {
-        setProfileStatus(null); // no profile yet
-      }
-      setProfileLoading(false);
-    };
-    checkProfile();
-  }, [user]);
+  // Profile check disabled during development
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
