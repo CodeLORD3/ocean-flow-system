@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { TrendingUp, Clock, DollarSign, Wallet, Target, ArrowUpRight } from "lucide-react";
+import { TrendingUp, DollarSign, Wallet, Target, ArrowUpRight, Search, ArrowRight } from "lucide-react";
 import { differenceInDays, parseISO, format } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 
 export default function PortalDashboard() {
   const { openOfferTab, switchTab } = usePortalTabs();
 
-  const { data: offers = [], isLoading } = useQuery({
+  const { data: offers = [], isLoading: offersLoading } = useQuery({
     queryKey: ["portal-offers"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -20,7 +20,7 @@ export default function PortalDashboard() {
     },
   });
 
-  const { data: pledges = [] } = useQuery({
+  const { data: pledges = [], isLoading: pledgesLoading } = useQuery({
     queryKey: ["portal-my-pledges"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -32,6 +32,8 @@ export default function PortalDashboard() {
     },
   });
 
+  const isLoading = offersLoading || pledgesLoading;
+
   const activePledges = pledges.filter((p: any) => p.status === "Active");
   const totalInvested = pledges.reduce((s: number, p: any) => s + Number(p.amount), 0);
   const totalReturns = pledges
@@ -41,7 +43,14 @@ export default function PortalDashboard() {
       return s + Number(p.amount) * (rate / 100);
     }, 0);
 
+  // Calculate expected returns from active investments
+  const expectedActiveReturns = activePledges.reduce((s: number, p: any) => {
+    const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
+    return s + Number(p.amount) * (rate / 100);
+  }, 0);
+
   const newOpportunities = offers.filter(o => o.status === "Open").slice(0, 3);
+  const hasInvestments = pledges.length > 0;
 
   if (isLoading) {
     return <div className="text-primary text-sm animate-pulse p-8 text-center">Loading your overview...</div>;
@@ -58,9 +67,9 @@ export default function PortalDashboard() {
       {/* Stat cards */}
       <div className="grid grid-cols-4 gap-4">
         {[
-          { icon: DollarSign, label: "Total Invested", value: `${totalInvested.toLocaleString()} kr`, sub: "All time", accent: "text-primary" },
-          { icon: TrendingUp, label: "Returns Earned", value: `${totalReturns.toLocaleString()} kr`, sub: "Completed deals", accent: "text-green-600" },
-          { icon: Target, label: "Active Investments", value: activePledges.length.toString(), sub: "Currently running", accent: "text-primary" },
+          { icon: DollarSign, label: "Total Invested", value: `${totalInvested.toLocaleString()} kr`, sub: `Across ${pledges.length} investment${pledges.length !== 1 ? "s" : ""}`, accent: "text-primary" },
+          { icon: TrendingUp, label: "Returns Earned", value: `${totalReturns.toLocaleString()} kr`, sub: expectedActiveReturns > 0 ? `+${expectedActiveReturns.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr pending` : "No completed deals yet", accent: "text-green-600" },
+          { icon: Target, label: "Active Investments", value: activePledges.length.toString(), sub: activePledges.length > 0 ? "Currently earning returns" : "No active deals", accent: "text-primary" },
           { icon: Wallet, label: "Available Balance", value: "0 kr", sub: "Ready to invest", accent: "text-foreground" },
         ].map((stat) => (
           <div key={stat.label} className="border border-border bg-white p-5">
@@ -74,68 +83,88 @@ export default function PortalDashboard() {
         ))}
       </div>
 
-      {/* Active investments table */}
-      <div className="border border-border bg-white">
-        <div className="h-11 flex items-center justify-between px-4 border-b border-border">
-          <h2 className="text-sm font-semibold text-foreground">Your Active Investments</h2>
+      {/* Empty state if no investments */}
+      {!hasInvestments && (
+        <div className="border border-primary/20 bg-primary/5 p-8 text-center space-y-4">
+          <Search className="h-10 w-10 text-primary mx-auto opacity-60" />
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">Start Your First Investment</h2>
+            <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
+              Browse our curated trade finance opportunities and earn attractive returns on short-term investments backed by real goods.
+            </p>
+          </div>
           <button
-            onClick={() => switchTab("/portal/portfolio")}
-            className="text-xs text-primary hover:underline flex items-center gap-1"
+            onClick={() => switchTab("/portal/opportunities")}
+            className="h-10 px-6 bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors inline-flex items-center gap-2"
           >
-            View all <ArrowUpRight className="h-3 w-3" />
+            Browse Opportunities <ArrowRight className="h-4 w-4" />
           </button>
         </div>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-xs text-muted-foreground">
-              <th className="text-left p-3 pl-4 font-medium">Offer</th>
-              <th className="text-right p-3 font-medium">Invested</th>
-              <th className="text-right p-3 font-medium">Return</th>
-              <th className="text-right p-3 font-medium">Expected Payout</th>
-              <th className="text-left p-3 font-medium">Maturity</th>
-              <th className="text-center p-3 pr-4 font-medium">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {activePledges.slice(0, 5).map((p: any) => {
-              const offer = p.trade_offers;
-              const rate = offer ? Number(offer.interest_rate) : 0;
-              const expectedReturn = Number(p.amount) * (1 + rate / 100);
-              return (
-                <tr
-                  key={p.id}
-                  onClick={() => offer && openOfferTab(offer.id, offer.title)}
-                  className="border-b border-border/50 hover:bg-muted/30 cursor-pointer transition-colors"
-                >
-                  <td className="p-3 pl-4 text-foreground font-medium">{offer?.title || "—"}</td>
-                  <td className="p-3 text-right text-foreground font-mono">{Number(p.amount).toLocaleString()} kr</td>
-                  <td className="p-3 text-right text-green-600 font-semibold">{rate.toFixed(1)}%</td>
-                  <td className="p-3 text-right text-foreground font-semibold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</td>
-                  <td className="p-3 text-muted-foreground">
-                    {offer?.maturity_date ? format(parseISO(offer.maturity_date), "d MMM yyyy") : "—"}
-                  </td>
-                  <td className="p-3 pr-4 text-center">
-                    <span className="inline-block px-2.5 py-1 text-[10px] font-semibold tracking-wide border text-green-700 border-green-200 bg-green-50">
-                      ACTIVE
-                    </span>
+      )}
+
+      {/* Active investments table */}
+      {hasInvestments && (
+        <div className="border border-border bg-white">
+          <div className="h-11 flex items-center justify-between px-4 border-b border-border">
+            <h2 className="text-sm font-semibold text-foreground">Your Active Investments</h2>
+            <button
+              onClick={() => switchTab("/portal/portfolio")}
+              className="text-xs text-primary hover:underline flex items-center gap-1"
+            >
+              View all <ArrowUpRight className="h-3 w-3" />
+            </button>
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-xs text-muted-foreground">
+                <th className="text-left p-3 pl-4 font-medium">Offer</th>
+                <th className="text-right p-3 font-medium">Invested</th>
+                <th className="text-right p-3 font-medium">Return</th>
+                <th className="text-right p-3 font-medium">Expected Payout</th>
+                <th className="text-left p-3 font-medium">Maturity</th>
+                <th className="text-center p-3 pr-4 font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {activePledges.slice(0, 5).map((p: any) => {
+                const offer = p.trade_offers;
+                const rate = offer ? Number(offer.interest_rate) : 0;
+                const expectedReturn = Number(p.amount) * (1 + rate / 100);
+                return (
+                  <tr
+                    key={p.id}
+                    onClick={() => offer && openOfferTab(offer.id, offer.title)}
+                    className="border-b border-border/50 hover:bg-muted/30 cursor-pointer transition-colors"
+                  >
+                    <td className="p-3 pl-4 text-foreground font-medium">{offer?.title || "—"}</td>
+                    <td className="p-3 text-right text-foreground font-mono">{Number(p.amount).toLocaleString()} kr</td>
+                    <td className="p-3 text-right text-green-600 font-semibold">{rate.toFixed(1)}%</td>
+                    <td className="p-3 text-right text-foreground font-semibold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</td>
+                    <td className="p-3 text-muted-foreground">
+                      {offer?.maturity_date ? format(parseISO(offer.maturity_date), "d MMM yyyy") : "—"}
+                    </td>
+                    <td className="p-3 pr-4 text-center">
+                      <span className="inline-block px-2.5 py-1 text-[10px] font-semibold tracking-wide border text-green-700 border-green-200 bg-green-50">
+                        ACTIVE
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+              {activePledges.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-muted-foreground text-sm">
+                    No active investments.{" "}
+                    <button onClick={() => switchTab("/portal/opportunities")} className="text-primary hover:underline font-medium">
+                      Browse opportunities
+                    </button>{" "}to get started.
                   </td>
                 </tr>
-              );
-            })}
-            {activePledges.length === 0 && (
-              <tr>
-                <td colSpan={6} className="p-8 text-center text-muted-foreground text-sm">
-                  You don't have any active investments yet.{" "}
-                  <button onClick={() => switchTab("/portal/opportunities")} className="text-primary hover:underline font-medium">
-                    Browse opportunities
-                  </button>{" "}
-                  to get started.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* New opportunities */}
       <div className="border border-border bg-white">
@@ -180,7 +209,6 @@ export default function PortalDashboard() {
                   <p className="text-xs text-muted-foreground mb-4 line-clamp-2 leading-relaxed">{offer.description}</p>
                 )}
 
-                {/* Funding progress */}
                 <div className="space-y-2 mb-4">
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground">Funding progress</span>
@@ -195,7 +223,6 @@ export default function PortalDashboard() {
                   </div>
                 </div>
 
-                {/* Key metrics */}
                 <div className="grid grid-cols-2 gap-3 pt-3 border-t border-border">
                   <div>
                     <div className="text-[11px] text-muted-foreground mb-0.5">Expected Return</div>

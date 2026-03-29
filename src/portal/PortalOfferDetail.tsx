@@ -2,17 +2,23 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock, Calculator, FileText, AlertTriangle, TrendingUp, Shield, Package } from "lucide-react";
+import { Clock, Calculator, FileText, AlertTriangle, TrendingUp, Shield, Package, CheckCircle, X, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 import { parseISO, format } from "date-fns";
+import { usePortalTabs } from "./PortalTabsContext";
 
 export default function PortalOfferDetail({ overrideId }: { overrideId?: string } = {}) {
   const { id: paramId } = useParams<{ id: string }>();
   const id = overrideId || paramId;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { switchTab } = usePortalTabs();
   const [pledgeAmount, setPledgeAmount] = useState("");
   const [calcAmount, setCalcAmount] = useState("");
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successRef, setSuccessRef] = useState("");
 
   const { data: offer, isLoading } = useQuery({
     queryKey: ["portal-offer", id],
@@ -31,21 +37,30 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
     mutationFn: async (amount: number) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
-      const { error } = await supabase.from("pledges").insert({
+      const { data, error } = await supabase.from("pledges").insert({
         offer_id: id!,
         user_id: user.id,
         amount,
-      });
+      }).select().single();
       if (error) throw error;
+      return data;
     },
-    onSuccess: () => {
-      toast.success("Investment submitted successfully!");
+    onSuccess: (data) => {
+      const ref = `OT-${Date.now().toString(36).toUpperCase()}`;
+      setSuccessRef(ref);
+      setShowConfirmModal(false);
+      setShowSuccess(true);
       setPledgeAmount("");
+      setTermsAccepted(false);
       queryClient.invalidateQueries({ queryKey: ["portal-offer", id] });
       queryClient.invalidateQueries({ queryKey: ["portal-offers"] });
-      queryClient.invalidateQueries({ queryKey: ["portal-commitments"] });
+      queryClient.invalidateQueries({ queryKey: ["portal-my-pledges"] });
+      queryClient.invalidateQueries({ queryKey: ["portal-portfolio"] });
     },
-    onError: (err: any) => toast.error(err.message),
+    onError: (err: any) => {
+      toast.error(err.message);
+      setShowConfirmModal(false);
+    },
   });
 
   const [daysLeft, setDaysLeft] = useState<number | null>(null);
@@ -75,6 +90,9 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   const calcResult = calcAmount ? Number(calcAmount) * (1 + rate / 100) : 0;
   const minPledge = Number(o.min_pledge) || 0;
   const maxPledge = o.max_pledge ? Number(o.max_pledge) : null;
+  const pledgeAmt = Number(pledgeAmount) || 0;
+  const pledgeReturn = pledgeAmt * (1 + rate / 100);
+  const pledgeProfit = pledgeReturn - pledgeAmt;
 
   const maturityDate = new Date(offer.maturity_date);
   const tenorDays = o.tenor_days ?? (o.purchase_date
@@ -88,8 +106,133 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
 
   const repaymentLabel = o.repayment_type === "rolling" ? "Rolling" : "Bullet";
 
+  const handleInvestClick = () => {
+    const amt = Number(pledgeAmount);
+    if (amt <= 0) { toast.error("Please enter an amount"); return; }
+    if (minPledge > 0 && amt < minPledge) { toast.error(`Minimum investment is ${minPledge.toLocaleString()} kr`); return; }
+    if (maxPledge && amt > maxPledge) { toast.error(`Maximum investment is ${maxPledge.toLocaleString()} kr`); return; }
+    setShowConfirmModal(true);
+  };
+
+  // Success screen
+  if (showSuccess) {
+    return (
+      <div className="max-w-lg mx-auto py-16 text-center space-y-6">
+        <div className="mx-auto h-16 w-16 bg-green-50 border border-green-200 flex items-center justify-center">
+          <CheckCircle className="h-8 w-8 text-green-600" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-foreground">Investment Confirmed</h1>
+          <p className="text-sm text-muted-foreground mt-2">
+            Your investment of <strong className="text-foreground">{pledgeAmt.toLocaleString()} kr</strong> in <strong className="text-foreground">{offer.title}</strong> has been submitted successfully.
+          </p>
+        </div>
+        <div className="border border-border bg-white p-5 text-left space-y-3">
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Reference Number</span>
+            <span className="font-mono font-semibold text-foreground">{successRef}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Amount Invested</span>
+            <span className="font-mono font-semibold text-foreground">{pledgeAmt.toLocaleString()} kr</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Expected Return</span>
+            <span className="font-mono font-semibold text-green-600">+{pledgeProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Maturity Date</span>
+            <span className="font-semibold text-foreground">{format(parseISO(offer.maturity_date), "d MMMM yyyy")}</span>
+          </div>
+        </div>
+        <div className="flex gap-3 justify-center">
+          <button
+            onClick={() => switchTab("/portal/portfolio")}
+            className="h-10 px-6 bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center gap-2"
+          >
+            <Briefcase className="h-4 w-4" /> View My Portfolio
+          </button>
+          <button
+            onClick={() => setShowSuccess(false)}
+            className="h-10 px-6 border border-border text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Back to Offer
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-5">
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white border border-border w-full max-w-md mx-4 shadow-lg">
+            <div className="h-12 flex items-center justify-between px-5 border-b border-border">
+              <h3 className="text-sm font-semibold text-foreground">Confirm Your Investment</h3>
+              <button onClick={() => setShowConfirmModal(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <p className="text-sm text-muted-foreground">Please review the details below before confirming.</p>
+              
+              <div className="border border-border bg-muted/20 p-4 space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Offer</span>
+                  <span className="font-medium text-foreground">{offer.title}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Your Investment</span>
+                  <span className="font-mono font-bold text-foreground">{pledgeAmt.toLocaleString()} kr</span>
+                </div>
+                <div className="border-t border-border pt-3 flex justify-between text-sm">
+                  <span className="text-muted-foreground">Expected Return ({rate.toFixed(1)}%)</span>
+                  <span className="font-mono font-bold text-green-600">+{pledgeProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Total Payout</span>
+                  <span className="font-mono font-bold text-foreground">{pledgeReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Maturity Date</span>
+                  <span className="font-semibold text-foreground">{format(parseISO(offer.maturity_date), "d MMMM yyyy")}</span>
+                </div>
+              </div>
+
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(e) => setTermsAccepted(e.target.checked)}
+                  className="mt-1 h-4 w-4 border-border accent-primary"
+                />
+                <span className="text-xs text-muted-foreground leading-relaxed">
+                  I have read and understood the offer terms, risk notes, and investment details. I confirm this investment at my own risk.
+                </span>
+              </label>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => pledgeMutation.mutate(pledgeAmt)}
+                  disabled={!termsAccepted || pledgeMutation.isPending}
+                  className="flex-1 h-10 bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                >
+                  {pledgeMutation.isPending ? "Processing..." : "Confirm Investment"}
+                </button>
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  className="h-10 px-5 border border-border text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div>
         <h1 className="text-xl font-bold text-foreground">{offer.title}</h1>
@@ -133,11 +276,10 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
         </div>
       )}
 
-      {/* Return overview — clear and prominent */}
+      {/* Return overview */}
       <div className="border border-green-200 bg-green-50/50 p-5">
         <h3 className="text-xs font-semibold text-green-700 mb-4 flex items-center gap-2">
-          <TrendingUp className="h-4 w-4" />
-          Investor Return Overview
+          <TrendingUp className="h-4 w-4" /> Investor Return Overview
         </h3>
         <div className="grid grid-cols-4 gap-4 text-center">
           <div>
@@ -160,7 +302,6 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Deal Summary */}
         <Section title="Deal Summary" icon={<Package className="h-4 w-4 text-primary" />}>
           <InfoRow label="Product" value={offer.title} />
           <InfoRow label="Product ID" value={o.product_id_display} />
@@ -168,8 +309,6 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
           <InfoRow label="Sector" value={o.sector || "Trade Finance"} />
           <InfoRow label="Structure" value={o.structure || "Trade Finance"} />
         </Section>
-
-        {/* Investment Terms */}
         <Section title="Investment Terms" icon={<TrendingUp className="h-4 w-4 text-primary" />}>
           <InfoRow label="Total Amount" value={`${target.toLocaleString()} kr`} />
           <InfoRow label="Minimum Investment" value={minPledge > 0 ? `${minPledge.toLocaleString()} kr` : "No minimum"} />
@@ -181,7 +320,6 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Underlying Transaction */}
         <Section title="Underlying Transaction" icon={<Package className="h-4 w-4 text-primary" />}>
           <InfoRow label="Product" value={offer.title} />
           <InfoRow label="Origin" value={o.origin} />
@@ -190,8 +328,6 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
           <InfoRow label="Sales Value" value={o.sales_value ? `${Number(o.sales_value).toLocaleString()} kr` : "—"} />
           <InfoRow label="Gross Margin" value={o.gross_margin ? `${Number(o.gross_margin).toFixed(1)}%` : "—"} />
         </Section>
-
-        {/* Risk & Security */}
         <Section title="Risk & Security" icon={<Shield className="h-4 w-4 text-primary" />}>
           <InfoRow label="Collateral" value={o.collateral || "Inventory"} />
           <InfoRow label="LTV" value={o.ltv ? `${Number(o.ltv).toFixed(1)}%` : "—"} />
@@ -201,7 +337,6 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
         </Section>
       </div>
 
-      {/* Risk note */}
       {(o.risk_note || o.downside) && (
         <div className="border border-warning/30 bg-warning/5 p-4 flex items-start gap-3">
           <AlertTriangle className="h-5 w-5 text-warning mt-0.5 shrink-0" />
@@ -212,7 +347,6 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
         </div>
       )}
 
-      {/* Document link */}
       {o.document_url && (
         <a href={o.document_url} target="_blank" rel="noreferrer"
           className="flex items-center gap-2 text-sm text-primary hover:underline font-medium">
@@ -272,22 +406,21 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                 />
               </div>
               <button
-                onClick={() => {
-                  const amt = Number(pledgeAmount);
-                  if (minPledge > 0 && amt < minPledge) { toast.error(`Minimum investment is ${minPledge.toLocaleString()} kr`); return; }
-                  if (maxPledge && amt > maxPledge) { toast.error(`Maximum investment is ${maxPledge.toLocaleString()} kr`); return; }
-                  if (amt > 0) pledgeMutation.mutate(amt);
-                }}
-                disabled={pledgeMutation.isPending || !pledgeAmount || Number(pledgeAmount) <= 0}
+                onClick={handleInvestClick}
+                disabled={!pledgeAmount || Number(pledgeAmount) <= 0}
                 className="h-10 px-8 bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors"
               >
-                {pledgeMutation.isPending ? "Processing..." : "Confirm Investment"}
+                Invest Now
               </button>
             </div>
+            {pledgeAmt > 0 && (
+              <p className="text-xs text-muted-foreground">
+                You will receive <span className="text-green-600 font-semibold">{pledgeReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</span> back on {format(parseISO(offer.maturity_date), "d MMM yyyy")}
+              </p>
+            )}
             {minPledge > 0 && (
               <p className="text-xs text-muted-foreground">
-                Minimum investment: {minPledge.toLocaleString()} kr
-                {maxPledge && ` · Maximum: ${maxPledge.toLocaleString()} kr`}
+                Minimum: {minPledge.toLocaleString()} kr{maxPledge && ` · Maximum: ${maxPledge.toLocaleString()} kr`}
               </p>
             )}
           </div>
