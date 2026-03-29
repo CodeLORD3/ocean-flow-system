@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { DollarSign, TrendingUp, Target, Percent } from "lucide-react";
 import { parseISO, format } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
+import CountryFlag from "@/components/CountryFlag";
 
 export default function PortalPortfolio() {
   const { openOfferTab } = usePortalTabs();
