@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Clock, Calculator, FileText, AlertTriangle } from "lucide-react";
+import { Clock, Calculator, FileText, AlertTriangle, TrendingUp, Shield, Package } from "lucide-react";
 import { toast } from "sonner";
+import { parseISO, format } from "date-fns";
 
 export default function PortalOfferDetail({ overrideId }: { overrideId?: string } = {}) {
   const { id: paramId } = useParams<{ id: string }>();
@@ -38,7 +39,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Pledge submitted successfully");
+      toast.success("Investment submitted successfully!");
       setPledgeAmount("");
       queryClient.invalidateQueries({ queryKey: ["portal-offer", id] });
       queryClient.invalidateQueries({ queryKey: ["portal-offers"] });
@@ -61,7 +62,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   }, [offer]);
 
   if (isLoading || !offer) {
-    return <div className="text-[#0066ff] text-xs animate-pulse">LOADING...</div>;
+    return <div className="text-primary text-sm animate-pulse p-8 text-center">Loading offer details...</div>;
   }
 
   const o = offer as any;
@@ -85,98 +86,103 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
     annualReturn = Math.round((rate / tenorDays) * 365 * 100) / 100;
   }
 
-  const repaymentLabel = o.repayment_type === "rolling" ? "Löpande" : "Bullet";
+  const repaymentLabel = o.repayment_type === "rolling" ? "Rolling" : "Bullet";
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
-      <button
-        onClick={() => navigate("/portal")}
-        className="flex items-center gap-1 text-[10px] text-[#6b7a8d] hover:text-[#0066ff] tracking-wider transition-colors"
-      >
-        <ArrowLeft className="h-3 w-3" /> BACK TO OFFERS
-      </button>
+    <div className="max-w-4xl mx-auto space-y-5">
+      {/* Header */}
+      <div>
+        <h1 className="text-xl font-bold text-foreground">{offer.title}</h1>
+        {offer.description && (
+          <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{offer.description}</p>
+        )}
+      </div>
 
-      {/* Countdown */}
+      {/* Countdown banner */}
       {offer.status === "Open" && daysLeft !== null && (
-        <div className={`border p-3 flex items-center justify-between ${daysLeft > 0 ? "border-[#0066ff]/30 bg-[#0066ff]/5" : "border-red-400/30 bg-red-400/5"}`}>
-          <div className="flex items-center gap-2">
-            <Clock className={`h-4 w-4 ${daysLeft > 0 ? "text-[#0066ff]" : "text-red-400"}`} />
-            <span className="text-[11px] text-[#1a2035] font-bold tracking-wider">
-              {daysLeft > 0 ? `${daysLeft} DAGAR KVAR` : "ERBJUDANDET HAR LÖPT UT"}
+        <div className={`border p-4 flex items-center justify-between ${
+          daysLeft > 0 ? "border-primary/30 bg-primary/5" : "border-destructive/30 bg-destructive/5"
+        }`}>
+          <div className="flex items-center gap-2.5">
+            <Clock className={`h-5 w-5 ${daysLeft > 0 ? "text-primary" : "text-destructive"}`} />
+            <span className="text-sm text-foreground font-semibold">
+              {daysLeft > 0 ? `${daysLeft} days remaining` : "This offer has expired"}
             </span>
           </div>
-          <span className="text-[9px] text-[#6b7a8d]">{offer.maturity_date}</span>
+          <span className="text-xs text-muted-foreground">
+            Maturity: {format(parseISO(offer.maturity_date), "d MMM yyyy")}
+          </span>
         </div>
       )}
 
-      {/* Funding Progress */}
-      <div className="border border-[#d0d7e2] bg-white p-3 space-y-1">
-        <div className="flex justify-between text-[9px] text-[#6b7a8d] tracking-wider">
-          <span>FUNDING PROGRESS</span>
-          <span>{funded.toLocaleString()} / {target.toLocaleString()} kr ({progress.toFixed(1)}%)</span>
+      {/* Funding progress */}
+      <div className="border border-border bg-white p-5">
+        <div className="flex justify-between text-xs text-muted-foreground mb-2">
+          <span className="font-medium">Funding Progress</span>
+          <span className="font-mono">{funded.toLocaleString()} / {target.toLocaleString()} kr ({progress.toFixed(1)}%)</span>
         </div>
-        <div className="h-3 bg-[#1a2035] overflow-hidden relative">
-          <div className="h-full bg-[#0066ff] transition-all" style={{ width: `${progress}%` }} />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-[8px] font-bold text-white mix-blend-difference">{progress.toFixed(0)}%</span>
-          </div>
+        <div className="h-3 bg-muted overflow-hidden">
+          <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
         </div>
       </div>
 
       {/* Product image */}
       {o.product_image_url && (
-        <div className="w-full h-40 overflow-hidden border border-[#d0d7e2]">
+        <div className="w-full h-48 overflow-hidden border border-border">
           <img src={o.product_image_url} alt={offer.title} className="w-full h-full object-cover" />
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Deal Summary */}
-        <Section title="DEAL SUMMARY">
-          <InfoRow label="Product" value={offer.title} />
-          <InfoRow label="Product-ID" value={o.product_id_display} />
-          <InfoRow label="Status" value={offer.status} />
-          <InfoRow label="Sector" value={o.sector || "Seafood Trading"} />
-          <InfoRow label="Structure" value={o.structure || "Trade Finance"} />
-        </Section>
-
-        {/* Investment Terms */}
-        <Section title="INVESTMENT TERMS">
-          <InfoRow label="Total Investment" value={`${target.toLocaleString()} kr`} />
-          <InfoRow label="Minimum Ticket" value={minPledge > 0 ? `${minPledge.toLocaleString()} kr` : "—"} />
-          <InfoRow label="Tenor" value={tenorDays ? `${tenorDays} days` : "—"} />
-          <InfoRow label="Expected Return" value={`${rate.toFixed(1)}%`} />
-          <InfoRow label="Annual Return" value={annualReturn ? `${annualReturn.toFixed(1)}%` : "—"} />
-          <InfoRow label="Repayment" value={repaymentLabel} />
-        </Section>
-      </div>
-
-      {/* Return - Investor View */}
-      <div className="border border-[#0066ff]/30 bg-[#0066ff]/5 p-4">
-        <h3 className="text-[10px] text-[#0066ff] tracking-wider font-bold mb-3">RETURN — INVESTOR VIEW</h3>
+      {/* Return overview — clear and prominent */}
+      <div className="border border-green-200 bg-green-50/50 p-5">
+        <h3 className="text-xs font-semibold text-green-700 mb-4 flex items-center gap-2">
+          <TrendingUp className="h-4 w-4" />
+          Investor Return Overview
+        </h3>
         <div className="grid grid-cols-4 gap-4 text-center">
           <div>
-            <div className="text-lg font-bold text-[#1a2035]">{target.toLocaleString()} kr</div>
-            <div className="text-[9px] text-[#6b7a8d]">Investment</div>
+            <div className="text-xl font-bold text-foreground font-mono">{target.toLocaleString()} kr</div>
+            <div className="text-xs text-muted-foreground mt-1">Total Investment</div>
           </div>
           <div>
-            <div className="text-lg font-bold text-green-400">{rate.toFixed(1)}%</div>
-            <div className="text-[9px] text-[#6b7a8d]">Return %</div>
+            <div className="text-xl font-bold text-green-600">{rate.toFixed(1)}%</div>
+            <div className="text-xs text-muted-foreground mt-1">Return Rate</div>
           </div>
           <div>
-            <div className="text-lg font-bold text-green-400">+{profitKr.toLocaleString()} kr</div>
-            <div className="text-[9px] text-[#6b7a8d]">Profit</div>
+            <div className="text-xl font-bold text-green-600 font-mono">+{profitKr.toLocaleString()} kr</div>
+            <div className="text-xs text-muted-foreground mt-1">Profit</div>
           </div>
           <div>
-            <div className="text-lg font-bold text-[#1a2035]">{totalPayout.toLocaleString()} kr</div>
-            <div className="text-[9px] text-[#6b7a8d]">Total Payout</div>
+            <div className="text-xl font-bold text-foreground font-mono">{totalPayout.toLocaleString()} kr</div>
+            <div className="text-xs text-muted-foreground mt-1">Total Payout</div>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Deal Summary */}
+        <Section title="Deal Summary" icon={<Package className="h-4 w-4 text-primary" />}>
+          <InfoRow label="Product" value={offer.title} />
+          <InfoRow label="Product ID" value={o.product_id_display} />
+          <InfoRow label="Status" value={offer.status} />
+          <InfoRow label="Sector" value={o.sector || "Trade Finance"} />
+          <InfoRow label="Structure" value={o.structure || "Trade Finance"} />
+        </Section>
+
+        {/* Investment Terms */}
+        <Section title="Investment Terms" icon={<TrendingUp className="h-4 w-4 text-primary" />}>
+          <InfoRow label="Total Amount" value={`${target.toLocaleString()} kr`} />
+          <InfoRow label="Minimum Investment" value={minPledge > 0 ? `${minPledge.toLocaleString()} kr` : "No minimum"} />
+          <InfoRow label="Duration" value={tenorDays ? `${tenorDays} days` : "—"} />
+          <InfoRow label="Expected Return" value={`${rate.toFixed(1)}%`} />
+          <InfoRow label="Annual Return" value={annualReturn ? `${annualReturn.toFixed(1)}%` : "—"} />
+          <InfoRow label="Repayment Type" value={repaymentLabel} />
+        </Section>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Underlying Transaction */}
-        <Section title="UNDERLYING TRANSACTION">
+        <Section title="Underlying Transaction" icon={<Package className="h-4 w-4 text-primary" />}>
           <InfoRow label="Product" value={offer.title} />
           <InfoRow label="Origin" value={o.origin} />
           <InfoRow label="Volume" value={o.volume} />
@@ -186,100 +192,104 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
         </Section>
 
         {/* Risk & Security */}
-        <Section title="RISK & SECURITY">
+        <Section title="Risk & Security" icon={<Shield className="h-4 w-4 text-primary" />}>
           <InfoRow label="Collateral" value={o.collateral || "Inventory"} />
           <InfoRow label="LTV" value={o.ltv ? `${Number(o.ltv).toFixed(1)}%` : "—"} />
           <InfoRow label="Primary Exit" value={o.primary_exit} />
           <InfoRow label="Secondary Exit" value={o.secondary_exit} />
-          <InfoRow label="Downside" value={o.downside || o.risk_note} />
+          <InfoRow label="Downside Risk" value={o.downside || o.risk_note} />
         </Section>
       </div>
 
-      {/* Risk note warning */}
+      {/* Risk note */}
       {(o.risk_note || o.downside) && (
-        <div className="border border-yellow-500/20 bg-yellow-500/5 p-3 flex items-start gap-2">
-          <AlertTriangle className="h-3.5 w-3.5 text-yellow-500 mt-0.5 shrink-0" />
+        <div className="border border-warning/30 bg-warning/5 p-4 flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-warning mt-0.5 shrink-0" />
           <div>
-            <span className="text-[9px] text-yellow-500 tracking-wider font-bold block mb-0.5">RISKNOTERING</span>
-            <span className="text-[10px] text-[#1a2035]">{o.downside || o.risk_note}</span>
+            <span className="text-xs font-semibold text-warning block mb-1">Risk Note</span>
+            <span className="text-sm text-foreground">{o.downside || o.risk_note}</span>
           </div>
         </div>
       )}
 
-      {/* Document */}
+      {/* Document link */}
       {o.document_url && (
         <a href={o.document_url} target="_blank" rel="noreferrer"
-          className="flex items-center gap-2 text-[10px] text-[#0066ff] hover:underline tracking-wider">
-          <FileText className="h-3 w-3" /> VISA BIFOGAT DOKUMENT (PDF)
+          className="flex items-center gap-2 text-sm text-primary hover:underline font-medium">
+          <FileText className="h-4 w-4" /> View Attached Document (PDF)
         </a>
       )}
 
       {/* ROI Calculator */}
-      <div className="border border-[#d0d7e2] bg-white">
-        <div className="h-8 flex items-center px-3 border-b border-[#d0d7e2]">
-          <Calculator className="h-3 w-3 text-[#0066ff] mr-1.5" />
-          <span className="text-[10px] text-[#0066ff] tracking-wider font-bold">AVKASTNINGSKALKYLATOR</span>
+      <div className="border border-border bg-white">
+        <div className="h-11 flex items-center gap-2 px-4 border-b border-border">
+          <Calculator className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">Return Calculator</h3>
         </div>
-        <div className="p-4">
-          <div className="flex gap-3 items-end">
-            <div className="flex-1 space-y-1">
-              <label className="text-[9px] text-[#6b7a8d] tracking-wider">ANGE BELOPP (KR)</label>
+        <div className="p-5">
+          <div className="flex gap-4 items-end">
+            <div className="flex-1 space-y-1.5">
+              <label className="text-xs text-muted-foreground font-medium">Enter amount (kr)</label>
               <input
                 type="number" value={calcAmount} onChange={e => setCalcAmount(e.target.value)}
-                min={1} placeholder="0"
-                className="w-full h-9 bg-[#f4f6f9] border border-[#d0d7e2] px-3 text-sm text-[#1a2035] font-bold focus:border-[#0066ff] focus:outline-none font-mono"
+                min={1} placeholder="e.g. 50,000"
+                className="w-full h-10 bg-muted/50 border border-border px-3 text-sm text-foreground font-mono focus:border-primary focus:outline-none"
               />
             </div>
-            <div className="flex-1 border border-[#d0d7e2] p-2 h-9 flex items-center">
+            <div className="flex-1 border border-border p-3 h-10 flex items-center bg-muted/20">
               {calcResult > 0 ? (
-                <span className="text-sm font-bold text-green-400">
-                  Du får tillbaka: {calcResult.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kr
+                <span className="text-sm font-semibold text-green-600">
+                  You receive: {calcResult.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kr
                 </span>
               ) : (
-                <span className="text-[10px] text-[#8a95a5]">Ange belopp för att beräkna</span>
+                <span className="text-xs text-muted-foreground">Enter an amount to calculate</span>
               )}
             </div>
           </div>
           {calcResult > 0 && (
-            <div className="mt-2 text-[9px] text-[#6b7a8d]">
-              Vinst: <span className="text-green-400 font-bold">{(calcResult - Number(calcAmount)).toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kr</span> ({rate.toFixed(1)}% ränta)
-            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Profit: <span className="text-green-600 font-semibold">{(calcResult - Number(calcAmount)).toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kr</span> ({rate.toFixed(1)}% return)
+            </p>
           )}
         </div>
       </div>
 
-      {/* Pledge form */}
+      {/* Investment form */}
       {offer.status === "Open" && (
-        <div className="border border-[#d0d7e2] bg-white">
-          <div className="h-8 flex items-center px-3 border-b border-[#d0d7e2]">
-            <span className="text-[10px] text-[#0066ff] tracking-wider font-bold">SUBMIT PLEDGE</span>
+        <div className="border border-primary/30 bg-primary/5">
+          <div className="h-11 flex items-center px-4 border-b border-primary/20">
+            <h3 className="text-sm font-semibold text-primary">Invest in This Offer</h3>
           </div>
-          <div className="p-4 space-y-3">
-            <div className="flex gap-3">
-              <div className="flex-1 space-y-1">
-                <label className="text-[9px] text-[#6b7a8d] tracking-wider">AMOUNT (KR)</label>
+          <div className="p-5 space-y-3">
+            <div className="flex gap-4 items-end">
+              <div className="flex-1 space-y-1.5">
+                <label className="text-xs text-muted-foreground font-medium">Investment Amount (kr)</label>
                 <input
                   type="number" value={pledgeAmount} onChange={e => setPledgeAmount(e.target.value)}
                   min={minPledge || 1} max={maxPledge || undefined}
-                  placeholder={minPledge > 0 ? `Min ${minPledge.toLocaleString()} kr` : "0"}
-                  className="w-full h-9 bg-[#f4f6f9] border border-[#d0d7e2] px-3 text-sm text-[#1a2035] font-bold focus:border-[#0066ff] focus:outline-none font-mono"
+                  placeholder={minPledge > 0 ? `Minimum ${minPledge.toLocaleString()} kr` : "Enter amount"}
+                  className="w-full h-10 bg-white border border-border px-3 text-sm text-foreground font-mono focus:border-primary focus:outline-none"
                 />
               </div>
-              <div className="flex items-end">
-                <button
-                  onClick={() => {
-                    const amt = Number(pledgeAmount);
-                    if (minPledge > 0 && amt < minPledge) { toast.error(`Minsta insats är ${minPledge.toLocaleString()} kr`); return; }
-                    if (maxPledge && amt > maxPledge) { toast.error(`Högsta insats är ${maxPledge.toLocaleString()} kr`); return; }
-                    if (amt > 0) pledgeMutation.mutate(amt);
-                  }}
-                  disabled={pledgeMutation.isPending || !pledgeAmount || Number(pledgeAmount) <= 0}
-                  className="h-9 px-6 bg-[#0066ff] text-white text-[10px] font-bold tracking-wider hover:bg-[#0052cc] disabled:opacity-50 transition-colors"
-                >
-                  {pledgeMutation.isPending ? "SUBMITTING..." : "COMMIT"}
-                </button>
-              </div>
+              <button
+                onClick={() => {
+                  const amt = Number(pledgeAmount);
+                  if (minPledge > 0 && amt < minPledge) { toast.error(`Minimum investment is ${minPledge.toLocaleString()} kr`); return; }
+                  if (maxPledge && amt > maxPledge) { toast.error(`Maximum investment is ${maxPledge.toLocaleString()} kr`); return; }
+                  if (amt > 0) pledgeMutation.mutate(amt);
+                }}
+                disabled={pledgeMutation.isPending || !pledgeAmount || Number(pledgeAmount) <= 0}
+                className="h-10 px-8 bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors"
+              >
+                {pledgeMutation.isPending ? "Processing..." : "Confirm Investment"}
+              </button>
             </div>
+            {minPledge > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Minimum investment: {minPledge.toLocaleString()} kr
+                {maxPledge && ` · Maximum: ${maxPledge.toLocaleString()} kr`}
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -287,20 +297,23 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, icon, children }: { title: string; icon?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="border border-[#d0d7e2] bg-white p-3">
-      <h3 className="text-[10px] text-[#0066ff] tracking-wider font-bold mb-2">{title}</h3>
-      {children}
+    <div className="border border-border bg-white">
+      <div className="h-11 flex items-center gap-2 px-4 border-b border-border">
+        {icon}
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+      </div>
+      <div className="p-4">{children}</div>
     </div>
   );
 }
 
 function InfoRow({ label, value }: { label: string; value: string | number | null | undefined }) {
   return (
-    <div className="flex justify-between py-1.5 border-b border-[#d0d7e2] last:border-0">
-      <span className="text-[10px] text-[#6b7a8d]">{label}</span>
-      <span className="text-[11px] font-medium text-[#1a2035]">{value ?? "—"}</span>
+    <div className="flex justify-between py-2 border-b border-border last:border-0">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-sm font-medium text-foreground">{value ?? "—"}</span>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { parseISO, format } from "date-fns";
 
 export default function PortalArchive() {
   const { data: offers = [], isLoading } = useQuery({
@@ -16,38 +17,46 @@ export default function PortalArchive() {
   });
 
   if (isLoading) {
-    return <div className="text-[#0066ff] text-xs animate-pulse">LOADING...</div>;
+    return <div className="text-primary text-sm animate-pulse p-8 text-center">Loading archive...</div>;
   }
 
   return (
-    <div className="space-y-4">
-      <div className="border border-[#d0d7e2] bg-white">
-        <div className="h-8 flex items-center px-3 border-b border-[#d0d7e2]">
-          <span className="text-[10px] text-[#0066ff] tracking-wider font-bold">OFFER ARCHIVE</span>
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-xl font-bold text-foreground">Archive</h1>
+        <p className="text-sm text-muted-foreground mt-1">Previously completed or closed investment offers.</p>
+      </div>
+
+      <div className="border border-border bg-white">
+        <div className="h-11 flex items-center px-4 border-b border-border">
+          <h2 className="text-sm font-semibold text-foreground">Closed Offers</h2>
         </div>
-        <table className="w-full text-[11px]">
+        <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[#d0d7e2] text-[9px] text-[#6b7a8d] tracking-wider">
-              <th className="text-left p-2 pl-3">PRODUCT</th>
-              <th className="text-right p-2">TARGET</th>
-              <th className="text-right p-2">FUNDED</th>
-              <th className="text-right p-2">RATE</th>
-              <th className="text-left p-2">MATURITY</th>
-              <th className="text-center p-2 pr-3">STATUS</th>
+            <tr className="border-b border-border text-xs text-muted-foreground">
+              <th className="text-left p-3 pl-4 font-medium">Offer</th>
+              <th className="text-right p-3 font-medium">Target Amount</th>
+              <th className="text-right p-3 font-medium">Amount Funded</th>
+              <th className="text-right p-3 font-medium">Return</th>
+              <th className="text-left p-3 font-medium">Maturity</th>
+              <th className="text-center p-3 pr-4 font-medium">Status</th>
             </tr>
           </thead>
           <tbody>
             {offers.map((offer) => (
-              <tr key={offer.id} className="border-b border-[#d0d7e2]/50 hover:bg-[#0066ff]/5 transition-colors">
-                <td className="p-2 pl-3 text-[#1a2035]">{offer.title}</td>
-                <td className="p-2 text-right text-[#1a2035]">{Number(offer.target_amount).toLocaleString()} kr</td>
-                <td className="p-2 text-right text-[#1a2035]">{Number(offer.funded_amount).toLocaleString()} kr</td>
-                <td className="p-2 text-right text-green-400">{Number(offer.interest_rate).toFixed(1)}%</td>
-                <td className="p-2 text-[#6b7a8d]">{offer.maturity_date}</td>
-                <td className="p-2 pr-3 text-center">
-                  <span className={`inline-block px-2 py-0.5 text-[9px] tracking-wider border ${
-                    offer.status === "Repaid" ? "text-green-400 border-green-400/30 bg-green-400/10" :
-                    "text-red-400 border-red-400/30 bg-red-400/10"
+              <tr key={offer.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                <td className="p-3 pl-4 text-foreground font-medium">{offer.title}</td>
+                <td className="p-3 text-right text-foreground font-mono">{Number(offer.target_amount).toLocaleString()} kr</td>
+                <td className="p-3 text-right text-foreground font-mono">{Number(offer.funded_amount).toLocaleString()} kr</td>
+                <td className="p-3 text-right text-green-600 font-semibold">{Number(offer.interest_rate).toFixed(1)}%</td>
+                <td className="p-3 text-muted-foreground">
+                  {offer.maturity_date ? format(parseISO(offer.maturity_date), "d MMM yyyy") : "—"}
+                </td>
+                <td className="p-3 pr-4 text-center">
+                  <span className={`inline-block px-2.5 py-1 text-[10px] font-semibold tracking-wide border ${
+                    offer.status === "Repaid"
+                      ? "text-green-700 border-green-200 bg-green-50"
+                      : "text-destructive border-destructive/20 bg-destructive/5"
                   }`}>
                     {offer.status.toUpperCase()}
                   </span>
@@ -56,8 +65,8 @@ export default function PortalArchive() {
             ))}
             {offers.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-[#8a95a5] text-xs">
-                  NO ARCHIVED OFFERS
+                <td colSpan={6} className="p-10 text-center text-muted-foreground text-sm">
+                  No archived offers yet.
                 </td>
               </tr>
             )}
