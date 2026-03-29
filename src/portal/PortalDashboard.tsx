@@ -57,28 +57,28 @@ export default function PortalDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Welcome */}
       <div>
-        <h1 className="text-xl font-bold text-foreground">Welcome back</h1>
-        <p className="text-sm text-muted-foreground mt-1">Here's a summary of your investment activity.</p>
+        <h1 className="text-base font-bold text-foreground">Welcome back</h1>
+        <p className="text-xs text-muted-foreground mt-0.5">Here's a summary of your investment activity.</p>
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-4 gap-3">
         {[
           { icon: DollarSign, label: "Total Invested", value: `${totalInvested.toLocaleString()} kr`, sub: `Across ${pledges.length} investment${pledges.length !== 1 ? "s" : ""}`, accent: "text-primary" },
           { icon: TrendingUp, label: "Returns Earned", value: `${totalReturns.toLocaleString()} kr`, sub: expectedActiveReturns > 0 ? `+${expectedActiveReturns.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr pending` : "No completed deals yet", accent: "text-green-600" },
           { icon: Target, label: "Active Investments", value: activePledges.length.toString(), sub: activePledges.length > 0 ? "Currently earning returns" : "No active deals", accent: "text-primary" },
           { icon: Wallet, label: "Available Balance", value: "0 kr", sub: "Ready to invest", accent: "text-foreground" },
         ].map((stat) => (
-          <div key={stat.label} className="border border-border bg-white p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs text-muted-foreground font-medium">{stat.label}</span>
-              <stat.icon className={`h-4 w-4 ${stat.accent} opacity-60`} />
+          <div key={stat.label} className="border border-border bg-white p-3">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] text-muted-foreground font-medium">{stat.label}</span>
+              <stat.icon className={`h-3.5 w-3.5 ${stat.accent} opacity-60`} />
             </div>
-            <div className={`text-2xl font-bold ${stat.accent} font-mono`}>{stat.value}</div>
-            <p className="text-[11px] text-muted-foreground mt-1">{stat.sub}</p>
+            <div className={`text-lg font-bold ${stat.accent} font-mono`}>{stat.value}</div>
+            <p className="text-[10px] text-muted-foreground mt-0.5">{stat.sub}</p>
           </div>
         ))}
       </div>
