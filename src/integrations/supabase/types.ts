@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      about_us_settings: {
+        Row: {
+          hero_description: string | null
+          hero_subtitle: string | null
+          hero_title: string | null
+          id: string
+          mission_text: string | null
+          team_json: Json | null
+          updated_at: string
+          values_json: Json | null
+        }
+        Insert: {
+          hero_description?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          id?: string
+          mission_text?: string | null
+          team_json?: Json | null
+          updated_at?: string
+          values_json?: Json | null
+        }
+        Update: {
+          hero_description?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          id?: string
+          mission_text?: string | null
+          team_json?: Json | null
+          updated_at?: string
+          values_json?: Json | null
+        }
+        Relationships: []
+      }
       activity_logs: {
         Row: {
           action_type: string

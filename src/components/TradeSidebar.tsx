@@ -8,6 +8,7 @@ import {
   CalendarDays,
   Building2,
   Phone,
+  Info,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -33,6 +34,7 @@ const tradeNav = [
   { title: "Investor List", url: "/investor-list", icon: Users },
   { title: "Investor Portal", url: "/investor-portal", icon: Eye },
   { title: "Contact Settings", url: "/contact-settings", icon: Phone },
+  { title: "About Us Settings", url: "/about-settings", icon: Info },
   { title: "Kalender", url: "/schedule", icon: CalendarDays },
 ];
 
