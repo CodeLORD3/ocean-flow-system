@@ -266,7 +266,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
               <img src={(company as any).logo_url} alt="" className="h-10 w-10 object-contain border border-border rounded" />
             )}
             <div>
-              <div className="text-sm font-semibold text-foreground">{getCountryFlag((company as any).country)} {(company as any).name}</div>
+              <div className="text-sm font-semibold text-foreground flex items-center gap-1.5"><CountryFlag country={(company as any).country} size={16} /> {(company as any).name}</div>
               <div className="text-xs text-muted-foreground">
                 {(company as any).industry && <span>{(company as any).industry}</span>}
                 {(company as any).industry && (company as any).country && <span> · </span>}
