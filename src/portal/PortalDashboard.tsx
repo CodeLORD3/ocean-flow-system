@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, DollarSign, Wallet, Target, ArrowUpRight, Search, ArrowRight } from "lucide-react";
 import { differenceInDays, parseISO, format } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
+import CountryFlag from "@/components/CountryFlag";
 
 export default function PortalDashboard() {
   const { openOfferTab, switchTab } = usePortalTabs();
