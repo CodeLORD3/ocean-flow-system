@@ -11,7 +11,7 @@ import { Plus, TrendingUp, Upload, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import TradeOfferDetail from "@/components/trade/TradeOfferDetail";
-import { getCountryFlag } from "@/pages/Companies";
+import CountryFlag from "@/components/CountryFlag";
 
 const EMPTY_FORM = {
   title: "", description: "", quantity: "", target_amount: "",
@@ -210,7 +210,7 @@ export default function TradeOffers() {
                     <SelectContent>
                       {companies.map((c: any) => (
                         <SelectItem key={c.id} value={c.id} className="text-xs">
-                          {getCountryFlag(c.country)} {c.name}
+                          <span className="flex items-center gap-1.5"><CountryFlag country={c.country} size={14} /> {c.name}</span>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -220,7 +220,7 @@ export default function TradeOffers() {
                       {companyMap[form.company_id].logo_url && (
                         <img src={companyMap[form.company_id].logo_url} alt="" className="h-6 w-6 object-contain rounded" />
                       )}
-                      <span className="font-medium">{getCountryFlag(companyMap[form.company_id].country)} {companyMap[form.company_id].name}</span>
+                      <span className="font-medium flex items-center gap-1.5"><CountryFlag country={companyMap[form.company_id].country} size={14} /> {companyMap[form.company_id].name}</span>
                     </div>
                   )}
                 </div>
@@ -408,7 +408,7 @@ export default function TradeOffers() {
                     <TableCell className="py-1.5 font-medium">{offer.title}</TableCell>
                     <TableCell className="py-1.5">
                       {(offer as any).company_id && companyMap[(offer as any).company_id] ? (
-                        <span className="text-[10px]">{getCountryFlag(companyMap[(offer as any).company_id].country)} {companyMap[(offer as any).company_id].name}</span>
+                        <span className="text-[10px] flex items-center gap-1"><CountryFlag country={companyMap[(offer as any).company_id].country} size={13} /> {companyMap[(offer as any).company_id].name}</span>
                       ) : <span className="text-muted-foreground">—</span>}
                     </TableCell>
                     <TableCell className="py-1.5 text-right">{target.toLocaleString()} kr</TableCell>

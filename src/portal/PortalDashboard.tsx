@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, DollarSign, Wallet, Target, ArrowUpRight, Search, ArrowRight } from "lucide-react";
 import { differenceInDays, parseISO, format } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
+import CountryFlag from "@/components/CountryFlag";
 
 export default function PortalDashboard() {
   const { openOfferTab, switchTab } = usePortalTabs();
@@ -31,6 +32,17 @@ export default function PortalDashboard() {
       return data || [];
     },
   });
+
+  const { data: companies = [] } = useQuery({
+    queryKey: ["portal-companies"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("companies").select("*");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const companyMap: Record<string, any> = Object.fromEntries(companies.map((c: any) => [c.id, c]));
 
   const isLoading = offersLoading || pledgesLoading;
 
@@ -135,7 +147,17 @@ export default function PortalDashboard() {
                     onClick={() => offer && openOfferTab(offer.id, offer.title)}
                     className="border-b border-border/50 hover:bg-muted/30 cursor-pointer transition-colors h-8"
                   >
-                    <td className="p-2 pl-3 text-foreground font-medium">{offer?.title || "—"}</td>
+                    <td className="p-2 pl-3 text-foreground font-medium">
+                      <div className="flex items-center gap-1.5">
+                        {offer?.company_id && companyMap[offer.company_id] && (
+                          <CountryFlag country={companyMap[offer.company_id].country} size={14} />
+                        )}
+                        <span>{offer?.title || "—"}</span>
+                        {offer?.company_id && companyMap[offer.company_id] && (
+                          <span className="text-[10px] text-muted-foreground font-normal">· {companyMap[offer.company_id].name}</span>
+                        )}
+                      </div>
+                    </td>
                     <td className="p-2 text-right text-foreground font-mono">{Number(p.amount).toLocaleString()} kr</td>
                     <td className="p-2 text-right text-green-600 font-semibold">{rate.toFixed(1)}%</td>
                     <td className="p-2 text-right text-foreground font-semibold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</td>
@@ -191,7 +213,7 @@ export default function PortalDashboard() {
                 onClick={() => openOfferTab(offer.id, offer.title)}
                 className="border border-border p-3 hover:border-primary hover:shadow-sm cursor-pointer transition-all group"
               >
-                <div className="flex items-start justify-between mb-2">
+                <div className="flex items-start justify-between mb-1">
                   <h3 className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors leading-snug pr-2">
                     {offer.title}
                   </h3>
@@ -203,6 +225,13 @@ export default function PortalDashboard() {
                     {offer.status === "Open" ? "OPEN" : "FUNDED"}
                   </span>
                 </div>
+
+                {(offer as any).company_id && companyMap[(offer as any).company_id] && (
+                  <p className="text-[10px] text-muted-foreground mb-1.5 flex items-center gap-1">
+                    <CountryFlag country={companyMap[(offer as any).company_id].country} size={14} />
+                    {companyMap[(offer as any).company_id].name}
+                  </p>
+                )}
 
                 {offer.description && (
                   <p className="text-[11px] text-muted-foreground mb-3 line-clamp-2 leading-relaxed">{offer.description}</p>

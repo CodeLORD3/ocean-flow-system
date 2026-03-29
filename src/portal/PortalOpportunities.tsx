@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Search, SlidersHorizontal, TrendingUp, Clock, ArrowRight } from "lucide-react";
 import { differenceInDays, parseISO, format } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
-import { getCountryFlag } from "@/pages/Companies";
+import CountryFlag from "@/components/CountryFlag";
 
 export default function PortalOpportunities() {
   const { openOfferTab } = usePortalTabs();
@@ -153,8 +153,8 @@ export default function PortalOpportunities() {
                 </div>
 
                 {company && (
-                  <p className="text-[10px] text-muted-foreground mb-1.5">
-                    {getCountryFlag(company.country)} {company.name}
+                  <p className="text-[10px] text-muted-foreground mb-1.5 flex items-center gap-1">
+                    <CountryFlag country={company.country} size={14} /> {company.name}
                   </p>
                 )}
 

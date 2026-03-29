@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Building2, ArrowLeft, Upload, Pencil, Eye } from "lucide-react";
+import CountryFlag from "@/components/CountryFlag";
 import { toast } from "sonner";
 
 const COUNTRY_OPTIONS = [
@@ -177,7 +178,7 @@ export default function Companies() {
               )}
               <div>
                 <div className="text-sm font-bold">{company.name}</div>
-                <div className="text-xs text-muted-foreground">{getCountryFlag(company.country)} {company.country} · {company.industry || "—"}</div>
+                <div className="text-xs text-muted-foreground flex items-center gap-1"><CountryFlag country={company.country} size={14} /> {company.country} · {company.industry || "—"}</div>
               </div>
               <Badge variant={company.status === "Active" ? "default" : "secondary"} className="ml-auto text-[10px]">
                 {company.status}
@@ -308,7 +309,7 @@ export default function Companies() {
                       <span className="font-medium">{c.name}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="py-1.5">{getCountryFlag(c.country)} {c.country}</TableCell>
+                  <TableCell className="py-1.5"><span className="flex items-center gap-1"><CountryFlag country={c.country} size={14} /> {c.country}</span></TableCell>
                   <TableCell className="py-1.5 text-muted-foreground">{c.industry || "—"}</TableCell>
                   <TableCell className="py-1.5 text-center">
                     <Badge variant={c.status === "Active" ? "default" : "secondary"} className="text-[9px]">{c.status}</Badge>
