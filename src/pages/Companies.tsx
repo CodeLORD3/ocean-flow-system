@@ -178,7 +178,7 @@ export default function Companies() {
               )}
               <div>
                 <div className="text-sm font-bold">{company.name}</div>
-                <div className="text-xs text-muted-foreground">{getCountryFlag(company.country)} {company.country} · {company.industry || "—"}</div>
+                <div className="text-xs text-muted-foreground flex items-center gap-1"><CountryFlag country={company.country} size={14} /> {company.country} · {company.industry || "—"}</div>
               </div>
               <Badge variant={company.status === "Active" ? "default" : "secondary"} className="ml-auto text-[10px]">
                 {company.status}
