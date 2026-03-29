@@ -365,6 +365,7 @@ export default function TradeOffers() {
               <TableRow className="text-[10px]">
                 <TableHead className="h-8">Product</TableHead>
                 <TableHead className="h-8">Company</TableHead>
+                <TableHead className="h-8 text-right">Investment</TableHead>
                 <TableHead className="h-8 text-right">Financed</TableHead>
                 <TableHead className="h-8 text-right">Return %</TableHead>
                 <TableHead className="h-8 text-right">Profit kr</TableHead>
