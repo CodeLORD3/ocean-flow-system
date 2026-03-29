@@ -5,8 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Clock, Calculator, FileText, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
-export default function PortalOfferDetail() {
-  const { id } = useParams<{ id: string }>();
+export default function PortalOfferDetail({ overrideId }: { overrideId?: string } = {}) {
+  const { id: paramId } = useParams<{ id: string }>();
+  const id = overrideId || paramId;
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [pledgeAmount, setPledgeAmount] = useState("");

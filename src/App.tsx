@@ -13,10 +13,6 @@ import { KeepAliveTabs } from "@/components/KeepAliveTabs";
 // Portal imports
 import PortalLayout from "@/portal/PortalLayout";
 import PortalLogin from "@/portal/PortalLogin";
-import PortalDashboard from "@/portal/PortalDashboard";
-import PortalOfferDetail from "@/portal/PortalOfferDetail";
-import PortalCommitments from "@/portal/PortalCommitments";
-import PortalArchive from "@/portal/PortalArchive";
 
 const queryClient = new QueryClient();
 
@@ -38,14 +34,9 @@ const AppContent = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Client Trading Portal — separate layout */}
+        {/* Client Trading Portal — separate layout with internal tab system */}
         <Route path="/portal/login" element={<PortalLogin />} />
-        <Route path="/portal" element={<PortalLayout />}>
-          <Route index element={<PortalDashboard />} />
-          <Route path="offer/:id" element={<PortalOfferDetail />} />
-          <Route path="commitments" element={<PortalCommitments />} />
-          <Route path="archive" element={<PortalArchive />} />
-        </Route>
+        <Route path="/portal/*" element={<PortalLayout />} />
 
         {/* ERP — catch-all */}
         <Route path="*" element={<ERPContent />} />

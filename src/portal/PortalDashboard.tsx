@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
 import { TrendingUp, Clock, DollarSign, Target, CheckCircle } from "lucide-react";
 import { differenceInDays, parseISO } from "date-fns";
+import { usePortalTabs } from "./PortalTabsContext";
 
 export default function PortalDashboard() {
-  const navigate = useNavigate();
+  const { openOfferTab } = usePortalTabs();
 
   const { data: offers = [], isLoading } = useQuery({
     queryKey: ["portal-offers"],
@@ -113,7 +113,7 @@ export default function PortalDashboard() {
                 return (
                   <tr
                     key={offer.id}
-                    onClick={() => navigate(`/portal/offer/${offer.id}`)}
+                    onClick={() => openOfferTab(offer.id, offer.title)}
                     className="border-b border-[#d0d7e2]/50 hover:bg-[#0066ff]/5 cursor-pointer transition-colors"
                   >
                     <td className="p-2 pl-3 text-[#1a2035] font-medium">{offer.title}</td>
@@ -181,7 +181,7 @@ export default function PortalDashboard() {
                   return (
                     <tr
                       key={offer.id}
-                      onClick={() => navigate(`/portal/offer/${offer.id}`)}
+                      onClick={() => openOfferTab(offer.id, offer.title)}
                       className="border-b border-[#d0d7e2]/50 hover:bg-[#0066ff]/5 cursor-pointer transition-colors"
                     >
                       <td className="p-2 pl-3 text-[#1a2035] font-medium">{offer.title}</td>
