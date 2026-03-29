@@ -32,6 +32,8 @@ const tradeNav = [
   { title: "Kalender", url: "/schedule", icon: CalendarDays },
 ];
 
+const DEV_PORTAL_URL = "/portal?dev=1";
+
 const bottomNav = [
   { title: "Revision & Logg", url: "/audit", icon: ClipboardList },
   { title: "Administration", url: "/settings", icon: Settings },
@@ -79,6 +81,19 @@ export function TradeSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <a
+                href={DEV_PORTAL_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-emerald-400 hover:text-emerald-300"
+              >
+                <Eye className="h-4 w-4" />
+                {!collapsed && <span>Open Portal (Dev)</span>}
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           {bottomNav.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild isActive={isActive(item.url)}>
