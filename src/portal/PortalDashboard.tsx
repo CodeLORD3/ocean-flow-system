@@ -205,10 +205,10 @@ export default function PortalDashboard() {
                 </div>
 
                 {offer.description && (
-                  <p className="text-xs text-muted-foreground mb-4 line-clamp-2 leading-relaxed">{offer.description}</p>
+                  <p className="text-[11px] text-muted-foreground mb-3 line-clamp-2 leading-relaxed">{offer.description}</p>
                 )}
 
-                <div className="space-y-2 mb-4">
+                <div className="space-y-1.5 mb-3">
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground">Funding progress</span>
                     <span className="text-foreground font-semibold">{progress.toFixed(0)}%</span>
