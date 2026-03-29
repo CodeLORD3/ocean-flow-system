@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Info, Plus, Trash2 } from "lucide-react";
+import { Info, Plus, Trash2, Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface TeamMember {
