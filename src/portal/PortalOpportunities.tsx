@@ -146,30 +146,30 @@ export default function PortalOpportunities() {
                 </div>
 
                 {/* Key metrics */}
-                <div className="grid grid-cols-3 gap-3 pt-3 border-t border-border mt-auto">
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border mt-auto">
                   <div>
-                    <div className="text-[11px] text-muted-foreground">Return</div>
-                    <div className="text-sm font-bold text-green-600 flex items-center gap-0.5">
-                      <TrendingUp className="h-3.5 w-3.5" />
+                    <div className="text-[10px] text-muted-foreground">Return</div>
+                    <div className="text-xs font-bold text-green-600 flex items-center gap-0.5">
+                      <TrendingUp className="h-3 w-3" />
                       {rate.toFixed(1)}%
                     </div>
                   </div>
                   <div>
-                    <div className="text-[11px] text-muted-foreground">Duration</div>
-                    <div className="text-sm font-bold text-foreground flex items-center gap-0.5">
-                      <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                    <div className="text-[10px] text-muted-foreground">Duration</div>
+                    <div className="text-xs font-bold text-foreground flex items-center gap-0.5">
+                      <Clock className="h-3 w-3 text-muted-foreground" />
                       {daysLeft !== null ? `${daysLeft}d` : "—"}
                     </div>
                   </div>
                   <div>
-                    <div className="text-[11px] text-muted-foreground">Min. invest</div>
-                    <div className="text-sm font-bold text-foreground font-mono">
+                    <div className="text-[10px] text-muted-foreground">Min. invest</div>
+                    <div className="text-xs font-bold text-foreground font-mono">
                       {Number(offer.min_pledge) > 0 ? `${Number(offer.min_pledge).toLocaleString()}` : "—"}
                     </div>
                   </div>
                 </div>
 
-                <button className="w-full h-10 mt-4 border border-primary text-primary text-xs font-semibold hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center gap-2">
+                <button className="w-full h-8 mt-3 border border-primary text-primary text-[11px] font-semibold hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center gap-1.5">
                   View Details <ArrowRight className="h-3.5 w-3.5" />
                 </button>
               </div>

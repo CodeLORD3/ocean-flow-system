@@ -222,14 +222,14 @@ export default function PortalDashboard() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-border">
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border">
                   <div>
-                    <div className="text-[11px] text-muted-foreground mb-0.5">Expected Return</div>
-                    <div className="text-base font-bold text-green-600">{rate.toFixed(1)}%</div>
+                    <div className="text-[10px] text-muted-foreground">Expected Return</div>
+                    <div className="text-sm font-bold text-green-600">{rate.toFixed(1)}%</div>
                   </div>
                   <div>
-                    <div className="text-[11px] text-muted-foreground mb-0.5">Time Remaining</div>
-                    <div className="text-base font-bold text-foreground">{daysLeft !== null ? `${daysLeft} days` : "—"}</div>
+                    <div className="text-[10px] text-muted-foreground">Time Remaining</div>
+                    <div className="text-sm font-bold text-foreground">{daysLeft !== null ? `${daysLeft} days` : "—"}</div>
                   </div>
                 </div>
               </div>
