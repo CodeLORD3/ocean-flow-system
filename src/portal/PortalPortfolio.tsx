@@ -49,26 +49,26 @@ export default function PortalPortfolio() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-foreground">My Investments</h1>
-        <p className="text-sm text-muted-foreground mt-1">Track all your active and completed investments.</p>
+        <h1 className="text-base font-bold text-foreground">My Investments</h1>
+        <p className="text-xs text-muted-foreground mt-0.5">Track all your active and completed investments.</p>
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-4 gap-3">
         {[
           { icon: DollarSign, label: "Total Invested", value: `${totalInvested.toLocaleString()} kr`, color: "text-primary" },
           { icon: TrendingUp, label: "Expected Payout", value: `${totalExpectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr`, color: "text-green-600" },
           { icon: Target, label: "Expected Profit", value: `+${totalProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr`, color: "text-green-600" },
           { icon: Percent, label: "Average Return", value: `${avgRate.toFixed(1)}%`, color: "text-primary" },
         ].map((stat) => (
-          <div key={stat.label} className="border border-border bg-white p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs text-muted-foreground font-medium">{stat.label}</span>
-              <stat.icon className={`h-4 w-4 ${stat.color} opacity-60`} />
+          <div key={stat.label} className="border border-border bg-white p-3">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] text-muted-foreground font-medium">{stat.label}</span>
+              <stat.icon className={`h-3.5 w-3.5 ${stat.color} opacity-60`} />
             </div>
-            <span className={`text-xl font-bold font-mono ${stat.color}`}>{stat.value}</span>
+            <span className={`text-lg font-bold font-mono ${stat.color}`}>{stat.value}</span>
           </div>
         ))}
       </div>
