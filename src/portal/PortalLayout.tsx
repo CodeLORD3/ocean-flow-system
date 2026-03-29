@@ -5,7 +5,7 @@ import { Search, Briefcase, FileText, Archive, LogOut, X, Bell, User, ChevronRig
 import PortalOnboarding from "./PortalOnboarding";
 import PortalWelcome from "./PortalWelcome";
 import { PortalTabsProvider, usePortalTabs } from "./PortalTabsContext";
-import PortalDashboard from "./PortalDashboard";
+import PortalOpportunities from "./PortalOpportunities";
 import PortalOpportunities from "./PortalOpportunities";
 import PortalPortfolio from "./PortalPortfolio";
 import PortalCommitments from "./PortalCommitments";
