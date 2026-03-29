@@ -254,6 +254,32 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
         )}
       </div>
 
+      {/* Published by */}
+      {company && (
+        <div className="border border-border bg-white p-4">
+          <div className="flex items-center gap-1.5 mb-3">
+            <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-[10px] font-semibold text-muted-foreground tracking-wider uppercase">Published by</span>
+          </div>
+          <div className="flex items-center gap-3">
+            {(company as any).logo_url && (
+              <img src={(company as any).logo_url} alt="" className="h-10 w-10 object-contain border border-border rounded" />
+            )}
+            <div>
+              <div className="text-sm font-semibold text-foreground">{getCountryFlag((company as any).country)} {(company as any).name}</div>
+              <div className="text-xs text-muted-foreground">
+                {(company as any).industry && <span>{(company as any).industry}</span>}
+                {(company as any).industry && (company as any).country && <span> · </span>}
+                {(company as any).country && <span>{(company as any).country}</span>}
+              </div>
+              {(company as any).description && (
+                <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">{(company as any).description}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Countdown banner */}
       {offer.status === "Open" && daysLeft !== null && (
         <div className={`border p-4 flex items-center justify-between ${
