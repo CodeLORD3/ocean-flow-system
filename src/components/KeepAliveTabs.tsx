@@ -28,6 +28,7 @@ import TradeHistory from "@/pages/TradeHistory";
 import InvestorPortal from "@/pages/InvestorPortal";
 import InvestorList from "@/pages/InvestorList";
 import ScheduleCalendar from "@/pages/ScheduleCalendar";
+import Companies from "@/pages/Companies";
 
 interface RouteEntry {
   component: React.ReactNode;
