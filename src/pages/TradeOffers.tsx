@@ -136,6 +136,7 @@ export default function TradeOffers() {
         downside: form.downside || null,
         tenor_days,
         annual_return,
+        company_id: form.company_id || null,
       } as any);
       if (error) throw error;
     },
