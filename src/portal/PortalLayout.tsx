@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { LayoutDashboard, Search, Briefcase, FileText, Archive, LogOut, X, Bell, User, ChevronRight } from "lucide-react";
+import { LayoutDashboard, Search, Briefcase, FileText, Archive, LogOut, X, Bell, User, ChevronRight, Info, BookOpen } from "lucide-react";
 import PortalOnboarding from "./PortalOnboarding";
 import PortalWelcome from "./PortalWelcome";
 import { PortalTabsProvider, usePortalTabs } from "./PortalTabsContext";
@@ -12,6 +12,8 @@ import PortalCommitments from "./PortalCommitments";
 import PortalDocuments from "./PortalDocuments";
 import PortalArchive from "./PortalArchive";
 import PortalOfferDetail from "./PortalOfferDetail";
+import PortalAbout from "./PortalAbout";
+import PortalHowItWorks from "./PortalHowItWorks";
 
 function PortalTabBar() {
   const { tabs, activeTab, switchTab, closeTab } = usePortalTabs();
@@ -63,6 +65,8 @@ function PortalKeepAlive() {
       else if (tab.path === "/portal/commitments") component = <PortalCommitments />;
       else if (tab.path === "/portal/documents") component = <PortalDocuments />;
       else if (tab.path === "/portal/archive") component = <PortalArchive />;
+      else if (tab.path === "/portal/about") component = <PortalAbout />;
+      else if (tab.path === "/portal/how-it-works") component = <PortalHowItWorks />;
       else if (tab.path.startsWith("/portal/offer/")) {
         const offerId = tab.path.replace("/portal/offer/", "");
         component = <PortalOfferDetail key={tab.path} overrideId={offerId} />;
@@ -177,6 +181,8 @@ function PortalInner() {
     { to: "/portal/opportunities", icon: Search, label: "Opportunities" },
     { to: "/portal/portfolio", icon: Briefcase, label: "My Investments" },
     { to: "/portal/documents", icon: FileText, label: "Documents" },
+    { to: "/portal/how-it-works", icon: BookOpen, label: "How It Works" },
+    { to: "/portal/about", icon: Info, label: "About Us" },
     { to: "/portal/archive", icon: Archive, label: "Archive" },
   ];
 
