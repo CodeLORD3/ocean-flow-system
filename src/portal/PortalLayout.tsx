@@ -68,6 +68,7 @@ function PortalKeepAlive() {
       else if (tab.path === "/portal/documents") component = <PortalDocuments />;
       else if (tab.path === "/portal/archive") component = <PortalArchive />;
       else if (tab.path === "/portal/about") component = <PortalAbout />;
+      else if (tab.path === "/portal/team") component = <PortalTeam />;
       else if (tab.path === "/portal/how-it-works") component = <PortalHowItWorks />;
       else if (tab.path === "/portal/contact") component = <PortalContact />;
       else if (tab.path.startsWith("/portal/offer/")) {

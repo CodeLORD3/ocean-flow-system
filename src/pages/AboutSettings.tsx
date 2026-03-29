@@ -219,10 +219,17 @@ export default function AboutSettings() {
                   </select>
                 )}
               </div>
-              <div className="flex-1 grid grid-cols-3 gap-2">
-                <Input value={m.name} onChange={e => updateTeamMember(i, "name", e.target.value)} className="h-7 text-xs" placeholder="Name" />
-                <Input value={m.role} onChange={e => updateTeamMember(i, "role", e.target.value)} className="h-7 text-xs" placeholder="Role" />
-                <Input value={m.desc} onChange={e => updateTeamMember(i, "desc", e.target.value)} className="h-7 text-xs" placeholder="Short bio" />
+              <div className="flex-1 space-y-2">
+                <div className="grid grid-cols-3 gap-2">
+                  <Input value={m.name} onChange={e => updateTeamMember(i, "name", e.target.value)} className="h-7 text-xs" placeholder="Name" />
+                  <Input value={m.role} onChange={e => updateTeamMember(i, "role", e.target.value)} className="h-7 text-xs" placeholder="Role" />
+                  <Input value={m.desc} onChange={e => updateTeamMember(i, "desc", e.target.value)} className="h-7 text-xs" placeholder="Short tagline" />
+                </div>
+                <Textarea value={m.bio || ""} onChange={e => updateTeamMember(i, "bio", e.target.value)} className="text-xs min-h-[50px]" placeholder="Extended bio (shown on Team page)" />
+                <div className="grid grid-cols-2 gap-2">
+                  <Input value={m.linkedin || ""} onChange={e => updateTeamMember(i, "linkedin", e.target.value)} className="h-7 text-xs" placeholder="LinkedIn URL" />
+                  <Input value={m.email || ""} onChange={e => updateTeamMember(i, "email", e.target.value)} className="h-7 text-xs" placeholder="Email" />
+                </div>
               </div>
               <Button variant="ghost" size="sm" onClick={() => removeTeamMember(i)} className="h-7 w-7 p-0 text-destructive">
                 <Trash2 className="h-3 w-3" />
