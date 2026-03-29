@@ -188,6 +188,16 @@ export default function AboutSettings() {
           </div>
           {team.map((m, i) => (
             <div key={i} className="flex gap-2 items-start p-2 border border-border bg-muted/30">
+              <label className="shrink-0 cursor-pointer">
+                {m.image_url ? (
+                  <img src={m.image_url} className="h-12 w-12 rounded-full object-cover border border-border" />
+                ) : (
+                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center border border-dashed border-border">
+                    {uploading === i ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : <Upload className="h-4 w-4 text-muted-foreground" />}
+                  </div>
+                )}
+                <input type="file" accept="image/*" className="hidden" onChange={e => { if (e.target.files?.[0]) uploadPhoto(i, e.target.files[0]); }} />
+              </label>
               <div className="flex-1 grid grid-cols-3 gap-2">
                 <Input value={m.name} onChange={e => updateTeamMember(i, "name", e.target.value)} className="h-7 text-xs" placeholder="Name" />
                 <Input value={m.role} onChange={e => updateTeamMember(i, "role", e.target.value)} className="h-7 text-xs" placeholder="Role" />
