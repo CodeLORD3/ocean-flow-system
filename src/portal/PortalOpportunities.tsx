@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Filter, TrendingUp } from "lucide-react";
-import { differenceInDays, parseISO } from "date-fns";
+import { Search, SlidersHorizontal, TrendingUp, Clock, ArrowRight } from "lucide-react";
+import { differenceInDays, parseISO, format } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 
 export default function PortalOpportunities() {
@@ -37,152 +37,141 @@ export default function PortalOpportunities() {
     return true;
   });
 
-  const calcRow = (offer: any) => {
-    const target = Number(offer.target_amount) || 0;
-    const funded = Number(offer.funded_amount) || 0;
-    const rate = Number(offer.interest_rate) || 0;
-    const progress = target > 0 ? Math.min(100, (funded / target) * 100) : 0;
-    const maturity = offer.maturity_date ? parseISO(offer.maturity_date) : null;
-    const daysLeft = maturity ? Math.max(0, differenceInDays(maturity, new Date())) : null;
-    const start = offer.purchase_date ? parseISO(offer.purchase_date) : null;
-    const tenorDays = (start && maturity) ? differenceInDays(maturity, start) : (Number(offer.tenor_days) || null);
-    const annualReturn = (tenorDays && tenorDays > 0) ? ((rate / tenorDays) * 365).toFixed(1) : null;
-    return { target, funded, rate, progress, daysLeft, annualReturn };
-  };
-
-  const statusColor = (status: string) => {
-    switch (status) {
-      case "Open": return "text-green-600 bg-green-50 border-green-200";
-      case "Funded": return "text-[#0066ff] bg-blue-50 border-blue-200";
-      default: return "text-[#6b7a8d] bg-gray-50 border-gray-200";
-    }
-  };
-
   if (isLoading) {
-    return <div className="text-[#0066ff] text-xs animate-pulse p-8 text-center">LOADING OPPORTUNITIES...</div>;
+    return <div className="text-primary text-sm animate-pulse p-8 text-center">Loading opportunities...</div>;
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-xl font-bold text-foreground">Investment Opportunities</h1>
+        <p className="text-sm text-muted-foreground mt-1">Browse available trade finance deals and invest directly.</p>
+      </div>
+
       {/* Filters */}
-      <div className="border border-[#d0d7e2] bg-white p-3">
+      <div className="border border-border bg-white p-4">
         <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-1.5 flex-1 min-w-[200px]">
-            <Search className="h-3.5 w-3.5 text-[#6b7a8d]" />
+          <div className="flex items-center gap-2 flex-1 min-w-[220px]">
+            <Search className="h-4 w-4 text-muted-foreground" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search offers..."
-              className="flex-1 h-8 bg-[#f4f6f9] border border-[#d0d7e2] px-3 text-[11px] text-[#1a2035] focus:border-[#0066ff] focus:outline-none"
+              placeholder="Search by name..."
+              className="flex-1 h-9 bg-muted/50 border border-border px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
             />
           </div>
           <div className="flex items-center gap-2">
-            <Filter className="h-3 w-3 text-[#6b7a8d]" />
+            <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-8 bg-[#f4f6f9] border border-[#d0d7e2] px-2 text-[10px] text-[#1a2035] focus:border-[#0066ff] focus:outline-none"
+              className="h-9 bg-muted/50 border border-border px-3 text-sm text-foreground focus:border-primary focus:outline-none"
             >
               <option value="all">All Status</option>
-              <option value="open">Open</option>
+              <option value="open">Open for Investment</option>
               <option value="funded">Fully Funded</option>
             </select>
             <input
               type="number"
               value={minInvestment}
               onChange={(e) => setMinInvestment(e.target.value)}
-              placeholder="Min invest"
-              className="h-8 w-24 bg-[#f4f6f9] border border-[#d0d7e2] px-2 text-[10px] text-[#1a2035] focus:border-[#0066ff] focus:outline-none"
+              placeholder="Min amount"
+              className="h-9 w-28 bg-muted/50 border border-border px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
             />
             <select
               value={returnRange}
               onChange={(e) => setReturnRange(e.target.value)}
-              className="h-8 bg-[#f4f6f9] border border-[#d0d7e2] px-2 text-[10px] text-[#1a2035] focus:border-[#0066ff] focus:outline-none"
+              className="h-9 bg-muted/50 border border-border px-3 text-sm text-foreground focus:border-primary focus:outline-none"
             >
-              <option value="all">All Returns</option>
-              <option value="0-5">0–5%</option>
-              <option value="5-10">5–10%</option>
+              <option value="all">Any Return</option>
+              <option value="0-5">0 – 5%</option>
+              <option value="5-10">5 – 10%</option>
               <option value="10+">10%+</option>
             </select>
           </div>
         </div>
       </div>
 
-      {/* Results count */}
-      <div className="text-[9px] text-[#6b7a8d] tracking-wider px-1">
-        {filtered.length} OPPORTUNITIES FOUND
-      </div>
+      <p className="text-xs text-muted-foreground">{filtered.length} {filtered.length === 1 ? "opportunity" : "opportunities"} found</p>
 
       {/* Offers grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.map((offer) => {
-          const r = calcRow(offer);
+          const target = Number(offer.target_amount) || 0;
+          const funded = Number(offer.funded_amount) || 0;
+          const rate = Number(offer.interest_rate) || 0;
+          const progress = target > 0 ? Math.min(100, (funded / target) * 100) : 0;
+          const maturity = offer.maturity_date ? parseISO(offer.maturity_date) : null;
+          const daysLeft = maturity ? Math.max(0, differenceInDays(maturity, new Date())) : null;
+
           return (
             <div
               key={offer.id}
-              className="border border-[#d0d7e2] bg-white hover:border-[#0066ff] cursor-pointer transition-colors group"
+              className="border border-border bg-white hover:border-primary hover:shadow-sm cursor-pointer transition-all group flex flex-col"
               onClick={() => openOfferTab(offer.id, offer.title)}
             >
-              {/* Image */}
               {offer.product_image_url && (
-                <div className="h-32 overflow-hidden border-b border-[#d0d7e2]">
+                <div className="h-36 overflow-hidden border-b border-border">
                   <img src={offer.product_image_url} alt={offer.title} className="w-full h-full object-cover" />
                 </div>
               )}
 
-              <div className="p-4 space-y-3">
-                <div className="flex items-start justify-between">
-                  <h3 className="text-[12px] font-bold text-[#1a2035] group-hover:text-[#0066ff] transition-colors leading-tight flex-1">
+              <div className="p-5 flex-1 flex flex-col">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors leading-snug flex-1 pr-2">
                     {offer.title}
                   </h3>
-                  <span className={`inline-block px-2 py-0.5 text-[8px] tracking-wider border shrink-0 ml-2 ${statusColor(offer.status)}`}>
-                    {offer.status.toUpperCase()}
+                  <span className={`shrink-0 px-2 py-0.5 text-[10px] font-semibold border ${
+                    offer.status === "Open"
+                      ? "text-green-700 bg-green-50 border-green-200"
+                      : "text-primary bg-primary/5 border-primary/20"
+                  }`}>
+                    {offer.status === "Open" ? "OPEN" : "FUNDED"}
                   </span>
                 </div>
 
                 {offer.description && (
-                  <p className="text-[10px] text-[#6b7a8d] line-clamp-2">{offer.description}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2 mb-4 leading-relaxed">{offer.description}</p>
                 )}
 
-                {/* Target & funding */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[9px]">
-                    <span className="text-[#6b7a8d]">Total needed</span>
-                    <span className="text-[#1a2035] font-bold font-mono">{r.target.toLocaleString()} kr</span>
+                {/* Funding progress */}
+                <div className="space-y-2 mb-4">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Funding</span>
+                    <span className="text-foreground font-medium font-mono">{funded.toLocaleString()} / {target.toLocaleString()} kr</span>
                   </div>
-                  <div className="h-2 bg-gray-100 overflow-hidden">
-                    <div className="h-full bg-[#0066ff] transition-all" style={{ width: `${r.progress}%` }} />
-                  </div>
-                  <div className="flex justify-between text-[9px]">
-                    <span className="text-[#6b7a8d]">{r.progress.toFixed(0)}% funded</span>
-                    <span className="text-[#6b7a8d] font-mono">{r.funded.toLocaleString()} kr</span>
+                  <div className="h-2 bg-muted overflow-hidden">
+                    <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
                   </div>
                 </div>
 
                 {/* Key metrics */}
-                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#d0d7e2]">
+                <div className="grid grid-cols-3 gap-3 pt-3 border-t border-border mt-auto">
                   <div>
-                    <div className="text-[8px] text-[#6b7a8d] tracking-wider">RETURN</div>
-                    <div className="text-[13px] font-bold text-green-600 flex items-center gap-0.5">
-                      <TrendingUp className="h-3 w-3" />
-                      {r.rate.toFixed(1)}%
+                    <div className="text-[11px] text-muted-foreground">Return</div>
+                    <div className="text-sm font-bold text-green-600 flex items-center gap-0.5">
+                      <TrendingUp className="h-3.5 w-3.5" />
+                      {rate.toFixed(1)}%
                     </div>
                   </div>
                   <div>
-                    <div className="text-[8px] text-[#6b7a8d] tracking-wider">DURATION</div>
-                    <div className="text-[13px] font-bold text-[#1a2035]">{r.daysLeft ?? "—"}d</div>
+                    <div className="text-[11px] text-muted-foreground">Duration</div>
+                    <div className="text-sm font-bold text-foreground flex items-center gap-0.5">
+                      <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                      {daysLeft !== null ? `${daysLeft}d` : "—"}
+                    </div>
                   </div>
                   <div>
-                    <div className="text-[8px] text-[#6b7a8d] tracking-wider">MIN</div>
-                    <div className="text-[11px] font-bold text-[#1a2035] font-mono">
-                      {Number(offer.min_pledge) > 0 ? `${Number(offer.min_pledge).toLocaleString()} kr` : "—"}
+                    <div className="text-[11px] text-muted-foreground">Min. invest</div>
+                    <div className="text-sm font-bold text-foreground font-mono">
+                      {Number(offer.min_pledge) > 0 ? `${Number(offer.min_pledge).toLocaleString()}` : "—"}
                     </div>
                   </div>
                 </div>
 
-                <button className="w-full h-8 border border-[#0066ff] text-[#0066ff] text-[10px] font-bold tracking-wider hover:bg-[#0066ff] hover:text-white transition-colors">
-                  VIEW DETAILS
+                <button className="w-full h-10 mt-4 border border-primary text-primary text-xs font-semibold hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center gap-2">
+                  View Details <ArrowRight className="h-3.5 w-3.5" />
                 </button>
               </div>
             </div>
@@ -191,8 +180,8 @@ export default function PortalOpportunities() {
       </div>
 
       {filtered.length === 0 && (
-        <div className="border border-[#d0d7e2] bg-white p-8 text-center text-[#8a95a5] text-xs">
-          No opportunities match your criteria.
+        <div className="border border-border bg-white p-10 text-center text-muted-foreground text-sm">
+          No opportunities match your criteria. Try adjusting your filters.
         </div>
       )}
     </div>

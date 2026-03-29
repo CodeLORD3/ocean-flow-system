@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { DollarSign, TrendingUp, Target, Clock } from "lucide-react";
+import { DollarSign, TrendingUp, Target, Percent } from "lucide-react";
+import { parseISO, format } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 
 export default function PortalPortfolio() {
@@ -36,64 +37,69 @@ export default function PortalPortfolio() {
 
   const statusBadge = (status: string) => {
     switch (status) {
-      case "Active": return "text-green-600 bg-green-50 border-green-200";
-      case "Matured": return "text-orange-500 bg-orange-50 border-orange-200";
-      case "Repaid": return "text-[#0066ff] bg-blue-50 border-blue-200";
-      default: return "text-[#6b7a8d] bg-gray-50 border-gray-200";
+      case "Active": return "text-green-700 bg-green-50 border-green-200";
+      case "Matured": return "text-orange-600 bg-orange-50 border-orange-200";
+      case "Repaid": return "text-primary bg-primary/5 border-primary/20";
+      default: return "text-muted-foreground bg-muted/50 border-border";
     }
   };
 
   if (isLoading) {
-    return <div className="text-[#0066ff] text-xs animate-pulse p-8 text-center">LOADING PORTFOLIO...</div>;
+    return <div className="text-primary text-sm animate-pulse p-8 text-center">Loading your investments...</div>;
   }
 
   return (
-    <div className="space-y-4">
-      {/* Summary bar */}
-      <div className="grid grid-cols-4 gap-3">
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-xl font-bold text-foreground">My Investments</h1>
+        <p className="text-sm text-muted-foreground mt-1">Track all your active and completed investments.</p>
+      </div>
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-4 gap-4">
         {[
-          { icon: DollarSign, label: "TOTAL INVESTED", value: `${totalInvested.toLocaleString()} kr`, color: "text-[#0066ff]" },
-          { icon: TrendingUp, label: "EXPECTED RETURN", value: `${totalExpectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr`, color: "text-green-600" },
-          { icon: Target, label: "EXPECTED PROFIT", value: `+${totalProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr`, color: "text-green-600" },
-          { icon: Clock, label: "AVG RATE", value: `${avgRate.toFixed(1)}%`, color: "text-[#0066ff]" },
+          { icon: DollarSign, label: "Total Invested", value: `${totalInvested.toLocaleString()} kr`, color: "text-primary" },
+          { icon: TrendingUp, label: "Expected Payout", value: `${totalExpectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr`, color: "text-green-600" },
+          { icon: Target, label: "Expected Profit", value: `+${totalProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr`, color: "text-green-600" },
+          { icon: Percent, label: "Average Return", value: `${avgRate.toFixed(1)}%`, color: "text-primary" },
         ].map((stat) => (
-          <div key={stat.label} className="border border-[#d0d7e2] bg-white p-4">
-            <div className="flex items-center gap-1.5 mb-2">
-              <stat.icon className={`h-3.5 w-3.5 ${stat.color}`} />
-              <span className="text-[9px] text-[#6b7a8d] tracking-wider">{stat.label}</span>
+          <div key={stat.label} className="border border-border bg-white p-5">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs text-muted-foreground font-medium">{stat.label}</span>
+              <stat.icon className={`h-4 w-4 ${stat.color} opacity-60`} />
             </div>
-            <span className={`text-lg font-bold font-mono ${stat.color}`}>{stat.value}</span>
+            <span className={`text-xl font-bold font-mono ${stat.color}`}>{stat.value}</span>
           </div>
         ))}
       </div>
 
-      {/* Tabs */}
-      <div className="border border-[#d0d7e2] bg-white">
-        <div className="h-8 flex items-center border-b border-[#d0d7e2]">
+      {/* Table with tabs */}
+      <div className="border border-border bg-white">
+        <div className="h-11 flex items-center border-b border-border px-1">
           {(["active", "history"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-4 h-full text-[10px] tracking-wider transition-colors border-b-2 ${
+              className={`px-5 h-full text-sm transition-colors border-b-2 ${
                 tab === t
-                  ? "text-[#0066ff] font-bold border-[#0066ff]"
-                  : "text-[#6b7a8d] border-transparent hover:text-[#1a2035]"
+                  ? "text-primary font-semibold border-primary"
+                  : "text-muted-foreground border-transparent hover:text-foreground"
               }`}
             >
-              {t === "active" ? `ACTIVE (${activePledges.length})` : `HISTORY (${historyPledges.length})`}
+              {t === "active" ? `Active (${activePledges.length})` : `History (${historyPledges.length})`}
             </button>
           ))}
         </div>
 
-        <table className="w-full text-[11px]">
+        <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[#d0d7e2] text-[9px] text-[#6b7a8d] tracking-wider">
-              <th className="text-left p-2 pl-3">OFFER NAME</th>
-              <th className="text-right p-2">INVESTED</th>
-              <th className="text-right p-2">RETURN %</th>
-              <th className="text-right p-2">EXPECTED RETURN</th>
-              <th className="text-left p-2">MATURITY DATE</th>
-              <th className="text-center p-2 pr-3">STATUS</th>
+            <tr className="border-b border-border text-xs text-muted-foreground">
+              <th className="text-left p-3 pl-4 font-medium">Offer Name</th>
+              <th className="text-right p-3 font-medium">Amount Invested</th>
+              <th className="text-right p-3 font-medium">Return Rate</th>
+              <th className="text-right p-3 font-medium">Expected Payout</th>
+              <th className="text-left p-3 font-medium">Maturity Date</th>
+              <th className="text-center p-3 pr-4 font-medium">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -105,15 +111,17 @@ export default function PortalPortfolio() {
                 <tr
                   key={p.id}
                   onClick={() => offer && openOfferTab(offer.id, offer.title)}
-                  className="border-b border-[#d0d7e2]/50 hover:bg-[#0066ff]/5 cursor-pointer transition-colors"
+                  className="border-b border-border/50 hover:bg-muted/30 cursor-pointer transition-colors"
                 >
-                  <td className="p-2 pl-3 text-[#1a2035] font-medium">{offer?.title || "—"}</td>
-                  <td className="p-2 text-right text-[#1a2035] font-mono">{Number(p.amount).toLocaleString()} kr</td>
-                  <td className="p-2 text-right text-green-600 font-bold">{rate.toFixed(1)}%</td>
-                  <td className="p-2 text-right text-[#1a2035] font-bold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</td>
-                  <td className="p-2 text-[#6b7a8d]">{offer?.maturity_date || "—"}</td>
-                  <td className="p-2 pr-3 text-center">
-                    <span className={`inline-block px-2 py-0.5 text-[9px] tracking-wider border ${statusBadge(p.status)}`}>
+                  <td className="p-3 pl-4 text-foreground font-medium">{offer?.title || "—"}</td>
+                  <td className="p-3 text-right text-foreground font-mono">{Number(p.amount).toLocaleString()} kr</td>
+                  <td className="p-3 text-right text-green-600 font-semibold">{rate.toFixed(1)}%</td>
+                  <td className="p-3 text-right text-foreground font-semibold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</td>
+                  <td className="p-3 text-muted-foreground">
+                    {offer?.maturity_date ? format(parseISO(offer.maturity_date), "d MMM yyyy") : "—"}
+                  </td>
+                  <td className="p-3 pr-4 text-center">
+                    <span className={`inline-block px-2.5 py-1 text-[10px] font-semibold tracking-wide border ${statusBadge(p.status)}`}>
                       {p.status?.toUpperCase() || "ACTIVE"}
                     </span>
                   </td>
@@ -122,7 +130,7 @@ export default function PortalPortfolio() {
             })}
             {currentList.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-[#8a95a5] text-xs">
+                <td colSpan={6} className="p-10 text-center text-muted-foreground text-sm">
                   {tab === "active" ? "No active investments." : "No completed investments yet."}
                 </td>
               </tr>

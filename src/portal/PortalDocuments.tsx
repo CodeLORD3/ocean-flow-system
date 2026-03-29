@@ -1,9 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, Download, Shield, File } from "lucide-react";
+import { FileText, Download, ShieldCheck, Receipt, FolderOpen } from "lucide-react";
 
 export default function PortalDocuments() {
-  // Fetch offers with documents
   const { data: offers = [], isLoading } = useQuery({
     queryKey: ["portal-documents-offers"],
     queryFn: async () => {
@@ -17,7 +16,6 @@ export default function PortalDocuments() {
     },
   });
 
-  // Fetch user's pledges for investment confirmations
   const { data: pledges = [] } = useQuery({
     queryKey: ["portal-documents-pledges"],
     queryFn: async () => {
@@ -31,74 +29,65 @@ export default function PortalDocuments() {
   });
 
   if (isLoading) {
-    return <div className="text-[#0066ff] text-xs animate-pulse p-8 text-center">LOADING DOCUMENTS...</div>;
+    return <div className="text-primary text-sm animate-pulse p-8 text-center">Loading documents...</div>;
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-xl font-bold text-foreground">Documents</h1>
+        <p className="text-sm text-muted-foreground mt-1">Access platform documents, investment confirmations, and offer attachments.</p>
+      </div>
+
       {/* Platform documents */}
-      <div className="border border-[#d0d7e2] bg-white">
-        <div className="h-8 flex items-center px-3 border-b border-[#d0d7e2]">
-          <Shield className="h-3 w-3 text-[#0066ff] mr-1.5" />
-          <span className="text-[10px] text-[#0066ff] tracking-wider font-bold">PLATFORM DOCUMENTS</span>
+      <div className="border border-border bg-white">
+        <div className="h-11 flex items-center gap-2 px-4 border-b border-border">
+          <ShieldCheck className="h-4 w-4 text-primary" />
+          <h2 className="text-sm font-semibold text-foreground">Platform Documents</h2>
         </div>
-        <div className="divide-y divide-[#d0d7e2]">
-          <div className="flex items-center justify-between p-3 hover:bg-[#f4f6f9] transition-colors">
-            <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-[#6b7a8d]" />
-              <div>
-                <div className="text-[11px] text-[#1a2035] font-medium">Terms of Use</div>
-                <div className="text-[9px] text-[#6b7a8d]">Platform terms and conditions</div>
+        <div className="divide-y divide-border">
+          {[
+            { title: "Terms of Use", desc: "Platform terms and conditions" },
+            { title: "Privacy Policy", desc: "How we handle your data" },
+            { title: "Investment Guidelines", desc: "How the platform works and what to expect" },
+          ].map((doc) => (
+            <div key={doc.title} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
+              <div className="flex items-center gap-3">
+                <FileText className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <div className="text-sm text-foreground font-medium">{doc.title}</div>
+                  <div className="text-xs text-muted-foreground">{doc.desc}</div>
+                </div>
               </div>
+              <span className="text-xs text-muted-foreground italic">Coming soon</span>
             </div>
-            <span className="text-[9px] text-[#6b7a8d]">Coming soon</span>
-          </div>
-          <div className="flex items-center justify-between p-3 hover:bg-[#f4f6f9] transition-colors">
-            <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-[#6b7a8d]" />
-              <div>
-                <div className="text-[11px] text-[#1a2035] font-medium">Privacy Policy</div>
-                <div className="text-[9px] text-[#6b7a8d]">Data handling and privacy</div>
-              </div>
-            </div>
-            <span className="text-[9px] text-[#6b7a8d]">Coming soon</span>
-          </div>
-          <div className="flex items-center justify-between p-3 hover:bg-[#f4f6f9] transition-colors">
-            <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-[#6b7a8d]" />
-              <div>
-                <div className="text-[11px] text-[#1a2035] font-medium">Investment Guidelines</div>
-                <div className="text-[9px] text-[#6b7a8d]">How the platform works</div>
-              </div>
-            </div>
-            <span className="text-[9px] text-[#6b7a8d]">Coming soon</span>
-          </div>
+          ))}
         </div>
       </div>
 
       {/* Investment confirmations */}
-      <div className="border border-[#d0d7e2] bg-white">
-        <div className="h-8 flex items-center px-3 border-b border-[#d0d7e2]">
-          <File className="h-3 w-3 text-[#0066ff] mr-1.5" />
-          <span className="text-[10px] text-[#0066ff] tracking-wider font-bold">INVESTMENT CONFIRMATIONS</span>
+      <div className="border border-border bg-white">
+        <div className="h-11 flex items-center gap-2 px-4 border-b border-border">
+          <Receipt className="h-4 w-4 text-primary" />
+          <h2 className="text-sm font-semibold text-foreground">Investment Confirmations</h2>
         </div>
         {pledges.length > 0 ? (
-          <div className="divide-y divide-[#d0d7e2]">
+          <div className="divide-y divide-border">
             {pledges.map((p: any) => (
-              <div key={p.id} className="flex items-center justify-between p-3 hover:bg-[#f4f6f9] transition-colors">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-green-600" />
+              <div key={p.id} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
+                <div className="flex items-center gap-3">
+                  <FileText className="h-5 w-5 text-green-600" />
                   <div>
-                    <div className="text-[11px] text-[#1a2035] font-medium">
-                      Investment — {p.trade_offers?.title || "Offer"}
+                    <div className="text-sm text-foreground font-medium">
+                      {p.trade_offers?.title || "Investment"}
                     </div>
-                    <div className="text-[9px] text-[#6b7a8d]">
+                    <div className="text-xs text-muted-foreground">
                       {Number(p.amount).toLocaleString()} kr · {new Date(p.created_at).toLocaleDateString()}
                     </div>
                   </div>
                 </div>
-                <span className={`inline-block px-2 py-0.5 text-[8px] tracking-wider border ${
-                  p.status === "Active" ? "text-green-600 border-green-200 bg-green-50" : "text-[#6b7a8d] border-gray-200 bg-gray-50"
+                <span className={`px-2.5 py-1 text-[10px] font-semibold border ${
+                  p.status === "Active" ? "text-green-700 border-green-200 bg-green-50" : "text-muted-foreground border-border bg-muted/50"
                 }`}>
                   {p.status?.toUpperCase()}
                 </span>
@@ -106,39 +95,39 @@ export default function PortalDocuments() {
             ))}
           </div>
         ) : (
-          <div className="p-6 text-center text-[#8a95a5] text-xs">No investment confirmations yet.</div>
+          <div className="p-8 text-center text-muted-foreground text-sm">No investment confirmations yet.</div>
         )}
       </div>
 
       {/* Offer documents */}
-      <div className="border border-[#d0d7e2] bg-white">
-        <div className="h-8 flex items-center px-3 border-b border-[#d0d7e2]">
-          <Download className="h-3 w-3 text-[#0066ff] mr-1.5" />
-          <span className="text-[10px] text-[#0066ff] tracking-wider font-bold">OFFER DOCUMENTS</span>
+      <div className="border border-border bg-white">
+        <div className="h-11 flex items-center gap-2 px-4 border-b border-border">
+          <FolderOpen className="h-4 w-4 text-primary" />
+          <h2 className="text-sm font-semibold text-foreground">Offer Documents</h2>
         </div>
         {offers.length > 0 ? (
-          <div className="divide-y divide-[#d0d7e2]">
+          <div className="divide-y divide-border">
             {offers.map((offer: any) => (
               <a
                 key={offer.id}
                 href={offer.document_url}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center justify-between p-3 hover:bg-[#f4f6f9] transition-colors"
+                className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
               >
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-red-500" />
+                <div className="flex items-center gap-3">
+                  <FileText className="h-5 w-5 text-destructive/70" />
                   <div>
-                    <div className="text-[11px] text-[#1a2035] font-medium">{offer.title}</div>
-                    <div className="text-[9px] text-[#6b7a8d]">PDF Document</div>
+                    <div className="text-sm text-foreground font-medium">{offer.title}</div>
+                    <div className="text-xs text-muted-foreground">PDF Document</div>
                   </div>
                 </div>
-                <Download className="h-3.5 w-3.5 text-[#0066ff]" />
+                <Download className="h-4 w-4 text-primary" />
               </a>
             ))}
           </div>
         ) : (
-          <div className="p-6 text-center text-[#8a95a5] text-xs">No offer documents available.</div>
+          <div className="p-8 text-center text-muted-foreground text-sm">No offer documents available.</div>
         )}
       </div>
     </div>
