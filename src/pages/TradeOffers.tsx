@@ -411,6 +411,7 @@ export default function TradeOffers() {
                         <span className="text-[10px]">{getCountryFlag(companyMap[(offer as any).company_id].country)} {companyMap[(offer as any).company_id].name}</span>
                       ) : <span className="text-muted-foreground">—</span>}
                     </TableCell>
+                    <TableCell className="py-1.5 text-right">{target.toLocaleString()} kr</TableCell>
                     <TableCell className="py-1.5 text-right">
                       <div className="space-y-0.5">
                         <span>{funded.toLocaleString()} kr</span>
