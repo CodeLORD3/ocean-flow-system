@@ -68,6 +68,7 @@ function PortalKeepAlive() {
       else if (tab.path === "/portal/archive") component = <PortalArchive />;
       else if (tab.path === "/portal/about") component = <PortalAbout />;
       else if (tab.path === "/portal/how-it-works") component = <PortalHowItWorks />;
+      else if (tab.path === "/portal/contact") component = <PortalContact />;
       else if (tab.path.startsWith("/portal/offer/")) {
         const offerId = tab.path.replace("/portal/offer/", "");
         component = <PortalOfferDetail key={tab.path} overrideId={offerId} />;
