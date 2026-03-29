@@ -1,11 +1,15 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate, useLocation } from "react-router-dom";
-import { BarChart3, Briefcase, History, LogOut, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { BarChart3, Briefcase, History, LogOut, X, Search, FolderOpen, FileText, Bell } from "lucide-react";
 import PortalOnboarding from "./PortalOnboarding";
+import PortalWelcome from "./PortalWelcome";
 import { PortalTabsProvider, usePortalTabs } from "./PortalTabsContext";
 import PortalDashboard from "./PortalDashboard";
+import PortalOpportunities from "./PortalOpportunities";
+import PortalPortfolio from "./PortalPortfolio";
 import PortalCommitments from "./PortalCommitments";
+import PortalDocuments from "./PortalDocuments";
 import PortalArchive from "./PortalArchive";
 import PortalOfferDetail from "./PortalOfferDetail";
 
@@ -53,8 +57,14 @@ function PortalKeepAlive() {
       let component: React.ReactNode = null;
       if (tab.path === "/portal") {
         component = <PortalDashboard />;
+      } else if (tab.path === "/portal/opportunities") {
+        component = <PortalOpportunities />;
+      } else if (tab.path === "/portal/portfolio") {
+        component = <PortalPortfolio />;
       } else if (tab.path === "/portal/commitments") {
         component = <PortalCommitments />;
+      } else if (tab.path === "/portal/documents") {
+        component = <PortalDocuments />;
       } else if (tab.path === "/portal/archive") {
         component = <PortalArchive />;
       } else if (tab.path.startsWith("/portal/offer/")) {
@@ -83,19 +93,32 @@ function PortalInner() {
   const [loading, setLoading] = useState(true);
   const [profileStatus, setProfileStatus] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(false);
   const navigate = useNavigate();
   const { switchTab } = usePortalTabs();
 
   useEffect(() => {
+    // Dev mode: skip auth entirely
     setUser({ id: "dev-user", email: "dev@localhost" } as any);
     setLoading(false);
     setProfileStatus("approved");
     setProfileLoading(false);
+
+    // Check if user has seen the welcome screen
+    const hasSeenWelcome = localStorage.getItem("portal-welcome-seen");
+    if (!hasSeenWelcome) {
+      setShowWelcome(true);
+    }
   }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/portal/login");
+  };
+
+  const handleWelcomeComplete = () => {
+    localStorage.setItem("portal-welcome-seen", "true");
+    setShowWelcome(false);
   };
 
   if (loading || profileLoading) {
@@ -170,8 +193,10 @@ function PortalInner() {
   }
 
   const navItems = [
-    { to: "/portal", icon: BarChart3, label: "OFFERS" },
-    { to: "/portal/commitments", icon: Briefcase, label: "MY COMMITMENTS" },
+    { to: "/portal", icon: BarChart3, label: "DASHBOARD" },
+    { to: "/portal/opportunities", icon: Search, label: "OPPORTUNITIES" },
+    { to: "/portal/portfolio", icon: Briefcase, label: "PORTFOLIO" },
+    { to: "/portal/documents", icon: FileText, label: "DOCUMENTS" },
     { to: "/portal/archive", icon: History, label: "ARCHIVE" },
   ];
 
@@ -194,6 +219,12 @@ function PortalInner() {
           </nav>
         </div>
         <div className="flex items-center gap-3">
+          <button className="relative p-1 text-[#6b7a8d] hover:text-[#0066ff] transition-colors">
+            <Bell className="h-4 w-4" />
+            <span className="absolute -top-0.5 -right-0.5 h-3 w-3 bg-red-500 text-white text-[7px] font-bold flex items-center justify-center">
+              0
+            </span>
+          </button>
           <span className="text-[10px] text-[#6b7a8d]">{user.email}</span>
           <button
             onClick={handleLogout}
@@ -208,11 +239,15 @@ function PortalInner() {
       <PortalTabBar />
 
       <main className="flex-1 overflow-auto p-4">
-        <PortalKeepAlive />
+        {showWelcome ? (
+          <PortalWelcome onComplete={handleWelcomeComplete} />
+        ) : (
+          <PortalKeepAlive />
+        )}
       </main>
 
       <footer className="h-6 flex items-center justify-between border-t border-[#d0d7e2] px-4 text-[9px] text-[#8a95a5] bg-white">
-        <span>TRADE PORTAL v1.0</span>
+        <span>TRADE PORTAL v2.0</span>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1">
             <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />

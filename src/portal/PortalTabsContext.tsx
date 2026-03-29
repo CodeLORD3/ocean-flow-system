@@ -7,8 +7,11 @@ export interface PortalTab {
 }
 
 const PORTAL_TITLES: Record<string, string> = {
-  "/portal": "Offers",
+  "/portal": "Dashboard",
+  "/portal/opportunities": "Opportunities",
+  "/portal/portfolio": "Portfolio",
   "/portal/commitments": "My Commitments",
+  "/portal/documents": "Documents",
   "/portal/archive": "Archive",
 };
 
@@ -32,7 +35,7 @@ export function PortalTabsProvider({ children }: { children: React.ReactNode }) 
   const location = useLocation();
   const navigate = useNavigate();
   const [tabs, setTabs] = useState<PortalTab[]>([
-    { path: "/portal", title: "Offers" },
+    { path: "/portal", title: "Dashboard" },
   ]);
   const [activeTab, setActiveTab] = useState(location.pathname);
 
@@ -79,13 +82,6 @@ export function PortalTabsProvider({ children }: { children: React.ReactNode }) 
     },
     [navigate]
   );
-
-  // Update tab title when offer detail loads
-  const updateTabTitle = useCallback((path: string, title: string) => {
-    setTabs((prev) =>
-      prev.map((t) => (t.path === path ? { ...t, title } : t))
-    );
-  }, []);
 
   return (
     <PortalTabsContext.Provider value={{ tabs, activeTab, closeTab, switchTab, openOfferTab }}>
