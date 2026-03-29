@@ -15,6 +15,7 @@ import PortalOfferDetail from "./PortalOfferDetail";
 import PortalAbout from "./PortalAbout";
 import PortalHowItWorks from "./PortalHowItWorks";
 import PortalContact from "./PortalContact";
+import PortalTeam from "./PortalTeam";
 
 function PortalTabBar() {
   const { tabs, activeTab, switchTab, closeTab } = usePortalTabs();
