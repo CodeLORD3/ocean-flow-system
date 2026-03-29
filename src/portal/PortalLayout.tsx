@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { LayoutDashboard, Search, Briefcase, FileText, Archive, LogOut, X, Bell, User, ChevronRight, Info, BookOpen } from "lucide-react";
+import { LayoutDashboard, Search, Briefcase, FileText, Archive, LogOut, X, Bell, User, ChevronRight, Info, BookOpen, Users } from "lucide-react";
 import PortalOnboarding from "./PortalOnboarding";
 import PortalWelcome from "./PortalWelcome";
 import { PortalTabsProvider, usePortalTabs } from "./PortalTabsContext";
@@ -15,6 +15,7 @@ import PortalOfferDetail from "./PortalOfferDetail";
 import PortalAbout from "./PortalAbout";
 import PortalHowItWorks from "./PortalHowItWorks";
 import PortalContact from "./PortalContact";
+import PortalTeam from "./PortalTeam";
 
 function PortalTabBar() {
   const { tabs, activeTab, switchTab, closeTab } = usePortalTabs();
@@ -67,6 +68,7 @@ function PortalKeepAlive() {
       else if (tab.path === "/portal/documents") component = <PortalDocuments />;
       else if (tab.path === "/portal/archive") component = <PortalArchive />;
       else if (tab.path === "/portal/about") component = <PortalAbout />;
+      else if (tab.path === "/portal/team") component = <PortalTeam />;
       else if (tab.path === "/portal/how-it-works") component = <PortalHowItWorks />;
       else if (tab.path === "/portal/contact") component = <PortalContact />;
       else if (tab.path.startsWith("/portal/offer/")) {
@@ -183,6 +185,7 @@ function PortalInner() {
     { to: "/portal/opportunities", icon: Search, label: "Opportunities" },
     { to: "/portal/portfolio", icon: Briefcase, label: "My Investments" },
     { to: "/portal/archive", icon: Archive, label: "Archive" },
+    { to: "/portal/team", icon: Users, label: "Team" },
   ];
 
   return (
