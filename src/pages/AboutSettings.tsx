@@ -91,6 +91,21 @@ export default function AboutSettings() {
     setValues(copy);
   };
 
+  const [uploading, setUploading] = useState<number | null>(null);
+
+  const uploadPhoto = async (i: number, file: File) => {
+    setUploading(i);
+    const ext = file.name.split(".").pop();
+    const path = `team/${Date.now()}_${i}.${ext}`;
+    const { error } = await supabase.storage.from("logos").upload(path, file, { upsert: true });
+    if (error) { toast.error("Upload failed"); setUploading(null); return; }
+    const { data: urlData } = supabase.storage.from("logos").getPublicUrl(path);
+    const copy = [...team];
+    copy[i] = { ...copy[i], image_url: urlData.publicUrl };
+    setTeam(copy);
+    setUploading(null);
+  };
+
   const addTeamMember = () => setTeam([...team, { name: "", role: "", desc: "" }]);
   const removeTeamMember = (i: number) => setTeam(team.filter((_, idx) => idx !== i));
   const updateTeamMember = (i: number, field: keyof TeamMember, v: string) => {
