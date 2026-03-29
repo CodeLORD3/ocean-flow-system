@@ -113,7 +113,7 @@ export default function PortalDashboard() {
                 return (
                   <tr
                     key={offer.id}
-                    onClick={() => navigate(`/portal/offer/${offer.id}`)}
+                    onClick={() => openOfferTab(offer.id, offer.title)}
                     className="border-b border-[#d0d7e2]/50 hover:bg-[#0066ff]/5 cursor-pointer transition-colors"
                   >
                     <td className="p-2 pl-3 text-[#1a2035] font-medium">{offer.title}</td>
@@ -181,7 +181,7 @@ export default function PortalDashboard() {
                   return (
                     <tr
                       key={offer.id}
-                      onClick={() => navigate(`/portal/offer/${offer.id}`)}
+                      onClick={() => openOfferTab(offer.id, offer.title)}
                       className="border-b border-[#d0d7e2]/50 hover:bg-[#0066ff]/5 cursor-pointer transition-colors"
                     >
                       <td className="p-2 pl-3 text-[#1a2035] font-medium">{offer.title}</td>
