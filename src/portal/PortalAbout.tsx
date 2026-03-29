@@ -77,7 +77,7 @@ export default function PortalAbout() {
           {team.map((person: any, i: number) => (
             <div key={i} className="border border-border p-5 text-center space-y-2">
               {person.image_url ? (
-                <img src={person.image_url} className="h-14 w-14 rounded-full object-cover mx-auto border border-border" />
+                <img src={person.image_url} className="h-14 w-14 rounded-full object-cover mx-auto border border-border" style={{ objectPosition: person.image_position || "center" }} />
               ) : (
                 <div className="h-14 w-14 bg-muted mx-auto flex items-center justify-center rounded-full">
                   <Users className="h-6 w-6 text-muted-foreground" />
