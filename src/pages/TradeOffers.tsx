@@ -22,6 +22,7 @@ const EMPTY_FORM = {
   origin: "", volume: "", purchase_price: "", sales_value: "",
   gross_margin: "", collateral: "Inventory", ltv: "",
   primary_exit: "", secondary_exit: "", downside: "",
+  company_id: "",
 };
 
 export default function TradeOffers() {
