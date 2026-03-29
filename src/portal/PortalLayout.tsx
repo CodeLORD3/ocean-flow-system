@@ -36,7 +36,7 @@ export default function PortalLayout() {
 
   // Check investor profile status
   useEffect(() => {
-    if (!user) return;
+    if (!user || isDevMode) return;
     const checkProfile = async () => {
       setProfileLoading(true);
       const { data, error } = await supabase
