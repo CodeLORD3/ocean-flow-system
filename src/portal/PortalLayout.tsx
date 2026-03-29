@@ -19,28 +19,7 @@ export default function PortalLayout() {
     setProfileLoading(false);
   }, []);
 
-  // Check investor profile status (skipped in dev mode)
-  useEffect(() => {
-    if (!user) return;
-    const checkProfile = async () => {
-      setProfileLoading(true);
-      const { data, error } = await supabase
-        .from("investor_profiles" as any)
-        .select("status")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (error) {
-        console.error("Profile check error:", error);
-        setProfileStatus(null);
-      } else if (data) {
-        setProfileStatus((data as any).status);
-      } else {
-        setProfileStatus(null); // no profile yet
-      }
-      setProfileLoading(false);
-    };
-    checkProfile();
-  }, [user]);
+  // Profile check disabled during development
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
