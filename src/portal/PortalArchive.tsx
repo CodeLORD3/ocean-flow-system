@@ -21,13 +21,13 @@ export default function PortalArchive() {
 
   return (
     <div className="space-y-4">
-      <div className="border border-[#1a2035] bg-[#0d1220]">
-        <div className="h-8 flex items-center px-3 border-b border-[#1a2035]">
+      <div className="border border-[#d0d7e2] bg-white">
+        <div className="h-8 flex items-center px-3 border-b border-[#d0d7e2]">
           <span className="text-[10px] text-[#0066ff] tracking-wider font-bold">OFFER ARCHIVE</span>
         </div>
         <table className="w-full text-[11px]">
           <thead>
-            <tr className="border-b border-[#1a2035] text-[9px] text-[#5a6a7a] tracking-wider">
+            <tr className="border-b border-[#d0d7e2] text-[9px] text-[#6b7a8d] tracking-wider">
               <th className="text-left p-2 pl-3">PRODUCT</th>
               <th className="text-right p-2">TARGET</th>
               <th className="text-right p-2">FUNDED</th>
@@ -38,12 +38,12 @@ export default function PortalArchive() {
           </thead>
           <tbody>
             {offers.map((offer) => (
-              <tr key={offer.id} className="border-b border-[#1a2035]/50 hover:bg-[#0066ff]/5 transition-colors">
-                <td className="p-2 pl-3 text-[#c8d6e5]">{offer.title}</td>
-                <td className="p-2 text-right text-[#c8d6e5]">{Number(offer.target_amount).toLocaleString()} kr</td>
-                <td className="p-2 text-right text-[#c8d6e5]">{Number(offer.funded_amount).toLocaleString()} kr</td>
+              <tr key={offer.id} className="border-b border-[#d0d7e2]/50 hover:bg-[#0066ff]/5 transition-colors">
+                <td className="p-2 pl-3 text-[#1a2035]">{offer.title}</td>
+                <td className="p-2 text-right text-[#1a2035]">{Number(offer.target_amount).toLocaleString()} kr</td>
+                <td className="p-2 text-right text-[#1a2035]">{Number(offer.funded_amount).toLocaleString()} kr</td>
                 <td className="p-2 text-right text-green-400">{Number(offer.interest_rate).toFixed(1)}%</td>
-                <td className="p-2 text-[#5a6a7a]">{offer.maturity_date}</td>
+                <td className="p-2 text-[#6b7a8d]">{offer.maturity_date}</td>
                 <td className="p-2 pr-3 text-center">
                   <span className={`inline-block px-2 py-0.5 text-[9px] tracking-wider border ${
                     offer.status === "Repaid" ? "text-green-400 border-green-400/30 bg-green-400/10" :
@@ -56,7 +56,7 @@ export default function PortalArchive() {
             ))}
             {offers.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-[#3a4a5a] text-xs">
+                <td colSpan={6} className="p-8 text-center text-[#8a95a5] text-xs">
                   NO ARCHIVED OFFERS
                 </td>
               </tr>

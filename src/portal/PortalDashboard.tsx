@@ -40,7 +40,7 @@ export default function PortalDashboard() {
       case "Funded": return "text-[#0066ff] bg-[#0066ff]/10 border-[#0066ff]/30";
       case "Closed": return "text-red-400 bg-red-400/10 border-red-400/30";
       case "Repaid": return "text-green-400 bg-green-400/10 border-green-400/30";
-      default: return "text-[#5a6a7a] bg-[#1a2035] border-[#1a2035]";
+      default: return "text-[#6b7a8d] bg-[#1a2035] border-[#d0d7e2]";
     }
   };
 
@@ -75,25 +75,25 @@ export default function PortalDashboard() {
           { icon: TrendingUp, label: "AVG RATE", value: offers.length ? `${(offers.reduce((s, o) => s + Number(o.interest_rate), 0) / offers.length).toFixed(1)}%` : "—" },
           { icon: Clock, label: "FUNDED", value: offers.filter(o => o.status === "Funded").length },
         ].map((stat) => (
-          <div key={stat.label} className="border border-[#1a2035] bg-[#0d1220] p-3">
+          <div key={stat.label} className="border border-[#d0d7e2] bg-white p-3">
             <div className="flex items-center gap-1.5 mb-1">
               <stat.icon className="h-3 w-3 text-[#0066ff]" />
-              <span className="text-[9px] text-[#5a6a7a] tracking-wider">{stat.label}</span>
+              <span className="text-[9px] text-[#6b7a8d] tracking-wider">{stat.label}</span>
             </div>
-            <span className="text-lg font-bold text-[#c8d6e5]">{stat.value}</span>
+            <span className="text-lg font-bold text-[#1a2035]">{stat.value}</span>
           </div>
         ))}
       </div>
 
       {/* Active Offers table — full columns matching admin */}
-      <div className="border border-[#1a2035] bg-[#0d1220]">
-        <div className="h-8 flex items-center px-3 border-b border-[#1a2035]">
+      <div className="border border-[#d0d7e2] bg-white">
+        <div className="h-8 flex items-center px-3 border-b border-[#d0d7e2]">
           <span className="text-[10px] text-[#0066ff] tracking-wider font-bold">ACTIVE TRADE OFFERS</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-[11px] min-w-[900px]">
             <thead>
-              <tr className="border-b border-[#1a2035] text-[9px] text-[#5a6a7a] tracking-wider">
+              <tr className="border-b border-[#d0d7e2] text-[9px] text-[#6b7a8d] tracking-wider">
                 <th className="text-left p-2 pl-3">PRODUCT</th>
                 <th className="text-right p-2">INVESTMENT</th>
                 <th className="text-right p-2">FINANCED</th>
@@ -114,26 +114,26 @@ export default function PortalDashboard() {
                   <tr
                     key={offer.id}
                     onClick={() => navigate(`/portal/offer/${offer.id}`)}
-                    className="border-b border-[#1a2035]/50 hover:bg-[#0066ff]/5 cursor-pointer transition-colors"
+                    className="border-b border-[#d0d7e2]/50 hover:bg-[#0066ff]/5 cursor-pointer transition-colors"
                   >
-                    <td className="p-2 pl-3 text-[#c8d6e5] font-medium">{offer.title}</td>
-                    <td className="p-2 text-right text-[#c8d6e5]">{r.target.toLocaleString()} kr</td>
+                    <td className="p-2 pl-3 text-[#1a2035] font-medium">{offer.title}</td>
+                    <td className="p-2 text-right text-[#1a2035]">{r.target.toLocaleString()} kr</td>
                     <td className="p-2 text-right">
-                      <div className="text-[#c8d6e5]">{r.funded.toLocaleString()} kr</div>
+                      <div className="text-[#1a2035]">{r.funded.toLocaleString()} kr</div>
                       <div className="flex items-center gap-1 justify-end mt-0.5">
                         <div className="w-12 h-1 bg-[#1a2035] overflow-hidden">
                           <div className="h-full bg-[#0066ff]" style={{ width: `${r.progress}%` }} />
                         </div>
-                        <span className="text-[8px] text-[#5a6a7a]">{r.progress.toFixed(0)}%</span>
+                        <span className="text-[8px] text-[#6b7a8d]">{r.progress.toFixed(0)}%</span>
                       </div>
                     </td>
                     <td className="p-2 text-right text-green-400 font-bold">{r.rate.toFixed(1)}%</td>
-                    <td className="p-2 text-right text-[#c8d6e5]">{r.profitKr.toLocaleString()} kr</td>
-                    <td className="p-2 text-right text-[#c8d6e5]">{r.totalPayout.toLocaleString()} kr</td>
-                    <td className="p-2 text-right text-[#c8d6e5]">{r.annualReturn ? `${r.annualReturn}%` : "—"}</td>
-                    <td className="p-2 text-[#5a6a7a]">{offer.purchase_date || "—"}</td>
-                    <td className="p-2 text-[#5a6a7a]">{offer.maturity_date}</td>
-                    <td className="p-2 text-right font-bold text-[#c8d6e5]">{r.daysLeft !== null ? r.daysLeft : "—"}</td>
+                    <td className="p-2 text-right text-[#1a2035]">{r.profitKr.toLocaleString()} kr</td>
+                    <td className="p-2 text-right text-[#1a2035]">{r.totalPayout.toLocaleString()} kr</td>
+                    <td className="p-2 text-right text-[#1a2035]">{r.annualReturn ? `${r.annualReturn}%` : "—"}</td>
+                    <td className="p-2 text-[#6b7a8d]">{offer.purchase_date || "—"}</td>
+                    <td className="p-2 text-[#6b7a8d]">{offer.maturity_date}</td>
+                    <td className="p-2 text-right font-bold text-[#1a2035]">{r.daysLeft !== null ? r.daysLeft : "—"}</td>
                     <td className="p-2 pr-3 text-center">
                       <span className={`inline-block px-2 py-0.5 text-[9px] tracking-wider border ${statusColor(offer.status)}`}>
                         {offer.status.toUpperCase()}
@@ -144,7 +144,7 @@ export default function PortalDashboard() {
               })}
               {offers.length === 0 && (
                 <tr>
-                  <td colSpan={11} className="p-8 text-center text-[#3a4a5a] text-xs">
+                  <td colSpan={11} className="p-8 text-center text-[#8a95a5] text-xs">
                     NO ACTIVE OFFERS
                   </td>
                 </tr>
@@ -156,15 +156,15 @@ export default function PortalDashboard() {
 
       {/* Past offers */}
       {pastOffers.length > 0 && (
-        <div className="border border-[#1a2035] bg-[#0d1220]">
-          <div className="h-8 flex items-center px-3 border-b border-[#1a2035]">
+        <div className="border border-[#d0d7e2] bg-white">
+          <div className="h-8 flex items-center px-3 border-b border-[#d0d7e2]">
             <CheckCircle className="h-3 w-3 text-green-400 mr-1.5" />
-            <span className="text-[10px] text-[#5a6a7a] tracking-wider font-bold">TIDIGARE ERBJUDANDEN</span>
+            <span className="text-[10px] text-[#6b7a8d] tracking-wider font-bold">TIDIGARE ERBJUDANDEN</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-[11px] min-w-[900px]">
               <thead>
-                <tr className="border-b border-[#1a2035] text-[9px] text-[#5a6a7a] tracking-wider">
+                <tr className="border-b border-[#d0d7e2] text-[9px] text-[#6b7a8d] tracking-wider">
                   <th className="text-left p-2 pl-3">PRODUCT</th>
                   <th className="text-right p-2">INVESTMENT</th>
                   <th className="text-right p-2">RETURN %</th>
@@ -182,15 +182,15 @@ export default function PortalDashboard() {
                     <tr
                       key={offer.id}
                       onClick={() => navigate(`/portal/offer/${offer.id}`)}
-                      className="border-b border-[#1a2035]/50 hover:bg-[#0066ff]/5 cursor-pointer transition-colors"
+                      className="border-b border-[#d0d7e2]/50 hover:bg-[#0066ff]/5 cursor-pointer transition-colors"
                     >
-                      <td className="p-2 pl-3 text-[#c8d6e5] font-medium">{offer.title}</td>
-                      <td className="p-2 text-right text-[#c8d6e5]">{r.target.toLocaleString()} kr</td>
+                      <td className="p-2 pl-3 text-[#1a2035] font-medium">{offer.title}</td>
+                      <td className="p-2 text-right text-[#1a2035]">{r.target.toLocaleString()} kr</td>
                       <td className="p-2 text-right text-green-400 font-bold">{r.rate.toFixed(1)}%</td>
-                      <td className="p-2 text-right text-[#c8d6e5]">{r.profitKr.toLocaleString()} kr</td>
-                      <td className="p-2 text-right text-[#c8d6e5]">{r.totalPayout.toLocaleString()} kr</td>
-                      <td className="p-2 text-right text-[#c8d6e5]">{r.annualReturn ? `${r.annualReturn}%` : "—"}</td>
-                      <td className="p-2 text-[#5a6a7a]">{offer.maturity_date}</td>
+                      <td className="p-2 text-right text-[#1a2035]">{r.profitKr.toLocaleString()} kr</td>
+                      <td className="p-2 text-right text-[#1a2035]">{r.totalPayout.toLocaleString()} kr</td>
+                      <td className="p-2 text-right text-[#1a2035]">{r.annualReturn ? `${r.annualReturn}%` : "—"}</td>
+                      <td className="p-2 text-[#6b7a8d]">{offer.maturity_date}</td>
                       <td className="p-2 pr-3 text-center">
                         <span className={`inline-block px-2 py-0.5 text-[9px] tracking-wider border ${statusColor(offer.status)}`}>
                           {offer.status === "Repaid" ? "ÅTERBETALD" : offer.status.toUpperCase()}
