@@ -153,8 +153,8 @@ export default function PortalOpportunities() {
                 </div>
 
                 {company && (
-                  <p className="text-[10px] text-muted-foreground mb-1.5">
-                    {getCountryFlag(company.country)} {company.name}
+                  <p className="text-[10px] text-muted-foreground mb-1.5 flex items-center gap-1">
+                    <CountryFlag country={company.country} size={14} /> {company.name}
                   </p>
                 )}
 
