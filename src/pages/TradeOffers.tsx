@@ -203,6 +203,27 @@ export default function TradeOffers() {
             <div>
               <h3 className="text-xs font-bold text-muted-foreground tracking-wider mb-2">DEAL SUMMARY</h3>
               <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1 col-span-2">
+                  <label className="text-[10px] text-muted-foreground">Company *</label>
+                  <Select value={form.company_id} onValueChange={v => setForm({...form, company_id: v})}>
+                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select company..." /></SelectTrigger>
+                    <SelectContent>
+                      {companies.map((c: any) => (
+                        <SelectItem key={c.id} value={c.id} className="text-xs">
+                          {getCountryFlag(c.country)} {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {form.company_id && companyMap[form.company_id] && (
+                    <div className="flex items-center gap-2 mt-1 p-2 bg-muted/50 border border-border text-xs">
+                      {companyMap[form.company_id].logo_url && (
+                        <img src={companyMap[form.company_id].logo_url} alt="" className="h-6 w-6 object-contain rounded" />
+                      )}
+                      <span className="font-medium">{getCountryFlag(companyMap[form.company_id].country)} {companyMap[form.company_id].name}</span>
+                    </div>
+                  )}
+                </div>
                 <FormField label="Produkt (Titel)" value={form.title} onChange={v => setForm({...form, title: v})} />
                 <FormField label="Product-ID" value={form.product_id_display} onChange={v => setForm({...form, product_id_display: v})} placeholder="t.ex. SF-2024-001" />
                 <FormField label="Sektor" value={form.sector} onChange={v => setForm({...form, sector: v})} />
