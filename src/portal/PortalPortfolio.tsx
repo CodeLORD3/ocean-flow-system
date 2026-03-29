@@ -111,17 +111,17 @@ export default function PortalPortfolio() {
                 <tr
                   key={p.id}
                   onClick={() => offer && openOfferTab(offer.id, offer.title)}
-                  className="border-b border-border/50 hover:bg-muted/30 cursor-pointer transition-colors"
+                  className="border-b border-border/50 hover:bg-muted/30 cursor-pointer transition-colors h-8"
                 >
-                  <td className="p-3 pl-4 text-foreground font-medium">{offer?.title || "—"}</td>
-                  <td className="p-3 text-right text-foreground font-mono">{Number(p.amount).toLocaleString()} kr</td>
-                  <td className="p-3 text-right text-green-600 font-semibold">{rate.toFixed(1)}%</td>
-                  <td className="p-3 text-right text-foreground font-semibold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</td>
-                  <td className="p-3 text-muted-foreground">
+                  <td className="p-2 pl-3 text-foreground font-medium">{offer?.title || "—"}</td>
+                  <td className="p-2 text-right text-foreground font-mono">{Number(p.amount).toLocaleString()} kr</td>
+                  <td className="p-2 text-right text-green-600 font-semibold">{rate.toFixed(1)}%</td>
+                  <td className="p-2 text-right text-foreground font-semibold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</td>
+                  <td className="p-2 text-muted-foreground">
                     {offer?.maturity_date ? format(parseISO(offer.maturity_date), "d MMM yyyy") : "—"}
                   </td>
-                  <td className="p-3 pr-4 text-center">
-                    <span className={`inline-block px-2.5 py-1 text-[10px] font-semibold tracking-wide border ${statusBadge(p.status)}`}>
+                  <td className="p-2 pr-3 text-center">
+                    <span className={`inline-block px-2 py-0.5 text-[9px] font-semibold tracking-wide border ${statusBadge(p.status)}`}>
                       {p.status?.toUpperCase() || "ACTIVE"}
                     </span>
                   </td>
