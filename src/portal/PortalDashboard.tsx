@@ -57,45 +57,44 @@ export default function PortalDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Welcome */}
       <div>
-        <h1 className="text-xl font-bold text-foreground">Welcome back</h1>
-        <p className="text-sm text-muted-foreground mt-1">Here's a summary of your investment activity.</p>
+        <h1 className="text-base font-bold text-foreground">Welcome back</h1>
+        <p className="text-xs text-muted-foreground mt-0.5">Here's a summary of your investment activity.</p>
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-4 gap-3">
         {[
           { icon: DollarSign, label: "Total Invested", value: `${totalInvested.toLocaleString()} kr`, sub: `Across ${pledges.length} investment${pledges.length !== 1 ? "s" : ""}`, accent: "text-primary" },
           { icon: TrendingUp, label: "Returns Earned", value: `${totalReturns.toLocaleString()} kr`, sub: expectedActiveReturns > 0 ? `+${expectedActiveReturns.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr pending` : "No completed deals yet", accent: "text-green-600" },
           { icon: Target, label: "Active Investments", value: activePledges.length.toString(), sub: activePledges.length > 0 ? "Currently earning returns" : "No active deals", accent: "text-primary" },
           { icon: Wallet, label: "Available Balance", value: "0 kr", sub: "Ready to invest", accent: "text-foreground" },
         ].map((stat) => (
-          <div key={stat.label} className="border border-border bg-white p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs text-muted-foreground font-medium">{stat.label}</span>
-              <stat.icon className={`h-4 w-4 ${stat.accent} opacity-60`} />
+          <div key={stat.label} className="border border-border bg-white p-3">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] text-muted-foreground font-medium">{stat.label}</span>
+              <stat.icon className={`h-3.5 w-3.5 ${stat.accent} opacity-60`} />
             </div>
-            <div className={`text-2xl font-bold ${stat.accent} font-mono`}>{stat.value}</div>
-            <p className="text-[11px] text-muted-foreground mt-1">{stat.sub}</p>
+            <div className={`text-lg font-bold ${stat.accent} font-mono`}>{stat.value}</div>
+            <p className="text-[10px] text-muted-foreground mt-0.5">{stat.sub}</p>
           </div>
         ))}
       </div>
 
-      {/* Empty state if no investments */}
       {!hasInvestments && (
-        <div className="border border-primary/20 bg-primary/5 p-8 text-center space-y-4">
-          <Search className="h-10 w-10 text-primary mx-auto opacity-60" />
+        <div className="border border-primary/20 bg-primary/5 p-5 text-center space-y-3">
+          <Search className="h-8 w-8 text-primary mx-auto opacity-60" />
           <div>
-            <h2 className="text-lg font-semibold text-foreground">Start Your First Investment</h2>
-            <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
+            <h2 className="text-sm font-semibold text-foreground">Start Your First Investment</h2>
+            <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
               Browse our curated trade finance opportunities and earn attractive returns on short-term investments backed by real goods.
             </p>
           </div>
           <button
             onClick={() => switchTab("/portal/opportunities")}
-            className="h-10 px-6 bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors inline-flex items-center gap-2"
+            className="h-8 px-4 bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors inline-flex items-center gap-1.5"
           >
             Browse Opportunities <ArrowRight className="h-4 w-4" />
           </button>
@@ -105,24 +104,24 @@ export default function PortalDashboard() {
       {/* Active investments table */}
       {hasInvestments && (
         <div className="border border-border bg-white">
-          <div className="h-11 flex items-center justify-between px-4 border-b border-border">
-            <h2 className="text-sm font-semibold text-foreground">Your Active Investments</h2>
+        <div className="h-9 flex items-center justify-between px-3 border-b border-border">
+            <h2 className="text-xs font-semibold text-foreground">Your Active Investments</h2>
             <button
               onClick={() => switchTab("/portal/portfolio")}
-              className="text-xs text-primary hover:underline flex items-center gap-1"
+              className="text-[11px] text-primary hover:underline flex items-center gap-1"
             >
               View all <ArrowUpRight className="h-3 w-3" />
             </button>
           </div>
-          <table className="w-full text-sm">
+          <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-border text-xs text-muted-foreground">
-                <th className="text-left p-3 pl-4 font-medium">Offer</th>
-                <th className="text-right p-3 font-medium">Invested</th>
-                <th className="text-right p-3 font-medium">Return</th>
-                <th className="text-right p-3 font-medium">Expected Payout</th>
-                <th className="text-left p-3 font-medium">Maturity</th>
-                <th className="text-center p-3 pr-4 font-medium">Status</th>
+              <tr className="border-b border-border text-[10px] text-muted-foreground">
+                <th className="text-left p-2 pl-3 font-medium">Offer</th>
+                <th className="text-right p-2 font-medium">Invested</th>
+                <th className="text-right p-2 font-medium">Return</th>
+                <th className="text-right p-2 font-medium">Expected Payout</th>
+                <th className="text-left p-2 font-medium">Maturity</th>
+                <th className="text-center p-2 pr-3 font-medium">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -134,17 +133,17 @@ export default function PortalDashboard() {
                   <tr
                     key={p.id}
                     onClick={() => offer && openOfferTab(offer.id, offer.title)}
-                    className="border-b border-border/50 hover:bg-muted/30 cursor-pointer transition-colors"
+                    className="border-b border-border/50 hover:bg-muted/30 cursor-pointer transition-colors h-8"
                   >
-                    <td className="p-3 pl-4 text-foreground font-medium">{offer?.title || "—"}</td>
-                    <td className="p-3 text-right text-foreground font-mono">{Number(p.amount).toLocaleString()} kr</td>
-                    <td className="p-3 text-right text-green-600 font-semibold">{rate.toFixed(1)}%</td>
-                    <td className="p-3 text-right text-foreground font-semibold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</td>
-                    <td className="p-3 text-muted-foreground">
+                    <td className="p-2 pl-3 text-foreground font-medium">{offer?.title || "—"}</td>
+                    <td className="p-2 text-right text-foreground font-mono">{Number(p.amount).toLocaleString()} kr</td>
+                    <td className="p-2 text-right text-green-600 font-semibold">{rate.toFixed(1)}%</td>
+                    <td className="p-2 text-right text-foreground font-semibold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</td>
+                    <td className="p-2 text-muted-foreground">
                       {offer?.maturity_date ? format(parseISO(offer.maturity_date), "d MMM yyyy") : "—"}
                     </td>
-                    <td className="p-3 pr-4 text-center">
-                      <span className="inline-block px-2.5 py-1 text-[10px] font-semibold tracking-wide border text-green-700 border-green-200 bg-green-50">
+                    <td className="p-2 pr-3 text-center">
+                      <span className="inline-block px-2 py-0.5 text-[9px] font-semibold tracking-wide border text-green-700 border-green-200 bg-green-50">
                         ACTIVE
                       </span>
                     </td>
@@ -153,7 +152,7 @@ export default function PortalDashboard() {
               })}
               {activePledges.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-muted-foreground text-sm">
+                  <td colSpan={6} className="p-5 text-center text-muted-foreground text-xs">
                     No active investments.{" "}
                     <button onClick={() => switchTab("/portal/opportunities")} className="text-primary hover:underline font-medium">
                       Browse opportunities
@@ -168,16 +167,16 @@ export default function PortalDashboard() {
 
       {/* New opportunities */}
       <div className="border border-border bg-white">
-        <div className="h-11 flex items-center justify-between px-4 border-b border-border">
-          <h2 className="text-sm font-semibold text-foreground">New Opportunities</h2>
+        <div className="h-9 flex items-center justify-between px-3 border-b border-border">
+          <h2 className="text-xs font-semibold text-foreground">New Opportunities</h2>
           <button
             onClick={() => switchTab("/portal/opportunities")}
-            className="text-xs text-primary hover:underline flex items-center gap-1"
+            className="text-[11px] text-primary hover:underline flex items-center gap-1"
           >
             Browse all <ArrowUpRight className="h-3 w-3" />
           </button>
         </div>
-        <div className="p-4 grid grid-cols-3 gap-4">
+        <div className="p-3 grid grid-cols-3 gap-3">
           {newOpportunities.map((offer) => {
             const target = Number(offer.target_amount) || 0;
             const funded = Number(offer.funded_amount) || 0;
@@ -190,10 +189,10 @@ export default function PortalDashboard() {
               <div
                 key={offer.id}
                 onClick={() => openOfferTab(offer.id, offer.title)}
-                className="border border-border p-5 hover:border-primary hover:shadow-sm cursor-pointer transition-all group"
+                className="border border-border p-3 hover:border-primary hover:shadow-sm cursor-pointer transition-all group"
               >
-                <div className="flex items-start justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors leading-snug pr-2">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors leading-snug pr-2">
                     {offer.title}
                   </h3>
                   <span className={`shrink-0 px-2 py-0.5 text-[10px] font-semibold border ${
@@ -206,10 +205,10 @@ export default function PortalDashboard() {
                 </div>
 
                 {offer.description && (
-                  <p className="text-xs text-muted-foreground mb-4 line-clamp-2 leading-relaxed">{offer.description}</p>
+                  <p className="text-[11px] text-muted-foreground mb-3 line-clamp-2 leading-relaxed">{offer.description}</p>
                 )}
 
-                <div className="space-y-2 mb-4">
+                <div className="space-y-1.5 mb-3">
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground">Funding progress</span>
                     <span className="text-foreground font-semibold">{progress.toFixed(0)}%</span>
@@ -223,14 +222,14 @@ export default function PortalDashboard() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-border">
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border">
                   <div>
-                    <div className="text-[11px] text-muted-foreground mb-0.5">Expected Return</div>
-                    <div className="text-base font-bold text-green-600">{rate.toFixed(1)}%</div>
+                    <div className="text-[10px] text-muted-foreground">Expected Return</div>
+                    <div className="text-sm font-bold text-green-600">{rate.toFixed(1)}%</div>
                   </div>
                   <div>
-                    <div className="text-[11px] text-muted-foreground mb-0.5">Time Remaining</div>
-                    <div className="text-base font-bold text-foreground">{daysLeft !== null ? `${daysLeft} days` : "—"}</div>
+                    <div className="text-[10px] text-muted-foreground">Time Remaining</div>
+                    <div className="text-sm font-bold text-foreground">{daysLeft !== null ? `${daysLeft} days` : "—"}</div>
                   </div>
                 </div>
               </div>

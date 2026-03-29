@@ -49,38 +49,38 @@ export default function PortalPortfolio() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-foreground">My Investments</h1>
-        <p className="text-sm text-muted-foreground mt-1">Track all your active and completed investments.</p>
+        <h1 className="text-base font-bold text-foreground">My Investments</h1>
+        <p className="text-xs text-muted-foreground mt-0.5">Track all your active and completed investments.</p>
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-4 gap-3">
         {[
           { icon: DollarSign, label: "Total Invested", value: `${totalInvested.toLocaleString()} kr`, color: "text-primary" },
           { icon: TrendingUp, label: "Expected Payout", value: `${totalExpectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr`, color: "text-green-600" },
           { icon: Target, label: "Expected Profit", value: `+${totalProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr`, color: "text-green-600" },
           { icon: Percent, label: "Average Return", value: `${avgRate.toFixed(1)}%`, color: "text-primary" },
         ].map((stat) => (
-          <div key={stat.label} className="border border-border bg-white p-5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs text-muted-foreground font-medium">{stat.label}</span>
-              <stat.icon className={`h-4 w-4 ${stat.color} opacity-60`} />
+          <div key={stat.label} className="border border-border bg-white p-3">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] text-muted-foreground font-medium">{stat.label}</span>
+              <stat.icon className={`h-3.5 w-3.5 ${stat.color} opacity-60`} />
             </div>
-            <span className={`text-xl font-bold font-mono ${stat.color}`}>{stat.value}</span>
+            <span className={`text-lg font-bold font-mono ${stat.color}`}>{stat.value}</span>
           </div>
         ))}
       </div>
 
       {/* Table with tabs */}
       <div className="border border-border bg-white">
-        <div className="h-11 flex items-center border-b border-border px-1">
+        <div className="h-9 flex items-center border-b border-border px-1">
           {(["active", "history"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-5 h-full text-sm transition-colors border-b-2 ${
+              className={`px-4 h-full text-xs transition-colors border-b-2 ${
                 tab === t
                   ? "text-primary font-semibold border-primary"
                   : "text-muted-foreground border-transparent hover:text-foreground"
@@ -91,15 +91,15 @@ export default function PortalPortfolio() {
           ))}
         </div>
 
-        <table className="w-full text-sm">
+        <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-border text-xs text-muted-foreground">
-              <th className="text-left p-3 pl-4 font-medium">Offer Name</th>
-              <th className="text-right p-3 font-medium">Amount Invested</th>
-              <th className="text-right p-3 font-medium">Return Rate</th>
-              <th className="text-right p-3 font-medium">Expected Payout</th>
-              <th className="text-left p-3 font-medium">Maturity Date</th>
-              <th className="text-center p-3 pr-4 font-medium">Status</th>
+            <tr className="border-b border-border text-[10px] text-muted-foreground">
+              <th className="text-left p-2 pl-3 font-medium">Offer Name</th>
+              <th className="text-right p-2 font-medium">Amount Invested</th>
+              <th className="text-right p-2 font-medium">Return Rate</th>
+              <th className="text-right p-2 font-medium">Expected Payout</th>
+              <th className="text-left p-2 font-medium">Maturity Date</th>
+              <th className="text-center p-2 pr-3 font-medium">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -111,17 +111,17 @@ export default function PortalPortfolio() {
                 <tr
                   key={p.id}
                   onClick={() => offer && openOfferTab(offer.id, offer.title)}
-                  className="border-b border-border/50 hover:bg-muted/30 cursor-pointer transition-colors"
+                  className="border-b border-border/50 hover:bg-muted/30 cursor-pointer transition-colors h-8"
                 >
-                  <td className="p-3 pl-4 text-foreground font-medium">{offer?.title || "—"}</td>
-                  <td className="p-3 text-right text-foreground font-mono">{Number(p.amount).toLocaleString()} kr</td>
-                  <td className="p-3 text-right text-green-600 font-semibold">{rate.toFixed(1)}%</td>
-                  <td className="p-3 text-right text-foreground font-semibold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</td>
-                  <td className="p-3 text-muted-foreground">
+                  <td className="p-2 pl-3 text-foreground font-medium">{offer?.title || "—"}</td>
+                  <td className="p-2 text-right text-foreground font-mono">{Number(p.amount).toLocaleString()} kr</td>
+                  <td className="p-2 text-right text-green-600 font-semibold">{rate.toFixed(1)}%</td>
+                  <td className="p-2 text-right text-foreground font-semibold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</td>
+                  <td className="p-2 text-muted-foreground">
                     {offer?.maturity_date ? format(parseISO(offer.maturity_date), "d MMM yyyy") : "—"}
                   </td>
-                  <td className="p-3 pr-4 text-center">
-                    <span className={`inline-block px-2.5 py-1 text-[10px] font-semibold tracking-wide border ${statusBadge(p.status)}`}>
+                  <td className="p-2 pr-3 text-center">
+                    <span className={`inline-block px-2 py-0.5 text-[9px] font-semibold tracking-wide border ${statusBadge(p.status)}`}>
                       {p.status?.toUpperCase() || "ACTIVE"}
                     </span>
                   </td>
@@ -130,7 +130,7 @@ export default function PortalPortfolio() {
             })}
             {currentList.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-10 text-center text-muted-foreground text-sm">
+                <td colSpan={6} className="p-5 text-center text-muted-foreground text-xs">
                   {tab === "active" ? "No active investments." : "No completed investments yet."}
                 </td>
               </tr>

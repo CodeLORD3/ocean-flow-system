@@ -42,14 +42,14 @@ export default function PortalOpportunities() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-foreground">Investment Opportunities</h1>
-        <p className="text-sm text-muted-foreground mt-1">Browse available trade finance deals and invest directly.</p>
+        <h1 className="text-base font-bold text-foreground">Investment Opportunities</h1>
+        <p className="text-xs text-muted-foreground mt-0.5">Browse available trade finance deals and invest directly.</p>
       </div>
 
       {/* Filters */}
-      <div className="border border-border bg-white p-4">
+      <div className="border border-border bg-white p-3">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-2 flex-1 min-w-[220px]">
             <Search className="h-4 w-4 text-muted-foreground" />
@@ -96,7 +96,7 @@ export default function PortalOpportunities() {
       <p className="text-xs text-muted-foreground">{filtered.length} {filtered.length === 1 ? "opportunity" : "opportunities"} found</p>
 
       {/* Offers grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {filtered.map((offer) => {
           const target = Number(offer.target_amount) || 0;
           const funded = Number(offer.funded_amount) || 0;
@@ -112,14 +112,14 @@ export default function PortalOpportunities() {
               onClick={() => openOfferTab(offer.id, offer.title)}
             >
               {offer.product_image_url && (
-                <div className="h-36 overflow-hidden border-b border-border">
+                <div className="h-28 overflow-hidden border-b border-border">
                   <img src={offer.product_image_url} alt={offer.title} className="w-full h-full object-cover" />
                 </div>
               )}
 
-              <div className="p-5 flex-1 flex flex-col">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors leading-snug flex-1 pr-2">
+              <div className="p-3 flex-1 flex flex-col">
+                <div className="flex items-start justify-between mb-1.5">
+                  <h3 className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors leading-snug flex-1 pr-2">
                     {offer.title}
                   </h3>
                   <span className={`shrink-0 px-2 py-0.5 text-[10px] font-semibold border ${
@@ -132,11 +132,10 @@ export default function PortalOpportunities() {
                 </div>
 
                 {offer.description && (
-                  <p className="text-xs text-muted-foreground line-clamp-2 mb-4 leading-relaxed">{offer.description}</p>
+                  <p className="text-[11px] text-muted-foreground line-clamp-2 mb-3 leading-relaxed">{offer.description}</p>
                 )}
 
-                {/* Funding progress */}
-                <div className="space-y-2 mb-4">
+                <div className="space-y-1.5 mb-3">
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground">Funding</span>
                     <span className="text-foreground font-medium font-mono">{funded.toLocaleString()} / {target.toLocaleString()} kr</span>
@@ -147,30 +146,30 @@ export default function PortalOpportunities() {
                 </div>
 
                 {/* Key metrics */}
-                <div className="grid grid-cols-3 gap-3 pt-3 border-t border-border mt-auto">
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border mt-auto">
                   <div>
-                    <div className="text-[11px] text-muted-foreground">Return</div>
-                    <div className="text-sm font-bold text-green-600 flex items-center gap-0.5">
-                      <TrendingUp className="h-3.5 w-3.5" />
+                    <div className="text-[10px] text-muted-foreground">Return</div>
+                    <div className="text-xs font-bold text-green-600 flex items-center gap-0.5">
+                      <TrendingUp className="h-3 w-3" />
                       {rate.toFixed(1)}%
                     </div>
                   </div>
                   <div>
-                    <div className="text-[11px] text-muted-foreground">Duration</div>
-                    <div className="text-sm font-bold text-foreground flex items-center gap-0.5">
-                      <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                    <div className="text-[10px] text-muted-foreground">Duration</div>
+                    <div className="text-xs font-bold text-foreground flex items-center gap-0.5">
+                      <Clock className="h-3 w-3 text-muted-foreground" />
                       {daysLeft !== null ? `${daysLeft}d` : "—"}
                     </div>
                   </div>
                   <div>
-                    <div className="text-[11px] text-muted-foreground">Min. invest</div>
-                    <div className="text-sm font-bold text-foreground font-mono">
+                    <div className="text-[10px] text-muted-foreground">Min. invest</div>
+                    <div className="text-xs font-bold text-foreground font-mono">
                       {Number(offer.min_pledge) > 0 ? `${Number(offer.min_pledge).toLocaleString()}` : "—"}
                     </div>
                   </div>
                 </div>
 
-                <button className="w-full h-10 mt-4 border border-primary text-primary text-xs font-semibold hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center gap-2">
+                <button className="w-full h-8 mt-3 border border-primary text-primary text-[11px] font-semibold hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center gap-1.5">
                   View Details <ArrowRight className="h-3.5 w-3.5" />
                 </button>
               </div>
