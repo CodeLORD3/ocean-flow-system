@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Building2, ArrowLeft, Upload, Pencil, Eye } from "lucide-react";
+import CountryFlag from "@/components/CountryFlag";
 import { toast } from "sonner";
 
 const COUNTRY_OPTIONS = [
