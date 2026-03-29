@@ -189,10 +189,10 @@ export default function PortalDashboard() {
               <div
                 key={offer.id}
                 onClick={() => openOfferTab(offer.id, offer.title)}
-                className="border border-border p-5 hover:border-primary hover:shadow-sm cursor-pointer transition-all group"
+                className="border border-border p-3 hover:border-primary hover:shadow-sm cursor-pointer transition-all group"
               >
-                <div className="flex items-start justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors leading-snug pr-2">
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors leading-snug pr-2">
                     {offer.title}
                   </h3>
                   <span className={`shrink-0 px-2 py-0.5 text-[10px] font-semibold border ${
