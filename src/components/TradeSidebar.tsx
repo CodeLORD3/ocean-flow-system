@@ -32,6 +32,7 @@ const tradeNav = [
   { title: "History", url: "/trade-history", icon: History },
   { title: "Investor List", url: "/investor-list", icon: Users },
   { title: "Investor Portal", url: "/investor-portal", icon: Eye },
+  { title: "Contact Settings", url: "/contact-settings", icon: Phone },
   { title: "Kalender", url: "/schedule", icon: CalendarDays },
 ];
 
