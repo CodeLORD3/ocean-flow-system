@@ -11,7 +11,16 @@ export default function PortalLayout() {
   const [profileLoading, setProfileLoading] = useState(true);
   const navigate = useNavigate();
 
+  const isDevMode = new URLSearchParams(window.location.search).get("dev") === "1";
+
   useEffect(() => {
+    if (isDevMode) {
+      setUser({ id: "dev-user", email: "dev@localhost" } as any);
+      setLoading(false);
+      setProfileStatus("approved");
+      setProfileLoading(false);
+      return;
+    }
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
@@ -23,7 +32,7 @@ export default function PortalLayout() {
       if (!session?.user) navigate("/portal/login");
     });
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, isDevMode]);
 
   // Check investor profile status
   useEffect(() => {
