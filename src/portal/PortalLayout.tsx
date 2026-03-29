@@ -61,7 +61,7 @@ function PortalKeepAlive() {
   const renderedTabs = useMemo(() => {
     return tabs.map((tab) => {
       let component: React.ReactNode = null;
-      if (tab.path === "/portal") component = <PortalDashboard />;
+      if (tab.path === "/portal") component = <PortalOpportunities />;
       else if (tab.path === "/portal/opportunities") component = <PortalOpportunities />;
       else if (tab.path === "/portal/portfolio") component = <PortalPortfolio />;
       else if (tab.path === "/portal/commitments") component = <PortalCommitments />;
