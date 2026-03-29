@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { LayoutDashboard, Search, Briefcase, FileText, Archive, LogOut, X, Bell, User, ChevronRight, Info, BookOpen, Users } from "lucide-react";
+import { Search, Briefcase, FileText, Archive, LogOut, X, Bell, User, ChevronRight, Info, BookOpen, Users } from "lucide-react";
 import PortalOnboarding from "./PortalOnboarding";
 import PortalWelcome from "./PortalWelcome";
 import { PortalTabsProvider, usePortalTabs } from "./PortalTabsContext";
