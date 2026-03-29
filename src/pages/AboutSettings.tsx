@@ -14,6 +14,9 @@ interface TeamMember {
   desc: string;
   image_url?: string;
   image_position?: string;
+  bio?: string;
+  linkedin?: string;
+  email?: string;
 }
 
 interface ValueItem {
