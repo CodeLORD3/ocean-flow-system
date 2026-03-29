@@ -19,9 +19,9 @@ export default function PortalLayout() {
     setProfileLoading(false);
   }, []);
 
-  // Check investor profile status
+  // Check investor profile status (skipped in dev mode)
   useEffect(() => {
-    if (!user || isDevMode) return;
+    if (!user) return;
     const checkProfile = async () => {
       setProfileLoading(true);
       const { data, error } = await supabase
