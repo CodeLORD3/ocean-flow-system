@@ -104,24 +104,24 @@ export default function PortalDashboard() {
       {/* Active investments table */}
       {hasInvestments && (
         <div className="border border-border bg-white">
-          <div className="h-11 flex items-center justify-between px-4 border-b border-border">
-            <h2 className="text-sm font-semibold text-foreground">Your Active Investments</h2>
+        <div className="h-9 flex items-center justify-between px-3 border-b border-border">
+            <h2 className="text-xs font-semibold text-foreground">Your Active Investments</h2>
             <button
               onClick={() => switchTab("/portal/portfolio")}
-              className="text-xs text-primary hover:underline flex items-center gap-1"
+              className="text-[11px] text-primary hover:underline flex items-center gap-1"
             >
               View all <ArrowUpRight className="h-3 w-3" />
             </button>
           </div>
-          <table className="w-full text-sm">
+          <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-border text-xs text-muted-foreground">
-                <th className="text-left p-3 pl-4 font-medium">Offer</th>
-                <th className="text-right p-3 font-medium">Invested</th>
-                <th className="text-right p-3 font-medium">Return</th>
-                <th className="text-right p-3 font-medium">Expected Payout</th>
-                <th className="text-left p-3 font-medium">Maturity</th>
-                <th className="text-center p-3 pr-4 font-medium">Status</th>
+              <tr className="border-b border-border text-[10px] text-muted-foreground">
+                <th className="text-left p-2 pl-3 font-medium">Offer</th>
+                <th className="text-right p-2 font-medium">Invested</th>
+                <th className="text-right p-2 font-medium">Return</th>
+                <th className="text-right p-2 font-medium">Expected Payout</th>
+                <th className="text-left p-2 font-medium">Maturity</th>
+                <th className="text-center p-2 pr-3 font-medium">Status</th>
               </tr>
             </thead>
             <tbody>
