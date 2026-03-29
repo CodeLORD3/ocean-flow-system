@@ -11,7 +11,9 @@ export default function PortalLayout() {
   const [profileLoading, setProfileLoading] = useState(true);
   const navigate = useNavigate();
 
-  const isDevMode = new URLSearchParams(window.location.search).get("dev") === "1";
+  const searchDevMode = new URLSearchParams(window.location.search).get("dev") === "1";
+  if (searchDevMode) sessionStorage.setItem("portal_dev", "1");
+  const isDevMode = searchDevMode || sessionStorage.getItem("portal_dev") === "1";
 
   useEffect(() => {
     if (isDevMode) {
