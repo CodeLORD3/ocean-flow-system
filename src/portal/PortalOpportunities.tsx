@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, SlidersHorizontal, TrendingUp, Clock, ArrowRight } from "lucide-react";
-import { differenceInDays, parseISO, format } from "date-fns";
+import { Search, SlidersHorizontal, TrendingUp, Clock, ArrowRight, LayoutGrid, List } from "lucide-react";
+import { differenceInDays, parseISO } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
 
@@ -12,6 +12,7 @@ export default function PortalOpportunities() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [minInvestment, setMinInvestment] = useState("");
   const [returnRange, setReturnRange] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"rows" | "cards">("rows");
 
   const { data: offers = [], isLoading } = useQuery({
     queryKey: ["portal-all-offers"],
@@ -52,6 +53,17 @@ export default function PortalOpportunities() {
   if (isLoading) {
     return <div className="text-primary text-sm animate-pulse p-8 text-center">Loading opportunities...</div>;
   }
+
+  const renderOfferData = (offer: any) => {
+    const target = Number(offer.target_amount) || 0;
+    const funded = Number(offer.funded_amount) || 0;
+    const rate = Number(offer.interest_rate) || 0;
+    const progress = target > 0 ? Math.min(100, (funded / target) * 100) : 0;
+    const maturity = offer.maturity_date ? parseISO(offer.maturity_date) : null;
+    const daysLeft = maturity ? Math.max(0, differenceInDays(maturity, new Date())) : null;
+    const company = (offer as any).company_id ? companyMap[(offer as any).company_id] : null;
+    return { target, funded, rate, progress, maturity, daysLeft, company };
+  };
 
   return (
     <div className="space-y-4">
@@ -105,105 +117,210 @@ export default function PortalOpportunities() {
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground">{filtered.length} {filtered.length === 1 ? "opportunity" : "opportunities"} found</p>
-
-      {/* Offers grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {filtered.map((offer) => {
-          const target = Number(offer.target_amount) || 0;
-          const funded = Number(offer.funded_amount) || 0;
-          const rate = Number(offer.interest_rate) || 0;
-          const progress = target > 0 ? Math.min(100, (funded / target) * 100) : 0;
-          const maturity = offer.maturity_date ? parseISO(offer.maturity_date) : null;
-          const daysLeft = maturity ? Math.max(0, differenceInDays(maturity, new Date())) : null;
-
-          const company = (offer as any).company_id ? companyMap[(offer as any).company_id] : null;
-
-          return (
-            <div
-              key={offer.id}
-              className="border border-border bg-white hover:border-primary hover:shadow-sm cursor-pointer transition-all group flex flex-col"
-              onClick={() => openOfferTab(offer.id, offer.title)}
-            >
-              <div className="relative">
-                {offer.product_image_url && (
-                  <div className="h-28 overflow-hidden border-b border-border">
-                    <img src={offer.product_image_url} alt={offer.title} className="w-full h-full object-cover" />
-                  </div>
-                )}
-                {company?.logo_url && (
-                  <div className="absolute top-2 right-2 h-8 w-8 bg-white border border-border rounded shadow-sm overflow-hidden">
-                    <img src={company.logo_url} alt="" className="h-full w-full object-contain" />
-                  </div>
-                )}
-              </div>
-
-              <div className="p-3 flex-1 flex flex-col">
-                <div className="flex items-start justify-between mb-1">
-                  <h3 className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors leading-snug flex-1 pr-2">
-                    {offer.title}
-                  </h3>
-                  <span className={`shrink-0 px-2 py-0.5 text-[10px] font-semibold border ${
-                    offer.status === "Open"
-                      ? "text-green-700 bg-green-50 border-green-200"
-                      : "text-primary bg-primary/5 border-primary/20"
-                  }`}>
-                    {offer.status === "Open" ? "OPEN" : "FUNDED"}
-                  </span>
-                </div>
-
-                {company && (
-                  <p className="text-[10px] text-muted-foreground mb-1.5 flex items-center gap-1">
-                    <CountryFlag country={company.country} size={14} /> {company.name}
-                  </p>
-                )}
-
-                {offer.description && (
-                  <p className="text-[11px] text-muted-foreground line-clamp-2 mb-3 leading-relaxed">{offer.description}</p>
-                )}
-
-                <div className="space-y-1.5 mb-3">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Funding</span>
-                    <span className="text-foreground font-medium font-mono">{funded.toLocaleString()} / {target.toLocaleString()} kr</span>
-                  </div>
-                  <div className="h-2 bg-muted overflow-hidden">
-                    <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
-                  </div>
-                </div>
-
-                {/* Key metrics */}
-                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border mt-auto">
-                  <div>
-                    <div className="text-[10px] text-muted-foreground">Return</div>
-                    <div className="text-xs font-bold text-green-600 flex items-center gap-0.5">
-                      <TrendingUp className="h-3 w-3" />
-                      {rate.toFixed(1)}%
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] text-muted-foreground">Duration</div>
-                    <div className="text-xs font-bold text-foreground flex items-center gap-0.5">
-                      <Clock className="h-3 w-3 text-muted-foreground" />
-                      {daysLeft !== null ? `${daysLeft}d` : "—"}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] text-muted-foreground">Min. invest</div>
-                    <div className="text-xs font-bold text-foreground font-mono">
-                      {Number(offer.min_pledge) > 0 ? `${Number(offer.min_pledge).toLocaleString()}` : "—"}
-                    </div>
-                  </div>
-                </div>
-
-                <button className="w-full h-8 mt-3 border border-primary text-primary text-[11px] font-semibold hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center gap-1.5">
-                  View Details <ArrowRight className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </div>
-          );
-        })}
+      {/* Count + view toggle */}
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">{filtered.length} {filtered.length === 1 ? "opportunity" : "opportunities"} found</p>
+        <div className="flex items-center border border-border bg-white">
+          <button
+            onClick={() => setViewMode("rows")}
+            className={`h-8 w-8 flex items-center justify-center transition-colors ${viewMode === "rows" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            title="List view"
+          >
+            <List className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setViewMode("cards")}
+            className={`h-8 w-8 flex items-center justify-center transition-colors ${viewMode === "cards" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            title="Card view"
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </button>
+        </div>
       </div>
+
+      {/* ROW VIEW */}
+      {viewMode === "rows" && (
+        <div className="border border-border bg-white overflow-x-auto">
+          <table className="w-full text-[11px]">
+            <thead>
+              <tr className="border-b border-border bg-muted/30">
+                <th className="text-left px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Offer</th>
+                <th className="text-left px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Company</th>
+                <th className="text-left px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Status</th>
+                <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Funding</th>
+                <th className="text-center px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Progress</th>
+                <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Return</th>
+                <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Duration</th>
+                <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Min. Invest</th>
+                <th className="px-3 py-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((offer) => {
+                const { target, funded, rate, progress, daysLeft, company } = renderOfferData(offer);
+                return (
+                  <tr
+                    key={offer.id}
+                    className="border-b border-border last:border-b-0 hover:bg-muted/20 cursor-pointer transition-colors group"
+                    onClick={() => openOfferTab(offer.id, offer.title)}
+                  >
+                    <td className="px-3 py-2.5">
+                      <div className="flex items-center gap-2">
+                        {offer.product_image_url && (
+                          <img src={offer.product_image_url} alt="" className="h-7 w-7 object-cover border border-border shrink-0" />
+                        )}
+                        <span className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1 max-w-[180px]">
+                          {offer.title}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      {company ? (
+                        <div className="flex items-center gap-1.5">
+                          {company.logo_url && <img src={company.logo_url} alt="" className="h-4 w-4 object-contain shrink-0" />}
+                          <CountryFlag country={company.country} size={12} />
+                          <span className="text-muted-foreground line-clamp-1 max-w-[120px]">{company.name}</span>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <span className={`px-1.5 py-0.5 text-[10px] font-semibold border ${
+                        offer.status === "Open"
+                          ? "text-green-700 bg-green-50 border-green-200"
+                          : "text-primary bg-primary/5 border-primary/20"
+                      }`}>
+                        {offer.status === "Open" ? "OPEN" : "FUNDED"}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2.5 text-right font-mono text-foreground whitespace-nowrap">
+                      {funded.toLocaleString()} / {target.toLocaleString()} kr
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <div className="w-16 mx-auto">
+                        <div className="h-1.5 bg-muted overflow-hidden">
+                          <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+                        </div>
+                        <div className="text-[9px] text-muted-foreground text-center mt-0.5">{progress.toFixed(0)}%</div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2.5 text-right">
+                      <span className="font-bold text-green-600 flex items-center justify-end gap-0.5">
+                        <TrendingUp className="h-3 w-3" />
+                        {rate.toFixed(1)}%
+                      </span>
+                    </td>
+                    <td className="px-3 py-2.5 text-right">
+                      <span className="text-foreground font-medium flex items-center justify-end gap-0.5">
+                        <Clock className="h-3 w-3 text-muted-foreground" />
+                        {daysLeft !== null ? `${daysLeft}d` : "—"}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2.5 text-right font-mono text-foreground whitespace-nowrap">
+                      {Number(offer.min_pledge) > 0 ? `${Number(offer.min_pledge).toLocaleString()} kr` : "—"}
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* CARD VIEW */}
+      {viewMode === "cards" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {filtered.map((offer) => {
+            const { target, funded, rate, progress, daysLeft, company } = renderOfferData(offer);
+            return (
+              <div
+                key={offer.id}
+                className="border border-border bg-white hover:border-primary hover:shadow-sm cursor-pointer transition-all group flex flex-col"
+                onClick={() => openOfferTab(offer.id, offer.title)}
+              >
+                <div className="relative">
+                  {offer.product_image_url && (
+                    <div className="h-28 overflow-hidden border-b border-border">
+                      <img src={offer.product_image_url} alt={offer.title} className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  {company?.logo_url && (
+                    <div className="absolute top-2 right-2 h-8 w-8 bg-white border border-border rounded shadow-sm overflow-hidden">
+                      <img src={company.logo_url} alt="" className="h-full w-full object-contain" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-3 flex-1 flex flex-col">
+                  <div className="flex items-start justify-between mb-1">
+                    <h3 className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors leading-snug flex-1 pr-2">
+                      {offer.title}
+                    </h3>
+                    <span className={`shrink-0 px-2 py-0.5 text-[10px] font-semibold border ${
+                      offer.status === "Open"
+                        ? "text-green-700 bg-green-50 border-green-200"
+                        : "text-primary bg-primary/5 border-primary/20"
+                    }`}>
+                      {offer.status === "Open" ? "OPEN" : "FUNDED"}
+                    </span>
+                  </div>
+
+                  {company && (
+                    <p className="text-[10px] text-muted-foreground mb-1.5 flex items-center gap-1">
+                      <CountryFlag country={company.country} size={14} /> {company.name}
+                    </p>
+                  )}
+
+                  {offer.description && (
+                    <p className="text-[11px] text-muted-foreground line-clamp-2 mb-3 leading-relaxed">{offer.description}</p>
+                  )}
+
+                  <div className="space-y-1.5 mb-3">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Funding</span>
+                      <span className="text-foreground font-medium font-mono">{funded.toLocaleString()} / {target.toLocaleString()} kr</span>
+                    </div>
+                    <div className="h-2 bg-muted overflow-hidden">
+                      <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border mt-auto">
+                    <div>
+                      <div className="text-[10px] text-muted-foreground">Return</div>
+                      <div className="text-xs font-bold text-green-600 flex items-center gap-0.5">
+                        <TrendingUp className="h-3 w-3" />
+                        {rate.toFixed(1)}%
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-muted-foreground">Duration</div>
+                      <div className="text-xs font-bold text-foreground flex items-center gap-0.5">
+                        <Clock className="h-3 w-3 text-muted-foreground" />
+                        {daysLeft !== null ? `${daysLeft}d` : "—"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-muted-foreground">Min. invest</div>
+                      <div className="text-xs font-bold text-foreground font-mono">
+                        {Number(offer.min_pledge) > 0 ? `${Number(offer.min_pledge).toLocaleString()}` : "—"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button className="w-full h-8 mt-3 border border-primary text-primary text-[11px] font-semibold hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center gap-1.5">
+                    View Details <ArrowRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {filtered.length === 0 && (
         <div className="border border-border bg-white p-10 text-center text-muted-foreground text-sm">
