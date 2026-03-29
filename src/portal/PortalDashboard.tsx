@@ -167,16 +167,16 @@ export default function PortalDashboard() {
 
       {/* New opportunities */}
       <div className="border border-border bg-white">
-        <div className="h-11 flex items-center justify-between px-4 border-b border-border">
-          <h2 className="text-sm font-semibold text-foreground">New Opportunities</h2>
+        <div className="h-9 flex items-center justify-between px-3 border-b border-border">
+          <h2 className="text-xs font-semibold text-foreground">New Opportunities</h2>
           <button
             onClick={() => switchTab("/portal/opportunities")}
-            className="text-xs text-primary hover:underline flex items-center gap-1"
+            className="text-[11px] text-primary hover:underline flex items-center gap-1"
           >
             Browse all <ArrowUpRight className="h-3 w-3" />
           </button>
         </div>
-        <div className="p-4 grid grid-cols-3 gap-4">
+        <div className="p-3 grid grid-cols-3 gap-3">
           {newOpportunities.map((offer) => {
             const target = Number(offer.target_amount) || 0;
             const funded = Number(offer.funded_amount) || 0;
