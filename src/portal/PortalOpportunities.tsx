@@ -112,14 +112,14 @@ export default function PortalOpportunities() {
               onClick={() => openOfferTab(offer.id, offer.title)}
             >
               {offer.product_image_url && (
-                <div className="h-36 overflow-hidden border-b border-border">
+                <div className="h-28 overflow-hidden border-b border-border">
                   <img src={offer.product_image_url} alt={offer.title} className="w-full h-full object-cover" />
                 </div>
               )}
 
-              <div className="p-5 flex-1 flex flex-col">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors leading-snug flex-1 pr-2">
+              <div className="p-3 flex-1 flex flex-col">
+                <div className="flex items-start justify-between mb-1.5">
+                  <h3 className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors leading-snug flex-1 pr-2">
                     {offer.title}
                   </h3>
                   <span className={`shrink-0 px-2 py-0.5 text-[10px] font-semibold border ${
