@@ -66,6 +66,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/schedule": { component: <ScheduleCalendar /> },
   "/companies": { component: <Companies /> },
   "/contact-settings": { component: <ContactSettings /> },
+  "/about-settings": { component: <AboutSettings /> },
 };
 
 /**
