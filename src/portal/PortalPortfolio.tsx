@@ -75,12 +75,12 @@ export default function PortalPortfolio() {
 
       {/* Table with tabs */}
       <div className="border border-border bg-white">
-        <div className="h-11 flex items-center border-b border-border px-1">
+        <div className="h-9 flex items-center border-b border-border px-1">
           {(["active", "history"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-5 h-full text-sm transition-colors border-b-2 ${
+              className={`px-4 h-full text-xs transition-colors border-b-2 ${
                 tab === t
                   ? "text-primary font-semibold border-primary"
                   : "text-muted-foreground border-transparent hover:text-foreground"
@@ -91,15 +91,15 @@ export default function PortalPortfolio() {
           ))}
         </div>
 
-        <table className="w-full text-sm">
+        <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-border text-xs text-muted-foreground">
-              <th className="text-left p-3 pl-4 font-medium">Offer Name</th>
-              <th className="text-right p-3 font-medium">Amount Invested</th>
-              <th className="text-right p-3 font-medium">Return Rate</th>
-              <th className="text-right p-3 font-medium">Expected Payout</th>
-              <th className="text-left p-3 font-medium">Maturity Date</th>
-              <th className="text-center p-3 pr-4 font-medium">Status</th>
+            <tr className="border-b border-border text-[10px] text-muted-foreground">
+              <th className="text-left p-2 pl-3 font-medium">Offer Name</th>
+              <th className="text-right p-2 font-medium">Amount Invested</th>
+              <th className="text-right p-2 font-medium">Return Rate</th>
+              <th className="text-right p-2 font-medium">Expected Payout</th>
+              <th className="text-left p-2 font-medium">Maturity Date</th>
+              <th className="text-center p-2 pr-3 font-medium">Status</th>
             </tr>
           </thead>
           <tbody>
