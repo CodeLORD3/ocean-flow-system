@@ -13,6 +13,7 @@ interface TeamMember {
   role: string;
   desc: string;
   image_url?: string;
+  image_position?: string;
 }
 
 interface ValueItem {
