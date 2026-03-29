@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Search, SlidersHorizontal, TrendingUp, Clock, ArrowRight } from "lucide-react";
 import { differenceInDays, parseISO, format } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
+import { getCountryFlag } from "@/pages/Companies";
 
 export default function PortalOpportunities() {
   const { openOfferTab } = usePortalTabs();
