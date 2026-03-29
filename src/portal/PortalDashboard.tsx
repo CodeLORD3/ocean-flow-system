@@ -33,6 +33,17 @@ export default function PortalDashboard() {
     },
   });
 
+  const { data: companies = [] } = useQuery({
+    queryKey: ["portal-companies"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("companies").select("*");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const companyMap: Record<string, any> = Object.fromEntries(companies.map((c: any) => [c.id, c]));
+
   const isLoading = offersLoading || pledgesLoading;
 
   const activePledges = pledges.filter((p: any) => p.status === "Active");
