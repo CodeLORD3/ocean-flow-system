@@ -79,6 +79,48 @@ export type Database = {
         }
         Relationships: []
       }
+      companies: {
+        Row: {
+          contact_email: string | null
+          contact_person: string | null
+          country: string
+          created_at: string
+          description: string | null
+          id: string
+          industry: string | null
+          logo_url: string | null
+          name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_person?: string | null
+          country?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          industry?: string | null
+          logo_url?: string | null
+          name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          contact_email?: string | null
+          contact_person?: string | null
+          country?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          industry?: string | null
+          logo_url?: string | null
+          name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           address: string | null
@@ -1638,6 +1680,7 @@ export type Database = {
         Row: {
           annual_return: number | null
           collateral: string | null
+          company_id: string | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -1676,6 +1719,7 @@ export type Database = {
         Insert: {
           annual_return?: number | null
           collateral?: string | null
+          company_id?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -1714,6 +1758,7 @@ export type Database = {
         Update: {
           annual_return?: number | null
           collateral?: string | null
+          company_id?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -1749,7 +1794,15 @@ export type Database = {
           visibility?: string
           volume?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "trade_offers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transport_schedules: {
         Row: {

@@ -11,6 +11,7 @@ import { Plus, TrendingUp, Upload, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import TradeOfferDetail from "@/components/trade/TradeOfferDetail";
+import { getCountryFlag } from "@/pages/Companies";
 
 const EMPTY_FORM = {
   title: "", description: "", quantity: "", target_amount: "",
@@ -21,6 +22,7 @@ const EMPTY_FORM = {
   origin: "", volume: "", purchase_price: "", sales_value: "",
   gross_margin: "", collateral: "Inventory", ltv: "",
   primary_exit: "", secondary_exit: "", downside: "",
+  company_id: "",
 };
 
 export default function TradeOffers() {
@@ -56,6 +58,21 @@ export default function TradeOffers() {
       return data;
     },
   });
+
+  const { data: companies = [] } = useQuery({
+    queryKey: ["companies"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("companies")
+        .select("*")
+        .eq("status", "Active")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const companyMap: Record<string, any> = Object.fromEntries(companies.map((c: any) => [c.id, c]));
 
   const uploadFile = async (file: File, folder: string) => {
     const ext = file.name.split(".").pop();
@@ -119,6 +136,7 @@ export default function TradeOffers() {
         downside: form.downside || null,
         tenor_days,
         annual_return,
+        company_id: form.company_id || null,
       } as any);
       if (error) throw error;
     },
@@ -185,6 +203,27 @@ export default function TradeOffers() {
             <div>
               <h3 className="text-xs font-bold text-muted-foreground tracking-wider mb-2">DEAL SUMMARY</h3>
               <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1 col-span-2">
+                  <label className="text-[10px] text-muted-foreground">Company *</label>
+                  <Select value={form.company_id} onValueChange={v => setForm({...form, company_id: v})}>
+                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select company..." /></SelectTrigger>
+                    <SelectContent>
+                      {companies.map((c: any) => (
+                        <SelectItem key={c.id} value={c.id} className="text-xs">
+                          {getCountryFlag(c.country)} {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {form.company_id && companyMap[form.company_id] && (
+                    <div className="flex items-center gap-2 mt-1 p-2 bg-muted/50 border border-border text-xs">
+                      {companyMap[form.company_id].logo_url && (
+                        <img src={companyMap[form.company_id].logo_url} alt="" className="h-6 w-6 object-contain rounded" />
+                      )}
+                      <span className="font-medium">{getCountryFlag(companyMap[form.company_id].country)} {companyMap[form.company_id].name}</span>
+                    </div>
+                  )}
+                </div>
                 <FormField label="Produkt (Titel)" value={form.title} onChange={v => setForm({...form, title: v})} />
                 <FormField label="Product-ID" value={form.product_id_display} onChange={v => setForm({...form, product_id_display: v})} placeholder="t.ex. SF-2024-001" />
                 <FormField label="Sektor" value={form.sector} onChange={v => setForm({...form, sector: v})} />
@@ -325,6 +364,7 @@ export default function TradeOffers() {
             <TableHeader>
               <TableRow className="text-[10px]">
                 <TableHead className="h-8">Product</TableHead>
+                <TableHead className="h-8">Company</TableHead>
                 <TableHead className="h-8 text-right">Investment</TableHead>
                 <TableHead className="h-8 text-right">Financed</TableHead>
                 <TableHead className="h-8 text-right">Return %</TableHead>
@@ -366,6 +406,11 @@ export default function TradeOffers() {
                     onClick={() => setSelectedOfferId(offer.id)}
                   >
                     <TableCell className="py-1.5 font-medium">{offer.title}</TableCell>
+                    <TableCell className="py-1.5">
+                      {(offer as any).company_id && companyMap[(offer as any).company_id] ? (
+                        <span className="text-[10px]">{getCountryFlag(companyMap[(offer as any).company_id].country)} {companyMap[(offer as any).company_id].name}</span>
+                      ) : <span className="text-muted-foreground">—</span>}
+                    </TableCell>
                     <TableCell className="py-1.5 text-right">{target.toLocaleString()} kr</TableCell>
                     <TableCell className="py-1.5 text-right">
                       <div className="space-y-0.5">

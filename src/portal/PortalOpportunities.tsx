@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Search, SlidersHorizontal, TrendingUp, Clock, ArrowRight } from "lucide-react";
 import { differenceInDays, parseISO, format } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
+import { getCountryFlag } from "@/pages/Companies";
 
 export default function PortalOpportunities() {
   const { openOfferTab } = usePortalTabs();
@@ -24,6 +25,17 @@ export default function PortalOpportunities() {
       return data;
     },
   });
+
+  const { data: companies = [] } = useQuery({
+    queryKey: ["portal-companies"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("companies").select("*");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const companyMap: Record<string, any> = Object.fromEntries(companies.map((c: any) => [c.id, c]));
 
   const filtered = offers.filter((o) => {
     if (search && !o.title.toLowerCase().includes(search.toLowerCase())) return false;
@@ -105,20 +117,29 @@ export default function PortalOpportunities() {
           const maturity = offer.maturity_date ? parseISO(offer.maturity_date) : null;
           const daysLeft = maturity ? Math.max(0, differenceInDays(maturity, new Date())) : null;
 
+          const company = (offer as any).company_id ? companyMap[(offer as any).company_id] : null;
+
           return (
             <div
               key={offer.id}
               className="border border-border bg-white hover:border-primary hover:shadow-sm cursor-pointer transition-all group flex flex-col"
               onClick={() => openOfferTab(offer.id, offer.title)}
             >
-              {offer.product_image_url && (
-                <div className="h-28 overflow-hidden border-b border-border">
-                  <img src={offer.product_image_url} alt={offer.title} className="w-full h-full object-cover" />
-                </div>
-              )}
+              <div className="relative">
+                {offer.product_image_url && (
+                  <div className="h-28 overflow-hidden border-b border-border">
+                    <img src={offer.product_image_url} alt={offer.title} className="w-full h-full object-cover" />
+                  </div>
+                )}
+                {company?.logo_url && (
+                  <div className="absolute top-2 right-2 h-8 w-8 bg-white border border-border rounded shadow-sm overflow-hidden">
+                    <img src={company.logo_url} alt="" className="h-full w-full object-contain" />
+                  </div>
+                )}
+              </div>
 
               <div className="p-3 flex-1 flex flex-col">
-                <div className="flex items-start justify-between mb-1.5">
+                <div className="flex items-start justify-between mb-1">
                   <h3 className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors leading-snug flex-1 pr-2">
                     {offer.title}
                   </h3>
@@ -130,6 +151,12 @@ export default function PortalOpportunities() {
                     {offer.status === "Open" ? "OPEN" : "FUNDED"}
                   </span>
                 </div>
+
+                {company && (
+                  <p className="text-[10px] text-muted-foreground mb-1.5">
+                    {getCountryFlag(company.country)} {company.name}
+                  </p>
+                )}
 
                 {offer.description && (
                   <p className="text-[11px] text-muted-foreground line-clamp-2 mb-3 leading-relaxed">{offer.description}</p>

@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock, Calculator, FileText, AlertTriangle, TrendingUp, Shield, Package, CheckCircle, X, Briefcase } from "lucide-react";
+import { Clock, Calculator, FileText, AlertTriangle, TrendingUp, Shield, Package, CheckCircle, X, Briefcase, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { parseISO, format } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
+import { getCountryFlag } from "@/pages/Companies";
 
 export default function PortalOfferDetail({ overrideId }: { overrideId?: string } = {}) {
   const { id: paramId } = useParams<{ id: string }>();
@@ -31,6 +32,18 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
       if (error) throw error;
       return data;
     },
+  });
+
+  const { data: company } = useQuery({
+    queryKey: ["portal-company", (offer as any)?.company_id],
+    queryFn: async () => {
+      const companyId = (offer as any)?.company_id;
+      if (!companyId) return null;
+      const { data, error } = await supabase.from("companies").select("*").eq("id", companyId).single();
+      if (error) return null;
+      return data;
+    },
+    enabled: !!(offer as any)?.company_id,
   });
 
   const pledgeMutation = useMutation({
@@ -240,6 +253,32 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
           <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{offer.description}</p>
         )}
       </div>
+
+      {/* Published by */}
+      {company && (
+        <div className="border border-border bg-white p-4">
+          <div className="flex items-center gap-1.5 mb-3">
+            <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-[10px] font-semibold text-muted-foreground tracking-wider uppercase">Published by</span>
+          </div>
+          <div className="flex items-center gap-3">
+            {(company as any).logo_url && (
+              <img src={(company as any).logo_url} alt="" className="h-10 w-10 object-contain border border-border rounded" />
+            )}
+            <div>
+              <div className="text-sm font-semibold text-foreground">{getCountryFlag((company as any).country)} {(company as any).name}</div>
+              <div className="text-xs text-muted-foreground">
+                {(company as any).industry && <span>{(company as any).industry}</span>}
+                {(company as any).industry && (company as any).country && <span> · </span>}
+                {(company as any).country && <span>{(company as any).country}</span>}
+              </div>
+              {(company as any).description && (
+                <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">{(company as any).description}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Countdown banner */}
       {offer.status === "Open" && daysLeft !== null && (

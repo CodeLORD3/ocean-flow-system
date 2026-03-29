@@ -6,6 +6,7 @@ import {
   Eye,
   Users,
   CalendarDays,
+  Building2,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -26,6 +27,7 @@ import {
 
 const tradeNav = [
   { title: "Trade Offers", url: "/trade-offers", icon: TrendingUp },
+  { title: "Companies", url: "/companies", icon: Building2 },
   { title: "History", url: "/trade-history", icon: History },
   { title: "Investor List", url: "/investor-list", icon: Users },
   { title: "Investor Portal", url: "/investor-portal", icon: Eye },
