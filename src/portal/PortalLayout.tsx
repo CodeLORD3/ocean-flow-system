@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { BarChart3, Briefcase, History, LogOut, X, Search, FolderOpen, FileText, Bell } from "lucide-react";
+import { LayoutDashboard, Search, Briefcase, FileText, Archive, LogOut, X, Bell, User, ChevronRight } from "lucide-react";
 import PortalOnboarding from "./PortalOnboarding";
 import PortalWelcome from "./PortalWelcome";
 import { PortalTabsProvider, usePortalTabs } from "./PortalTabsContext";
@@ -16,30 +16,32 @@ import PortalOfferDetail from "./PortalOfferDetail";
 function PortalTabBar() {
   const { tabs, activeTab, switchTab, closeTab } = usePortalTabs();
 
+  if (tabs.length <= 1) return null;
+
   return (
-    <div className="flex items-center gap-0 border-b border-[#d0d7e2] bg-[#eef1f5] px-2 overflow-x-auto">
+    <div className="flex items-center gap-0 border-b border-border bg-muted/40 px-3 overflow-x-auto">
       {tabs.map((tab) => {
         const isActive = tab.path === activeTab;
         return (
           <div
             key={tab.path}
-            className={`group flex items-center gap-1.5 px-3 py-1.5 text-[10px] tracking-wider cursor-pointer border-r border-[#d0d7e2] transition-colors shrink-0 ${
+            className={`group flex items-center gap-2 px-4 py-2 text-xs cursor-pointer border-r border-border transition-colors shrink-0 ${
               isActive
-                ? "bg-white text-[#0066ff] font-bold border-b-2 border-b-[#0066ff]"
-                : "text-[#6b7a8d] hover:bg-white/60"
+                ? "bg-white text-primary font-semibold border-b-2 border-b-primary"
+                : "text-muted-foreground hover:bg-white/60 hover:text-foreground"
             }`}
             onClick={() => switchTab(tab.path)}
           >
-            <span className="truncate max-w-[140px]">{tab.title}</span>
+            <span className="truncate max-w-[160px]">{tab.title}</span>
             {tabs.length > 1 && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   closeTab(tab.path);
                 }}
-                className="opacity-0 group-hover:opacity-100 hover:text-red-500 transition-opacity ml-1"
+                className="opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
               >
-                <X className="h-3 w-3" />
+                <X className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
@@ -55,30 +57,19 @@ function PortalKeepAlive() {
   const renderedTabs = useMemo(() => {
     return tabs.map((tab) => {
       let component: React.ReactNode = null;
-      if (tab.path === "/portal") {
-        component = <PortalDashboard />;
-      } else if (tab.path === "/portal/opportunities") {
-        component = <PortalOpportunities />;
-      } else if (tab.path === "/portal/portfolio") {
-        component = <PortalPortfolio />;
-      } else if (tab.path === "/portal/commitments") {
-        component = <PortalCommitments />;
-      } else if (tab.path === "/portal/documents") {
-        component = <PortalDocuments />;
-      } else if (tab.path === "/portal/archive") {
-        component = <PortalArchive />;
-      } else if (tab.path.startsWith("/portal/offer/")) {
+      if (tab.path === "/portal") component = <PortalDashboard />;
+      else if (tab.path === "/portal/opportunities") component = <PortalOpportunities />;
+      else if (tab.path === "/portal/portfolio") component = <PortalPortfolio />;
+      else if (tab.path === "/portal/commitments") component = <PortalCommitments />;
+      else if (tab.path === "/portal/documents") component = <PortalDocuments />;
+      else if (tab.path === "/portal/archive") component = <PortalArchive />;
+      else if (tab.path.startsWith("/portal/offer/")) {
         const offerId = tab.path.replace("/portal/offer/", "");
         component = <PortalOfferDetail key={tab.path} overrideId={offerId} />;
       }
       if (!component) return null;
-      const isActive = tab.path === activeTab;
       return (
-        <div
-          key={tab.path}
-          className="h-full w-full"
-          style={{ display: isActive ? "block" : "none" }}
-        >
+        <div key={tab.path} className="h-full w-full" style={{ display: tab.path === activeTab ? "block" : "none" }}>
           {component}
         </div>
       );
@@ -95,20 +86,15 @@ function PortalInner() {
   const [profileLoading, setProfileLoading] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
   const navigate = useNavigate();
-  const { switchTab } = usePortalTabs();
+  const { switchTab, activeTab } = usePortalTabs();
 
   useEffect(() => {
-    // Dev mode: skip auth entirely
     setUser({ id: "dev-user", email: "dev@localhost" } as any);
     setLoading(false);
     setProfileStatus("approved");
     setProfileLoading(false);
-
-    // Check if user has seen the welcome screen
     const hasSeenWelcome = localStorage.getItem("portal-welcome-seen");
-    if (!hasSeenWelcome) {
-      setShowWelcome(true);
-    }
+    if (!hasSeenWelcome) setShowWelcome(true);
   }, []);
 
   const handleLogout = async () => {
@@ -123,8 +109,8 @@ function PortalInner() {
 
   if (loading || profileLoading) {
     return (
-      <div className="min-h-screen bg-[#f4f6f9] flex items-center justify-center">
-        <div className="text-[#0066ff] font-mono text-sm animate-pulse">LOADING...</div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-primary text-sm animate-pulse">Loading your account...</div>
       </div>
     );
   }
@@ -133,14 +119,14 @@ function PortalInner() {
 
   if (profileStatus === null) {
     return (
-      <div className="min-h-screen bg-[#f4f6f9] text-[#1a2035] font-mono flex flex-col">
-        <header className="h-10 flex items-center justify-between border-b border-[#d0d7e2] px-4 bg-white">
-          <span className="text-[#0066ff] font-bold text-xs tracking-[0.2em]">TRADE PORTAL</span>
-          <button onClick={handleLogout} className="flex items-center gap-1 text-[10px] text-[#6b7a8d] hover:text-red-400 transition-colors">
-            <LogOut className="h-3 w-3" /> EXIT
+      <div className="min-h-screen bg-background text-foreground flex flex-col">
+        <header className="h-14 flex items-center justify-between border-b border-border px-6 bg-white">
+          <span className="text-primary font-bold text-sm tracking-wide">Ocean Trade</span>
+          <button onClick={handleLogout} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors">
+            <LogOut className="h-4 w-4" /> Sign Out
           </button>
         </header>
-        <main className="flex-1 overflow-auto p-4">
+        <main className="flex-1 overflow-auto p-6">
           <PortalOnboarding userId={user.id} onComplete={() => setProfileStatus("pending")} />
         </main>
       </div>
@@ -149,20 +135,17 @@ function PortalInner() {
 
   if (profileStatus === "pending") {
     return (
-      <div className="min-h-screen bg-[#f4f6f9] text-[#1a2035] font-mono flex flex-col">
-        <header className="h-10 flex items-center justify-between border-b border-[#d0d7e2] px-4 bg-white">
-          <span className="text-[#0066ff] font-bold text-xs tracking-[0.2em]">TRADE PORTAL</span>
-          <button onClick={handleLogout} className="flex items-center gap-1 text-[10px] text-[#6b7a8d] hover:text-red-400 transition-colors">
-            <LogOut className="h-3 w-3" /> EXIT
-          </button>
+      <div className="min-h-screen bg-background text-foreground flex flex-col">
+        <header className="h-14 flex items-center justify-between border-b border-border px-6 bg-white">
+          <span className="text-primary font-bold text-sm tracking-wide">Ocean Trade</span>
         </header>
         <main className="flex-1 flex items-center justify-center">
-          <div className="border border-[#d0d7e2] bg-white p-8 max-w-md text-center space-y-4">
-            <div className="text-yellow-400 text-4xl">⏳</div>
-            <h2 className="text-[#1a2035] text-lg font-bold tracking-wider">PENDING APPROVAL</h2>
-            <p className="text-[#6b7a8d] text-xs leading-relaxed">
-              Your application is being reviewed.<br />
-              Approval may take up to <span className="text-[#1a2035] font-bold">3 business days</span>.
+          <div className="border border-border bg-white p-10 max-w-md text-center space-y-4">
+            <div className="text-warning text-4xl">⏳</div>
+            <h2 className="text-foreground text-lg font-bold">Application Under Review</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Your application is being reviewed by our team.<br />
+              This usually takes <strong>1–3 business days</strong>.
             </p>
           </div>
         </main>
@@ -172,19 +155,16 @@ function PortalInner() {
 
   if (profileStatus === "rejected") {
     return (
-      <div className="min-h-screen bg-[#f4f6f9] text-[#1a2035] font-mono flex flex-col">
-        <header className="h-10 flex items-center justify-between border-b border-[#d0d7e2] px-4 bg-white">
-          <span className="text-[#0066ff] font-bold text-xs tracking-[0.2em]">TRADE PORTAL</span>
-          <button onClick={handleLogout} className="flex items-center gap-1 text-[10px] text-[#6b7a8d] hover:text-red-400 transition-colors">
-            <LogOut className="h-3 w-3" /> EXIT
-          </button>
+      <div className="min-h-screen bg-background text-foreground flex flex-col">
+        <header className="h-14 flex items-center justify-between border-b border-border px-6 bg-white">
+          <span className="text-primary font-bold text-sm tracking-wide">Ocean Trade</span>
         </header>
         <main className="flex-1 flex items-center justify-center">
-          <div className="border border-red-600/30 bg-white p-8 max-w-md text-center space-y-4">
-            <div className="text-red-400 text-4xl">✕</div>
-            <h2 className="text-red-400 text-lg font-bold tracking-wider">APPLICATION REJECTED</h2>
-            <p className="text-[#6b7a8d] text-xs leading-relaxed">
-              Your application has been declined. Please contact support for more information.
+          <div className="border border-destructive/30 bg-white p-10 max-w-md text-center space-y-4">
+            <div className="text-destructive text-4xl">✕</div>
+            <h2 className="text-destructive text-lg font-bold">Application Not Approved</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Unfortunately your application was not approved. Please contact support for more information.
             </p>
           </div>
         </main>
@@ -193,52 +173,70 @@ function PortalInner() {
   }
 
   const navItems = [
-    { to: "/portal", icon: BarChart3, label: "DASHBOARD" },
-    { to: "/portal/opportunities", icon: Search, label: "OPPORTUNITIES" },
-    { to: "/portal/portfolio", icon: Briefcase, label: "PORTFOLIO" },
-    { to: "/portal/documents", icon: FileText, label: "DOCUMENTS" },
-    { to: "/portal/archive", icon: History, label: "ARCHIVE" },
+    { to: "/portal", icon: LayoutDashboard, label: "Overview" },
+    { to: "/portal/opportunities", icon: Search, label: "Opportunities" },
+    { to: "/portal/portfolio", icon: Briefcase, label: "My Investments" },
+    { to: "/portal/documents", icon: FileText, label: "Documents" },
+    { to: "/portal/archive", icon: Archive, label: "Archive" },
   ];
 
   return (
-    <div className="min-h-screen bg-[#f4f6f9] text-[#1a2035] font-mono flex flex-col">
-      <header className="h-10 flex items-center justify-between border-b border-[#d0d7e2] px-4 bg-white">
-        <div className="flex items-center gap-6">
-          <span className="text-[#0066ff] font-bold text-xs tracking-[0.2em]">TRADE PORTAL</span>
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      {/* Top bar — clean bank header */}
+      <header className="h-14 flex items-center justify-between border-b border-border px-6 bg-white shadow-sm">
+        <div className="flex items-center gap-8">
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-7 bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-xs">OT</span>
+            </div>
+            <span className="text-foreground font-bold text-sm">Ocean Trade</span>
+          </div>
           <nav className="flex items-center gap-1">
-            {navItems.map((item) => (
-              <button
-                key={item.to}
-                onClick={() => switchTab(item.to)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] tracking-wider transition-colors text-[#6b7a8d] hover:text-[#1a2035]"
-              >
-                <item.icon className="h-3 w-3" />
-                {item.label}
-              </button>
-            ))}
+            {navItems.map((item) => {
+              const isActive = activeTab === item.to;
+              return (
+                <button
+                  key={item.to}
+                  onClick={() => switchTab(item.to)}
+                  className={`flex items-center gap-2 px-4 py-2 text-[13px] rounded-sm transition-colors ${
+                    isActive
+                      ? "text-primary bg-primary/5 font-semibold"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </button>
+              );
+            })}
           </nav>
         </div>
-        <div className="flex items-center gap-3">
-          <button className="relative p-1 text-[#6b7a8d] hover:text-[#0066ff] transition-colors">
-            <Bell className="h-4 w-4" />
-            <span className="absolute -top-0.5 -right-0.5 h-3 w-3 bg-red-500 text-white text-[7px] font-bold flex items-center justify-center">
+        <div className="flex items-center gap-4">
+          <button className="relative p-1.5 text-muted-foreground hover:text-primary transition-colors">
+            <Bell className="h-4.5 w-4.5" />
+            <span className="absolute -top-0.5 -right-0.5 h-4 w-4 bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center rounded-full">
               0
             </span>
           </button>
-          <span className="text-[10px] text-[#6b7a8d]">{user.email}</span>
+          <div className="h-6 w-px bg-border" />
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-7 bg-muted flex items-center justify-center">
+              <User className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <span className="text-xs text-muted-foreground">{user.email}</span>
+          </div>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-1 text-[10px] text-[#6b7a8d] hover:text-red-500 transition-colors"
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors"
           >
-            <LogOut className="h-3 w-3" />
-            EXIT
+            <LogOut className="h-4 w-4" />
           </button>
         </div>
       </header>
 
       <PortalTabBar />
 
-      <main className="flex-1 overflow-auto p-4">
+      <main className="flex-1 overflow-auto p-6 max-w-[1400px] mx-auto w-full">
         {showWelcome ? (
           <PortalWelcome onComplete={handleWelcomeComplete} />
         ) : (
@@ -246,13 +244,11 @@ function PortalInner() {
         )}
       </main>
 
-      <footer className="h-6 flex items-center justify-between border-t border-[#d0d7e2] px-4 text-[9px] text-[#8a95a5] bg-white">
-        <span>TRADE PORTAL v2.0</span>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1">
-            <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-            CONNECTED
-          </div>
+      <footer className="h-8 flex items-center justify-between border-t border-border px-6 text-[10px] text-muted-foreground bg-white">
+        <span>Ocean Trade Platform</span>
+        <div className="flex items-center gap-1.5">
+          <div className="h-2 w-2 rounded-full bg-green-500" />
+          <span>System Online</span>
         </div>
       </footer>
     </div>
