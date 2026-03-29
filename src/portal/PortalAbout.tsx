@@ -95,11 +95,15 @@ export default function PortalAbout() {
           <Users className="h-4 w-4 text-primary" /> Leadership Team
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {team.map((person, i) => (
+          {team.map((person: any, i: number) => (
             <div key={i} className="border border-border p-5 text-center space-y-2">
-              <div className="h-14 w-14 bg-muted mx-auto flex items-center justify-center">
-                <Users className="h-6 w-6 text-muted-foreground" />
-              </div>
+              {person.image_url ? (
+                <img src={person.image_url} className="h-14 w-14 rounded-full object-cover mx-auto border border-border" />
+              ) : (
+                <div className="h-14 w-14 bg-muted mx-auto flex items-center justify-center rounded-full">
+                  <Users className="h-6 w-6 text-muted-foreground" />
+                </div>
+              )}
               <h3 className="text-sm font-semibold text-foreground">{person.name}</h3>
               <p className="text-[11px] text-primary font-medium">{person.role}</p>
               <p className="text-xs text-muted-foreground leading-relaxed">{person.desc}</p>
