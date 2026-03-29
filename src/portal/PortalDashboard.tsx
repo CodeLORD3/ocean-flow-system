@@ -213,7 +213,7 @@ export default function PortalDashboard() {
                 onClick={() => openOfferTab(offer.id, offer.title)}
                 className="border border-border p-3 hover:border-primary hover:shadow-sm cursor-pointer transition-all group"
               >
-                <div className="flex items-start justify-between mb-2">
+                <div className="flex items-start justify-between mb-1">
                   <h3 className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors leading-snug pr-2">
                     {offer.title}
                   </h3>
@@ -225,6 +225,13 @@ export default function PortalDashboard() {
                     {offer.status === "Open" ? "OPEN" : "FUNDED"}
                   </span>
                 </div>
+
+                {(offer as any).company_id && companyMap[(offer as any).company_id] && (
+                  <p className="text-[10px] text-muted-foreground mb-1.5 flex items-center gap-1">
+                    <CountryFlag country={companyMap[(offer as any).company_id].country} size={14} />
+                    {companyMap[(offer as any).company_id].name}
+                  </p>
+                )}
 
                 {offer.description && (
                   <p className="text-[11px] text-muted-foreground mb-3 line-clamp-2 leading-relaxed">{offer.description}</p>
