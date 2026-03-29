@@ -6,7 +6,7 @@ import { Clock, Calculator, FileText, AlertTriangle, TrendingUp, Shield, Package
 import { toast } from "sonner";
 import { parseISO, format } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
-import { getCountryFlag } from "@/pages/Companies";
+import CountryFlag from "@/components/CountryFlag";
 
 export default function PortalOfferDetail({ overrideId }: { overrideId?: string } = {}) {
   const { id: paramId } = useParams<{ id: string }>();
