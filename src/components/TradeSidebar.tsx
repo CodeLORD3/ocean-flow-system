@@ -32,6 +32,8 @@ const tradeNav = [
   { title: "Kalender", url: "/schedule", icon: CalendarDays },
 ];
 
+const DEV_PORTAL_URL = "/portal?dev=1";
+
 const bottomNav = [
   { title: "Revision & Logg", url: "/audit", icon: ClipboardList },
   { title: "Administration", url: "/settings", icon: Settings },
