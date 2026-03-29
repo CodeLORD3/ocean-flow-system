@@ -26,6 +26,17 @@ export default function PortalOpportunities() {
     },
   });
 
+  const { data: companies = [] } = useQuery({
+    queryKey: ["portal-companies"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("companies").select("*");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const companyMap: Record<string, any> = Object.fromEntries(companies.map((c: any) => [c.id, c]));
+
   const filtered = offers.filter((o) => {
     if (search && !o.title.toLowerCase().includes(search.toLowerCase())) return false;
     if (statusFilter === "open" && o.status !== "Open") return false;
