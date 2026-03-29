@@ -11,6 +11,7 @@ import { Plus, TrendingUp, Upload, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import TradeOfferDetail from "@/components/trade/TradeOfferDetail";
+import { getCountryFlag } from "@/pages/Companies";
 
 const EMPTY_FORM = {
   title: "", description: "", quantity: "", target_amount: "",
