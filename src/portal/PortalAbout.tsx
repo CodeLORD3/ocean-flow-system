@@ -68,27 +68,6 @@ export default function PortalAbout() {
         <p className="text-sm text-muted-foreground leading-relaxed">{missionText}</p>
       </div>
 
-      {/* Values */}
-      <div className="border border-border bg-white p-8 space-y-5">
-        <h2 className="text-base font-bold text-foreground">Our Values</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {values.map((v, i) => {
-            const Icon = VALUE_ICONS[i % VALUE_ICONS.length];
-            return (
-              <div key={i} className="flex gap-3 p-4 bg-muted/30 border border-border">
-                <div className="h-9 w-9 bg-primary/10 flex items-center justify-center shrink-0">
-                  <Icon className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground">{v.title}</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">{v.desc}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
       {/* Team */}
       <div className="border border-border bg-white p-8 space-y-5">
         <h2 className="text-base font-bold text-foreground flex items-center gap-2">
@@ -109,6 +88,27 @@ export default function PortalAbout() {
               <p className="text-xs text-muted-foreground leading-relaxed">{person.desc}</p>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Values */}
+      <div className="border border-border bg-white p-8 space-y-5">
+        <h2 className="text-base font-bold text-foreground">Our Values</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {values.map((v, i) => {
+            const Icon = VALUE_ICONS[i % VALUE_ICONS.length];
+            return (
+              <div key={i} className="flex gap-3 p-4 bg-muted/30 border border-border">
+                <div className="h-9 w-9 bg-primary/10 flex items-center justify-center shrink-0">
+                  <Icon className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">{v.title}</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">{v.desc}</p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
