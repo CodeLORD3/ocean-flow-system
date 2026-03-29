@@ -152,7 +152,7 @@ export default function PortalDashboard() {
               })}
               {activePledges.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-muted-foreground text-sm">
+                  <td colSpan={6} className="p-5 text-center text-muted-foreground text-xs">
                     No active investments.{" "}
                     <button onClick={() => switchTab("/portal/opportunities")} className="text-primary hover:underline font-medium">
                       Browse opportunities
