@@ -96,7 +96,7 @@ export default function PortalOpportunities() {
       <p className="text-xs text-muted-foreground">{filtered.length} {filtered.length === 1 ? "opportunity" : "opportunities"} found</p>
 
       {/* Offers grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {filtered.map((offer) => {
           const target = Number(offer.target_amount) || 0;
           const funded = Number(offer.funded_amount) || 0;
