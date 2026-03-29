@@ -7,6 +7,7 @@ import {
   Users,
   CalendarDays,
   Building2,
+  Phone,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
