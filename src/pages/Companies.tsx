@@ -18,6 +18,7 @@ const COUNTRY_OPTIONS = [
   { code: "DK", name: "Denmark", flag: "🇩🇰" },
   { code: "FI", name: "Finland", flag: "🇫🇮" },
   { code: "IS", name: "Iceland", flag: "🇮🇸" },
+  { code: "CH", name: "Switzerland", flag: "🇨🇭" },
   { code: "GB", name: "United Kingdom", flag: "🇬🇧" },
   { code: "DE", name: "Germany", flag: "🇩🇪" },
   { code: "NL", name: "Netherlands", flag: "🇳🇱" },
