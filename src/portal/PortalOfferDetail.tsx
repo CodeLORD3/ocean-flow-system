@@ -34,6 +34,18 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
     },
   });
 
+  const { data: company } = useQuery({
+    queryKey: ["portal-company", (offer as any)?.company_id],
+    queryFn: async () => {
+      const companyId = (offer as any)?.company_id;
+      if (!companyId) return null;
+      const { data, error } = await supabase.from("companies").select("*").eq("id", companyId).single();
+      if (error) return null;
+      return data;
+    },
+    enabled: !!(offer as any)?.company_id,
+  });
+
   const pledgeMutation = useMutation({
     mutationFn: async (amount: number) => {
       const { data: { user } } = await supabase.auth.getUser();
