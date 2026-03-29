@@ -29,6 +29,7 @@ import InvestorPortal from "@/pages/InvestorPortal";
 import InvestorList from "@/pages/InvestorList";
 import ScheduleCalendar from "@/pages/ScheduleCalendar";
 import Companies from "@/pages/Companies";
+import ContactSettings from "@/pages/ContactSettings";
 
 interface RouteEntry {
   component: React.ReactNode;
