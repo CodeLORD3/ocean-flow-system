@@ -59,6 +59,21 @@ export default function TradeOffers() {
     },
   });
 
+  const { data: companies = [] } = useQuery({
+    queryKey: ["companies"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("companies")
+        .select("*")
+        .eq("status", "Active")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const companyMap: Record<string, any> = Object.fromEntries(companies.map((c: any) => [c.id, c]));
+
   const uploadFile = async (file: File, folder: string) => {
     const ext = file.name.split(".").pop();
     const path = `${folder}/${crypto.randomUUID()}.${ext}`;
