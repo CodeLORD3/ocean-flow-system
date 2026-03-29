@@ -7,7 +7,7 @@ export interface PortalTab {
 }
 
 const PORTAL_TITLES: Record<string, string> = {
-  "/portal": "Dashboard",
+  "/portal": "Opportunities",
   "/portal/opportunities": "Opportunities",
   "/portal/portfolio": "Portfolio",
   "/portal/commitments": "My Commitments",
@@ -16,6 +16,7 @@ const PORTAL_TITLES: Record<string, string> = {
   "/portal/about": "About Us",
   "/portal/how-it-works": "How It Works",
   "/portal/contact": "Contact & Support",
+  "/portal/team": "Team",
 };
 
 export function getPortalTitle(path: string): string {
