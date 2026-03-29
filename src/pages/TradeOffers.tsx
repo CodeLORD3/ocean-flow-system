@@ -408,7 +408,7 @@ export default function TradeOffers() {
                     <TableCell className="py-1.5 font-medium">{offer.title}</TableCell>
                     <TableCell className="py-1.5">
                       {(offer as any).company_id && companyMap[(offer as any).company_id] ? (
-                        <span className="text-[10px]">{getCountryFlag(companyMap[(offer as any).company_id].country)} {companyMap[(offer as any).company_id].name}</span>
+                        <span className="text-[10px] flex items-center gap-1"><CountryFlag country={companyMap[(offer as any).company_id].country} size={13} /> {companyMap[(offer as any).company_id].name}</span>
                       ) : <span className="text-muted-foreground">—</span>}
                     </TableCell>
                     <TableCell className="py-1.5 text-right">{target.toLocaleString()} kr</TableCell>

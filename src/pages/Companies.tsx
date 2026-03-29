@@ -309,7 +309,7 @@ export default function Companies() {
                       <span className="font-medium">{c.name}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="py-1.5">{getCountryFlag(c.country)} {c.country}</TableCell>
+                  <TableCell className="py-1.5"><span className="flex items-center gap-1"><CountryFlag country={c.country} size={14} /> {c.country}</span></TableCell>
                   <TableCell className="py-1.5 text-muted-foreground">{c.industry || "—"}</TableCell>
                   <TableCell className="py-1.5 text-center">
                     <Badge variant={c.status === "Active" ? "default" : "secondary"} className="text-[9px]">{c.status}</Badge>
