@@ -12,6 +12,8 @@ import PortalCommitments from "./PortalCommitments";
 import PortalDocuments from "./PortalDocuments";
 import PortalArchive from "./PortalArchive";
 import PortalOfferDetail from "./PortalOfferDetail";
+import PortalAbout from "./PortalAbout";
+import PortalHowItWorks from "./PortalHowItWorks";
 
 function PortalTabBar() {
   const { tabs, activeTab, switchTab, closeTab } = usePortalTabs();
