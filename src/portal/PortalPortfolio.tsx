@@ -5,6 +5,7 @@ import { DollarSign, TrendingUp, Target, Percent } from "lucide-react";
 import { parseISO, format, differenceInDays } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
+import InvestmentFlowDiagram from "./InvestmentFlowDiagram";
 
 export default function PortalPortfolio() {
   const { openOfferTab } = usePortalTabs();
@@ -84,6 +85,9 @@ export default function PortalPortfolio() {
           </div>
         ))}
       </div>
+
+      {/* Investment Flow Diagram */}
+      <InvestmentFlowDiagram pledges={pledges as any} />
 
       {/* Table with tabs */}
       <div className="border border-border bg-white">
