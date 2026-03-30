@@ -31,8 +31,19 @@ export default function PortalProfile() {
     load();
   }, []);
 
+  const isValidIban = useMemo(() => {
+    const cleaned = iban.replace(/\s/g, "");
+    if (cleaned.length < 15 || cleaned.length > 34) return false;
+    if (!/^[A-Z]{2}[0-9]{2}[A-Z0-9]+$/.test(cleaned)) return false;
+    return true;
+  }, [iban]);
+
   const handleSaveIban = async () => {
     if (!profile) return;
+    if (iban && !isValidIban) {
+      toast({ title: "Invalid IBAN", description: "Please enter a valid IBAN format.", variant: "destructive" });
+      return;
+    }
     setSaving(true);
     const { error } = await supabase
       .from("investor_profiles")
