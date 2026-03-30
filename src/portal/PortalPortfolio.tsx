@@ -171,7 +171,7 @@ export default function PortalPortfolio() {
             })}
             {currentList.length === 0 && (
               <tr>
-                <td colSpan={7} className="p-5 text-center text-muted-foreground text-xs">
+                <td colSpan={8} className="p-5 text-center text-muted-foreground text-xs">
                   {tab === "active" ? "No active investments." : "No completed investments yet."}
                 </td>
               </tr>
