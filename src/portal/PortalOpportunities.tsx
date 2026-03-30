@@ -260,7 +260,7 @@ export default function PortalOpportunities() {
       {viewMode === "cards" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {filtered.map((offer) => {
-            const { target, funded, rate, progress, daysLeft, company } = renderOfferData(offer);
+            const { target, funded, rate, progress, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity } = renderOfferData(offer);
             return (
               <div
                 key={offer.id}
@@ -314,6 +314,13 @@ export default function PortalOpportunities() {
                     </div>
                   </div>
 
+                  {/* Timeline info */}
+                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-2">
+                    <CalendarClock className="h-3 w-3 shrink-0" />
+                    <span>{purchaseDate ? format(purchaseDate, "d MMM") : "—"} → {maturity ? format(maturity, "d MMM yyyy") : "—"}</span>
+                    {tenorDays !== null && <span className="text-foreground font-medium">({tenorDays}d)</span>}
+                  </div>
+
                   <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border mt-auto">
                     <div>
                       <div className="text-[10px] text-muted-foreground">Return</div>
@@ -323,10 +330,10 @@ export default function PortalOpportunities() {
                       </div>
                     </div>
                     <div>
-                      <div className="text-[10px] text-muted-foreground">Duration</div>
-                      <div className="text-xs font-bold text-foreground flex items-center gap-0.5">
-                        <Clock className="h-3 w-3 text-muted-foreground" />
-                        {daysLeft !== null ? `${daysLeft}d` : "—"}
+                      <div className="text-[10px] text-muted-foreground">Days Left</div>
+                      <div className={`text-xs font-bold flex items-center gap-0.5 ${isMatured ? "text-destructive" : daysToMaturity !== null && daysToMaturity <= 7 ? "text-destructive" : daysToMaturity !== null && daysToMaturity <= 30 ? "text-warning" : "text-foreground"}`}>
+                        <Clock className="h-3 w-3" />
+                        {isMatured ? "MATURED" : daysToMaturity !== null ? `${daysToMaturity}d` : "—"}
                       </div>
                     </div>
                     <div>
