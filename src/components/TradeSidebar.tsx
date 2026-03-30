@@ -28,12 +28,18 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const tradeNav = [
+const tradingNav = [
   { title: "Trade Offers", url: "/trade-offers", icon: TrendingUp },
-  { title: "Companies", url: "/companies", icon: Building2 },
-  { title: "History", url: "/trade-history", icon: History },
   { title: "Investment Log", url: "/investment-log", icon: HandCoins },
+  { title: "History", url: "/trade-history", icon: History },
+];
+
+const relationsNav = [
   { title: "Investor List", url: "/investor-list", icon: Users },
+  { title: "Companies", url: "/companies", icon: Building2 },
+];
+
+const portalNav = [
   { title: "Investor Portal", url: "/investor-portal", icon: Eye },
   { title: "Contact Settings", url: "/contact-settings", icon: Phone },
   { title: "About Us Settings", url: "/about-settings", icon: Info },
