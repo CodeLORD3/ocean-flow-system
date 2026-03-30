@@ -69,13 +69,14 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
       if (user) {
         userId = user.id;
       } else if (selectedInvestorId) {
-        // Use the user_id from selected investor profile
         const investor = approvedInvestors.find((i: any) => i.id === selectedInvestorId);
         if (!investor) throw new Error("Please select an investor");
         userId = investor.user_id;
       } else {
         throw new Error("Please select an investor");
       }
+
+      // Insert the pledge
       const { data, error } = await supabase.from("pledges").insert({
         offer_id: id!,
         user_id: userId,
@@ -83,13 +84,23 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
       } as any).select().single();
       if (error) throw error;
 
-      // Update funded_amount on the offer
-      const newFunded = (offer?.funded_amount || 0) + amount;
-      await supabase.from("trade_offers").update({ funded_amount: newFunded } as any).eq("id", id!);
+      // Re-fetch current offer to get latest funded_amount
+      const { data: currentOffer } = await supabase.from("trade_offers").select("funded_amount, target_amount").eq("id", id!).single();
+      const currentFunded = Number(currentOffer?.funded_amount || 0);
+      const targetAmount = Number(currentOffer?.target_amount || 0);
+      const newFunded = currentFunded + amount;
+
+      // Update funded_amount and status if fully funded
+      const updatePayload: any = { funded_amount: newFunded };
+      if (newFunded >= targetAmount && targetAmount > 0) {
+        updatePayload.status = "Funded";
+      }
+      const { error: updateError } = await supabase.from("trade_offers").update(updatePayload).eq("id", id!);
+      if (updateError) console.error("Failed to update offer:", updateError);
 
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       const ref = `OT-${Date.now().toString(36).toUpperCase()}`;
       setSuccessRef(ref);
       setShowConfirmModal(false);
@@ -101,9 +112,10 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
       queryClient.invalidateQueries({ queryKey: ["portal-my-pledges"] });
       queryClient.invalidateQueries({ queryKey: ["portal-portfolio"] });
       queryClient.invalidateQueries({ queryKey: ["investment-log"] });
+      toast.success("Investment confirmed!");
     },
     onError: (err: any) => {
-      toast.error(err.message);
+      toast.error(err.message || "Failed to submit investment");
       setShowConfirmModal(false);
     },
   });
