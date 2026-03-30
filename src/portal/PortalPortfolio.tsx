@@ -126,7 +126,8 @@ export default function PortalPortfolio() {
               const rate = offer ? Number(offer.interest_rate) : 0;
               const expectedReturn = Number(p.amount) * (1 + rate / 100);
               const maturityDate = offer?.maturity_date ? parseISO(offer.maturity_date) : null;
-              const daysToPayout = maturityDate ? differenceInDays(maturityDate, new Date()) : null;
+              const daysToMaturity = maturityDate ? differenceInDays(maturityDate, new Date()) : null;
+              const duration = offer?.tenor_days ? Number(offer.tenor_days) : (offer?.purchase_date && offer?.maturity_date ? differenceInDays(parseISO(offer.maturity_date), parseISO(offer.purchase_date)) : null);
               return (
                 <tr
                   key={p.id}
