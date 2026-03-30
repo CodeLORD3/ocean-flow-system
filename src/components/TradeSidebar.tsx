@@ -9,6 +9,7 @@ import {
   Building2,
   Phone,
   Info,
+  HandCoins,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
