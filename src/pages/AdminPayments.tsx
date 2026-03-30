@@ -34,6 +34,19 @@ export default function AdminPayments() {
         .update({ status: "Active" })
         .eq("id", pledgeId);
       if (error) throw error;
+
+      // Notify investor
+      const pledge = pledges.find((p: any) => p.id === pledgeId);
+      if (pledge) {
+        const offerTitle = pledge.trade_offers?.title || "an offer";
+        await supabase.from("notifications").insert({
+          portal: "investor",
+          target_page: "/portal/portfolio",
+          message: `Your funds for "${offerTitle}" have been received. Your investment is now active.`,
+          entity_type: "pledge",
+          entity_id: pledgeId,
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-payments"] });
