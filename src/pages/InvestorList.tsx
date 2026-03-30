@@ -274,7 +274,7 @@ export default function InvestorList() {
           <div className="border rounded-md overflow-hidden">
             <Table>
               {tableHead}
-              <TableBody>{pending.map(inv => renderRow(inv, true))}</TableBody>
+              <TableBody>{pending.map((inv, idx) => renderRow(inv, true, idx))}</TableBody>
             </Table>
           </div>
         </div>
