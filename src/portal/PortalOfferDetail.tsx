@@ -225,7 +225,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                     amountTouched && pledgeAmt > 0 && !isValidAmount ? "border-destructive focus:border-destructive" : "border-border focus:border-primary"
                   }`}
                 />
-                {pledgeAmt > 0 && pledgeAmt < effectiveMin && (
+                {amountTouched && pledgeAmt > 0 && pledgeAmt < effectiveMin && (
                   <p className="text-[11px] text-destructive font-medium flex items-center gap-1">
                     <AlertTriangle className="h-3 w-3" /> Minimum investment is {effectiveMin.toLocaleString()} kr
                   </p>
