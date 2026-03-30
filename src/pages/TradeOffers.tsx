@@ -333,6 +333,15 @@ export default function TradeOffers() {
               </div>
             </div>
 
+            {/* Payment & Banking */}
+            <div>
+              <h3 className="text-xs font-bold text-muted-foreground tracking-wider mb-2">PAYMENT & BANKING</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <FormField label="Company IBAN" value={form.company_iban} onChange={v => setForm({...form, company_iban: v.toUpperCase()})} placeholder="SE00 0000 0000 0000 0000 0000" />
+                <FormField label="Payment Reference Prefix" value={form.payment_reference_prefix} onChange={v => setForm({...form, payment_reference_prefix: v})} placeholder="OT-2026-" />
+              </div>
+            </div>
+
             {/* Visibility & Files */}
             <div>
               <h3 className="text-xs font-bold text-muted-foreground tracking-wider mb-2">VISIBILITY & FILES</h3>
