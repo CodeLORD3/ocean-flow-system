@@ -90,7 +90,7 @@ export default function TradeHistory() {
               return (
                 <TableRow
                   key={offer.id}
-                  className={`text-[10px] cursor-pointer hover:bg-primary/10 transition-colors ${idx % 2 === 1 ? "bg-muted/30" : ""}`}
+                  className={`text-[10px] cursor-pointer hover:bg-primary/10 transition-colors ${idx % 2 === 1 ? "bg-muted/50" : ""}`}
                   onClick={() => setSelectedOfferId(offer.id)}
                 >
                   <TableCell className="py-1.5 font-medium">{offer.title}</TableCell>

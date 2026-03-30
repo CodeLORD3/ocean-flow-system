@@ -204,7 +204,7 @@ export default function InvestmentLog() {
                     const rate = p.offer?.interest_rate || 0;
                     const expectedReturn = p.amount * (1 + rate / 100);
                     return (
-                      <TableRow key={p.id} className={`hover:bg-primary/10 transition-colors ${filtered.indexOf(p) % 2 === 1 ? "bg-muted/30" : ""}`}>
+                      <TableRow key={p.id} className={`hover:bg-primary/10 transition-colors ${filtered.indexOf(p) % 2 === 1 ? "bg-muted/50" : ""}`}>
                         <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                           {format(new Date(p.created_at), "d MMM yyyy HH:mm", { locale: sv })}
                         </TableCell>

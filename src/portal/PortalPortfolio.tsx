@@ -103,7 +103,7 @@ export default function PortalPortfolio() {
           ))}
         </div>
 
-        <table className="w-full text-xs">
+        <table className="w-full text-[10px]">
           <thead>
             <tr className="border-b border-border text-[10px] text-muted-foreground">
               <th className="text-left p-2 pl-3 font-medium">Offer Name</th>
@@ -123,7 +123,7 @@ export default function PortalPortfolio() {
                 <tr
                   key={p.id}
                   onClick={() => offer && openOfferTab(offer.id, offer.title)}
-                  className={`border-b border-border/50 hover:bg-primary/10 cursor-pointer transition-colors h-8 ${currentList.indexOf(p) % 2 === 1 ? "bg-muted/30" : ""}`}
+                  className={`border-b border-border/50 hover:bg-primary/10 cursor-pointer transition-colors h-8 ${currentList.indexOf(p) % 2 === 1 ? "bg-muted/50" : ""}`}
                 >
                   <td className="p-2 pl-3 text-foreground font-medium">
                     <div className="flex items-center gap-1.5">
