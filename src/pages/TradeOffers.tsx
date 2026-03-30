@@ -22,7 +22,7 @@ const EMPTY_FORM = {
   origin: "", volume: "", purchase_price: "", sales_value: "",
   gross_margin: "", collateral: "Inventory", ltv: "",
   primary_exit: "", secondary_exit: "", downside: "",
-  company_id: "",
+  company_id: "", company_iban: "", payment_reference_prefix: "OT-",
 };
 
 export default function TradeOffers() {
