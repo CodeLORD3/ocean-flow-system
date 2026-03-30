@@ -100,6 +100,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
       queryClient.invalidateQueries({ queryKey: ["portal-offers"] });
       queryClient.invalidateQueries({ queryKey: ["portal-my-pledges"] });
       queryClient.invalidateQueries({ queryKey: ["portal-portfolio"] });
+      queryClient.invalidateQueries({ queryKey: ["investment-log"] });
     },
     onError: (err: any) => {
       toast.error(err.message);
