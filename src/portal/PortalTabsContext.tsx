@@ -17,6 +17,7 @@ const PORTAL_TITLES: Record<string, string> = {
   "/portal/how-it-works": "How It Works",
   "/portal/contact": "Contact & Support",
   "/portal/team": "Team",
+  "/portal/profile": "My Profile",
 };
 
 export function getPortalTitle(path: string): string {
