@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DollarSign, TrendingUp, Target, Percent } from "lucide-react";
-import { parseISO, format } from "date-fns";
+import { parseISO, format, differenceInDays } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
 
@@ -111,6 +111,7 @@ export default function PortalPortfolio() {
               <th className="text-right p-2 font-medium">Return Rate</th>
               <th className="text-right p-2 font-medium">Expected Payout</th>
               <th className="text-left p-2 font-medium">Maturity Date</th>
+              <th className="text-right p-2 font-medium">Days to Payout</th>
               <th className="text-center p-2 pr-3 font-medium">Status</th>
             </tr>
           </thead>
@@ -119,6 +120,8 @@ export default function PortalPortfolio() {
               const offer = p.trade_offers;
               const rate = offer ? Number(offer.interest_rate) : 0;
               const expectedReturn = Number(p.amount) * (1 + rate / 100);
+              const maturityDate = offer?.maturity_date ? parseISO(offer.maturity_date) : null;
+              const daysToPayout = maturityDate ? differenceInDays(maturityDate, new Date()) : null;
               return (
                 <tr
                   key={p.id}
@@ -142,6 +145,13 @@ export default function PortalPortfolio() {
                   <td className="p-2 text-muted-foreground">
                     {offer?.maturity_date ? format(parseISO(offer.maturity_date), "d MMM yyyy") : "—"}
                   </td>
+                  <td className="p-2 text-right">
+                    {daysToPayout !== null ? (
+                      <span className={`font-bold ${daysToPayout <= 0 ? "text-destructive" : daysToPayout <= 7 ? "text-destructive" : daysToPayout <= 30 ? "text-warning" : "text-foreground"}`}>
+                        {daysToPayout <= 0 ? "DUE" : `${daysToPayout}d`}
+                      </span>
+                    ) : "—"}
+                  </td>
                   <td className="p-2 pr-3 text-center">
                     <span className={`inline-block px-2 py-0.5 text-[9px] font-semibold tracking-wide border ${statusBadge(p.status)}`}>
                       {p.status?.toUpperCase() || "ACTIVE"}
@@ -152,7 +162,7 @@ export default function PortalPortfolio() {
             })}
             {currentList.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-5 text-center text-muted-foreground text-xs">
+                <td colSpan={7} className="p-5 text-center text-muted-foreground text-xs">
                   {tab === "active" ? "No active investments." : "No completed investments yet."}
                 </td>
               </tr>
