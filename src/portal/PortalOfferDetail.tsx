@@ -222,7 +222,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                   min={effectiveMin || 1} max={maxPledge || undefined}
                   placeholder={minPledge > 0 ? `Min ${minPledge.toLocaleString()} kr` : "Enter amount"}
                   className={`w-full h-10 bg-white border px-3 text-sm text-foreground font-mono focus:outline-none ${
-                    pledgeAmt > 0 && !isValidAmount ? "border-destructive focus:border-destructive" : "border-border focus:border-primary"
+                    amountTouched && pledgeAmt > 0 && !isValidAmount ? "border-destructive focus:border-destructive" : "border-border focus:border-primary"
                   }`}
                 />
                 {pledgeAmt > 0 && pledgeAmt < effectiveMin && (
