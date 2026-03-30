@@ -63,14 +63,30 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
 
   const pledgeMutation = useMutation({
     mutationFn: async (amount: number) => {
+      // Try auth user first, fall back to selected demo investor
+      let userId: string;
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (user) {
+        userId = user.id;
+      } else if (selectedInvestorId) {
+        // Use the user_id from selected investor profile
+        const investor = approvedInvestors.find((i: any) => i.id === selectedInvestorId);
+        if (!investor) throw new Error("Please select an investor");
+        userId = investor.user_id;
+      } else {
+        throw new Error("Please select an investor");
+      }
       const { data, error } = await supabase.from("pledges").insert({
         offer_id: id!,
-        user_id: user.id,
+        user_id: userId,
         amount,
-      }).select().single();
+      } as any).select().single();
       if (error) throw error;
+
+      // Update funded_amount on the offer
+      const newFunded = (offer?.funded_amount || 0) + amount;
+      await supabase.from("trade_offers").update({ funded_amount: newFunded } as any).eq("id", id!);
+
       return data;
     },
     onSuccess: (data) => {
