@@ -86,6 +86,9 @@ export default function PortalPortfolio() {
         ))}
       </div>
 
+      {/* Investment Flow Diagram */}
+      <InvestmentFlowDiagram pledges={pledges as any} />
+
       {/* Table with tabs */}
       <div className="border border-border bg-white">
         <div className="h-9 flex items-center border-b border-border px-1">
