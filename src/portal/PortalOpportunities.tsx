@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, SlidersHorizontal, TrendingUp, Clock, ArrowRight, LayoutGrid, List } from "lucide-react";
-import { differenceInDays, parseISO } from "date-fns";
+import { Search, SlidersHorizontal, TrendingUp, Clock, ArrowRight, LayoutGrid, List, Calendar, CalendarClock } from "lucide-react";
+import { differenceInDays, parseISO, format } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
 
@@ -60,16 +60,26 @@ export default function PortalOpportunities() {
     const rate = Number(offer.interest_rate) || 0;
     const progress = target > 0 ? Math.min(100, (funded / target) * 100) : 0;
     const maturity = offer.maturity_date ? parseISO(offer.maturity_date) : null;
-    const daysLeft = maturity ? Math.max(0, differenceInDays(maturity, new Date())) : null;
+    const purchaseDate = offer.purchase_date ? parseISO(offer.purchase_date) : null;
+    const now = new Date();
+    const daysToMaturity = maturity ? differenceInDays(maturity, now) : null;
+    const tenorDays = offer.tenor_days ? Number(offer.tenor_days) : (purchaseDate && maturity ? differenceInDays(maturity, purchaseDate) : null);
     const company = (offer as any).company_id ? companyMap[(offer as any).company_id] : null;
-    return { target, funded, rate, progress, maturity, daysLeft, company };
+    const isMatured = daysToMaturity !== null && daysToMaturity <= 0;
+    return { target, funded, rate, progress, maturity, purchaseDate, daysToMaturity, tenorDays, company, isMatured };
   };
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-base font-bold text-foreground">Investment Opportunities</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">Browse available trade finance deals and invest directly.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-base font-bold text-foreground">Investment Opportunities</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">Browse available trade finance deals and invest directly.</p>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground border border-border bg-white px-3 py-1.5">
+          <Calendar className="h-3.5 w-3.5" />
+          <span className="font-medium text-foreground">{format(new Date(), "d MMM yyyy")}</span>
+        </div>
       </div>
 
       {/* Filters */}
@@ -150,18 +160,20 @@ export default function PortalOpportunities() {
                 <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Funding</th>
                 <th className="text-center px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Progress</th>
                 <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Return</th>
+                <th className="text-center px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Start → Maturity</th>
                 <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Duration</th>
+                <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Days Left</th>
                 <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Min. Invest</th>
                 <th className="px-3 py-2"></th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((offer) => {
-                const { target, funded, rate, progress, daysLeft, company } = renderOfferData(offer);
+                const { target, funded, rate, progress, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity } = renderOfferData(offer);
                 return (
                   <tr
                     key={offer.id}
-                    className="border-b border-border last:border-b-0 hover:bg-muted/20 cursor-pointer transition-colors group"
+                    className={`border-b border-border last:border-b-0 hover:bg-primary/10 cursor-pointer transition-colors group ${filtered.indexOf(offer) % 2 === 1 ? "bg-muted/30" : ""}`}
                     onClick={() => openOfferTab(offer.id, offer.title)}
                   >
                     <td className="px-3 py-2.5">
@@ -211,11 +223,24 @@ export default function PortalOpportunities() {
                         {rate.toFixed(1)}%
                       </span>
                     </td>
-                    <td className="px-3 py-2.5 text-right">
-                      <span className="text-foreground font-medium flex items-center justify-end gap-0.5">
-                        <Clock className="h-3 w-3 text-muted-foreground" />
-                        {daysLeft !== null ? `${daysLeft}d` : "—"}
+                    <td className="px-3 py-2.5 text-center whitespace-nowrap">
+                      <div className="text-[10px] text-muted-foreground">
+                        {purchaseDate ? format(purchaseDate, "d MMM") : "—"} → {maturity ? format(maturity, "d MMM yyyy") : "—"}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2.5 text-right whitespace-nowrap">
+                      <span className="text-foreground font-medium">
+                        {tenorDays !== null ? `${tenorDays}d` : "—"}
                       </span>
+                    </td>
+                    <td className="px-3 py-2.5 text-right whitespace-nowrap">
+                      {isMatured ? (
+                        <span className="text-destructive font-bold text-[10px]">MATURED</span>
+                      ) : daysToMaturity !== null ? (
+                        <span className={`font-bold ${daysToMaturity <= 7 ? "text-destructive" : daysToMaturity <= 30 ? "text-warning" : "text-foreground"}`}>
+                          {daysToMaturity}d
+                        </span>
+                      ) : "—"}
                     </td>
                     <td className="px-3 py-2.5 text-right font-mono text-foreground whitespace-nowrap">
                       {Number(offer.min_pledge) > 0 ? `${Number(offer.min_pledge).toLocaleString()} kr` : "—"}
@@ -235,7 +260,7 @@ export default function PortalOpportunities() {
       {viewMode === "cards" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {filtered.map((offer) => {
-            const { target, funded, rate, progress, daysLeft, company } = renderOfferData(offer);
+            const { target, funded, rate, progress, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity } = renderOfferData(offer);
             return (
               <div
                 key={offer.id}
@@ -289,6 +314,13 @@ export default function PortalOpportunities() {
                     </div>
                   </div>
 
+                  {/* Timeline info */}
+                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-2">
+                    <CalendarClock className="h-3 w-3 shrink-0" />
+                    <span>{purchaseDate ? format(purchaseDate, "d MMM") : "—"} → {maturity ? format(maturity, "d MMM yyyy") : "—"}</span>
+                    {tenorDays !== null && <span className="text-foreground font-medium">({tenorDays}d)</span>}
+                  </div>
+
                   <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border mt-auto">
                     <div>
                       <div className="text-[10px] text-muted-foreground">Return</div>
@@ -298,10 +330,10 @@ export default function PortalOpportunities() {
                       </div>
                     </div>
                     <div>
-                      <div className="text-[10px] text-muted-foreground">Duration</div>
-                      <div className="text-xs font-bold text-foreground flex items-center gap-0.5">
-                        <Clock className="h-3 w-3 text-muted-foreground" />
-                        {daysLeft !== null ? `${daysLeft}d` : "—"}
+                      <div className="text-[10px] text-muted-foreground">Days Left</div>
+                      <div className={`text-xs font-bold flex items-center gap-0.5 ${isMatured ? "text-destructive" : daysToMaturity !== null && daysToMaturity <= 7 ? "text-destructive" : daysToMaturity !== null && daysToMaturity <= 30 ? "text-warning" : "text-foreground"}`}>
+                        <Clock className="h-3 w-3" />
+                        {isMatured ? "MATURED" : daysToMaturity !== null ? `${daysToMaturity}d` : "—"}
                       </div>
                     </div>
                     <div>
