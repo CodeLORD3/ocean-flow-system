@@ -159,10 +159,70 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   const pledgeProfit = pledgeReturn - pledgeAmt;
   const remaining = target - funded;
   const effectiveMin = (minPledge > 0 && remaining < minPledge && remaining > 0) ? 1 : minPledge;
-...
+
+  const maturityDate = new Date(offer.maturity_date);
+  const tenorDays = o.tenor_days ?? (o.purchase_date
+    ? Math.ceil((maturityDate.getTime() - new Date(o.purchase_date).getTime()) / (1000 * 60 * 60 * 24))
+    : null);
+  let annualReturn = o.annual_return ? Number(o.annual_return) : null;
+  if (!annualReturn && tenorDays && tenorDays > 0) {
+    annualReturn = Math.round((rate / tenorDays) * 365 * 100) / 100;
+  }
+  const repaymentLabel = o.repayment_type === "rolling" ? "Rolling" : "Bullet";
+
+  const isValidAmount = pledgeAmt > 0 && pledgeAmt >= effectiveMin && pledgeAmt <= remaining;
+  const investorName = investorProfile
+    ? `${investorProfile.first_name} ${investorProfile.last_name}`.trim()
+    : authUser?.email || "Investor";
+  const companyName = (company as any)?.name || "the issuer";
+
+  /* ── Step indicator ── */
+  const StepIndicator = () => (
+    <div className="flex items-center gap-1.5 mb-4">
+      {[1, 2, 3].map((s) => (
+        <div key={s} className="flex items-center gap-1.5">
+          <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${
+            step >= s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+          }`}>{s}</div>
+          {s < 3 && <div className={`w-6 h-0.5 ${step > s ? "bg-primary" : "bg-muted"}`} />}
+        </div>
+      ))}
+      <span className="ml-2 text-[10px] text-muted-foreground">
+        {step === 1 ? "Enter Amount" : step === 2 ? "Review & Sign" : "Payment"}
+      </span>
+    </div>
+  );
+
+  /* ── Investment Panel (3-step) ── */
+  const InvestPanel = () => {
+    if (offer.status !== "Open" || remaining <= 0) {
+      return (
+        <div className="border border-border bg-muted/20 p-4 text-center">
+          <span className="text-xs font-semibold text-muted-foreground">
+            {offer.status === "Funded" ? "This offer is fully funded" : `This offer is ${offer.status}`}
+          </span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="border border-primary/30 bg-primary/5 lg:sticky lg:top-4">
+        <div className="h-10 flex items-center px-4 border-b border-primary/20">
+          <h3 className="text-xs font-bold text-primary uppercase tracking-wider">Invest in This Offer</h3>
+        </div>
+        <div className="p-4">
+          <StepIndicator />
+
+          {/* ── STEP 1: Enter Amount ── */}
+          {step === 1 && (
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <label className="text-[11px] text-muted-foreground font-medium">Investment Amount (kr)</label>
                 <input
-                  type="text" inputMode="numeric" value={pledgeAmount}
-                  onChange={e => setPledgeAmount(e.target.value)}
+                  type="text"
+                  inputMode="numeric"
+                  value={pledgeAmount}
+                  onChange={(e) => setPledgeAmount(e.target.value)}
                   onBlur={() => setPledgeAmount((v) => v.replace(/[^\d]/g, ""))}
                   placeholder={minPledge > 0 ? `Min ${minPledge.toLocaleString()} kr` : "Enter amount"}
                   className={`w-full h-10 bg-white border px-3 text-sm text-foreground font-mono focus:outline-none ${
