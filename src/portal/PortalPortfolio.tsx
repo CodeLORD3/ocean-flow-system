@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DollarSign, TrendingUp, Target, Percent } from "lucide-react";
-import { parseISO, format } from "date-fns";
+import { parseISO, format, differenceInDays } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
 
