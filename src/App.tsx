@@ -38,6 +38,8 @@ const AppContent = () => {
       <Routes>
         {/* Client Trading Portal — separate layout with internal tab system */}
         <Route path="/portal/login" element={<PortalLogin />} />
+        <Route path="/portal/signup" element={<PortalSignup />} />
+        <Route path="/portal/confirm-email" element={<PortalConfirmEmail />} />
         <Route path="/portal/*" element={<PortalLayout />} />
 
         {/* ERP — catch-all */}
