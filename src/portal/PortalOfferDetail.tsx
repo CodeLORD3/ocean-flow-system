@@ -410,10 +410,25 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                     type="number" value={pledgeAmount} onChange={e => setPledgeAmount(e.target.value)}
                     min={minPledge || 1} max={maxPledge || undefined}
                     placeholder={minPledge > 0 ? `Min ${minPledge.toLocaleString()} kr` : "Enter amount"}
-                    className="w-full h-10 bg-white border border-border px-3 text-sm text-foreground font-mono focus:border-primary focus:outline-none"
+                    className={`w-full h-10 bg-white border px-3 text-sm text-foreground font-mono focus:outline-none ${pledgeAmt > 0 && (pledgeAmt < effectiveMin || pledgeAmt > remaining) ? "border-destructive focus:border-destructive" : "border-border focus:border-primary"}`}
                   />
+                  {pledgeAmt > 0 && pledgeAmt < effectiveMin && (
+                    <p className="text-[11px] text-destructive font-medium flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" /> Minimum investment is {effectiveMin.toLocaleString()} kr
+                    </p>
+                  )}
+                  {pledgeAmt > remaining && remaining > 0 && (
+                    <p className="text-[11px] text-destructive font-medium flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" /> Only {remaining.toLocaleString()} kr remaining in this offer
+                    </p>
+                  )}
+                  {remaining < minPledge && remaining > 0 && minPledge > 0 && (
+                    <p className="text-[11px] text-amber-600 font-medium">
+                      Note: Only {remaining.toLocaleString()} kr left — minimum rule waived to allow filling this offer
+                    </p>
+                  )}
                 </div>
-                {pledgeAmt > 0 && (
+                {pledgeAmt > 0 && pledgeAmt >= effectiveMin && pledgeAmt <= remaining && (
                   <div className="border border-border bg-white p-3 space-y-1.5">
                     <div className="flex justify-between text-[11px]">
                       <span className="text-muted-foreground">Expected Return</span>
