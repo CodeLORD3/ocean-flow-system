@@ -111,6 +111,7 @@ export default function PortalPortfolio() {
               <th className="text-right p-2 font-medium">Return Rate</th>
               <th className="text-right p-2 font-medium">Expected Payout</th>
               <th className="text-left p-2 font-medium">Maturity Date</th>
+              <th className="text-right p-2 font-medium">Days to Payout</th>
               <th className="text-center p-2 pr-3 font-medium">Status</th>
             </tr>
           </thead>
