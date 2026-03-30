@@ -115,7 +115,8 @@ export default function PortalPortfolio() {
               <th className="text-right p-2 font-medium">Return Rate</th>
               <th className="text-right p-2 font-medium">Expected Payout</th>
               <th className="text-left p-2 font-medium">Maturity Date</th>
-              <th className="text-right p-2 font-medium">Days to Payout</th>
+              <th className="text-right p-2 font-medium">Duration</th>
+              <th className="text-right p-2 font-medium">Days to Maturity</th>
               <th className="text-center p-2 pr-3 font-medium">Status</th>
             </tr>
           </thead>
@@ -125,7 +126,8 @@ export default function PortalPortfolio() {
               const rate = offer ? Number(offer.interest_rate) : 0;
               const expectedReturn = Number(p.amount) * (1 + rate / 100);
               const maturityDate = offer?.maturity_date ? parseISO(offer.maturity_date) : null;
-              const daysToPayout = maturityDate ? differenceInDays(maturityDate, new Date()) : null;
+              const daysToMaturity = maturityDate ? differenceInDays(maturityDate, new Date()) : null;
+              const duration = offer?.tenor_days ? Number(offer.tenor_days) : (offer?.purchase_date && offer?.maturity_date ? differenceInDays(parseISO(offer.maturity_date), parseISO(offer.purchase_date)) : null);
               return (
                 <tr
                   key={p.id}
@@ -149,10 +151,13 @@ export default function PortalPortfolio() {
                   <td className="p-2 text-muted-foreground">
                     {offer?.maturity_date ? format(parseISO(offer.maturity_date), "d MMM yyyy") : "—"}
                   </td>
+                  <td className="p-2 text-right text-muted-foreground font-mono">
+                    {duration !== null ? `${duration}d` : "—"}
+                  </td>
                   <td className="p-2 text-right">
-                    {daysToPayout !== null ? (
-                      <span className={`font-bold ${daysToPayout <= 0 ? "text-destructive" : daysToPayout <= 7 ? "text-destructive" : daysToPayout <= 30 ? "text-warning" : "text-foreground"}`}>
-                        {daysToPayout <= 0 ? "DUE" : `${daysToPayout}d`}
+                    {daysToMaturity !== null ? (
+                      <span className={`font-bold ${daysToMaturity <= 0 ? "text-destructive" : daysToMaturity <= 7 ? "text-destructive" : daysToMaturity <= 30 ? "text-warning" : "text-foreground"}`}>
+                        {daysToMaturity <= 0 ? "DUE" : `${daysToMaturity}d`}
                       </span>
                     ) : "—"}
                   </td>
@@ -166,7 +171,7 @@ export default function PortalPortfolio() {
             })}
             {currentList.length === 0 && (
               <tr>
-                <td colSpan={7} className="p-5 text-center text-muted-foreground text-xs">
+                <td colSpan={8} className="p-5 text-center text-muted-foreground text-xs">
                   {tab === "active" ? "No active investments." : "No completed investments yet."}
                 </td>
               </tr>
