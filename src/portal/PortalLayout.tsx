@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Search, Briefcase, FileText, Archive, LogOut, X, Bell, User, ChevronRight, Info, BookOpen, Users } from "lucide-react";
@@ -94,6 +95,31 @@ function PortalInner() {
   const [showWelcome, setShowWelcome] = useState(false);
   const navigate = useNavigate();
   const { switchTab, activeTab } = usePortalTabs();
+  const queryClient = useQueryClient();
+
+  const { data: portalNotifCount = 0 } = useQuery({
+    queryKey: ["portal-notification-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("notifications")
+        .select("*", { count: "exact", head: true })
+        .eq("portal", "investor")
+        .eq("is_read", false);
+      if (error) throw error;
+      return count || 0;
+    },
+    refetchInterval: 15000,
+  });
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("portal-notif-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["portal-notification-count"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
 
   useEffect(() => {
     setUser({ id: "dev-user", email: "dev@localhost" } as any);
@@ -218,11 +244,16 @@ function PortalInner() {
           </nav>
         </div>
         <div className="flex items-center gap-4">
-          <button className="relative p-1.5 text-muted-foreground hover:text-primary transition-colors">
+          <button
+            className="relative p-1.5 text-muted-foreground hover:text-primary transition-colors"
+            onClick={() => switchTab("/portal/portfolio")}
+          >
             <Bell className="h-4.5 w-4.5" />
-            <span className="absolute -top-0.5 -right-0.5 h-4 w-4 bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center rounded-full">
-              0
-            </span>
+            {portalNotifCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 h-4 w-4 bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center rounded-full">
+                {portalNotifCount}
+              </span>
+            )}
           </button>
           <div className="h-6 w-px bg-border" />
           <div className="flex items-center gap-2">
