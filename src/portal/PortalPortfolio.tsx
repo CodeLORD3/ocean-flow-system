@@ -103,7 +103,7 @@ export default function PortalPortfolio() {
           ))}
         </div>
 
-        <table className="w-full text-xs">
+        <table className="w-full text-[10px]">
           <thead>
             <tr className="border-b border-border text-[10px] text-muted-foreground">
               <th className="text-left p-2 pl-3 font-medium">Offer Name</th>
