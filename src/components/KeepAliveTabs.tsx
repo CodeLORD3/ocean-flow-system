@@ -33,6 +33,7 @@ import Companies from "@/pages/Companies";
 import ContactSettings from "@/pages/ContactSettings";
 import AboutSettings from "@/pages/AboutSettings";
 import Payouts from "@/pages/Payouts";
+import AdminPayments from "@/pages/AdminPayments";
 
 interface RouteEntry {
   component: React.ReactNode;
