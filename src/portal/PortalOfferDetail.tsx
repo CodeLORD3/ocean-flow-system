@@ -446,14 +446,18 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                 )}
                 <button
                   onClick={handleInvestClick}
-                  disabled={!pledgeAmount || Number(pledgeAmount) <= 0 || !selectedInvestorId}
+                  disabled={!pledgeAmount || pledgeAmt <= 0 || !selectedInvestorId || pledgeAmt < effectiveMin || pledgeAmt > remaining}
                   className="w-full h-10 bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
                 >
                   Invest Now <ArrowUpRight className="h-4 w-4" />
                 </button>
-                {minPledge > 0 && (
+                {(minPledge > 0 || remaining < target) && (
                   <p className="text-[10px] text-muted-foreground text-center">
-                    Min: {minPledge.toLocaleString()} kr{maxPledge && ` · Max: ${maxPledge.toLocaleString()} kr`}
+                    {effectiveMin > 0 && `Min: ${effectiveMin.toLocaleString()} kr`}
+                    {effectiveMin > 0 && maxPledge ? " · " : ""}
+                    {maxPledge && `Max: ${maxPledge.toLocaleString()} kr`}
+                    {(effectiveMin > 0 || maxPledge) && remaining < target ? " · " : ""}
+                    {remaining < target && `Available: ${remaining.toLocaleString()} kr`}
                   </p>
                 )}
               </div>
