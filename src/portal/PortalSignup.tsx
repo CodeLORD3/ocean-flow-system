@@ -173,8 +173,8 @@ export default function PortalSignup() {
                 className="mt-0.5 rounded border-gray-300"
               />
               <span className="text-xs text-gray-600">
-                I agree to the <a href="#" className="text-[#1a3a4a] underline">Terms of Use</a> and{" "}
-                <a href="#" className="text-[#1a3a4a] underline">Privacy Policy</a>
+                I agree to the <Link to="/portal/terms" className="text-[#1a3a4a] underline">Terms of Use</Link> and{" "}
+                <Link to="/portal/privacy" className="text-[#1a3a4a] underline">Privacy Policy</Link>
               </span>
             </label>
 

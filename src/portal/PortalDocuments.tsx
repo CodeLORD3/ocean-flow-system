@@ -48,11 +48,11 @@ export default function PortalDocuments() {
         </div>
         <div className="divide-y divide-border">
           {[
-            { title: "Terms of Use", desc: "Platform terms and conditions" },
-            { title: "Privacy Policy", desc: "How we handle your data" },
-            { title: "Investment Guidelines", desc: "How the platform works and what to expect" },
+            { title: "Terms of Use", desc: "Platform terms and conditions", to: "/portal/terms" },
+            { title: "Privacy Policy", desc: "How we handle your data", to: "/portal/privacy" },
+            { title: "Investment Guidelines", desc: "How the platform works and what to expect", to: "/portal/guidelines" },
           ].map((doc) => (
-            <div key={doc.title} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
+            <Link key={doc.title} to={doc.to} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
               <div className="flex items-center gap-3">
                 <FileText className="h-5 w-5 text-muted-foreground" />
                 <div>
@@ -60,8 +60,8 @@ export default function PortalDocuments() {
                   <div className="text-xs text-muted-foreground">{doc.desc}</div>
                 </div>
               </div>
-              <span className="text-xs text-muted-foreground italic">Coming soon</span>
-            </div>
+              <ArrowRight className="h-4 w-4 text-primary" />
+            </Link>
           ))}
         </div>
       </div>
