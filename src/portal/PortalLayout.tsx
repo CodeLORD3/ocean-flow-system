@@ -1,9 +1,8 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Search, Briefcase, FileText, Archive, LogOut, X, Bell, User, ChevronRight, Info, BookOpen, Users } from "lucide-react";
-import PortalOnboarding from "./PortalOnboarding";
+import { Search, Briefcase, Archive, LogOut, X, Bell, User, Users, ChevronDown } from "lucide-react";
 import PortalWelcome from "./PortalWelcome";
 import { PortalTabsProvider, usePortalTabs } from "./PortalTabsContext";
 import PortalOpportunities from "./PortalOpportunities";
@@ -16,12 +15,12 @@ import PortalAbout from "./PortalAbout";
 import PortalHowItWorks from "./PortalHowItWorks";
 import PortalContact from "./PortalContact";
 import PortalTeam from "./PortalTeam";
+import PortalProfile from "./PortalProfile";
 
+/* ── Tab bar (browser-like) ── */
 function PortalTabBar() {
   const { tabs, activeTab, switchTab, closeTab } = usePortalTabs();
-
   if (tabs.length <= 1) return null;
-
   return (
     <div className="flex items-center gap-0 border-b border-border bg-muted/40 px-3 overflow-x-auto">
       {tabs.map((tab) => {
@@ -39,10 +38,7 @@ function PortalTabBar() {
             <span className="truncate max-w-[160px]">{tab.title}</span>
             {tabs.length > 1 && (
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  closeTab(tab.path);
-                }}
+                onClick={(e) => { e.stopPropagation(); closeTab(tab.path); }}
                 className="opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
               >
                 <X className="h-3.5 w-3.5" />
@@ -55,14 +51,13 @@ function PortalTabBar() {
   );
 }
 
+/* ── Keep-alive content renderer ── */
 function PortalKeepAlive() {
   const { tabs, activeTab } = usePortalTabs();
-
   const renderedTabs = useMemo(() => {
     return tabs.map((tab) => {
       let component: React.ReactNode = null;
-      if (tab.path === "/portal") component = <PortalOpportunities />;
-      else if (tab.path === "/portal/opportunities") component = <PortalOpportunities />;
+      if (tab.path === "/portal" || tab.path === "/portal/opportunities") component = <PortalOpportunities />;
       else if (tab.path === "/portal/portfolio") component = <PortalPortfolio />;
       else if (tab.path === "/portal/commitments") component = <PortalCommitments />;
       else if (tab.path === "/portal/documents") component = <PortalDocuments />;
@@ -71,6 +66,7 @@ function PortalKeepAlive() {
       else if (tab.path === "/portal/team") component = <PortalTeam />;
       else if (tab.path === "/portal/how-it-works") component = <PortalHowItWorks />;
       else if (tab.path === "/portal/contact") component = <PortalContact />;
+      else if (tab.path === "/portal/profile") component = <PortalProfile />;
       else if (tab.path.startsWith("/portal/offer/")) {
         const offerId = tab.path.replace("/portal/offer/", "");
         component = <PortalOfferDetail key={tab.path} overrideId={offerId} />;
@@ -83,15 +79,70 @@ function PortalKeepAlive() {
       );
     });
   }, [tabs, activeTab]);
-
   return <>{renderedTabs}</>;
 }
 
+/* ── User dropdown ── */
+function UserDropdown({ user, profile, onLogout, onProfile }: {
+  user: any; profile: any; onLogout: () => void; onProfile: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const initials = profile
+    ? `${profile.first_name?.[0] || ""}${profile.last_name?.[0] || ""}`.toUpperCase()
+    : (user.email?.[0] || "U").toUpperCase();
+  const displayName = profile
+    ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim()
+    : user.email;
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <div className="h-7 w-7 bg-[#1a3a4a] rounded-full flex items-center justify-center">
+          <span className="text-white font-bold text-[10px]">{initials}</span>
+        </div>
+        <span className="max-w-[120px] truncate">{displayName}</span>
+        <ChevronDown className="h-3 w-3" />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-border rounded-lg shadow-lg z-50 py-1">
+          <button
+            onClick={() => { setOpen(false); onProfile(); }}
+            className="w-full text-left px-4 py-2 text-xs text-foreground hover:bg-muted/50 flex items-center gap-2"
+          >
+            <User className="h-3.5 w-3.5" /> My Profile
+          </button>
+          <div className="border-t border-border my-1" />
+          <button
+            onClick={() => { setOpen(false); onLogout(); }}
+            className="w-full text-left px-4 py-2 text-xs text-destructive hover:bg-muted/50 flex items-center gap-2"
+          >
+            <LogOut className="h-3.5 w-3.5" /> Log out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Main inner layout ── */
 function PortalInner() {
   const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [profileStatus, setProfileStatus] = useState<string | null>(null);
-  const [profileLoading, setProfileLoading] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
   const navigate = useNavigate();
   const { switchTab, activeTab } = usePortalTabs();
@@ -121,14 +172,50 @@ function PortalInner() {
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
+  // Auth listener
   useEffect(() => {
-    setUser({ id: "dev-user", email: "dev@localhost" } as any);
-    setLoading(false);
-    setProfileStatus("approved");
-    setProfileLoading(false);
-    const hasSeenWelcome = localStorage.getItem("portal-welcome-seen");
-    if (!hasSeenWelcome) setShowWelcome(true);
-  }, []);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!session?.user) {
+        navigate("/portal/login");
+        return;
+      }
+      setUser(session.user);
+
+      // Load profile
+      const { data: prof } = await supabase
+        .from("investor_profiles")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+      setProfile(prof);
+      setLoading(false);
+
+      const hasSeenWelcome = localStorage.getItem("portal-welcome-seen");
+      if (!hasSeenWelcome) setShowWelcome(true);
+    });
+
+    // Initial check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.user) {
+        navigate("/portal/login");
+        return;
+      }
+      setUser(session.user);
+      supabase
+        .from("investor_profiles")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .maybeSingle()
+        .then(({ data: prof }) => {
+          setProfile(prof);
+          setLoading(false);
+          const hasSeenWelcome = localStorage.getItem("portal-welcome-seen");
+          if (!hasSeenWelcome) setShowWelcome(true);
+        });
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -140,7 +227,7 @@ function PortalInner() {
     setShowWelcome(false);
   };
 
-  if (loading || profileLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-primary text-sm animate-pulse">Loading your account...</div>
@@ -149,61 +236,6 @@ function PortalInner() {
   }
 
   if (!user) return null;
-
-  if (profileStatus === null) {
-    return (
-      <div className="min-h-screen bg-background text-foreground flex flex-col">
-        <header className="h-14 flex items-center justify-between border-b border-border px-6 bg-white">
-          <span className="text-primary font-bold text-sm tracking-wide">Ocean Trade</span>
-          <button onClick={handleLogout} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors">
-            <LogOut className="h-4 w-4" /> Sign Out
-          </button>
-        </header>
-        <main className="flex-1 overflow-auto p-6">
-          <PortalOnboarding userId={user.id} onComplete={() => setProfileStatus("pending")} />
-        </main>
-      </div>
-    );
-  }
-
-  if (profileStatus === "pending") {
-    return (
-      <div className="min-h-screen bg-background text-foreground flex flex-col">
-        <header className="h-14 flex items-center justify-between border-b border-border px-6 bg-white">
-          <span className="text-primary font-bold text-sm tracking-wide">Ocean Trade</span>
-        </header>
-        <main className="flex-1 flex items-center justify-center">
-          <div className="border border-border bg-white p-10 max-w-md text-center space-y-4">
-            <div className="text-warning text-4xl">⏳</div>
-            <h2 className="text-foreground text-lg font-bold">Application Under Review</h2>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              Your application is being reviewed by our team.<br />
-              This usually takes <strong>1–3 business days</strong>.
-            </p>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  if (profileStatus === "rejected") {
-    return (
-      <div className="min-h-screen bg-background text-foreground flex flex-col">
-        <header className="h-14 flex items-center justify-between border-b border-border px-6 bg-white">
-          <span className="text-primary font-bold text-sm tracking-wide">Ocean Trade</span>
-        </header>
-        <main className="flex-1 flex items-center justify-center">
-          <div className="border border-destructive/30 bg-white p-10 max-w-md text-center space-y-4">
-            <div className="text-destructive text-4xl">✕</div>
-            <h2 className="text-destructive text-lg font-bold">Application Not Approved</h2>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              Unfortunately your application was not approved. Please contact support for more information.
-            </p>
-          </div>
-        </main>
-      </div>
-    );
-  }
 
   const navItems = [
     { to: "/portal", icon: Search, label: "Opportunities" },
@@ -214,7 +246,7 @@ function PortalInner() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {/* Top bar — clean bank header */}
+      {/* Top bar */}
       <header className="h-14 flex items-center justify-between border-b border-border px-6 bg-white shadow-sm">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2">
@@ -256,18 +288,12 @@ function PortalInner() {
             )}
           </button>
           <div className="h-6 w-px bg-border" />
-          <div className="flex items-center gap-2">
-            <div className="h-7 w-7 bg-muted flex items-center justify-center">
-              <User className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <span className="text-xs text-muted-foreground">{user.email}</span>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
+          <UserDropdown
+            user={user}
+            profile={profile}
+            onLogout={handleLogout}
+            onProfile={() => switchTab("/portal/profile")}
+          />
         </div>
       </header>
 
@@ -289,7 +315,6 @@ function PortalInner() {
             </div>
             <span className="text-xs font-semibold text-foreground">Ocean Trade</span>
           </div>
-
           <div className="flex gap-10">
             <div className="space-y-1.5">
               <div className="text-[10px] font-semibold text-foreground uppercase tracking-wider">Resources</div>
@@ -302,7 +327,6 @@ function PortalInner() {
               <button onClick={() => switchTab("/portal/contact")} className="block text-[11px] text-muted-foreground hover:text-primary transition-colors">Contact & Support</button>
             </div>
           </div>
-
           <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
             <div className="h-2 w-2 rounded-full bg-green-500" />
             <span>System Online</span>
