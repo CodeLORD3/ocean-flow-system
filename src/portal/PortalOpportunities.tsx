@@ -71,9 +71,15 @@ export default function PortalOpportunities() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-base font-bold text-foreground">Investment Opportunities</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">Browse available trade finance deals and invest directly.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-base font-bold text-foreground">Investment Opportunities</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">Browse available trade finance deals and invest directly.</p>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground border border-border bg-white px-3 py-1.5">
+          <Calendar className="h-3.5 w-3.5" />
+          <span className="font-medium text-foreground">{format(new Date(), "d MMM yyyy")}</span>
+        </div>
       </div>
 
       {/* Filters */}
