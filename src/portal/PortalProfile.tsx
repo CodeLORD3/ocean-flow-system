@@ -13,7 +13,8 @@ export default function PortalProfile() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user: u } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const u = session?.user;
       if (!u) return;
       setUser(u);
 
