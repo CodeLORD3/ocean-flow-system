@@ -230,7 +230,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                     <AlertTriangle className="h-3 w-3" /> Minimum investment is {effectiveMin.toLocaleString()} kr
                   </p>
                 )}
-                {pledgeAmt > remaining && remaining > 0 && (
+                {amountTouched && pledgeAmt > remaining && remaining > 0 && (
                   <p className="text-[11px] text-destructive font-medium flex items-center gap-1">
                     <AlertTriangle className="h-3 w-3" /> Only {remaining.toLocaleString()} kr remaining
                   </p>
