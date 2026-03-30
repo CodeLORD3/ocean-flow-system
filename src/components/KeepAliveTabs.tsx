@@ -32,6 +32,7 @@ import ScheduleCalendar from "@/pages/ScheduleCalendar";
 import Companies from "@/pages/Companies";
 import ContactSettings from "@/pages/ContactSettings";
 import AboutSettings from "@/pages/AboutSettings";
+import Payouts from "@/pages/Payouts";
 
 interface RouteEntry {
   component: React.ReactNode;
@@ -63,6 +64,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/trade-offers": { component: <TradeOffers /> },
   "/trade-history": { component: <TradeHistory /> },
   "/investment-log": { component: <InvestmentLog /> },
+  "/payouts": { component: <Payouts /> },
   "/investor-portal": { component: <InvestorPortal /> },
   "/investor-list": { component: <InvestorList /> },
   "/schedule": { component: <ScheduleCalendar /> },

@@ -10,6 +10,7 @@ import {
   Phone,
   Info,
   HandCoins,
+  Wallet,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -31,6 +32,7 @@ import {
 const tradingNav = [
   { title: "Trade Offers", url: "/trade-offers", icon: TrendingUp },
   { title: "Investment Log", url: "/investment-log", icon: HandCoins },
+  { title: "Payouts", url: "/payouts", icon: Wallet },
   { title: "History", url: "/trade-history", icon: History },
 ];
 

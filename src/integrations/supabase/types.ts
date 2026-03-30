@@ -1749,6 +1749,7 @@ export type Database = {
         Row: {
           annual_return: number | null
           collateral: string | null
+          company_iban: string | null
           company_id: string | null
           created_at: string
           created_by: string | null
@@ -1764,6 +1765,7 @@ export type Database = {
           max_pledge: number | null
           min_pledge: number | null
           origin: string | null
+          payment_reference_prefix: string | null
           primary_exit: string | null
           product_id_display: string | null
           product_image_url: string | null
@@ -1788,6 +1790,7 @@ export type Database = {
         Insert: {
           annual_return?: number | null
           collateral?: string | null
+          company_iban?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -1803,6 +1806,7 @@ export type Database = {
           max_pledge?: number | null
           min_pledge?: number | null
           origin?: string | null
+          payment_reference_prefix?: string | null
           primary_exit?: string | null
           product_id_display?: string | null
           product_image_url?: string | null
@@ -1827,6 +1831,7 @@ export type Database = {
         Update: {
           annual_return?: number | null
           collateral?: string | null
+          company_iban?: string | null
           company_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -1842,6 +1847,7 @@ export type Database = {
           max_pledge?: number | null
           min_pledge?: number | null
           origin?: string | null
+          payment_reference_prefix?: string | null
           primary_exit?: string | null
           product_id_display?: string | null
           product_image_url?: string | null
