@@ -151,10 +151,13 @@ export default function PortalPortfolio() {
                   <td className="p-2 text-muted-foreground">
                     {offer?.maturity_date ? format(parseISO(offer.maturity_date), "d MMM yyyy") : "—"}
                   </td>
+                  <td className="p-2 text-right text-muted-foreground font-mono">
+                    {duration !== null ? `${duration}d` : "—"}
+                  </td>
                   <td className="p-2 text-right">
-                    {daysToPayout !== null ? (
-                      <span className={`font-bold ${daysToPayout <= 0 ? "text-destructive" : daysToPayout <= 7 ? "text-destructive" : daysToPayout <= 30 ? "text-warning" : "text-foreground"}`}>
-                        {daysToPayout <= 0 ? "DUE" : `${daysToPayout}d`}
+                    {daysToMaturity !== null ? (
+                      <span className={`font-bold ${daysToMaturity <= 0 ? "text-destructive" : daysToMaturity <= 7 ? "text-destructive" : daysToMaturity <= 30 ? "text-warning" : "text-foreground"}`}>
+                        {daysToMaturity <= 0 ? "DUE" : `${daysToMaturity}d`}
                       </span>
                     ) : "—"}
                   </td>
