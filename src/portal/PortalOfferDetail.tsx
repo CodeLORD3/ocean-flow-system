@@ -165,10 +165,15 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
 
   const repaymentLabel = o.repayment_type === "rolling" ? "Rolling" : "Bullet";
 
+  const remaining = target - funded;
+  // Allow below minimum only if remaining capacity itself is below minimum (to fill the last gap)
+  const effectiveMin = (minPledge > 0 && remaining < minPledge && remaining > 0) ? 1 : minPledge;
+
   const handleInvestClick = () => {
     const amt = Number(pledgeAmount);
     if (amt <= 0) { toast.error("Please enter an amount"); return; }
-    if (minPledge > 0 && amt < minPledge) { toast.error(`Minimum investment is ${minPledge.toLocaleString()} kr`); return; }
+    if (amt > remaining) { toast.error(`Only ${remaining.toLocaleString()} kr remaining in this offer`); return; }
+    if (effectiveMin > 0 && amt < effectiveMin) { toast.error(`Minimum investment is ${effectiveMin.toLocaleString()} kr`); return; }
     if (maxPledge && amt > maxPledge) { toast.error(`Maximum investment is ${maxPledge.toLocaleString()} kr`); return; }
     setShowConfirmModal(true);
   };
