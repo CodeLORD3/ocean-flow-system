@@ -411,7 +411,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                 )}
                 <button
                   onClick={handleInvestClick}
-                  disabled={!pledgeAmount || Number(pledgeAmount) <= 0}
+                  disabled={!pledgeAmount || Number(pledgeAmount) <= 0 || !selectedInvestorId}
                   className="w-full h-10 bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
                 >
                   Invest Now <ArrowUpRight className="h-4 w-4" />
