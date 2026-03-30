@@ -153,7 +153,8 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   const calcResult = calcAmount ? Number(calcAmount) * (1 + rate / 100) : 0;
   const minPledge = Number(o.min_pledge) || 0;
   const maxPledge = o.max_pledge ? Number(o.max_pledge) : null;
-  const pledgeAmt = Number(pledgeAmount) || 0;
+  const sanitizedPledgeAmount = pledgeAmount.replace(/[^\d]/g, "");
+  const pledgeAmt = sanitizedPledgeAmount ? Number(sanitizedPledgeAmount) : 0;
   const pledgeReturn = pledgeAmt * (1 + rate / 100);
   const pledgeProfit = pledgeReturn - pledgeAmt;
   const remaining = target - funded;
@@ -218,8 +219,11 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
               <div className="space-y-1.5">
                 <label className="text-[11px] text-muted-foreground font-medium">Investment Amount (kr)</label>
                 <input
-                  type="text" inputMode="numeric" value={pledgeAmount}
-                  onChange={e => { const v = e.target.value; if (v === "" || /^\d+$/.test(v)) setPledgeAmount(v); }}
+                  type="text"
+                  inputMode="numeric"
+                  value={pledgeAmount}
+                  onChange={(e) => setPledgeAmount(e.target.value)}
+                  onBlur={() => setPledgeAmount((v) => v.replace(/[^\d]/g, ""))}
                   placeholder={minPledge > 0 ? `Min ${minPledge.toLocaleString()} kr` : "Enter amount"}
                   className={`w-full h-10 bg-white border px-3 text-sm text-foreground font-mono focus:outline-none ${
                     amountTouched && pledgeAmt > 0 && !isValidAmount ? "border-destructive focus:border-destructive" : "border-border focus:border-primary"
