@@ -20,6 +20,21 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successRef, setSuccessRef] = useState("");
+  const [selectedInvestorId, setSelectedInvestorId] = useState("");
+
+  // Fetch approved investors for demo selection
+  const { data: approvedInvestors = [] } = useQuery({
+    queryKey: ["approved-investors"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("investor_profiles" as any)
+        .select("*")
+        .eq("status", "approved")
+        .order("first_name");
+      if (error) throw error;
+      return data as any[];
+    },
+  });
 
   const { data: offer, isLoading } = useQuery({
     queryKey: ["portal-offer", id],
