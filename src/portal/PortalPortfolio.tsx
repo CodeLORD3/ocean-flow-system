@@ -221,8 +221,24 @@ export default function PortalPortfolio() {
             })}
             {currentList.length === 0 && (
               <tr>
-                <td colSpan={tab === "active" ? 9 : 8} className="p-5 text-center text-muted-foreground text-xs">
-                  {tab === "active" ? "No active investments." : "No completed investments yet."}
+                <td colSpan={tab === "active" ? 9 : 8} className="p-0">
+                  {tab === "active" ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <div className="h-14 w-14 bg-primary/10 flex items-center justify-center rounded-full mb-3">
+                        <Briefcase className="h-7 w-7 text-primary" />
+                      </div>
+                      <div className="text-sm font-semibold text-foreground mb-1">You haven't made any investments yet</div>
+                      <p className="text-xs text-muted-foreground mb-4">Start by exploring available trade finance opportunities.</p>
+                      <button
+                        onClick={() => switchTab("/portal")}
+                        className="h-9 px-5 bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-1.5"
+                      >
+                        Browse Opportunities <ArrowRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="p-5 text-center text-muted-foreground text-xs">No completed investments yet.</div>
+                  )}
                 </td>
               </tr>
             )}

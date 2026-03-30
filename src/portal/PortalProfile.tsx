@@ -105,14 +105,21 @@ export default function PortalProfile() {
         <p className="text-xs text-muted-foreground mb-4">
           Your IBAN will be used for receiving payouts at maturity.
         </p>
-        <div className="flex gap-3">
-          <input
-            type="text"
-            value={iban}
-            onChange={(e) => setIban(e.target.value.toUpperCase())}
-            placeholder="SE00 0000 0000 0000 0000 0000"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a4a]/20 focus:border-[#1a3a4a] font-mono"
-          />
+        <div className="flex gap-3 items-start">
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              value={iban}
+              onChange={(e) => setIban(e.target.value.toUpperCase().replace(/[^A-Z0-9\s]/g, ""))}
+              placeholder="SE00 0000 0000 0000 0000 0000"
+              className={`w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a4a]/20 font-mono pr-9 ${
+                iban && isValidIban ? "border-green-400 focus:border-green-500" : iban ? "border-destructive focus:border-destructive" : "border-gray-300 focus:border-[#1a3a4a]"
+              }`}
+            />
+            {iban && isValidIban && (
+              <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+            )}
+          </div>
           <button
             onClick={handleSaveIban}
             disabled={saving}
@@ -122,6 +129,9 @@ export default function PortalProfile() {
             {saving ? "Saving…" : "Save"}
           </button>
         </div>
+        {iban && !isValidIban && (
+          <p className="text-[11px] text-destructive mt-1">Please enter a valid IBAN (e.g. SE35 5000 0000 0549 1000 0003)</p>
+        )}
       </div>
 
       {/* Security */}
