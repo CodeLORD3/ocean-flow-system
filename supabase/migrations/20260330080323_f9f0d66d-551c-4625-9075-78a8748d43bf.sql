@@ -1,0 +1,1 @@
+ALTER TABLE public.pledges DROP CONSTRAINT pledges_user_id_fkey;
