@@ -169,7 +169,7 @@ export default function PortalOpportunities() {
             </thead>
             <tbody>
               {filtered.map((offer) => {
-                const { target, funded, rate, progress, daysLeft, company } = renderOfferData(offer);
+                const { target, funded, rate, progress, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity } = renderOfferData(offer);
                 return (
                   <tr
                     key={offer.id}
@@ -223,11 +223,24 @@ export default function PortalOpportunities() {
                         {rate.toFixed(1)}%
                       </span>
                     </td>
-                    <td className="px-3 py-2.5 text-right">
-                      <span className="text-foreground font-medium flex items-center justify-end gap-0.5">
-                        <Clock className="h-3 w-3 text-muted-foreground" />
-                        {daysLeft !== null ? `${daysLeft}d` : "—"}
+                    <td className="px-3 py-2.5 text-center whitespace-nowrap">
+                      <div className="text-[10px] text-muted-foreground">
+                        {purchaseDate ? format(purchaseDate, "d MMM") : "—"} → {maturity ? format(maturity, "d MMM yyyy") : "—"}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2.5 text-right whitespace-nowrap">
+                      <span className="text-foreground font-medium">
+                        {tenorDays !== null ? `${tenorDays}d` : "—"}
                       </span>
+                    </td>
+                    <td className="px-3 py-2.5 text-right whitespace-nowrap">
+                      {isMatured ? (
+                        <span className="text-destructive font-bold text-[10px]">MATURED</span>
+                      ) : daysToMaturity !== null ? (
+                        <span className={`font-bold ${daysToMaturity <= 7 ? "text-destructive" : daysToMaturity <= 30 ? "text-warning" : "text-foreground"}`}>
+                          {daysToMaturity}d
+                        </span>
+                      ) : "—"}
                     </td>
                     <td className="px-3 py-2.5 text-right font-mono text-foreground whitespace-nowrap">
                       {Number(offer.min_pledge) > 0 ? `${Number(offer.min_pledge).toLocaleString()} kr` : "—"}
