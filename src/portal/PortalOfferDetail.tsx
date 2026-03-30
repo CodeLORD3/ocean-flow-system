@@ -183,7 +183,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
         <div>
           <h1 className="text-xl font-bold text-foreground">Investment Confirmed</h1>
           <p className="text-sm text-muted-foreground mt-2">
-            Your investment of <strong className="text-foreground">{pledgeAmt.toLocaleString()} kr</strong> in <strong className="text-foreground">{offer.title}</strong> has been submitted successfully.
+            Your investment of <strong className="text-foreground">{successAmount.toLocaleString()} kr</strong> in <strong className="text-foreground">{offer.title}</strong> has been submitted successfully.
           </p>
         </div>
         <div className="border border-border bg-white p-5 text-left space-y-3">
@@ -193,11 +193,11 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Amount Invested</span>
-            <span className="font-mono font-semibold text-foreground">{pledgeAmt.toLocaleString()} kr</span>
+            <span className="font-mono font-semibold text-foreground">{successAmount.toLocaleString()} kr</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Expected Return</span>
-            <span className="font-mono font-semibold text-green-600">+{pledgeProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</span>
+            <span className="font-mono font-semibold text-green-600">+{Math.round(successAmount * (rate / 100)).toLocaleString()} kr</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Maturity Date</span>
