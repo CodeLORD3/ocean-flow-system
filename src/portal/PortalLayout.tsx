@@ -95,6 +95,31 @@ function PortalInner() {
   const [showWelcome, setShowWelcome] = useState(false);
   const navigate = useNavigate();
   const { switchTab, activeTab } = usePortalTabs();
+  const queryClient = useQueryClient();
+
+  const { data: portalNotifCount = 0 } = useQuery({
+    queryKey: ["portal-notification-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("notifications")
+        .select("*", { count: "exact", head: true })
+        .eq("portal", "investor")
+        .eq("is_read", false);
+      if (error) throw error;
+      return count || 0;
+    },
+    refetchInterval: 15000,
+  });
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("portal-notif-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["portal-notification-count"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
 
   useEffect(() => {
     setUser({ id: "dev-user", email: "dev@localhost" } as any);
