@@ -16,6 +16,8 @@ import PortalHowItWorks from "./PortalHowItWorks";
 import PortalContact from "./PortalContact";
 import PortalTeam from "./PortalTeam";
 import PortalProfile from "./PortalProfile";
+import PortalNotifications from "./PortalNotifications";
+import PortalNotificationDropdown from "./PortalNotificationDropdown";
 
 /* ── Tab bar (browser-like) ── */
 function PortalTabBar() {
