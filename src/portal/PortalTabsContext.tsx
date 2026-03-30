@@ -53,7 +53,14 @@ export function PortalTabsProvider({ children }: { children: React.ReactNode }) 
     setActiveTab(path);
     setTabs((prev) => {
       if (prev.some((t) => t.path === path)) return prev;
-      return [...prev, { path, title: getPortalTitle(path) }];
+      const next = [...prev, { path, title: getPortalTitle(path) }];
+      // Cap at 4 tabs — remove oldest (but not the first "Opportunities" tab if possible)
+      if (next.length > 4) {
+        const removeIdx = next.findIndex((t, i) => i > 0 && t.path !== path);
+        if (removeIdx > 0) next.splice(removeIdx, 1);
+        else next.splice(1, 1);
+      }
+      return next;
     });
   }, [location.pathname]);
 

@@ -539,34 +539,36 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
         <div className="lg:col-span-1 space-y-3">
           <InvestPanel />
 
-          {/* ROI Calculator */}
-          <div className="border border-border bg-white">
-            <div className="h-10 flex items-center gap-2 px-4 border-b border-border">
-              <Calculator className="h-3.5 w-3.5 text-primary" />
-              <h3 className="text-xs font-semibold text-foreground">Return Calculator</h3>
-            </div>
-            <div className="p-4 space-y-2">
-              <input
-                type="number" value={calcAmount} onChange={e => setCalcAmount(e.target.value)}
-                min={1} placeholder="Enter amount (kr)"
-                className="w-full h-9 bg-muted/50 border border-border px-3 text-xs text-foreground font-mono focus:border-primary focus:outline-none"
-              />
-              {calcResult > 0 ? (
-                <div className="border border-border bg-muted/20 p-2.5 space-y-1">
-                  <div className="flex justify-between text-[11px]">
-                    <span className="text-muted-foreground">You receive</span>
-                    <span className="font-mono font-bold text-green-600">{calcResult.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kr</span>
+          {/* ROI Calculator — only show when offer is not Open (no invest panel) */}
+          {offer.status !== "Open" && (
+            <div className="border border-border bg-white">
+              <div className="h-10 flex items-center gap-2 px-4 border-b border-border">
+                <Calculator className="h-3.5 w-3.5 text-primary" />
+                <h3 className="text-xs font-semibold text-foreground">Return Calculator</h3>
+              </div>
+              <div className="p-4 space-y-2">
+                <input
+                  type="number" value={calcAmount} onChange={e => setCalcAmount(e.target.value)}
+                  min={1} placeholder="Enter amount (kr)"
+                  className="w-full h-9 bg-muted/50 border border-border px-3 text-xs text-foreground font-mono focus:border-primary focus:outline-none"
+                />
+                {calcResult > 0 ? (
+                  <div className="border border-border bg-muted/20 p-2.5 space-y-1">
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-muted-foreground">You receive</span>
+                      <span className="font-mono font-bold text-green-600">{calcResult.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kr</span>
+                    </div>
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-muted-foreground">Profit</span>
+                      <span className="font-mono font-semibold text-green-600">+{(calcResult - Number(calcAmount)).toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kr</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-[11px]">
-                    <span className="text-muted-foreground">Profit</span>
-                    <span className="font-mono font-semibold text-green-600">+{(calcResult - Number(calcAmount)).toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kr</span>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-[10px] text-muted-foreground">Enter an amount to simulate returns</p>
-              )}
+                ) : (
+                  <p className="text-[10px] text-muted-foreground">Enter an amount to simulate returns</p>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Document link */}
           {o.document_url && (

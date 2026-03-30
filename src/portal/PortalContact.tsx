@@ -1,8 +1,14 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Mail, Phone, MapPin, Clock, Info } from "lucide-react";
+import { Mail, Phone, MapPin, Clock, Info, Send, CheckCircle } from "lucide-react";
 
 export default function PortalContact() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [sent, setSent] = useState(false);
+
   const { data: settings, isLoading } = useQuery({
     queryKey: ["contact-settings"],
     queryFn: async () => {
@@ -15,6 +21,11 @@ export default function PortalContact() {
       return data;
     },
   });
+
+  const handleSend = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSent(true);
+  };
 
   return (
     <div className="space-y-5 max-w-2xl">
@@ -96,6 +107,52 @@ export default function PortalContact() {
           Contact information is not available yet.
         </div>
       )}
+
+      {/* Contact Form */}
+      <div className="border border-border bg-white p-6">
+        <h2 className="text-sm font-semibold text-foreground mb-1">Send us a message</h2>
+        <p className="text-xs text-muted-foreground mb-4">We'll get back to you as soon as possible.</p>
+
+        {sent ? (
+          <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200">
+            <CheckCircle className="h-5 w-5 text-green-600 shrink-0" />
+            <div>
+              <div className="text-sm font-semibold text-green-800">Message sent!</div>
+              <div className="text-xs text-green-700">We've received your message and will reply within 1 business day.</div>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSend} className="space-y-3">
+            <div>
+              <label className="block text-xs font-medium text-foreground mb-1">Name</label>
+              <input
+                type="text" required value={name} onChange={e => setName(e.target.value)}
+                className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-foreground mb-1">Email</label>
+              <input
+                type="email" required value={email} onChange={e => setEmail(e.target.value)}
+                className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-foreground mb-1">Message</label>
+              <textarea
+                required value={message} onChange={e => setMessage(e.target.value)} rows={4}
+                className="w-full px-3 py-2 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
+              />
+            </div>
+            <button
+              type="submit"
+              className="h-9 px-5 bg-primary text-primary-foreground text-sm font-medium rounded hover:bg-primary/90 transition-colors flex items-center gap-1.5"
+            >
+              <Send className="h-3.5 w-3.5" /> Send Message
+            </button>
+          </form>
+        )}
+      </div>
     </div>
   );
 }

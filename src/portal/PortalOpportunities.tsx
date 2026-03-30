@@ -9,7 +9,7 @@ import CountryFlag from "@/components/CountryFlag";
 export default function PortalOpportunities() {
   const { openOfferTab } = usePortalTabs();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("open");
   const [minInvestment, setMinInvestment] = useState("");
   const [returnRange, setReturnRange] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"rows" | "cards">("rows");
