@@ -1,14 +1,32 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Check, X, Users } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Check, X, Users, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
+const DEMO_USER_ID = "00000000-0000-0000-0000-000000000001";
+
 export default function InvestorList() {
   const queryClient = useQueryClient();
+  const [showCreate, setShowCreate] = useState(false);
+
+  const [form, setForm] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    telephone: "",
+    address: "",
+    date_of_birth: "",
+    account_type: "private",
+  });
 
   const { data: investors = [], isLoading } = useQuery({
     queryKey: ["investor-profiles"],
@@ -37,6 +55,32 @@ export default function InvestorList() {
     onError: (err: any) => toast.error(err.message),
   });
 
+  const createInvestor = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("investor_profiles" as any).insert({
+        first_name: form.first_name,
+        last_name: form.last_name,
+        email: form.email,
+        telephone: form.telephone,
+        address: form.address,
+        date_of_birth: form.date_of_birth,
+        account_type: form.account_type,
+        user_id: DEMO_USER_ID,
+        status: "approved",
+        reviewed_at: new Date().toISOString(),
+        reviewed_by: "Admin",
+      } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["investor-profiles"] });
+      toast.success("Investor created successfully");
+      setShowCreate(false);
+      setForm({ first_name: "", last_name: "", email: "", telephone: "", address: "", date_of_birth: "", account_type: "private" });
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
   const statusBadge = (status: string) => {
     switch (status) {
       case "approved":
@@ -53,10 +97,71 @@ export default function InvestorList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Users className="h-5 w-5 text-emerald-400" />
-        <h1 className="text-xl font-bold">Investor List</h1>
-        <Badge variant="outline" className="ml-2">{investors.length} total</Badge>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Users className="h-5 w-5 text-emerald-400" />
+          <h1 className="text-xl font-bold">Investor List</h1>
+          <Badge variant="outline" className="ml-2">{investors.length} total</Badge>
+        </div>
+        <Dialog open={showCreate} onOpenChange={setShowCreate}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="gap-1.5">
+              <Plus className="h-4 w-4" /> Create Investor
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Create Investor Profile</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 pt-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">First Name *</Label>
+                  <Input value={form.first_name} onChange={e => setForm(f => ({ ...f, first_name: e.target.value }))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Last Name *</Label>
+                  <Input value={form.last_name} onChange={e => setForm(f => ({ ...f, last_name: e.target.value }))} />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Email *</Label>
+                <Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Telephone *</Label>
+                <Input value={form.telephone} onChange={e => setForm(f => ({ ...f, telephone: e.target.value }))} />
+              </div>
+              <div>
+                <Label className="text-xs">Address *</Label>
+                <Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Date of Birth *</Label>
+                  <Input type="date" value={form.date_of_birth} onChange={e => setForm(f => ({ ...f, date_of_birth: e.target.value }))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Account Type</Label>
+                  <Select value={form.account_type} onValueChange={v => setForm(f => ({ ...f, account_type: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="private">Private</SelectItem>
+                      <SelectItem value="company">Company</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <Button
+                className="w-full mt-2"
+                disabled={!form.first_name || !form.last_name || !form.email || !form.telephone || !form.address || !form.date_of_birth || createInvestor.isPending}
+                onClick={() => createInvestor.mutate()}
+              >
+                {createInvestor.isPending ? "Creating..." : "Create & Approve"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Pending applications */}
