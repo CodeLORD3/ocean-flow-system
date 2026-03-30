@@ -405,7 +405,7 @@ export default function TradeOffers() {
                 <TableHead className="h-8 text-right">Annual Return</TableHead>
                 <TableHead className="h-8">Start</TableHead>
                 <TableHead className="h-8">Expiry</TableHead>
-                <TableHead className="h-8 text-right">Days Left</TableHead>
+                <TableHead className="h-8 text-right">Days to Payout</TableHead>
                 <TableHead className="h-8 text-center">Status</TableHead>
                 <TableHead className="h-8" />
               </TableRow>

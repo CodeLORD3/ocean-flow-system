@@ -162,7 +162,7 @@ export default function PortalOpportunities() {
                 <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Return</th>
                 <th className="text-center px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Start → Maturity</th>
                 <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Duration</th>
-                <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Days Left</th>
+                <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Days to Payout</th>
                 <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Min. Invest</th>
                 <th className="px-3 py-2"></th>
               </tr>
@@ -330,7 +330,7 @@ export default function PortalOpportunities() {
                       </div>
                     </div>
                     <div>
-                      <div className="text-[10px] text-muted-foreground">Days Left</div>
+                      <div className="text-[10px] text-muted-foreground">Days to Payout</div>
                       <div className={`text-xs font-bold flex items-center gap-0.5 ${isMatured ? "text-destructive" : daysToMaturity !== null && daysToMaturity <= 7 ? "text-destructive" : daysToMaturity !== null && daysToMaturity <= 30 ? "text-warning" : "text-foreground"}`}>
                         <Clock className="h-3 w-3" />
                         {isMatured ? "MATURED" : daysToMaturity !== null ? `${daysToMaturity}d` : "—"}
