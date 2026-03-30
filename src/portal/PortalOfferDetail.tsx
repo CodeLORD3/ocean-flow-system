@@ -18,6 +18,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [pledgeAmount, setPledgeAmount] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [amountTouched, setAmountTouched] = useState(false);
   const [successRef, setSuccessRef] = useState("");
   const [calcAmount, setCalcAmount] = useState("");
 
@@ -221,15 +222,15 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                   min={effectiveMin || 1} max={maxPledge || undefined}
                   placeholder={minPledge > 0 ? `Min ${minPledge.toLocaleString()} kr` : "Enter amount"}
                   className={`w-full h-10 bg-white border px-3 text-sm text-foreground font-mono focus:outline-none ${
-                    pledgeAmt > 0 && !isValidAmount ? "border-destructive focus:border-destructive" : "border-border focus:border-primary"
+                    amountTouched && pledgeAmt > 0 && !isValidAmount ? "border-destructive focus:border-destructive" : "border-border focus:border-primary"
                   }`}
                 />
-                {pledgeAmt > 0 && pledgeAmt < effectiveMin && (
+                {amountTouched && pledgeAmt > 0 && pledgeAmt < effectiveMin && (
                   <p className="text-[11px] text-destructive font-medium flex items-center gap-1">
                     <AlertTriangle className="h-3 w-3" /> Minimum investment is {effectiveMin.toLocaleString()} kr
                   </p>
                 )}
-                {pledgeAmt > remaining && remaining > 0 && (
+                {amountTouched && pledgeAmt > remaining && remaining > 0 && (
                   <p className="text-[11px] text-destructive font-medium flex items-center gap-1">
                     <AlertTriangle className="h-3 w-3" /> Only {remaining.toLocaleString()} kr remaining
                   </p>
@@ -263,8 +264,8 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
               )}
 
               <button
-                onClick={() => setStep(2)}
-                disabled={!isValidAmount}
+                onClick={() => { setAmountTouched(true); if (isValidAmount) setStep(2); }}
+                disabled={false}
                 className="w-full h-10 bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
               >
                 Continue <ArrowRight className="h-4 w-4" />
