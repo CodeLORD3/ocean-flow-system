@@ -60,9 +60,13 @@ export default function PortalOpportunities() {
     const rate = Number(offer.interest_rate) || 0;
     const progress = target > 0 ? Math.min(100, (funded / target) * 100) : 0;
     const maturity = offer.maturity_date ? parseISO(offer.maturity_date) : null;
-    const daysLeft = maturity ? Math.max(0, differenceInDays(maturity, new Date())) : null;
+    const purchaseDate = offer.purchase_date ? parseISO(offer.purchase_date) : null;
+    const now = new Date();
+    const daysToMaturity = maturity ? differenceInDays(maturity, now) : null;
+    const tenorDays = offer.tenor_days ? Number(offer.tenor_days) : (purchaseDate && maturity ? differenceInDays(maturity, purchaseDate) : null);
     const company = (offer as any).company_id ? companyMap[(offer as any).company_id] : null;
-    return { target, funded, rate, progress, maturity, daysLeft, company };
+    const isMatured = daysToMaturity !== null && daysToMaturity <= 0;
+    return { target, funded, rate, progress, maturity, purchaseDate, daysToMaturity, tenorDays, company, isMatured };
   };
 
   return (
