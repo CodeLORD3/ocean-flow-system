@@ -5,8 +5,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CreditCard, CheckCircle, Filter, DollarSign, Clock, AlertTriangle } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { CreditCard, CheckCircle, Filter, DollarSign } from "lucide-react";
+import { format, parseISO, differenceInDays } from "date-fns";
 import { toast } from "sonner";
 
 type StatusFilter = "all" | "Pending Payment" | "Active" | "Matured" | "Paid Out";
@@ -20,7 +20,7 @@ export default function AdminPayments() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("pledges")
-        .select("*, trade_offers(title, maturity_date, interest_rate, company_iban, payment_reference_prefix), investor_profiles!inner(first_name, last_name, email)")
+        .select("*, trade_offers(id, title, maturity_date, interest_rate, company_iban, payment_reference_prefix, target_amount, funded_amount, status), investor_profiles!inner(first_name, last_name, email, iban)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as any[];
@@ -42,16 +42,44 @@ export default function AdminPayments() {
   });
 
   const markPaidOutMutation = useMutation({
-    mutationFn: async (pledgeId: string) => {
+    mutationFn: async ({ pledgeId, offerId }: { pledgeId: string; offerId: string }) => {
+      // 1. Mark pledge as Paid Out
       const { error } = await supabase
         .from("pledges")
         .update({ status: "Paid Out" })
         .eq("id", pledgeId);
       if (error) throw error;
+
+      // 2. Notify investor
+      const pledge = pledges.find((p: any) => p.id === pledgeId);
+      if (pledge) {
+        await supabase.from("notifications").insert({
+          portal: "investor",
+          target_page: "/portal/portfolio",
+          message: `Your payout for "${pledge.trade_offers?.title}" has been sent to your bank account.`,
+          entity_type: "pledge",
+          entity_id: pledgeId,
+        });
+      }
+
+      // 3. Check if all pledges for this offer are Paid Out → close offer
+      const { data: remaining } = await supabase
+        .from("pledges")
+        .select("id")
+        .eq("offer_id", offerId)
+        .neq("status", "Paid Out");
+
+      if (!remaining || remaining.length === 0) {
+        await supabase
+          .from("trade_offers")
+          .update({ status: "Closed" })
+          .eq("id", offerId);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-payments"] });
-      toast.success("Investment marked as Paid Out");
+      queryClient.invalidateQueries({ queryKey: ["payout-offers"] });
+      toast.success("Investment marked as Paid Out — investor notified");
     },
   });
 
@@ -70,12 +98,19 @@ export default function AdminPayments() {
     .filter((p: any) => p.status === "Pending Payment")
     .reduce((s: number, p: any) => s + Number(p.amount), 0);
 
-  const statusFilters: { label: string; value: StatusFilter; count: number; color: string }[] = [
-    { label: "All", value: "all", count: pledges.length, color: "" },
-    { label: "Pending Payment", value: "Pending Payment", count: counts.pending, color: "text-amber-600" },
-    { label: "Active", value: "Active", count: counts.active, color: "text-green-600" },
-    { label: "Matured", value: "Matured", count: counts.matured, color: "text-orange-600" },
-    { label: "Paid Out", value: "Paid Out", count: counts.paidOut, color: "text-primary" },
+  const totalMaturedDue = pledges
+    .filter((p: any) => p.status === "Matured")
+    .reduce((s: number, p: any) => {
+      const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
+      return s + Number(p.amount) * (1 + rate / 100);
+    }, 0);
+
+  const statusFilters: { label: string; value: StatusFilter; count: number }[] = [
+    { label: "All", value: "all", count: pledges.length },
+    { label: "Pending Payment", value: "Pending Payment", count: counts.pending },
+    { label: "Active", value: "Active", count: counts.active },
+    { label: "Matured", value: "Matured", count: counts.matured },
+    { label: "Paid Out", value: "Paid Out", count: counts.paidOut },
   ];
 
   const statusBadgeClass = (status: string) => {
@@ -87,6 +122,8 @@ export default function AdminPayments() {
       default: return "";
     }
   };
+
+  const today = new Date();
 
   return (
     <div className="space-y-4">
@@ -106,8 +143,8 @@ export default function AdminPayments() {
           <div className="text-lg font-bold text-amber-600">{totalPending.toLocaleString()} kr</div>
         </CardContent></Card>
         <Card><CardContent className="p-4">
-          <div className="text-[10px] text-muted-foreground mb-1">Active Investments</div>
-          <div className="text-lg font-bold text-green-600">{counts.active}</div>
+          <div className="text-[10px] text-muted-foreground mb-1">Matured — Due</div>
+          <div className="text-lg font-bold text-orange-600">{Math.round(totalMaturedDue).toLocaleString()} kr</div>
         </CardContent></Card>
         <Card><CardContent className="p-4">
           <div className="text-[10px] text-muted-foreground mb-1">Paid Out</div>
@@ -141,27 +178,39 @@ export default function AdminPayments() {
               <TableRow className="text-[10px]">
                 <TableHead className="h-8">Investor</TableHead>
                 <TableHead className="h-8">Offer</TableHead>
-                <TableHead className="h-8 text-right">Amount</TableHead>
+                <TableHead className="h-8 text-right">Principal</TableHead>
+                <TableHead className="h-8 text-right">Return</TableHead>
+                <TableHead className="h-8 text-right">Total Payout</TableHead>
                 <TableHead className="h-8">Reference</TableHead>
+                <TableHead className="h-8">Investor IBAN</TableHead>
                 <TableHead className="h-8">Status</TableHead>
-                <TableHead className="h-8">Date Committed</TableHead>
+                <TableHead className="h-8">Committed</TableHead>
+                <TableHead className="h-8">Days Since Matured</TableHead>
                 <TableHead className="h-8 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-xs text-muted-foreground animate-pulse">Loading...</TableCell>
+                  <TableCell colSpan={11} className="text-center py-8 text-xs text-muted-foreground animate-pulse">Loading...</TableCell>
                 </TableRow>
               ) : filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-xs text-muted-foreground">No investments found.</TableCell>
+                  <TableCell colSpan={11} className="text-center py-8 text-xs text-muted-foreground">No investments found.</TableCell>
                 </TableRow>
               ) : (
                 filtered.map((p: any, idx: number) => {
                   const investor = p.investor_profiles;
                   const offer = p.trade_offers;
+                  const rate = offer ? Number(offer.interest_rate) : 0;
+                  const principal = Number(p.amount);
+                  const returnAmt = Math.round(principal * (rate / 100));
+                  const totalPayout = principal + returnAmt;
                   const refCode = `${offer?.payment_reference_prefix || "OT-"}${new Date(p.created_at).getFullYear()}-${p.id.slice(0, 4).toUpperCase()}-${(p.offer_id || "").slice(0, 4).toUpperCase()}`;
+                  const matDate = offer?.maturity_date ? new Date(offer.maturity_date) : null;
+                  const daysSinceMatured = matDate && (p.status === "Matured" || p.status === "Paid Out")
+                    ? differenceInDays(today, matDate)
+                    : null;
 
                   return (
                     <TableRow
@@ -173,15 +222,25 @@ export default function AdminPayments() {
                         <div className="text-[10px] text-muted-foreground">{investor?.email}</div>
                       </TableCell>
                       <TableCell className="py-1.5 font-medium">{offer?.title || "—"}</TableCell>
-                      <TableCell className="py-1.5 text-right font-mono">{Number(p.amount).toLocaleString()} kr</TableCell>
+                      <TableCell className="py-1.5 text-right font-mono">{principal.toLocaleString()} kr</TableCell>
+                      <TableCell className="py-1.5 text-right font-mono text-green-600">{returnAmt.toLocaleString()} kr</TableCell>
+                      <TableCell className="py-1.5 text-right font-mono font-semibold">{totalPayout.toLocaleString()} kr</TableCell>
                       <TableCell className="py-1.5 font-mono text-[10px]">{refCode}</TableCell>
+                      <TableCell className="py-1.5 font-mono text-[10px]">{investor?.iban || "—"}</TableCell>
                       <TableCell className="py-1.5">
                         <Badge variant="outline" className={`text-[9px] ${statusBadgeClass(p.status)}`}>
                           {p.status}
                         </Badge>
                       </TableCell>
                       <TableCell className="py-1.5 text-muted-foreground">
-                        {format(parseISO(p.created_at), "yyyy-MM-dd HH:mm")}
+                        {format(parseISO(p.created_at), "yyyy-MM-dd")}
+                      </TableCell>
+                      <TableCell className="py-1.5">
+                        {daysSinceMatured !== null && daysSinceMatured >= 0 ? (
+                          <span className={`font-bold ${daysSinceMatured > 7 ? "text-destructive" : daysSinceMatured > 0 ? "text-amber-600" : "text-muted-foreground"}`}>
+                            {daysSinceMatured}d
+                          </span>
+                        ) : "—"}
                       </TableCell>
                       <TableCell className="py-1.5 text-right">
                         {p.status === "Pending Payment" && (
@@ -201,7 +260,7 @@ export default function AdminPayments() {
                             size="sm"
                             variant="outline"
                             className="h-6 text-[10px] text-primary border-primary/30 hover:bg-primary/5"
-                            onClick={() => markPaidOutMutation.mutate(p.id)}
+                            onClick={() => markPaidOutMutation.mutate({ pledgeId: p.id, offerId: p.offer_id })}
                             disabled={markPaidOutMutation.isPending}
                           >
                             <DollarSign className="h-3 w-3 mr-1" />

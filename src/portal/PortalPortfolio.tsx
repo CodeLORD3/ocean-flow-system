@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { DollarSign, TrendingUp, Target, Percent, ChevronDown, ChevronUp, Clock, CreditCard, CheckCircle, AlertTriangle } from "lucide-react";
+import { DollarSign, TrendingUp, Target, Percent, ChevronDown, ChevronUp, Clock, CreditCard, CheckCircle, AlertTriangle, Award } from "lucide-react";
 import { parseISO, format, differenceInDays } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
@@ -39,6 +39,7 @@ export default function PortalPortfolio() {
   const historyPledges = pledges.filter((p: any) => ["Paid Out", "Repaid"].includes(p.status));
   const currentList = tab === "active" ? activePledges : historyPledges;
 
+  // Active tab stats
   const totalInvested = activePledges.reduce((s: number, p: any) => s + Number(p.amount), 0);
   const totalExpectedReturn = activePledges.reduce((s: number, p: any) => {
     const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
@@ -48,6 +49,16 @@ export default function PortalPortfolio() {
   const avgRate = activePledges.length > 0
     ? activePledges.reduce((s: number, p: any) => s + (p.trade_offers ? Number(p.trade_offers.interest_rate) : 0), 0) / activePledges.length
     : 0;
+
+  // History tab stats
+  const totalPaidOut = historyPledges.reduce((s: number, p: any) => {
+    const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
+    return s + Number(p.amount) * (1 + rate / 100);
+  }, 0);
+  const totalHistoryProfit = historyPledges.reduce((s: number, p: any) => {
+    const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
+    return s + Number(p.amount) * (rate / 100);
+  }, 0);
 
   const statusBadge = (status: string) => {
     switch (status) {
@@ -60,18 +71,25 @@ export default function PortalPortfolio() {
     }
   };
 
-  const statusIcon = (status: string) => {
-    switch (status) {
-      case "Active": return <CheckCircle className="h-3.5 w-3.5 text-green-600" />;
-      case "Pending Payment": return <CreditCard className="h-3.5 w-3.5 text-amber-600" />;
-      case "Matured": return <AlertTriangle className="h-3.5 w-3.5 text-orange-600" />;
-      default: return <Clock className="h-3.5 w-3.5 text-muted-foreground" />;
-    }
-  };
-
   if (isLoading) {
     return <div className="text-primary text-sm animate-pulse p-8 text-center">Loading your investments...</div>;
   }
+
+  const activeStats = [
+    { icon: DollarSign, label: "Total Invested", value: `${totalInvested.toLocaleString()} kr`, color: "text-primary" },
+    { icon: TrendingUp, label: "Expected Payout", value: `${totalExpectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr`, color: "text-green-600" },
+    { icon: Target, label: "Expected Profit", value: `+${totalProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr`, color: "text-green-600" },
+    { icon: Percent, label: "Average Return", value: `${avgRate.toFixed(1)}%`, color: "text-primary" },
+  ];
+
+  const historyStats = [
+    { icon: DollarSign, label: "Total Paid Out", value: `${Math.round(totalPaidOut).toLocaleString()} kr`, color: "text-primary" },
+    { icon: Target, label: "Total Profit Earned", value: `+${Math.round(totalHistoryProfit).toLocaleString()} kr`, color: "text-green-600" },
+    { icon: Award, label: "Completed Investments", value: `${historyPledges.length}`, color: "text-primary" },
+    { icon: Percent, label: "Avg. Return", value: historyPledges.length > 0 ? `${(historyPledges.reduce((s: number, p: any) => s + (p.trade_offers ? Number(p.trade_offers.interest_rate) : 0), 0) / historyPledges.length).toFixed(1)}%` : "—", color: "text-green-600" },
+  ];
+
+  const currentStats = tab === "active" ? activeStats : historyStats;
 
   return (
     <div className="space-y-4">
@@ -80,14 +98,9 @@ export default function PortalPortfolio() {
         <p className="text-xs text-muted-foreground mt-0.5">Track all your active and completed investments.</p>
       </div>
 
-      {/* Summary cards */}
+      {/* Summary cards — change based on tab */}
       <div className="grid grid-cols-4 gap-3">
-        {[
-          { icon: DollarSign, label: "Total Invested", value: `${totalInvested.toLocaleString()} kr`, color: "text-primary" },
-          { icon: TrendingUp, label: "Expected Payout", value: `${totalExpectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr`, color: "text-green-600" },
-          { icon: Target, label: "Expected Profit", value: `+${totalProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr`, color: "text-green-600" },
-          { icon: Percent, label: "Average Return", value: `${avgRate.toFixed(1)}%`, color: "text-primary" },
-        ].map((stat) => (
+        {currentStats.map((stat) => (
           <div key={stat.label} className="border border-border bg-white p-3">
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-[11px] text-muted-foreground font-medium">{stat.label}</span>
@@ -98,8 +111,8 @@ export default function PortalPortfolio() {
         ))}
       </div>
 
-      {/* Investment Flow Diagram */}
-      <InvestmentFlowDiagram pledges={pledges as any} />
+      {/* Investment Flow Diagram — only on active tab */}
+      {tab === "active" && <InvestmentFlowDiagram pledges={pledges as any} />}
 
       {/* Table with tabs */}
       <div className="border border-border bg-white">
@@ -107,7 +120,7 @@ export default function PortalPortfolio() {
           {(["active", "history"] as const).map((t) => (
             <button
               key={t}
-              onClick={() => setTab(t)}
+              onClick={() => { setTab(t); setExpandedRow(null); }}
               className={`px-4 h-full text-xs transition-colors border-b-2 ${
                 tab === t
                   ? "text-primary font-semibold border-primary"
@@ -126,10 +139,10 @@ export default function PortalPortfolio() {
               <th className="text-left p-2 font-medium">Offer Name</th>
               <th className="text-right p-2 font-medium">Amount Invested</th>
               <th className="text-right p-2 font-medium">Return Rate</th>
-              <th className="text-right p-2 font-medium">Expected Payout</th>
+              <th className="text-right p-2 font-medium">{tab === "history" ? "Total Payout" : "Expected Payout"}</th>
               <th className="text-left p-2 font-medium">Maturity Date</th>
               <th className="text-right p-2 font-medium">Duration</th>
-              <th className="text-right p-2 font-medium">Days to Maturity</th>
+              {tab === "active" && <th className="text-right p-2 font-medium">Days to Maturity</th>}
               <th className="text-center p-2 pr-3 font-medium">Status</th>
             </tr>
           </thead>
@@ -142,6 +155,7 @@ export default function PortalPortfolio() {
               const daysToMaturity = maturityDate ? differenceInDays(maturityDate, new Date()) : null;
               const duration = offer?.tenor_days ? Number(offer.tenor_days) : (offer?.purchase_date && offer?.maturity_date ? differenceInDays(parseISO(offer.maturity_date), parseISO(offer.purchase_date)) : null);
               const isExpanded = expandedRow === p.id;
+              const colCount = tab === "active" ? 9 : 8;
 
               return (
                 <>
@@ -173,13 +187,15 @@ export default function PortalPortfolio() {
                     <td className="p-2 text-right text-muted-foreground font-mono">
                       {duration !== null ? `${duration}d` : "—"}
                     </td>
-                    <td className="p-2 text-right">
-                      {daysToMaturity !== null ? (
-                        <span className={`font-bold ${daysToMaturity <= 0 ? "text-destructive" : daysToMaturity <= 7 ? "text-destructive" : daysToMaturity <= 14 ? "text-amber-600" : "text-foreground"}`}>
-                          {daysToMaturity <= 0 ? "DUE" : `${daysToMaturity}d`}
-                        </span>
-                      ) : "—"}
-                    </td>
+                    {tab === "active" && (
+                      <td className="p-2 text-right">
+                        {daysToMaturity !== null ? (
+                          <span className={`font-bold ${daysToMaturity <= 0 ? "text-destructive" : daysToMaturity <= 7 ? "text-destructive" : daysToMaturity <= 14 ? "text-amber-600" : "text-foreground"}`}>
+                            {daysToMaturity <= 0 ? "DUE" : `${daysToMaturity}d`}
+                          </span>
+                        ) : "—"}
+                      </td>
+                    )}
                     <td className="p-2 pr-3 text-center">
                       <span className={`inline-block px-2 py-0.5 text-[9px] font-semibold tracking-wide border ${statusBadge(p.status)}`}>
                         {(p.status || "ACTIVE").toUpperCase()}
@@ -188,7 +204,7 @@ export default function PortalPortfolio() {
                   </tr>
                   {isExpanded && (
                     <tr key={`${p.id}-detail`} className="bg-muted/30">
-                      <td colSpan={9} className="p-0">
+                      <td colSpan={colCount} className="p-0">
                         <ExpandedInvestmentDetail
                           pledge={p}
                           offer={offer}
@@ -205,7 +221,7 @@ export default function PortalPortfolio() {
             })}
             {currentList.length === 0 && (
               <tr>
-                <td colSpan={9} className="p-5 text-center text-muted-foreground text-xs">
+                <td colSpan={tab === "active" ? 9 : 8} className="p-5 text-center text-muted-foreground text-xs">
                   {tab === "active" ? "No active investments." : "No completed investments yet."}
                 </td>
               </tr>
@@ -228,8 +244,6 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
   const status = pledge.status || "Active";
   const company = offer?.company_id ? companyMap[offer.company_id] : null;
   const rate = offer ? Number(offer.interest_rate) : 0;
-
-  // Generate reference from pledge id + offer id
   const refCode = `OT-${new Date(pledge.created_at).getFullYear()}-${pledge.id.slice(0, 4).toUpperCase()}-${(offer?.id || "").slice(0, 4).toUpperCase()}`;
 
   return (
@@ -247,7 +261,7 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
           <p className="text-[11px] text-muted-foreground leading-relaxed">
             {status === "Pending Payment" && "Your investment has been booked. We are waiting for your bank transfer to be confirmed. This typically takes 1–2 business days after you send the funds."}
             {status === "Active" && "Your investment is live and running. Funds have been received and deployed into the trade. You will receive your payout at maturity."}
-            {status === "Matured" && "This investment has reached its maturity date. Your payout is being processed and will be transferred to your bank account shortly."}
+            {status === "Matured" && "Payout due — awaiting transfer from company. Your investment has reached maturity and the payout is being processed."}
             {status === "Paid Out" && "This investment has been completed and the full payout has been transferred to your bank account."}
           </p>
           {daysToMaturity !== null && status === "Active" && (
@@ -279,7 +293,7 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
             <span className="text-green-600 font-semibold">{rate.toFixed(1)}%</span>
           </div>
           <div className="flex justify-between text-[11px]">
-            <span className="text-muted-foreground">Expected Payout</span>
+            <span className="text-muted-foreground">{status === "Paid Out" ? "Total Payout" : "Expected Payout"}</span>
             <span className="text-foreground font-mono font-semibold">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</span>
           </div>
           <div className="flex justify-between text-[11px]">
@@ -288,7 +302,7 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
           </div>
         </div>
 
-        {/* Payment instructions (only for Pending Payment) */}
+        {/* Payment instructions for Pending Payment */}
         {status === "Pending Payment" && (
           <div className="space-y-2 border-l border-border/50 pl-4">
             <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-2">Payment Instructions</div>
@@ -316,8 +330,23 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
           </div>
         )}
 
-        {/* For non-pending statuses, show date committed */}
-        {status !== "Pending Payment" && (
+        {/* Matured — payout message */}
+        {status === "Matured" && (
+          <div className="space-y-2 border-l border-border/50 pl-4">
+            <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-2">Payout Status</div>
+            <div className="bg-orange-50 border border-orange-200 p-3 space-y-1.5 text-[11px]">
+              <div className="flex items-center gap-1.5 text-orange-700 font-semibold">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Payout Due
+              </div>
+              <p className="text-orange-700">Your investment has matured. The company is processing your payout of <span className="font-bold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</span>.</p>
+              <p className="text-orange-600 text-[10px]">This typically takes 1–3 business days after maturity.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Timeline for Active / Paid Out */}
+        {(status === "Active" || status === "Paid Out") && (
           <div className="space-y-2 border-l border-border/50 pl-4">
             <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mb-2">Timeline</div>
             <div className="flex justify-between text-[11px]">
@@ -334,6 +363,12 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
               <div className="flex justify-between text-[11px]">
                 <span className="text-muted-foreground">Maturity Date</span>
                 <span className="text-foreground">{format(parseISO(offer.maturity_date), "d MMM yyyy")}</span>
+              </div>
+            )}
+            {status === "Paid Out" && (
+              <div className="flex justify-between text-[11px]">
+                <span className="text-muted-foreground">Status</span>
+                <span className="text-green-600 font-semibold">✓ Payout completed</span>
               </div>
             )}
           </div>
