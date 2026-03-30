@@ -635,47 +635,53 @@ export type Database = {
       investor_profiles: {
         Row: {
           account_type: string
-          address: string
+          address: string | null
+          country: string | null
           created_at: string
-          date_of_birth: string
+          date_of_birth: string | null
           email: string
           first_name: string
+          iban: string | null
           id: string
           last_name: string
           reviewed_at: string | null
           reviewed_by: string | null
           status: string
-          telephone: string
+          telephone: string | null
           user_id: string
         }
         Insert: {
           account_type?: string
-          address: string
+          address?: string | null
+          country?: string | null
           created_at?: string
-          date_of_birth: string
+          date_of_birth?: string | null
           email: string
           first_name: string
+          iban?: string | null
           id?: string
           last_name: string
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
-          telephone: string
+          telephone?: string | null
           user_id: string
         }
         Update: {
           account_type?: string
-          address?: string
+          address?: string | null
+          country?: string | null
           created_at?: string
-          date_of_birth?: string
+          date_of_birth?: string | null
           email?: string
           first_name?: string
+          iban?: string | null
           id?: string
           last_name?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
-          telephone?: string
+          telephone?: string | null
           user_id?: string
         }
         Relationships: []
