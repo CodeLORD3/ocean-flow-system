@@ -8,7 +8,7 @@ import CountryFlag from "@/components/CountryFlag";
 import InvestmentFlowDiagram from "./InvestmentFlowDiagram";
 
 export default function PortalPortfolio() {
-  const { openOfferTab } = usePortalTabs();
+  const { openOfferTab, switchTab } = usePortalTabs();
   const [tab, setTab] = useState<"active" | "history">("active");
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
