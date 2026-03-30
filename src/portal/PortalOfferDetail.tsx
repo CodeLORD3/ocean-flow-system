@@ -165,10 +165,15 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
 
   const repaymentLabel = o.repayment_type === "rolling" ? "Rolling" : "Bullet";
 
+  const remaining = target - funded;
+  // Allow below minimum only if remaining capacity itself is below minimum (to fill the last gap)
+  const effectiveMin = (minPledge > 0 && remaining < minPledge && remaining > 0) ? 1 : minPledge;
+
   const handleInvestClick = () => {
     const amt = Number(pledgeAmount);
     if (amt <= 0) { toast.error("Please enter an amount"); return; }
-    if (minPledge > 0 && amt < minPledge) { toast.error(`Minimum investment is ${minPledge.toLocaleString()} kr`); return; }
+    if (amt > remaining) { toast.error(`Only ${remaining.toLocaleString()} kr remaining in this offer`); return; }
+    if (effectiveMin > 0 && amt < effectiveMin) { toast.error(`Minimum investment is ${effectiveMin.toLocaleString()} kr`); return; }
     if (maxPledge && amt > maxPledge) { toast.error(`Maximum investment is ${maxPledge.toLocaleString()} kr`); return; }
     setShowConfirmModal(true);
   };
@@ -405,10 +410,25 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                     type="number" value={pledgeAmount} onChange={e => setPledgeAmount(e.target.value)}
                     min={minPledge || 1} max={maxPledge || undefined}
                     placeholder={minPledge > 0 ? `Min ${minPledge.toLocaleString()} kr` : "Enter amount"}
-                    className="w-full h-10 bg-white border border-border px-3 text-sm text-foreground font-mono focus:border-primary focus:outline-none"
+                    className={`w-full h-10 bg-white border px-3 text-sm text-foreground font-mono focus:outline-none ${pledgeAmt > 0 && (pledgeAmt < effectiveMin || pledgeAmt > remaining) ? "border-destructive focus:border-destructive" : "border-border focus:border-primary"}`}
                   />
+                  {pledgeAmt > 0 && pledgeAmt < effectiveMin && (
+                    <p className="text-[11px] text-destructive font-medium flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" /> Minimum investment is {effectiveMin.toLocaleString()} kr
+                    </p>
+                  )}
+                  {pledgeAmt > remaining && remaining > 0 && (
+                    <p className="text-[11px] text-destructive font-medium flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" /> Only {remaining.toLocaleString()} kr remaining in this offer
+                    </p>
+                  )}
+                  {remaining < minPledge && remaining > 0 && minPledge > 0 && (
+                    <p className="text-[11px] text-amber-600 font-medium">
+                      Note: Only {remaining.toLocaleString()} kr left — minimum rule waived to allow filling this offer
+                    </p>
+                  )}
                 </div>
-                {pledgeAmt > 0 && (
+                {pledgeAmt > 0 && pledgeAmt >= effectiveMin && pledgeAmt <= remaining && (
                   <div className="border border-border bg-white p-3 space-y-1.5">
                     <div className="flex justify-between text-[11px]">
                       <span className="text-muted-foreground">Expected Return</span>
@@ -426,14 +446,18 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                 )}
                 <button
                   onClick={handleInvestClick}
-                  disabled={!pledgeAmount || Number(pledgeAmount) <= 0 || !selectedInvestorId}
+                  disabled={!pledgeAmount || pledgeAmt <= 0 || !selectedInvestorId || pledgeAmt < effectiveMin || pledgeAmt > remaining}
                   className="w-full h-10 bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
                 >
                   Invest Now <ArrowUpRight className="h-4 w-4" />
                 </button>
-                {minPledge > 0 && (
+                {(minPledge > 0 || remaining < target) && (
                   <p className="text-[10px] text-muted-foreground text-center">
-                    Min: {minPledge.toLocaleString()} kr{maxPledge && ` · Max: ${maxPledge.toLocaleString()} kr`}
+                    {effectiveMin > 0 && `Min: ${effectiveMin.toLocaleString()} kr`}
+                    {effectiveMin > 0 && maxPledge ? " · " : ""}
+                    {maxPledge && `Max: ${maxPledge.toLocaleString()} kr`}
+                    {(effectiveMin > 0 || maxPledge) && remaining < target ? " · " : ""}
+                    {remaining < target && `Available: ${remaining.toLocaleString()} kr`}
                   </p>
                 )}
               </div>
