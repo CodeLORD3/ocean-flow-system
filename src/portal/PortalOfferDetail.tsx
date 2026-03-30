@@ -366,6 +366,24 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                 <h3 className="text-xs font-bold text-primary uppercase tracking-wider">Invest in This Offer</h3>
               </div>
               <div className="p-4 space-y-3">
+                {/* Investor selector (demo/pre-launch) */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] text-muted-foreground font-medium flex items-center gap-1">
+                    <UserCircle className="h-3 w-3" /> Select Investor
+                  </label>
+                  <select
+                    value={selectedInvestorId}
+                    onChange={e => setSelectedInvestorId(e.target.value)}
+                    className="w-full h-9 bg-white border border-border px-3 text-xs text-foreground focus:border-primary focus:outline-none"
+                  >
+                    <option value="">Choose investor...</option>
+                    {approvedInvestors.map((inv: any) => (
+                      <option key={inv.id} value={inv.id}>
+                        {inv.first_name} {inv.last_name} — {inv.email}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div className="space-y-1.5">
                   <label className="text-[11px] text-muted-foreground font-medium">Investment Amount (kr)</label>
                   <input
