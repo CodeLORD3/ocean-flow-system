@@ -18,6 +18,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [pledgeAmount, setPledgeAmount] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [amountTouched, setAmountTouched] = useState(false);
   const [successRef, setSuccessRef] = useState("");
   const [calcAmount, setCalcAmount] = useState("");
 
