@@ -153,7 +153,7 @@ export default function PortalOpportunities() {
         <div className="border border-border bg-white overflow-x-auto">
           <table className="w-full text-[10px]">
             <thead>
-              <tr className="border-b border-border bg-muted/30">
+              <tr className="border-b border-border bg-muted/50">
                 <th className="text-left px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Offer</th>
                 <th className="text-left px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Company</th>
                 <th className="text-left px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Status</th>
@@ -173,20 +173,20 @@ export default function PortalOpportunities() {
                 return (
                   <tr
                     key={offer.id}
-                    className={`border-b border-border last:border-b-0 hover:bg-primary/10 cursor-pointer transition-colors group ${filtered.indexOf(offer) % 2 === 1 ? "bg-muted/30" : ""}`}
+                    className={`border-b border-border last:border-b-0 hover:bg-primary/10 cursor-pointer transition-colors group ${filtered.indexOf(offer) % 2 === 1 ? "bg-muted/50" : ""}`}
                     onClick={() => openOfferTab(offer.id, offer.title)}
                   >
-                    <td className="px-3 py-2.5">
+                    <td className="px-2 py-1.5">
                       <div className="flex items-center gap-2">
                         {offer.product_image_url && (
-                          <img src={offer.product_image_url} alt="" className="h-7 w-7 object-cover border border-border shrink-0" />
+                          <img src={offer.product_image_url} alt="" className="h-5 w-5 object-cover border border-border shrink-0" />
                         )}
                         <span className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1 max-w-[180px]">
                           {offer.title}
                         </span>
                       </div>
                     </td>
-                    <td className="px-3 py-2.5">
+                    <td className="px-2 py-1.5">
                       {company ? (
                         <div className="flex items-center gap-1.5">
                           {company.logo_url && <img src={company.logo_url} alt="" className="h-4 w-4 object-contain shrink-0" />}
@@ -197,7 +197,7 @@ export default function PortalOpportunities() {
                         <span className="text-muted-foreground">—</span>
                       )}
                     </td>
-                    <td className="px-3 py-2.5">
+                    <td className="px-2 py-1.5">
                       <span className={`px-1.5 py-0.5 text-[10px] font-semibold border ${
                         offer.status === "Open"
                           ? "text-green-700 bg-green-50 border-green-200"
@@ -206,10 +206,10 @@ export default function PortalOpportunities() {
                         {offer.status === "Open" ? "OPEN" : "FUNDED"}
                       </span>
                     </td>
-                    <td className="px-3 py-2.5 text-right font-mono text-foreground whitespace-nowrap">
+                    <td className="px-2 py-1.5 text-right font-mono text-foreground whitespace-nowrap">
                       {funded.toLocaleString()} / {target.toLocaleString()} kr
                     </td>
-                    <td className="px-3 py-2.5">
+                    <td className="px-2 py-1.5">
                       <div className="w-16 mx-auto">
                         <div className="h-1.5 bg-muted overflow-hidden">
                           <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
@@ -217,23 +217,23 @@ export default function PortalOpportunities() {
                         <div className="text-[9px] text-muted-foreground text-center mt-0.5">{progress.toFixed(0)}%</div>
                       </div>
                     </td>
-                    <td className="px-3 py-2.5 text-right">
+                    <td className="px-2 py-1.5 text-right">
                       <span className="font-bold text-green-600 flex items-center justify-end gap-0.5">
                         <TrendingUp className="h-3 w-3" />
                         {rate.toFixed(1)}%
                       </span>
                     </td>
-                    <td className="px-3 py-2.5 text-center whitespace-nowrap">
+                    <td className="px-2 py-1.5 text-center whitespace-nowrap">
                       <div className="text-[10px] text-muted-foreground">
                         {purchaseDate ? format(purchaseDate, "d MMM") : "—"} → {maturity ? format(maturity, "d MMM yyyy") : "—"}
                       </div>
                     </td>
-                    <td className="px-3 py-2.5 text-right whitespace-nowrap">
+                    <td className="px-2 py-1.5 text-right whitespace-nowrap">
                       <span className="text-foreground font-medium">
                         {tenorDays !== null ? `${tenorDays}d` : "—"}
                       </span>
                     </td>
-                    <td className="px-3 py-2.5 text-right whitespace-nowrap">
+                    <td className="px-2 py-1.5 text-right whitespace-nowrap">
                       {isMatured ? (
                         <span className="text-destructive font-bold text-[10px]">MATURED</span>
                       ) : daysToMaturity !== null ? (
@@ -242,10 +242,10 @@ export default function PortalOpportunities() {
                         </span>
                       ) : "—"}
                     </td>
-                    <td className="px-3 py-2.5 text-right font-mono text-foreground whitespace-nowrap">
+                    <td className="px-2 py-1.5 text-right font-mono text-foreground whitespace-nowrap">
                       {Number(offer.min_pledge) > 0 ? `${Number(offer.min_pledge).toLocaleString()} kr` : "—"}
                     </td>
-                    <td className="px-3 py-2.5">
+                    <td className="px-2 py-1.5">
                       <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                     </td>
                   </tr>
@@ -269,7 +269,7 @@ export default function PortalOpportunities() {
               >
                 <div className="relative">
                   {offer.product_image_url && (
-                    <div className="h-28 overflow-hidden border-b border-border">
+                    <div className="h-20 overflow-hidden border-b border-border">
                       <img src={offer.product_image_url} alt={offer.title} className="w-full h-full object-cover" />
                     </div>
                   )}
