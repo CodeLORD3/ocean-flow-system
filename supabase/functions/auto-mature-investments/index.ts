@@ -18,22 +18,49 @@ Deno.serve(async (req) => {
 
     const today = new Date().toISOString().split("T")[0];
 
-    // 1. Find all Active pledges whose offer maturity_date <= today
+    // Calculate 7 days from now
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+    const sevenDaysDate = sevenDaysFromNow.toISOString().split("T")[0];
+
+    // 1. Find Active pledges maturing in exactly 7 days → send reminder
+    const { data: reminderPledges } = await supabase
+      .from("pledges")
+      .select("id, amount, offer_id, trade_offers!inner(title, maturity_date, interest_rate)")
+      .eq("status", "Active")
+      .eq("trade_offers.maturity_date", sevenDaysDate);
+
+    if (reminderPledges && reminderPledges.length > 0) {
+      for (const pledge of reminderPledges) {
+        const offer = (pledge as any).trade_offers;
+        const rate = Number(offer.interest_rate || 0);
+        const expectedPayout = Math.round(Number(pledge.amount) * (1 + rate / 100));
+        await supabase.from("notifications").insert({
+          portal: "investor",
+          target_page: "/portal/portfolio",
+          message: `Your investment in "${offer.title}" matures in 7 days. Expected payout: ${expectedPayout.toLocaleString()} kr.`,
+          entity_type: "pledge",
+          entity_id: pledge.id,
+        });
+      }
+    }
+
+    // 2. Find all Active pledges whose offer maturity_date <= today → mature them
     const { data: activePledges, error: fetchErr } = await supabase
       .from("pledges")
-      .select("id, offer_id, trade_offers!inner(maturity_date)")
+      .select("id, amount, offer_id, trade_offers!inner(title, maturity_date, interest_rate)")
       .eq("status", "Active")
       .lte("trade_offers.maturity_date", today);
 
     if (fetchErr) throw fetchErr;
 
     if (!activePledges || activePledges.length === 0) {
-      return new Response(JSON.stringify({ matured: 0 }), {
+      return new Response(JSON.stringify({ matured: 0, reminders: reminderPledges?.length || 0 }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // 2. Update pledges to Matured
+    // 3. Update pledges to Matured
     const pledgeIds = activePledges.map((p: any) => p.id);
     const { error: updateErr } = await supabase
       .from("pledges")
@@ -42,7 +69,7 @@ Deno.serve(async (req) => {
 
     if (updateErr) throw updateErr;
 
-    // 3. Update corresponding offers to Matured status
+    // 4. Update corresponding offers to Matured status
     const offerIds = [...new Set(activePledges.map((p: any) => p.offer_id))];
     const { error: offerErr } = await supabase
       .from("trade_offers")
@@ -52,19 +79,26 @@ Deno.serve(async (req) => {
 
     if (offerErr) throw offerErr;
 
-    // 4. Create notifications for investors
+    // 5. Create notifications for matured investments
     for (const pledge of activePledges) {
+      const offer = (pledge as any).trade_offers;
+      const rate = Number(offer.interest_rate || 0);
+      const expectedPayout = Math.round(Number(pledge.amount) * (1 + rate / 100));
       await supabase.from("notifications").insert({
         portal: "investor",
         target_page: "/portal/portfolio",
-        message: "Your investment has matured — payout is being processed.",
+        message: `"${offer.title}" has matured. Payout of ${expectedPayout.toLocaleString()} kr is being processed.`,
         entity_type: "pledge",
         entity_id: pledge.id,
       });
     }
 
     return new Response(
-      JSON.stringify({ matured: pledgeIds.length, offers_matured: offerIds.length }),
+      JSON.stringify({
+        matured: pledgeIds.length,
+        offers_matured: offerIds.length,
+        reminders: reminderPledges?.length || 0,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

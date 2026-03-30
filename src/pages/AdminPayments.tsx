@@ -63,13 +63,16 @@ export default function AdminPayments() {
         .eq("id", pledgeId);
       if (error) throw error;
 
-      // 2. Notify investor
+      // 2. Notify investor with amount
       const pledge = pledges.find((p: any) => p.id === pledgeId);
       if (pledge) {
+        const rate = pledge.trade_offers ? Number(pledge.trade_offers.interest_rate) : 0;
+        const totalPayout = Math.round(Number(pledge.amount) * (1 + rate / 100));
+        const offerTitle = pledge.trade_offers?.title || "an offer";
         await supabase.from("notifications").insert({
           portal: "investor",
           target_page: "/portal/portfolio",
-          message: `Your payout for "${pledge.trade_offers?.title}" has been sent to your bank account.`,
+          message: `Payout of ${totalPayout.toLocaleString()} kr for "${offerTitle}" has been sent to your registered IBAN.`,
           entity_type: "pledge",
           entity_id: pledgeId,
         });
