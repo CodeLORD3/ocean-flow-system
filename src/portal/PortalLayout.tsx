@@ -16,6 +16,8 @@ import PortalHowItWorks from "./PortalHowItWorks";
 import PortalContact from "./PortalContact";
 import PortalTeam from "./PortalTeam";
 import PortalProfile from "./PortalProfile";
+import PortalNotifications from "./PortalNotifications";
+import PortalNotificationDropdown from "./PortalNotificationDropdown";
 
 /* ── Tab bar (browser-like) ── */
 function PortalTabBar() {
@@ -67,6 +69,7 @@ function PortalKeepAlive() {
       else if (tab.path === "/portal/how-it-works") component = <PortalHowItWorks />;
       else if (tab.path === "/portal/contact") component = <PortalContact />;
       else if (tab.path === "/portal/profile") component = <PortalProfile />;
+      else if (tab.path === "/portal/notifications") component = <PortalNotifications />;
       else if (tab.path.startsWith("/portal/offer/")) {
         const offerId = tab.path.replace("/portal/offer/", "");
         component = <PortalOfferDetail key={tab.path} overrideId={offerId} />;
@@ -276,17 +279,7 @@ function PortalInner() {
           </nav>
         </div>
         <div className="flex items-center gap-4">
-          <button
-            className="relative p-1.5 text-muted-foreground hover:text-primary transition-colors"
-            onClick={() => switchTab("/portal/portfolio")}
-          >
-            <Bell className="h-4.5 w-4.5" />
-            {portalNotifCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 h-4 w-4 bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center rounded-full">
-                {portalNotifCount}
-              </span>
-            )}
-          </button>
+          <PortalNotificationDropdown onNavigate={(path) => switchTab(path)} />
           <div className="h-6 w-px bg-border" />
           <UserDropdown
             user={user}

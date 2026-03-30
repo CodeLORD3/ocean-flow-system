@@ -82,7 +82,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
       if (error) throw error;
 
       // Update funded_amount
-      const { data: currentOffer } = await supabase.from("trade_offers").select("funded_amount, target_amount").eq("id", id!).single();
+      const { data: currentOffer } = await supabase.from("trade_offers").select("funded_amount, target_amount, title, company_iban").eq("id", id!).single();
       const currentFunded = Number(currentOffer?.funded_amount || 0);
       const targetAmount = Number(currentOffer?.target_amount || 0);
       const newFunded = currentFunded + amount;
@@ -92,6 +92,16 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
         updatePayload.status = "Funded";
       }
       await supabase.from("trade_offers").update(updatePayload).eq("id", id!);
+
+      // Create investor notification for booking
+      const offerTitle = currentOffer?.title || (offer as any)?.title || "an offer";
+      await supabase.from("notifications").insert({
+        portal: "investor",
+        target_page: "/portal/portfolio",
+        message: `Investment booked for "${offerTitle}" — please send ${amount.toLocaleString()} kr to the IBAN provided.`,
+        entity_type: "pledge",
+        entity_id: data.id,
+      });
 
       return data;
     },
@@ -106,6 +116,8 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
       queryClient.invalidateQueries({ queryKey: ["portal-my-pledges"] });
       queryClient.invalidateQueries({ queryKey: ["portal-portfolio"] });
       queryClient.invalidateQueries({ queryKey: ["investment-log"] });
+      queryClient.invalidateQueries({ queryKey: ["portal-notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["portal-notification-count"] });
       toast.success("Investment booked!");
     },
     onError: (err: any) => {
