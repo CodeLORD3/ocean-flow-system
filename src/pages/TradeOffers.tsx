@@ -83,6 +83,33 @@ export default function TradeOffers() {
     return data.publicUrl;
   };
 
+  const requiredFields: { key: keyof typeof form; label: string }[] = [
+    { key: "title", label: "Product" },
+    { key: "target_amount", label: "Target Amount" },
+    { key: "interest_rate", label: "Interest Rate" },
+    { key: "maturity_date", label: "Maturity Date" },
+    { key: "purchase_date", label: "Purchase Date" },
+    { key: "quantity", label: "Quantity" },
+    { key: "min_pledge", label: "Min Pledge" },
+    { key: "origin", label: "Origin" },
+    { key: "volume", label: "Volume" },
+    { key: "purchase_price", label: "Purchase Price" },
+    { key: "sales_value", label: "Sales Value" },
+    { key: "primary_exit", label: "Primary Exit" },
+    { key: "secondary_exit", label: "Secondary Exit" },
+    { key: "company_id", label: "Company" },
+  ];
+
+  const missingFields = requiredFields.filter(f => !form[f.key] || String(form[f.key]).trim() === "");
+
+  const handleCreate = () => {
+    if (missingFields.length > 0) {
+      toast.error(`Missing required fields: ${missingFields.map(f => f.label).join(", ")}`);
+      return;
+    }
+    createMutation.mutate();
+  };
+
   const createMutation = useMutation({
     mutationFn: async () => {
       let product_image_url: string | null = null;
@@ -336,7 +363,12 @@ export default function TradeOffers() {
               </div>
             </div>
 
-            <Button onClick={() => createMutation.mutate()} disabled={!form.title || !form.maturity_date || createMutation.isPending} className="w-full h-8 text-xs mt-2">
+            {missingFields.length > 0 && (
+              <p className="text-[10px] text-destructive">
+                {missingFields.length} required field{missingFields.length > 1 ? "s" : ""} missing: {missingFields.map(f => f.label).join(", ")}
+              </p>
+            )}
+            <Button onClick={handleCreate} disabled={createMutation.isPending} className="w-full h-8 text-xs mt-2">
               {createMutation.isPending ? "Skapar..." : "Skapa erbjudande"}
             </Button>
           </CardContent>
