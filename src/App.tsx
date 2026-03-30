@@ -13,6 +13,8 @@ import { KeepAliveTabs } from "@/components/KeepAliveTabs";
 // Portal imports
 import PortalLayout from "@/portal/PortalLayout";
 import PortalLogin from "@/portal/PortalLogin";
+import PortalSignup from "@/portal/PortalSignup";
+import PortalConfirmEmail from "@/portal/PortalConfirmEmail";
 
 const queryClient = new QueryClient();
 
