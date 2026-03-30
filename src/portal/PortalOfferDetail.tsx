@@ -20,6 +20,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successRef, setSuccessRef] = useState("");
+  const [successAmount, setSuccessAmount] = useState(0);
   const [selectedInvestorId, setSelectedInvestorId] = useState("");
 
   // Fetch approved investors for demo selection
