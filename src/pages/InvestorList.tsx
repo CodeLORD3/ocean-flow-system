@@ -293,7 +293,7 @@ export default function InvestorList() {
                   </TableCell>
                 </TableRow>
               ) : (
-                reviewed.map(inv => renderRow(inv, false))
+                reviewed.map((inv, idx) => renderRow(inv, false, idx))
               )}
             </TableBody>
           </Table>
