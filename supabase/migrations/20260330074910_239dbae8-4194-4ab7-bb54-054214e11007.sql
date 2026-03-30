@@ -1,0 +1,1 @@
+ALTER TABLE public.investor_profiles DROP CONSTRAINT investor_profiles_user_id_fkey;
