@@ -363,7 +363,12 @@ export default function TradeOffers() {
               </div>
             </div>
 
-            <Button onClick={() => createMutation.mutate()} disabled={!form.title || !form.maturity_date || createMutation.isPending} className="w-full h-8 text-xs mt-2">
+            {missingFields.length > 0 && (
+              <p className="text-[10px] text-destructive">
+                {missingFields.length} required field{missingFields.length > 1 ? "s" : ""} missing: {missingFields.map(f => f.label).join(", ")}
+              </p>
+            )}
+            <Button onClick={handleCreate} disabled={createMutation.isPending} className="w-full h-8 text-xs mt-2">
               {createMutation.isPending ? "Skapar..." : "Skapa erbjudande"}
             </Button>
           </CardContent>
