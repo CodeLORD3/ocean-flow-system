@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, Download, ShieldCheck, Receipt, FolderOpen } from "lucide-react";
+import { FileText, Download, ShieldCheck, Receipt, FolderOpen, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function PortalDocuments() {
   const { data: offers = [], isLoading } = useQuery({
