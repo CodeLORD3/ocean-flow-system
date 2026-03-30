@@ -183,47 +183,48 @@ function PortalInner() {
 
   // Auth listener
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!session?.user) {
-        navigate("/portal/login");
-        return;
-      }
-      setUser(session.user);
+    let mounted = true;
 
-      // Load profile
+    const loadProfile = async (userId: string) => {
       const { data: prof } = await supabase
         .from("investor_profiles")
         .select("*")
-        .eq("user_id", session.user.id)
+        .eq("user_id", userId)
         .maybeSingle();
+      if (!mounted) return;
       setProfile(prof);
       setLoading(false);
-
       const hasSeenWelcome = localStorage.getItem("portal-welcome-seen");
       if (!hasSeenWelcome) setShowWelcome(true);
-    });
+    };
 
     // Initial check
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
       if (!session?.user) {
+        setLoading(false);
         navigate("/portal/login");
         return;
       }
       setUser(session.user);
-      supabase
-        .from("investor_profiles")
-        .select("*")
-        .eq("user_id", session.user.id)
-        .maybeSingle()
-        .then(({ data: prof }) => {
-          setProfile(prof);
-          setLoading(false);
-          const hasSeenWelcome = localStorage.getItem("portal-welcome-seen");
-          if (!hasSeenWelcome) setShowWelcome(true);
-        });
+      loadProfile(session.user.id);
     });
 
-    return () => subscription.unsubscribe();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+      if (!session?.user) {
+        setLoading(false);
+        navigate("/portal/login");
+        return;
+      }
+      setUser(session.user);
+      loadProfile(session.user.id);
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const handleLogout = async () => {
