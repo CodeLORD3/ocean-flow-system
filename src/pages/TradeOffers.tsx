@@ -164,6 +164,8 @@ export default function TradeOffers() {
         tenor_days,
         annual_return,
         company_id: form.company_id || null,
+        company_iban: form.company_iban || null,
+        payment_reference_prefix: form.payment_reference_prefix || "OT-",
       } as any);
       if (error) throw error;
     },
