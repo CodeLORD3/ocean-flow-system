@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Search, Briefcase, FileText, Archive, LogOut, X, Bell, User, ChevronRight, Info, BookOpen, Users } from "lucide-react";
