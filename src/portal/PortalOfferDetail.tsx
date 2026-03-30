@@ -104,6 +104,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
     onSuccess: () => {
       const ref = `OT-${Date.now().toString(36).toUpperCase()}`;
       setSuccessRef(ref);
+      setSuccessAmount(Number(pledgeAmount) || 0);
       setShowConfirmModal(false);
       setShowSuccess(true);
       setPledgeAmount("");
