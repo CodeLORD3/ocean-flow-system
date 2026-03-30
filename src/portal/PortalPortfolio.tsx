@@ -145,6 +145,13 @@ export default function PortalPortfolio() {
                   <td className="p-2 text-muted-foreground">
                     {offer?.maturity_date ? format(parseISO(offer.maturity_date), "d MMM yyyy") : "—"}
                   </td>
+                  <td className="p-2 text-right">
+                    {daysToPayout !== null ? (
+                      <span className={`font-bold ${daysToPayout <= 0 ? "text-destructive" : daysToPayout <= 7 ? "text-destructive" : daysToPayout <= 30 ? "text-warning" : "text-foreground"}`}>
+                        {daysToPayout <= 0 ? "DUE" : `${daysToPayout}d`}
+                      </span>
+                    ) : "—"}
+                  </td>
                   <td className="p-2 pr-3 text-center">
                     <span className={`inline-block px-2 py-0.5 text-[9px] font-semibold tracking-wide border ${statusBadge(p.status)}`}>
                       {p.status?.toUpperCase() || "ACTIVE"}
