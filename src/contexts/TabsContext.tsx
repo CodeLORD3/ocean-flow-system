@@ -33,6 +33,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/shop-reports": "Butiksrapporter",
   "/trade-offers": "Trade Offers",
   "/trade-history": "Trade History",
+  "/investment-log": "Investment Log",
   "/investor-portal": "Investor Portal",
   "/schedule": "Kalender",
 };
