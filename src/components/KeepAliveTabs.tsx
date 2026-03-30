@@ -32,6 +32,7 @@ import ScheduleCalendar from "@/pages/ScheduleCalendar";
 import Companies from "@/pages/Companies";
 import ContactSettings from "@/pages/ContactSettings";
 import AboutSettings from "@/pages/AboutSettings";
+import Payouts from "@/pages/Payouts";
 
 interface RouteEntry {
   component: React.ReactNode;
