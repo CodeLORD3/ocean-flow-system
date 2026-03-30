@@ -27,6 +27,7 @@ import TradeOffers from "@/pages/TradeOffers";
 import TradeHistory from "@/pages/TradeHistory";
 import InvestorPortal from "@/pages/InvestorPortal";
 import InvestorList from "@/pages/InvestorList";
+import InvestmentLog from "@/pages/InvestmentLog";
 import ScheduleCalendar from "@/pages/ScheduleCalendar";
 import Companies from "@/pages/Companies";
 import ContactSettings from "@/pages/ContactSettings";
