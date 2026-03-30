@@ -10,6 +10,7 @@ import {
   Phone,
   Info,
   HandCoins,
+  Wallet,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
