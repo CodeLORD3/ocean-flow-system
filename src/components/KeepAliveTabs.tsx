@@ -62,6 +62,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/settings": { component: <PlaceholderPage title="Systeminställningar" /> },
   "/trade-offers": { component: <TradeOffers /> },
   "/trade-history": { component: <TradeHistory /> },
+  "/investment-log": { component: <InvestmentLog /> },
   "/investor-portal": { component: <InvestorPortal /> },
   "/investor-list": { component: <InvestorList /> },
   "/schedule": { component: <ScheduleCalendar /> },
