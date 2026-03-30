@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock, Calculator, FileText, AlertTriangle, TrendingUp, Shield, Package, CheckCircle, X, Briefcase, Building2, ArrowUpRight } from "lucide-react";
+import { Clock, Calculator, FileText, AlertTriangle, TrendingUp, Shield, Package, CheckCircle, X, Briefcase, Building2, ArrowUpRight, UserCircle } from "lucide-react";
 import { toast } from "sonner";
 import { parseISO, format } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
@@ -20,6 +20,21 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successRef, setSuccessRef] = useState("");
+  const [selectedInvestorId, setSelectedInvestorId] = useState("");
+
+  // Fetch approved investors for demo selection
+  const { data: approvedInvestors = [] } = useQuery({
+    queryKey: ["approved-investors"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("investor_profiles" as any)
+        .select("*")
+        .eq("status", "approved")
+        .order("first_name");
+      if (error) throw error;
+      return data as any[];
+    },
+  });
 
   const { data: offer, isLoading } = useQuery({
     queryKey: ["portal-offer", id],
@@ -48,14 +63,30 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
 
   const pledgeMutation = useMutation({
     mutationFn: async (amount: number) => {
+      // Try auth user first, fall back to selected demo investor
+      let userId: string;
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (user) {
+        userId = user.id;
+      } else if (selectedInvestorId) {
+        // Use the user_id from selected investor profile
+        const investor = approvedInvestors.find((i: any) => i.id === selectedInvestorId);
+        if (!investor) throw new Error("Please select an investor");
+        userId = investor.user_id;
+      } else {
+        throw new Error("Please select an investor");
+      }
       const { data, error } = await supabase.from("pledges").insert({
         offer_id: id!,
-        user_id: user.id,
+        user_id: userId,
         amount,
-      }).select().single();
+      } as any).select().single();
       if (error) throw error;
+
+      // Update funded_amount on the offer
+      const newFunded = (offer?.funded_amount || 0) + amount;
+      await supabase.from("trade_offers").update({ funded_amount: newFunded } as any).eq("id", id!);
+
       return data;
     },
     onSuccess: (data) => {
@@ -69,6 +100,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
       queryClient.invalidateQueries({ queryKey: ["portal-offers"] });
       queryClient.invalidateQueries({ queryKey: ["portal-my-pledges"] });
       queryClient.invalidateQueries({ queryKey: ["portal-portfolio"] });
+      queryClient.invalidateQueries({ queryKey: ["investment-log"] });
     },
     onError: (err: any) => {
       toast.error(err.message);
@@ -335,6 +367,24 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                 <h3 className="text-xs font-bold text-primary uppercase tracking-wider">Invest in This Offer</h3>
               </div>
               <div className="p-4 space-y-3">
+                {/* Investor selector (demo/pre-launch) */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] text-muted-foreground font-medium flex items-center gap-1">
+                    <UserCircle className="h-3 w-3" /> Select Investor
+                  </label>
+                  <select
+                    value={selectedInvestorId}
+                    onChange={e => setSelectedInvestorId(e.target.value)}
+                    className="w-full h-9 bg-white border border-border px-3 text-xs text-foreground focus:border-primary focus:outline-none"
+                  >
+                    <option value="">Choose investor...</option>
+                    {approvedInvestors.map((inv: any) => (
+                      <option key={inv.id} value={inv.id}>
+                        {inv.first_name} {inv.last_name} — {inv.email}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div className="space-y-1.5">
                   <label className="text-[11px] text-muted-foreground font-medium">Investment Amount (kr)</label>
                   <input
@@ -362,7 +412,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                 )}
                 <button
                   onClick={handleInvestClick}
-                  disabled={!pledgeAmount || Number(pledgeAmount) <= 0}
+                  disabled={!pledgeAmount || Number(pledgeAmount) <= 0 || !selectedInvestorId}
                   className="w-full h-10 bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
                 >
                   Invest Now <ArrowUpRight className="h-4 w-4" />
