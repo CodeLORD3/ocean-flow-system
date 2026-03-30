@@ -431,10 +431,11 @@ export default function TradeOffers() {
                   annualReturn = Math.round((rate / Number(o.tenor_days)) * 365 * 100) / 100;
                 }
 
+                const idx = offers.indexOf(offer);
                 return (
                   <TableRow
                     key={offer.id}
-                    className="text-[10px] cursor-pointer hover:bg-muted/50"
+                    className={`text-[10px] cursor-pointer hover:bg-primary/10 transition-colors ${idx % 2 === 1 ? "bg-muted/30" : ""}`}
                     onClick={() => setSelectedOfferId(offer.id)}
                   >
                     <TableCell className="py-1.5 font-medium">{offer.title}</TableCell>

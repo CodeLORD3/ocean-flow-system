@@ -201,8 +201,8 @@ export default function InvestorList() {
     </Dialog>
   );
 
-  const renderRow = (inv: any, showActions: boolean) => (
-    <TableRow key={inv.id} className="text-[11px]">
+  const renderRow = (inv: any, showActions: boolean, idx?: number) => (
+    <TableRow key={inv.id} className={`text-[11px] hover:bg-primary/10 transition-colors ${idx !== undefined && idx % 2 === 1 ? "bg-muted/30" : ""}`}>
       <TableCell className="py-1.5 font-medium text-[11px]">{inv.first_name} {inv.last_name}</TableCell>
       <TableCell className="py-1.5 text-muted-foreground text-[11px]">{inv.email}</TableCell>
       <TableCell className="py-1.5 text-[11px]">{inv.telephone}</TableCell>

@@ -161,7 +161,7 @@ export default function PortalOpportunities() {
                 return (
                   <tr
                     key={offer.id}
-                    className="border-b border-border last:border-b-0 hover:bg-muted/20 cursor-pointer transition-colors group"
+                    className={`border-b border-border last:border-b-0 hover:bg-primary/10 cursor-pointer transition-colors group ${filtered.indexOf(offer) % 2 === 1 ? "bg-muted/30" : ""}`}
                     onClick={() => openOfferTab(offer.id, offer.title)}
                   >
                     <td className="px-3 py-2.5">
