@@ -218,8 +218,8 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
               <div className="space-y-1.5">
                 <label className="text-[11px] text-muted-foreground font-medium">Investment Amount (kr)</label>
                 <input
-                  type="number" value={pledgeAmount} onChange={e => setPledgeAmount(e.target.value)}
-                  min={effectiveMin || 1} max={maxPledge || undefined}
+                  type="text" inputMode="numeric" value={pledgeAmount}
+                  onChange={e => { const v = e.target.value; if (v === "" || /^\d+$/.test(v)) setPledgeAmount(v); }}
                   placeholder={minPledge > 0 ? `Min ${minPledge.toLocaleString()} kr` : "Enter amount"}
                   className={`w-full h-10 bg-white border px-3 text-sm text-foreground font-mono focus:outline-none ${
                     amountTouched && pledgeAmt > 0 && !isValidAmount ? "border-destructive focus:border-destructive" : "border-border focus:border-primary"
