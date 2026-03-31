@@ -87,6 +87,7 @@ interface Company {
   country: string;
   city?: string | null;
   address?: string | null;
+  ticker?: string | null;
   status?: string;
 }
 
