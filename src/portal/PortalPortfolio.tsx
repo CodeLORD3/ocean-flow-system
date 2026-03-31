@@ -62,7 +62,7 @@ export default function PortalPortfolio() {
 
   const statusBadge = (status: string) => {
     switch (status) {
-      case "Active": return "text-green-700 bg-green-50 border-green-200";
+      case "Active": return "text-mackerel bg-mackerel-light border-mackerel/30";
       case "Pending Payment": return "text-amber-700 bg-amber-50 border-amber-200";
       case "Matured": return "text-orange-600 bg-orange-50 border-orange-200";
       case "Paid Out":
@@ -80,16 +80,16 @@ export default function PortalPortfolio() {
 
   const activeStats = [
     { icon: Banknote, label: "Total Invested", value: hasActiveData ? `${totalInvested.toLocaleString()} kr` : "—", color: "text-primary" },
-    { icon: TrendingUp, label: "Expected Payout", value: hasActiveData ? `${totalExpectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr` : "—", color: "text-green-600" },
-    { icon: Target, label: "Expected Profit", value: hasActiveData ? `+${totalProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr` : "—", color: "text-green-600" },
+    { icon: TrendingUp, label: "Expected Payout", value: hasActiveData ? `${totalExpectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr` : "—", color: "text-mackerel" },
+    { icon: Target, label: "Expected Profit", value: hasActiveData ? `+${totalProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr` : "—", color: "text-mackerel" },
     { icon: Percent, label: "Average Return", value: hasActiveData ? `${avgRate.toFixed(1)}%` : "—", color: "text-primary" },
   ];
 
   const historyStats = [
     { icon: Banknote, label: "Total Paid Out", value: hasHistoryData ? `${Math.round(totalPaidOut).toLocaleString()} kr` : "—", color: "text-primary" },
-    { icon: Target, label: "Total Profit Earned", value: hasHistoryData ? `+${Math.round(totalHistoryProfit).toLocaleString()} kr` : "—", color: "text-green-600" },
+    { icon: Target, label: "Total Profit Earned", value: hasHistoryData ? `+${Math.round(totalHistoryProfit).toLocaleString()} kr` : "—", color: "text-mackerel" },
     { icon: Award, label: "Completed Investments", value: hasHistoryData ? `${historyPledges.length}` : "—", color: "text-primary" },
-    { icon: Percent, label: "Avg. Return", value: hasHistoryData ? `${(historyPledges.reduce((s: number, p: any) => s + (p.trade_offers ? Number(p.trade_offers.interest_rate) : 0), 0) / historyPledges.length).toFixed(1)}%` : "—", color: "text-green-600" },
+    { icon: Percent, label: "Avg. Return", value: hasHistoryData ? `${(historyPledges.reduce((s: number, p: any) => s + (p.trade_offers ? Number(p.trade_offers.interest_rate) : 0), 0) / historyPledges.length).toFixed(1)}%` : "—", color: "text-mackerel" },
   ];
 
   const currentStats = tab === "active" ? activeStats : historyStats;
@@ -182,7 +182,7 @@ export default function PortalPortfolio() {
                       </div>
                     </td>
                     <td className="p-2 text-right text-foreground font-mono">{Number(p.amount).toLocaleString()} kr</td>
-                    <td className="p-2 text-right text-green-600 font-semibold">{rate.toFixed(1)}%</td>
+                    <td className="p-2 text-right text-mackerel font-semibold">{rate.toFixed(1)}%</td>
                     <td className="p-2 text-right text-foreground font-semibold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</td>
                     <td className="p-2 text-muted-foreground">
                       {offer?.maturity_date ? format(parseISO(offer.maturity_date), "d MMM yyyy") : "—"}
@@ -272,7 +272,7 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
             {status === "Pending Payment" && <CreditCard className="h-3.5 w-3.5 text-amber-600" />}
-            {status === "Active" && <CheckCircle className="h-3.5 w-3.5 text-green-600" />}
+            {status === "Active" && <CheckCircle className="h-3.5 w-3.5 text-mackerel" />}
             {status === "Matured" && <AlertTriangle className="h-3.5 w-3.5 text-orange-600" />}
             {status === "Paid Out" && <Banknote className="h-3.5 w-3.5 text-primary" />}
             Status: {status}
@@ -309,7 +309,7 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
           </div>
           <div className="flex justify-between text-[11px]">
             <span className="text-muted-foreground">Return</span>
-            <span className="text-green-600 font-semibold">{rate.toFixed(1)}%</span>
+            <span className="text-mackerel font-semibold">{rate.toFixed(1)}%</span>
           </div>
           <div className="flex justify-between text-[11px]">
             <span className="text-muted-foreground">{status === "Paid Out" ? "Total Payout" : "Expected Payout"}</span>
@@ -387,7 +387,7 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
             {status === "Paid Out" && (
               <div className="flex justify-between text-[11px]">
                 <span className="text-muted-foreground">Status</span>
-                <span className="text-green-600 font-semibold">✓ Payout completed</span>
+                <span className="text-mackerel font-semibold">✓ Payout completed</span>
               </div>
             )}
           </div>

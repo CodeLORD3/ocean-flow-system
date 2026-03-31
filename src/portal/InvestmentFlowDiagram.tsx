@@ -193,7 +193,7 @@ export default function InvestmentFlowDiagram({ pledges }: { pledges: Pledge[] }
       <div className="mb-5">
         <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
           <span>Invested: <span className="font-mono font-bold text-foreground">{totalInvested.toLocaleString()} kr</span></span>
-          <span>Expected Payout: <span className="font-mono font-bold text-green-600">{totalPayout.toLocaleString()} kr</span></span>
+          <span>Expected Payout: <span className="font-mono font-bold text-mackerel">{totalPayout.toLocaleString()} kr</span></span>
         </div>
         <div className="h-3 bg-muted overflow-hidden relative">
           <motion.div

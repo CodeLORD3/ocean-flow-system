@@ -251,7 +251,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                   </div>
                   <div className="flex justify-between text-[11px]">
                     <span className="text-muted-foreground">Expected return</span>
-                    <span className="font-mono font-bold text-green-600">+{pledgeProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr ({rate.toFixed(1)}%)</span>
+                    <span className="font-mono font-bold text-mackerel">+{pledgeProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr ({rate.toFixed(1)}%)</span>
                   </div>
                   <div className="flex justify-between text-[11px]">
                     <span className="text-muted-foreground">Expected payout</span>
@@ -303,7 +303,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                 </div>
                 <div className="flex justify-between text-[11px]">
                   <span className="text-muted-foreground">Expected return ({rate.toFixed(1)}%)</span>
-                  <span className="font-mono font-bold text-green-600">+{pledgeProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</span>
+                  <span className="font-mono font-bold text-mackerel">+{pledgeProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</span>
                 </div>
                 <div className="flex justify-between text-[11px]">
                   <span className="text-muted-foreground">Total payout</span>
@@ -374,11 +374,11 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
           {step === 3 && (
             <div className="space-y-3">
               {/* Success banner */}
-              <div className="bg-green-50 border border-green-200 p-3 flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-600 shrink-0" />
+              <div className="bg-mackerel-light border border-mackerel/30 p-3 flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-mackerel shrink-0" />
                 <div>
-                  <div className="text-sm font-bold text-green-800">Your investment is booked! ✓</div>
-                  <div className="text-[11px] text-green-700">Complete the payment below to activate your investment.</div>
+                  <div className="text-sm font-bold text-mackerel">Your investment is booked! ✓</div>
+                  <div className="text-[11px] text-mackerel">Complete the payment below to activate your investment.</div>
                 </div>
               </div>
 
@@ -503,7 +503,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                   <h1 className="text-lg font-bold text-foreground truncate">{offer.title}</h1>
                   <span className={`shrink-0 px-2 py-0.5 text-[10px] font-semibold border ${
                     offer.status === "Open"
-                      ? "text-green-700 bg-green-50 border-green-200"
+                      ? "text-mackerel bg-mackerel-light border-mackerel/30"
                       : "text-primary bg-primary/5 border-primary/20"
                   }`}>
                     {offer.status}
@@ -545,10 +545,10 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
               </thead>
               <tbody>
                 <tr>
-                  <td className="px-3 py-2.5 font-bold text-green-600 font-mono">{rate.toFixed(1)}%</td>
-                  <td className="px-3 py-2.5 font-bold text-green-600 font-mono">{annualReturn ? `${annualReturn.toFixed(1)}%` : "—"}</td>
+                  <td className="px-3 py-2.5 font-bold text-mackerel font-mono">{rate.toFixed(1)}%</td>
+                  <td className="px-3 py-2.5 font-bold text-mackerel font-mono">{annualReturn ? `${annualReturn.toFixed(1)}%` : "—"}</td>
                   <td className="px-3 py-2.5 font-medium text-foreground font-mono">{tenorDays ? `${tenorDays} days` : "—"}</td>
-                  <td className="px-3 py-2.5 font-bold text-green-600 font-mono">+{profitKr.toLocaleString()} kr</td>
+                  <td className="px-3 py-2.5 font-bold text-mackerel font-mono">+{profitKr.toLocaleString()} kr</td>
                   <td className="px-3 py-2.5 font-bold text-foreground font-mono">{totalPayout.toLocaleString()} kr</td>
                   <td className="px-3 py-2.5 font-medium text-foreground">{format(parseISO(offer.maturity_date), "d MMM yyyy")}</td>
                 </tr>
@@ -606,11 +606,11 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                   <div className="border border-border bg-muted/20 p-2.5 space-y-1">
                     <div className="flex justify-between text-[11px]">
                       <span className="text-muted-foreground">You receive</span>
-                      <span className="font-mono font-bold text-green-600">{calcResult.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kr</span>
+                      <span className="font-mono font-bold text-mackerel">{calcResult.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kr</span>
                     </div>
                     <div className="flex justify-between text-[11px]">
                       <span className="text-muted-foreground">Profit</span>
-                      <span className="font-mono font-semibold text-green-600">+{(calcResult - Number(calcAmount)).toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kr</span>
+                      <span className="font-mono font-semibold text-mackerel">+{(calcResult - Number(calcAmount)).toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kr</span>
                     </div>
                   </div>
                 ) : (
@@ -726,7 +726,7 @@ function InfoRow({ label, value, highlight }: { label: string; value: string | n
   return (
     <div className="flex justify-between px-3 py-2 text-[11px] hover:bg-muted/20 transition-colors">
       <span className="text-muted-foreground">{label}</span>
-      <span className={`font-medium font-mono ${highlight ? "text-green-600 font-bold" : "text-foreground"}`}>{value ?? "—"}</span>
+      <span className={`font-medium font-mono ${highlight ? "text-mackerel font-bold" : "text-foreground"}`}>{value ?? "—"}</span>
     </div>
   );
 }

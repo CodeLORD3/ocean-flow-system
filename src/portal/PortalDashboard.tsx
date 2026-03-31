@@ -80,7 +80,7 @@ export default function PortalDashboard() {
       <div className="grid grid-cols-4 gap-3">
         {[
           { icon: DollarSign, label: "Total Invested", value: `${totalInvested.toLocaleString()} kr`, sub: `Across ${pledges.length} investment${pledges.length !== 1 ? "s" : ""}`, accent: "text-primary" },
-          { icon: TrendingUp, label: "Returns Earned", value: `${totalReturns.toLocaleString()} kr`, sub: expectedActiveReturns > 0 ? `+${expectedActiveReturns.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr pending` : "No completed deals yet", accent: "text-green-600" },
+          { icon: TrendingUp, label: "Returns Earned", value: `${totalReturns.toLocaleString()} kr`, sub: expectedActiveReturns > 0 ? `+${expectedActiveReturns.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr pending` : "No completed deals yet", accent: "text-mackerel" },
           { icon: Target, label: "Active Investments", value: activePledges.length.toString(), sub: activePledges.length > 0 ? "Currently earning returns" : "No active deals", accent: "text-primary" },
           { icon: Wallet, label: "Available Balance", value: "0 kr", sub: "Ready to invest", accent: "text-foreground" },
         ].map((stat) => (
@@ -159,13 +159,13 @@ export default function PortalDashboard() {
                       </div>
                     </td>
                     <td className="p-2 text-right text-foreground font-mono">{Number(p.amount).toLocaleString()} kr</td>
-                    <td className="p-2 text-right text-green-600 font-semibold">{rate.toFixed(1)}%</td>
+                    <td className="p-2 text-right text-mackerel font-semibold">{rate.toFixed(1)}%</td>
                     <td className="p-2 text-right text-foreground font-semibold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</td>
                     <td className="p-2 text-muted-foreground">
                       {offer?.maturity_date ? format(parseISO(offer.maturity_date), "d MMM yyyy") : "—"}
                     </td>
                     <td className="p-2 pr-3 text-center">
-                      <span className="inline-block px-2 py-0.5 text-[9px] font-semibold tracking-wide border text-green-700 border-green-200 bg-green-50">
+                      <span className="inline-block px-2 py-0.5 text-[9px] font-semibold tracking-wide border text-mackerel border-mackerel/30 bg-mackerel-light">
                         ACTIVE
                       </span>
                     </td>
@@ -219,7 +219,7 @@ export default function PortalDashboard() {
                   </h3>
                   <span className={`shrink-0 px-2 py-0.5 text-[10px] font-semibold border ${
                     offer.status === "Open" 
-                      ? "text-green-700 bg-green-50 border-green-200" 
+                      ? "text-mackerel bg-mackerel-light border-mackerel/30" 
                       : "text-primary bg-primary/5 border-primary/20"
                   }`}>
                     {offer.status === "Open" ? "OPEN" : "FUNDED"}
@@ -254,7 +254,7 @@ export default function PortalDashboard() {
                 <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border">
                   <div>
                     <div className="text-[10px] text-muted-foreground">Expected Return</div>
-                    <div className="text-sm font-bold text-green-600">{rate.toFixed(1)}%</div>
+                    <div className="text-sm font-bold text-mackerel">{rate.toFixed(1)}%</div>
                   </div>
                   <div>
                     <div className="text-[10px] text-muted-foreground">Time Remaining</div>

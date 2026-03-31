@@ -363,7 +363,7 @@ function PortalInner() {
             </div>
           </div>
           <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-            <div className="h-2 w-2 rounded-full bg-green-500" />
+            <div className="h-2 w-2 rounded-full bg-mackerel-light0" />
             <span>System Online</span>
           </div>
         </div>

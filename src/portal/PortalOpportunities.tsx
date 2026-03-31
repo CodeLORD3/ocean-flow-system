@@ -227,7 +227,7 @@ export default function PortalOpportunities() {
                     <td className="px-2 py-1.5">
                       <span className={`px-1.5 py-0.5 text-[10px] font-semibold border ${
                         offer.status === "Open"
-                          ? "text-green-700 bg-green-50 border-green-200"
+                          ? "text-mackerel bg-mackerel-light border-mackerel/30"
                           : "text-primary bg-primary/5 border-primary/20"
                       }`}>
                         {offer.status === "Open" ? "OPEN" : "FUNDED"}
@@ -245,7 +245,7 @@ export default function PortalOpportunities() {
                       </div>
                     </td>
                     <td className="px-2 py-1.5 text-right">
-                      <span className="font-bold text-green-600 flex items-center justify-end gap-0.5">
+                      <span className="font-bold text-mackerel flex items-center justify-end gap-0.5">
                         <TrendingUp className="h-3 w-3" />
                         {rate.toFixed(1)}%
                       </span>
@@ -317,7 +317,7 @@ export default function PortalOpportunities() {
                     </h3>
                     <span className={`shrink-0 px-2 py-0.5 text-[10px] font-semibold border ${
                       offer.status === "Open"
-                        ? "text-green-700 bg-green-50 border-green-200"
+                        ? "text-mackerel bg-mackerel-light border-mackerel/30"
                         : "text-primary bg-primary/5 border-primary/20"
                     }`}>
                       {offer.status === "Open" ? "OPEN" : "FUNDED"}
@@ -354,7 +354,7 @@ export default function PortalOpportunities() {
                   <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border mt-auto">
                     <div>
                       <div className="text-[10px] text-muted-foreground">Return</div>
-                      <div className="text-xs font-bold text-green-600 flex items-center gap-0.5">
+                      <div className="text-xs font-bold text-mackerel flex items-center gap-0.5">
                         <TrendingUp className="h-3 w-3" />
                         {rate.toFixed(1)}%
                       </div>

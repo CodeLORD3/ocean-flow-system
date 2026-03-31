@@ -89,8 +89,8 @@ export default function PortalResetPassword() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
           {success ? (
             <div className="text-center">
-              <div className="mx-auto w-12 h-12 bg-green-50 rounded-full flex items-center justify-center mb-4">
-                <CheckCircle className="h-6 w-6 text-green-600" />
+              <div className="mx-auto w-12 h-12 bg-mackerel-light rounded-full flex items-center justify-center mb-4">
+                <CheckCircle className="h-6 w-6 text-mackerel" />
               </div>
               <h1 className="text-xl font-bold text-[#0f2e3d] mb-2">Password updated</h1>
               <p className="text-sm text-gray-500">

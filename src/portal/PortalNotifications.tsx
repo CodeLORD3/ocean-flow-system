@@ -60,7 +60,7 @@ export default function PortalNotifications() {
 
   const getIcon = (message: string) => {
     if (message.toLowerCase().includes("payout") || message.toLowerCase().includes("paid") || message.toLowerCase().includes("sent")) {
-      return <DollarSign className="h-4 w-4 text-green-600" />;
+      return <DollarSign className="h-4 w-4 text-mackerel" />;
     }
     if (message.toLowerCase().includes("matured") || message.toLowerCase().includes("matures")) {
       return <AlertTriangle className="h-4 w-4 text-amber-600" />;
