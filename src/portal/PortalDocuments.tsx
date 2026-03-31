@@ -87,11 +87,42 @@ export default function PortalDocuments() {
                     </div>
                   </div>
                 </div>
-                <span className={`px-2.5 py-1 text-[10px] font-semibold border ${
-                  p.status === "Active" ? "text-green-700 border-green-200 bg-green-50" : "text-muted-foreground border-border bg-muted/50"
-                }`}>
-                  {p.status?.toUpperCase()}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className={`px-2.5 py-1 text-[10px] font-semibold border ${
+                    p.status === "Active" ? "text-green-700 border-green-200 bg-green-50" : "text-muted-foreground border-border bg-muted/50"
+                  }`}>
+                    {p.status?.toUpperCase()}
+                  </span>
+                  <button
+                    onClick={() => {
+                      const refCode = `OT-${new Date(p.created_at).getFullYear()}-${p.id.slice(0, 4).toUpperCase()}`;
+                      const content = [
+                        "INVESTMENT CONFIRMATION",
+                        "═══════════════════════════════════",
+                        "",
+                        `Date: ${new Date(p.created_at).toLocaleDateString("en-GB")}`,
+                        `Reference: ${refCode}`,
+                        "",
+                        `Offer: ${p.trade_offers?.title || "—"}`,
+                        `Amount: ${Number(p.amount).toLocaleString()} kr`,
+                        `Status: ${p.status}`,
+                        "",
+                        `© ${new Date().getFullYear()} Ocean Trade.`,
+                      ].join("\n");
+                      const blob = new Blob([content], { type: "text/plain" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `Confirmation-${refCode}.txt`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="text-primary hover:text-primary/80 transition-colors"
+                    title="Download confirmation"
+                  >
+                    <Download className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
