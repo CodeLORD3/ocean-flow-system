@@ -174,7 +174,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   const companyName = (company as any)?.name || "the issuer";
 
   /* ── Step indicator ── */
-  const StepIndicator = () => (
+  const stepIndicator = (
     <div className="flex items-center gap-1.5 mb-4">
       {[1, 2, 3].map((s) => (
         <div key={s} className="flex items-center gap-1.5">
