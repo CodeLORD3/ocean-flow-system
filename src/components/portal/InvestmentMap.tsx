@@ -239,7 +239,7 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
                     setSelectedCompanyId(selectedCompanyId === m.id ? null : m.id);
                   }}
                 >
-                  {m.name}
+                  {m.ticker}
                 </text>
                 <text
                   textAnchor="start"

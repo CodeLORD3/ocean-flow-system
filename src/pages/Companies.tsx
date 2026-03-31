@@ -268,6 +268,10 @@ export default function Companies() {
                 <Input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} className="h-8 text-xs" placeholder="e.g. Gothenburg" />
               </div>
               <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">Ticker (map label)</label>
+                <Input value={form.ticker} onChange={e => setForm({ ...form, ticker: e.target.value.toUpperCase() })} className="h-8 text-xs" placeholder="e.g. FSS" maxLength={8} />
+              </div>
+              <div className="space-y-1">
                 <label className="text-[10px] text-muted-foreground">Company Logo</label>
                 <input ref={logoRef} type="file" accept="image/*" className="hidden" onChange={e => setLogoFile(e.target.files?.[0] || null)} />
                 <Button type="button" variant="outline" className="w-full h-8 text-xs gap-1" onClick={() => logoRef.current?.click()}>
