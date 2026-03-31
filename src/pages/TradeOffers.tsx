@@ -157,6 +157,16 @@ export default function TradeOffers() {
     setSelectedOfferId(null);
   };
 
+  const duplicateOffer = (offer: any) => {
+    startEditing(offer);
+    setEditingOfferId(null); // Clear editing ID so it creates a new one
+    setForm(prev => ({
+      ...prev,
+      title: `${prev.title} (kopia)`,
+    }));
+    toast.info("Offer duplicerad — redigera och spara som ny");
+  };
+
   const createMutation = useMutation({
     mutationFn: async () => {
       let product_image_url: string | null = null;
