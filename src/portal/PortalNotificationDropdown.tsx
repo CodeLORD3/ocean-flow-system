@@ -12,19 +12,29 @@ export default function PortalNotificationDropdown({ onNavigate }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id || null);
+    });
+  }, []);
 
   const { data: notifications = [] } = useQuery({
-    queryKey: ["portal-notifications"],
+    queryKey: ["portal-notifications", userId],
     queryFn: async () => {
+      if (!userId) return [];
       const { data, error } = await supabase
         .from("notifications")
         .select("*")
         .eq("portal", "investor")
+        .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(20);
       if (error) throw error;
       return data;
     },
+    enabled: !!userId,
     refetchInterval: 15000,
   });
 
