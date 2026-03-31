@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, TrendingUp, Upload, ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import { Plus, TrendingUp, Upload, ArrowLeft, Pencil, Trash2, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import TradeOfferDetail from "@/components/trade/TradeOfferDetail";
