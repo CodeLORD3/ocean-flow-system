@@ -70,14 +70,14 @@ export default function PortalSignup() {
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
           <div className="h-8 w-8 bg-[#1a3a4a] flex items-center justify-center rounded">
-            <span className="text-white font-bold text-xs">OT</span>
+            <span className="text-white font-bold text-xs">MT</span>
           </div>
-          <span className="text-[#1a3a4a] font-bold text-lg">Ocean Trade</span>
+          <span className="text-[#1a3a4a] font-bold text-lg">Makrill Trade</span>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
           <h1 className="text-xl font-bold text-[#1a3a4a] mb-1">Create your account</h1>
-          <p className="text-sm text-gray-500 mb-6">Join Ocean Trade and start investing in trade finance.</p>
+          <p className="text-sm text-gray-500 mb-6">Join Makrill Trade and start investing in trade finance.</p>
 
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-xs">

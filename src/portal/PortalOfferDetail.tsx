@@ -458,7 +458,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                       "",
                       "Capital at risk. Investments are not covered by deposit guarantee schemes.",
                       "",
-                      `© ${new Date().getFullYear()} Ocean Trade. All rights reserved.`,
+                      `© ${new Date().getFullYear()} Makrill Trade. All rights reserved.`,
                     ].join("\n");
                     const blob = new Blob([content], { type: "text/plain" });
                     const url = URL.createObjectURL(blob);

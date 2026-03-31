@@ -3,13 +3,13 @@ export default function PortalGuidelines() {
     <div className="max-w-3xl mx-auto space-y-8">
       <div>
         <h1 className="text-xl font-bold text-foreground">Investment Guidelines</h1>
-        <p className="text-sm text-muted-foreground mt-1">Everything you need to know about investing through Ocean Trade.</p>
+        <p className="text-sm text-muted-foreground mt-1">Everything you need to know about investing through Makrill Trade.</p>
       </div>
 
       {[
         {
           title: "1. How Deals Are Structured",
-          content: `Ocean Trade offers are structured as short-term trade finance deals. A trading company purchases physical goods (such as seafood, commodities, or other trade goods) and needs funding to bridge the gap between purchase and sale.\n\nInvestors provide this funding. In return, they receive the principal plus a fixed return at the end of the deal (maturity). This is known as a "bullet repayment" structure — there are no interim interest payments. The full amount (principal + return) is paid out in a single lump sum at maturity.`,
+          content: `Makrill Trade offers are structured as short-term trade finance deals. A trading company purchases physical goods (such as seafood, commodities, or other trade goods) and needs funding to bridge the gap between purchase and sale.\n\nInvestors provide this funding. In return, they receive the principal plus a fixed return at the end of the deal (maturity). This is known as a "bullet repayment" structure — there are no interim interest payments. The full amount (principal + return) is paid out in a single lump sum at maturity.`,
         },
         {
           title: "2. How Return Rates Are Calculated",
@@ -25,7 +25,7 @@ export default function PortalGuidelines() {
         },
         {
           title: "5. What Happens at Maturity",
-          content: `When a deal reaches its maturity date:\n\n1. The investment status changes from "Active" to "Matured".\n2. The trading company repays the full amount (principal + return) to Ocean Trade.\n3. The Ocean Trade team verifies the funds and initiates payout to your registered IBAN.\n4. Your investment status changes to "Paid Out" and moves to the History tab in your portfolio.\n\nPayouts are typically processed within 1–5 business days after the maturity date. You will receive notifications at each stage.`,
+          content: `When a deal reaches its maturity date:\n\n1. The investment status changes from "Active" to "Matured".\n2. The trading company repays the full amount (principal + return) to Makrill Trade.\n3. The Makrill Trade team verifies the funds and initiates payout to your registered IBAN.\n4. Your investment status changes to "Paid Out" and moves to the History tab in your portfolio.\n\nPayouts are typically processed within 1–5 business days after the maturity date. You will receive notifications at each stage.`,
         },
         {
           title: "6. Important Reminders",

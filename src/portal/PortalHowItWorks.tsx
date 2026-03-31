@@ -47,9 +47,9 @@ export default function PortalHowItWorks() {
     <div className="space-y-8 max-w-4xl">
       {/* Header */}
       <div className="border border-border bg-white p-8">
-        <h1 className="text-xl font-bold text-foreground mb-2">How Ocean Trade Works</h1>
+        <h1 className="text-xl font-bold text-foreground mb-2">How Makrill Trade Works</h1>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Ocean Trade connects you directly with short-term commodity trades in the Nordic food sector.
+          Makrill Trade connects you directly with short-term commodity trades in the Nordic food sector.
           Here's how the process works from start to finish.
         </p>
       </div>
@@ -80,7 +80,7 @@ export default function PortalHowItWorks() {
 
       {/* Key benefits */}
       <div className="border border-border bg-white p-8 space-y-5">
-        <h2 className="text-base font-bold text-foreground">Why Invest with Ocean Trade?</h2>
+        <h2 className="text-base font-bold text-foreground">Why Invest with Makrill Trade?</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { icon: Shield, title: "Asset-Backed", desc: "Every investment is secured by physical inventory — real products with real market value." },

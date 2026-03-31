@@ -27,7 +27,7 @@ interface ValueItem {
 export default function AboutSettings() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState({
-    hero_title: "About Ocean Trade",
+    hero_title: "About Makrill Trade",
     hero_subtitle: "Who we are and what drives us",
     hero_description: "",
     mission_text: "",
@@ -51,7 +51,7 @@ export default function AboutSettings() {
   useEffect(() => {
     if (settings) {
       setForm({
-        hero_title: settings.hero_title || "About Ocean Trade",
+        hero_title: settings.hero_title || "About Makrill Trade",
         hero_subtitle: settings.hero_subtitle || "",
         hero_description: settings.hero_description || "",
         mission_text: settings.mission_text || "",

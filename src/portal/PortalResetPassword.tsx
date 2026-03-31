@@ -81,9 +81,9 @@ export default function PortalResetPassword() {
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2 mb-8">
           <div className="h-8 w-8 bg-[#1a3a4a] flex items-center justify-center rounded">
-            <span className="text-white font-bold text-xs">OT</span>
+            <span className="text-white font-bold text-xs">MT</span>
           </div>
-          <span className="text-[#1a3a4a] font-bold text-lg">Ocean Trade</span>
+          <span className="text-[#1a3a4a] font-bold text-lg">Makrill Trade</span>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">

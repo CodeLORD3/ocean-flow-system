@@ -33,9 +33,9 @@ export default function PortalAbout() {
     },
   });
 
-  const heroTitle = settings?.hero_title || "About Ocean Trade";
+  const heroTitle = settings?.hero_title || "About Makrill Trade";
   const heroSubtitle = settings?.hero_subtitle || "Who we are and what drives us";
-  const heroDesc = settings?.hero_description || "Ocean Trade is a specialised trade-finance platform connecting qualified investors with short-term commodity transactions in the Nordic seafood and food-distribution sector. We bridge the gap between real-economy supply chains and investors seeking transparent, asset-backed opportunities with attractive returns.";
+  const heroDesc = settings?.hero_description || "Makrill Trade is a specialised trade-finance platform connecting qualified investors with short-term commodity transactions in the Nordic seafood and food-distribution sector. We bridge the gap between real-economy supply chains and investors seeking transparent, asset-backed opportunities with attractive returns.";
   const missionText = settings?.mission_text || "To democratise access to trade-finance investments that were traditionally reserved for institutions. We make it simple for individual investors to participate in real, tangible trades — from fresh Atlantic salmon to premium shellfish — while providing the supply chain with much-needed working capital.";
   const values = (Array.isArray(settings?.values_json) && (settings.values_json as any[]).length > 0)
     ? (settings.values_json as unknown as { title: string; desc: string }[])
@@ -50,7 +50,7 @@ export default function PortalAbout() {
       <div className="border border-border bg-white p-8">
         <div className="flex items-center gap-3 mb-4">
           <div className="h-10 w-10 bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">OT</span>
+            <span className="text-primary-foreground font-bold text-sm">MT</span>
           </div>
           <div>
             <h1 className="text-xl font-bold text-foreground">{heroTitle}</h1>

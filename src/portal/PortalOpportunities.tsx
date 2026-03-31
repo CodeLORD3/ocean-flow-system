@@ -84,7 +84,7 @@ export default function PortalOpportunities() {
         <div className="border border-amber-200 bg-amber-50 px-4 py-2.5 flex items-start gap-2.5">
           <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
           <p className="text-[11px] text-amber-800 leading-relaxed flex-1">
-            <span className="font-semibold">Capital at risk.</span> Investments made through Ocean Trade are not covered by any government deposit guarantee scheme. You may lose part or all of your invested capital. Please read the{" "}
+            <span className="font-semibold">Capital at risk.</span> Investments made through Makrill Trade are not covered by any government deposit guarantee scheme. You may lose part or all of your invested capital. Please read the{" "}
             <button onClick={() => switchTab("/portal/terms")} className="underline font-medium hover:text-amber-900">Terms of Use</button>{" "}
             and{" "}
             <button onClick={() => switchTab("/portal/guidelines")} className="underline font-medium hover:text-amber-900">Investment Guidelines</button>{" "}

@@ -36,7 +36,7 @@ export default function PortalTeam() {
         <h1 className="text-lg font-bold text-foreground flex items-center gap-2">
           <Users className="h-5 w-5 text-primary" /> Leadership Team
         </h1>
-        <p className="text-xs text-muted-foreground">The people behind Ocean Trade — driving transparency and performance in commodity trade finance.</p>
+        <p className="text-xs text-muted-foreground">The people behind Makrill Trade — driving transparency and performance in commodity trade finance.</p>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {team.map((person: any, i: number) => (
