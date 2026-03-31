@@ -155,6 +155,7 @@ export default function Companies() {
       iban: company.iban || "",
       address: company.address || "",
       city: company.city || "",
+      ticker: company.ticker || "",
       status: company.status || "Active",
     });
     setLogoFile(null);
