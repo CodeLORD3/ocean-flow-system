@@ -648,6 +648,7 @@ export type Database = {
           reviewed_at: string | null
           reviewed_by: string | null
           status: string
+          suitability_passed: boolean
           telephone: string | null
           user_id: string
         }
@@ -666,6 +667,7 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          suitability_passed?: boolean
           telephone?: string | null
           user_id: string
         }
@@ -684,6 +686,7 @@ export type Database = {
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          suitability_passed?: boolean
           telephone?: string | null
           user_id?: string
         }
@@ -777,12 +780,89 @@ export type Database = {
           },
         ]
       }
+      offer_documents: {
+        Row: {
+          file_name: string
+          file_size_bytes: number | null
+          file_url: string
+          id: string
+          is_current: boolean
+          offer_id: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          file_name: string
+          file_size_bytes?: number | null
+          file_url: string
+          id?: string
+          is_current?: boolean
+          offer_id: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          file_name?: string
+          file_size_bytes?: number | null
+          file_url?: string
+          id?: string
+          is_current?: boolean
+          offer_id?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_documents_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "trade_offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_events: {
+        Row: {
+          admin_user_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          notes: string | null
+          pledge_id: string
+        }
+        Insert: {
+          admin_user_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          notes?: string | null
+          pledge_id: string
+        }
+        Update: {
+          admin_user_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          notes?: string | null
+          pledge_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_events_pledge_id_fkey"
+            columns: ["pledge_id"]
+            isOneToOne: false
+            referencedRelation: "pledges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pledges: {
         Row: {
           amount: number
           created_at: string
           id: string
           offer_id: string
+          payment_reference: string | null
           status: string
           user_id: string
         }
@@ -791,6 +871,7 @@ export type Database = {
           created_at?: string
           id?: string
           offer_id: string
+          payment_reference?: string | null
           status?: string
           user_id: string
         }
@@ -799,6 +880,7 @@ export type Database = {
           created_at?: string
           id?: string
           offer_id?: string
+          payment_reference?: string | null
           status?: string
           user_id?: string
         }
@@ -1715,6 +1797,36 @@ export type Database = {
         }
         Relationships: []
       }
+      suitability_responses: {
+        Row: {
+          id: string
+          is_18_plus: boolean
+          is_not_us_person: boolean
+          submitted_at: string
+          understands_no_deposit_guarantee: boolean
+          understands_risk: boolean
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          is_18_plus?: boolean
+          is_not_us_person?: boolean
+          submitted_at?: string
+          understands_no_deposit_guarantee?: boolean
+          understands_risk?: boolean
+          user_id: string
+        }
+        Update: {
+          id?: string
+          is_18_plus?: boolean
+          is_not_us_person?: boolean
+          submitted_at?: string
+          understands_no_deposit_guarantee?: boolean
+          understands_risk?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       suppliers: {
         Row: {
           address: string | null
@@ -1775,6 +1887,8 @@ export type Database = {
           primary_exit: string | null
           product_id_display: string | null
           product_image_url: string | null
+          published_at: string | null
+          published_by: string | null
           purchase_date: string | null
           purchase_price: number | null
           quantity: number
@@ -1816,6 +1930,8 @@ export type Database = {
           primary_exit?: string | null
           product_id_display?: string | null
           product_image_url?: string | null
+          published_at?: string | null
+          published_by?: string | null
           purchase_date?: string | null
           purchase_price?: number | null
           quantity?: number
@@ -1857,6 +1973,8 @@ export type Database = {
           primary_exit?: string | null
           product_id_display?: string | null
           product_image_url?: string | null
+          published_at?: string | null
+          published_by?: string | null
           purchase_date?: string | null
           purchase_price?: number | null
           quantity?: number
