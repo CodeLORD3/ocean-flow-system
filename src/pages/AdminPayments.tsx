@@ -45,6 +45,7 @@ export default function AdminPayments() {
           message: `Your funds for "${offerTitle}" have been received. Your investment is now active.`,
           entity_type: "pledge",
           entity_id: pledgeId,
+          user_id: pledge.user_id,
         });
       }
     },
