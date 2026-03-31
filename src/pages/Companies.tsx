@@ -55,6 +55,7 @@ const EMPTY_FORM = {
   iban: "",
   address: "",
   city: "",
+  ticker: "",
   status: "Active",
 };
 
