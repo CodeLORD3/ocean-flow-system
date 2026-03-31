@@ -157,16 +157,16 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
 
   return (
     <div className="border border-border bg-white shadow-sm relative">
-      <div className="px-4 pt-3 pb-1 flex items-center justify-between">
-        <div>
-          <h2 className="text-xs font-bold text-foreground tracking-wide uppercase">
+      <div className="px-4 pt-3 pb-1 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+        <div className="min-w-0">
+          <h2 className="text-[10px] sm:text-xs font-bold text-foreground tracking-wide uppercase truncate">
             Active Deals — Where Your Money Works
           </h2>
-          <p className="text-[10px] text-muted-foreground mt-0.5">
+          <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-0.5 truncate">
             {activeMarkers.length} {activeMarkers.length === 1 ? "location" : "locations"} · {totalDeals} active {totalDeals === 1 ? "deal" : "deals"} · {totalValue.toLocaleString()} kr total
           </p>
         </div>
-        <div className="flex items-center gap-3 text-[9px] text-muted-foreground">
+        <div className="flex items-center gap-3 text-[9px] text-muted-foreground shrink-0">
           <span className="flex items-center gap-1">
             <span className="h-2 w-2 rounded-full bg-mackerel inline-block" /> Active
           </span>
@@ -175,7 +175,7 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
           </span>
         </div>
       </div>
-      <div style={{ height: 260 }} className="overflow-hidden select-none" onWheel={(e) => e.preventDefault()}>
+      <div className="h-[180px] sm:h-[260px] overflow-hidden select-none" onWheel={(e) => e.preventDefault()}>
         <ComposableMap
           projection="geoMercator"
           projectionConfig={{ center: [centerLon, centerLat], scale: mapScale }}
