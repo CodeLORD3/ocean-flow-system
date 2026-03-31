@@ -160,16 +160,19 @@ function PortalInner() {
   const queryClient = useQueryClient();
 
   const { data: portalNotifCount = 0 } = useQuery({
-    queryKey: ["portal-notification-count"],
+    queryKey: ["portal-notification-count", user?.id],
     queryFn: async () => {
+      if (!user?.id) return 0;
       const { count, error } = await supabase
         .from("notifications")
         .select("*", { count: "exact", head: true })
         .eq("portal", "investor")
+        .eq("user_id", user.id)
         .eq("is_read", false);
       if (error) throw error;
       return count || 0;
     },
+    enabled: !!user?.id,
     refetchInterval: 15000,
   });
 
