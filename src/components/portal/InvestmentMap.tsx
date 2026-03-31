@@ -4,7 +4,6 @@ import {
   Geographies,
   Geography,
   Marker,
-  ZoomableGroup,
 } from "react-simple-maps";
 
 const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
@@ -171,15 +170,14 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
           </span>
         </div>
       </div>
-      <div style={{ height: 260 }} className="overflow-hidden">
+      <div style={{ height: 260 }} className="overflow-hidden select-none" onWheel={(e) => e.preventDefault()}>
         <ComposableMap
           projection="geoMercator"
-          projectionConfig={{ center: [15, 52], scale: 320 }}
+          projectionConfig={{ center: [15, 54], scale: 320 }}
           width={900}
           height={520}
-          style={{ width: "100%", height: "auto", marginTop: "-40px" }}
+          style={{ width: "100%", height: "auto", marginTop: "-40px", pointerEvents: "none" }}
         >
-          <ZoomableGroup center={[15, 52]} zoom={1} minZoom={1} maxZoom={1}>
             <Geographies geography={GEO_URL}>
               {({ geographies }) =>
                 geographies.map((geo) => (
@@ -191,7 +189,7 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
                     strokeWidth={0.5}
                     style={{
                       default: { outline: "none" },
-                      hover: { outline: "none", fill: "#dce5ef" },
+                      hover: { outline: "none", fill: "#e8eef4" },
                       pressed: { outline: "none" },
                     }}
                   />
@@ -215,9 +213,10 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
                 <circle
                   r={3.5}
                   fill="hsl(172, 62%, 32%)"
-                  stroke="#fff"
-                  strokeWidth={1.5}
+                  stroke={selectedCompanyId === m.id ? "#0f2e3d" : "#fff"}
+                  strokeWidth={selectedCompanyId === m.id ? 2 : 1.5}
                   className="cursor-pointer"
+                  style={{ pointerEvents: "auto" }}
                   onClick={(e) => {
                     e.stopPropagation();
                     setSelectedCompanyId(selectedCompanyId === m.id ? null : m.id);
@@ -233,6 +232,7 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
                     fontWeight: 600,
                     fill: "#0f2e3d",
                     cursor: "pointer",
+                    pointerEvents: "auto",
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -255,7 +255,6 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
                 </text>
               </Marker>
             ))}
-          </ZoomableGroup>
         </ComposableMap>
       </div>
 
