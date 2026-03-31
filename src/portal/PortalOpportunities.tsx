@@ -69,19 +69,31 @@ export default function PortalOpportunities() {
     return { target, funded, rate, progress, maturity, purchaseDate, daysToMaturity, tenorDays, company, isMatured };
   };
 
+  const [riskDismissed, setRiskDismissed] = useState(() => sessionStorage.getItem("risk-banner-dismissed") === "true");
+
+  const dismissRisk = () => {
+    setRiskDismissed(true);
+    sessionStorage.setItem("risk-banner-dismissed", "true");
+  };
+
   return (
     <div className="space-y-4">
       {/* Risk disclaimer banner */}
-      <div className="border border-amber-200 bg-amber-50 px-4 py-2.5 flex items-start gap-2.5">
-        <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-        <p className="text-[11px] text-amber-800 leading-relaxed">
-          <span className="font-semibold">Capital at risk.</span> Investments on Ocean Trade are not covered by deposit guarantee schemes. You may lose part or all of your invested capital. Past performance does not guarantee future results. Please read the{" "}
-          <button onClick={() => switchTab("/portal/terms")} className="underline font-medium hover:text-amber-900">Terms of Use</button>{" "}
-          and{" "}
-          <button onClick={() => switchTab("/portal/guidelines")} className="underline font-medium hover:text-amber-900">Investment Guidelines</button>{" "}
-          before investing.
-        </p>
-      </div>
+      {!riskDismissed && (
+        <div className="border border-amber-200 bg-amber-50 px-4 py-2.5 flex items-start gap-2.5">
+          <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+          <p className="text-[11px] text-amber-800 leading-relaxed flex-1">
+            <span className="font-semibold">Capital at risk.</span> Investments made through Ocean Trade are not covered by any government deposit guarantee scheme. You may lose part or all of your invested capital. Please read the{" "}
+            <button onClick={() => switchTab("/portal/terms")} className="underline font-medium hover:text-amber-900">Terms of Use</button>{" "}
+            and{" "}
+            <button onClick={() => switchTab("/portal/guidelines")} className="underline font-medium hover:text-amber-900">Investment Guidelines</button>{" "}
+            before investing.
+          </p>
+          <button onClick={dismissRisk} className="text-amber-600 hover:text-amber-800 shrink-0 mt-0.5">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-base font-bold text-foreground">Investment Opportunities</h1>
