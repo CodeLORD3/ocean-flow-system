@@ -313,6 +313,7 @@ export default function TradeOffers() {
     onError: (err: any) => toast.error(err.message),
   });
 
+  const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { error } = await supabase.from("trade_offers").update({ status }).eq("id", id);
       if (error) throw error;
