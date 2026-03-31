@@ -9,13 +9,17 @@ export default function PortalProfile() {
   const [iban, setIban] = useState("");
   const [saving, setSaving] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     const load = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       const u = session?.user;
-      if (!u) return;
+      if (!u) {
+        setProfileLoaded(true);
+        return;
+      }
       setUser(u);
 
       const { data } = await supabase
@@ -28,6 +32,7 @@ export default function PortalProfile() {
         setProfile(data);
         setIban((data as any).iban || "");
       }
+      setProfileLoaded(true);
     };
     load();
   }, []);
@@ -59,10 +64,18 @@ export default function PortalProfile() {
     setSaving(false);
   };
 
-  if (!profile || !user) {
+  if (!profileLoaded) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="text-sm text-muted-foreground animate-pulse">Loading profile…</div>
+      </div>
+    );
+  }
+
+  if (!profile || !user) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-sm text-muted-foreground">Could not load profile. Please try logging in again.</div>
       </div>
     );
   }

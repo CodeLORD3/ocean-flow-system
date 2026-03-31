@@ -16,6 +16,7 @@ import PortalHowItWorks from "./PortalHowItWorks";
 import PortalContact from "./PortalContact";
 import PortalTeam from "./PortalTeam";
 import PortalProfile from "./PortalProfile";
+import PortalSuitability from "./PortalSuitability";
 import PortalNotifications from "./PortalNotifications";
 import PortalNotificationDropdown from "./PortalNotificationDropdown";
 import PortalTerms from "./PortalTerms";
@@ -153,6 +154,7 @@ function PortalInner() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [showSuitability, setShowSuitability] = useState(false);
   const navigate = useNavigate();
   const { switchTab, activeTab } = usePortalTabs();
   const queryClient = useQueryClient();
@@ -194,6 +196,10 @@ function PortalInner() {
       if (!mounted) return;
       setProfile(prof);
       setLoading(false);
+      if (prof && !(prof as any).kyc_completed) {
+        setShowSuitability(true);
+        return;
+      }
       const hasSeenWelcome = localStorage.getItem("portal-welcome-seen");
       if (!hasSeenWelcome) setShowWelcome(true);
     };
@@ -246,6 +252,21 @@ function PortalInner() {
   }
 
   if (!user) return null;
+
+  if (showSuitability) {
+    return (
+      <div className="min-h-screen bg-background">
+        <PortalSuitability
+          userId={user.id}
+          onComplete={() => {
+            setShowSuitability(false);
+            const hasSeenWelcome = localStorage.getItem("portal-welcome-seen");
+            if (!hasSeenWelcome) setShowWelcome(true);
+          }}
+        />
+      </div>
+    );
+  }
 
   const navItems = [
     { to: "/portal", icon: Search, label: "Opportunities" },
