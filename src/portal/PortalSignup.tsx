@@ -69,15 +69,15 @@ export default function PortalSignup() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="h-8 w-8 bg-[#1a3a4a] flex items-center justify-center rounded">
-            <span className="text-white font-bold text-xs">OT</span>
+          <div className="h-8 w-8 bg-[#0f2e3d] flex items-center justify-center rounded">
+            <span className="text-white font-bold text-xs">MT</span>
           </div>
-          <span className="text-[#1a3a4a] font-bold text-lg">Ocean Trade</span>
+          <span className="text-[#0f2e3d] font-bold text-lg">Makrill Trade</span>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-          <h1 className="text-xl font-bold text-[#1a3a4a] mb-1">Create your account</h1>
-          <p className="text-sm text-gray-500 mb-6">Join Ocean Trade and start investing in trade finance.</p>
+          <h1 className="text-xl font-bold text-[#0f2e3d] mb-1">Create your account</h1>
+          <p className="text-sm text-gray-500 mb-6">Join Makrill Trade and start investing in trade finance.</p>
 
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-xs">
@@ -93,7 +93,7 @@ export default function PortalSignup() {
                   type="text"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a4a]/20 focus:border-[#1a3a4a]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d]"
                   required
                 />
               </div>
@@ -103,7 +103,7 @@ export default function PortalSignup() {
                   type="text"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a4a]/20 focus:border-[#1a3a4a]"
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d]"
                   required
                 />
               </div>
@@ -115,7 +115,7 @@ export default function PortalSignup() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a4a]/20 focus:border-[#1a3a4a]"
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d]"
                 required
               />
             </div>
@@ -125,7 +125,7 @@ export default function PortalSignup() {
               <select
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a4a]/20 focus:border-[#1a3a4a] bg-white"
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d] bg-white"
               >
                 {countries.map((c) => (
                   <option key={c} value={c}>{c}</option>
@@ -140,7 +140,7 @@ export default function PortalSignup() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a4a]/20 focus:border-[#1a3a4a] pr-10"
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d] pr-10"
                   required
                   minLength={6}
                 />
@@ -160,7 +160,7 @@ export default function PortalSignup() {
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a4a]/20 focus:border-[#1a3a4a]"
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d]"
                 required
               />
             </div>
@@ -173,15 +173,15 @@ export default function PortalSignup() {
                 className="mt-0.5 rounded border-gray-300"
               />
               <span className="text-xs text-gray-600">
-                I agree to the <Link to="/portal/terms" className="text-[#1a3a4a] underline">Terms of Use</Link> and{" "}
-                <Link to="/portal/privacy" className="text-[#1a3a4a] underline">Privacy Policy</Link>
+                I agree to the <Link to="/portal/terms" className="text-[#0f2e3d] underline">Terms of Use</Link> and{" "}
+                <Link to="/portal/privacy" className="text-[#0f2e3d] underline">Privacy Policy</Link>
               </span>
             </label>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#1a3a4a] text-white py-2.5 rounded text-sm font-medium hover:bg-[#1a3a4a]/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full bg-[#0f2e3d] text-white py-2.5 rounded text-sm font-medium hover:bg-[#0f2e3d]/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? "Creating account…" : "Create account"}
               {!loading && <ArrowRight className="h-4 w-4" />}
@@ -191,7 +191,7 @@ export default function PortalSignup() {
 
         <p className="text-center text-xs text-gray-500 mt-4">
           Already have an account?{" "}
-          <Link to="/portal/login" className="text-[#1a3a4a] font-medium hover:underline">
+          <Link to="/portal/login" className="text-[#0f2e3d] font-medium hover:underline">
             Sign in
           </Link>
         </p>

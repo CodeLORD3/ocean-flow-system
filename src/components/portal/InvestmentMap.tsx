@@ -108,12 +108,12 @@ export default function InvestmentMap({ companies, offers }: Props) {
       <div style={{ maxHeight: 300 }} className="overflow-hidden">
         <ComposableMap
           projection="geoMercator"
-          projectionConfig={{ center: [15, 50], scale: 520 }}
+          projectionConfig={{ center: [13, 48], scale: 480 }}
           width={800}
           height={380}
           style={{ width: "100%", height: "auto" }}
         >
-          <ZoomableGroup center={[15, 50]} zoom={1} minZoom={1} maxZoom={1}>
+          <ZoomableGroup center={[13, 48]} zoom={1} minZoom={1} maxZoom={1}>
             <Geographies geography={GEO_URL}>
               {({ geographies }) =>
                 geographies.map((geo) => (
@@ -145,7 +145,7 @@ export default function InvestmentMap({ companies, offers }: Props) {
             {/* Active company markers */}
             {activeMarkers.map((m: any) => (
               <Marker key={m.id} coordinates={m.coordinates}>
-                <circle r={6} fill="#1a3a4a" fillOpacity={0.15} stroke="none" />
+                <circle r={6} fill="#0f2e3d" fillOpacity={0.15} stroke="none" />
                 <circle r={3.5} fill="#22c55e" stroke="#fff" strokeWidth={1.5} />
                 <text
                   textAnchor="start"
@@ -155,7 +155,7 @@ export default function InvestmentMap({ companies, offers }: Props) {
                     fontFamily: "system-ui, sans-serif",
                     fontSize: "8px",
                     fontWeight: 600,
-                    fill: "#1a3a4a",
+                    fill: "#0f2e3d",
                   }}
                 >
                   {m.name}

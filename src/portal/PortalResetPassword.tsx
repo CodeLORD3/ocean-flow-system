@@ -60,13 +60,13 @@ export default function PortalResetPassword() {
       <div className="min-h-screen bg-[#f4f6f9] flex items-center justify-center p-4">
         <div className="w-full max-w-md text-center">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-            <h1 className="text-xl font-bold text-[#1a3a4a] mb-2">Invalid or expired link</h1>
+            <h1 className="text-xl font-bold text-[#0f2e3d] mb-2">Invalid or expired link</h1>
             <p className="text-sm text-gray-500 mb-4">
               This password reset link is invalid or has expired. Please request a new one.
             </p>
             <Link
               to="/portal/forgot-password"
-              className="inline-block bg-[#1a3a4a] text-white py-2 px-6 rounded text-sm font-medium hover:bg-[#1a3a4a]/90 transition-colors"
+              className="inline-block bg-[#0f2e3d] text-white py-2 px-6 rounded text-sm font-medium hover:bg-[#0f2e3d]/90 transition-colors"
             >
               Request new link
             </Link>
@@ -80,10 +80,10 @@ export default function PortalResetPassword() {
     <div className="min-h-screen bg-[#f4f6f9] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="h-8 w-8 bg-[#1a3a4a] flex items-center justify-center rounded">
-            <span className="text-white font-bold text-xs">OT</span>
+          <div className="h-8 w-8 bg-[#0f2e3d] flex items-center justify-center rounded">
+            <span className="text-white font-bold text-xs">MT</span>
           </div>
-          <span className="text-[#1a3a4a] font-bold text-lg">Ocean Trade</span>
+          <span className="text-[#0f2e3d] font-bold text-lg">Makrill Trade</span>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
@@ -92,14 +92,14 @@ export default function PortalResetPassword() {
               <div className="mx-auto w-12 h-12 bg-green-50 rounded-full flex items-center justify-center mb-4">
                 <CheckCircle className="h-6 w-6 text-green-600" />
               </div>
-              <h1 className="text-xl font-bold text-[#1a3a4a] mb-2">Password updated</h1>
+              <h1 className="text-xl font-bold text-[#0f2e3d] mb-2">Password updated</h1>
               <p className="text-sm text-gray-500">
                 Your password has been reset successfully. Redirecting you to the portal…
               </p>
             </div>
           ) : (
             <>
-              <h1 className="text-xl font-bold text-[#1a3a4a] mb-1">Set a new password</h1>
+              <h1 className="text-xl font-bold text-[#0f2e3d] mb-1">Set a new password</h1>
               <p className="text-sm text-gray-500 mb-6">Enter your new password below.</p>
 
               {error && (
@@ -116,7 +116,7 @@ export default function PortalResetPassword() {
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a4a]/20 focus:border-[#1a3a4a] pr-10"
+                      className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d] pr-10"
                       required
                       minLength={6}
                       autoFocus
@@ -137,7 +137,7 @@ export default function PortalResetPassword() {
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a4a]/20 focus:border-[#1a3a4a]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d]"
                     required
                   />
                 </div>
@@ -145,7 +145,7 @@ export default function PortalResetPassword() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#1a3a4a] text-white py-2.5 rounded text-sm font-medium hover:bg-[#1a3a4a]/90 transition-colors disabled:opacity-50"
+                  className="w-full bg-[#0f2e3d] text-white py-2.5 rounded text-sm font-medium hover:bg-[#0f2e3d]/90 transition-colors disabled:opacity-50"
                 >
                   {loading ? "Updating…" : "Update password"}
                 </button>

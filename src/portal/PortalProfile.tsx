@@ -140,7 +140,7 @@ export default function PortalProfile() {
       {/* Personal Info */}
       <div className="bg-white border border-border rounded-lg p-6">
         <div className="flex items-center gap-4 mb-5">
-          <div className="h-14 w-14 bg-[#1a3a4a] rounded-full flex items-center justify-center">
+          <div className="h-14 w-14 bg-[#0f2e3d] rounded-full flex items-center justify-center">
             <span className="text-white font-bold text-lg">
               {displayProfile.first_name?.[0]}{displayProfile.last_name?.[0]}
             </span>
@@ -164,7 +164,7 @@ export default function PortalProfile() {
               type="text"
               value={formData.first_name}
               onChange={(e) => setFormData(p => ({ ...p, first_name: e.target.value }))}
-              className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a4a]/20 focus:border-[#1a3a4a]"
+              className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d]"
             />
           </div>
           <div>
@@ -173,7 +173,7 @@ export default function PortalProfile() {
               type="text"
               value={formData.last_name}
               onChange={(e) => setFormData(p => ({ ...p, last_name: e.target.value }))}
-              className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a4a]/20 focus:border-[#1a3a4a]"
+              className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d]"
             />
           </div>
           <div>
@@ -186,7 +186,7 @@ export default function PortalProfile() {
               type="text"
               value={formData.country}
               onChange={(e) => setFormData(p => ({ ...p, country: e.target.value }))}
-              className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a4a]/20 focus:border-[#1a3a4a]"
+              className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d]"
             />
           </div>
           <div>
@@ -196,7 +196,7 @@ export default function PortalProfile() {
               value={formData.telephone}
               onChange={(e) => setFormData(p => ({ ...p, telephone: e.target.value }))}
               placeholder="Optional"
-              className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a4a]/20 focus:border-[#1a3a4a]"
+              className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d]"
             />
           </div>
           <div>
@@ -206,7 +206,7 @@ export default function PortalProfile() {
               value={formData.address}
               onChange={(e) => setFormData(p => ({ ...p, address: e.target.value }))}
               placeholder="Optional"
-              className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a4a]/20 focus:border-[#1a3a4a]"
+              className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d]"
             />
           </div>
         </div>
@@ -214,7 +214,7 @@ export default function PortalProfile() {
         <button
           onClick={handleSaveProfile}
           disabled={savingProfile || !formData.first_name || !formData.last_name}
-          className="mt-4 px-4 py-2 bg-[#1a3a4a] text-white rounded text-sm font-medium hover:bg-[#1a3a4a]/90 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+          className="mt-4 px-4 py-2 bg-[#0f2e3d] text-white rounded text-sm font-medium hover:bg-[#0f2e3d]/90 transition-colors disabled:opacity-50 flex items-center gap-1.5"
         >
           <Save className="h-3.5 w-3.5" />
           {savingProfile ? "Saving…" : "Save Profile"}
@@ -234,8 +234,8 @@ export default function PortalProfile() {
               value={iban}
               onChange={(e) => setIban(e.target.value.toUpperCase().replace(/[^A-Z0-9\s]/g, ""))}
               placeholder="SE00 0000 0000 0000 0000 0000"
-              className={`w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a4a]/20 font-mono pr-9 ${
-                iban && isValidIban ? "border-green-400 focus:border-green-500" : iban ? "border-destructive focus:border-destructive" : "border-gray-300 focus:border-[#1a3a4a]"
+              className={`w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 font-mono pr-9 ${
+                iban && isValidIban ? "border-green-400 focus:border-green-500" : iban ? "border-destructive focus:border-destructive" : "border-gray-300 focus:border-[#0f2e3d]"
               }`}
             />
             {iban && isValidIban && (
@@ -245,7 +245,7 @@ export default function PortalProfile() {
           <button
             onClick={handleSaveIban}
             disabled={saving || !profile}
-            className="px-4 py-2 bg-[#1a3a4a] text-white rounded text-sm font-medium hover:bg-[#1a3a4a]/90 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+            className="px-4 py-2 bg-[#0f2e3d] text-white rounded text-sm font-medium hover:bg-[#0f2e3d]/90 transition-colors disabled:opacity-50 flex items-center gap-1.5"
           >
             <Save className="h-3.5 w-3.5" />
             {saving ? "Saving…" : "Save"}

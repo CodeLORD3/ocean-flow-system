@@ -107,7 +107,7 @@ export default function PortalDocuments() {
                         `Amount: ${Number(p.amount).toLocaleString()} kr`,
                         `Status: ${p.status}`,
                         "",
-                        `© ${new Date().getFullYear()} Ocean Trade.`,
+                        `© ${new Date().getFullYear()} Makrill Trade.`,
                       ].join("\n");
                       const blob = new Blob([content], { type: "text/plain" });
                       const url = URL.createObjectURL(blob);

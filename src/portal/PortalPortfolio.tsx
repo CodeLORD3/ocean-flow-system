@@ -328,7 +328,7 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
             <div className="bg-amber-50 border border-amber-200 p-3 space-y-1.5 text-[11px]">
               <div className="flex justify-between">
                 <span className="text-amber-800">Bank</span>
-                <span className="text-amber-900 font-medium">{company?.name || "Ocean Trade"}</span>
+                <span className="text-amber-900 font-medium">{company?.name || "Makrill Trade"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-amber-800">IBAN</span>

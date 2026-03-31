@@ -15,22 +15,22 @@
     --popover: 0 0% 100%;
     --popover-foreground: 215 30% 12%;
 
-    --primary: 205 78% 28%;
+    --primary: 207 82% 22%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 195 60% 92%;
+    --secondary: 182 50% 90%;
     --secondary-foreground: 205 78% 28%;
 
     --muted: 210 20% 94%;
     --muted-foreground: 215 15% 50%;
 
-    --accent: 172 55% 40%;
+    --accent: 178 58% 34%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 60% 40%;
+    --success: 168 55% 38%;
     --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
@@ -42,12 +42,12 @@
 
     --radius: 0.25rem;
 
-    --sidebar-background: 215 35% 14%;
+    --sidebar-background: 210 40% 11%;
     --sidebar-background-shop: 160 30% 12%;
     --sidebar-foreground: 210 20% 85%;
-    --sidebar-primary: 195 80% 60%;
+    --sidebar-primary: 182 72% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 30% 20%;
+    --sidebar-accent: 200 38% 17%;
     --sidebar-accent-foreground: 210 20% 90%;
     --sidebar-border: 215 25% 22%;
     --sidebar-ring: 195 80% 60%;
@@ -55,7 +55,7 @@
     --font-heading: 'Space Grotesk', sans-serif;
     --font-body: 'DM Sans', sans-serif;
 
-    --gradient-ocean: linear-gradient(135deg, hsl(205 78% 28%), hsl(195 70% 35%));
+    --gradient-makrill: linear-gradient(135deg, hsl(207 82% 22%), hsl(182 72% 30%));
     --gradient-surface: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 25% 97%));
     --shadow-card: 0 1px 3px hsl(215 30% 12% / 0.06), 0 4px 12px hsl(215 30% 12% / 0.04);
     --shadow-card-hover: 0 4px 16px hsl(215 30% 12% / 0.1), 0 8px 24px hsl(215 30% 12% / 0.06);

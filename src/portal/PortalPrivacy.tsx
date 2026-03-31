@@ -9,7 +9,7 @@ export default function PortalPrivacy() {
       {[
         {
           title: "1. What Data We Collect",
-          content: `Ocean Trade collects the following personal data when you register and use the platform:\n\n• Full name\n• Email address\n• Country of residence\n• Date of birth (if provided)\n• Telephone number (if provided)\n• Postal address (if provided)\n• IBAN (bank account number for payouts)\n• Investment activity (commitments, amounts, dates, offer participation)\n• Login and session data (IP address, browser type, timestamps)`,
+          content: `Makrill Trade collects the following personal data when you register and use the platform:\n\n• Full name\n• Email address\n• Country of residence\n• Date of birth (if provided)\n• Telephone number (if provided)\n• Postal address (if provided)\n• IBAN (bank account number for payouts)\n• Investment activity (commitments, amounts, dates, offer participation)\n• Login and session data (IP address, browser type, timestamps)`,
         },
         {
           title: "2. Why We Collect Your Data",
@@ -37,7 +37,7 @@ export default function PortalPrivacy() {
         },
         {
           title: "8. Contact",
-          content: `For questions about this Privacy Policy or to exercise your data rights, contact:\n\nOcean Trade AB\nEmail: info@fiskskaldjur.ch`,
+          content: `For questions about this Privacy Policy or to exercise your data rights, contact:\n\nMakrill Trade AB\nEmail: info@fiskskaldjur.ch`,
         },
       ].map((section) => (
         <div key={section.title} className="border border-border bg-white p-6">

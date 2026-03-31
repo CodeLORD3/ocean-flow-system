@@ -120,7 +120,7 @@ function UserDropdown({ user, profile, onLogout, onProfile }: {
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
       >
-        <div className="h-7 w-7 bg-[#1a3a4a] rounded-full flex items-center justify-center">
+        <div className="h-7 w-7 bg-[#0f2e3d] rounded-full flex items-center justify-center">
           <span className="text-white font-bold text-[10px]">{initials}</span>
         </div>
         <span className="max-w-[120px] truncate">{displayName}</span>
@@ -248,8 +248,8 @@ function PortalInner() {
 
   // Set document title for portal routes
   useEffect(() => {
-    document.title = "Ocean Trade — Invest in Nordic Trade Finance";
-    return () => { document.title = "Ocean Trade"; };
+    document.title = "Makrill Trade — Invest in Nordic Trade Finance";
+    return () => { document.title = "Makrill Trade"; };
   }, []);
 
   if (loading) {
@@ -291,9 +291,9 @@ function PortalInner() {
         <div className="flex items-center gap-4 sm:gap-8 overflow-hidden">
           <div className="flex items-center gap-2 shrink-0">
             <div className="h-7 w-7 bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xs">OT</span>
+              <span className="text-primary-foreground font-bold text-xs">MT</span>
             </div>
-            <span className="text-foreground font-bold text-sm hidden sm:inline">Ocean Trade</span>
+            <span className="text-foreground font-bold text-sm hidden sm:inline">Makrill Trade</span>
           </div>
           <nav className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto">
             {navItems.map((item) => {
@@ -341,9 +341,9 @@ function PortalInner() {
         <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-start justify-between gap-4 sm:gap-8">
           <div className="flex items-center gap-2">
             <div className="h-5 w-5 bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-[8px]">OT</span>
+              <span className="text-primary-foreground font-bold text-[8px]">MT</span>
             </div>
-            <span className="text-xs font-semibold text-foreground">Ocean Trade</span>
+            <span className="text-xs font-semibold text-foreground">Makrill Trade</span>
           </div>
           <div className="flex flex-wrap gap-6 sm:gap-10">
             <div className="space-y-1.5">
@@ -368,7 +368,7 @@ function PortalInner() {
           </div>
         </div>
         <div className="max-w-[1400px] mx-auto mt-3 pt-2 border-t border-border">
-          <p className="text-[10px] text-muted-foreground">© {new Date().getFullYear()} Ocean Trade. All rights reserved.</p>
+          <p className="text-[10px] text-muted-foreground">© {new Date().getFullYear()} Makrill Trade. All rights reserved.</p>
         </div>
       </footer>
     </div>
