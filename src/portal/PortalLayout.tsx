@@ -281,29 +281,29 @@ function PortalInner() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Top bar */}
-      <header className="h-14 flex items-center justify-between border-b border-border px-6 bg-white shadow-sm">
-        <div className="flex items-center gap-8">
-          <div className="flex items-center gap-2">
+      <header className="h-14 flex items-center justify-between border-b border-border px-3 sm:px-6 bg-white shadow-sm">
+        <div className="flex items-center gap-4 sm:gap-8 overflow-hidden">
+          <div className="flex items-center gap-2 shrink-0">
             <div className="h-7 w-7 bg-primary flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-xs">OT</span>
             </div>
-            <span className="text-foreground font-bold text-sm">Ocean Trade</span>
+            <span className="text-foreground font-bold text-sm hidden sm:inline">Ocean Trade</span>
           </div>
-          <nav className="flex items-center gap-1">
+          <nav className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto">
             {navItems.map((item) => {
               const isActive = activeTab === item.to;
               return (
                 <button
                   key={item.to}
                   onClick={() => switchTab(item.to)}
-                  className={`flex items-center gap-2 px-4 py-2 text-[13px] rounded-sm transition-colors ${
+                  className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 text-[12px] sm:text-[13px] rounded-sm transition-colors whitespace-nowrap ${
                     isActive
                       ? "text-primary bg-primary/5 font-semibold"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   }`}
                 >
                   <item.icon className="h-4 w-4" />
-                  {item.label}
+                  <span className="hidden sm:inline">{item.label}</span>
                 </button>
               );
             })}
