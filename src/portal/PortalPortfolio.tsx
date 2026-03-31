@@ -263,7 +263,7 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
   const status = pledge.status || "Active";
   const company = offer?.company_id ? companyMap[offer.company_id] : null;
   const rate = offer ? Number(offer.interest_rate) : 0;
-  const refCode = `OT-${new Date(pledge.created_at).getFullYear()}-${pledge.id.slice(0, 4).toUpperCase()}-${(offer?.id || "").slice(0, 4).toUpperCase()}`;
+  const refCode = (pledge as any).payment_reference || `OT-${new Date(pledge.created_at).getFullYear()}-${pledge.id.slice(0, 6)}-${(offer?.id || "").slice(0, 6)}`;
 
   return (
     <div className="px-6 py-4 border-t border-border/30">
@@ -274,7 +274,7 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
             {status === "Pending Payment" && <CreditCard className="h-3.5 w-3.5 text-amber-600" />}
             {status === "Active" && <CheckCircle className="h-3.5 w-3.5 text-green-600" />}
             {status === "Matured" && <AlertTriangle className="h-3.5 w-3.5 text-orange-600" />}
-            {status === "Paid Out" && <DollarSign className="h-3.5 w-3.5 text-primary" />}
+            {status === "Paid Out" && <Banknote className="h-3.5 w-3.5 text-primary" />}
             Status: {status}
           </div>
           <p className="text-[11px] text-muted-foreground leading-relaxed">

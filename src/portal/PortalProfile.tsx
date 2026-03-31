@@ -10,6 +10,9 @@ export default function PortalProfile() {
   const [saving, setSaving] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [profileMissing, setProfileMissing] = useState(false);
+  const [formData, setFormData] = useState({ first_name: "", last_name: "", country: "", telephone: "", address: "" });
+  const [savingProfile, setSavingProfile] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -31,6 +34,24 @@ export default function PortalProfile() {
       if (data) {
         setProfile(data);
         setIban((data as any).iban || "");
+        setFormData({
+          first_name: (data as any).first_name || "",
+          last_name: (data as any).last_name || "",
+          country: (data as any).country || "",
+          telephone: (data as any).telephone || "",
+          address: (data as any).address || "",
+        });
+      } else {
+        // Profile doesn't exist yet — show empty form
+        setProfileMissing(true);
+        const meta = u.user_metadata || {};
+        setFormData({
+          first_name: meta.first_name || "",
+          last_name: meta.last_name || "",
+          country: meta.country || "Sweden",
+          telephone: "",
+          address: "",
+        });
       }
       setProfileLoaded(true);
     };
@@ -43,6 +64,34 @@ export default function PortalProfile() {
     if (!/^[A-Z]{2}[0-9]{2}[A-Z0-9]+$/.test(cleaned)) return false;
     return true;
   }, [iban]);
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    setSavingProfile(true);
+    const payload = {
+      user_id: user.id,
+      email: user.email,
+      first_name: formData.first_name,
+      last_name: formData.last_name,
+      country: formData.country,
+      telephone: formData.telephone || null,
+      address: formData.address || null,
+    };
+    const { data, error } = await supabase
+      .from("investor_profiles")
+      .upsert(payload as any, { onConflict: "user_id" })
+      .select()
+      .single();
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      setProfile(data);
+      setProfileMissing(false);
+      toast({ title: "Saved", description: "Profile updated successfully." });
+    }
+    setSavingProfile(false);
+  };
 
   const handleSaveIban = async () => {
     if (!profile) return;
@@ -72,7 +121,7 @@ export default function PortalProfile() {
     );
   }
 
-  if (!profile || !user) {
+  if (!user) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="text-sm text-muted-foreground">Could not load profile. Please try logging in again.</div>
@@ -80,8 +129,9 @@ export default function PortalProfile() {
     );
   }
 
-  const fullName = `${profile.first_name} ${profile.last_name}`.trim();
-  const memberSince = format(new Date(profile.created_at), "MMMM yyyy");
+  const displayProfile = profile || { first_name: formData.first_name, last_name: formData.last_name, email: user.email, created_at: new Date().toISOString(), country: formData.country };
+  const fullName = `${displayProfile.first_name} ${displayProfile.last_name}`.trim() || user.email;
+  const memberSince = format(new Date(displayProfile.created_at), "MMMM yyyy");
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -92,7 +142,7 @@ export default function PortalProfile() {
         <div className="flex items-center gap-4 mb-5">
           <div className="h-14 w-14 bg-[#1a3a4a] rounded-full flex items-center justify-center">
             <span className="text-white font-bold text-lg">
-              {profile.first_name?.[0]}{profile.last_name?.[0]}
+              {displayProfile.first_name?.[0]}{displayProfile.last_name?.[0]}
             </span>
           </div>
           <div>
@@ -101,16 +151,74 @@ export default function PortalProfile() {
           </div>
         </div>
 
+        {profileMissing && (
+          <div className="bg-amber-50 border border-amber-200 p-3 mb-4 text-xs text-amber-800">
+            Your profile is incomplete. Please fill in your details below and save.
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <div className="text-xs text-muted-foreground mb-0.5">Email</div>
-            <div className="text-foreground">{profile.email}</div>
+            <label className="text-xs text-muted-foreground mb-1 block">First Name</label>
+            <input
+              type="text"
+              value={formData.first_name}
+              onChange={(e) => setFormData(p => ({ ...p, first_name: e.target.value }))}
+              className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a4a]/20 focus:border-[#1a3a4a]"
+            />
           </div>
           <div>
-            <div className="text-xs text-muted-foreground mb-0.5">Country</div>
-            <div className="text-foreground">{(profile as any).country || "—"}</div>
+            <label className="text-xs text-muted-foreground mb-1 block">Last Name</label>
+            <input
+              type="text"
+              value={formData.last_name}
+              onChange={(e) => setFormData(p => ({ ...p, last_name: e.target.value }))}
+              className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a4a]/20 focus:border-[#1a3a4a]"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Email</label>
+            <div className="text-sm text-foreground py-2">{user.email}</div>
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Country</label>
+            <input
+              type="text"
+              value={formData.country}
+              onChange={(e) => setFormData(p => ({ ...p, country: e.target.value }))}
+              className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a4a]/20 focus:border-[#1a3a4a]"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Telephone</label>
+            <input
+              type="text"
+              value={formData.telephone}
+              onChange={(e) => setFormData(p => ({ ...p, telephone: e.target.value }))}
+              placeholder="Optional"
+              className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a4a]/20 focus:border-[#1a3a4a]"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Address</label>
+            <input
+              type="text"
+              value={formData.address}
+              onChange={(e) => setFormData(p => ({ ...p, address: e.target.value }))}
+              placeholder="Optional"
+              className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a4a]/20 focus:border-[#1a3a4a]"
+            />
           </div>
         </div>
+
+        <button
+          onClick={handleSaveProfile}
+          disabled={savingProfile || !formData.first_name || !formData.last_name}
+          className="mt-4 px-4 py-2 bg-[#1a3a4a] text-white rounded text-sm font-medium hover:bg-[#1a3a4a]/90 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+        >
+          <Save className="h-3.5 w-3.5" />
+          {savingProfile ? "Saving…" : "Save Profile"}
+        </button>
       </div>
 
       {/* Payout Details */}
@@ -136,7 +244,7 @@ export default function PortalProfile() {
           </div>
           <button
             onClick={handleSaveIban}
-            disabled={saving}
+            disabled={saving || !profile}
             className="px-4 py-2 bg-[#1a3a4a] text-white rounded text-sm font-medium hover:bg-[#1a3a4a]/90 transition-colors disabled:opacity-50 flex items-center gap-1.5"
           >
             <Save className="h-3.5 w-3.5" />
@@ -145,6 +253,9 @@ export default function PortalProfile() {
         </div>
         {iban && !isValidIban && (
           <p className="text-[11px] text-destructive mt-1">Please enter a valid IBAN (e.g. SE35 5000 0000 0549 1000 0003)</p>
+        )}
+        {!profile && (
+          <p className="text-[11px] text-muted-foreground mt-1">Save your profile first to enable IBAN settings.</p>
         )}
       </div>
 
@@ -158,7 +269,7 @@ export default function PortalProfile() {
           <button
             className="px-4 py-2 border border-border rounded text-sm font-medium text-foreground hover:bg-muted/50 transition-colors flex items-center gap-1.5"
             onClick={async () => {
-              const { error } = await supabase.auth.resetPasswordForEmail(profile.email, { redirectTo: `${window.location.origin}/portal/reset-password` });
+              const { error } = await supabase.auth.resetPasswordForEmail(user.email, { redirectTo: `${window.location.origin}/portal/reset-password` });
               if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
               else toast({ title: "Email sent", description: "Check your inbox for a password reset link." });
             }}
@@ -193,13 +304,12 @@ export default function PortalProfile() {
           onClick={async () => {
             const confirmed = window.confirm("Are you sure you want to request account deletion? This will send a request to our team to process within 30 days as required by GDPR.");
             if (!confirmed) return;
-            // Insert a notification for admin
             await supabase.from("notifications").insert({
               portal: "trade",
               target_page: "/investor-list",
-              message: `Account deletion requested by ${profile.first_name} ${profile.last_name} (${profile.email})`,
+              message: `Account deletion requested by ${formData.first_name} ${formData.last_name} (${user.email})`,
               entity_type: "account_deletion",
-              entity_id: profile.user_id,
+              entity_id: user.id,
             });
             toast({ title: "Request submitted", description: "Your account deletion request has been sent. Our team will process it within 30 days." });
           }}

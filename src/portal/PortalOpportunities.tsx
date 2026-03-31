@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, SlidersHorizontal, TrendingUp, Clock, ArrowRight, LayoutGrid, List, Calendar, CalendarClock, AlertTriangle } from "lucide-react";
+import { Search, SlidersHorizontal, TrendingUp, Clock, ArrowRight, LayoutGrid, List, Calendar, CalendarClock, AlertTriangle, X } from "lucide-react";
 import { differenceInDays, parseISO, format } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";

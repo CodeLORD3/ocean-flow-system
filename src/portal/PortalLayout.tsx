@@ -246,6 +246,12 @@ function PortalInner() {
     setShowWelcome(false);
   };
 
+  // Set document title for portal routes
+  useEffect(() => {
+    document.title = "Ocean Trade — Invest in Nordic Trade Finance";
+    return () => { document.title = "Ocean Trade"; };
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
