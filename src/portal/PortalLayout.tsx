@@ -196,6 +196,10 @@ function PortalInner() {
       if (!mounted) return;
       setProfile(prof);
       setLoading(false);
+      if (prof && !(prof as any).kyc_completed) {
+        setShowSuitability(true);
+        return;
+      }
       const hasSeenWelcome = localStorage.getItem("portal-welcome-seen");
       if (!hasSeenWelcome) setShowWelcome(true);
     };
