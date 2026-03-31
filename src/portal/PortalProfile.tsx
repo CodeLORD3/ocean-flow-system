@@ -154,12 +154,58 @@ export default function PortalProfile() {
         <p className="text-xs text-muted-foreground mb-4">
           Manage your account security settings.
         </p>
+        <div className="flex gap-3 flex-wrap">
+          <button
+            className="px-4 py-2 border border-border rounded text-sm font-medium text-foreground hover:bg-muted/50 transition-colors flex items-center gap-1.5"
+            onClick={async () => {
+              const { error } = await supabase.auth.resetPasswordForEmail(profile.email, { redirectTo: `${window.location.origin}/portal/reset-password` });
+              if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+              else toast({ title: "Email sent", description: "Check your inbox for a password reset link." });
+            }}
+          >
+            <Shield className="h-3.5 w-3.5" />
+            Change password
+          </button>
+          <button
+            className="px-4 py-2 border border-border rounded text-sm font-medium text-foreground hover:bg-muted/50 transition-colors flex items-center gap-1.5"
+            onClick={async () => {
+              const newEmail = window.prompt("Enter your new email address:");
+              if (!newEmail || !newEmail.includes("@")) return;
+              const { error } = await supabase.auth.updateUser({ email: newEmail });
+              if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+              else toast({ title: "Confirmation sent", description: "Check both your old and new email to confirm the change." });
+            }}
+          >
+            <Mail className="h-3.5 w-3.5" />
+            Update email
+          </button>
+        </div>
+      </div>
+
+      {/* Delete account */}
+      <div className="bg-white border border-destructive/20 rounded-lg p-6">
+        <h2 className="text-sm font-semibold text-destructive mb-1">Delete Account</h2>
+        <p className="text-xs text-muted-foreground mb-4">
+          Permanently delete your account and all associated data. This action cannot be undone.
+        </p>
         <button
-          className="px-4 py-2 border border-gray-300 rounded text-sm font-medium text-foreground hover:bg-muted/50 transition-colors flex items-center gap-1.5"
-          onClick={() => toast({ title: "Coming soon", description: "Password change will be available shortly." })}
+          className="px-4 py-2 border border-destructive/30 rounded text-sm font-medium text-destructive hover:bg-destructive/5 transition-colors flex items-center gap-1.5"
+          onClick={async () => {
+            const confirmed = window.confirm("Are you sure you want to request account deletion? This will send a request to our team to process within 30 days as required by GDPR.");
+            if (!confirmed) return;
+            // Insert a notification for admin
+            await supabase.from("notifications").insert({
+              portal: "trade",
+              target_page: "/investor-list",
+              message: `Account deletion requested by ${profile.first_name} ${profile.last_name} (${profile.email})`,
+              entity_type: "account_deletion",
+              entity_id: profile.user_id,
+            });
+            toast({ title: "Request submitted", description: "Your account deletion request has been sent. Our team will process it within 30 days." });
+          }}
         >
-          <Shield className="h-3.5 w-3.5" />
-          Change password
+          <Trash2 className="h-3.5 w-3.5" />
+          Request account deletion
         </button>
       </div>
     </div>

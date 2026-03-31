@@ -86,7 +86,7 @@ export default function PortalPortfolio() {
   ];
 
   const historyStats = [
-    { icon: DollarSign, label: "Total Paid Out", value: hasHistoryData ? `${Math.round(totalPaidOut).toLocaleString()} kr` : "—", color: "text-primary" },
+    { icon: Banknote, label: "Total Paid Out", value: hasHistoryData ? `${Math.round(totalPaidOut).toLocaleString()} kr` : "—", color: "text-primary" },
     { icon: Target, label: "Total Profit Earned", value: hasHistoryData ? `+${Math.round(totalHistoryProfit).toLocaleString()} kr` : "—", color: "text-green-600" },
     { icon: Award, label: "Completed Investments", value: hasHistoryData ? `${historyPledges.length}` : "—", color: "text-primary" },
     { icon: Percent, label: "Avg. Return", value: hasHistoryData ? `${(historyPledges.reduce((s: number, p: any) => s + (p.trade_offers ? Number(p.trade_offers.interest_rate) : 0), 0) / historyPledges.length).toFixed(1)}%` : "—", color: "text-green-600" },
