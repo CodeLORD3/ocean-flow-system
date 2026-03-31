@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Bell, CheckCircle, DollarSign, AlertTriangle } from "lucide-react";
@@ -7,18 +8,28 @@ import { usePortalTabs } from "./PortalTabsContext";
 export default function PortalNotifications() {
   const { switchTab } = usePortalTabs();
   const queryClient = useQueryClient();
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id || null);
+    });
+  }, []);
 
   const { data: notifications = [], isLoading } = useQuery({
-    queryKey: ["portal-notifications-full"],
+    queryKey: ["portal-notifications-full", userId],
     queryFn: async () => {
+      if (!userId) return [];
       const { data, error } = await supabase
         .from("notifications")
         .select("*")
         .eq("portal", "investor")
+        .eq("user_id", userId)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
+    enabled: !!userId,
   });
 
   const unreadCount = notifications.filter((n: any) => !n.is_read).length;

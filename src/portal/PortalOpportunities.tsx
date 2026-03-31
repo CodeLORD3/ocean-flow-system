@@ -189,7 +189,6 @@ export default function PortalOpportunities() {
                     <td className="px-2 py-1.5">
                       {company ? (
                         <div className="flex items-center gap-1.5">
-                          {company.logo_url && <img src={company.logo_url} alt="" className="h-4 w-4 object-contain shrink-0" />}
                           <CountryFlag country={company.country} size={12} />
                           <span className="text-muted-foreground line-clamp-1 max-w-[120px]">{company.name}</span>
                         </div>
@@ -273,9 +272,12 @@ export default function PortalOpportunities() {
                       <img src={offer.product_image_url} alt={offer.title} className="w-full h-full object-cover" />
                     </div>
                   )}
-                  {company?.logo_url && (
-                    <div className="absolute top-2 right-2 h-8 w-8 bg-white border border-border rounded shadow-sm overflow-hidden">
-                      <img src={company.logo_url} alt="" className="h-full w-full object-contain" />
+                  {company && (
+                    <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-white/90 border border-border text-[9px] font-medium text-muted-foreground rounded shadow-sm">
+                      <div className="flex items-center gap-1">
+                        <CountryFlag country={company.country} size={10} />
+                        {company.name}
+                      </div>
                     </div>
                   )}
                 </div>

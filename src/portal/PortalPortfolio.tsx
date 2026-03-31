@@ -75,18 +75,21 @@ export default function PortalPortfolio() {
     return <div className="text-primary text-sm animate-pulse p-8 text-center">Loading your investments...</div>;
   }
 
+  const hasActiveData = activePledges.length > 0;
+  const hasHistoryData = historyPledges.length > 0;
+
   const activeStats = [
-    { icon: DollarSign, label: "Total Invested", value: `${totalInvested.toLocaleString()} kr`, color: "text-primary" },
-    { icon: TrendingUp, label: "Expected Payout", value: `${totalExpectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr`, color: "text-green-600" },
-    { icon: Target, label: "Expected Profit", value: `+${totalProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr`, color: "text-green-600" },
-    { icon: Percent, label: "Average Return", value: `${avgRate.toFixed(1)}%`, color: "text-primary" },
+    { icon: DollarSign, label: "Total Invested", value: hasActiveData ? `${totalInvested.toLocaleString()} kr` : "—", color: "text-primary" },
+    { icon: TrendingUp, label: "Expected Payout", value: hasActiveData ? `${totalExpectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr` : "—", color: "text-green-600" },
+    { icon: Target, label: "Expected Profit", value: hasActiveData ? `+${totalProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr` : "—", color: "text-green-600" },
+    { icon: Percent, label: "Average Return", value: hasActiveData ? `${avgRate.toFixed(1)}%` : "—", color: "text-primary" },
   ];
 
   const historyStats = [
-    { icon: DollarSign, label: "Total Paid Out", value: `${Math.round(totalPaidOut).toLocaleString()} kr`, color: "text-primary" },
-    { icon: Target, label: "Total Profit Earned", value: `+${Math.round(totalHistoryProfit).toLocaleString()} kr`, color: "text-green-600" },
-    { icon: Award, label: "Completed Investments", value: `${historyPledges.length}`, color: "text-primary" },
-    { icon: Percent, label: "Avg. Return", value: historyPledges.length > 0 ? `${(historyPledges.reduce((s: number, p: any) => s + (p.trade_offers ? Number(p.trade_offers.interest_rate) : 0), 0) / historyPledges.length).toFixed(1)}%` : "—", color: "text-green-600" },
+    { icon: DollarSign, label: "Total Paid Out", value: hasHistoryData ? `${Math.round(totalPaidOut).toLocaleString()} kr` : "—", color: "text-primary" },
+    { icon: Target, label: "Total Profit Earned", value: hasHistoryData ? `+${Math.round(totalHistoryProfit).toLocaleString()} kr` : "—", color: "text-green-600" },
+    { icon: Award, label: "Completed Investments", value: hasHistoryData ? `${historyPledges.length}` : "—", color: "text-primary" },
+    { icon: Percent, label: "Avg. Return", value: hasHistoryData ? `${(historyPledges.reduce((s: number, p: any) => s + (p.trade_offers ? Number(p.trade_offers.interest_rate) : 0), 0) / historyPledges.length).toFixed(1)}%` : "—", color: "text-green-600" },
   ];
 
   const currentStats = tab === "active" ? activeStats : historyStats;
