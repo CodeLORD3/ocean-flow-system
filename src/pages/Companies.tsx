@@ -113,6 +113,7 @@ export default function Companies() {
         description: form.description || null,
         contact_person: form.contact_person || null,
         contact_email: form.contact_email || null,
+        iban: form.iban || null,
         status: form.status,
       };
       if (logo_url) payload.logo_url = logo_url;
