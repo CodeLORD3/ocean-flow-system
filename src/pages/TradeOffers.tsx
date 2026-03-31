@@ -7,11 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, TrendingUp, Upload, ArrowLeft } from "lucide-react";
+import { Plus, TrendingUp, Upload, ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import TradeOfferDetail from "@/components/trade/TradeOfferDetail";
 import CountryFlag from "@/components/CountryFlag";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const EMPTY_FORM = {
   title: "", description: "", quantity: "", target_amount: "",
@@ -28,6 +33,7 @@ const EMPTY_FORM = {
 export default function TradeOffers() {
   const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
+  const [editingOfferId, setEditingOfferId] = useState<string | null>(null);
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
   const imageRef = useRef<HTMLInputElement>(null);
   const docRef = useRef<HTMLInputElement>(null);
