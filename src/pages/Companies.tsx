@@ -198,6 +198,8 @@ export default function Companies() {
               <div><span className="text-muted-foreground">Contact:</span> {company.contact_person || "—"}</div>
               <div><span className="text-muted-foreground">Email:</span> {company.contact_email || "—"}</div>
               <div><span className="text-muted-foreground">IBAN:</span> {company.iban || "—"}</div>
+              <div><span className="text-muted-foreground">Address:</span> {company.address || "—"}</div>
+              <div><span className="text-muted-foreground">City:</span> {company.city || "—"}</div>
               <div><span className="text-muted-foreground">Offers:</span> {(offerCounts as any)[company.id] || 0}</div>
               <div><span className="text-muted-foreground">Added:</span> {new Date(company.created_at).toLocaleDateString()}</div>
             </div>
