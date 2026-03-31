@@ -201,7 +201,7 @@ export default function PortalOpportunities() {
                 return (
                   <tr
                     key={offer.id}
-                    className={`border-b border-border last:border-b-0 hover:bg-primary/10 cursor-pointer transition-colors group ${filtered.indexOf(offer) % 2 === 1 ? "bg-muted/50" : ""}`}
+                    className={`border-b border-border last:border-b-0 hover:bg-mackerel/10 cursor-pointer transition-colors group ${filtered.indexOf(offer) % 2 === 1 ? "bg-muted/50" : ""}`}
                     onClick={() => openOfferTab(offer.id, offer.title)}
                   >
                     <td className="px-2 py-1.5">
@@ -209,7 +209,7 @@ export default function PortalOpportunities() {
                         {offer.product_image_url && (
                           <img src={offer.product_image_url} alt="" className="h-5 w-5 object-cover border border-border shrink-0" />
                         )}
-                        <span className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1 max-w-[180px]">
+                        <span className="font-semibold text-foreground group-hover:text-mackerel transition-colors line-clamp-1 max-w-[180px]">
                           {offer.title}
                         </span>
                       </div>
@@ -227,7 +227,7 @@ export default function PortalOpportunities() {
                     <td className="px-2 py-1.5">
                       <span className={`px-1.5 py-0.5 text-[10px] font-semibold border ${
                         offer.status === "Open"
-                          ? "text-green-700 bg-green-50 border-green-200"
+                          ? "text-mackerel bg-mackerel-light border-mackerel/30"
                           : "text-primary bg-primary/5 border-primary/20"
                       }`}>
                         {offer.status === "Open" ? "OPEN" : "FUNDED"}
@@ -239,13 +239,13 @@ export default function PortalOpportunities() {
                     <td className="px-2 py-1.5">
                       <div className="w-16 mx-auto">
                         <div className="h-1.5 bg-muted overflow-hidden">
-                          <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+                          <div className="h-full bg-mackerel transition-all" style={{ width: `${progress}%` }} />
                         </div>
                         <div className="text-[9px] text-muted-foreground text-center mt-0.5">{progress.toFixed(0)}%</div>
                       </div>
                     </td>
                     <td className="px-2 py-1.5 text-right">
-                      <span className="font-bold text-green-600 flex items-center justify-end gap-0.5">
+                      <span className="font-bold text-mackerel flex items-center justify-end gap-0.5">
                         <TrendingUp className="h-3 w-3" />
                         {rate.toFixed(1)}%
                       </span>
@@ -273,7 +273,7 @@ export default function PortalOpportunities() {
                       {Number(offer.min_pledge) > 0 ? `${Number(offer.min_pledge).toLocaleString()} kr` : "—"}
                     </td>
                     <td className="px-2 py-1.5">
-                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-mackerel transition-colors" />
                     </td>
                   </tr>
                 );
@@ -312,12 +312,12 @@ export default function PortalOpportunities() {
 
                 <div className="p-3 flex-1 flex flex-col">
                   <div className="flex items-start justify-between mb-1">
-                    <h3 className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors leading-snug flex-1 pr-2">
+                    <h3 className="text-xs font-semibold text-foreground group-hover:text-mackerel transition-colors leading-snug flex-1 pr-2">
                       {offer.title}
                     </h3>
                     <span className={`shrink-0 px-2 py-0.5 text-[10px] font-semibold border ${
                       offer.status === "Open"
-                        ? "text-green-700 bg-green-50 border-green-200"
+                        ? "text-mackerel bg-mackerel-light border-mackerel/30"
                         : "text-primary bg-primary/5 border-primary/20"
                     }`}>
                       {offer.status === "Open" ? "OPEN" : "FUNDED"}
@@ -340,7 +340,7 @@ export default function PortalOpportunities() {
                       <span className="text-foreground font-medium font-mono">{funded.toLocaleString()} / {target.toLocaleString()} kr</span>
                     </div>
                     <div className="h-2 bg-muted overflow-hidden">
-                      <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+                      <div className="h-full bg-mackerel transition-all" style={{ width: `${progress}%` }} />
                     </div>
                   </div>
 
@@ -354,7 +354,7 @@ export default function PortalOpportunities() {
                   <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border mt-auto">
                     <div>
                       <div className="text-[10px] text-muted-foreground">Return</div>
-                      <div className="text-xs font-bold text-green-600 flex items-center gap-0.5">
+                      <div className="text-xs font-bold text-mackerel flex items-center gap-0.5">
                         <TrendingUp className="h-3 w-3" />
                         {rate.toFixed(1)}%
                       </div>
@@ -374,7 +374,7 @@ export default function PortalOpportunities() {
                     </div>
                   </div>
 
-                  <button className="w-full h-8 mt-3 border border-primary text-primary text-[11px] font-semibold hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center gap-1.5">
+                  <button className="w-full h-8 mt-3 border border-primary text-primary text-[11px] font-semibold hover:bg-primary hover:text-mackerel-foreground transition-colors flex items-center justify-center gap-1.5">
                     View Details <ArrowRight className="h-3.5 w-3.5" />
                   </button>
                 </div>

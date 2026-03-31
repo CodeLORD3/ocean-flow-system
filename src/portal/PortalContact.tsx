@@ -114,11 +114,11 @@ export default function PortalContact() {
         <p className="text-xs text-muted-foreground mb-4">We'll get back to you as soon as possible.</p>
 
         {sent ? (
-          <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200">
-            <CheckCircle className="h-5 w-5 text-green-600 shrink-0" />
+          <div className="flex items-center gap-3 p-4 bg-mackerel-light border border-mackerel/30">
+            <CheckCircle className="h-5 w-5 text-mackerel shrink-0" />
             <div>
-              <div className="text-sm font-semibold text-green-800">Message sent!</div>
-              <div className="text-xs text-green-700">We've received your message and will reply within 1 business day.</div>
+              <div className="text-sm font-semibold text-mackerel">Message sent!</div>
+              <div className="text-xs text-mackerel">We've received your message and will reply within 1 business day.</div>
             </div>
           </div>
         ) : (

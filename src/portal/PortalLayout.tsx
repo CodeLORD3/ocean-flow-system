@@ -36,7 +36,7 @@ function PortalTabBar() {
             key={tab.path}
             className={`group flex items-center gap-2 px-4 py-2 text-xs cursor-pointer border-r border-border transition-colors shrink-0 ${
               isActive
-                ? "bg-white text-primary font-semibold border-b-2 border-b-primary"
+                ? "bg-white text-mackerel font-semibold border-b-2 border-b-mackerel"
                 : "text-muted-foreground hover:bg-white/60 hover:text-foreground"
             }`}
             onClick={() => switchTab(tab.path)}
@@ -291,9 +291,9 @@ function PortalInner() {
         <div className="flex items-center gap-4 sm:gap-8 overflow-hidden">
           <div className="flex items-center gap-2 shrink-0">
             <div className="h-7 w-7 bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xs">MT</span>
+              <span className="text-mackerel-shimmer font-bold text-xs">MT</span>
             </div>
-            <span className="text-foreground font-bold text-sm hidden sm:inline">Makrill Trade</span>
+            <span className="text-foreground font-bold text-sm hidden sm:inline">Makrill <span className="text-mackerel">Trade</span></span>
           </div>
           <nav className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto">
             {navItems.map((item) => {
@@ -304,8 +304,8 @@ function PortalInner() {
                   onClick={() => switchTab(item.to)}
                   className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 text-[12px] sm:text-[13px] rounded-sm transition-colors whitespace-nowrap ${
                     isActive
-                      ? "text-primary bg-primary/5 font-semibold"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      ? "text-mackerel bg-mackerel/5 font-semibold border-b-2 border-b-mackerel"
+                      : "text-muted-foreground hover:text-mackerel hover:bg-muted/50"
                   }`}
                 >
                   <item.icon className="h-4 w-4" />
@@ -341,29 +341,29 @@ function PortalInner() {
         <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-start justify-between gap-4 sm:gap-8">
           <div className="flex items-center gap-2">
             <div className="h-5 w-5 bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-[8px]">MT</span>
+              <span className="text-mackerel-shimmer font-bold text-[8px]">MT</span>
             </div>
-            <span className="text-xs font-semibold text-foreground">Makrill Trade</span>
+            <span className="text-xs font-semibold text-foreground">Makrill <span className="text-mackerel">Trade</span></span>
           </div>
           <div className="flex flex-wrap gap-6 sm:gap-10">
             <div className="space-y-1.5">
               <div className="text-[10px] font-semibold text-foreground uppercase tracking-wider">Resources</div>
-              <button onClick={() => switchTab("/portal/documents")} className="block text-[11px] text-muted-foreground hover:text-primary transition-colors">Documents</button>
-              <button onClick={() => switchTab("/portal/how-it-works")} className="block text-[11px] text-muted-foreground hover:text-primary transition-colors">How It Works</button>
+              <button onClick={() => switchTab("/portal/documents")} className="block text-[11px] text-muted-foreground hover:text-mackerel transition-colors">Documents</button>
+              <button onClick={() => switchTab("/portal/how-it-works")} className="block text-[11px] text-muted-foreground hover:text-mackerel transition-colors">How It Works</button>
             </div>
             <div className="space-y-1.5">
               <div className="text-[10px] font-semibold text-foreground uppercase tracking-wider">Company</div>
-              <button onClick={() => switchTab("/portal/about")} className="block text-[11px] text-muted-foreground hover:text-primary transition-colors">About Us</button>
-              <button onClick={() => switchTab("/portal/contact")} className="block text-[11px] text-muted-foreground hover:text-primary transition-colors">Contact & Support</button>
+              <button onClick={() => switchTab("/portal/about")} className="block text-[11px] text-muted-foreground hover:text-mackerel transition-colors">About Us</button>
+              <button onClick={() => switchTab("/portal/contact")} className="block text-[11px] text-muted-foreground hover:text-mackerel transition-colors">Contact & Support</button>
             </div>
             <div className="space-y-1.5">
               <div className="text-[10px] font-semibold text-foreground uppercase tracking-wider">Legal</div>
-              <button onClick={() => switchTab("/portal/terms")} className="block text-[11px] text-muted-foreground hover:text-primary transition-colors">Terms of Use</button>
-              <button onClick={() => switchTab("/portal/privacy")} className="block text-[11px] text-muted-foreground hover:text-primary transition-colors">Privacy Policy</button>
+              <button onClick={() => switchTab("/portal/terms")} className="block text-[11px] text-muted-foreground hover:text-mackerel transition-colors">Terms of Use</button>
+              <button onClick={() => switchTab("/portal/privacy")} className="block text-[11px] text-muted-foreground hover:text-mackerel transition-colors">Privacy Policy</button>
             </div>
           </div>
           <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-            <div className="h-2 w-2 rounded-full bg-green-500" />
+            <div className="h-2 w-2 rounded-full bg-mackerel-light0" />
             <span>System Online</span>
           </div>
         </div>

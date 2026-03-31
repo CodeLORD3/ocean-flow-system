@@ -77,7 +77,7 @@ export default function PortalDocuments() {
             {pledges.map((p: any) => (
               <div key={p.id} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
                 <div className="flex items-center gap-3">
-                  <FileText className="h-5 w-5 text-green-600" />
+                  <FileText className="h-5 w-5 text-mackerel" />
                   <div>
                     <div className="text-sm text-foreground font-medium">
                       {p.trade_offers?.title || "Investment"}
@@ -89,7 +89,7 @@ export default function PortalDocuments() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={`px-2.5 py-1 text-[10px] font-semibold border ${
-                    p.status === "Active" ? "text-green-700 border-green-200 bg-green-50" : "text-muted-foreground border-border bg-muted/50"
+                    p.status === "Active" ? "text-mackerel border-mackerel/30 bg-mackerel-light" : "text-muted-foreground border-border bg-muted/50"
                   }`}>
                     {p.status?.toUpperCase()}
                   </span>

@@ -31,9 +31,9 @@ export default function PortalLogin() {
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
           <div className="h-8 w-8 bg-[#0f2e3d] flex items-center justify-center rounded">
-            <span className="text-white font-bold text-xs">MT</span>
+            <span className="text-[#2a9e7e] font-bold text-xs">MT</span>
           </div>
-          <span className="text-[#0f2e3d] font-bold text-lg">Makrill Trade</span>
+          <span className="text-[#0f2e3d] font-bold text-lg">Makrill <span className="text-[#2a9e7e]">Trade</span></span>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
@@ -97,7 +97,7 @@ export default function PortalLogin() {
 
         <p className="text-center text-xs text-gray-500 mt-4">
           Don't have an account?{" "}
-          <Link to="/portal/signup" className="text-[#0f2e3d] font-medium hover:underline">
+          <Link to="/portal/signup" className="text-[#2a9e7e] font-medium hover:underline">
             Create one
           </Link>
         </p>

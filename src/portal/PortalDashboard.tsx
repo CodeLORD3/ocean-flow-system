@@ -80,7 +80,7 @@ export default function PortalDashboard() {
       <div className="grid grid-cols-4 gap-3">
         {[
           { icon: DollarSign, label: "Total Invested", value: `${totalInvested.toLocaleString()} kr`, sub: `Across ${pledges.length} investment${pledges.length !== 1 ? "s" : ""}`, accent: "text-primary" },
-          { icon: TrendingUp, label: "Returns Earned", value: `${totalReturns.toLocaleString()} kr`, sub: expectedActiveReturns > 0 ? `+${expectedActiveReturns.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr pending` : "No completed deals yet", accent: "text-green-600" },
+          { icon: TrendingUp, label: "Returns Earned", value: `${totalReturns.toLocaleString()} kr`, sub: expectedActiveReturns > 0 ? `+${expectedActiveReturns.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr pending` : "No completed deals yet", accent: "text-mackerel" },
           { icon: Target, label: "Active Investments", value: activePledges.length.toString(), sub: activePledges.length > 0 ? "Currently earning returns" : "No active deals", accent: "text-primary" },
           { icon: Wallet, label: "Available Balance", value: "0 kr", sub: "Ready to invest", accent: "text-foreground" },
         ].map((stat) => (
@@ -106,7 +106,7 @@ export default function PortalDashboard() {
           </div>
           <button
             onClick={() => switchTab("/portal/opportunities")}
-            className="h-8 px-4 bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors inline-flex items-center gap-1.5"
+            className="h-8 px-4 bg-mackerel text-mackerel-foreground hover:bg-mackerel/90 transition-colors inline-flex items-center gap-1.5"
           >
             Browse Opportunities <ArrowRight className="h-4 w-4" />
           </button>
@@ -159,13 +159,13 @@ export default function PortalDashboard() {
                       </div>
                     </td>
                     <td className="p-2 text-right text-foreground font-mono">{Number(p.amount).toLocaleString()} kr</td>
-                    <td className="p-2 text-right text-green-600 font-semibold">{rate.toFixed(1)}%</td>
+                    <td className="p-2 text-right text-mackerel font-semibold">{rate.toFixed(1)}%</td>
                     <td className="p-2 text-right text-foreground font-semibold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</td>
                     <td className="p-2 text-muted-foreground">
                       {offer?.maturity_date ? format(parseISO(offer.maturity_date), "d MMM yyyy") : "—"}
                     </td>
                     <td className="p-2 pr-3 text-center">
-                      <span className="inline-block px-2 py-0.5 text-[9px] font-semibold tracking-wide border text-green-700 border-green-200 bg-green-50">
+                      <span className="inline-block px-2 py-0.5 text-[9px] font-semibold tracking-wide border text-mackerel border-mackerel/30 bg-mackerel-light">
                         ACTIVE
                       </span>
                     </td>
@@ -214,12 +214,12 @@ export default function PortalDashboard() {
                 className="border border-border p-3 hover:border-primary hover:shadow-sm cursor-pointer transition-all group"
               >
                 <div className="flex items-start justify-between mb-1">
-                  <h3 className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors leading-snug pr-2">
+                  <h3 className="text-xs font-semibold text-foreground group-hover:text-mackerel transition-colors leading-snug pr-2">
                     {offer.title}
                   </h3>
                   <span className={`shrink-0 px-2 py-0.5 text-[10px] font-semibold border ${
                     offer.status === "Open" 
-                      ? "text-green-700 bg-green-50 border-green-200" 
+                      ? "text-mackerel bg-mackerel-light border-mackerel/30" 
                       : "text-primary bg-primary/5 border-primary/20"
                   }`}>
                     {offer.status === "Open" ? "OPEN" : "FUNDED"}
@@ -243,7 +243,7 @@ export default function PortalDashboard() {
                     <span className="text-foreground font-semibold">{progress.toFixed(0)}%</span>
                   </div>
                   <div className="h-2 bg-muted overflow-hidden">
-                    <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+                    <div className="h-full bg-mackerel transition-all" style={{ width: `${progress}%` }} />
                   </div>
                   <div className="flex justify-between text-[11px] text-muted-foreground">
                     <span>{funded.toLocaleString()} kr raised</span>
@@ -254,7 +254,7 @@ export default function PortalDashboard() {
                 <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border">
                   <div>
                     <div className="text-[10px] text-muted-foreground">Expected Return</div>
-                    <div className="text-sm font-bold text-green-600">{rate.toFixed(1)}%</div>
+                    <div className="text-sm font-bold text-mackerel">{rate.toFixed(1)}%</div>
                   </div>
                   <div>
                     <div className="text-[10px] text-muted-foreground">Time Remaining</div>

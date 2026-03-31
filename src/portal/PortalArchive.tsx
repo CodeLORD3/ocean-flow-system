@@ -55,12 +55,12 @@ export default function PortalArchive() {
                 <tr
                   key={offer.id}
                   onClick={() => openOfferTab(offer.id, offer.title)}
-                  className={`border-b border-border/50 hover:bg-primary/10 cursor-pointer transition-colors h-8 ${idx % 2 === 1 ? "bg-muted/50" : ""}`}
+                  className={`border-b border-border/50 hover:bg-mackerel/10 cursor-pointer transition-colors h-8 ${idx % 2 === 1 ? "bg-muted/50" : ""}`}
                 >
                   <td className="p-2 pl-3 text-foreground font-medium">{offer.title}</td>
                   <td className="p-2 text-muted-foreground">{offer.companies?.name || "—"}</td>
                   <td className="p-2 text-right text-foreground font-mono">{Number(offer.funded_amount).toLocaleString()} kr</td>
-                  <td className="p-2 text-right text-green-600 font-semibold">{Number(offer.interest_rate).toFixed(1)}%</td>
+                  <td className="p-2 text-right text-mackerel font-semibold">{Number(offer.interest_rate).toFixed(1)}%</td>
                   <td className="p-2 text-muted-foreground">
                     {offer.purchase_date ? format(parseISO(offer.purchase_date), "d MMM yyyy") : "—"}
                   </td>
@@ -71,7 +71,7 @@ export default function PortalArchive() {
                     {duration !== null ? `${duration}d` : "—"}
                   </td>
                   <td className="p-2 pr-3 text-center">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-semibold tracking-wide border text-green-700 bg-green-50 border-green-200">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-semibold tracking-wide border text-mackerel bg-mackerel-light border-mackerel/30">
                       <CheckCircle className="h-2.5 w-2.5" />
                       CLOSED
                     </span>
