@@ -1,16 +1,23 @@
 import { useState } from "react";
-import { ArrowLeft, FileText, Users, DollarSign } from "lucide-react";
+import { ArrowLeft, FileText, Users, DollarSign, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface TradeOfferDetailProps {
   offer: any;
   pledges: any[];
   onBack: () => void;
   onStatusChange: (status: string) => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 function InfoRow({ label, value }: { label: string; value: string | number | null | undefined }) {
@@ -22,7 +29,7 @@ function InfoRow({ label, value }: { label: string; value: string | number | nul
   );
 }
 
-export default function TradeOfferDetail({ offer, pledges, onBack, onStatusChange }: TradeOfferDetailProps) {
+export default function TradeOfferDetail({ offer, pledges, onBack, onStatusChange, onEdit, onDelete }: TradeOfferDetailProps) {
   const [activeTab, setActiveTab] = useState<"details" | "investors">("details");
   
   const target = Number(offer.target_amount);
@@ -66,6 +73,39 @@ export default function TradeOfferDetail({ offer, pledges, onBack, onStatusChang
           <ArrowLeft className="h-3 w-3" /> Tillbaka
         </Button>
         <div className="flex items-center gap-2">
+          {onEdit && (
+            <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1" onClick={onEdit}>
+              <Pencil className="h-3 w-3" /> Redigera
+            </Button>
+          )}
+          {onDelete && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="h-7 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10">
+                  <Trash2 className="h-3 w-3" /> Ta bort
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Ta bort erbjudande?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Är du säker på att du vill ta bort "{offer.title}"? Detta kan inte ångras.
+                    {pledges.length > 0 && (
+                      <span className="block mt-2 font-semibold text-destructive">
+                        Varning: Det finns {pledges.length} investeringar kopplade till detta erbjudande.
+                      </span>
+                    )}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                  <AlertDialogAction onClick={onDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Ta bort
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
           <Badge variant="outline" className={`text-[9px] ${statusBadge(offer.status)}`}>
             {offer.status}
           </Badge>

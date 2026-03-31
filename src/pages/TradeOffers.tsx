@@ -7,11 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, TrendingUp, Upload, ArrowLeft } from "lucide-react";
+import { Plus, TrendingUp, Upload, ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import TradeOfferDetail from "@/components/trade/TradeOfferDetail";
 import CountryFlag from "@/components/CountryFlag";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const EMPTY_FORM = {
   title: "", description: "", quantity: "", target_amount: "",
@@ -28,6 +33,7 @@ const EMPTY_FORM = {
 export default function TradeOffers() {
   const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
+  const [editingOfferId, setEditingOfferId] = useState<string | null>(null);
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
   const imageRef = useRef<HTMLInputElement>(null);
   const docRef = useRef<HTMLInputElement>(null);
@@ -107,7 +113,48 @@ export default function TradeOffers() {
       toast.error(`Missing required fields: ${missingFields.map(f => f.label).join(", ")}`);
       return;
     }
-    createMutation.mutate();
+    if (editingOfferId) {
+      editMutation.mutate();
+    } else {
+      createMutation.mutate();
+    }
+  };
+
+  const startEditing = (offer: any) => {
+    setForm({
+      title: offer.title || "",
+      description: offer.description || "",
+      quantity: String(offer.quantity ?? ""),
+      target_amount: String(offer.target_amount ?? ""),
+      interest_rate: String(offer.interest_rate ?? ""),
+      maturity_date: offer.maturity_date || "",
+      visibility: offer.visibility || "all",
+      min_pledge: String(offer.min_pledge ?? ""),
+      max_pledge: offer.max_pledge ? String(offer.max_pledge) : "",
+      purchase_date: offer.purchase_date || "",
+      repayment_type: offer.repayment_type || "lump_sum",
+      supplier_name: offer.supplier_name || "",
+      risk_note: offer.risk_note || "",
+      product_id_display: offer.product_id_display || "",
+      sector: offer.sector || "Seafood Trading",
+      structure: offer.structure || "Trade Finance",
+      origin: offer.origin || "",
+      volume: offer.volume || "",
+      purchase_price: String(offer.purchase_price ?? ""),
+      sales_value: String(offer.sales_value ?? ""),
+      gross_margin: offer.gross_margin ? String(offer.gross_margin) : "",
+      collateral: offer.collateral || "Inventory",
+      ltv: offer.ltv ? String(offer.ltv) : "",
+      primary_exit: offer.primary_exit || "",
+      secondary_exit: offer.secondary_exit || "",
+      downside: offer.downside || "",
+      company_id: offer.company_id || "",
+      company_iban: offer.company_iban || "",
+      payment_reference_prefix: offer.payment_reference_prefix || "OT-",
+    });
+    setEditingOfferId(offer.id);
+    setIsCreating(true);
+    setSelectedOfferId(null);
   };
 
   const createMutation = useMutation({
@@ -180,6 +227,92 @@ export default function TradeOffers() {
     onError: (err: any) => toast.error(err.message),
   });
 
+  const buildOfferPayload = () => {
+    let tenor_days: number | null = null;
+    if (form.purchase_date && form.maturity_date) {
+      const start = new Date(form.purchase_date);
+      const end = new Date(form.maturity_date);
+      tenor_days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    }
+    const rate = Number(form.interest_rate) || 0;
+    let annual_return: number | null = null;
+    if (tenor_days && tenor_days > 0 && rate > 0) {
+      annual_return = Math.round((rate / tenor_days) * 365 * 100) / 100;
+    }
+    return {
+      title: form.title,
+      description: form.description || null,
+      quantity: Number(form.quantity) || 0,
+      target_amount: Number(form.target_amount) || 0,
+      interest_rate: Number(form.interest_rate) || 0,
+      maturity_date: form.maturity_date,
+      visibility: form.visibility,
+      min_pledge: Number(form.min_pledge) || 0,
+      max_pledge: form.max_pledge ? Number(form.max_pledge) : null,
+      purchase_date: form.purchase_date || null,
+      repayment_type: form.repayment_type,
+      supplier_name: form.supplier_name || null,
+      risk_note: form.risk_note || null,
+      product_id_display: form.product_id_display || null,
+      sector: form.sector || "Seafood Trading",
+      structure: form.structure || "Trade Finance",
+      origin: form.origin || null,
+      volume: form.volume || null,
+      purchase_price: Number(form.purchase_price) || 0,
+      sales_value: Number(form.sales_value) || 0,
+      gross_margin: form.gross_margin ? Number(form.gross_margin) : null,
+      collateral: form.collateral || "Inventory",
+      ltv: form.ltv ? Number(form.ltv) : null,
+      primary_exit: form.primary_exit || null,
+      secondary_exit: form.secondary_exit || null,
+      downside: form.downside || null,
+      tenor_days,
+      annual_return,
+      company_id: form.company_id || null,
+      company_iban: form.company_iban || null,
+      payment_reference_prefix: form.payment_reference_prefix || "OT-",
+    };
+  };
+
+  const editMutation = useMutation({
+    mutationFn: async () => {
+      let product_image_url: string | undefined = undefined;
+      let document_url: string | undefined = undefined;
+      if (imageFile) product_image_url = await uploadFile(imageFile, "images");
+      if (docFile) document_url = await uploadFile(docFile, "documents");
+
+      const payload: any = buildOfferPayload();
+      if (product_image_url) payload.product_image_url = product_image_url;
+      if (document_url) payload.document_url = document_url;
+
+      const { error } = await supabase.from("trade_offers").update(payload).eq("id", editingOfferId!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Erbjudande uppdaterat");
+      setIsCreating(false);
+      setEditingOfferId(null);
+      setForm({ ...EMPTY_FORM });
+      setImageFile(null);
+      setDocFile(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-trade-offers"] });
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("trade_offers").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Erbjudande borttaget");
+      setSelectedOfferId(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-trade-offers"] });
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { error } = await supabase.from("trade_offers").update({ status }).eq("id", id);
@@ -211,6 +344,8 @@ export default function TradeOffers() {
         pledges={allPledges.filter(p => p.offer_id === selectedOfferId)}
         onBack={() => setSelectedOfferId(null)}
         onStatusChange={(status) => updateStatus.mutate({ id: selectedOfferId, status })}
+        onEdit={() => startEditing(offer)}
+        onDelete={() => deleteMutation.mutate(selectedOfferId)}
       />
     );
   }
@@ -220,10 +355,10 @@ export default function TradeOffers() {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1" onClick={() => setIsCreating(false)}>
+          <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1" onClick={() => { setIsCreating(false); setEditingOfferId(null); setForm({ ...EMPTY_FORM }); }}>
             <ArrowLeft className="h-3 w-3" /> Tillbaka
           </Button>
-          <h1 className="text-lg font-bold">Skapa Trade Offer</h1>
+          <h1 className="text-lg font-bold">{editingOfferId ? "Redigera Trade Offer" : "Skapa Trade Offer"}</h1>
         </div>
 
         <Card>
@@ -379,8 +514,10 @@ export default function TradeOffers() {
                 {missingFields.length} required field{missingFields.length > 1 ? "s" : ""} missing: {missingFields.map(f => f.label).join(", ")}
               </p>
             )}
-            <Button onClick={handleCreate} disabled={createMutation.isPending} className="w-full h-8 text-xs mt-2">
-              {createMutation.isPending ? "Skapar..." : "Skapa erbjudande"}
+            <Button onClick={handleCreate} disabled={createMutation.isPending || editMutation.isPending} className="w-full h-8 text-xs mt-2">
+              {editingOfferId
+                ? (editMutation.isPending ? "Sparar..." : "Spara ändringar")
+                : (createMutation.isPending ? "Skapar..." : "Skapa erbjudande")}
             </Button>
           </CardContent>
         </Card>
@@ -418,7 +555,7 @@ export default function TradeOffers() {
                 <TableHead className="h-8">Expiry</TableHead>
                 <TableHead className="h-8 text-right">Days to Maturity</TableHead>
                 <TableHead className="h-8 text-center">Status</TableHead>
-                <TableHead className="h-8" />
+                <TableHead className="h-8 text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -484,7 +621,34 @@ export default function TradeOffers() {
                         </SelectContent>
                       </Select>
                     </TableCell>
-                    <TableCell className="py-1.5" />
+                    <TableCell className="py-1.5" onClick={e => e.stopPropagation()}>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => startEditing(offer)}>
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive hover:text-destructive">
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Ta bort erbjudande?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Är du säker på att du vill ta bort "{offer.title}"? Detta kan inte ångras.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => deleteMutation.mutate(offer.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                Ta bort
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 );
               })}
