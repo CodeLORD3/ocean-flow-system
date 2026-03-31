@@ -52,6 +52,7 @@ const EMPTY_FORM = {
   description: "",
   contact_person: "",
   contact_email: "",
+  iban: "",
   status: "Active",
 };
 
