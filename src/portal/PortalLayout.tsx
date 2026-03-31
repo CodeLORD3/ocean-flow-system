@@ -290,7 +290,10 @@ function PortalInner() {
       <header className="h-14 flex items-center justify-between border-b border-border px-3 sm:px-6 bg-white shadow-sm">
         <div className="flex items-center gap-4 sm:gap-8 overflow-hidden">
           <div className="flex items-center gap-2 shrink-0">
-            <img src={makrillLogo} alt="Makrill Trade" className="h-8 w-auto" />
+            <div className="h-7 w-7 bg-primary flex items-center justify-center">
+              <span className="text-mackerel-shimmer font-bold text-xs">MT</span>
+            </div>
+            <span className="text-foreground font-bold text-sm hidden sm:inline">Makrill <span className="text-mackerel">Trade</span></span>
           </div>
           <nav className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto">
             {navItems.map((item) => {
