@@ -113,7 +113,48 @@ export default function TradeOffers() {
       toast.error(`Missing required fields: ${missingFields.map(f => f.label).join(", ")}`);
       return;
     }
-    createMutation.mutate();
+    if (editingOfferId) {
+      editMutation.mutate();
+    } else {
+      createMutation.mutate();
+    }
+  };
+
+  const startEditing = (offer: any) => {
+    setForm({
+      title: offer.title || "",
+      description: offer.description || "",
+      quantity: String(offer.quantity ?? ""),
+      target_amount: String(offer.target_amount ?? ""),
+      interest_rate: String(offer.interest_rate ?? ""),
+      maturity_date: offer.maturity_date || "",
+      visibility: offer.visibility || "all",
+      min_pledge: String(offer.min_pledge ?? ""),
+      max_pledge: offer.max_pledge ? String(offer.max_pledge) : "",
+      purchase_date: offer.purchase_date || "",
+      repayment_type: offer.repayment_type || "lump_sum",
+      supplier_name: offer.supplier_name || "",
+      risk_note: offer.risk_note || "",
+      product_id_display: offer.product_id_display || "",
+      sector: offer.sector || "Seafood Trading",
+      structure: offer.structure || "Trade Finance",
+      origin: offer.origin || "",
+      volume: offer.volume || "",
+      purchase_price: String(offer.purchase_price ?? ""),
+      sales_value: String(offer.sales_value ?? ""),
+      gross_margin: offer.gross_margin ? String(offer.gross_margin) : "",
+      collateral: offer.collateral || "Inventory",
+      ltv: offer.ltv ? String(offer.ltv) : "",
+      primary_exit: offer.primary_exit || "",
+      secondary_exit: offer.secondary_exit || "",
+      downside: offer.downside || "",
+      company_id: offer.company_id || "",
+      company_iban: offer.company_iban || "",
+      payment_reference_prefix: offer.payment_reference_prefix || "OT-",
+    });
+    setEditingOfferId(offer.id);
+    setIsCreating(true);
+    setSelectedOfferId(null);
   };
 
   const createMutation = useMutation({
