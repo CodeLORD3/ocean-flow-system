@@ -36,6 +36,11 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
+    --mackerel: 172 62% 32%;
+    --mackerel-foreground: 0 0% 100%;
+    --mackerel-light: 172 50% 92%;
+    --mackerel-shimmer: 165 55% 42%;
+
     --border: 214 20% 88%;
     --input: 214 20% 88%;
     --ring: 205 78% 28%;
