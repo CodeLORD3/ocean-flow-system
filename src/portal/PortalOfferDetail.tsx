@@ -191,7 +191,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   );
 
   /* ── Investment Panel (3-step) ── */
-  const InvestPanel = () => {
+  const investPanel = (() => {
     if (offer.status !== "Open" || remaining <= 0) {
       return (
         <div className="border border-border bg-muted/20 p-4 text-center">
