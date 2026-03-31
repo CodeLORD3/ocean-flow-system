@@ -243,6 +243,10 @@ export default function Companies() {
                 <Input type="email" value={form.contact_email} onChange={e => setForm({ ...form, contact_email: e.target.value })} className="h-8 text-xs" />
               </div>
               <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">IBAN</label>
+                <Input value={form.iban} onChange={e => setForm({ ...form, iban: e.target.value.toUpperCase() })} className="h-8 text-xs" placeholder="SE00 0000 0000 0000 0000 0000" />
+              </div>
+              <div className="space-y-1">
                 <label className="text-[10px] text-muted-foreground">Company Logo</label>
                 <input ref={logoRef} type="file" accept="image/*" className="hidden" onChange={e => setLogoFile(e.target.files?.[0] || null)} />
                 <Button type="button" variant="outline" className="w-full h-8 text-xs gap-1" onClick={() => logoRef.current?.click()}>
