@@ -16,6 +16,7 @@ import PortalHowItWorks from "./PortalHowItWorks";
 import PortalContact from "./PortalContact";
 import PortalTeam from "./PortalTeam";
 import PortalProfile from "./PortalProfile";
+import PortalSuitability from "./PortalSuitability";
 import PortalNotifications from "./PortalNotifications";
 import PortalNotificationDropdown from "./PortalNotificationDropdown";
 import PortalTerms from "./PortalTerms";
