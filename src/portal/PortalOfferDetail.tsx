@@ -208,7 +208,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
           <h3 className="text-xs font-bold text-primary uppercase tracking-wider">Invest in This Offer</h3>
         </div>
         <div className="p-4">
-          <StepIndicator />
+          {stepIndicator}
 
           {/* ── STEP 1: Enter Amount ── */}
           {step === 1 && (
