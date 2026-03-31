@@ -114,6 +114,8 @@ export type Database = {
       }
       companies: {
         Row: {
+          address: string | null
+          city: string | null
           contact_email: string | null
           contact_person: string | null
           country: string
@@ -128,6 +130,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          address?: string | null
+          city?: string | null
           contact_email?: string | null
           contact_person?: string | null
           country?: string
@@ -142,6 +146,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          address?: string | null
+          city?: string | null
           contact_email?: string | null
           contact_person?: string | null
           country?: string

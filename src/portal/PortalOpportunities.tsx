@@ -97,7 +97,10 @@ export default function PortalOpportunities() {
       )}
 
       {/* Investment Map */}
-      <InvestmentMap companies={companies} offers={offers} />
+      <InvestmentMap companies={companies} offers={offers} onOfferClick={(id) => {
+        const offer = offers.find((o: any) => o.id === id);
+        if (offer) openOfferTab(offer.id, offer.title);
+      }} />
 
       <div className="flex items-center justify-between">
         <div>

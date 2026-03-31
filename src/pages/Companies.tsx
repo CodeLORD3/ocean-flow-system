@@ -53,6 +53,8 @@ const EMPTY_FORM = {
   contact_person: "",
   contact_email: "",
   iban: "",
+  address: "",
+  city: "",
   status: "Active",
 };
 
@@ -114,6 +116,8 @@ export default function Companies() {
         contact_person: form.contact_person || null,
         contact_email: form.contact_email || null,
         iban: form.iban || null,
+        address: form.address || null,
+        city: form.city || null,
         status: form.status,
       };
       if (logo_url) payload.logo_url = logo_url;
@@ -147,6 +151,8 @@ export default function Companies() {
       contact_person: company.contact_person || "",
       contact_email: company.contact_email || "",
       iban: company.iban || "",
+      address: company.address || "",
+      city: company.city || "",
       status: company.status || "Active",
     });
     setLogoFile(null);
@@ -192,6 +198,8 @@ export default function Companies() {
               <div><span className="text-muted-foreground">Contact:</span> {company.contact_person || "—"}</div>
               <div><span className="text-muted-foreground">Email:</span> {company.contact_email || "—"}</div>
               <div><span className="text-muted-foreground">IBAN:</span> {company.iban || "—"}</div>
+              <div><span className="text-muted-foreground">Address:</span> {company.address || "—"}</div>
+              <div><span className="text-muted-foreground">City:</span> {company.city || "—"}</div>
               <div><span className="text-muted-foreground">Offers:</span> {(offerCounts as any)[company.id] || 0}</div>
               <div><span className="text-muted-foreground">Added:</span> {new Date(company.created_at).toLocaleDateString()}</div>
             </div>
@@ -246,6 +254,14 @@ export default function Companies() {
               <div className="space-y-1">
                 <label className="text-[10px] text-muted-foreground">IBAN</label>
                 <Input value={form.iban} onChange={e => setForm({ ...form, iban: e.target.value.toUpperCase() })} className="h-8 text-xs" placeholder="SE00 0000 0000 0000 0000 0000" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">Address</label>
+                <Input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} className="h-8 text-xs" placeholder="Full street address" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">City</label>
+                <Input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} className="h-8 text-xs" placeholder="e.g. Gothenburg" />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] text-muted-foreground">Company Logo</label>
