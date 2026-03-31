@@ -5,6 +5,7 @@ import { Search, SlidersHorizontal, TrendingUp, Clock, ArrowRight, LayoutGrid, L
 import { differenceInDays, parseISO, format } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
+import InvestmentMap from "@/components/portal/InvestmentMap";
 
 export default function PortalOpportunities() {
   const { openOfferTab, switchTab } = usePortalTabs();
