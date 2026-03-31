@@ -53,6 +53,8 @@ const EMPTY_FORM = {
   contact_person: "",
   contact_email: "",
   iban: "",
+  address: "",
+  city: "",
   status: "Active",
 };
 
