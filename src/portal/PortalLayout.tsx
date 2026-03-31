@@ -323,7 +323,7 @@ function PortalInner() {
 
       <PortalTabBar />
 
-      <main className="flex-1 overflow-auto p-6 max-w-[1400px] mx-auto w-full">
+      <main className="flex-1 overflow-auto p-3 sm:p-6 max-w-[1400px] mx-auto w-full">
         {showWelcome ? (
           <PortalWelcome onComplete={handleWelcomeComplete} />
         ) : (
