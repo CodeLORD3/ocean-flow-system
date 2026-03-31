@@ -105,7 +105,7 @@ export default function InvestmentMap({ companies, offers }: Props) {
           </span>
         </div>
       </div>
-      <div style={{ maxHeight: 380 }} className="overflow-hidden">
+      <div style={{ maxHeight: 420 }} className="overflow-hidden">
         <ComposableMap
           projection="geoMercator"
           projectionConfig={{ center: [13, 46], scale: 380 }}
