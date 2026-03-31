@@ -55,7 +55,7 @@
     --font-heading: 'Space Grotesk', sans-serif;
     --font-body: 'DM Sans', sans-serif;
 
-    --gradient-ocean: linear-gradient(135deg, hsl(205 78% 28%), hsl(195 70% 35%));
+    --gradient-makrill: linear-gradient(135deg, hsl(207 82% 22%), hsl(182 72% 30%));
     --gradient-surface: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 25% 97%));
     --shadow-card: 0 1px 3px hsl(215 30% 12% / 0.06), 0 4px 12px hsl(215 30% 12% / 0.04);
     --shadow-card-hover: 0 4px 16px hsl(215 30% 12% / 0.1), 0 8px 24px hsl(215 30% 12% / 0.06);
