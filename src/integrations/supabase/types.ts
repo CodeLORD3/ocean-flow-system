@@ -745,6 +745,30 @@ export type Database = {
           },
         ]
       }
+      map_settings: {
+        Row: {
+          center_latitude: number
+          center_longitude: number
+          id: string
+          scale: number
+          updated_at: string
+        }
+        Insert: {
+          center_latitude?: number
+          center_longitude?: number
+          id?: string
+          scale?: number
+          updated_at?: string
+        }
+        Update: {
+          center_latitude?: number
+          center_longitude?: number
+          id?: string
+          scale?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
