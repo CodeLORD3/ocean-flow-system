@@ -636,6 +636,9 @@ export default function TradeOffers() {
                     </TableCell>
                     <TableCell className="py-1.5" onClick={e => e.stopPropagation()}>
                       <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0" title="Duplicera" onClick={() => duplicateOffer(offer)}>
+                          <Copy className="h-3 w-3" />
+                        </Button>
                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => startEditing(offer)}>
                           <Pencil className="h-3 w-3" />
                         </Button>
