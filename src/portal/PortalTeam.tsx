@@ -40,7 +40,7 @@ export default function PortalTeam() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {team.map((person: any, i: number) => (
-            <div key={i} className="border border-border p-4 text-center space-y-2">
+            <div key={i} className="border border-border p-4 text-center space-y-2 flex flex-col">
               {person.image_url ? (
                 <img
                   src={person.image_url}
