@@ -243,7 +243,7 @@ export default function PortalDashboard() {
                     <span className="text-foreground font-semibold">{progress.toFixed(0)}%</span>
                   </div>
                   <div className="h-2 bg-muted overflow-hidden">
-                    <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+                    <div className="h-full bg-mackerel transition-all" style={{ width: `${progress}%` }} />
                   </div>
                   <div className="flex justify-between text-[11px] text-muted-foreground">
                     <span>{funded.toLocaleString()} kr raised</span>

@@ -563,7 +563,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
               <span className="font-mono">{funded.toLocaleString()} / {target.toLocaleString()} kr ({progress.toFixed(1)}%)</span>
             </div>
             <div className="h-2 bg-muted overflow-hidden">
-              <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+              <div className="h-full bg-mackerel transition-all" style={{ width: `${progress}%` }} />
             </div>
           </div>
 

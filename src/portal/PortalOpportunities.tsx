@@ -239,7 +239,7 @@ export default function PortalOpportunities() {
                     <td className="px-2 py-1.5">
                       <div className="w-16 mx-auto">
                         <div className="h-1.5 bg-muted overflow-hidden">
-                          <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+                          <div className="h-full bg-mackerel transition-all" style={{ width: `${progress}%` }} />
                         </div>
                         <div className="text-[9px] text-muted-foreground text-center mt-0.5">{progress.toFixed(0)}%</div>
                       </div>
@@ -340,7 +340,7 @@ export default function PortalOpportunities() {
                       <span className="text-foreground font-medium font-mono">{funded.toLocaleString()} / {target.toLocaleString()} kr</span>
                     </div>
                     <div className="h-2 bg-muted overflow-hidden">
-                      <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+                      <div className="h-full bg-mackerel transition-all" style={{ width: `${progress}%` }} />
                     </div>
                   </div>
 
