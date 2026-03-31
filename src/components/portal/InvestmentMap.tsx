@@ -145,7 +145,7 @@ export default function InvestmentMap({ companies, offers }: Props) {
             {/* Active company markers */}
             {activeMarkers.map((m: any) => (
               <Marker key={m.id} coordinates={m.coordinates}>
-                <circle r={6} fill="#1a3a4a" fillOpacity={0.15} stroke="none" />
+                <circle r={6} fill="#0f2e3d" fillOpacity={0.15} stroke="none" />
                 <circle r={3.5} fill="#22c55e" stroke="#fff" strokeWidth={1.5} />
                 <text
                   textAnchor="start"
