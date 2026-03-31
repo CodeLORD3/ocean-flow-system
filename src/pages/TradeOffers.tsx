@@ -621,7 +621,34 @@ export default function TradeOffers() {
                         </SelectContent>
                       </Select>
                     </TableCell>
-                    <TableCell className="py-1.5" />
+                    <TableCell className="py-1.5" onClick={e => e.stopPropagation()}>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => startEditing(offer)}>
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive hover:text-destructive">
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Ta bort erbjudande?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Är du säker på att du vill ta bort "{offer.title}"? Detta kan inte ångras.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => deleteMutation.mutate(offer.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                Ta bort
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 );
               })}
