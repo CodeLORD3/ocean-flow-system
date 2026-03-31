@@ -151,6 +151,8 @@ export default function Companies() {
       contact_person: company.contact_person || "",
       contact_email: company.contact_email || "",
       iban: company.iban || "",
+      address: company.address || "",
+      city: company.city || "",
       status: company.status || "Active",
     });
     setLogoFile(null);
