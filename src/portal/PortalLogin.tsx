@@ -30,14 +30,14 @@ export default function PortalLogin() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="h-8 w-8 bg-[#1a3a4a] flex items-center justify-center rounded">
+          <div className="h-8 w-8 bg-[#0f2e3d] flex items-center justify-center rounded">
             <span className="text-white font-bold text-xs">MT</span>
           </div>
-          <span className="text-[#1a3a4a] font-bold text-lg">Makrill Trade</span>
+          <span className="text-[#0f2e3d] font-bold text-lg">Makrill Trade</span>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-          <h1 className="text-xl font-bold text-[#1a3a4a] mb-1">Welcome back</h1>
+          <h1 className="text-xl font-bold text-[#0f2e3d] mb-1">Welcome back</h1>
           <p className="text-sm text-gray-500 mb-6">Sign in to your Makrill Trade account.</p>
 
           {error && (
@@ -53,7 +53,7 @@ export default function PortalLogin() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a4a]/20 focus:border-[#1a3a4a]"
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d]"
                 required
                 autoFocus
               />
@@ -62,7 +62,7 @@ export default function PortalLogin() {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs font-medium text-gray-700">Password</label>
-                <Link to="/portal/forgot-password" className="text-xs text-[#1a3a4a] hover:underline">
+                <Link to="/portal/forgot-password" className="text-xs text-[#0f2e3d] hover:underline">
                   Forgot password?
                 </Link>
               </div>
@@ -71,7 +71,7 @@ export default function PortalLogin() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a4a]/20 focus:border-[#1a3a4a] pr-10"
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d] pr-10"
                   required
                 />
                 <button
@@ -87,7 +87,7 @@ export default function PortalLogin() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#1a3a4a] text-white py-2.5 rounded text-sm font-medium hover:bg-[#1a3a4a]/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full bg-[#0f2e3d] text-white py-2.5 rounded text-sm font-medium hover:bg-[#0f2e3d]/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? "Signing in…" : "Sign in"}
               {!loading && <ArrowRight className="h-4 w-4" />}
@@ -97,7 +97,7 @@ export default function PortalLogin() {
 
         <p className="text-center text-xs text-gray-500 mt-4">
           Don't have an account?{" "}
-          <Link to="/portal/signup" className="text-[#1a3a4a] font-medium hover:underline">
+          <Link to="/portal/signup" className="text-[#0f2e3d] font-medium hover:underline">
             Create one
           </Link>
         </p>

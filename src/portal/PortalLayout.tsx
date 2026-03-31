@@ -120,7 +120,7 @@ function UserDropdown({ user, profile, onLogout, onProfile }: {
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
       >
-        <div className="h-7 w-7 bg-[#1a3a4a] rounded-full flex items-center justify-center">
+        <div className="h-7 w-7 bg-[#0f2e3d] rounded-full flex items-center justify-center">
           <span className="text-white font-bold text-[10px]">{initials}</span>
         </div>
         <span className="max-w-[120px] truncate">{displayName}</span>
