@@ -348,7 +348,7 @@ function PortalInner() {
           <div className="flex flex-wrap gap-6 sm:gap-10">
             <div className="space-y-1.5">
               <div className="text-[10px] font-semibold text-foreground uppercase tracking-wider">Resources</div>
-              <button onClick={() => switchTab("/portal/documents")} className="block text-[11px] text-muted-foreground hover:text-primary transition-colors">Documents</button>
+              <button onClick={() => switchTab("/portal/documents")} className="block text-[11px] text-muted-foreground hover:text-mackerel transition-colors">Documents</button>
               <button onClick={() => switchTab("/portal/how-it-works")} className="block text-[11px] text-muted-foreground hover:text-primary transition-colors">How It Works</button>
             </div>
             <div className="space-y-1.5">
