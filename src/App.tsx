@@ -15,6 +15,8 @@ import PortalLayout from "@/portal/PortalLayout";
 import PortalLogin from "@/portal/PortalLogin";
 import PortalSignup from "@/portal/PortalSignup";
 import PortalConfirmEmail from "@/portal/PortalConfirmEmail";
+import PortalForgotPassword from "@/portal/PortalForgotPassword";
+import PortalResetPassword from "@/portal/PortalResetPassword";
 
 const queryClient = new QueryClient();
 
