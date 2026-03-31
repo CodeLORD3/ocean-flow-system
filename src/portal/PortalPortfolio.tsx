@@ -79,7 +79,7 @@ export default function PortalPortfolio() {
   const hasHistoryData = historyPledges.length > 0;
 
   const activeStats = [
-    { icon: DollarSign, label: "Total Invested", value: hasActiveData ? `${totalInvested.toLocaleString()} kr` : "—", color: "text-primary" },
+    { icon: Banknote, label: "Total Invested", value: hasActiveData ? `${totalInvested.toLocaleString()} kr` : "—", color: "text-primary" },
     { icon: TrendingUp, label: "Expected Payout", value: hasActiveData ? `${totalExpectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr` : "—", color: "text-green-600" },
     { icon: Target, label: "Expected Profit", value: hasActiveData ? `+${totalProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr` : "—", color: "text-green-600" },
     { icon: Percent, label: "Average Return", value: hasActiveData ? `${avgRate.toFixed(1)}%` : "—", color: "text-primary" },
