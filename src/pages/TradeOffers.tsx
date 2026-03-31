@@ -227,7 +227,92 @@ export default function TradeOffers() {
     onError: (err: any) => toast.error(err.message),
   });
 
-  const updateStatus = useMutation({
+  const buildOfferPayload = () => {
+    let tenor_days: number | null = null;
+    if (form.purchase_date && form.maturity_date) {
+      const start = new Date(form.purchase_date);
+      const end = new Date(form.maturity_date);
+      tenor_days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    }
+    const rate = Number(form.interest_rate) || 0;
+    let annual_return: number | null = null;
+    if (tenor_days && tenor_days > 0 && rate > 0) {
+      annual_return = Math.round((rate / tenor_days) * 365 * 100) / 100;
+    }
+    return {
+      title: form.title,
+      description: form.description || null,
+      quantity: Number(form.quantity) || 0,
+      target_amount: Number(form.target_amount) || 0,
+      interest_rate: Number(form.interest_rate) || 0,
+      maturity_date: form.maturity_date,
+      visibility: form.visibility,
+      min_pledge: Number(form.min_pledge) || 0,
+      max_pledge: form.max_pledge ? Number(form.max_pledge) : null,
+      purchase_date: form.purchase_date || null,
+      repayment_type: form.repayment_type,
+      supplier_name: form.supplier_name || null,
+      risk_note: form.risk_note || null,
+      product_id_display: form.product_id_display || null,
+      sector: form.sector || "Seafood Trading",
+      structure: form.structure || "Trade Finance",
+      origin: form.origin || null,
+      volume: form.volume || null,
+      purchase_price: Number(form.purchase_price) || 0,
+      sales_value: Number(form.sales_value) || 0,
+      gross_margin: form.gross_margin ? Number(form.gross_margin) : null,
+      collateral: form.collateral || "Inventory",
+      ltv: form.ltv ? Number(form.ltv) : null,
+      primary_exit: form.primary_exit || null,
+      secondary_exit: form.secondary_exit || null,
+      downside: form.downside || null,
+      tenor_days,
+      annual_return,
+      company_id: form.company_id || null,
+      company_iban: form.company_iban || null,
+      payment_reference_prefix: form.payment_reference_prefix || "OT-",
+    };
+  };
+
+  const editMutation = useMutation({
+    mutationFn: async () => {
+      let product_image_url: string | undefined = undefined;
+      let document_url: string | undefined = undefined;
+      if (imageFile) product_image_url = await uploadFile(imageFile, "images");
+      if (docFile) document_url = await uploadFile(docFile, "documents");
+
+      const payload: any = buildOfferPayload();
+      if (product_image_url) payload.product_image_url = product_image_url;
+      if (document_url) payload.document_url = document_url;
+
+      const { error } = await supabase.from("trade_offers").update(payload).eq("id", editingOfferId!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Erbjudande uppdaterat");
+      setIsCreating(false);
+      setEditingOfferId(null);
+      setForm({ ...EMPTY_FORM });
+      setImageFile(null);
+      setDocFile(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-trade-offers"] });
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("trade_offers").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Erbjudande borttaget");
+      setSelectedOfferId(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-trade-offers"] });
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { error } = await supabase.from("trade_offers").update({ status }).eq("id", id);
       if (error) throw error;
