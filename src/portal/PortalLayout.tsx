@@ -165,11 +165,11 @@ function PortalInner() {
       if (!user?.id) return 0;
       const { count, error } = await supabase
         .from("notifications")
-        .select("*", { count: "exact", head: true })
+        .select("id", { count: "exact", head: true })
         .eq("portal", "investor")
         .eq("user_id", user.id)
         .eq("is_read", false);
-      if (error) throw error;
+      if (error) return 0;
       return count || 0;
     },
     enabled: !!user?.id,
@@ -245,6 +245,12 @@ function PortalInner() {
     localStorage.setItem("portal-welcome-seen", "true");
     setShowWelcome(false);
   };
+
+  // Set document title for portal routes
+  useEffect(() => {
+    document.title = "Ocean Trade — Invest in Nordic Trade Finance";
+    return () => { document.title = "Ocean Trade"; };
+  }, []);
 
   if (loading) {
     return (

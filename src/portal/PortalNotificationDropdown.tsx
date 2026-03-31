@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Bell, CheckCircle, DollarSign, AlertTriangle, X } from "lucide-react";
+import { Bell, CheckCircle, Banknote, AlertTriangle, X } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 
 interface Props {
@@ -78,7 +78,7 @@ export default function PortalNotificationDropdown({ onNavigate }: Props) {
 
   const getIcon = (message: string) => {
     if (message.toLowerCase().includes("payout") || message.toLowerCase().includes("paid") || message.toLowerCase().includes("sent")) {
-      return <DollarSign className="h-3.5 w-3.5 text-green-600" />;
+      return <Banknote className="h-3.5 w-3.5 text-green-600" />;
     }
     if (message.toLowerCase().includes("matured") || message.toLowerCase().includes("matures")) {
       return <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />;
