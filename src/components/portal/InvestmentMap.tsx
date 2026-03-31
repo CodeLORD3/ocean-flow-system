@@ -155,7 +155,7 @@ export default function InvestmentMap({ companies, offers }: Props) {
                     fontFamily: "system-ui, sans-serif",
                     fontSize: "8px",
                     fontWeight: 600,
-                    fill: "#1a3a4a",
+                    fill: "#0f2e3d",
                   }}
                 >
                   {m.name}
