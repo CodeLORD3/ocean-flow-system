@@ -62,9 +62,9 @@ export default function PortalLogin() {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="text-xs font-medium text-gray-700">Password</label>
-                <button type="button" className="text-xs text-[#1a3a4a] hover:underline">
+                <Link to="/portal/forgot-password" className="text-xs text-[#1a3a4a] hover:underline">
                   Forgot password?
-                </button>
+                </Link>
               </div>
               <div className="relative">
                 <input

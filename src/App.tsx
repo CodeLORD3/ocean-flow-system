@@ -42,6 +42,8 @@ const AppContent = () => {
         <Route path="/portal/login" element={<PortalLogin />} />
         <Route path="/portal/signup" element={<PortalSignup />} />
         <Route path="/portal/confirm-email" element={<PortalConfirmEmail />} />
+        <Route path="/portal/forgot-password" element={<PortalForgotPassword />} />
+        <Route path="/portal/reset-password" element={<PortalResetPassword />} />
         <Route path="/portal/*" element={<PortalLayout />} />
 
         {/* ERP — catch-all */}
