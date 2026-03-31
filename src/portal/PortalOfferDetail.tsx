@@ -484,7 +484,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
         </div>
       </div>
     );
-  };
+  })();
 
   return (
     <div className="space-y-4">
