@@ -74,6 +74,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/contact-settings": { component: <ContactSettings /> },
   "/about-settings": { component: <AboutSettings /> },
   "/admin-payments": { component: <AdminPayments /> },
+  "/map-settings": { component: <MapSettings /> },
 };
 
 /**
