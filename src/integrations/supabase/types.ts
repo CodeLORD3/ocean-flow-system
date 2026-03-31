@@ -119,6 +119,7 @@ export type Database = {
           country: string
           created_at: string
           description: string | null
+          iban: string | null
           id: string
           industry: string | null
           logo_url: string | null
@@ -132,6 +133,7 @@ export type Database = {
           country?: string
           created_at?: string
           description?: string | null
+          iban?: string | null
           id?: string
           industry?: string | null
           logo_url?: string | null
@@ -145,6 +147,7 @@ export type Database = {
           country?: string
           created_at?: string
           description?: string | null
+          iban?: string | null
           id?: string
           industry?: string | null
           logo_url?: string | null
