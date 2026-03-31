@@ -55,6 +55,7 @@ const EMPTY_FORM = {
   iban: "",
   address: "",
   city: "",
+  ticker: "",
   status: "Active",
 };
 
@@ -118,6 +119,7 @@ export default function Companies() {
         iban: form.iban || null,
         address: form.address || null,
         city: form.city || null,
+        ticker: form.ticker || null,
         status: form.status,
       };
       if (logo_url) payload.logo_url = logo_url;
@@ -153,6 +155,7 @@ export default function Companies() {
       iban: company.iban || "",
       address: company.address || "",
       city: company.city || "",
+      ticker: company.ticker || "",
       status: company.status || "Active",
     });
     setLogoFile(null);
@@ -198,6 +201,7 @@ export default function Companies() {
               <div><span className="text-muted-foreground">Contact:</span> {company.contact_person || "—"}</div>
               <div><span className="text-muted-foreground">Email:</span> {company.contact_email || "—"}</div>
               <div><span className="text-muted-foreground">IBAN:</span> {company.iban || "—"}</div>
+              <div><span className="text-muted-foreground">Ticker:</span> {company.ticker || "—"}</div>
               <div><span className="text-muted-foreground">Address:</span> {company.address || "—"}</div>
               <div><span className="text-muted-foreground">City:</span> {company.city || "—"}</div>
               <div><span className="text-muted-foreground">Offers:</span> {(offerCounts as any)[company.id] || 0}</div>
@@ -262,6 +266,10 @@ export default function Companies() {
               <div className="space-y-1">
                 <label className="text-[10px] text-muted-foreground">City</label>
                 <Input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} className="h-8 text-xs" placeholder="e.g. Gothenburg" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">Ticker (map label)</label>
+                <Input value={form.ticker} onChange={e => setForm({ ...form, ticker: e.target.value.toUpperCase() })} className="h-8 text-xs" placeholder="e.g. FSS" maxLength={8} />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] text-muted-foreground">Company Logo</label>

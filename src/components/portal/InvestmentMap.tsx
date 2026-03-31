@@ -87,6 +87,7 @@ interface Company {
   country: string;
   city?: string | null;
   address?: string | null;
+  ticker?: string | null;
   status?: string;
 }
 
@@ -132,6 +133,7 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
         return {
           id: c.id,
           name: c.name,
+          ticker: c.ticker || c.name,
           city: c.city || c.country,
           country: c.country,
           coordinates: coords as [number, number],
@@ -172,12 +174,12 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
       <div style={{ maxHeight: 220 }} className="overflow-hidden">
         <ComposableMap
           projection="geoMercator"
-          projectionConfig={{ center: [12, 52], scale: 380 }}
+          projectionConfig={{ center: [10, 48], scale: 320 }}
           width={900}
           height={500}
-          style={{ width: "100%", height: "auto", marginTop: "-60px" }}
+          style={{ width: "100%", height: "auto", marginTop: "-30px" }}
         >
-          <ZoomableGroup center={[12, 52]} zoom={1} minZoom={1} maxZoom={1}>
+          <ZoomableGroup center={[10, 48]} zoom={1} minZoom={1} maxZoom={1}>
             <Geographies geography={GEO_URL}>
               {({ geographies }) =>
                 geographies.map((geo) => (
@@ -237,7 +239,7 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
                     setSelectedCompanyId(selectedCompanyId === m.id ? null : m.id);
                   }}
                 >
-                  {m.name}
+                  {m.ticker}
                 </text>
                 <text
                   textAnchor="start"
