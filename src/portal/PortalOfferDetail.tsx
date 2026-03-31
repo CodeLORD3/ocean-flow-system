@@ -587,7 +587,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
 
         {/* RIGHT: Investment panel */}
         <div className="lg:col-span-1 space-y-3">
-          <InvestPanel />
+          {investPanel}
 
           {/* ROI Calculator — only show when offer is not Open (no invest panel) */}
           {offer.status !== "Open" && (
