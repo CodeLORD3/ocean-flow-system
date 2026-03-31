@@ -12,6 +12,7 @@ import {
   HandCoins,
   Wallet,
   CreditCard,
+  Map,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -45,6 +46,7 @@ const relationsNav = [
 
 const portalNav = [
   { title: "Investor Portal", url: "/investor-portal", icon: Eye },
+  { title: "Map Settings", url: "/map-settings", icon: Map },
   { title: "Contact Settings", url: "/contact-settings", icon: Phone },
   { title: "About Us Settings", url: "/about-settings", icon: Info },
   { title: "Kalender", url: "/schedule", icon: CalendarDays },

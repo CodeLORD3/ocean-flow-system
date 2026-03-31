@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useMapSettings } from "@/hooks/useMapSettings";
 import {
   ComposableMap,
   Geographies,
@@ -108,6 +109,10 @@ interface Props {
 
 export default function InvestmentMap({ companies, offers, onOfferClick }: Props) {
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
+  const { data: mapSettings } = useMapSettings();
+  const centerLon = mapSettings?.center_longitude ?? 15;
+  const centerLat = mapSettings?.center_latitude ?? 54;
+  const mapScale = mapSettings?.scale ?? 320;
 
   const markers = useMemo(() => {
     const companyOffers: Record<string, Offer[]> = {};
@@ -173,7 +178,7 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
       <div style={{ height: 260 }} className="overflow-hidden select-none" onWheel={(e) => e.preventDefault()}>
         <ComposableMap
           projection="geoMercator"
-          projectionConfig={{ center: [15, 54], scale: 320 }}
+          projectionConfig={{ center: [centerLon, centerLat], scale: mapScale }}
           width={900}
           height={520}
           style={{ width: "100%", height: "auto", marginTop: "-40px", pointerEvents: "none" }}
