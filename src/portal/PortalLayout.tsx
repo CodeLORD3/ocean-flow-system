@@ -353,8 +353,8 @@ function PortalInner() {
             </div>
             <div className="space-y-1.5">
               <div className="text-[10px] font-semibold text-foreground uppercase tracking-wider">Company</div>
-              <button onClick={() => switchTab("/portal/about")} className="block text-[11px] text-muted-foreground hover:text-primary transition-colors">About Us</button>
-              <button onClick={() => switchTab("/portal/contact")} className="block text-[11px] text-muted-foreground hover:text-primary transition-colors">Contact & Support</button>
+              <button onClick={() => switchTab("/portal/about")} className="block text-[11px] text-muted-foreground hover:text-mackerel transition-colors">About Us</button>
+              <button onClick={() => switchTab("/portal/contact")} className="block text-[11px] text-muted-foreground hover:text-mackerel transition-colors">Contact & Support</button>
             </div>
             <div className="space-y-1.5">
               <div className="text-[10px] font-semibold text-foreground uppercase tracking-wider">Legal</div>
