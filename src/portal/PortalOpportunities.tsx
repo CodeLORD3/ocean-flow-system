@@ -7,7 +7,7 @@ import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
 
 export default function PortalOpportunities() {
-  const { openOfferTab } = usePortalTabs();
+  const { openOfferTab, switchTab } = usePortalTabs();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("open");
   const [minInvestment, setMinInvestment] = useState("");
