@@ -29,7 +29,7 @@ function InfoRow({ label, value }: { label: string; value: string | number | nul
   );
 }
 
-export default function TradeOfferDetail({ offer, pledges, onBack, onStatusChange }: TradeOfferDetailProps) {
+export default function TradeOfferDetail({ offer, pledges, onBack, onStatusChange, onEdit, onDelete }: TradeOfferDetailProps) {
   const [activeTab, setActiveTab] = useState<"details" | "investors">("details");
   
   const target = Number(offer.target_amount);
