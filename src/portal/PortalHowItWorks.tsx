@@ -20,8 +20,8 @@ const steps = [
     step: 3,
     icon: DollarSign,
     title: "Fund Your Investment",
-    desc: "Transfer your committed amount to the designated escrow account. Funds are held securely and only released when the trade is executed. You receive a confirmation with a unique reference number.",
-    detail: "All funds are held in segregated accounts with full regulatory compliance.",
+    desc: "Transfer your committed amount directly to the company's designated bank account using the IBAN and unique reference number provided after you commit. Your transfer is tracked and confirmed by our team.",
+    detail: "Each investment has a unique payment reference so your funds are matched accurately and promptly.",
   },
   {
     step: 4,
