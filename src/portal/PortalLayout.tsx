@@ -253,6 +253,21 @@ function PortalInner() {
 
   if (!user) return null;
 
+  if (showSuitability) {
+    return (
+      <div className="min-h-screen bg-background">
+        <PortalSuitability
+          userId={user.id}
+          onComplete={() => {
+            setShowSuitability(false);
+            const hasSeenWelcome = localStorage.getItem("portal-welcome-seen");
+            if (!hasSeenWelcome) setShowWelcome(true);
+          }}
+        />
+      </div>
+    );
+  }
+
   const navItems = [
     { to: "/portal", icon: Search, label: "Opportunities" },
     { to: "/portal/portfolio", icon: Briefcase, label: "My Investments" },
