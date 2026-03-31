@@ -643,6 +643,7 @@ export type Database = {
           first_name: string
           iban: string | null
           id: string
+          kyc_completed: boolean
           last_name: string
           reviewed_at: string | null
           reviewed_by: string | null
@@ -660,6 +661,7 @@ export type Database = {
           first_name: string
           iban?: string | null
           id?: string
+          kyc_completed?: boolean
           last_name: string
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -677,6 +679,7 @@ export type Database = {
           first_name?: string
           iban?: string | null
           id?: string
+          kyc_completed?: boolean
           last_name?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
