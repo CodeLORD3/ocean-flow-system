@@ -108,12 +108,12 @@ export default function InvestmentMap({ companies, offers }: Props) {
       <div style={{ maxHeight: 260 }} className="overflow-hidden">
         <ComposableMap
           projection="geoMercator"
-          projectionConfig={{ center: [13, 48], scale: 420 }}
+          projectionConfig={{ center: [13, 52], scale: 350 }}
           width={800}
           height={340}
-          style={{ width: "100%", height: "auto", marginTop: "-30px" }}
+          style={{ width: "100%", height: "auto", marginTop: "-10px" }}
         >
-          <ZoomableGroup center={[13, 48]} zoom={1} minZoom={1} maxZoom={1}>
+          <ZoomableGroup center={[13, 52]} zoom={1} minZoom={1} maxZoom={1}>
             <Geographies geography={GEO_URL}>
               {({ geographies }) =>
                 geographies.map((geo) => (
