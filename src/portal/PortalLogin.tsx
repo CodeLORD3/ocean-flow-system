@@ -2,7 +2,6 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
-import makrillLogo from "@/assets/makrill-trade-logo.png";
 
 export default function PortalLogin() {
   const [email, setEmail] = useState("");
