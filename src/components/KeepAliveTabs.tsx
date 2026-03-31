@@ -34,6 +34,7 @@ import ContactSettings from "@/pages/ContactSettings";
 import AboutSettings from "@/pages/AboutSettings";
 import Payouts from "@/pages/Payouts";
 import AdminPayments from "@/pages/AdminPayments";
+import MapSettings from "@/pages/MapSettings";
 
 interface RouteEntry {
   component: React.ReactNode;
