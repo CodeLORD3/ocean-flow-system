@@ -344,6 +344,8 @@ export default function TradeOffers() {
         pledges={allPledges.filter(p => p.offer_id === selectedOfferId)}
         onBack={() => setSelectedOfferId(null)}
         onStatusChange={(status) => updateStatus.mutate({ id: selectedOfferId, status })}
+        onEdit={() => startEditing(offer)}
+        onDelete={() => deleteMutation.mutate(selectedOfferId)}
       />
     );
   }
