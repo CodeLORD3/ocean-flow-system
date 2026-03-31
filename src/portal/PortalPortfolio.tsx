@@ -102,7 +102,7 @@ export default function PortalPortfolio() {
       </div>
 
       {/* Summary cards — change based on tab */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {currentStats.map((stat) => (
           <div key={stat.label} className="border border-border bg-white p-3">
             <div className="flex items-center justify-between mb-1.5">
