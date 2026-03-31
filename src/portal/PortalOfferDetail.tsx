@@ -94,15 +94,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
       }
       await supabase.from("trade_offers").update(updatePayload).eq("id", id!);
 
-      // Create investor notification for booking
-      const offerTitle = currentOffer?.title || (offer as any)?.title || "an offer";
-      await supabase.from("notifications").insert({
-        portal: "investor",
-        target_page: "/portal/portfolio",
-        message: `Investment booked for "${offerTitle}" — please send ${amount.toLocaleString()} kr to the IBAN provided.`,
-        entity_type: "pledge",
-        entity_id: data.id,
-      });
+      // Notification is handled by the database trigger (notify_new_pledge)
 
       return data;
     },
