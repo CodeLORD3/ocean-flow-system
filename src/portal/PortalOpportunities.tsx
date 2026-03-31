@@ -14,6 +14,7 @@ export default function PortalOpportunities() {
   const [minInvestment, setMinInvestment] = useState("");
   const [returnRange, setReturnRange] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"rows" | "cards">("rows");
+  const [riskDismissed, setRiskDismissed] = useState(() => sessionStorage.getItem("risk-banner-dismissed") === "true");
 
   const { data: offers = [], isLoading } = useQuery({
     queryKey: ["portal-all-offers"],
