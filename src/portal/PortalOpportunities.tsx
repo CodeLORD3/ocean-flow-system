@@ -201,7 +201,7 @@ export default function PortalOpportunities() {
                 return (
                   <tr
                     key={offer.id}
-                    className={`border-b border-border last:border-b-0 hover:bg-primary/10 cursor-pointer transition-colors group ${filtered.indexOf(offer) % 2 === 1 ? "bg-muted/50" : ""}`}
+                    className={`border-b border-border last:border-b-0 hover:bg-mackerel/10 cursor-pointer transition-colors group ${filtered.indexOf(offer) % 2 === 1 ? "bg-muted/50" : ""}`}
                     onClick={() => openOfferTab(offer.id, offer.title)}
                   >
                     <td className="px-2 py-1.5">
@@ -209,7 +209,7 @@ export default function PortalOpportunities() {
                         {offer.product_image_url && (
                           <img src={offer.product_image_url} alt="" className="h-5 w-5 object-cover border border-border shrink-0" />
                         )}
-                        <span className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1 max-w-[180px]">
+                        <span className="font-semibold text-foreground group-hover:text-mackerel transition-colors line-clamp-1 max-w-[180px]">
                           {offer.title}
                         </span>
                       </div>
@@ -273,7 +273,7 @@ export default function PortalOpportunities() {
                       {Number(offer.min_pledge) > 0 ? `${Number(offer.min_pledge).toLocaleString()} kr` : "—"}
                     </td>
                     <td className="px-2 py-1.5">
-                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-mackerel transition-colors" />
                     </td>
                   </tr>
                 );
@@ -312,7 +312,7 @@ export default function PortalOpportunities() {
 
                 <div className="p-3 flex-1 flex flex-col">
                   <div className="flex items-start justify-between mb-1">
-                    <h3 className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors leading-snug flex-1 pr-2">
+                    <h3 className="text-xs font-semibold text-foreground group-hover:text-mackerel transition-colors leading-snug flex-1 pr-2">
                       {offer.title}
                     </h3>
                     <span className={`shrink-0 px-2 py-0.5 text-[10px] font-semibold border ${
@@ -374,7 +374,7 @@ export default function PortalOpportunities() {
                     </div>
                   </div>
 
-                  <button className="w-full h-8 mt-3 border border-primary text-primary text-[11px] font-semibold hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center gap-1.5">
+                  <button className="w-full h-8 mt-3 border border-primary text-primary text-[11px] font-semibold hover:bg-primary hover:text-mackerel-foreground transition-colors flex items-center justify-center gap-1.5">
                     View Details <ArrowRight className="h-3.5 w-3.5" />
                   </button>
                 </div>

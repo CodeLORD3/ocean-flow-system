@@ -165,7 +165,7 @@ export default function PortalPortfolio() {
                   <tr
                     key={p.id}
                     onClick={() => setExpandedRow(isExpanded ? null : p.id)}
-                    className={`border-b border-border/50 hover:bg-primary/10 cursor-pointer transition-colors h-8 ${idx % 2 === 1 ? "bg-muted/50" : ""}`}
+                    className={`border-b border-border/50 hover:bg-mackerel/10 cursor-pointer transition-colors h-8 ${idx % 2 === 1 ? "bg-muted/50" : ""}`}
                   >
                     <td className="p-2 pl-3">
                       {isExpanded ? <ChevronUp className="h-3 w-3 text-muted-foreground" /> : <ChevronDown className="h-3 w-3 text-muted-foreground" />}

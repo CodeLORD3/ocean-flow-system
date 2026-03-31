@@ -55,7 +55,7 @@ export default function PortalArchive() {
                 <tr
                   key={offer.id}
                   onClick={() => openOfferTab(offer.id, offer.title)}
-                  className={`border-b border-border/50 hover:bg-primary/10 cursor-pointer transition-colors h-8 ${idx % 2 === 1 ? "bg-muted/50" : ""}`}
+                  className={`border-b border-border/50 hover:bg-mackerel/10 cursor-pointer transition-colors h-8 ${idx % 2 === 1 ? "bg-muted/50" : ""}`}
                 >
                   <td className="p-2 pl-3 text-foreground font-medium">{offer.title}</td>
                   <td className="p-2 text-muted-foreground">{offer.companies?.name || "—"}</td>

@@ -97,7 +97,7 @@ export default function PortalLogin() {
 
         <p className="text-center text-xs text-gray-500 mt-4">
           Don't have an account?{" "}
-          <Link to="/portal/signup" className="text-[#0f2e3d] font-medium hover:underline">
+          <Link to="/portal/signup" className="text-[#2a9e7e] font-medium hover:underline">
             Create one
           </Link>
         </p>
