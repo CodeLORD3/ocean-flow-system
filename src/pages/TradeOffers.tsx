@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, TrendingUp, Upload, ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import { Plus, TrendingUp, Upload, ArrowLeft, Pencil, Trash2, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import TradeOfferDetail from "@/components/trade/TradeOfferDetail";
@@ -155,6 +155,16 @@ export default function TradeOffers() {
     setEditingOfferId(offer.id);
     setIsCreating(true);
     setSelectedOfferId(null);
+  };
+
+  const duplicateOffer = (offer: any) => {
+    startEditing(offer);
+    setEditingOfferId(null); // Clear editing ID so it creates a new one
+    setForm(prev => ({
+      ...prev,
+      title: `${prev.title} (kopia)`,
+    }));
+    toast.info("Offer duplicerad — redigera och spara som ny");
   };
 
   const createMutation = useMutation({
@@ -369,7 +379,10 @@ export default function TradeOffers() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1 col-span-2">
                   <label className="text-[10px] text-muted-foreground">Company *</label>
-                  <Select value={form.company_id} onValueChange={v => setForm({...form, company_id: v})}>
+                   <Select value={form.company_id} onValueChange={v => {
+                     const company = companyMap[v];
+                     setForm({...form, company_id: v, company_iban: company?.iban || form.company_iban});
+                   }}>
                     <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select company..." /></SelectTrigger>
                     <SelectContent>
                       {companies.map((c: any) => (
@@ -623,6 +636,9 @@ export default function TradeOffers() {
                     </TableCell>
                     <TableCell className="py-1.5" onClick={e => e.stopPropagation()}>
                       <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0" title="Duplicera" onClick={() => duplicateOffer(offer)}>
+                          <Copy className="h-3 w-3" />
+                        </Button>
                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => startEditing(offer)}>
                           <Pencil className="h-3 w-3" />
                         </Button>

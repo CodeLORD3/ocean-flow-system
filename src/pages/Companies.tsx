@@ -52,6 +52,7 @@ const EMPTY_FORM = {
   description: "",
   contact_person: "",
   contact_email: "",
+  iban: "",
   status: "Active",
 };
 
@@ -112,6 +113,7 @@ export default function Companies() {
         description: form.description || null,
         contact_person: form.contact_person || null,
         contact_email: form.contact_email || null,
+        iban: form.iban || null,
         status: form.status,
       };
       if (logo_url) payload.logo_url = logo_url;
@@ -144,6 +146,7 @@ export default function Companies() {
       description: company.description || "",
       contact_person: company.contact_person || "",
       contact_email: company.contact_email || "",
+      iban: company.iban || "",
       status: company.status || "Active",
     });
     setLogoFile(null);
@@ -188,6 +191,7 @@ export default function Companies() {
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div><span className="text-muted-foreground">Contact:</span> {company.contact_person || "—"}</div>
               <div><span className="text-muted-foreground">Email:</span> {company.contact_email || "—"}</div>
+              <div><span className="text-muted-foreground">IBAN:</span> {company.iban || "—"}</div>
               <div><span className="text-muted-foreground">Offers:</span> {(offerCounts as any)[company.id] || 0}</div>
               <div><span className="text-muted-foreground">Added:</span> {new Date(company.created_at).toLocaleDateString()}</div>
             </div>
@@ -238,6 +242,10 @@ export default function Companies() {
               <div className="space-y-1">
                 <label className="text-[10px] text-muted-foreground">Contact Email</label>
                 <Input type="email" value={form.contact_email} onChange={e => setForm({ ...form, contact_email: e.target.value })} className="h-8 text-xs" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">IBAN</label>
+                <Input value={form.iban} onChange={e => setForm({ ...form, iban: e.target.value.toUpperCase() })} className="h-8 text-xs" placeholder="SE00 0000 0000 0000 0000 0000" />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] text-muted-foreground">Company Logo</label>
