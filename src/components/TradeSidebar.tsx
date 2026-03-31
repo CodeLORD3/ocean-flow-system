@@ -12,6 +12,7 @@ import {
   HandCoins,
   Wallet,
   CreditCard,
+  Map,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
