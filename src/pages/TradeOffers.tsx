@@ -379,7 +379,10 @@ export default function TradeOffers() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1 col-span-2">
                   <label className="text-[10px] text-muted-foreground">Company *</label>
-                  <Select value={form.company_id} onValueChange={v => setForm({...form, company_id: v})}>
+                   <Select value={form.company_id} onValueChange={v => {
+                     const company = companyMap[v];
+                     setForm({...form, company_id: v, company_iban: company?.iban || form.company_iban});
+                   }}>
                     <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select company..." /></SelectTrigger>
                     <SelectContent>
                       {companies.map((c: any) => (
