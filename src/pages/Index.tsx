@@ -8,7 +8,7 @@ const Index = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="text-center space-y-6">
-        <img src={makrillLogo} alt="Makrill Trade" className="h-24 w-auto mx-auto" />
+        <img src={makrillLogo} alt="Makrill Trade" className="h-40 w-auto mx-auto" />
         <p className="text-sm text-muted-foreground max-w-xs mx-auto">
           Nordic Trade Finance — Invest in real commodity deals
         </p>
