@@ -76,9 +76,9 @@ export default function PortalOpportunities() {
         <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
         <p className="text-[11px] text-amber-800 leading-relaxed">
           <span className="font-semibold">Capital at risk.</span> Investments on Ocean Trade are not covered by deposit guarantee schemes. You may lose part or all of your invested capital. Past performance does not guarantee future results. Please read the{" "}
-          <button onClick={() => openOfferTab("terms", "Terms of Use")} className="underline font-medium hover:text-amber-900">Terms of Use</button>{" "}
+          <button onClick={() => switchTab("/portal/terms")} className="underline font-medium hover:text-amber-900">Terms of Use</button>{" "}
           and{" "}
-          <button onClick={() => openOfferTab("guidelines", "Investment Guidelines")} className="underline font-medium hover:text-amber-900">Investment Guidelines</button>{" "}
+          <button onClick={() => switchTab("/portal/guidelines")} className="underline font-medium hover:text-amber-900">Investment Guidelines</button>{" "}
           before investing.
         </p>
       </div>
