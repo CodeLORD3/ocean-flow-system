@@ -133,6 +133,7 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
         return {
           id: c.id,
           name: c.name,
+          ticker: c.ticker || c.name,
           city: c.city || c.country,
           country: c.country,
           coordinates: coords as [number, number],
