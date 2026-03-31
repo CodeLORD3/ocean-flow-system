@@ -514,8 +514,10 @@ export default function TradeOffers() {
                 {missingFields.length} required field{missingFields.length > 1 ? "s" : ""} missing: {missingFields.map(f => f.label).join(", ")}
               </p>
             )}
-            <Button onClick={handleCreate} disabled={createMutation.isPending} className="w-full h-8 text-xs mt-2">
-              {createMutation.isPending ? "Skapar..." : "Skapa erbjudande"}
+            <Button onClick={handleCreate} disabled={createMutation.isPending || editMutation.isPending} className="w-full h-8 text-xs mt-2">
+              {editingOfferId
+                ? (editMutation.isPending ? "Sparar..." : "Spara ändringar")
+                : (createMutation.isPending ? "Skapar..." : "Skapa erbjudande")}
             </Button>
           </CardContent>
         </Card>

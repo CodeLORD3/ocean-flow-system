@@ -1,16 +1,23 @@
 import { useState } from "react";
-import { ArrowLeft, FileText, Users, DollarSign } from "lucide-react";
+import { ArrowLeft, FileText, Users, DollarSign, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface TradeOfferDetailProps {
   offer: any;
   pledges: any[];
   onBack: () => void;
   onStatusChange: (status: string) => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 function InfoRow({ label, value }: { label: string; value: string | number | null | undefined }) {
