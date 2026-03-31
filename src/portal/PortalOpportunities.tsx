@@ -5,6 +5,7 @@ import { Search, SlidersHorizontal, TrendingUp, Clock, ArrowRight, LayoutGrid, L
 import { differenceInDays, parseISO, format } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
+import InvestmentMap from "@/components/portal/InvestmentMap";
 
 export default function PortalOpportunities() {
   const { openOfferTab, switchTab } = usePortalTabs();
@@ -13,6 +14,7 @@ export default function PortalOpportunities() {
   const [minInvestment, setMinInvestment] = useState("");
   const [returnRange, setReturnRange] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"rows" | "cards">("rows");
+  const [riskDismissed, setRiskDismissed] = useState(() => sessionStorage.getItem("risk-banner-dismissed") === "true");
 
   const { data: offers = [], isLoading } = useQuery({
     queryKey: ["portal-all-offers"],
@@ -69,7 +71,6 @@ export default function PortalOpportunities() {
     return { target, funded, rate, progress, maturity, purchaseDate, daysToMaturity, tenorDays, company, isMatured };
   };
 
-  const [riskDismissed, setRiskDismissed] = useState(() => sessionStorage.getItem("risk-banner-dismissed") === "true");
 
   const dismissRisk = () => {
     setRiskDismissed(true);
@@ -94,6 +95,10 @@ export default function PortalOpportunities() {
           </button>
         </div>
       )}
+
+      {/* Investment Map */}
+      <InvestmentMap companies={companies} offers={offers} />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-base font-bold text-foreground">Investment Opportunities</h1>
