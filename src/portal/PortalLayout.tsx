@@ -36,7 +36,7 @@ function PortalTabBar() {
             key={tab.path}
             className={`group flex items-center gap-2 px-4 py-2 text-xs cursor-pointer border-r border-border transition-colors shrink-0 ${
               isActive
-                ? "bg-white text-primary font-semibold border-b-2 border-b-primary"
+                ? "bg-white text-mackerel font-semibold border-b-2 border-b-mackerel"
                 : "text-muted-foreground hover:bg-white/60 hover:text-foreground"
             }`}
             onClick={() => switchTab(tab.path)}

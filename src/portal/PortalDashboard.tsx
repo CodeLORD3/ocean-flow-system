@@ -106,7 +106,7 @@ export default function PortalDashboard() {
           </div>
           <button
             onClick={() => switchTab("/portal/opportunities")}
-            className="h-8 px-4 bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors inline-flex items-center gap-1.5"
+            className="h-8 px-4 bg-mackerel text-mackerel-foreground hover:bg-mackerel/90 transition-colors inline-flex items-center gap-1.5"
           >
             Browse Opportunities <ArrowRight className="h-4 w-4" />
           </button>
