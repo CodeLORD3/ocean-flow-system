@@ -179,7 +179,7 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
           height={500}
           style={{ width: "100%", height: "auto", marginTop: "-8px" }}
         >
-          <ZoomableGroup center={[10, 44]} zoom={1} minZoom={1} maxZoom={1}>
+          <ZoomableGroup center={[15, 54]} zoom={1} minZoom={1} maxZoom={1}>
             <Geographies geography={GEO_URL}>
               {({ geographies }) =>
                 geographies.map((geo) => (
