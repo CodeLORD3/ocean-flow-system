@@ -174,7 +174,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   const companyName = (company as any)?.name || "the issuer";
 
   /* ── Step indicator ── */
-  const StepIndicator = () => (
+  const stepIndicator = (
     <div className="flex items-center gap-1.5 mb-4">
       {[1, 2, 3].map((s) => (
         <div key={s} className="flex items-center gap-1.5">
@@ -191,7 +191,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   );
 
   /* ── Investment Panel (3-step) ── */
-  const InvestPanel = () => {
+  const investPanel = (() => {
     if (offer.status !== "Open" || remaining <= 0) {
       return (
         <div className="border border-border bg-muted/20 p-4 text-center">
@@ -208,7 +208,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
           <h3 className="text-xs font-bold text-primary uppercase tracking-wider">Invest in This Offer</h3>
         </div>
         <div className="p-4">
-          <StepIndicator />
+          {stepIndicator}
 
           {/* ── STEP 1: Enter Amount ── */}
           {step === 1 && (
@@ -484,7 +484,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
         </div>
       </div>
     );
-  };
+  })();
 
   return (
     <div className="space-y-4">
@@ -587,7 +587,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
 
         {/* RIGHT: Investment panel */}
         <div className="lg:col-span-1 space-y-3">
-          <InvestPanel />
+          {investPanel}
 
           {/* ROI Calculator — only show when offer is not Open (no invest panel) */}
           {offer.status !== "Open" && (
