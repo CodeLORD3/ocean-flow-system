@@ -17,9 +17,27 @@ export default function PortalSuitability({ userId, onComplete }: Props) {
   const handleSubmit = async () => {
     if (!allChecked) return;
     setLoading(true);
+
+    // Insert suitability responses
+    const { error: suitError } = await supabase
+      .from("suitability_responses" as any)
+      .insert({
+        user_id: userId,
+        is_18_plus: true,
+        is_not_us_person: true,
+        understands_risk: true,
+        understands_no_deposit_guarantee: true,
+      } as any);
+    if (suitError) {
+      toast.error(suitError.message);
+      setLoading(false);
+      return;
+    }
+
+    // Update investor profile
     const { error } = await supabase
       .from("investor_profiles")
-      .update({ kyc_completed: true } as any)
+      .update({ kyc_completed: true, suitability_passed: true } as any)
       .eq("user_id", userId);
     setLoading(false);
     if (error) {

@@ -106,11 +106,8 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
 
       return data;
     },
-    onSuccess: () => {
-      const investorShort = authUser?.id?.slice(0, 4).toUpperCase() || "XXXX";
-      const offerShort = id?.slice(0, 4).toUpperCase() || "XXXX";
-      const prefix = (offer as any)?.payment_reference_prefix || "OT-";
-      setSuccessRef(`${prefix}${new Date().getFullYear()}-${investorShort}-${offerShort}`);
+    onSuccess: (data: any) => {
+      setSuccessRef(data.payment_reference || "");
       setStep(3);
       queryClient.invalidateQueries({ queryKey: ["portal-offer", id] });
       queryClient.invalidateQueries({ queryKey: ["portal-offers"] });
