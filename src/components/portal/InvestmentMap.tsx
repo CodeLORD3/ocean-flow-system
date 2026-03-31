@@ -266,7 +266,7 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
       {/* Popup for selected company offers */}
       {selectedMarker && (
         <div
-          className="absolute bottom-2 left-2 z-20 bg-white border border-border shadow-lg p-3 max-w-[280px]"
+          className="absolute bottom-2 left-2 right-2 sm:right-auto z-20 bg-white border border-border shadow-lg p-3 sm:max-w-[280px]"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between mb-2">
