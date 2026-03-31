@@ -428,12 +428,60 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                 </p>
               </div>
 
-              <button
-                onClick={() => switchTab("/portal/portfolio")}
-                className="w-full h-10 bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-1.5"
-              >
-                <Briefcase className="h-4 w-4" /> View My Portfolio
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    const content = [
+                      "INVESTMENT CONFIRMATION",
+                      "═══════════════════════════════════",
+                      "",
+                      `Date: ${new Date().toLocaleDateString("en-GB")}`,
+                      `Reference: ${successRef}`,
+                      "",
+                      "INVESTMENT DETAILS",
+                      "───────────────────────────────────",
+                      `Offer: ${offer.title}`,
+                      `Amount Invested: ${pledgeAmt.toLocaleString()} kr`,
+                      `Return Rate: ${rate.toFixed(1)}%`,
+                      `Expected Payout: ${totalPayout.toLocaleString()} kr`,
+                      `Expected Profit: +${profitKr.toLocaleString()} kr`,
+                      `Maturity Date: ${format(parseISO(offer.maturity_date), "d MMM yyyy")}`,
+                      "",
+                      "PAYMENT DETAILS",
+                      "───────────────────────────────────",
+                      `Bank: ${companyName}`,
+                      `IBAN: ${o.company_iban || "Contact support"}`,
+                      `Payment Reference: ${successRef}`,
+                      `Amount to Transfer: ${pledgeAmt.toLocaleString()} kr`,
+                      "",
+                      "IMPORTANT",
+                      "───────────────────────────────────",
+                      "Use the exact reference number so your payment can be matched.",
+                      "Your investment will be activated once funds are confirmed (1–2 business days).",
+                      "",
+                      "Capital at risk. Investments are not covered by deposit guarantee schemes.",
+                      "",
+                      `© ${new Date().getFullYear()} Ocean Trade. All rights reserved.`,
+                    ].join("\n");
+                    const blob = new Blob([content], { type: "text/plain" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `Investment-Confirmation-${successRef}.txt`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="flex-1 h-10 border border-border text-foreground text-sm font-semibold hover:bg-muted/50 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <FileText className="h-4 w-4" /> Download Confirmation
+                </button>
+                <button
+                  onClick={() => switchTab("/portal/portfolio")}
+                  className="flex-1 h-10 bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Briefcase className="h-4 w-4" /> View My Portfolio
+                </button>
+              </div>
             </div>
           )}
         </div>
