@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useMapSettings } from "@/hooks/useMapSettings";
 import {
   ComposableMap,
   Geographies,
