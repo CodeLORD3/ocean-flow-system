@@ -46,6 +46,7 @@ const relationsNav = [
 
 const portalNav = [
   { title: "Investor Portal", url: "/investor-portal", icon: Eye },
+  { title: "Map Settings", url: "/map-settings", icon: Map },
   { title: "Contact Settings", url: "/contact-settings", icon: Phone },
   { title: "About Us Settings", url: "/about-settings", icon: Info },
   { title: "Kalender", url: "/schedule", icon: CalendarDays },
