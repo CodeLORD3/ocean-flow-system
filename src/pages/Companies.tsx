@@ -119,6 +119,7 @@ export default function Companies() {
         iban: form.iban || null,
         address: form.address || null,
         city: form.city || null,
+        ticker: form.ticker || null,
         status: form.status,
       };
       if (logo_url) payload.logo_url = logo_url;
