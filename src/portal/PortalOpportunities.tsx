@@ -71,7 +71,6 @@ export default function PortalOpportunities() {
     return { target, funded, rate, progress, maturity, purchaseDate, daysToMaturity, tenorDays, company, isMatured };
   };
 
-  const [riskDismissed, setRiskDismissed] = useState(() => sessionStorage.getItem("risk-banner-dismissed") === "true");
 
   const dismissRisk = () => {
     setRiskDismissed(true);
