@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from "react";
+import makrillLogo from "@/assets/makrill-trade-logo.png";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -290,10 +291,7 @@ function PortalInner() {
       <header className="h-14 flex items-center justify-between border-b border-border px-3 sm:px-6 bg-white shadow-sm">
         <div className="flex items-center gap-4 sm:gap-8 overflow-hidden">
           <div className="flex items-center gap-2 shrink-0">
-            <div className="h-7 w-7 bg-primary flex items-center justify-center">
-              <span className="text-mackerel-shimmer font-bold text-xs">MT</span>
-            </div>
-            <span className="text-foreground font-bold text-sm hidden sm:inline">Makrill <span className="text-mackerel">Trade</span></span>
+            <img src={makrillLogo} alt="Makrill Trade" className="h-8 w-auto" />
           </div>
           <nav className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto">
             {navItems.map((item) => {
@@ -340,10 +338,7 @@ function PortalInner() {
       <footer className="border-t border-border bg-white px-3 sm:px-6 py-4">
         <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-start justify-between gap-4 sm:gap-8">
           <div className="flex items-center gap-2">
-            <div className="h-5 w-5 bg-primary flex items-center justify-center">
-              <span className="text-mackerel-shimmer font-bold text-[8px]">MT</span>
-            </div>
-            <span className="text-xs font-semibold text-foreground">Makrill <span className="text-mackerel">Trade</span></span>
+            <img src={makrillLogo} alt="Makrill Trade" className="h-6 w-auto" />
           </div>
           <div className="flex flex-wrap gap-6 sm:gap-10">
             <div className="space-y-1.5">

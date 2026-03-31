@@ -2,6 +2,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
+import makrillLogo from "@/assets/makrill-trade-logo.png";
 
 export default function PortalLogin() {
   const [email, setEmail] = useState("");
@@ -29,11 +30,8 @@ export default function PortalLogin() {
     <div className="min-h-screen bg-[#f4f6f9] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="h-8 w-8 bg-[#0f2e3d] flex items-center justify-center rounded">
-            <span className="text-[#2a9e7e] font-bold text-xs">MT</span>
-          </div>
-          <span className="text-[#0f2e3d] font-bold text-lg">Makrill <span className="text-[#2a9e7e]">Trade</span></span>
+        <div className="flex items-center justify-center mb-8">
+          <img src={makrillLogo} alt="Makrill Trade" className="h-16 w-auto" />
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
