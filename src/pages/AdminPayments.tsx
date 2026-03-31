@@ -76,6 +76,7 @@ export default function AdminPayments() {
           message: `Payout of ${totalPayout.toLocaleString()} kr for "${offerTitle}" has been sent to your registered IBAN.`,
           entity_type: "pledge",
           entity_id: pledgeId,
+          user_id: pledge.user_id,
         });
       }
 
