@@ -109,6 +109,10 @@ interface Props {
 
 export default function InvestmentMap({ companies, offers, onOfferClick }: Props) {
   const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
+  const { data: mapSettings } = useMapSettings();
+  const centerLon = mapSettings?.center_longitude ?? 15;
+  const centerLat = mapSettings?.center_latitude ?? 54;
+  const mapScale = mapSettings?.scale ?? 320;
 
   const markers = useMemo(() => {
     const companyOffers: Record<string, Offer[]> = {};
