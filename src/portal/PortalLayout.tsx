@@ -304,8 +304,8 @@ function PortalInner() {
                   onClick={() => switchTab(item.to)}
                   className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 text-[12px] sm:text-[13px] rounded-sm transition-colors whitespace-nowrap ${
                     isActive
-                      ? "text-primary bg-primary/5 font-semibold"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      ? "text-mackerel bg-mackerel/5 font-semibold border-b-2 border-b-mackerel"
+                      : "text-muted-foreground hover:text-mackerel hover:bg-muted/50"
                   }`}
                 >
                   <item.icon className="h-4 w-4" />
