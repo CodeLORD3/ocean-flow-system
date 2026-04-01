@@ -173,11 +173,12 @@ export default function InvestmentFlowDiagram({ pledges }: { pledges: Pledge[] }
 
   const NodeIcon = ({ type }: { type: string }) => {
     switch (type) {
-      case "start": return <CircleDollarSign className="h-3 w-3" />;
-      case "current": return <MapPin className="h-3 w-3" />;
-      case "payout": return <TrendingUp className="h-3 w-3" />;
-      case "mixed": return <Flag className="h-3 w-3" />;
-      default: return <CircleDollarSign className="h-3 w-3" />;
+      case "committed": return <CircleDollarSign className="h-2.5 w-2.5" />;
+      case "start": return <Flag className="h-2.5 w-2.5" />;
+      case "current": return <MapPin className="h-2.5 w-2.5" />;
+      case "payout": return <TrendingUp className="h-2.5 w-2.5" />;
+      case "mixed": return <Flag className="h-2.5 w-2.5" />;
+      default: return <CircleDollarSign className="h-2.5 w-2.5" />;
     }
   };
 
