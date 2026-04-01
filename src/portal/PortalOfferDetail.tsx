@@ -285,7 +285,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
               </button>
               {(minPledge > 0 || remaining < target) && (
                 <p className="text-[10px] text-muted-foreground text-center">
-                  {effectiveMin > 0 && `Min: ${effectiveMin.toLocaleString()} {cur}`}
+                  {effectiveMin > 0 && `Min: ${effectiveMin.toLocaleString()} ${cur}`}
                   {effectiveMin > 0 && maxPledge ? " · " : ""}
                   {maxPledge && `Max: ${maxPledge.toLocaleString()} ${cur}`}
                   {(effectiveMin > 0 || maxPledge) && remaining < target ? " · " : ""}
