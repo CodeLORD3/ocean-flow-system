@@ -373,7 +373,7 @@ export default function PortalOpportunities() {
       {/* ROW VIEW */}
       {viewMode === "rows" && (
         <div className="border border-border bg-white overflow-x-auto">
-          <table className="w-full text-[10px] min-w-[900px]">
+          <table className="w-full text-[10px] min-w-[900px]" style={{ tableLayout: 'auto' }}>
             <thead>
               <tr className="border-b border-border bg-muted/50">
                 <th className="text-left px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Offer</th>
@@ -436,7 +436,7 @@ export default function PortalOpportunities() {
                     <td className="px-2 py-1.5 text-right font-mono text-foreground whitespace-nowrap">
                       {funded.toLocaleString()} / {target.toLocaleString()} {cur}
                     </td>
-                    <td className="px-2 py-1.5">
+                    <td className="px-2 py-1.5 whitespace-nowrap">
                       <div className="min-w-[5rem] mx-auto whitespace-nowrap">
                         <div className="h-1.5 bg-muted overflow-hidden flex">
                           <div className="h-full bg-mackerel transition-all" style={{ width: `${confirmedPct}%` }} />
@@ -445,7 +445,7 @@ export default function PortalOpportunities() {
                           )}
                         </div>
                         <div className="text-[9px] text-muted-foreground text-center mt-0.5 whitespace-nowrap">
-                          {confirmedPct.toFixed(0)}%{pendingPct > 0 ? ` · ${pendingPct.toFixed(0)}%` : ""}
+                          {confirmedPct.toFixed(0)}%{pendingPct > 0 ? ` · ${pendingPct.toFixed(0)}% pending` : ""}
                         </div>
                       </div>
                     </td>
