@@ -208,8 +208,8 @@ export default function InvestmentFlowDiagram({ pledges, baseCurrency = "SEK" }:
       {/* Growth bar */}
       <div className="mb-3">
         <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
-          <span>Invested: <span className="font-mono font-bold text-foreground">{totalInvested.toLocaleString()} ${baseCurrency}</span></span>
-          <span>Expected Payout: <span className="font-mono font-bold text-mackerel">{totalPayout.toLocaleString()} ${baseCurrency}</span></span>
+          <span>Invested: <span className="font-mono font-bold text-foreground">{totalInvested.toLocaleString()} {baseCurrency}</span></span>
+          <span>Expected Payout: <span className="font-mono font-bold text-mackerel">{totalPayout.toLocaleString()} {baseCurrency}</span></span>
         </div>
         <div className="h-2 bg-muted overflow-hidden relative">
           <motion.div
@@ -227,7 +227,7 @@ export default function InvestmentFlowDiagram({ pledges, baseCurrency = "SEK" }:
         </div>
         <div className="flex items-center justify-between text-[9px] text-muted-foreground mt-0.5">
           <span>{Math.round(progressPercent)}% elapsed</span>
-          <span>+{(totalPayout - totalInvested).toLocaleString()} ${baseCurrency} profit</span>
+          <span>+{(totalPayout - totalInvested).toLocaleString()} {baseCurrency} profit</span>
         </div>
       </div>
 
@@ -255,10 +255,10 @@ export default function InvestmentFlowDiagram({ pledges, baseCurrency = "SEK" }:
                 ? "NOW"
                 : format(node.date, "d MMM yyyy");
               const displayAmount = isCurrent
-                ? `~${node.totalAmount.toLocaleString()} ${baseCurrency}`
+                ? `~${node.totalAmount.toLocaleString()} {baseCurrency}`
                 : node.items.length === 1
-                  ? `${node.totalAmount.toLocaleString()} ${baseCurrency}`
-                  : `${node.items.length}× = ${node.totalAmount.toLocaleString()} ${baseCurrency}`;
+                  ? `${node.totalAmount.toLocaleString()} {baseCurrency}`
+                  : `${node.items.length}× = ${node.totalAmount.toLocaleString()} {baseCurrency}`;
 
               return (
                 <Tooltip key={`node-${i}`}>
@@ -303,7 +303,7 @@ export default function InvestmentFlowDiagram({ pledges, baseCurrency = "SEK" }:
                       node.items.map((item, j) => (
                         <div key={j} className="border-t border-border pt-1">
                           <p className="text-muted-foreground">{item.label}</p>
-                          <p className="font-mono font-bold">{item.amount.toLocaleString()} ${baseCurrency}</p>
+                          <p className="font-mono font-bold">{item.amount.toLocaleString()} {baseCurrency}</p>
                         </div>
                       ))
                     ) : (
@@ -347,10 +347,10 @@ export default function InvestmentFlowDiagram({ pledges, baseCurrency = "SEK" }:
                         {isCurrent ? "YOU ARE HERE" : format(node.date, "d MMM yyyy")}
                       </div>
                       {node.items.map((item, j) => (
-                        <div key={j} className="text-[9px] text-muted-foreground">{item.label} — <span className="font-mono font-bold text-foreground">{item.amount.toLocaleString()} ${baseCurrency}</span></div>
+                        <div key={j} className="text-[9px] text-muted-foreground">{item.label} — <span className="font-mono font-bold text-foreground">{item.amount.toLocaleString()} {baseCurrency}</span></div>
                       ))}
                       {isCurrent && (
-                        <div className="text-[9px] text-muted-foreground">Est. value: <span className="font-mono font-bold text-foreground">~{node.totalAmount.toLocaleString()} ${baseCurrency}</span></div>
+                        <div className="text-[9px] text-muted-foreground">Est. value: <span className="font-mono font-bold text-foreground">~{node.totalAmount.toLocaleString()} {baseCurrency}</span></div>
                       )}
                     </div>
                   </motion.div>
