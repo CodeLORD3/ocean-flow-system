@@ -203,13 +203,16 @@ export default function PortalOpportunities() {
               <option value="open">Open for Investment</option>
               <option value="funded">Fully Funded</option>
             </select>
-            <input
-              type="number"
-              value={minInvestment}
-              onChange={(e) => setMinInvestment(e.target.value)}
-              placeholder="Min amount"
-              className="h-9 w-28 bg-muted/50 border border-border px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
-            />
+            <div className="relative group/tip">
+              <input
+                type="number"
+                value={minInvestment}
+                onChange={(e) => setMinInvestment(e.target.value)}
+                placeholder="Max min. investment (kr)"
+                className="h-9 w-44 bg-muted/50 border border-border px-3 pr-7 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+              />
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground cursor-help text-xs" title="Filter offers by their minimum investment requirement.">ℹ</span>
+            </div>
             <select
               value={returnRange}
               onChange={(e) => setReturnRange(e.target.value)}
