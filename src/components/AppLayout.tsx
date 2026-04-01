@@ -150,7 +150,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                       <DropdownMenuItem
                         key={store.id}
                         className={`text-xs gap-2 ${site === "shop" && activeStoreName === store.name ? "bg-muted font-medium" : ""}`}
-                        onClick={() => { setSite("shop"); setActiveStore(store.id, store.name); }}
+                        onClick={() => { setSite("shop"); setActiveStore(store.id, store.name); switchTab("/"); }}
                       >
                         <Store className="h-3 w-3" /> {store.name}
                       </DropdownMenuItem>
