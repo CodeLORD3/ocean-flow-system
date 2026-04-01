@@ -95,6 +95,7 @@ export default function PortalProfile() {
       telephone: formData.telephone || null,
       address: formData.address || null,
       base_currency: formData.base_currency,
+      investor_classification: formData.investor_classification || null,
     };
     const { data, error } = await supabase
       .from("investor_profiles")
