@@ -112,6 +112,28 @@ export default function PortalOpportunities() {
         </div>
       )}
 
+      {/* IBAN reminder banner */}
+      {showIbanBanner && (
+        <div className="border border-primary/30 bg-primary/5 px-4 py-2.5 flex items-center gap-2.5">
+          <Landmark className="h-4 w-4 text-primary shrink-0" />
+          <p className="text-[11px] text-foreground leading-relaxed flex-1">
+            <span className="font-semibold">Add your payout IBAN</span> to receive returns at maturity. Without it, we can't pay you back automatically.
+          </p>
+          <button
+            onClick={() => switchTab("/portal/profile")}
+            className="shrink-0 px-3 py-1 bg-primary text-primary-foreground text-[11px] font-semibold hover:bg-primary/90 transition-colors flex items-center gap-1"
+          >
+            Add IBAN <ArrowRight className="h-3 w-3" />
+          </button>
+          <button
+            onClick={() => { setIbanBannerDismissed(true); sessionStorage.setItem("iban-banner-dismissed", "true"); }}
+            className="text-muted-foreground hover:text-foreground shrink-0"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       {/* Investment Map */}
       <InvestmentMap companies={companies} offers={offers} onOfferClick={(id) => {
         const offer = offers.find((o: any) => o.id === id);
