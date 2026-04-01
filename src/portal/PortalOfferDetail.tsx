@@ -717,11 +717,11 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                   <div className="border border-border bg-muted/20 p-2.5 space-y-1">
                     <div className="flex justify-between text-[11px]">
                       <span className="text-muted-foreground">You receive</span>
-                      <span className="font-mono font-bold text-mackerel">{calcResult.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kr</span>
+                      <span className="font-mono font-bold text-mackerel">{calcResult.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} {cur}</span>
                     </div>
                     <div className="flex justify-between text-[11px]">
                       <span className="text-muted-foreground">Profit</span>
-                      <span className="font-mono font-semibold text-mackerel">+{(calcResult - Number(calcAmount)).toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kr</span>
+                      <span className="font-mono font-semibold text-mackerel">+{(calcResult - Number(calcAmount)).toLocaleString("sv-SE", { maximumFractionDigits: 0 })} {cur}</span>
                     </div>
                   </div>
                 ) : (
@@ -793,8 +793,8 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
           <InfoRow label="Product" value={offer.title} />
           <InfoRow label="Origin" value={o.origin} />
           <InfoRow label="Volume" value={o.volume} />
-          <InfoRow label="Purchase Price" value={o.purchase_price ? `${Number(o.purchase_price).toLocaleString()} kr` : "—"} />
-          <InfoRow label="Sales Value" value={o.sales_value ? `${Number(o.sales_value).toLocaleString()} kr` : "—"} />
+          <InfoRow label="Purchase Price" value={o.purchase_price ? `${Number(o.purchase_price).toLocaleString()} ${cur}` : "—"} />
+          <InfoRow label="Sales Value" value={o.sales_value ? `${Number(o.sales_value).toLocaleString()} ${cur}` : "—"} />
           <InfoRow label="Gross Margin" value={o.gross_margin ? `${Number(o.gross_margin).toFixed(1)}%` : "—"} />
         </Section>
 
