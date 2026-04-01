@@ -13,7 +13,7 @@ export default function PortalPortfolio() {
   const { openOfferTab, switchTab } = usePortalTabs();
   const [tab, setTab] = useState<"active" | "history">("active");
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
-  type SortKey = "name" | "amount" | "rate" | "payout" | "maturity" | "daysToMaturity" | "status";
+  type SortKey = "name" | "amount" | "rate" | "payout" | "startDate" | "maturity" | "daysToMaturity" | "status";
   const [sortKey, setSortKey] = useState<SortKey>("maturity");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
@@ -94,6 +94,9 @@ export default function PortalPortfolio() {
           cmp = pA - pB;
           break;
         }
+        case "startDate":
+          cmp = (oA?.purchase_date || "").localeCompare(oB?.purchase_date || "");
+          break;
         case "maturity":
           cmp = (oA?.maturity_date || "").localeCompare(oB?.maturity_date || "");
           break;
@@ -249,6 +252,7 @@ export default function PortalPortfolio() {
               <th className="text-right p-2 font-medium cursor-pointer hover:text-foreground" onClick={() => toggleSort("amount")}>Amount Invested <SortIcon col="amount" /></th>
               <th className="text-right p-2 font-medium cursor-pointer hover:text-foreground" onClick={() => toggleSort("rate")}>Return Rate <SortIcon col="rate" /></th>
               <th className="text-right p-2 font-medium cursor-pointer hover:text-foreground" onClick={() => toggleSort("payout")}>{tab === "history" ? "Total Payout" : "Expected Payout"} <SortIcon col="payout" /></th>
+              <th className="text-left p-2 font-medium cursor-pointer hover:text-foreground" onClick={() => toggleSort("startDate")}>Start Date <SortIcon col="startDate" /></th>
               <th className="text-left p-2 font-medium cursor-pointer hover:text-foreground" onClick={() => toggleSort("maturity")}>Maturity Date <SortIcon col="maturity" /></th>
               <th className="text-right p-2 font-medium">Duration</th>
               {tab === "active" && <th className="text-right p-2 font-medium cursor-pointer hover:text-foreground" onClick={() => toggleSort("daysToMaturity")}>Days to Maturity <SortIcon col="daysToMaturity" /></th>}
@@ -266,7 +270,7 @@ export default function PortalPortfolio() {
               const isExpanded = expandedRow === p.id;
                const rowCompany = offer?.company_id ? companyMap[offer.company_id] : null;
                const cur = getCurrency(rowCompany?.country);
-               const colCount = tab === "active" ? 9 : 8;
+               const colCount = tab === "active" ? 10 : 9;
 
               return (
                 <>
@@ -292,6 +296,9 @@ export default function PortalPortfolio() {
                     <td className="p-2 text-right text-foreground font-mono">{Number(p.amount).toLocaleString()} {cur}</td>
                     <td className="p-2 text-right text-mackerel font-semibold">{rate.toFixed(1)}%</td>
                     <td className="p-2 text-right text-foreground font-semibold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} {cur}</td>
+                    <td className="p-2 text-muted-foreground">
+                      {offer?.purchase_date ? format(parseISO(offer.purchase_date), "d MMM yyyy") : "—"}
+                    </td>
                     <td className="p-2 text-muted-foreground">
                       {offer?.maturity_date ? format(parseISO(offer.maturity_date), "d MMM yyyy") : "—"}
                     </td>
