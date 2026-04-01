@@ -1,4 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import { CalendarIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Save, Shield, User, CheckCircle, Trash2, Mail, AlertTriangle, Upload, FileCheck, Clock, XCircle } from "lucide-react";
