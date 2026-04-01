@@ -285,7 +285,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
               </button>
               {(minPledge > 0 || remaining < target) && (
                 <p className="text-[10px] text-muted-foreground text-center">
-                  {effectiveMin > 0 && `Min: ${effectiveMin.toLocaleString()} {cur}`}
+                  {effectiveMin > 0 && `Min: ${effectiveMin.toLocaleString()} ${cur}`}
                   {effectiveMin > 0 && maxPledge ? " · " : ""}
                   {maxPledge && `Max: ${maxPledge.toLocaleString()} ${cur}`}
                   {(effectiveMin > 0 || maxPledge) && remaining < target ? " · " : ""}
@@ -821,7 +821,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
           <InfoRow label="Duration" value={tenorDays ? `${tenorDays} days` : "—"} />
           <InfoRow label="Expected Return" value={`${rate.toFixed(1)}%`} highlight />
           <InfoRow label="Annual Return" value={annualReturn ? `${annualReturn.toFixed(1)}%` : "—"} highlight />
-          <InfoRow label="Profit (on full)" value={`+${profitKr.toLocaleString()} {cur}`} highlight />
+          <InfoRow label="Profit (on full)" value={`+${profitKr.toLocaleString()} ${cur}`} highlight />
         </Section>
 
         <Section title="Underlying Transaction" icon={<Package className="h-3.5 w-3.5 text-primary" />}>
