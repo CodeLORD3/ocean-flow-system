@@ -20,6 +20,22 @@ export default function PortalOpportunities() {
   const [viewMode, setViewMode] = useState<"rows" | "cards">("rows");
   const [riskDismissed, setRiskDismissed] = useState(() => sessionStorage.getItem("risk-banner-dismissed") === "true");
   const [ibanBannerDismissed, setIbanBannerDismissed] = useState(() => sessionStorage.getItem("iban-banner-dismissed") === "true");
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  // Close mobile filters on outside click
+  useEffect(() => {
+    if (!mobileFiltersOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setMobileFiltersOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [mobileFiltersOpen]);
+
+  const hasActiveFilters = statusFilter !== "all" || minInvestment !== "" || returnRange !== "all" || sectorFilter !== "all" || countryFilter !== "all" || currencyFilter !== "all";
 
   const { data: offers = [], isLoading } = useQuery({
     queryKey: ["portal-all-offers"],
