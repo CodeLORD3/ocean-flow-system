@@ -78,6 +78,7 @@ export default function PortalProfile() {
       country: formData.country,
       telephone: formData.telephone || null,
       address: formData.address || null,
+      base_currency: formData.base_currency,
     };
     const { data, error } = await supabase
       .from("investor_profiles")
