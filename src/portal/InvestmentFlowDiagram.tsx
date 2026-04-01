@@ -206,7 +206,7 @@ export default function InvestmentFlowDiagram({ pledges }: { pledges: Pledge[] }
       </div>
 
       {/* Growth bar */}
-      <div className="mb-5">
+      <div className="mb-3">
         <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
           <span>Invested: <span className="font-mono font-bold text-foreground">{totalInvested.toLocaleString()} kr</span></span>
           <span>Expected Payout: <span className="font-mono font-bold text-mackerel">{totalPayout.toLocaleString()} kr</span></span>
