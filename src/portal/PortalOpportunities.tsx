@@ -343,6 +343,15 @@ export default function PortalOpportunities() {
                         {rate.toFixed(1)}%
                       </span>
                     </td>
+                    <td className="px-2 py-1.5 text-center">
+                      {risk ? (
+                        <span className={`px-1.5 py-0.5 text-[9px] font-semibold border ${risk.cls}`}>
+                          {risk.label}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
                     <td className="px-2 py-1.5 text-center whitespace-nowrap">
                       <div className="text-[10px] text-muted-foreground">
                         {purchaseDate ? format(purchaseDate, "d MMM") : "—"} → {maturity ? format(maturity, "d MMM yyyy") : "—"}
