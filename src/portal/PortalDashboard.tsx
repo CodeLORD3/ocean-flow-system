@@ -125,7 +125,8 @@ export default function PortalDashboard() {
               View all <ArrowUpRight className="h-3 w-3" />
             </button>
           </div>
-          <table className="w-full text-xs">
+          <div className="overflow-x-auto">
+          <table className="w-full text-xs min-w-[600px]">
             <thead>
               <tr className="border-b border-border text-[10px] text-muted-foreground">
                 <th className="text-left p-2 pl-3 font-medium">Offer</th>
