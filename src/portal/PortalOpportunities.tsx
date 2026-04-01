@@ -436,7 +436,7 @@ export default function PortalOpportunities() {
                     <td className="px-2 py-1.5 text-right font-mono text-foreground whitespace-nowrap">
                       {funded.toLocaleString()} / {target.toLocaleString()} {cur}
                     </td>
-                    <td className="px-2 py-1.5">
+                    <td className="px-2 py-1.5 whitespace-nowrap">
                       <div className="min-w-[5rem] mx-auto whitespace-nowrap">
                         <div className="h-1.5 bg-muted overflow-hidden flex">
                           <div className="h-full bg-mackerel transition-all" style={{ width: `${confirmedPct}%` }} />
