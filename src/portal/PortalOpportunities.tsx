@@ -464,7 +464,7 @@ export default function PortalOpportunities() {
                     <div>
                       <div className="text-[10px] text-muted-foreground">Min. invest</div>
                       <div className="text-xs font-bold text-foreground font-mono">
-                        {Number(offer.min_pledge) > 0 ? `${Number(offer.min_pledge).toLocaleString()}` : "—"}
+                        {Number(offer.min_pledge) > 0 ? `${Number(offer.min_pledge).toLocaleString()} ${cur}` : "—"}
                       </div>
                     </div>
                   </div>
