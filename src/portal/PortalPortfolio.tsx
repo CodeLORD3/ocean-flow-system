@@ -318,7 +318,7 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
           </div>
           <div className="flex justify-between text-[11px]">
             <span className="text-muted-foreground">{status === "Paid Out" ? "Total Payout" : "Expected Payout"}</span>
-            <span className="text-foreground font-mono font-semibold">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</span>
+            <span className="text-foreground font-mono font-semibold">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} {cur}</span>
           </div>
           <div className="flex justify-between text-[11px]">
             <span className="text-muted-foreground">Maturity</span>
