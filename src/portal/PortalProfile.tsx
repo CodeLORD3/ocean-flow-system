@@ -59,6 +59,7 @@ export default function PortalProfile() {
           first_name: meta.first_name || "",
           last_name: meta.last_name || "",
           country: meta.country || "Sweden",
+          date_of_birth: "",
           telephone: "",
           address: "",
           base_currency: "SEK",
