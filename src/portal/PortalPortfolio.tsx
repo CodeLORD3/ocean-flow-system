@@ -185,9 +185,9 @@ export default function PortalPortfolio() {
                         )}
                       </div>
                     </td>
-                    <td className="p-2 text-right text-foreground font-mono">{Number(p.amount).toLocaleString()} kr</td>
+                    <td className="p-2 text-right text-foreground font-mono">{Number(p.amount).toLocaleString()} {cur}</td>
                     <td className="p-2 text-right text-mackerel font-semibold">{rate.toFixed(1)}%</td>
-                    <td className="p-2 text-right text-foreground font-semibold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</td>
+                    <td className="p-2 text-right text-foreground font-semibold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} {cur}</td>
                     <td className="p-2 text-muted-foreground">
                       {offer?.maturity_date ? format(parseISO(offer.maturity_date), "d MMM yyyy") : "—"}
                     </td>
