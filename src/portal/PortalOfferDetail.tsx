@@ -8,6 +8,7 @@ import { parseISO, format, addBusinessDays } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
 import { getCurrency } from "@/lib/currency";
+import { generateConfirmationPdf } from "@/lib/generateConfirmationPdf";
 
 export default function PortalOfferDetail({ overrideId }: { overrideId?: string } = {}) {
   const { id: paramId } = useParams<{ id: string }>();
