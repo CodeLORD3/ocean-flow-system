@@ -157,6 +157,10 @@ export default function TradeOffers() {
     setEditingOfferId(offer.id);
     setIsCreating(true);
     setSelectedOfferId(null);
+    setExistingImageUrl(offer.product_image_url || null);
+    setExistingDocUrl(offer.document_url || null);
+    setImageFile(null);
+    setDocFile(null);
   };
 
   const duplicateOffer = (offer: any) => {
