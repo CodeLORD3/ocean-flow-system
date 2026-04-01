@@ -257,6 +257,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
               <p className="text-[10px] text-muted-foreground">You can invest additional amounts below.</p>
             </div>
           )}
+          {stepIndicator}
 
           {/* ── STEP 1: Enter Amount ── */}
           {step === 1 && (
