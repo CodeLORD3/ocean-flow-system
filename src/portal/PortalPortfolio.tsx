@@ -413,7 +413,7 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
 
   return (
     <div className="px-6 py-4 border-t border-border/30">
-      <InvestmentTimeline status={status} />
+      <InvestmentTimeline status={status} maturityDate={offer?.maturity_date} />
       <div className="grid grid-cols-3 gap-4">
         {/* Status explanation */}
         <div className="space-y-2">
