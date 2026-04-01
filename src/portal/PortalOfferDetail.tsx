@@ -183,7 +183,9 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   const pledgeReturn = pledgeAmt * (1 + rate / 100);
   const pledgeProfit = pledgeReturn - pledgeAmt;
   const remaining = target - funded;
-  const effectiveMin = (minPledge > 0 && remaining < minPledge && remaining > 0) ? 1 : minPledge;
+  const remainingAfterPending = target - funded - pending;
+  const isFullyCommitted = remainingAfterPending <= 0 && offer.status === "Open";
+  const effectiveMin = (minPledge > 0 && remainingAfterPending < minPledge && remainingAfterPending > 0) ? 1 : minPledge;
 
   const maturityDate = new Date(offer.maturity_date);
   const tenorDays = o.tenor_days ?? (o.purchase_date
