@@ -38,7 +38,7 @@ export default function InvestmentFlowDiagram({ pledges }: { pledges: Pledge[] }
     }
 
     const now = new Date();
-    const rawNodes: { date: Date; label: string; amount: number; type: "start" | "payout"; status: "completed" | "upcoming"; offerTitle: string }[] = [];
+    const rawNodes: { date: Date; label: string; amount: number; type: "committed" | "start" | "payout"; status: "completed" | "upcoming"; offerTitle: string }[] = [];
 
     let invested = 0;
     let payout = 0;
