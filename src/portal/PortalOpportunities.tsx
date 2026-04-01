@@ -122,7 +122,7 @@ export default function PortalOpportunities() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {/* Risk disclaimer banner */}
       {!riskDismissed && (
         <div className="border border-amber-200 bg-amber-50 px-4 py-2.5 flex items-start gap-2.5">
