@@ -40,7 +40,7 @@ export default function ReturnsChart({ pledges, companyMap, baseCurrency = "SEK"
     const now = new Date();
 
     const paidOut = pledges.filter((p: any) => ["Paid Out", "Repaid"].includes(p.status));
-    const active = pledges.filter((p: any) => ["Active", "Matured"].includes(p.status));
+    const active = pledges.filter((p: any) => ["Active", "Matured", "Pending Payment"].includes(p.status));
 
     const allDates: Date[] = [];
     pledges.forEach((p: any) => {
