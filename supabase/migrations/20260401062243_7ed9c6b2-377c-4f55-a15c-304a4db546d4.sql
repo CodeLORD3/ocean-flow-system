@@ -1,0 +1,1 @@
+UPDATE about_us_settings SET hero_title = 'About Makrill Trade' WHERE id = '129e6763-e86a-4a60-9516-c3583d870598';
