@@ -164,7 +164,7 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
             Active Deals — Where Your Money Works
           </h2>
           <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-0.5 truncate">
-            {activeMarkers.length} {activeMarkers.length === 1 ? "location" : "locations"} · {totalDeals} active {totalDeals === 1 ? "deal" : "deals"} · {totalValue.toLocaleString()} kr total
+            {activeMarkers.length} {activeMarkers.length === 1 ? "location" : "locations"} · {totalDeals} active {totalDeals === 1 ? "deal" : "deals"}
           </p>
         </div>
         <div className="flex items-center gap-3 text-[9px] text-muted-foreground shrink-0">
