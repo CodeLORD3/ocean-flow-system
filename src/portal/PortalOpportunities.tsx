@@ -107,7 +107,12 @@ export default function PortalOpportunities() {
     const company = (offer as any).company_id ? companyMap[(offer as any).company_id] : null;
     const isMatured = daysToMaturity !== null && daysToMaturity <= 0;
     const cur = getCurrency(company?.country);
-    return { target, funded, pending, rate, progress, confirmedPct, pendingPct, maturity, purchaseDate, daysToMaturity, tenorDays, company, isMatured, cur };
+    // Batch / period label derived from purchase_date or maturity_date
+    const batchMonth = purchaseDate ? format(purchaseDate, "MMM yyyy") : maturity ? format(maturity, "MMM yyyy") : null;
+    const dateRange = purchaseDate && maturity
+      ? `${format(purchaseDate, "d MMM")} → ${format(maturity, "d MMM yyyy")}`
+      : null;
+    return { target, funded, pending, rate, progress, confirmedPct, pendingPct, maturity, purchaseDate, daysToMaturity, tenorDays, company, isMatured, cur, batchMonth, dateRange };
   };
 
 
