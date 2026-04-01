@@ -213,45 +213,40 @@ export default function InvestmentLog() {
   ];
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <HandCoins className="h-7 w-7 text-emerald-400" />
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Investment Log</h1>
-          <p className="text-sm text-muted-foreground">
-            Track and manage all investor commitments
-          </p>
-        </div>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <HandCoins className="h-5 w-5 text-emerald-400" />
+        <h1 className="text-lg font-bold text-foreground">Investment Log</h1>
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-4 gap-3">
         <Card>
-          <CardContent className="pt-4 pb-3">
-            <p className="text-xs text-muted-foreground">Total Investments</p>
-            <p className="text-2xl font-bold font-mono">{filtered.length}</p>
+          <CardContent className="p-4">
+            <div className="text-[10px] text-muted-foreground mb-1">Total Investments</div>
+            <div className="text-lg font-bold font-mono">{filtered.length}</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4 pb-3">
-            <p className="text-xs text-muted-foreground">Total Funded</p>
-            <p className="text-2xl font-bold font-mono text-emerald-500">
+          <CardContent className="p-4">
+            <div className="text-[10px] text-muted-foreground mb-1">Total Funded</div>
+            <div className="text-lg font-bold font-mono text-emerald-500">
               {totalFunded.toLocaleString("sv-SE")} kr
-            </p>
+            </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4 pb-3">
-            <p className="text-xs text-muted-foreground">Pending Payment</p>
-            <p className="text-2xl font-bold font-mono text-amber-600">{counts.pending}</p>
+          <CardContent className="p-4">
+            <div className="text-[10px] text-muted-foreground mb-1">Pending Payment</div>
+            <div className="text-lg font-bold font-mono text-amber-600">{counts.pending}</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4 pb-3">
-            <p className="text-xs text-muted-foreground">Unique Investors</p>
-            <p className="text-2xl font-bold font-mono">
+          <CardContent className="p-4">
+            <div className="text-[10px] text-muted-foreground mb-1">Unique Investors</div>
+            <div className="text-lg font-bold font-mono">
               {new Set(filtered.map((p: any) => p.user_id)).size}
-            </p>
+            </div>
           </CardContent>
         </Card>
       </div>
