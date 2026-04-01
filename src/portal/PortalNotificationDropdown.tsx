@@ -76,6 +76,23 @@ export default function PortalNotificationDropdown({ onNavigate }: Props) {
     },
   });
 
+  const dismissNotification = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("notifications").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["portal-notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["portal-notification-count"] });
+    },
+  });
+
+  const markOneRead = async (id: string) => {
+    await supabase.from("notifications").update({ is_read: true }).eq("id", id);
+    queryClient.invalidateQueries({ queryKey: ["portal-notifications"] });
+    queryClient.invalidateQueries({ queryKey: ["portal-notification-count"] });
+  };
+
   const getIcon = (message: string) => {
     if (message.toLowerCase().includes("payout") || message.toLowerCase().includes("paid") || message.toLowerCase().includes("sent")) {
       return <Banknote className="h-3.5 w-3.5 text-mackerel" />;
@@ -90,13 +107,7 @@ export default function PortalNotificationDropdown({ onNavigate }: Props) {
   };
 
   const handleClick = (n: any) => {
-    // Mark this one as read
-    if (!n.is_read) {
-      supabase.from("notifications").update({ is_read: true }).eq("id", n.id).then(() => {
-        queryClient.invalidateQueries({ queryKey: ["portal-notifications"] });
-        queryClient.invalidateQueries({ queryKey: ["portal-notification-count"] });
-      });
-    }
+    if (!n.is_read) markOneRead(n.id);
     setOpen(false);
     if (n.target_page) onNavigate(n.target_page);
   };
@@ -143,28 +154,62 @@ export default function PortalNotificationDropdown({ onNavigate }: Props) {
               </div>
             ) : (
               notifications.map((n: any) => (
-                <button
+                <div
                   key={n.id}
-                  onClick={() => handleClick(n)}
-                  className={`w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-muted/40 transition-colors border-b border-border/30 ${
-                    !n.is_read ? "bg-primary/[0.03]" : ""
+                  className={`relative flex items-start gap-3 px-4 py-3 border-b border-border/30 transition-colors group ${
+                    !n.is_read
+                      ? "bg-primary/[0.06] hover:bg-primary/[0.10]"
+                      : "hover:bg-muted/40"
                   }`}
                 >
-                  <div className="mt-0.5 shrink-0">
-                    {getIcon(n.message)}
+                  {/* Unread indicator bar */}
+                  {!n.is_read && (
+                    <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-primary" />
+                  )}
+
+                  {/* Clickable main area */}
+                  <button
+                    onClick={() => handleClick(n)}
+                    className="flex items-start gap-3 flex-1 min-w-0 text-left"
+                  >
+                    <div className="mt-0.5 shrink-0">
+                      {getIcon(n.message)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-[11px] leading-relaxed ${!n.is_read ? "text-foreground font-semibold" : "text-muted-foreground"}`}>
+                        {n.message}
+                      </p>
+                      <span className="text-[10px] text-muted-foreground/70 mt-0.5 block">
+                        {formatDistanceToNow(parseISO(n.created_at), { addSuffix: true })}
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Action buttons */}
+                  <div className="shrink-0 flex items-center gap-0.5 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {!n.is_read && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); markOneRead(n.id); }}
+                        title="Mark as read"
+                        className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        <CheckCircle className="h-3 w-3" />
+                      </button>
+                    )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); dismissNotification.mutate(n.id); }}
+                      title="Dismiss"
+                      className="p-1 rounded hover:bg-accent text-muted-foreground hover:text-destructive transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-[11px] leading-relaxed ${!n.is_read ? "text-foreground font-semibold" : "text-muted-foreground"}`}>
-                      {n.message}
-                    </p>
-                    <span className="text-[10px] text-muted-foreground/70 mt-0.5 block">
-                      {formatDistanceToNow(parseISO(n.created_at), { addSuffix: true })}
-                    </span>
-                  </div>
+
+                  {/* Unread dot */}
                   {!n.is_read && (
                     <div className="h-2 w-2 rounded-full bg-primary mt-1.5 shrink-0" />
                   )}
-                </button>
+                </div>
               ))
             )}
           </div>
