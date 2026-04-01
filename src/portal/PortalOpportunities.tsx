@@ -11,7 +11,7 @@ import { getCurrency } from "@/lib/currency";
 export default function PortalOpportunities() {
   const { openOfferTab, switchTab } = usePortalTabs();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("open");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [minInvestment, setMinInvestment] = useState("");
   const [returnRange, setReturnRange] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"rows" | "cards">("rows");
