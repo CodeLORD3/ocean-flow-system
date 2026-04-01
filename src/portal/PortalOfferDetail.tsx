@@ -365,7 +365,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
               </div>
 
               {/* Agreement text */}
-              <div className="border border-border bg-muted/20 p-3 text-[10px] text-muted-foreground leading-relaxed space-y-2 max-h-40 overflow-y-auto">
+              <div className="border border-border bg-muted/20 p-3 text-[10px] text-muted-foreground leading-relaxed space-y-2 max-h-64 overflow-y-auto">
                 <p className="font-semibold text-foreground text-[11px]">Investment Agreement</p>
                 <p>
                   I, <strong className="text-foreground">{investorName}</strong>, hereby commit to invest{" "}
