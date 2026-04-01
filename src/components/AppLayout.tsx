@@ -123,19 +123,19 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className={`text-xs gap-2 ${site === "wholesale" ? "bg-muted font-medium" : ""}`}
-                    onClick={() => { setSite("wholesale"); setActiveStore(null, null); }}
+                    onClick={() => { setSite("wholesale"); setActiveStore(null, null); switchTab("/organisation"); }}
                   >
                     <Factory className="h-3 w-3" /> Grossist
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className={`text-xs gap-2 ${site === "production" ? "bg-muted font-medium" : ""}`}
-                    onClick={() => { setSite("production"); setActiveStore(null, null); }}
+                    onClick={() => { setSite("production"); setActiveStore(null, null); switchTab("/"); }}
                   >
                     <Factory className="h-3 w-3" /> Produktion
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className={`text-xs gap-2 ${site === "trade" ? "bg-muted font-medium" : ""}`}
-                    onClick={() => { setSite("trade"); setActiveStore(null, null); }}
+                    onClick={() => { setSite("trade"); setActiveStore(null, null); switchTab("/trade-offers"); }}
                   >
                     <TrendingUp className="h-3 w-3" /> Trade
                   </DropdownMenuItem>
@@ -150,7 +150,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                       <DropdownMenuItem
                         key={store.id}
                         className={`text-xs gap-2 ${site === "shop" && activeStoreName === store.name ? "bg-muted font-medium" : ""}`}
-                        onClick={() => { setSite("shop"); setActiveStore(store.id, store.name); }}
+                        onClick={() => { setSite("shop"); setActiveStore(store.id, store.name); switchTab("/"); }}
                       >
                         <Store className="h-3 w-3" /> {store.name}
                       </DropdownMenuItem>
