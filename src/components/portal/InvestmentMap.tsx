@@ -215,50 +215,49 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
             {/* Active company markers */}
             {activeMarkers.map((m: any) => (
               <Marker key={m.id} coordinates={m.coordinates}>
-                <circle r={6} fill="hsl(172, 62%, 32%)" fillOpacity={0.15} stroke="none" />
-                <circle
-                  r={3.5}
-                  fill="hsl(172, 62%, 32%)"
-                  stroke={selectedCompanyId === m.id ? "#0f2e3d" : "#fff"}
-                  strokeWidth={selectedCompanyId === m.id ? 2 : 1.5}
-                  className="cursor-pointer"
-                  style={{ pointerEvents: "auto" }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedCompanyId(selectedCompanyId === m.id ? null : m.id);
-                  }}
-                />
-                <text
-                  textAnchor="start"
-                  x={7}
-                  y={1}
-                  style={{
-                    fontFamily: "system-ui, sans-serif",
-                    fontSize: "8px",
-                    fontWeight: 600,
-                    fill: "#0f2e3d",
-                    cursor: "pointer",
-                    pointerEvents: "auto",
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedCompanyId(selectedCompanyId === m.id ? null : m.id);
-                  }}
-                >
-                  {m.ticker}
-                </text>
-                <text
-                  textAnchor="start"
-                  x={7}
-                  y={9}
-                  style={{
-                    fontFamily: "system-ui, sans-serif",
-                    fontSize: "6.5px",
-                    fill: "#64748b",
-                  }}
-                >
-                  {m.dealCount} {m.dealCount === 1 ? "deal" : "deals"} · {m.totalValue.toLocaleString()} {getCurrency(m.country)}
-                </text>
+                <g className="cursor-pointer" style={{ pointerEvents: "auto" }}>
+                  <title>{`${m.name}\n${m.dealCount} ${m.dealCount === 1 ? "deal" : "deals"} · ${m.totalValue.toLocaleString()} ${getCurrency(m.country)}`}</title>
+                  <circle r={6} fill="hsl(172, 62%, 32%)" fillOpacity={0.15} stroke="none" />
+                  <circle
+                    r={3.5}
+                    fill="hsl(172, 62%, 32%)"
+                    stroke={selectedCompanyId === m.id ? "#0f2e3d" : "#fff"}
+                    strokeWidth={selectedCompanyId === m.id ? 2 : 1.5}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedCompanyId(selectedCompanyId === m.id ? null : m.id);
+                    }}
+                  />
+                  <text
+                    textAnchor="start"
+                    x={7}
+                    y={1}
+                    style={{
+                      fontFamily: "system-ui, sans-serif",
+                      fontSize: "8px",
+                      fontWeight: 600,
+                      fill: "#0f2e3d",
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedCompanyId(selectedCompanyId === m.id ? null : m.id);
+                    }}
+                  >
+                    {m.ticker}
+                  </text>
+                  <text
+                    textAnchor="start"
+                    x={7}
+                    y={9}
+                    style={{
+                      fontFamily: "system-ui, sans-serif",
+                      fontSize: "6.5px",
+                      fill: "#64748b",
+                    }}
+                  >
+                    {m.dealCount} {m.dealCount === 1 ? "deal" : "deals"} · {m.totalValue.toLocaleString()} {getCurrency(m.country)}
+                  </text>
+                </g>
               </Marker>
             ))}
         </ComposableMap>
