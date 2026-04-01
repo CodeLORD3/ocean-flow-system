@@ -3,9 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Users, Award, Linkedin, Mail } from "lucide-react";
 
 const DEFAULT_TEAM = [
-  { name: "Erik Lindgren", role: "Founder & CEO", desc: "15+ years in commodity trading and structured finance across Nordic and European markets." },
-  { name: "Sofia Andersson", role: "Head of Operations", desc: "Former supply-chain director with deep expertise in seafood logistics and quality assurance." },
-  { name: "Marcus Johansson", role: "Chief Risk Officer", desc: "Background in institutional risk management and credit analysis for trade finance portfolios." },
+  { name: "Erik Lindgren", role: "Founder & CEO", desc: "15+ years in commodity trading and structured finance across Nordic and European markets.", bio: "Erik founded Makrill Trade to bridge the gap between institutional trade finance and everyday investors. He previously led commodity desks at two major Nordic banks.", experience: "15 years in commodity trading", linkedin: "#" },
+  { name: "Sofia Andersson", role: "Head of Operations", desc: "Former supply-chain director with deep expertise in seafood logistics and quality assurance.", bio: "Sofia oversees all deal operations from sourcing to settlement. Before joining, she managed logistics for one of Scandinavia's largest seafood exporters.", experience: "12 years in seafood logistics", linkedin: "#" },
+  { name: "Marcus Johansson", role: "Chief Risk Officer", desc: "Background in institutional risk management and credit analysis for trade finance portfolios.", bio: "Marcus leads credit assessment and portfolio risk monitoring. He brings experience from structured finance teams at SEB and Handelsbanken.", experience: "10 years in risk & credit analysis", linkedin: "#" },
 ];
 
 const DEFAULT_MISSION = "To democratise access to trade-finance investments that were traditionally reserved for institutions. We make it simple for individual investors to participate in real, tangible trades — from fresh Atlantic salmon to premium shellfish — while providing the supply chain with much-needed working capital.";
