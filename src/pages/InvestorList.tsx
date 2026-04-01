@@ -138,6 +138,32 @@ export default function InvestorList() {
     }
   };
 
+  const verificationBadge = (status: string) => {
+    switch (status) {
+      case "verified":
+        return <Badge className="bg-green-600/20 text-green-400 border-green-600/30 text-[9px] px-1.5 py-0">Verified</Badge>;
+      case "pending":
+        return <Badge className="bg-yellow-600/20 text-yellow-400 border-yellow-600/30 text-[9px] px-1.5 py-0">Pending</Badge>;
+      default:
+        return <Badge className="bg-red-600/20 text-red-400 border-red-600/30 text-[9px] px-1.5 py-0">Action Req.</Badge>;
+    }
+  };
+
+  const updateVerification = useMutation({
+    mutationFn: async ({ id, verification_status }: { id: string; verification_status: string }) => {
+      const { error } = await supabase
+        .from("investor_profiles" as any)
+        .update({ verification_status } as any)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["investor-profiles"] });
+      toast.success(`Verification status updated to ${vars.verification_status}`);
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
   const pending = investors.filter((i: any) => i.status === "pending");
   const reviewed = investors.filter((i: any) => i.status !== "pending");
 
