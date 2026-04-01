@@ -29,7 +29,7 @@ interface MergedNode {
   totalAmount: number;
 }
 
-export default function InvestmentFlowDiagram({ pledges }: { pledges: Pledge[] }) {
+export default function InvestmentFlowDiagram({ pledges, baseCurrency = "SEK" }: { pledges: Pledge[]; baseCurrency?: string }) {
   const activePledges = pledges.filter((p) => p.status === "Active" && p.trade_offers);
 
   const { milestones, totalInvested, totalPayout, progressPercent, earliestDate, latestDate } = useMemo(() => {

@@ -221,7 +221,7 @@ export default function PortalPortfolio() {
       <ReturnsChart pledges={pledges} companyMap={companyMap} baseCurrency={(investorProfile as any)?.base_currency || "SEK"} />
 
       {/* Investment Flow Diagram — only on active tab */}
-      {tab === "active" && <InvestmentFlowDiagram pledges={pledges as any} />}
+      {tab === "active" && <InvestmentFlowDiagram pledges={pledges as any} baseCurrency={(investorProfile as any)?.base_currency || "SEK"} />}
 
       {/* Table with tabs */}
       <div className="border border-border bg-white">
