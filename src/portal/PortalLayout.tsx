@@ -34,10 +34,10 @@ function PortalTabBar() {
         return (
           <div
             key={tab.path}
-            className={`group flex items-center gap-2 px-4 py-2 text-xs cursor-pointer border-r border-border transition-colors shrink-0 ${
+            className={`group flex items-center gap-2 px-4 py-2 text-xs cursor-pointer border-r border-white/10 transition-colors shrink-0 ${
               isActive
-                ? "bg-white text-mackerel font-semibold border-b-2 border-b-mackerel"
-                : "text-muted-foreground hover:bg-white/60 hover:text-foreground"
+                ? "bg-white/10 text-mackerel-gold font-semibold border-b-2 border-b-mackerel-gold"
+                : "text-white/50 hover:bg-white/5 hover:text-white/80"
             }`}
             onClick={() => switchTab(tab.path)}
           >
