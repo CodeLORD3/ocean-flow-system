@@ -123,8 +123,8 @@ function UserDropdown({ user, profile, onLogout, onProfile }: {
         <div className="h-7 w-7 bg-mackerel rounded-full flex items-center justify-center">
           <span className="text-white font-bold text-[10px]">{initials}</span>
         </div>
-        <span className="max-w-[120px] truncate hidden sm:inline">{displayName}</span>
-        <ChevronDown className="h-3 w-3" />
+        <span className="max-w-[100px] truncate hidden md:inline">{displayName}</span>
+        <ChevronDown className="h-3 w-3 hidden sm:block" />
       </button>
 
       {open && (
