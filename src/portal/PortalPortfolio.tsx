@@ -12,6 +12,7 @@ import { getCurrency } from "@/lib/currency";
 
 export default function PortalPortfolio() {
   const { openOfferTab, switchTab } = usePortalTabs();
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState<"active" | "history">("active");
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   type SortKey = "name" | "amount" | "rate" | "payout" | "startDate" | "maturity" | "daysToMaturity" | "status";
