@@ -335,7 +335,7 @@ export default function PortalPortfolio() {
   );
 }
 
-function InvestmentTimeline({ status }: { status: string }) {
+function InvestmentTimeline({ status, maturityDate }: { status: string; maturityDate?: string | null }) {
   const steps = [
     { label: "Investment committed", key: "committed" },
     { label: "Payment received", key: "received" },
@@ -350,11 +350,13 @@ function InvestmentTimeline({ status }: { status: string }) {
     : status === "Pending Payment" ? 1
     : 0;
 
+  const maturityLabel = maturityDate ? format(parseISO(maturityDate), "d MMM yyyy") : "maturity";
+
   const statusMessage =
-    status === "Pending Payment" ? "Waiting for your bank transfer to be received and matched. This typically takes 1–2 business days."
-    : status === "Active" ? "Your funds have been received and deployed. You'll receive your payout at maturity."
-    : status === "Matured" ? "Your investment has matured. Payout is being processed by the company."
-    : status === "Paid Out" || status === "Repaid" ? "Investment complete — funds have been transferred to your account."
+    status === "Pending Payment" ? "Waiting for your bank transfer — typically confirmed within 1–2 business days."
+    : status === "Active" ? `Your funds are deployed. Payout on ${maturityLabel}.`
+    : status === "Matured" ? "Your investment has matured. Payout is being processed."
+    : status === "Paid Out" || status === "Repaid" ? "Investment successfully closed. Payout sent."
     : null;
 
   return (
