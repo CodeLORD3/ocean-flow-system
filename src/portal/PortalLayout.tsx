@@ -123,7 +123,7 @@ function UserDropdown({ user, profile, onLogout, onProfile }: {
         <div className="h-7 w-7 bg-mackerel rounded-full flex items-center justify-center">
           <span className="text-white font-bold text-[10px]">{initials}</span>
         </div>
-        <span className="text-xs text-white/70">{displayName}</span>
+        <span className="text-xs text-white/70 hidden sm:inline">{displayName}</span>
         <ChevronDown className="h-3 w-3 hidden sm:block" />
       </button>
 
