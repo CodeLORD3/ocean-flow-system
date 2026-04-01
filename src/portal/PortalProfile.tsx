@@ -1,4 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import { CalendarIcon } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Save, Shield, User, CheckCircle, Trash2, Mail, AlertTriangle, Upload, FileCheck, Clock, XCircle } from "lucide-react";
@@ -11,7 +15,7 @@ export default function PortalProfile() {
   const [user, setUser] = useState<any>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [profileMissing, setProfileMissing] = useState(false);
-  const [formData, setFormData] = useState({ first_name: "", last_name: "", country: "", telephone: "", address: "", base_currency: "SEK", investor_classification: "" });
+  const [formData, setFormData] = useState({ first_name: "", last_name: "", country: "", date_of_birth: "", telephone: "", address: "", base_currency: "SEK", investor_classification: "" });
   const [savingProfile, setSavingProfile] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<{ name: string; url: string }[]>([]);
@@ -41,6 +45,7 @@ export default function PortalProfile() {
           first_name: (data as any).first_name || "",
           last_name: (data as any).last_name || "",
           country: (data as any).country || "",
+          date_of_birth: (data as any).date_of_birth || "",
           telephone: (data as any).telephone || "",
           address: (data as any).address || "",
           base_currency: (data as any).base_currency || "SEK",
@@ -54,6 +59,7 @@ export default function PortalProfile() {
           first_name: meta.first_name || "",
           last_name: meta.last_name || "",
           country: meta.country || "Sweden",
+          date_of_birth: "",
           telephone: "",
           address: "",
           base_currency: "SEK",
@@ -92,6 +98,7 @@ export default function PortalProfile() {
       first_name: formData.first_name,
       last_name: formData.last_name,
       country: formData.country,
+      date_of_birth: formData.date_of_birth || null,
       telephone: formData.telephone || null,
       address: formData.address || null,
       base_currency: formData.base_currency,
@@ -208,6 +215,33 @@ export default function PortalProfile() {
               onChange={(e) => setFormData(p => ({ ...p, country: e.target.value }))}
               className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d]"
             />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Date of Birth <span className="text-muted-foreground">(optional)</span></label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className={cn(
+                    "w-full h-9 px-3 border border-border rounded text-sm text-left flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d] bg-white",
+                    !formData.date_of_birth && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="h-3.5 w-3.5 opacity-50" />
+                  {formData.date_of_birth ? format(new Date(formData.date_of_birth), "PPP") : "Select date"}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={formData.date_of_birth ? new Date(formData.date_of_birth) : undefined}
+                  onSelect={(date) => setFormData(p => ({ ...p, date_of_birth: date ? format(date, "yyyy-MM-dd") : "" }))}
+                  disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           <div>
             <label className="text-xs text-muted-foreground mb-1 block">Telephone</label>
