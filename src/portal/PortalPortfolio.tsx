@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Banknote, TrendingUp, Target, Percent, ChevronDown, ChevronUp, Clock, CreditCard, CheckCircle, AlertTriangle, Award, Briefcase, ArrowRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { toast } from "sonner";
+import { Banknote, TrendingUp, Target, Percent, ChevronDown, ChevronUp, Clock, CreditCard, CheckCircle, AlertTriangle, Award, Briefcase, ArrowRight, ArrowUpDown, ArrowUp, ArrowDown, XCircle } from "lucide-react";
 import { parseISO, format, differenceInDays } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
@@ -11,6 +12,7 @@ import { getCurrency } from "@/lib/currency";
 
 export default function PortalPortfolio() {
   const { openOfferTab, switchTab } = usePortalTabs();
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState<"active" | "history">("active");
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   type SortKey = "name" | "amount" | "rate" | "payout" | "startDate" | "maturity" | "daysToMaturity" | "status";
@@ -330,6 +332,11 @@ export default function PortalPortfolio() {
                           expectedReturn={expectedReturn}
                           daysToMaturity={daysToMaturity}
                           onViewOffer={() => offer && openOfferTab(offer.id, offer.title)}
+                          onCancelled={() => {
+                            toast.success("Investment commitment withdrawn.");
+                            queryClient.invalidateQueries({ queryKey: ["portal-portfolio"] });
+                            setExpandedRow(null);
+                          }}
                         />
                       </td>
                     </tr>
@@ -429,14 +436,17 @@ function InvestmentTimeline({ status, maturityDate }: { status: string; maturity
   );
 }
 
-function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, daysToMaturity, onViewOffer }: {
+function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, daysToMaturity, onViewOffer, onCancelled }: {
   pledge: any;
   offer: any;
   companyMap: Record<string, any>;
   expectedReturn: number;
   daysToMaturity: number | null;
   onViewOffer: () => void;
+  onCancelled?: () => void;
 }) {
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const status = pledge.status || "Active";
   const company = offer?.company_id ? companyMap[offer.company_id] : null;
   const rate = offer ? Number(offer.interest_rate) : 0;
@@ -525,6 +535,12 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
             <p className="text-[10px] text-amber-700 italic">
               Use the exact reference number so your payment can be matched.
             </p>
+            <button
+              onClick={() => setShowCancelDialog(true)}
+              className="mt-2 w-full h-8 border border-destructive/30 text-destructive text-[11px] font-medium hover:bg-destructive/5 transition-colors flex items-center justify-center gap-1.5 rounded"
+            >
+              <XCircle className="h-3.5 w-3.5" /> Withdraw Commitment
+            </button>
           </div>
         )}
 
@@ -572,6 +588,50 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
           </div>
         )}
       </div>
+
+      {/* Cancel confirmation dialog */}
+      {showCancelDialog && (
+        <div className="mt-3 border border-destructive/30 bg-destructive/5 p-4 rounded">
+          <div className="flex items-start gap-2.5 mb-3">
+            <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+            <div>
+              <div className="text-sm font-semibold text-destructive">Withdraw this investment commitment?</div>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                This will cancel your commitment of <strong className="text-foreground">{Number(pledge.amount).toLocaleString()} {cur}</strong> in <strong className="text-foreground">{offer?.title}</strong>.
+                If you have already sent a bank transfer, please contact support to arrange a refund. This action cannot be undone.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <button
+              onClick={() => setShowCancelDialog(false)}
+              className="h-8 px-4 border border-border text-xs font-medium text-foreground hover:bg-muted/50 transition-colors rounded"
+            >
+              Keep Investment
+            </button>
+            <button
+              disabled={cancelling}
+              onClick={async () => {
+                setCancelling(true);
+                const { error } = await supabase
+                  .from("pledges")
+                  .update({ status: "Cancelled" } as any)
+                  .eq("id", pledge.id);
+                if (error) {
+                  setCancelling(false);
+                  return;
+                }
+                onCancelled?.();
+                setShowCancelDialog(false);
+                setCancelling(false);
+              }}
+              className="h-8 px-4 bg-destructive text-destructive-foreground text-xs font-semibold hover:bg-destructive/90 transition-colors rounded flex items-center gap-1.5"
+            >
+              {cancelling ? "Cancelling…" : "Yes, Withdraw"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
