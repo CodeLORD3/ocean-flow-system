@@ -290,7 +290,7 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
                 <div className="min-w-0">
                   <div className="text-[10px] font-semibold text-foreground truncate">{o.title}</div>
                   <div className="text-[9px] text-muted-foreground">
-                    {Number(o.target_amount).toLocaleString()} kr · {Number(o.interest_rate || 0).toFixed(1)}%
+                    {Number(o.target_amount).toLocaleString()} {getCurrency(selectedMarker.country)} · {Number(o.interest_rate || 0).toFixed(1)}%
                   </div>
                 </div>
                 <span className={`shrink-0 px-1 py-0.5 text-[8px] font-bold border ${
