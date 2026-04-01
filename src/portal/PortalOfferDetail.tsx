@@ -478,6 +478,123 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
     );
   })();
 
+  /* ── FULL-PAGE SUCCESS SCREEN (Step 3) ── */
+  if (step === 3) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-full max-w-lg space-y-5">
+          {/* Success header */}
+          <div className="text-center space-y-2">
+            <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-mackerel/10 mx-auto">
+              <CheckCircle className="h-9 w-9 text-mackerel" />
+            </div>
+            <h1 className="text-2xl font-bold text-foreground">Investment committed!</h1>
+            <p className="text-sm text-muted-foreground">Your next step is to send the funds via bank transfer.</p>
+          </div>
+
+          {/* Payment instruction box */}
+          <div className="border-2 border-primary/30 bg-white p-5 space-y-3">
+            <div className="flex items-center gap-2 mb-1">
+              <CreditCard className="h-5 w-5 text-primary" />
+              <span className="text-sm font-bold text-foreground">Payment Instructions</span>
+            </div>
+
+            <div className="space-y-2.5">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Bank</span>
+                <span className="font-medium text-foreground">{companyName}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">IBAN</span>
+                <span className="font-mono font-bold text-foreground">{o.company_iban || "Contact support"}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Reference number</span>
+                <span className="font-mono font-bold text-primary text-base">{successRef}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Amount to transfer</span>
+                <span className="font-mono font-bold text-foreground">{pledgeAmt.toLocaleString()} kr</span>
+              </div>
+            </div>
+
+            <div className="border-t border-border pt-3">
+              <p className="text-xs text-amber-600 font-semibold flex items-center gap-1.5 bg-amber-50 border border-amber-200 p-2.5">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                Use the exact reference number so your payment can be matched.
+              </p>
+            </div>
+          </div>
+
+          {/* Secondary note */}
+          <div className="border border-primary/20 bg-primary/5 p-4 flex items-start gap-2.5">
+            <Info className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Once we receive and confirm your transfer (typically <strong className="text-foreground">1–2 business days</strong>),
+              your investment status will change to <strong className="text-foreground">Active</strong> and you'll receive a confirmation email.
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                const content = [
+                  "INVESTMENT CONFIRMATION",
+                  "═══════════════════════════════════",
+                  "",
+                  `Date: ${new Date().toLocaleDateString("en-GB")}`,
+                  `Reference: ${successRef}`,
+                  "",
+                  "INVESTMENT DETAILS",
+                  "───────────────────────────────────",
+                  `Offer: ${offer.title}`,
+                  `Amount Invested: ${pledgeAmt.toLocaleString()} kr`,
+                  `Return Rate: ${rate.toFixed(1)}%`,
+                  `Expected Payout: ${pledgeReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr`,
+                  `Expected Profit: +${pledgeProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr`,
+                  `Maturity Date: ${format(parseISO(offer.maturity_date), "d MMM yyyy")}`,
+                  "",
+                  "PAYMENT DETAILS",
+                  "───────────────────────────────────",
+                  `Bank: ${companyName}`,
+                  `IBAN: ${o.company_iban || "Contact support"}`,
+                  `Payment Reference: ${successRef}`,
+                  `Amount to Transfer: ${pledgeAmt.toLocaleString()} kr`,
+                  "",
+                  "IMPORTANT",
+                  "───────────────────────────────────",
+                  "Use the exact reference number so your payment can be matched.",
+                  "Your investment will be activated once funds are confirmed (1–2 business days).",
+                  "",
+                  "Capital at risk. Investments are not covered by deposit guarantee schemes.",
+                  "",
+                  `© ${new Date().getFullYear()} Makrill Trade. All rights reserved.`,
+                ].join("\n");
+                const blob = new Blob([content], { type: "text/plain" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `Investment-Confirmation-${successRef}.txt`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+              className="flex-1 h-11 border border-border text-foreground text-sm font-semibold hover:bg-muted/50 transition-colors flex items-center justify-center gap-1.5"
+            >
+              <FileText className="h-4 w-4" /> Download Confirmation
+            </button>
+            <button
+              onClick={() => switchTab("/portal/portfolio")}
+              className="flex-1 h-11 bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-1.5"
+            >
+              View My Investments <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* ═══════════ TOP SECTION: Header + Key Metrics + Invest ═══════════ */}
