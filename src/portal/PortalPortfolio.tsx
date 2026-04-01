@@ -268,6 +268,7 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
   const company = offer?.company_id ? companyMap[offer.company_id] : null;
   const rate = offer ? Number(offer.interest_rate) : 0;
   const refCode = (pledge as any).payment_reference || `OT-${new Date(pledge.created_at).getFullYear()}-${pledge.id.slice(0, 6)}-${(offer?.id || "").slice(0, 6)}`;
+  const cur = getCurrency(company?.country);
 
   return (
     <div className="px-6 py-4 border-t border-border/30">
