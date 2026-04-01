@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ShieldCheck, AlertTriangle } from "lucide-react";
+import { ShieldCheck, AlertTriangle, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props {
@@ -9,16 +9,15 @@ interface Props {
 }
 
 export default function PortalSuitability({ userId, onComplete }: Props) {
-  const [answers, setAnswers] = useState({ age18: false, notUS: false, riskAware: false });
+  const [answers, setAnswers] = useState({ capitalRisk: false, notUS: false, readGuidelines: false });
   const [loading, setLoading] = useState(false);
 
-  const allChecked = answers.age18 && answers.notUS && answers.riskAware;
+  const allChecked = answers.capitalRisk && answers.notUS && answers.readGuidelines;
 
   const handleSubmit = async () => {
     if (!allChecked) return;
     setLoading(true);
 
-    // Insert suitability responses
     const { error: suitError } = await supabase
       .from("suitability_responses" as any)
       .insert({
@@ -34,7 +33,6 @@ export default function PortalSuitability({ userId, onComplete }: Props) {
       return;
     }
 
-    // Update investor profile
     const { error } = await supabase
       .from("investor_profiles")
       .update({ kyc_completed: true, suitability_passed: true } as any)
@@ -47,84 +45,101 @@ export default function PortalSuitability({ userId, onComplete }: Props) {
     onComplete();
   };
 
-  const checkboxClass = "h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary/20 mt-0.5";
+  const checkboxClass =
+    "h-4 w-4 rounded border-gray-300 text-[#0f2e3d] focus:ring-[#0f2e3d]/20 mt-0.5 shrink-0";
 
   return (
-    <div className="max-w-lg mx-auto py-12">
-      <div className="bg-white border border-border rounded-lg overflow-hidden">
-        <div className="px-6 py-4 border-b border-border flex items-center gap-3">
-          <ShieldCheck className="h-5 w-5 text-primary" />
-          <div>
-            <h1 className="text-sm font-bold text-foreground">Investor Suitability Check</h1>
-            <p className="text-[11px] text-muted-foreground">Required before you can invest</p>
+    <div className="min-h-screen bg-[#f4f6f9] flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="flex items-center justify-center gap-2 mb-8">
+          <div className="h-8 w-8 bg-[#0f2e3d] flex items-center justify-center rounded">
+            <span className="text-[#2a9e7e] font-bold text-xs">MT</span>
           </div>
+          <span className="text-[#0f2e3d] font-bold text-lg">
+            Makrill <span className="text-[#2a9e7e]">Trade</span>
+          </span>
         </div>
 
-        <div className="p-6 space-y-5">
-          <div className="bg-amber-50 border border-amber-200 rounded-md p-3 flex gap-2">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+          <div className="flex items-center gap-2.5 mb-1">
+            <ShieldCheck className="h-5 w-5 text-[#0f2e3d]" />
+            <h1 className="text-xl font-bold text-[#0f2e3d]">Before you start investing</h1>
+          </div>
+          <p className="text-sm text-gray-500 mb-6">
+            Makrill Trade is a non-regulated investment platform. Investments made here are not
+            covered by any deposit guarantee scheme, and returns are not guaranteed. Please read and
+            acknowledge the following before continuing.
+          </p>
+
+          <div className="bg-amber-50 border border-amber-200 rounded-md p-3 flex gap-2 mb-6">
             <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
             <p className="text-xs text-amber-800 leading-relaxed">
-              Investment in trade finance carries risk. Your capital is not covered by any deposit guarantee scheme. 
-              Please confirm the following to continue.
+              Capital at risk — you should only invest money you can afford to lose.
             </p>
           </div>
 
-          <label className="flex items-start gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={answers.age18}
-              onChange={(e) => setAnswers((p) => ({ ...p, age18: e.target.checked }))}
-              className={checkboxClass}
-            />
-            <div>
-              <span className="text-sm font-medium text-foreground">I am 18 years of age or older</span>
-              <p className="text-[11px] text-muted-foreground mt-0.5">You must be at least 18 to invest on this platform.</p>
-            </div>
-          </label>
+          <div className="space-y-4 mb-6">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={answers.capitalRisk}
+                onChange={(e) => setAnswers((p) => ({ ...p, capitalRisk: e.target.checked }))}
+                className={checkboxClass}
+              />
+              <span className="text-sm text-gray-700">
+                I understand that I may lose part or all of my invested capital.
+              </span>
+            </label>
 
-          <label className="flex items-start gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={answers.notUS}
-              onChange={(e) => setAnswers((p) => ({ ...p, notUS: e.target.checked }))}
-              className={checkboxClass}
-            />
-            <div>
-              <span className="text-sm font-medium text-foreground">I am not a US person or US tax resident</span>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                Due to regulatory requirements, US persons cannot invest through this platform.
-              </p>
-            </div>
-          </label>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={answers.notUS}
+                onChange={(e) => setAnswers((p) => ({ ...p, notUS: e.target.checked }))}
+                className={checkboxClass}
+              />
+              <span className="text-sm text-gray-700">
+                I confirm I am not a US person for tax purposes.
+              </span>
+            </label>
 
-          <label className="flex items-start gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={answers.riskAware}
-              onChange={(e) => setAnswers((p) => ({ ...p, riskAware: e.target.checked }))}
-              className={checkboxClass}
-            />
-            <div>
-              <span className="text-sm font-medium text-foreground">I understand the risks involved</span>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                I acknowledge that investments are not guaranteed and I may lose some or all of my invested capital. 
-                Returns are not guaranteed and depend on the successful completion of the underlying trade.
-              </p>
-            </div>
-          </label>
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={answers.readGuidelines}
+                onChange={(e) => setAnswers((p) => ({ ...p, readGuidelines: e.target.checked }))}
+                className={checkboxClass}
+              />
+              <span className="text-sm text-gray-700">
+                I have read and understood the{" "}
+                <a
+                  href="/portal/guidelines"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#2a9e7e] underline hover:text-[#2a9e7e]/80"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Investment Guidelines
+                </a>
+                .
+              </span>
+            </label>
+          </div>
 
           <button
             onClick={handleSubmit}
             disabled={!allChecked || loading}
-            className="w-full py-2.5 bg-primary text-primary-foreground text-sm font-medium rounded-md hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full bg-[#0f2e3d] text-white py-2.5 rounded text-sm font-medium hover:bg-[#0f2e3d]/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {loading ? "Confirming…" : "Confirm & Continue"}
+            {loading ? "Saving…" : "Continue to platform"}
+            {!loading && <ArrowRight className="h-4 w-4" />}
           </button>
-
-          <p className="text-[10px] text-center text-muted-foreground">
-            By proceeding you agree to the platform's Terms of Use and Privacy Policy.
-          </p>
         </div>
+
+        <p className="text-center text-[10px] text-gray-400 mt-4">
+          © {new Date().getFullYear()} Makrill Trade. All rights reserved.
+        </p>
       </div>
     </div>
   );
