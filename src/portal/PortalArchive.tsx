@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { parseISO, format, differenceInDays } from "date-fns";
-import { Archive, CheckCircle } from "lucide-react";
+import { Archive, CheckCircle, ArrowRight } from "lucide-react";
 import { usePortalTabs } from "./PortalTabsContext";
 
 export default function PortalArchive() {
-  const { openOfferTab } = usePortalTabs();
+  const { openOfferTab, switchTab } = usePortalTabs();
 
   const { data: offers = [], isLoading } = useQuery({
     queryKey: ["portal-archive"],
@@ -81,8 +81,18 @@ export default function PortalArchive() {
             })}
             {offers.length === 0 && (
               <tr>
-                <td colSpan={8} className="p-5 text-center text-muted-foreground text-xs">
-                  No archived offers yet.
+                <td colSpan={8} className="p-10">
+                  <div className="flex flex-col items-center text-center gap-2">
+                    <Archive className="h-8 w-8 text-muted-foreground/50" />
+                    <h3 className="text-sm font-semibold text-foreground">No completed deals yet</h3>
+                    <p className="text-xs text-muted-foreground max-w-xs">Deals that have reached maturity and been fully paid out will appear here. This is your historical track record.</p>
+                    <button
+                      onClick={() => switchTab("/portal")}
+                      className="mt-2 px-4 py-1.5 border border-primary text-primary text-[11px] font-semibold hover:bg-primary hover:text-primary-foreground transition-colors flex items-center gap-1"
+                    >
+                      Browse open opportunities <ArrowRight className="h-3 w-3" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             )}
