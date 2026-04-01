@@ -84,7 +84,7 @@ export default function PortalDocuments() {
                       {p.trade_offers?.title || "Investment"}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {Number(p.amount).toLocaleString()} kr · {new Date(p.created_at).toLocaleDateString()}
+                      {Number(p.amount).toLocaleString()} {getCurrency((p.trade_offers as any)?.companies?.country)} · {new Date(p.created_at).toLocaleDateString()}
                     </div>
                   </div>
                 </div>
