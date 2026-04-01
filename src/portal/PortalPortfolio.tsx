@@ -184,6 +184,7 @@ export default function PortalPortfolio() {
 
   const hasActiveData = activePledges.length > 0;
   const hasHistoryData = historyPledges.length > 0;
+  const hasAnyData = pledges.length > 0;
 
   const activeStats = [
     ...(hasPending ? [{ icon: Clock, label: "Booked (Awaiting Payment)", value: fmtByCurrency(pendingByCur), color: "text-amber-600" }] : []),
