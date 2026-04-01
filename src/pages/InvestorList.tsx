@@ -292,6 +292,7 @@ export default function InvestorList() {
         <TableHead className="py-1.5 text-[10px]">Address</TableHead>
         <TableHead className="py-1.5 text-[10px]">Applied</TableHead>
         <TableHead className="py-1.5 text-[10px]">Status</TableHead>
+        <TableHead className="py-1.5 text-[10px]">Verification</TableHead>
         <TableHead className="py-1.5 text-[10px] text-right">Actions</TableHead>
       </TableRow>
     </TableHeader>
