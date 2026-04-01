@@ -337,7 +337,7 @@ export default function InvestmentFlowDiagram({ pledges }: { pledges: Pledge[] }
                     transition={{ duration: 0.3, delay: 0.1 + i * 0.1 }}
                   >
                     <div className="flex flex-col items-center">
-                      <div className={`h-4 w-4 rounded-full border-2 ${style.border} ${style.bg} flex items-center justify-center ${style.icon} shrink-0 relative z-10`}>
+                      <div className={`h-3.5 w-3.5 rounded-full border-2 ${style.border} ${style.bg} flex items-center justify-center ${style.icon} shrink-0 relative z-10`}>
                         <NodeIcon type={node.type} />
                       </div>
                       {!isLast && <div className="w-px h-8 bg-border" />}
