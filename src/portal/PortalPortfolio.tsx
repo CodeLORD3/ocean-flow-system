@@ -99,26 +99,47 @@ export default function PortalPortfolio() {
 
   const currentList = sortPledges(tab === "active" ? activePledges : historyPledges);
 
+  // Helper: group amounts by currency
+  const sumByCurrency = (list: any[], valueFn: (p: any) => number) => {
+    const byCur: Record<string, number> = {};
+    list.forEach((p: any) => {
+      const offer = p.trade_offers;
+      const company = offer?.company_id ? companyMap[offer.company_id] : null;
+      const cur = getCurrency(company?.country);
+      byCur[cur] = (byCur[cur] || 0) + valueFn(p);
+    });
+    return byCur;
+  };
+
+  const fmtByCurrency = (byCur: Record<string, number>, prefix = "", opts?: Intl.NumberFormatOptions) => {
+    const entries = Object.entries(byCur).filter(([, v]) => v !== 0);
+    if (entries.length === 0) return "—";
+    return entries.map(([cur, val]) => `${prefix}${Math.round(val).toLocaleString()} ${cur}`).join(" + ");
+  };
+
   // Active tab stats
-  const totalInvested = activePledges.reduce((s: number, p: any) => s + Number(p.amount), 0);
-  const totalExpectedReturn = activePledges.reduce((s: number, p: any) => {
+  const investedByCur = sumByCurrency(activePledges, (p) => Number(p.amount));
+  const payoutByCur = sumByCurrency(activePledges, (p) => {
     const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
-    return s + Number(p.amount) * (1 + rate / 100);
-  }, 0);
-  const totalProfit = totalExpectedReturn - totalInvested;
+    return Number(p.amount) * (1 + rate / 100);
+  });
+  const profitByCur = sumByCurrency(activePledges, (p) => {
+    const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
+    return Number(p.amount) * (rate / 100);
+  });
   const avgRate = activePledges.length > 0
     ? activePledges.reduce((s: number, p: any) => s + (p.trade_offers ? Number(p.trade_offers.interest_rate) : 0), 0) / activePledges.length
     : 0;
 
   // History tab stats
-  const totalPaidOut = historyPledges.reduce((s: number, p: any) => {
+  const paidOutByCur = sumByCurrency(historyPledges, (p) => {
     const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
-    return s + Number(p.amount) * (1 + rate / 100);
-  }, 0);
-  const totalHistoryProfit = historyPledges.reduce((s: number, p: any) => {
+    return Number(p.amount) * (1 + rate / 100);
+  });
+  const histProfitByCur = sumByCurrency(historyPledges, (p) => {
     const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
-    return s + Number(p.amount) * (rate / 100);
-  }, 0);
+    return Number(p.amount) * (rate / 100);
+  });
 
   const statusBadge = (status: string) => {
     switch (status) {
@@ -139,15 +160,15 @@ export default function PortalPortfolio() {
   const hasHistoryData = historyPledges.length > 0;
 
   const activeStats = [
-    { icon: Banknote, label: "Total Invested", value: hasActiveData ? `${totalInvested.toLocaleString()} kr` : "—", color: "text-primary" },
-    { icon: TrendingUp, label: "Expected Payout", value: hasActiveData ? `${totalExpectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr` : "—", color: "text-mackerel" },
-    { icon: Target, label: "Expected Profit", value: hasActiveData ? `+${totalProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr` : "—", color: "text-mackerel" },
+    { icon: Banknote, label: "Total Invested", value: hasActiveData ? fmtByCurrency(investedByCur) : "—", color: "text-primary" },
+    { icon: TrendingUp, label: "Expected Payout", value: hasActiveData ? fmtByCurrency(payoutByCur) : "—", color: "text-mackerel" },
+    { icon: Target, label: "Expected Profit", value: hasActiveData ? fmtByCurrency(profitByCur, "+") : "—", color: "text-mackerel" },
     { icon: Percent, label: "Average Return", value: hasActiveData ? `${avgRate.toFixed(1)}%` : "—", color: "text-primary" },
   ];
 
   const historyStats = [
-    { icon: Banknote, label: "Total Paid Out", value: hasHistoryData ? `${Math.round(totalPaidOut).toLocaleString()} kr` : "—", color: "text-primary" },
-    { icon: Target, label: "Total Profit Earned", value: hasHistoryData ? `+${Math.round(totalHistoryProfit).toLocaleString()} kr` : "—", color: "text-mackerel" },
+    { icon: Banknote, label: "Total Paid Out", value: hasHistoryData ? fmtByCurrency(paidOutByCur) : "—", color: "text-primary" },
+    { icon: Target, label: "Total Profit Earned", value: hasHistoryData ? fmtByCurrency(histProfitByCur, "+") : "—", color: "text-mackerel" },
     { icon: Award, label: "Completed Investments", value: hasHistoryData ? `${historyPledges.length}` : "—", color: "text-primary" },
     { icon: Percent, label: "Avg. Return", value: hasHistoryData ? `${(historyPledges.reduce((s: number, p: any) => s + (p.trade_offers ? Number(p.trade_offers.interest_rate) : 0), 0) / historyPledges.length).toFixed(1)}%` : "—", color: "text-mackerel" },
   ];
