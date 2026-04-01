@@ -183,7 +183,9 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   const pledgeReturn = pledgeAmt * (1 + rate / 100);
   const pledgeProfit = pledgeReturn - pledgeAmt;
   const remaining = target - funded;
-  const effectiveMin = (minPledge > 0 && remaining < minPledge && remaining > 0) ? 1 : minPledge;
+  const remainingAfterPending = target - funded - pending;
+  const isFullyCommitted = remainingAfterPending <= 0 && offer.status === "Open";
+  const effectiveMin = (minPledge > 0 && remainingAfterPending < minPledge && remainingAfterPending > 0) ? 1 : minPledge;
 
   const maturityDate = new Date(offer.maturity_date);
   const tenorDays = o.tenor_days ?? (o.purchase_date
@@ -195,7 +197,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   }
   const repaymentLabel = o.repayment_type === "rolling" ? "Rolling" : "Bullet";
 
-  const isValidAmount = pledgeAmt > 0 && pledgeAmt >= effectiveMin && pledgeAmt <= remaining;
+  const isValidAmount = pledgeAmt > 0 && pledgeAmt >= effectiveMin && pledgeAmt <= Math.max(0, remainingAfterPending);
   const investorName = investorProfile
     ? `${investorProfile.first_name} ${investorProfile.last_name}`.trim()
     : authUser?.email || "Investor";
@@ -253,6 +255,16 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
       );
     }
 
+    if (isFullyCommitted) {
+      return (
+        <div className="border border-primary/30 bg-primary/5 p-4 text-center space-y-2">
+          <CheckCircle className="h-8 w-8 text-primary mx-auto" />
+          <p className="text-xs font-semibold text-foreground">This offer is fully committed</p>
+          <p className="text-[10px] text-muted-foreground">No further investments can be accepted. All remaining capacity is covered by pending commitments.</p>
+        </div>
+      );
+    }
+
     return (
       <div className="border border-primary/30 bg-primary/5 lg:sticky lg:top-4">
         <div className="h-10 flex items-center px-4 border-b border-primary/20">
@@ -304,14 +316,14 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                     <AlertTriangle className="h-3 w-3" /> Minimum investment is {effectiveMin.toLocaleString()} {cur}
                   </p>
                 )}
-                {amountTouched && pledgeAmt > remaining && remaining > 0 && (
+                {amountTouched && pledgeAmt > Math.max(0, remainingAfterPending) && remainingAfterPending > 0 && (
                   <p className="text-[11px] text-destructive font-medium flex items-center gap-1">
-                    <AlertTriangle className="h-3 w-3" /> Only {remaining.toLocaleString()} {cur} remaining
+                    <AlertTriangle className="h-3 w-3" /> Only {Math.max(0, remainingAfterPending).toLocaleString()} {cur} remaining
                   </p>
                 )}
-                {remaining < minPledge && remaining > 0 && minPledge > 0 && (
+                {remainingAfterPending < minPledge && remainingAfterPending > 0 && minPledge > 0 && (
                   <p className="text-[11px] text-amber-600 font-medium">
-                    Only {remaining.toLocaleString()} {cur} left — minimum rule waived
+                    Only {Math.max(0, remainingAfterPending).toLocaleString()} {cur} left — minimum rule waived
                   </p>
                 )}
               </div>
@@ -349,8 +361,8 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                   {effectiveMin > 0 && `Min: ${effectiveMin.toLocaleString()} ${cur}`}
                   {effectiveMin > 0 && maxPledge ? " · " : ""}
                   {maxPledge && `Max: ${maxPledge.toLocaleString()} ${cur}`}
-                  {(effectiveMin > 0 || maxPledge) && remaining < target ? " · " : ""}
-                  {remaining < target && `Available: ${remaining.toLocaleString()} ${cur}`}
+                  {(effectiveMin > 0 || maxPledge) && remainingAfterPending < target ? " · " : ""}
+                  {remainingAfterPending < target && `Available: ${Math.max(0, remainingAfterPending).toLocaleString()} ${cur}`}
                 </p>
               )}
             </div>
