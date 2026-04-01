@@ -151,6 +151,7 @@ export default function TradeOffers() {
       primary_exit: offer.primary_exit || "",
       secondary_exit: offer.secondary_exit || "",
       downside: offer.downside || "",
+      risk_level: (offer as any).risk_level || "",
       company_id: offer.company_id || "",
       company_iban: offer.company_iban || "",
       payment_reference_prefix: offer.payment_reference_prefix || "OT-",
