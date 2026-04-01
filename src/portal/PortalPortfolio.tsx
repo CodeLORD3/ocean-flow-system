@@ -6,6 +6,7 @@ import { parseISO, format, differenceInDays } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
 import InvestmentFlowDiagram from "./InvestmentFlowDiagram";
+import ReturnsChart from "./ReturnsChart";
 import { getCurrency } from "@/lib/currency";
 
 export default function PortalPortfolio() {
@@ -201,6 +202,9 @@ export default function PortalPortfolio() {
           </div>
         ))}
       </div>
+
+      {/* Returns Chart */}
+      <ReturnsChart pledges={pledges} companyMap={companyMap} />
 
       {/* Investment Flow Diagram — only on active tab */}
       {tab === "active" && <InvestmentFlowDiagram pledges={pledges as any} />}
