@@ -28,6 +28,7 @@ const EMPTY_FORM = {
   gross_margin: "", collateral: "Inventory", ltv: "",
   primary_exit: "", secondary_exit: "", downside: "",
   company_id: "", company_iban: "", payment_reference_prefix: "OT-",
+  risk_level: "",
 };
 
 export default function TradeOffers() {
