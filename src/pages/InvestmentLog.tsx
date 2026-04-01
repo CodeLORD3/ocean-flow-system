@@ -381,7 +381,7 @@ export default function InvestmentLog() {
                               Mark Received
                             </Button>
                           )}
-                          {p.status === "Matured" && (
+                          {(p.status === "Active" || p.status === "Matured") && (
                             <Button
                               size="sm"
                               variant="outline"
@@ -393,7 +393,7 @@ export default function InvestmentLog() {
                               Mark Paid Out
                             </Button>
                           )}
-                          {(p.status === "Active" || p.status === "Paid Out") && (
+                          {p.status === "Paid Out" && (
                             <span className="text-[10px] text-muted-foreground">—</span>
                           )}
                         </TableCell>
