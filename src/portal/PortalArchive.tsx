@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { parseISO, format, differenceInDays } from "date-fns";
-import { Archive, CheckCircle } from "lucide-react";
+import { Archive, CheckCircle, ArrowRight } from "lucide-react";
 import { usePortalTabs } from "./PortalTabsContext";
 
 export default function PortalArchive() {
