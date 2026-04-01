@@ -373,7 +373,7 @@ export default function PortalOpportunities() {
       {/* ROW VIEW */}
       {viewMode === "rows" && (
         <div className="border border-border bg-white overflow-x-auto">
-          <table className="w-full text-[10px] min-w-[900px]">
+          <table className="w-full text-[10px] min-w-[900px]" style={{ tableLayout: 'auto' }}>
             <thead>
               <tr className="border-b border-border bg-muted/50">
                 <th className="text-left px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Offer</th>
