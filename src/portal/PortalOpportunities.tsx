@@ -73,7 +73,7 @@ export default function PortalOpportunities() {
   }
 
   const companyMap: Record<string, any> = Object.fromEntries(companies.map((c: any) => [c.id, c]));
-  const showIbanBanner = !ibanBannerDismissed && investorProfile && !(investorProfile as any).iban;
+  const showIbanBanner = !ibanBannerDismissed && ibanFetched && (!(investorProfile as any)?.iban);
 
   const filtered = offers.filter((o) => {
     if (search && !o.title.toLowerCase().includes(search.toLowerCase())) return false;
