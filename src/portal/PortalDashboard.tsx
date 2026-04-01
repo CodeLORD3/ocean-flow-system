@@ -77,7 +77,7 @@ export default function PortalDashboard() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { icon: DollarSign, label: "Total Invested", value: `${totalInvested.toLocaleString()} kr`, sub: `Across ${pledges.length} investment${pledges.length !== 1 ? "s" : ""}`, accent: "text-primary" },
           { icon: TrendingUp, label: "Returns Earned", value: `${totalReturns.toLocaleString()} kr`, sub: expectedActiveReturns > 0 ? `+${expectedActiveReturns.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr pending` : "No completed deals yet", accent: "text-mackerel" },
