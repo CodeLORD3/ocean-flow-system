@@ -58,6 +58,17 @@ export default function PortalProfile() {
           base_currency: "SEK",
         });
       }
+      // Load uploaded KYC documents
+      if (u) {
+        const { data: files } = await supabase.storage.from("kyc-documents").list(u.id);
+        if (files && files.length > 0) {
+          setUploadedFiles(files.map(f => ({
+            name: f.name,
+            url: supabase.storage.from("kyc-documents").getPublicUrl(`${u.id}/${f.name}`).data.publicUrl,
+          })));
+        }
+      }
+
       setProfileLoaded(true);
     };
     load();
