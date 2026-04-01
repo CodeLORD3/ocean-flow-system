@@ -217,6 +217,58 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
     </div>
   );
 
+  const paymentDeadline = format(addBusinessDays(new Date(), 5), "d MMMM yyyy");
+
+  const generateConfirmationPdf = () => {
+    const lines = [
+      "INVESTMENT CONFIRMATION",
+      "═══════════════════════════════════",
+      "",
+      `Date: ${new Date().toLocaleDateString("en-GB")}`,
+      `Reference: ${successRef}`,
+      "",
+      "INVESTMENT DETAILS",
+      "───────────────────────────────────",
+      `Offer: ${offer.title}`,
+      `Company: ${companyName}`,
+      `Amount Invested: ${pledgeAmt.toLocaleString()} ${cur}`,
+      `Return Rate: ${rate.toFixed(1)}%`,
+      `Expected Payout: ${pledgeReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${cur}`,
+      `Expected Profit: +${pledgeProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${cur}`,
+      `Maturity Date: ${format(parseISO(offer.maturity_date), "d MMM yyyy")}`,
+      "",
+      "PAYMENT DETAILS",
+      "───────────────────────────────────",
+      `Bank: ${companyName}`,
+      `IBAN: ${o.company_iban || "Contact support"}`,
+      `Payment Reference: ${successRef}`,
+      `Amount to Transfer: ${pledgeAmt.toLocaleString()} ${cur}`,
+      `Payment Deadline: ${paymentDeadline}`,
+      "",
+      "IMPORTANT",
+      "───────────────────────────────────",
+      "Use the exact reference number so your payment can be matched.",
+      "Your investment will be activated once funds are confirmed (1–2 business days).",
+      `Funds must arrive by ${paymentDeadline}.`,
+      "",
+      "Capital at risk. Investments are not covered by deposit guarantee schemes.",
+      "",
+      `© ${new Date().getFullYear()} Makrill Trade. All rights reserved.`,
+    ].join("\n");
+    const blob = new Blob([lines], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Investment-Confirmation-${successRef}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const copyReference = () => {
+    navigator.clipboard.writeText(successRef);
+    toast.success("Reference copied to clipboard");
+  };
+
   /* ── Investment Panel (3-step) ── */
   const investPanel = (() => {
     if (offer.status !== "Open" || remaining <= 0) {
