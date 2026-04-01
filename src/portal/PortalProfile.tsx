@@ -252,7 +252,7 @@ export default function PortalProfile() {
           </button>
         </div>
         {iban && !isValidIban && (
-          <p className="text-[11px] text-destructive mt-1">Please enter a valid IBAN (e.g. SE35 5000 0000 0549 1000 0003)</p>
+          <p className="text-[11px] text-destructive mt-1">Please enter a valid IBAN (e.g. XX00 0000 0000 0000 0000 00)</p>
         )}
         {!iban && profile && (
           <p className="text-[11px] text-amber-600 mt-2 flex items-center gap-1">
