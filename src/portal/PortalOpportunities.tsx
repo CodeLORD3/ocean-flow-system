@@ -208,7 +208,7 @@ export default function PortalOpportunities() {
                 type="number"
                 value={minInvestment}
                 onChange={(e) => setMinInvestment(e.target.value)}
-                placeholder="Max min. investment (kr)"
+                placeholder="Min. invest ≤"
                 className="h-9 w-44 bg-muted/50 border border-border px-3 pr-7 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
               />
               <span className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground cursor-help text-xs" title="Filter offers by their minimum investment requirement.">ℹ</span>
