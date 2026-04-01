@@ -238,6 +238,7 @@ export default function InvestorList() {
       <TableCell className="py-1.5 text-[11px]">{inv.date_of_birth}</TableCell>
       <TableCell className="py-1.5 text-[11px] max-w-[120px] truncate">{inv.address}</TableCell>
       <TableCell className="py-1.5 text-[11px]">{format(new Date(inv.created_at), "yyyy-MM-dd")}</TableCell>
+      <TableCell className="py-1.5 text-[11px] capitalize">{inv.investor_classification ? inv.investor_classification.replace("sophisticated", "Sophisticated") : <span className="text-muted-foreground">—</span>}</TableCell>
       <TableCell className="py-1.5">{statusBadge(inv.status)}</TableCell>
       <TableCell className="py-1.5">
         <div className="flex items-center gap-1">
@@ -291,6 +292,7 @@ export default function InvestorList() {
         <TableHead className="py-1.5 text-[10px]">DOB</TableHead>
         <TableHead className="py-1.5 text-[10px]">Address</TableHead>
         <TableHead className="py-1.5 text-[10px]">Applied</TableHead>
+        <TableHead className="py-1.5 text-[10px]">Classification</TableHead>
         <TableHead className="py-1.5 text-[10px]">Status</TableHead>
         <TableHead className="py-1.5 text-[10px]">Verification</TableHead>
         <TableHead className="py-1.5 text-[10px] text-right">Actions</TableHead>
@@ -333,7 +335,7 @@ export default function InvestorList() {
             <TableBody>
               {reviewed.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center text-muted-foreground py-6 text-xs">
+                  <TableCell colSpan={11} className="text-center text-muted-foreground py-6 text-xs">
                     No reviewed investors yet
                   </TableCell>
                 </TableRow>

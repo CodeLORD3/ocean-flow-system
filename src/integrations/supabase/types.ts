@@ -656,6 +656,7 @@ export type Database = {
           first_name: string
           iban: string | null
           id: string
+          investor_classification: string | null
           kyc_completed: boolean
           last_name: string
           reviewed_at: string | null
@@ -677,6 +678,7 @@ export type Database = {
           first_name: string
           iban?: string | null
           id?: string
+          investor_classification?: string | null
           kyc_completed?: boolean
           last_name: string
           reviewed_at?: string | null
@@ -698,6 +700,7 @@ export type Database = {
           first_name?: string
           iban?: string | null
           id?: string
+          investor_classification?: string | null
           kyc_completed?: boolean
           last_name?: string
           reviewed_at?: string | null

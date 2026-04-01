@@ -11,7 +11,7 @@ export default function PortalProfile() {
   const [user, setUser] = useState<any>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [profileMissing, setProfileMissing] = useState(false);
-  const [formData, setFormData] = useState({ first_name: "", last_name: "", country: "", telephone: "", address: "", base_currency: "SEK" });
+  const [formData, setFormData] = useState({ first_name: "", last_name: "", country: "", telephone: "", address: "", base_currency: "SEK", investor_classification: "" });
   const [savingProfile, setSavingProfile] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<{ name: string; url: string }[]>([]);
@@ -44,6 +44,7 @@ export default function PortalProfile() {
           telephone: (data as any).telephone || "",
           address: (data as any).address || "",
           base_currency: (data as any).base_currency || "SEK",
+          investor_classification: (data as any).investor_classification || "",
         });
       } else {
         // Profile doesn't exist yet — show empty form
@@ -56,6 +57,7 @@ export default function PortalProfile() {
           telephone: "",
           address: "",
           base_currency: "SEK",
+          investor_classification: "",
         });
       }
       // Load uploaded KYC documents
@@ -93,6 +95,7 @@ export default function PortalProfile() {
       telephone: formData.telephone || null,
       address: formData.address || null,
       base_currency: formData.base_currency,
+      investor_classification: formData.investor_classification || null,
     };
     const { data, error } = await supabase
       .from("investor_profiles")
@@ -249,6 +252,48 @@ export default function PortalProfile() {
           <Save className="h-3.5 w-3.5" />
           {savingProfile ? "Saving…" : "Save Profile"}
         </button>
+      </div>
+
+      {/* Investor Declaration */}
+      <div className="bg-white border border-border rounded-lg p-6">
+        <h2 className="text-sm font-semibold text-foreground mb-1">Investor Declaration</h2>
+        <p className="text-xs text-muted-foreground mb-4">
+          Select the classification that best describes your investor status.
+        </p>
+        <div className="space-y-2.5">
+          {[
+            { value: "retail", label: "Retail Investor", desc: "Individual investing with personal funds, without professional financial qualifications." },
+            { value: "professional", label: "Professional Investor", desc: "Meets regulatory criteria such as portfolio size, transaction frequency, or professional experience." },
+            { value: "sophisticated", label: "Sophisticated / Accredited Investor", desc: "High-net-worth individual or entity meeting accreditation thresholds set by applicable regulations." },
+          ].map((opt) => (
+            <label
+              key={opt.value}
+              className={`flex items-start gap-3 p-3 border rounded cursor-pointer transition-colors ${
+                formData.investor_classification === opt.value
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-muted-foreground/30"
+              }`}
+            >
+              <input
+                type="radio"
+                name="investor_classification"
+                value={opt.value}
+                checked={formData.investor_classification === opt.value}
+                onChange={(e) => setFormData(p => ({ ...p, investor_classification: e.target.value }))}
+                className="mt-0.5 accent-primary"
+              />
+              <div>
+                <div className="text-sm font-medium text-foreground">{opt.label}</div>
+                <div className="text-xs text-muted-foreground">{opt.desc}</div>
+              </div>
+            </label>
+          ))}
+        </div>
+        {formData.investor_classification && (
+          <p className="text-[11px] text-muted-foreground mt-3">
+            This will be saved when you click "Save Profile" above.
+          </p>
+        )}
       </div>
 
       {/* Verification Status */}

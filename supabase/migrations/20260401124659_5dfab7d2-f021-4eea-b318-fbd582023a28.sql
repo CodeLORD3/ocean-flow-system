@@ -1,0 +1,1 @@
+ALTER TABLE public.investor_profiles ADD COLUMN IF NOT EXISTS investor_classification text DEFAULT NULL;
