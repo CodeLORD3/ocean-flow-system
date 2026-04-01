@@ -239,6 +239,24 @@ export default function InvestorList() {
       <TableCell className="py-1.5 text-[11px] max-w-[120px] truncate">{inv.address}</TableCell>
       <TableCell className="py-1.5 text-[11px]">{format(new Date(inv.created_at), "yyyy-MM-dd")}</TableCell>
       <TableCell className="py-1.5">{statusBadge(inv.status)}</TableCell>
+      <TableCell className="py-1.5">
+        <div className="flex items-center gap-1">
+          {verificationBadge(inv.verification_status || "action_required")}
+          <Select
+            value={inv.verification_status || "action_required"}
+            onValueChange={(v) => updateVerification.mutate({ id: inv.id, verification_status: v })}
+          >
+            <SelectTrigger className="h-5 w-5 p-0 border-0 bg-transparent [&>svg]:h-3 [&>svg]:w-3">
+              <Pencil className="h-2.5 w-2.5 text-muted-foreground" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="action_required">Action Required</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="verified">Verified</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </TableCell>
       <TableCell className="py-1.5 text-right space-x-0.5">
         {showActions && inv.status === "pending" && (
           <>
