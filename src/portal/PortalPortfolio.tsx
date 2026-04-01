@@ -429,14 +429,17 @@ function InvestmentTimeline({ status, maturityDate }: { status: string; maturity
   );
 }
 
-function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, daysToMaturity, onViewOffer }: {
+function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, daysToMaturity, onViewOffer, onCancelled }: {
   pledge: any;
   offer: any;
   companyMap: Record<string, any>;
   expectedReturn: number;
   daysToMaturity: number | null;
   onViewOffer: () => void;
+  onCancelled?: () => void;
 }) {
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const status = pledge.status || "Active";
   const company = offer?.company_id ? companyMap[offer.company_id] : null;
   const rate = offer ? Number(offer.interest_rate) : 0;
