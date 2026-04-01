@@ -138,6 +138,32 @@ export default function InvestorList() {
     }
   };
 
+  const verificationBadge = (status: string) => {
+    switch (status) {
+      case "verified":
+        return <Badge className="bg-green-600/20 text-green-400 border-green-600/30 text-[9px] px-1.5 py-0">Verified</Badge>;
+      case "pending":
+        return <Badge className="bg-yellow-600/20 text-yellow-400 border-yellow-600/30 text-[9px] px-1.5 py-0">Pending</Badge>;
+      default:
+        return <Badge className="bg-red-600/20 text-red-400 border-red-600/30 text-[9px] px-1.5 py-0">Action Req.</Badge>;
+    }
+  };
+
+  const updateVerification = useMutation({
+    mutationFn: async ({ id, verification_status }: { id: string; verification_status: string }) => {
+      const { error } = await supabase
+        .from("investor_profiles" as any)
+        .update({ verification_status } as any)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["investor-profiles"] });
+      toast.success(`Verification status updated to ${vars.verification_status}`);
+    },
+    onError: (err: any) => toast.error(err.message),
+  });
+
   const pending = investors.filter((i: any) => i.status === "pending");
   const reviewed = investors.filter((i: any) => i.status !== "pending");
 
@@ -213,6 +239,24 @@ export default function InvestorList() {
       <TableCell className="py-1.5 text-[11px] max-w-[120px] truncate">{inv.address}</TableCell>
       <TableCell className="py-1.5 text-[11px]">{format(new Date(inv.created_at), "yyyy-MM-dd")}</TableCell>
       <TableCell className="py-1.5">{statusBadge(inv.status)}</TableCell>
+      <TableCell className="py-1.5">
+        <div className="flex items-center gap-1">
+          {verificationBadge(inv.verification_status || "action_required")}
+          <Select
+            value={inv.verification_status || "action_required"}
+            onValueChange={(v) => updateVerification.mutate({ id: inv.id, verification_status: v })}
+          >
+            <SelectTrigger className="h-5 w-5 p-0 border-0 bg-transparent [&>svg]:h-3 [&>svg]:w-3">
+              <Pencil className="h-2.5 w-2.5 text-muted-foreground" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="action_required">Action Required</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="verified">Verified</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </TableCell>
       <TableCell className="py-1.5 text-right space-x-0.5">
         {showActions && inv.status === "pending" && (
           <>
@@ -248,6 +292,7 @@ export default function InvestorList() {
         <TableHead className="py-1.5 text-[10px]">Address</TableHead>
         <TableHead className="py-1.5 text-[10px]">Applied</TableHead>
         <TableHead className="py-1.5 text-[10px]">Status</TableHead>
+        <TableHead className="py-1.5 text-[10px]">Verification</TableHead>
         <TableHead className="py-1.5 text-[10px] text-right">Actions</TableHead>
       </TableRow>
     </TableHeader>
@@ -288,7 +333,7 @@ export default function InvestorList() {
             <TableBody>
               {reviewed.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-6 text-xs">
+                  <TableCell colSpan={10} className="text-center text-muted-foreground py-6 text-xs">
                     No reviewed investors yet
                   </TableCell>
                 </TableRow>

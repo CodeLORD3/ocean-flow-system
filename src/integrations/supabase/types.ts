@@ -664,6 +664,7 @@ export type Database = {
           suitability_passed: boolean
           telephone: string | null
           user_id: string
+          verification_status: string
         }
         Insert: {
           account_type?: string
@@ -684,6 +685,7 @@ export type Database = {
           suitability_passed?: boolean
           telephone?: string | null
           user_id: string
+          verification_status?: string
         }
         Update: {
           account_type?: string
@@ -704,6 +706,7 @@ export type Database = {
           suitability_passed?: boolean
           telephone?: string | null
           user_id?: string
+          verification_status?: string
         }
         Relationships: []
       }
