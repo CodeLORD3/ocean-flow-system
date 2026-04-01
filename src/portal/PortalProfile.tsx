@@ -11,6 +11,7 @@ import { format } from "date-fns";
 export default function PortalProfile() {
   const [profile, setProfile] = useState<any>(null);
   const [iban, setIban] = useState("");
+  const [ibanCopied, setIbanCopied] = useState(false);
   const [saving, setSaving] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
