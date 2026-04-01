@@ -11,7 +11,7 @@ export default function PortalProfile() {
   const [user, setUser] = useState<any>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [profileMissing, setProfileMissing] = useState(false);
-  const [formData, setFormData] = useState({ first_name: "", last_name: "", country: "", telephone: "", address: "" });
+  const [formData, setFormData] = useState({ first_name: "", last_name: "", country: "", telephone: "", address: "", base_currency: "SEK" });
   const [savingProfile, setSavingProfile] = useState(false);
   const { toast } = useToast();
 
@@ -40,6 +40,7 @@ export default function PortalProfile() {
           country: (data as any).country || "",
           telephone: (data as any).telephone || "",
           address: (data as any).address || "",
+          base_currency: (data as any).base_currency || "SEK",
         });
       } else {
         // Profile doesn't exist yet — show empty form
@@ -51,6 +52,7 @@ export default function PortalProfile() {
           country: meta.country || "Sweden",
           telephone: "",
           address: "",
+          base_currency: "SEK",
         });
       }
       setProfileLoaded(true);
@@ -76,6 +78,7 @@ export default function PortalProfile() {
       country: formData.country,
       telephone: formData.telephone || null,
       address: formData.address || null,
+      base_currency: formData.base_currency,
     };
     const { data, error } = await supabase
       .from("investor_profiles")
@@ -199,7 +202,7 @@ export default function PortalProfile() {
               className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d]"
             />
           </div>
-          <div>
+           <div>
             <label className="text-xs text-muted-foreground mb-1 block">Address</label>
             <input
               type="text"
@@ -208,6 +211,19 @@ export default function PortalProfile() {
               placeholder="Optional"
               className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d]"
             />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Base Currency</label>
+            <select
+              value={formData.base_currency}
+              onChange={(e) => setFormData(p => ({ ...p, base_currency: e.target.value }))}
+              className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d] bg-white"
+            >
+              <option value="SEK">SEK – Swedish Krona</option>
+              <option value="CHF">CHF – Swiss Franc</option>
+              <option value="EUR">EUR – Euro</option>
+              <option value="USD">USD – US Dollar</option>
+            </select>
           </div>
         </div>
 

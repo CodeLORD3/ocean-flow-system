@@ -648,6 +648,7 @@ export type Database = {
         Row: {
           account_type: string
           address: string | null
+          base_currency: string
           country: string | null
           created_at: string
           date_of_birth: string | null
@@ -667,6 +668,7 @@ export type Database = {
         Insert: {
           account_type?: string
           address?: string | null
+          base_currency?: string
           country?: string | null
           created_at?: string
           date_of_birth?: string | null
@@ -686,6 +688,7 @@ export type Database = {
         Update: {
           account_type?: string
           address?: string | null
+          base_currency?: string
           country?: string | null
           created_at?: string
           date_of_birth?: string | null

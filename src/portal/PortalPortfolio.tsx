@@ -54,6 +54,20 @@ export default function PortalPortfolio() {
     },
   });
 
+  const { data: investorProfile } = useQuery({
+    queryKey: ["portal-investor-profile"],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return null;
+      const { data } = await supabase
+        .from("investor_profiles")
+        .select("base_currency")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+
   const companyMap: Record<string, any> = Object.fromEntries(companies.map((c: any) => [c.id, c]));
 
   const activePledges = pledges.filter((p: any) => ["Active", "Pending Payment", "Matured"].includes(p.status));
@@ -204,7 +218,7 @@ export default function PortalPortfolio() {
       </div>
 
       {/* Returns Chart */}
-      <ReturnsChart pledges={pledges} companyMap={companyMap} />
+      <ReturnsChart pledges={pledges} companyMap={companyMap} baseCurrency={(investorProfile as any)?.base_currency || "SEK"} />
 
       {/* Investment Flow Diagram — only on active tab */}
       {tab === "active" && <InvestmentFlowDiagram pledges={pledges as any} />}
