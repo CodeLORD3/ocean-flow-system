@@ -6,6 +6,7 @@ import { parseISO, format, differenceInDays } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
 import InvestmentFlowDiagram from "./InvestmentFlowDiagram";
+import { getCurrency } from "@/lib/currency";
 
 export default function PortalPortfolio() {
   const { openOfferTab, switchTab } = usePortalTabs();

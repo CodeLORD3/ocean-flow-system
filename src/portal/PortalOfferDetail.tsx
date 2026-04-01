@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { parseISO, format } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
+import { getCurrency } from "@/lib/currency";
 
 export default function PortalOfferDetail({ overrideId }: { overrideId?: string } = {}) {
   const { id: paramId } = useParams<{ id: string }>();
