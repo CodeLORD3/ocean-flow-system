@@ -239,7 +239,7 @@ export default function InvestmentFlowDiagram({ pledges }: { pledges: Pledge[] }
             <div className="absolute top-[33px] h-px bg-border" style={{ left: `${PAD}%`, right: `${PAD}%` }} />
             {/* Animated progress line */}
             <motion.div
-              className="absolute top-[46px] h-px bg-primary"
+              className="absolute top-[33px] h-px bg-primary"
               style={{ left: `${PAD}%` }}
               initial={{ width: 0 }}
               animate={{ width: `${progressPercent * (100 - 2 * PAD) / 100}%` }}
