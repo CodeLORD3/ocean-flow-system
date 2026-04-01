@@ -1,0 +1,1 @@
+ALTER TABLE public.trade_offers ADD COLUMN IF NOT EXISTS risk_level text DEFAULT NULL;
