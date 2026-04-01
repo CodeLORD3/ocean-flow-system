@@ -94,6 +94,9 @@ export default function PortalPortfolio() {
           cmp = pA - pB;
           break;
         }
+        case "startDate":
+          cmp = (oA?.purchase_date || "").localeCompare(oB?.purchase_date || "");
+          break;
         case "maturity":
           cmp = (oA?.maturity_date || "").localeCompare(oB?.maturity_date || "");
           break;
