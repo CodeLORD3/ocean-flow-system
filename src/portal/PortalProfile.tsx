@@ -538,6 +538,58 @@ export default function PortalProfile() {
         </div>
       </div>
 
+      {/* Email Notification Preferences */}
+      <div className="bg-white border border-border rounded-lg p-6">
+        <div className="flex items-center gap-2 mb-1">
+          <Bell className="h-4 w-4 text-primary" />
+          <h2 className="text-sm font-semibold text-foreground">Email Notification Preferences</h2>
+        </div>
+        <p className="text-xs text-muted-foreground mb-4">
+          Choose which email notifications you'd like to receive.
+        </p>
+        <div className="space-y-3">
+          {([
+            { key: "new_opportunity", label: "New investment opportunity published", desc: "Get notified when a new deal is available on the platform." },
+            { key: "investment_confirmed", label: "Investment confirmed", desc: "Confirmation when your investment commitment is registered." },
+            { key: "funds_received", label: "Funds received / investment activated", desc: "Notification when your bank transfer is confirmed and investment goes active." },
+            { key: "payout_approaching", label: "Payout approaching (7 days before maturity)", desc: "Reminder before your investment reaches its maturity date." },
+            { key: "payout_completed", label: "Payout completed", desc: "Confirmation when your payout has been sent to your IBAN." },
+          ] as { key: keyof typeof notifPrefs; label: string; desc: string }[]).map((item) => (
+            <div key={item.key} className="flex items-center justify-between gap-4 py-2 border-b border-border last:border-b-0">
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-foreground">{item.label}</div>
+                <div className="text-xs text-muted-foreground">{item.desc}</div>
+              </div>
+              <button
+                disabled={savingNotifPref === item.key || !user}
+                onClick={async () => {
+                  if (!user) return;
+                  const newVal = !notifPrefs[item.key];
+                  setSavingNotifPref(item.key);
+                  setNotifPrefs(prev => ({ ...prev, [item.key]: newVal }));
+                  const payload = { user_id: user.id, ...notifPrefs, [item.key]: newVal };
+                  const { error } = await supabase
+                    .from("notification_preferences")
+                    .upsert(payload as any, { onConflict: "user_id" });
+                  if (error) {
+                    setNotifPrefs(prev => ({ ...prev, [item.key]: !newVal }));
+                    toast({ title: "Error", description: error.message, variant: "destructive" });
+                  }
+                  setSavingNotifPref(null);
+                }}
+                className={`relative shrink-0 w-10 h-5 rounded-full transition-colors ${
+                  notifPrefs[item.key] ? "bg-primary" : "bg-muted-foreground/30"
+                }`}
+              >
+                <span className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                  notifPrefs[item.key] ? "translate-x-5" : "translate-x-0"
+                }`} />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Delete account */}
       <div className="bg-white border border-destructive/20 rounded-lg p-6">
         <h2 className="text-sm font-semibold text-destructive mb-1">Delete Account</h2>
