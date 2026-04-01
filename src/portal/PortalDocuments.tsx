@@ -98,27 +98,17 @@ export default function PortalDocuments() {
                   </span>
                   <button
                     onClick={() => {
-                      const refCode = `OT-${new Date(p.created_at).getFullYear()}-${p.id.slice(0, 4).toUpperCase()}`;
-                      const content = [
-                        "INVESTMENT CONFIRMATION",
-                        "═══════════════════════════════════",
-                        "",
-                        `Date: ${new Date(p.created_at).toLocaleDateString("en-GB")}`,
-                        `Reference: ${refCode}`,
-                        "",
-                        `Offer: ${p.trade_offers?.title || "—"}`,
-                        `Amount: ${Number(p.amount).toLocaleString()} ${getCurrency((p.trade_offers as any)?.companies?.country)}`,
-                        `Status: ${p.status}`,
-                        "",
-                        `© ${new Date().getFullYear()} Makrill Trade.`,
-                      ].join("\n");
-                      const blob = new Blob([content], { type: "text/plain" });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement("a");
-                      a.href = url;
-                      a.download = `Confirmation-${refCode}.txt`;
-                      a.click();
-                      URL.revokeObjectURL(url);
+                      const cur = getCurrency((p.trade_offers as any)?.companies?.country);
+                      const ref = p.payment_reference || `OT-${new Date(p.created_at).getFullYear()}-${p.id.slice(0, 4).toUpperCase()}`;
+                      generateConfirmationPdf({
+                        reference: ref,
+                        offerTitle: p.trade_offers?.title || "Investment",
+                        companyName: "Makrill Trade",
+                        amount: Number(p.amount),
+                        currency: cur,
+                        status: p.status,
+                        date: p.created_at,
+                      });
                     }}
                     className="text-primary hover:text-primary/80 transition-colors"
                     title="Download confirmation"
