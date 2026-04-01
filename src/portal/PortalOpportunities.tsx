@@ -254,6 +254,33 @@ export default function PortalOpportunities() {
               <option value="5-10">5 – 10%</option>
               <option value="10+">10%+</option>
             </select>
+            <select
+              value={sectorFilter}
+              onChange={(e) => setSectorFilter(e.target.value)}
+              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none"
+            >
+              <option value="all">All Sectors</option>
+              {sectorOptions.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <select
+              value={countryFilter}
+              onChange={(e) => setCountryFilter(e.target.value)}
+              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none"
+            >
+              <option value="all">All Countries</option>
+              {countryOptions.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select
+              value={currencyFilter}
+              onChange={(e) => setCurrencyFilter(e.target.value)}
+              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none"
+            >
+              <option value="all">All Currencies</option>
+              <option value="SEK">SEK</option>
+              <option value="CHF">CHF</option>
+              <option value="EUR">EUR</option>
+              <option value="USD">USD</option>
+            </select>
           </div>
         </div>
       </div>
