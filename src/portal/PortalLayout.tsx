@@ -287,13 +287,13 @@ function PortalInner() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Top bar */}
-      <header className="h-14 flex items-center justify-between border-b border-border px-3 sm:px-6 bg-white shadow-sm">
+      <header className="h-14 flex items-center justify-between border-b border-mackerel-dark px-3 sm:px-6 bg-mackerel-dark shadow-sm">
         <div className="flex items-center gap-4 sm:gap-8 overflow-hidden">
           <div className="flex items-center gap-2 shrink-0 cursor-pointer" onClick={() => switchTab("/portal")}>
-            <div className="h-7 w-7 bg-primary flex items-center justify-center">
-              <span className="text-mackerel-shimmer font-bold text-xs">MT</span>
+            <div className="h-7 w-7 bg-mackerel flex items-center justify-center">
+              <span className="text-white font-bold text-xs">MT</span>
             </div>
-            <span className="text-foreground font-bold text-sm hidden sm:inline">Makrill <span className="text-mackerel">Trade</span></span>
+            <span className="text-white font-bold text-sm hidden sm:inline">Makrill <span className="text-mackerel-gold">Trade</span></span>
           </div>
           <nav className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto">
             {navItems.map((item) => {
@@ -304,8 +304,8 @@ function PortalInner() {
                   onClick={() => switchTab(item.to)}
                   className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 text-[12px] sm:text-[13px] rounded-sm transition-colors whitespace-nowrap ${
                     isActive
-                      ? "text-mackerel bg-mackerel/5 font-semibold border-b-2 border-b-mackerel"
-                      : "text-muted-foreground hover:text-mackerel hover:bg-muted/50"
+                      ? "text-mackerel-gold bg-white/10 font-semibold border-b-2 border-b-mackerel-gold"
+                      : "text-white/60 hover:text-mackerel-gold hover:bg-white/5"
                   }`}
                 >
                   <item.icon className="h-4 w-4" />
@@ -317,7 +317,7 @@ function PortalInner() {
         </div>
         <div className="flex items-center gap-4">
           <PortalNotificationDropdown onNavigate={(path) => switchTab(path)} />
-          <div className="h-6 w-px bg-border" />
+          <div className="h-6 w-px bg-white/20" />
           <UserDropdown
             user={user}
             profile={profile}
