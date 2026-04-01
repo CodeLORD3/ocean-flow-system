@@ -13,6 +13,9 @@ export default function PortalProfile() {
   const [profileMissing, setProfileMissing] = useState(false);
   const [formData, setFormData] = useState({ first_name: "", last_name: "", country: "", telephone: "", address: "", base_currency: "SEK" });
   const [savingProfile, setSavingProfile] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<{ name: string; url: string }[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
