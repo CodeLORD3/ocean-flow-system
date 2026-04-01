@@ -358,9 +358,9 @@ export default function InvestmentLog() {
                       <TableCell className="py-1.5">
                         <Badge
                           variant="outline"
-                          className={`text-[9px] ${statusBadgeClass(p.status)}`}
+                          className={`text-[9px] font-semibold tracking-wide rounded-none ${statusBadgeClass(p.status)}`}
                         >
-                          {p.status}
+                          {(p.status || "").toUpperCase()}
                         </Badge>
                       </TableCell>
                       <TableCell className="py-1.5 text-right">

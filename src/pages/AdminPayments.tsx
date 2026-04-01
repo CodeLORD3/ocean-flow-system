@@ -276,8 +276,8 @@ export default function AdminPayments() {
                       <TableCell className="py-1.5 font-mono text-[10px]">{refCode}</TableCell>
                       <TableCell className="py-1.5 font-mono text-[10px]">{investor?.iban || "—"}</TableCell>
                       <TableCell className="py-1.5">
-                        <Badge variant="outline" className={`text-[9px] ${statusBadgeClass(p.status)}`}>
-                          {p.status}
+                        <Badge variant="outline" className={`text-[9px] font-semibold tracking-wide rounded-none ${statusBadgeClass(p.status)}`}>
+                          {(p.status || "").toUpperCase()}
                         </Badge>
                       </TableCell>
                       <TableCell className="py-1.5 text-muted-foreground">
