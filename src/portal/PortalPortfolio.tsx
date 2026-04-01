@@ -117,18 +117,22 @@ export default function PortalPortfolio() {
     return entries.map(([cur, val]) => `${prefix}${Math.round(val).toLocaleString()} ${cur}`).join(" + ");
   };
 
-  // Active tab stats
-  const investedByCur = sumByCurrency(activePledges, (p) => Number(p.amount));
-  const payoutByCur = sumByCurrency(activePledges, (p) => {
+  // Active tab stats — split pending vs invested
+  const pendingPledges = activePledges.filter((p: any) => p.status === "Pending Payment");
+  const confirmedPledges = activePledges.filter((p: any) => p.status !== "Pending Payment");
+
+  const pendingByCur = sumByCurrency(pendingPledges, (p) => Number(p.amount));
+  const investedByCur = sumByCurrency(confirmedPledges, (p) => Number(p.amount));
+  const payoutByCur = sumByCurrency(confirmedPledges, (p) => {
     const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
     return Number(p.amount) * (1 + rate / 100);
   });
-  const profitByCur = sumByCurrency(activePledges, (p) => {
+  const profitByCur = sumByCurrency(confirmedPledges, (p) => {
     const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
     return Number(p.amount) * (rate / 100);
   });
-  const avgRate = activePledges.length > 0
-    ? activePledges.reduce((s: number, p: any) => s + (p.trade_offers ? Number(p.trade_offers.interest_rate) : 0), 0) / activePledges.length
+  const avgRate = confirmedPledges.length > 0
+    ? confirmedPledges.reduce((s: number, p: any) => s + (p.trade_offers ? Number(p.trade_offers.interest_rate) : 0), 0) / confirmedPledges.length
     : 0;
 
   // History tab stats
@@ -141,29 +145,14 @@ export default function PortalPortfolio() {
     return Number(p.amount) * (rate / 100);
   });
 
-  const statusBadge = (status: string) => {
-    switch (status) {
-      case "Active": return "text-mackerel bg-mackerel-light border-mackerel/30";
-      case "Pending Payment": return "text-amber-700 bg-amber-50 border-amber-200";
-      case "Matured": return "text-orange-600 bg-orange-50 border-orange-200";
-      case "Paid Out":
-      case "Repaid": return "text-primary bg-primary/5 border-primary/20";
-      default: return "text-muted-foreground bg-muted/50 border-border";
-    }
-  };
-
-  if (isLoading) {
-    return <div className="text-primary text-sm animate-pulse p-8 text-center">Loading your investments...</div>;
-  }
-
-  const hasActiveData = activePledges.length > 0;
-  const hasHistoryData = historyPledges.length > 0;
+  const hasPending = pendingPledges.length > 0;
 
   const activeStats = [
-    { icon: Banknote, label: "Total Invested", value: hasActiveData ? fmtByCurrency(investedByCur) : "—", color: "text-primary" },
-    { icon: TrendingUp, label: "Expected Payout", value: hasActiveData ? fmtByCurrency(payoutByCur) : "—", color: "text-mackerel" },
-    { icon: Target, label: "Expected Profit", value: hasActiveData ? fmtByCurrency(profitByCur, "+") : "—", color: "text-mackerel" },
-    { icon: Percent, label: "Average Return", value: hasActiveData ? `${avgRate.toFixed(1)}%` : "—", color: "text-primary" },
+    ...(hasPending ? [{ icon: Clock, label: "Booked (Awaiting Payment)", value: fmtByCurrency(pendingByCur), color: "text-amber-600" }] : []),
+    { icon: Banknote, label: "Total Invested", value: hasActiveData && confirmedPledges.length > 0 ? fmtByCurrency(investedByCur) : "—", color: "text-primary" },
+    { icon: TrendingUp, label: "Expected Payout", value: confirmedPledges.length > 0 ? fmtByCurrency(payoutByCur) : "—", color: "text-mackerel" },
+    { icon: Target, label: "Expected Profit", value: confirmedPledges.length > 0 ? fmtByCurrency(profitByCur, "+") : "—", color: "text-mackerel" },
+    { icon: Percent, label: "Average Return", value: confirmedPledges.length > 0 ? `${avgRate.toFixed(1)}%` : "—", color: "text-primary" },
   ];
 
   const historyStats = [
