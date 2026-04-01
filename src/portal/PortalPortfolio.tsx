@@ -314,6 +314,66 @@ export default function PortalPortfolio() {
   );
 }
 
+function InvestmentTimeline({ status }: { status: string }) {
+  const steps = [
+    { label: "Investment committed", key: "committed" },
+    { label: "Payment received", key: "received" },
+    { label: "Investment active", key: "active" },
+    { label: "Payout at maturity", key: "payout" },
+  ];
+
+  const completedCount =
+    status === "Paid Out" || status === "Repaid" ? 4
+    : status === "Matured" ? 3
+    : status === "Active" ? 2
+    : status === "Pending Payment" ? 1
+    : 0;
+
+  const statusMessage =
+    status === "Pending Payment" ? "Waiting for your bank transfer to be received and matched. This typically takes 1–2 business days."
+    : status === "Active" ? "Your funds have been received and deployed. You'll receive your payout at maturity."
+    : status === "Matured" ? "Your investment has matured. Payout is being processed by the company."
+    : status === "Paid Out" || status === "Repaid" ? "Investment complete — funds have been transferred to your account."
+    : null;
+
+  return (
+    <div className="mb-4">
+      <div className="flex items-center gap-0">
+        {steps.map((step, i) => {
+          const isCompleted = i < completedCount;
+          const isCurrent = i === completedCount - 1;
+          return (
+            <div key={step.key} className="flex items-center">
+              <div className="flex flex-col items-center">
+                <div className={`h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold border-2 ${
+                  isCompleted
+                    ? isCurrent
+                      ? "bg-mackerel border-mackerel text-white"
+                      : "bg-primary border-primary text-primary-foreground"
+                    : "bg-muted border-border text-muted-foreground"
+                }`}>
+                  {isCompleted ? "✓" : ""}
+                </div>
+                <span className={`text-[9px] mt-1 text-center max-w-[80px] leading-tight ${
+                  isCompleted ? isCurrent ? "text-mackerel font-semibold" : "text-foreground font-medium" : "text-muted-foreground"
+                }`}>
+                  {step.label}
+                </span>
+              </div>
+              {i < steps.length - 1 && (
+                <div className={`h-0.5 w-8 mx-1 mt-[-14px] ${i < completedCount - 1 ? "bg-primary" : "bg-border"}`} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {statusMessage && (
+        <p className="text-[10px] text-muted-foreground mt-2">{statusMessage}</p>
+      )}
+    </div>
+  );
+}
+
 function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, daysToMaturity, onViewOffer }: {
   pledge: any;
   offer: any;
@@ -330,6 +390,7 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
 
   return (
     <div className="px-6 py-4 border-t border-border/30">
+      <InvestmentTimeline status={status} />
       <div className="grid grid-cols-3 gap-4">
         {/* Status explanation */}
         <div className="space-y-2">
