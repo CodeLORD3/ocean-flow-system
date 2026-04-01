@@ -210,24 +210,44 @@ export default function PortalPortfolio() {
         <p className="text-xs text-muted-foreground mt-0.5">Track all your active and completed investments.</p>
       </div>
 
-      {/* Summary cards — change based on tab */}
-      <div className={`grid gap-3 ${currentStats.length <= 4 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2 sm:grid-cols-5"}`}>
-        {currentStats.map((stat) => (
-          <div key={stat.label} className="border border-border bg-white p-3">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] text-muted-foreground font-medium">{stat.label}</span>
-              <stat.icon className={`h-3.5 w-3.5 ${stat.color} opacity-60`} />
-            </div>
-            <span className={`text-lg font-bold font-mono ${stat.color}`}>{stat.value}</span>
+      {!hasAnyData ? (
+        <div className="border border-border bg-white flex flex-col items-center justify-center py-16 text-center">
+          <div className="h-16 w-16 bg-primary/10 flex items-center justify-center rounded-full mb-4">
+            <Briefcase className="h-8 w-8 text-primary" />
           </div>
-        ))}
-      </div>
+          <h2 className="text-lg font-semibold text-foreground mb-2">You haven't made any investments yet</h2>
+          <p className="text-sm text-muted-foreground max-w-md mb-6">
+            Browse our available trade finance opportunities, review the details, and make your first investment commitment in just a few steps.
+          </p>
+          <button
+            onClick={() => switchTab("/portal")}
+            className="h-10 px-6 bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center gap-2"
+          >
+            Browse Investment Opportunities <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
+      ) : (
+        <>
+          {/* Summary cards — change based on tab */}
+          <div className={`grid gap-3 ${currentStats.length <= 4 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2 sm:grid-cols-5"}`}>
+            {currentStats.map((stat) => (
+              <div key={stat.label} className="border border-border bg-white p-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[11px] text-muted-foreground font-medium">{stat.label}</span>
+                  <stat.icon className={`h-3.5 w-3.5 ${stat.color} opacity-60`} />
+                </div>
+                <span className={`text-lg font-bold font-mono ${stat.color}`}>{stat.value}</span>
+              </div>
+            ))}
+          </div>
 
-      {/* Returns Chart */}
-      <ReturnsChart pledges={pledges} companyMap={companyMap} baseCurrency={(investorProfile as any)?.base_currency || "SEK"} />
+          {/* Returns Chart */}
+          <ReturnsChart pledges={pledges} companyMap={companyMap} baseCurrency={(investorProfile as any)?.base_currency || "SEK"} />
 
-      {/* Investment Flow Diagram — only on active tab */}
-      {tab === "active" && <InvestmentFlowDiagram pledges={pledges as any} baseCurrency={(investorProfile as any)?.base_currency || "SEK"} />}
+          {/* Investment Flow Diagram — only on active tab */}
+          {tab === "active" && <InvestmentFlowDiagram pledges={pledges as any} baseCurrency={(investorProfile as any)?.base_currency || "SEK"} />}
+        </>
+      )}
 
       {/* Table with tabs */}
       <div className="border border-border bg-white">
