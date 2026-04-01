@@ -52,6 +52,7 @@ export default function PortalProfile() {
           country: meta.country || "Sweden",
           telephone: "",
           address: "",
+          base_currency: "SEK",
         });
       }
       setProfileLoaded(true);
