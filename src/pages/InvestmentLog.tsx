@@ -282,125 +282,121 @@ export default function InvestmentLog() {
 
       {/* Table */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <HandCoins className="h-5 w-5" />
-            Investments ({filtered.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <p className="text-muted-foreground py-8 text-center">Loading...</p>
-          ) : filtered.length === 0 ? (
-            <p className="text-muted-foreground py-8 text-center">No investments found</p>
-          ) : (
-            <div className="overflow-auto max-h-[60vh]">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[140px]">Date</TableHead>
-                    <TableHead>Investor</TableHead>
-                    <TableHead>Offer</TableHead>
-                    <TableHead>Company</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead className="text-right">Rate</TableHead>
-                    <TableHead className="text-right">Expected Return</TableHead>
-                    <TableHead>Reference</TableHead>
-                    <TableHead className="w-[110px]">Status</TableHead>
-                    <TableHead className="text-right w-[140px]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((p: any, idx: number) => {
-                    const rate = p.offer?.interest_rate || 0;
-                    const expectedReturn = p.amount * (1 + rate / 100);
-                    const cur = p.currency || "SEK";
-                    return (
-                      <TableRow key={p.id} className={`hover:bg-primary/10 transition-colors ${idx % 2 === 1 ? "bg-muted/50" : ""}`}>
-                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                          {format(new Date(p.created_at), "d MMM yyyy HH:mm", { locale: sv })}
-                        </TableCell>
-                        <TableCell>
-                          {p.investor ? (
-                            <div>
-                              <span className="font-medium text-sm">
-                                {p.investor.first_name} {p.investor.last_name}
-                              </span>
-                              <p className="text-[10px] text-muted-foreground">{p.investor.email}</p>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">Unknown</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm max-w-[200px] truncate">
-                          {p.offer?.title || "—"}
-                        </TableCell>
-                        <TableCell>
-                          {p.company ? (
-                            <div className="flex items-center gap-1.5">
-                              <CountryFlag country={p.company.country} size={14} />
-                              <span className="text-xs">{p.company.name}</span>
-                            </div>
-                          ) : (
-                            "—"
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right font-mono text-sm font-medium">
-                          {(p.amount || 0).toLocaleString("sv-SE")} {cur}
-                        </TableCell>
-                        <TableCell className="text-right font-mono text-sm">
-                          {rate}%
-                        </TableCell>
-                        <TableCell className="text-right font-mono text-sm text-emerald-500">
-                          {Math.round(expectedReturn).toLocaleString("sv-SE")} {cur}
-                        </TableCell>
-                        <TableCell className="font-mono text-[10px] text-muted-foreground">
-                          {p.payment_reference || "—"}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
+        <CardContent className="p-0 overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="text-[10px]">
+                <TableHead className="h-8">Date</TableHead>
+                <TableHead className="h-8">Investor</TableHead>
+                <TableHead className="h-8">Offer</TableHead>
+                <TableHead className="h-8">Company</TableHead>
+                <TableHead className="h-8 text-right">Amount</TableHead>
+                <TableHead className="h-8 text-right">Rate</TableHead>
+                <TableHead className="h-8 text-right">Expected Return</TableHead>
+                <TableHead className="h-8">Reference</TableHead>
+                <TableHead className="h-8">Status</TableHead>
+                <TableHead className="h-8 text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={10} className="text-center py-8 text-xs text-muted-foreground animate-pulse">Loading...</TableCell>
+                </TableRow>
+              ) : filtered.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={10} className="text-center py-8 text-xs text-muted-foreground">No investments found</TableCell>
+                </TableRow>
+              ) : (
+                filtered.map((p: any, idx: number) => {
+                  const rate = p.offer?.interest_rate || 0;
+                  const expectedReturn = p.amount * (1 + rate / 100);
+                  const cur = p.currency || "SEK";
+                  return (
+                    <TableRow key={p.id} className={`text-[11px] hover:bg-muted/50 transition-colors ${idx % 2 === 1 ? "bg-muted/30" : ""}`}>
+                      <TableCell className="py-1.5 text-muted-foreground whitespace-nowrap">
+                        {format(new Date(p.created_at), "d MMM yyyy HH:mm", { locale: sv })}
+                      </TableCell>
+                      <TableCell className="py-1.5">
+                        {p.investor ? (
+                          <div>
+                            <span className="font-medium">
+                              {p.investor.first_name} {p.investor.last_name}
+                            </span>
+                            <p className="text-[10px] text-muted-foreground">{p.investor.email}</p>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">Unknown</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="py-1.5 font-medium max-w-[200px] truncate">
+                        {p.offer?.title || "—"}
+                      </TableCell>
+                      <TableCell className="py-1.5">
+                        {p.company ? (
+                          <div className="flex items-center gap-1.5">
+                            <CountryFlag country={p.company.country} size={14} />
+                            <span className="text-[10px]">{p.company.name}</span>
+                          </div>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                      <TableCell className="py-1.5 text-right font-mono font-medium">
+                        {(p.amount || 0).toLocaleString("sv-SE")} {cur}
+                      </TableCell>
+                      <TableCell className="py-1.5 text-right font-mono">
+                        {rate}%
+                      </TableCell>
+                      <TableCell className="py-1.5 text-right font-mono text-emerald-500">
+                        {Math.round(expectedReturn).toLocaleString("sv-SE")} {cur}
+                      </TableCell>
+                      <TableCell className="py-1.5 font-mono text-[10px] text-muted-foreground">
+                        {p.payment_reference || "—"}
+                      </TableCell>
+                      <TableCell className="py-1.5">
+                        <Badge
+                          variant="outline"
+                          className={`text-[9px] ${statusBadgeClass(p.status)}`}
+                        >
+                          {p.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-1.5 text-right">
+                        {p.status === "Pending Payment" && (
+                          <Button
+                            size="sm"
                             variant="outline"
-                            className={`text-[9px] ${statusBadgeClass(p.status)}`}
+                            className="h-6 text-[10px] text-green-700 border-green-300 hover:bg-green-50"
+                            onClick={() => markReceivedMutation.mutate(p)}
+                            disabled={markReceivedMutation.isPending}
                           >
-                            {p.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {p.status === "Pending Payment" && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-6 text-[10px] text-green-700 border-green-300 hover:bg-green-50"
-                              onClick={() => markReceivedMutation.mutate(p)}
-                              disabled={markReceivedMutation.isPending}
-                            >
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Mark Received
-                            </Button>
-                          )}
-                          {(p.status === "Active" || p.status === "Matured") && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-6 text-[10px] text-primary border-primary/30 hover:bg-primary/5"
-                              onClick={() => markPaidOutMutation.mutate(p)}
-                              disabled={markPaidOutMutation.isPending}
-                            >
-                              <DollarSign className="h-3 w-3 mr-1" />
-                              Mark Paid Out
-                            </Button>
-                          )}
-                          {p.status === "Paid Out" && (
-                            <span className="text-[10px] text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Mark Received
+                          </Button>
+                        )}
+                        {(p.status === "Active" || p.status === "Matured") && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-6 text-[10px] text-primary border-primary/30 hover:bg-primary/5"
+                            onClick={() => markPaidOutMutation.mutate(p)}
+                            disabled={markPaidOutMutation.isPending}
+                          >
+                            <DollarSign className="h-3 w-3 mr-1" />
+                            Mark Paid Out
+                          </Button>
+                        )}
+                        {p.status === "Paid Out" && (
+                          <span className="text-[10px] text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>
