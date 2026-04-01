@@ -185,6 +185,7 @@ export default function PortalDashboard() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 

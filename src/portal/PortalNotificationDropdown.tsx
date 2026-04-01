@@ -127,7 +127,7 @@ export default function PortalNotificationDropdown({ onNavigate }: Props) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-[360px] bg-white border border-border rounded-lg shadow-xl z-50 overflow-hidden">
+        <div className="absolute right-0 top-full mt-1 w-[min(360px,calc(100vw-1rem))] bg-white border border-border rounded-lg shadow-xl z-50 overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-muted/30">
             <span className="text-xs font-semibold text-foreground">Notifications</span>

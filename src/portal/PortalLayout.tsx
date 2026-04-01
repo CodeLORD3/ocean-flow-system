@@ -128,7 +128,7 @@ function UserDropdown({ user, profile, onLogout, onProfile }: {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-border rounded-lg shadow-lg z-50 py-1">
+        <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-border rounded-lg shadow-lg z-50 py-1 max-w-[calc(100vw-1rem)]">
           <button
             onClick={() => { setOpen(false); onProfile(); }}
             className="w-full text-left px-4 py-2 text-xs text-foreground hover:bg-muted/50 flex items-center gap-2"
