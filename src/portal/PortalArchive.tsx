@@ -5,7 +5,7 @@ import { Archive, CheckCircle, ArrowRight } from "lucide-react";
 import { usePortalTabs } from "./PortalTabsContext";
 
 export default function PortalArchive() {
-  const { openOfferTab } = usePortalTabs();
+  const { openOfferTab, switchTab } = usePortalTabs();
 
   const { data: offers = [], isLoading } = useQuery({
     queryKey: ["portal-archive"],
