@@ -40,6 +40,7 @@ export default function PortalProfile() {
           country: (data as any).country || "",
           telephone: (data as any).telephone || "",
           address: (data as any).address || "",
+          base_currency: (data as any).base_currency || "SEK",
         });
       } else {
         // Profile doesn't exist yet — show empty form
