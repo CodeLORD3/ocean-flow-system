@@ -352,6 +352,7 @@ export default function PortalProfile() {
             </div>
           );
         })()}
+      </div>
 
       {/* Payout Details */}
       <div className="bg-white border border-border rounded-lg p-6">
