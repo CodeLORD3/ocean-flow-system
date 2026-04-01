@@ -85,6 +85,24 @@ export default function PortalProfile() {
           })));
         }
       }
+      // Load notification preferences
+      if (u) {
+        const { data: prefs } = await supabase
+          .from("notification_preferences")
+          .select("*")
+          .eq("user_id", u.id)
+          .maybeSingle();
+        if (prefs) {
+          setNotifPrefs({
+            new_opportunity: (prefs as any).new_opportunity ?? true,
+            investment_confirmed: (prefs as any).investment_confirmed ?? true,
+            funds_received: (prefs as any).funds_received ?? true,
+            payout_approaching: (prefs as any).payout_approaching ?? true,
+            payout_completed: (prefs as any).payout_completed ?? true,
+          });
+        }
+        setNotifPrefsLoaded(true);
+      }
 
       setProfileLoaded(true);
     };
