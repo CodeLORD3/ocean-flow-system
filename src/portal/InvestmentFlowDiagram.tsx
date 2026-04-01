@@ -53,25 +53,40 @@ export default function InvestmentFlowDiagram({ pledges }: { pledges: Pledge[] }
       invested += amt;
       payout += amt * (1 + rate / 100);
 
-      const startDate = offer.purchase_date ? parseISO(offer.purchase_date) : parseISO(p.created_at);
+      const committedDate = parseISO(p.created_at);
+      const startDate = offer.purchase_date ? parseISO(offer.purchase_date) : committedDate;
       const maturityDate = parseISO(offer.maturity_date);
 
-      if (!earliest || isBefore(startDate, earliest)) earliest = startDate;
+      if (!earliest || isBefore(committedDate, earliest)) earliest = committedDate;
       if (!latest || isAfter(maturityDate, latest)) latest = maturityDate;
 
+      // Committed node (when investor placed the pledge)
       rawNodes.push({
-        date: startDate,
-        label: `Invested in ${offer.title}`,
+        date: committedDate,
+        label: `Committed – ${offer.title}`,
         amount: amt,
-        type: "start",
+        type: "committed",
         status: "completed",
         offerTitle: offer.title,
       });
 
+      // Start node (when the offer's investment period begins)
+      if (!isSameDay(startDate, committedDate)) {
+        const started = isBefore(startDate, now) || isSameDay(startDate, now);
+        rawNodes.push({
+          date: startDate,
+          label: `Started – ${offer.title}`,
+          amount: amt,
+          type: "start",
+          status: started ? "completed" : "upcoming",
+          offerTitle: offer.title,
+        });
+      }
+
       const matured = isBefore(maturityDate, now) || differenceInDays(maturityDate, now) <= 0;
       rawNodes.push({
         date: maturityDate,
-        label: `Payout – ${offer.title}`,
+        label: `Maturity – ${offer.title}`,
         amount: Math.round(amt * (1 + rate / 100)),
         type: "payout",
         status: matured ? "completed" : "upcoming",
