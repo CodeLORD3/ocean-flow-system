@@ -257,7 +257,7 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
                     fill: "#64748b",
                   }}
                 >
-                  {m.dealCount} {m.dealCount === 1 ? "deal" : "deals"} · {m.totalValue.toLocaleString()} kr
+                  {m.dealCount} {m.dealCount === 1 ? "deal" : "deals"} · {m.totalValue.toLocaleString()} {getCurrency(m.country)}
                 </text>
               </Marker>
             ))}
