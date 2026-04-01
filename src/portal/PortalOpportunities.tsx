@@ -228,73 +228,124 @@ export default function PortalOpportunities() {
 
       {/* Filters */}
       <div className="border border-border bg-white px-3 py-1.5">
-        <div className="flex flex-col gap-2">
+        {/* Desktop: search + all filters in one row */}
+        <div className="hidden md:flex items-center gap-1.5">
+          <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search..."
+            className="h-7 w-36 bg-muted/50 border border-border px-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+          />
+          <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-7 bg-muted/50 border border-border px-1.5 text-xs text-foreground focus:border-primary focus:outline-none min-w-0">
+            <option value="all">Status</option>
+            <option value="open">Open</option>
+            <option value="funded">Funded</option>
+          </select>
+          <input type="number" value={minInvestment} onChange={(e) => setMinInvestment(e.target.value)} placeholder="Min. invest" className="h-7 w-24 bg-muted/50 border border-border px-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+          <select value={returnRange} onChange={(e) => setReturnRange(e.target.value)} className="h-7 bg-muted/50 border border-border px-1.5 text-xs text-foreground focus:border-primary focus:outline-none min-w-0">
+            <option value="all">Return</option>
+            <option value="0-5">0–5%</option>
+            <option value="5-10">5–10%</option>
+            <option value="10+">10%+</option>
+          </select>
+          <select value={sectorFilter} onChange={(e) => setSectorFilter(e.target.value)} className="h-7 bg-muted/50 border border-border px-1.5 text-xs text-foreground focus:border-primary focus:outline-none min-w-0">
+            <option value="all">Sector</option>
+            {sectorOptions.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <select value={countryFilter} onChange={(e) => setCountryFilter(e.target.value)} className="h-7 bg-muted/50 border border-border px-1.5 text-xs text-foreground focus:border-primary focus:outline-none min-w-0">
+            <option value="all">Country</option>
+            {countryOptions.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <select value={currencyFilter} onChange={(e) => setCurrencyFilter(e.target.value)} className="h-7 bg-muted/50 border border-border px-1.5 text-xs text-foreground focus:border-primary focus:outline-none min-w-0">
+            <option value="all">Currency</option>
+            <option value="SEK">SEK</option>
+            <option value="CHF">CHF</option>
+            <option value="EUR">EUR</option>
+            <option value="USD">USD</option>
+          </select>
+        </div>
+
+        {/* Mobile: search + filter icon */}
+        <div className="md:hidden relative" ref={filterRef}>
           <div className="flex items-center gap-1.5">
             <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name..."
+              placeholder="Search..."
               className="flex-1 h-7 bg-muted/50 border border-border px-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none min-w-0"
             />
+            <button
+              onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
+              className={`h-7 w-7 flex items-center justify-center border border-border shrink-0 transition-colors ${hasActiveFilters ? 'bg-primary text-primary-foreground' : 'bg-muted/50 text-muted-foreground hover:text-foreground'}`}
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+            </button>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:items-center gap-1.5">
-            <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground shrink-0 hidden md:block" />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none min-w-0"
-            >
-              <option value="all">All Status</option>
-              <option value="open">Open</option>
-              <option value="funded">Funded</option>
-            </select>
-            <input
-              type="number"
-              value={minInvestment}
-              onChange={(e) => setMinInvestment(e.target.value)}
-              placeholder="Min. invest ≤"
-              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none min-w-0"
-            />
-            <select
-              value={returnRange}
-              onChange={(e) => setReturnRange(e.target.value)}
-              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none min-w-0"
-            >
-              <option value="all">Return</option>
-              <option value="0-5">0–5%</option>
-              <option value="5-10">5–10%</option>
-              <option value="10+">10%+</option>
-            </select>
-            <select
-              value={sectorFilter}
-              onChange={(e) => setSectorFilter(e.target.value)}
-              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none min-w-0"
-            >
-              <option value="all">Sector</option>
-              {sectorOptions.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-            <select
-              value={countryFilter}
-              onChange={(e) => setCountryFilter(e.target.value)}
-              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none min-w-0"
-            >
-              <option value="all">Country</option>
-              {countryOptions.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <select
-              value={currencyFilter}
-              onChange={(e) => setCurrencyFilter(e.target.value)}
-              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none min-w-0"
-            >
-              <option value="all">Currency</option>
-              <option value="SEK">SEK</option>
-              <option value="CHF">CHF</option>
-              <option value="EUR">EUR</option>
-              <option value="USD">USD</option>
-            </select>
-          </div>
+
+          {/* Mobile filter dropdown */}
+          {mobileFiltersOpen && (
+            <div className="absolute top-full left-0 right-0 mt-1 z-50 border border-border bg-white shadow-lg p-3 space-y-2">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-semibold text-foreground">Filters</span>
+                {hasActiveFilters && (
+                  <button onClick={() => { setStatusFilter("all"); setMinInvestment(""); setReturnRange("all"); setSectorFilter("all"); setCountryFilter("all"); setCurrencyFilter("all"); }} className="text-[10px] text-primary hover:underline">Clear all</button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] text-muted-foreground mb-0.5 block">Status</label>
+                  <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="w-full h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none">
+                    <option value="all">All</option>
+                    <option value="open">Open</option>
+                    <option value="funded">Funded</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] text-muted-foreground mb-0.5 block">Min. invest</label>
+                  <input type="number" value={minInvestment} onChange={(e) => setMinInvestment(e.target.value)} placeholder="Amount" className="w-full h-7 bg-muted/50 border border-border px-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+                </div>
+                <div>
+                  <label className="text-[10px] text-muted-foreground mb-0.5 block">Return</label>
+                  <select value={returnRange} onChange={(e) => setReturnRange(e.target.value)} className="w-full h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none">
+                    <option value="all">Any</option>
+                    <option value="0-5">0–5%</option>
+                    <option value="5-10">5–10%</option>
+                    <option value="10+">10%+</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] text-muted-foreground mb-0.5 block">Sector</label>
+                  <select value={sectorFilter} onChange={(e) => setSectorFilter(e.target.value)} className="w-full h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none">
+                    <option value="all">All</option>
+                    {sectorOptions.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] text-muted-foreground mb-0.5 block">Country</label>
+                  <select value={countryFilter} onChange={(e) => setCountryFilter(e.target.value)} className="w-full h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none">
+                    <option value="all">All</option>
+                    {countryOptions.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] text-muted-foreground mb-0.5 block">Currency</label>
+                  <select value={currencyFilter} onChange={(e) => setCurrencyFilter(e.target.value)} className="w-full h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none">
+                    <option value="all">All</option>
+                    <option value="SEK">SEK</option>
+                    <option value="CHF">CHF</option>
+                    <option value="EUR">EUR</option>
+                    <option value="USD">USD</option>
+                  </select>
+                </div>
+              </div>
+              <button onClick={() => setMobileFiltersOpen(false)} className="w-full h-7 bg-primary text-primary-foreground text-xs font-medium mt-1">Apply</button>
+            </div>
+          )}
         </div>
       </div>
 
