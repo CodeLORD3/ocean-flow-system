@@ -147,6 +147,24 @@ export default function PortalPortfolio() {
 
   const hasPending = pendingPledges.length > 0;
 
+  const statusBadge = (status: string) => {
+    switch (status) {
+      case "Active": return "text-mackerel bg-mackerel-light border-mackerel/30";
+      case "Pending Payment": return "text-amber-700 bg-amber-50 border-amber-200";
+      case "Matured": return "text-orange-600 bg-orange-50 border-orange-200";
+      case "Paid Out":
+      case "Repaid": return "text-primary bg-primary/5 border-primary/20";
+      default: return "text-muted-foreground bg-muted/50 border-border";
+    }
+  };
+
+  if (isLoading) {
+    return <div className="text-primary text-sm animate-pulse p-8 text-center">Loading your investments...</div>;
+  }
+
+  const hasActiveData = activePledges.length > 0;
+  const hasHistoryData = historyPledges.length > 0;
+
   const activeStats = [
     ...(hasPending ? [{ icon: Clock, label: "Booked (Awaiting Payment)", value: fmtByCurrency(pendingByCur), color: "text-amber-600" }] : []),
     { icon: Banknote, label: "Total Invested", value: hasActiveData && confirmedPledges.length > 0 ? fmtByCurrency(investedByCur) : "—", color: "text-primary" },
