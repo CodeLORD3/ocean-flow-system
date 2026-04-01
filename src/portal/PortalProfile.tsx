@@ -212,7 +212,7 @@ export default function PortalProfile() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
           <div>
             <label className="text-xs text-muted-foreground mb-1 block">First Name</label>
             <input

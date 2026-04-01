@@ -77,7 +77,7 @@ export default function PortalDashboard() {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { icon: DollarSign, label: "Total Invested", value: `${totalInvested.toLocaleString()} kr`, sub: `Across ${pledges.length} investment${pledges.length !== 1 ? "s" : ""}`, accent: "text-primary" },
           { icon: TrendingUp, label: "Returns Earned", value: `${totalReturns.toLocaleString()} kr`, sub: expectedActiveReturns > 0 ? `+${expectedActiveReturns.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr pending` : "No completed deals yet", accent: "text-mackerel" },
@@ -125,7 +125,8 @@ export default function PortalDashboard() {
               View all <ArrowUpRight className="h-3 w-3" />
             </button>
           </div>
-          <table className="w-full text-xs">
+          <div className="overflow-x-auto">
+          <table className="w-full text-xs min-w-[600px]">
             <thead>
               <tr className="border-b border-border text-[10px] text-muted-foreground">
                 <th className="text-left p-2 pl-3 font-medium">Offer</th>
@@ -184,6 +185,7 @@ export default function PortalDashboard() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
@@ -198,7 +200,7 @@ export default function PortalDashboard() {
             Browse all <ArrowUpRight className="h-3 w-3" />
           </button>
         </div>
-        <div className="p-3 grid grid-cols-3 gap-3">
+        <div className="p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {newOpportunities.map((offer) => {
             const target = Number(offer.target_amount) || 0;
             const funded = Number(offer.funded_amount) || 0;

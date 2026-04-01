@@ -549,7 +549,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
 
   if (step === 3) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex items-center justify-center min-h-[60vh] px-2">
       <div className="w-full max-w-lg space-y-5">
           {stepIndicator}
           {/* Success header */}
@@ -621,7 +621,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={copyReference}
               className="h-11 px-4 border border-border text-foreground text-sm font-semibold hover:bg-muted/50 transition-colors flex items-center justify-center gap-1.5"
@@ -691,8 +691,8 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
           </div>
 
           {/* Key metrics row */}
-          <div className="border border-border bg-white">
-            <table className="w-full text-[11px]">
+          <div className="border border-border bg-white overflow-x-auto">
+            <table className="w-full text-[11px] min-w-[500px]">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
                   <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Return</th>
@@ -718,9 +718,9 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
 
           {/* Funding progress */}
           <div className="border border-border bg-white p-3">
-            <div className="flex justify-between text-[11px] text-muted-foreground mb-1.5">
+            <div className="flex flex-col sm:flex-row sm:justify-between text-[11px] text-muted-foreground mb-1.5 gap-1">
               <span className="font-semibold">Funding Progress</span>
-              <span className="font-mono">
+              <span className="font-mono text-[10px] sm:text-[11px]">
                 {funded.toLocaleString()} / {target.toLocaleString()} {cur} ({confirmedPct.toFixed(1)}%{pendingPct > 0 ? ` confirmed · ${pendingPct.toFixed(1)}% pending` : ""})
               </span>
             </div>

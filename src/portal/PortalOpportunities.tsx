@@ -212,9 +212,9 @@ export default function PortalOpportunities() {
 
       {/* Filters */}
       <div className="border border-border bg-white px-3 py-1.5">
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-wrap">
           <div className="flex items-center gap-1.5 flex-1 min-w-[180px]">
-            <Search className="h-3.5 w-3.5 text-muted-foreground" />
+            <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
             <input
               type="text"
               value={search}
@@ -223,31 +223,28 @@ export default function PortalOpportunities() {
               className="flex-1 h-7 bg-muted/50 border border-border px-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
             />
           </div>
-          <div className="flex items-center gap-1.5">
-            <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground shrink-0 hidden sm:block" />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none"
+              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none flex-1 sm:flex-none"
             >
               <option value="all">All Status</option>
               <option value="open">Open for Investment</option>
               <option value="funded">Fully Funded</option>
             </select>
-            <div className="relative group/tip">
-              <input
-                type="number"
-                value={minInvestment}
-                onChange={(e) => setMinInvestment(e.target.value)}
-                placeholder="Min. invest ≤"
-                className="h-7 w-36 bg-muted/50 border border-border px-2 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
-              />
-              <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground cursor-help text-[10px]" title="Filter offers by their minimum investment requirement.">ℹ</span>
-            </div>
+            <input
+              type="number"
+              value={minInvestment}
+              onChange={(e) => setMinInvestment(e.target.value)}
+              placeholder="Min. invest ≤"
+              className="h-7 w-28 sm:w-36 bg-muted/50 border border-border px-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none flex-1 sm:flex-none"
+            />
             <select
               value={returnRange}
               onChange={(e) => setReturnRange(e.target.value)}
-              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none"
+              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none flex-1 sm:flex-none"
             >
               <option value="all">Any Return</option>
               <option value="0-5">0 – 5%</option>
@@ -257,7 +254,7 @@ export default function PortalOpportunities() {
             <select
               value={sectorFilter}
               onChange={(e) => setSectorFilter(e.target.value)}
-              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none"
+              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none flex-1 sm:flex-none"
             >
               <option value="all">All Sectors</option>
               {sectorOptions.map(s => <option key={s} value={s}>{s}</option>)}
@@ -265,7 +262,7 @@ export default function PortalOpportunities() {
             <select
               value={countryFilter}
               onChange={(e) => setCountryFilter(e.target.value)}
-              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none"
+              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none flex-1 sm:flex-none"
             >
               <option value="all">All Countries</option>
               {countryOptions.map(c => <option key={c} value={c}>{c}</option>)}
@@ -273,7 +270,7 @@ export default function PortalOpportunities() {
             <select
               value={currencyFilter}
               onChange={(e) => setCurrencyFilter(e.target.value)}
-              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none"
+              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none flex-1 sm:flex-none"
             >
               <option value="all">All Currencies</option>
               <option value="SEK">SEK</option>
@@ -308,8 +305,8 @@ export default function PortalOpportunities() {
 
       {/* ROW VIEW */}
       {viewMode === "rows" && (
-        <div className="border border-border bg-white overflow-x-auto">
-          <table className="w-full text-[10px]">
+        <div className="border border-border bg-white overflow-x-auto -mx-3 sm:mx-0">
+          <table className="w-full text-[10px] min-w-[900px]">
             <thead>
               <tr className="border-b border-border bg-muted/50">
                 <th className="text-left px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Offer</th>
