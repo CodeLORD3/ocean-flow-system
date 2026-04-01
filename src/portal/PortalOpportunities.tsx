@@ -14,6 +14,9 @@ export default function PortalOpportunities() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [minInvestment, setMinInvestment] = useState("");
   const [returnRange, setReturnRange] = useState<string>("all");
+  const [sectorFilter, setSectorFilter] = useState<string>("all");
+  const [countryFilter, setCountryFilter] = useState<string>("all");
+  const [currencyFilter, setCurrencyFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"rows" | "cards">("rows");
   const [riskDismissed, setRiskDismissed] = useState(() => sessionStorage.getItem("risk-banner-dismissed") === "true");
   const [ibanBannerDismissed, setIbanBannerDismissed] = useState(() => sessionStorage.getItem("iban-banner-dismissed") === "true");
