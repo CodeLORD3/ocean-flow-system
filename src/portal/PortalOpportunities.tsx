@@ -394,6 +394,9 @@ export default function PortalOpportunities() {
                     <h3 className="text-xs font-semibold text-foreground group-hover:text-mackerel transition-colors leading-snug flex-1 pr-2">
                       {offer.title}
                     </h3>
+                    {dateRange && (
+                      <p className="text-[10px] text-muted-foreground mt-0.5 pr-2">{dateRange}</p>
+                    )}
                     <span className={`shrink-0 px-2 py-0.5 text-[10px] font-semibold border ${
                       offer.status === "Open"
                         ? "text-mackerel bg-mackerel-light border-mackerel/30"
