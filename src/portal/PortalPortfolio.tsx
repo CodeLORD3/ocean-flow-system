@@ -13,7 +13,7 @@ export default function PortalPortfolio() {
   const { openOfferTab, switchTab } = usePortalTabs();
   const [tab, setTab] = useState<"active" | "history">("active");
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
-  type SortKey = "name" | "amount" | "rate" | "payout" | "maturity" | "daysToMaturity" | "status";
+  type SortKey = "name" | "amount" | "rate" | "payout" | "startDate" | "maturity" | "daysToMaturity" | "status";
   const [sortKey, setSortKey] = useState<SortKey>("maturity");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
