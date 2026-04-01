@@ -42,7 +42,7 @@ function PortalTabBar() {
             onClick={() => switchTab(tab.path)}
           >
             <span className="truncate max-w-[160px]">{tab.title}</span>
-            {tabs.length > 1 && (
+            {tabs.length > 1 && tab.path !== "/portal" && (
               <button
                 onClick={(e) => { e.stopPropagation(); closeTab(tab.path); }}
                 className="opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
