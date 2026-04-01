@@ -230,11 +230,11 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
                   />
                   <text
                     textAnchor="start"
-                    x={7}
-                    y={1}
+                    x={10}
+                    y={2}
                     style={{
                       fontFamily: "system-ui, sans-serif",
-                      fontSize: "8px",
+                      fontSize: "10px",
                       fontWeight: 600,
                       fill: "#0f2e3d",
                     }}
