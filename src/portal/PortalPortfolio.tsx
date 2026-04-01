@@ -267,7 +267,7 @@ export default function PortalPortfolio() {
               const isExpanded = expandedRow === p.id;
                const rowCompany = offer?.company_id ? companyMap[offer.company_id] : null;
                const cur = getCurrency(rowCompany?.country);
-               const colCount = tab === "active" ? 9 : 8;
+               const colCount = tab === "active" ? 10 : 9;
 
               return (
                 <>
