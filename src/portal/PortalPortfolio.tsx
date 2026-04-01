@@ -391,6 +391,7 @@ export default function PortalPortfolio() {
             )}
           </tbody>
         </table>
+        </div>
       </div>}
     </div>
   );
