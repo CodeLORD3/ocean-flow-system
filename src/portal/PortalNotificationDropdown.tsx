@@ -76,6 +76,23 @@ export default function PortalNotificationDropdown({ onNavigate }: Props) {
     },
   });
 
+  const dismissNotification = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("notifications").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["portal-notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["portal-notification-count"] });
+    },
+  });
+
+  const markOneRead = async (id: string) => {
+    await supabase.from("notifications").update({ is_read: true }).eq("id", id);
+    queryClient.invalidateQueries({ queryKey: ["portal-notifications"] });
+    queryClient.invalidateQueries({ queryKey: ["portal-notification-count"] });
+  };
+
   const getIcon = (message: string) => {
     if (message.toLowerCase().includes("payout") || message.toLowerCase().includes("paid") || message.toLowerCase().includes("sent")) {
       return <Banknote className="h-3.5 w-3.5 text-mackerel" />;
@@ -90,13 +107,7 @@ export default function PortalNotificationDropdown({ onNavigate }: Props) {
   };
 
   const handleClick = (n: any) => {
-    // Mark this one as read
-    if (!n.is_read) {
-      supabase.from("notifications").update({ is_read: true }).eq("id", n.id).then(() => {
-        queryClient.invalidateQueries({ queryKey: ["portal-notifications"] });
-        queryClient.invalidateQueries({ queryKey: ["portal-notification-count"] });
-      });
-    }
+    if (!n.is_read) markOneRead(n.id);
     setOpen(false);
     if (n.target_page) onNavigate(n.target_page);
   };
