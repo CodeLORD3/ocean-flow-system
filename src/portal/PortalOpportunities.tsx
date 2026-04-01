@@ -85,7 +85,8 @@ export default function PortalOpportunities() {
     const tenorDays = offer.tenor_days ? Number(offer.tenor_days) : (purchaseDate && maturity ? differenceInDays(maturity, purchaseDate) : null);
     const company = (offer as any).company_id ? companyMap[(offer as any).company_id] : null;
     const isMatured = daysToMaturity !== null && daysToMaturity <= 0;
-    return { target, funded, rate, progress, maturity, purchaseDate, daysToMaturity, tenorDays, company, isMatured };
+    const cur = getCurrency(company?.country);
+    return { target, funded, rate, progress, maturity, purchaseDate, daysToMaturity, tenorDays, company, isMatured, cur };
   };
 
 
