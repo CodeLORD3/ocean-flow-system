@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import ScrollToTop from "@/components/ScrollToTop";
 import { AppLayout } from "@/components/AppLayout";
 import { SiteProvider } from "@/contexts/SiteContext";
 import { ActiveUserProvider } from "@/contexts/ActiveUserContext";
@@ -38,6 +39,7 @@ const ERPContent = () => {
 const AppContent = () => {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         {/* Client Trading Portal — separate layout with internal tab system */}
         <Route path="/portal/login" element={<PortalLogin />} />
