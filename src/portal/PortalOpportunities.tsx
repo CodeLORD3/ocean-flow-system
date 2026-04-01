@@ -277,7 +277,7 @@ export default function PortalOpportunities() {
                       </span>
                     </td>
                     <td className="px-2 py-1.5 text-right font-mono text-foreground whitespace-nowrap">
-                      {funded.toLocaleString()} / {target.toLocaleString()} kr
+                      {funded.toLocaleString()} / {target.toLocaleString()} {cur}
                     </td>
                     <td className="px-2 py-1.5">
                       <div className="w-16 mx-auto">
