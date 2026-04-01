@@ -11,7 +11,7 @@ export default function PortalProfile() {
   const [user, setUser] = useState<any>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [profileMissing, setProfileMissing] = useState(false);
-  const [formData, setFormData] = useState({ first_name: "", last_name: "", country: "", telephone: "", address: "" });
+  const [formData, setFormData] = useState({ first_name: "", last_name: "", country: "", telephone: "", address: "", base_currency: "SEK" });
   const [savingProfile, setSavingProfile] = useState(false);
   const { toast } = useToast();
 
