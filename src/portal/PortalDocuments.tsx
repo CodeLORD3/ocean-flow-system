@@ -23,7 +23,7 @@ export default function PortalDocuments() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("pledges")
-        .select("*, trade_offers(title)")
+        .select("*, trade_offers(title, company_id, companies:company_id(country))")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
