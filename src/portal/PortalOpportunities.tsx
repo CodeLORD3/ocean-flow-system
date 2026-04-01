@@ -281,6 +281,11 @@ export default function PortalOpportunities() {
                         <span className="font-semibold text-foreground group-hover:text-mackerel transition-colors line-clamp-1 max-w-[180px]">
                           {offer.title}
                         </span>
+                        {batchMonth && (
+                          <span className="shrink-0 px-1.5 py-0.5 bg-muted text-[9px] font-medium text-muted-foreground border border-border">
+                            {batchMonth}
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="px-2 py-1.5">
