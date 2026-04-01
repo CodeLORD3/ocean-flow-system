@@ -255,10 +255,10 @@ export default function InvestmentFlowDiagram({ pledges, baseCurrency = "SEK" }:
                 ? "NOW"
                 : format(node.date, "d MMM yyyy");
               const displayAmount = isCurrent
-                ? `~${node.totalAmount.toLocaleString()} {baseCurrency}`
+                ? `~${node.totalAmount.toLocaleString()} ${baseCurrency}`
                 : node.items.length === 1
-                  ? `${node.totalAmount.toLocaleString()} {baseCurrency}`
-                  : `${node.items.length}× = ${node.totalAmount.toLocaleString()} {baseCurrency}`;
+                  ? `${node.totalAmount.toLocaleString()} ${baseCurrency}`
+                  : `${node.items.length}× = ${node.totalAmount.toLocaleString()} ${baseCurrency}`;
 
               return (
                 <Tooltip key={`node-${i}`}>
