@@ -305,7 +305,7 @@ export default function PortalOpportunities() {
                       <span className={`px-1.5 py-0.5 text-[10px] font-semibold border ${
                         offer.status === "Open"
                           ? "text-mackerel bg-mackerel-light border-mackerel/30"
-                          : "text-primary bg-primary/5 border-primary/20"
+                          : "text-muted-foreground bg-muted border-border"
                       }`}>
                         {offer.status === "Open" ? "OPEN" : "FUNDED"}
                       </span>
