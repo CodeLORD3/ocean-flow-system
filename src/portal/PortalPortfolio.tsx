@@ -12,6 +12,25 @@ export default function PortalPortfolio() {
   const { openOfferTab, switchTab } = usePortalTabs();
   const [tab, setTab] = useState<"active" | "history">("active");
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  type SortKey = "name" | "amount" | "rate" | "payout" | "maturity" | "daysToMaturity" | "status";
+  const [sortKey, setSortKey] = useState<SortKey>("maturity");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
+
+  const SortIcon = ({ col }: { col: SortKey }) => {
+    if (sortKey !== col) return <ArrowUpDown className="inline h-2.5 w-2.5 ml-0.5 opacity-40" />;
+    return sortDir === "asc"
+      ? <ArrowUp className="inline h-2.5 w-2.5 ml-0.5 text-primary" />
+      : <ArrowDown className="inline h-2.5 w-2.5 ml-0.5 text-primary" />;
+  };
 
   const { data: pledges = [], isLoading } = useQuery({
     queryKey: ["portal-portfolio"],
