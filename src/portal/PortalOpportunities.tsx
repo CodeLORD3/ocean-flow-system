@@ -313,7 +313,7 @@ export default function PortalOpportunities() {
                       ) : "—"}
                     </td>
                     <td className="px-2 py-1.5 text-right font-mono text-foreground whitespace-nowrap">
-                      {Number(offer.min_pledge) > 0 ? `${Number(offer.min_pledge).toLocaleString()} kr` : "—"}
+                      {Number(offer.min_pledge) > 0 ? `${Number(offer.min_pledge).toLocaleString()} ${cur}` : "—"}
                     </td>
                     <td className="px-2 py-1.5">
                       <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-mackerel transition-colors" />
