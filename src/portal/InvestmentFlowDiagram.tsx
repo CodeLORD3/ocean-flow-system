@@ -23,8 +23,8 @@ interface Pledge {
 
 interface MergedNode {
   date: Date;
-  items: { label: string; amount: number; type: "start" | "payout"; offerTitle: string }[];
-  type: "start" | "current" | "payout" | "mixed";
+  items: { label: string; amount: number; type: "committed" | "start" | "payout"; offerTitle: string }[];
+  type: "committed" | "start" | "current" | "payout" | "mixed";
   status: "completed" | "current" | "upcoming";
   totalAmount: number;
 }
@@ -38,7 +38,7 @@ export default function InvestmentFlowDiagram({ pledges }: { pledges: Pledge[] }
     }
 
     const now = new Date();
-    const rawNodes: { date: Date; label: string; amount: number; type: "start" | "payout"; status: "completed" | "upcoming"; offerTitle: string }[] = [];
+    const rawNodes: { date: Date; label: string; amount: number; type: "committed" | "start" | "payout"; status: "completed" | "upcoming"; offerTitle: string }[] = [];
 
     let invested = 0;
     let payout = 0;
@@ -53,25 +53,40 @@ export default function InvestmentFlowDiagram({ pledges }: { pledges: Pledge[] }
       invested += amt;
       payout += amt * (1 + rate / 100);
 
-      const startDate = offer.purchase_date ? parseISO(offer.purchase_date) : parseISO(p.created_at);
+      const committedDate = parseISO(p.created_at);
+      const startDate = offer.purchase_date ? parseISO(offer.purchase_date) : committedDate;
       const maturityDate = parseISO(offer.maturity_date);
 
-      if (!earliest || isBefore(startDate, earliest)) earliest = startDate;
+      if (!earliest || isBefore(committedDate, earliest)) earliest = committedDate;
       if (!latest || isAfter(maturityDate, latest)) latest = maturityDate;
 
+      // Committed node (when investor placed the pledge)
       rawNodes.push({
-        date: startDate,
-        label: `Invested in ${offer.title}`,
+        date: committedDate,
+        label: `Committed – ${offer.title}`,
         amount: amt,
-        type: "start",
+        type: "committed",
         status: "completed",
         offerTitle: offer.title,
       });
 
+      // Start node (when the offer's investment period begins)
+      if (!isSameDay(startDate, committedDate)) {
+        const started = isBefore(startDate, now) || isSameDay(startDate, now);
+        rawNodes.push({
+          date: startDate,
+          label: `Started – ${offer.title}`,
+          amount: amt,
+          type: "start",
+          status: started ? "completed" : "upcoming",
+          offerTitle: offer.title,
+        });
+      }
+
       const matured = isBefore(maturityDate, now) || differenceInDays(maturityDate, now) <= 0;
       rawNodes.push({
         date: maturityDate,
-        label: `Payout – ${offer.title}`,
+        label: `Maturity – ${offer.title}`,
         amount: Math.round(amt * (1 + rate / 100)),
         type: "payout",
         status: matured ? "completed" : "upcoming",
@@ -158,17 +173,18 @@ export default function InvestmentFlowDiagram({ pledges }: { pledges: Pledge[] }
 
   const NodeIcon = ({ type }: { type: string }) => {
     switch (type) {
-      case "start": return <CircleDollarSign className="h-3 w-3" />;
-      case "current": return <MapPin className="h-3 w-3" />;
-      case "payout": return <TrendingUp className="h-3 w-3" />;
-      case "mixed": return <Flag className="h-3 w-3" />;
-      default: return <CircleDollarSign className="h-3 w-3" />;
+      case "committed": return <CircleDollarSign className="h-2.5 w-2.5" />;
+      case "start": return <Flag className="h-2.5 w-2.5" />;
+      case "current": return <MapPin className="h-2.5 w-2.5" />;
+      case "payout": return <TrendingUp className="h-2.5 w-2.5" />;
+      case "mixed": return <Flag className="h-2.5 w-2.5" />;
+      default: return <CircleDollarSign className="h-2.5 w-2.5" />;
     }
   };
 
   return (
-    <div className="border border-border bg-white p-4">
-      <div className="flex items-center justify-between mb-4">
+    <div className="border border-border bg-white p-3">
+      <div className="flex items-center justify-between mb-2">
         <div>
           <h2 className="text-xs font-bold text-foreground">Investment Lifecycle</h2>
           <p className="text-[10px] text-muted-foreground mt-0.5">Timeline from investment to payout</p>
@@ -190,12 +206,12 @@ export default function InvestmentFlowDiagram({ pledges }: { pledges: Pledge[] }
       </div>
 
       {/* Growth bar */}
-      <div className="mb-5">
+      <div className="mb-3">
         <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
           <span>Invested: <span className="font-mono font-bold text-foreground">{totalInvested.toLocaleString()} kr</span></span>
           <span>Expected Payout: <span className="font-mono font-bold text-mackerel">{totalPayout.toLocaleString()} kr</span></span>
         </div>
-        <div className="h-3 bg-muted overflow-hidden relative">
+        <div className="h-2 bg-muted overflow-hidden relative">
           <motion.div
             className="h-full bg-gradient-to-r from-primary to-accent"
             initial={{ width: 0 }}
@@ -218,12 +234,12 @@ export default function InvestmentFlowDiagram({ pledges }: { pledges: Pledge[] }
       {/* Desktop timeline */}
       <TooltipProvider>
         <div className="hidden md:block">
-          <div className="relative" style={{ height: "100px" }}>
+          <div className="relative" style={{ height: "72px" }}>
             {/* Timeline line */}
-            <div className="absolute top-[46px] h-px bg-border" style={{ left: `${PAD}%`, right: `${PAD}%` }} />
+            <div className="absolute top-[33px] h-px bg-border" style={{ left: `${PAD}%`, right: `${PAD}%` }} />
             {/* Animated progress line */}
             <motion.div
-              className="absolute top-[46px] h-px bg-primary"
+              className="absolute top-[33px] h-px bg-primary"
               style={{ left: `${PAD}%` }}
               initial={{ width: 0 }}
               animate={{ width: `${progressPercent * (100 - 2 * PAD) / 100}%` }}
@@ -262,13 +278,13 @@ export default function InvestmentFlowDiagram({ pledges }: { pledges: Pledge[] }
                             </div>
                             <div className="text-[9px] font-mono font-bold text-foreground">{displayAmount}</div>
                           </div>
-                          <div className={`h-4 w-4 rounded-full border-2 ${style.border} ${style.bg} flex items-center justify-center ${style.icon} relative z-10`}>
+                          <div className={`h-3.5 w-3.5 rounded-full border-2 ${style.border} ${style.bg} flex items-center justify-center ${style.icon} relative z-10`}>
                             <NodeIcon type={node.type} />
                           </div>
                         </>
                       ) : (
                         <>
-                          <div className={`h-4 w-4 rounded-full border-2 ${style.border} ${style.bg} flex items-center justify-center ${style.icon} relative z-10`}>
+                          <div className={`h-3.5 w-3.5 rounded-full border-2 ${style.border} ${style.bg} flex items-center justify-center ${style.icon} relative z-10`}>
                             <NodeIcon type={node.type} />
                           </div>
                           <div className="text-center mt-1 whitespace-nowrap">
@@ -321,7 +337,7 @@ export default function InvestmentFlowDiagram({ pledges }: { pledges: Pledge[] }
                     transition={{ duration: 0.3, delay: 0.1 + i * 0.1 }}
                   >
                     <div className="flex flex-col items-center">
-                      <div className={`h-4 w-4 rounded-full border-2 ${style.border} ${style.bg} flex items-center justify-center ${style.icon} shrink-0 relative z-10`}>
+                      <div className={`h-3.5 w-3.5 rounded-full border-2 ${style.border} ${style.bg} flex items-center justify-center ${style.icon} shrink-0 relative z-10`}>
                         <NodeIcon type={node.type} />
                       </div>
                       {!isLast && <div className="w-px h-8 bg-border" />}
