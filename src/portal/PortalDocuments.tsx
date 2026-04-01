@@ -81,7 +81,8 @@ export default function PortalDocuments() {
                   <FileText className="h-5 w-5 text-mackerel" />
                   <div>
                     <div className="text-sm text-foreground font-medium">
-                      {p.trade_offers?.title || "Investment"}
+                      {p.trade_offers?.title || "Investment"}{" "}
+                      <span className="text-muted-foreground font-normal text-xs">#{p.payment_reference || p.id.slice(0, 8).toUpperCase()}</span>
                     </div>
                     <div className="text-xs text-muted-foreground">
                       {Number(p.amount).toLocaleString()} {getCurrency((p.trade_offers as any)?.companies?.country)} · {new Date(p.created_at).toLocaleDateString()}
