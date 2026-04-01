@@ -278,7 +278,7 @@ export default function InvestmentFlowDiagram({ pledges }: { pledges: Pledge[] }
                             </div>
                             <div className="text-[9px] font-mono font-bold text-foreground">{displayAmount}</div>
                           </div>
-                          <div className={`h-4 w-4 rounded-full border-2 ${style.border} ${style.bg} flex items-center justify-center ${style.icon} relative z-10`}>
+                          <div className={`h-3.5 w-3.5 rounded-full border-2 ${style.border} ${style.bg} flex items-center justify-center ${style.icon} relative z-10`}>
                             <NodeIcon type={node.type} />
                           </div>
                         </>
