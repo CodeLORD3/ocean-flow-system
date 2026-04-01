@@ -408,9 +408,17 @@ export default function PortalOpportunities() {
                       <span className="text-muted-foreground">Funding</span>
                       <span className="text-foreground font-medium font-mono">{funded.toLocaleString()} / {target.toLocaleString()} {cur}</span>
                     </div>
-                    <div className="h-2 bg-muted overflow-hidden">
-                      <div className="h-full bg-mackerel transition-all" style={{ width: `${progress}%` }} />
+                    <div className="h-2 bg-muted overflow-hidden flex">
+                      <div className="h-full bg-mackerel transition-all" style={{ width: `${confirmedPct}%` }} />
+                      {pendingPct > 0 && (
+                        <div className="h-full bg-mackerel/30 transition-all" style={{ width: `${pendingPct}%` }} />
+                      )}
                     </div>
+                    {pendingPct > 0 && (
+                      <div className="text-[9px] text-muted-foreground">
+                        {confirmedPct.toFixed(0)}% confirmed · {pendingPct.toFixed(0)}% pending
+                      </div>
+                    )}
                   </div>
 
                   {/* Timeline info */}
