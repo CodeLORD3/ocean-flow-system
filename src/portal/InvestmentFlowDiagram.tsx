@@ -211,7 +211,7 @@ export default function InvestmentFlowDiagram({ pledges }: { pledges: Pledge[] }
           <span>Invested: <span className="font-mono font-bold text-foreground">{totalInvested.toLocaleString()} kr</span></span>
           <span>Expected Payout: <span className="font-mono font-bold text-mackerel">{totalPayout.toLocaleString()} kr</span></span>
         </div>
-        <div className="h-3 bg-muted overflow-hidden relative">
+        <div className="h-2 bg-muted overflow-hidden relative">
           <motion.div
             className="h-full bg-gradient-to-r from-primary to-accent"
             initial={{ width: 0 }}
