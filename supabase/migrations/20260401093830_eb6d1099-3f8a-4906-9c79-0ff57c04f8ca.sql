@@ -1,0 +1,1 @@
+ALTER TABLE public.investor_profiles ADD COLUMN base_currency text NOT NULL DEFAULT 'SEK';
