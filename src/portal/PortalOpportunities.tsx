@@ -11,7 +11,7 @@ import { getCurrency } from "@/lib/currency";
 export default function PortalOpportunities() {
   const { openOfferTab, switchTab } = usePortalTabs();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("open");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [minInvestment, setMinInvestment] = useState("");
   const [returnRange, setReturnRange] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"rows" | "cards">("rows");
@@ -305,7 +305,7 @@ export default function PortalOpportunities() {
                       <span className={`px-1.5 py-0.5 text-[10px] font-semibold border ${
                         offer.status === "Open"
                           ? "text-mackerel bg-mackerel-light border-mackerel/30"
-                          : "text-primary bg-primary/5 border-primary/20"
+                          : "text-muted-foreground bg-muted border-border"
                       }`}>
                         {offer.status === "Open" ? "OPEN" : "FUNDED"}
                       </span>
@@ -405,7 +405,7 @@ export default function PortalOpportunities() {
                     <span className={`shrink-0 px-2 py-0.5 text-[10px] font-semibold border ${
                       offer.status === "Open"
                         ? "text-mackerel bg-mackerel-light border-mackerel/30"
-                        : "text-primary bg-primary/5 border-primary/20"
+                        : "text-muted-foreground bg-muted border-border"
                     }`}>
                       {offer.status === "Open" ? "OPEN" : "FUNDED"}
                     </span>
