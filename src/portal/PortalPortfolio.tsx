@@ -197,16 +197,16 @@ export default function PortalPortfolio() {
 
         <table className="w-full text-[10px]">
           <thead>
-            <tr className="border-b border-border text-[10px] text-muted-foreground">
+            <tr className="border-b border-border text-[10px] text-muted-foreground select-none">
               <th className="w-6 p-2"></th>
-              <th className="text-left p-2 font-medium">Offer Name</th>
-              <th className="text-right p-2 font-medium">Amount Invested</th>
-              <th className="text-right p-2 font-medium">Return Rate</th>
-              <th className="text-right p-2 font-medium">{tab === "history" ? "Total Payout" : "Expected Payout"}</th>
-              <th className="text-left p-2 font-medium">Maturity Date</th>
+              <th className="text-left p-2 font-medium cursor-pointer hover:text-foreground" onClick={() => toggleSort("name")}>Offer Name <SortIcon col="name" /></th>
+              <th className="text-right p-2 font-medium cursor-pointer hover:text-foreground" onClick={() => toggleSort("amount")}>Amount Invested <SortIcon col="amount" /></th>
+              <th className="text-right p-2 font-medium cursor-pointer hover:text-foreground" onClick={() => toggleSort("rate")}>Return Rate <SortIcon col="rate" /></th>
+              <th className="text-right p-2 font-medium cursor-pointer hover:text-foreground" onClick={() => toggleSort("payout")}>{tab === "history" ? "Total Payout" : "Expected Payout"} <SortIcon col="payout" /></th>
+              <th className="text-left p-2 font-medium cursor-pointer hover:text-foreground" onClick={() => toggleSort("maturity")}>Maturity Date <SortIcon col="maturity" /></th>
               <th className="text-right p-2 font-medium">Duration</th>
-              {tab === "active" && <th className="text-right p-2 font-medium">Days to Maturity</th>}
-              <th className="text-center p-2 pr-3 font-medium">Status</th>
+              {tab === "active" && <th className="text-right p-2 font-medium cursor-pointer hover:text-foreground" onClick={() => toggleSort("daysToMaturity")}>Days to Maturity <SortIcon col="daysToMaturity" /></th>}
+              <th className="text-center p-2 pr-3 font-medium cursor-pointer hover:text-foreground" onClick={() => toggleSort("status")}>Status <SortIcon col="status" /></th>
             </tr>
           </thead>
           <tbody>
