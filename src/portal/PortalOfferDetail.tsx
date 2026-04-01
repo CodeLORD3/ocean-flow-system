@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { parseISO, format } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
+import { getCurrency } from "@/lib/currency";
 
 export default function PortalOfferDetail({ overrideId }: { overrideId?: string } = {}) {
   const { id: paramId } = useParams<{ id: string }>();
@@ -133,6 +134,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   }
 
   const o = offer as any;
+  const cur = getCurrency((company as any)?.country);
   const target = Number(offer.target_amount);
   const funded = Number(offer.funded_amount);
   const rate = Number(offer.interest_rate);
@@ -206,31 +208,31 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
           {step === 1 && (
             <div className="space-y-3">
               <div className="space-y-1.5">
-                <label className="text-[11px] text-muted-foreground font-medium">Investment Amount (kr)</label>
+                <label className="text-[11px] text-muted-foreground font-medium">Investment Amount</label>
                 <input
                   type="text"
                   inputMode="numeric"
                   value={pledgeAmount}
                   onChange={(e) => setPledgeAmount(e.target.value)}
                   onBlur={() => setPledgeAmount((v) => v.replace(/[^\d]/g, ""))}
-                  placeholder={minPledge > 0 ? `Min ${minPledge.toLocaleString()} kr` : "Enter amount"}
+                  placeholder={minPledge > 0 ? `Min ${minPledge.toLocaleString()} ${cur}` : "Enter amount"}
                   className={`w-full h-10 bg-white border px-3 text-sm text-foreground font-mono focus:outline-none ${
                     amountTouched && pledgeAmt > 0 && !isValidAmount ? "border-destructive focus:border-destructive" : "border-border focus:border-primary"
                   }`}
                 />
                 {amountTouched && pledgeAmt > 0 && pledgeAmt < effectiveMin && (
                   <p className="text-[11px] text-destructive font-medium flex items-center gap-1">
-                    <AlertTriangle className="h-3 w-3" /> Minimum investment is {effectiveMin.toLocaleString()} kr
+                    <AlertTriangle className="h-3 w-3" /> Minimum investment is {effectiveMin.toLocaleString()} {cur}
                   </p>
                 )}
                 {amountTouched && pledgeAmt > remaining && remaining > 0 && (
                   <p className="text-[11px] text-destructive font-medium flex items-center gap-1">
-                    <AlertTriangle className="h-3 w-3" /> Only {remaining.toLocaleString()} kr remaining
+                    <AlertTriangle className="h-3 w-3" /> Only {remaining.toLocaleString()} {cur} remaining
                   </p>
                 )}
                 {remaining < minPledge && remaining > 0 && minPledge > 0 && (
                   <p className="text-[11px] text-amber-600 font-medium">
-                    Only {remaining.toLocaleString()} kr left — minimum rule waived
+                    Only {remaining.toLocaleString()} {cur} left — minimum rule waived
                   </p>
                 )}
               </div>
@@ -239,15 +241,15 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                 <div className="border border-border bg-white p-3 space-y-2">
                   <div className="flex justify-between text-[11px]">
                     <span className="text-muted-foreground">You invest</span>
-                    <span className="font-mono font-bold text-foreground">{pledgeAmt.toLocaleString()} kr</span>
+                    <span className="font-mono font-bold text-foreground">{pledgeAmt.toLocaleString()} {cur}</span>
                   </div>
                   <div className="flex justify-between text-[11px]">
                     <span className="text-muted-foreground">Expected return</span>
-                    <span className="font-mono font-bold text-mackerel">+{pledgeProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr ({rate.toFixed(1)}%)</span>
+                    <span className="font-mono font-bold text-mackerel">+{pledgeProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} {cur} ({rate.toFixed(1)}%)</span>
                   </div>
                   <div className="flex justify-between text-[11px]">
                     <span className="text-muted-foreground">Expected payout</span>
-                    <span className="font-mono font-bold text-foreground">{pledgeReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</span>
+                    <span className="font-mono font-bold text-foreground">{pledgeReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} {cur}</span>
                   </div>
                   <div className="flex justify-between text-[11px]">
                     <span className="text-muted-foreground">Maturity date</span>
@@ -265,11 +267,11 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
               </button>
               {(minPledge > 0 || remaining < target) && (
                 <p className="text-[10px] text-muted-foreground text-center">
-                  {effectiveMin > 0 && `Min: ${effectiveMin.toLocaleString()} kr`}
+                  {effectiveMin > 0 && `Min: ${effectiveMin.toLocaleString()} {cur}`}
                   {effectiveMin > 0 && maxPledge ? " · " : ""}
-                  {maxPledge && `Max: ${maxPledge.toLocaleString()} kr`}
+                  {maxPledge && `Max: ${maxPledge.toLocaleString()} ${cur}`}
                   {(effectiveMin > 0 || maxPledge) && remaining < target ? " · " : ""}
-                  {remaining < target && `Available: ${remaining.toLocaleString()} kr`}
+                  {remaining < target && `Available: ${remaining.toLocaleString()} ${cur}`}
                 </p>
               )}
             </div>
@@ -291,15 +293,15 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                 </div>
                 <div className="flex justify-between text-[11px]">
                   <span className="text-muted-foreground">Your investment</span>
-                  <span className="font-mono font-bold text-foreground">{pledgeAmt.toLocaleString()} kr</span>
+                  <span className="font-mono font-bold text-foreground">{pledgeAmt.toLocaleString()} {cur}</span>
                 </div>
                 <div className="flex justify-between text-[11px]">
                   <span className="text-muted-foreground">Expected return ({rate.toFixed(1)}%)</span>
-                  <span className="font-mono font-bold text-mackerel">+{pledgeProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</span>
+                  <span className="font-mono font-bold text-mackerel">+{pledgeProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} {cur}</span>
                 </div>
                 <div className="flex justify-between text-[11px]">
                   <span className="text-muted-foreground">Total payout</span>
-                  <span className="font-mono font-bold text-foreground">{pledgeReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</span>
+                  <span className="font-mono font-bold text-foreground">{pledgeReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} {cur}</span>
                 </div>
                 <div className="flex justify-between text-[11px]">
                   <span className="text-muted-foreground">Maturity date</span>
@@ -312,7 +314,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                 <p className="font-semibold text-foreground text-[11px]">Investment Agreement</p>
                 <p>
                   I, <strong className="text-foreground">{investorName}</strong>, hereby commit to invest{" "}
-                  <strong className="text-foreground">{pledgeAmt.toLocaleString()} kr</strong> in the trade finance offer{" "}
+                  <strong className="text-foreground">{pledgeAmt.toLocaleString()} {cur}</strong> in the trade finance offer{" "}
                   "<strong className="text-foreground">{offer.title}</strong>" published by{" "}
                   <strong className="text-foreground">{companyName}</strong>.
                 </p>
@@ -396,7 +398,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                   </div>
                   <div className="flex justify-between text-[11px]">
                     <span className="text-muted-foreground">Amount</span>
-                    <span className="font-mono font-bold text-foreground">{pledgeAmt.toLocaleString()} kr</span>
+                    <span className="font-mono font-bold text-foreground">{pledgeAmt.toLocaleString()} {cur}</span>
                   </div>
                 </div>
 
@@ -430,10 +432,10 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                       "INVESTMENT DETAILS",
                       "───────────────────────────────────",
                       `Offer: ${offer.title}`,
-                      `Amount Invested: ${pledgeAmt.toLocaleString()} kr`,
+                      `Amount Invested: ${pledgeAmt.toLocaleString()} {cur}`,
                       `Return Rate: ${rate.toFixed(1)}%`,
-                      `Expected Payout: ${totalPayout.toLocaleString()} kr`,
-                      `Expected Profit: +${profitKr.toLocaleString()} kr`,
+                      `Expected Payout: ${totalPayout.toLocaleString()} {cur}`,
+                      `Expected Profit: +${profitKr.toLocaleString()} {cur}`,
                       `Maturity Date: ${format(parseISO(offer.maturity_date), "d MMM yyyy")}`,
                       "",
                       "PAYMENT DETAILS",
@@ -441,7 +443,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                       `Bank: ${companyName}`,
                       `IBAN: ${o.company_iban || "Contact support"}`,
                       `Payment Reference: ${successRef}`,
-                      `Amount to Transfer: ${pledgeAmt.toLocaleString()} kr`,
+                      `Amount to Transfer: ${pledgeAmt.toLocaleString()} {cur}`,
                       "",
                       "IMPORTANT",
                       "───────────────────────────────────",
@@ -514,7 +516,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Amount to transfer</span>
-                <span className="font-mono font-bold text-foreground">{pledgeAmt.toLocaleString()} kr</span>
+                <span className="font-mono font-bold text-foreground">{pledgeAmt.toLocaleString()} {cur}</span>
               </div>
             </div>
 
@@ -549,10 +551,10 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                   "INVESTMENT DETAILS",
                   "───────────────────────────────────",
                   `Offer: ${offer.title}`,
-                  `Amount Invested: ${pledgeAmt.toLocaleString()} kr`,
+                  `Amount Invested: ${pledgeAmt.toLocaleString()} {cur}`,
                   `Return Rate: ${rate.toFixed(1)}%`,
-                  `Expected Payout: ${pledgeReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr`,
-                  `Expected Profit: +${pledgeProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr`,
+                  `Expected Payout: ${pledgeReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} {cur}`,
+                  `Expected Profit: +${pledgeProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} {cur}`,
                   `Maturity Date: ${format(parseISO(offer.maturity_date), "d MMM yyyy")}`,
                   "",
                   "PAYMENT DETAILS",
@@ -560,7 +562,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                   `Bank: ${companyName}`,
                   `IBAN: ${o.company_iban || "Contact support"}`,
                   `Payment Reference: ${successRef}`,
-                  `Amount to Transfer: ${pledgeAmt.toLocaleString()} kr`,
+                  `Amount to Transfer: ${pledgeAmt.toLocaleString()} {cur}`,
                   "",
                   "IMPORTANT",
                   "───────────────────────────────────",
@@ -657,8 +659,8 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                   <td className="px-3 py-2.5 font-bold text-mackerel font-mono">{rate.toFixed(1)}%</td>
                   <td className="px-3 py-2.5 font-bold text-mackerel font-mono">{annualReturn ? `${annualReturn.toFixed(1)}%` : "—"}</td>
                   <td className="px-3 py-2.5 font-medium text-foreground font-mono">{tenorDays ? `${tenorDays} days` : "—"}</td>
-                  <td className="px-3 py-2.5 font-bold text-mackerel font-mono">+{profitKr.toLocaleString()} kr</td>
-                  <td className="px-3 py-2.5 font-bold text-foreground font-mono">{totalPayout.toLocaleString()} kr</td>
+                  <td className="px-3 py-2.5 font-bold text-mackerel font-mono">+{profitKr.toLocaleString()} {cur}</td>
+                  <td className="px-3 py-2.5 font-bold text-foreground font-mono">{totalPayout.toLocaleString()} {cur}</td>
                   <td className="px-3 py-2.5 font-medium text-foreground">{format(parseISO(offer.maturity_date), "d MMM yyyy")}</td>
                 </tr>
               </tbody>
@@ -669,7 +671,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
           <div className="border border-border bg-white p-3">
             <div className="flex justify-between text-[11px] text-muted-foreground mb-1.5">
               <span className="font-semibold">Funding Progress</span>
-              <span className="font-mono">{funded.toLocaleString()} / {target.toLocaleString()} kr ({progress.toFixed(1)}%)</span>
+              <span className="font-mono">{funded.toLocaleString()} / {target.toLocaleString()} {cur} ({progress.toFixed(1)}%)</span>
             </div>
             <div className="h-2 bg-muted overflow-hidden">
               <div className="h-full bg-mackerel transition-all" style={{ width: `${progress}%` }} />
@@ -708,18 +710,18 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
               <div className="p-4 space-y-2">
                 <input
                   type="number" value={calcAmount} onChange={e => setCalcAmount(e.target.value)}
-                  min={1} placeholder="Enter amount (kr)"
+                  min={1} placeholder="Enter amount"
                   className="w-full h-9 bg-muted/50 border border-border px-3 text-xs text-foreground font-mono focus:border-primary focus:outline-none"
                 />
                 {calcResult > 0 ? (
                   <div className="border border-border bg-muted/20 p-2.5 space-y-1">
                     <div className="flex justify-between text-[11px]">
                       <span className="text-muted-foreground">You receive</span>
-                      <span className="font-mono font-bold text-mackerel">{calcResult.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kr</span>
+                      <span className="font-mono font-bold text-mackerel">{calcResult.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} {cur}</span>
                     </div>
                     <div className="flex justify-between text-[11px]">
                       <span className="text-muted-foreground">Profit</span>
-                      <span className="font-mono font-semibold text-mackerel">+{(calcResult - Number(calcAmount)).toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kr</span>
+                      <span className="font-mono font-semibold text-mackerel">+{(calcResult - Number(calcAmount)).toLocaleString("sv-SE", { maximumFractionDigits: 0 })} {cur}</span>
                     </div>
                   </div>
                 ) : (
@@ -779,20 +781,20 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
         </Section>
 
         <Section title="Investment Terms" icon={<TrendingUp className="h-3.5 w-3.5 text-primary" />}>
-          <InfoRow label="Total Amount" value={`${target.toLocaleString()} kr`} />
-          <InfoRow label="Min Investment" value={minPledge > 0 ? `${minPledge.toLocaleString()} kr` : "No minimum"} />
+          <InfoRow label="Total Amount" value={`${target.toLocaleString()} ${cur}`} />
+          <InfoRow label="Min Investment" value={minPledge > 0 ? `${minPledge.toLocaleString()} ${cur}` : "No minimum"} />
           <InfoRow label="Duration" value={tenorDays ? `${tenorDays} days` : "—"} />
           <InfoRow label="Expected Return" value={`${rate.toFixed(1)}%`} highlight />
           <InfoRow label="Annual Return" value={annualReturn ? `${annualReturn.toFixed(1)}%` : "—"} highlight />
-          <InfoRow label="Profit (on full)" value={`+${profitKr.toLocaleString()} kr`} highlight />
+          <InfoRow label="Profit (on full)" value={`+${profitKr.toLocaleString()} {cur}`} highlight />
         </Section>
 
         <Section title="Underlying Transaction" icon={<Package className="h-3.5 w-3.5 text-primary" />}>
           <InfoRow label="Product" value={offer.title} />
           <InfoRow label="Origin" value={o.origin} />
           <InfoRow label="Volume" value={o.volume} />
-          <InfoRow label="Purchase Price" value={o.purchase_price ? `${Number(o.purchase_price).toLocaleString()} kr` : "—"} />
-          <InfoRow label="Sales Value" value={o.sales_value ? `${Number(o.sales_value).toLocaleString()} kr` : "—"} />
+          <InfoRow label="Purchase Price" value={o.purchase_price ? `${Number(o.purchase_price).toLocaleString()} ${cur}` : "—"} />
+          <InfoRow label="Sales Value" value={o.sales_value ? `${Number(o.sales_value).toLocaleString()} ${cur}` : "—"} />
           <InfoRow label="Gross Margin" value={o.gross_margin ? `${Number(o.gross_margin).toFixed(1)}%` : "—"} />
         </Section>
 

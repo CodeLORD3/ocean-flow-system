@@ -6,6 +6,7 @@ import { parseISO, format, differenceInDays } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
 import InvestmentFlowDiagram from "./InvestmentFlowDiagram";
+import { getCurrency } from "@/lib/currency";
 
 export default function PortalPortfolio() {
   const { openOfferTab, switchTab } = usePortalTabs();
@@ -159,6 +160,9 @@ export default function PortalPortfolio() {
               const duration = offer?.tenor_days ? Number(offer.tenor_days) : (offer?.purchase_date && offer?.maturity_date ? differenceInDays(parseISO(offer.maturity_date), parseISO(offer.purchase_date)) : null);
               const isExpanded = expandedRow === p.id;
               const colCount = tab === "active" ? 9 : 8;
+              const rowCompany = offer?.company_id ? companyMap[offer.company_id] : null;
+              const cur = getCurrency(rowCompany?.country);
+              const colCount = tab === "active" ? 9 : 8;
 
               return (
                 <>
@@ -181,9 +185,9 @@ export default function PortalPortfolio() {
                         )}
                       </div>
                     </td>
-                    <td className="p-2 text-right text-foreground font-mono">{Number(p.amount).toLocaleString()} kr</td>
+                    <td className="p-2 text-right text-foreground font-mono">{Number(p.amount).toLocaleString()} {cur}</td>
                     <td className="p-2 text-right text-mackerel font-semibold">{rate.toFixed(1)}%</td>
-                    <td className="p-2 text-right text-foreground font-semibold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</td>
+                    <td className="p-2 text-right text-foreground font-semibold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} {cur}</td>
                     <td className="p-2 text-muted-foreground">
                       {offer?.maturity_date ? format(parseISO(offer.maturity_date), "d MMM yyyy") : "—"}
                     </td>
@@ -264,6 +268,7 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
   const company = offer?.company_id ? companyMap[offer.company_id] : null;
   const rate = offer ? Number(offer.interest_rate) : 0;
   const refCode = (pledge as any).payment_reference || `OT-${new Date(pledge.created_at).getFullYear()}-${pledge.id.slice(0, 6)}-${(offer?.id || "").slice(0, 6)}`;
+  const cur = getCurrency(company?.country);
 
   return (
     <div className="px-6 py-4 border-t border-border/30">
@@ -305,7 +310,7 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
           )}
           <div className="flex justify-between text-[11px]">
             <span className="text-muted-foreground">Invested</span>
-            <span className="text-foreground font-mono">{Number(pledge.amount).toLocaleString()} kr</span>
+            <span className="text-foreground font-mono">{Number(pledge.amount).toLocaleString()} {cur}</span>
           </div>
           <div className="flex justify-between text-[11px]">
             <span className="text-muted-foreground">Return</span>
@@ -313,7 +318,7 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
           </div>
           <div className="flex justify-between text-[11px]">
             <span className="text-muted-foreground">{status === "Paid Out" ? "Total Payout" : "Expected Payout"}</span>
-            <span className="text-foreground font-mono font-semibold">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</span>
+            <span className="text-foreground font-mono font-semibold">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} {cur}</span>
           </div>
           <div className="flex justify-between text-[11px]">
             <span className="text-muted-foreground">Maturity</span>
@@ -340,7 +345,7 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
               </div>
               <div className="flex justify-between">
                 <span className="text-amber-800">Amount</span>
-                <span className="text-amber-900 font-mono font-bold">{Number(pledge.amount).toLocaleString()} kr</span>
+                <span className="text-amber-900 font-mono font-bold">{Number(pledge.amount).toLocaleString()} {cur}</span>
               </div>
             </div>
             <p className="text-[10px] text-amber-700 italic">
@@ -358,7 +363,7 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
                 <AlertTriangle className="h-3.5 w-3.5" />
                 Payout Due
               </div>
-              <p className="text-orange-700">Your investment has matured. The company is processing your payout of <span className="font-bold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</span>.</p>
+              <p className="text-orange-700">Your investment has matured. The company is processing your payout of <span className="font-bold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} {cur}</span>.</p>
               <p className="text-orange-600 text-[10px]">This typically takes 1–3 business days after maturity.</p>
             </div>
           </div>

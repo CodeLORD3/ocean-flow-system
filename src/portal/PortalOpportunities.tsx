@@ -6,6 +6,7 @@ import { differenceInDays, parseISO, format } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
 import InvestmentMap from "@/components/portal/InvestmentMap";
+import { getCurrency } from "@/lib/currency";
 
 export default function PortalOpportunities() {
   const { openOfferTab, switchTab } = usePortalTabs();
@@ -84,7 +85,8 @@ export default function PortalOpportunities() {
     const tenorDays = offer.tenor_days ? Number(offer.tenor_days) : (purchaseDate && maturity ? differenceInDays(maturity, purchaseDate) : null);
     const company = (offer as any).company_id ? companyMap[(offer as any).company_id] : null;
     const isMatured = daysToMaturity !== null && daysToMaturity <= 0;
-    return { target, funded, rate, progress, maturity, purchaseDate, daysToMaturity, tenorDays, company, isMatured };
+    const cur = getCurrency(company?.country);
+    return { target, funded, rate, progress, maturity, purchaseDate, daysToMaturity, tenorDays, company, isMatured, cur };
   };
 
 
@@ -238,7 +240,7 @@ export default function PortalOpportunities() {
             </thead>
             <tbody>
               {filtered.map((offer) => {
-                const { target, funded, rate, progress, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity } = renderOfferData(offer);
+                const { target, funded, rate, progress, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity, cur } = renderOfferData(offer);
                 return (
                   <tr
                     key={offer.id}
@@ -275,7 +277,7 @@ export default function PortalOpportunities() {
                       </span>
                     </td>
                     <td className="px-2 py-1.5 text-right font-mono text-foreground whitespace-nowrap">
-                      {funded.toLocaleString()} / {target.toLocaleString()} kr
+                      {funded.toLocaleString()} / {target.toLocaleString()} {cur}
                     </td>
                     <td className="px-2 py-1.5">
                       <div className="w-16 mx-auto">
@@ -311,7 +313,7 @@ export default function PortalOpportunities() {
                       ) : "—"}
                     </td>
                     <td className="px-2 py-1.5 text-right font-mono text-foreground whitespace-nowrap">
-                      {Number(offer.min_pledge) > 0 ? `${Number(offer.min_pledge).toLocaleString()} kr` : "—"}
+                      {Number(offer.min_pledge) > 0 ? `${Number(offer.min_pledge).toLocaleString()} ${cur}` : "—"}
                     </td>
                     <td className="px-2 py-1.5">
                       <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-mackerel transition-colors" />
@@ -328,7 +330,7 @@ export default function PortalOpportunities() {
       {viewMode === "cards" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {filtered.map((offer) => {
-            const { target, funded, rate, progress, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity } = renderOfferData(offer);
+            const { target, funded, rate, progress, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity, cur } = renderOfferData(offer);
             return (
               <div
                 key={offer.id}
@@ -378,7 +380,7 @@ export default function PortalOpportunities() {
                   <div className="space-y-1.5 mb-3">
                     <div className="flex justify-between text-xs">
                       <span className="text-muted-foreground">Funding</span>
-                      <span className="text-foreground font-medium font-mono">{funded.toLocaleString()} / {target.toLocaleString()} kr</span>
+                      <span className="text-foreground font-medium font-mono">{funded.toLocaleString()} / {target.toLocaleString()} {cur}</span>
                     </div>
                     <div className="h-2 bg-muted overflow-hidden">
                       <div className="h-full bg-mackerel transition-all" style={{ width: `${progress}%` }} />

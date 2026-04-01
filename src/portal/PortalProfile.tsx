@@ -233,7 +233,7 @@ export default function PortalProfile() {
               type="text"
               value={iban}
               onChange={(e) => setIban(e.target.value.toUpperCase().replace(/[^A-Z0-9\s]/g, ""))}
-              placeholder="SE00 0000 0000 0000 0000 0000"
+              placeholder="e.g. SE35 5000 0000 0549 1000 0003"
               className={`w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 font-mono pr-9 ${
                 iban && isValidIban ? "border-green-400 focus:border-green-500" : iban ? "border-destructive focus:border-destructive" : "border-gray-300 focus:border-[#0f2e3d]"
               }`}
