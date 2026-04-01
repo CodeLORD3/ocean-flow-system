@@ -45,6 +45,7 @@ export default function PortalProfile() {
           first_name: (data as any).first_name || "",
           last_name: (data as any).last_name || "",
           country: (data as any).country || "",
+          date_of_birth: (data as any).date_of_birth || "",
           telephone: (data as any).telephone || "",
           address: (data as any).address || "",
           base_currency: (data as any).base_currency || "SEK",
