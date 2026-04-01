@@ -217,6 +217,33 @@ export default function PortalProfile() {
             />
           </div>
           <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Date of Birth <span className="text-muted-foreground">(optional)</span></label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className={cn(
+                    "w-full h-9 px-3 border border-border rounded text-sm text-left flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d] bg-white",
+                    !formData.date_of_birth && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="h-3.5 w-3.5 opacity-50" />
+                  {formData.date_of_birth ? format(new Date(formData.date_of_birth), "PPP") : "Select date"}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={formData.date_of_birth ? new Date(formData.date_of_birth) : undefined}
+                  onSelect={(date) => setFormData(p => ({ ...p, date_of_birth: date ? format(date, "yyyy-MM-dd") : "" }))}
+                  disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div>
             <label className="text-xs text-muted-foreground mb-1 block">Telephone</label>
             <input
               type="text"

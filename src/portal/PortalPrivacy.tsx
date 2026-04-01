@@ -3,25 +3,25 @@ export default function PortalPrivacy() {
     <div className="max-w-3xl mx-auto space-y-8">
       <div>
         <h1 className="text-xl font-bold text-foreground">Privacy Policy</h1>
-        <p className="text-sm text-muted-foreground mt-1">Last updated: March 2026</p>
+        <p className="text-sm text-muted-foreground mt-1">Last updated: April 2026</p>
       </div>
 
       {[
         {
           title: "1. What Data We Collect",
-          content: `Makrill Trade collects the following personal data when you register and use the platform:\n\n• Full name\n• Email address\n• Country of residence\n• Date of birth (if provided)\n• Telephone number (if provided)\n• Postal address (if provided)\n• IBAN (bank account number for payouts)\n• Investment activity (commitments, amounts, dates, offer participation)\n• Login and session data (IP address, browser type, timestamps)`,
+          content: `Makrill Trade collects the following personal data when you register and use the platform:\n\n• Full name\n• Email address\n• Country of residence\n• Date of birth (if provided)\n• Telephone number (if provided)\n• Postal address (if provided)\n• IBAN (bank account number for payouts)\n• Investor classification (Retail, Professional, or Sophisticated/Accredited)\n• KYC/AML verification documents (ID document, proof of address)\n• Investment activity (commitments, amounts, dates, offer participation)\n• Suitability assessment responses\n• Login and session data (IP address, browser type, timestamps)`,
         },
         {
           title: "2. Why We Collect Your Data",
-          content: `We process your personal data for the following purposes:\n\n• To operate the platform and provide the investment service.\n• To verify your identity and eligibility.\n• To process your investments and facilitate payouts.\n• To communicate with you about your account, investments, and platform updates.\n• To comply with applicable laws and regulations, including anti-money laundering (AML) and know-your-customer (KYC) obligations.\n• To improve the platform and user experience.`,
+          content: `We process your personal data for the following purposes:\n\n• To operate the platform and provide the investment service.\n• To verify your identity and eligibility (KYC/AML verification).\n• To classify investors according to regulatory requirements.\n• To process your investments and facilitate payouts.\n• To assess suitability for investment products.\n• To communicate with you about your account, investments, and platform updates.\n• To comply with applicable laws and regulations, including anti-money laundering (AML) and know-your-customer (KYC) obligations.\n• To improve the platform and user experience.`,
         },
         {
           title: "3. Legal Basis",
-          content: `We process your data based on:\n\n• Contract performance — processing necessary to provide the service you signed up for.\n• Legal obligation — processing required by law (e.g. AML/KYC compliance).\n• Legitimate interest — improving the platform, fraud prevention, and internal analytics.\n• Consent — where explicitly given (e.g. marketing communications).`,
+          content: `We process your data based on:\n\n• Contract performance — processing necessary to provide the service you signed up for.\n• Legal obligation — processing required by law (e.g. AML/KYC compliance, investor classification).\n• Legitimate interest — improving the platform, fraud prevention, and internal analytics.\n• Consent — where explicitly given (e.g. marketing communications).`,
         },
         {
           title: "4. Data Retention",
-          content: `We retain your personal data for as long as your account is active and for a period of 5 years after account closure, or longer if required by law (e.g. financial record-keeping obligations). Investment transaction records are retained for 7 years in accordance with Swedish bookkeeping regulations.`,
+          content: `We retain your personal data for as long as your account is active and for a period of 5 years after account closure, or longer if required by law (e.g. financial record-keeping obligations). Investment transaction records are retained for 7 years in accordance with Swedish bookkeeping regulations. KYC/AML verification documents are retained for 5 years after the end of the business relationship as required by anti-money laundering regulations.`,
         },
         {
           title: "5. Your Rights (GDPR)",
@@ -29,14 +29,18 @@ export default function PortalPrivacy() {
         },
         {
           title: "6. Data Sharing",
-          content: `We do not sell your personal data. We may share data with:\n\n• Banking partners — to process payments and verify IBAN details.\n• Regulatory authorities — when required by law.\n• Service providers — hosting, email, and analytics providers that process data on our behalf under strict data processing agreements.`,
+          content: `We do not sell your personal data. We may share data with:\n\n• Banking partners — to process payments and verify IBAN details.\n• Regulatory authorities — when required by law.\n• Service providers — hosting, email, and analytics providers that process data on our behalf under strict data processing agreements.\n• KYC/AML service providers — for identity verification and compliance checks.`,
         },
         {
-          title: "7. Security",
-          content: `We implement appropriate technical and organisational measures to protect your personal data against unauthorised access, alteration, disclosure, or destruction. All data is encrypted in transit (TLS) and at rest.`,
+          title: "7. Document Storage & Security",
+          content: `KYC verification documents (ID documents, proof of address) are stored securely in encrypted cloud storage. Access is restricted to authorised personnel for verification purposes only. All data is encrypted in transit (TLS) and at rest. We implement appropriate technical and organisational measures to protect your personal data against unauthorised access, alteration, disclosure, or destruction.`,
         },
         {
-          title: "8. Contact",
+          title: "8. Cookies & Session Data",
+          content: `We use essential cookies and session storage to maintain your login session and remember user preferences (e.g. dismissed notices). We do not use third-party tracking cookies for advertising purposes.`,
+        },
+        {
+          title: "9. Contact",
           content: `For questions about this Privacy Policy or to exercise your data rights, contact:\n\nMakrill Trade AB\nEmail: info@fiskskaldjur.ch`,
         },
       ].map((section) => (
