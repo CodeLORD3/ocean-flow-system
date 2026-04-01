@@ -1,0 +1,1 @@
+UPDATE trade_offers SET funded_amount = 0 WHERE id = 'ff972810-1877-417d-8b0e-cfa61137f6a3';
