@@ -718,9 +718,9 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
 
           {/* Funding progress */}
           <div className="border border-border bg-white p-3">
-            <div className="flex justify-between text-[11px] text-muted-foreground mb-1.5">
+            <div className="flex flex-col sm:flex-row sm:justify-between text-[11px] text-muted-foreground mb-1.5 gap-1">
               <span className="font-semibold">Funding Progress</span>
-              <span className="font-mono">
+              <span className="font-mono text-[10px] sm:text-[11px]">
                 {funded.toLocaleString()} / {target.toLocaleString()} {cur} ({confirmedPct.toFixed(1)}%{pendingPct > 0 ? ` confirmed · ${pendingPct.toFixed(1)}% pending` : ""})
               </span>
             </div>
