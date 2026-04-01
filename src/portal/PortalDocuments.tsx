@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { FileText, Download, ShieldCheck, Receipt, FolderOpen, ArrowRight } from "lucide-react";
+import { getCurrency } from "@/lib/currency";
 import { Link } from "react-router-dom";
 
 export default function PortalDocuments() {
@@ -22,7 +23,7 @@ export default function PortalDocuments() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("pledges")
-        .select("*, trade_offers(title)")
+        .select("*, trade_offers(title, company_id, companies:company_id(country))")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
@@ -83,7 +84,7 @@ export default function PortalDocuments() {
                       {p.trade_offers?.title || "Investment"}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {Number(p.amount).toLocaleString()} kr · {new Date(p.created_at).toLocaleDateString()}
+                      {Number(p.amount).toLocaleString()} {getCurrency((p.trade_offers as any)?.companies?.country)} · {new Date(p.created_at).toLocaleDateString()}
                     </div>
                   </div>
                 </div>
@@ -104,7 +105,7 @@ export default function PortalDocuments() {
                         `Reference: ${refCode}`,
                         "",
                         `Offer: ${p.trade_offers?.title || "—"}`,
-                        `Amount: ${Number(p.amount).toLocaleString()} kr`,
+                        `Amount: ${Number(p.amount).toLocaleString()} ${getCurrency((p.trade_offers as any)?.companies?.country)}`,
                         `Status: ${p.status}`,
                         "",
                         `© ${new Date().getFullYear()} Makrill Trade.`,
