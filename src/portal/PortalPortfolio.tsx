@@ -250,7 +250,7 @@ export default function PortalPortfolio() {
       )}
 
       {/* Table with tabs */}
-      <div className="border border-border bg-white">
+      {hasAnyData && <div className="border border-border bg-white">
         <div className="h-9 flex items-center border-b border-border px-1">
           {(["active", "history"] as const).map((t) => (
             <button
