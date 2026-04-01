@@ -183,7 +183,7 @@ export default function InvestmentFlowDiagram({ pledges }: { pledges: Pledge[] }
   };
 
   return (
-    <div className="border border-border bg-white p-4">
+    <div className="border border-border bg-white p-3">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xs font-bold text-foreground">Investment Lifecycle</h2>
