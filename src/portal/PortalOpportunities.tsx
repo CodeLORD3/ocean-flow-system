@@ -380,7 +380,7 @@ export default function PortalOpportunities() {
                   <div className="space-y-1.5 mb-3">
                     <div className="flex justify-between text-xs">
                       <span className="text-muted-foreground">Funding</span>
-                      <span className="text-foreground font-medium font-mono">{funded.toLocaleString()} / {target.toLocaleString()} kr</span>
+                      <span className="text-foreground font-medium font-mono">{funded.toLocaleString()} / {target.toLocaleString()} {cur}</span>
                     </div>
                     <div className="h-2 bg-muted overflow-hidden">
                       <div className="h-full bg-mackerel transition-all" style={{ width: `${progress}%` }} />
