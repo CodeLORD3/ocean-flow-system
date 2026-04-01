@@ -265,12 +265,20 @@ export default function InvestorList() {
     try {
       const { data: files } = await supabase.storage.from("kyc-documents").list(userId);
       if (files && files.length > 0) {
+        const fileEntries = await Promise.all(
+          files.map(async (f) => {
+            const { data } = await supabase.storage
+              .from("kyc-documents")
+              .createSignedUrl(`${userId}/${f.name}`, 3600);
+            return {
+              name: f.name,
+              url: data?.signedUrl || "",
+            };
+          })
+        );
         setKycFilesMap((prev) => ({
           ...prev,
-          [userId]: files.map((f) => ({
-            name: f.name,
-            url: supabase.storage.from("kyc-documents").getPublicUrl(`${userId}/${f.name}`).data.publicUrl,
-          })),
+          [userId]: fileEntries.filter((f) => f.url),
         }));
       } else {
         setKycFilesMap((prev) => ({ ...prev, [userId]: [] }));
