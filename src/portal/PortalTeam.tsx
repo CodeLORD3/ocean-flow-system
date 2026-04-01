@@ -58,8 +58,7 @@ export default function PortalTeam() {
               {person.experience && (
                 <p className="text-[10px] text-muted-foreground">{person.experience}</p>
               )}
-              <p className="text-xs text-muted-foreground leading-relaxed">{person.desc}</p>
-              <div className="flex-1" />
+              <p className="text-xs text-muted-foreground leading-relaxed flex-1">{person.desc}</p>
               {person.bio && (
                 <p className="text-[11px] text-muted-foreground leading-relaxed border-t border-border pt-2 mt-1">{person.bio}</p>
               )}
