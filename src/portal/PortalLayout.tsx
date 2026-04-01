@@ -28,7 +28,7 @@ function PortalTabBar() {
   const { tabs, activeTab, switchTab, closeTab } = usePortalTabs();
   if (tabs.length <= 1) return null;
   return (
-    <div className="flex items-center gap-0 border-b border-border bg-muted/40 px-3 overflow-x-auto">
+    <div className="flex items-center gap-0 border-b border-white/10 bg-mackerel-dark/80 px-3 overflow-x-auto">
       {tabs.map((tab) => {
         const isActive = tab.path === activeTab;
         return (
