@@ -332,6 +332,11 @@ export default function PortalPortfolio() {
                           expectedReturn={expectedReturn}
                           daysToMaturity={daysToMaturity}
                           onViewOffer={() => offer && openOfferTab(offer.id, offer.title)}
+                          onCancelled={() => {
+                            toast.success("Investment commitment withdrawn.");
+                            queryClient.invalidateQueries({ queryKey: ["portal-portfolio"] });
+                            setExpandedRow(null);
+                          }}
                         />
                       </td>
                     </tr>
