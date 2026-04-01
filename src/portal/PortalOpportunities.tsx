@@ -107,7 +107,12 @@ export default function PortalOpportunities() {
     const company = (offer as any).company_id ? companyMap[(offer as any).company_id] : null;
     const isMatured = daysToMaturity !== null && daysToMaturity <= 0;
     const cur = getCurrency(company?.country);
-    return { target, funded, pending, rate, progress, confirmedPct, pendingPct, maturity, purchaseDate, daysToMaturity, tenorDays, company, isMatured, cur };
+    // Batch / period label derived from purchase_date or maturity_date
+    const batchMonth = purchaseDate ? format(purchaseDate, "MMM yyyy") : maturity ? format(maturity, "MMM yyyy") : null;
+    const dateRange = purchaseDate && maturity
+      ? `${format(purchaseDate, "d MMM")} → ${format(maturity, "d MMM yyyy")}`
+      : null;
+    return { target, funded, pending, rate, progress, confirmedPct, pendingPct, maturity, purchaseDate, daysToMaturity, tenorDays, company, isMatured, cur, batchMonth, dateRange };
   };
 
 
@@ -261,7 +266,7 @@ export default function PortalOpportunities() {
             </thead>
             <tbody>
               {filtered.map((offer) => {
-                const { target, funded, pending, rate, progress, confirmedPct, pendingPct, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity, cur } = renderOfferData(offer);
+                const { target, funded, pending, rate, progress, confirmedPct, pendingPct, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity, cur, batchMonth } = renderOfferData(offer);
                 return (
                   <tr
                     key={offer.id}
@@ -276,6 +281,11 @@ export default function PortalOpportunities() {
                         <span className="font-semibold text-foreground group-hover:text-mackerel transition-colors line-clamp-1 max-w-[180px]">
                           {offer.title}
                         </span>
+                        {batchMonth && (
+                          <span className="shrink-0 px-1.5 py-0.5 bg-muted text-[9px] font-medium text-muted-foreground border border-border">
+                            {batchMonth}
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="px-2 py-1.5">
@@ -356,7 +366,7 @@ export default function PortalOpportunities() {
       {viewMode === "cards" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {filtered.map((offer) => {
-            const { target, funded, pending, rate, progress, confirmedPct, pendingPct, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity, cur } = renderOfferData(offer);
+            const { target, funded, pending, rate, progress, confirmedPct, pendingPct, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity, cur, batchMonth, dateRange } = renderOfferData(offer);
             return (
               <div
                 key={offer.id}
@@ -381,9 +391,14 @@ export default function PortalOpportunities() {
 
                 <div className="p-3 flex-1 flex flex-col">
                   <div className="flex items-start justify-between mb-1">
-                    <h3 className="text-xs font-semibold text-foreground group-hover:text-mackerel transition-colors leading-snug flex-1 pr-2">
-                      {offer.title}
-                    </h3>
+                    <div className="flex-1 pr-2">
+                      <h3 className="text-xs font-semibold text-foreground group-hover:text-mackerel transition-colors leading-snug">
+                        {offer.title}
+                      </h3>
+                      {dateRange && (
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{dateRange}</p>
+                      )}
+                    </div>
                     <span className={`shrink-0 px-2 py-0.5 text-[10px] font-semibold border ${
                       offer.status === "Open"
                         ? "text-mackerel bg-mackerel-light border-mackerel/30"
