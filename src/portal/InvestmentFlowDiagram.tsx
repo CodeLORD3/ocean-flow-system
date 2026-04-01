@@ -236,7 +236,7 @@ export default function InvestmentFlowDiagram({ pledges }: { pledges: Pledge[] }
         <div className="hidden md:block">
           <div className="relative" style={{ height: "72px" }}>
             {/* Timeline line */}
-            <div className="absolute top-[46px] h-px bg-border" style={{ left: `${PAD}%`, right: `${PAD}%` }} />
+            <div className="absolute top-[33px] h-px bg-border" style={{ left: `${PAD}%`, right: `${PAD}%` }} />
             {/* Animated progress line */}
             <motion.div
               className="absolute top-[46px] h-px bg-primary"
