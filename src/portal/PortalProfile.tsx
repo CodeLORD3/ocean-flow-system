@@ -44,6 +44,7 @@ export default function PortalProfile() {
           telephone: (data as any).telephone || "",
           address: (data as any).address || "",
           base_currency: (data as any).base_currency || "SEK",
+          investor_classification: (data as any).investor_classification || "",
         });
       } else {
         // Profile doesn't exist yet — show empty form
