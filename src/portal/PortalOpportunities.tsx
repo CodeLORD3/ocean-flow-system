@@ -78,6 +78,18 @@ export default function PortalOpportunities() {
   const companyMap: Record<string, any> = Object.fromEntries(companies.map((c: any) => [c.id, c]));
   const showIbanBanner = !ibanBannerDismissed && ibanFetched && (!(investorProfile as any)?.iban);
 
+  // Derive dynamic filter options from offers + companies
+  const sectorOptions = [...new Set(offers.map(o => (o as any).sector).filter(Boolean))].sort();
+  const countryOptions = [...new Set(offers.map(o => {
+    const comp = (o as any).company_id ? companyMap[(o as any).company_id] : null;
+    return comp?.country;
+  }).filter(Boolean))].sort();
+
+  const getOfferCurrency = (o: any) => {
+    const comp = o.company_id ? companyMap[o.company_id] : null;
+    return getCurrency(comp?.country);
+  };
+
   const filtered = offers.filter((o) => {
     if (search && !o.title.toLowerCase().includes(search.toLowerCase())) return false;
     if (statusFilter === "open" && o.status !== "Open") return false;
@@ -87,6 +99,12 @@ export default function PortalOpportunities() {
     if (returnRange === "0-5" && (rate < 0 || rate > 5)) return false;
     if (returnRange === "5-10" && (rate < 5 || rate > 10)) return false;
     if (returnRange === "10+" && rate < 10) return false;
+    if (sectorFilter !== "all" && (o as any).sector !== sectorFilter) return false;
+    if (countryFilter !== "all") {
+      const comp = (o as any).company_id ? companyMap[(o as any).company_id] : null;
+      if (comp?.country !== countryFilter) return false;
+    }
+    if (currencyFilter !== "all" && getOfferCurrency(o) !== currencyFilter) return false;
     return true;
   });
 
