@@ -391,12 +391,14 @@ export default function PortalOpportunities() {
 
                 <div className="p-3 flex-1 flex flex-col">
                   <div className="flex items-start justify-between mb-1">
-                    <h3 className="text-xs font-semibold text-foreground group-hover:text-mackerel transition-colors leading-snug flex-1 pr-2">
-                      {offer.title}
-                    </h3>
-                    {dateRange && (
-                      <p className="text-[10px] text-muted-foreground mt-0.5 pr-2">{dateRange}</p>
-                    )}
+                    <div className="flex-1 pr-2">
+                      <h3 className="text-xs font-semibold text-foreground group-hover:text-mackerel transition-colors leading-snug">
+                        {offer.title}
+                      </h3>
+                      {dateRange && (
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{dateRange}</p>
+                      )}
+                    </div>
                     <span className={`shrink-0 px-2 py-0.5 text-[10px] font-semibold border ${
                       offer.status === "Open"
                         ? "text-mackerel bg-mackerel-light border-mackerel/30"
