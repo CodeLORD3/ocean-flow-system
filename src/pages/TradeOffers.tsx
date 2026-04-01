@@ -536,7 +536,6 @@ export default function TradeOffers() {
                   {docFile && existingDocUrl && (
                     <p className="text-[9px] text-amber-600 mt-0.5">Nytt dokument ersätter befintligt</p>
                   )}
-                  </Button>
                 </div>
               </div>
             </div>
