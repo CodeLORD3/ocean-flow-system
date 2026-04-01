@@ -98,6 +98,7 @@ export default function PortalProfile() {
       first_name: formData.first_name,
       last_name: formData.last_name,
       country: formData.country,
+      date_of_birth: formData.date_of_birth || null,
       telephone: formData.telephone || null,
       address: formData.address || null,
       base_currency: formData.base_currency,
