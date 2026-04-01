@@ -536,6 +536,58 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   })();
 
   /* ── FULL-PAGE SUCCESS SCREEN (Step 3) ── */
+  const paymentDeadline = format(addBusinessDays(new Date(), 5), "d MMMM yyyy");
+
+  const generateConfirmationPdf = () => {
+    const lines = [
+      "INVESTMENT CONFIRMATION",
+      "═══════════════════════════════════",
+      "",
+      `Date: ${new Date().toLocaleDateString("en-GB")}`,
+      `Reference: ${successRef}`,
+      "",
+      "INVESTMENT DETAILS",
+      "───────────────────────────────────",
+      `Offer: ${offer.title}`,
+      `Company: ${companyName}`,
+      `Amount Invested: ${pledgeAmt.toLocaleString()} ${cur}`,
+      `Return Rate: ${rate.toFixed(1)}%`,
+      `Expected Payout: ${pledgeReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${cur}`,
+      `Expected Profit: +${pledgeProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${cur}`,
+      `Maturity Date: ${format(parseISO(offer.maturity_date), "d MMM yyyy")}`,
+      "",
+      "PAYMENT DETAILS",
+      "───────────────────────────────────",
+      `Bank: ${companyName}`,
+      `IBAN: ${o.company_iban || "Contact support"}`,
+      `Payment Reference: ${successRef}`,
+      `Amount to Transfer: ${pledgeAmt.toLocaleString()} ${cur}`,
+      `Payment Deadline: ${paymentDeadline}`,
+      "",
+      "IMPORTANT",
+      "───────────────────────────────────",
+      "Use the exact reference number so your payment can be matched.",
+      "Your investment will be activated once funds are confirmed (1–2 business days).",
+      `Funds must arrive by ${paymentDeadline}.`,
+      "",
+      "Capital at risk. Investments are not covered by deposit guarantee schemes.",
+      "",
+      `© ${new Date().getFullYear()} Makrill Trade. All rights reserved.`,
+    ].join("\n");
+    const blob = new Blob([lines], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Investment-Confirmation-${successRef}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const copyReference = () => {
+    navigator.clipboard.writeText(successRef);
+    toast.success("Reference copied to clipboard");
+  };
+
   if (step === 3) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -546,7 +598,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
               <CheckCircle className="h-9 w-9 text-mackerel" />
             </div>
             <h1 className="text-2xl font-bold text-foreground">Investment committed!</h1>
-            <p className="text-sm text-muted-foreground">Your next step is to send the funds via bank transfer.</p>
+            <p className="text-sm text-muted-foreground">Your commitment has been registered. Complete the bank transfer below to activate your investment.</p>
           </div>
 
           {/* Payment instruction box */}
@@ -565,20 +617,36 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                 <span className="text-muted-foreground">IBAN</span>
                 <span className="font-mono font-bold text-foreground">{o.company_iban || "Contact support"}</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-sm items-center">
                 <span className="text-muted-foreground">Reference number</span>
-                <span className="font-mono font-bold text-primary text-base">{successRef}</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-bold text-primary text-base">{successRef}</span>
+                  <button
+                    onClick={copyReference}
+                    className="h-7 w-7 flex items-center justify-center border border-border rounded hover:bg-muted/50 transition-colors"
+                    title="Copy reference"
+                  >
+                    <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
+                </div>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Amount to transfer</span>
                 <span className="font-mono font-bold text-foreground">{pledgeAmt.toLocaleString()} {cur}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Payment deadline</span>
+                <span className="font-medium text-foreground flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                  {paymentDeadline}
+                </span>
               </div>
             </div>
 
             <div className="border-t border-border pt-3">
               <p className="text-xs text-amber-600 font-semibold flex items-center gap-1.5 bg-amber-50 border border-amber-200 p-2.5">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
-                Use the exact reference number so your payment can be matched.
+                Use the exact reference number so your payment can be matched. Funds must arrive by {paymentDeadline}.
               </p>
             </div>
           </div>
@@ -588,57 +656,23 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
             <Info className="h-5 w-5 text-primary mt-0.5 shrink-0" />
             <p className="text-xs text-muted-foreground leading-relaxed">
               Once we receive and confirm your transfer (typically <strong className="text-foreground">1–2 business days</strong>),
-              your investment status will change to <strong className="text-foreground">Active</strong> and you'll receive a confirmation email.
+              your investment status will change to <strong className="text-foreground">Active</strong> and you'll receive a confirmation notification.
             </p>
           </div>
 
           {/* Actions */}
           <div className="flex gap-3">
             <button
-              onClick={() => {
-                const content = [
-                  "INVESTMENT CONFIRMATION",
-                  "═══════════════════════════════════",
-                  "",
-                  `Date: ${new Date().toLocaleDateString("en-GB")}`,
-                  `Reference: ${successRef}`,
-                  "",
-                  "INVESTMENT DETAILS",
-                  "───────────────────────────────────",
-                  `Offer: ${offer.title}`,
-                  `Amount Invested: ${pledgeAmt.toLocaleString()} {cur}`,
-                  `Return Rate: ${rate.toFixed(1)}%`,
-                  `Expected Payout: ${pledgeReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} {cur}`,
-                  `Expected Profit: +${pledgeProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} {cur}`,
-                  `Maturity Date: ${format(parseISO(offer.maturity_date), "d MMM yyyy")}`,
-                  "",
-                  "PAYMENT DETAILS",
-                  "───────────────────────────────────",
-                  `Bank: ${companyName}`,
-                  `IBAN: ${o.company_iban || "Contact support"}`,
-                  `Payment Reference: ${successRef}`,
-                  `Amount to Transfer: ${pledgeAmt.toLocaleString()} {cur}`,
-                  "",
-                  "IMPORTANT",
-                  "───────────────────────────────────",
-                  "Use the exact reference number so your payment can be matched.",
-                  "Your investment will be activated once funds are confirmed (1–2 business days).",
-                  "",
-                  "Capital at risk. Investments are not covered by deposit guarantee schemes.",
-                  "",
-                  `© ${new Date().getFullYear()} Makrill Trade. All rights reserved.`,
-                ].join("\n");
-                const blob = new Blob([content], { type: "text/plain" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = `Investment-Confirmation-${successRef}.txt`;
-                a.click();
-                URL.revokeObjectURL(url);
-              }}
+              onClick={copyReference}
+              className="h-11 px-4 border border-border text-foreground text-sm font-semibold hover:bg-muted/50 transition-colors flex items-center justify-center gap-1.5"
+            >
+              <Copy className="h-4 w-4" /> Copy Reference
+            </button>
+            <button
+              onClick={generateConfirmationPdf}
               className="flex-1 h-11 border border-border text-foreground text-sm font-semibold hover:bg-muted/50 transition-colors flex items-center justify-center gap-1.5"
             >
-              <FileText className="h-4 w-4" /> Download Confirmation
+              <Download className="h-4 w-4" /> Download Confirmation
             </button>
             <button
               onClick={() => switchTab("/portal/portfolio")}
