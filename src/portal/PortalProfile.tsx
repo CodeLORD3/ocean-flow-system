@@ -254,6 +254,12 @@ export default function PortalProfile() {
         {iban && !isValidIban && (
           <p className="text-[11px] text-destructive mt-1">Please enter a valid IBAN (e.g. SE35 5000 0000 0549 1000 0003)</p>
         )}
+        {!iban && profile && (
+          <p className="text-[11px] text-amber-600 mt-2 flex items-center gap-1">
+            <AlertTriangle className="h-3 w-3 shrink-0" />
+            Required to receive payouts. Please add your IBAN before your first investment matures.
+          </p>
+        )}
         {!profile && (
           <p className="text-[11px] text-muted-foreground mt-1">Save your profile first to enable IBAN settings.</p>
         )}
