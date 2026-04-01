@@ -549,7 +549,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
 
   if (step === 3) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
+      <div className="flex items-center justify-center min-h-[60vh] px-2">
       <div className="w-full max-w-lg space-y-5">
           {stepIndicator}
           {/* Success header */}
