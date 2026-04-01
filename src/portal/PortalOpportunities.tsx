@@ -445,7 +445,7 @@ export default function PortalOpportunities() {
                           )}
                         </div>
                         <div className="text-[9px] text-muted-foreground text-center mt-0.5 whitespace-nowrap">
-                          {confirmedPct.toFixed(0)}%{pendingPct > 0 ? ` · ${pendingPct.toFixed(0)}%` : ""}
+                          {confirmedPct.toFixed(0)}%{pendingPct > 0 ? ` · ${pendingPct.toFixed(0)}% pending` : ""}
                         </div>
                       </div>
                     </td>
