@@ -83,17 +83,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
       } as any).select().single();
       if (error) throw error;
 
-      // Update funded_amount
-      const { data: currentOffer } = await supabase.from("trade_offers").select("funded_amount, target_amount, title, company_iban").eq("id", id!).single();
-      const currentFunded = Number(currentOffer?.funded_amount || 0);
-      const targetAmount = Number(currentOffer?.target_amount || 0);
-      const newFunded = currentFunded + amount;
-
-      const updatePayload: any = { funded_amount: newFunded };
-      if (newFunded >= targetAmount && targetAmount > 0) {
-        updatePayload.status = "Funded";
-      }
-      await supabase.from("trade_offers").update(updatePayload).eq("id", id!);
+      // funded_amount is updated only when admin marks the pledge as "Active" (received)
 
       // Notification is handled by the database trigger (notify_new_pledge)
 
