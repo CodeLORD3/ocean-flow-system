@@ -363,7 +363,7 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
                 <AlertTriangle className="h-3.5 w-3.5" />
                 Payout Due
               </div>
-              <p className="text-orange-700">Your investment has matured. The company is processing your payout of <span className="font-bold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} kr</span>.</p>
+              <p className="text-orange-700">Your investment has matured. The company is processing your payout of <span className="font-bold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} {cur}</span>.</p>
               <p className="text-orange-600 text-[10px]">This typically takes 1–3 business days after maturity.</p>
             </div>
           </div>
