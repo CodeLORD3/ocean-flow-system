@@ -853,12 +853,18 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
         </Section>
 
         <Section title="Risk & Security" icon={<Shield className="h-3.5 w-3.5 text-primary" />}>
-          <InfoRow label="Risk Rating" value={
-            o.risk_level === "Low" ? <span className="px-1.5 py-0.5 text-[9px] font-semibold border text-emerald-700 bg-emerald-50 border-emerald-200">Low Risk</span>
-            : o.risk_level === "High" ? <span className="px-1.5 py-0.5 text-[9px] font-semibold border text-red-600 bg-red-50 border-red-200">High Risk</span>
-            : o.risk_level === "Medium" ? <span className="px-1.5 py-0.5 text-[9px] font-semibold border text-amber-700 bg-amber-50 border-amber-200">Medium Risk</span>
-            : <span className="px-1.5 py-0.5 text-[9px] font-medium border border-border text-muted-foreground bg-muted/30">Not rated</span>
-          } />
+          <div className="flex justify-between px-3 py-2 text-[11px] hover:bg-muted/20 transition-colors">
+            <span className="text-muted-foreground">Risk Rating</span>
+            {o.risk_level === "Low" ? (
+              <span className="px-1.5 py-0.5 text-[9px] font-semibold border text-emerald-700 bg-emerald-50 border-emerald-200">Low Risk</span>
+            ) : o.risk_level === "High" ? (
+              <span className="px-1.5 py-0.5 text-[9px] font-semibold border text-red-600 bg-red-50 border-red-200">High Risk</span>
+            ) : o.risk_level === "Medium" ? (
+              <span className="px-1.5 py-0.5 text-[9px] font-semibold border text-amber-700 bg-amber-50 border-amber-200">Medium Risk</span>
+            ) : (
+              <span className="px-1.5 py-0.5 text-[9px] font-medium border border-border text-muted-foreground bg-muted/30">Not rated</span>
+            )}
+          </div>
           <InfoRow label="Collateral" value={o.collateral || "Inventory"} />
           <InfoRow label="LTV" value={o.ltv ? `${Number(o.ltv).toFixed(1)}%` : "—"} />
           <InfoRow label="Primary Exit" value={o.primary_exit} />
