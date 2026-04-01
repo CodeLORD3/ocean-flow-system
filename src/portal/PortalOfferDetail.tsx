@@ -821,7 +821,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
           <InfoRow label="Duration" value={tenorDays ? `${tenorDays} days` : "—"} />
           <InfoRow label="Expected Return" value={`${rate.toFixed(1)}%`} highlight />
           <InfoRow label="Annual Return" value={annualReturn ? `${annualReturn.toFixed(1)}%` : "—"} highlight />
-          <InfoRow label="Profit (on full)" value={`+${profitKr.toLocaleString()} {cur}`} highlight />
+          <InfoRow label="Profit (on full)" value={`+${profitKr.toLocaleString()} ${cur}`} highlight />
         </Section>
 
         <Section title="Underlying Transaction" icon={<Package className="h-3.5 w-3.5 text-primary" />}>
