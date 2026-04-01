@@ -361,8 +361,8 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                   {effectiveMin > 0 && `Min: ${effectiveMin.toLocaleString()} ${cur}`}
                   {effectiveMin > 0 && maxPledge ? " · " : ""}
                   {maxPledge && `Max: ${maxPledge.toLocaleString()} ${cur}`}
-                  {(effectiveMin > 0 || maxPledge) && remaining < target ? " · " : ""}
-                  {remaining < target && `Available: ${remaining.toLocaleString()} ${cur}`}
+                  {(effectiveMin > 0 || maxPledge) && remainingAfterPending < target ? " · " : ""}
+                  {remainingAfterPending < target && `Available: ${Math.max(0, remainingAfterPending).toLocaleString()} ${cur}`}
                 </p>
               )}
             </div>
