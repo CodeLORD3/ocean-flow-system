@@ -116,6 +116,21 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
     },
   });
 
+  // Fetch pending pledges for this offer
+  const { data: pendingPledgeAmount = 0 } = useQuery({
+    queryKey: ["portal-pending-pledges-offer", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pledges")
+        .select("amount")
+        .eq("offer_id", id!)
+        .eq("status", "Pending Payment");
+      if (error) throw error;
+      return data.reduce((sum: number, p: any) => sum + Number(p.amount), 0);
+    },
+    enabled: !!id,
+  });
+
   const [daysLeft, setDaysLeft] = useState<number | null>(null);
   useEffect(() => {
     if (!offer) return;
@@ -137,8 +152,11 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   const cur = getCurrency((company as any)?.country);
   const target = Number(offer.target_amount);
   const funded = Number(offer.funded_amount);
+  const pending = pendingPledgeAmount;
   const rate = Number(offer.interest_rate);
-  const progress = target > 0 ? Math.min(100, (funded / target) * 100) : 0;
+  const confirmedPct = target > 0 ? Math.min(100, (funded / target) * 100) : 0;
+  const pendingPct = target > 0 ? Math.min(100 - confirmedPct, (pending / target) * 100) : 0;
+  const progress = confirmedPct;
   const profitKr = Math.round(target * (rate / 100));
   const totalPayout = target + profitKr;
   const calcResult = calcAmount ? Number(calcAmount) * (1 + rate / 100) : 0;
