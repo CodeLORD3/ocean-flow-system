@@ -528,6 +528,12 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
             <p className="text-[10px] text-amber-700 italic">
               Use the exact reference number so your payment can be matched.
             </p>
+            <button
+              onClick={() => setShowCancelDialog(true)}
+              className="mt-2 w-full h-8 border border-destructive/30 text-destructive text-[11px] font-medium hover:bg-destructive/5 transition-colors flex items-center justify-center gap-1.5 rounded"
+            >
+              <XCircle className="h-3.5 w-3.5" /> Withdraw Commitment
+            </button>
           </div>
         )}
 
