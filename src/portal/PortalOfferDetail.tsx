@@ -689,11 +689,28 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
           <div className="border border-border bg-white p-3">
             <div className="flex justify-between text-[11px] text-muted-foreground mb-1.5">
               <span className="font-semibold">Funding Progress</span>
-              <span className="font-mono">{funded.toLocaleString()} / {target.toLocaleString()} {cur} ({progress.toFixed(1)}%)</span>
+              <span className="font-mono">
+                {funded.toLocaleString()} / {target.toLocaleString()} {cur} ({confirmedPct.toFixed(1)}%{pendingPct > 0 ? ` confirmed · ${pendingPct.toFixed(1)}% pending` : ""})
+              </span>
             </div>
-            <div className="h-2 bg-muted overflow-hidden">
-              <div className="h-full bg-mackerel transition-all" style={{ width: `${progress}%` }} />
+            <div className="h-2 bg-muted overflow-hidden flex">
+              <div className="h-full bg-mackerel transition-all" style={{ width: `${confirmedPct}%` }} />
+              {pendingPct > 0 && (
+                <div className="h-full bg-mackerel/30 transition-all" style={{ width: `${pendingPct}%` }} />
+              )}
             </div>
+            {pendingPct > 0 && (
+              <div className="flex items-center gap-3 mt-2 text-[10px]">
+                <div className="flex items-center gap-1">
+                  <div className="w-2.5 h-2.5 bg-mackerel" />
+                  <span className="text-muted-foreground">Confirmed ({funded.toLocaleString()} {cur})</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-2.5 h-2.5 bg-mackerel/30" />
+                  <span className="text-muted-foreground">Pending ({pending.toLocaleString()} {cur})</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Countdown */}
