@@ -270,6 +270,7 @@ export default function PortalOpportunities() {
                 <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Funding</th>
                 <th className="text-center px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Progress</th>
                 <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Return</th>
+                <th className="text-center px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Risk</th>
                 <th className="text-center px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Start → Maturity</th>
                 <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Duration</th>
                 <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Days to Maturity</th>
