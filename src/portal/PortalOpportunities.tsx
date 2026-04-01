@@ -31,7 +31,7 @@ export default function PortalOpportunities() {
     },
   });
 
-  const { data: investorProfile } = useQuery({
+  const { data: investorProfile, isFetched: ibanFetched } = useQuery({
     queryKey: ["portal-investor-profile-iban-check"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
