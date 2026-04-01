@@ -39,6 +39,8 @@ export default function TradeOffers() {
   const docRef = useRef<HTMLInputElement>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [docFile, setDocFile] = useState<File | null>(null);
+  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
+  const [existingDocUrl, setExistingDocUrl] = useState<string | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
 
   const { data: offers = [] } = useQuery({
