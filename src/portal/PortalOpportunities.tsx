@@ -54,6 +54,24 @@ export default function PortalOpportunities() {
     },
   });
 
+  // Fetch pending pledges grouped by offer
+  const { data: pendingPledges = [] } = useQuery({
+    queryKey: ["portal-pending-pledges"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pledges")
+        .select("offer_id, amount")
+        .eq("status", "Pending Payment");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const pendingByOffer: Record<string, number> = {};
+  for (const p of pendingPledges) {
+    pendingByOffer[p.offer_id] = (pendingByOffer[p.offer_id] || 0) + Number(p.amount);
+  }
+
   const companyMap: Record<string, any> = Object.fromEntries(companies.map((c: any) => [c.id, c]));
   const showIbanBanner = !ibanBannerDismissed && investorProfile && !(investorProfile as any).iban;
 
@@ -76,8 +94,11 @@ export default function PortalOpportunities() {
   const renderOfferData = (offer: any) => {
     const target = Number(offer.target_amount) || 0;
     const funded = Number(offer.funded_amount) || 0;
+    const pending = pendingByOffer[offer.id] || 0;
     const rate = Number(offer.interest_rate) || 0;
-    const progress = target > 0 ? Math.min(100, (funded / target) * 100) : 0;
+    const confirmedPct = target > 0 ? Math.min(100, (funded / target) * 100) : 0;
+    const pendingPct = target > 0 ? Math.min(100 - confirmedPct, (pending / target) * 100) : 0;
+    const progress = confirmedPct; // keep for backward compat
     const maturity = offer.maturity_date ? parseISO(offer.maturity_date) : null;
     const purchaseDate = offer.purchase_date ? parseISO(offer.purchase_date) : null;
     const now = new Date();
@@ -86,7 +107,7 @@ export default function PortalOpportunities() {
     const company = (offer as any).company_id ? companyMap[(offer as any).company_id] : null;
     const isMatured = daysToMaturity !== null && daysToMaturity <= 0;
     const cur = getCurrency(company?.country);
-    return { target, funded, rate, progress, maturity, purchaseDate, daysToMaturity, tenorDays, company, isMatured, cur };
+    return { target, funded, pending, rate, progress, confirmedPct, pendingPct, maturity, purchaseDate, daysToMaturity, tenorDays, company, isMatured, cur };
   };
 
 
@@ -240,7 +261,7 @@ export default function PortalOpportunities() {
             </thead>
             <tbody>
               {filtered.map((offer) => {
-                const { target, funded, rate, progress, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity, cur } = renderOfferData(offer);
+                const { target, funded, pending, rate, progress, confirmedPct, pendingPct, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity, cur } = renderOfferData(offer);
                 return (
                   <tr
                     key={offer.id}
@@ -280,11 +301,16 @@ export default function PortalOpportunities() {
                       {funded.toLocaleString()} / {target.toLocaleString()} {cur}
                     </td>
                     <td className="px-2 py-1.5">
-                      <div className="w-16 mx-auto">
-                        <div className="h-1.5 bg-muted overflow-hidden">
-                          <div className="h-full bg-mackerel transition-all" style={{ width: `${progress}%` }} />
+                      <div className="w-20 mx-auto">
+                        <div className="h-1.5 bg-muted overflow-hidden flex">
+                          <div className="h-full bg-mackerel transition-all" style={{ width: `${confirmedPct}%` }} />
+                          {pendingPct > 0 && (
+                            <div className="h-full bg-mackerel/30 transition-all" style={{ width: `${pendingPct}%` }} />
+                          )}
                         </div>
-                        <div className="text-[9px] text-muted-foreground text-center mt-0.5">{progress.toFixed(0)}%</div>
+                        <div className="text-[9px] text-muted-foreground text-center mt-0.5">
+                          {confirmedPct.toFixed(0)}%{pendingPct > 0 ? ` · ${pendingPct.toFixed(0)}% pending` : ""}
+                        </div>
                       </div>
                     </td>
                     <td className="px-2 py-1.5 text-right">
@@ -330,7 +356,7 @@ export default function PortalOpportunities() {
       {viewMode === "cards" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {filtered.map((offer) => {
-            const { target, funded, rate, progress, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity, cur } = renderOfferData(offer);
+            const { target, funded, pending, rate, progress, confirmedPct, pendingPct, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity, cur } = renderOfferData(offer);
             return (
               <div
                 key={offer.id}
@@ -382,9 +408,17 @@ export default function PortalOpportunities() {
                       <span className="text-muted-foreground">Funding</span>
                       <span className="text-foreground font-medium font-mono">{funded.toLocaleString()} / {target.toLocaleString()} {cur}</span>
                     </div>
-                    <div className="h-2 bg-muted overflow-hidden">
-                      <div className="h-full bg-mackerel transition-all" style={{ width: `${progress}%` }} />
+                    <div className="h-2 bg-muted overflow-hidden flex">
+                      <div className="h-full bg-mackerel transition-all" style={{ width: `${confirmedPct}%` }} />
+                      {pendingPct > 0 && (
+                        <div className="h-full bg-mackerel/30 transition-all" style={{ width: `${pendingPct}%` }} />
+                      )}
                     </div>
+                    {pendingPct > 0 && (
+                      <div className="text-[9px] text-muted-foreground">
+                        {confirmedPct.toFixed(0)}% confirmed · {pendingPct.toFixed(0)}% pending
+                      </div>
+                    )}
                   </div>
 
                   {/* Timeline info */}
