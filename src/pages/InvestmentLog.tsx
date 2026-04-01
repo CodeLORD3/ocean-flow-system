@@ -172,6 +172,8 @@ export default function InvestmentLog() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["investment-log"] });
       queryClient.invalidateQueries({ queryKey: ["admin-payments"] });
+      queryClient.invalidateQueries({ queryKey: ["payouts-paid-out"] });
+      queryClient.invalidateQueries({ queryKey: ["payout-offers"] });
       toast.success("Investment marked as Paid Out — investor notified");
     },
     onError: (e) => toast.error("Failed: " + e.message),

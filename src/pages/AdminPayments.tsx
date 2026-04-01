@@ -125,6 +125,7 @@ export default function AdminPayments() {
       queryClient.invalidateQueries({ queryKey: ["admin-payments"] });
       queryClient.invalidateQueries({ queryKey: ["investment-log"] });
       queryClient.invalidateQueries({ queryKey: ["payout-offers"] });
+      queryClient.invalidateQueries({ queryKey: ["payouts-paid-out"] });
       toast.success("Investment marked as Paid Out — investor notified");
     },
   });
