@@ -134,6 +134,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   }
 
   const o = offer as any;
+  const cur = getCurrency((company as any)?.country);
   const target = Number(offer.target_amount);
   const funded = Number(offer.funded_amount);
   const rate = Number(offer.interest_rate);
