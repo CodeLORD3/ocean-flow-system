@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { Banknote, TrendingUp, Target, Percent, ChevronDown, ChevronUp, Clock, CreditCard, CheckCircle, AlertTriangle, Award, Briefcase, ArrowRight, ArrowUpDown, ArrowUp, ArrowDown, XCircle } from "lucide-react";
 import { parseISO, format, differenceInDays } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
