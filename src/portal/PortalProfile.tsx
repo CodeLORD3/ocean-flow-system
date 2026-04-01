@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Shield, User, CheckCircle, Trash2, Mail } from "lucide-react";
+import { Save, Shield, User, CheckCircle, Trash2, Mail, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 
 export default function PortalProfile() {
@@ -253,6 +253,12 @@ export default function PortalProfile() {
         </div>
         {iban && !isValidIban && (
           <p className="text-[11px] text-destructive mt-1">Please enter a valid IBAN (e.g. SE35 5000 0000 0549 1000 0003)</p>
+        )}
+        {!iban && profile && (
+          <p className="text-[11px] text-amber-600 mt-2 flex items-center gap-1">
+            <AlertTriangle className="h-3 w-3 shrink-0" />
+            Required to receive payouts. Please add your IBAN before your first investment matures.
+          </p>
         )}
         {!profile && (
           <p className="text-[11px] text-muted-foreground mt-1">Save your profile first to enable IBAN settings.</p>

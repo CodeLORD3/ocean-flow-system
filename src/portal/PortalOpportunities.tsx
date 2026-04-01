@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, SlidersHorizontal, TrendingUp, Clock, ArrowRight, LayoutGrid, List, Calendar, CalendarClock, AlertTriangle, X } from "lucide-react";
+import { Search, SlidersHorizontal, TrendingUp, Clock, ArrowRight, LayoutGrid, List, Calendar, CalendarClock, AlertTriangle, X, Landmark } from "lucide-react";
 import { differenceInDays, parseISO, format } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
@@ -15,6 +15,7 @@ export default function PortalOpportunities() {
   const [returnRange, setReturnRange] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"rows" | "cards">("rows");
   const [riskDismissed, setRiskDismissed] = useState(() => sessionStorage.getItem("risk-banner-dismissed") === "true");
+  const [ibanBannerDismissed, setIbanBannerDismissed] = useState(() => sessionStorage.getItem("iban-banner-dismissed") === "true");
 
   const { data: offers = [], isLoading } = useQuery({
     queryKey: ["portal-all-offers"],
@@ -29,6 +30,20 @@ export default function PortalOpportunities() {
     },
   });
 
+  const { data: investorProfile } = useQuery({
+    queryKey: ["portal-investor-profile-iban-check"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data } = await supabase
+        .from("investor_profiles")
+        .select("iban")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+
   const { data: companies = [] } = useQuery({
     queryKey: ["portal-companies"],
     queryFn: async () => {
@@ -39,6 +54,7 @@ export default function PortalOpportunities() {
   });
 
   const companyMap: Record<string, any> = Object.fromEntries(companies.map((c: any) => [c.id, c]));
+  const showIbanBanner = !ibanBannerDismissed && investorProfile && !(investorProfile as any).iban;
 
   const filtered = offers.filter((o) => {
     if (search && !o.title.toLowerCase().includes(search.toLowerCase())) return false;
@@ -91,6 +107,28 @@ export default function PortalOpportunities() {
             before investing.
           </p>
           <button onClick={dismissRisk} className="text-amber-600 hover:text-amber-800 shrink-0 mt-0.5">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      {/* IBAN reminder banner */}
+      {showIbanBanner && (
+        <div className="border border-primary/30 bg-primary/5 px-4 py-2.5 flex items-center gap-2.5">
+          <Landmark className="h-4 w-4 text-primary shrink-0" />
+          <p className="text-[11px] text-foreground leading-relaxed flex-1">
+            <span className="font-semibold">Add your payout IBAN</span> to receive returns at maturity. Without it, we can't pay you back automatically.
+          </p>
+          <button
+            onClick={() => switchTab("/portal/profile")}
+            className="shrink-0 px-3 py-1 bg-primary text-primary-foreground text-[11px] font-semibold hover:bg-primary/90 transition-colors flex items-center gap-1"
+          >
+            Add IBAN <ArrowRight className="h-3 w-3" />
+          </button>
+          <button
+            onClick={() => { setIbanBannerDismissed(true); sessionStorage.setItem("iban-banner-dismissed", "true"); }}
+            className="text-muted-foreground hover:text-foreground shrink-0"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
