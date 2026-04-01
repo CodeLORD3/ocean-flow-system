@@ -345,7 +345,7 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
               </div>
               <div className="flex justify-between">
                 <span className="text-amber-800">Amount</span>
-                <span className="text-amber-900 font-mono font-bold">{Number(pledge.amount).toLocaleString()} kr</span>
+                <span className="text-amber-900 font-mono font-bold">{Number(pledge.amount).toLocaleString()} {cur}</span>
               </div>
             </div>
             <p className="text-[10px] text-amber-700 italic">
