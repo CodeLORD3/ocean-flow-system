@@ -267,8 +267,8 @@ export default function PortalPortfolio() {
           ))}
         </div>
 
-        <table className="w-full text-[10px]">
-          <thead>
+        <div className="overflow-x-auto -mx-3 sm:mx-0">
+        <table className="w-full text-[10px] min-w-[800px]">
             <tr className="border-b border-border text-[10px] text-muted-foreground select-none">
               <th className="w-6 p-2"></th>
               <th className="text-left p-2 font-medium cursor-pointer hover:text-foreground" onClick={() => toggleSort("name")}>Offer Name <SortIcon col="name" /></th>
