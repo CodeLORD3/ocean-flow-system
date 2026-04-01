@@ -203,7 +203,8 @@ export default function InvestmentLog() {
     paidOut: pledges.filter((p: any) => p.status === "Paid Out").length,
   };
 
-  const totalFunded = useMemo(() => filtered.reduce((s: number, p: any) => s + (p.amount || 0), 0), [filtered]);
+  const totalFunded = useMemo(() => filtered.filter((p: any) => ["Active", "Matured", "Paid Out"].includes(p.status)).reduce((s: number, p: any) => s + (p.amount || 0), 0), [filtered]);
+  const totalPendingCommitted = useMemo(() => filtered.filter((p: any) => p.status === "Pending Payment").reduce((s: number, p: any) => s + (p.amount || 0), 0), [filtered]);
 
   const statusFilters: { label: string; value: StatusFilter; count: number }[] = [
     { label: "All", value: "all", count: counts.all },
@@ -221,7 +222,7 @@ export default function InvestmentLog() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-5 gap-3">
         <Card>
           <CardContent className="p-4">
             <div className="text-[10px] text-muted-foreground mb-1">Total Investments</div>
@@ -230,15 +231,23 @@ export default function InvestmentLog() {
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-[10px] text-muted-foreground mb-1">Total Funded</div>
-            <div className="text-lg font-bold font-mono text-emerald-500">
+            <div className="text-[10px] text-muted-foreground mb-1">Confirmed Funded</div>
+            <div className="text-lg font-bold font-mono text-mackerel">
               {totalFunded.toLocaleString("sv-SE")} kr
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4">
-            <div className="text-[10px] text-muted-foreground mb-1">Pending Payment</div>
+            <div className="text-[10px] text-muted-foreground mb-1">Pending Committed</div>
+            <div className="text-lg font-bold font-mono text-amber-600">
+              {totalPendingCommitted.toLocaleString("sv-SE")} kr
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-[10px] text-muted-foreground mb-1">Pending Count</div>
             <div className="text-lg font-bold font-mono text-amber-600">{counts.pending}</div>
           </CardContent>
         </Card>
