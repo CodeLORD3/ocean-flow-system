@@ -301,11 +301,16 @@ export default function PortalOpportunities() {
                       {funded.toLocaleString()} / {target.toLocaleString()} {cur}
                     </td>
                     <td className="px-2 py-1.5">
-                      <div className="w-16 mx-auto">
-                        <div className="h-1.5 bg-muted overflow-hidden">
-                          <div className="h-full bg-mackerel transition-all" style={{ width: `${progress}%` }} />
+                      <div className="w-20 mx-auto">
+                        <div className="h-1.5 bg-muted overflow-hidden flex">
+                          <div className="h-full bg-mackerel transition-all" style={{ width: `${confirmedPct}%` }} />
+                          {pendingPct > 0 && (
+                            <div className="h-full bg-mackerel/30 transition-all" style={{ width: `${pendingPct}%` }} />
+                          )}
                         </div>
-                        <div className="text-[9px] text-muted-foreground text-center mt-0.5">{progress.toFixed(0)}%</div>
+                        <div className="text-[9px] text-muted-foreground text-center mt-0.5">
+                          {confirmedPct.toFixed(0)}%{pendingPct > 0 ? ` · ${pendingPct.toFixed(0)}% pending` : ""}
+                        </div>
                       </div>
                     </td>
                     <td className="px-2 py-1.5 text-right">
