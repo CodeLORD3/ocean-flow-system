@@ -57,7 +57,47 @@ export default function PortalPortfolio() {
 
   const activePledges = pledges.filter((p: any) => ["Active", "Pending Payment", "Matured"].includes(p.status));
   const historyPledges = pledges.filter((p: any) => ["Paid Out", "Repaid"].includes(p.status));
-  const currentList = tab === "active" ? activePledges : historyPledges;
+
+  const sortPledges = (list: any[]) => {
+    const sorted = [...list].sort((a, b) => {
+      const oA = a.trade_offers;
+      const oB = b.trade_offers;
+      let cmp = 0;
+      switch (sortKey) {
+        case "name":
+          cmp = (oA?.title || "").localeCompare(oB?.title || "");
+          break;
+        case "amount":
+          cmp = Number(a.amount) - Number(b.amount);
+          break;
+        case "rate":
+          cmp = (oA ? Number(oA.interest_rate) : 0) - (oB ? Number(oB.interest_rate) : 0);
+          break;
+        case "payout": {
+          const pA = Number(a.amount) * (1 + (oA ? Number(oA.interest_rate) : 0) / 100);
+          const pB = Number(b.amount) * (1 + (oB ? Number(oB.interest_rate) : 0) / 100);
+          cmp = pA - pB;
+          break;
+        }
+        case "maturity":
+          cmp = (oA?.maturity_date || "").localeCompare(oB?.maturity_date || "");
+          break;
+        case "daysToMaturity": {
+          const dA = oA?.maturity_date ? differenceInDays(parseISO(oA.maturity_date), new Date()) : 99999;
+          const dB = oB?.maturity_date ? differenceInDays(parseISO(oB.maturity_date), new Date()) : 99999;
+          cmp = dA - dB;
+          break;
+        }
+        case "status":
+          cmp = (a.status || "").localeCompare(b.status || "");
+          break;
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+    return sorted;
+  };
+
+  const currentList = sortPledges(tab === "active" ? activePledges : historyPledges);
 
   // Active tab stats
   const totalInvested = activePledges.reduce((s: number, p: any) => s + Number(p.amount), 0);
