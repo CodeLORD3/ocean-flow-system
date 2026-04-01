@@ -333,7 +333,7 @@ export default function InvestorList() {
             <TableBody>
               {reviewed.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-muted-foreground py-6 text-xs">
+                  <TableCell colSpan={10} className="text-center text-muted-foreground py-6 text-xs">
                     No reviewed investors yet
                   </TableCell>
                 </TableRow>
