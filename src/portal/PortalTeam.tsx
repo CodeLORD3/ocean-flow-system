@@ -67,11 +67,9 @@ export default function PortalTeam() {
               )}
               <div className="flex-1" />
               <div className="flex items-center justify-center gap-2 pt-1">
-                {person.linkedin && (
-                  <a href={person.linkedin} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-                    <Linkedin className="h-3.5 w-3.5" />
-                  </a>
-                )}
+                <a href={person.linkedin || "#"} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                  <Linkedin className="h-3.5 w-3.5" />
+                </a>
                 {person.email && (
                   <a href={`mailto:${person.email}`} className="text-muted-foreground hover:text-primary transition-colors">
                     <Mail className="h-3.5 w-3.5" />
