@@ -23,11 +23,12 @@ function getCurrency(country?: string | null) {
 
 const statusBadgeClass = (status: string) => {
   switch (status) {
-    case "Pending Payment": return "bg-amber-100 text-amber-700 border-amber-300";
-    case "Active": return "bg-green-50 text-green-700 border-green-200";
-    case "Matured": return "bg-orange-50 text-orange-600 border-orange-200";
-    case "Paid Out": return "bg-primary/10 text-primary border-primary/30";
-    default: return "";
+    case "Pending Payment": return "text-amber-700 bg-amber-50 border-amber-200";
+    case "Active": return "text-mackerel bg-mackerel-light border-mackerel/30";
+    case "Matured": return "text-orange-600 bg-orange-50 border-orange-200";
+    case "Paid Out":
+    case "Repaid": return "text-primary bg-primary/5 border-primary/20";
+    default: return "text-muted-foreground bg-muted/50 border-border";
   }
 };
 
@@ -357,9 +358,9 @@ export default function InvestmentLog() {
                       <TableCell className="py-1.5">
                         <Badge
                           variant="outline"
-                          className={`text-[9px] ${statusBadgeClass(p.status)}`}
+                          className={`text-[9px] font-semibold tracking-wide rounded-none ${statusBadgeClass(p.status)}`}
                         >
-                          {p.status}
+                          {(p.status || "").toUpperCase()}
                         </Badge>
                       </TableCell>
                       <TableCell className="py-1.5 text-right">
