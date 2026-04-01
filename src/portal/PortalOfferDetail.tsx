@@ -8,6 +8,7 @@ import { parseISO, format, addBusinessDays } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
 import { getCurrency } from "@/lib/currency";
+import { generateConfirmationPdf } from "@/lib/generateConfirmationPdf";
 
 export default function PortalOfferDetail({ overrideId }: { overrideId?: string } = {}) {
   const { id: paramId } = useParams<{ id: string }>();
@@ -219,49 +220,20 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
 
   const paymentDeadline = format(addBusinessDays(new Date(), 5), "d MMMM yyyy");
 
-  const generateConfirmationPdf = () => {
-    const lines = [
-      "INVESTMENT CONFIRMATION",
-      "═══════════════════════════════════",
-      "",
-      `Date: ${new Date().toLocaleDateString("en-GB")}`,
-      `Reference: ${successRef}`,
-      "",
-      "INVESTMENT DETAILS",
-      "───────────────────────────────────",
-      `Offer: ${offer.title}`,
-      `Company: ${companyName}`,
-      `Amount Invested: ${pledgeAmt.toLocaleString()} ${cur}`,
-      `Return Rate: ${rate.toFixed(1)}%`,
-      `Expected Payout: ${pledgeReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${cur}`,
-      `Expected Profit: +${pledgeProfit.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${cur}`,
-      `Maturity Date: ${format(parseISO(offer.maturity_date), "d MMM yyyy")}`,
-      "",
-      "PAYMENT DETAILS",
-      "───────────────────────────────────",
-      `Bank: ${companyName}`,
-      `IBAN: ${o.company_iban || "Contact support"}`,
-      `Payment Reference: ${successRef}`,
-      `Amount to Transfer: ${pledgeAmt.toLocaleString()} ${cur}`,
-      `Payment Deadline: ${paymentDeadline}`,
-      "",
-      "IMPORTANT",
-      "───────────────────────────────────",
-      "Use the exact reference number so your payment can be matched.",
-      "Your investment will be activated once funds are confirmed (1–2 business days).",
-      `Funds must arrive by ${paymentDeadline}.`,
-      "",
-      "Capital at risk. Investments are not covered by deposit guarantee schemes.",
-      "",
-      `© ${new Date().getFullYear()} Makrill Trade. All rights reserved.`,
-    ].join("\n");
-    const blob = new Blob([lines], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `Investment-Confirmation-${successRef}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleDownloadConfirmation = () => {
+    generateConfirmationPdf({
+      reference: successRef,
+      offerTitle: offer.title,
+      companyName,
+      amount: pledgeAmt,
+      currency: cur,
+      status: "Pending Payment",
+      date: new Date().toISOString(),
+      rate,
+      maturityDate: format(parseISO(offer.maturity_date), "d MMMM yyyy"),
+      iban: o.company_iban || undefined,
+      paymentDeadline,
+    });
   };
 
   const copyReference = () => {
@@ -542,7 +514,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                   <Copy className="h-3.5 w-3.5" /> Copy Ref
                 </button>
                 <button
-                  onClick={generateConfirmationPdf}
+                  onClick={handleDownloadConfirmation}
                   className="flex-1 h-10 border border-border text-foreground text-sm font-semibold hover:bg-muted/50 transition-colors flex items-center justify-center gap-1.5"
                 >
                   <Download className="h-4 w-4" /> Download
@@ -644,7 +616,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
               <Copy className="h-4 w-4" /> Copy Reference
             </button>
             <button
-              onClick={generateConfirmationPdf}
+              onClick={handleDownloadConfirmation}
               className="flex-1 h-11 border border-border text-foreground text-sm font-semibold hover:bg-muted/50 transition-colors flex items-center justify-center gap-1.5"
             >
               <Download className="h-4 w-4" /> Download Confirmation
