@@ -203,7 +203,8 @@ export default function InvestmentLog() {
     paidOut: pledges.filter((p: any) => p.status === "Paid Out").length,
   };
 
-  const totalFunded = useMemo(() => filtered.reduce((s: number, p: any) => s + (p.amount || 0), 0), [filtered]);
+  const totalFunded = useMemo(() => filtered.filter((p: any) => ["Active", "Matured", "Paid Out"].includes(p.status)).reduce((s: number, p: any) => s + (p.amount || 0), 0), [filtered]);
+  const totalPendingCommitted = useMemo(() => filtered.filter((p: any) => p.status === "Pending Payment").reduce((s: number, p: any) => s + (p.amount || 0), 0), [filtered]);
 
   const statusFilters: { label: string; value: StatusFilter; count: number }[] = [
     { label: "All", value: "all", count: counts.all },
