@@ -238,6 +238,7 @@ export default function InvestorList() {
       <TableCell className="py-1.5 text-[11px]">{inv.date_of_birth}</TableCell>
       <TableCell className="py-1.5 text-[11px] max-w-[120px] truncate">{inv.address}</TableCell>
       <TableCell className="py-1.5 text-[11px]">{format(new Date(inv.created_at), "yyyy-MM-dd")}</TableCell>
+      <TableCell className="py-1.5 text-[11px] capitalize">{inv.investor_classification ? inv.investor_classification.replace("sophisticated", "Sophisticated") : <span className="text-muted-foreground">—</span>}</TableCell>
       <TableCell className="py-1.5">{statusBadge(inv.status)}</TableCell>
       <TableCell className="py-1.5">
         <div className="flex items-center gap-1">
