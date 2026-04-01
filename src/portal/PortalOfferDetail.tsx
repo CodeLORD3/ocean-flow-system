@@ -121,6 +121,31 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
     enabled: !!id,
   });
 
+  // Fetch user's existing pledges for this offer
+  const { data: myPledges = [] } = useQuery({
+    queryKey: ["my-pledges-for-offer", id, authUser?.id],
+    queryFn: async () => {
+      if (!authUser?.id || !id) return [];
+      const { data } = await supabase
+        .from("pledges")
+        .select("id, amount, status, created_at")
+        .eq("offer_id", id)
+        .eq("user_id", authUser.id)
+        .order("created_at", { ascending: false });
+      return (data || []) as any[];
+    },
+    enabled: !!authUser?.id && !!id,
+  });
+
+  // Reset investment flow when navigating to a different offer
+  useEffect(() => {
+    setStep(1);
+    setPledgeAmount("");
+    setTermsAccepted(false);
+    setAmountTouched(false);
+    setSuccessRef("");
+  }, [id]);
+
   const [daysLeft, setDaysLeft] = useState<number | null>(null);
   useEffect(() => {
     if (!offer) return;
@@ -210,6 +235,28 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
           <h3 className="text-xs font-bold text-primary uppercase tracking-wider">Invest in This Offer</h3>
         </div>
         <div className="p-4">
+          {/* Existing investments info banner */}
+          {myPledges.length > 0 && step === 1 && (
+            <div className="border border-mackerel/30 bg-mackerel-light p-3 mb-3 space-y-1.5">
+              <div className="flex items-center gap-1.5">
+                <Info className="h-3.5 w-3.5 text-mackerel shrink-0" />
+                <span className="text-[11px] font-semibold text-mackerel">You have existing investments in this offer</span>
+              </div>
+              <div className="space-y-0.5">
+                {myPledges.map((p: any) => (
+                  <div key={p.id} className="flex justify-between text-[10px]">
+                    <span className="text-muted-foreground">
+                      {format(parseISO(p.created_at), "d MMM yyyy")} — <span className={`font-medium ${
+                        p.status === 'Active' ? 'text-mackerel' : p.status === 'Paid Out' ? 'text-primary' : 'text-amber-600'
+                      }`}>{p.status}</span>
+                    </span>
+                    <span className="font-mono font-medium text-foreground">{Number(p.amount).toLocaleString()} {cur}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground">You can invest additional amounts below.</p>
+            </div>
+          )}
           {stepIndicator}
 
           {/* ── STEP 1: Enter Amount ── */}
