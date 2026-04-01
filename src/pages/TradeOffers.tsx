@@ -515,14 +515,27 @@ export default function TradeOffers() {
                   <label className="text-[10px] text-muted-foreground">Produktbild</label>
                   <input ref={imageRef} type="file" accept="image/*" className="hidden" onChange={e => setImageFile(e.target.files?.[0] || null)} />
                   <Button type="button" variant="outline" className="w-full h-8 text-xs gap-1" onClick={() => imageRef.current?.click()}>
-                    <Upload className="h-3 w-3" /> {imageFile ? imageFile.name.slice(0, 20) : "Välj bild"}
+                    <Upload className="h-3 w-3" /> {imageFile ? imageFile.name.slice(0, 20) : existingImageUrl ? "Byt bild" : "Välj bild"}
                   </Button>
+                  {!imageFile && existingImageUrl && (
+                    <p className="text-[9px] text-green-600 flex items-center gap-1 mt-0.5">✓ Bild finns redan</p>
+                  )}
+                  {imageFile && existingImageUrl && (
+                    <p className="text-[9px] text-amber-600 mt-0.5">Ny bild ersätter befintlig</p>
+                  )}
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] text-muted-foreground">Bifoga dokument</label>
                   <input ref={docRef} type="file" accept=".pdf" className="hidden" onChange={e => setDocFile(e.target.files?.[0] || null)} />
                   <Button type="button" variant="outline" className="w-full h-8 text-xs gap-1" onClick={() => docRef.current?.click()}>
-                    <Upload className="h-3 w-3" /> {docFile ? docFile.name.slice(0, 20) : "Välj PDF"}
+                    <Upload className="h-3 w-3" /> {docFile ? docFile.name.slice(0, 20) : existingDocUrl ? "Byt PDF" : "Välj PDF"}
+                  </Button>
+                  {!docFile && existingDocUrl && (
+                    <p className="text-[9px] text-green-600 flex items-center gap-1 mt-0.5">✓ Dokument finns redan</p>
+                  )}
+                  {docFile && existingDocUrl && (
+                    <p className="text-[9px] text-amber-600 mt-0.5">Nytt dokument ersätter befintligt</p>
+                  )}
                   </Button>
                 </div>
               </div>
