@@ -91,6 +91,15 @@ export default function PortalOpportunities() {
     return <div className="text-primary text-sm animate-pulse p-8 text-center">Loading opportunities...</div>;
   }
 
+  const getRiskBadge = (offer: any) => {
+    const level = (offer as any).risk_level;
+    if (level === "Low") return { label: "Low Risk", cls: "text-emerald-700 bg-emerald-50 border-emerald-200" };
+    if (level === "High") return { label: "High Risk", cls: "text-red-600 bg-red-50 border-red-200" };
+    // Default to Medium if set or if downside/risk_note exists
+    if (level === "Medium" || offer.downside || offer.risk_note) return { label: "Medium Risk", cls: "text-amber-700 bg-amber-50 border-amber-200" };
+    return null;
+  };
+
   const renderOfferData = (offer: any) => {
     const target = Number(offer.target_amount) || 0;
     const funded = Number(offer.funded_amount) || 0;
@@ -112,7 +121,8 @@ export default function PortalOpportunities() {
     const dateRange = purchaseDate && maturity
       ? `${format(purchaseDate, "d MMM")} → ${format(maturity, "d MMM yyyy")}`
       : null;
-    return { target, funded, pending, rate, progress, confirmedPct, pendingPct, maturity, purchaseDate, daysToMaturity, tenorDays, company, isMatured, cur, batchMonth, dateRange };
+    const risk = getRiskBadge(offer);
+    return { target, funded, pending, rate, progress, confirmedPct, pendingPct, maturity, purchaseDate, daysToMaturity, tenorDays, company, isMatured, cur, batchMonth, dateRange, risk };
   };
 
 
