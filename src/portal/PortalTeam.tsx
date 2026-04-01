@@ -26,7 +26,7 @@ export default function PortalTeam() {
 
   const missionText = settings?.mission_text || DEFAULT_MISSION;
   const team = (Array.isArray(settings?.team_json) && (settings.team_json as any[]).length > 0)
-    ? (settings.team_json as unknown as { name: string; role: string; desc: string; image_url?: string; image_position?: string; bio?: string; linkedin?: string; email?: string }[])
+    ? (settings.team_json as unknown as { name: string; role: string; desc: string; image_url?: string; image_position?: string; bio?: string; linkedin?: string; email?: string; experience?: string; year?: string }[])
     : DEFAULT_TEAM;
 
   return (
