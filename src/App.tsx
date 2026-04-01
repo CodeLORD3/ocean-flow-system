@@ -39,6 +39,7 @@ const ERPContent = () => {
 const AppContent = () => {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         {/* Client Trading Portal — separate layout with internal tab system */}
         <Route path="/portal/login" element={<PortalLogin />} />
