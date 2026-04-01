@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Banknote, TrendingUp, Target, Percent, ChevronDown, ChevronUp, Clock, CreditCard, CheckCircle, AlertTriangle, Award, Briefcase, ArrowRight, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
