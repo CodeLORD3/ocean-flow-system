@@ -240,7 +240,7 @@ export default function PortalOpportunities() {
             </thead>
             <tbody>
               {filtered.map((offer) => {
-                const { target, funded, rate, progress, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity } = renderOfferData(offer);
+                const { target, funded, rate, progress, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity, cur } = renderOfferData(offer);
                 return (
                   <tr
                     key={offer.id}
