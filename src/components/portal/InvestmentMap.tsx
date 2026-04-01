@@ -262,49 +262,49 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
               </Marker>
             ))}
         </ComposableMap>
-      </div>
 
-      {/* Popup for selected company offers */}
-      {selectedMarker && (
-        <div
-          className="absolute bottom-2 left-2 right-2 sm:right-auto z-20 bg-white border border-border shadow-lg p-3 sm:max-w-[280px]"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-[11px] font-bold text-foreground">{selectedMarker.name}</h3>
-            <button
-              onClick={() => setSelectedCompanyId(null)}
-              className="text-muted-foreground hover:text-foreground text-xs leading-none"
-            >
-              ✕
-            </button>
-          </div>
-          <p className="text-[9px] text-muted-foreground mb-2">{selectedMarker.city}, {selectedMarker.country}</p>
-          <div className="space-y-1.5">
-            {selectedMarker.offers.map((o: Offer) => (
-              <div
-                key={o.id}
-                className="flex items-center justify-between gap-2 px-2 py-1.5 border border-border hover:bg-mackerel/10 cursor-pointer transition-colors"
-                onClick={() => onOfferClick?.(o.id)}
+        {/* Popup for selected company offers — inside map container */}
+        {selectedMarker && (
+          <div
+            className="absolute bottom-1 left-1 right-1 sm:right-auto z-20 bg-white border border-border shadow-lg p-2 sm:max-w-[260px] max-h-[calc(100%-8px)] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-[10px] font-bold text-foreground">{selectedMarker.name}</h3>
+              <button
+                onClick={() => setSelectedCompanyId(null)}
+                className="text-muted-foreground hover:text-foreground text-xs leading-none"
               >
-                <div className="min-w-0">
-                  <div className="text-[10px] font-semibold text-foreground truncate">{o.title}</div>
-                  <div className="text-[9px] text-muted-foreground">
-                    {Number(o.target_amount).toLocaleString()} {getCurrency(selectedMarker.country)} · {Number(o.interest_rate || 0).toFixed(1)}%
+                ✕
+              </button>
+            </div>
+            <p className="text-[8px] text-muted-foreground mb-1.5">{selectedMarker.city}, {selectedMarker.country}</p>
+            <div className="space-y-1">
+              {selectedMarker.offers.map((o: Offer) => (
+                <div
+                  key={o.id}
+                  className="flex items-center justify-between gap-2 px-1.5 py-1 border border-border hover:bg-mackerel/10 cursor-pointer transition-colors"
+                  onClick={() => onOfferClick?.(o.id)}
+                >
+                  <div className="min-w-0">
+                    <div className="text-[9px] font-semibold text-foreground truncate">{o.title}</div>
+                    <div className="text-[8px] text-muted-foreground">
+                      {Number(o.target_amount).toLocaleString()} {getCurrency(selectedMarker.country)} · {Number(o.interest_rate || 0).toFixed(1)}%
+                    </div>
                   </div>
+                  <span className={`shrink-0 px-1 py-0.5 text-[7px] font-bold border ${
+                    o.status === "Open"
+                      ? "text-mackerel bg-mackerel-light border-mackerel/30"
+                      : "text-primary bg-primary/5 border-primary/20"
+                  }`}>
+                    {o.status === "Open" ? "OPEN" : "FUNDED"}
+                  </span>
                 </div>
-                <span className={`shrink-0 px-1 py-0.5 text-[8px] font-bold border ${
-                  o.status === "Open"
-                    ? "text-mackerel bg-mackerel-light border-mackerel/30"
-                    : "text-primary bg-primary/5 border-primary/20"
-                }`}>
-                  {o.status === "Open" ? "OPEN" : "FUNDED"}
-                </span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
