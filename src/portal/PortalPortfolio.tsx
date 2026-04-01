@@ -294,6 +294,9 @@ export default function PortalPortfolio() {
                     <td className="p-2 text-right text-mackerel font-semibold">{rate.toFixed(1)}%</td>
                     <td className="p-2 text-right text-foreground font-semibold font-mono">{expectedReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })} {cur}</td>
                     <td className="p-2 text-muted-foreground">
+                      {offer?.purchase_date ? format(parseISO(offer.purchase_date), "d MMM yyyy") : "—"}
+                    </td>
+                    <td className="p-2 text-muted-foreground">
                       {offer?.maturity_date ? format(parseISO(offer.maturity_date), "d MMM yyyy") : "—"}
                     </td>
                     <td className="p-2 text-right text-muted-foreground font-mono">
