@@ -226,6 +226,7 @@ export default function TradeOffers() {
         primary_exit: form.primary_exit || null,
         secondary_exit: form.secondary_exit || null,
         downside: form.downside || null,
+        risk_level: form.risk_level || null,
         tenor_days,
         annual_return,
         company_id: form.company_id || null,
