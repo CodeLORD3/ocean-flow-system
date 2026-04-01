@@ -514,7 +514,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                   <Copy className="h-3.5 w-3.5" /> Copy Ref
                 </button>
                 <button
-                  onClick={generateConfirmationPdf}
+                  onClick={handleDownloadConfirmation}
                   className="flex-1 h-10 border border-border text-foreground text-sm font-semibold hover:bg-muted/50 transition-colors flex items-center justify-center gap-1.5"
                 >
                   <Download className="h-4 w-4" /> Download
