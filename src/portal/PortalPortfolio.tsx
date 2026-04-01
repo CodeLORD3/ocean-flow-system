@@ -249,6 +249,7 @@ export default function PortalPortfolio() {
               <th className="text-right p-2 font-medium cursor-pointer hover:text-foreground" onClick={() => toggleSort("amount")}>Amount Invested <SortIcon col="amount" /></th>
               <th className="text-right p-2 font-medium cursor-pointer hover:text-foreground" onClick={() => toggleSort("rate")}>Return Rate <SortIcon col="rate" /></th>
               <th className="text-right p-2 font-medium cursor-pointer hover:text-foreground" onClick={() => toggleSort("payout")}>{tab === "history" ? "Total Payout" : "Expected Payout"} <SortIcon col="payout" /></th>
+              <th className="text-left p-2 font-medium cursor-pointer hover:text-foreground" onClick={() => toggleSort("startDate")}>Start Date <SortIcon col="startDate" /></th>
               <th className="text-left p-2 font-medium cursor-pointer hover:text-foreground" onClick={() => toggleSort("maturity")}>Maturity Date <SortIcon col="maturity" /></th>
               <th className="text-right p-2 font-medium">Duration</th>
               {tab === "active" && <th className="text-right p-2 font-medium cursor-pointer hover:text-foreground" onClick={() => toggleSort("daysToMaturity")}>Days to Maturity <SortIcon col="daysToMaturity" /></th>}
