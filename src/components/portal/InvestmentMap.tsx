@@ -208,7 +208,7 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
               .filter((m: any) => m.dealCount === 0)
               .map((m: any) => (
                 <Marker key={m.id} coordinates={m.coordinates}>
-                  <circle r={5} fill="#c8d4e0" stroke="#fff" strokeWidth={1.5} />
+                  <circle r={8} fill="#c8d4e0" stroke="#fff" strokeWidth={2} />
                 </Marker>
               ))}
 
@@ -217,12 +217,12 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
               <Marker key={m.id} coordinates={m.coordinates}>
                 <g className="cursor-pointer" style={{ pointerEvents: "auto" }}>
                   <title>{`${m.name}\n${m.dealCount} ${m.dealCount === 1 ? "deal" : "deals"} · ${m.totalValue.toLocaleString()} ${getCurrency(m.country)}`}</title>
-                  <circle r={10} fill="hsl(172, 62%, 32%)" fillOpacity={0.15} stroke="none" />
+                  <circle r={16} fill="hsl(172, 62%, 32%)" fillOpacity={0.16} stroke="none" />
                   <circle
-                    r={6}
+                    r={10}
                     fill="hsl(172, 62%, 32%)"
                     stroke={selectedCompanyId === m.id ? "#0f2e3d" : "#fff"}
-                    strokeWidth={selectedCompanyId === m.id ? 2.5 : 2}
+                    strokeWidth={selectedCompanyId === m.id ? 3 : 2.5}
                     onClick={(e) => {
                       e.stopPropagation();
                       setSelectedCompanyId(selectedCompanyId === m.id ? null : m.id);
