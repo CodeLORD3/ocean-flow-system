@@ -176,13 +176,13 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
           </span>
         </div>
       </div>
-      <div className="h-[100px] sm:h-[146px] overflow-hidden select-none relative" onWheel={(e) => e.preventDefault()}>
+      <div className="h-[130px] sm:h-[146px] overflow-hidden select-none relative" onWheel={(e) => e.preventDefault()}>
         <ComposableMap
           projection="geoMercator"
           projectionConfig={{ center: [centerLon, centerLat], scale: mapScale }}
           width={900}
           height={520}
-          style={{ width: "100%", height: "auto", marginTop: "-40px", pointerEvents: "none" }}
+          style={{ width: "100%", height: "100%", objectFit: "cover", pointerEvents: "none" }}
         >
             <Geographies geography={GEO_URL}>
               {({ geographies }) =>
