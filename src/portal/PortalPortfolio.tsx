@@ -117,18 +117,22 @@ export default function PortalPortfolio() {
     return entries.map(([cur, val]) => `${prefix}${Math.round(val).toLocaleString()} ${cur}`).join(" + ");
   };
 
-  // Active tab stats
-  const investedByCur = sumByCurrency(activePledges, (p) => Number(p.amount));
-  const payoutByCur = sumByCurrency(activePledges, (p) => {
+  // Active tab stats — split pending vs invested
+  const pendingPledges = activePledges.filter((p: any) => p.status === "Pending Payment");
+  const confirmedPledges = activePledges.filter((p: any) => p.status !== "Pending Payment");
+
+  const pendingByCur = sumByCurrency(pendingPledges, (p) => Number(p.amount));
+  const investedByCur = sumByCurrency(confirmedPledges, (p) => Number(p.amount));
+  const payoutByCur = sumByCurrency(confirmedPledges, (p) => {
     const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
     return Number(p.amount) * (1 + rate / 100);
   });
-  const profitByCur = sumByCurrency(activePledges, (p) => {
+  const profitByCur = sumByCurrency(confirmedPledges, (p) => {
     const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
     return Number(p.amount) * (rate / 100);
   });
-  const avgRate = activePledges.length > 0
-    ? activePledges.reduce((s: number, p: any) => s + (p.trade_offers ? Number(p.trade_offers.interest_rate) : 0), 0) / activePledges.length
+  const avgRate = confirmedPledges.length > 0
+    ? confirmedPledges.reduce((s: number, p: any) => s + (p.trade_offers ? Number(p.trade_offers.interest_rate) : 0), 0) / confirmedPledges.length
     : 0;
 
   // History tab stats
@@ -140,6 +144,8 @@ export default function PortalPortfolio() {
     const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
     return Number(p.amount) * (rate / 100);
   });
+
+  const hasPending = pendingPledges.length > 0;
 
   const statusBadge = (status: string) => {
     switch (status) {
@@ -160,10 +166,11 @@ export default function PortalPortfolio() {
   const hasHistoryData = historyPledges.length > 0;
 
   const activeStats = [
-    { icon: Banknote, label: "Total Invested", value: hasActiveData ? fmtByCurrency(investedByCur) : "—", color: "text-primary" },
-    { icon: TrendingUp, label: "Expected Payout", value: hasActiveData ? fmtByCurrency(payoutByCur) : "—", color: "text-mackerel" },
-    { icon: Target, label: "Expected Profit", value: hasActiveData ? fmtByCurrency(profitByCur, "+") : "—", color: "text-mackerel" },
-    { icon: Percent, label: "Average Return", value: hasActiveData ? `${avgRate.toFixed(1)}%` : "—", color: "text-primary" },
+    ...(hasPending ? [{ icon: Clock, label: "Booked (Awaiting Payment)", value: fmtByCurrency(pendingByCur), color: "text-amber-600" }] : []),
+    { icon: Banknote, label: "Total Invested", value: hasActiveData && confirmedPledges.length > 0 ? fmtByCurrency(investedByCur) : "—", color: "text-primary" },
+    { icon: TrendingUp, label: "Expected Payout", value: confirmedPledges.length > 0 ? fmtByCurrency(payoutByCur) : "—", color: "text-mackerel" },
+    { icon: Target, label: "Expected Profit", value: confirmedPledges.length > 0 ? fmtByCurrency(profitByCur, "+") : "—", color: "text-mackerel" },
+    { icon: Percent, label: "Average Return", value: confirmedPledges.length > 0 ? `${avgRate.toFixed(1)}%` : "—", color: "text-primary" },
   ];
 
   const historyStats = [
@@ -183,7 +190,7 @@ export default function PortalPortfolio() {
       </div>
 
       {/* Summary cards — change based on tab */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className={`grid gap-3 ${currentStats.length <= 4 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2 sm:grid-cols-5"}`}>
         {currentStats.map((stat) => (
           <div key={stat.label} className="border border-border bg-white p-3">
             <div className="flex items-center justify-between mb-1.5">
