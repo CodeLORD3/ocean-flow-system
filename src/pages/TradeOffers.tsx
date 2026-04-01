@@ -313,6 +313,8 @@ export default function TradeOffers() {
       setForm({ ...EMPTY_FORM });
       setImageFile(null);
       setDocFile(null);
+      setExistingImageUrl(null);
+      setExistingDocUrl(null);
       queryClient.invalidateQueries({ queryKey: ["admin-trade-offers"] });
     },
     onError: (err: any) => toast.error(err.message),
