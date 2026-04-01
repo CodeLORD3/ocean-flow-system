@@ -217,12 +217,12 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
               <Marker key={m.id} coordinates={m.coordinates}>
                 <g className="cursor-pointer" style={{ pointerEvents: "auto" }}>
                   <title>{`${m.name}\n${m.dealCount} ${m.dealCount === 1 ? "deal" : "deals"} · ${m.totalValue.toLocaleString()} ${getCurrency(m.country)}`}</title>
-                  <circle r={6} fill="hsl(172, 62%, 32%)" fillOpacity={0.15} stroke="none" />
+                  <circle r={10} fill="hsl(172, 62%, 32%)" fillOpacity={0.15} stroke="none" />
                   <circle
-                    r={3.5}
+                    r={6}
                     fill="hsl(172, 62%, 32%)"
                     stroke={selectedCompanyId === m.id ? "#0f2e3d" : "#fff"}
-                    strokeWidth={selectedCompanyId === m.id ? 2 : 1.5}
+                    strokeWidth={selectedCompanyId === m.id ? 2.5 : 2}
                     onClick={(e) => {
                       e.stopPropagation();
                       setSelectedCompanyId(selectedCompanyId === m.id ? null : m.id);
