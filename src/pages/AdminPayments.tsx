@@ -301,7 +301,7 @@ export default function AdminPayments() {
                             Mark Received
                           </Button>
                         )}
-                        {p.status === "Matured" && (
+                        {(p.status === "Active" || p.status === "Matured") && (
                           <Button
                             size="sm"
                             variant="outline"
@@ -313,7 +313,7 @@ export default function AdminPayments() {
                             Mark Paid Out
                           </Button>
                         )}
-                        {(p.status === "Active" || p.status === "Paid Out") && (
+                        {p.status === "Paid Out" && (
                           <span className="text-[10px] text-muted-foreground">—</span>
                         )}
                       </TableCell>
