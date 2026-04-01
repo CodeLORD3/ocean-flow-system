@@ -48,6 +48,8 @@ export default {
           foreground: "hsl(var(--mackerel-foreground))",
           light: "hsl(var(--mackerel-light))",
           shimmer: "hsl(var(--mackerel-shimmer))",
+          dark: "hsl(var(--mackerel-dark))",
+          gold: "hsl(var(--mackerel-gold))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",

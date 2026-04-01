@@ -105,7 +105,7 @@ export default function PortalNotificationDropdown({ onNavigate }: Props) {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
-        className="relative p-1.5 text-muted-foreground hover:text-primary transition-colors"
+        className="relative p-1.5 text-white/60 hover:text-mackerel-gold transition-colors"
       >
         <Bell className="h-4.5 w-4.5" />
         {unreadCount > 0 && (

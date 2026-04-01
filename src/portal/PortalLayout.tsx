@@ -28,16 +28,16 @@ function PortalTabBar() {
   const { tabs, activeTab, switchTab, closeTab } = usePortalTabs();
   if (tabs.length <= 1) return null;
   return (
-    <div className="flex items-center gap-0 border-b border-border bg-muted/40 px-3 overflow-x-auto">
+    <div className="flex items-center gap-0 border-b border-white/10 bg-mackerel-dark/80 px-3 overflow-x-auto">
       {tabs.map((tab) => {
         const isActive = tab.path === activeTab;
         return (
           <div
             key={tab.path}
-            className={`group flex items-center gap-2 px-4 py-2 text-xs cursor-pointer border-r border-border transition-colors shrink-0 ${
+            className={`group flex items-center gap-2 px-4 py-2 text-xs cursor-pointer border-r border-white/10 transition-colors shrink-0 ${
               isActive
-                ? "bg-white text-mackerel font-semibold border-b-2 border-b-mackerel"
-                : "text-muted-foreground hover:bg-white/60 hover:text-foreground"
+                ? "bg-white/10 text-mackerel-gold font-semibold border-b-2 border-b-mackerel-gold"
+                : "text-white/50 hover:bg-white/5 hover:text-white/80"
             }`}
             onClick={() => switchTab(tab.path)}
           >
@@ -118,9 +118,9 @@ function UserDropdown({ user, profile, onLogout, onProfile }: {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        className="flex items-center gap-2 text-xs text-white/70 hover:text-white transition-colors"
       >
-        <div className="h-7 w-7 bg-[#0f2e3d] rounded-full flex items-center justify-center">
+        <div className="h-7 w-7 bg-mackerel rounded-full flex items-center justify-center">
           <span className="text-white font-bold text-[10px]">{initials}</span>
         </div>
         <span className="max-w-[120px] truncate">{displayName}</span>
@@ -287,13 +287,13 @@ function PortalInner() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Top bar */}
-      <header className="h-14 flex items-center justify-between border-b border-border px-3 sm:px-6 bg-white shadow-sm">
+      <header className="h-14 flex items-center justify-between border-b border-mackerel-dark px-3 sm:px-6 bg-mackerel-dark shadow-sm">
         <div className="flex items-center gap-4 sm:gap-8 overflow-hidden">
           <div className="flex items-center gap-2 shrink-0 cursor-pointer" onClick={() => switchTab("/portal")}>
-            <div className="h-7 w-7 bg-primary flex items-center justify-center">
-              <span className="text-mackerel-shimmer font-bold text-xs">MT</span>
+            <div className="h-7 w-7 bg-mackerel flex items-center justify-center">
+              <span className="text-white font-bold text-xs">MT</span>
             </div>
-            <span className="text-foreground font-bold text-sm hidden sm:inline">Makrill <span className="text-mackerel">Trade</span></span>
+            <span className="text-white font-bold text-sm hidden sm:inline">Makrill <span className="text-mackerel-gold">Trade</span></span>
           </div>
           <nav className="flex items-center gap-0.5 sm:gap-1 overflow-x-auto">
             {navItems.map((item) => {
@@ -304,8 +304,8 @@ function PortalInner() {
                   onClick={() => switchTab(item.to)}
                   className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 text-[12px] sm:text-[13px] rounded-sm transition-colors whitespace-nowrap ${
                     isActive
-                      ? "text-mackerel bg-mackerel/5 font-semibold border-b-2 border-b-mackerel"
-                      : "text-muted-foreground hover:text-mackerel hover:bg-muted/50"
+                      ? "text-mackerel-gold bg-white/10 font-semibold border-b-2 border-b-mackerel-gold"
+                      : "text-white/60 hover:text-mackerel-gold hover:bg-white/5"
                   }`}
                 >
                   <item.icon className="h-4 w-4" />
@@ -317,7 +317,7 @@ function PortalInner() {
         </div>
         <div className="flex items-center gap-4">
           <PortalNotificationDropdown onNavigate={(path) => switchTab(path)} />
-          <div className="h-6 w-px bg-border" />
+          <div className="h-6 w-px bg-white/20" />
           <UserDropdown
             user={user}
             profile={profile}
@@ -337,38 +337,38 @@ function PortalInner() {
         )}
       </main>
 
-      <footer className="border-t border-border bg-white px-3 sm:px-6 py-4">
+      <footer className="border-t border-white/10 bg-mackerel-dark px-3 sm:px-6 py-4">
         <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-start justify-between gap-4 sm:gap-8">
           <div className="flex items-center gap-2">
-            <div className="h-5 w-5 bg-primary flex items-center justify-center">
-              <span className="text-mackerel-shimmer font-bold text-[8px]">MT</span>
+            <div className="h-5 w-5 bg-mackerel flex items-center justify-center">
+              <span className="text-white font-bold text-[8px]">MT</span>
             </div>
-            <span className="text-xs font-semibold text-foreground">Makrill <span className="text-mackerel">Trade</span></span>
+            <span className="text-xs font-semibold text-white">Makrill <span className="text-mackerel-gold">Trade</span></span>
           </div>
           <div className="flex flex-wrap gap-6 sm:gap-10">
             <div className="space-y-1.5">
-              <div className="text-[10px] font-semibold text-foreground uppercase tracking-wider">Resources</div>
-              <button onClick={() => switchTab("/portal/documents")} className="block text-[11px] text-muted-foreground hover:text-mackerel transition-colors">Documents</button>
-              <button onClick={() => switchTab("/portal/how-it-works")} className="block text-[11px] text-muted-foreground hover:text-mackerel transition-colors">How It Works</button>
+              <div className="text-[10px] font-semibold text-mackerel-gold uppercase tracking-wider">Resources</div>
+              <button onClick={() => switchTab("/portal/documents")} className="block text-[11px] text-white/60 hover:text-mackerel transition-colors">Documents</button>
+              <button onClick={() => switchTab("/portal/how-it-works")} className="block text-[11px] text-white/60 hover:text-mackerel transition-colors">How It Works</button>
             </div>
             <div className="space-y-1.5">
-              <div className="text-[10px] font-semibold text-foreground uppercase tracking-wider">Company</div>
-              <button onClick={() => switchTab("/portal/about")} className="block text-[11px] text-muted-foreground hover:text-mackerel transition-colors">About Us</button>
-              <button onClick={() => switchTab("/portal/contact")} className="block text-[11px] text-muted-foreground hover:text-mackerel transition-colors">Contact & Support</button>
+              <div className="text-[10px] font-semibold text-mackerel-gold uppercase tracking-wider">Company</div>
+              <button onClick={() => switchTab("/portal/about")} className="block text-[11px] text-white/60 hover:text-mackerel transition-colors">About Us</button>
+              <button onClick={() => switchTab("/portal/contact")} className="block text-[11px] text-white/60 hover:text-mackerel transition-colors">Contact & Support</button>
             </div>
             <div className="space-y-1.5">
-              <div className="text-[10px] font-semibold text-foreground uppercase tracking-wider">Legal</div>
-              <button onClick={() => switchTab("/portal/terms")} className="block text-[11px] text-muted-foreground hover:text-mackerel transition-colors">Terms of Use</button>
-              <button onClick={() => switchTab("/portal/privacy")} className="block text-[11px] text-muted-foreground hover:text-mackerel transition-colors">Privacy Policy</button>
+              <div className="text-[10px] font-semibold text-mackerel-gold uppercase tracking-wider">Legal</div>
+              <button onClick={() => switchTab("/portal/terms")} className="block text-[11px] text-white/60 hover:text-mackerel transition-colors">Terms of Use</button>
+              <button onClick={() => switchTab("/portal/privacy")} className="block text-[11px] text-white/60 hover:text-mackerel transition-colors">Privacy Policy</button>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-            <div className="h-2 w-2 rounded-full bg-mackerel-light0" />
+          <div className="flex items-center gap-1.5 text-[10px] text-white/50">
+            <div className="h-2 w-2 rounded-full bg-mackerel" />
             <span>System Online</span>
           </div>
         </div>
-        <div className="max-w-[1400px] mx-auto mt-3 pt-2 border-t border-border">
-          <p className="text-[10px] text-muted-foreground">© {new Date().getFullYear()} Makrill Trade. All rights reserved.</p>
+        <div className="max-w-[1400px] mx-auto mt-3 pt-2 border-t border-white/10">
+          <p className="text-[10px] text-white/40">© {new Date().getFullYear()} Makrill Trade. All rights reserved.</p>
         </div>
       </footer>
     </div>
