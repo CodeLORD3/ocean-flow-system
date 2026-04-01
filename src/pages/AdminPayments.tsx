@@ -78,14 +78,20 @@ export default function AdminPayments() {
 
   const markPaidOutMutation = useMutation({
     mutationFn: async ({ pledgeId, offerId }: { pledgeId: string; offerId: string }) => {
-      // 1. Mark pledge as Paid Out
       const { error } = await supabase
         .from("pledges")
         .update({ status: "Paid Out" })
         .eq("id", pledgeId);
       if (error) throw error;
 
-      // 2. Notify investor with amount
+      // Log payment event
+      await supabase.from("payment_events").insert({
+        pledge_id: pledgeId,
+        event_type: "paid_out",
+        notes: "Payout sent to investor",
+      });
+
+      // Notify investor with amount
       const pledge = pledges.find((p: any) => p.id === pledgeId);
       if (pledge) {
         const rate = pledge.trade_offers ? Number(pledge.trade_offers.interest_rate) : 0;
@@ -101,7 +107,7 @@ export default function AdminPayments() {
         });
       }
 
-      // 3. Check if all pledges for this offer are Paid Out → close offer
+      // Check if all pledges for this offer are Paid Out → close offer
       const { data: remaining } = await supabase
         .from("pledges")
         .select("id")
@@ -117,6 +123,7 @@ export default function AdminPayments() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-payments"] });
+      queryClient.invalidateQueries({ queryKey: ["investment-log"] });
       queryClient.invalidateQueries({ queryKey: ["payout-offers"] });
       toast.success("Investment marked as Paid Out — investor notified");
     },
