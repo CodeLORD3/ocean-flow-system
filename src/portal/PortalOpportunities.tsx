@@ -54,6 +54,24 @@ export default function PortalOpportunities() {
     },
   });
 
+  // Fetch pending pledges grouped by offer
+  const { data: pendingPledges = [] } = useQuery({
+    queryKey: ["portal-pending-pledges"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pledges")
+        .select("offer_id, amount")
+        .eq("status", "Pending Payment");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const pendingByOffer: Record<string, number> = {};
+  for (const p of pendingPledges) {
+    pendingByOffer[p.offer_id] = (pendingByOffer[p.offer_id] || 0) + Number(p.amount);
+  }
+
   const companyMap: Record<string, any> = Object.fromEntries(companies.map((c: any) => [c.id, c]));
   const showIbanBanner = !ibanBannerDismissed && investorProfile && !(investorProfile as any).iban;
 
