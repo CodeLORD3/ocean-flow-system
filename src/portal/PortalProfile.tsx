@@ -19,6 +19,15 @@ export default function PortalProfile() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<{ name: string; url: string }[]>([]);
+  const [notifPrefs, setNotifPrefs] = useState({
+    new_opportunity: true,
+    investment_confirmed: true,
+    funds_received: true,
+    payout_approaching: true,
+    payout_completed: true,
+  });
+  const [notifPrefsLoaded, setNotifPrefsLoaded] = useState(false);
+  const [savingNotifPref, setSavingNotifPref] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
