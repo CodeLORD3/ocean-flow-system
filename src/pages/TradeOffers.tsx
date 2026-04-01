@@ -375,7 +375,7 @@ export default function TradeOffers() {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1" onClick={() => { setIsCreating(false); setEditingOfferId(null); setForm({ ...EMPTY_FORM }); }}>
+          <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1" onClick={() => { setIsCreating(false); setEditingOfferId(null); setForm({ ...EMPTY_FORM }); setExistingImageUrl(null); setExistingDocUrl(null); }}>
             <ArrowLeft className="h-3 w-3" /> Tillbaka
           </Button>
           <h1 className="text-lg font-bold">{editingOfferId ? "Redigera Trade Offer" : "Skapa Trade Offer"}</h1>
