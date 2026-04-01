@@ -234,7 +234,7 @@ export default function InvestmentFlowDiagram({ pledges }: { pledges: Pledge[] }
       {/* Desktop timeline */}
       <TooltipProvider>
         <div className="hidden md:block">
-          <div className="relative" style={{ height: "100px" }}>
+          <div className="relative" style={{ height: "72px" }}>
             {/* Timeline line */}
             <div className="absolute top-[46px] h-px bg-border" style={{ left: `${PAD}%`, right: `${PAD}%` }} />
             {/* Animated progress line */}
