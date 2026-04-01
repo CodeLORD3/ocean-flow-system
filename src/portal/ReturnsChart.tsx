@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { parseISO, format, addMonths, isAfter, isBefore, startOfMonth } from "date-fns";
 import {
   ResponsiveContainer,
@@ -11,23 +11,37 @@ import {
 } from "recharts";
 import { getCurrency } from "@/lib/currency";
 
+// Indicative cross rates (static, good enough for display)
+const FX_RATES: Record<string, Record<string, number>> = {
+  SEK: { SEK: 1, CHF: 0.085, EUR: 0.088, USD: 0.095 },
+  CHF: { CHF: 1, SEK: 11.8, EUR: 1.04, USD: 1.12 },
+  EUR: { EUR: 1, SEK: 11.35, CHF: 0.96, USD: 1.08 },
+  USD: { USD: 1, SEK: 10.5, CHF: 0.89, EUR: 0.93 },
+};
+
+function convert(amount: number, from: string, to: string): number {
+  if (from === to) return amount;
+  const rate = FX_RATES[from]?.[to] ?? 1;
+  return amount * rate;
+}
+
 interface Props {
   pledges: any[];
   companyMap: Record<string, any>;
+  baseCurrency?: string;
 }
 
-export default function ReturnsChart({ pledges, companyMap }: Props) {
+export default function ReturnsChart({ pledges, companyMap, baseCurrency = "SEK" }: Props) {
+  const [displayCurrency, setDisplayCurrency] = useState<string>(baseCurrency);
+
   const chartData = useMemo(() => {
     if (!pledges.length) return [];
 
     const now = new Date();
-    const events: { date: Date; realized: number; projected: number; label: string }[] = [];
 
-    // Collect all payout events (paid out = realized, active/matured = projected)
     const paidOut = pledges.filter((p: any) => ["Paid Out", "Repaid"].includes(p.status));
     const active = pledges.filter((p: any) => ["Active", "Matured"].includes(p.status));
 
-    // Build timeline from earliest pledge to latest maturity + buffer
     const allDates: Date[] = [];
     pledges.forEach((p: any) => {
       if (p.created_at) allDates.push(parseISO(p.created_at));
@@ -39,16 +53,20 @@ export default function ReturnsChart({ pledges, companyMap }: Props) {
     const earliest = startOfMonth(new Date(Math.min(...allDates.map((d) => d.getTime()))));
     const latest = addMonths(new Date(Math.max(...allDates.map((d) => d.getTime()))), 1);
 
-    // Generate monthly data points
     const months: Date[] = [];
     let cursor = earliest;
     while (isBefore(cursor, latest) || cursor.getTime() === latest.getTime()) {
       months.push(new Date(cursor));
       cursor = addMonths(cursor, 1);
-      if (months.length > 60) break; // safety
+      if (months.length > 60) break;
     }
 
-    // For each month, calculate cumulative realized profit and projected profit
+    const getPledgeCurrency = (p: any) => {
+      const offer = p.trade_offers;
+      const company = offer?.company_id ? companyMap[offer.company_id] : null;
+      return getCurrency(company?.country);
+    };
+
     return months.map((month) => {
       let realized = 0;
       let projected = 0;
@@ -57,7 +75,9 @@ export default function ReturnsChart({ pledges, companyMap }: Props) {
         const maturity = p.trade_offers?.maturity_date ? parseISO(p.trade_offers.maturity_date) : null;
         if (maturity && !isAfter(maturity, month)) {
           const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
-          realized += Number(p.amount) * (rate / 100);
+          const profit = Number(p.amount) * (rate / 100);
+          const cur = getPledgeCurrency(p);
+          realized += convert(profit, cur, displayCurrency);
         }
       });
 
@@ -65,7 +85,9 @@ export default function ReturnsChart({ pledges, companyMap }: Props) {
         const maturity = p.trade_offers?.maturity_date ? parseISO(p.trade_offers.maturity_date) : null;
         if (maturity && !isAfter(maturity, month)) {
           const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
-          projected += Number(p.amount) * (rate / 100);
+          const profit = Number(p.amount) * (rate / 100);
+          const cur = getPledgeCurrency(p);
+          projected += convert(profit, cur, displayCurrency);
         }
       });
 
@@ -78,15 +100,16 @@ export default function ReturnsChart({ pledges, companyMap }: Props) {
         total: Math.round(realized + projected),
       };
     });
-  }, [pledges, companyMap]);
+  }, [pledges, companyMap, displayCurrency]);
 
   if (!chartData.length) return null;
 
-  // Find where projected starts (first non-null projected value)
   const hasProjected = chartData.some((d) => d.projected !== null);
   const hasRealized = chartData.some((d) => d.realized > 0);
 
   if (!hasRealized && !hasProjected) return null;
+
+  const currencies = ["SEK", "CHF", "EUR", "USD"];
 
   return (
     <div className="border border-border bg-white p-4">
@@ -95,17 +118,29 @@ export default function ReturnsChart({ pledges, companyMap }: Props) {
           <h3 className="text-xs font-semibold text-foreground">Cumulative Returns</h3>
           <p className="text-[10px] text-muted-foreground">Past profit earned and expected future returns</p>
         </div>
-        <div className="flex items-center gap-3 text-[10px]">
-          <span className="flex items-center gap-1">
-            <span className="h-2 w-4 bg-primary rounded-sm inline-block" />
-            Realized
-          </span>
-          {hasProjected && (
+        <div className="flex items-center gap-3">
+          {/* Currency switcher */}
+          <select
+            value={displayCurrency}
+            onChange={(e) => setDisplayCurrency(e.target.value)}
+            className="h-6 px-1.5 text-[10px] border border-border rounded bg-white text-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
+          >
+            {currencies.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+          <div className="flex items-center gap-3 text-[10px]">
             <span className="flex items-center gap-1">
-              <span className="h-2 w-4 rounded-sm inline-block border border-dashed border-mackerel bg-mackerel/20" />
-              Expected
+              <span className="h-2 w-4 bg-primary rounded-sm inline-block" />
+              Realized
             </span>
-          )}
+            {hasProjected && (
+              <span className="flex items-center gap-1">
+                <span className="h-2 w-4 rounded-sm inline-block border border-dashed border-mackerel bg-mackerel/20" />
+                Expected
+              </span>
+            )}
+          </div>
         </div>
       </div>
       <div className="h-48">
@@ -134,7 +169,7 @@ export default function ReturnsChart({ pledges, companyMap }: Props) {
                 borderRadius: 4,
               }}
               formatter={(value: number, name: string) => [
-                `${value.toLocaleString()}`,
+                `${value.toLocaleString()} ${displayCurrency}`,
                 name === "realized" ? "Realized Profit" : "Expected Profit",
               ]}
             />

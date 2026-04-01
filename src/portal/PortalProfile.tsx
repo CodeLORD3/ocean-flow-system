@@ -202,7 +202,7 @@ export default function PortalProfile() {
               className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d]"
             />
           </div>
-          <div>
+           <div>
             <label className="text-xs text-muted-foreground mb-1 block">Address</label>
             <input
               type="text"
@@ -211,6 +211,19 @@ export default function PortalProfile() {
               placeholder="Optional"
               className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d]"
             />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Base Currency</label>
+            <select
+              value={formData.base_currency}
+              onChange={(e) => setFormData(p => ({ ...p, base_currency: e.target.value }))}
+              className="w-full h-9 px-3 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 focus:border-[#0f2e3d] bg-white"
+            >
+              <option value="SEK">SEK – Swedish Krona</option>
+              <option value="CHF">CHF – Swiss Franc</option>
+              <option value="EUR">EUR – Euro</option>
+              <option value="USD">USD – US Dollar</option>
+            </select>
           </div>
         </div>
 
