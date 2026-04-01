@@ -473,13 +473,29 @@ export default function PortalProfile() {
               value={iban}
               onChange={(e) => setIban(e.target.value.toUpperCase().replace(/[^A-Z0-9\s]/g, ""))}
               placeholder="e.g. XX00 0000 0000 0000 0000 00"
-              className={`w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 font-mono pr-9 ${
+              className={`w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2e3d]/20 font-mono pr-16 ${
                 iban && isValidIban ? "border-green-400 focus:border-green-500" : iban ? "border-destructive focus:border-destructive" : "border-gray-300 focus:border-[#0f2e3d]"
               }`}
             />
-            {iban && isValidIban && (
-              <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
-            )}
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              {iban && isValidIban && (
+                <CheckCircle className="h-4 w-4 text-green-500" />
+              )}
+              {iban && (
+                <button
+                  type="button"
+                  title={ibanCopied ? "Copied!" : "Copy IBAN"}
+                  onClick={() => {
+                    navigator.clipboard.writeText(iban.trim());
+                    setIbanCopied(true);
+                    setTimeout(() => setIbanCopied(false), 2000);
+                  }}
+                  className="p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {ibanCopied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                </button>
+              )}
+            </div>
           </div>
           <button
             onClick={handleSaveIban}
