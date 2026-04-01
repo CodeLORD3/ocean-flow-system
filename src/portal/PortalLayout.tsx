@@ -287,28 +287,28 @@ function PortalInner() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Top bar */}
-      <header className="h-14 flex items-center justify-between border-b border-mackerel-dark px-3 sm:px-6 bg-mackerel-dark shadow-sm">
-        <div className="flex items-center gap-2 sm:gap-8 min-w-0">
+      <header className="h-14 flex items-center justify-between border-b border-mackerel-dark px-2 sm:px-6 bg-mackerel-dark shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 sm:gap-8 min-w-0 overflow-hidden">
           <div className="flex items-center gap-2 shrink-0 cursor-pointer" onClick={() => switchTab("/portal")}>
             <div className="h-7 w-7 bg-mackerel flex items-center justify-center">
               <span className="text-white font-bold text-xs">MT</span>
             </div>
             <span className="text-white font-bold text-sm hidden sm:inline">Makrill <span className="text-mackerel-gold">Trade</span></span>
           </div>
-          <nav className="flex items-center gap-0.5 sm:gap-1">
+          <nav className="flex items-center gap-0.5 sm:gap-1 overflow-hidden">
             {navItems.map((item) => {
               const isActive = activeTab === item.to;
               return (
                 <button
                   key={item.to}
                   onClick={() => switchTab(item.to)}
-                  className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 text-[11px] sm:text-[13px] rounded-sm transition-colors whitespace-nowrap ${
+                  className={`flex items-center gap-1 sm:gap-2 px-1.5 sm:px-4 py-2 text-[11px] sm:text-[13px] rounded-sm transition-colors whitespace-nowrap ${
                     isActive
                       ? "text-mackerel-gold bg-white/10 font-semibold border-b-2 border-b-mackerel-gold"
                       : "text-white/60 hover:text-mackerel-gold hover:bg-white/5"
                   }`}
                 >
-                  <item.icon className="h-4 w-4 shrink-0" />
+                  <item.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                   <span className="hidden sm:inline">{item.label}</span>
                 </button>
               );
