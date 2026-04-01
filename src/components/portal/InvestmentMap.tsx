@@ -208,7 +208,7 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
               .filter((m: any) => m.dealCount === 0)
               .map((m: any) => (
                 <Marker key={m.id} coordinates={m.coordinates}>
-                  <circle r={3} fill="#c8d4e0" stroke="#fff" strokeWidth={1} />
+                  <circle r={5} fill="#c8d4e0" stroke="#fff" strokeWidth={1.5} />
                 </Marker>
               ))}
 
