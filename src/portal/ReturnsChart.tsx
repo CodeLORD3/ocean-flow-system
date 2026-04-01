@@ -40,7 +40,7 @@ export default function ReturnsChart({ pledges, companyMap, baseCurrency = "SEK"
     const now = new Date();
 
     const paidOut = pledges.filter((p: any) => ["Paid Out", "Repaid"].includes(p.status));
-    const active = pledges.filter((p: any) => ["Active", "Matured"].includes(p.status));
+    const active = pledges.filter((p: any) => ["Active", "Matured", "Pending Payment"].includes(p.status));
 
     const allDates: Date[] = [];
     pledges.forEach((p: any) => {
@@ -72,8 +72,11 @@ export default function ReturnsChart({ pledges, companyMap, baseCurrency = "SEK"
       let projected = 0;
 
       paidOut.forEach((p: any) => {
+        // For paid-out pledges, profit is realized at whichever is earlier:
+        // the maturity date or the current date (since it's already paid)
         const maturity = p.trade_offers?.maturity_date ? parseISO(p.trade_offers.maturity_date) : null;
-        if (maturity && !isAfter(maturity, month)) {
+        const realizedDate = maturity && isBefore(maturity, now) ? maturity : now;
+        if (!isAfter(realizedDate, month)) {
           const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
           const profit = Number(p.amount) * (rate / 100);
           const cur = getPledgeCurrency(p);
