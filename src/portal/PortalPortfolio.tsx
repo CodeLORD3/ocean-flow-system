@@ -203,6 +203,9 @@ export default function PortalPortfolio() {
         ))}
       </div>
 
+      {/* Returns Chart */}
+      <ReturnsChart pledges={pledges} companyMap={companyMap} />
+
       {/* Investment Flow Diagram — only on active tab */}
       {tab === "active" && <InvestmentFlowDiagram pledges={pledges as any} />}
 
