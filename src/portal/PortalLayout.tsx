@@ -337,38 +337,38 @@ function PortalInner() {
         )}
       </main>
 
-      <footer className="border-t border-border bg-white px-3 sm:px-6 py-4">
+      <footer className="border-t border-white/10 bg-mackerel-dark px-3 sm:px-6 py-4">
         <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-start justify-between gap-4 sm:gap-8">
           <div className="flex items-center gap-2">
-            <div className="h-5 w-5 bg-primary flex items-center justify-center">
-              <span className="text-mackerel-shimmer font-bold text-[8px]">MT</span>
+            <div className="h-5 w-5 bg-mackerel flex items-center justify-center">
+              <span className="text-white font-bold text-[8px]">MT</span>
             </div>
-            <span className="text-xs font-semibold text-foreground">Makrill <span className="text-mackerel">Trade</span></span>
+            <span className="text-xs font-semibold text-white">Makrill <span className="text-mackerel-gold">Trade</span></span>
           </div>
           <div className="flex flex-wrap gap-6 sm:gap-10">
             <div className="space-y-1.5">
-              <div className="text-[10px] font-semibold text-foreground uppercase tracking-wider">Resources</div>
-              <button onClick={() => switchTab("/portal/documents")} className="block text-[11px] text-muted-foreground hover:text-mackerel transition-colors">Documents</button>
-              <button onClick={() => switchTab("/portal/how-it-works")} className="block text-[11px] text-muted-foreground hover:text-mackerel transition-colors">How It Works</button>
+              <div className="text-[10px] font-semibold text-mackerel-gold uppercase tracking-wider">Resources</div>
+              <button onClick={() => switchTab("/portal/documents")} className="block text-[11px] text-white/60 hover:text-mackerel transition-colors">Documents</button>
+              <button onClick={() => switchTab("/portal/how-it-works")} className="block text-[11px] text-white/60 hover:text-mackerel transition-colors">How It Works</button>
             </div>
             <div className="space-y-1.5">
-              <div className="text-[10px] font-semibold text-foreground uppercase tracking-wider">Company</div>
-              <button onClick={() => switchTab("/portal/about")} className="block text-[11px] text-muted-foreground hover:text-mackerel transition-colors">About Us</button>
-              <button onClick={() => switchTab("/portal/contact")} className="block text-[11px] text-muted-foreground hover:text-mackerel transition-colors">Contact & Support</button>
+              <div className="text-[10px] font-semibold text-mackerel-gold uppercase tracking-wider">Company</div>
+              <button onClick={() => switchTab("/portal/about")} className="block text-[11px] text-white/60 hover:text-mackerel transition-colors">About Us</button>
+              <button onClick={() => switchTab("/portal/contact")} className="block text-[11px] text-white/60 hover:text-mackerel transition-colors">Contact & Support</button>
             </div>
             <div className="space-y-1.5">
-              <div className="text-[10px] font-semibold text-foreground uppercase tracking-wider">Legal</div>
-              <button onClick={() => switchTab("/portal/terms")} className="block text-[11px] text-muted-foreground hover:text-mackerel transition-colors">Terms of Use</button>
-              <button onClick={() => switchTab("/portal/privacy")} className="block text-[11px] text-muted-foreground hover:text-mackerel transition-colors">Privacy Policy</button>
+              <div className="text-[10px] font-semibold text-mackerel-gold uppercase tracking-wider">Legal</div>
+              <button onClick={() => switchTab("/portal/terms")} className="block text-[11px] text-white/60 hover:text-mackerel transition-colors">Terms of Use</button>
+              <button onClick={() => switchTab("/portal/privacy")} className="block text-[11px] text-white/60 hover:text-mackerel transition-colors">Privacy Policy</button>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-            <div className="h-2 w-2 rounded-full bg-mackerel-light0" />
+          <div className="flex items-center gap-1.5 text-[10px] text-white/50">
+            <div className="h-2 w-2 rounded-full bg-mackerel" />
             <span>System Online</span>
           </div>
         </div>
-        <div className="max-w-[1400px] mx-auto mt-3 pt-2 border-t border-border">
-          <p className="text-[10px] text-muted-foreground">© {new Date().getFullYear()} Makrill Trade. All rights reserved.</p>
+        <div className="max-w-[1400px] mx-auto mt-3 pt-2 border-t border-white/10">
+          <p className="text-[10px] text-white/40">© {new Date().getFullYear()} Makrill Trade. All rights reserved.</p>
         </div>
       </footer>
     </div>
