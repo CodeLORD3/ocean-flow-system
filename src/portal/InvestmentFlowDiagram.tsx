@@ -23,8 +23,8 @@ interface Pledge {
 
 interface MergedNode {
   date: Date;
-  items: { label: string; amount: number; type: "start" | "payout"; offerTitle: string }[];
-  type: "start" | "current" | "payout" | "mixed";
+  items: { label: string; amount: number; type: "committed" | "start" | "payout"; offerTitle: string }[];
+  type: "committed" | "start" | "current" | "payout" | "mixed";
   status: "completed" | "current" | "upcoming";
   totalAmount: number;
 }
