@@ -778,6 +778,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          funds_received: boolean
+          id: string
+          investment_confirmed: boolean
+          new_opportunity: boolean
+          payout_approaching: boolean
+          payout_completed: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          funds_received?: boolean
+          id?: string
+          investment_confirmed?: boolean
+          new_opportunity?: boolean
+          payout_approaching?: boolean
+          payout_completed?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          funds_received?: boolean
+          id?: string
+          investment_confirmed?: boolean
+          new_opportunity?: boolean
+          payout_approaching?: boolean
+          payout_completed?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
