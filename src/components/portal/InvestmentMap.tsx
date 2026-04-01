@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { getCurrency } from "@/lib/currency";
 import { useMapSettings } from "@/hooks/useMapSettings";
 import {
   ComposableMap,
@@ -163,7 +164,7 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
             Active Deals — Where Your Money Works
           </h2>
           <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-0.5 truncate">
-            {activeMarkers.length} {activeMarkers.length === 1 ? "location" : "locations"} · {totalDeals} active {totalDeals === 1 ? "deal" : "deals"} · {totalValue.toLocaleString()} kr total
+            {activeMarkers.length} {activeMarkers.length === 1 ? "location" : "locations"} · {totalDeals} active {totalDeals === 1 ? "deal" : "deals"}
           </p>
         </div>
         <div className="flex items-center gap-3 text-[9px] text-muted-foreground shrink-0">
@@ -256,7 +257,7 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
                     fill: "#64748b",
                   }}
                 >
-                  {m.dealCount} {m.dealCount === 1 ? "deal" : "deals"} · {m.totalValue.toLocaleString()} kr
+                  {m.dealCount} {m.dealCount === 1 ? "deal" : "deals"} · {m.totalValue.toLocaleString()} {getCurrency(m.country)}
                 </text>
               </Marker>
             ))}
@@ -289,7 +290,7 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
                 <div className="min-w-0">
                   <div className="text-[10px] font-semibold text-foreground truncate">{o.title}</div>
                   <div className="text-[9px] text-muted-foreground">
-                    {Number(o.target_amount).toLocaleString()} kr · {Number(o.interest_rate || 0).toFixed(1)}%
+                    {Number(o.target_amount).toLocaleString()} {getCurrency(selectedMarker.country)} · {Number(o.interest_rate || 0).toFixed(1)}%
                   </div>
                 </div>
                 <span className={`shrink-0 px-1 py-0.5 text-[8px] font-bold border ${
