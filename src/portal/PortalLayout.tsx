@@ -302,13 +302,13 @@ function PortalInner() {
                 <button
                   key={item.to}
                   onClick={() => switchTab(item.to)}
-                  className={`flex items-center gap-1 sm:gap-2 px-1.5 sm:px-4 py-2 text-[11px] sm:text-[13px] rounded-sm transition-colors whitespace-nowrap ${
+                  className={`flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 py-2 text-[11px] sm:text-[13px] rounded-sm transition-colors whitespace-nowrap ${
                     isActive
                       ? "text-mackerel-gold bg-white/10 font-semibold border-b-2 border-b-mackerel-gold"
                       : "text-white/60 hover:text-mackerel-gold hover:bg-white/5"
                   }`}
                 >
-                  <item.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                  <item.icon className="h-5 w-5 sm:h-4 sm:w-4 shrink-0" />
                   <span className="hidden sm:inline">{item.label}</span>
                 </button>
               );
