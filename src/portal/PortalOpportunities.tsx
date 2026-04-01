@@ -31,7 +31,7 @@ export default function PortalOpportunities() {
     },
   });
 
-  const { data: investorProfile } = useQuery({
+  const { data: investorProfile, isFetched: ibanFetched } = useQuery({
     queryKey: ["portal-investor-profile-iban-check"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -73,7 +73,7 @@ export default function PortalOpportunities() {
   }
 
   const companyMap: Record<string, any> = Object.fromEntries(companies.map((c: any) => [c.id, c]));
-  const showIbanBanner = !ibanBannerDismissed && investorProfile && !(investorProfile as any).iban;
+  const showIbanBanner = !ibanBannerDismissed && ibanFetched && (!(investorProfile as any)?.iban);
 
   const filtered = offers.filter((o) => {
     if (search && !o.title.toLowerCase().includes(search.toLowerCase())) return false;
