@@ -262,9 +262,13 @@ export default function PortalProfile() {
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
+                  captionLayout="dropdown-buttons"
+                  fromYear={1920}
+                  toYear={new Date().getFullYear()}
                   selected={formData.date_of_birth ? new Date(formData.date_of_birth) : undefined}
                   onSelect={(date) => setFormData(p => ({ ...p, date_of_birth: date ? format(date, "yyyy-MM-dd") : "" }))}
                   disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                  defaultMonth={formData.date_of_birth ? new Date(formData.date_of_birth) : new Date(1990, 0)}
                   initialFocus
                   className={cn("p-3 pointer-events-auto")}
                 />
