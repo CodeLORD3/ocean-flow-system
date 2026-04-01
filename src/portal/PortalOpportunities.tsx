@@ -212,67 +212,67 @@ export default function PortalOpportunities() {
 
       {/* Filters */}
       <div className="border border-border bg-white px-3 py-1.5">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 flex-1 min-w-[180px]">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-1.5">
             <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name..."
-              className="flex-1 h-7 bg-muted/50 border border-border px-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+              className="flex-1 h-7 bg-muted/50 border border-border px-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none min-w-0"
             />
           </div>
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground shrink-0 hidden sm:block" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:items-center gap-1.5">
+            <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground shrink-0 hidden md:block" />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none flex-1 sm:flex-none"
+              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none min-w-0"
             >
               <option value="all">All Status</option>
-              <option value="open">Open for Investment</option>
-              <option value="funded">Fully Funded</option>
+              <option value="open">Open</option>
+              <option value="funded">Funded</option>
             </select>
             <input
               type="number"
               value={minInvestment}
               onChange={(e) => setMinInvestment(e.target.value)}
               placeholder="Min. invest ≤"
-              className="h-7 w-28 sm:w-36 bg-muted/50 border border-border px-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none flex-1 sm:flex-none"
+              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none min-w-0"
             />
             <select
               value={returnRange}
               onChange={(e) => setReturnRange(e.target.value)}
-              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none flex-1 sm:flex-none"
+              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none min-w-0"
             >
-              <option value="all">Any Return</option>
-              <option value="0-5">0 – 5%</option>
-              <option value="5-10">5 – 10%</option>
+              <option value="all">Return</option>
+              <option value="0-5">0–5%</option>
+              <option value="5-10">5–10%</option>
               <option value="10+">10%+</option>
             </select>
             <select
               value={sectorFilter}
               onChange={(e) => setSectorFilter(e.target.value)}
-              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none flex-1 sm:flex-none"
+              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none min-w-0"
             >
-              <option value="all">All Sectors</option>
+              <option value="all">Sector</option>
               {sectorOptions.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
             <select
               value={countryFilter}
               onChange={(e) => setCountryFilter(e.target.value)}
-              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none flex-1 sm:flex-none"
+              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none min-w-0"
             >
-              <option value="all">All Countries</option>
+              <option value="all">Country</option>
               {countryOptions.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
             <select
               value={currencyFilter}
               onChange={(e) => setCurrencyFilter(e.target.value)}
-              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none flex-1 sm:flex-none"
+              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none min-w-0"
             >
-              <option value="all">All Currencies</option>
+              <option value="all">Currency</option>
               <option value="SEK">SEK</option>
               <option value="CHF">CHF</option>
               <option value="EUR">EUR</option>
@@ -305,7 +305,7 @@ export default function PortalOpportunities() {
 
       {/* ROW VIEW */}
       {viewMode === "rows" && (
-        <div className="border border-border bg-white overflow-x-auto -mx-3 sm:mx-0">
+        <div className="border border-border bg-white overflow-x-auto">
           <table className="w-full text-[10px] min-w-[900px]">
             <thead>
               <tr className="border-b border-border bg-muted/50">

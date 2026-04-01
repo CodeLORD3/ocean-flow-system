@@ -267,7 +267,7 @@ export default function PortalPortfolio() {
           ))}
         </div>
 
-        <div className="overflow-x-auto -mx-3 sm:mx-0">
+        <div className="overflow-x-auto">
         <table className="w-full text-[10px] min-w-[800px]">
           <thead>
             <tr className="border-b border-border text-[10px] text-muted-foreground select-none">
