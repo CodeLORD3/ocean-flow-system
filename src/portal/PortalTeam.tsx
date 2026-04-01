@@ -3,9 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Users, Award, Linkedin, Mail } from "lucide-react";
 
 const DEFAULT_TEAM = [
-  { name: "Erik Lindgren", role: "Founder & CEO", desc: "15+ years in commodity trading and structured finance across Nordic and European markets." },
-  { name: "Sofia Andersson", role: "Head of Operations", desc: "Former supply-chain director with deep expertise in seafood logistics and quality assurance." },
-  { name: "Marcus Johansson", role: "Chief Risk Officer", desc: "Background in institutional risk management and credit analysis for trade finance portfolios." },
+  { name: "Erik Lindgren", role: "Founder & CEO", desc: "15+ years in commodity trading and structured finance across Nordic and European markets.", bio: "Erik founded Makrill Trade to bridge the gap between institutional trade finance and everyday investors. He previously led commodity desks at two major Nordic banks.", experience: "15 years in commodity trading", linkedin: "#" },
+  { name: "Sofia Andersson", role: "Head of Operations", desc: "Former supply-chain director with deep expertise in seafood logistics and quality assurance.", bio: "Sofia oversees all deal operations from sourcing to settlement. Before joining, she managed logistics for one of Scandinavia's largest seafood exporters.", experience: "12 years in seafood logistics", linkedin: "#" },
+  { name: "Marcus Johansson", role: "Chief Risk Officer", desc: "Background in institutional risk management and credit analysis for trade finance portfolios.", bio: "Marcus leads credit assessment and portfolio risk monitoring. He brings experience from structured finance teams at SEB and Handelsbanken.", experience: "10 years in risk & credit analysis", linkedin: "#" },
 ];
 
 const DEFAULT_MISSION = "To democratise access to trade-finance investments that were traditionally reserved for institutions. We make it simple for individual investors to participate in real, tangible trades — from fresh Atlantic salmon to premium shellfish — while providing the supply chain with much-needed working capital.";
@@ -26,7 +26,7 @@ export default function PortalTeam() {
 
   const missionText = settings?.mission_text || DEFAULT_MISSION;
   const team = (Array.isArray(settings?.team_json) && (settings.team_json as any[]).length > 0)
-    ? (settings.team_json as unknown as { name: string; role: string; desc: string; image_url?: string; image_position?: string; bio?: string; linkedin?: string; email?: string }[])
+    ? (settings.team_json as unknown as { name: string; role: string; desc: string; image_url?: string; image_position?: string; bio?: string; linkedin?: string; email?: string; experience?: string; year?: string }[])
     : DEFAULT_TEAM;
 
   return (
@@ -55,9 +55,11 @@ export default function PortalTeam() {
               )}
               <h3 className="text-sm font-semibold text-foreground">{person.name}</h3>
               <p className="text-[11px] text-primary font-medium">{person.role}</p>
-              {person.year && (
+              {person.experience ? (
+                <p className="text-[10px] text-muted-foreground">{person.experience}</p>
+              ) : person.year ? (
                 <p className="text-[10px] text-muted-foreground">Industry since {person.year}</p>
-              )}
+              ) : null}
               <p className="text-xs text-muted-foreground leading-relaxed">{person.desc}</p>
               <div className="flex-1" />
               {person.bio && (
@@ -65,11 +67,9 @@ export default function PortalTeam() {
               )}
               <div className="flex-1" />
               <div className="flex items-center justify-center gap-2 pt-1">
-                {person.linkedin && (
-                  <a href={person.linkedin} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-                    <Linkedin className="h-3.5 w-3.5" />
-                  </a>
-                )}
+                <a href={person.linkedin || "#"} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                  <Linkedin className="h-3.5 w-3.5" />
+                </a>
                 {person.email && (
                   <a href={`mailto:${person.email}`} className="text-muted-foreground hover:text-primary transition-colors">
                     <Mail className="h-3.5 w-3.5" />
