@@ -160,6 +160,9 @@ export default function PortalPortfolio() {
               const duration = offer?.tenor_days ? Number(offer.tenor_days) : (offer?.purchase_date && offer?.maturity_date ? differenceInDays(parseISO(offer.maturity_date), parseISO(offer.purchase_date)) : null);
               const isExpanded = expandedRow === p.id;
               const colCount = tab === "active" ? 9 : 8;
+              const rowCompany = offer?.company_id ? companyMap[offer.company_id] : null;
+              const cur = getCurrency(rowCompany?.country);
+              const colCount = tab === "active" ? 9 : 8;
 
               return (
                 <>
