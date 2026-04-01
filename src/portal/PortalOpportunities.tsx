@@ -397,7 +397,7 @@ export default function PortalOpportunities() {
                           {risk.label}
                         </span>
                       ) : (
-                        <span className="text-muted-foreground">—</span>
+                        <span className="px-1.5 py-0.5 text-[9px] font-medium border border-border text-muted-foreground bg-muted/30 cursor-help" title="This offer has not yet been assigned a risk rating. Please review the Risk &amp; Security section on the offer detail page.">Not rated</span>
                       )}
                     </td>
                     <td className="px-2 py-1.5 text-center whitespace-nowrap">
