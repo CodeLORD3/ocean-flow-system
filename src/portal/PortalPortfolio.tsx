@@ -581,6 +581,50 @@ function ExpandedInvestmentDetail({ pledge, offer, companyMap, expectedReturn, d
           </div>
         )}
       </div>
+
+      {/* Cancel confirmation dialog */}
+      {showCancelDialog && (
+        <div className="mt-3 border border-destructive/30 bg-destructive/5 p-4 rounded">
+          <div className="flex items-start gap-2.5 mb-3">
+            <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+            <div>
+              <div className="text-sm font-semibold text-destructive">Withdraw this investment commitment?</div>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                This will cancel your commitment of <strong className="text-foreground">{Number(pledge.amount).toLocaleString()} {cur}</strong> in <strong className="text-foreground">{offer?.title}</strong>.
+                If you have already sent a bank transfer, please contact support to arrange a refund. This action cannot be undone.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <button
+              onClick={() => setShowCancelDialog(false)}
+              className="h-8 px-4 border border-border text-xs font-medium text-foreground hover:bg-muted/50 transition-colors rounded"
+            >
+              Keep Investment
+            </button>
+            <button
+              disabled={cancelling}
+              onClick={async () => {
+                setCancelling(true);
+                const { error } = await supabase
+                  .from("pledges")
+                  .update({ status: "Cancelled" } as any)
+                  .eq("id", pledge.id);
+                if (error) {
+                  setCancelling(false);
+                  return;
+                }
+                onCancelled?.();
+                setShowCancelDialog(false);
+                setCancelling(false);
+              }}
+              className="h-8 px-4 bg-destructive text-destructive-foreground text-xs font-semibold hover:bg-destructive/90 transition-colors rounded flex items-center gap-1.5"
+            >
+              {cancelling ? "Cancelling…" : "Yes, Withdraw"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
