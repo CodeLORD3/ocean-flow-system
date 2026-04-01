@@ -94,8 +94,11 @@ export default function PortalOpportunities() {
   const renderOfferData = (offer: any) => {
     const target = Number(offer.target_amount) || 0;
     const funded = Number(offer.funded_amount) || 0;
+    const pending = pendingByOffer[offer.id] || 0;
     const rate = Number(offer.interest_rate) || 0;
-    const progress = target > 0 ? Math.min(100, (funded / target) * 100) : 0;
+    const confirmedPct = target > 0 ? Math.min(100, (funded / target) * 100) : 0;
+    const pendingPct = target > 0 ? Math.min(100 - confirmedPct, (pending / target) * 100) : 0;
+    const progress = confirmedPct; // keep for backward compat
     const maturity = offer.maturity_date ? parseISO(offer.maturity_date) : null;
     const purchaseDate = offer.purchase_date ? parseISO(offer.purchase_date) : null;
     const now = new Date();
@@ -104,7 +107,7 @@ export default function PortalOpportunities() {
     const company = (offer as any).company_id ? companyMap[(offer as any).company_id] : null;
     const isMatured = daysToMaturity !== null && daysToMaturity <= 0;
     const cur = getCurrency(company?.country);
-    return { target, funded, rate, progress, maturity, purchaseDate, daysToMaturity, tenorDays, company, isMatured, cur };
+    return { target, funded, pending, rate, progress, confirmedPct, pendingPct, maturity, purchaseDate, daysToMaturity, tenorDays, company, isMatured, cur };
   };
 
 
