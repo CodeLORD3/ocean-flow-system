@@ -121,6 +121,31 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
     enabled: !!id,
   });
 
+  // Fetch user's existing pledges for this offer
+  const { data: myPledges = [] } = useQuery({
+    queryKey: ["my-pledges-for-offer", id, authUser?.id],
+    queryFn: async () => {
+      if (!authUser?.id || !id) return [];
+      const { data } = await supabase
+        .from("pledges")
+        .select("id, amount, status, created_at")
+        .eq("offer_id", id)
+        .eq("user_id", authUser.id)
+        .order("created_at", { ascending: false });
+      return (data || []) as any[];
+    },
+    enabled: !!authUser?.id && !!id,
+  });
+
+  // Reset investment flow when navigating to a different offer
+  useEffect(() => {
+    setStep(1);
+    setPledgeAmount("");
+    setTermsAccepted(false);
+    setAmountTouched(false);
+    setSuccessRef("");
+  }, [id]);
+
   const [daysLeft, setDaysLeft] = useState<number | null>(null);
   useEffect(() => {
     if (!offer) return;
