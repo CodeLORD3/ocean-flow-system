@@ -466,7 +466,7 @@ export default function PortalOpportunities() {
                     {tenorDays !== null && <span className="text-foreground font-medium">({tenorDays}d)</span>}
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border mt-auto">
+                  <div className="grid grid-cols-4 gap-2 pt-2 border-t border-border mt-auto">
                     <div>
                       <div className="text-[10px] text-muted-foreground">Return</div>
                       <div className="text-xs font-bold text-mackerel flex items-center gap-0.5">
@@ -475,7 +475,17 @@ export default function PortalOpportunities() {
                       </div>
                     </div>
                     <div>
-                      <div className="text-[10px] text-muted-foreground">Days to Maturity</div>
+                      <div className="text-[10px] text-muted-foreground">Risk</div>
+                      {risk ? (
+                        <span className={`inline-block px-1.5 py-0.5 text-[9px] font-semibold border mt-0.5 ${risk.cls}`}>
+                          {risk.label}
+                        </span>
+                      ) : (
+                        <div className="text-xs text-muted-foreground">—</div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-muted-foreground">Maturity</div>
                       <div className={`text-xs font-bold flex items-center gap-0.5 ${isMatured ? "text-destructive" : daysToMaturity !== null && daysToMaturity <= 7 ? "text-destructive" : daysToMaturity !== null && daysToMaturity <= 30 ? "text-warning" : "text-foreground"}`}>
                         <Clock className="h-3 w-3" />
                         {isMatured ? "MATURED" : daysToMaturity !== null ? `${daysToMaturity}d` : "—"}
