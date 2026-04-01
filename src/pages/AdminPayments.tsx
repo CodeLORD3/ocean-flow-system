@@ -35,10 +35,30 @@ export default function AdminPayments() {
         .eq("id", pledgeId);
       if (error) throw error;
 
-      // Notify investor
       const pledge = pledges.find((p: any) => p.id === pledgeId);
       if (pledge) {
-        const offerTitle = pledge.trade_offers?.title || "an offer";
+        // Update funded_amount on the offer
+        const offer = pledge.trade_offers;
+        if (offer) {
+          const newFunded = Number(offer.funded_amount || 0) + Number(pledge.amount);
+          await supabase
+            .from("trade_offers")
+            .update({
+              funded_amount: newFunded,
+              status: newFunded >= Number(offer.target_amount) ? "Funded" : offer.status,
+            })
+            .eq("id", pledge.offer_id);
+        }
+
+        // Log payment event
+        await supabase.from("payment_events").insert({
+          pledge_id: pledgeId,
+          event_type: "funds_received",
+          notes: "Marked as received by admin",
+        });
+
+        // Notify investor
+        const offerTitle = offer?.title || "an offer";
         await supabase.from("notifications").insert({
           portal: "investor",
           target_page: "/portal/portfolio",
@@ -51,6 +71,7 @@ export default function AdminPayments() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-payments"] });
+      queryClient.invalidateQueries({ queryKey: ["investment-log"] });
       toast.success("Funds marked as received — investment is now Active");
     },
   });
