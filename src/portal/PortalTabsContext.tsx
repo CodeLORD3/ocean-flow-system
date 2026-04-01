@@ -82,6 +82,18 @@ export function PortalTabsProvider({ children }: { children: React.ReactNode }) 
 
   const switchTab = useCallback(
     (path: string) => {
+      // Ensure tab exists before navigating
+      setTabs((prev) => {
+        if (prev.some((t) => t.path === path)) return prev;
+        const next = [...prev, { path, title: getPortalTitle(path) }];
+        if (next.length > 4) {
+          const removeIdx = next.findIndex((t, i) => i > 0 && t.path !== path);
+          if (removeIdx > 0) next.splice(removeIdx, 1);
+          else next.splice(1, 1);
+        }
+        return next;
+      });
+      setActiveTab(path);
       navigate(path);
     },
     [navigate]
