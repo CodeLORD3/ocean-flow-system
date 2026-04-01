@@ -316,14 +316,14 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                     <AlertTriangle className="h-3 w-3" /> Minimum investment is {effectiveMin.toLocaleString()} {cur}
                   </p>
                 )}
-                {amountTouched && pledgeAmt > remaining && remaining > 0 && (
+                {amountTouched && pledgeAmt > Math.max(0, remainingAfterPending) && remainingAfterPending > 0 && (
                   <p className="text-[11px] text-destructive font-medium flex items-center gap-1">
-                    <AlertTriangle className="h-3 w-3" /> Only {remaining.toLocaleString()} {cur} remaining
+                    <AlertTriangle className="h-3 w-3" /> Only {Math.max(0, remainingAfterPending).toLocaleString()} {cur} remaining
                   </p>
                 )}
-                {remaining < minPledge && remaining > 0 && minPledge > 0 && (
+                {remainingAfterPending < minPledge && remainingAfterPending > 0 && minPledge > 0 && (
                   <p className="text-[11px] text-amber-600 font-medium">
-                    Only {remaining.toLocaleString()} {cur} left — minimum rule waived
+                    Only {Math.max(0, remainingAfterPending).toLocaleString()} {cur} left — minimum rule waived
                   </p>
                 )}
               </div>
