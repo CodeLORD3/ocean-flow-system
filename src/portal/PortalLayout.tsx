@@ -287,7 +287,7 @@ function PortalInner() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Top bar */}
-      <header className="h-14 flex items-center justify-between border-b border-mackerel-dark px-2 sm:px-6 bg-mackerel-dark shadow-sm overflow-hidden">
+      <header className="h-14 flex items-center justify-between border-b border-mackerel-dark px-2 sm:px-6 bg-mackerel-dark shadow-sm">
         <div className="flex items-center gap-2 sm:gap-8 min-w-0 overflow-hidden">
           <div className="flex items-center gap-2 shrink-0 cursor-pointer" onClick={() => switchTab("/portal")}>
             <div className="h-7 w-7 bg-mackerel flex items-center justify-center">
