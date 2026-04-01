@@ -492,6 +492,17 @@ export default function TradeOffers() {
                   <label className="text-[10px] text-muted-foreground">Downside / Risknotering</label>
                   <Input value={form.downside} onChange={e => setForm({...form, downside: e.target.value, risk_note: e.target.value})} className="h-8 text-xs" placeholder="t.ex. Discount liquidation at 80% of cost" />
                 </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] text-muted-foreground">Risk Level</label>
+                  <Select value={form.risk_level} onValueChange={v => setForm({...form, risk_level: v})}>
+                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select risk level" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Low">Low Risk</SelectItem>
+                      <SelectItem value="Medium">Medium Risk</SelectItem>
+                      <SelectItem value="High">High Risk</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
