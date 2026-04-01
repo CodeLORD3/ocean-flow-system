@@ -170,34 +170,34 @@ export default function PortalOpportunities() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-base font-bold text-foreground">Investment Opportunities</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">Browse available trade finance deals and invest directly.</p>
+          <h1 className="text-sm font-bold text-foreground">Investment Opportunities</h1>
+          <p className="text-[10px] text-muted-foreground">Browse available trade finance deals and invest directly.</p>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground border border-border bg-white px-3 py-1.5">
-          <Calendar className="h-3.5 w-3.5" />
+        <div className="flex items-center gap-1 text-[10px] text-muted-foreground border border-border bg-white px-2 py-1">
+          <Calendar className="h-3 w-3" />
           <span className="font-medium text-foreground">{format(new Date(), "d MMM yyyy")}</span>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="border border-border bg-white p-3">
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-2 flex-1 min-w-[220px]">
-            <Search className="h-4 w-4 text-muted-foreground" />
+      <div className="border border-border bg-white px-3 py-1.5">
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-1 min-w-[180px]">
+            <Search className="h-3.5 w-3.5 text-muted-foreground" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name..."
-              className="flex-1 h-9 bg-muted/50 border border-border px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+              className="flex-1 h-7 bg-muted/50 border border-border px-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
+          <div className="flex items-center gap-1.5">
+            <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-9 bg-muted/50 border border-border px-3 text-sm text-foreground focus:border-primary focus:outline-none"
+              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none"
             >
               <option value="all">All Status</option>
               <option value="open">Open for Investment</option>
@@ -209,14 +209,14 @@ export default function PortalOpportunities() {
                 value={minInvestment}
                 onChange={(e) => setMinInvestment(e.target.value)}
                 placeholder="Min. invest ≤"
-                className="h-9 w-44 bg-muted/50 border border-border px-3 pr-7 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                className="h-7 w-36 bg-muted/50 border border-border px-2 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
               />
-              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground cursor-help text-xs" title="Filter offers by their minimum investment requirement.">ℹ</span>
+              <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground cursor-help text-[10px]" title="Filter offers by their minimum investment requirement.">ℹ</span>
             </div>
             <select
               value={returnRange}
               onChange={(e) => setReturnRange(e.target.value)}
-              className="h-9 bg-muted/50 border border-border px-3 text-sm text-foreground focus:border-primary focus:outline-none"
+              className="h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none"
             >
               <option value="all">Any Return</option>
               <option value="0-5">0 – 5%</option>
@@ -229,21 +229,21 @@ export default function PortalOpportunities() {
 
       {/* Count + view toggle */}
       <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">{filtered.length} {filtered.length === 1 ? "opportunity" : "opportunities"} found</p>
+        <p className="text-[10px] text-muted-foreground">{filtered.length} {filtered.length === 1 ? "opportunity" : "opportunities"} found</p>
         <div className="flex items-center border border-border bg-white">
           <button
             onClick={() => setViewMode("rows")}
-            className={`h-8 w-8 flex items-center justify-center transition-colors ${viewMode === "rows" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            className={`h-7 w-7 flex items-center justify-center transition-colors ${viewMode === "rows" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
             title="List view"
           >
-            <List className="h-4 w-4" />
+            <List className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={() => setViewMode("cards")}
-            className={`h-8 w-8 flex items-center justify-center transition-colors ${viewMode === "cards" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+            className={`h-7 w-7 flex items-center justify-center transition-colors ${viewMode === "cards" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
             title="Card view"
           >
-            <LayoutGrid className="h-4 w-4" />
+            <LayoutGrid className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
