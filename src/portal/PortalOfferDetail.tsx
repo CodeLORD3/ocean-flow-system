@@ -197,7 +197,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   }
   const repaymentLabel = o.repayment_type === "rolling" ? "Rolling" : "Bullet";
 
-  const isValidAmount = pledgeAmt > 0 && pledgeAmt >= effectiveMin && pledgeAmt <= remaining;
+  const isValidAmount = pledgeAmt > 0 && pledgeAmt >= effectiveMin && pledgeAmt <= Math.max(0, remainingAfterPending);
   const investorName = investorProfile
     ? `${investorProfile.first_name} ${investorProfile.last_name}`.trim()
     : authUser?.email || "Investor";
