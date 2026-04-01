@@ -57,6 +57,7 @@ export default function PortalProfile() {
           telephone: "",
           address: "",
           base_currency: "SEK",
+          investor_classification: "",
         });
       }
       // Load uploaded KYC documents
