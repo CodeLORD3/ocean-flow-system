@@ -105,7 +105,7 @@ export default function PortalDocuments() {
                         `Reference: ${refCode}`,
                         "",
                         `Offer: ${p.trade_offers?.title || "—"}`,
-                        `Amount: ${Number(p.amount).toLocaleString()} kr`,
+                        `Amount: ${Number(p.amount).toLocaleString()} ${getCurrency((p.trade_offers as any)?.companies?.country)}`,
                         `Status: ${p.status}`,
                         "",
                         `© ${new Date().getFullYear()} Makrill Trade.`,
