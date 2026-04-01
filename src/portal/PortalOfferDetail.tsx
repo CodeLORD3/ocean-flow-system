@@ -621,7 +621,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={copyReference}
               className="h-11 px-4 border border-border text-foreground text-sm font-semibold hover:bg-muted/50 transition-colors flex items-center justify-center gap-1.5"
