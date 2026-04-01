@@ -55,11 +55,9 @@ export default function PortalTeam() {
               )}
               <h3 className="text-sm font-semibold text-foreground">{person.name}</h3>
               <p className="text-[11px] text-primary font-medium">{person.role}</p>
-              {person.experience ? (
+              {person.experience && (
                 <p className="text-[10px] text-muted-foreground">{person.experience}</p>
-              ) : person.year ? (
-                <p className="text-[10px] text-muted-foreground">Industry since {person.year}</p>
-              ) : null}
+              )}
               <p className="text-xs text-muted-foreground leading-relaxed">{person.desc}</p>
               <div className="flex-1" />
               {person.bio && (
