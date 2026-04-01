@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Shield, User, CheckCircle, Trash2, Mail } from "lucide-react";
+import { Save, Shield, User, CheckCircle, Trash2, Mail, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 
 export default function PortalProfile() {
