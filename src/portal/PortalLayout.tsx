@@ -293,7 +293,7 @@ function PortalInner() {
             <div className="h-7 w-7 bg-mackerel flex items-center justify-center">
               <span className="text-white font-bold text-xs">MT</span>
             </div>
-            <span className="text-white font-bold text-sm hidden sm:inline">Makrill <span className="text-mackerel-gold">Trade</span></span>
+            <span className="text-white font-bold text-sm">Makrill <span className="text-mackerel-gold">Trade</span></span>
           </div>
           <nav className="flex items-center gap-0.5 sm:gap-1 overflow-hidden">
             {navItems.map((item) => {
