@@ -208,7 +208,7 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
               .filter((m: any) => m.dealCount === 0)
               .map((m: any) => (
                 <Marker key={m.id} coordinates={m.coordinates}>
-                  <circle r={8} fill="#c8d4e0" stroke="#fff" strokeWidth={2} />
+                  <circle r={24} fill="#c8d4e0" stroke="#fff" strokeWidth={3} />
                 </Marker>
               ))}
 
@@ -217,12 +217,12 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
               <Marker key={m.id} coordinates={m.coordinates}>
                 <g className="cursor-pointer" style={{ pointerEvents: "auto" }}>
                   <title>{`${m.name}\n${m.dealCount} ${m.dealCount === 1 ? "deal" : "deals"} · ${m.totalValue.toLocaleString()} ${getCurrency(m.country)}`}</title>
-                  <circle r={16} fill="hsl(172, 62%, 32%)" fillOpacity={0.16} stroke="none" />
+                  <circle r={48} fill="hsl(172, 62%, 32%)" fillOpacity={0.16} stroke="none" />
                   <circle
-                    r={10}
+                    r={30}
                     fill="hsl(172, 62%, 32%)"
                     stroke={selectedCompanyId === m.id ? "#0f2e3d" : "#fff"}
-                    strokeWidth={selectedCompanyId === m.id ? 3 : 2.5}
+                    strokeWidth={selectedCompanyId === m.id ? 4 : 3}
                     onClick={(e) => {
                       e.stopPropagation();
                       setSelectedCompanyId(selectedCompanyId === m.id ? null : m.id);
@@ -230,11 +230,11 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
                   />
                   <text
                     textAnchor="start"
-                    x={10}
-                    y={2}
+                    x={36}
+                    y={6}
                     style={{
                       fontFamily: "system-ui, sans-serif",
-                      fontSize: "10px",
+                      fontSize: "40px",
                       fontWeight: 600,
                       fill: "#0f2e3d",
                     }}
@@ -247,11 +247,11 @@ export default function InvestmentMap({ companies, offers, onOfferClick }: Props
                   </text>
                   <text
                     textAnchor="start"
-                    x={10}
-                    y={13}
+                    x={36}
+                    y={48}
                     style={{
                       fontFamily: "system-ui, sans-serif",
-                      fontSize: "8px",
+                      fontSize: "32px",
                       fill: "#64748b",
                     }}
                   >
