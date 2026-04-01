@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, SlidersHorizontal, TrendingUp, Clock, ArrowRight, LayoutGrid, List, Calendar, CalendarClock, AlertTriangle, X, Landmark } from "lucide-react";
+import { Search, SlidersHorizontal, TrendingUp, Clock, ArrowRight, LayoutGrid, List, Calendar, CalendarClock, AlertTriangle, X, Landmark, ShieldAlert } from "lucide-react";
 import { differenceInDays, parseISO, format } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
@@ -91,6 +91,15 @@ export default function PortalOpportunities() {
     return <div className="text-primary text-sm animate-pulse p-8 text-center">Loading opportunities...</div>;
   }
 
+  const getRiskBadge = (offer: any) => {
+    const level = (offer as any).risk_level;
+    if (level === "Low") return { label: "Low Risk", cls: "text-emerald-700 bg-emerald-50 border-emerald-200" };
+    if (level === "High") return { label: "High Risk", cls: "text-red-600 bg-red-50 border-red-200" };
+    // Default to Medium if set or if downside/risk_note exists
+    if (level === "Medium" || offer.downside || offer.risk_note) return { label: "Medium Risk", cls: "text-amber-700 bg-amber-50 border-amber-200" };
+    return null;
+  };
+
   const renderOfferData = (offer: any) => {
     const target = Number(offer.target_amount) || 0;
     const funded = Number(offer.funded_amount) || 0;
@@ -112,7 +121,8 @@ export default function PortalOpportunities() {
     const dateRange = purchaseDate && maturity
       ? `${format(purchaseDate, "d MMM")} → ${format(maturity, "d MMM yyyy")}`
       : null;
-    return { target, funded, pending, rate, progress, confirmedPct, pendingPct, maturity, purchaseDate, daysToMaturity, tenorDays, company, isMatured, cur, batchMonth, dateRange };
+    const risk = getRiskBadge(offer);
+    return { target, funded, pending, rate, progress, confirmedPct, pendingPct, maturity, purchaseDate, daysToMaturity, tenorDays, company, isMatured, cur, batchMonth, dateRange, risk };
   };
 
 
@@ -260,6 +270,7 @@ export default function PortalOpportunities() {
                 <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Funding</th>
                 <th className="text-center px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Progress</th>
                 <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Return</th>
+                <th className="text-center px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Risk</th>
                 <th className="text-center px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Start → Maturity</th>
                 <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Duration</th>
                 <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Days to Maturity</th>
@@ -269,7 +280,7 @@ export default function PortalOpportunities() {
             </thead>
             <tbody>
               {filtered.map((offer) => {
-                const { target, funded, pending, rate, progress, confirmedPct, pendingPct, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity, cur, batchMonth } = renderOfferData(offer);
+                const { target, funded, pending, rate, progress, confirmedPct, pendingPct, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity, cur, batchMonth, risk } = renderOfferData(offer);
                 return (
                   <tr
                     key={offer.id}
@@ -332,6 +343,15 @@ export default function PortalOpportunities() {
                         {rate.toFixed(1)}%
                       </span>
                     </td>
+                    <td className="px-2 py-1.5 text-center">
+                      {risk ? (
+                        <span className={`px-1.5 py-0.5 text-[9px] font-semibold border ${risk.cls}`}>
+                          {risk.label}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
                     <td className="px-2 py-1.5 text-center whitespace-nowrap">
                       <div className="text-[10px] text-muted-foreground">
                         {purchaseDate ? format(purchaseDate, "d MMM") : "—"} → {maturity ? format(maturity, "d MMM yyyy") : "—"}
@@ -369,7 +389,7 @@ export default function PortalOpportunities() {
       {viewMode === "cards" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {filtered.map((offer) => {
-            const { target, funded, pending, rate, progress, confirmedPct, pendingPct, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity, cur, batchMonth, dateRange } = renderOfferData(offer);
+            const { target, funded, pending, rate, progress, confirmedPct, pendingPct, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity, cur, batchMonth, dateRange, risk } = renderOfferData(offer);
             return (
               <div
                 key={offer.id}
@@ -446,7 +466,7 @@ export default function PortalOpportunities() {
                     {tenorDays !== null && <span className="text-foreground font-medium">({tenorDays}d)</span>}
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border mt-auto">
+                  <div className="grid grid-cols-4 gap-2 pt-2 border-t border-border mt-auto">
                     <div>
                       <div className="text-[10px] text-muted-foreground">Return</div>
                       <div className="text-xs font-bold text-mackerel flex items-center gap-0.5">
@@ -455,7 +475,17 @@ export default function PortalOpportunities() {
                       </div>
                     </div>
                     <div>
-                      <div className="text-[10px] text-muted-foreground">Days to Maturity</div>
+                      <div className="text-[10px] text-muted-foreground">Risk</div>
+                      {risk ? (
+                        <span className={`inline-block px-1.5 py-0.5 text-[9px] font-semibold border mt-0.5 ${risk.cls}`}>
+                          {risk.label}
+                        </span>
+                      ) : (
+                        <div className="text-xs text-muted-foreground">—</div>
+                      )}
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-muted-foreground">Maturity</div>
                       <div className={`text-xs font-bold flex items-center gap-0.5 ${isMatured ? "text-destructive" : daysToMaturity !== null && daysToMaturity <= 7 ? "text-destructive" : daysToMaturity !== null && daysToMaturity <= 30 ? "text-warning" : "text-foreground"}`}>
                         <Clock className="h-3 w-3" />
                         {isMatured ? "MATURED" : daysToMaturity !== null ? `${daysToMaturity}d` : "—"}

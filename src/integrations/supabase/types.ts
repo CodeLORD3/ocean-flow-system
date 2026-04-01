@@ -1938,6 +1938,7 @@ export type Database = {
           purchase_price: number | null
           quantity: number
           repayment_type: string | null
+          risk_level: string | null
           risk_note: string | null
           sales_value: number | null
           secondary_exit: string | null
@@ -1981,6 +1982,7 @@ export type Database = {
           purchase_price?: number | null
           quantity?: number
           repayment_type?: string | null
+          risk_level?: string | null
           risk_note?: string | null
           sales_value?: number | null
           secondary_exit?: string | null
@@ -2024,6 +2026,7 @@ export type Database = {
           purchase_price?: number | null
           quantity?: number
           repayment_type?: string | null
+          risk_level?: string | null
           risk_note?: string | null
           sales_value?: number | null
           secondary_exit?: string | null
