@@ -733,7 +733,8 @@ export default function WholesaleOrders() {
                           <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">PRODUKTER</th>
                           <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">ANT.</th>
                           <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">STATUS</th>
-                          <th className="px-1.5 py-0.5 text-right font-medium text-muted-foreground">VÄRDE</th>
+                           <th className="px-1.5 py-0.5 text-right font-medium text-muted-foreground">VÄRDE</th>
+                           <th className="px-1.5 py-0.5 text-right font-medium text-muted-foreground">PACKAT</th>
                           <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">PACK.</th>
                           <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">LEV.R.</th>
                           <th className="px-1.5 py-0.5 text-center font-medium text-muted-foreground">PS</th>
