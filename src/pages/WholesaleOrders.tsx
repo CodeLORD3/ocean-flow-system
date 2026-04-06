@@ -733,7 +733,8 @@ export default function WholesaleOrders() {
                           <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">PRODUKTER</th>
                           <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">ANT.</th>
                           <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">STATUS</th>
-                          <th className="px-1.5 py-0.5 text-right font-medium text-muted-foreground">VÄRDE</th>
+                           <th className="px-1.5 py-0.5 text-right font-medium text-muted-foreground">VÄRDE</th>
+                           <th className="px-1.5 py-0.5 text-right font-medium text-muted-foreground">PACKAT</th>
                           <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">PACK.</th>
                           <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">LEV.R.</th>
                           <th className="px-1.5 py-0.5 text-center font-medium text-muted-foreground">PS</th>
@@ -743,7 +744,7 @@ export default function WholesaleOrders() {
                     </thead>
                     <tbody>
                       {filteredOrders.length === 0 && (
-                          <tr><td colSpan={16} className="px-2.5 py-6 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
+                          <tr><td colSpan={17} className="px-2.5 py-6 text-center text-muted-foreground">Inga ordrar att visa.</td></tr>
                        )}
                        {filteredOrders.map((o: any) => (
                          <React.Fragment key={o.id}>
@@ -784,7 +785,15 @@ export default function WholesaleOrders() {
                              </Select>
                            </td>
                            <td className="px-1.5 py-0.5 text-right font-mono text-foreground text-[9px] whitespace-nowrap">
-                             {(o.shop_order_lines || []).reduce((sum: number, l: any) => sum + (l.quantity_delivered || l.quantity_ordered || 0) * (l.products?.wholesale_price || 0), 0).toFixed(0)}kr
+                             {(o.shop_order_lines || []).reduce((sum: number, l: any) => sum + (l.quantity_ordered || 0) * (l.products?.wholesale_price || 0), 0).toFixed(0)}kr
+                           </td>
+                           <td className="px-1.5 py-0.5 text-right font-mono text-foreground text-[9px] whitespace-nowrap">
+                             {(() => {
+                               const packedValue = (o.shop_order_lines || [])
+                                 .filter((l: any) => ["Packad", "Skickad", "Klar / Levererad", "Levererad", "Producerad"].includes(l.status))
+                                 .reduce((sum: number, l: any) => sum + (l.quantity_delivered || l.quantity_ordered || 0) * (l.products?.wholesale_price || 0), 0);
+                               return packedValue > 0 ? `${packedValue.toFixed(0)}kr` : "–";
+                             })()}
                            </td>
                            <td className="px-1.5 py-0.5 text-muted-foreground text-[9px] whitespace-nowrap">{o.packer_name || "–"}</td>
                            <td className="px-1.5 py-0.5" onClick={e => e.stopPropagation()}>
