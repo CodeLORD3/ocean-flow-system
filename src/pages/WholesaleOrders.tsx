@@ -785,7 +785,15 @@ export default function WholesaleOrders() {
                              </Select>
                            </td>
                            <td className="px-1.5 py-0.5 text-right font-mono text-foreground text-[9px] whitespace-nowrap">
-                             {(o.shop_order_lines || []).reduce((sum: number, l: any) => sum + (l.quantity_delivered || l.quantity_ordered || 0) * (l.products?.wholesale_price || 0), 0).toFixed(0)}kr
+                             {(o.shop_order_lines || []).reduce((sum: number, l: any) => sum + (l.quantity_ordered || 0) * (l.products?.wholesale_price || 0), 0).toFixed(0)}kr
+                           </td>
+                           <td className="px-1.5 py-0.5 text-right font-mono text-foreground text-[9px] whitespace-nowrap">
+                             {(() => {
+                               const packedValue = (o.shop_order_lines || [])
+                                 .filter((l: any) => ["Packad", "Skickad", "Klar / Levererad", "Levererad", "Producerad"].includes(l.status))
+                                 .reduce((sum: number, l: any) => sum + (l.quantity_delivered || l.quantity_ordered || 0) * (l.products?.wholesale_price || 0), 0);
+                               return packedValue > 0 ? `${packedValue.toFixed(0)}kr` : "–";
+                             })()}
                            </td>
                            <td className="px-1.5 py-0.5 text-muted-foreground text-[9px] whitespace-nowrap">{o.packer_name || "–"}</td>
                            <td className="px-1.5 py-0.5" onClick={e => e.stopPropagation()}>
