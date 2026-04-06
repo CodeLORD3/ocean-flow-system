@@ -75,6 +75,21 @@ const statusIcon: Record<string, React.ReactNode> = {
 
 const LINE_STATUSES = ["", "Pågående", "Producerad", "Packad", "Skickad", "Ej tillgänglig"];
 
+const FULFILLED_LINE_STATUSES = ["Packad", "Skickad", "Klar / Levererad", "Levererad", "Producerad"];
+
+function getPackedLineValue(line: any) {
+  const qtyDelivered = Number(line?.quantity_delivered || 0);
+  const qtyOrdered = Number(line?.quantity_ordered || 0);
+  const wholesalePrice = Number(line?.products?.wholesale_price || 0);
+  const packedQty = qtyDelivered > 0
+    ? qtyDelivered
+    : FULFILLED_LINE_STATUSES.includes(line?.status)
+      ? qtyOrdered
+      : 0;
+
+  return packedQty * wholesalePrice;
+}
+
 export default function WholesaleOrders() {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -787,14 +802,16 @@ export default function WholesaleOrders() {
                            <td className="px-1.5 py-0.5 text-right font-mono text-foreground text-[9px] whitespace-nowrap">
                              {(o.shop_order_lines || []).reduce((sum: number, l: any) => sum + (l.quantity_ordered || 0) * (l.products?.wholesale_price || 0), 0).toFixed(0)}kr
                            </td>
-                           <td className="px-1.5 py-0.5 text-right font-mono text-foreground text-[9px] whitespace-nowrap">
-                             {(() => {
-                               const packedValue = (o.shop_order_lines || [])
-                                 .filter((l: any) => ["Packad", "Skickad", "Klar / Levererad", "Levererad", "Producerad"].includes(l.status))
-                                 .reduce((sum: number, l: any) => sum + (l.quantity_delivered || l.quantity_ordered || 0) * (l.products?.wholesale_price || 0), 0);
-                               return packedValue > 0 ? `${packedValue.toFixed(0)}kr` : "–";
-                             })()}
-                           </td>
+                            <td className="px-1.5 py-0.5 text-right font-mono text-foreground text-[9px] whitespace-nowrap">
+                              {(() => {
+                                const packedValue = (o.shop_order_lines || []).reduce(
+                                  (sum: number, l: any) => sum + getPackedLineValue(l),
+                                  0,
+                                );
+
+                                return packedValue > 0 ? `${packedValue.toFixed(0)}kr` : "–";
+                              })()}
+                            </td>
                            <td className="px-1.5 py-0.5 text-muted-foreground text-[9px] whitespace-nowrap">{o.packer_name || "–"}</td>
                            <td className="px-1.5 py-0.5" onClick={e => e.stopPropagation()}>
                              {(() => {
