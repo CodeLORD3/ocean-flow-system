@@ -223,7 +223,7 @@ export default function ShopOrders() {
   const [creatingOrder, setCreatingOrder] = useState(false);
   const [confirmSendOpen, setConfirmSendOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   // Fetch active store details to determine zone
