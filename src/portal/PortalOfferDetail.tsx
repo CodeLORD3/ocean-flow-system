@@ -73,6 +73,17 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
     enabled: !!(offer as any)?.company_id,
   });
 
+  const { data: offers_all_for_company = [] } = useQuery({
+    queryKey: ["portal-company-all-offers", (offer as any)?.company_id],
+    queryFn: async () => {
+      const companyId = (offer as any)?.company_id;
+      if (!companyId) return [];
+      const { data } = await supabase.from("trade_offers").select("id, funded_amount").eq("company_id", companyId);
+      return (data || []) as any[];
+    },
+    enabled: !!(offer as any)?.company_id,
+  });
+
   const pledgeMutation = useMutation({
     mutationFn: async (amount: number) => {
       if (!authUser) throw new Error("You must be logged in to invest");
