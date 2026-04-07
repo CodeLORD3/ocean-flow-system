@@ -5,7 +5,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Shield, User, CheckCircle, Trash2, Mail, AlertTriangle, Upload, FileCheck, Clock, XCircle, Bell, Copy, Check } from "lucide-react";
+import { Save, Shield, User, CheckCircle, Trash2, Mail, AlertTriangle, Upload, FileCheck, Clock, XCircle, Bell, Copy, Check, Eye, EyeOff } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { format } from "date-fns";
 
 export default function PortalProfile() {
