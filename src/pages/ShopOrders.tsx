@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Plus, Search, Clock, CheckCircle2, Truck, XCircle, X, Package,
@@ -106,8 +106,18 @@ const DONE_STATUSES = ["Levererad", "Klar / Levererad", "Arkiverad", "Avbruten"]
 
 const FOLLJESEDEL_STATUSES = ["Skickad", "Levererad", "Klar / Levererad", "Arkiverad"];
 
-function OrderTable({ orders, onSelect, emptyMsg }: { orders: any[]; onSelect: (o: any) => void; emptyMsg: string }) {
+function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDateDisabled }: {
+  orders: any[];
+  emptyMsg: string;
+  products: any[];
+  toast: any;
+  allowedWeekdays: Set<number> | null;
+  isDateDisabled: (date: Date) => boolean;
+}) {
   const [FolljesedelOrder, setFolljesedelOrder] = useState<any>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const toggleExpand = (id: string) => setExpandedId(prev => prev === id ? null : id);
 
   return (
     <>
@@ -135,38 +145,62 @@ function OrderTable({ orders, onSelect, emptyMsg }: { orders: any[]; onSelect: (
                 {orders.map((o: any) => {
                   const lines = o.shop_order_lines || [];
                   const hasFolljesedel = FOLLJESEDEL_STATUSES.includes(o.status);
+                  const isExpanded = expandedId === o.id;
                   return (
-                    <tr key={o.id} className="border-b border-border/40 transition-colors cursor-pointer" style={{ background: buildProgressGradient(lines) }} onClick={() => onSelect(o)}>
-                      <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
-                      <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
-                      <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
-                      <td className="p-3 text-muted-foreground">{o.desired_delivery_date || "–"}</td>
-                      <td className="p-3 text-right text-foreground">{lines.length}</td>
-                      <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
-                        {lines.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
-                      </td>
-                      <td className="p-3 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
-                      <td className="p-3 text-center">
-                        {hasFolljesedel ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-6 text-[10px] gap-1 px-2"
-                            onClick={(e) => { e.stopPropagation(); setFolljesedelOrder(o); }}
-                          >
-                            <FileText className="h-3 w-3" /> Skriv ut
-                          </Button>
-                        ) : (
-                          <span className="text-[10px] text-muted-foreground">—</span>
-                        )}
-                      </td>
-                      <td className="p-3 text-right">
-                        <Badge variant="outline" className={`${statusColor[o.status] || ""} text-[10px] gap-1`}>
-                          {statusIcon[o.status]}
-                          {o.status}
-                        </Badge>
-                      </td>
-                    </tr>
+                    <React.Fragment key={o.id}>
+                      <tr
+                        className={`border-b border-border/40 transition-colors cursor-pointer hover:bg-muted/30 ${isExpanded ? "bg-primary/10 border-l-2 border-l-primary border-b-0" : ""}`}
+                        style={{ background: isExpanded ? undefined : buildProgressGradient(lines) }}
+                        onClick={() => toggleExpand(o.id)}
+                      >
+                        <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
+                        <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
+                        <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
+                        <td className="p-3 text-muted-foreground">{o.desired_delivery_date || "–"}</td>
+                        <td className="p-3 text-right text-foreground">{lines.length}</td>
+                        <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
+                          {lines.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
+                        </td>
+                        <td className="p-3 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
+                        <td className="p-3 text-center">
+                          {hasFolljesedel ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-6 text-[10px] gap-1 px-2"
+                              onClick={(e) => { e.stopPropagation(); setFolljesedelOrder(o); }}
+                            >
+                              <FileText className="h-3 w-3" /> Skriv ut
+                            </Button>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground">—</span>
+                          )}
+                        </td>
+                        <td className="p-3 text-right">
+                          <Badge variant="outline" className={`${statusColor[o.status] || ""} text-[10px] gap-1`}>
+                            {statusIcon[o.status]}
+                            {o.status}
+                          </Badge>
+                        </td>
+                      </tr>
+                      {isExpanded && (
+                        <tr>
+                          <td colSpan={9} className="p-0">
+                            <div className="border-l-2 border-l-primary bg-card p-4 space-y-3">
+                              <OrderDetailWithEdit
+                                order={o}
+                                products={products}
+                                onClose={() => setExpandedId(null)}
+                                toast={toast}
+                                allowedWeekdays={allowedWeekdays}
+                                isDateDisabled={isDateDisabled}
+                                inline
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   );
                 })}
               </tbody>
@@ -189,7 +223,7 @@ export default function ShopOrders() {
   const [creatingOrder, setCreatingOrder] = useState(false);
   const [confirmSendOpen, setConfirmSendOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   // Fetch active store details to determine zone
@@ -264,15 +298,6 @@ export default function ShopOrders() {
     return () => { supabase.removeChannel(channel); };
   }, [activeStoreId, qc]);
 
-  // Keep selectedOrder in sync with fetched data
-  useEffect(() => {
-    if (selectedOrder && orders.length > 0) {
-      const updated = orders.find((o: any) => o.id === selectedOrder.id);
-      if (updated && JSON.stringify(updated) !== JSON.stringify(selectedOrder)) {
-        setSelectedOrder(updated);
-      }
-    }
-  }, [orders]);
 
   // Split orders
   const liveOrders = useMemo(() => orders.filter((o: any) => LIVE_STATUSES.includes(o.status)), [orders]);
@@ -414,7 +439,10 @@ export default function ShopOrders() {
         <TabsContent value="live">
           <OrderTable
             orders={liveOrders}
-            onSelect={setSelectedOrder}
+            products={products}
+            toast={toast}
+            allowedWeekdays={allowedWeekdays}
+            isDateDisabled={isDateDisabled}
             emptyMsg="Inga aktiva beställningar just nu."
           />
         </TabsContent>
@@ -422,7 +450,10 @@ export default function ShopOrders() {
         <TabsContent value="done">
           <OrderTable
             orders={doneOrders}
-            onSelect={setSelectedOrder}
+            products={products}
+            toast={toast}
+            allowedWeekdays={allowedWeekdays}
+            isDateDisabled={isDateDisabled}
             emptyMsg="Inga levererade eller arkiverade ordrar."
           />
         </TabsContent>
@@ -430,7 +461,10 @@ export default function ShopOrders() {
         <TabsContent value="all">
           <OrderTable
             orders={orders}
-            onSelect={setSelectedOrder}
+            products={products}
+            toast={toast}
+            allowedWeekdays={allowedWeekdays}
+            isDateDisabled={isDateDisabled}
             emptyMsg="Inga beställningar ännu. Klicka &quot;Ny beställning&quot; för att börja."
           />
         </TabsContent>
@@ -614,33 +648,19 @@ export default function ShopOrders() {
         </Card>
       )}
 
-      {/* Order detail dialog with edit capability */}
-      <Dialog open={!!selectedOrder} onOpenChange={open => { if (!open) setSelectedOrder(null); }}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-          {selectedOrder && (
-            <OrderDetailWithEdit
-              order={selectedOrder}
-              products={products}
-              onClose={() => setSelectedOrder(null)}
-              toast={toast}
-              allowedWeekdays={allowedWeekdays}
-              isDateDisabled={isDateDisabled}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </motion.div>
   );
 }
 
 /* ---- Inline edit component for order detail ---- */
-function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays, isDateDisabled }: {
+function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays, isDateDisabled, inline }: {
   order: any;
   products: any[];
   onClose: () => void;
   toast: any;
   allowedWeekdays: Set<number> | null;
   isDateDisabled: (date: Date) => boolean;
+  inline?: boolean;
 }) {
   const createChange = useCreateChangeRequest();
   const resolveChange = useResolveChangeRequest();
@@ -748,26 +768,50 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
 
   return (
     <>
-      <DialogHeader>
-        <DialogTitle className="font-heading flex items-center gap-2">
-          Order {order.order_week}
-          <Badge variant="outline" className={`${statusColor[order.status] || ""} text-[10px] gap-1 ml-2`}>
-            {statusIcon[order.status]}
-            {order.status}
-          </Badge>
-          {isEditable && !editMode && (
-            <Button variant="outline" size="sm" className="ml-auto h-7 text-[10px] gap-1" onClick={startEdit}>
-              <Pencil className="h-3 w-3" /> Redigera
+      <div className={inline ? "flex items-center gap-2 flex-wrap" : ""}>
+        {inline ? (
+          <div className="flex items-center gap-2 flex-wrap flex-1">
+            <h3 className="font-heading font-semibold text-sm">Order {order.order_week}</h3>
+            <Badge variant="outline" className={`${statusColor[order.status] || ""} text-[10px] gap-1`}>
+              {statusIcon[order.status]}
+              {order.status}
+            </Badge>
+            <span className="text-xs text-muted-foreground">
+              Skapad {new Date(order.created_at).toLocaleDateString("sv-SE")} · {order.stores?.name || "–"}
+              {order.desired_delivery_date && <> · Önskat lev: <span className="font-medium text-foreground">{order.desired_delivery_date}</span></>}
+            </span>
+            {isEditable && !editMode && (
+              <Button variant="outline" size="sm" className="ml-auto h-7 text-[10px] gap-1" onClick={startEdit}>
+                <Pencil className="h-3 w-3" /> Redigera
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1" onClick={onClose}>
+              <X className="h-3 w-3" /> Stäng
             </Button>
-          )}
-        </DialogTitle>
-        <DialogDescription className="text-xs">
-          Skapad {new Date(order.created_at).toLocaleDateString("sv-SE")} · {order.stores?.name || "–"}
-          {order.desired_delivery_date && (
-            <> · Önskat leveransdatum: <span className="font-medium text-foreground">{order.desired_delivery_date}</span></>
-          )}
-        </DialogDescription>
-      </DialogHeader>
+          </div>
+        ) : (
+          <DialogHeader>
+            <DialogTitle className="font-heading flex items-center gap-2">
+              Order {order.order_week}
+              <Badge variant="outline" className={`${statusColor[order.status] || ""} text-[10px] gap-1 ml-2`}>
+                {statusIcon[order.status]}
+                {order.status}
+              </Badge>
+              {isEditable && !editMode && (
+                <Button variant="outline" size="sm" className="ml-auto h-7 text-[10px] gap-1" onClick={startEdit}>
+                  <Pencil className="h-3 w-3" /> Redigera
+                </Button>
+              )}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Skapad {new Date(order.created_at).toLocaleDateString("sv-SE")} · {order.stores?.name || "–"}
+              {order.desired_delivery_date && (
+                <> · Önskat leveransdatum: <span className="font-medium text-foreground">{order.desired_delivery_date}</span></>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+        )}
+      </div>
 
       {order.notes && (
         <div className="bg-muted/30 rounded-md p-3 text-xs text-muted-foreground">
@@ -1025,18 +1069,28 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
         </div>
       )}
 
-      <DialogFooter className="gap-2">
-        {editMode ? (
-          <>
-            <Button variant="outline" size="sm" onClick={() => setEditMode(false)}>Avbryt</Button>
-            <Button size="sm" className="gap-1.5" onClick={handleSubmitChanges} disabled={createChange.isPending}>
-              <Send className="h-3.5 w-3.5" /> Skicka ändringsförfrågan
-            </Button>
-          </>
-        ) : (
-          <Button variant="outline" size="sm" onClick={onClose}>Stäng</Button>
-        )}
-      </DialogFooter>
+      {!inline && (
+        <DialogFooter className="gap-2">
+          {editMode ? (
+            <>
+              <Button variant="outline" size="sm" onClick={() => setEditMode(false)}>Avbryt</Button>
+              <Button size="sm" className="gap-1.5" onClick={handleSubmitChanges} disabled={createChange.isPending}>
+                <Send className="h-3.5 w-3.5" /> Skicka ändringsförfrågan
+              </Button>
+            </>
+          ) : (
+            <Button variant="outline" size="sm" onClick={onClose}>Stäng</Button>
+          )}
+        </DialogFooter>
+      )}
+      {inline && editMode && (
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="outline" size="sm" onClick={() => setEditMode(false)}>Avbryt</Button>
+          <Button size="sm" className="gap-1.5" onClick={handleSubmitChanges} disabled={createChange.isPending}>
+            <Send className="h-3.5 w-3.5" /> Skicka ändringsförfrågan
+          </Button>
+        </div>
+      )}
     </>
   );
 }
