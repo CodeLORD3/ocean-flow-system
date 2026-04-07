@@ -155,6 +155,7 @@ function PortalInner() {
   const [loading, setLoading] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
   const [showSuitability, setShowSuitability] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const { switchTab, activeTab } = usePortalTabs();
   const queryClient = useQueryClient();
