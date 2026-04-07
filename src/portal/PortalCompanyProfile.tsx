@@ -278,6 +278,3 @@ export default function PortalCompanyProfile({ companyId }: { companyId: string 
     </div>
   );
 }
-
-// Need the import for Briefcase used above
-import { Briefcase } from "lucide-react";
