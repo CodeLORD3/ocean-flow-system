@@ -425,9 +425,50 @@ export default function PortalOpportunities() {
         </div>
       </div>
 
-      {/* ROW VIEW */}
+      {/* ROW VIEW — table hidden on mobile, cards shown instead */}
       {viewMode === "rows" && (
-        <div className="border border-border bg-white overflow-x-auto">
+        <>
+        {/* Mobile: show cards */}
+        <div className="md:hidden grid grid-cols-1 gap-3">
+          {sortedFiltered2.map((offer) => {
+            const { target, funded, pending, rate, confirmedPct, pendingPct, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity, cur, batchMonth, dateRange, risk } = renderOfferData(offer);
+            return (
+              <div
+                key={offer.id}
+                className="border border-border bg-white hover:border-primary cursor-pointer transition-all p-3 space-y-2"
+                onClick={() => openOfferTab(offer.id, offer.title)}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 pr-2">
+                    <h3 className="text-xs font-semibold text-foreground leading-snug">{offer.title}</h3>
+                    {company && (
+                      <p className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                        <CountryFlag country={company.country} size={12} /> {company.name}
+                      </p>
+                    )}
+                  </div>
+                  <span className={`shrink-0 px-2 py-0.5 text-[10px] font-semibold border ${offer.status === "Open" ? "text-mackerel bg-mackerel-light border-mackerel/30" : "text-muted-foreground bg-muted border-border"}`}>
+                    {offer.status === "Open" ? "OPEN" : "FUNDED"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="h-1.5 bg-muted overflow-hidden flex flex-1">
+                    <div className="h-full bg-mackerel" style={{ width: `${confirmedPct}%` }} />
+                    {pendingPct > 0 && <div className="h-full bg-mackerel/30" style={{ width: `${pendingPct}%` }} />}
+                  </div>
+                  <span className="text-[10px] font-semibold text-foreground shrink-0">{(confirmedPct + pendingPct).toFixed(0)}%</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-[10px]">
+                  <div><span className="text-muted-foreground">Return</span><div className="font-bold text-mackerel">{rate.toFixed(1)}%</div></div>
+                  <div><span className="text-muted-foreground">Duration</span><div className="font-medium text-foreground">{tenorDays !== null ? `${tenorDays}d` : "—"}</div></div>
+                  <div><span className="text-muted-foreground">Maturity</span><div className="font-medium text-foreground">{isMatured ? "MATURED" : daysToMaturity !== null ? `${daysToMaturity}d` : "—"}</div></div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        {/* Desktop: table */}
+        <div className="hidden md:block border border-border bg-white overflow-x-auto">
           <table className="w-full text-[10px] min-w-[900px]" style={{ tableLayout: 'auto' }}>
             <thead>
               <tr className="border-b border-border bg-muted/50">
@@ -558,6 +599,7 @@ export default function PortalOpportunities() {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {/* CARD VIEW */}
