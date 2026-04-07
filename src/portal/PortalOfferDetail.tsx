@@ -205,19 +205,22 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   const companyName = (company as any)?.name || "the issuer";
 
   /* ── Step indicator ── */
+  const stepLabels = ["Enter Amount", "Review & Confirm", "Payment Details"];
   const stepIndicator = (
     <div className="flex items-center gap-1.5 mb-4">
       {[1, 2, 3].map((s) => (
         <div key={s} className="flex items-center gap-1.5">
-          <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${
-            step >= s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-          }`}>{s}</div>
-          {s < 3 && <div className={`w-6 h-0.5 ${step > s ? "bg-primary" : "bg-muted"}`} />}
+          <div className="flex flex-col items-center gap-0.5">
+            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${
+              step >= s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+            }`}>{s}</div>
+            <span className={`text-[8px] leading-tight whitespace-nowrap ${step >= s ? "text-primary font-semibold" : "text-muted-foreground"}`}>
+              {stepLabels[s - 1]}
+            </span>
+          </div>
+          {s < 3 && <div className={`w-6 h-0.5 mb-3 ${step > s ? "bg-primary" : "bg-muted"}`} />}
         </div>
       ))}
-      <span className="ml-2 text-[10px] text-muted-foreground">
-        {step === 1 ? "Enter Amount" : step === 2 ? "Review & Sign" : "Payment"}
-      </span>
     </div>
   );
 
