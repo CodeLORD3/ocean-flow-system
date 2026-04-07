@@ -1078,18 +1078,28 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
         </div>
       )}
 
-      <DialogFooter className="gap-2">
-        {editMode ? (
-          <>
-            <Button variant="outline" size="sm" onClick={() => setEditMode(false)}>Avbryt</Button>
-            <Button size="sm" className="gap-1.5" onClick={handleSubmitChanges} disabled={createChange.isPending}>
-              <Send className="h-3.5 w-3.5" /> Skicka ändringsförfrågan
-            </Button>
-          </>
-        ) : (
-          <Button variant="outline" size="sm" onClick={onClose}>Stäng</Button>
-        )}
-      </DialogFooter>
+      {!inline && (
+        <DialogFooter className="gap-2">
+          {editMode ? (
+            <>
+              <Button variant="outline" size="sm" onClick={() => setEditMode(false)}>Avbryt</Button>
+              <Button size="sm" className="gap-1.5" onClick={handleSubmitChanges} disabled={createChange.isPending}>
+                <Send className="h-3.5 w-3.5" /> Skicka ändringsförfrågan
+              </Button>
+            </>
+          ) : (
+            <Button variant="outline" size="sm" onClick={onClose}>Stäng</Button>
+          )}
+        </DialogFooter>
+      )}
+      {inline && editMode && (
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="outline" size="sm" onClick={() => setEditMode(false)}>Avbryt</Button>
+          <Button size="sm" className="gap-1.5" onClick={handleSubmitChanges} disabled={createChange.isPending}>
+            <Send className="h-3.5 w-3.5" /> Skicka ändringsförfrågan
+          </Button>
+        </div>
+      )}
     </>
   );
 }
