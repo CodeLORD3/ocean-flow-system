@@ -703,10 +703,13 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                     {(company as any).logo_url && (
                       <img src={(company as any).logo_url} alt="" className="h-5 w-5 object-contain" />
                     )}
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <button
+                      className="text-xs text-muted-foreground flex items-center gap-1 hover:text-primary hover:underline transition-colors"
+                      onClick={() => switchTab(`/portal/company/${(company as any).id}`)}
+                    >
                       <CountryFlag country={(company as any).country} size={14} />
                       {(company as any).name}
-                    </span>
+                    </button>
                     {(company as any).industry && (
                       <span className="text-[10px] text-muted-foreground/70">· {(company as any).industry}</span>
                     )}
