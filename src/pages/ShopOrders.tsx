@@ -298,15 +298,6 @@ export default function ShopOrders() {
     return () => { supabase.removeChannel(channel); };
   }, [activeStoreId, qc]);
 
-  // Keep selectedOrder in sync with fetched data
-  useEffect(() => {
-    if (selectedOrder && orders.length > 0) {
-      const updated = orders.find((o: any) => o.id === selectedOrder.id);
-      if (updated && JSON.stringify(updated) !== JSON.stringify(selectedOrder)) {
-        setSelectedOrder(updated);
-      }
-    }
-  }, [orders]);
 
   // Split orders
   const liveOrders = useMemo(() => orders.filter((o: any) => LIVE_STATUSES.includes(o.status)), [orders]);
