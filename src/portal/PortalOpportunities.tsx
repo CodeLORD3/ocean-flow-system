@@ -454,7 +454,7 @@ export default function PortalOpportunities() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((offer) => {
+              {sortedFiltered2.map((offer) => {
                 const { target, funded, pending, rate, progress, confirmedPct, pendingPct, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity, cur, batchMonth, risk } = renderOfferData(offer);
                 return (
                   <tr
