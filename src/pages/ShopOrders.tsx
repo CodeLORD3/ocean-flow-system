@@ -777,26 +777,50 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
 
   return (
     <>
-      <DialogHeader>
-        <DialogTitle className="font-heading flex items-center gap-2">
-          Order {order.order_week}
-          <Badge variant="outline" className={`${statusColor[order.status] || ""} text-[10px] gap-1 ml-2`}>
-            {statusIcon[order.status]}
-            {order.status}
-          </Badge>
-          {isEditable && !editMode && (
-            <Button variant="outline" size="sm" className="ml-auto h-7 text-[10px] gap-1" onClick={startEdit}>
-              <Pencil className="h-3 w-3" /> Redigera
+      <div className={inline ? "flex items-center gap-2 flex-wrap" : ""}>
+        {inline ? (
+          <div className="flex items-center gap-2 flex-wrap flex-1">
+            <h3 className="font-heading font-semibold text-sm">Order {order.order_week}</h3>
+            <Badge variant="outline" className={`${statusColor[order.status] || ""} text-[10px] gap-1`}>
+              {statusIcon[order.status]}
+              {order.status}
+            </Badge>
+            <span className="text-xs text-muted-foreground">
+              Skapad {new Date(order.created_at).toLocaleDateString("sv-SE")} · {order.stores?.name || "–"}
+              {order.desired_delivery_date && <> · Önskat lev: <span className="font-medium text-foreground">{order.desired_delivery_date}</span></>}
+            </span>
+            {isEditable && !editMode && (
+              <Button variant="outline" size="sm" className="ml-auto h-7 text-[10px] gap-1" onClick={startEdit}>
+                <Pencil className="h-3 w-3" /> Redigera
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1" onClick={onClose}>
+              <X className="h-3 w-3" /> Stäng
             </Button>
-          )}
-        </DialogTitle>
-        <DialogDescription className="text-xs">
-          Skapad {new Date(order.created_at).toLocaleDateString("sv-SE")} · {order.stores?.name || "–"}
-          {order.desired_delivery_date && (
-            <> · Önskat leveransdatum: <span className="font-medium text-foreground">{order.desired_delivery_date}</span></>
-          )}
-        </DialogDescription>
-      </DialogHeader>
+          </div>
+        ) : (
+          <DialogHeader>
+            <DialogTitle className="font-heading flex items-center gap-2">
+              Order {order.order_week}
+              <Badge variant="outline" className={`${statusColor[order.status] || ""} text-[10px] gap-1 ml-2`}>
+                {statusIcon[order.status]}
+                {order.status}
+              </Badge>
+              {isEditable && !editMode && (
+                <Button variant="outline" size="sm" className="ml-auto h-7 text-[10px] gap-1" onClick={startEdit}>
+                  <Pencil className="h-3 w-3" /> Redigera
+                </Button>
+              )}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Skapad {new Date(order.created_at).toLocaleDateString("sv-SE")} · {order.stores?.name || "–"}
+              {order.desired_delivery_date && (
+                <> · Önskat leveransdatum: <span className="font-medium text-foreground">{order.desired_delivery_date}</span></>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+        )}
+      </div>
 
       {order.notes && (
         <div className="bg-muted/30 rounded-md p-3 text-xs text-muted-foreground">
