@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock, Calculator, FileText, AlertTriangle, TrendingUp, Shield, Package, CheckCircle, Briefcase, Building2, ArrowUpRight, ArrowRight, ArrowLeft, CreditCard, Info, Copy, Download, Calendar } from "lucide-react";
+import { Clock, Calculator, FileText, AlertTriangle, TrendingUp, Shield, Package, CheckCircle, Briefcase, Building2, ArrowUpRight, ArrowRight, ArrowLeft, CreditCard, Info, Copy, Download, Calendar, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 import { parseISO, format, addBusinessDays } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
