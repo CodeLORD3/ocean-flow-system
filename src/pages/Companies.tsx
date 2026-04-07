@@ -221,6 +221,10 @@ export default function Companies() {
               <div><span className="text-muted-foreground">City:</span> {company.city || "—"}</div>
               <div><span className="text-muted-foreground">Offers:</span> {(offerCounts as any)[company.id] || 0}</div>
               <div><span className="text-muted-foreground">Added:</span> {new Date(company.created_at).toLocaleDateString()}</div>
+              <div><span className="text-muted-foreground">Founded:</span> {company.founded_year || "—"}</div>
+              <div><span className="text-muted-foreground">Employees:</span> {company.employee_count || "—"}</div>
+              <div><span className="text-muted-foreground">Revenue:</span> {company.revenue_range || "—"}</div>
+              <div><span className="text-muted-foreground">Website:</span> {company.website_url ? <a href={company.website_url} target="_blank" rel="noreferrer" className="text-primary hover:underline">{company.website_url}</a> : "—"}</div>
             </div>
           </CardContent>
         </Card>
