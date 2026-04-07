@@ -522,7 +522,10 @@ export default function PortalOpportunities() {
                       {company ? (
                         <div className="flex items-center gap-1.5">
                           <CountryFlag country={company.country} size={12} />
-                          <span className="text-muted-foreground line-clamp-1 max-w-[160px]">{company.name}</span>
+                          <button
+                            className="text-muted-foreground line-clamp-1 max-w-[160px] hover:text-primary hover:underline transition-colors text-left"
+                            onClick={(e) => { e.stopPropagation(); switchTab(`/portal/company/${company.id}`); }}
+                          >{company.name}</button>
                         </div>
                       ) : (
                         <span className="text-muted-foreground">—</span>
