@@ -153,13 +153,13 @@ export default function PortalPortfolio() {
   const pendingPledges = activePledges.filter((p: any) => p.status === "Pending Payment");
   const confirmedPledges = activePledges.filter((p: any) => p.status !== "Pending Payment");
 
-  const pendingByCur = sumByCurrency(pendingPledges, (p) => Number(p.amount));
-  const investedByCur = sumByCurrency(confirmedPledges, (p) => Number(p.amount));
-  const payoutByCur = sumByCurrency(confirmedPledges, (p) => {
+  const pendingTotal = sumConverted(pendingPledges, (p) => Number(p.amount));
+  const investedTotal = sumConverted(confirmedPledges, (p) => Number(p.amount));
+  const payoutTotal = sumConverted(confirmedPledges, (p) => {
     const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
     return Number(p.amount) * (1 + rate / 100);
   });
-  const profitByCur = sumByCurrency(confirmedPledges, (p) => {
+  const profitTotal = sumConverted(confirmedPledges, (p) => {
     const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
     return Number(p.amount) * (rate / 100);
   });
@@ -168,11 +168,11 @@ export default function PortalPortfolio() {
     : 0;
 
   // History tab stats
-  const paidOutByCur = sumByCurrency(historyPledges, (p) => {
+  const paidOutTotal = sumConverted(historyPledges, (p) => {
     const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
     return Number(p.amount) * (1 + rate / 100);
   });
-  const histProfitByCur = sumByCurrency(historyPledges, (p) => {
+  const histProfitTotal = sumConverted(historyPledges, (p) => {
     const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
     return Number(p.amount) * (rate / 100);
   });
