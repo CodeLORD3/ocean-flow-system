@@ -110,7 +110,13 @@ export default function PortalOpportunities() {
     if (search && !o.title.toLowerCase().includes(search.toLowerCase())) return false;
     if (statusFilter === "open" && o.status !== "Open") return false;
     if (statusFilter === "funded" && o.status !== "Funded") return false;
-    if (minInvestment && Number(o.min_pledge) > Number(minInvestment)) return false;
+    if (minInvestment !== "all") {
+      const min = Number(o.min_pledge) || 0;
+      if (minInvestment === "<50000" && min >= 50000) return false;
+      if (minInvestment === "50000-100000" && (min < 50000 || min > 100000)) return false;
+      if (minInvestment === "100000-200000" && (min < 100000 || min > 200000)) return false;
+      if (minInvestment === "200000+" && min < 200000) return false;
+    }
     const rate = Number(o.interest_rate);
     if (returnRange === "0-5" && (rate < 0 || rate > 5)) return false;
     if (returnRange === "5-10" && (rate < 5 || rate > 10)) return false;
