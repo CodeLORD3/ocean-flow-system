@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Building2, Globe, Calendar, Users, TrendingUp, FileText, Mail, User, ArrowRight, Award, Clock, ExternalLink } from "lucide-react";
+import { Building2, Globe, Calendar, Users, TrendingUp, FileText, Mail, User, ArrowRight, Award, Clock, ExternalLink, Briefcase } from "lucide-react";
 import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
 import { getCurrency } from "@/lib/currency";
