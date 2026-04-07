@@ -836,18 +836,18 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
         </div>
       </div>
 
-      {/* Published by */}
+      {/* Published by — rich preview card */}
       {company && (
         <div className="border border-border bg-white p-4">
           <div className="flex items-center gap-1.5 mb-3">
             <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="text-[10px] font-semibold text-muted-foreground tracking-wider uppercase">Published by</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-start gap-4">
             {(company as any).logo_url && (
-              <img src={(company as any).logo_url} alt="" className="h-10 w-10 object-contain border border-border rounded" />
+              <img src={(company as any).logo_url} alt="" className="h-12 w-12 object-contain border border-border shrink-0" />
             )}
-            <div>
+            <div className="flex-1 min-w-0">
               <div className="text-sm font-semibold text-foreground flex items-center gap-1.5">
                 <CountryFlag country={(company as any).country} size={16} /> {(company as any).name}
               </div>
@@ -857,9 +857,28 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                 {(company as any).country && <span>{(company as any).country}</span>}
               </div>
               {(company as any).description && (
-                <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">{(company as any).description}</p>
+                <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed line-clamp-2">{(company as any).description}</p>
               )}
+              <div className="flex items-center gap-4 mt-2">
+                {(() => {
+                  const compOffers = offers_all_for_company;
+                  const totalDeals = compOffers?.length || 0;
+                  const totalRaised = compOffers?.reduce((s: number, o: any) => s + Number(o.funded_amount || 0), 0) || 0;
+                  return totalDeals > 0 ? (
+                    <>
+                      <span className="text-[10px] text-muted-foreground"><span className="font-mono font-semibold text-foreground">{totalDeals}</span> deals</span>
+                      <span className="text-[10px] text-muted-foreground"><span className="font-mono font-semibold text-foreground">{totalRaised.toLocaleString()}</span> {cur} raised</span>
+                    </>
+                  ) : null;
+                })()}
+              </div>
             </div>
+            <button
+              onClick={() => switchTab(`/portal/company/${(company as any).id}`)}
+              className="shrink-0 px-3 py-1.5 border border-primary text-primary text-[11px] font-semibold hover:bg-primary hover:text-primary-foreground transition-colors flex items-center gap-1"
+            >
+              View full profile <ArrowRight className="h-3 w-3" />
+            </button>
           </div>
         </div>
       )}
