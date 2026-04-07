@@ -436,12 +436,20 @@ export default function PortalOpportunities() {
                 <th className="text-left px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Status</th>
                 <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Funding</th>
                 <th className="text-center px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Progress</th>
-                <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Return</th>
+                <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap cursor-pointer hover:text-foreground select-none" onClick={() => toggleSort("return")}>
+                  Return<SortArrow col="return" />
+                </th>
                 <th className="text-center px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Risk</th>
                 <th className="text-center px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Start → Maturity</th>
-                <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Duration</th>
-                <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Days to Maturity</th>
-                <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Min. Invest</th>
+                <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap cursor-pointer hover:text-foreground select-none" onClick={() => toggleSort("duration")}>
+                  Duration<SortArrow col="duration" />
+                </th>
+                <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap cursor-pointer hover:text-foreground select-none" onClick={() => toggleSort("daysToMaturity")}>
+                  Days to Maturity<SortArrow col="daysToMaturity" />
+                </th>
+                <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap cursor-pointer hover:text-foreground select-none" onClick={() => toggleSort("minInvest")}>
+                  Min. Invest<SortArrow col="minInvest" />
+                </th>
                 <th className="px-3 py-2"></th>
               </tr>
             </thead>
