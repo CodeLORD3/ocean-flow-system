@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, ShoppingCart, Users, Fish, Package, Truck, Store, UserCheck, BarChart3, Settings, Anchor, CreditCard, ClipboardList, CalendarDays,
+  LayoutDashboard, ShoppingCart, Users, Fish, Package, Truck, Store, UserCheck, BarChart3, Settings, Anchor, CreditCard, ClipboardList, CalendarDays, Star,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -22,6 +22,7 @@ const overviewNav = [
 const salesNav = [
   { title: "Ordrar", url: "/orders", icon: ShoppingCart },
   { title: "Kunder", url: "/customers", icon: Users },
+  { title: "Önskemål", url: "/wishes", icon: Star },
 ];
 
 const inventoryNav = [
