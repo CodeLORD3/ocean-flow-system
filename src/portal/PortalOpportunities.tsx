@@ -1,7 +1,10 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, SlidersHorizontal, TrendingUp, Clock, ArrowRight, LayoutGrid, List, Calendar, CalendarClock, AlertTriangle, X, Landmark, ShieldAlert } from "lucide-react";
+import { Search, SlidersHorizontal, TrendingUp, Clock, ArrowRight, LayoutGrid, List, Calendar, CalendarClock, AlertTriangle, X, Landmark, ShieldAlert, ArrowUp, ArrowDown } from "lucide-react";
+
+type SortKey = "return" | "daysToMaturity" | "duration" | "minInvest";
+type SortDir = "asc" | "desc";
 import { differenceInDays, parseISO, format } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
@@ -20,6 +23,8 @@ export default function PortalOpportunities() {
   const [viewMode, setViewMode] = useState<"rows" | "cards">("rows");
   const [riskDismissed, setRiskDismissed] = useState(() => sessionStorage.getItem("risk-banner-dismissed") === "true");
   const [ibanBannerDismissed, setIbanBannerDismissed] = useState(() => sessionStorage.getItem("iban-banner-dismissed") === "true");
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
 
@@ -130,6 +135,23 @@ export default function PortalOpportunities() {
     return true;
   });
 
+  const sortedFiltered2 = useMemo(() => {
+    if (!sortKey) return filtered;
+    return [...filtered].sort((a, b) => {
+      const da = renderOfferData(a);
+      const db = renderOfferData(b);
+      let va: number, vb: number;
+      switch (sortKey) {
+        case "return": va = da.rate; vb = db.rate; break;
+        case "daysToMaturity": va = da.daysToMaturity ?? 99999; vb = db.daysToMaturity ?? 99999; break;
+        case "duration": va = da.tenorDays ?? 99999; vb = db.tenorDays ?? 99999; break;
+        case "minInvest": va = Number(a.min_pledge) || 0; vb = Number(b.min_pledge) || 0; break;
+        default: va = 0; vb = 0;
+      }
+      return sortDir === "asc" ? va - vb : vb - va;
+    });
+  }, [filtered, sortKey, sortDir]);
+
   if (isLoading) {
     return <div className="text-primary text-sm animate-pulse p-8 text-center">Loading opportunities...</div>;
   }
@@ -166,6 +188,21 @@ export default function PortalOpportunities() {
       : null;
     const risk = getRiskBadge(offer);
     return { target, funded, pending, rate, progress, confirmedPct, pendingPct, maturity, purchaseDate, daysToMaturity, tenorDays, company, isMatured, cur, batchMonth, dateRange, risk };
+  };
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
+
+  const SortArrow = ({ col }: { col: SortKey }) => {
+    if (sortKey !== col) return null;
+    return sortDir === "asc"
+      ? <ArrowUp className="h-3 w-3 inline ml-0.5" />
+      : <ArrowDown className="h-3 w-3 inline ml-0.5" />;
   };
 
 
@@ -399,17 +436,25 @@ export default function PortalOpportunities() {
                 <th className="text-left px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Status</th>
                 <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Funding</th>
                 <th className="text-center px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Progress</th>
-                <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Return</th>
+                <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap cursor-pointer hover:text-foreground select-none" onClick={() => toggleSort("return")}>
+                  Return<SortArrow col="return" />
+                </th>
                 <th className="text-center px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Risk</th>
                 <th className="text-center px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Start → Maturity</th>
-                <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Duration</th>
-                <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Days to Maturity</th>
-                <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Min. Invest</th>
+                <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap cursor-pointer hover:text-foreground select-none" onClick={() => toggleSort("duration")}>
+                  Duration<SortArrow col="duration" />
+                </th>
+                <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap cursor-pointer hover:text-foreground select-none" onClick={() => toggleSort("daysToMaturity")}>
+                  Days to Maturity<SortArrow col="daysToMaturity" />
+                </th>
+                <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap cursor-pointer hover:text-foreground select-none" onClick={() => toggleSort("minInvest")}>
+                  Min. Invest<SortArrow col="minInvest" />
+                </th>
                 <th className="px-3 py-2"></th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((offer) => {
+              {sortedFiltered2.map((offer) => {
                 const { target, funded, pending, rate, progress, confirmedPct, pendingPct, daysToMaturity, tenorDays, company, isMatured, purchaseDate, maturity, cur, batchMonth, risk } = renderOfferData(offer);
                 return (
                   <tr
