@@ -50,6 +50,7 @@ const EMPTY_FORM = {
   country: "Sweden",
   industry: "",
   description: "",
+  description_long: "",
   contact_person: "",
   contact_email: "",
   iban: "",
@@ -57,6 +58,10 @@ const EMPTY_FORM = {
   city: "",
   ticker: "",
   status: "Active",
+  founded_year: "",
+  employee_count: "",
+  revenue_range: "",
+  website_url: "",
 };
 
 export default function Companies() {
