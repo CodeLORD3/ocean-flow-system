@@ -22,6 +22,8 @@ import PortalNotificationDropdown from "./PortalNotificationDropdown";
 import PortalTerms from "./PortalTerms";
 import PortalPrivacy from "./PortalPrivacy";
 import PortalGuidelines from "./PortalGuidelines";
+import PortalCompanyProfile from "./PortalCompanyProfile";
+import PortalCompanies from "./PortalCompanies";
 
 /* ── Tab bar (browser-like) ── */
 function PortalTabBar() {

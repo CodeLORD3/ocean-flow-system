@@ -22,11 +22,13 @@ const PORTAL_TITLES: Record<string, string> = {
   "/portal/terms": "Terms of Use",
   "/portal/privacy": "Privacy Policy",
   "/portal/guidelines": "Investment Guidelines",
+  "/portal/companies": "Companies",
 };
 
 export function getPortalTitle(path: string): string {
   if (PORTAL_TITLES[path]) return PORTAL_TITLES[path];
   if (path.startsWith("/portal/offer/")) return "Offer Detail";
+  if (path.startsWith("/portal/company/")) return "Company Profile";
   return "Page";
 }
 
