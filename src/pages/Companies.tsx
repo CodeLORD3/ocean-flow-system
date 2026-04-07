@@ -119,6 +119,7 @@ export default function Companies() {
         country: form.country,
         industry: form.industry || null,
         description: form.description || null,
+        description_long: form.description_long || null,
         contact_person: form.contact_person || null,
         contact_email: form.contact_email || null,
         iban: form.iban || null,
@@ -126,6 +127,10 @@ export default function Companies() {
         city: form.city || null,
         ticker: form.ticker || null,
         status: form.status,
+        founded_year: form.founded_year ? Number(form.founded_year) : null,
+        employee_count: form.employee_count || null,
+        revenue_range: form.revenue_range || null,
+        website_url: form.website_url || null,
       };
       if (logo_url) payload.logo_url = logo_url;
 
