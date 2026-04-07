@@ -135,19 +135,29 @@ export default function PortalOpportunities() {
     return true;
   });
 
+  const getSortValue = (offer: any, key: SortKey): number => {
+    switch (key) {
+      case "return": return Number(offer.interest_rate) || 0;
+      case "daysToMaturity": {
+        const mat = offer.maturity_date ? parseISO(offer.maturity_date) : null;
+        return mat ? differenceInDays(mat, new Date()) : 99999;
+      }
+      case "duration": {
+        if (offer.tenor_days) return Number(offer.tenor_days);
+        const pd = offer.purchase_date ? parseISO(offer.purchase_date) : null;
+        const md = offer.maturity_date ? parseISO(offer.maturity_date) : null;
+        return pd && md ? differenceInDays(md, pd) : 99999;
+      }
+      case "minInvest": return Number(offer.min_pledge) || 0;
+      default: return 0;
+    }
+  };
+
   const sortedFiltered2 = useMemo(() => {
     if (!sortKey) return filtered;
     return [...filtered].sort((a, b) => {
-      const da = renderOfferData(a);
-      const db = renderOfferData(b);
-      let va: number, vb: number;
-      switch (sortKey) {
-        case "return": va = da.rate; vb = db.rate; break;
-        case "daysToMaturity": va = da.daysToMaturity ?? 99999; vb = db.daysToMaturity ?? 99999; break;
-        case "duration": va = da.tenorDays ?? 99999; vb = db.tenorDays ?? 99999; break;
-        case "minInvest": va = Number(a.min_pledge) || 0; vb = Number(b.min_pledge) || 0; break;
-        default: va = 0; vb = 0;
-      }
+      const va = getSortValue(a, sortKey);
+      const vb = getSortValue(b, sortKey);
       return sortDir === "asc" ? va - vb : vb - va;
     });
   }, [filtered, sortKey, sortDir]);
