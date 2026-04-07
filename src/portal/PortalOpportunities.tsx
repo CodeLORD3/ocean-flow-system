@@ -12,7 +12,7 @@ export default function PortalOpportunities() {
   const { openOfferTab, switchTab } = usePortalTabs();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [minInvestment, setMinInvestment] = useState("");
+  const [minInvestment, setMinInvestment] = useState("all");
   const [returnRange, setReturnRange] = useState<string>("all");
   const [sectorFilter, setSectorFilter] = useState<string>("all");
   const [countryFilter, setCountryFilter] = useState<string>("all");
