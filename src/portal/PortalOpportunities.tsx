@@ -653,7 +653,11 @@ export default function PortalOpportunities() {
 
                   {company && (
                     <p className="text-[10px] text-muted-foreground mb-1.5 flex items-center gap-1">
-                      <CountryFlag country={company.country} size={14} /> {company.name}
+                      <CountryFlag country={company.country} size={14} />
+                      <button
+                        className="hover:text-primary hover:underline transition-colors text-left"
+                        onClick={(e) => { e.stopPropagation(); switchTab(`/portal/company/${company.id}`); }}
+                      >{company.name}</button>
                     </p>
                   )}
 
