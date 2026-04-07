@@ -294,8 +294,28 @@ export default function Companies() {
                 </Button>
               </div>
               <div className="space-y-1 col-span-2">
-                <label className="text-[10px] text-muted-foreground">Description</label>
+                <label className="text-[10px] text-muted-foreground">Short Description (tagline)</label>
                 <Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="text-xs min-h-[60px]" placeholder="Short company description..." />
+              </div>
+              <div className="space-y-1 col-span-2">
+                <label className="text-[10px] text-muted-foreground">Full Description (investor profile page)</label>
+                <Textarea value={form.description_long} onChange={e => setForm({ ...form, description_long: e.target.value })} className="text-xs min-h-[100px]" placeholder="Detailed company description for the investor-facing profile page..." />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">Founded Year</label>
+                <Input type="number" value={form.founded_year} onChange={e => setForm({ ...form, founded_year: e.target.value })} className="h-8 text-xs" placeholder="e.g. 2018" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">Employee Count</label>
+                <Input value={form.employee_count} onChange={e => setForm({ ...form, employee_count: e.target.value })} className="h-8 text-xs" placeholder="e.g. 10–50" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">Revenue Range</label>
+                <Input value={form.revenue_range} onChange={e => setForm({ ...form, revenue_range: e.target.value })} className="h-8 text-xs" placeholder="e.g. 10–50M SEK" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">Website URL</label>
+                <Input value={form.website_url} onChange={e => setForm({ ...form, website_url: e.target.value })} className="h-8 text-xs" placeholder="https://..." />
               </div>
               <div className="flex items-center gap-3">
                 <label className="text-[10px] text-muted-foreground">Status</label>
