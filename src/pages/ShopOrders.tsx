@@ -448,7 +448,10 @@ export default function ShopOrders() {
         <TabsContent value="live">
           <OrderTable
             orders={liveOrders}
-            onSelect={setSelectedOrder}
+            products={products}
+            toast={toast}
+            allowedWeekdays={allowedWeekdays}
+            isDateDisabled={isDateDisabled}
             emptyMsg="Inga aktiva beställningar just nu."
           />
         </TabsContent>
@@ -456,7 +459,10 @@ export default function ShopOrders() {
         <TabsContent value="done">
           <OrderTable
             orders={doneOrders}
-            onSelect={setSelectedOrder}
+            products={products}
+            toast={toast}
+            allowedWeekdays={allowedWeekdays}
+            isDateDisabled={isDateDisabled}
             emptyMsg="Inga levererade eller arkiverade ordrar."
           />
         </TabsContent>
@@ -464,7 +470,10 @@ export default function ShopOrders() {
         <TabsContent value="all">
           <OrderTable
             orders={orders}
-            onSelect={setSelectedOrder}
+            products={products}
+            toast={toast}
+            allowedWeekdays={allowedWeekdays}
+            isDateDisabled={isDateDisabled}
             emptyMsg="Inga beställningar ännu. Klicka &quot;Ny beställning&quot; för att börja."
           />
         </TabsContent>
