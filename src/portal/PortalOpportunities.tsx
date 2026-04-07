@@ -23,6 +23,8 @@ export default function PortalOpportunities() {
   const [viewMode, setViewMode] = useState<"rows" | "cards">("rows");
   const [riskDismissed, setRiskDismissed] = useState(() => sessionStorage.getItem("risk-banner-dismissed") === "true");
   const [ibanBannerDismissed, setIbanBannerDismissed] = useState(() => sessionStorage.getItem("iban-banner-dismissed") === "true");
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
 
