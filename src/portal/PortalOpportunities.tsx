@@ -472,8 +472,8 @@ export default function PortalOpportunities() {
           <table className="w-full text-[10px] min-w-[900px]" style={{ tableLayout: 'auto' }}>
             <thead>
               <tr className="border-b border-border bg-muted/50">
-                <th className="text-left px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Offer</th>
-                <th className="text-left px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Company</th>
+                <th className="text-left px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap min-w-[260px]">Offer</th>
+                <th className="text-left px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap min-w-[180px]">Company</th>
                 <th className="text-left px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Status</th>
                 <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Funding</th>
                 <th className="text-center px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Progress</th>
@@ -508,7 +508,7 @@ export default function PortalOpportunities() {
                         {offer.product_image_url && (
                           <img src={offer.product_image_url} alt="" className="h-5 w-5 object-cover border border-border shrink-0" />
                         )}
-                        <span className="font-semibold text-foreground group-hover:text-mackerel transition-colors line-clamp-1 max-w-[180px]">
+                        <span className="font-semibold text-foreground group-hover:text-mackerel transition-colors line-clamp-1 max-w-[240px]">
                           {offer.title}
                         </span>
                         {batchMonth && (
@@ -522,7 +522,7 @@ export default function PortalOpportunities() {
                       {company ? (
                         <div className="flex items-center gap-1.5">
                           <CountryFlag country={company.country} size={12} />
-                          <span className="text-muted-foreground line-clamp-1 max-w-[120px]">{company.name}</span>
+                          <span className="text-muted-foreground line-clamp-1 max-w-[160px]">{company.name}</span>
                         </div>
                       ) : (
                         <span className="text-muted-foreground">—</span>
