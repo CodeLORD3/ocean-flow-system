@@ -12,7 +12,7 @@ export default function PortalOpportunities() {
   const { openOfferTab, switchTab } = usePortalTabs();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [minInvestment, setMinInvestment] = useState("");
+  const [minInvestment, setMinInvestment] = useState("all");
   const [returnRange, setReturnRange] = useState<string>("all");
   const [sectorFilter, setSectorFilter] = useState<string>("all");
   const [countryFilter, setCountryFilter] = useState<string>("all");
@@ -35,7 +35,7 @@ export default function PortalOpportunities() {
     return () => document.removeEventListener("mousedown", handler);
   }, [mobileFiltersOpen]);
 
-  const hasActiveFilters = statusFilter !== "all" || minInvestment !== "" || returnRange !== "all" || sectorFilter !== "all" || countryFilter !== "all" || currencyFilter !== "all";
+  const hasActiveFilters = statusFilter !== "all" || minInvestment !== "all" || returnRange !== "all" || sectorFilter !== "all" || countryFilter !== "all" || currencyFilter !== "all";
 
   const { data: offers = [], isLoading } = useQuery({
     queryKey: ["portal-all-offers"],
@@ -110,7 +110,13 @@ export default function PortalOpportunities() {
     if (search && !o.title.toLowerCase().includes(search.toLowerCase())) return false;
     if (statusFilter === "open" && o.status !== "Open") return false;
     if (statusFilter === "funded" && o.status !== "Funded") return false;
-    if (minInvestment && Number(o.min_pledge) > Number(minInvestment)) return false;
+    if (minInvestment !== "all") {
+      const min = Number(o.min_pledge) || 0;
+      if (minInvestment === "<50000" && min >= 50000) return false;
+      if (minInvestment === "50000-100000" && (min < 50000 || min > 100000)) return false;
+      if (minInvestment === "100000-200000" && (min < 100000 || min > 200000)) return false;
+      if (minInvestment === "200000+" && min < 200000) return false;
+    }
     const rate = Number(o.interest_rate);
     if (returnRange === "0-5" && (rate < 0 || rate > 5)) return false;
     if (returnRange === "5-10" && (rate < 5 || rate > 10)) return false;
@@ -244,7 +250,13 @@ export default function PortalOpportunities() {
             <option value="open">Open</option>
             <option value="funded">Funded</option>
           </select>
-          <input type="number" value={minInvestment} onChange={(e) => setMinInvestment(e.target.value)} placeholder="Min. invest" className="h-7 w-24 bg-muted/50 border border-border px-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+          <select value={minInvestment} onChange={(e) => setMinInvestment(e.target.value)} className="h-7 bg-muted/50 border border-border px-1.5 text-xs text-foreground focus:border-primary focus:outline-none min-w-0">
+            <option value="all">Min. invest</option>
+            <option value="<50000">&lt; 50 000</option>
+            <option value="50000-100000">50 000–100 000</option>
+            <option value="100000-200000">100 000–200 000</option>
+            <option value="200000+">200 000+</option>
+          </select>
           <select value={returnRange} onChange={(e) => setReturnRange(e.target.value)} className="h-7 bg-muted/50 border border-border px-1.5 text-xs text-foreground focus:border-primary focus:outline-none min-w-0">
             <option value="all">Return</option>
             <option value="0-5">0–5%</option>
@@ -293,7 +305,7 @@ export default function PortalOpportunities() {
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-semibold text-foreground">Filters</span>
                 {hasActiveFilters && (
-                  <button onClick={() => { setStatusFilter("all"); setMinInvestment(""); setReturnRange("all"); setSectorFilter("all"); setCountryFilter("all"); setCurrencyFilter("all"); }} className="text-[10px] text-primary hover:underline">Clear all</button>
+                  <button onClick={() => { setStatusFilter("all"); setMinInvestment("all"); setReturnRange("all"); setSectorFilter("all"); setCountryFilter("all"); setCurrencyFilter("all"); }} className="text-[10px] text-primary hover:underline">Clear all</button>
                 )}
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -307,7 +319,13 @@ export default function PortalOpportunities() {
                 </div>
                 <div>
                   <label className="text-[10px] text-muted-foreground mb-0.5 block">Min. invest</label>
-                  <input type="number" value={minInvestment} onChange={(e) => setMinInvestment(e.target.value)} placeholder="Amount" className="w-full h-7 bg-muted/50 border border-border px-2 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+                  <select value={minInvestment} onChange={(e) => setMinInvestment(e.target.value)} className="w-full h-7 bg-muted/50 border border-border px-2 text-xs text-foreground focus:border-primary focus:outline-none">
+                    <option value="all">Any</option>
+                    <option value="<50000">&lt; 50 000</option>
+                    <option value="50000-100000">50 000–100 000</option>
+                    <option value="100000-200000">100 000–200 000</option>
+                    <option value="200000+">200 000+</option>
+                  </select>
                 </div>
                 <div>
                   <label className="text-[10px] text-muted-foreground mb-0.5 block">Return</label>
