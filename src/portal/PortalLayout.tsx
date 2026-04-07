@@ -22,6 +22,8 @@ import PortalNotificationDropdown from "./PortalNotificationDropdown";
 import PortalTerms from "./PortalTerms";
 import PortalPrivacy from "./PortalPrivacy";
 import PortalGuidelines from "./PortalGuidelines";
+import PortalCompanyProfile from "./PortalCompanyProfile";
+import PortalCompanies from "./PortalCompanies";
 
 /* ── Tab bar (browser-like) ── */
 function PortalTabBar() {
@@ -77,9 +79,14 @@ function PortalKeepAlive() {
       else if (tab.path === "/portal/terms") component = <PortalTerms />;
       else if (tab.path === "/portal/privacy") component = <PortalPrivacy />;
       else if (tab.path === "/portal/guidelines") component = <PortalGuidelines />;
+      else if (tab.path === "/portal/companies") component = <PortalCompanies />;
       else if (tab.path.startsWith("/portal/offer/")) {
         const offerId = tab.path.replace("/portal/offer/", "");
         component = <PortalOfferDetail key={tab.path} overrideId={offerId} />;
+      }
+      else if (tab.path.startsWith("/portal/company/")) {
+        const cId = tab.path.replace("/portal/company/", "");
+        component = <PortalCompanyProfile key={tab.path} companyId={cId} />;
       }
       if (!component) return null;
       return (
@@ -382,6 +389,7 @@ function PortalInner() {
               <div className="text-[10px] font-semibold text-mackerel-gold uppercase tracking-wider">Resources</div>
               <button onClick={() => switchTab("/portal/documents")} className="block text-[11px] text-white/60 hover:text-mackerel transition-colors">Documents</button>
               <button onClick={() => switchTab("/portal/how-it-works")} className="block text-[11px] text-white/60 hover:text-mackerel transition-colors">How It Works</button>
+              <button onClick={() => switchTab("/portal/companies")} className="block text-[11px] text-white/60 hover:text-mackerel transition-colors">Companies</button>
             </div>
             <div className="space-y-1.5">
               <div className="text-[10px] font-semibold text-mackerel-gold uppercase tracking-wider">Company</div>

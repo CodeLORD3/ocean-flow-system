@@ -121,14 +121,19 @@ export type Database = {
           country: string
           created_at: string
           description: string | null
+          description_long: string | null
+          employee_count: string | null
+          founded_year: number | null
           iban: string | null
           id: string
           industry: string | null
           logo_url: string | null
           name: string
+          revenue_range: string | null
           status: string
           ticker: string | null
           updated_at: string
+          website_url: string | null
         }
         Insert: {
           address?: string | null
@@ -138,14 +143,19 @@ export type Database = {
           country?: string
           created_at?: string
           description?: string | null
+          description_long?: string | null
+          employee_count?: string | null
+          founded_year?: number | null
           iban?: string | null
           id?: string
           industry?: string | null
           logo_url?: string | null
           name: string
+          revenue_range?: string | null
           status?: string
           ticker?: string | null
           updated_at?: string
+          website_url?: string | null
         }
         Update: {
           address?: string | null
@@ -155,16 +165,62 @@ export type Database = {
           country?: string
           created_at?: string
           description?: string | null
+          description_long?: string | null
+          employee_count?: string | null
+          founded_year?: number | null
           iban?: string | null
           id?: string
           industry?: string | null
           logo_url?: string | null
           name?: string
+          revenue_range?: string | null
           status?: string
           ticker?: string | null
           updated_at?: string
+          website_url?: string | null
         }
         Relationships: []
+      }
+      company_documents: {
+        Row: {
+          company_id: string
+          document_type: string | null
+          file_name: string
+          file_size_bytes: number | null
+          file_url: string
+          id: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          company_id: string
+          document_type?: string | null
+          file_name: string
+          file_size_bytes?: number | null
+          file_url: string
+          id?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          company_id?: string
+          document_type?: string | null
+          file_name?: string
+          file_size_bytes?: number | null
+          file_url?: string
+          id?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_documents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contact_settings: {
         Row: {

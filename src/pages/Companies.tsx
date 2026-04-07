@@ -50,6 +50,7 @@ const EMPTY_FORM = {
   country: "Sweden",
   industry: "",
   description: "",
+  description_long: "",
   contact_person: "",
   contact_email: "",
   iban: "",
@@ -57,6 +58,10 @@ const EMPTY_FORM = {
   city: "",
   ticker: "",
   status: "Active",
+  founded_year: "",
+  employee_count: "",
+  revenue_range: "",
+  website_url: "",
 };
 
 export default function Companies() {
@@ -114,6 +119,7 @@ export default function Companies() {
         country: form.country,
         industry: form.industry || null,
         description: form.description || null,
+        description_long: form.description_long || null,
         contact_person: form.contact_person || null,
         contact_email: form.contact_email || null,
         iban: form.iban || null,
@@ -121,6 +127,10 @@ export default function Companies() {
         city: form.city || null,
         ticker: form.ticker || null,
         status: form.status,
+        founded_year: form.founded_year ? Number(form.founded_year) : null,
+        employee_count: form.employee_count || null,
+        revenue_range: form.revenue_range || null,
+        website_url: form.website_url || null,
       };
       if (logo_url) payload.logo_url = logo_url;
 
@@ -150,6 +160,7 @@ export default function Companies() {
       country: company.country || "Sweden",
       industry: company.industry || "",
       description: company.description || "",
+      description_long: company.description_long || "",
       contact_person: company.contact_person || "",
       contact_email: company.contact_email || "",
       iban: company.iban || "",
@@ -157,6 +168,10 @@ export default function Companies() {
       city: company.city || "",
       ticker: company.ticker || "",
       status: company.status || "Active",
+      founded_year: company.founded_year ? String(company.founded_year) : "",
+      employee_count: company.employee_count || "",
+      revenue_range: company.revenue_range || "",
+      website_url: company.website_url || "",
     });
     setLogoFile(null);
     setView("edit");
@@ -206,6 +221,10 @@ export default function Companies() {
               <div><span className="text-muted-foreground">City:</span> {company.city || "—"}</div>
               <div><span className="text-muted-foreground">Offers:</span> {(offerCounts as any)[company.id] || 0}</div>
               <div><span className="text-muted-foreground">Added:</span> {new Date(company.created_at).toLocaleDateString()}</div>
+              <div><span className="text-muted-foreground">Founded:</span> {company.founded_year || "—"}</div>
+              <div><span className="text-muted-foreground">Employees:</span> {company.employee_count || "—"}</div>
+              <div><span className="text-muted-foreground">Revenue:</span> {company.revenue_range || "—"}</div>
+              <div><span className="text-muted-foreground">Website:</span> {company.website_url ? <a href={company.website_url} target="_blank" rel="noreferrer" className="text-primary hover:underline">{company.website_url}</a> : "—"}</div>
             </div>
           </CardContent>
         </Card>
@@ -279,8 +298,28 @@ export default function Companies() {
                 </Button>
               </div>
               <div className="space-y-1 col-span-2">
-                <label className="text-[10px] text-muted-foreground">Description</label>
+                <label className="text-[10px] text-muted-foreground">Short Description (tagline)</label>
                 <Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="text-xs min-h-[60px]" placeholder="Short company description..." />
+              </div>
+              <div className="space-y-1 col-span-2">
+                <label className="text-[10px] text-muted-foreground">Full Description (investor profile page)</label>
+                <Textarea value={form.description_long} onChange={e => setForm({ ...form, description_long: e.target.value })} className="text-xs min-h-[100px]" placeholder="Detailed company description for the investor-facing profile page..." />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">Founded Year</label>
+                <Input type="number" value={form.founded_year} onChange={e => setForm({ ...form, founded_year: e.target.value })} className="h-8 text-xs" placeholder="e.g. 2018" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">Employee Count</label>
+                <Input value={form.employee_count} onChange={e => setForm({ ...form, employee_count: e.target.value })} className="h-8 text-xs" placeholder="e.g. 10–50" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">Revenue Range</label>
+                <Input value={form.revenue_range} onChange={e => setForm({ ...form, revenue_range: e.target.value })} className="h-8 text-xs" placeholder="e.g. 10–50M SEK" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground">Website URL</label>
+                <Input value={form.website_url} onChange={e => setForm({ ...form, website_url: e.target.value })} className="h-8 text-xs" placeholder="https://..." />
               </div>
               <div className="flex items-center gap-3">
                 <label className="text-[10px] text-muted-foreground">Status</label>

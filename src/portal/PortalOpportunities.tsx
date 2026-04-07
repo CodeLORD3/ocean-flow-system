@@ -443,7 +443,11 @@ export default function PortalOpportunities() {
                     <h3 className="text-xs font-semibold text-foreground leading-snug">{offer.title}</h3>
                     {company && (
                       <p className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1">
-                        <CountryFlag country={company.country} size={12} /> {company.name}
+                        <CountryFlag country={company.country} size={12} />
+                        <button
+                          className="hover:text-primary hover:underline transition-colors text-left"
+                          onClick={(e) => { e.stopPropagation(); switchTab(`/portal/company/${company.id}`); }}
+                        >{company.name}</button>
                       </p>
                     )}
                   </div>
@@ -522,7 +526,10 @@ export default function PortalOpportunities() {
                       {company ? (
                         <div className="flex items-center gap-1.5">
                           <CountryFlag country={company.country} size={12} />
-                          <span className="text-muted-foreground line-clamp-1 max-w-[160px]">{company.name}</span>
+                          <button
+                            className="text-muted-foreground line-clamp-1 max-w-[160px] hover:text-primary hover:underline transition-colors text-left"
+                            onClick={(e) => { e.stopPropagation(); switchTab(`/portal/company/${company.id}`); }}
+                          >{company.name}</button>
                         </div>
                       ) : (
                         <span className="text-muted-foreground">—</span>
@@ -621,10 +628,13 @@ export default function PortalOpportunities() {
                   )}
                   {company && (
                     <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-white/90 border border-border text-[9px] font-medium text-muted-foreground rounded shadow-sm">
-                      <div className="flex items-center gap-1">
+                      <button
+                        className="flex items-center gap-1 hover:text-primary transition-colors"
+                        onClick={(e) => { e.stopPropagation(); switchTab(`/portal/company/${company.id}`); }}
+                      >
                         <CountryFlag country={company.country} size={10} />
                         {company.name}
-                      </div>
+                      </button>
                     </div>
                   )}
                 </div>
@@ -650,7 +660,11 @@ export default function PortalOpportunities() {
 
                   {company && (
                     <p className="text-[10px] text-muted-foreground mb-1.5 flex items-center gap-1">
-                      <CountryFlag country={company.country} size={14} /> {company.name}
+                      <CountryFlag country={company.country} size={14} />
+                      <button
+                        className="hover:text-primary hover:underline transition-colors text-left"
+                        onClick={(e) => { e.stopPropagation(); switchTab(`/portal/company/${company.id}`); }}
+                      >{company.name}</button>
                     </p>
                   )}
 
