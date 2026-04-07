@@ -23,6 +23,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   const [amountTouched, setAmountTouched] = useState(false);
   const [successRef, setSuccessRef] = useState("");
   const [calcAmount, setCalcAmount] = useState("");
+  const [descExpanded, setDescExpanded] = useState(false);
 
   // Auth user + profile
   const { data: authUser } = useQuery({
