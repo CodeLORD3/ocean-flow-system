@@ -15,6 +15,7 @@ export default function PortalPortfolio() {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<"active" | "history">("active");
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [displayCurrency, setDisplayCurrency] = useState<string | null>(null); // null until profile loads
   type SortKey = "name" | "amount" | "rate" | "payout" | "startDate" | "maturity" | "daysToMaturity" | "status";
   const [sortKey, setSortKey] = useState<SortKey>("maturity");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
