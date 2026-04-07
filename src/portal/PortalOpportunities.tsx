@@ -621,17 +621,20 @@ export default function PortalOpportunities() {
                       <span className="text-muted-foreground">Funding</span>
                       <span className="text-foreground font-medium font-mono">{funded.toLocaleString()} / {target.toLocaleString()} {cur}</span>
                     </div>
-                    <div className="h-2 bg-muted overflow-hidden flex">
-                      <div className="h-full bg-mackerel transition-all" style={{ width: `${confirmedPct}%` }} />
-                      {pendingPct > 0 && (
-                        <div className="h-full bg-mackerel/30 transition-all" style={{ width: `${pendingPct}%` }} />
-                      )}
-                    </div>
-                    {pendingPct > 0 && (
-                      <div className="text-[9px] text-muted-foreground">
-                        {confirmedPct.toFixed(0)}% confirmed · {pendingPct.toFixed(0)}% pending
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-2 bg-muted overflow-hidden flex flex-1">
+                        <div className="h-full bg-mackerel transition-all" style={{ width: `${confirmedPct}%` }} />
+                        {pendingPct > 0 && (
+                          <div className="h-full bg-mackerel/30 transition-all" style={{ width: `${pendingPct}%` }} />
+                        )}
                       </div>
-                    )}
+                      <span className="text-[10px] font-semibold text-foreground shrink-0">{(confirmedPct + pendingPct).toFixed(0)}%</span>
+                    </div>
+                    <div className="text-[9px] text-muted-foreground">
+                      {pendingPct > 0
+                        ? `${confirmedPct.toFixed(0)}% confirmed · ${pendingPct.toFixed(0)}% pending`
+                        : `${confirmedPct.toFixed(0)}% confirmed`}
+                    </div>
                   </div>
 
                   {/* Timeline info */}
