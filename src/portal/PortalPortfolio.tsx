@@ -240,7 +240,25 @@ export default function PortalPortfolio() {
         </div>
       ) : (
         <>
-          {/* Summary cards — change based on tab */}
+          {/* Currency toggle + summary cards */}
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-1">
+              {["SEK", "CHF", "EUR", "USD"].map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setDisplayCurrency(c)}
+                  className={`px-2 py-0.5 text-[10px] font-semibold border transition-colors ${
+                    activeCur === c
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-muted/50 text-muted-foreground border-border hover:border-primary/40"
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+            <span className="text-[9px] text-muted-foreground italic">Values converted at approximate FX rates</span>
+          </div>
           <div className={`grid gap-3 ${currentStats.length <= 4 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2 sm:grid-cols-5"}`}>
             {currentStats.map((stat) => (
               <div key={stat.label} className="border border-border bg-white p-3">
