@@ -79,9 +79,14 @@ function PortalKeepAlive() {
       else if (tab.path === "/portal/terms") component = <PortalTerms />;
       else if (tab.path === "/portal/privacy") component = <PortalPrivacy />;
       else if (tab.path === "/portal/guidelines") component = <PortalGuidelines />;
+      else if (tab.path === "/portal/companies") component = <PortalCompanies />;
       else if (tab.path.startsWith("/portal/offer/")) {
         const offerId = tab.path.replace("/portal/offer/", "");
         component = <PortalOfferDetail key={tab.path} overrideId={offerId} />;
+      }
+      else if (tab.path.startsWith("/portal/company/")) {
+        const cId = tab.path.replace("/portal/company/", "");
+        component = <PortalCompanyProfile key={tab.path} companyId={cId} />;
       }
       if (!component) return null;
       return (
