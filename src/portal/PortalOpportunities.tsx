@@ -299,7 +299,7 @@ export default function PortalOpportunities() {
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-semibold text-foreground">Filters</span>
                 {hasActiveFilters && (
-                  <button onClick={() => { setStatusFilter("all"); setMinInvestment(""); setReturnRange("all"); setSectorFilter("all"); setCountryFilter("all"); setCurrencyFilter("all"); }} className="text-[10px] text-primary hover:underline">Clear all</button>
+                  <button onClick={() => { setStatusFilter("all"); setMinInvestment("all"); setReturnRange("all"); setSectorFilter("all"); setCountryFilter("all"); setCurrencyFilter("all"); }} className="text-[10px] text-primary hover:underline">Clear all</button>
                 )}
               </div>
               <div className="grid grid-cols-2 gap-2">
