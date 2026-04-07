@@ -274,7 +274,14 @@ export default function PortalArchive() {
                     <div className="flex flex-col items-center text-center gap-2">
                       <Archive className="h-8 w-8 text-muted-foreground/50" />
                       <h3 className="text-sm font-semibold text-foreground">No completed deals yet</h3>
-                      <p className="text-xs text-muted-foreground max-w-xs">Deals that have reached maturity and been fully paid out will appear here.</p>
+                      <p className="text-xs text-muted-foreground max-w-sm leading-relaxed">
+                        Once a deal you have invested in reaches its maturity date and is fully paid out, it will be moved here as a permanent record of your completed investments.
+                      </p>
+                      {earliestPayoutDate && (
+                        <p className="text-[11px] text-primary font-medium mt-1">
+                          Your first payout is expected on {format(earliestPayoutDate, "d MMM yyyy")}.
+                        </p>
+                      )}
                       <button
                         onClick={() => switchTab("/portal")}
                         className="mt-2 px-4 py-1.5 border border-primary text-primary text-[11px] font-semibold hover:bg-primary hover:text-primary-foreground transition-colors flex items-center gap-1"
