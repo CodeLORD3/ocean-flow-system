@@ -51,6 +51,33 @@ export default function PortalArchive() {
     },
   });
 
+  // Fetch user's active pledges to find earliest payout date for empty state hint
+  const { data: activePledges = [] } = useQuery({
+    queryKey: ["portal-archive-active-pledges"],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return [];
+      const { data, error } = await supabase
+        .from("pledges")
+        .select("*, trade_offers(maturity_date)")
+        .eq("user_id", session.user.id)
+        .in("status", ["Active", "Pending Payment"]);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const earliestPayoutDate = useMemo(() => {
+    const dates = activePledges
+      .map((p: any) => p.trade_offers?.maturity_date)
+      .filter(Boolean)
+      .map((d: string) => parseISO(d))
+      .filter((d: Date) => isAfter(d, new Date()));
+    if (dates.length === 0) return null;
+    dates.sort((a: Date, b: Date) => a.getTime() - b.getTime());
+    return dates[0];
+  }, [activePledges]);
+
   const filteredAndSorted = useMemo(() => {
     let list = [...offers];
 
