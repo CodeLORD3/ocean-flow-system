@@ -244,7 +244,13 @@ export default function PortalOpportunities() {
             <option value="open">Open</option>
             <option value="funded">Funded</option>
           </select>
-          <input type="number" value={minInvestment} onChange={(e) => setMinInvestment(e.target.value)} placeholder="Min. invest" className="h-7 w-24 bg-muted/50 border border-border px-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
+          <select value={minInvestment} onChange={(e) => setMinInvestment(e.target.value)} className="h-7 bg-muted/50 border border-border px-1.5 text-xs text-foreground focus:border-primary focus:outline-none min-w-0">
+            <option value="all">Min. invest</option>
+            <option value="<50000">&lt; 50 000</option>
+            <option value="50000-100000">50 000–100 000</option>
+            <option value="100000-200000">100 000–200 000</option>
+            <option value="200000+">200 000+</option>
+          </select>
           <select value={returnRange} onChange={(e) => setReturnRange(e.target.value)} className="h-7 bg-muted/50 border border-border px-1.5 text-xs text-foreground focus:border-primary focus:outline-none min-w-0">
             <option value="all">Return</option>
             <option value="0-5">0–5%</option>
