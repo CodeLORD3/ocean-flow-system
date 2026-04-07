@@ -246,14 +246,29 @@ export default function InvestmentFlowDiagram({ pledges, baseCurrency = "SEK" }:
               transition={{ duration: 1.2, ease: "easeOut" }}
             />
 
-            {milestones.map((node, i) => {
-              const left = getLeftPercent(node.date);
+            {/* Pre-compute positions to detect collisions */}
+            {(() => {
+              const positions = milestones.map((node) => getLeftPercent(node.date));
+              const COLLISION_THRESHOLD = 6; // percent
+              // For each node, check if it collides with any neighbor
+              const collisionFlags = milestones.map((node, i) => {
+                if (node.type === "current") return false;
+                // Check if a "current" node is within threshold
+                return milestones.some((other, j) => {
+                  if (i === j) return false;
+                  if (other.type !== "current" && node.type !== "current") return false;
+                  return Math.abs(positions[i] - positions[j]) < COLLISION_THRESHOLD;
+                });
+              });
+              return milestones.map((node, i) => {
+              const left = positions[i];
               const style = nodeStyles[node.status];
               const isAbove = i % 2 === 0;
               const isCurrent = node.type === "current";
+              const hideLabel = collisionFlags[i]; // hide date label if colliding with NOW
               const displayLabel = isCurrent
                 ? "NOW"
-                : format(node.date, "d MMM yyyy");
+                : hideLabel ? "" : format(node.date, "d MMM yyyy");
               const displayAmount = isCurrent
                 ? `~${node.totalAmount.toLocaleString()} ${baseCurrency}`
                 : node.items.length === 1
