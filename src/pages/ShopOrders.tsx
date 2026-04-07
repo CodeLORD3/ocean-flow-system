@@ -657,21 +657,6 @@ export default function ShopOrders() {
         </Card>
       )}
 
-      {/* Order detail dialog with edit capability */}
-      <Dialog open={!!selectedOrder} onOpenChange={open => { if (!open) setSelectedOrder(null); }}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-          {selectedOrder && (
-            <OrderDetailWithEdit
-              order={selectedOrder}
-              products={products}
-              onClose={() => setSelectedOrder(null)}
-              toast={toast}
-              allowedWeekdays={allowedWeekdays}
-              isDateDisabled={isDateDisabled}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </motion.div>
   );
 }
