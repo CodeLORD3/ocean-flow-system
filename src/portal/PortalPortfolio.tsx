@@ -134,22 +134,19 @@ export default function PortalPortfolio() {
 
   const currentList = sortPledges(tab === "active" ? activePledges : historyPledges);
 
-  // Helper: group amounts by currency
-  const sumByCurrency = (list: any[], valueFn: (p: any) => number) => {
-    const byCur: Record<string, number> = {};
-    list.forEach((p: any) => {
+  // Helper: sum amounts converted to display currency
+  const sumConverted = (list: any[], valueFn: (p: any) => number) => {
+    return list.reduce((total: number, p: any) => {
       const offer = p.trade_offers;
       const company = offer?.company_id ? companyMap[offer.company_id] : null;
       const cur = getCurrency(company?.country);
-      byCur[cur] = (byCur[cur] || 0) + valueFn(p);
-    });
-    return byCur;
+      return total + convertToDisplay(valueFn(p), cur);
+    }, 0);
   };
 
-  const fmtByCurrency = (byCur: Record<string, number>, prefix = "", opts?: Intl.NumberFormatOptions) => {
-    const entries = Object.entries(byCur).filter(([, v]) => v !== 0);
-    if (entries.length === 0) return "—";
-    return entries.map(([cur, val]) => `${prefix}${Math.round(val).toLocaleString()} ${cur}`).join(" + ");
+  const fmtConverted = (value: number, prefix = "") => {
+    if (value === 0) return "—";
+    return `${prefix}${Math.round(value).toLocaleString()} ${activeCur}`;
   };
 
   // Active tab stats — split pending vs invested
