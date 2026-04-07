@@ -676,7 +676,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                     type="button"
                     onClick={() => {
                       navigator.clipboard.writeText(window.location.href);
-                      toast({ title: "Link copied!", description: "Deal URL copied to clipboard." });
+                      toast.success("Link copied!");
                     }}
                     className="shrink-0 h-6 w-6 flex items-center justify-center border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                     title="Copy link"
