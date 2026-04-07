@@ -599,6 +599,7 @@ export default function PortalOpportunities() {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {/* CARD VIEW */}
