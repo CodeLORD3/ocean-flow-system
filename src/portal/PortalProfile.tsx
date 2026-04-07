@@ -546,30 +546,167 @@ export default function PortalProfile() {
         <div className="flex gap-3 flex-wrap">
           <button
             className="px-4 py-2 border border-border rounded text-sm font-medium text-foreground hover:bg-muted/50 transition-colors flex items-center gap-1.5"
-            onClick={async () => {
-              const { error } = await supabase.auth.resetPasswordForEmail(user.email, { redirectTo: `${window.location.origin}/portal/reset-password` });
-              if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-              else toast({ title: "Email sent", description: "Check your inbox for a password reset link." });
-            }}
+            onClick={() => { setPwForm({ current: "", new: "", confirm: "" }); setPwModalOpen(true); }}
           >
             <Shield className="h-3.5 w-3.5" />
             Change password
           </button>
           <button
             className="px-4 py-2 border border-border rounded text-sm font-medium text-foreground hover:bg-muted/50 transition-colors flex items-center gap-1.5"
-            onClick={async () => {
-              const newEmail = window.prompt("Enter your new email address:");
-              if (!newEmail || !newEmail.includes("@")) return;
-              const { error } = await supabase.auth.updateUser({ email: newEmail });
-              if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-              else toast({ title: "Confirmation sent", description: "Check both your old and new email to confirm the change." });
-            }}
+            onClick={() => { setEmailForm({ newEmail: "", password: "" }); setEmailModalOpen(true); }}
           >
             <Mail className="h-3.5 w-3.5" />
             Update email
           </button>
         </div>
       </div>
+
+      {/* Change Password Modal */}
+      <Dialog open={pwModalOpen} onOpenChange={setPwModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base"><Shield className="h-4 w-4 text-primary" /> Change Password</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div>
+              <label className="text-xs text-muted-foreground font-medium mb-1 block">Current password</label>
+              <div className="relative">
+                <input
+                  type={pwShowCurrent ? "text" : "password"}
+                  value={pwForm.current}
+                  onChange={(e) => setPwForm(f => ({ ...f, current: e.target.value }))}
+                  className="w-full px-3 py-2 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 pr-9"
+                  placeholder="Enter current password"
+                />
+                <button type="button" onClick={() => setPwShowCurrent(v => !v)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  {pwShowCurrent ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground font-medium mb-1 block">New password</label>
+              <div className="relative">
+                <input
+                  type={pwShowNew ? "text" : "password"}
+                  value={pwForm.new}
+                  onChange={(e) => setPwForm(f => ({ ...f, new: e.target.value }))}
+                  className="w-full px-3 py-2 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 pr-9"
+                  placeholder="Enter new password"
+                />
+                <button type="button" onClick={() => setPwShowNew(v => !v)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  {pwShowNew ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground font-medium mb-1 block">Confirm new password</label>
+              <input
+                type="password"
+                value={pwForm.confirm}
+                onChange={(e) => setPwForm(f => ({ ...f, confirm: e.target.value }))}
+                className="w-full px-3 py-2 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                placeholder="Re-enter new password"
+              />
+              {pwForm.confirm && pwForm.new !== pwForm.confirm && (
+                <p className="text-[11px] text-destructive mt-1">Passwords do not match.</p>
+              )}
+            </div>
+            {pwForm.new && pwForm.new.length < 6 && (
+              <p className="text-[11px] text-destructive">Password must be at least 6 characters.</p>
+            )}
+          </div>
+          <DialogFooter>
+            <button onClick={() => setPwModalOpen(false)} className="px-4 py-2 border border-border rounded text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
+            <button
+              disabled={pwSaving || !pwForm.current || pwForm.new.length < 6 || pwForm.new !== pwForm.confirm}
+              onClick={async () => {
+                setPwSaving(true);
+                // Verify current password by re-signing in
+                const { error: signInError } = await supabase.auth.signInWithPassword({ email: user.email, password: pwForm.current });
+                if (signInError) {
+                  toast({ title: "Incorrect password", description: "Your current password is incorrect.", variant: "destructive" });
+                  setPwSaving(false);
+                  return;
+                }
+                const { error } = await supabase.auth.updateUser({ password: pwForm.new });
+                if (error) {
+                  toast({ title: "Error", description: error.message, variant: "destructive" });
+                } else {
+                  toast({ title: "Password updated", description: "Your password has been changed successfully." });
+                  setPwModalOpen(false);
+                }
+                setPwSaving(false);
+              }}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+            >
+              {pwSaving ? "Saving…" : "Update Password"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Update Email Modal */}
+      <Dialog open={emailModalOpen} onOpenChange={setEmailModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base"><Mail className="h-4 w-4 text-primary" /> Update Email</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div>
+              <label className="text-xs text-muted-foreground font-medium mb-1 block">Current email</label>
+              <input type="text" value={user?.email || ""} disabled className="w-full px-3 py-2 border border-border rounded text-sm bg-muted/50 text-muted-foreground" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground font-medium mb-1 block">New email address</label>
+              <input
+                type="email"
+                value={emailForm.newEmail}
+                onChange={(e) => setEmailForm(f => ({ ...f, newEmail: e.target.value }))}
+                className="w-full px-3 py-2 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                placeholder="Enter new email"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground font-medium mb-1 block">Current password (for verification)</label>
+              <input
+                type="password"
+                value={emailForm.password}
+                onChange={(e) => setEmailForm(f => ({ ...f, password: e.target.value }))}
+                className="w-full px-3 py-2 border border-border rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                placeholder="Enter your password"
+              />
+            </div>
+            <p className="text-[11px] text-muted-foreground">A confirmation email will be sent to both your current and new email addresses.</p>
+          </div>
+          <DialogFooter>
+            <button onClick={() => setEmailModalOpen(false)} className="px-4 py-2 border border-border rounded text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Cancel</button>
+            <button
+              disabled={emailSaving || !emailForm.newEmail.includes("@") || !emailForm.password}
+              onClick={async () => {
+                setEmailSaving(true);
+                // Verify password first
+                const { error: signInError } = await supabase.auth.signInWithPassword({ email: user.email, password: emailForm.password });
+                if (signInError) {
+                  toast({ title: "Incorrect password", description: "Please enter your correct password.", variant: "destructive" });
+                  setEmailSaving(false);
+                  return;
+                }
+                const { error } = await supabase.auth.updateUser({ email: emailForm.newEmail });
+                if (error) {
+                  toast({ title: "Error", description: error.message, variant: "destructive" });
+                } else {
+                  toast({ title: "Confirmation sent", description: "Check both your old and new email to confirm the change." });
+                  setEmailModalOpen(false);
+                }
+                setEmailSaving(false);
+              }}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+            >
+              {emailSaving ? "Sending…" : "Update Email"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Email Notification Preferences */}
       <div className="bg-white border border-border rounded-lg p-6">
