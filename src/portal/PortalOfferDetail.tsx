@@ -23,6 +23,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
   const [amountTouched, setAmountTouched] = useState(false);
   const [successRef, setSuccessRef] = useState("");
   const [calcAmount, setCalcAmount] = useState("");
+  const [descExpanded, setDescExpanded] = useState(false);
 
   // Auth user + profile
   const { data: authUser } = useQuery({
@@ -670,7 +671,18 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                   </span>
                 </div>
                 {offer.description && (
-                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{offer.description}</p>
+                  <div>
+                    <p className={`text-xs text-muted-foreground leading-relaxed ${descExpanded ? '' : 'line-clamp-2'}`}>{offer.description}</p>
+                    {offer.description.length > 120 && (
+                      <button
+                        type="button"
+                        onClick={() => setDescExpanded(!descExpanded)}
+                        className="text-[11px] text-primary hover:underline mt-0.5 font-medium"
+                      >
+                        {descExpanded ? 'Show less' : 'Read more'}
+                      </button>
+                    )}
+                  </div>
                 )}
                 {company && (
                   <div className="flex items-center gap-2 mt-2">
