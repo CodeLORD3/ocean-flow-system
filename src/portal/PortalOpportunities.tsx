@@ -35,7 +35,7 @@ export default function PortalOpportunities() {
     return () => document.removeEventListener("mousedown", handler);
   }, [mobileFiltersOpen]);
 
-  const hasActiveFilters = statusFilter !== "all" || minInvestment !== "" || returnRange !== "all" || sectorFilter !== "all" || countryFilter !== "all" || currencyFilter !== "all";
+  const hasActiveFilters = statusFilter !== "all" || minInvestment !== "all" || returnRange !== "all" || sectorFilter !== "all" || countryFilter !== "all" || currencyFilter !== "all";
 
   const { data: offers = [], isLoading } = useQuery({
     queryKey: ["portal-all-offers"],
