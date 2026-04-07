@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock, Calculator, FileText, AlertTriangle, TrendingUp, Shield, Package, CheckCircle, Briefcase, Building2, ArrowUpRight, ArrowRight, ArrowLeft, CreditCard, Info, Copy, Download, Calendar } from "lucide-react";
+import { Clock, Calculator, FileText, AlertTriangle, TrendingUp, Shield, Package, CheckCircle, Briefcase, Building2, ArrowUpRight, ArrowRight, ArrowLeft, CreditCard, Info, Copy, Download, Calendar, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
 import { parseISO, format, addBusinessDays } from "date-fns";
 import { usePortalTabs } from "./PortalTabsContext";
@@ -670,8 +670,19 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                       ? "text-mackerel bg-mackerel-light border-mackerel/30"
                       : "text-primary bg-primary/5 border-primary/20"
                   }`}>
-                    {offer.status}
+                     {offer.status}
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(window.location.href);
+                      toast.success("Link copied!");
+                    }}
+                    className="shrink-0 h-6 w-6 flex items-center justify-center border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                    title="Copy link"
+                  >
+                    <LinkIcon className="h-3 w-3" />
+                  </button>
                 </div>
                 {offer.description && (
                   <div>
