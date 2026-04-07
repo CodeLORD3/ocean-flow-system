@@ -106,8 +106,18 @@ const DONE_STATUSES = ["Levererad", "Klar / Levererad", "Arkiverad", "Avbruten"]
 
 const FOLLJESEDEL_STATUSES = ["Skickad", "Levererad", "Klar / Levererad", "Arkiverad"];
 
-function OrderTable({ orders, onSelect, emptyMsg }: { orders: any[]; onSelect: (o: any) => void; emptyMsg: string }) {
+function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDateDisabled }: {
+  orders: any[];
+  emptyMsg: string;
+  products: any[];
+  toast: any;
+  allowedWeekdays: Set<number> | null;
+  isDateDisabled: (date: Date) => boolean;
+}) {
   const [FolljesedelOrder, setFolljesedelOrder] = useState<any>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const toggleExpand = (id: string) => setExpandedId(prev => prev === id ? null : id);
 
   return (
     <>
@@ -135,38 +145,62 @@ function OrderTable({ orders, onSelect, emptyMsg }: { orders: any[]; onSelect: (
                 {orders.map((o: any) => {
                   const lines = o.shop_order_lines || [];
                   const hasFolljesedel = FOLLJESEDEL_STATUSES.includes(o.status);
+                  const isExpanded = expandedId === o.id;
                   return (
-                    <tr key={o.id} className="border-b border-border/40 transition-colors cursor-pointer" style={{ background: buildProgressGradient(lines) }} onClick={() => onSelect(o)}>
-                      <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
-                      <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
-                      <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
-                      <td className="p-3 text-muted-foreground">{o.desired_delivery_date || "–"}</td>
-                      <td className="p-3 text-right text-foreground">{lines.length}</td>
-                      <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
-                        {lines.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
-                      </td>
-                      <td className="p-3 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
-                      <td className="p-3 text-center">
-                        {hasFolljesedel ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-6 text-[10px] gap-1 px-2"
-                            onClick={(e) => { e.stopPropagation(); setFolljesedelOrder(o); }}
-                          >
-                            <FileText className="h-3 w-3" /> Skriv ut
-                          </Button>
-                        ) : (
-                          <span className="text-[10px] text-muted-foreground">—</span>
-                        )}
-                      </td>
-                      <td className="p-3 text-right">
-                        <Badge variant="outline" className={`${statusColor[o.status] || ""} text-[10px] gap-1`}>
-                          {statusIcon[o.status]}
-                          {o.status}
-                        </Badge>
-                      </td>
-                    </tr>
+                    <React.Fragment key={o.id}>
+                      <tr
+                        className={`border-b border-border/40 transition-colors cursor-pointer hover:bg-muted/30 ${isExpanded ? "bg-primary/10 border-l-2 border-l-primary border-b-0" : ""}`}
+                        style={{ background: isExpanded ? undefined : buildProgressGradient(lines) }}
+                        onClick={() => toggleExpand(o.id)}
+                      >
+                        <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
+                        <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
+                        <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
+                        <td className="p-3 text-muted-foreground">{o.desired_delivery_date || "–"}</td>
+                        <td className="p-3 text-right text-foreground">{lines.length}</td>
+                        <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
+                          {lines.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
+                        </td>
+                        <td className="p-3 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
+                        <td className="p-3 text-center">
+                          {hasFolljesedel ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-6 text-[10px] gap-1 px-2"
+                              onClick={(e) => { e.stopPropagation(); setFolljesedelOrder(o); }}
+                            >
+                              <FileText className="h-3 w-3" /> Skriv ut
+                            </Button>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground">—</span>
+                          )}
+                        </td>
+                        <td className="p-3 text-right">
+                          <Badge variant="outline" className={`${statusColor[o.status] || ""} text-[10px] gap-1`}>
+                            {statusIcon[o.status]}
+                            {o.status}
+                          </Badge>
+                        </td>
+                      </tr>
+                      {isExpanded && (
+                        <tr>
+                          <td colSpan={9} className="p-0">
+                            <div className="border-l-2 border-l-primary bg-card p-4 space-y-3">
+                              <OrderDetailWithEdit
+                                order={o}
+                                products={products}
+                                onClose={() => setExpandedId(null)}
+                                toast={toast}
+                                allowedWeekdays={allowedWeekdays}
+                                isDateDisabled={isDateDisabled}
+                                inline
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   );
                 })}
               </tbody>
