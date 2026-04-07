@@ -462,10 +462,17 @@ export default function PortalOpportunities() {
                   </div>
                   <span className="text-[10px] font-semibold text-foreground shrink-0">{(confirmedPct + pendingPct).toFixed(0)}%</span>
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-[10px]">
+                <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                  <span className="font-mono">{funded.toLocaleString()} / {target.toLocaleString()} {cur}</span>
+                  {risk && (
+                    <span className={`px-1.5 py-0.5 text-[9px] font-semibold border ${risk.cls}`}>{risk.label}</span>
+                  )}
+                </div>
+                <div className="grid grid-cols-4 gap-2 text-[10px]">
                   <div><span className="text-muted-foreground">Return</span><div className="font-bold text-mackerel">{rate.toFixed(1)}%</div></div>
                   <div><span className="text-muted-foreground">Duration</span><div className="font-medium text-foreground">{tenorDays !== null ? `${tenorDays}d` : "—"}</div></div>
                   <div><span className="text-muted-foreground">Maturity</span><div className="font-medium text-foreground">{isMatured ? "MATURED" : daysToMaturity !== null ? `${daysToMaturity}d` : "—"}</div></div>
+                  <div><span className="text-muted-foreground">Start→Mat.</span><div className="font-medium text-foreground">{dateRange || "—"}</div></div>
                 </div>
               </div>
             );
