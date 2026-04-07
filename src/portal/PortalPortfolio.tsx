@@ -199,16 +199,16 @@ export default function PortalPortfolio() {
   const hasAnyData = pledges.length > 0;
 
   const activeStats = [
-    ...(hasPending ? [{ icon: Clock, label: "Booked (Awaiting Payment)", value: fmtByCurrency(pendingByCur), color: "text-amber-600" }] : []),
-    { icon: Banknote, label: "Total Invested", value: hasActiveData && confirmedPledges.length > 0 ? fmtByCurrency(investedByCur) : "—", color: "text-primary" },
-    { icon: TrendingUp, label: "Expected Payout", value: confirmedPledges.length > 0 ? fmtByCurrency(payoutByCur) : "—", color: "text-mackerel" },
-    { icon: Target, label: "Expected Profit", value: confirmedPledges.length > 0 ? fmtByCurrency(profitByCur, "+") : "—", color: "text-mackerel" },
+    ...(hasPending ? [{ icon: Clock, label: "Booked (Awaiting Payment)", value: fmtConverted(pendingTotal), color: "text-amber-600" }] : []),
+    { icon: Banknote, label: "Total Invested", value: hasActiveData && confirmedPledges.length > 0 ? fmtConverted(investedTotal) : "—", color: "text-primary" },
+    { icon: TrendingUp, label: "Expected Payout", value: confirmedPledges.length > 0 ? fmtConverted(payoutTotal) : "—", color: "text-mackerel" },
+    { icon: Target, label: "Expected Profit", value: confirmedPledges.length > 0 ? fmtConverted(profitTotal, "+") : "—", color: "text-mackerel" },
     { icon: Percent, label: "Average Return", value: confirmedPledges.length > 0 ? `${avgRate.toFixed(1)}%` : "—", color: "text-primary" },
   ];
 
   const historyStats = [
-    { icon: Banknote, label: "Total Paid Out", value: hasHistoryData ? fmtByCurrency(paidOutByCur) : "—", color: "text-primary" },
-    { icon: Target, label: "Total Profit Earned", value: hasHistoryData ? fmtByCurrency(histProfitByCur, "+") : "—", color: "text-mackerel" },
+    { icon: Banknote, label: "Total Paid Out", value: hasHistoryData ? fmtConverted(paidOutTotal) : "—", color: "text-primary" },
+    { icon: Target, label: "Total Profit Earned", value: hasHistoryData ? fmtConverted(histProfitTotal, "+") : "—", color: "text-mackerel" },
     { icon: Award, label: "Completed Investments", value: hasHistoryData ? `${historyPledges.length}` : "—", color: "text-primary" },
     { icon: Percent, label: "Avg. Return", value: hasHistoryData ? `${(historyPledges.reduce((s: number, p: any) => s + (p.trade_offers ? Number(p.trade_offers.interest_rate) : 0), 0) / historyPledges.length).toFixed(1)}%` : "—", color: "text-mackerel" },
   ];
