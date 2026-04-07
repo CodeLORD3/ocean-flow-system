@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Search, Briefcase, Archive, LogOut, X, Bell, User, Users, ChevronDown } from "lucide-react";
+import { Search, Briefcase, Archive, LogOut, X, Bell, User, Users, ChevronDown, Menu } from "lucide-react";
 import PortalWelcome from "./PortalWelcome";
 import { PortalTabsProvider, usePortalTabs } from "./PortalTabsContext";
 import PortalOpportunities from "./PortalOpportunities";
