@@ -332,7 +332,8 @@ export default function InvestmentFlowDiagram({ pledges, baseCurrency = "SEK" }:
                   </TooltipContent>
                 </Tooltip>
               );
-            })}
+            });
+            })()}
           </div>
         </div>
 
