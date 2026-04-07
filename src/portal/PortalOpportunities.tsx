@@ -508,7 +508,7 @@ export default function PortalOpportunities() {
                         {offer.product_image_url && (
                           <img src={offer.product_image_url} alt="" className="h-5 w-5 object-cover border border-border shrink-0" />
                         )}
-                        <span className="font-semibold text-foreground group-hover:text-mackerel transition-colors line-clamp-1 max-w-[180px]">
+                        <span className="font-semibold text-foreground group-hover:text-mackerel transition-colors line-clamp-1 max-w-[240px]">
                           {offer.title}
                         </span>
                         {batchMonth && (
