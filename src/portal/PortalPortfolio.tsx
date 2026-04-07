@@ -71,6 +71,20 @@ export default function PortalPortfolio() {
     },
   });
 
+  // Set display currency from profile once loaded
+  const profileCur = (investorProfile as any)?.base_currency || "SEK";
+  if (displayCurrency === null && investorProfile) {
+    setDisplayCurrency(profileCur);
+  }
+  const activeCur = displayCurrency || profileCur;
+
+  // Approximate FX rates (to SEK as base)
+  const FX_TO_SEK: Record<string, number> = { SEK: 1, CHF: 12.2, EUR: 11.5, USD: 10.5 };
+  const convertToDisplay = (amount: number, fromCur: string) => {
+    const toSek = amount * (FX_TO_SEK[fromCur] || 1);
+    return toSek / (FX_TO_SEK[activeCur] || 1);
+  };
+
   const companyMap: Record<string, any> = Object.fromEntries(companies.map((c: any) => [c.id, c]));
 
   const activePledges = pledges.filter((p: any) => ["Active", "Pending Payment", "Matured"].includes(p.status));
