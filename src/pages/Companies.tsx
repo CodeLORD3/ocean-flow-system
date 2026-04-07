@@ -160,6 +160,7 @@ export default function Companies() {
       country: company.country || "Sweden",
       industry: company.industry || "",
       description: company.description || "",
+      description_long: company.description_long || "",
       contact_person: company.contact_person || "",
       contact_email: company.contact_email || "",
       iban: company.iban || "",
@@ -167,6 +168,10 @@ export default function Companies() {
       city: company.city || "",
       ticker: company.ticker || "",
       status: company.status || "Active",
+      founded_year: company.founded_year ? String(company.founded_year) : "",
+      employee_count: company.employee_count || "",
+      revenue_range: company.revenue_range || "",
+      website_url: company.website_url || "",
     });
     setLogoFile(null);
     setView("edit");
