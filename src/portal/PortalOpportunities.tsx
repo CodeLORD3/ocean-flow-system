@@ -472,8 +472,8 @@ export default function PortalOpportunities() {
           <table className="w-full text-[10px] min-w-[900px]" style={{ tableLayout: 'auto' }}>
             <thead>
               <tr className="border-b border-border bg-muted/50">
-                <th className="text-left px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Offer</th>
-                <th className="text-left px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Company</th>
+                <th className="text-left px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap min-w-[260px]">Offer</th>
+                <th className="text-left px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap min-w-[180px]">Company</th>
                 <th className="text-left px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Status</th>
                 <th className="text-right px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Funding</th>
                 <th className="text-center px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">Progress</th>
