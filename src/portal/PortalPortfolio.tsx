@@ -15,6 +15,7 @@ export default function PortalPortfolio() {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<"active" | "history">("active");
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [displayCurrency, setDisplayCurrency] = useState<string | null>(null); // null until profile loads
   type SortKey = "name" | "amount" | "rate" | "payout" | "startDate" | "maturity" | "daysToMaturity" | "status";
   const [sortKey, setSortKey] = useState<SortKey>("maturity");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
@@ -70,6 +71,20 @@ export default function PortalPortfolio() {
     },
   });
 
+  // Set display currency from profile once loaded
+  const profileCur = (investorProfile as any)?.base_currency || "SEK";
+  if (displayCurrency === null && investorProfile) {
+    setDisplayCurrency(profileCur);
+  }
+  const activeCur = displayCurrency || profileCur;
+
+  // Approximate FX rates (to SEK as base)
+  const FX_TO_SEK: Record<string, number> = { SEK: 1, CHF: 12.2, EUR: 11.5, USD: 10.5 };
+  const convertToDisplay = (amount: number, fromCur: string) => {
+    const toSek = amount * (FX_TO_SEK[fromCur] || 1);
+    return toSek / (FX_TO_SEK[activeCur] || 1);
+  };
+
   const companyMap: Record<string, any> = Object.fromEntries(companies.map((c: any) => [c.id, c]));
 
   const activePledges = pledges.filter((p: any) => ["Active", "Pending Payment", "Matured"].includes(p.status));
@@ -119,35 +134,32 @@ export default function PortalPortfolio() {
 
   const currentList = sortPledges(tab === "active" ? activePledges : historyPledges);
 
-  // Helper: group amounts by currency
-  const sumByCurrency = (list: any[], valueFn: (p: any) => number) => {
-    const byCur: Record<string, number> = {};
-    list.forEach((p: any) => {
+  // Helper: sum amounts converted to display currency
+  const sumConverted = (list: any[], valueFn: (p: any) => number) => {
+    return list.reduce((total: number, p: any) => {
       const offer = p.trade_offers;
       const company = offer?.company_id ? companyMap[offer.company_id] : null;
       const cur = getCurrency(company?.country);
-      byCur[cur] = (byCur[cur] || 0) + valueFn(p);
-    });
-    return byCur;
+      return total + convertToDisplay(valueFn(p), cur);
+    }, 0);
   };
 
-  const fmtByCurrency = (byCur: Record<string, number>, prefix = "", opts?: Intl.NumberFormatOptions) => {
-    const entries = Object.entries(byCur).filter(([, v]) => v !== 0);
-    if (entries.length === 0) return "—";
-    return entries.map(([cur, val]) => `${prefix}${Math.round(val).toLocaleString()} ${cur}`).join(" + ");
+  const fmtConverted = (value: number, prefix = "") => {
+    if (value === 0) return "—";
+    return `${prefix}${Math.round(value).toLocaleString()} ${activeCur}`;
   };
 
   // Active tab stats — split pending vs invested
   const pendingPledges = activePledges.filter((p: any) => p.status === "Pending Payment");
   const confirmedPledges = activePledges.filter((p: any) => p.status !== "Pending Payment");
 
-  const pendingByCur = sumByCurrency(pendingPledges, (p) => Number(p.amount));
-  const investedByCur = sumByCurrency(confirmedPledges, (p) => Number(p.amount));
-  const payoutByCur = sumByCurrency(confirmedPledges, (p) => {
+  const pendingTotal = sumConverted(pendingPledges, (p) => Number(p.amount));
+  const investedTotal = sumConverted(confirmedPledges, (p) => Number(p.amount));
+  const payoutTotal = sumConverted(confirmedPledges, (p) => {
     const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
     return Number(p.amount) * (1 + rate / 100);
   });
-  const profitByCur = sumByCurrency(confirmedPledges, (p) => {
+  const profitTotal = sumConverted(confirmedPledges, (p) => {
     const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
     return Number(p.amount) * (rate / 100);
   });
@@ -156,11 +168,11 @@ export default function PortalPortfolio() {
     : 0;
 
   // History tab stats
-  const paidOutByCur = sumByCurrency(historyPledges, (p) => {
+  const paidOutTotal = sumConverted(historyPledges, (p) => {
     const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
     return Number(p.amount) * (1 + rate / 100);
   });
-  const histProfitByCur = sumByCurrency(historyPledges, (p) => {
+  const histProfitTotal = sumConverted(historyPledges, (p) => {
     const rate = p.trade_offers ? Number(p.trade_offers.interest_rate) : 0;
     return Number(p.amount) * (rate / 100);
   });
@@ -187,16 +199,16 @@ export default function PortalPortfolio() {
   const hasAnyData = pledges.length > 0;
 
   const activeStats = [
-    ...(hasPending ? [{ icon: Clock, label: "Booked (Awaiting Payment)", value: fmtByCurrency(pendingByCur), color: "text-amber-600" }] : []),
-    { icon: Banknote, label: "Total Invested", value: hasActiveData && confirmedPledges.length > 0 ? fmtByCurrency(investedByCur) : "—", color: "text-primary" },
-    { icon: TrendingUp, label: "Expected Payout", value: confirmedPledges.length > 0 ? fmtByCurrency(payoutByCur) : "—", color: "text-mackerel" },
-    { icon: Target, label: "Expected Profit", value: confirmedPledges.length > 0 ? fmtByCurrency(profitByCur, "+") : "—", color: "text-mackerel" },
+    ...(hasPending ? [{ icon: Clock, label: "Booked (Awaiting Payment)", value: fmtConverted(pendingTotal), color: "text-amber-600" }] : []),
+    { icon: Banknote, label: "Total Invested", value: hasActiveData && confirmedPledges.length > 0 ? fmtConverted(investedTotal) : "—", color: "text-primary" },
+    { icon: TrendingUp, label: "Expected Payout", value: confirmedPledges.length > 0 ? fmtConverted(payoutTotal) : "—", color: "text-mackerel" },
+    { icon: Target, label: "Expected Profit", value: confirmedPledges.length > 0 ? fmtConverted(profitTotal, "+") : "—", color: "text-mackerel" },
     { icon: Percent, label: "Average Return", value: confirmedPledges.length > 0 ? `${avgRate.toFixed(1)}%` : "—", color: "text-primary" },
   ];
 
   const historyStats = [
-    { icon: Banknote, label: "Total Paid Out", value: hasHistoryData ? fmtByCurrency(paidOutByCur) : "—", color: "text-primary" },
-    { icon: Target, label: "Total Profit Earned", value: hasHistoryData ? fmtByCurrency(histProfitByCur, "+") : "—", color: "text-mackerel" },
+    { icon: Banknote, label: "Total Paid Out", value: hasHistoryData ? fmtConverted(paidOutTotal) : "—", color: "text-primary" },
+    { icon: Target, label: "Total Profit Earned", value: hasHistoryData ? fmtConverted(histProfitTotal, "+") : "—", color: "text-mackerel" },
     { icon: Award, label: "Completed Investments", value: hasHistoryData ? `${historyPledges.length}` : "—", color: "text-primary" },
     { icon: Percent, label: "Avg. Return", value: hasHistoryData ? `${(historyPledges.reduce((s: number, p: any) => s + (p.trade_offers ? Number(p.trade_offers.interest_rate) : 0), 0) / historyPledges.length).toFixed(1)}%` : "—", color: "text-mackerel" },
   ];
@@ -228,7 +240,25 @@ export default function PortalPortfolio() {
         </div>
       ) : (
         <>
-          {/* Summary cards — change based on tab */}
+          {/* Currency toggle + summary cards */}
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-1">
+              {["SEK", "CHF", "EUR", "USD"].map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setDisplayCurrency(c)}
+                  className={`px-2 py-0.5 text-[10px] font-semibold border transition-colors ${
+                    activeCur === c
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-muted/50 text-muted-foreground border-border hover:border-primary/40"
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+            <span className="text-[9px] text-muted-foreground italic">Values converted at approximate FX rates</span>
+          </div>
           <div className={`grid gap-3 ${currentStats.length <= 4 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2 sm:grid-cols-5"}`}>
             {currentStats.map((stat) => (
               <div key={stat.label} className="border border-border bg-white p-3">
