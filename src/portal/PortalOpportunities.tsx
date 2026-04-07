@@ -135,6 +135,23 @@ export default function PortalOpportunities() {
     return true;
   });
 
+  const sortedFiltered2 = useMemo(() => {
+    if (!sortKey) return filtered;
+    return [...filtered].sort((a, b) => {
+      const da = renderOfferData(a);
+      const db = renderOfferData(b);
+      let va: number, vb: number;
+      switch (sortKey) {
+        case "return": va = da.rate; vb = db.rate; break;
+        case "daysToMaturity": va = da.daysToMaturity ?? 99999; vb = db.daysToMaturity ?? 99999; break;
+        case "duration": va = da.tenorDays ?? 99999; vb = db.tenorDays ?? 99999; break;
+        case "minInvest": va = Number(a.min_pledge) || 0; vb = Number(b.min_pledge) || 0; break;
+        default: va = 0; vb = 0;
+      }
+      return sortDir === "asc" ? va - vb : vb - va;
+    });
+  }, [filtered, sortKey, sortDir]);
+
   if (isLoading) {
     return <div className="text-primary text-sm animate-pulse p-8 text-center">Loading opportunities...</div>;
   }
