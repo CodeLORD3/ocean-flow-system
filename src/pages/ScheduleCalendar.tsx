@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import { useSite } from "@/contexts/SiteContext";
 import { useScheduleEvents, EVENT_TYPES, SEVERITY_LEVELS, RECURRENCE_OPTIONS, type ScheduleEvent } from "@/hooks/useScheduleEvents";
