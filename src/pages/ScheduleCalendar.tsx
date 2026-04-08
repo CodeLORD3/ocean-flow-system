@@ -4,10 +4,9 @@ import { sv } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Plus, X, Trash2, Edit2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import { useSite } from "@/contexts/SiteContext";
 import { useScheduleEvents, EVENT_TYPES, SEVERITY_LEVELS, RECURRENCE_OPTIONS, type ScheduleEvent } from "@/hooks/useScheduleEvents";
@@ -296,27 +295,26 @@ export default function ScheduleCalendar() {
 
   const renderAddForm = () => (
     <>
-      <div className="text-xs font-bold text-foreground">Ny händelse</div>
-      <Input
-        type="date"
-        value={formDate}
-        onChange={e => setFormDate(e.target.value)}
-        className="text-xs h-8"
-      />
-      <Input
-        placeholder="Titel"
-        value={formTitle}
-        onChange={e => setFormTitle(e.target.value)}
-        className="text-xs h-8"
-        autoFocus
-      />
-      <Textarea
-        placeholder="Beskrivning (valfritt)"
-        value={formDesc}
-        onChange={e => setFormDesc(e.target.value)}
-        className="text-xs min-h-[50px]"
-      />
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <div>
+          <label className="text-[9px] text-muted-foreground font-medium">DATUM</label>
+          <Input
+            type="date"
+            value={formDate}
+            onChange={e => setFormDate(e.target.value)}
+            className="text-xs h-8"
+          />
+        </div>
+        <div>
+          <label className="text-[9px] text-muted-foreground font-medium">TITEL</label>
+          <Input
+            placeholder="Titel"
+            value={formTitle}
+            onChange={e => setFormTitle(e.target.value)}
+            className="text-xs h-8"
+            autoFocus
+          />
+        </div>
         <div>
           <label className="text-[9px] text-muted-foreground font-medium">TYP</label>
           <Select value={formType} onValueChange={setFormType}>
@@ -354,40 +352,50 @@ export default function ScheduleCalendar() {
           </Select>
         </div>
       </div>
-      <div>
-        <label className="text-[9px] text-muted-foreground font-medium">UPPREPNING</label>
-        <Select value={formRecurrence} onValueChange={setFormRecurrence}>
-          <SelectTrigger className="h-8 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {RECURRENCE_OPTIONS.map(r => (
-              <SelectItem key={r.value} value={r.value} className="text-xs">
-                <span className="flex items-center gap-1.5">
-                  {r.value !== "none" && <Repeat className="h-3 w-3 text-muted-foreground" />}
-                  {r.label}
-                </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      {formRecurrence !== "none" && (
-        <div>
-          <label className="text-[9px] text-muted-foreground font-medium">SLUTAR (VALFRITT)</label>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <div className="col-span-2 md:col-span-1">
+          <label className="text-[9px] text-muted-foreground font-medium">UPPREPNING</label>
+          <Select value={formRecurrence} onValueChange={setFormRecurrence}>
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {RECURRENCE_OPTIONS.map(r => (
+                <SelectItem key={r.value} value={r.value} className="text-xs">
+                  <span className="flex items-center gap-1.5">
+                    {r.value !== "none" && <Repeat className="h-3 w-3 text-muted-foreground" />}
+                    {r.label}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {formRecurrence !== "none" && (
+          <div>
+            <label className="text-[9px] text-muted-foreground font-medium">SLUTAR</label>
+            <Input
+              type="date"
+              value={formRecurrenceEnd}
+              onChange={e => setFormRecurrenceEnd(e.target.value)}
+              className="text-xs h-8"
+            />
+          </div>
+        )}
+        <div className={cn("col-span-2 md:col-span-1", formRecurrence !== "none" ? "" : "md:col-start-4")}>
+          <label className="text-[9px] text-muted-foreground font-medium">BESKRIVNING</label>
           <Input
-            type="date"
-            value={formRecurrenceEnd}
-            onChange={e => setFormRecurrenceEnd(e.target.value)}
+            placeholder="Valfritt"
+            value={formDesc}
+            onChange={e => setFormDesc(e.target.value)}
             className="text-xs h-8"
           />
         </div>
-      )}
-      <div className="flex justify-end gap-2 pt-1">
-        <Button variant="outline" size="sm" onClick={() => setShowAddDialog(false)} className="text-[10px] h-7">Avbryt</Button>
-        <Button size="sm" onClick={handleAdd} disabled={!formTitle.trim() || addEvent.isPending} className="text-[10px] h-7">
-          {addEvent.isPending ? "Sparar..." : "Spara"}
-        </Button>
+        <div className="flex items-end justify-end col-span-2 md:col-span-1">
+          <Button size="sm" onClick={handleAdd} disabled={!formTitle.trim() || addEvent.isPending} className="text-[10px] h-8 w-full">
+            {addEvent.isPending ? "Sparar..." : "Spara händelse"}
+          </Button>
+        </div>
       </div>
     </>
   );
@@ -410,16 +418,10 @@ export default function ScheduleCalendar() {
         </div>
         <div className="flex items-center gap-2">
           {renderLegend()}
-          <Popover open={showAddDialog} onOpenChange={setShowAddDialog}>
-            <PopoverTrigger asChild>
-              <Button size="sm" onClick={() => { if (!showAddDialog) openAddDialog(); }} className="text-[10px] h-7 gap-1">
-                <Plus className="h-3 w-3" /> Ny händelse
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-80 p-3 space-y-3" sideOffset={8}>
-              {renderAddForm()}
-            </PopoverContent>
-          </Popover>
+          <Button size="sm" onClick={() => { if (showAddDialog) { setShowAddDialog(false); } else { openAddDialog(); } }} className="text-[10px] h-7 gap-1">
+            {showAddDialog ? <X className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+            {showAddDialog ? "Stäng" : "Ny händelse"}
+          </Button>
         </div>
       </div>
 
@@ -432,6 +434,15 @@ export default function ScheduleCalendar() {
           </Badge>
         ))}
       </div>
+
+      {/* ── INLINE ADD EVENT PANEL ── */}
+      <Collapsible open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <CollapsibleContent>
+          <div className="border border-border bg-card p-4 space-y-3 rounded-sm">
+            {renderAddForm()}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Main content */}
       {expandedMonth === null ? renderYearView() : renderMonthView(expandedMonth)}
