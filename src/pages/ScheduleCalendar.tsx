@@ -468,6 +468,9 @@ export default function ScheduleCalendar() {
                     <Badge variant="outline" className={cn("text-[7px] px-1 py-0")}>
                       {SEVERITY_LEVELS.find(s => s.value === evt.severity)?.label}
                     </Badge>
+                    <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground" onClick={() => copyEvent(evt, selectedDate || undefined)}>
+                      <Copy className="h-3 w-3" />
+                    </Button>
                     <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-destructive" onClick={() => handleDelete(evt.id)}>
                       <Trash2 className="h-3 w-3" />
                     </Button>
