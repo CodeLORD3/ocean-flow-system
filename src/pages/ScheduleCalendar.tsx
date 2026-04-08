@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { format, getDaysInMonth, startOfMonth, getDay, isToday, parseISO, isSameMonth } from "date-fns";
 import { sv } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Plus, X, Trash2, Edit2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X, Trash2, Edit2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -79,6 +79,18 @@ export default function ScheduleCalendar() {
     setFormDate(date || format(new Date(), "yyyy-MM-dd"));
     setFormRecurrence("none");
     setFormRecurrenceEnd("");
+    setShowAddDialog(true);
+  };
+
+  const copyEvent = (evt: ScheduleEvent, date?: string) => {
+    setFormTitle(evt.title);
+    setFormDesc(evt.description || "");
+    setFormType(evt.event_type);
+    setFormSeverity(evt.severity);
+    setFormDate(date || format(new Date(), "yyyy-MM-dd"));
+    setFormRecurrence(evt.recurrence_type || "none");
+    setFormRecurrenceEnd(evt.recurrence_end_date || "");
+    setShowDayDetail(false);
     setShowAddDialog(true);
   };
 
@@ -456,6 +468,9 @@ export default function ScheduleCalendar() {
                     <Badge variant="outline" className={cn("text-[7px] px-1 py-0")}>
                       {SEVERITY_LEVELS.find(s => s.value === evt.severity)?.label}
                     </Badge>
+                    <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground" onClick={() => copyEvent(evt, selectedDate || undefined)}>
+                      <Copy className="h-3 w-3" />
+                    </Button>
                     <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-destructive" onClick={() => handleDelete(evt.id)}>
                       <Trash2 className="h-3 w-3" />
                     </Button>
