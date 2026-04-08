@@ -410,16 +410,10 @@ export default function ScheduleCalendar() {
         </div>
         <div className="flex items-center gap-2">
           {renderLegend()}
-          <Popover open={showAddDialog} onOpenChange={setShowAddDialog}>
-            <PopoverTrigger asChild>
-              <Button size="sm" onClick={() => { if (!showAddDialog) openAddDialog(); }} className="text-[10px] h-7 gap-1">
-                <Plus className="h-3 w-3" /> Ny händelse
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-80 p-3 space-y-3" sideOffset={8}>
-              {renderAddForm()}
-            </PopoverContent>
-          </Popover>
+          <Button size="sm" onClick={() => { if (showAddDialog) { setShowAddDialog(false); } else { openAddDialog(); } }} className="text-[10px] h-7 gap-1">
+            {showAddDialog ? <X className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+            {showAddDialog ? "Stäng" : "Ny händelse"}
+          </Button>
         </div>
       </div>
 
@@ -432,6 +426,15 @@ export default function ScheduleCalendar() {
           </Badge>
         ))}
       </div>
+
+      {/* ── INLINE ADD EVENT PANEL ── */}
+      <Collapsible open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <CollapsibleContent>
+          <div className="border border-border bg-card p-4 space-y-3 rounded-sm">
+            {renderAddForm()}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Main content */}
       {expandedMonth === null ? renderYearView() : renderMonthView(expandedMonth)}
