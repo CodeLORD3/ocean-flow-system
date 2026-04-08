@@ -296,27 +296,26 @@ export default function ScheduleCalendar() {
 
   const renderAddForm = () => (
     <>
-      <div className="text-xs font-bold text-foreground">Ny händelse</div>
-      <Input
-        type="date"
-        value={formDate}
-        onChange={e => setFormDate(e.target.value)}
-        className="text-xs h-8"
-      />
-      <Input
-        placeholder="Titel"
-        value={formTitle}
-        onChange={e => setFormTitle(e.target.value)}
-        className="text-xs h-8"
-        autoFocus
-      />
-      <Textarea
-        placeholder="Beskrivning (valfritt)"
-        value={formDesc}
-        onChange={e => setFormDesc(e.target.value)}
-        className="text-xs min-h-[50px]"
-      />
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <div>
+          <label className="text-[9px] text-muted-foreground font-medium">DATUM</label>
+          <Input
+            type="date"
+            value={formDate}
+            onChange={e => setFormDate(e.target.value)}
+            className="text-xs h-8"
+          />
+        </div>
+        <div>
+          <label className="text-[9px] text-muted-foreground font-medium">TITEL</label>
+          <Input
+            placeholder="Titel"
+            value={formTitle}
+            onChange={e => setFormTitle(e.target.value)}
+            className="text-xs h-8"
+            autoFocus
+          />
+        </div>
         <div>
           <label className="text-[9px] text-muted-foreground font-medium">TYP</label>
           <Select value={formType} onValueChange={setFormType}>
@@ -354,40 +353,50 @@ export default function ScheduleCalendar() {
           </Select>
         </div>
       </div>
-      <div>
-        <label className="text-[9px] text-muted-foreground font-medium">UPPREPNING</label>
-        <Select value={formRecurrence} onValueChange={setFormRecurrence}>
-          <SelectTrigger className="h-8 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {RECURRENCE_OPTIONS.map(r => (
-              <SelectItem key={r.value} value={r.value} className="text-xs">
-                <span className="flex items-center gap-1.5">
-                  {r.value !== "none" && <Repeat className="h-3 w-3 text-muted-foreground" />}
-                  {r.label}
-                </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      {formRecurrence !== "none" && (
-        <div>
-          <label className="text-[9px] text-muted-foreground font-medium">SLUTAR (VALFRITT)</label>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <div className="col-span-2 md:col-span-1">
+          <label className="text-[9px] text-muted-foreground font-medium">UPPREPNING</label>
+          <Select value={formRecurrence} onValueChange={setFormRecurrence}>
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {RECURRENCE_OPTIONS.map(r => (
+                <SelectItem key={r.value} value={r.value} className="text-xs">
+                  <span className="flex items-center gap-1.5">
+                    {r.value !== "none" && <Repeat className="h-3 w-3 text-muted-foreground" />}
+                    {r.label}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {formRecurrence !== "none" && (
+          <div>
+            <label className="text-[9px] text-muted-foreground font-medium">SLUTAR</label>
+            <Input
+              type="date"
+              value={formRecurrenceEnd}
+              onChange={e => setFormRecurrenceEnd(e.target.value)}
+              className="text-xs h-8"
+            />
+          </div>
+        )}
+        <div className={cn("col-span-2 md:col-span-1", formRecurrence !== "none" ? "" : "md:col-start-4")}>
+          <label className="text-[9px] text-muted-foreground font-medium">BESKRIVNING</label>
           <Input
-            type="date"
-            value={formRecurrenceEnd}
-            onChange={e => setFormRecurrenceEnd(e.target.value)}
+            placeholder="Valfritt"
+            value={formDesc}
+            onChange={e => setFormDesc(e.target.value)}
             className="text-xs h-8"
           />
         </div>
-      )}
-      <div className="flex justify-end gap-2 pt-1">
-        <Button variant="outline" size="sm" onClick={() => setShowAddDialog(false)} className="text-[10px] h-7">Avbryt</Button>
-        <Button size="sm" onClick={handleAdd} disabled={!formTitle.trim() || addEvent.isPending} className="text-[10px] h-7">
-          {addEvent.isPending ? "Sparar..." : "Spara"}
-        </Button>
+        <div className="flex items-end justify-end col-span-2 md:col-span-1">
+          <Button size="sm" onClick={handleAdd} disabled={!formTitle.trim() || addEvent.isPending} className="text-[10px] h-8 w-full">
+            {addEvent.isPending ? "Sparar..." : "Spara händelse"}
+          </Button>
+        </div>
       </div>
     </>
   );
