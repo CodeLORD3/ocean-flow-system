@@ -217,16 +217,9 @@ export default function ScheduleCalendar() {
             <ChevronRight className="h-3 w-3" />
           </Button>
           <div className="flex-1" />
-          <Popover open={showAddDialog} onOpenChange={setShowAddDialog}>
-            <PopoverTrigger asChild>
-              <Button size="sm" onClick={() => openAddDialog(`${year}-${String(monthIdx + 1).padStart(2, "0")}-01`)} className="text-[10px] h-7 gap-1">
-                <Plus className="h-3 w-3" /> Lägg till
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-80 p-3 space-y-3">
-              {renderAddForm()}
-            </PopoverContent>
-          </Popover>
+          <Button size="sm" onClick={() => openAddDialog(`${year}-${String(monthIdx + 1).padStart(2, "0")}-01`)} className="text-[10px] h-7 gap-1">
+            <Plus className="h-3 w-3" /> Lägg till
+          </Button>
         </div>
 
         <div className="grid grid-cols-7 border border-border">
