@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useSite } from "@/contexts/SiteContext";
-import { useScheduleEvents, EVENT_TYPES, SEVERITY_LEVELS, type ScheduleEvent } from "@/hooks/useScheduleEvents";
+import { useScheduleEvents, EVENT_TYPES, SEVERITY_LEVELS, RECURRENCE_OPTIONS, type ScheduleEvent } from "@/hooks/useScheduleEvents";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { Repeat } from "lucide-react";
 
 const MONTHS = [
   "Januari", "Februari", "Mars", "April", "Maj", "Juni",
