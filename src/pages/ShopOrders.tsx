@@ -891,12 +891,12 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-border bg-muted/30">
-                <th className="p-2.5 text-left font-medium text-muted-foreground">Produkt</th>
-                <th className="p-2.5 text-left font-medium text-muted-foreground">Enhet</th>
-                <th className="p-2.5 text-right font-medium text-muted-foreground">Beställt</th>
-                <th className="p-2.5 text-right font-medium text-muted-foreground">Packat</th>
-                <th className="p-2.5 text-left font-medium text-muted-foreground">Avvikelse</th>
-                <th className="p-2.5 text-left font-medium text-muted-foreground">Status</th>
+                <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">Produkt</th>
+                <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">Enhet</th>
+                <th className="px-1.5 py-0.5 text-right font-medium text-muted-foreground">Beställt</th>
+                <th className="px-1.5 py-0.5 text-right font-medium text-muted-foreground">Packat</th>
+                <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">Avvikelse</th>
+                <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -905,15 +905,15 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
                 const qtyDelivered = line.quantity_delivered || 0;
                 const hasDiff = qtyDelivered > 0 && qtyDelivered !== qtyOrdered;
                 return (
-                  <tr key={line.id} className={`border-b border-border/30 transition-colors ${rowBgByStatus[line.status || ""] || ""}`}>
-                    <td className="p-2.5 font-medium text-foreground">{line.products?.name || "–"}</td>
-                    <td className="p-2.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
-                    <td className="p-2.5 text-right font-mono text-foreground">{qtyOrdered}</td>
-                    <td className={`p-2.5 text-right font-mono ${hasDiff ? "text-warning font-bold" : "text-muted-foreground"}`}>
+                  <tr key={line.id} className={`border-b border-border/30 h-6 transition-colors ${rowBgByStatus[line.status || ""] || ""}`}>
+                    <td className="px-1.5 py-0.5 font-medium text-foreground">{line.products?.name || "–"}</td>
+                    <td className="px-1.5 py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
+                    <td className="px-1.5 py-0.5 text-right font-mono text-foreground">{qtyOrdered}</td>
+                    <td className={`px-1.5 py-0.5 text-right font-mono ${hasDiff ? "text-warning font-bold" : "text-muted-foreground"}`}>
                       {qtyDelivered > 0 ? qtyDelivered : "–"}
                     </td>
-                    <td className="p-2.5 text-muted-foreground">{line.deviation || "–"}</td>
-                    <td className="p-2.5">
+                    <td className="px-1.5 py-0.5 text-muted-foreground">{line.deviation || "–"}</td>
+                    <td className="px-1.5 py-0.5">
                       {line.status ? (
                         <Badge variant="outline" className={`${statusColor[line.status] || ""} text-[10px] gap-1`}>
                           {statusIcon[line.status]}
