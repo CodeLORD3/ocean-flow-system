@@ -401,7 +401,7 @@ export default function ScheduleCalendar() {
       {/* ── INLINE ADD EVENT PANEL ── */}
       <Collapsible open={showAddDialog} onOpenChange={setShowAddDialog}>
         <CollapsibleContent>
-          <div className="border border-border bg-card p-4 space-y-3 rounded-sm">
+          <div className="border border-border bg-card px-3 py-2 rounded-sm">
             {renderAddForm()}
           </div>
         </CollapsibleContent>
