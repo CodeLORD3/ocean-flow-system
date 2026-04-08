@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useMemo } from "react";
+import { addDays, addWeeks, addMonths, addYears, format, parseISO, isBefore, isAfter } from "date-fns";
 
 export type ScheduleEvent = {
   id: string;
@@ -15,7 +17,19 @@ export type ScheduleEvent = {
   end_time: string | null;
   created_at: string;
   created_by: string | null;
+  recurrence_type: string;
+  recurrence_end_date: string | null;
 };
+
+export type RecurrenceType = "none" | "daily" | "weekly" | "monthly" | "yearly";
+
+export const RECURRENCE_OPTIONS: { value: RecurrenceType; label: string }[] = [
+  { value: "none", label: "Ingen upprepning" },
+  { value: "daily", label: "Dagligen" },
+  { value: "weekly", label: "Veckovis" },
+  { value: "monthly", label: "Månadsvis" },
+  { value: "yearly", label: "Årligen" },
+];
 
 export const EVENT_TYPES = [
   { value: "note", label: "Anteckning", color: "bg-blue-500" },
@@ -37,6 +51,40 @@ export const SEVERITY_LEVELS = [
   { value: "critical", label: "Kritisk", color: "bg-red-500" },
 ] as const;
 
+function generateRecurrences(event: ScheduleEvent, yearStart: string, yearEnd: string): ScheduleEvent[] {
+  if (!event.recurrence_type || event.recurrence_type === "none") return [event];
+
+  const results: ScheduleEvent[] = [];
+  const start = parseISO(event.event_date);
+  const rangeStart = parseISO(yearStart);
+  const rangeEnd = parseISO(yearEnd);
+  const recEnd = event.recurrence_end_date ? parseISO(event.recurrence_end_date) : rangeEnd;
+  const effectiveEnd = isBefore(recEnd, rangeEnd) ? recEnd : rangeEnd;
+
+  const advanceFn =
+    event.recurrence_type === "daily" ? addDays :
+    event.recurrence_type === "weekly" ? addWeeks :
+    event.recurrence_type === "monthly" ? addMonths :
+    addYears;
+
+  // Generate occurrences – cap at 400 to avoid infinite loops
+  let current = start;
+  for (let i = 0; i < 400; i++) {
+    if (isAfter(current, effectiveEnd)) break;
+    if (!isBefore(current, rangeStart)) {
+      results.push({
+        ...event,
+        event_date: format(current, "yyyy-MM-dd"),
+        // Tag generated instances so we know the source
+        id: i === 0 ? event.id : `${event.id}__rec_${i}`,
+      });
+    }
+    current = advanceFn(current, 1);
+  }
+
+  return results;
+}
+
 export function useScheduleEvents(portal?: string, year?: number, storeId?: string | null) {
   const queryClient = useQueryClient();
   const currentYear = year || new Date().getFullYear();
@@ -47,9 +95,12 @@ export function useScheduleEvents(portal?: string, year?: number, storeId?: stri
       let q = supabase
         .from("schedule_events" as any)
         .select("*")
-        .gte("event_date", `${currentYear}-01-01`)
-        .lte("event_date", `${currentYear}-12-31`)
         .order("event_date");
+
+      // Fetch events that START on or before year end (they could recur into this year)
+      // and whose recurrence hasn't ended before year start
+      q = q.lte("event_date", `${currentYear}-12-31`);
+
       if (portal && portal !== "all") {
         q = q.eq("portal", portal);
       }
@@ -64,6 +115,14 @@ export function useScheduleEvents(portal?: string, year?: number, storeId?: stri
     },
   });
 
+  // Expand recurring events into individual date instances
+  const events = useMemo(() => {
+    if (!query.data) return [];
+    const yearStart = `${currentYear}-01-01`;
+    const yearEnd = `${currentYear}-12-31`;
+    return query.data.flatMap(e => generateRecurrences(e, yearStart, yearEnd));
+  }, [query.data, currentYear]);
+
   const addEvent = useMutation({
     mutationFn: async (event: {
       event_date: string;
@@ -77,6 +136,8 @@ export function useScheduleEvents(portal?: string, year?: number, storeId?: stri
       start_time?: string;
       end_time?: string;
       created_by?: string;
+      recurrence_type?: string;
+      recurrence_end_date?: string | null;
     }) => {
       const { error } = await supabase.from("schedule_events" as any).insert(event as any);
       if (error) throw error;
@@ -101,7 +162,9 @@ export function useScheduleEvents(portal?: string, year?: number, storeId?: stri
 
   const deleteEvent = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("schedule_events" as any).delete().eq("id", id);
+      // Strip recurrence suffix to get real ID
+      const realId = id.includes("__rec_") ? id.split("__rec_")[0] : id;
+      const { error } = await supabase.from("schedule_events" as any).delete().eq("id", realId);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -110,7 +173,7 @@ export function useScheduleEvents(portal?: string, year?: number, storeId?: stri
   });
 
   return {
-    events: query.data || [],
+    events,
     isLoading: query.isLoading,
     addEvent,
     updateEvent,

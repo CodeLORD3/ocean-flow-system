@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useSite } from "@/contexts/SiteContext";
-import { useScheduleEvents, EVENT_TYPES, SEVERITY_LEVELS, type ScheduleEvent } from "@/hooks/useScheduleEvents";
+import { useScheduleEvents, EVENT_TYPES, SEVERITY_LEVELS, RECURRENCE_OPTIONS, type ScheduleEvent } from "@/hooks/useScheduleEvents";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { Repeat } from "lucide-react";
 
 const MONTHS = [
   "Januari", "Februari", "Mars", "April", "Maj", "Juni",
@@ -58,6 +59,8 @@ export default function ScheduleCalendar() {
   const [formType, setFormType] = useState("note");
   const [formSeverity, setFormSeverity] = useState("info");
   const [formDate, setFormDate] = useState("");
+  const [formRecurrence, setFormRecurrence] = useState("none");
+  const [formRecurrenceEnd, setFormRecurrenceEnd] = useState("");
 
   const eventsByDate = useMemo(() => {
     const map: Record<string, ScheduleEvent[]> = {};
@@ -74,6 +77,8 @@ export default function ScheduleCalendar() {
     setFormType("note");
     setFormSeverity("info");
     setFormDate(date || format(new Date(), "yyyy-MM-dd"));
+    setFormRecurrence("none");
+    setFormRecurrenceEnd("");
     setShowAddDialog(true);
   };
 
@@ -88,6 +93,8 @@ export default function ScheduleCalendar() {
         severity: formSeverity,
         portal: site,
         store_id: site === "shop" ? activeStoreId : null,
+        recurrence_type: formRecurrence,
+        recurrence_end_date: formRecurrenceEnd || null,
       });
       toast({ title: "Händelse tillagd" });
       setShowAddDialog(false);
@@ -376,6 +383,37 @@ export default function ScheduleCalendar() {
                 </Select>
               </div>
             </div>
+            {/* Recurrence */}
+            <div>
+              <label className="text-[9px] text-muted-foreground font-medium">UPPREPNING</label>
+              <Select value={formRecurrence} onValueChange={setFormRecurrence}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {RECURRENCE_OPTIONS.map(r => (
+                    <SelectItem key={r.value} value={r.value} className="text-xs">
+                      <span className="flex items-center gap-1.5">
+                        {r.value !== "none" && <Repeat className="h-3 w-3 text-muted-foreground" />}
+                        {r.label}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {formRecurrence !== "none" && (
+              <div>
+                <label className="text-[9px] text-muted-foreground font-medium">UPPREPNING SLUTAR (VALFRITT)</label>
+                <Input
+                  type="date"
+                  value={formRecurrenceEnd}
+                  onChange={e => setFormRecurrenceEnd(e.target.value)}
+                  className="text-xs h-8"
+                  placeholder="Inget slutdatum"
+                />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setShowAddDialog(false)} className="text-[10px] h-7">Avbryt</Button>
@@ -407,6 +445,9 @@ export default function ScheduleCalendar() {
                   <div className="flex items-center gap-1.5">
                     <div className={cn("h-2 w-2 rounded-full shrink-0", getEventTypeInfo(evt.event_type).color)} />
                     <span className="text-xs font-medium">{evt.title}</span>
+                    {evt.recurrence_type && evt.recurrence_type !== "none" && (
+                      <Repeat className="h-3 w-3 text-muted-foreground shrink-0" />
+                    )}
                   </div>
                   <div className="flex items-center gap-1">
                     <Badge variant="outline" className="text-[7px] px-1 py-0">
