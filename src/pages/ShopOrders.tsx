@@ -894,7 +894,7 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
                 <th className="p-2.5 text-left font-medium text-muted-foreground">Produkt</th>
                 <th className="p-2.5 text-left font-medium text-muted-foreground">Enhet</th>
                 <th className="p-2.5 text-right font-medium text-muted-foreground">Beställt</th>
-                <th className="p-2.5 text-right font-medium text-muted-foreground">Levererat</th>
+                <th className="p-2.5 text-right font-medium text-muted-foreground">Packat</th>
                 <th className="p-2.5 text-left font-medium text-muted-foreground">Avvikelse</th>
                 <th className="p-2.5 text-left font-medium text-muted-foreground">Status</th>
               </tr>
@@ -910,7 +910,7 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
                     <td className="p-2.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
                     <td className="p-2.5 text-right font-mono text-foreground">{qtyOrdered}</td>
                     <td className={`p-2.5 text-right font-mono ${hasDiff ? "text-warning font-bold" : "text-muted-foreground"}`}>
-                      {qtyDelivered || "–"}
+                      {qtyDelivered > 0 ? qtyDelivered : "–"}
                     </td>
                     <td className="p-2.5 text-muted-foreground">{line.deviation || "–"}</td>
                     <td className="p-2.5">

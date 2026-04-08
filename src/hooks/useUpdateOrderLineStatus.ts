@@ -148,7 +148,16 @@ export function useUpdateOrderLineStatus() {
           .select("quantity_delivered, quantity_ordered")
           .eq("id", params.lineId)
           .single();
-        const newQtyDelivered = Number(updatedLine?.quantity_delivered || updatedLine?.quantity_ordered || 0);
+        let newQtyDelivered = Number(updatedLine?.quantity_delivered || 0);
+        
+        // If quantity_delivered is still 0, default to quantity_ordered
+        if (newQtyDelivered === 0 && updatedLine?.quantity_ordered) {
+          newQtyDelivered = Number(updatedLine.quantity_ordered);
+          await supabase
+            .from("shop_order_lines")
+            .update({ quantity_delivered: newQtyDelivered })
+            .eq("id", params.lineId);
+        }
         
         // If was already Packad, delta is the difference; if newly Packad, delta is full new amount
         const previousPacked = oldStatus === "Packad" ? oldQtyDelivered : 0;
