@@ -313,9 +313,16 @@ export default function ScheduleCalendar() {
         <div className="flex items-center gap-2">
           {renderLegend()}
           {expandedMonth === null && (
-            <Button size="sm" onClick={() => openAddDialog()} className="text-[10px] h-7 gap-1">
-              <Plus className="h-3 w-3" /> Ny händelse
-            </Button>
+            <Popover open={showAddDialog} onOpenChange={setShowAddDialog}>
+              <PopoverTrigger asChild>
+                <Button size="sm" onClick={() => openAddDialog()} className="text-[10px] h-7 gap-1">
+                  <Plus className="h-3 w-3" /> Ny händelse
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-80 p-3 space-y-3">
+                {renderAddForm()}
+              </PopoverContent>
+            </Popover>
           )}
         </div>
       </div>
