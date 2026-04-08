@@ -494,11 +494,11 @@ function OrderRow({
   return (
     <>
       <tr
-        className="border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors h-9 cursor-pointer"
+        className="border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors h-7 cursor-pointer"
         onClick={onToggle}
       >
         {isGrossist && (
-          <td className="px-1 py-1" onClick={(e) => e.stopPropagation()}>
+          <td className="px-1 py-0.5" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-1">
               {canPack && (
                 <Button
@@ -542,23 +542,23 @@ function OrderRow({
             </div>
           </td>
         )}
-        <td className="px-1 py-1">
+        <td className="px-1 py-0.5">
           {isExpanded ? (
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+            <ChevronDown className="h-3 w-3 text-muted-foreground" />
           ) : (
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+            <ChevronRight className="h-3 w-3 text-muted-foreground" />
           )}
         </td>
-        <td className="px-1.5 py-1 font-medium text-foreground whitespace-nowrap">{order.stores?.name || "—"}</td>
-        <td className="px-1.5 py-1 text-muted-foreground">{order.order_week}</td>
-        <td className="px-1.5 py-1 text-muted-foreground whitespace-nowrap">
+        <td className="px-1.5 py-0.5 font-medium text-foreground whitespace-nowrap">{order.stores?.name || "—"}</td>
+        <td className="px-1.5 py-0.5 text-muted-foreground">{order.order_week}</td>
+        <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">
           {order.desired_delivery_date ? format(new Date(order.desired_delivery_date), "yy-MM-dd") : "—"}
         </td>
-        <td className="px-1.5 py-1 text-muted-foreground whitespace-nowrap">
+        <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">
           {order.created_at ? format(new Date(order.created_at), "yy-MM-dd HH:mm") : "—"}
         </td>
-        <td className="px-1.5 py-1 text-right text-foreground">{lines.length}</td>
-        <td className="px-1.5 py-1 text-right">
+        <td className="px-1.5 py-0.5 text-right text-foreground">{lines.length}</td>
+        <td className="px-1.5 py-0.5 text-right">
           <Badge variant="outline" className={`${statusColor[order.status] || ""} text-[10px] gap-0.5`}>
             {statusIcon[order.status] || null}
             {order.status}
@@ -576,7 +576,7 @@ function OrderRow({
                 transition={{ duration: 0.2 }}
                 className="overflow-hidden"
               >
-                <div className="bg-muted/20 border-b border-border px-4 py-2">
+                <div className="bg-muted/20 border-b border-border px-3 py-1.5">
                   {order.packer_name && (
                     <div className="mb-2 text-[10px] text-muted-foreground">
                       Packare: <span className="font-medium text-foreground">{order.packer_name}</span>
@@ -602,19 +602,19 @@ function OrderRow({
                         const canEditPacked = isGrossist && lineStatus === "Pågående";
 
                         return (
-                          <tr key={line.id} className={`border-b border-border/30 last:border-0 h-8 ${rowBgByStatus[lineStatus] || ""}`}>
-                            <td className="py-1 font-medium text-foreground">{line.products?.name || "—"}</td>
-                            <td className="py-1 text-muted-foreground">{line.products?.category || "—"}</td>
-                            <td className="py-1 text-right text-foreground">{line.quantity_ordered}</td>
-                            <td className="py-1 text-right text-muted-foreground">
+                          <tr key={line.id} className={`border-b border-border/30 last:border-0 h-6 ${rowBgByStatus[lineStatus] || ""}`}>
+                            <td className="py-0.5 font-medium text-foreground">{line.products?.name || "—"}</td>
+                            <td className="py-0.5 text-muted-foreground">{line.products?.category || "—"}</td>
+                            <td className="py-0.5 text-right text-foreground">{line.quantity_ordered}</td>
+                            <td className="py-0.5 text-right text-muted-foreground">
                               {canEditPacked ? (
                                 <PackedInput lineId={line.id} orderId={order.id} defaultValue={line.quantity_ordered} currentDelivered={line.quantity_delivered} onStatusChange={onStatusChange} />
                               ) : (
                                 Number(line.quantity_delivered || 0) > 0 ? line.quantity_delivered : "–"
                               )}
                             </td>
-                            <td className="py-1 text-muted-foreground">{line.unit || line.products?.unit || "kg"}</td>
-                            <td className="py-1 text-right">
+                            <td className="py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "kg"}</td>
+                            <td className="py-0.5 text-right">
                               <Badge variant="outline" className={`${statusColor[lineStatus] || statusColor["Ny"]} text-[10px] gap-1`}>
                                 {statusIcon[lineStatus] || statusIcon["Ny"]}
                                 {lineStatus}
