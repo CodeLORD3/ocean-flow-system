@@ -383,6 +383,37 @@ export default function ScheduleCalendar() {
                 </Select>
               </div>
             </div>
+            {/* Recurrence */}
+            <div>
+              <label className="text-[9px] text-muted-foreground font-medium">UPPREPNING</label>
+              <Select value={formRecurrence} onValueChange={setFormRecurrence}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {RECURRENCE_OPTIONS.map(r => (
+                    <SelectItem key={r.value} value={r.value} className="text-xs">
+                      <span className="flex items-center gap-1.5">
+                        {r.value !== "none" && <Repeat className="h-3 w-3 text-muted-foreground" />}
+                        {r.label}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {formRecurrence !== "none" && (
+              <div>
+                <label className="text-[9px] text-muted-foreground font-medium">UPPREPNING SLUTAR (VALFRITT)</label>
+                <Input
+                  type="date"
+                  value={formRecurrenceEnd}
+                  onChange={e => setFormRecurrenceEnd(e.target.value)}
+                  className="text-xs h-8"
+                  placeholder="Inget slutdatum"
+                />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setShowAddDialog(false)} className="text-[10px] h-7">Avbryt</Button>
