@@ -446,7 +446,7 @@ export default function ScheduleCalendar() {
                     <div className={cn("h-2 w-2 rounded-full shrink-0", getEventTypeInfo(evt.event_type).color)} />
                     <span className="text-xs font-medium">{evt.title}</span>
                     {evt.recurrence_type && evt.recurrence_type !== "none" && (
-                      <Repeat className="h-3 w-3 text-muted-foreground shrink-0" title={RECURRENCE_OPTIONS.find(r => r.value === evt.recurrence_type)?.label} />
+                      <Repeat className="h-3 w-3 text-muted-foreground shrink-0" />
                     )}
                   </div>
                   <div className="flex items-center gap-1">
