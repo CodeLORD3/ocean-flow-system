@@ -1497,6 +1497,8 @@ export type Database = {
           event_type: string
           id: string
           portal: string
+          recurrence_end_date: string | null
+          recurrence_type: string
           severity: string
           start_time: string | null
           store_id: string | null
@@ -1512,6 +1514,8 @@ export type Database = {
           event_type?: string
           id?: string
           portal?: string
+          recurrence_end_date?: string | null
+          recurrence_type?: string
           severity?: string
           start_time?: string | null
           store_id?: string | null
@@ -1527,6 +1531,8 @@ export type Database = {
           event_type?: string
           id?: string
           portal?: string
+          recurrence_end_date?: string | null
+          recurrence_type?: string
           severity?: string
           start_time?: string | null
           store_id?: string | null
