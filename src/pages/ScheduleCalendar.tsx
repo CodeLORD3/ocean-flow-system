@@ -294,110 +294,73 @@ export default function ScheduleCalendar() {
   );
 
   const renderAddForm = () => (
-    <>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        <div>
-          <label className="text-[9px] text-muted-foreground font-medium">DATUM</label>
-          <Input
-            type="date"
-            value={formDate}
-            onChange={e => setFormDate(e.target.value)}
-            className="text-xs h-8"
-          />
-        </div>
-        <div>
-          <label className="text-[9px] text-muted-foreground font-medium">TITEL</label>
-          <Input
-            placeholder="Titel"
-            value={formTitle}
-            onChange={e => setFormTitle(e.target.value)}
-            className="text-xs h-8"
-            autoFocus
-          />
-        </div>
-        <div>
-          <label className="text-[9px] text-muted-foreground font-medium">TYP</label>
-          <Select value={formType} onValueChange={setFormType}>
-            <SelectTrigger className="h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {EVENT_TYPES.map(t => (
-                <SelectItem key={t.value} value={t.value} className="text-xs">
-                  <span className="flex items-center gap-1.5">
-                    <div className={cn("h-2 w-2 rounded-full", t.color)} />
-                    {t.label}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <label className="text-[9px] text-muted-foreground font-medium">PRIORITET</label>
-          <Select value={formSeverity} onValueChange={setFormSeverity}>
-            <SelectTrigger className="h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SEVERITY_LEVELS.map(s => (
-                <SelectItem key={s.value} value={s.value} className="text-xs">
-                  <span className="flex items-center gap-1.5">
-                    <div className={cn("h-2 w-2 rounded-full", s.color)} />
-                    {s.label}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-x-2 gap-y-1">
+      <div>
+        <label className="text-[8px] text-muted-foreground font-medium leading-none">DATUM</label>
+        <Input type="date" value={formDate} onChange={e => setFormDate(e.target.value)} className="text-[10px] h-6 px-1.5" />
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        <div className="col-span-2 md:col-span-1">
-          <label className="text-[9px] text-muted-foreground font-medium">UPPREPNING</label>
-          <Select value={formRecurrence} onValueChange={setFormRecurrence}>
-            <SelectTrigger className="h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {RECURRENCE_OPTIONS.map(r => (
-                <SelectItem key={r.value} value={r.value} className="text-xs">
-                  <span className="flex items-center gap-1.5">
-                    {r.value !== "none" && <Repeat className="h-3 w-3 text-muted-foreground" />}
-                    {r.label}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        {formRecurrence !== "none" && (
-          <div>
-            <label className="text-[9px] text-muted-foreground font-medium">SLUTAR</label>
-            <Input
-              type="date"
-              value={formRecurrenceEnd}
-              onChange={e => setFormRecurrenceEnd(e.target.value)}
-              className="text-xs h-8"
-            />
-          </div>
-        )}
-        <div className={cn("col-span-2 md:col-span-1", formRecurrence !== "none" ? "" : "md:col-start-4")}>
-          <label className="text-[9px] text-muted-foreground font-medium">BESKRIVNING</label>
-          <Input
-            placeholder="Valfritt"
-            value={formDesc}
-            onChange={e => setFormDesc(e.target.value)}
-            className="text-xs h-8"
-          />
-        </div>
-        <div className="flex items-end justify-end col-span-2 md:col-span-1">
-          <Button size="sm" onClick={handleAdd} disabled={!formTitle.trim() || addEvent.isPending} className="text-[10px] h-8 w-full">
-            {addEvent.isPending ? "Sparar..." : "Spara händelse"}
-          </Button>
-        </div>
+      <div>
+        <label className="text-[8px] text-muted-foreground font-medium leading-none">TITEL</label>
+        <Input placeholder="Titel" value={formTitle} onChange={e => setFormTitle(e.target.value)} className="text-[10px] h-6 px-1.5" autoFocus />
       </div>
-    </>
+      <div>
+        <label className="text-[8px] text-muted-foreground font-medium leading-none">TYP</label>
+        <Select value={formType} onValueChange={setFormType}>
+          <SelectTrigger className="h-6 text-[10px] px-1.5"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {EVENT_TYPES.map(t => (
+              <SelectItem key={t.value} value={t.value} className="text-[10px]">
+                <span className="flex items-center gap-1"><div className={cn("h-1.5 w-1.5 rounded-full", t.color)} />{t.label}</span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <label className="text-[8px] text-muted-foreground font-medium leading-none">PRIORITET</label>
+        <Select value={formSeverity} onValueChange={setFormSeverity}>
+          <SelectTrigger className="h-6 text-[10px] px-1.5"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {SEVERITY_LEVELS.map(s => (
+              <SelectItem key={s.value} value={s.value} className="text-[10px]">
+                <span className="flex items-center gap-1"><div className={cn("h-1.5 w-1.5 rounded-full", s.color)} />{s.label}</span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
+        <label className="text-[8px] text-muted-foreground font-medium leading-none">UPPREPNING</label>
+        <Select value={formRecurrence} onValueChange={setFormRecurrence}>
+          <SelectTrigger className="h-6 text-[10px] px-1.5"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {RECURRENCE_OPTIONS.map(r => (
+              <SelectItem key={r.value} value={r.value} className="text-[10px]">
+                <span className="flex items-center gap-1">
+                  {r.value !== "none" && <Repeat className="h-2.5 w-2.5 text-muted-foreground" />}
+                  {r.label}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      {formRecurrence !== "none" && (
+        <div>
+          <label className="text-[8px] text-muted-foreground font-medium leading-none">SLUTAR</label>
+          <Input type="date" value={formRecurrenceEnd} onChange={e => setFormRecurrenceEnd(e.target.value)} className="text-[10px] h-6 px-1.5" />
+        </div>
+      )}
+      <div className={cn(formRecurrence !== "none" ? "col-span-2 md:col-span-2" : "col-span-2 md:col-span-3")}>
+        <label className="text-[8px] text-muted-foreground font-medium leading-none">BESKRIVNING</label>
+        <Input placeholder="Valfritt" value={formDesc} onChange={e => setFormDesc(e.target.value)} className="text-[10px] h-6 px-1.5" />
+      </div>
+      <div className="flex items-end col-span-2 md:col-span-1">
+        <Button size="sm" onClick={handleAdd} disabled={!formTitle.trim() || addEvent.isPending} className="text-[9px] h-6 w-full px-2">
+          {addEvent.isPending ? "Sparar..." : "Spara"}
+        </Button>
+      </div>
+    </div>
   );
 
   return (
@@ -438,7 +401,7 @@ export default function ScheduleCalendar() {
       {/* ── INLINE ADD EVENT PANEL ── */}
       <Collapsible open={showAddDialog} onOpenChange={setShowAddDialog}>
         <CollapsibleContent>
-          <div className="border border-border bg-card p-4 space-y-3 rounded-sm">
+          <div className="border border-border bg-card px-3 py-2 rounded-sm">
             {renderAddForm()}
           </div>
         </CollapsibleContent>
