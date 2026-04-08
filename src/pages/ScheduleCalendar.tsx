@@ -77,6 +77,8 @@ export default function ScheduleCalendar() {
     setFormType("note");
     setFormSeverity("info");
     setFormDate(date || format(new Date(), "yyyy-MM-dd"));
+    setFormRecurrence("none");
+    setFormRecurrenceEnd("");
     setShowAddDialog(true);
   };
 
