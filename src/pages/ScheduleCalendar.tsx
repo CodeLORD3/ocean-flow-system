@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { format, getDaysInMonth, startOfMonth, getDay, isToday, parseISO, isSameMonth } from "date-fns";
 import { sv } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Plus, X, Trash2, Edit2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X, Trash2, Edit2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
