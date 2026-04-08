@@ -82,6 +82,18 @@ export default function ScheduleCalendar() {
     setShowAddDialog(true);
   };
 
+  const copyEvent = (evt: ScheduleEvent, date?: string) => {
+    setFormTitle(evt.title);
+    setFormDesc(evt.description || "");
+    setFormType(evt.event_type);
+    setFormSeverity(evt.severity);
+    setFormDate(date || format(new Date(), "yyyy-MM-dd"));
+    setFormRecurrence(evt.recurrence_type || "none");
+    setFormRecurrenceEnd(evt.recurrence_end_date || "");
+    setShowDayDetail(false);
+    setShowAddDialog(true);
+  };
+
   const handleAdd = async () => {
     if (!formTitle.trim()) return;
     try {
