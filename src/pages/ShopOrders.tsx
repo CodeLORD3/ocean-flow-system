@@ -127,15 +127,15 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
-                  <th className="p-3 text-left font-medium text-muted-foreground">VECKA</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">DATUM</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">BUTIK</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">ÖNSKAD LEV.</th>
-                  <th className="p-3 text-right font-medium text-muted-foreground">RADER</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">PRODUKTER</th>
-                  <th className="p-3 text-left font-medium text-muted-foreground">ANTECKNING</th>
-                  <th className="p-3 text-center font-medium text-muted-foreground">FÖLJESEDEL</th>
-                  <th className="p-3 text-right font-medium text-muted-foreground">STATUS</th>
+                  <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">VECKA</th>
+                  <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">DATUM</th>
+                  <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">BUTIK</th>
+                  <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">ÖNSKAD LEV.</th>
+                  <th className="px-1.5 py-0.5 text-right font-medium text-muted-foreground">RADER</th>
+                  <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">PRODUKTER</th>
+                  <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">ANTECKNING</th>
+                  <th className="px-1.5 py-0.5 text-center font-medium text-muted-foreground">FÖLJESEDEL</th>
+                  <th className="px-1.5 py-0.5 text-right font-medium text-muted-foreground">STATUS</th>
                 </tr>
               </thead>
               <tbody>
@@ -149,34 +149,34 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                   return (
                     <React.Fragment key={o.id}>
                       <tr
-                        className={`border-b border-border/40 transition-colors cursor-pointer hover:bg-muted/30 ${isExpanded ? "bg-primary/10 border-l-2 border-l-primary border-b-0" : ""}`}
+                        className={`border-b border-border/40 h-7 transition-colors cursor-pointer hover:bg-muted/30 ${isExpanded ? "bg-primary/10 border-l-2 border-l-primary border-b-0" : ""}`}
                         style={{ background: isExpanded ? undefined : buildProgressGradient(lines) }}
                         onClick={() => toggleExpand(o.id)}
                       >
-                        <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
-                        <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
-                        <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
-                        <td className="p-3 text-muted-foreground">{o.desired_delivery_date || "–"}</td>
-                        <td className="p-3 text-right text-foreground">{lines.length}</td>
-                        <td className="p-3 text-muted-foreground text-[10px] max-w-48 truncate">
+                        <td className="px-1.5 py-0.5 font-mono font-medium text-foreground">{o.order_week}</td>
+                        <td className="px-1.5 py-0.5 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
+                        <td className="px-1.5 py-0.5 text-muted-foreground">{o.stores?.name || "–"}</td>
+                        <td className="px-1.5 py-0.5 text-muted-foreground">{o.desired_delivery_date || "–"}</td>
+                        <td className="px-1.5 py-0.5 text-right text-foreground">{lines.length}</td>
+                        <td className="px-1.5 py-0.5 text-muted-foreground text-[10px] max-w-48 truncate">
                           {lines.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
                         </td>
-                        <td className="p-3 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
-                        <td className="p-3 text-center">
+                        <td className="px-1.5 py-0.5 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
+                        <td className="px-1.5 py-0.5 text-center">
                           {hasFolljesedel ? (
                             <Button
                               variant="outline"
                               size="sm"
-                              className="h-6 text-[10px] gap-1 px-2"
+                              className="h-5 text-[9px] gap-1 px-1.5"
                               onClick={(e) => { e.stopPropagation(); setFolljesedelOrder(o); }}
                             >
-                              <FileText className="h-3 w-3" /> Skriv ut
+                              <FileText className="h-2.5 w-2.5" /> Skriv ut
                             </Button>
                           ) : (
                             <span className="text-[10px] text-muted-foreground">—</span>
                           )}
                         </td>
-                        <td className="p-3 text-right">
+                        <td className="px-1.5 py-0.5 text-right">
                           <Badge variant="outline" className={`${statusColor[o.status] || ""} text-[10px] gap-1`}>
                             {statusIcon[o.status]}
                             {o.status}
@@ -186,7 +186,7 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                       {isExpanded && (
                         <tr>
                           <td colSpan={9} className="p-0">
-                            <div className="border-l-2 border-l-primary bg-card p-4 space-y-3">
+                            <div className="border-l-2 border-l-primary bg-card px-3 py-2 space-y-2">
                               <OrderDetailWithEdit
                                 order={o}
                                 products={products}
