@@ -487,11 +487,32 @@ export default function ShopOrders() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Product search */}
-            <div className="relative">
-              <Label className="text-xs font-medium mb-1.5 block">Lägg till produkter</Label>
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            {/* Copy last order + Product search */}
+            <div className="flex items-end gap-2">
+              <div className="relative flex-1">
+                <Label className="text-xs font-medium mb-1.5 block">Lägg till produkter</Label>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    placeholder="Sök produkt (namn eller SKU)..."
+                    value={productSearch}
+                    onChange={e => { setProductSearch(e.target.value); setHighlightedIndex(-1); }}
+                    onKeyDown={e => {
+                      if (filteredProducts.length === 0) return;
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        setHighlightedIndex(prev => (prev + 1) % filteredProducts.length);
+                      } else if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        setHighlightedIndex(prev => (prev <= 0 ? filteredProducts.length - 1 : prev - 1));
+                      } else if (e.key === "Enter" && highlightedIndex >= 0 && highlightedIndex < filteredProducts.length) {
+                        e.preventDefault();
+                        addProduct(filteredProducts[highlightedIndex]);
+                      }
+                    }}
+                    className="pl-8 h-8 text-xs"
+                  />
+                </div>
                 <Input
                   placeholder="Sök produkt (namn eller SKU)..."
                   value={productSearch}
