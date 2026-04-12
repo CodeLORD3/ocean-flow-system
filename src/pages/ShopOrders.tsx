@@ -529,29 +529,36 @@ export default function ShopOrders() {
                   </div>
                 )}
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-xs h-8 whitespace-nowrap"
-                disabled={orders.length === 0}
-                onClick={() => {
-                  const lastOrder = orders[0];
-                  if (!lastOrder?.shop_order_lines?.length) {
-                    toast({ title: "Ingen tidigare order att kopiera", variant: "destructive" });
+              <Select
+                value=""
+                onValueChange={(orderId) => {
+                  const picked = orders.find((o: any) => o.id === orderId);
+                  if (!picked?.shop_order_lines?.length) {
+                    toast({ title: "Ingen rader att kopiera", variant: "destructive" });
                     return;
                   }
-                  const copied: OrderLine[] = lastOrder.shop_order_lines.map((l: any) => ({
+                  const copied: OrderLine[] = picked.shop_order_lines.map((l: any) => ({
                     product_id: l.product_id,
                     product_name: l.products?.name || "–",
                     unit: l.unit || l.products?.unit || "ST",
                     quantity: String(l.quantity_ordered || ""),
                   }));
                   setOrderLines(copied);
-                  toast({ title: "Förra ordern kopierad", description: `${copied.length} produkter tillagda` });
+                  toast({ title: "Order kopierad", description: `${copied.length} produkter tillagda från ${picked.order_week}` });
                 }}
               >
-                <Copy className="h-3.5 w-3.5" /> Kopiera förra ordern
-              </Button>
+                <SelectTrigger className="h-8 text-xs w-auto gap-1.5 whitespace-nowrap" disabled={orders.length === 0}>
+                  <Copy className="h-3.5 w-3.5" />
+                  <span>Kopiera tidigare order</span>
+                </SelectTrigger>
+                <SelectContent>
+                  {orders.map((o: any) => (
+                    <SelectItem key={o.id} value={o.id} className="text-xs">
+                      {o.order_week} — {o.stores?.name} ({new Date(o.created_at).toLocaleDateString("sv-SE")})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Order lines */}
