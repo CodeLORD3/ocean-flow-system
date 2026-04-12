@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Plus, Search, Clock, CheckCircle2, Truck, XCircle, X, Package,
-  Archive, ListChecks, History, CalendarIcon, Pencil, Send, FileText,
+  Archive, ListChecks, History, CalendarIcon, Pencil, Send, FileText, Copy,
 } from "lucide-react";
 import DeliveryNote from "@/components/DeliveryNote";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
