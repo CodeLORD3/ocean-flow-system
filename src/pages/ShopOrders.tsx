@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Plus, Search, Clock, CheckCircle2, Truck, XCircle, X, Package,
-  Archive, ListChecks, History, CalendarIcon, Pencil, Send, FileText,
+  Archive, ListChecks, History, CalendarIcon, Pencil, Send, FileText, Copy,
 } from "lucide-react";
 import DeliveryNote from "@/components/DeliveryNote";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -487,46 +487,71 @@ export default function ShopOrders() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Product search */}
-            <div className="relative">
-              <Label className="text-xs font-medium mb-1.5 block">Lägg till produkter</Label>
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input
-                  placeholder="Sök produkt (namn eller SKU)..."
-                  value={productSearch}
-                  onChange={e => { setProductSearch(e.target.value); setHighlightedIndex(-1); }}
-                  onKeyDown={e => {
-                    if (filteredProducts.length === 0) return;
-                    if (e.key === "ArrowDown") {
-                      e.preventDefault();
-                      setHighlightedIndex(prev => (prev + 1) % filteredProducts.length);
-                    } else if (e.key === "ArrowUp") {
-                      e.preventDefault();
-                      setHighlightedIndex(prev => (prev <= 0 ? filteredProducts.length - 1 : prev - 1));
-                    } else if (e.key === "Enter" && highlightedIndex >= 0 && highlightedIndex < filteredProducts.length) {
-                      e.preventDefault();
-                      addProduct(filteredProducts[highlightedIndex]);
-                    }
-                  }}
-                  className="pl-8 h-8 text-xs"
-                />
-              </div>
-              {filteredProducts.length > 0 && (
-                <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
-                  {filteredProducts.map((p, idx) => (
-                    <button
-                      key={p.id}
-                      className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between ${idx === highlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
-                      onClick={() => addProduct(p)}
-                      onMouseEnter={() => setHighlightedIndex(idx)}
-                    >
-                      <span className="font-medium text-foreground">{p.name}</span>
-                      <span className="text-muted-foreground font-mono text-[10px]">{p.sku} · {p.unit}</span>
-                    </button>
-                  ))}
+            {/* Copy last order + Product search */}
+            <div className="flex items-end gap-2">
+              <div className="relative flex-1">
+                <Label className="text-xs font-medium mb-1.5 block">Lägg till produkter</Label>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    placeholder="Sök produkt (namn eller SKU)..."
+                    value={productSearch}
+                    onChange={e => { setProductSearch(e.target.value); setHighlightedIndex(-1); }}
+                    onKeyDown={e => {
+                      if (filteredProducts.length === 0) return;
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        setHighlightedIndex(prev => (prev + 1) % filteredProducts.length);
+                      } else if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        setHighlightedIndex(prev => (prev <= 0 ? filteredProducts.length - 1 : prev - 1));
+                      } else if (e.key === "Enter" && highlightedIndex >= 0 && highlightedIndex < filteredProducts.length) {
+                        e.preventDefault();
+                        addProduct(filteredProducts[highlightedIndex]);
+                      }
+                    }}
+                    className="pl-8 h-8 text-xs"
+                  />
                 </div>
-              )}
+                {filteredProducts.length > 0 && (
+                  <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                    {filteredProducts.map((p, idx) => (
+                      <button
+                        key={p.id}
+                        className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between ${idx === highlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
+                        onClick={() => addProduct(p)}
+                        onMouseEnter={() => setHighlightedIndex(idx)}
+                      >
+                        <span className="font-medium text-foreground">{p.name}</span>
+                        <span className="text-muted-foreground font-mono text-[10px]">{p.sku} · {p.unit}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs h-8 whitespace-nowrap"
+                disabled={orders.length === 0}
+                onClick={() => {
+                  const lastOrder = orders[0];
+                  if (!lastOrder?.shop_order_lines?.length) {
+                    toast({ title: "Ingen tidigare order att kopiera", variant: "destructive" });
+                    return;
+                  }
+                  const copied: OrderLine[] = lastOrder.shop_order_lines.map((l: any) => ({
+                    product_id: l.product_id,
+                    product_name: l.products?.name || "–",
+                    unit: l.unit || l.products?.unit || "ST",
+                    quantity: String(l.quantity_ordered || ""),
+                  }));
+                  setOrderLines(copied);
+                  toast({ title: "Förra ordern kopierad", description: `${copied.length} produkter tillagda` });
+                }}
+              >
+                <Copy className="h-3.5 w-3.5" /> Kopiera förra ordern
+              </Button>
             </div>
 
             {/* Order lines */}
