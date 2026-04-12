@@ -548,6 +548,30 @@ export default function ShopOrders() {
                   ))}
                 </div>
               )}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs h-8 whitespace-nowrap"
+                disabled={orders.length === 0}
+                onClick={() => {
+                  const lastOrder = orders[0];
+                  if (!lastOrder?.shop_order_lines?.length) {
+                    toast({ title: "Ingen tidigare order att kopiera", variant: "destructive" });
+                    return;
+                  }
+                  const copied: OrderLine[] = lastOrder.shop_order_lines.map((l: any) => ({
+                    product_id: l.product_id,
+                    product_name: l.products?.name || "–",
+                    unit: l.unit || l.products?.unit || "ST",
+                    quantity: String(l.quantity_ordered || ""),
+                  }));
+                  setOrderLines(copied);
+                  toast({ title: "Förra ordern kopierad", description: `${copied.length} produkter tillagda` });
+                }}
+              >
+                <Copy className="h-3.5 w-3.5" /> Kopiera förra ordern
+              </Button>
             </div>
 
             {/* Order lines */}
