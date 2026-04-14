@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
 export type SiteMode = "shop" | "wholesale" | "production" | "trade";
 
@@ -18,15 +18,67 @@ const SiteContext = createContext<SiteContextType>({
   setActiveStore: () => {},
 });
 
+const SITE_STORAGE_KEY = "erp_site_context";
+
+function getStoredSiteContext() {
+  if (typeof window === "undefined") {
+    return {
+      site: "wholesale" as SiteMode,
+      activeStoreId: null as string | null,
+      activeStoreName: null as string | null,
+    };
+  }
+
+  try {
+    const raw = sessionStorage.getItem(SITE_STORAGE_KEY);
+    if (!raw) {
+      return {
+        site: "wholesale" as SiteMode,
+        activeStoreId: null as string | null,
+        activeStoreName: null as string | null,
+      };
+    }
+
+    const parsed = JSON.parse(raw) as {
+      site?: SiteMode;
+      activeStoreId?: string | null;
+      activeStoreName?: string | null;
+    };
+
+    return {
+      site: parsed.site ?? "wholesale",
+      activeStoreId: parsed.activeStoreId ?? null,
+      activeStoreName: parsed.activeStoreName ?? null,
+    };
+  } catch {
+    return {
+      site: "wholesale" as SiteMode,
+      activeStoreId: null as string | null,
+      activeStoreName: null as string | null,
+    };
+  }
+}
+
 export function SiteProvider({ children }: { children: ReactNode }) {
-  const [site, setSite] = useState<SiteMode>("wholesale");
-  const [activeStoreId, setActiveStoreId] = useState<string | null>(null);
-  const [activeStoreName, setActiveStoreName] = useState<string | null>(null);
+  const [site, setSite] = useState<SiteMode>(() => getStoredSiteContext().site);
+  const [activeStoreId, setActiveStoreId] = useState<string | null>(() => getStoredSiteContext().activeStoreId);
+  const [activeStoreName, setActiveStoreName] = useState<string | null>(() => getStoredSiteContext().activeStoreName);
 
   const setActiveStore = (id: string | null, name: string | null) => {
     setActiveStoreId(id);
     setActiveStoreName(name);
   };
+
+  useEffect(() => {
+    sessionStorage.setItem(
+      SITE_STORAGE_KEY,
+      JSON.stringify({
+        site,
+        activeStoreId,
+        activeStoreName,
+      })
+    );
+  }, [site, activeStoreId, activeStoreName]);
 
   return (
     <SiteContext.Provider value={{ site, setSite, activeStoreId, activeStoreName, setActiveStore }}>
