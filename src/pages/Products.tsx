@@ -550,9 +550,9 @@ export default function Products() {
 
         {/* Prices */}
         {isWholesale && (
-          <td className="px-2 py-0 text-right">
+          <td className="px-2 py-0 text-right font-mono tabular-nums">
             {isAggregatedParent ? (
-              <span className="font-medium text-foreground">{agg!.cost_price.toFixed(2)}</span>
+              <span className="font-medium text-foreground">{agg!.cost_price.toLocaleString("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             ) : (
               <Input
                 type="number"
@@ -565,7 +565,7 @@ export default function Products() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") saveInlineEdit(p);
                 }}
-                className="h-7 w-24 text-right text-xs ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
+                className="h-7 w-24 text-right text-xs font-mono tabular-nums ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
               />
             )}
           </td>
