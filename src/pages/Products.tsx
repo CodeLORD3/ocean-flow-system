@@ -570,10 +570,10 @@ export default function Products() {
             )}
           </td>
         )}
-        <td className="px-2 py-0 text-right">
+        <td className="px-2 py-0 text-right font-mono tabular-nums">
           {isAggregatedParent ? (
-            <span className="font-medium text-foreground">
-              {(agg ? agg.wholesale_price : Number(p.wholesale_price)).toFixed(2)}
+            <span className="font-mono font-medium text-foreground tabular-nums">
+              {(agg ? agg.wholesale_price : Number(p.wholesale_price)).toLocaleString("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           ) : isWholesale ? (
             <Input
@@ -587,10 +587,10 @@ export default function Products() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") saveInlineEdit(p);
               }}
-              className="h-7 w-24 text-right text-xs ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
+              className="h-7 w-24 text-right text-xs font-mono tabular-nums ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
             />
           ) : (
-            <span className="font-medium text-foreground">{Number(p.wholesale_price).toFixed(2)}</span>
+            <span className="font-mono font-medium text-foreground tabular-nums">{Number(p.wholesale_price).toLocaleString("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           )}
         </td>
         {isWholesale && (
