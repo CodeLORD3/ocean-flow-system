@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
-export type SiteMode = "shop" | "wholesale" | "production" | "trade";
+export type SiteMode = "shop" | "wholesale" | "production";
 
 interface SiteContextType {
   site: SiteMode;

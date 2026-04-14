@@ -2,9 +2,9 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { ShopSidebar } from "@/components/ShopSidebar";
 import { ProductionSidebar } from "@/components/ProductionSidebar";
-import { TradeSidebar } from "@/components/TradeSidebar";
+
 import { useLocation } from "react-router-dom";
-import { Bell, ChevronRight, Search, User, ArrowLeftRight, Factory, Store, ChevronDown, X, Check, TrendingUp } from "lucide-react";
+import { Bell, ChevronRight, Search, User, ArrowLeftRight, Factory, Store, ChevronDown, X, Check } from "lucide-react";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -36,9 +36,6 @@ const pageTitles: Record<string, { title: string; breadcrumb: string[] }> = {
   "/products": { title: "Produkter", breadcrumb: ["Hem", "Lagerstyrning", "Produkter"] },
   "/receiving": { title: "Inleveranser", breadcrumb: ["Hem", "Lagerstyrning", "Inleveranser"] },
   "/barcodes": { title: "Streckkoder", breadcrumb: ["Hem", "Lagerstyrning", "Streckkoder"] },
-  "/trade-offers": { title: "Trade Offers", breadcrumb: ["Hem", "Trading", "Trade Offers"] },
-  "/trade-history": { title: "Trade History", breadcrumb: ["Hem", "Trading", "History"] },
-  "/investor-portal": { title: "Investor Portal", breadcrumb: ["Hem", "Trading", "Investor Portal"] },
 };
 
 function AccountSwitcher() {
@@ -94,7 +91,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
-        {site === "shop" ? <ShopSidebar /> : site === "production" ? <ProductionSidebar /> : site === "trade" ? <TradeSidebar /> : <AppSidebar />}
+        {site === "shop" ? <ShopSidebar /> : site === "production" ? <ProductionSidebar /> : <AppSidebar />}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Top status bar */}
           <div className="h-8 flex items-center justify-between bg-sidebar-background px-4 text-xs text-sidebar-foreground/70 shrink-0">
@@ -102,7 +99,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <span>FiskHandel ERP v2.4.1</span>
               <span className="hidden sm:inline">•</span>
               <span className="hidden sm:inline">
-                {site === "shop" ? `Butik: ${activeStoreName || "–"}` : site === "production" ? "Produktion" : site === "trade" ? "Trade" : "Grossist"}
+                {site === "shop" ? `Butik: ${activeStoreName || "–"}` : site === "production" ? "Produktion" : "Grossist"}
               </span>
             </div>
             <div className="flex items-center gap-3">
@@ -114,7 +111,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     className="h-6 text-[10px] gap-1 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
                   >
                     <ArrowLeftRight className="h-3 w-3" />
-                    {site === "shop" ? activeStoreName || "Butik" : site === "production" ? "Produktion" : site === "trade" ? "Trade" : "Grossist"}
+                    {site === "shop" ? activeStoreName || "Butik" : site === "production" ? "Produktion" : "Grossist"}
                     <ChevronDown className="h-2.5 w-2.5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -132,12 +129,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     onClick={() => { setSite("production"); setActiveStore(null, null); switchTab("/"); }}
                   >
                     <Factory className="h-3 w-3" /> Produktion
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className={`text-xs gap-2 ${site === "trade" ? "bg-muted font-medium" : ""}`}
-                    onClick={() => { setSite("trade"); setActiveStore(null, null); switchTab("/trade-offers"); }}
-                  >
-                    <TrendingUp className="h-3 w-3" /> Trade
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuLabel className="text-[10px]">Butiker</DropdownMenuLabel>

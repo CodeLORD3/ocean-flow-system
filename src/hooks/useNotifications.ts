@@ -12,7 +12,7 @@ export function useNotifications() {
   const { site, activeStoreId } = useSite();
   const queryClient = useQueryClient();
 
-  const portal = site === "shop" ? "shop" : site === "production" ? "production" : site === "trade" ? "trade" : "wholesale";
+  const portal = site === "shop" ? "shop" : site === "production" ? "production" : "wholesale";
 
   const { data: counts = [] } = useQuery<NotificationCount[]>({
     queryKey: ["notification-counts", portal, activeStoreId],
