@@ -36,6 +36,7 @@ import Payouts from "@/pages/Payouts";
 import AdminPayments from "@/pages/AdminPayments";
 import MapSettings from "@/pages/MapSettings";
 import ShopWishes from "@/pages/ShopWishes";
+import MeetingProtocols from "@/pages/MeetingProtocols";
 
 interface RouteEntry {
   component: React.ReactNode;
@@ -77,6 +78,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/admin-payments": { component: <AdminPayments /> },
   "/map-settings": { component: <MapSettings /> },
   "/wishes": { component: <ShopWishes /> },
+  "/meetings": { component: <MeetingProtocols /> },
 };
 
 /**

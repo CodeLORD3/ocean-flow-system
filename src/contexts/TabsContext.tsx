@@ -37,6 +37,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/investor-portal": "Investor Portal",
   "/schedule": "Kalender",
   "/map-settings": "Map Settings",
+  "/meetings": "Mötesprotokoll",
 };
 
 export function getTitleForPath(path: string): string {

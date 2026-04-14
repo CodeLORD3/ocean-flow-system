@@ -834,6 +834,76 @@ export type Database = {
         }
         Relationships: []
       }
+      meeting_protocol_items: {
+        Row: {
+          completed: boolean
+          content: string
+          id: string
+          protocol_id: string
+          sort_order: number
+        }
+        Insert: {
+          completed?: boolean
+          content?: string
+          id?: string
+          protocol_id: string
+          sort_order?: number
+        }
+        Update: {
+          completed?: boolean
+          content?: string
+          id?: string
+          protocol_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_protocol_items_protocol_id_fkey"
+            columns: ["protocol_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_protocols"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_protocols: {
+        Row: {
+          attendees: string | null
+          created_at: string
+          id: string
+          meeting_date: string
+          notes: string | null
+          store_id: string
+          title: string
+        }
+        Insert: {
+          attendees?: string | null
+          created_at?: string
+          id?: string
+          meeting_date?: string
+          notes?: string | null
+          store_id: string
+          title?: string
+        }
+        Update: {
+          attendees?: string | null
+          created_at?: string
+          id?: string
+          meeting_date?: string
+          notes?: string | null
+          store_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_protocols_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           funds_received: boolean
