@@ -570,9 +570,9 @@ export default function Products() {
             )}
           </td>
         )}
-        <td className="px-2 py-0 text-right font-mono tabular-nums">
+        <td className="px-2 py-0 text-right text-xs font-mono tabular-nums">
           {isAggregatedParent ? (
-            <span className="font-mono font-medium text-foreground tabular-nums">
+            <span className="text-foreground">
               {(agg ? agg.wholesale_price : Number(p.wholesale_price)).toLocaleString("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           ) : isWholesale ? (
@@ -590,7 +590,7 @@ export default function Products() {
               className="h-7 w-24 text-right text-xs font-mono tabular-nums ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
             />
           ) : (
-            <span className="font-mono font-medium text-foreground tabular-nums">{Number(p.wholesale_price).toLocaleString("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <span className="text-foreground">{Number(p.wholesale_price).toLocaleString("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           )}
         </td>
         {isWholesale && (
