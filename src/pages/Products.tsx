@@ -570,7 +570,7 @@ export default function Products() {
             )}
           </td>
         )}
-        <td className="px-2 py-0 text-right">
+        <td className="px-2 py-0 text-right font-mono tabular-nums">
           {isAggregatedParent ? (
             <span className="font-mono font-medium text-foreground tabular-nums">
               {(agg ? agg.wholesale_price : Number(p.wholesale_price)).toLocaleString("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
