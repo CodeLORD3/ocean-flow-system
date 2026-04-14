@@ -550,9 +550,9 @@ export default function Products() {
 
         {/* Prices */}
         {isWholesale && (
-          <td className="px-2 py-0 text-right font-mono tabular-nums">
+          <td className="px-2 py-0 text-right text-xs font-mono tabular-nums">
             {isAggregatedParent ? (
-              <span className="font-medium text-foreground">{agg!.cost_price.toLocaleString("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span className="text-foreground">{agg!.cost_price.toLocaleString("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             ) : (
               <Input
                 type="number"
