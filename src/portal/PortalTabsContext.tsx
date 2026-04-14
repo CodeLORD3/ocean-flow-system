@@ -53,10 +53,10 @@ export function PortalTabsProvider({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     const path = location.pathname;
     setActiveTab(path);
+    sessionStorage.setItem("portal_last_route", path);
     setTabs((prev) => {
       if (prev.some((t) => t.path === path)) return prev;
       const next = [...prev, { path, title: getPortalTitle(path) }];
-      // Cap at 4 tabs — remove oldest (but not the first "Opportunities" tab if possible)
       if (next.length > 4) {
         const removeIdx = next.findIndex((t, i) => i > 0 && t.path !== path);
         if (removeIdx > 0) next.splice(removeIdx, 1);
@@ -65,6 +65,15 @@ export function PortalTabsProvider({ children }: { children: React.ReactNode }) 
       return next;
     });
   }, [location.pathname]);
+
+  // On mount, restore last portal route
+  useEffect(() => {
+    const saved = sessionStorage.getItem("portal_last_route");
+    if (saved && saved !== "/portal" && location.pathname === "/portal") {
+      navigate(saved, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const closeTab = useCallback(
     (path: string) => {

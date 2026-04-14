@@ -60,15 +60,25 @@ export function TabsProvider({ children }: { children: React.ReactNode }) {
   ]);
   const [activeTab, setActiveTab] = useState(location.pathname);
 
-  // When location changes, add tab if not exists
+  // When location changes, add tab if not exists and persist route
   useEffect(() => {
     const path = location.pathname;
     setActiveTab(path);
+    sessionStorage.setItem("erp_last_route", path);
     setTabs((prev) => {
       if (prev.some((t) => t.path === path)) return prev;
       return [...prev, { path, title: getTitleForPath(path) }];
     });
   }, [location.pathname]);
+
+  // On mount, restore last route if we landed on "/"
+  useEffect(() => {
+    const saved = sessionStorage.getItem("erp_last_route");
+    if (saved && saved !== "/" && location.pathname === "/") {
+      navigate(saved, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const closeTab = useCallback(
     (path: string) => {
