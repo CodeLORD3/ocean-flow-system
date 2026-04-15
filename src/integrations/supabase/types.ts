@@ -837,6 +837,7 @@ export type Database = {
       meeting_protocol_items: {
         Row: {
           assigned_to: string | null
+          calendar_event_id: string | null
           completed: boolean
           content: string
           id: string
@@ -845,6 +846,7 @@ export type Database = {
         }
         Insert: {
           assigned_to?: string | null
+          calendar_event_id?: string | null
           completed?: boolean
           content?: string
           id?: string
@@ -853,6 +855,7 @@ export type Database = {
         }
         Update: {
           assigned_to?: string | null
+          calendar_event_id?: string | null
           completed?: boolean
           content?: string
           id?: string
