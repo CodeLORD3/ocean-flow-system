@@ -11,7 +11,7 @@ import {
   useDeleteProtocolItem,
 } from "@/hooks/useMeetingProtocols";
 import { useStaff } from "@/hooks/useStaff";
-import { useScheduleEvents, EVENT_TYPES, SEVERITY_LEVELS, RECURRENCE_OPTIONS } from "@/hooks/useScheduleEvents";
+import { useScheduleEvents } from "@/hooks/useScheduleEvents";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,12 +20,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Trash2, ChevronDown, ChevronRight, Users, Calendar, FileText, CalendarPlus, UserCheck } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronRight, Users, Calendar, FileText, CalendarPlus, UserCheck, ListTodo } from "lucide-react";
 import { format } from "date-fns";
 import { sv } from "date-fns/locale";
 import { toast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function MeetingProtocols() {
   const { activeStoreId, activeStoreName } = useSite();
@@ -36,8 +36,9 @@ export default function MeetingProtocols() {
   const addItem = useAddProtocolItem();
   const updateItem = useUpdateProtocolItem();
   const deleteItem = useDeleteProtocolItem();
-  const { addEvent } = useScheduleEvents("shop", undefined, activeStoreId);
+  const { updateEvent } = useScheduleEvents("shop", undefined, activeStoreId);
   const { data: staffMembers } = useStaff(activeStoreId || undefined);
+  const queryClient = useQueryClient();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -45,18 +46,6 @@ export default function MeetingProtocols() {
   const [newAttendees, setNewAttendees] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [newItemText, setNewItemText] = useState<Record<string, string>>({});
-
-  const [calDialogOpen, setCalDialogOpen] = useState(false);
-  const [calItemId, setCalItemId] = useState<string | null>(null);
-  const [calTitle, setCalTitle] = useState("");
-  const [calDate, setCalDate] = useState(format(new Date(), "yyyy-MM-dd"));
-  const [calType, setCalType] = useState("meeting");
-  const [calSeverity, setCalSeverity] = useState("info");
-  const [calAllDay, setCalAllDay] = useState(true);
-  const [calStartTime, setCalStartTime] = useState("09:00");
-  const [calEndTime, setCalEndTime] = useState("10:00");
-  const [calDescription, setCalDescription] = useState("");
-  const [calRecurrence, setCalRecurrence] = useState("none");
 
   if (!activeStoreId) {
     return (
@@ -94,49 +83,45 @@ export default function MeetingProtocols() {
     setNewItemText((prev) => ({ ...prev, [protocolId]: "" }));
   };
 
-  const openCalendarDialog = (itemId: string, itemContent: string) => {
-    setCalItemId(itemId);
-    setCalTitle(itemContent);
-    setCalDate(format(new Date(), "yyyy-MM-dd"));
-    setCalType("meeting");
-    setCalSeverity("info");
-    setCalAllDay(true);
-    setCalStartTime("09:00");
-    setCalEndTime("10:00");
-    setCalDescription("");
-    setCalRecurrence("none");
-    setCalDialogOpen(true);
+  const handleToggleCompleted = async (itemId: string, currentCompleted: boolean, calendarEventId: string | null) => {
+    const newCompleted = !currentCompleted;
+    await updateItem.mutateAsync({ id: itemId, completed: newCompleted });
+    // Sync to calendar event if linked
+    if (calendarEventId) {
+      const realId = calendarEventId.includes("__rec_") ? calendarEventId.split("__rec_")[0] : calendarEventId;
+      await supabase.from("schedule_events" as any).update({ is_done: newCompleted } as any).eq("id", realId);
+      queryClient.invalidateQueries({ queryKey: ["schedule_events"] });
+    }
   };
 
-  const handleAddToCalendar = async () => {
-    if (!calTitle.trim() || !calDate) return;
-    // addEvent returns void, so we need to insert and get the id separately
-    const { data: insertedEvent } = await supabase
-      .from("schedule_events")
-      .insert({
-        title: calTitle,
-        event_date: calDate,
-        event_type: calType,
-        severity: calSeverity,
-        portal: "shop",
-        store_id: activeStoreId,
-        all_day: calAllDay,
-        start_time: calAllDay ? undefined : calStartTime,
-        end_time: calAllDay ? undefined : calEndTime,
-        description: calDescription || undefined,
-        recurrence_type: calRecurrence,
-      } as any)
-      .select("id")
-      .single();
+  const handleCreateTask = async (item: { id: string; content: string; assigned_to: string | null; deadline: string | null }, protocolTitle: string) => {
+    const deadline = item.deadline || format(new Date(), "yyyy-MM-dd");
+    try {
+      const { data: insertedEvent } = await supabase
+        .from("schedule_events" as any)
+        .insert({
+          title: item.content,
+          event_date: deadline,
+          event_type: "task",
+          severity: "info",
+          portal: "shop",
+          store_id: activeStoreId,
+          all_day: true,
+          assigned_to: item.assigned_to,
+          meeting_item_id: item.id,
+          description: `Från mötesprotokoll: ${protocolTitle}`,
+        } as any)
+        .select("id")
+        .single();
 
-    // Mark the protocol item as added to calendar
-    if (insertedEvent && calItemId) {
-      updateItem.mutate({ id: calItemId, calendar_event_id: (insertedEvent as any).id });
+      if (insertedEvent) {
+        await updateItem.mutateAsync({ id: item.id, calendar_event_id: (insertedEvent as any).id });
+      }
+      queryClient.invalidateQueries({ queryKey: ["schedule_events"] });
+      toast({ title: "Uppgift skapad i kalendern" });
+    } catch {
+      toast({ title: "Fel", variant: "destructive" });
     }
-
-    setCalDialogOpen(false);
-    setCalItemId(null);
-    toast({ title: "Tillagd i kalendern" });
   };
 
   return (
@@ -177,6 +162,7 @@ export default function MeetingProtocols() {
           const expanded = expandedId === p.id;
           const items = p.meeting_protocol_items || [];
           const completedCount = items.filter((i) => i.completed).length;
+          const hasCalendarLinks = items.some(i => i.calendar_event_id);
           return (
             <Card key={p.id} className="overflow-hidden">
               <div
@@ -193,6 +179,11 @@ export default function MeetingProtocols() {
                     {items.length > 0 && (
                       <Badge variant="outline" className="text-xs shrink-0">
                         {completedCount}/{items.length} klara
+                      </Badge>
+                    )}
+                    {hasCalendarLinks && (
+                      <Badge variant="outline" className="text-[9px] shrink-0 text-purple-400 border-purple-400/30 gap-1">
+                        <ListTodo className="h-3 w-3" /> Uppgifter
                       </Badge>
                     )}
                   </div>
@@ -263,9 +254,7 @@ export default function MeetingProtocols() {
                         <div key={item.id} className="flex items-start gap-2 group">
                           <Checkbox
                             checked={item.completed}
-                            onCheckedChange={(checked) =>
-                              updateItem.mutate({ id: item.id, completed: !!checked })
-                            }
+                            onCheckedChange={() => handleToggleCompleted(item.id, item.completed, item.calendar_event_id)}
                             className="mt-0.5"
                           />
                           <Input
@@ -274,6 +263,19 @@ export default function MeetingProtocols() {
                             onBlur={(e) => {
                               if (e.target.value !== item.content) {
                                 updateItem.mutate({ id: item.id, content: e.target.value });
+                              }
+                            }}
+                          />
+                          {/* Deadline */}
+                          <Input
+                            type="date"
+                            className="w-[130px] h-8 text-xs shrink-0"
+                            defaultValue={item.deadline || ""}
+                            placeholder="Deadline"
+                            onBlur={(e) => {
+                              const val = e.target.value || null;
+                              if (val !== (item.deadline || null)) {
+                                updateItem.mutate({ id: item.id, deadline: val });
                               }
                             }}
                           />
@@ -321,30 +323,30 @@ export default function MeetingProtocols() {
                               </div>
                             </PopoverContent>
                           </Popover>
-                          <div className="flex items-center gap-1 ml-2 shrink-0">
-                          {item.calendar_event_id ? (
-                            <span className="flex items-center gap-1 text-[10px] text-emerald-500 shrink-0 px-1" title="Tillagd i kalendern">
-                              <CalendarPlus className="h-3.5 w-3.5" /> I kalender
-                            </span>
-                          ) : (
+                          <div className="flex items-center gap-1 ml-1 shrink-0">
+                            {item.calendar_event_id ? (
+                              <span className="flex items-center gap-1 text-[10px] text-purple-400 shrink-0 px-1" title="Uppgift i kalendern">
+                                <ListTodo className="h-3.5 w-3.5" /> Uppgift
+                              </span>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 opacity-0 group-hover:opacity-100"
+                                title="Skapa uppgift i kalendern"
+                                onClick={() => handleCreateTask(item, p.title)}
+                              >
+                                <CalendarPlus className="h-3.5 w-3.5 text-purple-400" />
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="icon"
                               className="h-7 w-7 opacity-0 group-hover:opacity-100"
-                              title="Lägg till i kalender"
-                              onClick={() => openCalendarDialog(item.id, item.content)}
+                              onClick={() => deleteItem.mutate(item.id)}
                             >
-                              <CalendarPlus className="h-3.5 w-3.5 text-primary" />
+                              <Trash2 className="h-3 w-3 text-destructive" />
                             </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 opacity-0 group-hover:opacity-100"
-                            onClick={() => deleteItem.mutate(item.id)}
-                          >
-                            <Trash2 className="h-3 w-3 text-destructive" />
-                          </Button>
                           </div>
                         </div>
                       ))}
@@ -367,94 +369,6 @@ export default function MeetingProtocols() {
           );
         })}
       </div>
-
-      {/* Add to Calendar Dialog */}
-      <Dialog open={calDialogOpen} onOpenChange={setCalDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CalendarPlus className="h-5 w-5" /> Lägg till i kalender
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <label className="text-sm font-medium">Titel</label>
-              <Input value={calTitle} onChange={(e) => setCalTitle(e.target.value)} />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Datum</label>
-              <Input type="date" value={calDate} onChange={(e) => setCalDate(e.target.value)} />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium">Typ</label>
-                <Select value={calType} onValueChange={setCalType}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {EVENT_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Prioritet</label>
-                <Select value={calSeverity} onValueChange={setCalSeverity}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {SEVERITY_LEVELS.map((s) => (
-                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="cal-allday"
-                checked={calAllDay}
-                onCheckedChange={(v) => setCalAllDay(!!v)}
-              />
-              <label htmlFor="cal-allday" className="text-sm">Heldag</label>
-            </div>
-            {!calAllDay && (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-sm font-medium">Starttid</label>
-                  <Input type="time" value={calStartTime} onChange={(e) => setCalStartTime(e.target.value)} />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Sluttid</label>
-                  <Input type="time" value={calEndTime} onChange={(e) => setCalEndTime(e.target.value)} />
-                </div>
-              </div>
-            )}
-            <div>
-              <label className="text-sm font-medium">Upprepning</label>
-              <Select value={calRecurrence} onValueChange={setCalRecurrence}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {RECURRENCE_OPTIONS.map((r) => (
-                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Beskrivning</label>
-              <Textarea
-                value={calDescription}
-                onChange={(e) => setCalDescription(e.target.value)}
-                placeholder="Valfri beskrivning..."
-                className="min-h-[60px]"
-              />
-            </div>
-            <Button onClick={handleAddToCalendar} disabled={!calTitle.trim() || !calDate || addEvent.isPending} className="w-full">
-              <CalendarPlus className="h-4 w-4 mr-1" /> Lägg till i kalender
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
