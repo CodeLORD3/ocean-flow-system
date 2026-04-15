@@ -19,6 +19,10 @@ export type ScheduleEvent = {
   created_by: string | null;
   recurrence_type: string;
   recurrence_end_date: string | null;
+  assigned_to: string | null;
+  is_done: boolean;
+  meeting_item_id: string | null;
+  staff?: { id: string; first_name: string; last_name: string } | null;
 };
 
 export type RecurrenceType = "none" | "daily" | "weekly" | "monthly" | "yearly";
@@ -32,15 +36,16 @@ export const RECURRENCE_OPTIONS: { value: RecurrenceType; label: string }[] = [
 ];
 
 export const EVENT_TYPES = [
-  { value: "note", label: "Anteckning", color: "bg-blue-500" },
-  { value: "delivery", label: "Specialleverans", color: "bg-purple-500" },
-  { value: "vacation", label: "Semester", color: "bg-amber-500" },
-  { value: "closed", label: "Stängt", color: "bg-red-500" },
-  { value: "holiday", label: "Helgdag", color: "bg-rose-400" },
-  { value: "meeting", label: "Möte", color: "bg-cyan-500" },
-  { value: "maintenance", label: "Underhåll", color: "bg-orange-500" },
-  { value: "inventory", label: "Inventering", color: "bg-emerald-500" },
-  { value: "other", label: "Övrigt", color: "bg-gray-500" },
+  { value: "note", label: "Anteckning", color: "bg-blue-500", hex: "#3B82F6" },
+  { value: "meeting", label: "Möte", color: "bg-cyan-500", hex: "#06B6D4" },
+  { value: "task", label: "Uppgift", color: "bg-purple-500", hex: "#8B5CF6" },
+  { value: "delivery", label: "Specialleverans", color: "bg-indigo-500", hex: "#6366F1" },
+  { value: "vacation", label: "Semester", color: "bg-orange-500", hex: "#F97316" },
+  { value: "closed", label: "Stängt", color: "bg-red-600", hex: "#DC2626" },
+  { value: "holiday", label: "Helgdag", color: "bg-pink-500", hex: "#EC4899" },
+  { value: "maintenance", label: "Underhåll", color: "bg-amber-600", hex: "#D97706" },
+  { value: "inventory", label: "Inventering", color: "bg-emerald-500", hex: "#10B981" },
+  { value: "other", label: "Övrigt", color: "bg-gray-500", hex: "#6B7280" },
 ] as const;
 
 export const SEVERITY_LEVELS = [
@@ -67,7 +72,6 @@ function generateRecurrences(event: ScheduleEvent, yearStart: string, yearEnd: s
     event.recurrence_type === "monthly" ? addMonths :
     addYears;
 
-  // Generate occurrences – cap at 400 to avoid infinite loops
   let current = start;
   for (let i = 0; i < 400; i++) {
     if (isAfter(current, effectiveEnd)) break;
@@ -75,7 +79,6 @@ function generateRecurrences(event: ScheduleEvent, yearStart: string, yearEnd: s
       results.push({
         ...event,
         event_date: format(current, "yyyy-MM-dd"),
-        // Tag generated instances so we know the source
         id: i === 0 ? event.id : `${event.id}__rec_${i}`,
       });
     }
@@ -94,11 +97,9 @@ export function useScheduleEvents(portal?: string, year?: number, storeId?: stri
     queryFn: async () => {
       let q = supabase
         .from("schedule_events" as any)
-        .select("*")
+        .select("*, staff:assigned_to(id, first_name, last_name)")
         .order("event_date");
 
-      // Fetch events that START on or before year end (they could recur into this year)
-      // and whose recurrence hasn't ended before year start
       q = q.lte("event_date", `${currentYear}-12-31`);
 
       if (portal && portal !== "all") {
@@ -115,7 +116,6 @@ export function useScheduleEvents(portal?: string, year?: number, storeId?: stri
     },
   });
 
-  // Expand recurring events into individual date instances
   const events = useMemo(() => {
     if (!query.data) return [];
     const yearStart = `${currentYear}-01-01`;
@@ -138,9 +138,13 @@ export function useScheduleEvents(portal?: string, year?: number, storeId?: stri
       created_by?: string;
       recurrence_type?: string;
       recurrence_end_date?: string | null;
+      assigned_to?: string | null;
+      is_done?: boolean;
+      meeting_item_id?: string | null;
     }) => {
-      const { error } = await supabase.from("schedule_events" as any).insert(event as any);
+      const { data, error } = await supabase.from("schedule_events" as any).insert(event as any).select("*").single();
       if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["schedule_events"] });
@@ -162,7 +166,6 @@ export function useScheduleEvents(portal?: string, year?: number, storeId?: stri
 
   const deleteEvent = useMutation({
     mutationFn: async (id: string) => {
-      // Strip recurrence suffix to get real ID
       const realId = id.includes("__rec_") ? id.split("__rec_")[0] : id;
       const { error } = await supabase.from("schedule_events" as any).delete().eq("id", realId);
       if (error) throw error;

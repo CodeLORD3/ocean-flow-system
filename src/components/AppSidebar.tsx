@@ -18,13 +18,15 @@ import {
   Factory,
   ScanLine,
   CalendarDays,
+  ChevronDown,
+  ListTodo,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
 import { NotificationBadge } from "@/components/NotificationBadge";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -38,10 +40,17 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
 
 const overviewNav = [
   { title: "Översikt", url: "/organisation", icon: BarChart3 },
+];
+
+const calendarNav = [
   { title: "Kalender", url: "/schedule", icon: CalendarDays },
+  { title: "Mötesprotokoll", url: "/meetings", icon: FileText },
+  { title: "Uppgifter", url: "/tasks", icon: ListTodo },
 ];
 
 const salesNav = [
@@ -73,7 +82,6 @@ const orgNav = [
   { title: "Personal", url: "/staff", icon: UserCheck },
 ];
 
-
 const financeNav = [
   { title: "Rapporter", url: "/reports", icon: BarChart3 },
   { title: "Ekonomi", url: "/finance", icon: CreditCard },
@@ -85,16 +93,17 @@ const bottomNav = [
   { title: "Administration", url: "/settings", icon: Settings },
 ];
 
-type NavSection = { label: string; items: typeof overviewNav };
+type NavItem = { title: string; url: string; icon: any };
+type NavSection = { label: string; items: NavItem[]; collapsible?: boolean };
 
 const sections: NavSection[] = [
   { label: "Översikt", items: overviewNav },
+  { label: "Kalender", items: calendarNav, collapsible: true },
   { label: "Försäljning", items: salesNav },
   { label: "Inköp", items: purchaseNav },
   { label: "Produktion", items: productionNav },
   { label: "Lagerstyrning", items: inventoryNav },
   { label: "Organisation", items: orgNav },
-  
   { label: "Ekonomi & Rapporter", items: financeNav },
 ];
 
@@ -105,13 +114,76 @@ export function AppSidebar() {
   const isActive = (path: string) => location.pathname === path;
   const { getCount, markAsRead } = useNotifications();
 
-  // Auto-mark as read when navigating
+  // Calendar section starts open if any of its routes are active
+  const calendarRoutes = calendarNav.map(n => n.url);
+  const isCalendarActive = calendarRoutes.some(r => isActive(r));
+  const [calendarOpen, setCalendarOpen] = useState(isCalendarActive);
+
+  useEffect(() => {
+    if (isCalendarActive && !calendarOpen) setCalendarOpen(true);
+  }, [isCalendarActive]);
+
   useEffect(() => {
     const count = getCount(location.pathname);
     if (count > 0) {
       markAsRead.mutate(location.pathname);
     }
   }, [location.pathname]);
+
+  const renderSection = (section: NavSection) => {
+    if (section.collapsible) {
+      return (
+        <SidebarGroup key={section.label}>
+          <Collapsible open={calendarOpen} onOpenChange={setCalendarOpen}>
+            <CollapsibleTrigger className="w-full">
+              <SidebarGroupLabel className="cursor-pointer flex items-center justify-between pr-2">
+                {section.label}
+                <ChevronDown className={cn("h-3 w-3 transition-transform", calendarOpen && "rotate-180")} />
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {section.items.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild isActive={isActive(item.url)}>
+                        <NavLink to={item.url} end>
+                          <item.icon className="h-4 w-4" />
+                          {!collapsed && <span>{item.title}</span>}
+                          {!collapsed && <NotificationBadge count={getCount(item.url)} />}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
+      );
+    }
+
+    return (
+      <SidebarGroup key={section.label}>
+        <SidebarGroupLabel>{section.label}</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {section.items.map((item) => (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton asChild isActive={isActive(item.url)}>
+                  <NavLink to={item.url} end>
+                    <item.icon className="h-4 w-4" />
+                    {!collapsed && <span>{item.title}</span>}
+                    {!collapsed && <NotificationBadge count={getCount(item.url)} />}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    );
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r-2 border-r-sky-700/30 bg-gradient-to-b from-sidebar-background to-sky-950/10">
@@ -128,26 +200,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {sections.map((section) => (
-          <SidebarGroup key={section.label}>
-            <SidebarGroupLabel>{section.label}</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {section.items.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                      <NavLink to={item.url} end>
-                        <item.icon className="h-4 w-4" />
-                        {!collapsed && <span>{item.title}</span>}
-                        {!collapsed && <NotificationBadge count={getCount(item.url)} />}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+        {sections.map(section => renderSection(section))}
       </SidebarContent>
 
       <SidebarFooter>

@@ -840,6 +840,7 @@ export type Database = {
           calendar_event_id: string | null
           completed: boolean
           content: string
+          deadline: string | null
           id: string
           protocol_id: string
           sort_order: number
@@ -849,6 +850,7 @@ export type Database = {
           calendar_event_id?: string | null
           completed?: boolean
           content?: string
+          deadline?: string | null
           id?: string
           protocol_id: string
           sort_order?: number
@@ -858,6 +860,7 @@ export type Database = {
           calendar_event_id?: string | null
           completed?: boolean
           content?: string
+          deadline?: string | null
           id?: string
           protocol_id?: string
           sort_order?: number
@@ -1572,6 +1575,7 @@ export type Database = {
       schedule_events: {
         Row: {
           all_day: boolean
+          assigned_to: string | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -1579,6 +1583,8 @@ export type Database = {
           event_date: string
           event_type: string
           id: string
+          is_done: boolean
+          meeting_item_id: string | null
           portal: string
           recurrence_end_date: string | null
           recurrence_type: string
@@ -1589,6 +1595,7 @@ export type Database = {
         }
         Insert: {
           all_day?: boolean
+          assigned_to?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -1596,6 +1603,8 @@ export type Database = {
           event_date: string
           event_type?: string
           id?: string
+          is_done?: boolean
+          meeting_item_id?: string | null
           portal?: string
           recurrence_end_date?: string | null
           recurrence_type?: string
@@ -1606,6 +1615,7 @@ export type Database = {
         }
         Update: {
           all_day?: boolean
+          assigned_to?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -1613,6 +1623,8 @@ export type Database = {
           event_date?: string
           event_type?: string
           id?: string
+          is_done?: boolean
+          meeting_item_id?: string | null
           portal?: string
           recurrence_end_date?: string | null
           recurrence_type?: string
@@ -1622,6 +1634,20 @@ export type Database = {
           title?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "schedule_events_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_events_meeting_item_id_fkey"
+            columns: ["meeting_item_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_protocol_items"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "schedule_events_store_id_fkey"
             columns: ["store_id"]

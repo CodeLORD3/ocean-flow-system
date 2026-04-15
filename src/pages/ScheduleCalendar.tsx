@@ -1,19 +1,21 @@
 import { useState, useMemo } from "react";
-import { format, getDaysInMonth, startOfMonth, getDay, isToday, parseISO, isSameMonth } from "date-fns";
+import { format, getDaysInMonth, startOfMonth, getDay, isToday, parseISO, isBefore } from "date-fns";
 import { sv } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Plus, X, Trash2, Edit2, Copy } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X, Trash2, Copy, Check, UserCheck, Repeat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useSite } from "@/contexts/SiteContext";
 import { useScheduleEvents, EVENT_TYPES, SEVERITY_LEVELS, RECURRENCE_OPTIONS, type ScheduleEvent } from "@/hooks/useScheduleEvents";
 import { useCreateMeetingProtocol } from "@/hooks/useMeetingProtocols";
+import { useUpdateProtocolItem } from "@/hooks/useMeetingProtocols";
+import { useStaff } from "@/hooks/useStaff";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { Repeat } from "lucide-react";
 
 const MONTHS = [
   "Januari", "Februari", "Mars", "April", "Maj", "Juni",
@@ -21,7 +23,6 @@ const MONTHS = [
 ];
 const WEEKDAYS_SHORT = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
 
-// Swedish holidays (fixed dates)
 const SWEDISH_HOLIDAYS: Record<string, string> = {
   "01-01": "Nyårsdagen",
   "01-06": "Trettondedag jul",
@@ -35,12 +36,23 @@ const SWEDISH_HOLIDAYS: Record<string, string> = {
   "06-21": "Midsommardagen",
 };
 
-function getSeverityColor(severity: string) {
-  return SEVERITY_LEVELS.find(s => s.value === severity)?.color || "bg-blue-500";
-}
-
 function getEventTypeInfo(type: string) {
   return EVENT_TYPES.find(t => t.value === type) || EVENT_TYPES[0];
+}
+
+function getEventDisplayColor(evt: ScheduleEvent): string {
+  if (evt.event_type === "task") {
+    if (evt.is_done) return "bg-emerald-500/60";
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (isBefore(parseISO(evt.event_date), today)) return "bg-red-400/60";
+    return "bg-purple-500";
+  }
+  return getEventTypeInfo(evt.event_type).color;
+}
+
+function getSeverityDotColor(severity: string) {
+  return SEVERITY_LEVELS.find(s => s.value === severity)?.color || "bg-blue-500";
 }
 
 export default function ScheduleCalendar() {
@@ -49,13 +61,24 @@ export default function ScheduleCalendar() {
   const [expandedMonth, setExpandedMonth] = useState<number | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
   const [showDayDetail, setShowDayDetail] = useState(false);
 
   const { events, isLoading, addEvent, updateEvent, deleteEvent } = useScheduleEvents(site, year, site === "shop" ? activeStoreId : null);
   const createProtocol = useCreateMeetingProtocol();
+  const updateProtocolItem = useUpdateProtocolItem();
+  const { data: staffMembers } = useStaff(site === "shop" ? (activeStoreId || undefined) : undefined);
   const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
+
+  // Type filter
+  const [activeTypeFilters, setActiveTypeFilters] = useState<Set<string>>(new Set(EVENT_TYPES.map(t => t.value)));
+  const toggleTypeFilter = (type: string) => {
+    setActiveTypeFilters(prev => {
+      const next = new Set(prev);
+      if (next.has(type)) next.delete(type); else next.add(type);
+      return next;
+    });
+  };
 
   // Form state
   const [formTitle, setFormTitle] = useState("");
@@ -65,15 +88,16 @@ export default function ScheduleCalendar() {
   const [formDate, setFormDate] = useState("");
   const [formRecurrence, setFormRecurrence] = useState("none");
   const [formRecurrenceEnd, setFormRecurrenceEnd] = useState("");
+  const [formAssignee, setFormAssignee] = useState("");
 
   const eventsByDate = useMemo(() => {
     const map: Record<string, ScheduleEvent[]> = {};
-    events.forEach(e => {
+    events.filter(e => activeTypeFilters.has(e.event_type)).forEach(e => {
       if (!map[e.event_date]) map[e.event_date] = [];
       map[e.event_date].push(e);
     });
     return map;
-  }, [events]);
+  }, [events, activeTypeFilters]);
 
   const openAddDialog = (date?: string) => {
     setFormTitle("");
@@ -83,6 +107,7 @@ export default function ScheduleCalendar() {
     setFormDate(date || format(new Date(), "yyyy-MM-dd"));
     setFormRecurrence("none");
     setFormRecurrenceEnd("");
+    setFormAssignee("");
     setShowAddDialog(true);
   };
 
@@ -94,6 +119,7 @@ export default function ScheduleCalendar() {
     setFormDate(date || format(new Date(), "yyyy-MM-dd"));
     setFormRecurrence(evt.recurrence_type || "none");
     setFormRecurrenceEnd(evt.recurrence_end_date || "");
+    setFormAssignee(evt.assigned_to || "");
     setShowDayDetail(false);
     setShowAddDialog(true);
   };
@@ -111,8 +137,8 @@ export default function ScheduleCalendar() {
         store_id: site === "shop" ? activeStoreId : null,
         recurrence_type: formRecurrence,
         recurrence_end_date: formRecurrenceEnd || null,
+        assigned_to: formType === "task" && formAssignee ? formAssignee : null,
       });
-      // If type is "meeting" and we're in a shop portal, also create a meeting protocol
       if (formType === "meeting" && site === "shop" && activeStoreId) {
         await createProtocol.mutateAsync({
           store_id: activeStoreId,
@@ -133,6 +159,20 @@ export default function ScheduleCalendar() {
       await deleteEvent.mutateAsync(id);
       toast({ title: "Händelse borttagen" });
       setShowDayDetail(false);
+    } catch {
+      toast({ title: "Fel", variant: "destructive" });
+    }
+  };
+
+  const handleToggleDone = async (evt: ScheduleEvent) => {
+    const realId = evt.id.includes("__rec_") ? evt.id.split("__rec_")[0] : evt.id;
+    const newDone = !evt.is_done;
+    try {
+      await updateEvent.mutateAsync({ id: realId, is_done: newDone } as any);
+      if (evt.meeting_item_id) {
+        await updateProtocolItem.mutateAsync({ id: evt.meeting_item_id, completed: newDone });
+      }
+      toast({ title: newDone ? "Markerad som klar" : "Återöppnad" });
     } catch {
       toast({ title: "Fel", variant: "destructive" });
     }
@@ -161,7 +201,7 @@ export default function ScheduleCalendar() {
     <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
       {MONTHS.map((monthName, monthIdx) => {
         const daysInMonth = getDaysInMonth(new Date(year, monthIdx));
-        const firstDay = (getDay(startOfMonth(new Date(year, monthIdx))) + 6) % 7; // Monday=0
+        const firstDay = (getDay(startOfMonth(new Date(year, monthIdx))) + 6) % 7;
         return (
           <div
             key={monthIdx}
@@ -170,15 +210,12 @@ export default function ScheduleCalendar() {
           >
             <div className="text-[10px] font-bold text-foreground mb-1 tracking-wide">{monthName.toUpperCase()}</div>
             <div className="grid grid-cols-7 gap-px">
-              {/* Weekday headers */}
               {WEEKDAYS_SHORT.map(d => (
                 <div key={d} className="text-[7px] text-muted-foreground text-center">{d[0]}</div>
               ))}
-              {/* Empty cells before first day */}
               {Array.from({ length: firstDay }).map((_, i) => (
                 <div key={`e${i}`} className="h-3" />
               ))}
-              {/* Day cells */}
               {Array.from({ length: daysInMonth }).map((_, dayIdx) => {
                 const day = dayIdx + 1;
                 const dateStr = `${year}-${String(monthIdx + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -188,14 +225,12 @@ export default function ScheduleCalendar() {
                 const isWeekend = ((firstDay + dayIdx) % 7) >= 5;
                 const today = isToday(new Date(year, monthIdx, day));
 
-                // Determine dot color based on highest severity
                 let dotColor = "";
                 if (dayEvents.length > 0) {
-                  const severities = ["critical", "high", "medium", "low", "info"];
-                  const highest = severities.find(s => dayEvents.some(e => e.severity === s));
-                  dotColor = getSeverityColor(highest || "info");
+                  // Use the event type color of the first event
+                  dotColor = getEventDisplayColor(dayEvents[0]);
                 } else if (isHoliday) {
-                  dotColor = "bg-rose-400";
+                  dotColor = "bg-pink-500";
                 }
 
                 return (
@@ -248,15 +283,12 @@ export default function ScheduleCalendar() {
         </div>
 
         <div className="grid grid-cols-7 border border-border">
-          {/* Weekday headers */}
           {WEEKDAYS_SHORT.map(d => (
             <div key={d} className="text-[9px] font-bold text-muted-foreground text-center py-1 bg-muted/50 border-b border-border">{d}</div>
           ))}
-          {/* Empty cells */}
           {Array.from({ length: firstDay }).map((_, i) => (
             <div key={`e${i}`} className="min-h-[80px] border-b border-r border-border bg-muted/20" />
           ))}
-          {/* Day cells */}
           {Array.from({ length: daysInMonth }).map((_, dayIdx) => {
             const day = dayIdx + 1;
             const dateStr = `${year}-${String(monthIdx + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -287,7 +319,7 @@ export default function ScheduleCalendar() {
                   )}
                 </div>
                 {holiday && (
-                  <div className="text-[8px] text-rose-400 truncate mt-0.5">{holiday}</div>
+                  <div className="text-[8px] text-pink-500 truncate mt-0.5">{holiday}</div>
                 )}
                 {dayEvents.slice(0, 3).map(evt => (
                   <div
@@ -295,9 +327,17 @@ export default function ScheduleCalendar() {
                     draggable
                     onDragStart={(e) => { e.stopPropagation(); setDraggedEventId(evt.id); }}
                     onDragEnd={() => { setDraggedEventId(null); setDropTarget(null); }}
-                    className={cn("text-[8px] truncate mt-0.5 px-1 rounded-sm text-white cursor-grab active:cursor-grabbing", getEventTypeInfo(evt.event_type).color, draggedEventId === evt.id && "opacity-50")}
+                    className={cn(
+                      "text-[8px] truncate mt-0.5 px-1 rounded-sm text-white cursor-grab active:cursor-grabbing flex items-center gap-0.5",
+                      getEventDisplayColor(evt),
+                      draggedEventId === evt.id && "opacity-50",
+                      evt.event_type === "task" && evt.is_done && "line-through",
+                    )}
                   >
+                    {evt.event_type === "task" && evt.is_done && <Check className="h-2 w-2 shrink-0" />}
                     {evt.title}
+                    {/* Priority dot */}
+                    <div className={cn("h-1.5 w-1.5 rounded-full shrink-0 ml-auto", getSeverityDotColor(evt.severity))} />
                   </div>
                 ))}
                 {dayEvents.length > 3 && (
@@ -311,18 +351,26 @@ export default function ScheduleCalendar() {
     );
   };
 
-  // ── LEGEND ──
+  // ── LEGEND (single row, event-type based) ──
   const renderLegend = () => (
-    <div className="flex flex-wrap items-center gap-3 text-[9px] text-muted-foreground">
-      <span className="font-bold text-foreground text-[10px]">LEGEND:</span>
-      {SEVERITY_LEVELS.map(s => (
-        <span key={s.value} className="flex items-center gap-1">
-          <div className={cn("h-2 w-2 rounded-full", s.color)} /> {s.label}
-        </span>
-      ))}
-      <span className="flex items-center gap-1">
-        <div className="h-2 w-2 rounded-full bg-rose-400" /> Helgdag
-      </span>
+    <div className="flex flex-wrap items-center gap-1.5">
+      {EVENT_TYPES.map(t => {
+        const active = activeTypeFilters.has(t.value);
+        return (
+          <Badge
+            key={t.value}
+            variant={active ? "default" : "outline"}
+            className={cn(
+              "text-[8px] gap-1 px-1.5 py-0.5 cursor-pointer transition-opacity select-none",
+              !active && "opacity-40",
+            )}
+            onClick={() => toggleTypeFilter(t.value)}
+          >
+            <div className={cn("h-1.5 w-1.5 rounded-full", t.color)} />
+            {t.label}
+          </Badge>
+        );
+      })}
     </div>
   );
 
@@ -384,7 +432,21 @@ export default function ScheduleCalendar() {
           <Input type="date" value={formRecurrenceEnd} onChange={e => setFormRecurrenceEnd(e.target.value)} className="text-[10px] h-6 px-1.5" />
         </div>
       )}
-      <div className={cn(formRecurrence !== "none" ? "col-span-2 md:col-span-2" : "col-span-2 md:col-span-3")}>
+      {formType === "task" && (
+        <div>
+          <label className="text-[8px] text-muted-foreground font-medium leading-none">TILLDELAD</label>
+          <Select value={formAssignee} onValueChange={setFormAssignee}>
+            <SelectTrigger className="h-6 text-[10px] px-1.5"><SelectValue placeholder="Välj" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="" className="text-[10px]">Ingen</SelectItem>
+              {staffMembers?.map(s => (
+                <SelectItem key={s.id} value={s.id} className="text-[10px]">{s.first_name} {s.last_name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      <div className={cn("col-span-2", formType !== "task" && formRecurrence === "none" ? "md:col-span-3" : "md:col-span-2")}>
         <label className="text-[8px] text-muted-foreground font-medium leading-none">BESKRIVNING</label>
         <Input placeholder="Valfritt" value={formDesc} onChange={e => setFormDesc(e.target.value)} className="text-[10px] h-6 px-1.5" />
       </div>
@@ -412,24 +474,14 @@ export default function ScheduleCalendar() {
             Idag
           </Button>
         </div>
-        <div className="flex items-center gap-2">
-          {renderLegend()}
-          <Button size="sm" onClick={() => { if (showAddDialog) { setShowAddDialog(false); } else { openAddDialog(); } }} className="text-[10px] h-7 gap-1">
-            {showAddDialog ? <X className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
-            {showAddDialog ? "Stäng" : "Ny händelse"}
-          </Button>
-        </div>
+        <Button size="sm" onClick={() => { if (showAddDialog) { setShowAddDialog(false); } else { openAddDialog(); } }} className="text-[10px] h-7 gap-1">
+          {showAddDialog ? <X className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+          {showAddDialog ? "Stäng" : "Ny händelse"}
+        </Button>
       </div>
 
-      {/* Event type filter chips */}
-      <div className="flex flex-wrap gap-1">
-        {EVENT_TYPES.map(t => (
-          <Badge key={t.value} variant="outline" className="text-[8px] gap-1 px-1.5 py-0.5 cursor-default">
-            <div className={cn("h-1.5 w-1.5 rounded-full", t.color)} />
-            {t.label}
-          </Badge>
-        ))}
-      </div>
+      {/* Single legend row — event type filter chips */}
+      {renderLegend()}
 
       {/* ── INLINE ADD EVENT PANEL ── */}
       <Collapsible open={showAddDialog} onOpenChange={setShowAddDialog}>
@@ -450,7 +502,7 @@ export default function ScheduleCalendar() {
             <DialogTitle className="text-sm flex items-center gap-2">
               {selectedDate && format(parseISO(selectedDate), "EEEE d MMMM yyyy", { locale: sv })}
               {selectedDate && SWEDISH_HOLIDAYS[selectedDate.slice(5)] && (
-                <Badge variant="outline" className="text-[8px] text-rose-400 border-rose-400/30">{SWEDISH_HOLIDAYS[selectedDate.slice(5)]}</Badge>
+                <Badge variant="outline" className="text-[8px] text-pink-500 border-pink-500/30">{SWEDISH_HOLIDAYS[selectedDate.slice(5)]}</Badge>
               )}
             </DialogTitle>
           </DialogHeader>
@@ -459,11 +511,17 @@ export default function ScheduleCalendar() {
               <p className="text-xs text-muted-foreground py-4 text-center">Inga händelser denna dag</p>
             )}
             {selectedDate && (eventsByDate[selectedDate] || []).map(evt => (
-              <div key={evt.id} className="border border-border p-2 space-y-1">
+              <div key={evt.id} className={cn(
+                "border border-border p-2 space-y-1 rounded-sm",
+                evt.event_type === "task" && evt.is_done && "bg-emerald-500/10",
+                evt.event_type === "task" && !evt.is_done && isBefore(parseISO(evt.event_date), new Date()) && "bg-red-500/10",
+              )}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-1.5">
-                    <div className={cn("h-2 w-2 rounded-full shrink-0", getEventTypeInfo(evt.event_type).color)} />
-                    <span className="text-xs font-medium">{evt.title}</span>
+                    <div className={cn("h-2 w-2 rounded-full shrink-0", getEventDisplayColor(evt))} />
+                    <span className={cn("text-xs font-medium", evt.event_type === "task" && evt.is_done && "line-through text-muted-foreground")}>
+                      {evt.title}
+                    </span>
                     {evt.recurrence_type && evt.recurrence_type !== "none" && (
                       <Repeat className="h-3 w-3 text-muted-foreground shrink-0" />
                     )}
@@ -472,9 +530,7 @@ export default function ScheduleCalendar() {
                     <Badge variant="outline" className="text-[7px] px-1 py-0">
                       {getEventTypeInfo(evt.event_type).label}
                     </Badge>
-                    <Badge variant="outline" className={cn("text-[7px] px-1 py-0")}>
-                      {SEVERITY_LEVELS.find(s => s.value === evt.severity)?.label}
-                    </Badge>
+                    <div className={cn("h-2 w-2 rounded-full shrink-0", getSeverityDotColor(evt.severity))} title={SEVERITY_LEVELS.find(s => s.value === evt.severity)?.label} />
                     <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground" onClick={() => copyEvent(evt, selectedDate || undefined)}>
                       <Copy className="h-3 w-3" />
                     </Button>
@@ -484,6 +540,26 @@ export default function ScheduleCalendar() {
                   </div>
                 </div>
                 {evt.description && <p className="text-[10px] text-muted-foreground">{evt.description}</p>}
+                {/* Task-specific info */}
+                {evt.event_type === "task" && (
+                  <div className="flex items-center gap-2 pt-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn("h-6 text-[9px] gap-1", evt.is_done && "bg-emerald-500/20 border-emerald-500/30")}
+                      onClick={() => handleToggleDone(evt)}
+                    >
+                      {evt.is_done ? <Check className="h-3 w-3 text-emerald-500" /> : <Check className="h-3 w-3" />}
+                      {evt.is_done ? "Klar" : "Markera klar"}
+                    </Button>
+                    {evt.staff && (
+                      <span className="text-[9px] text-muted-foreground flex items-center gap-1">
+                        <UserCheck className="h-3 w-3" />
+                        {evt.staff.first_name} {evt.staff.last_name.charAt(0)}.
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
