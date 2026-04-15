@@ -846,7 +846,7 @@ export default function ScheduleCalendar() {
                               </div>
                             </PopoverContent>
                           </Popover>
-                          <div className="flex items-center gap-0.5 shrink-0">
+                          <div className="flex items-center justify-end">
                             {item.calendar_event_id ? (
                               <span className="text-[9px] text-purple-400 flex items-center gap-0.5 px-1">
                                 <CalendarIcon className="h-3 w-3" />
@@ -858,7 +858,7 @@ export default function ScheduleCalendar() {
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className={cn("h-6 px-1.5 text-[10px] shrink-0", !item.deadline && "opacity-0 group-hover:opacity-100")}
+                                    className={cn("h-6 px-1.5 text-[10px]", !item.deadline && "opacity-0 group-hover:opacity-100")}
                                     title="Välj datum & lägg till i kalendern"
                                   >
                                     <CalendarPlus className="h-3 w-3 mr-0.5 text-purple-400" />
@@ -879,6 +879,8 @@ export default function ScheduleCalendar() {
                                 </PopoverContent>
                               </Popover>
                             )}
+                          </div>
+                          <div className="flex items-center justify-end">
                             <Button
                               variant="ghost"
                               size="icon"
