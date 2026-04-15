@@ -51,7 +51,9 @@ export default function ScheduleCalendar() {
   const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
   const [showDayDetail, setShowDayDetail] = useState(false);
 
-  const { events, isLoading, addEvent, deleteEvent } = useScheduleEvents(site, year, site === "shop" ? activeStoreId : null);
+  const { events, isLoading, addEvent, updateEvent, deleteEvent } = useScheduleEvents(site, year, site === "shop" ? activeStoreId : null);
+  const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
 
   // Form state
   const [formTitle, setFormTitle] = useState("");
@@ -128,6 +130,19 @@ export default function ScheduleCalendar() {
   const openDayDetail = (dateStr: string) => {
     setSelectedDate(dateStr);
     setShowDayDetail(true);
+  };
+
+  const handleDrop = async (targetDate: string) => {
+    if (!draggedEventId) return;
+    const realId = draggedEventId.includes("__rec_") ? draggedEventId.split("__rec_")[0] : draggedEventId;
+    try {
+      await updateEvent.mutateAsync({ id: realId, event_date: targetDate } as any);
+      toast({ title: "Händelse flyttad" });
+    } catch {
+      toast({ title: "Kunde inte flytta", variant: "destructive" });
+    }
+    setDraggedEventId(null);
+    setDropTarget(null);
   };
 
   // ── YEAR VIEW ──
@@ -247,8 +262,12 @@ export default function ScheduleCalendar() {
                   "min-h-[80px] border-b border-r border-border p-1 cursor-pointer hover:bg-muted/30 transition-colors",
                   isWeekend && "bg-muted/10",
                   today && "ring-1 ring-inset ring-primary",
+                  dropTarget === dateStr && "bg-primary/10 ring-2 ring-inset ring-primary",
                 )}
                 onClick={() => openDayDetail(dateStr)}
+                onDragOver={(e) => { e.preventDefault(); setDropTarget(dateStr); }}
+                onDragLeave={() => setDropTarget(null)}
+                onDrop={(e) => { e.preventDefault(); handleDrop(dateStr); }}
               >
                 <div className="flex items-center justify-between">
                   <span className={cn("text-[10px] font-medium", today && "text-primary font-bold", isWeekend && "text-muted-foreground")}>{day}</span>
@@ -262,7 +281,10 @@ export default function ScheduleCalendar() {
                 {dayEvents.slice(0, 3).map(evt => (
                   <div
                     key={evt.id}
-                    className={cn("text-[8px] truncate mt-0.5 px-1 rounded-sm text-white", getEventTypeInfo(evt.event_type).color)}
+                    draggable
+                    onDragStart={(e) => { e.stopPropagation(); setDraggedEventId(evt.id); }}
+                    onDragEnd={() => { setDraggedEventId(null); setDropTarget(null); }}
+                    className={cn("text-[8px] truncate mt-0.5 px-1 rounded-sm text-white cursor-grab active:cursor-grabbing", getEventTypeInfo(evt.event_type).color, draggedEventId === evt.id && "opacity-50")}
                   >
                     {evt.title}
                   </div>
