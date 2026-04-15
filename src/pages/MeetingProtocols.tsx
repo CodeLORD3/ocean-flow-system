@@ -22,9 +22,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Trash2, ChevronDown, ChevronRight, Users, Calendar, FileText, CalendarPlus, UserCheck, ListTodo } from "lucide-react";
-import { format } from "date-fns";
+import { Plus, Trash2, ChevronDown, ChevronRight, Users, Calendar as CalendarIcon, FileText, CalendarPlus, UserCheck, ListTodo } from "lucide-react";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar";
+import { format, parseISO } from "date-fns";
 import { sv } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -190,7 +192,7 @@ export default function MeetingProtocols() {
                   </div>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
                     <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
+                      <CalendarIcon className="h-3 w-3" />
                       {format(new Date(p.meeting_date), "d MMM yyyy", { locale: sv })}
                     </span>
                     {p.attendees && (
@@ -264,6 +266,37 @@ export default function MeetingProtocols() {
                             onSave={(val) => updateItem.mutate({ id: item.id, content: val })}
                             className="flex-1 text-sm"
                           />
+                          {/* Deadline datepicker */}
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className={cn("h-7 px-2 text-xs shrink-0", !item.deadline && "opacity-0 group-hover:opacity-100")}
+                                title="Sätt deadline"
+                              >
+                                <CalendarIcon className="h-3.5 w-3.5 mr-1" />
+                                {item.deadline ? format(parseISO(item.deadline), "d/M") : "Datum"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="end">
+                              <CalendarPicker
+                                mode="single"
+                                selected={item.deadline ? parseISO(item.deadline) : undefined}
+                                onSelect={(date) => {
+                                  updateItem.mutate({ id: item.id, deadline: date ? format(date, "yyyy-MM-dd") : null });
+                                }}
+                                className={cn("p-3 pointer-events-auto")}
+                              />
+                              {item.deadline && (
+                                <div className="px-3 pb-2">
+                                  <Button variant="ghost" size="sm" className="w-full text-xs text-destructive" onClick={() => updateItem.mutate({ id: item.id, deadline: null })}>
+                                    Ta bort datum
+                                  </Button>
+                                </div>
+                              )}
+                            </PopoverContent>
+                          </Popover>
                           {/* Assignee selector */}
                           <Popover>
                             <PopoverTrigger asChild>
