@@ -10,6 +10,7 @@ import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import { useSite } from "@/contexts/SiteContext";
 import { useScheduleEvents, EVENT_TYPES, SEVERITY_LEVELS, RECURRENCE_OPTIONS, type ScheduleEvent } from "@/hooks/useScheduleEvents";
+import { useCreateMeetingProtocol } from "@/hooks/useMeetingProtocols";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Repeat } from "lucide-react";
