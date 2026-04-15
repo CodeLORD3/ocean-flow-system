@@ -19,6 +19,7 @@ export interface MeetingProtocolItem {
   sort_order: number;
   completed: boolean;
   assigned_to: string | null;
+  calendar_event_id: string | null;
   staff?: { id: string; first_name: string; last_name: string } | null;
 }
 
