@@ -171,7 +171,7 @@ export default function ScheduleCalendar() {
     setFormDate(date || format(new Date(), "yyyy-MM-dd"));
     setFormRecurrence("none");
     setFormRecurrenceEnd("");
-    setFormAssignee("");
+    setFormAssignee("none");
     setShowAddPanel(true);
   };
 
@@ -184,7 +184,7 @@ export default function ScheduleCalendar() {
     setFormDate(date || format(new Date(), "yyyy-MM-dd"));
     setFormRecurrence(evt.recurrence_type || "none");
     setFormRecurrenceEnd(evt.recurrence_end_date || "");
-    setFormAssignee(evt.assigned_to || "");
+    setFormAssignee(evt.assigned_to || "none");
     setShowAddPanel(true);
   };
 
