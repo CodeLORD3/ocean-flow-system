@@ -829,6 +829,7 @@ export default function ScheduleCalendar() {
                               )}
                             </PopoverContent>
                           </Popover>
+                          <Popover>
                             <PopoverTrigger asChild>
                               <Button
                                 variant="ghost"
