@@ -642,16 +642,29 @@ export default function ScheduleCalendar() {
                       <Input value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} className="text-xs h-7" />
                       <Input value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} placeholder="Beskrivning" className="text-xs h-7" />
                       <div className="flex gap-2">
-                        <Select value={editForm.type} onValueChange={v => setEditForm(f => ({ ...f, type: v }))}>
+                        <Select value={editForm.category} onValueChange={(v: "event" | "task") => setEditForm(f => ({ ...f, category: v }))}>
                           <SelectTrigger className="h-7 text-[10px] flex-1"><SelectValue /></SelectTrigger>
                           <SelectContent>
-                            {EVENT_TYPES.map(t => (
-                              <SelectItem key={t.value} value={t.value} className="text-[10px]">
-                                <span className="flex items-center gap-1"><div className={cn("h-1.5 w-1.5 rounded-full", t.color)} />{t.label}</span>
-                              </SelectItem>
-                            ))}
+                            <SelectItem value="event" className="text-[10px]">
+                              <span className="flex items-center gap-1"><div className="h-1.5 w-1.5 rounded-full bg-blue-500" />Händelse</span>
+                            </SelectItem>
+                            <SelectItem value="task" className="text-[10px]">
+                              <span className="flex items-center gap-1"><div className="h-1.5 w-1.5 rounded-full bg-purple-500" />Uppgift</span>
+                            </SelectItem>
                           </SelectContent>
                         </Select>
+                        {editForm.category === "event" && (
+                          <Select value={editForm.type} onValueChange={v => setEditForm(f => ({ ...f, type: v }))}>
+                            <SelectTrigger className="h-7 text-[10px] flex-1"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {EVENT_TYPES.filter(t => t.value !== "task").map(t => (
+                                <SelectItem key={t.value} value={t.value} className="text-[10px]">
+                                  <span className="flex items-center gap-1"><div className={cn("h-1.5 w-1.5 rounded-full", t.color)} />{t.label}</span>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
                         <Select value={editForm.severity} onValueChange={v => setEditForm(f => ({ ...f, severity: v }))}>
                           <SelectTrigger className="h-7 text-[10px] flex-1"><SelectValue /></SelectTrigger>
                           <SelectContent>
@@ -663,7 +676,7 @@ export default function ScheduleCalendar() {
                           </SelectContent>
                         </Select>
                       </div>
-                      {isTaskType(editForm.type) && (
+                      {editForm.category === "task" && (
                         <Select value={editForm.assignee} onValueChange={v => setEditForm(f => ({ ...f, assignee: v }))}>
                           <SelectTrigger className="h-7 text-[10px]"><SelectValue placeholder="Tilldelad" /></SelectTrigger>
                           <SelectContent>
