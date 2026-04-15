@@ -1,23 +1,29 @@
 import {
-  LayoutDashboard, ShoppingCart, Users, Fish, Package, Truck, Store, UserCheck, BarChart3, Settings, Anchor, CreditCard, ClipboardList, CalendarDays, Star, BookOpen,
+  LayoutDashboard, ShoppingCart, Users, Fish, Package, Truck, Store, UserCheck, BarChart3, Settings, Anchor, CreditCard, ClipboardList, CalendarDays, Star, BookOpen, ListTodo, ChevronDown, FileText,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
 import { NotificationBadge } from "@/components/NotificationBadge";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSite } from "@/contexts/SiteContext";
 import { useStores } from "@/hooks/useStores";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
 
 const overviewNav = [
   { title: "Översikt", url: "/", icon: LayoutDashboard },
+];
+
+const calendarNav = [
   { title: "Kalender", url: "/schedule", icon: CalendarDays },
-  { title: "Mötesprotokoll", url: "/meetings", icon: BookOpen },
+  { title: "Mötesprotokoll", url: "/meetings", icon: FileText },
+  { title: "Uppgifter", url: "/tasks", icon: ListTodo },
 ];
 
 const salesNav = [
@@ -43,10 +49,12 @@ const financeNav = [
   { title: "Rapporter", url: "/reports", icon: BarChart3 },
 ];
 
-type NavSection = { label: string; items: typeof overviewNav };
+type NavItem = { title: string; url: string; icon: any };
+type NavSection = { label: string; items: NavItem[]; collapsible?: boolean };
 
 const sections: NavSection[] = [
   { label: "Översikt", items: overviewNav },
+  { label: "Kalender", items: calendarNav, collapsible: true },
   { label: "Inköp", items: salesNav },
   { label: "Lagerstyrning", items: inventoryNav },
   { label: "Organisation", items: orgNav },
