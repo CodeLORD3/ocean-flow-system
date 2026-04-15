@@ -562,6 +562,10 @@ export default function ScheduleCalendar() {
                           {dayEvents.length > 3 && (
                             <div className="text-[7px] text-muted-foreground mt-0.5">+{dayEvents.length - 3} till</div>
                           )}
+                          {/* Meeting protocol indicator */}
+                          {hasMeeting && (
+                            <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-muted-foreground/30 rounded-b-sm" title="Mötesprotokoll" />
+                          )}
                         </div>
                       );
                     })}
