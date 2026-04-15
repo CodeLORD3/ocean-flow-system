@@ -257,7 +257,7 @@ export default function MeetingProtocols() {
                     {items
                       .sort((a, b) => a.sort_order - b.sort_order)
                       .map((item) => (
-                        <div key={item.id} className="flex items-center gap-2 group min-h-[32px]">
+                        <div key={item.id} className="group min-h-[32px] items-center gap-x-2" style={{ display: 'grid', gridTemplateColumns: '20px 1fr 100px 60px 28px' }}>
                           <Checkbox
                             checked={item.completed}
                             onCheckedChange={() => handleToggleCompleted(item.id, item.completed, item.calendar_event_id)}
@@ -313,10 +313,10 @@ export default function MeetingProtocols() {
                               </div>
                             </PopoverContent>
                           </Popover>
-                          <div className="flex items-center gap-1 ml-1 shrink-0">
+                          <div className="flex items-center justify-end">
                             {item.calendar_event_id ? (
-                              <span className="flex items-center gap-1 text-[10px] text-purple-400 shrink-0 px-1" title="Uppgift i kalendern">
-                                <CalendarIcon className="h-3.5 w-3.5 mr-0.5" />
+                              <span className="flex items-center gap-1 text-[10px] text-purple-400 px-1" title="Uppgift i kalendern">
+                                <CalendarIcon className="h-3.5 w-3.5" />
                                 {item.deadline ? format(parseISO(item.deadline), "d/M") : ""}
                               </span>
                             ) : (
@@ -325,7 +325,7 @@ export default function MeetingProtocols() {
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className={cn("h-7 px-2 text-xs shrink-0", !item.deadline && "opacity-0 group-hover:opacity-100")}
+                                    className={cn("h-7 px-2 text-xs", !item.deadline && "opacity-0 group-hover:opacity-100")}
                                     title="Välj datum & lägg till i kalendern"
                                   >
                                     <CalendarPlus className="h-3.5 w-3.5 mr-1 text-purple-400" />
@@ -346,6 +346,8 @@ export default function MeetingProtocols() {
                                 </PopoverContent>
                               </Popover>
                             )}
+                          </div>
+                          <div className="flex items-center justify-end">
                             <Button
                               variant="ghost"
                               size="icon"
