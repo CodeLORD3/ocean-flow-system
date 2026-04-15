@@ -1,0 +1,1 @@
+ALTER TABLE public.meeting_protocol_items ADD COLUMN assigned_to UUID REFERENCES public.staff(id) ON DELETE SET NULL;
