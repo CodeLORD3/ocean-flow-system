@@ -45,8 +45,8 @@ export default function MeetingProtocols() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [newItemText, setNewItemText] = useState<Record<string, string>>({});
 
-  // Calendar dialog state
   const [calDialogOpen, setCalDialogOpen] = useState(false);
+  const [calItemId, setCalItemId] = useState<string | null>(null);
   const [calTitle, setCalTitle] = useState("");
   const [calDate, setCalDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [calType, setCalType] = useState("meeting");
@@ -93,7 +93,8 @@ export default function MeetingProtocols() {
     setNewItemText((prev) => ({ ...prev, [protocolId]: "" }));
   };
 
-  const openCalendarDialog = (itemContent: string) => {
+  const openCalendarDialog = (itemId: string, itemContent: string) => {
+    setCalItemId(itemId);
     setCalTitle(itemContent);
     setCalDate(format(new Date(), "yyyy-MM-dd"));
     setCalType("meeting");
@@ -108,20 +109,32 @@ export default function MeetingProtocols() {
 
   const handleAddToCalendar = async () => {
     if (!calTitle.trim() || !calDate) return;
-    await addEvent.mutateAsync({
-      title: calTitle,
-      event_date: calDate,
-      event_type: calType,
-      severity: calSeverity,
-      portal: "shop",
-      store_id: activeStoreId,
-      all_day: calAllDay,
-      start_time: calAllDay ? undefined : calStartTime,
-      end_time: calAllDay ? undefined : calEndTime,
-      description: calDescription || undefined,
-      recurrence_type: calRecurrence,
-    });
+    // addEvent returns void, so we need to insert and get the id separately
+    const { data: insertedEvent } = await supabase
+      .from("schedule_events")
+      .insert({
+        title: calTitle,
+        event_date: calDate,
+        event_type: calType,
+        severity: calSeverity,
+        portal: "shop",
+        store_id: activeStoreId,
+        all_day: calAllDay,
+        start_time: calAllDay ? undefined : calStartTime,
+        end_time: calAllDay ? undefined : calEndTime,
+        description: calDescription || undefined,
+        recurrence_type: calRecurrence,
+      } as any)
+      .select("id")
+      .single();
+
+    // Mark the protocol item as added to calendar
+    if (insertedEvent && calItemId) {
+      updateItem.mutate({ id: calItemId, calendar_event_id: (insertedEvent as any).id });
+    }
+
     setCalDialogOpen(false);
+    setCalItemId(null);
     toast({ title: "Tillagd i kalendern" });
   };
 
