@@ -545,7 +545,7 @@ export default function ScheduleCalendar() {
                             <div
                               key={evt.id}
                               draggable
-                              onDragStart={(e) => { e.stopPropagation(); setDraggedEventId(evt.id); }}
+                              onDragStart={(e) => { e.stopPropagation(); e.dataTransfer.setData("text/plain", evt.id); e.dataTransfer.effectAllowed = "move"; setDraggedEventId(evt.id); }}
                               onDragEnd={() => { setDraggedEventId(null); setDropTarget(null); }}
                               className={cn(
                                 "text-[8px] truncate mt-0.5 px-1 rounded-sm text-white cursor-grab active:cursor-grabbing flex items-center gap-0.5",
@@ -774,6 +774,8 @@ export default function ScheduleCalendar() {
                           draggable={!item.calendar_event_id}
                           onDragStart={(e) => {
                             e.stopPropagation();
+                            e.dataTransfer.setData("text/plain", item.id);
+                            e.dataTransfer.effectAllowed = "move";
                             setDraggedProtocolItem({
                               id: item.id,
                               content: item.content,
