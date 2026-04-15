@@ -119,7 +119,7 @@ export default function ScheduleCalendar() {
 
   // Editing state
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ title: "", description: "", type: "", severity: "", assignee: "", recurrence: "", recurrenceEnd: "" });
+  const [editForm, setEditForm] = useState({ title: "", description: "", category: "event" as "event" | "task", type: "", severity: "", assignee: "", recurrence: "", recurrenceEnd: "" });
 
   // Form state for new event
   const [formTitle, setFormTitle] = useState("");
