@@ -246,6 +246,50 @@ export default function MeetingProtocols() {
                               }
                             }}
                           />
+                          {/* Assignee selector */}
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className={`h-7 px-2 text-xs shrink-0 ${item.assigned_to ? '' : 'opacity-0 group-hover:opacity-100'}`}
+                                title="Tilldela person"
+                              >
+                                <UserCheck className="h-3.5 w-3.5 mr-1" />
+                                {item.staff
+                                  ? `${item.staff.first_name} ${item.staff.last_name.charAt(0)}.`
+                                  : "Tilldela"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-48 p-1" align="end">
+                              <div className="space-y-0.5">
+                                {item.assigned_to && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full justify-start text-xs text-destructive"
+                                    onClick={() => updateItem.mutate({ id: item.id, assigned_to: null })}
+                                  >
+                                    Ta bort tilldelning
+                                  </Button>
+                                )}
+                                {staffMembers?.map((s) => (
+                                  <Button
+                                    key={s.id}
+                                    variant={item.assigned_to === s.id ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className="w-full justify-start text-xs"
+                                    onClick={() => updateItem.mutate({ id: item.id, assigned_to: s.id })}
+                                  >
+                                    {s.first_name} {s.last_name}
+                                  </Button>
+                                ))}
+                                {(!staffMembers || staffMembers.length === 0) && (
+                                  <p className="text-xs text-muted-foreground p-2">Ingen personal hittad</p>
+                                )}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
                           <Button
                             variant="ghost"
                             size="icon"
