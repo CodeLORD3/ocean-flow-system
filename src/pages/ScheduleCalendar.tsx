@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -103,7 +104,13 @@ export default function ScheduleCalendar() {
   const { data: staffMembers } = useStaff(site === "shop" ? (activeStoreId || undefined) : undefined);
   const queryClient = useQueryClient();
   const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
+  const [draggedProtocolItem, setDraggedProtocolItem] = useState<{ id: string; content: string; assigned_to: string | null; deadline: string | null; protocolTitle: string } | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
+  // Dialog for creating event from dropped protocol item
+  const [dropCreateDialog, setDropCreateDialog] = useState<{ targetDate: string; content: string; assignedTo: string | null; protocolTitle: string; itemId: string } | null>(null);
+  const [dropFormType, setDropFormType] = useState<string>("task");
+  const [dropFormTitle, setDropFormTitle] = useState("");
+  const [dropFormDesc, setDropFormDesc] = useState("");
 
   // Category filter: "all" | "task" | "event"
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -138,7 +145,12 @@ export default function ScheduleCalendar() {
     return map;
   }, [events, categoryFilter]);
 
-  // Meetings for the selected date
+  // Meetings indexed by date
+  const meetingDates = useMemo(() => {
+    if (!protocols) return new Set<string>();
+    return new Set(protocols.map(p => p.meeting_date));
+  }, [protocols]);
+
   const meetingsForDate = useMemo(() => {
     if (!selectedDate || !protocols) return [];
     return protocols.filter(p => p.meeting_date === selectedDate);
@@ -255,6 +267,23 @@ export default function ScheduleCalendar() {
   };
 
   const handleDrop = async (targetDate: string) => {
+    // Protocol item drop → open dialog to create event
+    if (draggedProtocolItem) {
+      setDropCreateDialog({
+        targetDate,
+        content: draggedProtocolItem.content,
+        assignedTo: draggedProtocolItem.assigned_to,
+        protocolTitle: draggedProtocolItem.protocolTitle,
+        itemId: draggedProtocolItem.id,
+      });
+      setDropFormType("task");
+      setDropFormTitle(draggedProtocolItem.content);
+      setDropFormDesc(`Från mötesprotokoll: ${draggedProtocolItem.protocolTitle}`);
+      setDraggedProtocolItem(null);
+      setDropTarget(null);
+      return;
+    }
+    // Normal event drag
     if (!draggedEventId) return;
     const realId = draggedEventId.includes("__rec_") ? draggedEventId.split("__rec_")[0] : draggedEventId;
     try {
@@ -265,6 +294,36 @@ export default function ScheduleCalendar() {
     }
     setDraggedEventId(null);
     setDropTarget(null);
+  };
+
+  const handleDropCreate = async () => {
+    if (!dropCreateDialog || !dropFormTitle.trim()) return;
+    try {
+      const { data: insertedEvent } = await supabase
+        .from("schedule_events" as any)
+        .insert({
+          title: dropFormTitle,
+          event_date: dropCreateDialog.targetDate,
+          event_type: dropFormType,
+          severity: "info",
+          portal: site,
+          store_id: site === "shop" ? activeStoreId : null,
+          all_day: true,
+          assigned_to: dropCreateDialog.assignedTo,
+          meeting_item_id: dropCreateDialog.itemId,
+          description: dropFormDesc || null,
+        } as any)
+        .select("id")
+        .single();
+      if (insertedEvent) {
+        await updateProtocolItem.mutateAsync({ id: dropCreateDialog.itemId, calendar_event_id: (insertedEvent as any).id });
+      }
+      queryClient.invalidateQueries({ queryKey: ["schedule_events"] });
+      toast({ title: "Händelse skapad från mötespunkt" });
+      setDropCreateDialog(null);
+    } catch {
+      toast({ title: "Fel", variant: "destructive" });
+    }
   };
 
   // Protocol helpers
@@ -452,12 +511,13 @@ export default function ScheduleCalendar() {
                       const today = isToday(new Date(year, monthIdx, cell.day));
                       const dayPast = isDatePast(year, monthIdx, cell.day);
                       const isSelected = selectedDate === cell.dateStr;
+                      const hasMeeting = meetingDates.has(cell.dateStr);
 
                       return (
                         <div
                           key={cell.day}
                           className={cn(
-                            "min-h-[80px] border-b border-r border-border p-1 cursor-pointer hover:bg-muted/30 transition-colors",
+                            "min-h-[80px] border-b border-r border-border p-1 cursor-pointer hover:bg-muted/30 transition-colors relative",
                             dayPast && "bg-muted/20",
                             today && "ring-1 ring-inset ring-primary",
                             isSelected && "ring-2 ring-inset ring-primary bg-primary/5",
@@ -502,6 +562,10 @@ export default function ScheduleCalendar() {
                           ))}
                           {dayEvents.length > 3 && (
                             <div className="text-[7px] text-muted-foreground mt-0.5">+{dayEvents.length - 3} till</div>
+                          )}
+                          {/* Meeting protocol indicator */}
+                          {hasMeeting && (
+                            <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-muted-foreground/30 rounded-b-sm" title="Mötesprotokoll" />
                           )}
                         </div>
                       );
@@ -704,7 +768,22 @@ export default function ScheduleCalendar() {
                     <div className="space-y-1">
                       <p className="text-[9px] font-medium text-muted-foreground">Punkter</p>
                       {items.sort((a, b) => a.sort_order - b.sort_order).map(item => (
-                        <div key={item.id} className="flex items-start gap-2 group">
+                        <div
+                          key={item.id}
+                          className="flex items-start gap-2 group"
+                          draggable={!item.calendar_event_id}
+                          onDragStart={(e) => {
+                            e.stopPropagation();
+                            setDraggedProtocolItem({
+                              id: item.id,
+                              content: item.content,
+                              assigned_to: item.assigned_to,
+                              deadline: item.deadline,
+                              protocolTitle: p.title,
+                            });
+                          }}
+                          onDragEnd={() => { setDraggedProtocolItem(null); setDropTarget(null); }}
+                        >
                           <Checkbox
                             checked={item.completed}
                             onCheckedChange={() => handleToggleProtocolItem(item.id, item.completed, item.calendar_event_id)}
@@ -959,6 +1038,46 @@ export default function ScheduleCalendar() {
 
       {/* Main calendar */}
       {expandedMonth === null ? renderYearView() : renderMonthView(expandedMonth)}
+
+      {/* Drop-create dialog for protocol items dragged to a day */}
+      <Dialog open={!!dropCreateDialog} onOpenChange={(open) => { if (!open) setDropCreateDialog(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-sm">Skapa händelse från mötespunkt</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <div>
+              <label className="text-[9px] text-muted-foreground font-medium">DATUM</label>
+              <p className="text-xs font-medium">{dropCreateDialog && format(parseISO(dropCreateDialog.targetDate), "EEEE d MMMM yyyy", { locale: sv })}</p>
+            </div>
+            <div>
+              <label className="text-[9px] text-muted-foreground font-medium">TYP</label>
+              <Select value={dropFormType} onValueChange={setDropFormType}>
+                <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {EVENT_TYPES.map(t => (
+                    <SelectItem key={t.value} value={t.value} className="text-xs">
+                      <span className="flex items-center gap-1"><div className={cn("h-1.5 w-1.5 rounded-full", t.color)} />{t.label}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-[9px] text-muted-foreground font-medium">TITEL</label>
+              <Input value={dropFormTitle} onChange={e => setDropFormTitle(e.target.value)} className="text-xs h-7" />
+            </div>
+            <div>
+              <label className="text-[9px] text-muted-foreground font-medium">BESKRIVNING</label>
+              <Input value={dropFormDesc} onChange={e => setDropFormDesc(e.target.value)} className="text-xs h-7" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" size="sm" onClick={() => setDropCreateDialog(null)} className="text-xs">Avbryt</Button>
+            <Button size="sm" onClick={handleDropCreate} disabled={!dropFormTitle.trim()} className="text-xs">Skapa</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
