@@ -124,12 +124,16 @@ export default function ScheduleCalendar() {
   // Form state for new event
   const [formTitle, setFormTitle] = useState("");
   const [formDesc, setFormDesc] = useState("");
+  const [formCategory, setFormCategory] = useState<"event" | "task">("event");
   const [formType, setFormType] = useState("note");
   const [formSeverity, setFormSeverity] = useState("info");
   const [formDate, setFormDate] = useState("");
   const [formRecurrence, setFormRecurrence] = useState("none");
   const [formRecurrenceEnd, setFormRecurrenceEnd] = useState("");
   const [formAssignee, setFormAssignee] = useState("");
+
+  // Derived: actual event_type based on category
+  const effectiveFormType = formCategory === "task" ? "task" : formType;
 
   // Meeting protocol new item text
   const [newItemText, setNewItemText] = useState<Record<string, string>>({});
@@ -161,6 +165,7 @@ export default function ScheduleCalendar() {
   const openAddPanel = (date?: string) => {
     setFormTitle("");
     setFormDesc("");
+    setFormCategory("event");
     setFormType("note");
     setFormSeverity("info");
     setFormDate(date || format(new Date(), "yyyy-MM-dd"));
@@ -173,7 +178,8 @@ export default function ScheduleCalendar() {
   const copyEvent = (evt: ScheduleEvent, date?: string) => {
     setFormTitle(evt.title);
     setFormDesc(evt.description || "");
-    setFormType(evt.event_type);
+    setFormCategory(isTaskType(evt.event_type) ? "task" : "event");
+    setFormType(isTaskType(evt.event_type) ? "note" : evt.event_type);
     setFormSeverity(evt.severity);
     setFormDate(date || format(new Date(), "yyyy-MM-dd"));
     setFormRecurrence(evt.recurrence_type || "none");
@@ -189,15 +195,15 @@ export default function ScheduleCalendar() {
         event_date: formDate,
         title: formTitle,
         description: formDesc || undefined,
-        event_type: formType,
+        event_type: effectiveFormType,
         severity: formSeverity,
         portal: site,
         store_id: site === "shop" ? activeStoreId : null,
         recurrence_type: formRecurrence,
         recurrence_end_date: formRecurrenceEnd || null,
-        assigned_to: isTaskType(formType) && formAssignee ? formAssignee : null,
+        assigned_to: formCategory === "task" && formAssignee ? formAssignee : null,
       });
-      if (formType === "meeting" && site === "shop" && activeStoreId) {
+      if (effectiveFormType === "meeting" && site === "shop" && activeStoreId) {
         await createProtocol.mutateAsync({
           store_id: activeStoreId,
           title: formTitle,
@@ -205,7 +211,7 @@ export default function ScheduleCalendar() {
           notes: formDesc || undefined,
         });
       }
-      toast({ title: formType === "meeting" && site === "shop" ? "Möte tillagt i kalender & mötesprotokoll" : "Händelse tillagd" });
+      toast({ title: effectiveFormType === "meeting" && site === "shop" ? "Möte tillagt i kalender & mötesprotokoll" : formCategory === "task" ? "Uppgift tillagd" : "Händelse tillagd" });
       setShowAddPanel(false);
     } catch {
       toast({ title: "Fel", description: "Kunde inte spara", variant: "destructive" });
@@ -924,6 +930,20 @@ export default function ScheduleCalendar() {
   const renderAddForm = () => (
     <div className="grid grid-cols-2 md:grid-cols-5 gap-x-2 gap-y-1">
       <div>
+        <label className="text-[8px] text-muted-foreground font-medium leading-none">KATEGORI</label>
+        <Select value={formCategory} onValueChange={(v: "event" | "task") => setFormCategory(v)}>
+          <SelectTrigger className="h-6 text-[10px] px-1.5"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="event" className="text-[10px]">
+              <span className="flex items-center gap-1"><div className="h-1.5 w-1.5 rounded-full bg-blue-500" />Händelse</span>
+            </SelectItem>
+            <SelectItem value="task" className="text-[10px]">
+              <span className="flex items-center gap-1"><div className="h-1.5 w-1.5 rounded-full bg-purple-500" />Uppgift</span>
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
         <label className="text-[8px] text-muted-foreground font-medium leading-none">DATUM</label>
         <Input type="date" value={formDate} onChange={e => setFormDate(e.target.value)} className="text-[10px] h-6 px-1.5" />
       </div>
@@ -931,19 +951,21 @@ export default function ScheduleCalendar() {
         <label className="text-[8px] text-muted-foreground font-medium leading-none">TITEL</label>
         <Input placeholder="Titel" value={formTitle} onChange={e => setFormTitle(e.target.value)} className="text-[10px] h-6 px-1.5" autoFocus />
       </div>
-      <div>
-        <label className="text-[8px] text-muted-foreground font-medium leading-none">TYP</label>
-        <Select value={formType} onValueChange={setFormType}>
-          <SelectTrigger className="h-6 text-[10px] px-1.5"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {EVENT_TYPES.map(t => (
-              <SelectItem key={t.value} value={t.value} className="text-[10px]">
-                <span className="flex items-center gap-1"><div className={cn("h-1.5 w-1.5 rounded-full", t.color)} />{t.label}</span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {formCategory === "event" && (
+        <div>
+          <label className="text-[8px] text-muted-foreground font-medium leading-none">TYP</label>
+          <Select value={formType} onValueChange={setFormType}>
+            <SelectTrigger className="h-6 text-[10px] px-1.5"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {EVENT_TYPES.filter(t => t.value !== "task").map(t => (
+                <SelectItem key={t.value} value={t.value} className="text-[10px]">
+                  <span className="flex items-center gap-1"><div className={cn("h-1.5 w-1.5 rounded-full", t.color)} />{t.label}</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       <div>
         <label className="text-[8px] text-muted-foreground font-medium leading-none">PRIORITET</label>
         <Select value={formSeverity} onValueChange={setFormSeverity}>
@@ -979,7 +1001,7 @@ export default function ScheduleCalendar() {
           <Input type="date" value={formRecurrenceEnd} onChange={e => setFormRecurrenceEnd(e.target.value)} className="text-[10px] h-6 px-1.5" />
         </div>
       )}
-      {isTaskType(formType) && (
+      {formCategory === "task" && (
         <div>
           <label className="text-[8px] text-muted-foreground font-medium leading-none">TILLDELAD</label>
           <Select value={formAssignee} onValueChange={setFormAssignee}>
@@ -993,7 +1015,7 @@ export default function ScheduleCalendar() {
           </Select>
         </div>
       )}
-      <div className={cn("col-span-2", !isTaskType(formType) && formRecurrence === "none" ? "md:col-span-3" : "md:col-span-2")}>
+      <div className={cn("col-span-2", formCategory === "event" && formRecurrence === "none" ? "md:col-span-2" : "md:col-span-2")}>
         <label className="text-[8px] text-muted-foreground font-medium leading-none">BESKRIVNING</label>
         <Input placeholder="Valfritt" value={formDesc} onChange={e => setFormDesc(e.target.value)} className="text-[10px] h-6 px-1.5" />
       </div>
