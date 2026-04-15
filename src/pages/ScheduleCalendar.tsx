@@ -53,6 +53,7 @@ export default function ScheduleCalendar() {
   const [showDayDetail, setShowDayDetail] = useState(false);
 
   const { events, isLoading, addEvent, updateEvent, deleteEvent } = useScheduleEvents(site, year, site === "shop" ? activeStoreId : null);
+  const createProtocol = useCreateMeetingProtocol();
   const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
 
@@ -111,7 +112,16 @@ export default function ScheduleCalendar() {
         recurrence_type: formRecurrence,
         recurrence_end_date: formRecurrenceEnd || null,
       });
-      toast({ title: "Händelse tillagd" });
+      // If type is "meeting" and we're in a shop portal, also create a meeting protocol
+      if (formType === "meeting" && site === "shop" && activeStoreId) {
+        await createProtocol.mutateAsync({
+          store_id: activeStoreId,
+          title: formTitle,
+          meeting_date: formDate,
+          notes: formDesc || undefined,
+        });
+      }
+      toast({ title: formType === "meeting" && site === "shop" ? "Möte tillagt i kalender & mötesprotokoll" : "Händelse tillagd" });
       setShowAddDialog(false);
     } catch {
       toast({ title: "Fel", description: "Kunde inte spara", variant: "destructive" });
