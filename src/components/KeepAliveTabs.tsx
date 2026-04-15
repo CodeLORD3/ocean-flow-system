@@ -80,6 +80,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/map-settings": { component: <MapSettings /> },
   "/wishes": { component: <ShopWishes /> },
   "/meetings": { component: <MeetingProtocols /> },
+  "/tasks": { component: <Tasks /> },
 };
 
 /**
