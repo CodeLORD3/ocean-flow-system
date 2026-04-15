@@ -789,27 +789,13 @@ export default function ScheduleCalendar() {
                           <Checkbox
                             checked={item.completed}
                             onCheckedChange={() => handleToggleProtocolItem(item.id, item.completed, item.calendar_event_id)}
-                            className="mt-0.5"
+                            className="shrink-0"
                           />
-                          <Input
-                            className={cn("flex-1 h-7 text-xs", item.completed && "line-through text-muted-foreground")}
-                            defaultValue={item.content}
-                            onBlur={(e) => {
-                              if (e.target.value !== item.content) {
-                                updateProtocolItem.mutate({ id: item.id, content: e.target.value });
-                              }
-                            }}
-                          />
-                          <Input
-                            type="date"
-                            className="w-[120px] h-7 text-[10px] shrink-0"
-                            defaultValue={item.deadline || ""}
-                            onBlur={(e) => {
-                              const val = e.target.value || null;
-                              if (val !== (item.deadline || null)) {
-                                updateProtocolItem.mutate({ id: item.id, deadline: val });
-                              }
-                            }}
+                          <EditableText
+                            value={item.content}
+                            completed={item.completed}
+                            onSave={(val) => updateProtocolItem.mutate({ id: item.id, content: val })}
+                            className="flex-1 text-xs"
                           />
                           <Popover>
                             <PopoverTrigger asChild>

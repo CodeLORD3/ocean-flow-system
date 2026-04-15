@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSite } from "@/contexts/SiteContext";
 import {
@@ -251,33 +251,17 @@ export default function MeetingProtocols() {
                     {items
                       .sort((a, b) => a.sort_order - b.sort_order)
                       .map((item) => (
-                        <div key={item.id} className="flex items-start gap-2 group">
+                        <div key={item.id} className="flex items-center gap-2 group min-h-[32px]">
                           <Checkbox
                             checked={item.completed}
                             onCheckedChange={() => handleToggleCompleted(item.id, item.completed, item.calendar_event_id)}
-                            className="mt-0.5"
+                            className="shrink-0"
                           />
-                          <Input
-                            className={`flex-1 h-8 text-sm ${item.completed ? "line-through text-muted-foreground" : ""}`}
-                            defaultValue={item.content}
-                            onBlur={(e) => {
-                              if (e.target.value !== item.content) {
-                                updateItem.mutate({ id: item.id, content: e.target.value });
-                              }
-                            }}
-                          />
-                          {/* Deadline */}
-                          <Input
-                            type="date"
-                            className="w-[130px] h-8 text-xs shrink-0"
-                            defaultValue={item.deadline || ""}
-                            placeholder="Deadline"
-                            onBlur={(e) => {
-                              const val = e.target.value || null;
-                              if (val !== (item.deadline || null)) {
-                                updateItem.mutate({ id: item.id, deadline: val });
-                              }
-                            }}
+                          <EditableText
+                            value={item.content}
+                            completed={item.completed}
+                            onSave={(val) => updateItem.mutate({ id: item.id, content: val })}
+                            className="flex-1 text-sm"
                           />
                           {/* Assignee selector */}
                           <Popover>
