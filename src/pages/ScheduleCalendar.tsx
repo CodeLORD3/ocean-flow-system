@@ -409,78 +409,111 @@ export default function ScheduleCalendar() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-7 border border-border">
-          {WEEKDAYS_SHORT.map(d => (
-            <div key={d} className="text-[9px] font-bold text-muted-foreground text-center py-1 bg-muted/50 border-b border-border">{d}</div>
-          ))}
-          {Array.from({ length: firstDay }).map((_, i) => (
-            <div key={`e${i}`} className="min-h-[80px] border-b border-r border-border bg-muted/20" />
-          ))}
-          {Array.from({ length: daysInMonth }).map((_, dayIdx) => {
-            const day = dayIdx + 1;
-            const dateStr = `${year}-${String(monthIdx + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-            const dayEvents = eventsByDate[dateStr] || [];
-            const holidayKey = `${String(monthIdx + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-            const holiday = SWEDISH_HOLIDAYS[holidayKey];
-            const isWeekend = ((firstDay + dayIdx) % 7) >= 5;
-            const today = isToday(new Date(year, monthIdx, day));
-            const dayPast = isDatePast(year, monthIdx, day);
-            const isSelected = selectedDate === dateStr;
+        {(() => {
+          // Build rows of cells
+          const cells: { day: number; dateStr: string }[] = [];
+          // Leading empty cells
+          for (let i = 0; i < firstDay; i++) cells.push({ day: 0, dateStr: "" });
+          for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = `${year}-${String(monthIdx + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+            cells.push({ day: d, dateStr });
+          }
+          const rows: { day: number; dateStr: string }[][] = [];
+          for (let i = 0; i < cells.length; i += 7) {
+            const row = cells.slice(i, i + 7);
+            // Pad last row
+            while (row.length < 7) row.push({ day: 0, dateStr: "" });
+            rows.push(row);
+          }
 
-            return (
-              <div
-                key={day}
-                className={cn(
-                  "min-h-[80px] border-b border-r border-border p-1 cursor-pointer hover:bg-muted/30 transition-colors",
-                  dayPast && "bg-muted/20",
-                  today && "ring-1 ring-inset ring-primary",
-                  isSelected && "ring-2 ring-inset ring-primary bg-primary/5",
-                  dropTarget === dateStr && "bg-primary/10 ring-2 ring-inset ring-primary",
-                )}
-                onClick={() => setSelectedDate(isSelected ? null : dateStr)}
-                onDragOver={(e) => { e.preventDefault(); setDropTarget(dateStr); }}
-                onDragLeave={() => setDropTarget(null)}
-                onDrop={(e) => { e.preventDefault(); handleDrop(dateStr); }}
-              >
-                <div className="flex items-center justify-between">
-                  <span className={cn(
-                    "text-[10px] font-medium",
-                    today && "text-primary font-bold",
-                    dayPast && !today && "text-muted-foreground/60",
-                  )}>{day}</span>
-                  {dayEvents.length > 0 && (
-                    <span className="text-[8px] text-muted-foreground">{dayEvents.length}</span>
-                  )}
-                </div>
-                {holiday && (
-                  <div className="text-[8px] text-pink-500 truncate mt-0.5">{holiday}</div>
-                )}
-                {dayEvents.slice(0, 3).map(evt => (
-                  <div
-                    key={evt.id}
-                    draggable
-                    onDragStart={(e) => { e.stopPropagation(); setDraggedEventId(evt.id); }}
-                    onDragEnd={() => { setDraggedEventId(null); setDropTarget(null); }}
-                    className={cn(
-                      "text-[8px] truncate mt-0.5 px-1 rounded-sm text-white cursor-grab active:cursor-grabbing flex items-center gap-0.5",
-                      getEventDisplayColor(evt),
-                      draggedEventId === evt.id && "opacity-50",
-                      evt.event_type === "task" && evt.is_done && "line-through",
-                      dayPast && "opacity-70",
-                    )}
-                  >
-                    {evt.event_type === "task" && evt.is_done && <Check className="h-2 w-2 shrink-0" />}
-                    {evt.title}
-                    <div className={cn("h-1.5 w-1.5 rounded-full shrink-0 ml-auto", getSeverityDotColor(evt.severity))} />
-                  </div>
+          // Find which row contains the selected date
+          const selectedRowIdx = selectedDate
+            ? rows.findIndex(row => row.some(c => c.dateStr === selectedDate))
+            : -1;
+
+          return (
+            <div className="border border-border">
+              {/* Weekday headers */}
+              <div className="grid grid-cols-7">
+                {WEEKDAYS_SHORT.map(d => (
+                  <div key={d} className="text-[9px] font-bold text-muted-foreground text-center py-1 bg-muted/50 border-b border-border">{d}</div>
                 ))}
-                {dayEvents.length > 3 && (
-                  <div className="text-[7px] text-muted-foreground mt-0.5">+{dayEvents.length - 3} till</div>
-                )}
               </div>
-            );
-          })}
-        </div>
+              {rows.map((row, rowIdx) => (
+                <div key={rowIdx}>
+                  <div className="grid grid-cols-7">
+                    {row.map((cell, cellIdx) => {
+                      if (cell.day === 0) {
+                        return <div key={`e${cellIdx}`} className="min-h-[80px] border-b border-r border-border bg-muted/20" />;
+                      }
+                      const dayEvents = eventsByDate[cell.dateStr] || [];
+                      const holidayKey = cell.dateStr.slice(5);
+                      const holiday = SWEDISH_HOLIDAYS[holidayKey];
+                      const today = isToday(new Date(year, monthIdx, cell.day));
+                      const dayPast = isDatePast(year, monthIdx, cell.day);
+                      const isSelected = selectedDate === cell.dateStr;
+
+                      return (
+                        <div
+                          key={cell.day}
+                          className={cn(
+                            "min-h-[80px] border-b border-r border-border p-1 cursor-pointer hover:bg-muted/30 transition-colors",
+                            dayPast && "bg-muted/20",
+                            today && "ring-1 ring-inset ring-primary",
+                            isSelected && "ring-2 ring-inset ring-primary bg-primary/5",
+                            dropTarget === cell.dateStr && "bg-primary/10 ring-2 ring-inset ring-primary",
+                          )}
+                          onClick={() => setSelectedDate(isSelected ? null : cell.dateStr)}
+                          onDragOver={(e) => { e.preventDefault(); setDropTarget(cell.dateStr); }}
+                          onDragLeave={() => setDropTarget(null)}
+                          onDrop={(e) => { e.preventDefault(); handleDrop(cell.dateStr); }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className={cn(
+                              "text-[10px] font-medium",
+                              today && "text-primary font-bold",
+                              dayPast && !today && "text-muted-foreground/60",
+                            )}>{cell.day}</span>
+                            {dayEvents.length > 0 && (
+                              <span className="text-[8px] text-muted-foreground">{dayEvents.length}</span>
+                            )}
+                          </div>
+                          {holiday && (
+                            <div className="text-[8px] text-pink-500 truncate mt-0.5">{holiday}</div>
+                          )}
+                          {dayEvents.slice(0, 3).map(evt => (
+                            <div
+                              key={evt.id}
+                              draggable
+                              onDragStart={(e) => { e.stopPropagation(); setDraggedEventId(evt.id); }}
+                              onDragEnd={() => { setDraggedEventId(null); setDropTarget(null); }}
+                              className={cn(
+                                "text-[8px] truncate mt-0.5 px-1 rounded-sm text-white cursor-grab active:cursor-grabbing flex items-center gap-0.5",
+                                getEventDisplayColor(evt),
+                                draggedEventId === evt.id && "opacity-50",
+                                evt.event_type === "task" && evt.is_done && "line-through",
+                                dayPast && "opacity-70",
+                              )}
+                            >
+                              {evt.event_type === "task" && evt.is_done && <Check className="h-2 w-2 shrink-0" />}
+                              {evt.title}
+                              <div className={cn("h-1.5 w-1.5 rounded-full shrink-0 ml-auto", getSeverityDotColor(evt.severity))} />
+                            </div>
+                          ))}
+                          {dayEvents.length > 3 && (
+                            <div className="text-[7px] text-muted-foreground mt-0.5">+{dayEvents.length - 3} till</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* Inline day detail splits open after this row */}
+                  {rowIdx === selectedRowIdx && renderDayDetail()}
+                </div>
+              ))}
+            </div>
+          );
+        })()}
       </div>
     );
   };
@@ -930,9 +963,6 @@ export default function ScheduleCalendar() {
 
       {/* Main calendar */}
       {expandedMonth === null ? renderYearView() : renderMonthView(expandedMonth)}
-
-      {/* Inline day detail (below calendar grid) */}
-      {expandedMonth !== null && renderDayDetail()}
     </div>
   );
 }
