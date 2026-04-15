@@ -51,7 +51,9 @@ export default function ScheduleCalendar() {
   const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
   const [showDayDetail, setShowDayDetail] = useState(false);
 
-  const { events, isLoading, addEvent, deleteEvent } = useScheduleEvents(site, year, site === "shop" ? activeStoreId : null);
+  const { events, isLoading, addEvent, updateEvent, deleteEvent } = useScheduleEvents(site, year, site === "shop" ? activeStoreId : null);
+  const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
 
   // Form state
   const [formTitle, setFormTitle] = useState("");
