@@ -510,6 +510,7 @@ export default function ScheduleCalendar() {
                       const today = isToday(new Date(year, monthIdx, cell.day));
                       const dayPast = isDatePast(year, monthIdx, cell.day);
                       const isSelected = selectedDate === cell.dateStr;
+                      const hasMeeting = meetingDates.has(cell.dateStr);
 
                       return (
                         <div
