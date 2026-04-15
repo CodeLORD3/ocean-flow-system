@@ -171,7 +171,7 @@ export default function ScheduleCalendar() {
     setFormDate(date || format(new Date(), "yyyy-MM-dd"));
     setFormRecurrence("none");
     setFormRecurrenceEnd("");
-    setFormAssignee("");
+    setFormAssignee("none");
     setShowAddPanel(true);
   };
 
@@ -184,7 +184,7 @@ export default function ScheduleCalendar() {
     setFormDate(date || format(new Date(), "yyyy-MM-dd"));
     setFormRecurrence(evt.recurrence_type || "none");
     setFormRecurrenceEnd(evt.recurrence_end_date || "");
-    setFormAssignee(evt.assigned_to || "");
+    setFormAssignee(evt.assigned_to || "none");
     setShowAddPanel(true);
   };
 
@@ -201,7 +201,7 @@ export default function ScheduleCalendar() {
         store_id: site === "shop" ? activeStoreId : null,
         recurrence_type: formRecurrence,
         recurrence_end_date: formRecurrenceEnd || null,
-        assigned_to: formCategory === "task" && formAssignee ? formAssignee : null,
+        assigned_to: formCategory === "task" && formAssignee !== "none" ? formAssignee : null,
       });
       if (effectiveFormType === "meeting" && site === "shop" && activeStoreId) {
         await createProtocol.mutateAsync({
@@ -250,7 +250,7 @@ export default function ScheduleCalendar() {
       category: isTask ? "task" : "event",
       type: isTask ? "note" : evt.event_type,
       severity: evt.severity,
-      assignee: evt.assigned_to || "",
+      assignee: evt.assigned_to || "none",
       recurrence: evt.recurrence_type || "none",
       recurrenceEnd: evt.recurrence_end_date || "",
     });
@@ -266,7 +266,7 @@ export default function ScheduleCalendar() {
         description: editForm.description || null,
         event_type: effectiveType,
         severity: editForm.severity,
-        assigned_to: editForm.category === "task" && editForm.assignee ? editForm.assignee : null,
+        assigned_to: editForm.category === "task" && editForm.assignee !== "none" ? editForm.assignee : null,
         recurrence_type: editForm.recurrence,
         recurrence_end_date: editForm.recurrenceEnd || null,
       } as any);
@@ -680,7 +680,7 @@ export default function ScheduleCalendar() {
                         <Select value={editForm.assignee} onValueChange={v => setEditForm(f => ({ ...f, assignee: v }))}>
                           <SelectTrigger className="h-7 text-[10px]"><SelectValue placeholder="Tilldelad" /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="" className="text-[10px]">Ingen</SelectItem>
+                            <SelectItem value="none" className="text-[10px]">Ingen</SelectItem>
                             {staffMembers?.map(s => (
                               <SelectItem key={s.id} value={s.id} className="text-[10px]">{s.first_name} {s.last_name}</SelectItem>
                             ))}
@@ -1026,7 +1026,7 @@ export default function ScheduleCalendar() {
           <Select value={formAssignee} onValueChange={setFormAssignee}>
             <SelectTrigger className="h-6 text-[10px] px-1.5"><SelectValue placeholder="Välj" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="" className="text-[10px]">Ingen</SelectItem>
+              <SelectItem value="none" className="text-[10px]">Ingen</SelectItem>
               {staffMembers?.map(s => (
                 <SelectItem key={s.id} value={s.id} className="text-[10px]">{s.first_name} {s.last_name}</SelectItem>
               ))}
