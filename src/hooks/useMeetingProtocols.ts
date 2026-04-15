@@ -18,6 +18,8 @@ export interface MeetingProtocolItem {
   content: string;
   sort_order: number;
   completed: boolean;
+  assigned_to: string | null;
+  staff?: { id: string; first_name: string; last_name: string } | null;
 }
 
 export function useMeetingProtocols(storeId: string | null) {
@@ -27,7 +29,7 @@ export function useMeetingProtocols(storeId: string | null) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("meeting_protocols")
-        .select("*, meeting_protocol_items(*)")
+        .select("*, meeting_protocol_items(*, staff:assigned_to(id, first_name, last_name))")
         .eq("store_id", storeId!)
         .order("meeting_date", { ascending: false });
       if (error) throw error;
@@ -86,7 +88,7 @@ export function useAddProtocolItem() {
 export function useUpdateProtocolItem() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...updates }: { id: string; content?: string; completed?: boolean; sort_order?: number }) => {
+    mutationFn: async ({ id, ...updates }: { id: string; content?: string; completed?: boolean; sort_order?: number; assigned_to?: string | null }) => {
       const { data, error } = await supabase.from("meeting_protocol_items").update(updates).eq("id", id).select().single();
       if (error) throw error;
       return data;

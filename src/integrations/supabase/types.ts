@@ -836,6 +836,7 @@ export type Database = {
       }
       meeting_protocol_items: {
         Row: {
+          assigned_to: string | null
           completed: boolean
           content: string
           id: string
@@ -843,6 +844,7 @@ export type Database = {
           sort_order: number
         }
         Insert: {
+          assigned_to?: string | null
           completed?: boolean
           content?: string
           id?: string
@@ -850,6 +852,7 @@ export type Database = {
           sort_order?: number
         }
         Update: {
+          assigned_to?: string | null
           completed?: boolean
           content?: string
           id?: string
@@ -857,6 +860,13 @@ export type Database = {
           sort_order?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "meeting_protocol_items_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "meeting_protocol_items_protocol_id_fkey"
             columns: ["protocol_id"]
