@@ -144,7 +144,12 @@ export default function ScheduleCalendar() {
     return map;
   }, [events, categoryFilter]);
 
-  // Meetings for the selected date
+  // Meetings indexed by date
+  const meetingDates = useMemo(() => {
+    if (!protocols) return new Set<string>();
+    return new Set(protocols.map(p => p.meeting_date));
+  }, [protocols]);
+
   const meetingsForDate = useMemo(() => {
     if (!selectedDate || !protocols) return [];
     return protocols.filter(p => p.meeting_date === selectedDate);
