@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -1037,6 +1038,46 @@ export default function ScheduleCalendar() {
 
       {/* Main calendar */}
       {expandedMonth === null ? renderYearView() : renderMonthView(expandedMonth)}
+
+      {/* Drop-create dialog for protocol items dragged to a day */}
+      <Dialog open={!!dropCreateDialog} onOpenChange={(open) => { if (!open) setDropCreateDialog(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-sm">Skapa händelse från mötespunkt</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <div>
+              <label className="text-[9px] text-muted-foreground font-medium">DATUM</label>
+              <p className="text-xs font-medium">{dropCreateDialog && format(parseISO(dropCreateDialog.targetDate), "EEEE d MMMM yyyy", { locale: sv })}</p>
+            </div>
+            <div>
+              <label className="text-[9px] text-muted-foreground font-medium">TYP</label>
+              <Select value={dropFormType} onValueChange={setDropFormType}>
+                <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {EVENT_TYPES.map(t => (
+                    <SelectItem key={t.value} value={t.value} className="text-xs">
+                      <span className="flex items-center gap-1"><div className={cn("h-1.5 w-1.5 rounded-full", t.color)} />{t.label}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-[9px] text-muted-foreground font-medium">TITEL</label>
+              <Input value={dropFormTitle} onChange={e => setDropFormTitle(e.target.value)} className="text-xs h-7" />
+            </div>
+            <div>
+              <label className="text-[9px] text-muted-foreground font-medium">BESKRIVNING</label>
+              <Input value={dropFormDesc} onChange={e => setDropFormDesc(e.target.value)} className="text-xs h-7" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" size="sm" onClick={() => setDropCreateDialog(null)} className="text-xs">Avbryt</Button>
+            <Button size="sm" onClick={handleDropCreate} disabled={!dropFormTitle.trim()} className="text-xs">Skapa</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
