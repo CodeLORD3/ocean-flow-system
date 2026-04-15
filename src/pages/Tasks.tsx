@@ -100,7 +100,7 @@ export default function Tasks() {
         severity: "info",
         portal: site,
         store_id: site === "shop" ? activeStoreId : null,
-        assigned_to: formAssignee || null,
+        assigned_to: formAssignee && formAssignee !== "none" ? formAssignee : null,
       });
       toast({ title: "Uppgift skapad" });
       setShowCreate(false);
@@ -119,7 +119,7 @@ export default function Tasks() {
         title: formTitle,
         description: formDesc || null,
         event_date: formDeadline,
-        assigned_to: formAssignee || null,
+        assigned_to: formAssignee && formAssignee !== "none" ? formAssignee : null,
       } as any);
       toast({ title: "Uppgift uppdaterad" });
       setEditEvent(null);
@@ -140,8 +140,8 @@ export default function Tasks() {
 
   const resetForm = () => {
     setFormTitle("");
-    setFormAssignee("");
-    setFormDeadline("");
+    setFormAssignee("none");
+    setFormDeadline(format(new Date(), "yyyy-MM-dd"));
     setFormDesc("");
   };
 
@@ -295,7 +295,7 @@ export default function Tasks() {
               <Select value={formAssignee} onValueChange={setFormAssignee}>
                 <SelectTrigger><SelectValue placeholder="Välj person" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Ingen</SelectItem>
+                  <SelectItem value="none">Ingen</SelectItem>
                   {staffMembers?.map(s => (
                     <SelectItem key={s.id} value={s.id}>{s.first_name} {s.last_name}</SelectItem>
                   ))}
