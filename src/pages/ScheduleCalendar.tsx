@@ -178,7 +178,8 @@ export default function ScheduleCalendar() {
   const copyEvent = (evt: ScheduleEvent, date?: string) => {
     setFormTitle(evt.title);
     setFormDesc(evt.description || "");
-    setFormType(evt.event_type);
+    setFormCategory(isTaskType(evt.event_type) ? "task" : "event");
+    setFormType(isTaskType(evt.event_type) ? "note" : evt.event_type);
     setFormSeverity(evt.severity);
     setFormDate(date || format(new Date(), "yyyy-MM-dd"));
     setFormRecurrence(evt.recurrence_type || "none");
