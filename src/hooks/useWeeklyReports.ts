@@ -157,7 +157,7 @@ export function useCreateWeeklyReportFull() {
 
       const reportId = report.id;
 
-      const promises: Promise<any>[] = [];
+      const promises: PromiseLike<any>[] = [];
 
       if (inventoryLines.length > 0) {
         promises.push(
