@@ -808,7 +808,7 @@ export default function ScheduleCalendar() {
                                 className={cn("h-6 px-1.5 text-[10px] shrink-0", !item.deadline && "opacity-0 group-hover:opacity-100")}
                                 title="Sätt deadline"
                               >
-                                <Calendar className="h-3 w-3 mr-0.5" />
+                                <CalendarIcon className="h-3 w-3 mr-0.5" />
                                 {item.deadline ? format(parseISO(item.deadline), "d/M") : "Datum"}
                               </Button>
                             </PopoverTrigger>
