@@ -791,37 +791,6 @@ export default function ScheduleCalendar() {
                             onSave={(val) => updateProtocolItem.mutate({ id: item.id, content: val })}
                             className="flex-1 text-xs"
                           />
-                          {/* Deadline datepicker */}
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className={cn("h-6 px-1.5 text-[10px] shrink-0", !item.deadline && "opacity-0 group-hover:opacity-100")}
-                                title="Sätt deadline"
-                              >
-                                <CalendarIcon className="h-3 w-3 mr-0.5" />
-                                {item.deadline ? format(parseISO(item.deadline), "d/M") : "Datum"}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="end">
-                              <CalendarPicker
-                                mode="single"
-                                selected={item.deadline ? parseISO(item.deadline) : undefined}
-                                onSelect={(date: Date | undefined) => {
-                                  updateProtocolItem.mutate({ id: item.id, deadline: date ? format(date, "yyyy-MM-dd") : null });
-                                }}
-                                className={cn("p-3 pointer-events-auto")}
-                              />
-                              {item.deadline && (
-                                <div className="px-3 pb-2">
-                                  <Button variant="ghost" size="sm" className="w-full text-xs text-destructive" onClick={() => updateProtocolItem.mutate({ id: item.id, deadline: null })}>
-                                    Ta bort datum
-                                  </Button>
-                                </div>
-                              )}
-                            </PopoverContent>
-                          </Popover>
                           <Popover>
                             <PopoverTrigger asChild>
                               <Button
@@ -857,18 +826,35 @@ export default function ScheduleCalendar() {
                           <div className="flex items-center gap-0.5 shrink-0">
                             {item.calendar_event_id ? (
                               <span className="text-[9px] text-purple-400 flex items-center gap-0.5 px-1">
-                                <ListTodo className="h-3 w-3" /> Uppgift
+                                <CalendarIcon className="h-3 w-3" />
+                                {item.deadline ? format(parseISO(item.deadline), "d/M") : ""}
                               </span>
                             ) : (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 opacity-0 group-hover:opacity-100"
-                                title="Skapa uppgift i kalendern"
-                                onClick={() => handleCreateTaskFromItem(item, p.title)}
-                              >
-                                <CalendarPlus className="h-3 w-3 text-purple-400" />
-                              </Button>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className={cn("h-6 px-1.5 text-[10px] shrink-0", !item.deadline && "opacity-0 group-hover:opacity-100")}
+                                    title="Välj datum & lägg till i kalendern"
+                                  >
+                                    <CalendarPlus className="h-3 w-3 mr-0.5 text-purple-400" />
+                                    {item.deadline ? format(parseISO(item.deadline), "d/M") : "Datum"}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="end">
+                                  <CalendarPicker
+                                    mode="single"
+                                    selected={item.deadline ? parseISO(item.deadline) : undefined}
+                                    onSelect={(date: Date | undefined) => {
+                                      if (date) {
+                                        handleCreateTaskFromItem(item, p.title, format(date, "yyyy-MM-dd"));
+                                      }
+                                    }}
+                                    className={cn("p-3 pointer-events-auto")}
+                                  />
+                                </PopoverContent>
+                              </Popover>
                             )}
                             <Button
                               variant="ghost"
