@@ -674,8 +674,13 @@ export default function ScheduleCalendar() {
                     <>
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-1.5">
+                          <Checkbox
+                            checked={evt.is_done}
+                            onCheckedChange={() => handleToggleDone(evt)}
+                            className="shrink-0"
+                          />
                           <div className={cn("h-2 w-2 rounded-full shrink-0", getEventDisplayColor(evt))} />
-                          <span className={cn("text-xs font-medium", isTaskType(evt.event_type) && evt.is_done && "line-through text-muted-foreground")}>
+                          <span className={cn("text-xs font-medium", evt.is_done && "line-through text-muted-foreground")}>
                             {evt.title}
                           </span>
                           {evt.recurrence_type && evt.recurrence_type !== "none" && (
@@ -698,31 +703,18 @@ export default function ScheduleCalendar() {
                           </Button>
                         </div>
                       </div>
-                      {evt.description && <p className="text-[10px] text-muted-foreground">{evt.description}</p>}
-                      {isTaskType(evt.event_type) && (
-                        <div className="flex items-center gap-2 pt-1">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className={cn("h-6 text-[9px] gap-1", evt.is_done && "bg-emerald-500/20 border-emerald-500/30")}
-                            onClick={() => handleToggleDone(evt)}
-                          >
-                            {evt.is_done ? <Check className="h-3 w-3 text-emerald-500" /> : <Check className="h-3 w-3" />}
-                            {evt.is_done ? "Klar" : "Markera klar"}
-                          </Button>
-                          {evt.staff && (
-                            <span className="text-[9px] text-muted-foreground flex items-center gap-1">
-                              <UserCheck className="h-3 w-3" />
-                              {evt.staff.first_name} {evt.staff.last_name.charAt(0)}.
-                            </span>
-                          )}
-                        </div>
-                      )}
-                      {!isTaskType(evt.event_type) && (
-                        <div className="flex items-center gap-2 pt-0.5">
+                      {evt.description && <p className="text-[10px] text-muted-foreground ml-6">{evt.description}</p>}
+                      <div className="flex items-center gap-2 pt-0.5 ml-6">
+                        {isTaskType(evt.event_type) && evt.staff && (
+                          <span className="text-[9px] text-muted-foreground flex items-center gap-1">
+                            <UserCheck className="h-3 w-3" />
+                            {evt.staff.first_name} {evt.staff.last_name.charAt(0)}.
+                          </span>
+                        )}
+                        {!isTaskType(evt.event_type) && (
                           <Badge variant="secondary" className="text-[7px]">{getEventTypeInfo(evt.event_type).label}</Badge>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </>
                   )}
                 </div>
