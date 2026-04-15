@@ -1026,7 +1026,7 @@ export default function ScheduleCalendar() {
           <Select value={formAssignee} onValueChange={setFormAssignee}>
             <SelectTrigger className="h-6 text-[10px] px-1.5"><SelectValue placeholder="Välj" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="" className="text-[10px]">Ingen</SelectItem>
+              <SelectItem value="none" className="text-[10px]">Ingen</SelectItem>
               {staffMembers?.map(s => (
                 <SelectItem key={s.id} value={s.id} className="text-[10px]">{s.first_name} {s.last_name}</SelectItem>
               ))}
