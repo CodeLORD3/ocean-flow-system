@@ -275,7 +275,7 @@ export default function MeetingProtocols() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className={`h-7 px-2 text-xs shrink-0 ${item.assigned_to ? '' : 'opacity-0 group-hover:opacity-100'}`}
+                                className={cn("h-7 px-1.5 text-xs max-w-full overflow-hidden", item.assigned_to ? '' : 'opacity-0 group-hover:opacity-100')}
                                 title="Tilldela person"
                               >
                                 <UserCheck className="h-3.5 w-3.5 mr-1" />
