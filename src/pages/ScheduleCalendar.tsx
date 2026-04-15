@@ -266,6 +266,23 @@ export default function ScheduleCalendar() {
   };
 
   const handleDrop = async (targetDate: string) => {
+    // Protocol item drop → open dialog to create event
+    if (draggedProtocolItem) {
+      setDropCreateDialog({
+        targetDate,
+        content: draggedProtocolItem.content,
+        assignedTo: draggedProtocolItem.assigned_to,
+        protocolTitle: draggedProtocolItem.protocolTitle,
+        itemId: draggedProtocolItem.id,
+      });
+      setDropFormType("task");
+      setDropFormTitle(draggedProtocolItem.content);
+      setDropFormDesc(`Från mötesprotokoll: ${draggedProtocolItem.protocolTitle}`);
+      setDraggedProtocolItem(null);
+      setDropTarget(null);
+      return;
+    }
+    // Normal event drag
     if (!draggedEventId) return;
     const realId = draggedEventId.includes("__rec_") ? draggedEventId.split("__rec_")[0] : draggedEventId;
     try {
@@ -276,6 +293,36 @@ export default function ScheduleCalendar() {
     }
     setDraggedEventId(null);
     setDropTarget(null);
+  };
+
+  const handleDropCreate = async () => {
+    if (!dropCreateDialog || !dropFormTitle.trim()) return;
+    try {
+      const { data: insertedEvent } = await supabase
+        .from("schedule_events" as any)
+        .insert({
+          title: dropFormTitle,
+          event_date: dropCreateDialog.targetDate,
+          event_type: dropFormType,
+          severity: "info",
+          portal: site,
+          store_id: site === "shop" ? activeStoreId : null,
+          all_day: true,
+          assigned_to: dropCreateDialog.assignedTo,
+          meeting_item_id: dropCreateDialog.itemId,
+          description: dropFormDesc || null,
+        } as any)
+        .select("id")
+        .single();
+      if (insertedEvent) {
+        await updateProtocolItem.mutateAsync({ id: dropCreateDialog.itemId, calendar_event_id: (insertedEvent as any).id });
+      }
+      queryClient.invalidateQueries({ queryKey: ["schedule_events"] });
+      toast({ title: "Händelse skapad från mötespunkt" });
+      setDropCreateDialog(null);
+    } catch {
+      toast({ title: "Fel", variant: "destructive" });
+    }
   };
 
   // Protocol helpers
