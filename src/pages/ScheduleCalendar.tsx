@@ -218,9 +218,13 @@ export default function ScheduleCalendar() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, meetingItemId?: string | null) => {
     try {
       await deleteEvent.mutateAsync(id);
+      // Clear linked meeting protocol item
+      if (meetingItemId) {
+        await updateProtocolItem.mutateAsync({ id: meetingItemId, calendar_event_id: null, deadline: null });
+      }
       toast({ title: "Händelse borttagen" });
     } catch {
       toast({ title: "Fel", variant: "destructive" });
