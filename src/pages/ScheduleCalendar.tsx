@@ -819,7 +819,7 @@ export default function ScheduleCalendar() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className={cn("h-7 px-1.5 text-[10px] shrink-0", !item.assigned_to && "opacity-0 group-hover:opacity-100")}
+                                className={cn("h-7 px-1.5 text-[10px] max-w-full overflow-hidden", !item.assigned_to && "opacity-0 group-hover:opacity-100")}
                               >
                                 <UserCheck className="h-3 w-3 mr-0.5" />
                                 {item.staff ? `${item.staff.first_name} ${item.staff.last_name.charAt(0)}.` : "Tilldela"}
