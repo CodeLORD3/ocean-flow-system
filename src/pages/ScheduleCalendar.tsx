@@ -243,10 +243,12 @@ export default function ScheduleCalendar() {
 
   const startEditing = (evt: ScheduleEvent) => {
     setEditingEventId(evt.id);
+    const isTask = isTaskType(evt.event_type);
     setEditForm({
       title: evt.title,
       description: evt.description || "",
-      type: evt.event_type,
+      category: isTask ? "task" : "event",
+      type: isTask ? "note" : evt.event_type,
       severity: evt.severity,
       assignee: evt.assigned_to || "",
       recurrence: evt.recurrence_type || "none",
@@ -256,14 +258,15 @@ export default function ScheduleCalendar() {
 
   const saveEdit = async (evt: ScheduleEvent) => {
     const realId = evt.id.includes("__rec_") ? evt.id.split("__rec_")[0] : evt.id;
+    const effectiveType = editForm.category === "task" ? "task" : editForm.type;
     try {
       await updateEvent.mutateAsync({
         id: realId,
         title: editForm.title,
         description: editForm.description || null,
-        event_type: editForm.type,
+        event_type: effectiveType,
         severity: editForm.severity,
-        assigned_to: isTaskType(editForm.type) && editForm.assignee ? editForm.assignee : null,
+        assigned_to: editForm.category === "task" && editForm.assignee ? editForm.assignee : null,
         recurrence_type: editForm.recurrence,
         recurrence_end_date: editForm.recurrenceEnd || null,
       } as any);
