@@ -786,8 +786,8 @@ export default function ScheduleCalendar() {
                       {items.sort((a, b) => a.sort_order - b.sort_order).map(item => (
                         <div
                           key={item.id}
-                          className="group min-h-[28px] items-center gap-x-2"
-                          style={{ display: 'grid', gridTemplateColumns: '18px 1fr 80px 50px 24px' }}
+                          className="group min-h-[28px] items-center gap-x-1"
+                          style={{ display: 'grid', gridTemplateColumns: '18px 1fr minmax(60px, auto) minmax(44px, auto) 24px' }}
                           draggable={!item.calendar_event_id}
                           onDragStart={(e) => {
                             e.stopPropagation();
