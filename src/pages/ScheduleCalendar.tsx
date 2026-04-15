@@ -1008,7 +1008,7 @@ export default function ScheduleCalendar() {
             <SelectContent>
               <SelectItem value="" className="text-[10px]">Ingen</SelectItem>
               {staffMembers?.map(s => (
-                <SelectItem key={s.id} value={s.id} value-label={s.first_name} className="text-[10px]">{s.first_name} {s.last_name}</SelectItem>
+                <SelectItem key={s.id} value={s.id} className="text-[10px]">{s.first_name} {s.last_name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
