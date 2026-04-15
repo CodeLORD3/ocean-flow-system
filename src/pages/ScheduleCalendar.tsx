@@ -262,8 +262,12 @@ export default function ScheduleCalendar() {
                   "min-h-[80px] border-b border-r border-border p-1 cursor-pointer hover:bg-muted/30 transition-colors",
                   isWeekend && "bg-muted/10",
                   today && "ring-1 ring-inset ring-primary",
+                  dropTarget === dateStr && "bg-primary/10 ring-2 ring-inset ring-primary",
                 )}
                 onClick={() => openDayDetail(dateStr)}
+                onDragOver={(e) => { e.preventDefault(); setDropTarget(dateStr); }}
+                onDragLeave={() => setDropTarget(null)}
+                onDrop={(e) => { e.preventDefault(); handleDrop(dateStr); }}
               >
                 <div className="flex items-center justify-between">
                   <span className={cn("text-[10px] font-medium", today && "text-primary font-bold", isWeekend && "text-muted-foreground")}>{day}</span>
@@ -277,7 +281,10 @@ export default function ScheduleCalendar() {
                 {dayEvents.slice(0, 3).map(evt => (
                   <div
                     key={evt.id}
-                    className={cn("text-[8px] truncate mt-0.5 px-1 rounded-sm text-white", getEventTypeInfo(evt.event_type).color)}
+                    draggable
+                    onDragStart={(e) => { e.stopPropagation(); setDraggedEventId(evt.id); }}
+                    onDragEnd={() => { setDraggedEventId(null); setDropTarget(null); }}
+                    className={cn("text-[8px] truncate mt-0.5 px-1 rounded-sm text-white cursor-grab active:cursor-grabbing", getEventTypeInfo(evt.event_type).color, draggedEventId === evt.id && "opacity-50")}
                   >
                     {evt.title}
                   </div>
