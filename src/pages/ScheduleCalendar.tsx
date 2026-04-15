@@ -339,14 +339,14 @@ export default function ScheduleCalendar() {
     }
   };
 
-  const handleCreateTaskFromItem = async (item: { id: string; content: string; assigned_to: string | null; deadline: string | null }, protocolTitle: string) => {
-    const deadline = item.deadline || selectedDate || format(new Date(), "yyyy-MM-dd");
+  const handleCreateTaskFromItem = async (item: { id: string; content: string; assigned_to: string | null; deadline: string | null }, protocolTitle: string, selectedDateForTask: string) => {
     try {
+      await updateProtocolItem.mutateAsync({ id: item.id, deadline: selectedDateForTask });
       const { data: insertedEvent } = await supabase
         .from("schedule_events" as any)
         .insert({
           title: item.content,
-          event_date: deadline,
+          event_date: selectedDateForTask,
           event_type: "task",
           severity: "info",
           portal: site,
@@ -362,7 +362,7 @@ export default function ScheduleCalendar() {
         await updateProtocolItem.mutateAsync({ id: item.id, calendar_event_id: (insertedEvent as any).id });
       }
       queryClient.invalidateQueries({ queryKey: ["schedule_events"] });
-      toast({ title: "Uppgift skapad i kalendern" });
+      toast({ title: "Uppgift tillagd i kalendern" });
     } catch {
       toast({ title: "Fel", variant: "destructive" });
     }
