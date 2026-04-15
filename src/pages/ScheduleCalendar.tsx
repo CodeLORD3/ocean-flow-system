@@ -963,9 +963,6 @@ export default function ScheduleCalendar() {
 
       {/* Main calendar */}
       {expandedMonth === null ? renderYearView() : renderMonthView(expandedMonth)}
-
-      {/* Inline day detail (below calendar grid) */}
-      {expandedMonth !== null && renderDayDetail()}
     </div>
   );
 }
