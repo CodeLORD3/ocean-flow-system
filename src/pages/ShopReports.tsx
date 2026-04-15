@@ -1,16 +1,20 @@
-import { useState, useMemo, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Package } from "lucide-react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useSite } from "@/contexts/SiteContext";
 import {
-  useWeeklyReports,
-  useCreateWeeklyReport,
-  useUpdateWeeklyReport,
-  SALES_CATEGORIES,
-  PURCHASE_CATEGORIES,
-  type ReportLine,
-} from "@/hooks/useShopReports";
+  useWeeklyReportsList,
+  useWeeklyReportDetail,
+  usePreviousReport,
+  useCreateWeeklyReportFull,
+  useUpdateWeeklyReportFull,
+  DEFAULT_COST_LABELS,
+  DEFAULT_SALES_CHANNELS,
+  DEFAULT_SOCIAL_PLATFORMS,
+  type InventoryLine,
+  type CostLine,
+  type SalesLine,
+  type SocialLine,
+} from "@/hooks/useWeeklyReports";
+import { useProducts } from "@/hooks/useProducts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -23,492 +27,828 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Save, BarChart3, TrendingUp, ShoppingCart } from "lucide-react";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
-} from "@/components/ui/dialog";
+  Plus, Save, BarChart3, TrendingUp, ArrowLeft, Trash2, Search,
+  Package, DollarSign, Share2, FileText, AlertTriangle, Printer,
+} from "lucide-react";
+import {
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
+} from "@/components/ui/command";
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 function getCurrentWeek() {
   const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 1);
-  const diff = now.getTime() - start.getTime();
-  const oneWeek = 604800000;
-  return Math.ceil((diff / oneWeek + start.getDay() / 7));
-}
-
-function getWeeksInYear(year: number) {
-  const d = new Date(year, 11, 31);
-  const week = getCurrentWeekForDate(d);
-  return week === 1 ? 52 : week;
-}
-
-function getCurrentWeekForDate(date: Date) {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
   const dayNum = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
   return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
 }
 
-function getWeeksForMonth(year: number, month: number): number[] {
-  const weeks: Set<number> = new Set();
-  const daysInMonth = new Date(year, month, 0).getDate();
-  for (let day = 1; day <= daysInMonth; day++) {
-    const d = new Date(year, month - 1, day);
-    weeks.add(getCurrentWeekForDate(d));
-  }
-  return Array.from(weeks).sort((a, b) => a - b);
+function getWeekDateRange(year: number, week: number) {
+  const jan4 = new Date(year, 0, 4);
+  const dayOfWeek = jan4.getDay() || 7;
+  const monday = new Date(jan4);
+  monday.setDate(jan4.getDate() - dayOfWeek + 1 + (week - 1) * 7);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const fmt = (d: Date) => d.toLocaleDateString("sv-SE", { day: "numeric", month: "short" });
+  return `${fmt(monday)} – ${fmt(sunday)}`;
 }
 
 const fmt = (v: number) =>
-  new Intl.NumberFormat("sv-SE", {
-    style: "currency",
-    currency: "SEK",
-    maximumFractionDigits: 0,
-  }).format(v);
+  new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 }).format(v);
 
-const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "Maj", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"];
+const fmtKr = (v: number) => `${fmt(v)} kr`;
 
-// ─── Weekly Report Form ─────────────────────────────────────────────
+// ─── Product Picker ─────────────────────────────────────────────────
+function ProductPicker({
+  value,
+  onSelect,
+  products,
+}: {
+  value: string | null;
+  onSelect: (id: string, name: string, unit: string, price: number) => void;
+  products: any[];
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = products.find((p) => p.id === value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="w-full justify-start text-xs h-8 font-normal">
+          {selected ? selected.name : <span className="text-muted-foreground">Välj produkt...</span>}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Sök produkt..." />
+          <CommandList>
+            <CommandEmpty>Ingen produkt hittad</CommandEmpty>
+            <CommandGroup>
+              {products.map((p) => (
+                <CommandItem
+                  key={p.id}
+                  value={p.name}
+                  onSelect={() => {
+                    onSelect(p.id, p.name, p.unit, p.cost_price);
+                    setOpen(false);
+                  }}
+                >
+                  <span className="text-xs">{p.name}</span>
+                  <span className="text-[10px] text-muted-foreground ml-auto">{p.unit}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// ─── Summary Cards ──────────────────────────────────────────────────
+function SummaryCards({
+  totalSales,
+  grossMarginPct,
+  closingInventory,
+  inventoryChange,
+}: {
+  totalSales: number;
+  grossMarginPct: number;
+  closingInventory: number;
+  inventoryChange: number;
+}) {
+  const marginColor =
+    grossMarginPct >= 45 ? "text-emerald-400" :
+    grossMarginPct >= 35 ? "text-yellow-400" :
+    grossMarginPct > 0 ? "text-red-400" : "text-muted-foreground";
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <Card>
+        <CardContent className="pt-3 pb-2 px-3">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Försäljning</p>
+          <p className="text-lg font-bold font-mono tabular-nums">{fmtKr(totalSales)}</p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent className="pt-3 pb-2 px-3">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Bruttomarginal</p>
+          <p className={`text-lg font-bold font-mono tabular-nums ${marginColor}`}>
+            {grossMarginPct > 0 ? `${grossMarginPct.toFixed(1)}%` : "–"}
+          </p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent className="pt-3 pb-2 px-3">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Utgående lager</p>
+          <p className="text-lg font-bold font-mono tabular-nums">{fmtKr(closingInventory)}</p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent className="pt-3 pb-2 px-3">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Lagerförändring</p>
+          <p className={`text-lg font-bold font-mono tabular-nums ${inventoryChange >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+            {inventoryChange >= 0 ? "+" : ""}{fmtKr(inventoryChange)}
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ─── Report Form ────────────────────────────────────────────────────
 function WeeklyReportForm({
   storeId,
   onDone,
-  editReport,
-  allReports,
+  reportId,
 }: {
   storeId: string;
   onDone: () => void;
-  editReport?: any;
-  allReports?: any[];
+  reportId: string | null;
 }) {
+  const isEdit = !!reportId;
+  const { data: detail, isLoading: detailLoading } = useWeeklyReportDetail(reportId);
+  const { data: allProducts = [] } = useProducts();
   const currentYear = new Date().getFullYear();
   const currentWeek = getCurrentWeek();
 
-  const [year, setYear] = useState(editReport?.year ?? currentYear);
-  const [week, setWeek] = useState(editReport?.week_number ?? currentWeek);
-  const [openingInv, setOpeningInv] = useState(String(editReport?.opening_inventory ?? ""));
-  const [closingInv, setClosingInv] = useState(String(editReport?.closing_inventory ?? ""));
-  const [openingAutoFilled, setOpeningAutoFilled] = useState(false);
-  const [closingAutoFilled, setClosingAutoFilled] = useState(false);
+  const [year, setYear] = useState(currentYear);
+  const [week, setWeek] = useState(currentWeek);
+  const [status, setStatus] = useState<"draft" | "finalized">("draft");
+  const [notes, setNotes] = useState("");
+  const [openingInventory, setOpeningInventory] = useState(0);
+  const [activeTab, setActiveTab] = useState("inventory");
+  const [showFinalizeWarning, setShowFinalizeWarning] = useState(false);
 
-  // Auto-fill opening inventory from previous week's closing inventory
+  // Inventory lines
+  const [invLines, setInvLines] = useState<(InventoryLine & { _name?: string })[]>([]);
+
+  // Cost lines
+  const [costLines, setCostLines] = useState<CostLine[]>(
+    DEFAULT_COST_LABELS.map((label, i) => ({ label, amount: 0, sort_order: i }))
+  );
+
+  // Sales lines
+  const [salesLines, setSalesLines] = useState<SalesLine[]>(
+    DEFAULT_SALES_CHANNELS.map((channel, i) => ({ channel, quantity: 0, amount: 0, sort_order: i }))
+  );
+
+  // Social lines
+  const [socialLines, setSocialLines] = useState<SocialLine[]>(
+    DEFAULT_SOCIAL_PLATFORMS.map((platform, i) => ({
+      platform, opening_followers: 0, closing_followers: 0, follower_change: 0, posts_count: 0, sort_order: i,
+    }))
+  );
+
+  // Previous report for auto-fill
+  const { data: prevData } = usePreviousReport(storeId, year, week);
+
+  // Auto-fill from previous report
   useEffect(() => {
-    if (editReport) return;
-    if (!allReports || allReports.length === 0) {
-      setOpeningAutoFilled(false);
+    if (isEdit || !prevData) return;
+    setOpeningInventory(Number(prevData.report.closing_inventory) || 0);
+    if (prevData.socialLines.length > 0) {
+      setSocialLines((prev) =>
+        prev.map((s) => {
+          const prevSocial = prevData.socialLines.find((ps: any) => ps.platform === s.platform);
+          return prevSocial ? { ...s, opening_followers: prevSocial.closing_followers } : s;
+        })
+      );
+    }
+  }, [prevData, isEdit]);
+
+  // Load existing report data
+  useEffect(() => {
+    if (!detail) return;
+    const r = detail.report;
+    setYear(r.year);
+    setWeek(r.week_number);
+    setStatus(r.status as any);
+    setNotes(r.notes || "");
+    setOpeningInventory(Number(r.opening_inventory));
+
+    if (detail.inventoryLines.length > 0) {
+      setInvLines(
+        detail.inventoryLines.map((l: any) => {
+          const prod = allProducts.find((p) => p.id === l.product_id);
+          return {
+            product_id: l.product_id,
+            quantity: Number(l.quantity),
+            unit: l.unit,
+            unit_price: Number(l.unit_price),
+            total: Number(l.total),
+            _name: prod?.name || "Okänd produkt",
+          };
+        })
+      );
+    }
+
+    if (detail.costLines.length > 0) {
+      setCostLines(detail.costLines.map((l: any) => ({
+        label: l.label,
+        amount: Number(l.amount),
+        sort_order: l.sort_order,
+      })));
+    }
+
+    if (detail.salesLines.length > 0) {
+      setSalesLines(detail.salesLines.map((l: any) => ({
+        channel: l.channel,
+        quantity: l.quantity,
+        amount: Number(l.amount),
+        last_year_amount: l.last_year_amount ? Number(l.last_year_amount) : undefined,
+        sort_order: l.sort_order,
+      })));
+    }
+
+    if (detail.socialLines.length > 0) {
+      setSocialLines(detail.socialLines.map((l: any) => ({
+        platform: l.platform,
+        opening_followers: l.opening_followers,
+        closing_followers: l.closing_followers,
+        follower_change: l.follower_change,
+        posts_count: l.posts_count,
+        sort_order: l.sort_order,
+      })));
+    }
+  }, [detail, allProducts]);
+
+  // Computed values
+  const closingInventory = invLines.reduce((s, l) => s + l.total, 0);
+  const inventoryChange = closingInventory - openingInventory;
+  const totalCosts = costLines.reduce((s, l) => s + l.amount, 0) + Math.abs(Math.min(0, inventoryChange));
+  const totalSales = salesLines.reduce((s, l) => s + l.amount, 0);
+  const grossMargin = totalSales - totalCosts;
+  const grossMarginPct = totalSales > 0 ? (grossMargin / totalSales) * 100 : 0;
+
+  const createMut = useCreateWeeklyReportFull();
+  const updateMut = useUpdateWeeklyReportFull();
+
+  const handleSave = (targetStatus: "draft" | "finalized") => {
+    if (targetStatus === "finalized" && isEdit && status === "finalized") {
+      setShowFinalizeWarning(true);
       return;
     }
-    const previous = allReports
-      .filter((r: any) => r.year < year || (r.year === year && (r.week_number ?? 0) < week))
-      .sort((a: any, b: any) => b.year - a.year || (b.week_number ?? 0) - (a.week_number ?? 0))[0];
-    if (previous) {
-      setOpeningInv(String(previous.closing_inventory ?? 0));
-      setOpeningAutoFilled(true);
-    } else {
-      setOpeningAutoFilled(false);
-    }
-  }, [year, week, allReports, editReport]);
-
-  // Auto-fill closing inventory from store's current stock value
-  const { data: closingStockValue } = useQuery({
-    queryKey: ["store_stock_value", storeId],
-    enabled: !editReport,
-    queryFn: async () => {
-      const { data: locations } = await supabase
-        .from("storage_locations")
-        .select("id")
-        .eq("store_id", storeId);
-      if (!locations || locations.length === 0) return 0;
-      const locationIds = locations.map((l) => l.id);
-      const { data: stockEntries } = await supabase
-        .from("product_stock_locations")
-        .select("quantity, product_id, products(cost_price)")
-        .in("location_id", locationIds);
-      if (!stockEntries) return 0;
-      return stockEntries.reduce((sum, entry: any) => {
-        const qty = Number(entry.quantity) || 0;
-        const cost = Number(entry.products?.cost_price) || 0;
-        return sum + qty * cost;
-      }, 0);
-    },
-  });
-
-  useEffect(() => {
-    if (editReport) return;
-    if (closingStockValue !== undefined && closingStockValue > 0) {
-      setClosingInv(String(Math.round(closingStockValue)));
-      setClosingAutoFilled(true);
-    }
-  }, [closingStockValue, editReport]);
-  const [notes, setNotes] = useState(editReport?.notes ?? "");
-
-  const existingLines: ReportLine[] = editReport?.shop_report_lines ?? [];
-
-  const initLines = (): Record<string, string> => {
-    const m: Record<string, string> = {};
-    SALES_CATEGORIES.forEach((c) => {
-      const existing = existingLines.find((l: any) => l.line_type === "sale" && l.category === c);
-      m[`sale_${c}`] = existing ? String(existing.amount) : "";
-    });
-    PURCHASE_CATEGORIES.forEach((c) => {
-      const existing = existingLines.find((l: any) => l.line_type === "purchase" && l.category === c);
-      m[`purchase_${c}`] = existing ? String(existing.amount) : "";
-    });
-    return m;
+    doSave(targetStatus);
   };
 
-  const [lineAmounts, setLineAmounts] = useState<Record<string, string>>(initLines);
+  const doSave = (targetStatus: "draft" | "finalized") => {
+    const payload = {
+      store_id: storeId,
+      year,
+      week_number: week,
+      status: targetStatus,
+      opening_inventory: openingInventory,
+      closing_inventory: closingInventory,
+      inventory_change: inventoryChange,
+      total_costs: totalCosts,
+      total_sales: totalSales,
+      gross_margin: grossMargin,
+      gross_margin_pct: grossMarginPct,
+      notes: notes || undefined,
+      inventoryLines: invLines.filter((l) => l.product_id).map(({ _name, ...l }) => l),
+      costLines: costLines.filter((l) => l.amount > 0),
+      salesLines: salesLines.filter((l) => l.amount > 0 || l.quantity > 0),
+      socialLines: socialLines.map((s) => ({
+        ...s,
+        follower_change: s.closing_followers - s.opening_followers,
+      })),
+    };
 
-  const setAmount = (key: string, val: string) =>
-    setLineAmounts((prev) => ({ ...prev, [key]: val }));
-
-  const createMut = useCreateWeeklyReport();
-  const updateMut = useUpdateWeeklyReport();
-
-  const handleSubmit = () => {
-    const lines: ReportLine[] = [];
-    SALES_CATEGORIES.forEach((c) => {
-      const amt = Number(lineAmounts[`sale_${c}`]) || 0;
-      if (amt > 0) lines.push({ line_type: "sale", category: c, amount: amt });
-    });
-    PURCHASE_CATEGORIES.forEach((c) => {
-      const amt = Number(lineAmounts[`purchase_${c}`]) || 0;
-      if (amt > 0) lines.push({ line_type: "purchase", category: c, amount: amt });
-    });
-
-    if (editReport) {
+    if (isEdit) {
       updateMut.mutate(
+        { ...payload, id: reportId! },
         {
-          id: editReport.id,
-          store_id: storeId,
-          opening_inventory: Number(openingInv) || 0,
-          closing_inventory: Number(closingInv) || 0,
-          notes: notes || undefined,
-          lines,
-        },
-        {
-          onSuccess: () => { toast.success("Rapport uppdaterad"); onDone(); },
+          onSuccess: () => {
+            toast.success(targetStatus === "finalized" ? "Rapport slutförd & lager uppdaterat" : "Utkast sparat");
+            onDone();
+          },
           onError: (e) => toast.error(e.message),
         }
       );
     } else {
-      createMut.mutate(
-        {
-          store_id: storeId,
-          year,
-          week_number: week,
-          opening_inventory: Number(openingInv) || 0,
-          closing_inventory: Number(closingInv) || 0,
-          notes: notes || undefined,
-          lines,
+      createMut.mutate(payload, {
+        onSuccess: () => {
+          toast.success(targetStatus === "finalized" ? "Rapport skapad & lager uppdaterat" : "Utkast sparat");
+          onDone();
         },
-        {
-          onSuccess: () => { toast.success("Rapport sparad"); onDone(); },
-          onError: (e) => toast.error(e.message),
-        }
-      );
+        onError: (e) => toast.error(e.message),
+      });
     }
   };
 
   const isPending = createMut.isPending || updateMut.isPending;
 
-  const totalSales = SALES_CATEGORIES.reduce(
-    (s, c) => s + (Number(lineAmounts[`sale_${c}`]) || 0), 0
-  );
-  const totalPurchases = PURCHASE_CATEGORIES.reduce(
-    (s, c) => s + (Number(lineAmounts[`purchase_${c}`]) || 0), 0
-  );
+  // Inventory line helpers
+  const addInvLine = () => {
+    setInvLines((prev) => [...prev, { product_id: "", quantity: 0, unit: "kg", unit_price: 0, total: 0 }]);
+  };
+
+  const updateInvLine = (idx: number, field: string, value: any) => {
+    setInvLines((prev) => {
+      const updated = [...prev];
+      (updated[idx] as any)[field] = value;
+      if (field === "quantity" || field === "unit_price") {
+        updated[idx].total = updated[idx].quantity * updated[idx].unit_price;
+      }
+      return updated;
+    });
+  };
+
+  const removeInvLine = (idx: number) => {
+    setInvLines((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  // Cost line helpers
+  const addCostLine = () => {
+    setCostLines((prev) => [...prev, { label: "", amount: 0, sort_order: prev.length }]);
+  };
+
+  const updateCostLine = (idx: number, field: string, value: any) => {
+    setCostLines((prev) => {
+      const updated = [...prev];
+      (updated[idx] as any)[field] = value;
+      return updated;
+    });
+  };
+
+  if (detailLoading && isEdit) {
+    return <p className="text-muted-foreground text-sm p-6">Laddar rapport...</p>;
+  }
 
   return (
-    <div className="space-y-5">
-      {/* Week selector */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>År</Label>
-          <Select value={String(year)} onValueChange={(v) => setYear(Number(v))} disabled={!!editReport}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {[currentYear - 1, currentYear, currentYear + 1].map((y) => (
-                <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>Vecka</Label>
-          <Select value={String(week)} onValueChange={(v) => setWeek(Number(v))} disabled={!!editReport}>
-            <SelectTrigger><SelectValue placeholder="Välj vecka" /></SelectTrigger>
-            <SelectContent>
-              {Array.from({ length: getWeeksInYear(year) }, (_, i) => i + 1).map((w) => (
-                <SelectItem key={w} value={String(w)}>V{w}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Sales section */}
-      <div>
-        <h3 className="text-sm font-semibold flex items-center gap-2 mb-3">
-          <TrendingUp className="h-4 w-4 text-primary" /> Försäljning
-        </h3>
-        <div className="grid grid-cols-1 gap-2">
-          {SALES_CATEGORIES.map((c) => (
-            <div key={c} className="flex items-center gap-3">
-              <Label className="w-44 text-xs shrink-0">{c}</Label>
-              <Input
-                type="number"
-                placeholder="0"
-                className="h-8 text-sm"
-                value={lineAmounts[`sale_${c}`]}
-                onChange={(e) => setAmount(`sale_${c}`, e.target.value)}
-              />
-            </div>
-          ))}
-          <div className="flex items-center gap-3 pt-1 border-t border-border">
-            <span className="w-44 text-xs font-semibold shrink-0">Totalt försäljning</span>
-            <span className="text-sm font-bold">{fmt(totalSales)}</span>
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={onDone}>
+            <ArrowLeft className="h-4 w-4 mr-1" /> Tillbaka
+          </Button>
+          <div>
+            <h2 className="text-lg font-bold">
+              {isEdit ? `Vecka ${week}, ${year}` : "Ny veckorapport"}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {getWeekDateRange(year, week)}
+              {status === "finalized" && (
+                <Badge variant="secondary" className="ml-2 text-[10px]">Slutförd</Badge>
+              )}
+              {status === "draft" && (
+                <Badge variant="outline" className="ml-2 text-[10px]">Utkast</Badge>
+              )}
+            </p>
           </div>
         </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => window.print()}>
+            <Printer className="h-3.5 w-3.5 mr-1" /> Skriv ut
+          </Button>
+        </div>
       </div>
 
-      {/* Purchase section */}
-      <div>
-        <h3 className="text-sm font-semibold flex items-center gap-2 mb-3">
-          <ShoppingCart className="h-4 w-4 text-primary" /> Inköp
-        </h3>
-        <div className="grid grid-cols-1 gap-2">
-          {PURCHASE_CATEGORIES.map((c) => (
-            <div key={c} className="flex items-center gap-3">
-              <Label className="w-44 text-xs shrink-0">{c}</Label>
-              <Input
-                type="number"
-                placeholder="0"
-                className="h-8 text-sm"
-                value={lineAmounts[`purchase_${c}`]}
-                onChange={(e) => setAmount(`purchase_${c}`, e.target.value)}
-              />
-            </div>
-          ))}
-          <div className="flex items-center gap-3 pt-1 border-t border-border">
-            <span className="w-44 text-xs font-semibold shrink-0">Totalt inköp</span>
-            <span className="text-sm font-bold">{fmt(totalPurchases)}</span>
+      {/* Week selector for new reports */}
+      {!isEdit && (
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label>År</Label>
+            <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {[currentYear - 1, currentYear, currentYear + 1].map((y) => (
+                  <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Vecka</Label>
+            <Select value={String(week)} onValueChange={(v) => setWeek(Number(v))}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 52 }, (_, i) => i + 1).map((w) => (
+                  <SelectItem key={w} value={String(w)}>V{w}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Inventory */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label className="flex items-center gap-1">
-            Ingående lager (SEK)
-            {openingAutoFilled && <span className="text-[10px] text-muted-foreground ml-1">(auto från förra veckan)</span>}
-          </Label>
-          <Input type="number" placeholder="0" value={openingInv} onChange={(e) => { setOpeningInv(e.target.value); setOpeningAutoFilled(false); }} />
-        </div>
-        <div>
-          <Label className="flex items-center gap-1">
-            Utgående lager (SEK)
-            {closingAutoFilled && <span className="text-[10px] text-muted-foreground ml-1">(auto från lager)</span>}
-          </Label>
-          <Input type="number" placeholder="0" value={closingInv} onChange={(e) => { setClosingInv(e.target.value); setClosingAutoFilled(false); }} />
-        </div>
-      </div>
+      {/* Summary Cards */}
+      <SummaryCards
+        totalSales={totalSales}
+        grossMarginPct={grossMarginPct}
+        closingInventory={closingInventory}
+        inventoryChange={inventoryChange}
+      />
 
-      <div>
-        <Label>Anteckningar</Label>
-        <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Valfria anteckningar..." />
-      </div>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid grid-cols-4 w-full">
+          <TabsTrigger value="inventory" className="text-xs gap-1"><Package className="h-3.5 w-3.5" /> Inventering</TabsTrigger>
+          <TabsTrigger value="sales" className="text-xs gap-1"><DollarSign className="h-3.5 w-3.5" /> Försäljning</TabsTrigger>
+          <TabsTrigger value="social" className="text-xs gap-1"><Share2 className="h-3.5 w-3.5" /> Sociala Medier</TabsTrigger>
+          <TabsTrigger value="notes" className="text-xs gap-1"><FileText className="h-3.5 w-3.5" /> Noteringar</TabsTrigger>
+        </TabsList>
 
-      <Button onClick={handleSubmit} disabled={isPending} className="w-full">
-        <Save className="h-4 w-4 mr-2" />
-        {isPending ? "Sparar..." : editReport ? "Uppdatera rapport" : "Spara rapport"}
-      </Button>
-    </div>
-  );
-}
+        {/* Section A: Inventory */}
+        <TabsContent value="inventory" className="space-y-4">
+          <Card>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm">Inventeringsrapport</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 px-4 pb-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs">
+                    Ingående lager (kr)
+                    {!isEdit && prevData && (
+                      <span className="text-[10px] text-muted-foreground ml-1">(auto)</span>
+                    )}
+                  </Label>
+                  <Input
+                    type="number"
+                    className="h-8 text-sm font-mono"
+                    value={openingInventory || ""}
+                    onChange={(e) => setOpeningInventory(Number(e.target.value) || 0)}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Utgående lager (beräknat)</Label>
+                  <div className="h-8 flex items-center text-sm font-mono font-bold">{fmtKr(closingInventory)}</div>
+                </div>
+              </div>
 
-// ─── Inventory Reports Tab ──────────────────────────────────────────
-function InventoryReportsTab({ storeId }: { storeId: string }) {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  const { data: reports, isLoading } = useQuery({
-    queryKey: ["inventory_reports", storeId],
-    enabled: !!storeId,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("inventory_reports")
-        .select("*")
-        .eq("store_id", storeId)
-        .order("reported_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: expandedLines } = useQuery({
-    queryKey: ["inventory_report_lines", expandedId],
-    enabled: !!expandedId,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("inventory_report_lines")
-        .select("*")
-        .eq("report_id", expandedId!)
-        .order("category", { ascending: true });
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  return (
-    <Card>
-      <CardHeader><CardTitle className="text-base flex items-center gap-2"><Package className="h-4 w-4" /> Lagerrapporter</CardTitle></CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <p className="text-muted-foreground text-sm">Laddar...</p>
-        ) : !reports?.length ? (
-          <p className="text-muted-foreground text-sm">Inga lagerrapporter ännu. Skapa en via Lager-sidan.</p>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Datum</TableHead>
-                <TableHead>Plats</TableHead>
-                <TableHead className="text-right">Produkter</TableHead>
-                <TableHead className="text-right">Lagervärde (SEK)</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {reports.map((r: any) => (
-                <>
-                  <TableRow key={r.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}>
-                    <TableCell className="font-medium text-sm">
-                      {new Date(r.reported_at).toLocaleDateString("sv-SE")} {new Date(r.reported_at).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}
-                    </TableCell>
-                    <TableCell className="text-sm">{r.location_name}</TableCell>
-                    <TableCell className="text-right text-sm">{r.line_count}</TableCell>
-                    <TableCell className="text-right text-sm font-medium">{fmt(Number(r.total_value))}</TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">{expandedId === r.id ? "Dölj" : "Visa"}</Button>
-                    </TableCell>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs w-[40%]">Produkt</TableHead>
+                    <TableHead className="text-xs text-right">Antal</TableHead>
+                    <TableHead className="text-xs text-center">Enhet</TableHead>
+                    <TableHead className="text-xs text-right">Á-pris (kr)</TableHead>
+                    <TableHead className="text-xs text-right">Totalt</TableHead>
+                    <TableHead className="w-8"></TableHead>
                   </TableRow>
-                  {expandedId === r.id && (
-                    <TableRow key={`${r.id}-detail`}>
-                      <TableCell colSpan={5} className="bg-muted/30 p-0">
-                        <div className="p-4">
-                          {!expandedLines ? (
-                            <p className="text-xs text-muted-foreground">Laddar detaljer...</p>
-                          ) : (
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead className="text-xs">Produkt</TableHead>
-                                  <TableHead className="text-xs">SKU</TableHead>
-                                  <TableHead className="text-xs">Kategori</TableHead>
-                                  <TableHead className="text-xs text-right">Antal</TableHead>
-                                  <TableHead className="text-xs text-right">Á-pris</TableHead>
-                                  <TableHead className="text-xs text-right">Värde</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {expandedLines.map((l: any) => (
-                                  <TableRow key={l.id}>
-                                    <TableCell className="text-xs">{l.product_name}</TableCell>
-                                    <TableCell className="text-xs text-muted-foreground">{l.sku}</TableCell>
-                                    <TableCell className="text-xs">{l.category}</TableCell>
-                                    <TableCell className="text-xs text-right">{l.quantity} {l.unit}</TableCell>
-                                    <TableCell className="text-xs text-right">{fmt(Number(l.cost_price))}</TableCell>
-                                    <TableCell className="text-xs text-right font-medium">{fmt(Number(l.line_value))}</TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          )}
-                        </div>
+                </TableHeader>
+                <TableBody>
+                  {invLines.map((line, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell className="py-1">
+                        <ProductPicker
+                          value={line.product_id || null}
+                          products={allProducts}
+                          onSelect={(id, name, unit, price) => {
+                            const updated = [...invLines];
+                            updated[idx] = {
+                              ...updated[idx],
+                              product_id: id,
+                              unit,
+                              unit_price: price,
+                              _name: name,
+                              total: updated[idx].quantity * price,
+                            };
+                            setInvLines(updated);
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell className="py-1">
+                        <Input
+                          type="number"
+                          className="h-7 text-xs text-right font-mono w-20"
+                          value={line.quantity || ""}
+                          onChange={(e) => updateInvLine(idx, "quantity", Number(e.target.value) || 0)}
+                        />
+                      </TableCell>
+                      <TableCell className="py-1 text-center text-xs text-muted-foreground">{line.unit}</TableCell>
+                      <TableCell className="py-1">
+                        <Input
+                          type="number"
+                          className="h-7 text-xs text-right font-mono w-24"
+                          value={line.unit_price || ""}
+                          onChange={(e) => updateInvLine(idx, "unit_price", Number(e.target.value) || 0)}
+                        />
+                      </TableCell>
+                      <TableCell className="py-1 text-right text-xs font-mono font-medium">{fmtKr(line.total)}</TableCell>
+                      <TableCell className="py-1">
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => removeInvLine(idx)}>
+                          <Trash2 className="h-3 w-3 text-destructive" />
+                        </Button>
                       </TableCell>
                     </TableRow>
-                  )}
-                </>
+                  ))}
+                </TableBody>
+              </Table>
+
+              <Button variant="outline" size="sm" onClick={addInvLine} className="text-xs">
+                <Plus className="h-3 w-3 mr-1" /> Lägg till rad
+              </Button>
+
+              <div className="flex justify-between items-center pt-2 border-t">
+                <span className="text-sm font-semibold">Totalt inventering</span>
+                <span className="text-sm font-bold font-mono">{fmtKr(closingInventory)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-muted-foreground">Lagerförändring</span>
+                <span className={`text-xs font-mono ${inventoryChange >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                  {inventoryChange >= 0 ? "+" : ""}{fmtKr(inventoryChange)}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Section B: Sales & Gross Margin */}
+        <TabsContent value="sales" className="space-y-4">
+          {/* Costs */}
+          <Card>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm">Kostnader</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 px-4 pb-4">
+              {costLines.map((line, idx) => (
+                <div key={idx} className="flex items-center gap-3">
+                  <Input
+                    className="h-8 text-xs w-44"
+                    value={line.label}
+                    onChange={(e) => updateCostLine(idx, "label", e.target.value)}
+                    placeholder="Kostnad..."
+                  />
+                  <Input
+                    type="number"
+                    className="h-8 text-xs text-right font-mono flex-1"
+                    value={line.amount || ""}
+                    onChange={(e) => updateCostLine(idx, "amount", Number(e.target.value) || 0)}
+                    placeholder="0"
+                  />
+                  <span className="text-xs text-muted-foreground w-6">kr</span>
+                </div>
               ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span className="w-44">Lagerförändring (neg.)</span>
+                <span className="flex-1 text-right font-mono">
+                  {inventoryChange < 0 ? fmtKr(Math.abs(inventoryChange)) : "0 kr"}
+                </span>
+                <span className="w-6"></span>
+              </div>
+              <Button variant="outline" size="sm" onClick={addCostLine} className="text-xs">
+                <Plus className="h-3 w-3 mr-1" /> Lägg till kostnad
+              </Button>
+              <div className="flex justify-between items-center pt-2 border-t">
+                <span className="text-sm font-semibold">Totala kostnader</span>
+                <span className="text-sm font-bold font-mono">{fmtKr(totalCosts)}</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Sales */}
+          <Card>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm">Försäljning exkl. moms</CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Kanal</TableHead>
+                    <TableHead className="text-xs text-right">Antal</TableHead>
+                    <TableHead className="text-xs text-right">Belopp (kr)</TableHead>
+                    <TableHead className="text-xs text-right">Förra året</TableHead>
+                    <TableHead className="text-xs text-right">Förändr.</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {salesLines.map((line, idx) => {
+                    const yoy = line.last_year_amount && line.last_year_amount > 0
+                      ? ((line.amount - line.last_year_amount) / line.last_year_amount * 100)
+                      : null;
+                    return (
+                      <TableRow key={idx}>
+                        <TableCell className="text-xs py-1">{line.channel}</TableCell>
+                        <TableCell className="py-1">
+                          <Input
+                            type="number"
+                            className="h-7 text-xs text-right font-mono w-20 ml-auto"
+                            value={line.quantity || ""}
+                            onChange={(e) => {
+                              const updated = [...salesLines];
+                              updated[idx].quantity = Number(e.target.value) || 0;
+                              setSalesLines(updated);
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell className="py-1">
+                          <Input
+                            type="number"
+                            className="h-7 text-xs text-right font-mono w-28 ml-auto"
+                            value={line.amount || ""}
+                            onChange={(e) => {
+                              const updated = [...salesLines];
+                              updated[idx].amount = Number(e.target.value) || 0;
+                              setSalesLines(updated);
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell className="py-1">
+                          <Input
+                            type="number"
+                            className="h-7 text-xs text-right font-mono w-28 ml-auto"
+                            value={line.last_year_amount || ""}
+                            onChange={(e) => {
+                              const updated = [...salesLines];
+                              updated[idx].last_year_amount = Number(e.target.value) || undefined;
+                              setSalesLines(updated);
+                            }}
+                            placeholder="–"
+                          />
+                        </TableCell>
+                        <TableCell className="text-xs text-right py-1 font-mono">
+                          {yoy !== null ? (
+                            <span className={yoy >= 0 ? "text-emerald-400" : "text-red-400"}>
+                              {yoy >= 0 ? "+" : ""}{yoy.toFixed(0)}%
+                            </span>
+                          ) : "–"}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+
+              <div className="space-y-2 pt-3 border-t mt-3">
+                <div className="flex justify-between">
+                  <span className="text-sm font-semibold">Total försäljning exkl. moms</span>
+                  <span className="text-sm font-bold font-mono">{fmtKr(totalSales)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-semibold">Bruttomarginal</span>
+                  <span className="text-sm font-bold font-mono">{fmtKr(grossMargin)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm font-semibold">Bruttomarginal %</span>
+                  <span className={`text-sm font-bold font-mono ${
+                    grossMarginPct >= 45 ? "text-emerald-400" :
+                    grossMarginPct >= 35 ? "text-yellow-400" :
+                    grossMarginPct > 0 ? "text-red-400" : ""
+                  }`}>
+                    {grossMarginPct > 0 ? `${grossMarginPct.toFixed(1)}%` : "–"}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Section C: Social Media */}
+        <TabsContent value="social" className="space-y-4">
+          <Card>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm">Sociala Medier</CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs">Plattform</TableHead>
+                    <TableHead className="text-xs text-right">Ing. följare</TableHead>
+                    <TableHead className="text-xs text-right">Utg. följare</TableHead>
+                    <TableHead className="text-xs text-right">Förändring</TableHead>
+                    <TableHead className="text-xs text-right">Antal inlägg</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {socialLines.map((line, idx) => {
+                    const change = line.closing_followers - line.opening_followers;
+                    return (
+                      <TableRow key={idx}>
+                        <TableCell className="text-xs py-1 font-medium">{line.platform}</TableCell>
+                        <TableCell className="py-1">
+                          <Input
+                            type="number"
+                            className="h-7 text-xs text-right font-mono w-24 ml-auto"
+                            value={line.opening_followers || ""}
+                            onChange={(e) => {
+                              const updated = [...socialLines];
+                              updated[idx].opening_followers = Number(e.target.value) || 0;
+                              setSocialLines(updated);
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell className="py-1">
+                          <Input
+                            type="number"
+                            className="h-7 text-xs text-right font-mono w-24 ml-auto"
+                            value={line.closing_followers || ""}
+                            onChange={(e) => {
+                              const updated = [...socialLines];
+                              updated[idx].closing_followers = Number(e.target.value) || 0;
+                              setSocialLines(updated);
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell className={`text-xs text-right py-1 font-mono ${change > 0 ? "text-emerald-400" : change < 0 ? "text-red-400" : ""}`}>
+                          {change > 0 ? "+" : ""}{change}
+                        </TableCell>
+                        <TableCell className="py-1">
+                          <Input
+                            type="number"
+                            className="h-7 text-xs text-right font-mono w-20 ml-auto"
+                            value={line.posts_count || ""}
+                            onChange={(e) => {
+                              const updated = [...socialLines];
+                              updated[idx].posts_count = Number(e.target.value) || 0;
+                              setSocialLines(updated);
+                            }}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Section D: Notes */}
+        <TabsContent value="notes" className="space-y-4">
+          <Card>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm">Veckans Noteringar</CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Kommentarer och observationer om veckan..."
+                className="min-h-[200px]"
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Save buttons */}
+      <div className="flex gap-3">
+        <Button
+          variant="outline"
+          className="flex-1"
+          onClick={() => handleSave("draft")}
+          disabled={isPending}
+        >
+          <Save className="h-4 w-4 mr-2" />
+          {isPending ? "Sparar..." : "Spara utkast"}
+        </Button>
+        <Button
+          className="flex-1"
+          onClick={() => handleSave("finalized")}
+          disabled={isPending}
+        >
+          <TrendingUp className="h-4 w-4 mr-2" />
+          {isPending ? "Sparar..." : "Slutför & uppdatera lager"}
+        </Button>
+      </div>
+
+      {/* Finalize warning dialog */}
+      <AlertDialog open={showFinalizeWarning} onOpenChange={setShowFinalizeWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-400" />
+              Uppdatera slutförd rapport
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Denna rapport är redan slutförd. Att spara om den kommer att uppdatera lagersaldona igen baserat på de nya inventeingssiffrorna. Vill du fortsätta?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setShowFinalizeWarning(false); doSave("finalized"); }}>
+              Uppdatera ändå
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 }
 
 // ─── Main Page ──────────────────────────────────────────────────────
 export default function ShopReports() {
   const { activeStoreId, activeStoreName } = useSite();
-  const { data: weeklyReports, isLoading } = useWeeklyReports(activeStoreId);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingReport, setEditingReport] = useState<any>(null);
-
-  // Monthly aggregation state
-  const currentYear = new Date().getFullYear();
-  const [monthlyYear, setMonthlyYear] = useState(currentYear);
-  const [monthlyMode, setMonthlyMode] = useState<"month" | "weeks" | "dates">("month");
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-  const [selectedWeeksFrom, setSelectedWeeksFrom] = useState(1);
-  const [selectedWeeksTo, setSelectedWeeksTo] = useState(getCurrentWeek());
-
-  const targetWeeks = useMemo(() => {
-    if (monthlyMode === "month") return getWeeksForMonth(monthlyYear, selectedMonth);
-    return Array.from(
-      { length: selectedWeeksTo - selectedWeeksFrom + 1 },
-      (_, i) => selectedWeeksFrom + i
-    );
-  }, [monthlyMode, monthlyYear, selectedMonth, selectedWeeksFrom, selectedWeeksTo]);
-
-  const monthlyData = useMemo(() => {
-    if (!weeklyReports) return null;
-    const filtered = weeklyReports.filter(
-      (r) => r.year === monthlyYear && targetWeeks.includes(r.week_number!)
-    );
-    if (filtered.length === 0) return null;
-
-    const allLines = filtered.flatMap((r: any) => r.shop_report_lines || []);
-    const salesByCategory: Record<string, number> = {};
-    const purchasesByCategory: Record<string, number> = {};
-
-    allLines.forEach((l: any) => {
-      if (l.line_type === "sale") {
-        salesByCategory[l.category] = (salesByCategory[l.category] || 0) + Number(l.amount);
-      } else {
-        purchasesByCategory[l.category] = (purchasesByCategory[l.category] || 0) + Number(l.amount);
-      }
-    });
-
-    const totalSales = Object.values(salesByCategory).reduce((s, v) => s + v, 0);
-    const totalPurchases = Object.values(purchasesByCategory).reduce((s, v) => s + v, 0);
-
-    const sortedByWeek = [...filtered].sort((a, b) => (a.week_number ?? 0) - (b.week_number ?? 0));
-    const openingInv = Number(sortedByWeek[0]?.opening_inventory ?? 0);
-    const closingInv = Number(sortedByWeek[sortedByWeek.length - 1]?.closing_inventory ?? 0);
-
-    return {
-      weeksIncluded: filtered.length,
-      salesByCategory,
-      purchasesByCategory,
-      totalSales,
-      totalPurchases,
-      openingInv,
-      closingInv,
-    };
-  }, [weeklyReports, monthlyYear, targetWeeks]);
-
-  const handleEdit = (report: any) => {
-    setEditingReport(report);
-    setDialogOpen(true);
-  };
-
-  const handleDialogClose = () => {
-    setDialogOpen(false);
-    setEditingReport(null);
-  };
+  const { data: reports, isLoading } = useWeeklyReportsList(activeStoreId);
+  const [activeReportId, setActiveReportId] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
   if (!activeStoreId) {
     return (
@@ -518,6 +858,23 @@ export default function ShopReports() {
     );
   }
 
+  // Show form if editing or creating
+  if (activeReportId || isCreating) {
+    return (
+      <div className="p-6 max-w-4xl">
+        <WeeklyReportForm
+          storeId={activeStoreId}
+          reportId={activeReportId}
+          onDone={() => {
+            setActiveReportId(null);
+            setIsCreating(false);
+          }}
+        />
+      </div>
+    );
+  }
+
+  // Report list view
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -526,222 +883,73 @@ export default function ShopReports() {
             <BarChart3 className="h-6 w-6 text-primary" />
             Rapporter — {activeStoreName}
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">Vecko- och månadsrapporter</p>
+          <p className="text-muted-foreground text-sm mt-1">Veckorapporter</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={(v) => { if (!v) handleDialogClose(); else setDialogOpen(true); }}>
-          <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" />Ny veckorapport</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{editingReport ? `Redigera V${editingReport.week_number} ${editingReport.year}` : "Ny veckorapport"}</DialogTitle>
-            </DialogHeader>
-            <WeeklyReportForm storeId={activeStoreId} onDone={handleDialogClose} editReport={editingReport} allReports={weeklyReports} />
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => setIsCreating(true)}>
+          <Plus className="h-4 w-4 mr-2" /> Skapa ny rapport
+        </Button>
       </div>
 
-      <Tabs defaultValue="weekly">
-        <TabsList>
-          <TabsTrigger value="weekly">Veckorapporter</TabsTrigger>
-          <TabsTrigger value="monthly">Månadsrapport</TabsTrigger>
-          <TabsTrigger value="inventory">Lagerrapporter</TabsTrigger>
-        </TabsList>
-
-        {/* ── Weekly Tab ── */}
-        <TabsContent value="weekly" className="space-y-4">
-          <Card>
-            <CardHeader><CardTitle className="text-base">Veckorapporter</CardTitle></CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <p className="text-muted-foreground text-sm">Laddar...</p>
-              ) : !weeklyReports?.length ? (
-                <p className="text-muted-foreground text-sm">Inga veckorapporter ännu.</p>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Vecka</TableHead>
-                      <TableHead className="text-right">Försäljning</TableHead>
-                      <TableHead className="text-right">Inköp</TableHead>
-                      <TableHead className="text-right">Ing. lager</TableHead>
-                      <TableHead className="text-right">Utg. lager</TableHead>
-                      <TableHead></TableHead>
+      <Card>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <p className="text-muted-foreground text-sm p-6">Laddar...</p>
+          ) : !reports?.length ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <BarChart3 className="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <p className="text-sm">Inga veckorapporter ännu.</p>
+              <p className="text-xs mt-1">Klicka "Skapa ny rapport" för att börja.</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Vecka</TableHead>
+                  <TableHead>Period</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Försäljning</TableHead>
+                  <TableHead className="text-right">Bruttomarg. %</TableHead>
+                  <TableHead className="text-right">Utg. lager</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {reports.map((r: any) => {
+                  const marginColor =
+                    r.gross_margin_pct >= 45 ? "text-emerald-400" :
+                    r.gross_margin_pct >= 35 ? "text-yellow-400" :
+                    r.gross_margin_pct > 0 ? "text-red-400" : "text-muted-foreground";
+                  return (
+                    <TableRow
+                      key={r.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => setActiveReportId(r.id)}
+                    >
+                      <TableCell className="font-medium">V{r.week_number} {r.year}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {getWeekDateRange(r.year, r.week_number)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={r.status === "finalized" ? "secondary" : "outline"} className="text-[10px]">
+                          {r.status === "finalized" ? "Slutförd" : "Utkast"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-mono tabular-nums text-sm">
+                        {fmtKr(Number(r.total_sales))}
+                      </TableCell>
+                      <TableCell className={`text-right font-mono tabular-nums text-sm ${marginColor}`}>
+                        {Number(r.gross_margin_pct) > 0 ? `${Number(r.gross_margin_pct).toFixed(1)}%` : "–"}
+                      </TableCell>
+                      <TableCell className="text-right font-mono tabular-nums text-sm">
+                        {fmtKr(Number(r.closing_inventory))}
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {weeklyReports.map((r: any) => {
-                      const lines = r.shop_report_lines || [];
-                      const sales = lines.filter((l: any) => l.line_type === "sale").reduce((s: number, l: any) => s + Number(l.amount), 0);
-                      const purchases = lines.filter((l: any) => l.line_type === "purchase").reduce((s: number, l: any) => s + Number(l.amount), 0);
-                      return (
-                        <TableRow key={r.id}>
-                          <TableCell className="font-medium">V{r.week_number} {r.year}</TableCell>
-                          <TableCell className="text-right">{fmt(sales)}</TableCell>
-                          <TableCell className="text-right">{fmt(purchases)}</TableCell>
-                          <TableCell className="text-right">{fmt(Number(r.opening_inventory))}</TableCell>
-                          <TableCell className="text-right">{fmt(Number(r.closing_inventory))}</TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="sm" onClick={() => handleEdit(r)}>Redigera</Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* ── Monthly Tab ── */}
-        <TabsContent value="monthly" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Månadsrapport (summering)</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Interval selector */}
-              <div className="flex flex-wrap gap-4 items-end">
-                <div>
-                  <Label>År</Label>
-                  <Select value={String(monthlyYear)} onValueChange={(v) => setMonthlyYear(Number(v))}>
-                    <SelectTrigger className="w-24"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {[currentYear - 1, currentYear, currentYear + 1].map((y) => (
-                        <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Typ</Label>
-                  <Select value={monthlyMode} onValueChange={(v: any) => setMonthlyMode(v)}>
-                    <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="month">Hel månad</SelectItem>
-                      <SelectItem value="weeks">Veckointervall</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {monthlyMode === "month" && (
-                  <div>
-                    <Label>Månad</Label>
-                    <Select value={String(selectedMonth)} onValueChange={(v) => setSelectedMonth(Number(v))}>
-                      <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {MONTH_NAMES.map((m, i) => (
-                          <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-                {monthlyMode === "weeks" && (
-                  <>
-                    <div>
-                      <Label>Från vecka</Label>
-                      <Select value={String(selectedWeeksFrom)} onValueChange={(v) => setSelectedWeeksFrom(Number(v))}>
-                        <SelectTrigger className="w-20"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: 53 }, (_, i) => i + 1).map((w) => (
-                            <SelectItem key={w} value={String(w)}>V{w}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Till vecka</Label>
-                      <Select value={String(selectedWeeksTo)} onValueChange={(v) => setSelectedWeeksTo(Number(v))}>
-                        <SelectTrigger className="w-20"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: 53 }, (_, i) => i + 1).map((w) => (
-                            <SelectItem key={w} value={String(w)}>V{w}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Aggregated results */}
-              {!monthlyData ? (
-                <p className="text-muted-foreground text-sm py-4">
-                  Inga veckorapporter hittades för det valda intervallet.
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-xs text-muted-foreground">
-                    Summerat från {monthlyData.weeksIncluded} veckorapport(er)
-                  </p>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <Card>
-                      <CardContent className="pt-4 pb-3 px-4">
-                        <p className="text-xs text-muted-foreground">Försäljning</p>
-                        <p className="text-lg font-bold">{fmt(monthlyData.totalSales)}</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="pt-4 pb-3 px-4">
-                        <p className="text-xs text-muted-foreground">Inköp</p>
-                        <p className="text-lg font-bold">{fmt(monthlyData.totalPurchases)}</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="pt-4 pb-3 px-4">
-                        <p className="text-xs text-muted-foreground">Ingående lager</p>
-                        <p className="text-lg font-bold">{fmt(monthlyData.openingInv)}</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="pt-4 pb-3 px-4">
-                        <p className="text-xs text-muted-foreground">Utgående lager</p>
-                        <p className="text-lg font-bold">{fmt(monthlyData.closingInv)}</p>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                      <h4 className="text-sm font-semibold mb-2">Försäljning per kategori</h4>
-                      <Table>
-                        <TableBody>
-                          {Object.entries(monthlyData.salesByCategory).map(([cat, amt]) => (
-                            <TableRow key={cat}>
-                              <TableCell className="text-sm">{cat}</TableCell>
-                              <TableCell className="text-right text-sm font-medium">{fmt(amt)}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-semibold mb-2">Inköp per kategori</h4>
-                      <Table>
-                        <TableBody>
-                          {Object.entries(monthlyData.purchasesByCategory).map(([cat, amt]) => (
-                            <TableRow key={cat}>
-                              <TableCell className="text-sm">{cat}</TableCell>
-                              <TableCell className="text-right text-sm font-medium">{fmt(amt)}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* ── Inventory Tab ── */}
-        <TabsContent value="inventory" className="space-y-4">
-          <InventoryReportsTab storeId={activeStoreId} />
-        </TabsContent>
-      </Tabs>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
