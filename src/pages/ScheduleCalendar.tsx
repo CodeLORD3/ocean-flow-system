@@ -327,7 +327,7 @@ export default function ScheduleCalendar() {
         .select("id")
         .single();
       if (insertedEvent) {
-        await updateProtocolItem.mutateAsync({ id: dropCreateDialog.itemId, calendar_event_id: (insertedEvent as any).id });
+        await updateProtocolItem.mutateAsync({ id: dropCreateDialog.itemId, calendar_event_id: (insertedEvent as any).id, deadline: dropCreateDialog.targetDate });
       }
       queryClient.invalidateQueries({ queryKey: ["schedule_events"] });
       toast({ title: "Händelse skapad från mötespunkt" });
