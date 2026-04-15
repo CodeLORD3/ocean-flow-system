@@ -257,7 +257,7 @@ export default function MeetingProtocols() {
                     {items
                       .sort((a, b) => a.sort_order - b.sort_order)
                       .map((item) => (
-                        <div key={item.id} className="flex items-center gap-2 group min-h-[32px]">
+                        <div key={item.id} className="flex items-center gap-2 group min-h-[32px]" style={{ display: 'grid', gridTemplateColumns: '20px 1fr auto auto auto' }}>
                           <Checkbox
                             checked={item.completed}
                             onCheckedChange={() => handleToggleCompleted(item.id, item.completed, item.calendar_event_id)}
