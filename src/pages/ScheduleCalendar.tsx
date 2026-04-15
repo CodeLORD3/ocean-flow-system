@@ -132,6 +132,19 @@ export default function ScheduleCalendar() {
     setShowDayDetail(true);
   };
 
+  const handleDrop = async (targetDate: string) => {
+    if (!draggedEventId) return;
+    const realId = draggedEventId.includes("__rec_") ? draggedEventId.split("__rec_")[0] : draggedEventId;
+    try {
+      await updateEvent.mutateAsync({ id: realId, event_date: targetDate } as any);
+      toast({ title: "Händelse flyttad" });
+    } catch {
+      toast({ title: "Kunde inte flytta", variant: "destructive" });
+    }
+    setDraggedEventId(null);
+    setDropTarget(null);
+  };
+
   // ── YEAR VIEW ──
   const renderYearView = () => (
     <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
