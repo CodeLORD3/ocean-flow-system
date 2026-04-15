@@ -103,7 +103,13 @@ export default function ScheduleCalendar() {
   const { data: staffMembers } = useStaff(site === "shop" ? (activeStoreId || undefined) : undefined);
   const queryClient = useQueryClient();
   const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
+  const [draggedProtocolItem, setDraggedProtocolItem] = useState<{ id: string; content: string; assigned_to: string | null; deadline: string | null; protocolTitle: string } | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
+  // Dialog for creating event from dropped protocol item
+  const [dropCreateDialog, setDropCreateDialog] = useState<{ targetDate: string; content: string; assignedTo: string | null; protocolTitle: string; itemId: string } | null>(null);
+  const [dropFormType, setDropFormType] = useState<string>("task");
+  const [dropFormTitle, setDropFormTitle] = useState("");
+  const [dropFormDesc, setDropFormDesc] = useState("");
 
   // Category filter: "all" | "task" | "event"
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
