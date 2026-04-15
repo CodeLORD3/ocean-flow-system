@@ -366,7 +366,6 @@ export default function ScheduleCalendar() {
                     className={cn(
                       "h-3 flex items-center justify-center relative text-[7px] leading-none",
                       today && "ring-1 ring-primary",
-                      isWeekend && !isHoliday && !dotColor && "text-muted-foreground/50",
                       dayPast && !dotColor && "opacity-40",
                     )}
                     title={isHoliday || dayEvents.map(e => e.title).join(", ") || undefined}
@@ -374,7 +373,7 @@ export default function ScheduleCalendar() {
                     {dotColor ? (
                       <div className={cn("h-2 w-2 rounded-full", dotColor, dayPast && "opacity-60")} />
                     ) : (
-                      <span className={cn(isWeekend && "opacity-40")}>{day}</span>
+                      <span>{day}</span>
                     )}
                   </div>
                 );
@@ -433,7 +432,6 @@ export default function ScheduleCalendar() {
                 key={day}
                 className={cn(
                   "min-h-[80px] border-b border-r border-border p-1 cursor-pointer hover:bg-muted/30 transition-colors",
-                  isWeekend && "bg-muted/10",
                   dayPast && "bg-muted/20",
                   today && "ring-1 ring-inset ring-primary",
                   isSelected && "ring-2 ring-inset ring-primary bg-primary/5",
@@ -448,7 +446,6 @@ export default function ScheduleCalendar() {
                   <span className={cn(
                     "text-[10px] font-medium",
                     today && "text-primary font-bold",
-                    isWeekend && "text-muted-foreground",
                     dayPast && !today && "text-muted-foreground/60",
                   )}>{day}</span>
                   {dayEvents.length > 0 && (
