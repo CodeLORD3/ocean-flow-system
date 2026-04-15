@@ -786,8 +786,8 @@ export default function ScheduleCalendar() {
                       {items.sort((a, b) => a.sort_order - b.sort_order).map(item => (
                         <div
                           key={item.id}
-                          className="group min-h-[28px] items-center gap-x-2"
-                          style={{ display: 'grid', gridTemplateColumns: '18px 1fr 80px 50px 24px' }}
+                          className="group min-h-[28px] items-center gap-x-1"
+                          style={{ display: 'grid', gridTemplateColumns: '18px 1fr minmax(60px, auto) minmax(44px, auto) 24px' }}
                           draggable={!item.calendar_event_id}
                           onDragStart={(e) => {
                             e.stopPropagation();
@@ -819,7 +819,7 @@ export default function ScheduleCalendar() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className={cn("h-7 px-1.5 text-[10px] shrink-0", !item.assigned_to && "opacity-0 group-hover:opacity-100")}
+                                className={cn("h-7 px-1.5 text-[10px] max-w-full overflow-hidden", !item.assigned_to && "opacity-0 group-hover:opacity-100")}
                               >
                                 <UserCheck className="h-3 w-3 mr-0.5" />
                                 {item.staff ? `${item.staff.first_name} ${item.staff.last_name.charAt(0)}.` : "Tilldela"}

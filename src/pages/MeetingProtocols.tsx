@@ -257,7 +257,7 @@ export default function MeetingProtocols() {
                     {items
                       .sort((a, b) => a.sort_order - b.sort_order)
                       .map((item) => (
-                        <div key={item.id} className="group min-h-[32px] items-center gap-x-2" style={{ display: 'grid', gridTemplateColumns: '20px 1fr 100px 60px 28px' }}>
+                        <div key={item.id} className="group min-h-[32px] items-center gap-x-1" style={{ display: 'grid', gridTemplateColumns: '20px 1fr minmax(70px, auto) minmax(50px, auto) 28px' }}>
                           <Checkbox
                             checked={item.completed}
                             onCheckedChange={() => handleToggleCompleted(item.id, item.completed, item.calendar_event_id)}
@@ -275,7 +275,7 @@ export default function MeetingProtocols() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className={`h-7 px-2 text-xs shrink-0 ${item.assigned_to ? '' : 'opacity-0 group-hover:opacity-100'}`}
+                                className={cn("h-7 px-1.5 text-xs max-w-full overflow-hidden", item.assigned_to ? '' : 'opacity-0 group-hover:opacity-100')}
                                 title="Tilldela person"
                               >
                                 <UserCheck className="h-3.5 w-3.5 mr-1" />
