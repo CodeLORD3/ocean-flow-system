@@ -97,14 +97,17 @@ export default function MeetingProtocols() {
     }
   };
 
-  const handleCreateTask = async (item: { id: string; content: string; assigned_to: string | null; deadline: string | null }, protocolTitle: string) => {
-    const deadline = item.deadline || format(new Date(), "yyyy-MM-dd");
+  const handleCreateTask = async (item: { id: string; content: string; assigned_to: string | null; deadline: string | null }, protocolTitle: string, selectedDate: string) => {
     try {
+      // Update deadline on the protocol item
+      await updateItem.mutateAsync({ id: item.id, deadline: selectedDate });
+
+      // Create calendar event
       const { data: insertedEvent } = await supabase
         .from("schedule_events" as any)
         .insert({
           title: item.content,
-          event_date: deadline,
+          event_date: selectedDate,
           event_type: "task",
           severity: "info",
           portal: "shop",
@@ -121,7 +124,7 @@ export default function MeetingProtocols() {
         await updateItem.mutateAsync({ id: item.id, calendar_event_id: (insertedEvent as any).id });
       }
       queryClient.invalidateQueries({ queryKey: ["schedule_events"] });
-      toast({ title: "Uppgift skapad i kalendern" });
+      toast({ title: "Uppgift tillagd i kalendern" });
     } catch {
       toast({ title: "Fel", variant: "destructive" });
     }
