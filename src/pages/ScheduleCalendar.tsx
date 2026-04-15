@@ -798,7 +798,37 @@ export default function ScheduleCalendar() {
                             onSave={(val) => updateProtocolItem.mutate({ id: item.id, content: val })}
                             className="flex-1 text-xs"
                           />
+                          {/* Deadline datepicker */}
                           <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className={cn("h-6 px-1.5 text-[10px] shrink-0", !item.deadline && "opacity-0 group-hover:opacity-100")}
+                                title="Sätt deadline"
+                              >
+                                <Calendar className="h-3 w-3 mr-0.5" />
+                                {item.deadline ? format(parseISO(item.deadline), "d/M") : "Datum"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="end">
+                              <CalendarPicker
+                                mode="single"
+                                selected={item.deadline ? parseISO(item.deadline) : undefined}
+                                onSelect={(date: Date | undefined) => {
+                                  updateProtocolItem.mutate({ id: item.id, deadline: date ? format(date, "yyyy-MM-dd") : null });
+                                }}
+                                className={cn("p-3 pointer-events-auto")}
+                              />
+                              {item.deadline && (
+                                <div className="px-3 pb-2">
+                                  <Button variant="ghost" size="sm" className="w-full text-xs text-destructive" onClick={() => updateProtocolItem.mutate({ id: item.id, deadline: null })}>
+                                    Ta bort datum
+                                  </Button>
+                                </div>
+                              )}
+                            </PopoverContent>
+                          </Popover>
                             <PopoverTrigger asChild>
                               <Button
                                 variant="ghost"
