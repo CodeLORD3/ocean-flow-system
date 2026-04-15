@@ -37,6 +37,7 @@ import AdminPayments from "@/pages/AdminPayments";
 import MapSettings from "@/pages/MapSettings";
 import ShopWishes from "@/pages/ShopWishes";
 import MeetingProtocols from "@/pages/MeetingProtocols";
+import Tasks from "@/pages/Tasks";
 
 interface RouteEntry {
   component: React.ReactNode;
