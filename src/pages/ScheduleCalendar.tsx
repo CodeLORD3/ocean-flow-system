@@ -1,21 +1,31 @@
 import { useState, useMemo } from "react";
-import { format, getDaysInMonth, startOfMonth, getDay, isToday, parseISO, isBefore } from "date-fns";
+import { format, getDaysInMonth, startOfMonth, getDay, isToday, parseISO, isBefore, isPast } from "date-fns";
 import { sv } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Plus, X, Trash2, Copy, Check, UserCheck, Repeat } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X, Trash2, Copy, Check, UserCheck, Repeat, Calendar, Users, FileText, CalendarPlus, ListTodo, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Card, CardContent } from "@/components/ui/card";
 import { useSite } from "@/contexts/SiteContext";
 import { useScheduleEvents, EVENT_TYPES, SEVERITY_LEVELS, RECURRENCE_OPTIONS, type ScheduleEvent } from "@/hooks/useScheduleEvents";
-import { useCreateMeetingProtocol } from "@/hooks/useMeetingProtocols";
-import { useUpdateProtocolItem } from "@/hooks/useMeetingProtocols";
+import {
+  useMeetingProtocols,
+  useCreateMeetingProtocol,
+  useUpdateMeetingProtocol,
+  useAddProtocolItem,
+  useUpdateProtocolItem,
+  useDeleteProtocolItem,
+} from "@/hooks/useMeetingProtocols";
 import { useStaff } from "@/hooks/useStaff";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const MONTHS = [
   "Januari", "Februari", "Mars", "April", "Maj", "Juni",
@@ -36,12 +46,22 @@ const SWEDISH_HOLIDAYS: Record<string, string> = {
   "06-21": "Midsommardagen",
 };
 
+// Two main categories for the legend filter
+const CATEGORY_FILTERS = [
+  { value: "task", label: "Uppgifter", color: "bg-purple-500" },
+  { value: "event", label: "Händelser", color: "bg-blue-500" },
+] as const;
+
 function getEventTypeInfo(type: string) {
   return EVENT_TYPES.find(t => t.value === type) || EVENT_TYPES[0];
 }
 
+function isTaskType(type: string) {
+  return type === "task";
+}
+
 function getEventDisplayColor(evt: ScheduleEvent): string {
-  if (evt.event_type === "task") {
+  if (isTaskType(evt.event_type)) {
     if (evt.is_done) return "bg-emerald-500/60";
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -55,32 +75,44 @@ function getSeverityDotColor(severity: string) {
   return SEVERITY_LEVELS.find(s => s.value === severity)?.color || "bg-blue-500";
 }
 
+function isDatePast(year: number, month: number, day?: number): boolean {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  if (day !== undefined) {
+    return isBefore(new Date(year, month, day), now);
+  }
+  // For month: past if the entire month is before current month
+  const lastDayOfMonth = new Date(year, month + 1, 0);
+  return isBefore(lastDayOfMonth, now);
+}
+
 export default function ScheduleCalendar() {
-  const { site, activeStoreId } = useSite();
+  const { site, activeStoreId, activeStoreName } = useSite();
   const [year, setYear] = useState(new Date().getFullYear());
   const [expandedMonth, setExpandedMonth] = useState<number | null>(null);
-  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showAddPanel, setShowAddPanel] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [showDayDetail, setShowDayDetail] = useState(false);
 
   const { events, isLoading, addEvent, updateEvent, deleteEvent } = useScheduleEvents(site, year, site === "shop" ? activeStoreId : null);
   const createProtocol = useCreateMeetingProtocol();
+  const updateProtocol = useUpdateMeetingProtocol();
+  const addProtocolItem = useAddProtocolItem();
   const updateProtocolItem = useUpdateProtocolItem();
+  const deleteProtocolItem = useDeleteProtocolItem();
+  const { data: protocols } = useMeetingProtocols(site === "shop" ? activeStoreId : null);
   const { data: staffMembers } = useStaff(site === "shop" ? (activeStoreId || undefined) : undefined);
+  const queryClient = useQueryClient();
   const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
 
-  // Type filter
-  const [activeTypeFilters, setActiveTypeFilters] = useState<Set<string>>(new Set(EVENT_TYPES.map(t => t.value)));
-  const toggleTypeFilter = (type: string) => {
-    setActiveTypeFilters(prev => {
-      const next = new Set(prev);
-      if (next.has(type)) next.delete(type); else next.add(type);
-      return next;
-    });
-  };
+  // Category filter: "all" | "task" | "event"
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
-  // Form state
+  // Editing state
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ title: "", description: "", type: "", severity: "", assignee: "", recurrence: "", recurrenceEnd: "" });
+
+  // Form state for new event
   const [formTitle, setFormTitle] = useState("");
   const [formDesc, setFormDesc] = useState("");
   const [formType, setFormType] = useState("note");
@@ -90,16 +122,29 @@ export default function ScheduleCalendar() {
   const [formRecurrenceEnd, setFormRecurrenceEnd] = useState("");
   const [formAssignee, setFormAssignee] = useState("");
 
+  // Meeting protocol new item text
+  const [newItemText, setNewItemText] = useState<Record<string, string>>({});
+
   const eventsByDate = useMemo(() => {
     const map: Record<string, ScheduleEvent[]> = {};
-    events.filter(e => activeTypeFilters.has(e.event_type)).forEach(e => {
+    events.filter(e => {
+      if (categoryFilter === "task") return isTaskType(e.event_type);
+      if (categoryFilter === "event") return !isTaskType(e.event_type);
+      return true;
+    }).forEach(e => {
       if (!map[e.event_date]) map[e.event_date] = [];
       map[e.event_date].push(e);
     });
     return map;
-  }, [events, activeTypeFilters]);
+  }, [events, categoryFilter]);
 
-  const openAddDialog = (date?: string) => {
+  // Meetings for the selected date
+  const meetingsForDate = useMemo(() => {
+    if (!selectedDate || !protocols) return [];
+    return protocols.filter(p => p.meeting_date === selectedDate);
+  }, [selectedDate, protocols]);
+
+  const openAddPanel = (date?: string) => {
     setFormTitle("");
     setFormDesc("");
     setFormType("note");
@@ -108,7 +153,7 @@ export default function ScheduleCalendar() {
     setFormRecurrence("none");
     setFormRecurrenceEnd("");
     setFormAssignee("");
-    setShowAddDialog(true);
+    setShowAddPanel(true);
   };
 
   const copyEvent = (evt: ScheduleEvent, date?: string) => {
@@ -120,8 +165,7 @@ export default function ScheduleCalendar() {
     setFormRecurrence(evt.recurrence_type || "none");
     setFormRecurrenceEnd(evt.recurrence_end_date || "");
     setFormAssignee(evt.assigned_to || "");
-    setShowDayDetail(false);
-    setShowAddDialog(true);
+    setShowAddPanel(true);
   };
 
   const handleAdd = async () => {
@@ -137,7 +181,7 @@ export default function ScheduleCalendar() {
         store_id: site === "shop" ? activeStoreId : null,
         recurrence_type: formRecurrence,
         recurrence_end_date: formRecurrenceEnd || null,
-        assigned_to: formType === "task" && formAssignee ? formAssignee : null,
+        assigned_to: isTaskType(formType) && formAssignee ? formAssignee : null,
       });
       if (formType === "meeting" && site === "shop" && activeStoreId) {
         await createProtocol.mutateAsync({
@@ -148,7 +192,7 @@ export default function ScheduleCalendar() {
         });
       }
       toast({ title: formType === "meeting" && site === "shop" ? "Möte tillagt i kalender & mötesprotokoll" : "Händelse tillagd" });
-      setShowAddDialog(false);
+      setShowAddPanel(false);
     } catch {
       toast({ title: "Fel", description: "Kunde inte spara", variant: "destructive" });
     }
@@ -158,7 +202,6 @@ export default function ScheduleCalendar() {
     try {
       await deleteEvent.mutateAsync(id);
       toast({ title: "Händelse borttagen" });
-      setShowDayDetail(false);
     } catch {
       toast({ title: "Fel", variant: "destructive" });
     }
@@ -178,9 +221,37 @@ export default function ScheduleCalendar() {
     }
   };
 
-  const openDayDetail = (dateStr: string) => {
-    setSelectedDate(dateStr);
-    setShowDayDetail(true);
+  const startEditing = (evt: ScheduleEvent) => {
+    setEditingEventId(evt.id);
+    setEditForm({
+      title: evt.title,
+      description: evt.description || "",
+      type: evt.event_type,
+      severity: evt.severity,
+      assignee: evt.assigned_to || "",
+      recurrence: evt.recurrence_type || "none",
+      recurrenceEnd: evt.recurrence_end_date || "",
+    });
+  };
+
+  const saveEdit = async (evt: ScheduleEvent) => {
+    const realId = evt.id.includes("__rec_") ? evt.id.split("__rec_")[0] : evt.id;
+    try {
+      await updateEvent.mutateAsync({
+        id: realId,
+        title: editForm.title,
+        description: editForm.description || null,
+        event_type: editForm.type,
+        severity: editForm.severity,
+        assigned_to: isTaskType(editForm.type) && editForm.assignee ? editForm.assignee : null,
+        recurrence_type: editForm.recurrence,
+        recurrence_end_date: editForm.recurrenceEnd || null,
+      } as any);
+      setEditingEventId(null);
+      toast({ title: "Uppdaterad" });
+    } catch {
+      toast({ title: "Fel", variant: "destructive" });
+    }
   };
 
   const handleDrop = async (targetDate: string) => {
@@ -196,16 +267,72 @@ export default function ScheduleCalendar() {
     setDropTarget(null);
   };
 
+  // Protocol helpers
+  const handleToggleProtocolItem = async (itemId: string, currentCompleted: boolean, calendarEventId: string | null) => {
+    const newCompleted = !currentCompleted;
+    await updateProtocolItem.mutateAsync({ id: itemId, completed: newCompleted });
+    if (calendarEventId) {
+      const realId = calendarEventId.includes("__rec_") ? calendarEventId.split("__rec_")[0] : calendarEventId;
+      await supabase.from("schedule_events" as any).update({ is_done: newCompleted } as any).eq("id", realId);
+      queryClient.invalidateQueries({ queryKey: ["schedule_events"] });
+    }
+  };
+
+  const handleCreateTaskFromItem = async (item: { id: string; content: string; assigned_to: string | null; deadline: string | null }, protocolTitle: string) => {
+    const deadline = item.deadline || selectedDate || format(new Date(), "yyyy-MM-dd");
+    try {
+      const { data: insertedEvent } = await supabase
+        .from("schedule_events" as any)
+        .insert({
+          title: item.content,
+          event_date: deadline,
+          event_type: "task",
+          severity: "info",
+          portal: site,
+          store_id: site === "shop" ? activeStoreId : null,
+          all_day: true,
+          assigned_to: item.assigned_to,
+          meeting_item_id: item.id,
+          description: `Från mötesprotokoll: ${protocolTitle}`,
+        } as any)
+        .select("id")
+        .single();
+      if (insertedEvent) {
+        await updateProtocolItem.mutateAsync({ id: item.id, calendar_event_id: (insertedEvent as any).id });
+      }
+      queryClient.invalidateQueries({ queryKey: ["schedule_events"] });
+      toast({ title: "Uppgift skapad i kalendern" });
+    } catch {
+      toast({ title: "Fel", variant: "destructive" });
+    }
+  };
+
+  const handleAddProtocolItem = async (protocolId: string) => {
+    const text = newItemText[protocolId]?.trim();
+    if (!text) return;
+    const items = protocols?.find((p) => p.id === protocolId)?.meeting_protocol_items || [];
+    await addProtocolItem.mutateAsync({
+      protocol_id: protocolId,
+      content: text,
+      sort_order: items.length,
+    });
+    setNewItemText((prev) => ({ ...prev, [protocolId]: "" }));
+  };
+
   // ── YEAR VIEW ──
   const renderYearView = () => (
     <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
       {MONTHS.map((monthName, monthIdx) => {
         const daysInMonth = getDaysInMonth(new Date(year, monthIdx));
         const firstDay = (getDay(startOfMonth(new Date(year, monthIdx))) + 6) % 7;
+        const monthPast = isDatePast(year, monthIdx);
         return (
           <div
             key={monthIdx}
-            className="border border-border bg-card p-2 cursor-pointer hover:bg-muted/50 transition-colors"
+            className={cn(
+              "border border-border bg-card p-2 cursor-pointer hover:bg-muted/50 transition-colors",
+              monthPast && "opacity-50",
+            )}
             onClick={() => setExpandedMonth(monthIdx)}
           >
             <div className="text-[10px] font-bold text-foreground mb-1 tracking-wide">{monthName.toUpperCase()}</div>
@@ -224,10 +351,10 @@ export default function ScheduleCalendar() {
                 const isHoliday = SWEDISH_HOLIDAYS[holidayKey];
                 const isWeekend = ((firstDay + dayIdx) % 7) >= 5;
                 const today = isToday(new Date(year, monthIdx, day));
+                const dayPast = isDatePast(year, monthIdx, day);
 
                 let dotColor = "";
                 if (dayEvents.length > 0) {
-                  // Use the event type color of the first event
                   dotColor = getEventDisplayColor(dayEvents[0]);
                 } else if (isHoliday) {
                   dotColor = "bg-pink-500";
@@ -240,11 +367,12 @@ export default function ScheduleCalendar() {
                       "h-3 flex items-center justify-center relative text-[7px] leading-none",
                       today && "ring-1 ring-primary",
                       isWeekend && !isHoliday && !dotColor && "text-muted-foreground/50",
+                      dayPast && !dotColor && "opacity-40",
                     )}
                     title={isHoliday || dayEvents.map(e => e.title).join(", ") || undefined}
                   >
                     {dotColor ? (
-                      <div className={cn("h-2 w-2 rounded-full", dotColor)} />
+                      <div className={cn("h-2 w-2 rounded-full", dotColor, dayPast && "opacity-60")} />
                     ) : (
                       <span className={cn(isWeekend && "opacity-40")}>{day}</span>
                     )}
@@ -266,7 +394,7 @@ export default function ScheduleCalendar() {
     return (
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <Button variant="outline" size="sm" onClick={() => setExpandedMonth(null)} className="text-[10px] h-7 px-2">
+          <Button variant="outline" size="sm" onClick={() => { setExpandedMonth(null); setSelectedDate(null); }} className="text-[10px] h-7 px-2">
             <ChevronLeft className="h-3 w-3 mr-1" /> Årsvy
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setExpandedMonth(Math.max(0, monthIdx - 1))} disabled={monthIdx === 0} className="h-7 w-7 p-0">
@@ -277,7 +405,7 @@ export default function ScheduleCalendar() {
             <ChevronRight className="h-3 w-3" />
           </Button>
           <div className="flex-1" />
-          <Button size="sm" onClick={() => openAddDialog(`${year}-${String(monthIdx + 1).padStart(2, "0")}-01`)} className="text-[10px] h-7 gap-1">
+          <Button size="sm" onClick={() => openAddPanel(selectedDate || `${year}-${String(monthIdx + 1).padStart(2, "0")}-01`)} className="text-[10px] h-7 gap-1">
             <Plus className="h-3 w-3" /> Lägg till
           </Button>
         </div>
@@ -297,6 +425,8 @@ export default function ScheduleCalendar() {
             const holiday = SWEDISH_HOLIDAYS[holidayKey];
             const isWeekend = ((firstDay + dayIdx) % 7) >= 5;
             const today = isToday(new Date(year, monthIdx, day));
+            const dayPast = isDatePast(year, monthIdx, day);
+            const isSelected = selectedDate === dateStr;
 
             return (
               <div
@@ -304,16 +434,23 @@ export default function ScheduleCalendar() {
                 className={cn(
                   "min-h-[80px] border-b border-r border-border p-1 cursor-pointer hover:bg-muted/30 transition-colors",
                   isWeekend && "bg-muted/10",
+                  dayPast && "bg-muted/20",
                   today && "ring-1 ring-inset ring-primary",
+                  isSelected && "ring-2 ring-inset ring-primary bg-primary/5",
                   dropTarget === dateStr && "bg-primary/10 ring-2 ring-inset ring-primary",
                 )}
-                onClick={() => openDayDetail(dateStr)}
+                onClick={() => setSelectedDate(isSelected ? null : dateStr)}
                 onDragOver={(e) => { e.preventDefault(); setDropTarget(dateStr); }}
                 onDragLeave={() => setDropTarget(null)}
                 onDrop={(e) => { e.preventDefault(); handleDrop(dateStr); }}
               >
                 <div className="flex items-center justify-between">
-                  <span className={cn("text-[10px] font-medium", today && "text-primary font-bold", isWeekend && "text-muted-foreground")}>{day}</span>
+                  <span className={cn(
+                    "text-[10px] font-medium",
+                    today && "text-primary font-bold",
+                    isWeekend && "text-muted-foreground",
+                    dayPast && !today && "text-muted-foreground/60",
+                  )}>{day}</span>
                   {dayEvents.length > 0 && (
                     <span className="text-[8px] text-muted-foreground">{dayEvents.length}</span>
                   )}
@@ -332,11 +469,11 @@ export default function ScheduleCalendar() {
                       getEventDisplayColor(evt),
                       draggedEventId === evt.id && "opacity-50",
                       evt.event_type === "task" && evt.is_done && "line-through",
+                      dayPast && "opacity-70",
                     )}
                   >
                     {evt.event_type === "task" && evt.is_done && <Check className="h-2 w-2 shrink-0" />}
                     {evt.title}
-                    {/* Priority dot */}
                     <div className={cn("h-1.5 w-1.5 rounded-full shrink-0 ml-auto", getSeverityDotColor(evt.severity))} />
                   </div>
                 ))}
@@ -351,26 +488,328 @@ export default function ScheduleCalendar() {
     );
   };
 
-  // ── LEGEND (single row, event-type based) ──
+  // ── INLINE DAY DETAIL PANEL ──
+  const renderDayDetail = () => {
+    if (!selectedDate) return null;
+    const dayEvents = eventsByDate[selectedDate] || [];
+    const holiday = SWEDISH_HOLIDAYS[selectedDate.slice(5)];
+    const dayMeetings = meetingsForDate;
+
+    return (
+      <div className="border border-border bg-card rounded-sm p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-bold">
+              {format(parseISO(selectedDate), "EEEE d MMMM yyyy", { locale: sv })}
+            </h3>
+            {holiday && (
+              <Badge variant="outline" className="text-[8px] text-pink-500 border-pink-500/30">{holiday}</Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
+            <Button size="sm" variant="outline" onClick={() => openAddPanel(selectedDate)} className="text-[10px] h-7 gap-1">
+              <Plus className="h-3 w-3" /> Ny
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setSelectedDate(null)} className="h-7 w-7 p-0">
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Events & Tasks */}
+        {dayEvents.length === 0 && dayMeetings.length === 0 && (
+          <p className="text-xs text-muted-foreground py-2 text-center">Inga händelser eller möten denna dag</p>
+        )}
+
+        {dayEvents.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Händelser & Uppgifter</p>
+            {dayEvents.map(evt => {
+              const isEditing = editingEventId === evt.id;
+              return (
+                <div key={evt.id} className={cn(
+                  "border border-border p-2 space-y-1 rounded-sm",
+                  isTaskType(evt.event_type) && evt.is_done && "bg-emerald-500/10",
+                  isTaskType(evt.event_type) && !evt.is_done && isBefore(parseISO(evt.event_date), new Date()) && "bg-red-500/10",
+                )}>
+                  {isEditing ? (
+                    <div className="space-y-2">
+                      <Input value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} className="text-xs h-7" />
+                      <Input value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} placeholder="Beskrivning" className="text-xs h-7" />
+                      <div className="flex gap-2">
+                        <Select value={editForm.type} onValueChange={v => setEditForm(f => ({ ...f, type: v }))}>
+                          <SelectTrigger className="h-7 text-[10px] flex-1"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {EVENT_TYPES.map(t => (
+                              <SelectItem key={t.value} value={t.value} className="text-[10px]">
+                                <span className="flex items-center gap-1"><div className={cn("h-1.5 w-1.5 rounded-full", t.color)} />{t.label}</span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Select value={editForm.severity} onValueChange={v => setEditForm(f => ({ ...f, severity: v }))}>
+                          <SelectTrigger className="h-7 text-[10px] flex-1"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {SEVERITY_LEVELS.map(s => (
+                              <SelectItem key={s.value} value={s.value} className="text-[10px]">
+                                <span className="flex items-center gap-1"><div className={cn("h-1.5 w-1.5 rounded-full", s.color)} />{s.label}</span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {isTaskType(editForm.type) && (
+                        <Select value={editForm.assignee} onValueChange={v => setEditForm(f => ({ ...f, assignee: v }))}>
+                          <SelectTrigger className="h-7 text-[10px]"><SelectValue placeholder="Tilldelad" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="" className="text-[10px]">Ingen</SelectItem>
+                            {staffMembers?.map(s => (
+                              <SelectItem key={s.id} value={s.id} className="text-[10px]">{s.first_name} {s.last_name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      <div className="flex gap-1 justify-end">
+                        <Button size="sm" variant="ghost" onClick={() => setEditingEventId(null)} className="text-[10px] h-6">Avbryt</Button>
+                        <Button size="sm" onClick={() => saveEdit(evt)} className="text-[10px] h-6">Spara</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <div className={cn("h-2 w-2 rounded-full shrink-0", getEventDisplayColor(evt))} />
+                          <span className={cn("text-xs font-medium", isTaskType(evt.event_type) && evt.is_done && "line-through text-muted-foreground")}>
+                            {evt.title}
+                          </span>
+                          {evt.recurrence_type && evt.recurrence_type !== "none" && (
+                            <Repeat className="h-3 w-3 text-muted-foreground shrink-0" />
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Badge variant="outline" className={cn("text-[7px] px-1 py-0", isTaskType(evt.event_type) ? "text-purple-400 border-purple-400/30" : "")}>
+                            {isTaskType(evt.event_type) ? "Uppgift" : "Händelse"}
+                          </Badge>
+                          <div className={cn("h-2 w-2 rounded-full shrink-0", getSeverityDotColor(evt.severity))} title={SEVERITY_LEVELS.find(s => s.value === evt.severity)?.label} />
+                          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground" onClick={() => startEditing(evt)}>
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground" onClick={() => copyEvent(evt, selectedDate || undefined)}>
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-destructive" onClick={() => handleDelete(evt.id)}>
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                      {evt.description && <p className="text-[10px] text-muted-foreground">{evt.description}</p>}
+                      {isTaskType(evt.event_type) && (
+                        <div className="flex items-center gap-2 pt-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={cn("h-6 text-[9px] gap-1", evt.is_done && "bg-emerald-500/20 border-emerald-500/30")}
+                            onClick={() => handleToggleDone(evt)}
+                          >
+                            {evt.is_done ? <Check className="h-3 w-3 text-emerald-500" /> : <Check className="h-3 w-3" />}
+                            {evt.is_done ? "Klar" : "Markera klar"}
+                          </Button>
+                          {evt.staff && (
+                            <span className="text-[9px] text-muted-foreground flex items-center gap-1">
+                              <UserCheck className="h-3 w-3" />
+                              {evt.staff.first_name} {evt.staff.last_name.charAt(0)}.
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {!isTaskType(evt.event_type) && (
+                        <div className="flex items-center gap-2 pt-0.5">
+                          <Badge variant="secondary" className="text-[7px]">{getEventTypeInfo(evt.event_type).label}</Badge>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Meeting Protocols for this date */}
+        {site === "shop" && activeStoreId && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                <FileText className="h-3 w-3" /> Mötesprotokoll
+              </p>
+            </div>
+            {dayMeetings.length === 0 && (
+              <p className="text-[10px] text-muted-foreground">Inga mötesprotokoll för denna dag</p>
+            )}
+            {dayMeetings.map(p => {
+              const items = p.meeting_protocol_items || [];
+              const completedCount = items.filter(i => i.completed).length;
+              return (
+                <Card key={p.id} className="overflow-hidden">
+                  <div className="px-3 py-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-medium">{p.title || "Utan titel"}</span>
+                      <Badge variant="secondary" className="text-[8px]">{completedCount}/{items.length} klara</Badge>
+                      {p.attendees && (
+                        <span className="text-[9px] text-muted-foreground flex items-center gap-1">
+                          <Users className="h-3 w-3" /> {p.attendees}
+                        </span>
+                      )}
+                    </div>
+                    <Textarea
+                      placeholder="Anteckningar..."
+                      className="text-xs min-h-[40px] mb-2"
+                      defaultValue={p.notes || ""}
+                      onBlur={(e) => {
+                        if (e.target.value !== (p.notes || "")) {
+                          updateProtocol.mutate({ id: p.id, notes: e.target.value });
+                        }
+                      }}
+                    />
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-medium text-muted-foreground">Punkter</p>
+                      {items.sort((a, b) => a.sort_order - b.sort_order).map(item => (
+                        <div key={item.id} className="flex items-start gap-2 group">
+                          <Checkbox
+                            checked={item.completed}
+                            onCheckedChange={() => handleToggleProtocolItem(item.id, item.completed, item.calendar_event_id)}
+                            className="mt-0.5"
+                          />
+                          <Input
+                            className={cn("flex-1 h-7 text-xs", item.completed && "line-through text-muted-foreground")}
+                            defaultValue={item.content}
+                            onBlur={(e) => {
+                              if (e.target.value !== item.content) {
+                                updateProtocolItem.mutate({ id: item.id, content: e.target.value });
+                              }
+                            }}
+                          />
+                          <Input
+                            type="date"
+                            className="w-[120px] h-7 text-[10px] shrink-0"
+                            defaultValue={item.deadline || ""}
+                            onBlur={(e) => {
+                              const val = e.target.value || null;
+                              if (val !== (item.deadline || null)) {
+                                updateProtocolItem.mutate({ id: item.id, deadline: val });
+                              }
+                            }}
+                          />
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className={cn("h-7 px-1.5 text-[10px] shrink-0", !item.assigned_to && "opacity-0 group-hover:opacity-100")}
+                              >
+                                <UserCheck className="h-3 w-3 mr-0.5" />
+                                {item.staff ? `${item.staff.first_name} ${item.staff.last_name.charAt(0)}.` : "Tilldela"}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-44 p-1" align="end">
+                              <div className="space-y-0.5">
+                                {item.assigned_to && (
+                                  <Button variant="ghost" size="sm" className="w-full justify-start text-xs text-destructive" onClick={() => updateProtocolItem.mutate({ id: item.id, assigned_to: null })}>
+                                    Ta bort
+                                  </Button>
+                                )}
+                                {staffMembers?.map(s => (
+                                  <Button
+                                    key={s.id}
+                                    variant={item.assigned_to === s.id ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className="w-full justify-start text-xs"
+                                    onClick={() => updateProtocolItem.mutate({ id: item.id, assigned_to: s.id })}
+                                  >
+                                    {s.first_name} {s.last_name}
+                                  </Button>
+                                ))}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                          <div className="flex items-center gap-0.5 shrink-0">
+                            {item.calendar_event_id ? (
+                              <span className="text-[9px] text-purple-400 flex items-center gap-0.5 px-1">
+                                <ListTodo className="h-3 w-3" /> Uppgift
+                              </span>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                                title="Skapa uppgift i kalendern"
+                                onClick={() => handleCreateTaskFromItem(item, p.title)}
+                              >
+                                <CalendarPlus className="h-3 w-3 text-purple-400" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                              onClick={() => deleteProtocolItem.mutate(item.id)}
+                            >
+                              <Trash2 className="h-2.5 w-2.5 text-destructive" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          className="h-7 text-xs flex-1"
+                          placeholder="Lägg till punkt..."
+                          value={newItemText[p.id] || ""}
+                          onChange={(e) => setNewItemText(prev => ({ ...prev, [p.id]: e.target.value }))}
+                          onKeyDown={(e) => e.key === "Enter" && handleAddProtocolItem(p.id)}
+                        />
+                        <Button size="sm" variant="outline" className="h-7" onClick={() => handleAddProtocolItem(p.id)}>
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ── LEGEND ──
   const renderLegend = () => (
     <div className="flex flex-wrap items-center gap-1.5">
-      {EVENT_TYPES.map(t => {
-        const active = activeTypeFilters.has(t.value);
-        return (
-          <Badge
-            key={t.value}
-            variant={active ? "default" : "outline"}
-            className={cn(
-              "text-[8px] gap-1 px-1.5 py-0.5 cursor-pointer transition-opacity select-none",
-              !active && "opacity-40",
-            )}
-            onClick={() => toggleTypeFilter(t.value)}
-          >
-            <div className={cn("h-1.5 w-1.5 rounded-full", t.color)} />
-            {t.label}
-          </Badge>
-        );
-      })}
+      <Badge
+        variant={categoryFilter === "all" ? "default" : "outline"}
+        className="text-[8px] px-1.5 py-0.5 cursor-pointer"
+        onClick={() => setCategoryFilter("all")}
+      >
+        Alla
+      </Badge>
+      {CATEGORY_FILTERS.map(c => (
+        <Badge
+          key={c.value}
+          variant={categoryFilter === c.value ? "default" : "outline"}
+          className={cn("text-[8px] gap-1 px-1.5 py-0.5 cursor-pointer", categoryFilter !== c.value && "opacity-60")}
+          onClick={() => setCategoryFilter(categoryFilter === c.value ? "all" : c.value)}
+        >
+          <div className={cn("h-1.5 w-1.5 rounded-full", c.color)} />
+          {c.label}
+        </Badge>
+      ))}
+      <div className="h-3 w-px bg-border mx-1" />
+      {EVENT_TYPES.filter(t => t.value !== "task").map(t => (
+        <span key={t.value} className="flex items-center gap-0.5 text-[7px] text-muted-foreground">
+          <div className={cn("h-1.5 w-1.5 rounded-full", t.color)} />
+          {t.label}
+        </span>
+      ))}
     </div>
   );
 
@@ -432,7 +871,7 @@ export default function ScheduleCalendar() {
           <Input type="date" value={formRecurrenceEnd} onChange={e => setFormRecurrenceEnd(e.target.value)} className="text-[10px] h-6 px-1.5" />
         </div>
       )}
-      {formType === "task" && (
+      {isTaskType(formType) && (
         <div>
           <label className="text-[8px] text-muted-foreground font-medium leading-none">TILLDELAD</label>
           <Select value={formAssignee} onValueChange={setFormAssignee}>
@@ -446,7 +885,7 @@ export default function ScheduleCalendar() {
           </Select>
         </div>
       )}
-      <div className={cn("col-span-2", formType !== "task" && formRecurrence === "none" ? "md:col-span-3" : "md:col-span-2")}>
+      <div className={cn("col-span-2", !isTaskType(formType) && formRecurrence === "none" ? "md:col-span-3" : "md:col-span-2")}>
         <label className="text-[8px] text-muted-foreground font-medium leading-none">BESKRIVNING</label>
         <Input placeholder="Valfritt" value={formDesc} onChange={e => setFormDesc(e.target.value)} className="text-[10px] h-6 px-1.5" />
       </div>
@@ -470,21 +909,21 @@ export default function ScheduleCalendar() {
           <Button variant="ghost" size="sm" onClick={() => setYear(y => y + 1)} className="h-7 w-7 p-0">
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => { setYear(new Date().getFullYear()); setExpandedMonth(null); }} className="text-[10px] h-7 px-2">
+          <Button variant="ghost" size="sm" onClick={() => { setYear(new Date().getFullYear()); setExpandedMonth(null); setSelectedDate(null); }} className="text-[10px] h-7 px-2">
             Idag
           </Button>
         </div>
-        <Button size="sm" onClick={() => { if (showAddDialog) { setShowAddDialog(false); } else { openAddDialog(); } }} className="text-[10px] h-7 gap-1">
-          {showAddDialog ? <X className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
-          {showAddDialog ? "Stäng" : "Ny händelse"}
+        <Button size="sm" onClick={() => { if (showAddPanel) { setShowAddPanel(false); } else { openAddPanel(); } }} className="text-[10px] h-7 gap-1">
+          {showAddPanel ? <X className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+          {showAddPanel ? "Stäng" : "Ny händelse"}
         </Button>
       </div>
 
-      {/* Single legend row — event type filter chips */}
+      {/* Legend */}
       {renderLegend()}
 
-      {/* ── INLINE ADD EVENT PANEL ── */}
-      <Collapsible open={showAddDialog} onOpenChange={setShowAddDialog}>
+      {/* Inline add panel */}
+      <Collapsible open={showAddPanel} onOpenChange={setShowAddPanel}>
         <CollapsibleContent>
           <div className="border border-border bg-card px-3 py-2 rounded-sm">
             {renderAddForm()}
@@ -492,84 +931,11 @@ export default function ScheduleCalendar() {
         </CollapsibleContent>
       </Collapsible>
 
-      {/* Main content */}
+      {/* Main calendar */}
       {expandedMonth === null ? renderYearView() : renderMonthView(expandedMonth)}
 
-      {/* ── DAY DETAIL DIALOG ── */}
-      <Dialog open={showDayDetail} onOpenChange={setShowDayDetail}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-sm flex items-center gap-2">
-              {selectedDate && format(parseISO(selectedDate), "EEEE d MMMM yyyy", { locale: sv })}
-              {selectedDate && SWEDISH_HOLIDAYS[selectedDate.slice(5)] && (
-                <Badge variant="outline" className="text-[8px] text-pink-500 border-pink-500/30">{SWEDISH_HOLIDAYS[selectedDate.slice(5)]}</Badge>
-              )}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2 max-h-[400px] overflow-auto">
-            {selectedDate && (eventsByDate[selectedDate] || []).length === 0 && (
-              <p className="text-xs text-muted-foreground py-4 text-center">Inga händelser denna dag</p>
-            )}
-            {selectedDate && (eventsByDate[selectedDate] || []).map(evt => (
-              <div key={evt.id} className={cn(
-                "border border-border p-2 space-y-1 rounded-sm",
-                evt.event_type === "task" && evt.is_done && "bg-emerald-500/10",
-                evt.event_type === "task" && !evt.is_done && isBefore(parseISO(evt.event_date), new Date()) && "bg-red-500/10",
-              )}>
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-1.5">
-                    <div className={cn("h-2 w-2 rounded-full shrink-0", getEventDisplayColor(evt))} />
-                    <span className={cn("text-xs font-medium", evt.event_type === "task" && evt.is_done && "line-through text-muted-foreground")}>
-                      {evt.title}
-                    </span>
-                    {evt.recurrence_type && evt.recurrence_type !== "none" && (
-                      <Repeat className="h-3 w-3 text-muted-foreground shrink-0" />
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Badge variant="outline" className="text-[7px] px-1 py-0">
-                      {getEventTypeInfo(evt.event_type).label}
-                    </Badge>
-                    <div className={cn("h-2 w-2 rounded-full shrink-0", getSeverityDotColor(evt.severity))} title={SEVERITY_LEVELS.find(s => s.value === evt.severity)?.label} />
-                    <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground" onClick={() => copyEvent(evt, selectedDate || undefined)}>
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-destructive" onClick={() => handleDelete(evt.id)}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-                {evt.description && <p className="text-[10px] text-muted-foreground">{evt.description}</p>}
-                {/* Task-specific info */}
-                {evt.event_type === "task" && (
-                  <div className="flex items-center gap-2 pt-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className={cn("h-6 text-[9px] gap-1", evt.is_done && "bg-emerald-500/20 border-emerald-500/30")}
-                      onClick={() => handleToggleDone(evt)}
-                    >
-                      {evt.is_done ? <Check className="h-3 w-3 text-emerald-500" /> : <Check className="h-3 w-3" />}
-                      {evt.is_done ? "Klar" : "Markera klar"}
-                    </Button>
-                    {evt.staff && (
-                      <span className="text-[9px] text-muted-foreground flex items-center gap-1">
-                        <UserCheck className="h-3 w-3" />
-                        {evt.staff.first_name} {evt.staff.last_name.charAt(0)}.
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-          <DialogFooter>
-            <Button size="sm" onClick={() => { setShowDayDetail(false); openAddDialog(selectedDate || undefined); }} className="text-[10px] h-7 gap-1">
-              <Plus className="h-3 w-3" /> Lägg till händelse
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Inline day detail (below calendar grid) */}
+      {expandedMonth !== null && renderDayDetail()}
     </div>
   );
 }
