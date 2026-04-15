@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { EditableText } from "@/components/EditableText";
 import { supabase } from "@/integrations/supabase/client";
 import { useSite } from "@/contexts/SiteContext";
 import {
