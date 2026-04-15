@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useSite } from "@/contexts/SiteContext";
 import {
   useMeetingProtocols,
