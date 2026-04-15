@@ -680,7 +680,7 @@ export default function ScheduleCalendar() {
                         <Select value={editForm.assignee} onValueChange={v => setEditForm(f => ({ ...f, assignee: v }))}>
                           <SelectTrigger className="h-7 text-[10px]"><SelectValue placeholder="Tilldelad" /></SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="" className="text-[10px]">Ingen</SelectItem>
+                            <SelectItem value="none" className="text-[10px]">Ingen</SelectItem>
                             {staffMembers?.map(s => (
                               <SelectItem key={s.id} value={s.id} className="text-[10px]">{s.first_name} {s.last_name}</SelectItem>
                             ))}
