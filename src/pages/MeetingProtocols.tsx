@@ -35,6 +35,7 @@ export default function MeetingProtocols() {
   const updateItem = useUpdateProtocolItem();
   const deleteItem = useDeleteProtocolItem();
   const { addEvent } = useScheduleEvents("shop", undefined, activeStoreId);
+  const { data: staffMembers } = useStaff(activeStoreId || undefined);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
