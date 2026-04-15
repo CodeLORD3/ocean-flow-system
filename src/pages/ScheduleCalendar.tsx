@@ -943,10 +943,6 @@ export default function ScheduleCalendar() {
             Idag
           </Button>
         </div>
-        <Button size="sm" onClick={() => { if (showAddPanel) { setShowAddPanel(false); } else { openAddPanel(); } }} className="text-[10px] h-7 gap-1">
-          {showAddPanel ? <X className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
-          {showAddPanel ? "Stäng" : "Ny händelse"}
-        </Button>
       </div>
 
       {/* Legend */}
