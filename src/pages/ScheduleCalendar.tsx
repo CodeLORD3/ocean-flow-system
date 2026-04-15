@@ -165,6 +165,7 @@ export default function ScheduleCalendar() {
   const openAddPanel = (date?: string) => {
     setFormTitle("");
     setFormDesc("");
+    setFormCategory("event");
     setFormType("note");
     setFormSeverity("info");
     setFormDate(date || format(new Date(), "yyyy-MM-dd"));
