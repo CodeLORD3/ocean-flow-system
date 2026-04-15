@@ -124,12 +124,16 @@ export default function ScheduleCalendar() {
   // Form state for new event
   const [formTitle, setFormTitle] = useState("");
   const [formDesc, setFormDesc] = useState("");
+  const [formCategory, setFormCategory] = useState<"event" | "task">("event");
   const [formType, setFormType] = useState("note");
   const [formSeverity, setFormSeverity] = useState("info");
   const [formDate, setFormDate] = useState("");
   const [formRecurrence, setFormRecurrence] = useState("none");
   const [formRecurrenceEnd, setFormRecurrenceEnd] = useState("");
   const [formAssignee, setFormAssignee] = useState("");
+
+  // Derived: actual event_type based on category
+  const effectiveFormType = formCategory === "task" ? "task" : formType;
 
   // Meeting protocol new item text
   const [newItemText, setNewItemText] = useState<Record<string, string>>({});
