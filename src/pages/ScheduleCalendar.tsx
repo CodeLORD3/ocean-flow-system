@@ -194,15 +194,15 @@ export default function ScheduleCalendar() {
         event_date: formDate,
         title: formTitle,
         description: formDesc || undefined,
-        event_type: formType,
+        event_type: effectiveFormType,
         severity: formSeverity,
         portal: site,
         store_id: site === "shop" ? activeStoreId : null,
         recurrence_type: formRecurrence,
         recurrence_end_date: formRecurrenceEnd || null,
-        assigned_to: isTaskType(formType) && formAssignee ? formAssignee : null,
+        assigned_to: formCategory === "task" && formAssignee ? formAssignee : null,
       });
-      if (formType === "meeting" && site === "shop" && activeStoreId) {
+      if (effectiveFormType === "meeting" && site === "shop" && activeStoreId) {
         await createProtocol.mutateAsync({
           store_id: activeStoreId,
           title: formTitle,
@@ -210,7 +210,7 @@ export default function ScheduleCalendar() {
           notes: formDesc || undefined,
         });
       }
-      toast({ title: formType === "meeting" && site === "shop" ? "Möte tillagt i kalender & mötesprotokoll" : "Händelse tillagd" });
+      toast({ title: effectiveFormType === "meeting" && site === "shop" ? "Möte tillagt i kalender & mötesprotokoll" : formCategory === "task" ? "Uppgift tillagd" : "Händelse tillagd" });
       setShowAddPanel(false);
     } catch {
       toast({ title: "Fel", description: "Kunde inte spara", variant: "destructive" });
