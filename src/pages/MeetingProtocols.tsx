@@ -23,7 +23,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Plus, Trash2, ChevronDown, ChevronRight, Users, Calendar as CalendarIcon, FileText, CalendarPlus, UserCheck, ListTodo } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 import { format, parseISO } from "date-fns";
 import { sv } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -192,7 +192,7 @@ export default function MeetingProtocols() {
                   </div>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
                     <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
+                      <CalendarIcon className="h-3 w-3" />
                       {format(new Date(p.meeting_date), "d MMM yyyy", { locale: sv })}
                     </span>
                     {p.attendees && (
@@ -280,7 +280,7 @@ export default function MeetingProtocols() {
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0" align="end">
-                              <Calendar
+                              <CalendarPicker
                                 mode="single"
                                 selected={item.deadline ? parseISO(item.deadline) : undefined}
                                 onSelect={(date) => {
