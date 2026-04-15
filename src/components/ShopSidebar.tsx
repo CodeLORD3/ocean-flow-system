@@ -72,12 +72,75 @@ export function ShopSidebar() {
   const { data: stores } = useStores();
   const activeStore = stores?.find(s => s.id === activeStoreId);
 
+  const calendarRoutes = calendarNav.map(n => n.url);
+  const isCalendarActive = calendarRoutes.some(r => isActive(r));
+  const [calendarOpen, setCalendarOpen] = useState(isCalendarActive);
+
+  useEffect(() => {
+    if (isCalendarActive && !calendarOpen) setCalendarOpen(true);
+  }, [isCalendarActive]);
+
   useEffect(() => {
     const count = getCount(location.pathname);
     if (count > 0) {
       markAsRead.mutate(location.pathname);
     }
   }, [location.pathname]);
+
+  const renderSection = (section: NavSection) => {
+    if (section.collapsible) {
+      return (
+        <SidebarGroup key={section.label}>
+          <Collapsible open={calendarOpen} onOpenChange={setCalendarOpen}>
+            <CollapsibleTrigger className="w-full">
+              <SidebarGroupLabel className="cursor-pointer flex items-center justify-between pr-2">
+                {section.label}
+                <ChevronDown className={cn("h-3 w-3 transition-transform", calendarOpen && "rotate-180")} />
+              </SidebarGroupLabel>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {section.items.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild isActive={isActive(item.url)}>
+                        <NavLink to={item.url} end>
+                          <item.icon className="h-4 w-4" />
+                          {!collapsed && <span>{item.title}</span>}
+                          {!collapsed && <NotificationBadge count={getCount(item.url)} />}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
+      );
+    }
+
+    return (
+      <SidebarGroup key={section.label}>
+        <SidebarGroupLabel>{section.label}</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {section.items.map((item) => (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton asChild isActive={isActive(item.url)}>
+                  <NavLink to={item.url} end>
+                    <item.icon className="h-4 w-4" />
+                    {!collapsed && <span>{item.title}</span>}
+                    {!collapsed && <NotificationBadge count={getCount(item.url)} />}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    );
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r-2 border-r-emerald-700/30" style={{ background: 'hsl(160 30% 12%)' }}>
@@ -96,26 +159,7 @@ export function ShopSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {sections.map((section) => (
-          <SidebarGroup key={section.label}>
-            <SidebarGroupLabel>{section.label}</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {section.items.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                      <NavLink to={item.url} end>
-                        <item.icon className="h-4 w-4" />
-                        {!collapsed && <span>{item.title}</span>}
-                        {!collapsed && <NotificationBadge count={getCount(item.url)} />}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+        {sections.map(section => renderSection(section))}
       </SidebarContent>
 
       <SidebarFooter>
