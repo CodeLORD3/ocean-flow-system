@@ -250,7 +250,7 @@ export default function ScheduleCalendar() {
       category: isTask ? "task" : "event",
       type: isTask ? "note" : evt.event_type,
       severity: evt.severity,
-      assignee: evt.assigned_to || "",
+      assignee: evt.assigned_to || "none",
       recurrence: evt.recurrence_type || "none",
       recurrenceEnd: evt.recurrence_end_date || "",
     });
@@ -266,7 +266,7 @@ export default function ScheduleCalendar() {
         description: editForm.description || null,
         event_type: effectiveType,
         severity: editForm.severity,
-        assigned_to: editForm.category === "task" && editForm.assignee ? editForm.assignee : null,
+        assigned_to: editForm.category === "task" && editForm.assignee !== "none" ? editForm.assignee : null,
         recurrence_type: editForm.recurrence,
         recurrence_end_date: editForm.recurrenceEnd || null,
       } as any);
