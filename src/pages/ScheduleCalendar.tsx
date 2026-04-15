@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { format, getDaysInMonth, startOfMonth, getDay, isToday, parseISO, isBefore, isPast } from "date-fns";
+import { format, getDaysInMonth, startOfMonth, getDay, isToday, parseISO, isBefore } from "date-fns";
 import { sv } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Plus, X, Trash2, Copy, Check, UserCheck, Repeat, Calendar, Users, FileText, CalendarPlus, ListTodo, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
