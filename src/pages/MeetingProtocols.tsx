@@ -8,8 +8,8 @@ import {
   useAddProtocolItem,
   useUpdateProtocolItem,
   useDeleteProtocolItem,
-  MeetingProtocol,
 } from "@/hooks/useMeetingProtocols";
+import { useStaff } from "@/hooks/useStaff";
 import { useScheduleEvents, EVENT_TYPES, SEVERITY_LEVELS, RECURRENCE_OPTIONS } from "@/hooks/useScheduleEvents";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, ChevronDown, ChevronRight, Users, Calendar, FileText, CalendarPlus } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Plus, Trash2, ChevronDown, ChevronRight, Users, Calendar, FileText, CalendarPlus, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import { sv } from "date-fns/locale";
 import { toast } from "@/hooks/use-toast";
