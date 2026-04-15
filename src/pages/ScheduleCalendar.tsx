@@ -767,7 +767,22 @@ export default function ScheduleCalendar() {
                     <div className="space-y-1">
                       <p className="text-[9px] font-medium text-muted-foreground">Punkter</p>
                       {items.sort((a, b) => a.sort_order - b.sort_order).map(item => (
-                        <div key={item.id} className="flex items-start gap-2 group">
+                        <div
+                          key={item.id}
+                          className="flex items-start gap-2 group"
+                          draggable={!item.calendar_event_id}
+                          onDragStart={(e) => {
+                            e.stopPropagation();
+                            setDraggedProtocolItem({
+                              id: item.id,
+                              content: item.content,
+                              assigned_to: item.assigned_to,
+                              deadline: item.deadline,
+                              protocolTitle: p.title,
+                            });
+                          }}
+                          onDragEnd={() => { setDraggedProtocolItem(null); setDropTarget(null); }}
+                        >
                           <Checkbox
                             checked={item.completed}
                             onCheckedChange={() => handleToggleProtocolItem(item.id, item.completed, item.calendar_event_id)}
