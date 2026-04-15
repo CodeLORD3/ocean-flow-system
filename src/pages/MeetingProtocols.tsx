@@ -10,14 +10,16 @@ import {
   useDeleteProtocolItem,
   MeetingProtocol,
 } from "@/hooks/useMeetingProtocols";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useScheduleEvents, EVENT_TYPES, SEVERITY_LEVELS, RECURRENCE_OPTIONS } from "@/hooks/useScheduleEvents";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, ChevronDown, ChevronRight, Users, Calendar, FileText } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Trash2, ChevronDown, ChevronRight, Users, Calendar, FileText, CalendarPlus } from "lucide-react";
 import { format } from "date-fns";
 import { sv } from "date-fns/locale";
 import { toast } from "@/hooks/use-toast";
@@ -31,6 +33,7 @@ export default function MeetingProtocols() {
   const addItem = useAddProtocolItem();
   const updateItem = useUpdateProtocolItem();
   const deleteItem = useDeleteProtocolItem();
+  const { addEvent } = useScheduleEvents("shop", undefined, activeStoreId);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -38,6 +41,18 @@ export default function MeetingProtocols() {
   const [newAttendees, setNewAttendees] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [newItemText, setNewItemText] = useState<Record<string, string>>({});
+
+  // Calendar dialog state
+  const [calDialogOpen, setCalDialogOpen] = useState(false);
+  const [calTitle, setCalTitle] = useState("");
+  const [calDate, setCalDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [calType, setCalType] = useState("meeting");
+  const [calSeverity, setCalSeverity] = useState("info");
+  const [calAllDay, setCalAllDay] = useState(true);
+  const [calStartTime, setCalStartTime] = useState("09:00");
+  const [calEndTime, setCalEndTime] = useState("10:00");
+  const [calDescription, setCalDescription] = useState("");
+  const [calRecurrence, setCalRecurrence] = useState("none");
 
   if (!activeStoreId) {
     return (
@@ -73,6 +88,38 @@ export default function MeetingProtocols() {
       sort_order: items.length,
     });
     setNewItemText((prev) => ({ ...prev, [protocolId]: "" }));
+  };
+
+  const openCalendarDialog = (itemContent: string) => {
+    setCalTitle(itemContent);
+    setCalDate(format(new Date(), "yyyy-MM-dd"));
+    setCalType("meeting");
+    setCalSeverity("info");
+    setCalAllDay(true);
+    setCalStartTime("09:00");
+    setCalEndTime("10:00");
+    setCalDescription("");
+    setCalRecurrence("none");
+    setCalDialogOpen(true);
+  };
+
+  const handleAddToCalendar = async () => {
+    if (!calTitle.trim() || !calDate) return;
+    await addEvent.mutateAsync({
+      title: calTitle,
+      event_date: calDate,
+      event_type: calType,
+      severity: calSeverity,
+      portal: "shop",
+      store_id: activeStoreId,
+      all_day: calAllDay,
+      start_time: calAllDay ? undefined : calStartTime,
+      end_time: calAllDay ? undefined : calEndTime,
+      description: calDescription || undefined,
+      recurrence_type: calRecurrence,
+    });
+    setCalDialogOpen(false);
+    toast({ title: "Tillagd i kalendern" });
   };
 
   return (
@@ -162,7 +209,6 @@ export default function MeetingProtocols() {
 
               {expanded && (
                 <CardContent className="pt-0 pb-3 px-4 border-t space-y-3">
-                  {/* Notes */}
                   <Textarea
                     placeholder="Allmänna anteckningar..."
                     className="text-sm min-h-[60px]"
@@ -174,7 +220,6 @@ export default function MeetingProtocols() {
                     }}
                   />
 
-                  {/* Items */}
                   <div className="space-y-1">
                     <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
                       <FileText className="h-3 w-3" /> Punkter
@@ -199,6 +244,15 @@ export default function MeetingProtocols() {
                               }
                             }}
                           />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 opacity-0 group-hover:opacity-100"
+                            title="Lägg till i kalender"
+                            onClick={() => openCalendarDialog(item.content)}
+                          >
+                            <CalendarPlus className="h-3.5 w-3.5 text-primary" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -228,6 +282,94 @@ export default function MeetingProtocols() {
           );
         })}
       </div>
+
+      {/* Add to Calendar Dialog */}
+      <Dialog open={calDialogOpen} onOpenChange={setCalDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarPlus className="h-5 w-5" /> Lägg till i kalender
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-medium">Titel</label>
+              <Input value={calTitle} onChange={(e) => setCalTitle(e.target.value)} />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Datum</label>
+              <Input type="date" value={calDate} onChange={(e) => setCalDate(e.target.value)} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm font-medium">Typ</label>
+                <Select value={calType} onValueChange={setCalType}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {EVENT_TYPES.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Prioritet</label>
+                <Select value={calSeverity} onValueChange={setCalSeverity}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {SEVERITY_LEVELS.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="cal-allday"
+                checked={calAllDay}
+                onCheckedChange={(v) => setCalAllDay(!!v)}
+              />
+              <label htmlFor="cal-allday" className="text-sm">Heldag</label>
+            </div>
+            {!calAllDay && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium">Starttid</label>
+                  <Input type="time" value={calStartTime} onChange={(e) => setCalStartTime(e.target.value)} />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Sluttid</label>
+                  <Input type="time" value={calEndTime} onChange={(e) => setCalEndTime(e.target.value)} />
+                </div>
+              </div>
+            )}
+            <div>
+              <label className="text-sm font-medium">Upprepning</label>
+              <Select value={calRecurrence} onValueChange={setCalRecurrence}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {RECURRENCE_OPTIONS.map((r) => (
+                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Beskrivning</label>
+              <Textarea
+                value={calDescription}
+                onChange={(e) => setCalDescription(e.target.value)}
+                placeholder="Valfri beskrivning..."
+                className="min-h-[60px]"
+              />
+            </div>
+            <Button onClick={handleAddToCalendar} disabled={!calTitle.trim() || !calDate || addEvent.isPending} className="w-full">
+              <CalendarPlus className="h-4 w-4 mr-1" /> Lägg till i kalender
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
