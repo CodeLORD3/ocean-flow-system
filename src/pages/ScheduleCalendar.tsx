@@ -724,7 +724,7 @@ export default function ScheduleCalendar() {
                           <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground" onClick={() => copyEvent(evt, selectedDate || undefined)}>
                             <Copy className="h-3 w-3" />
                           </Button>
-                          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-destructive" onClick={() => handleDelete(evt.id)}>
+                          <Button variant="ghost" size="sm" className="h-5 w-5 p-0 text-destructive" onClick={() => handleDelete(evt.id, evt.meeting_item_id)}>
                             <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
