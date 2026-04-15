@@ -322,15 +322,21 @@ export default function MeetingProtocols() {
                             </PopoverContent>
                           </Popover>
                           <div className="flex items-center gap-1 ml-2 shrink-0">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 opacity-0 group-hover:opacity-100"
-                            title="Lägg till i kalender"
-                            onClick={() => openCalendarDialog(item.content)}
-                          >
-                            <CalendarPlus className="h-3.5 w-3.5 text-primary" />
-                          </Button>
+                          {item.calendar_event_id ? (
+                            <span className="flex items-center gap-1 text-[10px] text-emerald-500 shrink-0 px-1" title="Tillagd i kalendern">
+                              <CalendarPlus className="h-3.5 w-3.5" /> I kalender
+                            </span>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 opacity-0 group-hover:opacity-100"
+                              title="Lägg till i kalender"
+                              onClick={() => openCalendarDialog(item.id, item.content)}
+                            >
+                              <CalendarPlus className="h-3.5 w-3.5 text-primary" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
