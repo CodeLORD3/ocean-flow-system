@@ -195,19 +195,35 @@ export default function MeetingProtocols() {
                     )}
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 shrink-0 ml-4"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (confirm("Ta bort detta mötesprotokoll?")) {
-                      deleteProtocol.mutate(p.id);
-                    }
-                  }}
-                >
-                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 shrink-0 ml-4"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Ta bort mötesprotokoll</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Är du säker på att du vill ta bort "{p.title || "Utan titel"}"? Alla punkter i protokollet kommer också att tas bort. Denna åtgärd kan inte ångras.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick={() => deleteProtocol.mutate(p.id)}
+                      >
+                        Ta bort
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
 
               {expanded && (
