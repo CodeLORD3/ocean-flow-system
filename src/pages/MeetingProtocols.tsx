@@ -197,7 +197,7 @@ export default function MeetingProtocols() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 shrink-0"
+                  className="h-7 w-7 shrink-0 ml-4"
                   onClick={(e) => {
                     e.stopPropagation();
                     if (confirm("Ta bort detta mötesprotokoll?")) {
@@ -290,6 +290,7 @@ export default function MeetingProtocols() {
                               </div>
                             </PopoverContent>
                           </Popover>
+                          <div className="flex items-center gap-1 ml-2 shrink-0">
                           <Button
                             variant="ghost"
                             size="icon"
@@ -307,6 +308,7 @@ export default function MeetingProtocols() {
                           >
                             <Trash2 className="h-3 w-3 text-destructive" />
                           </Button>
+                          </div>
                         </div>
                       ))}
                     <div className="flex gap-2 mt-1">
