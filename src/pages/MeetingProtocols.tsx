@@ -269,37 +269,6 @@ export default function MeetingProtocols() {
                             onSave={(val) => updateItem.mutate({ id: item.id, content: val })}
                             className="flex-1 text-sm"
                           />
-                          {/* Deadline datepicker */}
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className={cn("h-7 px-2 text-xs shrink-0", !item.deadline && "opacity-0 group-hover:opacity-100")}
-                                title="Sätt deadline"
-                              >
-                                <CalendarIcon className="h-3.5 w-3.5 mr-1" />
-                                {item.deadline ? format(parseISO(item.deadline), "d/M") : "Datum"}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="end">
-                              <CalendarPicker
-                                mode="single"
-                                selected={item.deadline ? parseISO(item.deadline) : undefined}
-                                onSelect={(date) => {
-                                  updateItem.mutate({ id: item.id, deadline: date ? format(date, "yyyy-MM-dd") : null });
-                                }}
-                                className={cn("p-3 pointer-events-auto")}
-                              />
-                              {item.deadline && (
-                                <div className="px-3 pb-2">
-                                  <Button variant="ghost" size="sm" className="w-full text-xs text-destructive" onClick={() => updateItem.mutate({ id: item.id, deadline: null })}>
-                                    Ta bort datum
-                                  </Button>
-                                </div>
-                              )}
-                            </PopoverContent>
-                          </Popover>
                           {/* Assignee selector */}
                           <Popover>
                             <PopoverTrigger asChild>
@@ -347,18 +316,35 @@ export default function MeetingProtocols() {
                           <div className="flex items-center gap-1 ml-1 shrink-0">
                             {item.calendar_event_id ? (
                               <span className="flex items-center gap-1 text-[10px] text-purple-400 shrink-0 px-1" title="Uppgift i kalendern">
-                                <ListTodo className="h-3.5 w-3.5" /> Uppgift
+                                <CalendarIcon className="h-3.5 w-3.5 mr-0.5" />
+                                {item.deadline ? format(parseISO(item.deadline), "d/M") : ""}
                               </span>
                             ) : (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 opacity-0 group-hover:opacity-100"
-                                title="Skapa uppgift i kalendern"
-                                onClick={() => handleCreateTask(item, p.title)}
-                              >
-                                <CalendarPlus className="h-3.5 w-3.5 text-purple-400" />
-                              </Button>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className={cn("h-7 px-2 text-xs shrink-0", !item.deadline && "opacity-0 group-hover:opacity-100")}
+                                    title="Välj datum & lägg till i kalendern"
+                                  >
+                                    <CalendarPlus className="h-3.5 w-3.5 mr-1 text-purple-400" />
+                                    {item.deadline ? format(parseISO(item.deadline), "d/M") : "Datum"}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="end">
+                                  <CalendarPicker
+                                    mode="single"
+                                    selected={item.deadline ? parseISO(item.deadline) : undefined}
+                                    onSelect={(date) => {
+                                      if (date) {
+                                        handleCreateTask(item, p.title, format(date, "yyyy-MM-dd"));
+                                      }
+                                    }}
+                                    className={cn("p-3 pointer-events-auto")}
+                                  />
+                                </PopoverContent>
+                              </Popover>
                             )}
                             <Button
                               variant="ghost"
