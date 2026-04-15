@@ -17,6 +17,7 @@ import {
 const overviewNav = [
   { title: "Översikt", url: "/", icon: LayoutDashboard },
   { title: "Kalender", url: "/schedule", icon: CalendarDays },
+  { title: "Mötesprotokoll", url: "/meetings", icon: BookOpen },
 ];
 
 const salesNav = [
@@ -35,7 +36,6 @@ const inventoryNav = [
 
 const orgNav = [
   { title: "Personal", url: "/staff", icon: UserCheck },
-  { title: "Mötesprotokoll", url: "/meetings", icon: BookOpen },
   { title: "Aktivitetslogg", url: "/audit", icon: ClipboardList },
 ];
 
