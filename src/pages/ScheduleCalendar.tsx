@@ -516,7 +516,7 @@ export default function ScheduleCalendar() {
                         <div
                           key={cell.day}
                           className={cn(
-                            "min-h-[80px] border-b border-r border-border p-1 cursor-pointer hover:bg-muted/30 transition-colors",
+                            "min-h-[80px] border-b border-r border-border p-1 cursor-pointer hover:bg-muted/30 transition-colors relative",
                             dayPast && "bg-muted/20",
                             today && "ring-1 ring-inset ring-primary",
                             isSelected && "ring-2 ring-inset ring-primary bg-primary/5",
