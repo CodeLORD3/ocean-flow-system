@@ -201,7 +201,7 @@ export default function ScheduleCalendar() {
         store_id: site === "shop" ? activeStoreId : null,
         recurrence_type: formRecurrence,
         recurrence_end_date: formRecurrenceEnd || null,
-        assigned_to: formCategory === "task" && formAssignee ? formAssignee : null,
+        assigned_to: formCategory === "task" && formAssignee !== "none" ? formAssignee : null,
       });
       if (effectiveFormType === "meeting" && site === "shop" && activeStoreId) {
         await createProtocol.mutateAsync({
