@@ -248,7 +248,7 @@ export function useUpdateWeeklyReportFull() {
         supabase.from("weekly_report_social_lines").delete().eq("report_id", id).then(),
       ]);
 
-      const promises: Promise<any>[] = [];
+      const promises: PromiseLike<any>[] = [];
       if (inventoryLines.length > 0) {
         promises.push(supabase.from("weekly_report_inventory_lines").insert(inventoryLines.map((l) => ({ ...l, report_id: id }))).select().then());
       }
