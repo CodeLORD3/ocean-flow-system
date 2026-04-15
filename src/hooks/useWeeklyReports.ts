@@ -163,28 +163,28 @@ export function useCreateWeeklyReportFull() {
         promises.push(
           supabase.from("weekly_report_inventory_lines").insert(
             inventoryLines.map((l) => ({ ...l, report_id: reportId }))
-          )
+          ).select().then()
         );
       }
       if (costLines.length > 0) {
         promises.push(
           supabase.from("weekly_report_cost_lines").insert(
             costLines.map((l) => ({ ...l, report_id: reportId }))
-          )
+          ).select().then()
         );
       }
       if (salesLines.length > 0) {
         promises.push(
           supabase.from("weekly_report_sales_lines").insert(
             salesLines.map((l) => ({ ...l, report_id: reportId }))
-          )
+          ).select().then()
         );
       }
       if (socialLines.length > 0) {
         promises.push(
           supabase.from("weekly_report_social_lines").insert(
             socialLines.map((l) => ({ ...l, report_id: reportId }))
-          )
+          ).select().then()
         );
       }
 
@@ -242,24 +242,24 @@ export function useUpdateWeeklyReportFull() {
 
       // Delete and re-insert all lines
       await Promise.all([
-        supabase.from("weekly_report_inventory_lines").delete().eq("report_id", id),
-        supabase.from("weekly_report_cost_lines").delete().eq("report_id", id),
-        supabase.from("weekly_report_sales_lines").delete().eq("report_id", id),
-        supabase.from("weekly_report_social_lines").delete().eq("report_id", id),
+        supabase.from("weekly_report_inventory_lines").delete().eq("report_id", id).then(),
+        supabase.from("weekly_report_cost_lines").delete().eq("report_id", id).then(),
+        supabase.from("weekly_report_sales_lines").delete().eq("report_id", id).then(),
+        supabase.from("weekly_report_social_lines").delete().eq("report_id", id).then(),
       ]);
 
       const promises: Promise<any>[] = [];
       if (inventoryLines.length > 0) {
-        promises.push(supabase.from("weekly_report_inventory_lines").insert(inventoryLines.map((l) => ({ ...l, report_id: id }))));
+        promises.push(supabase.from("weekly_report_inventory_lines").insert(inventoryLines.map((l) => ({ ...l, report_id: id }))).select().then());
       }
       if (costLines.length > 0) {
-        promises.push(supabase.from("weekly_report_cost_lines").insert(costLines.map((l) => ({ ...l, report_id: id }))));
+        promises.push(supabase.from("weekly_report_cost_lines").insert(costLines.map((l) => ({ ...l, report_id: id }))).select().then());
       }
       if (salesLines.length > 0) {
-        promises.push(supabase.from("weekly_report_sales_lines").insert(salesLines.map((l) => ({ ...l, report_id: id }))));
+        promises.push(supabase.from("weekly_report_sales_lines").insert(salesLines.map((l) => ({ ...l, report_id: id }))).select().then());
       }
       if (socialLines.length > 0) {
-        promises.push(supabase.from("weekly_report_social_lines").insert(socialLines.map((l) => ({ ...l, report_id: id }))));
+        promises.push(supabase.from("weekly_report_social_lines").insert(socialLines.map((l) => ({ ...l, report_id: id }))).select().then());
       }
       await Promise.all(promises);
 
