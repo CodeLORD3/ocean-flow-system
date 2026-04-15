@@ -1,0 +1,1 @@
+ALTER TABLE public.meeting_protocol_items ADD COLUMN calendar_event_id UUID DEFAULT NULL;

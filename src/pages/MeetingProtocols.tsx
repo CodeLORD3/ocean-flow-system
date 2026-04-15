@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useSite } from "@/contexts/SiteContext";
 import {
   useMeetingProtocols,
@@ -45,8 +46,8 @@ export default function MeetingProtocols() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [newItemText, setNewItemText] = useState<Record<string, string>>({});
 
-  // Calendar dialog state
   const [calDialogOpen, setCalDialogOpen] = useState(false);
+  const [calItemId, setCalItemId] = useState<string | null>(null);
   const [calTitle, setCalTitle] = useState("");
   const [calDate, setCalDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [calType, setCalType] = useState("meeting");
@@ -93,7 +94,8 @@ export default function MeetingProtocols() {
     setNewItemText((prev) => ({ ...prev, [protocolId]: "" }));
   };
 
-  const openCalendarDialog = (itemContent: string) => {
+  const openCalendarDialog = (itemId: string, itemContent: string) => {
+    setCalItemId(itemId);
     setCalTitle(itemContent);
     setCalDate(format(new Date(), "yyyy-MM-dd"));
     setCalType("meeting");
@@ -108,20 +110,32 @@ export default function MeetingProtocols() {
 
   const handleAddToCalendar = async () => {
     if (!calTitle.trim() || !calDate) return;
-    await addEvent.mutateAsync({
-      title: calTitle,
-      event_date: calDate,
-      event_type: calType,
-      severity: calSeverity,
-      portal: "shop",
-      store_id: activeStoreId,
-      all_day: calAllDay,
-      start_time: calAllDay ? undefined : calStartTime,
-      end_time: calAllDay ? undefined : calEndTime,
-      description: calDescription || undefined,
-      recurrence_type: calRecurrence,
-    });
+    // addEvent returns void, so we need to insert and get the id separately
+    const { data: insertedEvent } = await supabase
+      .from("schedule_events")
+      .insert({
+        title: calTitle,
+        event_date: calDate,
+        event_type: calType,
+        severity: calSeverity,
+        portal: "shop",
+        store_id: activeStoreId,
+        all_day: calAllDay,
+        start_time: calAllDay ? undefined : calStartTime,
+        end_time: calAllDay ? undefined : calEndTime,
+        description: calDescription || undefined,
+        recurrence_type: calRecurrence,
+      } as any)
+      .select("id")
+      .single();
+
+    // Mark the protocol item as added to calendar
+    if (insertedEvent && calItemId) {
+      updateItem.mutate({ id: calItemId, calendar_event_id: (insertedEvent as any).id });
+    }
+
     setCalDialogOpen(false);
+    setCalItemId(null);
     toast({ title: "Tillagd i kalendern" });
   };
 
@@ -308,15 +322,21 @@ export default function MeetingProtocols() {
                             </PopoverContent>
                           </Popover>
                           <div className="flex items-center gap-1 ml-2 shrink-0">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 opacity-0 group-hover:opacity-100"
-                            title="Lägg till i kalender"
-                            onClick={() => openCalendarDialog(item.content)}
-                          >
-                            <CalendarPlus className="h-3.5 w-3.5 text-primary" />
-                          </Button>
+                          {item.calendar_event_id ? (
+                            <span className="flex items-center gap-1 text-[10px] text-emerald-500 shrink-0 px-1" title="Tillagd i kalendern">
+                              <CalendarPlus className="h-3.5 w-3.5" /> I kalender
+                            </span>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 opacity-0 group-hover:opacity-100"
+                              title="Lägg till i kalender"
+                              onClick={() => openCalendarDialog(item.id, item.content)}
+                            >
+                              <CalendarPlus className="h-3.5 w-3.5 text-primary" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
