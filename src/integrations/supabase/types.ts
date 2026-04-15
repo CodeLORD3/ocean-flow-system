@@ -2327,6 +2327,224 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_report_cost_lines: {
+        Row: {
+          amount: number
+          id: string
+          label: string
+          report_id: string
+          sort_order: number
+        }
+        Insert: {
+          amount?: number
+          id?: string
+          label: string
+          report_id: string
+          sort_order?: number
+        }
+        Update: {
+          amount?: number
+          id?: string
+          label?: string
+          report_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_report_cost_lines_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_report_inventory_lines: {
+        Row: {
+          id: string
+          product_id: string
+          quantity: number
+          report_id: string
+          total: number
+          unit: string
+          unit_price: number
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          quantity?: number
+          report_id: string
+          total?: number
+          unit?: string
+          unit_price?: number
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          quantity?: number
+          report_id?: string
+          total?: number
+          unit?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_report_inventory_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_report_inventory_lines_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_report_sales_lines: {
+        Row: {
+          amount: number
+          channel: string
+          id: string
+          last_year_amount: number | null
+          quantity: number
+          report_id: string
+          sort_order: number
+        }
+        Insert: {
+          amount?: number
+          channel: string
+          id?: string
+          last_year_amount?: number | null
+          quantity?: number
+          report_id: string
+          sort_order?: number
+        }
+        Update: {
+          amount?: number
+          channel?: string
+          id?: string
+          last_year_amount?: number | null
+          quantity?: number
+          report_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_report_sales_lines_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_report_social_lines: {
+        Row: {
+          closing_followers: number
+          follower_change: number
+          id: string
+          opening_followers: number
+          platform: string
+          posts_count: number
+          report_id: string
+          sort_order: number
+        }
+        Insert: {
+          closing_followers?: number
+          follower_change?: number
+          id?: string
+          opening_followers?: number
+          platform: string
+          posts_count?: number
+          report_id: string
+          sort_order?: number
+        }
+        Update: {
+          closing_followers?: number
+          follower_change?: number
+          id?: string
+          opening_followers?: number
+          platform?: string
+          posts_count?: number
+          report_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_report_social_lines_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_reports: {
+        Row: {
+          closing_inventory: number
+          created_at: string
+          gross_margin: number
+          gross_margin_pct: number
+          id: string
+          inventory_change: number
+          notes: string | null
+          opening_inventory: number
+          status: string
+          store_id: string
+          total_costs: number
+          total_sales: number
+          updated_at: string
+          week_number: number
+          year: number
+        }
+        Insert: {
+          closing_inventory?: number
+          created_at?: string
+          gross_margin?: number
+          gross_margin_pct?: number
+          id?: string
+          inventory_change?: number
+          notes?: string | null
+          opening_inventory?: number
+          status?: string
+          store_id: string
+          total_costs?: number
+          total_sales?: number
+          updated_at?: string
+          week_number: number
+          year: number
+        }
+        Update: {
+          closing_inventory?: number
+          created_at?: string
+          gross_margin?: number
+          gross_margin_pct?: number
+          id?: string
+          inventory_change?: number
+          notes?: string | null
+          opening_inventory?: number
+          status?: string
+          store_id?: string
+          total_costs?: number
+          total_sales?: number
+          updated_at?: string
+          week_number?: number
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_reports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
