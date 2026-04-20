@@ -30,7 +30,7 @@ async function getRawLagerId(storeId: string): Promise<string | null> {
 /**
  * Add quantity to a destination location, handling multiple existing rows safely.
  */
-async function addToLocation(productId: string, locationId: string, quantity: number, shopOrderId?: string) {
+async function addToLocation(productId: string, locationId: string, quantity: number, shopOrderId?: string, unitCost?: number) {
   // Find existing row(s) — use limit(1) to avoid maybeSingle errors with split rows
   const q = supabase
     .from("product_stock_locations")
@@ -38,7 +38,6 @@ async function addToLocation(productId: string, locationId: string, quantity: nu
     .eq("product_id", productId)
     .eq("location_id", locationId);
 
-  // If shopOrderId specified, filter by it; otherwise only look at untagged rows
   if (shopOrderId) {
     q.eq("shop_order_id", shopOrderId);
   } else {
@@ -49,16 +48,16 @@ async function addToLocation(productId: string, locationId: string, quantity: nu
   const row = existing?.[0];
 
   if (row) {
-    await supabase
-      .from("product_stock_locations")
-      .update({ quantity: Number(row.quantity) + quantity, updated_at: new Date().toISOString() })
-      .eq("id", row.id);
+    const update: any = { quantity: Number(row.quantity) + quantity, updated_at: new Date().toISOString() };
+    if (unitCost != null) update.unit_cost = unitCost;
+    await supabase.from("product_stock_locations").update(update).eq("id", row.id);
   } else {
     await supabase.from("product_stock_locations").insert({
       product_id: productId,
       location_id: locationId,
       quantity: quantity,
       shop_order_id: shopOrderId || null,
+      unit_cost: unitCost ?? null,
       updated_at: new Date().toISOString(),
     });
   }
@@ -168,7 +167,11 @@ export async function moveStockToTransport(orderId: string) {
  * When a shop approves an inleverans, move products from Transportlager
  * to the shop's Raw-lager, then delete the order-tagged Transportlager entries.
  */
-export async function moveStockToRawLager(orderId: string, storeId: string) {
+export async function moveStockToRawLager(
+  orderId: string,
+  storeId: string,
+  unitCostByProductId?: Record<string, number>,
+) {
   const transportId = await getTransportlagerId();
   if (!transportId) {
     console.error("Transportlager not found");
@@ -181,7 +184,6 @@ export async function moveStockToRawLager(orderId: string, storeId: string) {
     return;
   }
 
-  // Get all Transportlager entries tagged with this order
   const { data: transportEntries } = await supabase
     .from("product_stock_locations")
     .select("id, product_id, quantity")
@@ -190,18 +192,16 @@ export async function moveStockToRawLager(orderId: string, storeId: string) {
 
   if (!transportEntries?.length) {
     console.warn(`moveStockToRawLager: No tagged Transportlager entries found for order ${orderId}. Stock may not have been transferred to Transportlager.`);
-    return; // Do NOT use fallback — it causes duplicates
+    return;
   }
 
-  // Move each tagged entry to Raw-lager and then delete the Transportlager row
   for (const entry of transportEntries) {
     const qty = Number(entry.quantity) || 0;
     if (qty <= 0) continue;
 
-    // Add to Raw-lager (untagged)
-    await addToLocation(entry.product_id, rawLagerId, qty);
+    const unitCost = unitCostByProductId?.[entry.product_id];
+    await addToLocation(entry.product_id, rawLagerId, qty, undefined, unitCost);
 
-    // Delete the Transportlager entry
     await supabase
       .from("product_stock_locations")
       .delete()
