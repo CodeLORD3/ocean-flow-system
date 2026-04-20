@@ -161,6 +161,14 @@ export default function Receiving() {
     return d.toISOString().slice(0, 10);
   };
 
+  // Compute auto CHF cost for a line based on product cost (SEK) + transport
+  const autoChfCost = (line: any): string => {
+    if (!isChfStore || !currencySettings) return "";
+    const sek = Number(line?.products?.cost_price) || 0;
+    if (sek <= 0) return "";
+    return String(convertSekToChfCost(sek, currencySettings));
+  };
+
   const openOrder = (order: any) => {
     setSelectedOrder(order);
     const today = new Date().toISOString().slice(0, 10);
@@ -174,6 +182,7 @@ export default function Receiving() {
         arrival_date: today,
         // Auto-fill expiry if product has shelf_life_days set
         expiry_date: calcExpiry(today, shelfLife),
+        unit_cost_local: autoChfCost(line),
       };
     });
     setLineReports(initial);
@@ -228,9 +237,19 @@ export default function Receiving() {
           .eq("id", lineId);
       }
 
-      // Move stock from Transportlager to shop's Raw-lager
+      // Move stock from Transportlager to shop's Raw-lager (with optional CHF unit costs for Zollikon)
       try {
-        await moveStockToRawLager(selectedOrder.id, activeStoreId);
+        const unitCostMap: Record<string, number> = {};
+        if (isChfStore) {
+          for (const [lineId, report] of Object.entries(lineReports)) {
+            const line = (selectedOrder.shop_order_lines || []).find((l: any) => l.id === lineId);
+            const cost = Number(report.unit_cost_local);
+            if (line && Number.isFinite(cost) && cost > 0) {
+              unitCostMap[line.product_id] = cost;
+            }
+          }
+        }
+        await moveStockToRawLager(selectedOrder.id, activeStoreId, isChfStore ? unitCostMap : undefined);
       } catch (err) {
         console.error("Stock transfer to Raw-lager error:", err);
       }
@@ -292,8 +311,8 @@ export default function Receiving() {
         quantity_received: String(line.quantity_ordered),
         confirmed: true,
         arrival_date: today,
-        // Auto-fill expiry from shelf_life_days if available
         expiry_date: lineReports[line.id]?.expiry_date || calcExpiry(today, shelfLife),
+        unit_cost_local: lineReports[line.id]?.unit_cost_local ?? autoChfCost(line),
       };
     });
     setLineReports(updated);
