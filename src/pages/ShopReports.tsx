@@ -487,7 +487,7 @@ function WeeklyReportForm({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-xs">
-                    Ingående lager (kr)
+                    Ingående lager ({currencyLabel})
                     {!isEdit && prevData && (
                       <span className="text-[10px] text-muted-foreground ml-1">(auto)</span>
                     )}
@@ -511,7 +511,7 @@ function WeeklyReportForm({
                     <TableHead className="text-xs w-[40%]">Produkt</TableHead>
                     <TableHead className="text-xs text-right">Antal</TableHead>
                     <TableHead className="text-xs text-center">Enhet</TableHead>
-                    <TableHead className="text-xs text-right">Á-pris (kr)</TableHead>
+                    <TableHead className="text-xs text-right">Á-pris ({currencyLabel})</TableHead>
                     <TableHead className="text-xs text-right">Totalt</TableHead>
                     <TableHead className="w-8"></TableHead>
                   </TableRow>
@@ -637,7 +637,7 @@ function WeeklyReportForm({
                   <TableRow>
                     <TableHead className="text-xs">Kanal</TableHead>
                     <TableHead className="text-xs text-right">Antal</TableHead>
-                    <TableHead className="text-xs text-right">Belopp (kr)</TableHead>
+                    <TableHead className="text-xs text-right">Belopp ({currencyLabel})</TableHead>
                     <TableHead className="text-xs text-right">Förra året</TableHead>
                     <TableHead className="text-xs text-right">Förändr.</TableHead>
                   </TableRow>
