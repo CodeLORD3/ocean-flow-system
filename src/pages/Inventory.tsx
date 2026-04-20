@@ -162,12 +162,13 @@ type InventoryLine = {
   arrival_date?: string;
 };
 
-const fmt = (v: number) =>
+const fmtFor = (currency: string) => (v: number) =>
   new Intl.NumberFormat("sv-SE", {
     style: "currency",
-    currency: "SEK",
+    currency,
     maximumFractionDigits: 0,
   }).format(v);
+const fmt = fmtFor("SEK");
 
 export default function Inventory() {
   const { toast } = useToast();
