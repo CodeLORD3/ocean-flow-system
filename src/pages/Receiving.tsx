@@ -702,6 +702,29 @@ export default function Receiving() {
                             <p className={`text-[9px] font-medium ${expiryLabel.class}`}>{expiryLabel.text}</p>
                           </div>
                         )}
+                        {isChfStore && (
+                          <div className="col-span-3 space-y-0.5 pt-1 border-t border-border/40">
+                            <Label className="text-[9px] text-muted-foreground uppercase tracking-wide">
+                              Värde per {line.products?.unit || "kg"} ({localCurrency}) — auto-förslag, redigerbart
+                            </Label>
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={report.unit_cost_local || ""}
+                                onChange={(e) => updateLineReport(line.id, "unit_cost_local", e.target.value)}
+                                className="h-6 text-[10px] bg-background w-32"
+                                placeholder={autoChfCost(line) || "0.00"}
+                              />
+                              <span className="text-[9px] text-muted-foreground">
+                                Inköp: {Number(line.products?.cost_price || 0).toLocaleString("sv-SE")} SEK
+                                {Number(report.quantity_received) > 0 && Number(report.unit_cost_local) > 0 && (
+                                  <> · Totalt: {fmtCur(Number(report.quantity_received) * Number(report.unit_cost_local), localCurrency, { maximumFractionDigits: 2 })}</>
+                                )}
+                              </span>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* Deviation fields */}
