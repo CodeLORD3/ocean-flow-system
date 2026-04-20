@@ -252,6 +252,27 @@ export type Database = {
         }
         Relationships: []
       }
+      currency_settings: {
+        Row: {
+          id: string
+          sek_to_chf: number
+          transport_chf_per_kg: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          sek_to_chf?: number
+          transport_chf_per_kg?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          sek_to_chf?: number
+          transport_chf_per_kg?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           address: string | null

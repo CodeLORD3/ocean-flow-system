@@ -1,5 +1,8 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useSite } from "@/contexts/SiteContext";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { getStoreCurrency } from "@/lib/currency";
 import {
   useWeeklyReportsList,
   useWeeklyReportDetail,
@@ -67,7 +70,9 @@ function getWeekDateRange(year: number, week: number) {
 const fmt = (v: number) =>
   new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 }).format(v);
 
+// Default formatter (SEK). Per-store currency is resolved inside SummaryCards / WeeklyReportForm.
 const fmtKr = (v: number) => `${fmt(v)} kr`;
+const fmtCurr = (v: number, cur: string) => `${fmt(v)} ${cur === "SEK" ? "kr" : cur}`;
 
 // ─── Product Picker ─────────────────────────────────────────────────
 function ProductPicker({
@@ -180,6 +185,16 @@ function WeeklyReportForm({
   const isEdit = !!reportId;
   const { data: detail, isLoading: detailLoading } = useWeeklyReportDetail(reportId);
   const { data: allProducts = [] } = useProducts();
+  const { data: storeRow } = useQuery({
+    queryKey: ["store_row_for_report", storeId],
+    enabled: !!storeId,
+    queryFn: async () => {
+      const { data } = await supabase.from("stores").select("id, name, city").eq("id", storeId).maybeSingle();
+      return data;
+    },
+  });
+  const localCurrency = getStoreCurrency(storeRow as any);
+  const currencyLabel = localCurrency === "SEK" ? "kr" : localCurrency;
   const currentYear = new Date().getFullYear();
   const currentWeek = getCurrentWeek();
 
@@ -472,7 +487,7 @@ function WeeklyReportForm({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-xs">
-                    Ingående lager (kr)
+                    Ingående lager ({currencyLabel})
                     {!isEdit && prevData && (
                       <span className="text-[10px] text-muted-foreground ml-1">(auto)</span>
                     )}
@@ -496,7 +511,7 @@ function WeeklyReportForm({
                     <TableHead className="text-xs w-[40%]">Produkt</TableHead>
                     <TableHead className="text-xs text-right">Antal</TableHead>
                     <TableHead className="text-xs text-center">Enhet</TableHead>
-                    <TableHead className="text-xs text-right">Á-pris (kr)</TableHead>
+                    <TableHead className="text-xs text-right">Á-pris ({currencyLabel})</TableHead>
                     <TableHead className="text-xs text-right">Totalt</TableHead>
                     <TableHead className="w-8"></TableHead>
                   </TableRow>
@@ -622,7 +637,7 @@ function WeeklyReportForm({
                   <TableRow>
                     <TableHead className="text-xs">Kanal</TableHead>
                     <TableHead className="text-xs text-right">Antal</TableHead>
-                    <TableHead className="text-xs text-right">Belopp (kr)</TableHead>
+                    <TableHead className="text-xs text-right">Belopp ({currencyLabel})</TableHead>
                     <TableHead className="text-xs text-right">Förra året</TableHead>
                     <TableHead className="text-xs text-right">Förändr.</TableHead>
                   </TableRow>

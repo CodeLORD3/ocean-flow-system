@@ -37,6 +37,8 @@ import { useSubmitReceivingReport } from "@/hooks/useDeliveryReceivingReports";
 import { moveStockToRawLager } from "@/lib/stockTransfer";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { sv } from "date-fns/locale";
+import { getStoreCurrency, fmtCur } from "@/lib/currency";
+import { useCurrencySettings, convertSekToChfCost } from "@/hooks/useCurrencySettings";
 
 const REPORT_TYPES = ["Skadad", "Fel kvantitet", "Dålig kvalitet", "Saknas", "Annat"];
 
@@ -49,6 +51,8 @@ interface LineReport {
   // NEW: freshness fields captured at receiving
   arrival_date?: string;
   expiry_date?: string;
+  // NEW: per-unit cost in shop's local currency (CHF for Zollikon)
+  unit_cost_local?: string;
 }
 
 // Helper: color-code expiry dates entered during receiving
@@ -78,6 +82,19 @@ export default function Receiving() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const submitReport = useSubmitReceivingReport();
   const [lineReports, setLineReports] = useState<Record<string, LineReport>>({});
+  const { data: currencySettings } = useCurrencySettings();
+
+  // Fetch active store row to derive local currency (CHF for Zollikon, SEK otherwise)
+  const { data: activeStore } = useQuery({
+    queryKey: ["store_row", activeStoreId],
+    enabled: !!activeStoreId,
+    queryFn: async () => {
+      const { data } = await supabase.from("stores").select("id, name, city").eq("id", activeStoreId!).maybeSingle();
+      return data;
+    },
+  });
+  const localCurrency = getStoreCurrency(activeStore as any);
+  const isChfStore = localCurrency === "CHF";
 
   // Only fetch orders with status "Skickad"
   const { data: pendingOrders = [] } = useQuery({
@@ -86,7 +103,7 @@ export default function Receiving() {
       if (!activeStoreId) return [];
       const { data, error } = await supabase
         .from("shop_orders")
-        .select("*, stores(name), shop_order_lines(*, products(name, unit, category))")
+        .select("*, stores(name), shop_order_lines(*, products(name, unit, category, cost_price))")
         .eq("store_id", activeStoreId)
         .eq("status", "Skickad")
         .order("created_at", { ascending: false });
@@ -144,6 +161,14 @@ export default function Receiving() {
     return d.toISOString().slice(0, 10);
   };
 
+  // Compute auto CHF cost for a line based on product cost (SEK) + transport
+  const autoChfCost = (line: any): string => {
+    if (!isChfStore || !currencySettings) return "";
+    const sek = Number(line?.products?.cost_price) || 0;
+    if (sek <= 0) return "";
+    return String(convertSekToChfCost(sek, currencySettings));
+  };
+
   const openOrder = (order: any) => {
     setSelectedOrder(order);
     const today = new Date().toISOString().slice(0, 10);
@@ -157,6 +182,7 @@ export default function Receiving() {
         arrival_date: today,
         // Auto-fill expiry if product has shelf_life_days set
         expiry_date: calcExpiry(today, shelfLife),
+        unit_cost_local: autoChfCost(line),
       };
     });
     setLineReports(initial);
@@ -211,9 +237,19 @@ export default function Receiving() {
           .eq("id", lineId);
       }
 
-      // Move stock from Transportlager to shop's Raw-lager
+      // Move stock from Transportlager to shop's Raw-lager (with optional CHF unit costs for Zollikon)
       try {
-        await moveStockToRawLager(selectedOrder.id, activeStoreId);
+        const unitCostMap: Record<string, number> = {};
+        if (isChfStore) {
+          for (const [lineId, report] of Object.entries(lineReports)) {
+            const line = (selectedOrder.shop_order_lines || []).find((l: any) => l.id === lineId);
+            const cost = Number(report.unit_cost_local);
+            if (line && Number.isFinite(cost) && cost > 0) {
+              unitCostMap[line.product_id] = cost;
+            }
+          }
+        }
+        await moveStockToRawLager(selectedOrder.id, activeStoreId, isChfStore ? unitCostMap : undefined);
       } catch (err) {
         console.error("Stock transfer to Raw-lager error:", err);
       }
@@ -275,8 +311,8 @@ export default function Receiving() {
         quantity_received: String(line.quantity_ordered),
         confirmed: true,
         arrival_date: today,
-        // Auto-fill expiry from shelf_life_days if available
         expiry_date: lineReports[line.id]?.expiry_date || calcExpiry(today, shelfLife),
+        unit_cost_local: lineReports[line.id]?.unit_cost_local ?? autoChfCost(line),
       };
     });
     setLineReports(updated);
@@ -507,6 +543,13 @@ export default function Receiving() {
                 </DialogDescription>
               </DialogHeader>
 
+              {isChfStore && currencySettings && (
+                <div className="text-[10px] rounded-md border border-primary/20 bg-primary/5 p-2 text-foreground">
+                  <span className="font-medium">CHF-konvertering aktiv:</span>{" "}
+                  Inköpspris (SEK) × {currencySettings.sek_to_chf} + {currencySettings.transport_chf_per_kg} CHF/kg transport. Justera värdet per rad om behövs.
+                </div>
+              )}
+
               {/* Quick actions */}
               <div className="flex flex-wrap gap-2 mb-1">
                 <Button size="sm" variant="outline" className="text-xs gap-1 h-7" onClick={approveAll}>
@@ -657,6 +700,29 @@ export default function Receiving() {
                         {expiryLabel && (
                           <div className="col-span-3">
                             <p className={`text-[9px] font-medium ${expiryLabel.class}`}>{expiryLabel.text}</p>
+                          </div>
+                        )}
+                        {isChfStore && (
+                          <div className="col-span-3 space-y-0.5 pt-1 border-t border-border/40">
+                            <Label className="text-[9px] text-muted-foreground uppercase tracking-wide">
+                              Värde per {line.products?.unit || "kg"} ({localCurrency}) — auto-förslag, redigerbart
+                            </Label>
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={report.unit_cost_local || ""}
+                                onChange={(e) => updateLineReport(line.id, "unit_cost_local", e.target.value)}
+                                className="h-6 text-[10px] bg-background w-32"
+                                placeholder={autoChfCost(line) || "0.00"}
+                              />
+                              <span className="text-[9px] text-muted-foreground">
+                                Inköp: {Number(line.products?.cost_price || 0).toLocaleString("sv-SE")} SEK
+                                {Number(report.quantity_received) > 0 && Number(report.unit_cost_local) > 0 && (
+                                  <> · Totalt: {fmtCur(Number(report.quantity_received) * Number(report.unit_cost_local), localCurrency, { maximumFractionDigits: 2 })}</>
+                                )}
+                              </span>
+                            </div>
                           </div>
                         )}
                       </div>
