@@ -82,6 +82,19 @@ export default function Receiving() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const submitReport = useSubmitReceivingReport();
   const [lineReports, setLineReports] = useState<Record<string, LineReport>>({});
+  const { data: currencySettings } = useCurrencySettings();
+
+  // Fetch active store row to derive local currency (CHF for Zollikon, SEK otherwise)
+  const { data: activeStore } = useQuery({
+    queryKey: ["store_row", activeStoreId],
+    enabled: !!activeStoreId,
+    queryFn: async () => {
+      const { data } = await supabase.from("stores").select("id, name, city").eq("id", activeStoreId!).maybeSingle();
+      return data;
+    },
+  });
+  const localCurrency = getStoreCurrency(activeStore as any);
+  const isChfStore = localCurrency === "CHF";
 
   // Only fetch orders with status "Skickad"
   const { data: pendingOrders = [] } = useQuery({
@@ -90,7 +103,7 @@ export default function Receiving() {
       if (!activeStoreId) return [];
       const { data, error } = await supabase
         .from("shop_orders")
-        .select("*, stores(name), shop_order_lines(*, products(name, unit, category))")
+        .select("*, stores(name), shop_order_lines(*, products(name, unit, category, cost_price))")
         .eq("store_id", activeStoreId)
         .eq("status", "Skickad")
         .order("created_at", { ascending: false });
