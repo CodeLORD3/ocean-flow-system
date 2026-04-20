@@ -59,6 +59,7 @@ import {
   useUpsertStockLocation,
 } from "@/hooks/useStorageLocations";
 import { useSite } from "@/contexts/SiteContext";
+import { getStoreCurrency } from "@/lib/currency";
 import BarcodeScanner from "@/components/barcode/BarcodeScanner";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { sv } from "date-fns/locale";
@@ -224,6 +225,11 @@ export default function Inventory() {
   const queryClient = useQueryClient();
   const storeFilter = activeStoreId || "all";
   const isGrossist = site === "wholesale" || site === "production";
+
+  // Derive currency from active store (Zollikon → CHF, others → SEK)
+  const activeStore = (stores as any[]).find((s: any) => s.id === activeStoreId);
+  const localCurrency = getStoreCurrency(activeStore as any);
+  const fmtLocal = useMemo(() => fmtFor(localCurrency), [localCurrency]);
   const { data: locations = [], isLoading: loadingLoc } = useStorageLocations(
     isGrossist ? undefined : storeFilter !== "all" ? storeFilter : undefined,
   );
@@ -1005,8 +1011,8 @@ export default function Inventory() {
         </Card>
         <Card className="shadow-card">
           <CardContent className="p-3">
-            <p className="text-[10px] text-muted-foreground">Lagervärde (SEK)</p>
-            <p className="text-xl font-heading font-bold text-foreground">{fmt(totalValue)}</p>
+            <p className="text-[10px] text-muted-foreground">Lagervärde ({localCurrency})</p>
+            <p className="text-xl font-heading font-bold text-foreground">{fmtLocal(totalValue)}</p>
           </CardContent>
         </Card>
         <Card className="shadow-card">
