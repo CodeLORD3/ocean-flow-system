@@ -67,7 +67,9 @@ function getWeekDateRange(year: number, week: number) {
 const fmt = (v: number) =>
   new Intl.NumberFormat("sv-SE", { maximumFractionDigits: 0 }).format(v);
 
+// Default formatter (SEK). Per-store currency is resolved inside SummaryCards / WeeklyReportForm.
 const fmtKr = (v: number) => `${fmt(v)} kr`;
+const fmtCurr = (v: number, cur: string) => `${fmt(v)} ${cur === "SEK" ? "kr" : cur}`;
 
 // ─── Product Picker ─────────────────────────────────────────────────
 function ProductPicker({
