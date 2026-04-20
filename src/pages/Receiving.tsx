@@ -543,6 +543,13 @@ export default function Receiving() {
                 </DialogDescription>
               </DialogHeader>
 
+              {isChfStore && currencySettings && (
+                <div className="text-[10px] rounded-md border border-primary/20 bg-primary/5 p-2 text-foreground">
+                  <span className="font-medium">CHF-konvertering aktiv:</span>{" "}
+                  Inköpspris (SEK) × {currencySettings.sek_to_chf} + {currencySettings.transport_chf_per_kg} CHF/kg transport. Justera värdet per rad om behövs.
+                </div>
+              )}
+
               {/* Quick actions */}
               <div className="flex flex-wrap gap-2 mb-1">
                 <Button size="sm" variant="outline" className="text-xs gap-1 h-7" onClick={approveAll}>
