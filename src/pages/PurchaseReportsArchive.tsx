@@ -86,7 +86,8 @@ export default function PurchaseReportsArchive() {
       const { data, error } = await supabase
         .from("purchase_report_lines")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: true })
+        .order("id", { ascending: true });
       if (error) throw error;
       return data as ReportLine[];
     },
