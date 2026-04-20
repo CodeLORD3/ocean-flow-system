@@ -182,6 +182,16 @@ function WeeklyReportForm({
   const isEdit = !!reportId;
   const { data: detail, isLoading: detailLoading } = useWeeklyReportDetail(reportId);
   const { data: allProducts = [] } = useProducts();
+  const { data: storeRow } = useQuery({
+    queryKey: ["store_row_for_report", storeId],
+    enabled: !!storeId,
+    queryFn: async () => {
+      const { data } = await supabase.from("stores").select("id, name, city").eq("id", storeId).maybeSingle();
+      return data;
+    },
+  });
+  const localCurrency = getStoreCurrency(storeRow as any);
+  const currencyLabel = localCurrency === "SEK" ? "kr" : localCurrency;
   const currentYear = new Date().getFullYear();
   const currentWeek = getCurrentWeek();
 
