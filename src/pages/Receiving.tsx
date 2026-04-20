@@ -37,6 +37,8 @@ import { useSubmitReceivingReport } from "@/hooks/useDeliveryReceivingReports";
 import { moveStockToRawLager } from "@/lib/stockTransfer";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { sv } from "date-fns/locale";
+import { getStoreCurrency, fmtCur } from "@/lib/currency";
+import { useCurrencySettings, convertSekToChfCost } from "@/hooks/useCurrencySettings";
 
 const REPORT_TYPES = ["Skadad", "Fel kvantitet", "Dålig kvalitet", "Saknas", "Annat"];
 
@@ -49,6 +51,8 @@ interface LineReport {
   // NEW: freshness fields captured at receiving
   arrival_date?: string;
   expiry_date?: string;
+  // NEW: per-unit cost in shop's local currency (CHF for Zollikon)
+  unit_cost_local?: string;
 }
 
 // Helper: color-code expiry dates entered during receiving
