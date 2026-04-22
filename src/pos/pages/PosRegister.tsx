@@ -46,20 +46,45 @@ export default function PosRegister() {
     });
   }, [products, search, activeCat]);
 
-  const onTileClick = (p: PosProduct) => {
+  /**
+   * Hämtar äldsta aktiva batchen via traceability-edge så vi kan visa ursprung
+   * direkt på cart-raden. Tyst fail om backend inte svarar — raden läggs till ändå.
+   */
+  const fetchOriginForSku = async (sku: string): Promise<CartLineOrigin | null> => {
+    try {
+      const res = await scomberClient.traceability({ sku, store_id: cashier?.store_id ?? null });
+      const oldest = res.batches?.[0];
+      if (!oldest) return null;
+      const raw = (oldest.raw ?? {}) as Record<string, unknown>;
+      return {
+        batch_id: oldest.batch_id,
+        country: typeof raw.country_of_origin === "string" ? raw.country_of_origin : null,
+        caught_at: oldest.caught_at,
+        vessel: typeof raw.vessel === "string" ? raw.vessel : null,
+        msc: raw.msc_certified === true,
+      };
+    } catch (e) {
+      console.warn("traceability lookup failed", e);
+      return null;
+    }
+  };
+
+  const onTileClick = async (p: PosProduct) => {
     if (p.unit_type === "kg") {
       setWeightProduct(p);
-    } else {
-      addLine({
-        product_id: p.id,
-        sku: p.sku,
-        name: p.name,
-        unit: p.unit_type,
-        quantity: 1,
-        unit_price_ore: p.price_ore,
-        vat_rate: Number(p.vat_rate),
-      });
+      return;
     }
+    const origin = await fetchOriginForSku(p.sku);
+    addLine({
+      product_id: p.id,
+      sku: p.sku,
+      name: p.name,
+      unit: p.unit_type,
+      quantity: 1,
+      unit_price_ore: p.price_ore,
+      vat_rate: Number(p.vat_rate),
+      origin,
+    });
   };
 
   const park = async () => {
