@@ -39,44 +39,47 @@ const pageTitles: Record<string, { title: string; breadcrumb: string[] }> = {
   "/barcodes": { title: "Streckkoder", breadcrumb: ["Hem", "Lagerstyrning", "Streckkoder"] },
 };
 
-function AccountSwitcher() {
-  const { activeUser, staff, switchUser } = useActiveUser();
-  const initials = activeUser ? `${activeUser.first_name[0]}${activeUser.last_name[0]}` : "?";
+function AccountMenu() {
+  const { staff, signOut } = useStaffAuth();
+  const navigate = useNavigate();
+  const initials = staff ? `${staff.first_name[0]}${staff.last_name[0]}` : "?";
+  const portalCount = staff?.portal_access?.length ?? 0;
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/", { replace: true });
+  };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-8 gap-2 px-2">
           <Avatar className="h-6 w-6">
-            {activeUser?.profile_image_url && <AvatarImage src={activeUser.profile_image_url} />}
+            {staff?.profile_image_url && <AvatarImage src={staff.profile_image_url} />}
             <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{initials}</AvatarFallback>
           </Avatar>
           <span className="hidden sm:inline text-xs font-medium">
-            {activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : "Välj konto"}
+            {staff ? `${staff.first_name} ${staff.last_name}` : "Konto"}
           </span>
           <ChevronDown className="h-3 w-3 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="text-xs text-muted-foreground">Byt konto</DropdownMenuLabel>
+        <DropdownMenuLabel className="text-xs">
+          <div className="flex flex-col">
+            <span>{staff ? `${staff.first_name} ${staff.last_name}` : "—"}</span>
+            <span className="text-[10px] text-muted-foreground font-normal">{staff?.email ?? ""}</span>
+          </div>
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {staff.map((s) => (
-          <DropdownMenuItem
-            key={s.id}
-            onClick={() => switchUser(s.id)}
-            className="gap-2 cursor-pointer"
-          >
-            <Avatar className="h-6 w-6">
-              {s.profile_image_url && <AvatarImage src={s.profile_image_url} />}
-              <AvatarFallback className="text-[9px] bg-muted">{s.first_name[0]}{s.last_name[0]}</AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col flex-1 min-w-0">
-              <span className="text-xs font-medium truncate">{s.first_name} {s.last_name}</span>
-              <span className="text-[10px] text-muted-foreground truncate">{s.workplace || "–"}</span>
-            </div>
-            {activeUser?.id === s.id && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+        {portalCount > 1 && (
+          <DropdownMenuItem className="text-xs gap-2 cursor-pointer" onClick={() => navigate("/choose-portal")}>
+            <ArrowLeftRight className="h-3.5 w-3.5" /> Byt portal
           </DropdownMenuItem>
-        ))}
+        )}
+        <DropdownMenuItem className="text-xs gap-2 cursor-pointer text-destructive focus:text-destructive" onClick={handleSignOut}>
+          <LogOut className="h-3.5 w-3.5" /> Logga ut
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
