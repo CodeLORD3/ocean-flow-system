@@ -3,9 +3,10 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { ShopSidebar } from "@/components/ShopSidebar";
 import { ProductionSidebar } from "@/components/ProductionSidebar";
 
-import { useLocation } from "react-router-dom";
-import { Bell, ChevronRight, Search, User, ArrowLeftRight, Factory, Store, ChevronDown, X, Check } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Bell, ChevronRight, Search, User, ArrowLeftRight, Factory, Store, ChevronDown, X, Check, LogOut } from "lucide-react";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,44 +39,47 @@ const pageTitles: Record<string, { title: string; breadcrumb: string[] }> = {
   "/barcodes": { title: "Streckkoder", breadcrumb: ["Hem", "Lagerstyrning", "Streckkoder"] },
 };
 
-function AccountSwitcher() {
-  const { activeUser, staff, switchUser } = useActiveUser();
-  const initials = activeUser ? `${activeUser.first_name[0]}${activeUser.last_name[0]}` : "?";
+function AccountMenu() {
+  const { staff, signOut } = useStaffAuth();
+  const navigate = useNavigate();
+  const initials = staff ? `${staff.first_name[0]}${staff.last_name[0]}` : "?";
+  const portalCount = staff?.portal_access?.length ?? 0;
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/", { replace: true });
+  };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-8 gap-2 px-2">
           <Avatar className="h-6 w-6">
-            {activeUser?.profile_image_url && <AvatarImage src={activeUser.profile_image_url} />}
+            {staff?.profile_image_url && <AvatarImage src={staff.profile_image_url} />}
             <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{initials}</AvatarFallback>
           </Avatar>
           <span className="hidden sm:inline text-xs font-medium">
-            {activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : "Välj konto"}
+            {staff ? `${staff.first_name} ${staff.last_name}` : "Konto"}
           </span>
           <ChevronDown className="h-3 w-3 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="text-xs text-muted-foreground">Byt konto</DropdownMenuLabel>
+        <DropdownMenuLabel className="text-xs">
+          <div className="flex flex-col">
+            <span>{staff ? `${staff.first_name} ${staff.last_name}` : "—"}</span>
+            <span className="text-[10px] text-muted-foreground font-normal">{staff?.email ?? ""}</span>
+          </div>
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {staff.map((s) => (
-          <DropdownMenuItem
-            key={s.id}
-            onClick={() => switchUser(s.id)}
-            className="gap-2 cursor-pointer"
-          >
-            <Avatar className="h-6 w-6">
-              {s.profile_image_url && <AvatarImage src={s.profile_image_url} />}
-              <AvatarFallback className="text-[9px] bg-muted">{s.first_name[0]}{s.last_name[0]}</AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col flex-1 min-w-0">
-              <span className="text-xs font-medium truncate">{s.first_name} {s.last_name}</span>
-              <span className="text-[10px] text-muted-foreground truncate">{s.workplace || "–"}</span>
-            </div>
-            {activeUser?.id === s.id && <Check className="h-3.5 w-3.5 text-primary shrink-0" />}
+        {portalCount > 1 && (
+          <DropdownMenuItem className="text-xs gap-2 cursor-pointer" onClick={() => navigate("/choose-portal")}>
+            <ArrowLeftRight className="h-3.5 w-3.5" /> Byt portal
           </DropdownMenuItem>
-        ))}
+        )}
+        <DropdownMenuItem className="text-xs gap-2 cursor-pointer text-destructive focus:text-destructive" onClick={handleSignOut}>
+          <LogOut className="h-3.5 w-3.5" /> Logga ut
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -87,7 +91,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { site, setSite, activeStoreName, setActiveStore } = useSite();
   const { tabs, activeTab, closeTab, switchTab } = useTabs();
   const { data: allStores = [] } = useStores();
-  const retailStores = allStores.filter(s => !s.is_wholesale);
+  const { staff } = useStaffAuth();
+
+  const access = staff?.portal_access ?? [];
+  const lockedStoreId = staff?.allowed_store_id ?? null;
+  const retailStores = allStores
+    .filter((s) => !s.is_wholesale)
+    .filter((s) => !lockedStoreId || s.id === lockedStoreId);
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -118,34 +129,42 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuLabel className="text-[10px]">Välj portal</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className={`text-xs gap-2 ${site === "wholesale" ? "bg-muted font-medium" : ""}`}
-                    onClick={() => { setSite("wholesale"); setActiveStore(null, null); switchTab("/organisation"); }}
-                  >
-                    <Factory className="h-3 w-3" /> Grossist
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className={`text-xs gap-2 ${site === "production" ? "bg-muted font-medium" : ""}`}
-                    onClick={() => { setSite("production"); setActiveStore(null, null); switchTab("/"); }}
-                  >
-                    <Factory className="h-3 w-3" /> Produktion
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuLabel className="text-[10px]">Butiker</DropdownMenuLabel>
-                  {retailStores.length === 0 ? (
-                    <DropdownMenuItem disabled className="text-[10px] text-muted-foreground">
-                      Inga butiker tillagda
+                  {access.includes("wholesale") && (
+                    <DropdownMenuItem
+                      className={`text-xs gap-2 ${site === "wholesale" ? "bg-muted font-medium" : ""}`}
+                      onClick={() => { setSite("wholesale"); setActiveStore(null, null); switchTab("/organisation"); }}
+                    >
+                      <Factory className="h-3 w-3" /> Grossist
                     </DropdownMenuItem>
-                  ) : (
-                    retailStores.map(store => (
-                      <DropdownMenuItem
-                        key={store.id}
-                        className={`text-xs gap-2 ${site === "shop" && activeStoreName === store.name ? "bg-muted font-medium" : ""}`}
-                        onClick={() => { setSite("shop"); setActiveStore(store.id, store.name); switchTab("/"); }}
-                      >
-                        <Store className="h-3 w-3" /> {store.name}
-                      </DropdownMenuItem>
-                    ))
+                  )}
+                  {access.includes("production") && (
+                    <DropdownMenuItem
+                      className={`text-xs gap-2 ${site === "production" ? "bg-muted font-medium" : ""}`}
+                      onClick={() => { setSite("production"); setActiveStore(null, null); switchTab("/"); }}
+                    >
+                      <Factory className="h-3 w-3" /> Produktion
+                    </DropdownMenuItem>
+                  )}
+                  {access.includes("shop") && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel className="text-[10px]">Butiker</DropdownMenuLabel>
+                      {retailStores.length === 0 ? (
+                        <DropdownMenuItem disabled className="text-[10px] text-muted-foreground">
+                          Inga butiker tillgängliga
+                        </DropdownMenuItem>
+                      ) : (
+                        retailStores.map((store) => (
+                          <DropdownMenuItem
+                            key={store.id}
+                            className={`text-xs gap-2 ${site === "shop" && activeStoreName === store.name ? "bg-muted font-medium" : ""}`}
+                            onClick={() => { setSite("shop"); setActiveStore(store.id, store.name); switchTab("/"); }}
+                          >
+                            <Store className="h-3 w-3" /> {store.name}
+                          </DropdownMenuItem>
+                        ))
+                      )}
+                    </>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -179,7 +198,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 <Bell className="h-4 w-4" />
               </Button>
 
-              <AccountSwitcher />
+              <AccountMenu />
             </div>
           </header>
 

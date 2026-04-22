@@ -21,7 +21,7 @@ export function useStaff(storeId?: string) {
     queryFn: async () => {
       let q = supabase
         .from("staff")
-        .select("*, stores(name)")
+        .select("*, stores!staff_store_id_fkey(name)")
         .order("first_name", { ascending: true });
       if (storeId) q = q.eq("store_id", storeId);
       const { data, error } = await q;

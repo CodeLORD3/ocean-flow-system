@@ -4,15 +4,19 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import ScrollToTop from "@/components/ScrollToTop";
 import { AppLayout } from "@/components/AppLayout";
 import { SiteProvider } from "@/contexts/SiteContext";
 import { ActiveUserProvider } from "@/contexts/ActiveUserContext";
 import { TabsProvider } from "@/contexts/TabsContext";
 import { KeepAliveTabs } from "@/components/KeepAliveTabs";
+import { StaffAuthProvider, useStaffAuth } from "@/contexts/StaffAuthContext";
+import Landing from "@/pages/Landing";
+import PortalChooser from "@/pages/PortalChooser";
+import { Loader2 } from "lucide-react";
 
-// Portal imports
+// Investor Portal
 import PortalLayout from "@/portal/PortalLayout";
 import PortalLogin from "@/portal/PortalLogin";
 import PortalSignup from "@/portal/PortalSignup";
@@ -22,17 +26,32 @@ import PortalResetPassword from "@/portal/PortalResetPassword";
 
 const queryClient = new QueryClient();
 
-const ERPContent = () => {
+const ERPGate = () => {
+  const { session, staff, loading } = useStaffAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  if (!session) return <Navigate to="/" replace />;
+  if (!staff || (staff.portal_access ?? []).length === 0) {
+    return <Navigate to="/choose-portal" replace />;
+  }
+  // Mark current path as the post-login destination
+  if (location.pathname === "/") return <Navigate to="/choose-portal" replace />;
+
   return (
-    <SiteProvider>
-      <ActiveUserProvider>
-        <TabsProvider>
-          <AppLayout>
-            <KeepAliveTabs />
-          </AppLayout>
-        </TabsProvider>
-      </ActiveUserProvider>
-    </SiteProvider>
+    <ActiveUserProvider>
+      <TabsProvider>
+        <AppLayout>
+          <KeepAliveTabs />
+        </AppLayout>
+      </TabsProvider>
+    </ActiveUserProvider>
   );
 };
 
@@ -40,18 +59,26 @@ const AppContent = () => {
   return (
     <BrowserRouter>
       <ScrollToTop />
-      <Routes>
-        {/* Client Trading Portal — separate layout with internal tab system */}
-        <Route path="/portal/login" element={<PortalLogin />} />
-        <Route path="/portal/signup" element={<PortalSignup />} />
-        <Route path="/portal/confirm-email" element={<PortalConfirmEmail />} />
-        <Route path="/portal/forgot-password" element={<PortalForgotPassword />} />
-        <Route path="/portal/reset-password" element={<PortalResetPassword />} />
-        <Route path="/portal/*" element={<PortalLayout />} />
+      <StaffAuthProvider>
+        <SiteProvider>
+          <Routes>
+            {/* Public landing with login (root) */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/choose-portal" element={<PortalChooser />} />
 
-        {/* ERP — catch-all */}
-        <Route path="*" element={<ERPContent />} />
-      </Routes>
+            {/* Investor Portal (separate auth) */}
+            <Route path="/portal/login" element={<PortalLogin />} />
+            <Route path="/portal/signup" element={<PortalSignup />} />
+            <Route path="/portal/confirm-email" element={<PortalConfirmEmail />} />
+            <Route path="/portal/forgot-password" element={<PortalForgotPassword />} />
+            <Route path="/portal/reset-password" element={<PortalResetPassword />} />
+            <Route path="/portal/*" element={<PortalLayout />} />
+
+            {/* Everything else = ERP (gated) */}
+            <Route path="*" element={<ERPGate />} />
+          </Routes>
+        </SiteProvider>
+      </StaffAuthProvider>
     </BrowserRouter>
   );
 };
