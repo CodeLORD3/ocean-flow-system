@@ -174,4 +174,31 @@ export const scomberClient = {
       payload as Record<string, unknown>,
     );
   },
+
+  traceability(payload: { sku: string; store_id?: string | null }) {
+    return invoke<TraceabilityResponse>("scomber-traceability", payload as Record<string, unknown>);
+  },
+
+  morningSuggest(payload: { store_ids: string[] }) {
+    return invoke<{ ok: true; generated_at: string; suggestions: MorningSuggestion[] }>(
+      "scomber-morning-suggest",
+      payload as Record<string, unknown>,
+    );
+  },
+
+  setOverrides(payload: {
+    overrides: Array<{
+      article_id: string;
+      store_id?: string | null;
+      price_ore: number;
+      channel?: string;
+      effective_date?: string;
+    }>;
+    set_by?: string;
+  }) {
+    return invoke<{ ok: true; inserted: number }>(
+      "scomber-set-override",
+      payload as Record<string, unknown>,
+    );
+  },
 };
