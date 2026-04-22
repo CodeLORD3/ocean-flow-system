@@ -52,7 +52,11 @@ Deno.serve(async (req) => {
   const { data: list } = await sb.auth.admin.listUsers({ page: 1, perPage: 200 });
 
   for (const u of USERS) {
-    let user = list?.users.find((x) => x.email?.toLowerCase() === u.email.toLowerCase());
+    let user =
+      list?.users.find((x) => x.email?.toLowerCase() === u.email.toLowerCase()) ||
+      (u.oldEmail
+        ? list?.users.find((x) => x.email?.toLowerCase() === u.oldEmail!.toLowerCase())
+        : undefined);
 
     if (!user) {
       const { data, error } = await sb.auth.admin.createUser({
@@ -68,6 +72,7 @@ Deno.serve(async (req) => {
       results.push({ email: u.email, status: "created" });
     } else {
       const { error } = await sb.auth.admin.updateUserById(user.id, {
+        email: u.email,
         password: u.password,
         email_confirm: true,
       });
