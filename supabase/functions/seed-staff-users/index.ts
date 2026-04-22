@@ -11,12 +11,15 @@ const sb = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
-const ZOLLIKON_STORE_ID = "93adfded-5d68-41e3-9b00-c3b3db4f5ee4";
-const KUNGSHOLMEN_STORE_ID = "eb3b69e6-cf80-4cef-aaba-c5fe2c5151d7";
-const ALSTEN_STORE_ID = "0f8691d1-1fde-4b0f-8f26-31cc9d59619f";
+const ZOLLIKON_STORE_ID   = "93adfded-5d68-41e3-9b00-c3b3db4f5ee4";
+const STOCKHOLM_STORE_ID  = "eb3b69e6-cf80-4cef-aaba-c5fe2c5151d7";
+const TORGET_STORE_ID     = "b541f4c6-1ac0-4127-8af3-761ce3ecbbd7";
+const AMHULT_STORE_ID     = "1426d0bb-dd09-46be-9d11-bc96d203eede";
+const SARO_STORE_ID       = "9ca4f9de-5a14-4bdf-90e7-b22246d41f55";
 
 type SeedUser = {
   email: string;
+  oldEmail?: string;
   password: string;
   first: string;
   last?: string;
@@ -26,13 +29,14 @@ type SeedUser = {
 };
 
 const USERS: SeedUser[] = [
-  { email: "info@fiskskaldjur.ch",     password: "Anna123",    first: "Anna",    portals: ["shop"],                          store: ZOLLIKON_STORE_ID },
-  { email: "info@fiskskaldjur.se",     password: "Robin123",   first: "Robin",   portals: ["wholesale", "production"],       store: null },
-  { email: "timhvarfvenius@gmail.com", password: "Tim123",     first: "Tim",     portals: ["shop", "wholesale", "production"], store: null },
-  { email: "joakim@fiskskaldjur.ch",   password: "Joakim123",  first: "Joakim",  portals: ["shop", "wholesale", "production"], store: null },
-  { email: "baldvin@fiskskaldjur.se",  password: "Baldvin123", first: "Baldvin", portals: ["shop", "wholesale", "production"], store: null },
-  { email: "mensur@fiskskaldjur.se",   password: "Mensur123",  first: "Mensur",  portals: ["production"],                    store: null },
-  { email: "vilma.gunnarsson@gmail.com", password: "Vilma123", first: "Vilma",   last: "Andersson", portals: ["shop"],       store: null, stores: [KUNGSHOLMEN_STORE_ID, ALSTEN_STORE_ID] },
+  { email: "info@fiskskaldjur.ch",        password: "Anna123",    first: "Anna",    portals: ["shop"],                            store: ZOLLIKON_STORE_ID },
+  { email: "robinelzerqvist@icloud.com",  oldEmail: "info@fiskskaldjur.se", password: "Robin123",   first: "Robin",   portals: ["wholesale", "production"],         store: null },
+  { email: "timhvarfvenius@gmail.com",    password: "Tim123",     first: "Tim",     portals: ["shop", "wholesale", "production"], store: null },
+  { email: "joakim@fiskskaldjur.ch",      password: "Joakim123",  first: "Joakim",  portals: ["shop", "wholesale", "production"], store: null },
+  { email: "baldvin@fiskskaldjur.se",     password: "Baldvin123", first: "Baldvin", portals: ["shop", "wholesale", "production"], store: null },
+  { email: "mensurmehamed23@gmail.com",   oldEmail: "mensur@fiskskaldjur.se", password: "Mensur123",  first: "Mensur",  portals: ["production"],                      store: null },
+  { email: "vilma.gunnarsson@gmail.com",  password: "Vilma123",   first: "Vilma",   last: "Andersson", portals: ["shop"],         store: null, stores: [STOCKHOLM_STORE_ID] },
+  { email: "fredric.lindqvist@calixter.com", password: "Fredric123", first: "Fredric", last: "Lindqvist", portals: ["shop", "wholesale", "production"], store: null, stores: [STOCKHOLM_STORE_ID, TORGET_STORE_ID, AMHULT_STORE_ID, SARO_STORE_ID] },
 ];
 
 Deno.serve(async (req) => {
@@ -48,7 +52,11 @@ Deno.serve(async (req) => {
   const { data: list } = await sb.auth.admin.listUsers({ page: 1, perPage: 200 });
 
   for (const u of USERS) {
-    let user = list?.users.find((x) => x.email?.toLowerCase() === u.email.toLowerCase());
+    let user =
+      list?.users.find((x) => x.email?.toLowerCase() === u.email.toLowerCase()) ||
+      (u.oldEmail
+        ? list?.users.find((x) => x.email?.toLowerCase() === u.oldEmail!.toLowerCase())
+        : undefined);
 
     if (!user) {
       const { data, error } = await sb.auth.admin.createUser({
@@ -64,6 +72,7 @@ Deno.serve(async (req) => {
       results.push({ email: u.email, status: "created" });
     } else {
       const { error } = await sb.auth.admin.updateUserById(user.id, {
+        email: u.email,
         password: u.password,
         email_confirm: true,
       });

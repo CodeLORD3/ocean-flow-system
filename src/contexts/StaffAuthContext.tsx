@@ -15,6 +15,7 @@ export interface StaffProfile {
   portal_access: PortalKey[];
   allowed_store_id: string | null;
   allowed_store_ids: string[];
+  must_change_password: boolean;
 }
 
 interface AuthContextValue {
@@ -41,7 +42,7 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
     }
     const { data } = await supabase
       .from("staff")
-      .select("id, user_id, first_name, last_name, email, workplace, profile_image_url, portal_access, allowed_store_id, allowed_store_ids")
+      .select("id, user_id, first_name, last_name, email, workplace, profile_image_url, portal_access, allowed_store_id, allowed_store_ids, must_change_password")
       .eq("user_id", uid)
       .maybeSingle();
     setStaff((data as unknown as StaffProfile) ?? null);

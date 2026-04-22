@@ -14,6 +14,7 @@ import { KeepAliveTabs } from "@/components/KeepAliveTabs";
 import { StaffAuthProvider, useStaffAuth } from "@/contexts/StaffAuthContext";
 import Landing from "@/pages/Landing";
 import PortalChooser from "@/pages/PortalChooser";
+import FirstLoginPasswordChange from "@/pages/FirstLoginPasswordChange";
 import { Loader2 } from "lucide-react";
 
 // Investor Portal
@@ -40,6 +41,9 @@ const ERPGate = () => {
   if (!session) return <Navigate to="/" replace />;
   if (!staff || (staff.portal_access ?? []).length === 0) {
     return <Navigate to="/choose-portal" replace />;
+  }
+  if (staff.must_change_password) {
+    return <FirstLoginPasswordChange />;
   }
   // Mark current path as the post-login destination
   if (location.pathname === "/") return <Navigate to="/choose-portal" replace />;
