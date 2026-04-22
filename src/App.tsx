@@ -25,6 +25,13 @@ import PortalConfirmEmail from "@/portal/PortalConfirmEmail";
 import PortalForgotPassword from "@/portal/PortalForgotPassword";
 import PortalResetPassword from "@/portal/PortalResetPassword";
 
+// POS (Point of Sale)
+import PosLayout from "@/pos/PosLayout";
+import PosGate from "@/pos/PosGate";
+import PosLogin from "@/pos/pages/PosLogin";
+import PosShift from "@/pos/pages/PosShift";
+import PosRegister from "@/pos/pages/PosRegister";
+
 const queryClient = new QueryClient();
 
 const ERPGate = () => {
