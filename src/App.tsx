@@ -85,6 +85,27 @@ const AppContent = () => {
             <Route path="/portal/reset-password" element={<PortalResetPassword />} />
             <Route path="/portal/*" element={<PortalLayout />} />
 
+            {/* POS — separate auth, scoped theme */}
+            <Route path="/pos" element={<PosLayout />}>
+              <Route path="login" element={<PosLogin />} />
+              <Route
+                path="shift"
+                element={
+                  <PosGate>
+                    <PosShift />
+                  </PosGate>
+                }
+              />
+              <Route
+                index
+                element={
+                  <PosGate requireShift>
+                    <PosRegister />
+                  </PosGate>
+                }
+              />
+            </Route>
+
             {/* Everything else = ERP (gated) */}
             <Route path="*" element={<ERPGate />} />
           </Routes>
