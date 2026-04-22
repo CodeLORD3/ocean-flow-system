@@ -100,7 +100,7 @@ type NavSection = { label: string; items: NavItem[]; collapsible?: boolean };
 
 const sections: NavSection[] = [
   { label: "Översikt", items: overviewNav },
-  { label: "Kalender", items: calendarNav, collapsible: true },
+  { label: "Kalender", items: calendarNav },
   { label: "Försäljning", items: salesNav },
   { label: "Inköp", items: purchaseNav },
   { label: "Produktion", items: productionNav },
