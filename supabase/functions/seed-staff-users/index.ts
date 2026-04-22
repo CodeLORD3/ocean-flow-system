@@ -19,6 +19,7 @@ const SARO_STORE_ID       = "9ca4f9de-5a14-4bdf-90e7-b22246d41f55";
 
 type SeedUser = {
   email: string;
+  oldEmail?: string;
   password: string;
   first: string;
   last?: string;
