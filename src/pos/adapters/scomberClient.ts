@@ -57,13 +57,54 @@ async function invoke<T>(
     | "scomber-pos-checkout"
     | "scomber-b2b-order"
     | "scomber-batch-allocate"
-    | "scomber-makrilltrade-sync",
+    | "scomber-makrilltrade-sync"
+    | "scomber-traceability"
+    | "scomber-morning-suggest"
+    | "scomber-set-override",
   body: Record<string, unknown>,
 ): Promise<T> {
   const { data, error } = await supabase.functions.invoke(fn, { body });
   if (error) throw new Error(`${fn} failed: ${error.message}`);
   if (!data?.ok) throw new Error(`${fn} returned error: ${JSON.stringify(data)}`);
   return data as T;
+}
+
+export interface TraceabilityBatch {
+  batch_id: string;
+  article_id: string;
+  supplier_name: string | null;
+  caught_at: string | null;
+  best_before: string | null;
+  quantity_remaining: number;
+  unit: string;
+  raw: Record<string, unknown> | null;
+}
+
+export interface TraceabilityResponse {
+  ok: true;
+  product: { id: string; sku: string; name: string; erp_id: string | null } | null;
+  article: { article_id: string; name: string; sku: string | null; unit: string; vat_rate: number; category: string | null } | null;
+  batches: TraceabilityBatch[];
+  store_id: string | null;
+}
+
+export interface MorningSuggestion {
+  article_id: string;
+  sku: string | null;
+  name: string;
+  unit: string;
+  vat_rate: number;
+  store_id: string;
+  store_name: string;
+  current_price_ore: number;
+  current_source: "override" | "default";
+  suggested_price_ore: number;
+  change_ore: number;
+  margin_percent: number | null;
+  rationale: string;
+  oldest_batch_id: string | null;
+  cost_ore: number | null;
+  strategy: string;
 }
 
 export const scomberClient = {
@@ -130,6 +171,33 @@ export const scomberClient = {
   }) {
     return invoke<{ ok: true; mode: string; articles: number; batches: number }>(
       "scomber-makrilltrade-sync",
+      payload as Record<string, unknown>,
+    );
+  },
+
+  traceability(payload: { sku: string; store_id?: string | null }) {
+    return invoke<TraceabilityResponse>("scomber-traceability", payload as Record<string, unknown>);
+  },
+
+  morningSuggest(payload: { store_ids: string[] }) {
+    return invoke<{ ok: true; generated_at: string; suggestions: MorningSuggestion[] }>(
+      "scomber-morning-suggest",
+      payload as Record<string, unknown>,
+    );
+  },
+
+  setOverrides(payload: {
+    overrides: Array<{
+      article_id: string;
+      store_id?: string | null;
+      price_ore: number;
+      channel?: string;
+      effective_date?: string;
+    }>;
+    set_by?: string;
+  }) {
+    return invoke<{ ok: true; inserted: number }>(
+      "scomber-set-override",
       payload as Record<string, unknown>,
     );
   },

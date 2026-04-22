@@ -2418,6 +2418,56 @@ export type Database = {
         }
         Relationships: []
       }
+      scomber_pricing_rules: {
+        Row: {
+          article_id: string
+          created_at: string
+          fixed_price_ore: number | null
+          id: string
+          markup_percent: number | null
+          max_price_ore: number | null
+          min_price_ore: number | null
+          store_multiplier: Json
+          strategy: string
+          target_margin_percent: number | null
+          updated_at: string
+        }
+        Insert: {
+          article_id: string
+          created_at?: string
+          fixed_price_ore?: number | null
+          id?: string
+          markup_percent?: number | null
+          max_price_ore?: number | null
+          min_price_ore?: number | null
+          store_multiplier?: Json
+          strategy?: string
+          target_margin_percent?: number | null
+          updated_at?: string
+        }
+        Update: {
+          article_id?: string
+          created_at?: string
+          fixed_price_ore?: number | null
+          id?: string
+          markup_percent?: number | null
+          max_price_ore?: number | null
+          min_price_ore?: number | null
+          store_multiplier?: Json
+          strategy?: string
+          target_margin_percent?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scomber_pricing_rules_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: true
+            referencedRelation: "makrilltrade_articles_cache"
+            referencedColumns: ["article_id"]
+          },
+        ]
+      }
       shop_order_change_requests: {
         Row: {
           change_type: string

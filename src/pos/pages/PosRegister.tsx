@@ -10,6 +10,9 @@ import { useCashier } from "../store/cashier";
 import { formatSek } from "../lib/money";
 import WeightDialog from "../components/WeightDialog";
 import PaymentDialog from "../components/PaymentDialog";
+import OriginChip from "../components/OriginChip";
+import TraceabilityModal from "../components/TraceabilityModal";
+import { CountryFlag } from "../components/CountryBadge";
 
 const CATEGORY_ORDER = ["Färsk fisk", "Skaldjur", "Rökt & gravat", "Delikatess", "Torrvaror"];
 
@@ -22,6 +25,7 @@ export default function PosRegister() {
   const [search, setSearch] = useState("");
   const [weightProduct, setWeightProduct] = useState<PosProduct | null>(null);
   const [showPay, setShowPay] = useState(false);
+  const [traceFor, setTraceFor] = useState<{ sku: string; name: string } | null>(null);
 
   const { tabs, activeTabId, switchTab, newTab, removeTab, addLine, removeLine, clear } = useCart();
   const activeTab = useCart(selectActiveTab);
@@ -204,6 +208,12 @@ export default function PosRegister() {
                         ? `${l.quantity.toLocaleString("sv-SE", { maximumFractionDigits: 3 })} kg × ${formatSek(l.unit_price_ore)}`
                         : `${l.quantity} st × ${formatSek(l.unit_price_ore)}`}
                     </div>
+                    <div className="mt-1">
+                      <OriginChip
+                        origin={l.origin ?? null}
+                        onClick={() => setTraceFor({ sku: l.sku, name: l.name })}
+                      />
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold tabular">{formatSek(l.line_total_ore)}</span>
@@ -293,6 +303,14 @@ export default function PosRegister() {
           onClose={() => setShowPay(false)}
         />
       )}
+
+      <TraceabilityModal
+        open={!!traceFor}
+        sku={traceFor?.sku ?? null}
+        productName={traceFor?.name ?? ""}
+        storeId={cashier?.store_id ?? null}
+        onClose={() => setTraceFor(null)}
+      />
     </div>
   );
 }

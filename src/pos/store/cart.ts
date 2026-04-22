@@ -1,5 +1,13 @@
 import { create } from "zustand";
 
+export interface CartLineOrigin {
+  batch_id: string | null;
+  country: string | null;       // ISO 3166-1 alpha-2 (e.g. "NO", "SE")
+  caught_at: string | null;     // ISO date
+  vessel: string | null;
+  msc: boolean;
+}
+
 export interface CartLine {
   id: string;
   product_id: string;
@@ -13,6 +21,7 @@ export interface CartLine {
   /** computed: round(quantity * unit_price_ore) - per line */
   line_total_ore: number;
   discount_ore: number;
+  origin?: CartLineOrigin | null;
 }
 
 export interface CartTab {
