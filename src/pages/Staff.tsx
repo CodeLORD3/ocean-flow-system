@@ -22,7 +22,16 @@ import { useToast } from "@/hooks/use-toast";
 import { useStaff, useCreateStaff, useUpdateStaff, useDeleteStaff, StaffMember } from "@/hooks/useStaff";
 import { useStores } from "@/hooks/useStores";
 import { useSite } from "@/contexts/SiteContext";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { StaffDetailDialog } from "@/components/staff/StaffDetailDialog";
+import { Activity } from "lucide-react";
+
+const ACTIVITY_VIEWER_EMAILS = [
+  "joakim@fiskskaldjur.ch",
+  "baldvin@fiskskaldjur.se",
+  "timhvarfvenius@gmail.com",
+];
 
 export default function Staff() {
   const { toast } = useToast();
