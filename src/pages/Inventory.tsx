@@ -825,14 +825,14 @@ export default function Inventory() {
 
   // ── Render helpers ───────────────────────────────────────────────────────
   const renderSelectionActions = (locId: string) => (
-    <div className="flex items-center gap-1 mr-2">
+    <div className="flex items-center gap-1 flex-wrap sm:mr-2">
       <Badge variant="outline" className="text-[10px] h-5">
         {getSelectedForLocation(locId).size} valda
       </Badge>
       <Button
         variant="outline"
         size="sm"
-        className="h-6 px-2 text-[10px] gap-1"
+        className="h-7 sm:h-6 px-2 text-[10px] gap-1"
         onClick={() => {
           setActiveLocationId(locId);
           setMoveDialogOpen(true);
@@ -843,7 +843,7 @@ export default function Inventory() {
       <Button
         variant="outline"
         size="sm"
-        className="h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+        className="h-7 sm:h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
         onClick={() => {
           setActiveLocationId(locId);
           setDeleteDialogOpen(true);
@@ -856,7 +856,7 @@ export default function Inventory() {
           <Button
             variant="outline"
             size="sm"
-            className="h-6 px-2 text-[10px] gap-1"
+            className="h-7 sm:h-6 px-2 text-[10px] gap-1"
             onClick={() => {
               setActiveLocationId(locId);
               setSplitDialogOpen(true);
@@ -868,7 +868,7 @@ export default function Inventory() {
             <Button
               variant="outline"
               size="sm"
-              className="h-6 px-2 text-[10px] gap-1"
+              className="h-7 sm:h-6 px-2 text-[10px] gap-1"
               onClick={() => {
                 setActiveLocationId(locId);
                 setTransformDialogOpen(true);
