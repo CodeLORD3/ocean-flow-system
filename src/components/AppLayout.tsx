@@ -91,7 +91,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { site, setSite, activeStoreName, setActiveStore } = useSite();
   const { tabs, activeTab, closeTab, switchTab } = useTabs();
   const { data: allStores = [] } = useStores();
-  const retailStores = allStores.filter(s => !s.is_wholesale);
+  const { staff } = useStaffAuth();
+
+  const access = staff?.portal_access ?? [];
+  const lockedStoreId = staff?.allowed_store_id ?? null;
+  const retailStores = allStores
+    .filter((s) => !s.is_wholesale)
+    .filter((s) => !lockedStoreId || s.id === lockedStoreId);
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -122,34 +129,42 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuLabel className="text-[10px]">Välj portal</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className={`text-xs gap-2 ${site === "wholesale" ? "bg-muted font-medium" : ""}`}
-                    onClick={() => { setSite("wholesale"); setActiveStore(null, null); switchTab("/organisation"); }}
-                  >
-                    <Factory className="h-3 w-3" /> Grossist
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className={`text-xs gap-2 ${site === "production" ? "bg-muted font-medium" : ""}`}
-                    onClick={() => { setSite("production"); setActiveStore(null, null); switchTab("/"); }}
-                  >
-                    <Factory className="h-3 w-3" /> Produktion
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuLabel className="text-[10px]">Butiker</DropdownMenuLabel>
-                  {retailStores.length === 0 ? (
-                    <DropdownMenuItem disabled className="text-[10px] text-muted-foreground">
-                      Inga butiker tillagda
+                  {access.includes("wholesale") && (
+                    <DropdownMenuItem
+                      className={`text-xs gap-2 ${site === "wholesale" ? "bg-muted font-medium" : ""}`}
+                      onClick={() => { setSite("wholesale"); setActiveStore(null, null); switchTab("/organisation"); }}
+                    >
+                      <Factory className="h-3 w-3" /> Grossist
                     </DropdownMenuItem>
-                  ) : (
-                    retailStores.map(store => (
-                      <DropdownMenuItem
-                        key={store.id}
-                        className={`text-xs gap-2 ${site === "shop" && activeStoreName === store.name ? "bg-muted font-medium" : ""}`}
-                        onClick={() => { setSite("shop"); setActiveStore(store.id, store.name); switchTab("/"); }}
-                      >
-                        <Store className="h-3 w-3" /> {store.name}
-                      </DropdownMenuItem>
-                    ))
+                  )}
+                  {access.includes("production") && (
+                    <DropdownMenuItem
+                      className={`text-xs gap-2 ${site === "production" ? "bg-muted font-medium" : ""}`}
+                      onClick={() => { setSite("production"); setActiveStore(null, null); switchTab("/"); }}
+                    >
+                      <Factory className="h-3 w-3" /> Produktion
+                    </DropdownMenuItem>
+                  )}
+                  {access.includes("shop") && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel className="text-[10px]">Butiker</DropdownMenuLabel>
+                      {retailStores.length === 0 ? (
+                        <DropdownMenuItem disabled className="text-[10px] text-muted-foreground">
+                          Inga butiker tillgängliga
+                        </DropdownMenuItem>
+                      ) : (
+                        retailStores.map((store) => (
+                          <DropdownMenuItem
+                            key={store.id}
+                            className={`text-xs gap-2 ${site === "shop" && activeStoreName === store.name ? "bg-muted font-medium" : ""}`}
+                            onClick={() => { setSite("shop"); setActiveStore(store.id, store.name); switchTab("/"); }}
+                          >
+                            <Store className="h-3 w-3" /> {store.name}
+                          </DropdownMenuItem>
+                        ))
+                      )}
+                    </>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
