@@ -122,7 +122,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 text-[10px] gap-1 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                    className="h-6 text-[10px] gap-1 text-foreground hover:text-foreground hover:bg-sidebar-accent"
                   >
                     <ArrowLeftRight className="h-3 w-3" />
                     {site === "shop" ? activeStoreName || "Butik" : site === "production" ? "Produktion" : "Grossist"}
