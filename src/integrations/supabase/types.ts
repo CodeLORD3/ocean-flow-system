@@ -1222,6 +1222,348 @@ export type Database = {
         }
         Relationships: []
       }
+      pos_audit_log: {
+        Row: {
+          action: string
+          actor_cashier_id: string | null
+          after_data: Json | null
+          before_data: Json | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          occurred_at: string
+        }
+        Insert: {
+          action: string
+          actor_cashier_id?: string | null
+          after_data?: Json | null
+          before_data?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          occurred_at?: string
+        }
+        Update: {
+          action?: string
+          actor_cashier_id?: string | null
+          after_data?: Json | null
+          before_data?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          occurred_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_audit_log_actor_cashier_id_fkey"
+            columns: ["actor_cashier_id"]
+            isOneToOne: false
+            referencedRelation: "pos_cashiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_cashiers: {
+        Row: {
+          active: boolean
+          created_at: string
+          display_name: string
+          id: string
+          pin_hash: string
+          role: string
+          staff_id: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          display_name: string
+          id?: string
+          pin_hash: string
+          role?: string
+          staff_id?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          display_name?: string
+          id?: string
+          pin_hash?: string
+          role?: string
+          staff_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_cashiers_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_products: {
+        Row: {
+          active: boolean
+          barcode: string | null
+          category: string
+          created_at: string
+          erp_id: string | null
+          id: string
+          image_url: string | null
+          name: string
+          price_ore: number
+          sku: string
+          sort_order: number
+          unit_type: string
+          updated_at: string
+          vat_rate: number
+        }
+        Insert: {
+          active?: boolean
+          barcode?: string | null
+          category: string
+          created_at?: string
+          erp_id?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          price_ore?: number
+          sku: string
+          sort_order?: number
+          unit_type?: string
+          updated_at?: string
+          vat_rate?: number
+        }
+        Update: {
+          active?: boolean
+          barcode?: string | null
+          category?: string
+          created_at?: string
+          erp_id?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          price_ore?: number
+          sku?: string
+          sort_order?: number
+          unit_type?: string
+          updated_at?: string
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_products_erp_id_fkey"
+            columns: ["erp_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_shifts: {
+        Row: {
+          cashier_id: string
+          closed_at: string | null
+          closing_cash_ore: number | null
+          id: string
+          notes: string | null
+          opened_at: string
+          opening_float_ore: number
+        }
+        Insert: {
+          cashier_id: string
+          closed_at?: string | null
+          closing_cash_ore?: number | null
+          id?: string
+          notes?: string | null
+          opened_at?: string
+          opening_float_ore?: number
+        }
+        Update: {
+          cashier_id?: string
+          closed_at?: string | null
+          closing_cash_ore?: number | null
+          id?: string
+          notes?: string | null
+          opened_at?: string
+          opening_float_ore?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_shifts_cashier_id_fkey"
+            columns: ["cashier_id"]
+            isOneToOne: false
+            referencedRelation: "pos_cashiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_sync_queue: {
+        Row: {
+          attempts: number
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          last_error: string | null
+          payload: Json
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          last_error?: string | null
+          payload: Json
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          last_error?: string | null
+          payload?: Json
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      pos_transaction_items: {
+        Row: {
+          discount_ore: number
+          id: string
+          line_total_ore: number
+          product_id: string | null
+          product_name: string
+          quantity: number
+          sku: string | null
+          transaction_id: string
+          unit: string
+          unit_price_ore: number
+          vat_rate: number
+        }
+        Insert: {
+          discount_ore?: number
+          id?: string
+          line_total_ore: number
+          product_id?: string | null
+          product_name: string
+          quantity: number
+          sku?: string | null
+          transaction_id: string
+          unit: string
+          unit_price_ore: number
+          vat_rate: number
+        }
+        Update: {
+          discount_ore?: number
+          id?: string
+          line_total_ore?: number
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          sku?: string | null
+          transaction_id?: string
+          unit?: string
+          unit_price_ore?: number
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_transaction_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "pos_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_transaction_items_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "pos_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pos_transactions: {
+        Row: {
+          cashier_id: string
+          control_code: string | null
+          id: string
+          occurred_at: string
+          parked: boolean
+          parked_label: string | null
+          payment_details: Json | null
+          payment_method: string
+          receipt_no: number
+          reversed_transaction_id: string | null
+          shift_id: string | null
+          status: string
+          total_ore: number
+          vat_breakdown: Json
+        }
+        Insert: {
+          cashier_id: string
+          control_code?: string | null
+          id?: string
+          occurred_at?: string
+          parked?: boolean
+          parked_label?: string | null
+          payment_details?: Json | null
+          payment_method: string
+          receipt_no?: number
+          reversed_transaction_id?: string | null
+          shift_id?: string | null
+          status?: string
+          total_ore?: number
+          vat_breakdown?: Json
+        }
+        Update: {
+          cashier_id?: string
+          control_code?: string | null
+          id?: string
+          occurred_at?: string
+          parked?: boolean
+          parked_label?: string | null
+          payment_details?: Json | null
+          payment_method?: string
+          receipt_no?: number
+          reversed_transaction_id?: string | null
+          shift_id?: string | null
+          status?: string
+          total_ore?: number
+          vat_breakdown?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pos_transactions_cashier_id_fkey"
+            columns: ["cashier_id"]
+            isOneToOne: false
+            referencedRelation: "pos_cashiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_transactions_reversed_transaction_id_fkey"
+            columns: ["reversed_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "pos_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_transactions_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "pos_shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       price_history: {
         Row: {
           changed_by: string | null
