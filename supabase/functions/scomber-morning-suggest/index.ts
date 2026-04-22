@@ -34,6 +34,12 @@ interface Suggestion {
 
 const round = (n: number) => Math.round(n);
 
+// Round to nearest unit (e.g. 100 öre = whole krona, 50 = 50-öring).
+function roundToUnit(ore: number, unit: number): number {
+  if (!unit || unit <= 1) return Math.round(ore);
+  return Math.round(ore / unit) * unit;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return errorResponse("Method not allowed", 405);
@@ -48,12 +54,14 @@ Deno.serve(async (req) => {
     const sb = getServiceClient();
     const today = new Date().toISOString().slice(0, 10);
 
-    // Load stores (for display names)
+    // Load stores (for display names + slug-based multiplier lookup)
     const { data: stores } = await sb
       .from("stores")
-      .select("id, name")
+      .select("id, name, slug, currency")
       .in("id", storeIds);
-    const storeMap = new Map((stores ?? []).map((s: any) => [s.id, s.name as string]));
+    const storeMap = new Map(
+      (stores ?? []).map((s: any) => [s.id, { name: s.name as string, slug: s.slug as string, currency: s.currency as string }]),
+    );
 
     // Load all active articles + their pricing rules
     const { data: articles, error: artErr } = await sb
@@ -119,7 +127,9 @@ Deno.serve(async (req) => {
       }
 
       for (const storeId of storeIds) {
-        const storeName = storeMap.get(storeId) ?? storeId;
+        const storeInfo = storeMap.get(storeId);
+        const storeName = storeInfo?.name ?? storeId;
+        const storeSlug = storeInfo?.slug ?? null;
 
         // Resolve current price (override per store, then any-store override, then default)
         const currentOverride =
@@ -136,14 +146,21 @@ Deno.serve(async (req) => {
 
         if (rule) {
           strategy = rule.strategy;
+          // Multiplier-uppslag: stöd både slug ("saro") och UUID. Slug föredras.
+          const mults = (rule.store_multiplier ?? {}) as Record<string, number>;
           const multiplier =
-            (rule.store_multiplier as Record<string, number> | null)?.[storeId] ?? 1;
+            (storeSlug && mults[storeSlug] != null ? mults[storeSlug] : undefined) ??
+            mults[storeId] ??
+            1;
+          const roundUnit = (rule.round_to_ore as number | null) ?? 100;
 
           if (rule.strategy === "fixed" && rule.fixed_price_ore != null) {
             suggestedOre = rule.fixed_price_ore;
             rationale = `Fast pris ${(rule.fixed_price_ore / 100).toFixed(2)} kr`;
           } else if (rule.strategy === "markup" && rule.markup_percent != null && costOre != null) {
-            suggestedOre = round(costOre * (1 + rule.markup_percent / 100) * multiplier);
+            // Multiplier appliceras FÖRE rounding (Särö-bug fix)
+            const raw = costOre * (1 + rule.markup_percent / 100) * multiplier;
+            suggestedOre = roundToUnit(raw, roundUnit);
             const mult = multiplier !== 1 ? ` × ${multiplier} (butik ${storeName})` : "";
             rationale = `Inköp ${(costOre / 100).toFixed(2)} kr + ${rule.markup_percent}% påslag${mult}`;
           } else if (
@@ -152,7 +169,8 @@ Deno.serve(async (req) => {
             costOre != null
           ) {
             const m = rule.target_margin_percent / 100;
-            suggestedOre = round((costOre / (1 - m)) * multiplier);
+            const raw = (costOre / (1 - m)) * multiplier;
+            suggestedOre = roundToUnit(raw, roundUnit);
             const mult = multiplier !== 1 ? ` × ${multiplier} (butik ${storeName})` : "";
             rationale = `Inköp ${(costOre / 100).toFixed(2)} kr → ${rule.target_margin_percent}% bruttomarginal${mult}`;
           } else if (costOre == null) {
