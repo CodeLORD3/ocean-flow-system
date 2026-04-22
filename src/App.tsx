@@ -14,6 +14,7 @@ import { KeepAliveTabs } from "@/components/KeepAliveTabs";
 import { StaffAuthProvider, useStaffAuth } from "@/contexts/StaffAuthContext";
 import Landing from "@/pages/Landing";
 import PortalChooser from "@/pages/PortalChooser";
+import FirstLoginPasswordChange from "@/pages/FirstLoginPasswordChange";
 import { Loader2 } from "lucide-react";
 
 // Investor Portal
