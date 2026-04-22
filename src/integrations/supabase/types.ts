@@ -94,6 +94,160 @@ export type Database = {
           },
         ]
       }
+      b2b_order_lines: {
+        Row: {
+          article_id: string
+          id: string
+          line_total_ore: number
+          order_id: string
+          product_name: string
+          quantity: number
+          unit: string
+          unit_price_ore: number
+          vat_rate: number
+        }
+        Insert: {
+          article_id: string
+          id?: string
+          line_total_ore: number
+          order_id: string
+          product_name: string
+          quantity: number
+          unit: string
+          unit_price_ore: number
+          vat_rate: number
+        }
+        Update: {
+          article_id?: string
+          id?: string
+          line_total_ore?: number
+          order_id?: string
+          product_name?: string
+          quantity?: number
+          unit?: string
+          unit_price_ore?: number
+          vat_rate?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b2b_order_lines_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "makrilltrade_articles_cache"
+            referencedColumns: ["article_id"]
+          },
+          {
+            foreignKeyName: "b2b_order_lines_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      b2b_orders: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_email: string | null
+          customer_name: string
+          customer_org_no: string | null
+          customer_tier_id: string | null
+          delivery_date: string | null
+          id: string
+          notes: string | null
+          order_no: number
+          status: string
+          store_id: string | null
+          total_ore: number
+          updated_at: string
+          vat_breakdown: Json
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_email?: string | null
+          customer_name: string
+          customer_org_no?: string | null
+          customer_tier_id?: string | null
+          delivery_date?: string | null
+          id?: string
+          notes?: string | null
+          order_no?: number
+          status?: string
+          store_id?: string | null
+          total_ore?: number
+          updated_at?: string
+          vat_breakdown?: Json
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_email?: string | null
+          customer_name?: string
+          customer_org_no?: string | null
+          customer_tier_id?: string | null
+          delivery_date?: string | null
+          id?: string
+          notes?: string | null
+          order_no?: number
+          status?: string
+          store_id?: string | null
+          total_ore?: number
+          updated_at?: string
+          vat_breakdown?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b2b_orders_customer_tier_id_fkey"
+            columns: ["customer_tier_id"]
+            isOneToOne: false
+            referencedRelation: "scomber_customer_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      batch_allocations: {
+        Row: {
+          allocated_at: string
+          article_id: string
+          batch_id: string
+          id: string
+          quantity: number
+          source_id: string
+          source_type: string
+          unit: string
+        }
+        Insert: {
+          allocated_at?: string
+          article_id: string
+          batch_id: string
+          id?: string
+          quantity: number
+          source_id: string
+          source_type: string
+          unit: string
+        }
+        Update: {
+          allocated_at?: string
+          article_id?: string
+          batch_id?: string
+          id?: string
+          quantity?: number
+          source_id?: string
+          source_type?: string
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_allocations_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "makrilltrade_batches_cache"
+            referencedColumns: ["batch_id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string | null
@@ -807,6 +961,89 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      makrilltrade_articles_cache: {
+        Row: {
+          active: boolean
+          article_id: string
+          category: string | null
+          default_price_ore: number
+          name: string
+          raw: Json | null
+          sku: string | null
+          synced_at: string
+          unit: string
+          vat_rate: number
+        }
+        Insert: {
+          active?: boolean
+          article_id: string
+          category?: string | null
+          default_price_ore?: number
+          name: string
+          raw?: Json | null
+          sku?: string | null
+          synced_at?: string
+          unit?: string
+          vat_rate?: number
+        }
+        Update: {
+          active?: boolean
+          article_id?: string
+          category?: string | null
+          default_price_ore?: number
+          name?: string
+          raw?: Json | null
+          sku?: string | null
+          synced_at?: string
+          unit?: string
+          vat_rate?: number
+        }
+        Relationships: []
+      }
+      makrilltrade_batches_cache: {
+        Row: {
+          article_id: string
+          batch_id: string
+          best_before: string | null
+          caught_at: string | null
+          quantity_remaining: number
+          raw: Json | null
+          supplier_name: string | null
+          synced_at: string
+          unit: string
+        }
+        Insert: {
+          article_id: string
+          batch_id: string
+          best_before?: string | null
+          caught_at?: string | null
+          quantity_remaining?: number
+          raw?: Json | null
+          supplier_name?: string | null
+          synced_at?: string
+          unit?: string
+        }
+        Update: {
+          article_id?: string
+          batch_id?: string
+          best_before?: string | null
+          caught_at?: string | null
+          quantity_remaining?: number
+          raw?: Json | null
+          supplier_name?: string | null
+          synced_at?: string
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "makrilltrade_batches_cache_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "makrilltrade_articles_cache"
+            referencedColumns: ["article_id"]
+          },
+        ]
       }
       manual_schedule_entries: {
         Row: {
@@ -1605,6 +1842,57 @@ export type Database = {
           },
         ]
       }
+      price_overrides: {
+        Row: {
+          article_id: string
+          channel: string
+          created_at: string
+          customer_tier_id: string | null
+          effective_date: string
+          id: string
+          price_ore: number
+          set_by: string | null
+          store_id: string | null
+        }
+        Insert: {
+          article_id: string
+          channel?: string
+          created_at?: string
+          customer_tier_id?: string | null
+          effective_date?: string
+          id?: string
+          price_ore: number
+          set_by?: string | null
+          store_id?: string | null
+        }
+        Update: {
+          article_id?: string
+          channel?: string
+          created_at?: string
+          customer_tier_id?: string | null
+          effective_date?: string
+          id?: string
+          price_ore?: number
+          set_by?: string | null
+          store_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_overrides_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "makrilltrade_articles_cache"
+            referencedColumns: ["article_id"]
+          },
+          {
+            foreignKeyName: "price_overrides_customer_tier_id_fkey"
+            columns: ["customer_tier_id"]
+            isOneToOne: false
+            referencedRelation: "scomber_customer_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_stock_locations: {
         Row: {
           arrival_date: string | null
@@ -2089,6 +2377,27 @@ export type Database = {
           },
         ]
       }
+      scomber_customer_tiers: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       shop_order_change_requests: {
         Row: {
           change_type: string
@@ -2504,6 +2813,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      store_configs: {
+        Row: {
+          channel: string
+          id: string
+          key: string
+          store_id: string | null
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          channel: string
+          id?: string
+          key: string
+          store_id?: string | null
+          updated_at?: string
+          value?: Json
+        }
+        Update: {
+          channel?: string
+          id?: string
+          key?: string
+          store_id?: string | null
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
       }
       stores: {
         Row: {
