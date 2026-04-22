@@ -43,13 +43,13 @@ export default function Landing() {
   const headline = settings?.headline ?? "Välkommen till Makrill Trade";
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6">
-      <h1 className="text-3xl md:text-5xl font-bold text-center text-foreground max-w-3xl mb-10 leading-tight">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4 py-8 sm:p-6">
+      <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold text-center text-foreground max-w-3xl mb-6 sm:mb-10 leading-tight">
         {headline}
       </h1>
 
       <Card className="w-full max-w-md shadow-lg">
-        <CardContent className="p-6">
+        <CardContent className="p-4 sm:p-6">
           <h2 className="text-lg font-semibold mb-1 text-foreground">Logga in</h2>
           <p className="text-xs text-muted-foreground mb-5">
             Använd din arbets-e-post för att komma åt portalerna.
