@@ -145,7 +145,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   {access.includes("production") && (
                     <DropdownMenuItem
                       className={`text-xs gap-2 ${site === "production" ? "bg-muted font-medium" : ""}`}
-                      onClick={() => { setSite("production"); setActiveStore(null, null); switchTab("/"); }}
+                      onClick={() => { setSite("production"); setActiveStore(null, null); switchTab("/organisation"); }}
                     >
                       <Factory className="h-3 w-3" /> Produktion
                     </DropdownMenuItem>
@@ -163,7 +163,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                           <DropdownMenuItem
                             key={store.id}
                             className={`text-xs gap-2 ${site === "shop" && activeStoreName === store.name ? "bg-muted font-medium" : ""}`}
-                            onClick={() => { setSite("shop"); setActiveStore(store.id, store.name); switchTab("/"); }}
+                            onClick={() => { setSite("shop"); setActiveStore(store.id, store.name); switchTab("/organisation"); }}
                           >
                             <Store className="h-3 w-3" /> {store.name}
                           </DropdownMenuItem>
