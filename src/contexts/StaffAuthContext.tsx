@@ -14,6 +14,7 @@ export interface StaffProfile {
   profile_image_url: string | null;
   portal_access: PortalKey[];
   allowed_store_id: string | null;
+  allowed_store_ids: string[];
 }
 
 interface AuthContextValue {
