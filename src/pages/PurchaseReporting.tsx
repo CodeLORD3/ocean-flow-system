@@ -510,6 +510,23 @@ function ReportSection({
         <span className="text-xs text-muted-foreground shrink-0">
           {lines.length} rader · {sectionTotal.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr
         </span>
+        <div className="shrink-0 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          <Label htmlFor={`report-date-${report.id}`} className="text-[10px] text-muted-foreground">
+            Datum
+          </Label>
+          <Input
+            id={`report-date-${report.id}`}
+            type="date"
+            value={report.report_date}
+            disabled={isLocked}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v && v !== report.report_date) onUpdateReportDate(report.id, v);
+            }}
+            className="h-6 text-[11px] px-1.5 w-[120px]"
+            title="Rapportdatum – styr vilken dag rapporten arkiveras under"
+          />
+        </div>
         {isLocked ? (
           <Badge className="text-[10px] shrink-0 bg-primary/10 text-primary border-primary/20" variant="outline">
             <CheckCircle2 className="h-3 w-3 mr-0.5" /> Bekräftad
@@ -729,6 +746,21 @@ export default function PurchaseReporting() {
     },
   });
 
+  const updateReportDate = useMutation({
+    mutationFn: async ({ id, date }: { id: string; date: string }) => {
+      const { error } = await supabase
+        .from("purchase_reports")
+        .update({ report_date: date } as any)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
+      toast({ title: "Rapportdatum uppdaterat" });
+    },
+    onError: (e: any) => toast({ title: "Fel", description: e.message, variant: "destructive" }),
+  });
+
   const GROSSIST_FLYTANDE_ID = "5da57ad6-f72c-4a84-9873-87174d194e10";
 
   const confirmReport = useMutation({
@@ -788,9 +820,10 @@ export default function PurchaseReporting() {
     mutationFn: async (product: any) => {
       let reportId = selectedReportId;
       if (!reportId) {
+        const today = format(new Date(), "yyyy-MM-dd");
         const { data: newReport, error: rErr } = await supabase
           .from("purchase_reports")
-          .insert({ file_name: `Manuell rapport ${format(new Date(), "yyyy-MM-dd")}`, file_url: "", status: "Klar" })
+          .insert({ file_name: `Manuell rapport ${today}`, file_url: "", status: "Klar", report_date: today } as any)
           .select()
           .single();
         if (rErr) throw rErr;
@@ -890,7 +923,7 @@ export default function PurchaseReporting() {
 
         const { data: report, error: reportError } = await supabase
           .from("purchase_reports")
-          .insert({ file_name: file.name, file_url: fileUrl, status: "Bearbetar" })
+          .insert({ file_name: file.name, file_url: fileUrl, status: "Bearbetar", report_date: format(new Date(), "yyyy-MM-dd") } as any)
           .select()
           .single();
         if (reportError) throw reportError;
@@ -1174,6 +1207,7 @@ export default function PurchaseReporting() {
                       onViewDocument={(reportId) => { setSelectedReportId(reportId); setDocExpanded(true); setZoom(1); }}
                       onConfirm={(reportId) => confirmReport.mutate(reportId)}
                       onRenameReport={(id, name) => renameReport.mutate({ id, name })}
+                      onUpdateReportDate={(id, date) => updateReportDate.mutate({ id, date })}
                       focusLineId={focusLineId}
                       onQtyFocused={() => setFocusLineId(null)}
                     />
@@ -1198,6 +1232,7 @@ export default function PurchaseReporting() {
                       onViewDocument={(reportId) => { setSelectedReportId(reportId); setDocExpanded(true); setZoom(1); }}
                       onConfirm={(reportId) => confirmReport.mutate(reportId)}
                       onRenameReport={(id, name) => renameReport.mutate({ id, name })}
+                      onUpdateReportDate={(id, date) => updateReportDate.mutate({ id, date })}
                       focusLineId={focusLineId}
                       onQtyFocused={() => setFocusLineId(null)}
                     />

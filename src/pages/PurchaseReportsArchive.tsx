@@ -223,7 +223,8 @@ export default function PurchaseReportsArchive() {
   // Group reports by created date
   const reportsByDate = new Map<string, ArchivedReport[]>();
   for (const r of archivedReports) {
-    const dateKey = format(new Date(r.created_at), "yyyy-MM-dd");
+    // Group by the report's business date (set by user) — falls back to created_at for legacy rows
+    const dateKey = (r as any).report_date || format(new Date(r.created_at), "yyyy-MM-dd");
     const existing = reportsByDate.get(dateKey) || [];
     existing.push(r);
     reportsByDate.set(dateKey, existing);
