@@ -13,7 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 export default function PosShift() {
   const cashier = useCashier((s) => s.cashier);
   const setShift = useCashier((s) => s.setShift);
-  const { data: openShift, isLoading } = useOpenShift(cashier?.id);
+  const { data: currentShift, isLoading } = useOpenShift(cashier?.id);
   const nav = useNavigate();
   const qc = useQueryClient();
 
@@ -24,7 +24,7 @@ export default function PosShift() {
 
   if (!cashier) return null;
 
-  const openShift = async () => {
+  const handleOpen = async () => {
     setBusy(true);
     try {
       const { data, error } = await (supabase as any)
@@ -47,8 +47,8 @@ export default function PosShift() {
     }
   };
 
-  const closeShift = async () => {
-    if (!openShift) return;
+  const handleClose = async () => {
+    if (!currentShift) return;
     setBusy(true);
     try {
       const { error } = await (supabase as any)
@@ -58,7 +58,7 @@ export default function PosShift() {
           closing_cash_ore: sekToOre(parseFloat(closingCash || "0")),
           notes: notes || null,
         })
-        .eq("id", openShift.id);
+        .eq("id", currentShift.id);
       if (error) throw error;
       setShift(null);
       qc.invalidateQueries({ queryKey: ["pos_open_shift"] });
@@ -74,12 +74,12 @@ export default function PosShift() {
     <div className="mx-auto max-w-xl px-4 py-8">
       {isLoading ? (
         <div className="text-sm text-muted-foreground">Laddar skift…</div>
-      ) : openShift ? (
+      ) : currentShift ? (
         <div className="rounded-xl border border-border bg-card p-6 shadow-[var(--pos-shadow)]">
           <h1 className="text-xl font-semibold">Avsluta skift</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Öppnat {new Date(openShift.opened_at).toLocaleString("sv-SE")} · Växelkassa{" "}
-            <span className="tabular">{formatSek(openShift.opening_float_ore)}</span>
+            Öppnat {new Date(currentShift.opened_at).toLocaleString("sv-SE")} · Växelkassa{" "}
+            <span className="tabular">{formatSek(currentShift.opening_float_ore)}</span>
           </p>
 
           <div className="mt-6 space-y-4">
@@ -104,7 +104,7 @@ export default function PosShift() {
             <Button variant="outline" className="flex-1" onClick={() => nav("/pos")}>
               Tillbaka till kassan
             </Button>
-            <Button className="flex-1" onClick={closeShift} disabled={busy}>
+            <Button className="flex-1" onClick={handleClose} disabled={busy}>
               Avsluta skift &amp; Z-rapport
             </Button>
           </div>
@@ -129,7 +129,7 @@ export default function PosShift() {
             </div>
           </div>
 
-          <Button className="mt-6 w-full" onClick={openShift} disabled={busy}>
+          <Button className="mt-6 w-full" onClick={handleOpen} disabled={busy}>
             Öppna skift
           </Button>
         </div>
