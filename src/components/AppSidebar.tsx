@@ -20,6 +20,7 @@ import {
   CalendarDays,
   ChevronDown,
   ListTodo,
+  LogIn,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -89,6 +90,7 @@ const financeNav = [
 ];
 
 const bottomNav = [
+  { title: "Inloggningssida", url: "/landing-settings", icon: LogIn },
   { title: "Revision & Logg", url: "/audit", icon: ClipboardList },
   { title: "Administration", url: "/settings", icon: Settings },
 ];
