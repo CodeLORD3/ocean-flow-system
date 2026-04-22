@@ -888,22 +888,10 @@ export default function Inventory() {
       {loc.items.length === 0 ? (
         <div className="px-2 py-2 text-center text-xs text-muted-foreground">Tomt lager</div>
       ) : (
-        <table className="w-full text-[10px]">
-          <thead>
-            <tr className="bg-muted/20 h-6">
-              <th className="px-2 py-0 w-6"></th>
-              <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Produkt</th>
-              <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">SKU</th>
-              <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Kat.</th>
-              <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Antal</th>
-              <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Värde</th>
-              <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Ank.</th>
-              <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">B.före</th>
-              <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Färskh.</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loc.items.map((s: any, idx: number) => {
+        <>
+          {/* Mobile: card list */}
+          <div className="sm:hidden divide-y divide-border/30">
+            {loc.items.map((s: any) => {
               const isRawLager = (loc.name || "").toLowerCase().startsWith("raw-");
               const unitPrice = isRawLager
                 ? Number(s.products?.wholesale_price) || 0
@@ -912,57 +900,144 @@ export default function Inventory() {
               const isChecked = getSelectedForLocation(loc.id).has(s.id);
               const freshness = getFreshnessInfo(s.expiry_date);
               const fifoIssue = hasFifoIssue(s, loc.items);
-              const zebra = idx % 2 === 1 ? "bg-muted/30" : "";
 
               return (
-                <tr
+                <div
                   key={s.id}
-                  className={`border-b border-border/30 last:border-0 hover:bg-primary/20 transition-colors h-7 ${isChecked ? "bg-primary/5" : freshness?.rowClass || zebra}`}
+                  className={`flex items-start gap-2 px-2 py-2 ${isChecked ? "bg-primary/5" : freshness?.rowClass || ""}`}
+                  onClick={() => toggleItemSelection(loc.id, s.id)}
                 >
-                  <td className="px-2 py-0.5 text-center">
-                    <Checkbox checked={isChecked} onCheckedChange={() => toggleItemSelection(loc.id, s.id)} />
-                  </td>
-                  <td className="px-2 py-0.5 font-medium text-foreground">
-                    <div className="flex items-center gap-1.5">
-                      {s.products?.name}
-                      {fifoIssue && (
-                        <span title="FIFO-varning: äldre batch finns på annat lagerställe">
-                          <AlertCircle className="h-3 w-3 text-amber-500" />
-                        </span>
+                  <Checkbox
+                    checked={isChecked}
+                    onCheckedChange={() => toggleItemSelection(loc.id, s.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-0.5"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                          <span className="truncate">{s.products?.name}</span>
+                          {fifoIssue && (
+                            <span title="FIFO-varning: äldre batch finns på annat lagerställe">
+                              <AlertCircle className="h-3 w-3 text-amber-500 shrink-0" />
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground font-mono truncate">
+                          {s.products?.sku} · {s.products?.category}
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-sm font-semibold text-foreground whitespace-nowrap">
+                          {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground whitespace-nowrap">{fmt(value)}</div>
+                      </div>
+                    </div>
+                    <div className="mt-1 flex items-center gap-2 flex-wrap text-[10px] text-muted-foreground">
+                      {s.arrival_date && (
+                        <span>Ank: {format(parseISO(s.arrival_date), "d MMM", { locale: sv })}</span>
+                      )}
+                      {s.expiry_date && (
+                        <span>B.före: {format(parseISO(s.expiry_date), "d MMM", { locale: sv })}</span>
+                      )}
+                      {freshness && (
+                        <Badge variant="outline" className={`text-[10px] ${freshness.badgeClass}`}>
+                          {freshness.isExpired ? (
+                            <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
+                          ) : (
+                            <Clock className="h-2.5 w-2.5 mr-0.5" />
+                          )}
+                          {freshness.label}
+                        </Badge>
                       )}
                     </div>
-                  </td>
-                  <td className="px-2 py-0.5 font-mono text-muted-foreground text-[10px]">{s.products?.sku}</td>
-                  <td className="px-2 py-0.5 text-muted-foreground">{s.products?.category}</td>
-                  <td className="px-2 py-0.5 text-right font-medium text-foreground">
-                    {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
-                  </td>
-                  <td className="px-2 py-0.5 text-right text-muted-foreground">{fmt(value)}</td>
-                  <td className="px-2 py-0.5 text-center text-[10px] text-muted-foreground">
-                    {s.arrival_date ? format(parseISO(s.arrival_date), "d MMM", { locale: sv }) : "–"}
-                  </td>
-                  <td className="px-2 py-0.5 text-center text-[10px] text-muted-foreground">
-                    {s.expiry_date ? format(parseISO(s.expiry_date), "d MMM", { locale: sv }) : "–"}
-                  </td>
-                  <td className="px-2 py-0.5 text-center">
-                    {freshness ? (
-                      <Badge variant="outline" className={`text-[10px] ${freshness.badgeClass}`}>
-                        {freshness.isExpired ? (
-                          <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
-                        ) : (
-                          <Clock className="h-2.5 w-2.5 mr-0.5" />
-                        )}
-                        {freshness.label}
-                      </Badge>
-                    ) : (
-                      <span className="text-[10px] text-muted-foreground/40">–</span>
-                    )}
-                  </td>
-                </tr>
+                  </div>
+                </div>
               );
             })}
-          </tbody>
-        </table>
+          </div>
+
+          {/* Desktop: full table */}
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full text-[10px] min-w-[640px]">
+              <thead>
+                <tr className="bg-muted/20 h-6">
+                  <th className="px-2 py-0 w-6"></th>
+                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Produkt</th>
+                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">SKU</th>
+                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Kat.</th>
+                  <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Antal</th>
+                  <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Värde</th>
+                  <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Ank.</th>
+                  <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">B.före</th>
+                  <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Färskh.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loc.items.map((s: any, idx: number) => {
+                  const isRawLager = (loc.name || "").toLowerCase().startsWith("raw-");
+                  const unitPrice = isRawLager
+                    ? Number(s.products?.wholesale_price) || 0
+                    : Number(s.unit_cost) || Number(s.products?.cost_price) || 0;
+                  const value = Number(s.quantity) * unitPrice;
+                  const isChecked = getSelectedForLocation(loc.id).has(s.id);
+                  const freshness = getFreshnessInfo(s.expiry_date);
+                  const fifoIssue = hasFifoIssue(s, loc.items);
+                  const zebra = idx % 2 === 1 ? "bg-muted/30" : "";
+
+                  return (
+                    <tr
+                      key={s.id}
+                      className={`border-b border-border/30 last:border-0 hover:bg-primary/20 transition-colors h-7 ${isChecked ? "bg-primary/5" : freshness?.rowClass || zebra}`}
+                    >
+                      <td className="px-2 py-0.5 text-center">
+                        <Checkbox checked={isChecked} onCheckedChange={() => toggleItemSelection(loc.id, s.id)} />
+                      </td>
+                      <td className="px-2 py-0.5 font-medium text-foreground">
+                        <div className="flex items-center gap-1.5">
+                          {s.products?.name}
+                          {fifoIssue && (
+                            <span title="FIFO-varning: äldre batch finns på annat lagerställe">
+                              <AlertCircle className="h-3 w-3 text-amber-500" />
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-2 py-0.5 font-mono text-muted-foreground text-[10px]">{s.products?.sku}</td>
+                      <td className="px-2 py-0.5 text-muted-foreground">{s.products?.category}</td>
+                      <td className="px-2 py-0.5 text-right font-medium text-foreground">
+                        {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
+                      </td>
+                      <td className="px-2 py-0.5 text-right text-muted-foreground">{fmt(value)}</td>
+                      <td className="px-2 py-0.5 text-center text-[10px] text-muted-foreground">
+                        {s.arrival_date ? format(parseISO(s.arrival_date), "d MMM", { locale: sv }) : "–"}
+                      </td>
+                      <td className="px-2 py-0.5 text-center text-[10px] text-muted-foreground">
+                        {s.expiry_date ? format(parseISO(s.expiry_date), "d MMM", { locale: sv }) : "–"}
+                      </td>
+                      <td className="px-2 py-0.5 text-center">
+                        {freshness ? (
+                          <Badge variant="outline" className={`text-[10px] ${freshness.badgeClass}`}>
+                            {freshness.isExpired ? (
+                              <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
+                            ) : (
+                              <Clock className="h-2.5 w-2.5 mr-0.5" />
+                            )}
+                            {freshness.label}
+                          </Badge>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground/40">–</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );
