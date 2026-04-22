@@ -36,6 +36,7 @@ const ACTIVITY_VIEWER_EMAILS = [
 export default function Staff() {
   const { toast } = useToast();
   const { site, activeStoreId } = useSite();
+  const { staff: currentStaff } = useStaffAuth();
   const storeFilter = site === "shop" ? activeStoreId : undefined;
   const { data: staffList = [], isLoading } = useStaff(storeFilter);
   const { data: stores = [] } = useStores(true);
@@ -43,12 +44,18 @@ export default function Staff() {
   const updateStaff = useUpdateStaff();
   const deleteStaff = useDeleteStaff();
 
+  const canViewActivity =
+    site === "wholesale" &&
+    !!currentStaff?.email &&
+    ACTIVITY_VIEWER_EMAILS.includes(currentStaff.email.toLowerCase());
+
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [detailStaff, setDetailStaff] = useState<any | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const emptyForm = {
