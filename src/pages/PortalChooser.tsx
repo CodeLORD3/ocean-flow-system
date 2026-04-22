@@ -62,7 +62,9 @@ export default function PortalChooser() {
     } else {
       setActiveStore(null, null);
     }
-    navigate("/app", { replace: true });
+    const saved = sessionStorage.getItem("erp_last_route");
+    const target = saved && saved !== "/" && saved !== "/choose-portal" ? saved : "/inventory";
+    navigate(target, { replace: true });
   };
 
   return (
