@@ -26,7 +26,7 @@ export default function PosLogin() {
       const hash = await hashPin(pin);
       const { data, error } = await (supabase as any)
         .from("pos_cashiers")
-        .select("id, display_name, role")
+        .select("id, display_name, role, store_id, stores(name)")
         .eq("pin_hash", hash)
         .eq("active", true)
         .maybeSingle();
@@ -34,6 +34,12 @@ export default function PosLogin() {
       if (error) throw error;
       if (!data) {
         toast.error("Fel PIN-kod");
+        setPin("");
+        return;
+      }
+
+      if (!data.store_id) {
+        toast.error("Kassören är inte kopplad till någon butik. Kontakta admin.");
         setPin("");
         return;
       }
@@ -51,6 +57,8 @@ export default function PosLogin() {
         display_name: data.display_name,
         role: data.role,
         shift_id: shift?.id ?? null,
+        store_id: data.store_id,
+        store_name: data.stores?.name ?? null,
       });
       toast.success(`Välkommen, ${data.display_name}`);
       nav(shift?.id ? "/pos" : "/pos/shift", { replace: true });

@@ -39,7 +39,9 @@ export default function PosLayout() {
             </div>
             <div className="leading-tight">
               <div className="text-sm font-semibold">Fisk &amp; Skaldjur · Kassa</div>
-              <div className="text-[11px] text-muted-foreground">Terminal · Stockholm</div>
+              <div className="text-[11px] text-muted-foreground">
+                {cashier?.store_name ? `Terminal · ${cashier.store_name}` : "Terminal"}
+              </div>
             </div>
           </div>
 

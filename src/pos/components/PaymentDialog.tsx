@@ -74,6 +74,7 @@ export default function PaymentDialog({
         .insert({
           cashier_id: cashier.id,
           shift_id: cashier.shift_id,
+          store_id: cashier.store_id,
           status: "completed",
           total_ore: totalOre,
           vat_breakdown: vatBreakdownObj,
