@@ -14,6 +14,8 @@ export interface PosProduct {
   active: boolean;
   sort_order: number;
   stock_quantity: number;
+  /** Link to makrilltrade_articles_cache.sku — drives traceability lookup. */
+  article_sku: string | null;
 }
 
 /**

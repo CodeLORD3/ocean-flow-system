@@ -175,7 +175,7 @@ export const scomberClient = {
     );
   },
 
-  traceability(payload: { sku: string; store_id?: string | null }) {
+  traceability(payload: { sku?: string; article_sku?: string | null; store_id?: string | null }) {
     return invoke<TraceabilityResponse>("scomber-traceability", payload as Record<string, unknown>);
   },
 

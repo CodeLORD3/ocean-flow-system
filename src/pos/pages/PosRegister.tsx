@@ -48,11 +48,17 @@ export default function PosRegister() {
 
   /**
    * Hämtar äldsta aktiva batchen via traceability-edge så vi kan visa ursprung
-   * direkt på cart-raden. Tyst fail om backend inte svarar — raden läggs till ändå.
+   * direkt på cart-raden. Returnerar null om produkten inte är länkad till
+   * Makrilltrade-katalogen (article_sku saknas) eller om backend inte svarar.
    */
-  const fetchOriginForSku = async (sku: string): Promise<CartLineOrigin | null> => {
+  const fetchOriginForProduct = async (p: PosProduct): Promise<CartLineOrigin | null> => {
+    if (!p.article_sku) return null;
     try {
-      const res = await scomberClient.traceability({ sku, store_id: cashier?.store_id ?? null });
+      const res = await scomberClient.traceability({
+        article_sku: p.article_sku,
+        sku: p.sku,
+        store_id: cashier?.store_id ?? null,
+      });
       const oldest = res.batches?.[0];
       if (!oldest) return null;
       const raw = (oldest.raw ?? {}) as Record<string, unknown>;
@@ -74,7 +80,7 @@ export default function PosRegister() {
       setWeightProduct(p);
       return;
     }
-    const origin = await fetchOriginForSku(p.sku);
+    const origin = await fetchOriginForProduct(p);
     addLine({
       product_id: p.id,
       sku: p.sku,
@@ -306,7 +312,7 @@ export default function PosRegister() {
           onClose={() => setWeightProduct(null)}
           onConfirm={async (grams) => {
             const kg = grams / 1000;
-            const origin = await fetchOriginForSku(weightProduct.sku);
+            const origin = await fetchOriginForProduct(weightProduct);
             addLine({
               product_id: weightProduct.id,
               sku: weightProduct.sku,

@@ -18,23 +18,37 @@ Deno.serve(async (req) => {
 
   try {
     const body = await readJson(req);
-    const sku = requireString(body.sku, "sku");
+    // Accept either `article_sku` (preferred — direct link to makrilltrade catalog)
+    // or `sku` (POS product sku, fallback for backwards compat).
+    const articleSku =
+      typeof body.article_sku === "string" && body.article_sku.length > 0
+        ? body.article_sku
+        : null;
+    const posSku = typeof body.sku === "string" ? body.sku : null;
+    if (!articleSku && !posSku) {
+      throw new ValidationError("article_sku or sku is required");
+    }
     const storeId = typeof body.store_id === "string" ? body.store_id : null;
 
     const sb = getServiceClient();
 
-    // 1. Find the POS product to learn its erp_id (so we can look up an article id)
-    const { data: posProduct } = await sb
-      .from("pos_products")
-      .select("id, sku, name, erp_id")
-      .eq("sku", sku)
-      .maybeSingle();
+    // 1. Find the POS product (by its own sku) for context
+    let posProduct: any = null;
+    if (posSku) {
+      const { data } = await sb
+        .from("pos_products")
+        .select("id, sku, name, erp_id, article_sku")
+        .eq("sku", posSku)
+        .maybeSingle();
+      posProduct = data;
+    }
 
-    // 2. Try to find a matching article in cache (by sku)
+    // 2. Find the article in cache, preferring explicit article_sku
+    const lookupSku = articleSku ?? posProduct?.article_sku ?? posSku;
     const { data: article } = await sb
       .from("makrilltrade_articles_cache")
       .select("article_id, name, sku, unit, vat_rate, category")
-      .eq("sku", sku)
+      .eq("sku", lookupSku)
       .maybeSingle();
 
     // 3. List active batches for the article (FIFO order)
