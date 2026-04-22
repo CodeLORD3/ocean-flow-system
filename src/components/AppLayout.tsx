@@ -3,9 +3,10 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { ShopSidebar } from "@/components/ShopSidebar";
 import { ProductionSidebar } from "@/components/ProductionSidebar";
 
-import { useLocation } from "react-router-dom";
-import { Bell, ChevronRight, Search, User, ArrowLeftRight, Factory, Store, ChevronDown, X, Check } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Bell, ChevronRight, Search, User, ArrowLeftRight, Factory, Store, ChevronDown, X, Check, LogOut } from "lucide-react";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
