@@ -1,9 +1,9 @@
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, NavLink } from "react-router-dom";
 import { useEffect, useState } from "react";
 import "./pos.css";
 import { useCashier } from "./store/cashier";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, LogOut, Wifi, WifiOff } from "lucide-react";
+import { Moon, Sun, LogOut, Wifi, WifiOff, TrendingUp, ShoppingCart } from "lucide-react";
 
 export default function PosLayout() {
   const [dark, setDark] = useState<boolean>(() =>
