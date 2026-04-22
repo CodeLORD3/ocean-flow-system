@@ -70,27 +70,37 @@ Deno.serve(async (req) => {
       results.push({ email: u.email, status: error ? "update-failed" : "password-reset", error: error?.message });
     }
 
-    // Find staff row by first_name
-    const { data: staffRows } = await sb
-      .from("staff")
-      .select("id")
-      .ilike("first_name", u.first)
-      .limit(1);
+    // Find staff row by first_name (+ last_name when provided), otherwise create
+    let staffQuery = sb.from("staff").select("id").ilike("first_name", u.first);
+    if (u.last) staffQuery = staffQuery.ilike("last_name", u.last);
+    const { data: staffRows } = await staffQuery.limit(1);
 
-    if (staffRows && staffRows.length) {
-      const { error: e2 } = await sb
+    let staffId = staffRows?.[0]?.id;
+
+    if (!staffId) {
+      const { data: created, error: cErr } = await sb
         .from("staff")
-        .update({
-          user_id: user!.id,
-          portal_access: u.portals,
-          allowed_store_id: u.store,
-          email: u.email,
-        })
-        .eq("id", staffRows[0].id);
-      results.push({ email: u.email, link: e2 ? `error: ${e2.message}` : "linked" });
-    } else {
-      results.push({ email: u.email, link: "no staff row found" });
+        .insert({ first_name: u.first, last_name: u.last ?? "", email: u.email })
+        .select("id")
+        .single();
+      if (cErr) {
+        results.push({ email: u.email, link: `create-staff-error: ${cErr.message}` });
+        continue;
+      }
+      staffId = created!.id;
     }
+
+    const { error: e2 } = await sb
+      .from("staff")
+      .update({
+        user_id: user!.id,
+        portal_access: u.portals,
+        allowed_store_id: u.store,
+        allowed_store_ids: u.stores ?? (u.store ? [u.store] : []),
+        email: u.email,
+      })
+      .eq("id", staffId);
+    results.push({ email: u.email, link: e2 ? `error: ${e2.message}` : "linked" });
   }
 
   return new Response(JSON.stringify({ results }, null, 2), {
