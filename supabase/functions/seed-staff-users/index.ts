@@ -30,11 +30,11 @@ type SeedUser = {
 
 const USERS: SeedUser[] = [
   { email: "info@fiskskaldjur.ch",        password: "Anna123",    first: "Anna",    portals: ["shop"],                            store: ZOLLIKON_STORE_ID },
-  { email: "robinelzerqvist@icloud.com",  password: "Robin123",   first: "Robin",   portals: ["wholesale", "production"],         store: null },
+  { email: "robinelzerqvist@icloud.com",  oldEmail: "info@fiskskaldjur.se", password: "Robin123",   first: "Robin",   portals: ["wholesale", "production"],         store: null },
   { email: "timhvarfvenius@gmail.com",    password: "Tim123",     first: "Tim",     portals: ["shop", "wholesale", "production"], store: null },
   { email: "joakim@fiskskaldjur.ch",      password: "Joakim123",  first: "Joakim",  portals: ["shop", "wholesale", "production"], store: null },
   { email: "baldvin@fiskskaldjur.se",     password: "Baldvin123", first: "Baldvin", portals: ["shop", "wholesale", "production"], store: null },
-  { email: "mensurmehamed23@gmail.com",   password: "Mensur123",  first: "Mensur",  portals: ["production"],                      store: null },
+  { email: "mensurmehamed23@gmail.com",   oldEmail: "mensur@fiskskaldjur.se", password: "Mensur123",  first: "Mensur",  portals: ["production"],                      store: null },
   { email: "vilma.gunnarsson@gmail.com",  password: "Vilma123",   first: "Vilma",   last: "Andersson", portals: ["shop"],         store: null, stores: [STOCKHOLM_STORE_ID] },
   { email: "fredric.lindqvist@calixter.com", password: "Fredric123", first: "Fredric", last: "Lindqvist", portals: ["shop", "wholesale", "production"], store: null, stores: [STOCKHOLM_STORE_ID, TORGET_STORE_ID, AMHULT_STORE_ID, SARO_STORE_ID] },
 ];
