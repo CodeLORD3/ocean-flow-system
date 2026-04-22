@@ -17,7 +17,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { cn } from "@/lib/utils";
 
 const overviewNav = [
-  { title: "Översikt", url: "/", icon: LayoutDashboard },
+  { title: "Översikt", url: "/organisation", icon: LayoutDashboard },
 ];
 
 const calendarNav = [
