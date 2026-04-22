@@ -12,14 +12,27 @@ const sb = createClient(SUPABASE_URL, SERVICE_ROLE, {
 });
 
 const ZOLLIKON_STORE_ID = "93adfded-5d68-41e3-9b00-c3b3db4f5ee4";
+const KUNGSHOLMEN_STORE_ID = "eb3b69e6-cf80-4cef-aaba-c5fe2c5151d7";
+const ALSTEN_STORE_ID = "0f8691d1-1fde-4b0f-8f26-31cc9d59619f";
 
-const USERS = [
+type SeedUser = {
+  email: string;
+  password: string;
+  first: string;
+  last?: string;
+  portals: string[];
+  store: string | null;
+  stores?: string[];
+};
+
+const USERS: SeedUser[] = [
   { email: "info@fiskskaldjur.ch",     password: "Anna123",    first: "Anna",    portals: ["shop"],                          store: ZOLLIKON_STORE_ID },
   { email: "info@fiskskaldjur.se",     password: "Robin123",   first: "Robin",   portals: ["wholesale", "production"],       store: null },
   { email: "timhvarfvenius@gmail.com", password: "Tim123",     first: "Tim",     portals: ["shop", "wholesale", "production"], store: null },
   { email: "joakim@fiskskaldjur.ch",   password: "Joakim123",  first: "Joakim",  portals: ["shop", "wholesale", "production"], store: null },
   { email: "baldvin@fiskskaldjur.se",  password: "Baldvin123", first: "Baldvin", portals: ["shop", "wholesale", "production"], store: null },
   { email: "mensur@fiskskaldjur.se",   password: "Mensur123",  first: "Mensur",  portals: ["production"],                    store: null },
+  { email: "vilma.gunnarsson@gmail.com", password: "Vilma123", first: "Vilma",   last: "Andersson", portals: ["shop"],       store: null, stores: [KUNGSHOLMEN_STORE_ID, ALSTEN_STORE_ID] },
 ];
 
 Deno.serve(async (req) => {
@@ -57,27 +70,37 @@ Deno.serve(async (req) => {
       results.push({ email: u.email, status: error ? "update-failed" : "password-reset", error: error?.message });
     }
 
-    // Find staff row by first_name
-    const { data: staffRows } = await sb
-      .from("staff")
-      .select("id")
-      .ilike("first_name", u.first)
-      .limit(1);
+    // Find staff row by first_name (+ last_name when provided), otherwise create
+    let staffQuery = sb.from("staff").select("id").ilike("first_name", u.first);
+    if (u.last) staffQuery = staffQuery.ilike("last_name", u.last);
+    const { data: staffRows } = await staffQuery.limit(1);
 
-    if (staffRows && staffRows.length) {
-      const { error: e2 } = await sb
+    let staffId = staffRows?.[0]?.id;
+
+    if (!staffId) {
+      const { data: created, error: cErr } = await sb
         .from("staff")
-        .update({
-          user_id: user!.id,
-          portal_access: u.portals,
-          allowed_store_id: u.store,
-          email: u.email,
-        })
-        .eq("id", staffRows[0].id);
-      results.push({ email: u.email, link: e2 ? `error: ${e2.message}` : "linked" });
-    } else {
-      results.push({ email: u.email, link: "no staff row found" });
+        .insert({ first_name: u.first, last_name: u.last ?? "", email: u.email })
+        .select("id")
+        .single();
+      if (cErr) {
+        results.push({ email: u.email, link: `create-staff-error: ${cErr.message}` });
+        continue;
+      }
+      staffId = created!.id;
     }
+
+    const { error: e2 } = await sb
+      .from("staff")
+      .update({
+        user_id: user!.id,
+        portal_access: u.portals,
+        allowed_store_id: u.store,
+        allowed_store_ids: u.stores ?? (u.store ? [u.store] : []),
+        email: u.email,
+      })
+      .eq("id", staffId);
+    results.push({ email: u.email, link: e2 ? `error: ${e2.message}` : "linked" });
   }
 
   return new Response(JSON.stringify({ results }, null, 2), {

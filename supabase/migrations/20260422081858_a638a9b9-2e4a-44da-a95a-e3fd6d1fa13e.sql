@@ -1,0 +1,1 @@
+ALTER TABLE public.staff ADD COLUMN IF NOT EXISTS allowed_store_ids uuid[] NOT NULL DEFAULT '{}'::uuid[];

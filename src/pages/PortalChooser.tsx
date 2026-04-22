@@ -56,9 +56,18 @@ export default function PortalChooser() {
 
   const enterPortal = (key: PortalKey) => {
     setSite(key);
-    if (key === "shop" && staff?.allowed_store_id) {
-      const store = stores.find((s) => s.id === staff.allowed_store_id);
-      setActiveStore(staff.allowed_store_id, store?.name ?? null);
+    if (key === "shop") {
+      const allowedIds = [
+        ...(staff?.allowed_store_ids ?? []),
+        ...(staff?.allowed_store_id ? [staff.allowed_store_id] : []),
+      ];
+      if (allowedIds.length === 1) {
+        const store = stores.find((s) => s.id === allowedIds[0]);
+        setActiveStore(allowedIds[0], store?.name ?? null);
+      } else {
+        // Multiple or none → let user pick from sidebar dropdown
+        setActiveStore(null, null);
+      }
     } else {
       setActiveStore(null, null);
     }

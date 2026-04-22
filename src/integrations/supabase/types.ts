@@ -2012,6 +2012,7 @@ export type Database = {
         Row: {
           age: number | null
           allowed_store_id: string | null
+          allowed_store_ids: string[]
           created_at: string | null
           email: string | null
           first_name: string
@@ -2027,6 +2028,7 @@ export type Database = {
         Insert: {
           age?: number | null
           allowed_store_id?: string | null
+          allowed_store_ids?: string[]
           created_at?: string | null
           email?: string | null
           first_name: string
@@ -2042,6 +2044,7 @@ export type Database = {
         Update: {
           age?: number | null
           allowed_store_id?: string | null
+          allowed_store_ids?: string[]
           created_at?: string | null
           email?: string | null
           first_name?: string
@@ -2636,6 +2639,7 @@ export type Database = {
         Returns: {
           age: number | null
           allowed_store_id: string | null
+          allowed_store_ids: string[]
           created_at: string | null
           email: string | null
           first_name: string
