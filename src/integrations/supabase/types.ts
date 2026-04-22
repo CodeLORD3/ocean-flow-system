@@ -1509,6 +1509,7 @@ export type Database = {
           pin_hash: string
           role: string
           staff_id: string | null
+          store_id: string | null
         }
         Insert: {
           active?: boolean
@@ -1518,6 +1519,7 @@ export type Database = {
           pin_hash: string
           role?: string
           staff_id?: string | null
+          store_id?: string | null
         }
         Update: {
           active?: boolean
@@ -1527,6 +1529,7 @@ export type Database = {
           pin_hash?: string
           role?: string
           staff_id?: string | null
+          store_id?: string | null
         }
         Relationships: [
           {
@@ -1534,6 +1537,13 @@ export type Database = {
             columns: ["staff_id"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_cashiers_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
@@ -1742,6 +1752,7 @@ export type Database = {
           reversed_transaction_id: string | null
           shift_id: string | null
           status: string
+          store_id: string | null
           total_ore: number
           vat_breakdown: Json
         }
@@ -1758,6 +1769,7 @@ export type Database = {
           reversed_transaction_id?: string | null
           shift_id?: string | null
           status?: string
+          store_id?: string | null
           total_ore?: number
           vat_breakdown?: Json
         }
@@ -1774,6 +1786,7 @@ export type Database = {
           reversed_transaction_id?: string | null
           shift_id?: string | null
           status?: string
+          store_id?: string | null
           total_ore?: number
           vat_breakdown?: Json
         }
@@ -1797,6 +1810,13 @@ export type Database = {
             columns: ["shift_id"]
             isOneToOne: false
             referencedRelation: "pos_shifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_transactions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
