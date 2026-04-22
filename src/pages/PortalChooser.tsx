@@ -41,6 +41,7 @@ export default function PortalChooser() {
   }
 
   if (!session) return <Navigate to="/" replace />;
+  if (needsPwd) return <FirstLoginPasswordChange />;
 
   if (staff && access.length === 0) {
     return (
