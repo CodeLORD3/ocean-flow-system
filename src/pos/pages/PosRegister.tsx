@@ -10,6 +10,9 @@ import { useCashier } from "../store/cashier";
 import { formatSek } from "../lib/money";
 import WeightDialog from "../components/WeightDialog";
 import PaymentDialog from "../components/PaymentDialog";
+import OriginChip from "../components/OriginChip";
+import TraceabilityModal from "../components/TraceabilityModal";
+import { CountryFlag } from "../components/CountryBadge";
 
 const CATEGORY_ORDER = ["Färsk fisk", "Skaldjur", "Rökt & gravat", "Delikatess", "Torrvaror"];
 
@@ -22,6 +25,7 @@ export default function PosRegister() {
   const [search, setSearch] = useState("");
   const [weightProduct, setWeightProduct] = useState<PosProduct | null>(null);
   const [showPay, setShowPay] = useState(false);
+  const [traceFor, setTraceFor] = useState<{ sku: string; name: string } | null>(null);
 
   const { tabs, activeTabId, switchTab, newTab, removeTab, addLine, removeLine, clear } = useCart();
   const activeTab = useCart(selectActiveTab);
