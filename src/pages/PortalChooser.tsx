@@ -21,15 +21,16 @@ export default function PortalChooser() {
   const navigate = useNavigate();
 
   const access = staff?.portal_access ?? [];
+  const needsPwd = !!staff?.must_change_password;
 
   // If only one portal, jump straight in
   useEffect(() => {
-    if (loading || !staff) return;
+    if (loading || !staff || needsPwd) return;
     if (access.length === 1) {
       enterPortal(access[0]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, staff?.id]);
+  }, [loading, staff?.id, needsPwd]);
 
   if (loading) {
     return (
