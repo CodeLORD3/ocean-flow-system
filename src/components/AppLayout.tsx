@@ -109,10 +109,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen flex w-full">
         {site === "shop" ? <ShopSidebar /> : site === "production" ? <ProductionSidebar /> : <AppSidebar />}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Top status bar */}
-          <div className="h-8 flex items-center justify-between bg-sidebar-background px-4 text-xs text-foreground shrink-0">
+          {/* Top status bar — hidden on mobile to save vertical space */}
+          <div className="hidden sm:flex h-8 items-center justify-between bg-sidebar-background px-4 text-xs text-foreground shrink-0">
             <div className="flex items-center gap-4">
-              <span className="hidden sm:inline">
+              <span>
                 {site === "shop" ? `Butik: ${activeStoreName || "–"}` : site === "production" ? "Produktion" : "Grossist"}
               </span>
             </div>
@@ -171,16 +171,16 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <span className="hidden sm:inline">•</span>
+              <span>•</span>
               <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
-              <span className="hidden sm:inline">Online</span>
+              <span>Online</span>
             </div>
           </div>
 
-          {/* Main header */}
-          <header className="h-12 flex items-center justify-between border-b border-border bg-card px-4 shrink-0">
-            <div className="flex items-center gap-3">
-              <SidebarTrigger />
+          {/* Main header — taller tap targets on mobile */}
+          <header className="h-14 sm:h-12 flex items-center justify-between border-b border-border bg-card px-3 sm:px-4 shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <SidebarTrigger className="h-10 w-10 sm:h-7 sm:w-7" />
               <nav className="hidden md:flex items-center gap-1 text-xs text-muted-foreground">
                 {page.breadcrumb.map((crumb, i) => (
                   <span key={i} className="flex items-center gap-1">
@@ -189,16 +189,20 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   </span>
                 ))}
               </nav>
+              {/* On mobile show only the current page title */}
+              <span className="md:hidden text-sm font-semibold text-foreground truncate">
+                {page.title}
+              </span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <div className="relative hidden lg:block">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input placeholder="Sök i hela systemet... (Ctrl+K)" className="h-8 w-64 pl-8 text-xs bg-muted/50" />
               </div>
 
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <Bell className="h-4 w-4" />
+              <Button variant="ghost" size="icon" className="h-10 w-10 sm:h-8 sm:w-8">
+                <Bell className="h-5 w-5 sm:h-4 sm:w-4" />
               </Button>
 
               <AccountMenu />
@@ -240,11 +244,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             })}
           </div>
 
-          <main className="flex-1 overflow-auto p-4 lg:p-6">
+          <main className="flex-1 overflow-auto p-3 sm:p-4 lg:p-6">
             {children}
           </main>
 
-          <div className="h-6 flex items-center justify-between border-t border-border bg-muted/30 px-4 text-[10px] text-muted-foreground shrink-0">
+          {/* Footer — hidden on mobile to save vertical space */}
+          <div className="hidden sm:flex h-6 items-center justify-between border-t border-border bg-muted/30 px-4 text-[10px] text-muted-foreground shrink-0">
             <span>FiskHandel AB © 2026</span>
             <div className="flex items-center gap-3">
               <span>Databas: Ansluten</span>
