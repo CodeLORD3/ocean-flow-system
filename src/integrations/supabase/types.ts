@@ -790,6 +790,24 @@ export type Database = {
         }
         Relationships: []
       }
+      landing_settings: {
+        Row: {
+          headline: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          headline?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          headline?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       manual_schedule_entries: {
         Row: {
           created_at: string
@@ -1993,41 +2011,57 @@ export type Database = {
       staff: {
         Row: {
           age: number | null
+          allowed_store_id: string | null
           created_at: string | null
           email: string | null
           first_name: string
           id: string
           last_name: string
           phone: string | null
+          portal_access: string[]
           profile_image_url: string | null
           store_id: string | null
+          user_id: string | null
           workplace: string | null
         }
         Insert: {
           age?: number | null
+          allowed_store_id?: string | null
           created_at?: string | null
           email?: string | null
           first_name: string
           id?: string
           last_name: string
           phone?: string | null
+          portal_access?: string[]
           profile_image_url?: string | null
           store_id?: string | null
+          user_id?: string | null
           workplace?: string | null
         }
         Update: {
           age?: number | null
+          allowed_store_id?: string | null
           created_at?: string | null
           email?: string | null
           first_name?: string
           id?: string
           last_name?: string
           phone?: string | null
+          portal_access?: string[]
           profile_image_url?: string | null
           store_id?: string | null
+          user_id?: string | null
           workplace?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "staff_allowed_store_id_fkey"
+            columns: ["allowed_store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "staff_store_id_fkey"
             columns: ["store_id"]
@@ -2597,6 +2631,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      current_staff: {
+        Args: never
+        Returns: {
+          age: number | null
+          allowed_store_id: string | null
+          created_at: string | null
+          email: string | null
+          first_name: string
+          id: string
+          last_name: string
+          phone: string | null
+          portal_access: string[]
+          profile_image_url: string | null
+          store_id: string | null
+          user_id: string | null
+          workplace: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "staff"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
