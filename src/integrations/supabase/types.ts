@@ -94,119 +94,6 @@ export type Database = {
           },
         ]
       }
-      b2b_order_lines: {
-        Row: {
-          article_id: string
-          id: string
-          line_total_ore: number
-          order_id: string
-          product_name: string
-          quantity: number
-          unit: string
-          unit_price_ore: number
-          vat_rate: number
-        }
-        Insert: {
-          article_id: string
-          id?: string
-          line_total_ore: number
-          order_id: string
-          product_name: string
-          quantity: number
-          unit: string
-          unit_price_ore: number
-          vat_rate: number
-        }
-        Update: {
-          article_id?: string
-          id?: string
-          line_total_ore?: number
-          order_id?: string
-          product_name?: string
-          quantity?: number
-          unit?: string
-          unit_price_ore?: number
-          vat_rate?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "b2b_order_lines_article_id_fkey"
-            columns: ["article_id"]
-            isOneToOne: false
-            referencedRelation: "makrilltrade_articles_cache"
-            referencedColumns: ["article_id"]
-          },
-          {
-            foreignKeyName: "b2b_order_lines_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "b2b_orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      b2b_orders: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          customer_email: string | null
-          customer_name: string
-          customer_org_no: string | null
-          customer_tier_id: string | null
-          delivery_date: string | null
-          id: string
-          notes: string | null
-          order_no: number
-          status: string
-          store_id: string | null
-          total_ore: number
-          updated_at: string
-          vat_breakdown: Json
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          customer_email?: string | null
-          customer_name: string
-          customer_org_no?: string | null
-          customer_tier_id?: string | null
-          delivery_date?: string | null
-          id?: string
-          notes?: string | null
-          order_no?: number
-          status?: string
-          store_id?: string | null
-          total_ore?: number
-          updated_at?: string
-          vat_breakdown?: Json
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          customer_email?: string | null
-          customer_name?: string
-          customer_org_no?: string | null
-          customer_tier_id?: string | null
-          delivery_date?: string | null
-          id?: string
-          notes?: string | null
-          order_no?: number
-          status?: string
-          store_id?: string | null
-          total_ore?: number
-          updated_at?: string
-          vat_breakdown?: Json
-        }
-        Relationships: [
-          {
-            foreignKeyName: "b2b_orders_customer_tier_id_fkey"
-            columns: ["customer_tier_id"]
-            isOneToOne: false
-            referencedRelation: "scomber_customer_tiers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       batch_allocations: {
         Row: {
           allocated_at: string
@@ -959,6 +846,51 @@ export type Database = {
           headline?: string
           id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      legal_entities: {
+        Row: {
+          accounting_config: Json
+          accounting_provider: string | null
+          country: string
+          created_at: string
+          currency: string
+          fortnox_access_token: string | null
+          fortnox_refresh_token: string | null
+          legal_entity_id: string
+          legal_name: string
+          locale: string
+          org_nr: string
+          vat_registration: string | null
+        }
+        Insert: {
+          accounting_config?: Json
+          accounting_provider?: string | null
+          country: string
+          created_at?: string
+          currency: string
+          fortnox_access_token?: string | null
+          fortnox_refresh_token?: string | null
+          legal_entity_id: string
+          legal_name: string
+          locale?: string
+          org_nr: string
+          vat_registration?: string | null
+        }
+        Update: {
+          accounting_config?: Json
+          accounting_provider?: string | null
+          country?: string
+          created_at?: string
+          currency?: string
+          fortnox_access_token?: string | null
+          fortnox_refresh_token?: string | null
+          legal_entity_id?: string
+          legal_name?: string
+          locale?: string
+          org_nr?: string
+          vat_registration?: string | null
         }
         Relationships: []
       }
@@ -1753,6 +1685,7 @@ export type Database = {
           cashier_id: string
           control_code: string | null
           id: string
+          legal_entity_id: string | null
           occurred_at: string
           parked: boolean
           parked_label: string | null
@@ -1770,6 +1703,7 @@ export type Database = {
           cashier_id: string
           control_code?: string | null
           id?: string
+          legal_entity_id?: string | null
           occurred_at?: string
           parked?: boolean
           parked_label?: string | null
@@ -1787,6 +1721,7 @@ export type Database = {
           cashier_id?: string
           control_code?: string | null
           id?: string
+          legal_entity_id?: string | null
           occurred_at?: string
           parked?: boolean
           parked_label?: string | null
@@ -1807,6 +1742,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "pos_cashiers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_transactions_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
           },
           {
             foreignKeyName: "pos_transactions_reversed_transaction_id_fkey"
@@ -1913,13 +1855,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "makrilltrade_articles_cache"
             referencedColumns: ["article_id"]
-          },
-          {
-            foreignKeyName: "price_overrides_customer_tier_id_fkey"
-            columns: ["customer_tier_id"]
-            isOneToOne: false
-            referencedRelation: "scomber_customer_tiers"
-            referencedColumns: ["id"]
           },
         ]
       }
@@ -2407,27 +2342,6 @@ export type Database = {
           },
         ]
       }
-      scomber_customer_tiers: {
-        Row: {
-          code: string
-          created_at: string
-          id: string
-          name: string
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          id?: string
-          name: string
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          id?: string
-          name?: string
-        }
-        Relationships: []
-      }
       scomber_pricing_rules: {
         Row: {
           article_id: string
@@ -2437,6 +2351,7 @@ export type Database = {
           markup_percent: number | null
           max_price_ore: number | null
           min_price_ore: number | null
+          round_to_ore: number
           store_multiplier: Json
           strategy: string
           target_margin_percent: number | null
@@ -2450,6 +2365,7 @@ export type Database = {
           markup_percent?: number | null
           max_price_ore?: number | null
           min_price_ore?: number | null
+          round_to_ore?: number
           store_multiplier?: Json
           strategy?: string
           target_margin_percent?: number | null
@@ -2463,6 +2379,7 @@ export type Database = {
           markup_percent?: number | null
           max_price_ore?: number | null
           min_price_ore?: number | null
+          round_to_ore?: number
           store_multiplier?: Json
           strategy?: string
           target_margin_percent?: number | null
@@ -2923,45 +2840,74 @@ export type Database = {
       }
       stores: {
         Row: {
+          active: boolean
           address: string | null
           city: string
+          country: string
           created_at: string | null
+          currency: string
           hours: string | null
           id: string
           is_wholesale: boolean | null
+          legal_entity_id: string
+          locale: string
           logo_url: string | null
           manager: string | null
           name: string
           phone: string | null
+          region: string | null
+          slug: string
           sqm: number | null
         }
         Insert: {
+          active?: boolean
           address?: string | null
           city: string
+          country: string
           created_at?: string | null
+          currency: string
           hours?: string | null
           id?: string
           is_wholesale?: boolean | null
+          legal_entity_id: string
+          locale: string
           logo_url?: string | null
           manager?: string | null
           name: string
           phone?: string | null
+          region?: string | null
+          slug: string
           sqm?: number | null
         }
         Update: {
+          active?: boolean
           address?: string | null
           city?: string
+          country?: string
           created_at?: string | null
+          currency?: string
           hours?: string | null
           id?: string
           is_wholesale?: boolean | null
+          legal_entity_id?: string
+          locale?: string
           logo_url?: string | null
           manager?: string | null
           name?: string
           phone?: string | null
+          region?: string | null
+          slug?: string
           sqm?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "stores_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
+        ]
       }
       suitability_responses: {
         Row: {
