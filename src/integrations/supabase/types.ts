@@ -1080,6 +1080,54 @@ export type Database = {
           },
         ]
       }
+      page_visits: {
+        Row: {
+          id: string
+          page_title: string | null
+          path: string
+          portal: string | null
+          session_id: string | null
+          staff_id: string | null
+          user_id: string
+          visited_at: string
+        }
+        Insert: {
+          id?: string
+          page_title?: string | null
+          path: string
+          portal?: string | null
+          session_id?: string | null
+          staff_id?: string | null
+          user_id: string
+          visited_at?: string
+        }
+        Update: {
+          id?: string
+          page_title?: string | null
+          path?: string
+          portal?: string | null
+          session_id?: string | null
+          staff_id?: string | null
+          user_id?: string
+          visited_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_visits_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "user_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "page_visits_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_events: {
         Row: {
           admin_user_id: string | null
@@ -2416,6 +2464,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          duration_seconds: number | null
+          id: string
+          last_seen_at: string
+          login_at: string
+          logout_at: string | null
+          portal: string | null
+          staff_id: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          duration_seconds?: number | null
+          id?: string
+          last_seen_at?: string
+          login_at?: string
+          logout_at?: string | null
+          portal?: string | null
+          staff_id?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          duration_seconds?: number | null
+          id?: string
+          last_seen_at?: string
+          login_at?: string
+          logout_at?: string | null
+          portal?: string | null
+          staff_id?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_sessions_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       weekly_report_cost_lines: {
         Row: {

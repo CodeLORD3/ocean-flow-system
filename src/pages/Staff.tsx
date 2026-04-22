@@ -22,11 +22,21 @@ import { useToast } from "@/hooks/use-toast";
 import { useStaff, useCreateStaff, useUpdateStaff, useDeleteStaff, StaffMember } from "@/hooks/useStaff";
 import { useStores } from "@/hooks/useStores";
 import { useSite } from "@/contexts/SiteContext";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { StaffDetailDialog } from "@/components/staff/StaffDetailDialog";
+import { Activity } from "lucide-react";
+
+const ACTIVITY_VIEWER_EMAILS = [
+  "joakim@fiskskaldjur.ch",
+  "baldvin@fiskskaldjur.se",
+  "timhvarfvenius@gmail.com",
+];
 
 export default function Staff() {
   const { toast } = useToast();
   const { site, activeStoreId } = useSite();
+  const { staff: currentStaff } = useStaffAuth();
   const storeFilter = site === "shop" ? activeStoreId : undefined;
   const { data: staffList = [], isLoading } = useStaff(storeFilter);
   const { data: stores = [] } = useStores(true);
@@ -34,12 +44,18 @@ export default function Staff() {
   const updateStaff = useUpdateStaff();
   const deleteStaff = useDeleteStaff();
 
+  const canViewActivity =
+    site === "wholesale" &&
+    !!currentStaff?.email &&
+    ACTIVITY_VIEWER_EMAILS.includes(currentStaff.email.toLowerCase());
+
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [detailStaff, setDetailStaff] = useState<any | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const emptyForm = {
@@ -163,7 +179,11 @@ export default function Staff() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtered.map((s: any) => (
-            <Card key={s.id} className="shadow-card hover:shadow-card-hover transition-shadow">
+            <Card
+              key={s.id}
+              className={`shadow-card hover:shadow-card-hover transition-shadow ${canViewActivity ? "cursor-pointer" : ""}`}
+              onClick={canViewActivity ? () => setDetailStaff(s) : undefined}
+            >
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
@@ -179,11 +199,22 @@ export default function Staff() {
                       {s.age && <p className="text-[10px] text-muted-foreground">{s.age} år</p>}
                     </div>
                   </div>
-                  <div className="flex items-center gap-0.5">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(s)}>
+                  <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+                    {canViewActivity && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        title="Visa aktivitet"
+                        onClick={(e) => { e.stopPropagation(); setDetailStaff(s); }}
+                      >
+                        <Activity className="h-3.5 w-3.5 text-primary" />
+                      </Button>
+                    )}
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openEdit(s); }}>
                       <Edit className="h-3.5 w-3.5 text-muted-foreground" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteTarget({ id: s.id, name: `${s.first_name} ${s.last_name}` })}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: s.id, name: `${s.first_name} ${s.last_name}` }); }}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
@@ -296,6 +327,13 @@ export default function Staff() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Personal activity dialog */}
+      <StaffDetailDialog
+        open={!!detailStaff}
+        onOpenChange={(open) => !open && setDetailStaff(null)}
+        staff={detailStaff}
+      />
     </motion.div>
   );
 }
