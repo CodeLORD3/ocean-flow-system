@@ -145,7 +145,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   {access.includes("production") && (
                     <DropdownMenuItem
                       className={`text-xs gap-2 ${site === "production" ? "bg-muted font-medium" : ""}`}
-                      onClick={() => { setSite("production"); setActiveStore(null, null); switchTab("/"); }}
+                      onClick={() => { setSite("production"); setActiveStore(null, null); switchTab("/organisation"); }}
                     >
                       <Factory className="h-3 w-3" /> Produktion
                     </DropdownMenuItem>
