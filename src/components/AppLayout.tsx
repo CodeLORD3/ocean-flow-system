@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { useSite } from "@/contexts/SiteContext";
 import { useTabs } from "@/contexts/TabsContext";
 import { useStores } from "@/hooks/useStores";
+import { useSessionTracking, closeCurrentSession } from "@/hooks/useSessionTracking";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,6 +47,7 @@ function AccountMenu() {
   const portalCount = staff?.portal_access?.length ?? 0;
 
   const handleSignOut = async () => {
+    await closeCurrentSession();
     await signOut();
     navigate("/", { replace: true });
   };
@@ -92,6 +94,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { tabs, activeTab, closeTab, switchTab } = useTabs();
   const { data: allStores = [] } = useStores();
   const { staff } = useStaffAuth();
+  useSessionTracking();
 
   const access = staff?.portal_access ?? [];
   const lockedStoreId = staff?.allowed_store_id ?? null;
