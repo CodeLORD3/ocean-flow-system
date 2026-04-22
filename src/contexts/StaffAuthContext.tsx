@@ -15,6 +15,7 @@ export interface StaffProfile {
   portal_access: PortalKey[];
   allowed_store_id: string | null;
   allowed_store_ids: string[];
+  must_change_password: boolean;
 }
 
 interface AuthContextValue {
