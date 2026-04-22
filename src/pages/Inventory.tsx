@@ -825,14 +825,14 @@ export default function Inventory() {
 
   // ── Render helpers ───────────────────────────────────────────────────────
   const renderSelectionActions = (locId: string) => (
-    <div className="flex items-center gap-1 mr-2">
+    <div className="flex items-center gap-1 flex-wrap sm:mr-2">
       <Badge variant="outline" className="text-[10px] h-5">
         {getSelectedForLocation(locId).size} valda
       </Badge>
       <Button
         variant="outline"
         size="sm"
-        className="h-6 px-2 text-[10px] gap-1"
+        className="h-7 sm:h-6 px-2 text-[10px] gap-1"
         onClick={() => {
           setActiveLocationId(locId);
           setMoveDialogOpen(true);
@@ -843,7 +843,7 @@ export default function Inventory() {
       <Button
         variant="outline"
         size="sm"
-        className="h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+        className="h-7 sm:h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
         onClick={() => {
           setActiveLocationId(locId);
           setDeleteDialogOpen(true);
@@ -856,7 +856,7 @@ export default function Inventory() {
           <Button
             variant="outline"
             size="sm"
-            className="h-6 px-2 text-[10px] gap-1"
+            className="h-7 sm:h-6 px-2 text-[10px] gap-1"
             onClick={() => {
               setActiveLocationId(locId);
               setSplitDialogOpen(true);
@@ -868,7 +868,7 @@ export default function Inventory() {
             <Button
               variant="outline"
               size="sm"
-              className="h-6 px-2 text-[10px] gap-1"
+              className="h-7 sm:h-6 px-2 text-[10px] gap-1"
               onClick={() => {
                 setActiveLocationId(locId);
                 setTransformDialogOpen(true);
@@ -888,22 +888,10 @@ export default function Inventory() {
       {loc.items.length === 0 ? (
         <div className="px-2 py-2 text-center text-xs text-muted-foreground">Tomt lager</div>
       ) : (
-        <table className="w-full text-[10px]">
-          <thead>
-            <tr className="bg-muted/20 h-6">
-              <th className="px-2 py-0 w-6"></th>
-              <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Produkt</th>
-              <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">SKU</th>
-              <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Kat.</th>
-              <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Antal</th>
-              <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Värde</th>
-              <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Ank.</th>
-              <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">B.före</th>
-              <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Färskh.</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loc.items.map((s: any, idx: number) => {
+        <>
+          {/* Mobile: card list */}
+          <div className="sm:hidden divide-y divide-border/30">
+            {loc.items.map((s: any) => {
               const isRawLager = (loc.name || "").toLowerCase().startsWith("raw-");
               const unitPrice = isRawLager
                 ? Number(s.products?.wholesale_price) || 0
@@ -912,57 +900,144 @@ export default function Inventory() {
               const isChecked = getSelectedForLocation(loc.id).has(s.id);
               const freshness = getFreshnessInfo(s.expiry_date);
               const fifoIssue = hasFifoIssue(s, loc.items);
-              const zebra = idx % 2 === 1 ? "bg-muted/30" : "";
 
               return (
-                <tr
+                <div
                   key={s.id}
-                  className={`border-b border-border/30 last:border-0 hover:bg-primary/20 transition-colors h-7 ${isChecked ? "bg-primary/5" : freshness?.rowClass || zebra}`}
+                  className={`flex items-start gap-2 px-2 py-2 ${isChecked ? "bg-primary/5" : freshness?.rowClass || ""}`}
+                  onClick={() => toggleItemSelection(loc.id, s.id)}
                 >
-                  <td className="px-2 py-0.5 text-center">
-                    <Checkbox checked={isChecked} onCheckedChange={() => toggleItemSelection(loc.id, s.id)} />
-                  </td>
-                  <td className="px-2 py-0.5 font-medium text-foreground">
-                    <div className="flex items-center gap-1.5">
-                      {s.products?.name}
-                      {fifoIssue && (
-                        <span title="FIFO-varning: äldre batch finns på annat lagerställe">
-                          <AlertCircle className="h-3 w-3 text-amber-500" />
-                        </span>
+                  <Checkbox
+                    checked={isChecked}
+                    onCheckedChange={() => toggleItemSelection(loc.id, s.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-0.5"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                          <span className="truncate">{s.products?.name}</span>
+                          {fifoIssue && (
+                            <span title="FIFO-varning: äldre batch finns på annat lagerställe">
+                              <AlertCircle className="h-3 w-3 text-amber-500 shrink-0" />
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground font-mono truncate">
+                          {s.products?.sku} · {s.products?.category}
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-sm font-semibold text-foreground whitespace-nowrap">
+                          {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground whitespace-nowrap">{fmt(value)}</div>
+                      </div>
+                    </div>
+                    <div className="mt-1 flex items-center gap-2 flex-wrap text-[10px] text-muted-foreground">
+                      {s.arrival_date && (
+                        <span>Ank: {format(parseISO(s.arrival_date), "d MMM", { locale: sv })}</span>
+                      )}
+                      {s.expiry_date && (
+                        <span>B.före: {format(parseISO(s.expiry_date), "d MMM", { locale: sv })}</span>
+                      )}
+                      {freshness && (
+                        <Badge variant="outline" className={`text-[10px] ${freshness.badgeClass}`}>
+                          {freshness.isExpired ? (
+                            <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
+                          ) : (
+                            <Clock className="h-2.5 w-2.5 mr-0.5" />
+                          )}
+                          {freshness.label}
+                        </Badge>
                       )}
                     </div>
-                  </td>
-                  <td className="px-2 py-0.5 font-mono text-muted-foreground text-[10px]">{s.products?.sku}</td>
-                  <td className="px-2 py-0.5 text-muted-foreground">{s.products?.category}</td>
-                  <td className="px-2 py-0.5 text-right font-medium text-foreground">
-                    {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
-                  </td>
-                  <td className="px-2 py-0.5 text-right text-muted-foreground">{fmt(value)}</td>
-                  <td className="px-2 py-0.5 text-center text-[10px] text-muted-foreground">
-                    {s.arrival_date ? format(parseISO(s.arrival_date), "d MMM", { locale: sv }) : "–"}
-                  </td>
-                  <td className="px-2 py-0.5 text-center text-[10px] text-muted-foreground">
-                    {s.expiry_date ? format(parseISO(s.expiry_date), "d MMM", { locale: sv }) : "–"}
-                  </td>
-                  <td className="px-2 py-0.5 text-center">
-                    {freshness ? (
-                      <Badge variant="outline" className={`text-[10px] ${freshness.badgeClass}`}>
-                        {freshness.isExpired ? (
-                          <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
-                        ) : (
-                          <Clock className="h-2.5 w-2.5 mr-0.5" />
-                        )}
-                        {freshness.label}
-                      </Badge>
-                    ) : (
-                      <span className="text-[10px] text-muted-foreground/40">–</span>
-                    )}
-                  </td>
-                </tr>
+                  </div>
+                </div>
               );
             })}
-          </tbody>
-        </table>
+          </div>
+
+          {/* Desktop: full table */}
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full text-[10px] min-w-[640px]">
+              <thead>
+                <tr className="bg-muted/20 h-6">
+                  <th className="px-2 py-0 w-6"></th>
+                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Produkt</th>
+                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">SKU</th>
+                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Kat.</th>
+                  <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Antal</th>
+                  <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Värde</th>
+                  <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Ank.</th>
+                  <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">B.före</th>
+                  <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Färskh.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loc.items.map((s: any, idx: number) => {
+                  const isRawLager = (loc.name || "").toLowerCase().startsWith("raw-");
+                  const unitPrice = isRawLager
+                    ? Number(s.products?.wholesale_price) || 0
+                    : Number(s.unit_cost) || Number(s.products?.cost_price) || 0;
+                  const value = Number(s.quantity) * unitPrice;
+                  const isChecked = getSelectedForLocation(loc.id).has(s.id);
+                  const freshness = getFreshnessInfo(s.expiry_date);
+                  const fifoIssue = hasFifoIssue(s, loc.items);
+                  const zebra = idx % 2 === 1 ? "bg-muted/30" : "";
+
+                  return (
+                    <tr
+                      key={s.id}
+                      className={`border-b border-border/30 last:border-0 hover:bg-primary/20 transition-colors h-7 ${isChecked ? "bg-primary/5" : freshness?.rowClass || zebra}`}
+                    >
+                      <td className="px-2 py-0.5 text-center">
+                        <Checkbox checked={isChecked} onCheckedChange={() => toggleItemSelection(loc.id, s.id)} />
+                      </td>
+                      <td className="px-2 py-0.5 font-medium text-foreground">
+                        <div className="flex items-center gap-1.5">
+                          {s.products?.name}
+                          {fifoIssue && (
+                            <span title="FIFO-varning: äldre batch finns på annat lagerställe">
+                              <AlertCircle className="h-3 w-3 text-amber-500" />
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-2 py-0.5 font-mono text-muted-foreground text-[10px]">{s.products?.sku}</td>
+                      <td className="px-2 py-0.5 text-muted-foreground">{s.products?.category}</td>
+                      <td className="px-2 py-0.5 text-right font-medium text-foreground">
+                        {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
+                      </td>
+                      <td className="px-2 py-0.5 text-right text-muted-foreground">{fmt(value)}</td>
+                      <td className="px-2 py-0.5 text-center text-[10px] text-muted-foreground">
+                        {s.arrival_date ? format(parseISO(s.arrival_date), "d MMM", { locale: sv }) : "–"}
+                      </td>
+                      <td className="px-2 py-0.5 text-center text-[10px] text-muted-foreground">
+                        {s.expiry_date ? format(parseISO(s.expiry_date), "d MMM", { locale: sv }) : "–"}
+                      </td>
+                      <td className="px-2 py-0.5 text-center">
+                        {freshness ? (
+                          <Badge variant="outline" className={`text-[10px] ${freshness.badgeClass}`}>
+                            {freshness.isExpired ? (
+                              <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
+                            ) : (
+                              <Clock className="h-2.5 w-2.5 mr-0.5" />
+                            )}
+                            {freshness.label}
+                          </Badge>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground/40">–</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );
@@ -970,9 +1045,9 @@ export default function Inventory() {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-heading font-bold text-foreground">
+          <h2 className="text-lg sm:text-xl font-heading font-bold text-foreground">
             Lager {activeStoreName ? `— ${activeStoreName}` : ""}
           </h2>
           <p className="text-xs text-muted-foreground">Lageröversikt och lagerrapporter</p>
@@ -982,14 +1057,14 @@ export default function Inventory() {
             <Button
               size="sm"
               variant="outline"
-              className="gap-1.5 text-xs h-8 border-amber-500/40 text-amber-700 hover:bg-amber-500/10"
+              className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none border-amber-500/40 text-amber-700 hover:bg-amber-500/10"
               onClick={() => setShowExpiryAlerts(true)}
             >
               <AlertTriangle className="h-3 w-3" />
               {expiryAlerts.length} utgångsvarning{expiryAlerts.length > 1 ? "ar" : ""}
             </Button>
           )}
-          <Button size="sm" className="gap-1.5 text-xs h-8" onClick={() => setReportDialogOpen(true)}>
+          <Button size="sm" className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none" onClick={() => setReportDialogOpen(true)}>
             <ClipboardList className="h-3 w-3" /> Skapa lagerrapport
           </Button>
         </div>
@@ -1071,19 +1146,19 @@ export default function Inventory() {
         return (
           <Card className="shadow-card">
             <CardHeader className="pb-2">
-              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
+              <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-between">
                 <div>
                   <CardTitle className="text-sm font-heading">Lager per destination</CardTitle>
                   <CardDescription className="text-xs">{stockByLocation.length} lagerställen</CardDescription>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="relative w-48">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="relative w-full sm:w-48">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                     <Input
                       placeholder="Sök produkt..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      className="pl-8 h-8 text-xs"
+                      className="pl-8 h-9 sm:h-8 text-xs"
                     />
                   </div>
                 </div>
@@ -1130,13 +1205,13 @@ export default function Inventory() {
                     return (
                       <div key={loc.id} className="mb-3">
                         {showHeader && (
-                          <div className="flex items-center justify-between px-2 py-1.5 bg-muted/20 rounded-t-md border border-b-0 border-border/50">
-                            <div className="flex items-center gap-2">
-                              <Warehouse className="h-3 w-3 text-muted-foreground" />
-                              <span className="text-xs font-medium text-foreground">{loc.name}</span>
+                          <div className="flex flex-wrap items-center justify-between gap-2 px-2 py-1.5 bg-muted/20 rounded-t-md border border-b-0 border-border/50">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Warehouse className="h-3 w-3 text-muted-foreground shrink-0" />
+                              <span className="text-xs font-medium text-foreground truncate">{loc.name}</span>
                               <Badge variant="secondary" className="text-[9px] h-4">{loc.items.length}</Badge>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap justify-end">
                               {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
                               <span className="text-[10px] text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
                               <span className="text-[10px] font-medium text-foreground">{fmt(loc.totalValue)}</span>
@@ -1144,11 +1219,11 @@ export default function Inventory() {
                           </div>
                         )}
                         {!showHeader && (
-                          <div className="flex items-center justify-between px-2 py-1.5 mb-1">
-                            <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center justify-between gap-2 px-2 py-1.5 mb-1">
+                            <div className="flex items-center gap-2 flex-wrap">
                               {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 ml-auto">
                               <span className="text-[10px] text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
                               <span className="text-[10px] font-medium text-foreground">{fmt(loc.totalValue)}</span>
                             </div>
