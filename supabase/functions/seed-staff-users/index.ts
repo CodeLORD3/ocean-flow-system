@@ -12,14 +12,27 @@ const sb = createClient(SUPABASE_URL, SERVICE_ROLE, {
 });
 
 const ZOLLIKON_STORE_ID = "93adfded-5d68-41e3-9b00-c3b3db4f5ee4";
+const KUNGSHOLMEN_STORE_ID = "eb3b69e6-cf80-4cef-aaba-c5fe2c5151d7";
+const ALSTEN_STORE_ID = "0f8691d1-1fde-4b0f-8f26-31cc9d59619f";
 
-const USERS = [
+type SeedUser = {
+  email: string;
+  password: string;
+  first: string;
+  last?: string;
+  portals: string[];
+  store: string | null;
+  stores?: string[];
+};
+
+const USERS: SeedUser[] = [
   { email: "info@fiskskaldjur.ch",     password: "Anna123",    first: "Anna",    portals: ["shop"],                          store: ZOLLIKON_STORE_ID },
   { email: "info@fiskskaldjur.se",     password: "Robin123",   first: "Robin",   portals: ["wholesale", "production"],       store: null },
   { email: "timhvarfvenius@gmail.com", password: "Tim123",     first: "Tim",     portals: ["shop", "wholesale", "production"], store: null },
   { email: "joakim@fiskskaldjur.ch",   password: "Joakim123",  first: "Joakim",  portals: ["shop", "wholesale", "production"], store: null },
   { email: "baldvin@fiskskaldjur.se",  password: "Baldvin123", first: "Baldvin", portals: ["shop", "wholesale", "production"], store: null },
   { email: "mensur@fiskskaldjur.se",   password: "Mensur123",  first: "Mensur",  portals: ["production"],                    store: null },
+  { email: "vilma.gunnarsson@gmail.com", password: "Vilma123", first: "Vilma",   last: "Andersson", portals: ["shop"],       store: null, stores: [KUNGSHOLMEN_STORE_ID, ALSTEN_STORE_ID] },
 ];
 
 Deno.serve(async (req) => {
