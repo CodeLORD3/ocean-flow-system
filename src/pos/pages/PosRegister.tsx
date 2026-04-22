@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Plus, X, Trash2, Pause } from "lucide-react";
 import { usePosProducts, type PosProduct } from "../hooks/usePosProducts";
-import { useCart, computeTotals, selectActiveTab } from "../store/cart";
+import { useCart, computeTotals, selectActiveTab, type CartLineOrigin } from "../store/cart";
 import { useCashier } from "../store/cashier";
 import { formatSek } from "../lib/money";
 import WeightDialog from "../components/WeightDialog";
 import PaymentDialog from "../components/PaymentDialog";
 import OriginChip from "../components/OriginChip";
 import TraceabilityModal from "../components/TraceabilityModal";
-import { CountryFlag } from "../components/CountryBadge";
+import { scomberClient } from "../adapters/scomberClient";
 
 const CATEGORY_ORDER = ["Färsk fisk", "Skaldjur", "Rökt & gravat", "Delikatess", "Torrvaror"];
 
@@ -46,20 +46,45 @@ export default function PosRegister() {
     });
   }, [products, search, activeCat]);
 
-  const onTileClick = (p: PosProduct) => {
+  /**
+   * Hämtar äldsta aktiva batchen via traceability-edge så vi kan visa ursprung
+   * direkt på cart-raden. Tyst fail om backend inte svarar — raden läggs till ändå.
+   */
+  const fetchOriginForSku = async (sku: string): Promise<CartLineOrigin | null> => {
+    try {
+      const res = await scomberClient.traceability({ sku, store_id: cashier?.store_id ?? null });
+      const oldest = res.batches?.[0];
+      if (!oldest) return null;
+      const raw = (oldest.raw ?? {}) as Record<string, unknown>;
+      return {
+        batch_id: oldest.batch_id,
+        country: typeof raw.country_of_origin === "string" ? raw.country_of_origin : null,
+        caught_at: oldest.caught_at,
+        vessel: typeof raw.vessel === "string" ? raw.vessel : null,
+        msc: raw.msc_certified === true,
+      };
+    } catch (e) {
+      console.warn("traceability lookup failed", e);
+      return null;
+    }
+  };
+
+  const onTileClick = async (p: PosProduct) => {
     if (p.unit_type === "kg") {
       setWeightProduct(p);
-    } else {
-      addLine({
-        product_id: p.id,
-        sku: p.sku,
-        name: p.name,
-        unit: p.unit_type,
-        quantity: 1,
-        unit_price_ore: p.price_ore,
-        vat_rate: Number(p.vat_rate),
-      });
+      return;
     }
+    const origin = await fetchOriginForSku(p.sku);
+    addLine({
+      product_id: p.id,
+      sku: p.sku,
+      name: p.name,
+      unit: p.unit_type,
+      quantity: 1,
+      unit_price_ore: p.price_ore,
+      vat_rate: Number(p.vat_rate),
+      origin,
+    });
   };
 
   const park = async () => {
@@ -279,8 +304,9 @@ export default function PosRegister() {
         <WeightDialog
           product={weightProduct}
           onClose={() => setWeightProduct(null)}
-          onConfirm={(grams) => {
+          onConfirm={async (grams) => {
             const kg = grams / 1000;
+            const origin = await fetchOriginForSku(weightProduct.sku);
             addLine({
               product_id: weightProduct.id,
               sku: weightProduct.sku,
@@ -289,6 +315,7 @@ export default function PosRegister() {
               quantity: kg,
               unit_price_ore: weightProduct.price_ore,
               vat_rate: Number(weightProduct.vat_rate),
+              origin,
             });
             setWeightProduct(null);
           }}

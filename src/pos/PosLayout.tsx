@@ -1,9 +1,9 @@
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, NavLink } from "react-router-dom";
 import { useEffect, useState } from "react";
 import "./pos.css";
 import { useCashier } from "./store/cashier";
 import { Button } from "@/components/ui/button";
-import { Moon, Sun, LogOut, Wifi, WifiOff } from "lucide-react";
+import { Moon, Sun, LogOut, Wifi, WifiOff, TrendingUp, ShoppingCart } from "lucide-react";
 
 export default function PosLayout() {
   const [dark, setDark] = useState<boolean>(() =>
@@ -44,6 +44,35 @@ export default function PosLayout() {
               </div>
             </div>
           </div>
+
+          {cashier && (
+            <nav className="hidden md:flex items-center gap-1 ml-4">
+              <NavLink
+                to="/pos/register"
+                className={({ isActive }) =>
+                  `inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                    isActive
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`
+                }
+              >
+                <ShoppingCart className="h-3.5 w-3.5" /> Kassa
+              </NavLink>
+              <NavLink
+                to="/pos/pricing"
+                className={({ isActive }) =>
+                  `inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                    isActive
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`
+                }
+              >
+                <TrendingUp className="h-3.5 w-3.5" /> Morgonpriser
+              </NavLink>
+            </nav>
+          )}
 
           <div className="ml-auto flex items-center gap-2">
             <span

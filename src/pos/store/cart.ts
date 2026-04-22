@@ -37,7 +37,7 @@ interface CartStore {
   newTab: (label?: string) => string;
   switchTab: (id: string) => void;
   removeTab: (id: string) => void;
-  addLine: (line: Omit<CartLine, "id" | "line_total_ore" | "discount_ore">) => void;
+  addLine: (line: Omit<CartLine, "id" | "line_total_ore" | "discount_ore"> & { origin?: CartLineOrigin | null }) => void;
   updateLineQty: (lineId: string, quantity: number) => void;
   removeLine: (lineId: string) => void;
   setLineDiscount: (lineId: string, discountOre: number) => void;
