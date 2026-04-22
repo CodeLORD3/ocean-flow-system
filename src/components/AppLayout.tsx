@@ -198,7 +198,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 <Bell className="h-4 w-4" />
               </Button>
 
-              <AccountSwitcher />
+              <AccountMenu />
             </div>
           </header>
 
