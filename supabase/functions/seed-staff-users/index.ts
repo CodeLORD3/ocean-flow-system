@@ -11,9 +11,11 @@ const sb = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
-const ZOLLIKON_STORE_ID = "93adfded-5d68-41e3-9b00-c3b3db4f5ee4";
-const KUNGSHOLMEN_STORE_ID = "eb3b69e6-cf80-4cef-aaba-c5fe2c5151d7";
-const ALSTEN_STORE_ID = "0f8691d1-1fde-4b0f-8f26-31cc9d59619f";
+const ZOLLIKON_STORE_ID   = "93adfded-5d68-41e3-9b00-c3b3db4f5ee4";
+const STOCKHOLM_STORE_ID  = "eb3b69e6-cf80-4cef-aaba-c5fe2c5151d7";
+const TORGET_STORE_ID     = "b541f4c6-1ac0-4127-8af3-761ce3ecbbd7";
+const AMHULT_STORE_ID     = "1426d0bb-dd09-46be-9d11-bc96d203eede";
+const SARO_STORE_ID       = "9ca4f9de-5a14-4bdf-90e7-b22246d41f55";
 
 type SeedUser = {
   email: string;
