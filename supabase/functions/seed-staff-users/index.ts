@@ -107,6 +107,7 @@ Deno.serve(async (req) => {
         allowed_store_id: u.store,
         allowed_store_ids: u.stores ?? (u.store ? [u.store] : []),
         email: u.email,
+        must_change_password: true,
       })
       .eq("id", staffId);
     results.push({ email: u.email, link: e2 ? `error: ${e2.message}` : "linked" });
