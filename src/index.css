@@ -75,12 +75,41 @@
     @apply border-border;
   }
 
-  body {
+  html, body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
+    /* Prevent accidental horizontal scrolling on mobile from wide content */
+    overflow-x: hidden;
+  }
+
+  body {
+    /* iOS safe area support so chrome bars don't overlap content */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* On mobile, prevent iOS zoom-on-focus by ensuring inputs are at least 16px */
+  @media (max-width: 767px) {
+    input,
+    select,
+    textarea {
+      font-size: 16px;
+    }
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
+  }
+}
+
+@layer utilities {
+  /* Subtle right-edge fade to hint that a table scrolls horizontally */
+  .scroll-hint-x {
+    -webkit-mask-image: linear-gradient(to right, black 92%, transparent 100%);
+            mask-image: linear-gradient(to right, black 92%, transparent 100%);
+  }
+  .scroll-hint-x.is-end {
+    -webkit-mask-image: none;
+            mask-image: none;
   }
 }
