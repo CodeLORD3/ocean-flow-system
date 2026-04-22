@@ -31,6 +31,7 @@ import PosGate from "@/pos/PosGate";
 import PosLogin from "@/pos/pages/PosLogin";
 import PosShift from "@/pos/pages/PosShift";
 import PosRegister from "@/pos/pages/PosRegister";
+import PosPricing from "@/pos/pages/PosPricing";
 
 const queryClient = new QueryClient();
 
@@ -93,6 +94,14 @@ const AppContent = () => {
                 element={
                   <PosGate>
                     <PosShift />
+                  </PosGate>
+                }
+              />
+              <Route
+                path="pricing"
+                element={
+                  <PosGate>
+                    <PosPricing />
                   </PosGate>
                 }
               />
