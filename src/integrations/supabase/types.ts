@@ -1551,6 +1551,7 @@ export type Database = {
       pos_products: {
         Row: {
           active: boolean
+          article_sku: string | null
           barcode: string | null
           category: string
           created_at: string
@@ -1567,6 +1568,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          article_sku?: string | null
           barcode?: string | null
           category: string
           created_at?: string
@@ -1583,6 +1585,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          article_sku?: string | null
           barcode?: string | null
           category?: string
           created_at?: string
@@ -1598,6 +1601,13 @@ export type Database = {
           vat_rate?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "pos_products_article_sku_fkey"
+            columns: ["article_sku"]
+            isOneToOne: false
+            referencedRelation: "makrilltrade_articles_cache"
+            referencedColumns: ["sku"]
+          },
           {
             foreignKeyName: "pos_products_erp_id_fkey"
             columns: ["erp_id"]
