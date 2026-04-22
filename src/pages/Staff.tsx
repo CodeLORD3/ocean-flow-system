@@ -327,6 +327,13 @@ export default function Staff() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Personal activity dialog */}
+      <StaffDetailDialog
+        open={!!detailStaff}
+        onOpenChange={(open) => !open && setDetailStaff(null)}
+        staff={detailStaff}
+      />
     </motion.div>
   );
 }
