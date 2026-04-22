@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const overviewNav = [
-  { title: "Översikt", url: "/", icon: LayoutDashboard },
+  { title: "Översikt", url: "/organisation", icon: LayoutDashboard },
   { title: "Kalender", url: "/schedule", icon: CalendarDays },
 ];
 
