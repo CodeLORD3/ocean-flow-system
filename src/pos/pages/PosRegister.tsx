@@ -304,8 +304,9 @@ export default function PosRegister() {
         <WeightDialog
           product={weightProduct}
           onClose={() => setWeightProduct(null)}
-          onConfirm={(grams) => {
+          onConfirm={async (grams) => {
             const kg = grams / 1000;
+            const origin = await fetchOriginForSku(weightProduct.sku);
             addLine({
               product_id: weightProduct.id,
               sku: weightProduct.sku,
@@ -314,6 +315,7 @@ export default function PosRegister() {
               quantity: kg,
               unit_price_ore: weightProduct.price_ore,
               vat_rate: Number(weightProduct.vat_rate),
+              origin,
             });
             setWeightProduct(null);
           }}
