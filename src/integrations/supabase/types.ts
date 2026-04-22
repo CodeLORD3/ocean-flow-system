@@ -2018,6 +2018,7 @@ export type Database = {
           first_name: string
           id: string
           last_name: string
+          must_change_password: boolean
           phone: string | null
           portal_access: string[]
           profile_image_url: string | null
@@ -2034,6 +2035,7 @@ export type Database = {
           first_name: string
           id?: string
           last_name: string
+          must_change_password?: boolean
           phone?: string | null
           portal_access?: string[]
           profile_image_url?: string | null
@@ -2050,6 +2052,7 @@ export type Database = {
           first_name?: string
           id?: string
           last_name?: string
+          must_change_password?: boolean
           phone?: string | null
           portal_access?: string[]
           profile_image_url?: string | null
@@ -2645,6 +2648,7 @@ export type Database = {
           first_name: string
           id: string
           last_name: string
+          must_change_password: boolean
           phone: string | null
           portal_access: string[]
           profile_image_url: string | null
