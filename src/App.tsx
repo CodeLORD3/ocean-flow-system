@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import ScrollToTop from "@/components/ScrollToTop";
 import { AppLayout } from "@/components/AppLayout";
 import { SiteProvider } from "@/contexts/SiteContext";
@@ -16,7 +16,7 @@ import Landing from "@/pages/Landing";
 import PortalChooser from "@/pages/PortalChooser";
 import { Loader2 } from "lucide-react";
 
-// Portal imports (Investor portal)
+// Investor Portal
 import PortalLayout from "@/portal/PortalLayout";
 import PortalLogin from "@/portal/PortalLogin";
 import PortalSignup from "@/portal/PortalSignup";
@@ -26,22 +26,10 @@ import PortalResetPassword from "@/portal/PortalResetPassword";
 
 const queryClient = new QueryClient();
 
-const ERPContent = () => {
-  return (
-    <SiteProvider>
-      <ActiveUserProvider>
-        <TabsProvider>
-          <AppLayout>
-            <KeepAliveTabs />
-          </AppLayout>
-        </TabsProvider>
-      </ActiveUserProvider>
-    </SiteProvider>
-  );
-};
-
-const RequireStaffAuth = ({ children }: { children: React.ReactNode }) => {
+const ERPGate = () => {
   const { session, staff, loading } = useStaffAuth();
+  const location = useLocation();
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -53,7 +41,18 @@ const RequireStaffAuth = ({ children }: { children: React.ReactNode }) => {
   if (!staff || (staff.portal_access ?? []).length === 0) {
     return <Navigate to="/choose-portal" replace />;
   }
-  return <>{children}</>;
+  // Mark current path as the post-login destination
+  if (location.pathname === "/") return <Navigate to="/choose-portal" replace />;
+
+  return (
+    <ActiveUserProvider>
+      <TabsProvider>
+        <AppLayout>
+          <KeepAliveTabs />
+        </AppLayout>
+      </TabsProvider>
+    </ActiveUserProvider>
+  );
 };
 
 const AppContent = () => {
@@ -63,7 +62,7 @@ const AppContent = () => {
       <StaffAuthProvider>
         <SiteProvider>
           <Routes>
-            {/* Public landing with login */}
+            {/* Public landing with login (root) */}
             <Route path="/" element={<Landing />} />
             <Route path="/choose-portal" element={<PortalChooser />} />
 
@@ -75,24 +74,8 @@ const AppContent = () => {
             <Route path="/portal/reset-password" element={<PortalResetPassword />} />
             <Route path="/portal/*" element={<PortalLayout />} />
 
-            {/* ERP — gated */}
-            <Route
-              path="/app/*"
-              element={
-                <RequireStaffAuth>
-                  <ActiveUserProvider>
-                    <TabsProvider>
-                      <AppLayout>
-                        <KeepAliveTabs />
-                      </AppLayout>
-                    </TabsProvider>
-                  </ActiveUserProvider>
-                </RequireStaffAuth>
-              }
-            />
-
-            {/* Catch-all sends back to landing */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/* Everything else = ERP (gated) */}
+            <Route path="*" element={<ERPGate />} />
           </Routes>
         </SiteProvider>
       </StaffAuthProvider>
