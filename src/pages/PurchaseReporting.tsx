@@ -419,6 +419,7 @@ function ReportSection({
   onViewDocument,
   onConfirm,
   onRenameReport,
+  onUpdateReportDate,
   focusLineId,
   onQtyFocused,
 }: {
@@ -432,6 +433,7 @@ function ReportSection({
   onViewDocument: (reportId: string) => void;
   onConfirm: (reportId: string) => void;
   onRenameReport: (reportId: string, newName: string) => void;
+  onUpdateReportDate: (reportId: string, newDate: string) => void;
   focusLineId: string | null;
   onQtyFocused: () => void;
 }) {
