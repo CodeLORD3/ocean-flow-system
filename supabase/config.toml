@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.archive-daily-production-reports]
 verify_jwt = false
+
+[functions.seed-staff-users]
+verify_jwt = false
