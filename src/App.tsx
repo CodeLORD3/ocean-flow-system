@@ -42,6 +42,9 @@ const ERPGate = () => {
   if (!staff || (staff.portal_access ?? []).length === 0) {
     return <Navigate to="/choose-portal" replace />;
   }
+  if (staff.must_change_password) {
+    return <FirstLoginPasswordChange />;
+  }
   // Mark current path as the post-login destination
   if (location.pathname === "/") return <Navigate to="/choose-portal" replace />;
 
