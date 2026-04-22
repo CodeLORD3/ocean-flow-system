@@ -4,12 +4,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Loader2, KeyRound } from "lucide-react";
+import { Eye, EyeOff, Loader2, KeyRound, LogOut } from "lucide-react";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 export default function FirstLoginPasswordChange() {
-  const { staff, refresh } = useStaffAuth();
+  const { staff, refresh, signOut } = useStaffAuth();
   const { toast } = useToast();
   const [pwd, setPwd] = useState("");
   const [pwd2, setPwd2] = useState("");
@@ -113,6 +113,19 @@ export default function FirstLoginPasswordChange() {
               Behåll tilldelat lösenord
             </Button>
           </form>
+
+          <div className="mt-4 pt-4 border-t border-border text-center">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={signOut}
+              disabled={busy}
+              className="text-xs text-muted-foreground"
+            >
+              <LogOut className="h-3.5 w-3.5 mr-1.5" /> Logga ut
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
