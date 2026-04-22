@@ -1,0 +1,111 @@
+/* POS portal scoped theme — clean Scandinavian/banking aesthetic.
+   Loaded inside <PosLayout> via a wrapper className "pos-root". */
+
+.pos-root {
+  /* Light mode (default) */
+  --background: 210 20% 97%;
+  --foreground: 213 60% 12%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 213 60% 12%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 213 60% 12%;
+
+  /* Deep navy #0A2540 */
+  --primary: 213 73% 14%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 210 16% 92%;
+  --secondary-foreground: 213 60% 14%;
+
+  --muted: 210 16% 94%;
+  --muted-foreground: 213 12% 40%;
+
+  /* warm copper accent */
+  --accent: 24 65% 50%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 72% 45%;
+  --destructive-foreground: 0 0% 100%;
+
+  --success: 152 55% 32%;
+  --success-foreground: 0 0% 100%;
+
+  --warning: 38 92% 45%;
+  --warning-foreground: 0 0% 100%;
+
+  --border: 213 18% 86%;
+  --input: 213 18% 86%;
+  --ring: 213 73% 14%;
+
+  --radius: 0.5rem;
+
+  --pos-shadow-sm: 0 1px 2px hsl(213 60% 12% / 0.05);
+  --pos-shadow: 0 2px 8px hsl(213 60% 12% / 0.08), 0 1px 2px hsl(213 60% 12% / 0.06);
+  --pos-shadow-lg: 0 8px 24px hsl(213 60% 12% / 0.12);
+
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  min-height: 100vh;
+}
+
+.pos-root.dark {
+  --background: 213 35% 8%;
+  --foreground: 210 20% 95%;
+
+  --card: 213 32% 12%;
+  --card-foreground: 210 20% 95%;
+
+  --popover: 213 32% 12%;
+  --popover-foreground: 210 20% 95%;
+
+  --primary: 210 25% 95%;
+  --primary-foreground: 213 73% 14%;
+
+  --secondary: 213 25% 18%;
+  --secondary-foreground: 210 20% 95%;
+
+  --muted: 213 25% 16%;
+  --muted-foreground: 213 12% 68%;
+
+  --accent: 24 65% 55%;
+  --accent-foreground: 0 0% 100%;
+
+  --border: 213 25% 22%;
+  --input: 213 25% 22%;
+  --ring: 24 65% 55%;
+}
+
+/* Touch-friendly minimums */
+.pos-root button,
+.pos-root [role="button"] {
+  min-height: 44px;
+}
+
+.pos-root .pos-tile {
+  min-height: 96px;
+  transition: transform 0.08s ease, box-shadow 0.12s ease;
+}
+.pos-root .pos-tile:active {
+  transform: scale(0.97);
+}
+
+.pos-root .tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Print styles for receipt */
+@media print {
+  body * { visibility: hidden !important; }
+  .pos-print, .pos-print * { visibility: visible !important; }
+  .pos-print {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    background: white !important;
+    color: black !important;
+  }
+}

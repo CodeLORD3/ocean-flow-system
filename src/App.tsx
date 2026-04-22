@@ -25,6 +25,13 @@ import PortalConfirmEmail from "@/portal/PortalConfirmEmail";
 import PortalForgotPassword from "@/portal/PortalForgotPassword";
 import PortalResetPassword from "@/portal/PortalResetPassword";
 
+// POS (Point of Sale)
+import PosLayout from "@/pos/PosLayout";
+import PosGate from "@/pos/PosGate";
+import PosLogin from "@/pos/pages/PosLogin";
+import PosShift from "@/pos/pages/PosShift";
+import PosRegister from "@/pos/pages/PosRegister";
+
 const queryClient = new QueryClient();
 
 const ERPGate = () => {
@@ -77,6 +84,27 @@ const AppContent = () => {
             <Route path="/portal/forgot-password" element={<PortalForgotPassword />} />
             <Route path="/portal/reset-password" element={<PortalResetPassword />} />
             <Route path="/portal/*" element={<PortalLayout />} />
+
+            {/* POS — separate auth, scoped theme */}
+            <Route path="/pos" element={<PosLayout />}>
+              <Route path="login" element={<PosLogin />} />
+              <Route
+                path="shift"
+                element={
+                  <PosGate>
+                    <PosShift />
+                  </PosGate>
+                }
+              />
+              <Route
+                index
+                element={
+                  <PosGate requireShift>
+                    <PosRegister />
+                  </PosGate>
+                }
+              />
+            </Route>
 
             {/* Everything else = ERP (gated) */}
             <Route path="*" element={<ERPGate />} />
