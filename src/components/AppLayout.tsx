@@ -110,10 +110,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         {site === "shop" ? <ShopSidebar /> : site === "production" ? <ProductionSidebar /> : <AppSidebar />}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Top status bar */}
-          <div className="h-8 flex items-center justify-between bg-sidebar-background px-4 text-xs text-sidebar-foreground/70 shrink-0">
+          <div className="h-8 flex items-center justify-between bg-sidebar-background px-4 text-xs text-foreground shrink-0">
             <div className="flex items-center gap-4">
-              <span>FiskHandel ERP v2.4.1</span>
-              <span className="hidden sm:inline">•</span>
               <span className="hidden sm:inline">
                 {site === "shop" ? `Butik: ${activeStoreName || "–"}` : site === "production" ? "Produktion" : "Grossist"}
               </span>
@@ -124,7 +122,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 text-[10px] gap-1 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                    className="h-6 text-[10px] gap-1 text-foreground hover:text-foreground hover:bg-sidebar-accent"
                   >
                     <ArrowLeftRight className="h-3 w-3" />
                     {site === "shop" ? activeStoreName || "Butik" : site === "production" ? "Produktion" : "Grossist"}
