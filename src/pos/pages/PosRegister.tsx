@@ -16,7 +16,7 @@ const CATEGORY_ORDER = ["Färsk fisk", "Skaldjur", "Rökt & gravat", "Delikatess
 export default function PosRegister() {
   const cashier = useCashier((s) => s.cashier);
   const nav = useNavigate();
-  const { data: products = [], isLoading } = usePosProducts();
+  const { data: products = [], isLoading } = usePosProducts(cashier?.store_id);
 
   const [activeCat, setActiveCat] = useState<string>(CATEGORY_ORDER[0]);
   const [search, setSearch] = useState("");
@@ -102,6 +102,13 @@ export default function PosRegister() {
         <ScrollArea className="flex-1 p-3">
           {isLoading ? (
             <div className="text-sm text-muted-foreground">Laddar produkter…</div>
+          ) : products.length === 0 ? (
+            <div className="text-sm text-muted-foreground p-6 text-center">
+              Inga produkter i lager för {cashier?.store_name ?? "denna butik"}.
+              <div className="text-[11px] mt-1">
+                Kontrollera lagersaldon i ERP:n innan försäljning.
+              </div>
+            </div>
           ) : filtered.length === 0 ? (
             <div className="text-sm text-muted-foreground p-4 text-center">
               Inga produkter matchade

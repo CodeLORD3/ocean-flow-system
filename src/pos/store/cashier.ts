@@ -8,6 +8,8 @@ export interface CashierSession {
   display_name: string;
   role: CashierRole;
   shift_id: string | null;
+  store_id: string | null;
+  store_name: string | null;
 }
 
 interface CashierStore {
