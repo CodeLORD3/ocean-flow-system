@@ -50,6 +50,12 @@ export function useCreateCustomer() {
           phone: customer.phone || null,
           manager: customer.contact_person || null,
           is_wholesale: false,
+          // POS-fält: wholesale-kunder defaultar till FSAB-bolaget
+          legal_entity_id: "fsab-se",
+          country: "SE",
+          currency: "SEK",
+          locale: "sv-SE",
+          slug: `wholesale-${Date.now()}`,
         })
         .select()
         .single();

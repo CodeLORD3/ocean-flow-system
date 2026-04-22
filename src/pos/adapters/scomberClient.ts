@@ -1,5 +1,6 @@
 // Typed client for the Scomber Commerce API (edge functions).
-// POS, B2B, and Morning-rutin all go through this — no direct table writes.
+// POS and Morning-rutin go through this — no direct table writes.
+// B2B has been removed: POS is B2C-only (kvittohandel i butik).
 
 import { supabase } from "@/integrations/supabase/client";
 
@@ -36,8 +37,7 @@ export interface ScomberCheckoutResult {
 export interface ScomberPriceQuery {
   article_id: string;
   store_id?: string | null;
-  channel?: "pos" | "b2b" | "morning" | "any";
-  customer_tier_id?: string | null;
+  channel?: "pos" | "morning" | "any";
   effective_date?: string;
 }
 
@@ -55,7 +55,6 @@ async function invoke<T>(
   fn:
     | "scomber-price-resolve"
     | "scomber-pos-checkout"
-    | "scomber-b2b-order"
     | "scomber-batch-allocate"
     | "scomber-makrilltrade-sync"
     | "scomber-traceability"
@@ -121,40 +120,10 @@ export const scomberClient = {
     } as Record<string, unknown>);
   },
 
-  createB2bOrder(payload: {
-    customer_name: string;
-    customer_org_no?: string;
-    customer_email?: string;
-    customer_tier_id?: string;
-    delivery_date?: string;
-    store_id?: string;
-    status?: "draft" | "confirmed";
-    total_ore: number;
-    vat_breakdown: Record<string, unknown>;
-    notes?: string;
-    created_by?: string;
-    allocate?: boolean;
-    lines: Array<{
-      article_id: string;
-      product_name: string;
-      quantity: number;
-      unit: string;
-      unit_price_ore: number;
-      line_total_ore: number;
-      vat_rate: number;
-    }>;
-  }) {
-    return invoke<{
-      ok: true;
-      order: { id: string; order_no: number };
-      allocations: number;
-    }>("scomber-b2b-order", payload as Record<string, unknown>);
-  },
-
   allocateBatch(payload: {
     batch_id: string;
     article_id: string;
-    source_type: "pos_transaction_item" | "b2b_order_line";
+    source_type: "pos_transaction_item";
     source_id: string;
     quantity: number;
     unit: string;
