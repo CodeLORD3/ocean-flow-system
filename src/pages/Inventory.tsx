@@ -1146,19 +1146,19 @@ export default function Inventory() {
         return (
           <Card className="shadow-card">
             <CardHeader className="pb-2">
-              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between">
+              <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-between">
                 <div>
                   <CardTitle className="text-sm font-heading">Lager per destination</CardTitle>
                   <CardDescription className="text-xs">{stockByLocation.length} lagerställen</CardDescription>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="relative w-48">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="relative w-full sm:w-48">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                     <Input
                       placeholder="Sök produkt..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      className="pl-8 h-8 text-xs"
+                      className="pl-8 h-9 sm:h-8 text-xs"
                     />
                   </div>
                 </div>
