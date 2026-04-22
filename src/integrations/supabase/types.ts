@@ -1584,6 +1584,7 @@ export type Database = {
           file_url: string
           id: string
           notes: string | null
+          report_date: string
           status: string
           total_amount: number | null
         }
@@ -1595,6 +1596,7 @@ export type Database = {
           file_url: string
           id?: string
           notes?: string | null
+          report_date?: string
           status?: string
           total_amount?: number | null
         }
@@ -1606,6 +1608,7 @@ export type Database = {
           file_url?: string
           id?: string
           notes?: string | null
+          report_date?: string
           status?: string
           total_amount?: number | null
         }
