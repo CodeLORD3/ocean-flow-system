@@ -29,7 +29,7 @@ type SeedUser = {
 };
 
 const USERS: SeedUser[] = [
-  { email: "info@fiskskaldjur.ch",        password: "Anna123",    first: "Anna",    portals: ["shop"],                            store: ZOLLIKON_STORE_ID },
+  { email: "annalilham@gmail.com",        oldEmail: "info@fiskskaldjur.ch", password: "Anna123",    first: "Anna",    portals: ["shop"],                            store: ZOLLIKON_STORE_ID },
   { email: "robinelzerqvist@icloud.com",  oldEmail: "info@fiskskaldjur.se", password: "Robin123",   first: "Robin",   portals: ["wholesale", "production"],         store: null },
   { email: "timhvarfvenius@gmail.com",    password: "Tim123",     first: "Tim",     portals: ["shop", "wholesale", "production"], store: null },
   { email: "joakim@fiskskaldjur.ch",      password: "Joakim123",  first: "Joakim",  portals: ["shop", "wholesale", "production"], store: null },
