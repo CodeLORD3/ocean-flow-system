@@ -1045,9 +1045,9 @@ export default function Inventory() {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-heading font-bold text-foreground">
+          <h2 className="text-lg sm:text-xl font-heading font-bold text-foreground">
             Lager {activeStoreName ? `— ${activeStoreName}` : ""}
           </h2>
           <p className="text-xs text-muted-foreground">Lageröversikt och lagerrapporter</p>
@@ -1057,14 +1057,14 @@ export default function Inventory() {
             <Button
               size="sm"
               variant="outline"
-              className="gap-1.5 text-xs h-8 border-amber-500/40 text-amber-700 hover:bg-amber-500/10"
+              className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none border-amber-500/40 text-amber-700 hover:bg-amber-500/10"
               onClick={() => setShowExpiryAlerts(true)}
             >
               <AlertTriangle className="h-3 w-3" />
               {expiryAlerts.length} utgångsvarning{expiryAlerts.length > 1 ? "ar" : ""}
             </Button>
           )}
-          <Button size="sm" className="gap-1.5 text-xs h-8" onClick={() => setReportDialogOpen(true)}>
+          <Button size="sm" className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none" onClick={() => setReportDialogOpen(true)}>
             <ClipboardList className="h-3 w-3" /> Skapa lagerrapport
           </Button>
         </div>
