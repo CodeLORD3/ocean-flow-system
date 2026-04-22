@@ -1205,13 +1205,13 @@ export default function Inventory() {
                     return (
                       <div key={loc.id} className="mb-3">
                         {showHeader && (
-                          <div className="flex items-center justify-between px-2 py-1.5 bg-muted/20 rounded-t-md border border-b-0 border-border/50">
-                            <div className="flex items-center gap-2">
-                              <Warehouse className="h-3 w-3 text-muted-foreground" />
-                              <span className="text-xs font-medium text-foreground">{loc.name}</span>
+                          <div className="flex flex-wrap items-center justify-between gap-2 px-2 py-1.5 bg-muted/20 rounded-t-md border border-b-0 border-border/50">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Warehouse className="h-3 w-3 text-muted-foreground shrink-0" />
+                              <span className="text-xs font-medium text-foreground truncate">{loc.name}</span>
                               <Badge variant="secondary" className="text-[9px] h-4">{loc.items.length}</Badge>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap justify-end">
                               {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
                               <span className="text-[10px] text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
                               <span className="text-[10px] font-medium text-foreground">{fmt(loc.totalValue)}</span>
@@ -1219,11 +1219,11 @@ export default function Inventory() {
                           </div>
                         )}
                         {!showHeader && (
-                          <div className="flex items-center justify-between px-2 py-1.5 mb-1">
-                            <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center justify-between gap-2 px-2 py-1.5 mb-1">
+                            <div className="flex items-center gap-2 flex-wrap">
                               {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 ml-auto">
                               <span className="text-[10px] text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
                               <span className="text-[10px] font-medium text-foreground">{fmt(loc.totalValue)}</span>
                             </div>
