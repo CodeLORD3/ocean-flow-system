@@ -95,9 +95,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   const access = staff?.portal_access ?? [];
   const lockedStoreId = staff?.allowed_store_id ?? null;
+  const lockedStoreIds = staff?.allowed_store_ids ?? [];
+  const allowedSet = new Set<string>([
+    ...lockedStoreIds,
+    ...(lockedStoreId ? [lockedStoreId] : []),
+  ]);
   const retailStores = allStores
     .filter((s) => !s.is_wholesale)
-    .filter((s) => !lockedStoreId || s.id === lockedStoreId);
+    .filter((s) => allowedSet.size === 0 || allowedSet.has(s.id));
 
   return (
     <SidebarProvider>
