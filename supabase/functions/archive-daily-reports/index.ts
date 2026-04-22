@@ -1,19 +1,22 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-Deno.serve(async (req) => {
+Deno.serve(async (_req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-  // Archive all non-archived purchase reports (confirmed or not) from previous days
+  // Archive all non-archived purchase reports whose report_date is before today.
+  // The report_date is the business date set on the report (defaults to creation
+  // date but can be edited); at 00:00 we archive everything that belongs to a
+  // previous day, so reports automatically fall under the date the user set.
   const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+  const todayISO = now.toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
 
   const { data, error } = await supabase
     .from("purchase_reports")
     .update({ archived_at: now.toISOString() })
     .is("archived_at", null)
-    .lt("created_at", todayStart)
+    .lt("report_date", todayISO)
     .select("id");
 
   if (error) {
@@ -23,6 +26,6 @@ Deno.serve(async (req) => {
 
   return new Response(
     JSON.stringify({ archived: data?.length ?? 0, timestamp: now.toISOString() }),
-    { headers: { "Content-Type": "application/json" } }
+    { headers: { "Content-Type": "application/json" } },
   );
 });

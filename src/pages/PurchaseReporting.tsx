@@ -87,6 +87,7 @@ type ReportLine = {
 type Report = {
   id: string;
   created_at: string;
+  report_date: string;
   file_name: string;
   file_url: string;
   status: string;
