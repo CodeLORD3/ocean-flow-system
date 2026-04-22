@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, Plus, X, Trash2, Pause } from "lucide-react";
 import { usePosProducts, type PosProduct } from "../hooks/usePosProducts";
-import { useCart, computeTotals, selectActiveTab } from "../store/cart";
+import { useCart, computeTotals, selectActiveTab, type CartLineOrigin } from "../store/cart";
 import { useCashier } from "../store/cashier";
 import { formatSek } from "../lib/money";
 import WeightDialog from "../components/WeightDialog";
 import PaymentDialog from "../components/PaymentDialog";
 import OriginChip from "../components/OriginChip";
 import TraceabilityModal from "../components/TraceabilityModal";
-import { CountryFlag } from "../components/CountryBadge";
+import { scomberClient } from "../adapters/scomberClient";
 
 const CATEGORY_ORDER = ["Färsk fisk", "Skaldjur", "Rökt & gravat", "Delikatess", "Torrvaror"];
 
