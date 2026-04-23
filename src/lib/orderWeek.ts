@@ -33,7 +33,7 @@ export function displayOrderWeek(order: any): string {
   if (!order) return "";
 
   const desired = parseDate(order.desired_delivery_date);
-  if (desired) return String(getIsoWeek(desired));
+  if (desired) return `V${getIsoWeek(desired)}`;
 
   const lineDates: Date[] = Array.isArray(order.shop_order_lines)
     ? order.shop_order_lines
@@ -42,8 +42,10 @@ export function displayOrderWeek(order: any): string {
     : [];
   if (lineDates.length > 0) {
     const earliest = new Date(Math.min(...lineDates.map((d) => d.getTime())));
-    return String(getIsoWeek(earliest));
+    return `V${getIsoWeek(earliest)}`;
   }
 
-  return order.order_week ? String(order.order_week) : "";
+  if (!order.order_week) return "";
+  const raw = String(order.order_week);
+  return raw.startsWith("V") ? raw : `V${raw}`;
 }
