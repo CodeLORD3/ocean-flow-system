@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { displayOrderWeek } from "@/lib/orderWeek";
 import {
   Fish, ShoppingCart, DollarSign, TrendingUp, AlertTriangle, Store,
   ArrowUpRight, ArrowDownRight, Package, Users, Clock, Truck, BarChart3

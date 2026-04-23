@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { displayOrderWeek } from "@/lib/orderWeek";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Plus, Search, Clock, CheckCircle2, Truck, XCircle, X, Package,
