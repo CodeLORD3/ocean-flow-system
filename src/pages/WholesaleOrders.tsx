@@ -1020,7 +1020,7 @@ export default function WholesaleOrders() {
                     {archivedOrders.map((o: any) => (
                       <React.Fragment key={o.id}>
                         <tr className={`border-b border-border/40 cursor-pointer hover:bg-muted/20 ${expandedOrderIds.has(o.id) ? "bg-primary/10 border-l-2 border-l-primary border-b-0" : ""}`} onClick={() => toggleExpandOrder(o.id)}>
-                          <td className="p-3 font-mono font-medium text-foreground">{o.order_week}</td>
+                          <td className="p-3 font-mono font-medium text-foreground">{displayOrderWeek(o)}</td>
                           <td className="p-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                           <td className="p-3 text-muted-foreground">{o.stores?.name || "–"}</td>
                           <td className="p-3 text-muted-foreground">{(o as any).desired_delivery_date || "–"}</td>
@@ -1036,7 +1036,7 @@ export default function WholesaleOrders() {
                               <div className="border-l-2 border-l-primary border-b-2 border-b-primary/20 bg-primary/5 px-4 py-3">
                                 <div className="flex items-center justify-between mb-3">
                                   <h3 className="font-heading text-sm font-semibold">
-                                    Order {o.order_week} — {o.stores?.name || "Okänd butik"}
+                                    Order {displayOrderWeek(o)} — {o.stores?.name || "Okänd butik"}
                                   </h3>
                                   <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={(e) => { e.stopPropagation(); collapseOrder(o.id); }}>
                                     <X className="h-3 w-3 mr-1" /> Stäng
@@ -1075,7 +1075,7 @@ export default function WholesaleOrders() {
                     <div key={cr.id} className="border border-warning/30 bg-warning/5 rounded-md p-3 text-xs flex items-start justify-between gap-3">
                       <div className="flex-1 space-y-0.5">
                         <div className="font-medium text-foreground">
-                          {cr.shop_orders?.stores?.name || "Okänd butik"} · {cr.shop_orders?.order_week}
+                          {cr.shop_orders?.stores?.name || "Okänd butik"} · {displayOrderWeek(cr.shop_orders)}
                         </div>
                         <div className="text-muted-foreground">
                           {cr.change_type === "quantity_change" && (
@@ -1132,7 +1132,7 @@ export default function WholesaleOrders() {
               <>
                 <DialogHeader>
                   <DialogTitle className="font-heading text-sm flex items-center gap-2">
-                    Leveransrapport — {reportViewOrder.order_week} · {reportViewOrder.stores?.name}
+                    Leveransrapport — {displayOrderWeek(reportViewOrder)} · {reportViewOrder.stores?.name}
                     <Badge variant="outline" className={`text-[10px] ml-2 ${hasIssues ? "text-warning border-warning/30" : "text-success border-success/30"}`}>
                       {hasIssues ? "Avvikelse" : "Allt godkänt"}
                     </Badge>
@@ -1184,7 +1184,7 @@ export default function WholesaleOrders() {
           <DialogHeader>
             <DialogTitle className="font-heading text-sm">Arkivera order?</DialogTitle>
             <DialogDescription className="text-xs">
-              Är du säker på att du vill arkivera order {archiveConfirmOrder?.order_week} från {archiveConfirmOrder?.stores?.name}? Ordern flyttas till fliken "Arkiverade".
+              Är du säker på att du vill arkivera order {displayOrderWeek(archiveConfirmOrder)} från {archiveConfirmOrder?.stores?.name}? Ordern flyttas till fliken "Arkiverade".
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
