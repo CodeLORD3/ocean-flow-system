@@ -121,7 +121,7 @@ export default function ShopOrderTab() {
                       <div className="flex items-center gap-2">
                         <Store className="h-3.5 w-3.5 text-primary" />
                         <span className="text-xs font-medium text-foreground">{order.stores?.name}</span>
-                        <Badge variant="outline" className="text-[10px]">{order.order_week}</Badge>
+                        <Badge variant="outline" className="text-[10px]">v.{displayOrderWeek(order)}</Badge>
                         <Badge variant="outline" className={`text-[10px] ${order.status === "Ny" ? "bg-primary/10 text-primary" : "bg-success/10 text-success"}`}>{order.status}</Badge>
                       </div>
                       <span className="text-[10px] text-muted-foreground">{new Date(order.created_at).toLocaleDateString("sv-SE")}</span>

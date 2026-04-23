@@ -371,7 +371,7 @@ export default function OrganisationOverview() {
                     <div key={o.id} className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0">
                       <div>
                         <p className="text-xs font-medium text-foreground">{o.stores?.name || "–"}</p>
-                        <p className="text-[10px] text-muted-foreground">{o.order_week} · {o.desired_delivery_date || "–"}</p>
+                        <p className="text-[10px] text-muted-foreground">v.{displayOrderWeek(o)} · {o.desired_delivery_date || "–"}</p>
                       </div>
                       <span className="text-xs font-bold text-foreground">{Math.round(orderSales).toLocaleString("sv-SE")} kr</span>
                     </div>

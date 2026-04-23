@@ -153,7 +153,7 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                         style={{ background: isExpanded ? undefined : buildProgressGradient(lines) }}
                         onClick={() => toggleExpand(o.id)}
                       >
-                        <td className="px-1.5 py-0.5 font-mono font-medium text-foreground">{o.order_week}</td>
+                        <td className="px-1.5 py-0.5 font-mono font-medium text-foreground">{displayOrderWeek(o)}</td>
                         <td className="px-1.5 py-0.5 text-muted-foreground">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                         <td className="px-1.5 py-0.5 text-muted-foreground">{o.stores?.name || "–"}</td>
                         <td className="px-1.5 py-0.5 text-muted-foreground">{o.desired_delivery_date || "–"}</td>
@@ -544,7 +544,7 @@ export default function ShopOrders() {
                     quantity: String(l.quantity_ordered || ""),
                   }));
                   setOrderLines(copied);
-                  toast({ title: "Order kopierad", description: `${copied.length} produkter tillagda från ${picked.order_week}` });
+                  toast({ title: "Order kopierad", description: `${copied.length} produkter tillagda från vecka ${displayOrderWeek(picked)}` });
                 }}
               >
                 <SelectTrigger className="h-8 text-xs w-auto gap-1.5 whitespace-nowrap" disabled={orders.length === 0}>
@@ -554,7 +554,7 @@ export default function ShopOrders() {
                 <SelectContent>
                   {orders.map((o: any) => (
                     <SelectItem key={o.id} value={o.id} className="text-xs">
-                      {o.order_week} — {o.stores?.name} ({new Date(o.created_at).toLocaleDateString("sv-SE")})
+                      {displayOrderWeek(o)} — {o.stores?.name} ({new Date(o.created_at).toLocaleDateString("sv-SE")})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -803,7 +803,7 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
       <div className={inline ? "flex items-center gap-2 flex-wrap" : ""}>
         {inline ? (
           <div className="flex items-center gap-2 flex-wrap flex-1">
-            <h3 className="font-heading font-semibold text-sm">Order {order.order_week}</h3>
+            <h3 className="font-heading font-semibold text-sm">Order {displayOrderWeek(order)}</h3>
             <Badge variant="outline" className={`${statusColor[order.status] || ""} text-[10px] gap-1`}>
               {statusIcon[order.status]}
               {order.status}
@@ -824,7 +824,7 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
         ) : (
           <DialogHeader>
             <DialogTitle className="font-heading flex items-center gap-2">
-              Order {order.order_week}
+              Order {displayOrderWeek(order)}
               <Badge variant="outline" className={`${statusColor[order.status] || ""} text-[10px] gap-1 ml-2`}>
                 {statusIcon[order.status]}
                 {order.status}

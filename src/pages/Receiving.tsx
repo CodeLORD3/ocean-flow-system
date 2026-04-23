@@ -284,7 +284,7 @@ export default function Receiving() {
       const hasIssues = Object.values(lineReports).some((r) => r.status === "Rapporterad");
       toast({
         title: hasIssues ? "Inleverans rapporterad med avvikelser" : "Inleverans godkänd",
-        description: `Order ${selectedOrder.order_week} har ${hasIssues ? "rapporterats" : "godkänts"}.`,
+        description: `Order vecka ${displayOrderWeek(selectedOrder)} har ${hasIssues ? "rapporterats" : "godkänts"}.`,
       });
 
       qc.invalidateQueries({ queryKey: ["pending-deliveries"] });
@@ -343,7 +343,7 @@ export default function Receiving() {
   const missingExpiryCount = Object.values(lineReports).filter((r) => !r.expiry_date).length;
 
   const filteredUnreported = unreportedOrders.filter(
-    (o: any) => !search || o.order_week?.toLowerCase().includes(search.toLowerCase()),
+    (o: any) => !search || displayOrderWeek(o).toLowerCase().includes(search.toLowerCase()),
   );
 
   const allHistoryOrders = [...reportedPendingOrders, ...completedOrders];
@@ -438,7 +438,7 @@ export default function Receiving() {
                       </div>
                       <div>
                         <p className="text-xs font-medium text-foreground">
-                          Order {order.order_week} — {order.stores?.name || "Okänd"}
+                          Order vecka {displayOrderWeek(order)} — {order.stores?.name || "Okänd"}
                         </p>
                         <p className="text-[10px] text-muted-foreground">
                           {lines.length} produkt{lines.length !== 1 ? "er" : ""} ·{" "}
@@ -487,7 +487,7 @@ export default function Receiving() {
                     const hasIssues = orderReports.some((r: any) => r.status === "Rapporterad");
                     return (
                       <tr key={o.id} className="border-b border-border/50 hover:bg-muted/30">
-                        <td className="py-2 font-mono font-medium text-foreground">{o.order_week}</td>
+                        <td className="py-2 font-mono font-medium text-foreground">{displayOrderWeek(o)}</td>
                         <td className="py-2 text-muted-foreground">
                           {new Date(o.created_at).toLocaleDateString("sv-SE")}
                         </td>
@@ -536,7 +536,7 @@ export default function Receiving() {
               <DialogHeader>
                 <DialogTitle className="font-heading flex items-center gap-2">
                   <Truck className="h-5 w-5 text-primary" />
-                  Ta emot leverans — {selectedOrder.order_week}
+                  Ta emot leverans — vecka {displayOrderWeek(selectedOrder)}
                 </DialogTitle>
                 <DialogDescription className="text-xs">
                   Godkänn varje produkt, ange mottagen kvantitet och fyll i bäst-före-datum för spårbarhet.
@@ -798,7 +798,7 @@ export default function Receiving() {
           {viewReportOrder && (
             <>
               <DialogHeader>
-                <DialogTitle className="font-heading text-sm">Rapport — {viewReportOrder.order_week}</DialogTitle>
+                <DialogTitle className="font-heading text-sm">Rapport — vecka {displayOrderWeek(viewReportOrder)}</DialogTitle>
               </DialogHeader>
               <div className="space-y-2">
                 {(viewReportOrder.shop_order_lines || []).map((line: any) => {

@@ -158,7 +158,7 @@ export default function Invoices() {
                             }
                           </td>
                           <td className="py-2 font-medium text-foreground">{order.stores?.name || "–"}</td>
-                          <td className="py-2 text-muted-foreground">{order.order_week}</td>
+                          <td className="py-2 text-muted-foreground">{displayOrderWeek(order)}</td>
                           <td className="py-2 text-muted-foreground">{order.desired_delivery_date || "–"}</td>
                           <td className="py-2 text-muted-foreground">{order.packer_name || "–"}</td>
                           <td className="py-2 text-right text-foreground">{packedLines.length}</td>
@@ -203,7 +203,7 @@ export default function Invoices() {
                               <div className="bg-muted/20 border-y border-border/30 px-6 py-3">
                                 <div className="flex items-center justify-between mb-2">
                                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
-                                    Följesedel — {order.stores?.name} — {order.order_week}
+                                    Följesedel — {order.stores?.name} — vecka {displayOrderWeek(order)}
                                   </p>
                                   <Button
                                     variant="outline"

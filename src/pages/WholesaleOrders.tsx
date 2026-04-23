@@ -282,7 +282,7 @@ export default function WholesaleOrders() {
 
   // Filter orders (active only)
   const filteredOrders = activeOrders.filter((o: any) => {
-    const matchSearch = !search || (o.order_week || "").includes(search) || (o.stores?.name || "").toLowerCase().includes(search.toLowerCase());
+    const matchSearch = !search || displayOrderWeek(o).includes(search) || (o.stores?.name || "").toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "Alla" || o.status === statusFilter;
     return matchSearch && matchStatus;
   });
@@ -777,7 +777,7 @@ export default function WholesaleOrders() {
                                 </Button>
                               )}
                             </td>
-                            <td className="px-1.5 py-0.5 font-mono font-medium text-foreground">{o.order_week}</td>
+                            <td className="px-1.5 py-0.5 font-mono font-medium text-foreground">{displayOrderWeek(o)}</td>
                             <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                             <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">{o.stores?.name || "–"}</td>
                             <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">{(o as any).desired_delivery_date || "–"}</td>
@@ -876,7 +876,7 @@ export default function WholesaleOrders() {
                                  <div className="flex items-center justify-between mb-3">
                                    <div className="flex items-center gap-2">
                                      <h3 className="font-heading text-sm font-semibold">
-                                       Order {o.order_week} — {o.stores?.name || "Okänd butik"}
+                                       Order vecka {displayOrderWeek(o)} — {o.stores?.name || "Okänd butik"}
                                      </h3>
                                      <Badge variant="outline" className={`${statusColor[o.status] || ""} text-[10px] gap-1`}>
                                        {statusIcon[o.status]}
@@ -942,7 +942,7 @@ export default function WholesaleOrders() {
                     {deliveredOrders.map((o: any) => (
                       <React.Fragment key={o.id}>
                         <tr className={`border-b border-border/40 h-7 cursor-pointer hover:bg-muted/20 bg-primary/5 ${expandedOrderIds.has(o.id) ? "bg-primary/10 border-l-2 border-l-primary border-b-0" : ""}`} onClick={() => toggleExpandOrder(o.id)}>
-                          <td className="px-1.5 py-0.5 font-mono font-medium text-foreground">{o.order_week}</td>
+                          <td className="px-1.5 py-0.5 font-mono font-medium text-foreground">{displayOrderWeek(o)}</td>
                           <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">{new Date(o.created_at).toLocaleDateString("sv-SE")}</td>
                           <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">{o.stores?.name || "–"}</td>
                           <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">{(o as any).desired_delivery_date || "–"}</td>
@@ -971,7 +971,7 @@ export default function WholesaleOrders() {
                               <div className="border-l-2 border-l-primary border-b-2 border-b-primary/20 bg-primary/5 px-4 py-3">
                                 <div className="flex items-center justify-between mb-3">
                                   <h3 className="font-heading text-sm font-semibold">
-                                    Order {o.order_week} — {o.stores?.name || "Okänd butik"}
+                                    Order vecka {displayOrderWeek(o)} — {o.stores?.name || "Okänd butik"}
                                   </h3>
                                   <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={(e) => { e.stopPropagation(); collapseOrder(o.id); }}>
                                     <X className="h-3 w-3 mr-1" /> Stäng
