@@ -4,6 +4,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { Printer } from "lucide-react";
+import { displayOrderWeek } from "@/lib/orderWeek";
 
 interface PackingSlipProps {
   order: any;
@@ -36,7 +37,7 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
     printWindow.document.write(`
       <html>
         <head>
-          <title>Packsedel — ${storeName} — ${order.order_week}</title>
+          <title>Packsedel — ${storeName} — v.${displayOrderWeek(order)}</title>
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body { font-family: 'Segoe UI', Arial, sans-serif; padding: 0; color: #111; font-size: 15px; }
@@ -105,7 +106,7 @@ export default function PackingSlip({ order, open, onOpenChange }: PackingSlipPr
                     <tbody>
                       {([
                         ["Packsedel nr", order.id?.slice(0, 8).toUpperCase()],
-                        ["Order nr / Order No.", order.order_week],
+                        ["Order nr / Order No.", displayOrderWeek(order)],
                         ["Leveransdatum", deliveryDate],
                         ["Orderdatum", orderDate],
                         ["Antal rader", String(lines.length)],

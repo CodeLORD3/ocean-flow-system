@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { displayOrderWeek } from "@/lib/orderWeek";
 import {
   Fish, ShoppingCart, DollarSign, TrendingUp, AlertTriangle, Store,
   ArrowUpRight, ArrowDownRight, Package, Users, Clock, Truck, BarChart3
@@ -438,7 +439,7 @@ export default function Dashboard() {
                     {recentOrders.map((order: any) => (
                       <tr key={order.id} className="border-b border-border/50 last:border-0 hover:bg-muted/30 transition-colors">
                         {!isShop && <td className="py-2.5 font-medium text-foreground">{order.stores?.name || "–"}</td>}
-                        <td className="py-2.5 text-muted-foreground">{order.order_week}</td>
+                        <td className="py-2.5 text-muted-foreground">{displayOrderWeek(order)}</td>
                         <td className="py-2.5 text-muted-foreground">{order.desired_delivery_date || "–"}</td>
                         <td className="py-2.5 text-muted-foreground">{order.packer_name || "–"}</td>
                         <td className="py-2.5 text-right">

@@ -4,6 +4,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { Printer } from "lucide-react";
+import { displayOrderWeek } from "@/lib/orderWeek";
 
 interface DeliveryNoteProps {
   order: any;
@@ -47,7 +48,7 @@ export default function DeliveryNote({ order, open, onOpenChange }: DeliveryNote
     printWindow.document.write(`
       <html>
         <head>
-          <title>Följesedel — ${storeName} — ${order.order_week}</title>
+          <title>Följesedel — ${storeName} — v.${displayOrderWeek(order)}</title>
           <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body { font-family: 'Segoe UI', Arial, sans-serif; padding: 0; color: #111; font-size: 15px; }
@@ -111,7 +112,7 @@ export default function DeliveryNote({ order, open, onOpenChange }: DeliveryNote
                     <tbody>
                       {([
                         ["Följesedel nr", order.id?.slice(0, 8).toUpperCase()],
-                        ["Order / Vecka", order.order_week],
+                        ["Order / Vecka", displayOrderWeek(order)],
                         ["Leveransdatum", deliveryDate],
                         ["Orderdatum", orderDate],
                         ["Packad av", packerName],
