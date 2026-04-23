@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { displayOrderWeek } from "@/lib/orderWeek";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Clock, CheckCircle2, Truck, XCircle, Package, ShoppingCart, ChevronDown, ChevronRight, ArrowRight, Pencil, Plus, X, Send, Trash2, CalendarIcon, FileText, Printer } from "lucide-react";
 import DeliveryNote from "@/components/DeliveryNote";
@@ -550,7 +551,7 @@ function OrderRow({
           )}
         </td>
         <td className="px-1.5 py-0.5 font-medium text-foreground whitespace-nowrap">{order.stores?.name || "—"}</td>
-        <td className="px-1.5 py-0.5 text-muted-foreground">{order.order_week}</td>
+        <td className="px-1.5 py-0.5 text-muted-foreground">{displayOrderWeek(order)}</td>
         <td className="px-1.5 py-0.5 text-muted-foreground whitespace-nowrap">
           {order.desired_delivery_date ? format(new Date(order.desired_delivery_date), "yy-MM-dd") : "—"}
         </td>
@@ -868,7 +869,7 @@ function WholesaleOrderDetail({ order, products, transportSchedules, stores, onC
     <>
       <div className="flex items-center gap-2 mb-2">
         <h3 className="font-heading text-sm font-semibold flex items-center gap-2">
-          Redigera order {order.order_week} · {order.stores?.name || "–"}
+          Redigera order {displayOrderWeek(order)} · {order.stores?.name || "–"}
           <Badge variant="outline" className={`${statusColor[order.status] || ""} text-[10px] gap-1`}>
             {statusIcon[order.status]}
             {order.status}
