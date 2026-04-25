@@ -869,6 +869,16 @@ export default function ShopReports() {
   const { data: reports, isLoading } = useWeeklyReportsList(activeStoreId);
   const [activeReportId, setActiveReportId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const { data: storeRow } = useQuery({
+    queryKey: ["store_row_for_report_list", activeStoreId],
+    enabled: !!activeStoreId,
+    queryFn: async () => {
+      const { data } = await supabase.from("stores").select("id, name, city").eq("id", activeStoreId!).maybeSingle();
+      return data;
+    },
+  });
+  const listCurrency = getStoreCurrency(storeRow as any);
+  const fmtListC = (v: number) => fmtCurr(v, listCurrency);
 
   if (!activeStoreId) {
     return (
