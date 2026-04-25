@@ -470,6 +470,7 @@ function WeeklyReportForm({
         grossMarginPct={grossMarginPct}
         closingInventory={closingInventory}
         inventoryChange={inventoryChange}
+        currency={localCurrency}
       />
 
       {/* Tabs */}
