@@ -35,6 +35,7 @@ import { toast } from "sonner";
 import {
   Plus, Save, BarChart3, TrendingUp, ArrowLeft, Trash2, Search,
   Package, DollarSign, Share2, FileText, AlertTriangle, Printer,
+  PencilLine, CheckCircle2,
 } from "lucide-react";
 import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
@@ -904,6 +905,26 @@ export default function ShopReports() {
     );
   }
 
+  // Find a draft for the current week (so "create" resumes it)
+  const currentYear = new Date().getFullYear();
+  const currentWeek = getCurrentWeek();
+  const currentWeekDraft = reports?.find(
+    (r: any) => r.status === "draft" && r.year === currentYear && r.week_number === currentWeek
+  );
+  const otherOpenDrafts = reports?.filter(
+    (r: any) =>
+      r.status === "draft" &&
+      !(r.year === currentYear && r.week_number === currentWeek)
+  ) || [];
+
+  const handleStartOrResume = () => {
+    if (currentWeekDraft) {
+      setActiveReportId(currentWeekDraft.id);
+    } else {
+      setIsCreating(true);
+    }
+  };
+
   // Report list view
   return (
     <div className="p-6 space-y-6">
@@ -915,10 +936,46 @@ export default function ShopReports() {
           </h1>
           <p className="text-muted-foreground text-sm mt-1">Veckorapporter</p>
         </div>
-        <Button onClick={() => setIsCreating(true)}>
-          <Plus className="h-4 w-4 mr-2" /> Skapa ny rapport
+        <Button onClick={handleStartOrResume}>
+          {currentWeekDraft ? (
+            <>
+              <PencilLine className="h-4 w-4 mr-2" /> Fortsätt V{currentWeek} (utkast)
+            </>
+          ) : (
+            <>
+              <Plus className="h-4 w-4 mr-2" /> Starta ny rapport
+            </>
+          )}
         </Button>
       </div>
+
+      {/* Open drafts banner */}
+      {otherOpenDrafts.length > 0 && (
+        <Card className="border-yellow-500/40 bg-yellow-500/5">
+          <CardContent className="py-3 px-4 flex items-center gap-3 flex-wrap">
+            <PencilLine className="h-4 w-4 text-yellow-500 shrink-0" />
+            <div className="flex-1 min-w-[200px]">
+              <p className="text-sm font-medium">Du har öppna utkast</p>
+              <p className="text-xs text-muted-foreground">
+                Klicka för att fortsätta arbetet med en pågående rapport.
+              </p>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {otherOpenDrafts.map((d: any) => (
+                <Button
+                  key={d.id}
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => setActiveReportId(d.id)}
+                >
+                  V{d.week_number} {d.year}
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardContent className="p-0">
@@ -928,7 +985,7 @@ export default function ShopReports() {
             <div className="text-center py-12 text-muted-foreground">
               <BarChart3 className="h-12 w-12 mx-auto mb-3 opacity-30" />
               <p className="text-sm">Inga veckorapporter ännu.</p>
-              <p className="text-xs mt-1">Klicka "Skapa ny rapport" för att börja.</p>
+              <p className="text-xs mt-1">Klicka "Starta ny rapport" för att börja.</p>
             </div>
           ) : (
             <Table>
@@ -940,10 +997,12 @@ export default function ShopReports() {
                   <TableHead className="text-right">Försäljning</TableHead>
                   <TableHead className="text-right">Bruttomarg. %</TableHead>
                   <TableHead className="text-right">Utg. lager</TableHead>
+                  <TableHead className="w-[90px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {reports.map((r: any) => {
+                  const isDraft = r.status === "draft";
                   const marginColor =
                     r.gross_margin_pct >= 45 ? "text-emerald-400" :
                     r.gross_margin_pct >= 35 ? "text-yellow-400" :
@@ -951,7 +1010,7 @@ export default function ShopReports() {
                   return (
                     <TableRow
                       key={r.id}
-                      className="cursor-pointer hover:bg-muted/50"
+                      className={`cursor-pointer hover:bg-muted/50 ${isDraft ? "bg-yellow-500/5" : ""}`}
                       onClick={() => setActiveReportId(r.id)}
                     >
                       <TableCell className="font-medium">V{r.week_number} {r.year}</TableCell>
@@ -959,9 +1018,15 @@ export default function ShopReports() {
                         {getWeekDateRange(r.year, r.week_number)}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={r.status === "finalized" ? "secondary" : "outline"} className="text-[10px]">
-                          {r.status === "finalized" ? "Slutförd" : "Utkast"}
-                        </Badge>
+                        {isDraft ? (
+                          <Badge variant="outline" className="text-[10px] gap-1 border-yellow-500/50 text-yellow-500">
+                            <PencilLine className="h-3 w-3" /> Pågående
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-[10px] gap-1">
+                            <CheckCircle2 className="h-3 w-3" /> Slutförd
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell className="text-right font-mono tabular-nums text-sm">
                         {fmtListC(Number(r.total_sales))}
@@ -971,6 +1036,16 @@ export default function ShopReports() {
                       </TableCell>
                       <TableCell className="text-right font-mono tabular-nums text-sm">
                         {fmtListC(Number(r.closing_inventory))}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant={isDraft ? "default" : "ghost"}
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={(e) => { e.stopPropagation(); setActiveReportId(r.id); }}
+                        >
+                          {isDraft ? "Fortsätt" : "Öppna"}
+                        </Button>
                       </TableCell>
                     </TableRow>
                   );
