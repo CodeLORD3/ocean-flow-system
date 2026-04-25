@@ -198,6 +198,7 @@ function WeeklyReportForm({
   });
   const localCurrency = getStoreCurrency(storeRow as any);
   const currencyLabel = localCurrency === "SEK" ? "kr" : localCurrency;
+  const fmtC = (v: number) => fmtCurr(v, localCurrency);
   const currentYear = new Date().getFullYear();
   const currentWeek = getCurrentWeek();
 
