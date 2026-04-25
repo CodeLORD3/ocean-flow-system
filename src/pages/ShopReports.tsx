@@ -127,12 +127,15 @@ function SummaryCards({
   grossMarginPct,
   closingInventory,
   inventoryChange,
+  currency = "SEK",
 }: {
   totalSales: number;
   grossMarginPct: number;
   closingInventory: number;
   inventoryChange: number;
+  currency?: string;
 }) {
+  const fmtC = (v: number) => fmtCurr(v, currency);
   const marginColor =
     grossMarginPct >= 45 ? "text-emerald-400" :
     grossMarginPct >= 35 ? "text-yellow-400" :
@@ -143,7 +146,7 @@ function SummaryCards({
       <Card>
         <CardContent className="pt-3 pb-2 px-3">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Försäljning</p>
-          <p className="text-lg font-bold font-mono tabular-nums">{fmtKr(totalSales)}</p>
+          <p className="text-lg font-bold font-mono tabular-nums">{fmtC(totalSales)}</p>
         </CardContent>
       </Card>
       <Card>
@@ -157,14 +160,14 @@ function SummaryCards({
       <Card>
         <CardContent className="pt-3 pb-2 px-3">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Utgående lager</p>
-          <p className="text-lg font-bold font-mono tabular-nums">{fmtKr(closingInventory)}</p>
+          <p className="text-lg font-bold font-mono tabular-nums">{fmtC(closingInventory)}</p>
         </CardContent>
       </Card>
       <Card>
         <CardContent className="pt-3 pb-2 px-3">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Lagerförändring</p>
           <p className={`text-lg font-bold font-mono tabular-nums ${inventoryChange >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-            {inventoryChange >= 0 ? "+" : ""}{fmtKr(inventoryChange)}
+            {inventoryChange >= 0 ? "+" : ""}{fmtC(inventoryChange)}
           </p>
         </CardContent>
       </Card>
@@ -195,6 +198,7 @@ function WeeklyReportForm({
   });
   const localCurrency = getStoreCurrency(storeRow as any);
   const currencyLabel = localCurrency === "SEK" ? "kr" : localCurrency;
+  const fmtC = (v: number) => fmtCurr(v, localCurrency);
   const currentYear = new Date().getFullYear();
   const currentWeek = getCurrentWeek();
 
@@ -466,6 +470,7 @@ function WeeklyReportForm({
         grossMarginPct={grossMarginPct}
         closingInventory={closingInventory}
         inventoryChange={inventoryChange}
+        currency={localCurrency}
       />
 
       {/* Tabs */}
@@ -501,7 +506,7 @@ function WeeklyReportForm({
                 </div>
                 <div>
                   <Label className="text-xs">Utgående lager (beräknat)</Label>
-                  <div className="h-8 flex items-center text-sm font-mono font-bold">{fmtKr(closingInventory)}</div>
+                  <div className="h-8 flex items-center text-sm font-mono font-bold">{fmtC(closingInventory)}</div>
                 </div>
               </div>
 
@@ -554,7 +559,7 @@ function WeeklyReportForm({
                           onChange={(e) => updateInvLine(idx, "unit_price", Number(e.target.value) || 0)}
                         />
                       </TableCell>
-                      <TableCell className="py-1 text-right text-xs font-mono font-medium">{fmtKr(line.total)}</TableCell>
+                      <TableCell className="py-1 text-right text-xs font-mono font-medium">{fmtC(line.total)}</TableCell>
                       <TableCell className="py-1">
                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => removeInvLine(idx)}>
                           <Trash2 className="h-3 w-3 text-destructive" />
@@ -571,12 +576,12 @@ function WeeklyReportForm({
 
               <div className="flex justify-between items-center pt-2 border-t">
                 <span className="text-sm font-semibold">Totalt inventering</span>
-                <span className="text-sm font-bold font-mono">{fmtKr(closingInventory)}</span>
+                <span className="text-sm font-bold font-mono">{fmtC(closingInventory)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs text-muted-foreground">Lagerförändring</span>
                 <span className={`text-xs font-mono ${inventoryChange >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-                  {inventoryChange >= 0 ? "+" : ""}{fmtKr(inventoryChange)}
+                  {inventoryChange >= 0 ? "+" : ""}{fmtC(inventoryChange)}
                 </span>
               </div>
             </CardContent>
@@ -606,13 +611,13 @@ function WeeklyReportForm({
                     onChange={(e) => updateCostLine(idx, "amount", Number(e.target.value) || 0)}
                     placeholder="0"
                   />
-                  <span className="text-xs text-muted-foreground w-6">kr</span>
+                  <span className="text-xs text-muted-foreground w-6">{currencyLabel}</span>
                 </div>
               ))}
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 <span className="w-44">Lagerförändring (neg.)</span>
                 <span className="flex-1 text-right font-mono">
-                  {inventoryChange < 0 ? fmtKr(Math.abs(inventoryChange)) : "0 kr"}
+                  {inventoryChange < 0 ? fmtC(Math.abs(inventoryChange)) : `0 ${currencyLabel}`}
                 </span>
                 <span className="w-6"></span>
               </div>
@@ -621,7 +626,7 @@ function WeeklyReportForm({
               </Button>
               <div className="flex justify-between items-center pt-2 border-t">
                 <span className="text-sm font-semibold">Totala kostnader</span>
-                <span className="text-sm font-bold font-mono">{fmtKr(totalCosts)}</span>
+                <span className="text-sm font-bold font-mono">{fmtC(totalCosts)}</span>
               </div>
             </CardContent>
           </Card>
@@ -703,11 +708,11 @@ function WeeklyReportForm({
               <div className="space-y-2 pt-3 border-t mt-3">
                 <div className="flex justify-between">
                   <span className="text-sm font-semibold">Total försäljning exkl. moms</span>
-                  <span className="text-sm font-bold font-mono">{fmtKr(totalSales)}</span>
+                  <span className="text-sm font-bold font-mono">{fmtC(totalSales)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm font-semibold">Bruttomarginal</span>
-                  <span className="text-sm font-bold font-mono">{fmtKr(grossMargin)}</span>
+                  <span className="text-sm font-bold font-mono">{fmtC(grossMargin)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm font-semibold">Bruttomarginal %</span>
@@ -864,6 +869,16 @@ export default function ShopReports() {
   const { data: reports, isLoading } = useWeeklyReportsList(activeStoreId);
   const [activeReportId, setActiveReportId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const { data: storeRow } = useQuery({
+    queryKey: ["store_row_for_report_list", activeStoreId],
+    enabled: !!activeStoreId,
+    queryFn: async () => {
+      const { data } = await supabase.from("stores").select("id, name, city").eq("id", activeStoreId!).maybeSingle();
+      return data;
+    },
+  });
+  const listCurrency = getStoreCurrency(storeRow as any);
+  const fmtListC = (v: number) => fmtCurr(v, listCurrency);
 
   if (!activeStoreId) {
     return (
@@ -949,13 +964,13 @@ export default function ShopReports() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right font-mono tabular-nums text-sm">
-                        {fmtKr(Number(r.total_sales))}
+                        {fmtListC(Number(r.total_sales))}
                       </TableCell>
                       <TableCell className={`text-right font-mono tabular-nums text-sm ${marginColor}`}>
                         {Number(r.gross_margin_pct) > 0 ? `${Number(r.gross_margin_pct).toFixed(1)}%` : "–"}
                       </TableCell>
                       <TableCell className="text-right font-mono tabular-nums text-sm">
-                        {fmtKr(Number(r.closing_inventory))}
+                        {fmtListC(Number(r.closing_inventory))}
                       </TableCell>
                     </TableRow>
                   );
