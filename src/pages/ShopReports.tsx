@@ -35,6 +35,7 @@ import { toast } from "sonner";
 import {
   Plus, Save, BarChart3, TrendingUp, ArrowLeft, Trash2, Search,
   Package, DollarSign, Share2, FileText, AlertTriangle, Printer,
+  PencilLine, CheckCircle2,
 } from "lucide-react";
 import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
