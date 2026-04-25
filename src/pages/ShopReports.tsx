@@ -1008,9 +1008,11 @@ export default function ShopReports() {
                   <TableHead>Vecka</TableHead>
                   <TableHead>Period</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Lagerförändring</TableHead>
+                  <TableHead className="text-right">Kostnader</TableHead>
                   <TableHead className="text-right">Försäljning</TableHead>
+                  <TableHead className="text-right">Marginal</TableHead>
                   <TableHead className="text-right">Bruttomarg. %</TableHead>
-                  <TableHead className="text-right">Utg. lager</TableHead>
                   <TableHead className="w-[90px]"></TableHead>
                 </TableRow>
               </TableHeader>
