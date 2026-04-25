@@ -127,12 +127,15 @@ function SummaryCards({
   grossMarginPct,
   closingInventory,
   inventoryChange,
+  currency = "SEK",
 }: {
   totalSales: number;
   grossMarginPct: number;
   closingInventory: number;
   inventoryChange: number;
+  currency?: string;
 }) {
+  const fmtC = (v: number) => fmtCurr(v, currency);
   const marginColor =
     grossMarginPct >= 45 ? "text-emerald-400" :
     grossMarginPct >= 35 ? "text-yellow-400" :
