@@ -143,6 +143,9 @@ function SummaryCards({
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <Card>
+        <CardContent className="pt-3 pb-2 px-3">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Försäljning</p>
           <p className="text-lg font-bold font-mono tabular-nums">{fmtC(totalSales)}</p>
         </CardContent>
       </Card>
