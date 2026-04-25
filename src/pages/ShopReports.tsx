@@ -964,13 +964,13 @@ export default function ShopReports() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right font-mono tabular-nums text-sm">
-                        {fmtKr(Number(r.total_sales))}
+                        {fmtListC(Number(r.total_sales))}
                       </TableCell>
                       <TableCell className={`text-right font-mono tabular-nums text-sm ${marginColor}`}>
                         {Number(r.gross_margin_pct) > 0 ? `${Number(r.gross_margin_pct).toFixed(1)}%` : "–"}
                       </TableCell>
                       <TableCell className="text-right font-mono tabular-nums text-sm">
-                        {fmtKr(Number(r.closing_inventory))}
+                        {fmtListC(Number(r.closing_inventory))}
                       </TableCell>
                     </TableRow>
                   );
