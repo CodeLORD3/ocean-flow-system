@@ -274,22 +274,36 @@ function WeeklyReportForm({
       );
     }
 
-    if (detail.costLines.length > 0) {
-      setCostLines(detail.costLines.map((l: any) => ({
+    // Merge saved cost lines with defaults so empty default rows remain editable
+    {
+      const saved: CostLine[] = detail.costLines.map((l: any) => ({
         label: l.label,
         amount: Number(l.amount),
         sort_order: l.sort_order,
-      })));
+      }));
+      const savedLabels = new Set(saved.map((l) => l.label));
+      const missingDefaults = DEFAULT_COST_LABELS
+        .filter((label) => !savedLabels.has(label))
+        .map((label, i) => ({ label, amount: 0, sort_order: saved.length + i }));
+      const merged = [...saved, ...missingDefaults].sort((a, b) => a.sort_order - b.sort_order);
+      setCostLines(merged.length > 0 ? merged : DEFAULT_COST_LABELS.map((label, i) => ({ label, amount: 0, sort_order: i })));
     }
 
-    if (detail.salesLines.length > 0) {
-      setSalesLines(detail.salesLines.map((l: any) => ({
+    // Merge saved sales lines with default channels so empty default rows remain editable
+    {
+      const saved: SalesLine[] = detail.salesLines.map((l: any) => ({
         channel: l.channel,
         quantity: l.quantity,
         amount: Number(l.amount),
         last_year_amount: l.last_year_amount ? Number(l.last_year_amount) : undefined,
         sort_order: l.sort_order,
-      })));
+      }));
+      const savedChannels = new Set(saved.map((l) => l.channel));
+      const missingDefaults = DEFAULT_SALES_CHANNELS
+        .filter((channel) => !savedChannels.has(channel))
+        .map((channel, i) => ({ channel, quantity: 0, amount: 0, sort_order: saved.length + i }));
+      const merged = [...saved, ...missingDefaults].sort((a, b) => a.sort_order - b.sort_order);
+      setSalesLines(merged.length > 0 ? merged : DEFAULT_SALES_CHANNELS.map((channel, i) => ({ channel, quantity: 0, amount: 0, sort_order: i })));
     }
 
     if (detail.socialLines.length > 0) {
