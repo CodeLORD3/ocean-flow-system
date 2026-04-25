@@ -505,7 +505,7 @@ function WeeklyReportForm({
                 </div>
                 <div>
                   <Label className="text-xs">Utgående lager (beräknat)</Label>
-                  <div className="h-8 flex items-center text-sm font-mono font-bold">{fmtKr(closingInventory)}</div>
+                  <div className="h-8 flex items-center text-sm font-mono font-bold">{fmtC(closingInventory)}</div>
                 </div>
               </div>
 
@@ -558,7 +558,7 @@ function WeeklyReportForm({
                           onChange={(e) => updateInvLine(idx, "unit_price", Number(e.target.value) || 0)}
                         />
                       </TableCell>
-                      <TableCell className="py-1 text-right text-xs font-mono font-medium">{fmtKr(line.total)}</TableCell>
+                      <TableCell className="py-1 text-right text-xs font-mono font-medium">{fmtC(line.total)}</TableCell>
                       <TableCell className="py-1">
                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => removeInvLine(idx)}>
                           <Trash2 className="h-3 w-3 text-destructive" />
@@ -575,12 +575,12 @@ function WeeklyReportForm({
 
               <div className="flex justify-between items-center pt-2 border-t">
                 <span className="text-sm font-semibold">Totalt inventering</span>
-                <span className="text-sm font-bold font-mono">{fmtKr(closingInventory)}</span>
+                <span className="text-sm font-bold font-mono">{fmtC(closingInventory)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs text-muted-foreground">Lagerförändring</span>
                 <span className={`text-xs font-mono ${inventoryChange >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-                  {inventoryChange >= 0 ? "+" : ""}{fmtKr(inventoryChange)}
+                  {inventoryChange >= 0 ? "+" : ""}{fmtC(inventoryChange)}
                 </span>
               </div>
             </CardContent>
@@ -610,13 +610,13 @@ function WeeklyReportForm({
                     onChange={(e) => updateCostLine(idx, "amount", Number(e.target.value) || 0)}
                     placeholder="0"
                   />
-                  <span className="text-xs text-muted-foreground w-6">kr</span>
+                  <span className="text-xs text-muted-foreground w-6">{currencyLabel}</span>
                 </div>
               ))}
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 <span className="w-44">Lagerförändring (neg.)</span>
                 <span className="flex-1 text-right font-mono">
-                  {inventoryChange < 0 ? fmtKr(Math.abs(inventoryChange)) : "0 kr"}
+                  {inventoryChange < 0 ? fmtC(Math.abs(inventoryChange)) : `0 ${currencyLabel}`}
                 </span>
                 <span className="w-6"></span>
               </div>
@@ -625,7 +625,7 @@ function WeeklyReportForm({
               </Button>
               <div className="flex justify-between items-center pt-2 border-t">
                 <span className="text-sm font-semibold">Totala kostnader</span>
-                <span className="text-sm font-bold font-mono">{fmtKr(totalCosts)}</span>
+                <span className="text-sm font-bold font-mono">{fmtC(totalCosts)}</span>
               </div>
             </CardContent>
           </Card>
@@ -707,11 +707,11 @@ function WeeklyReportForm({
               <div className="space-y-2 pt-3 border-t mt-3">
                 <div className="flex justify-between">
                   <span className="text-sm font-semibold">Total försäljning exkl. moms</span>
-                  <span className="text-sm font-bold font-mono">{fmtKr(totalSales)}</span>
+                  <span className="text-sm font-bold font-mono">{fmtC(totalSales)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm font-semibold">Bruttomarginal</span>
-                  <span className="text-sm font-bold font-mono">{fmtKr(grossMargin)}</span>
+                  <span className="text-sm font-bold font-mono">{fmtC(grossMargin)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm font-semibold">Bruttomarginal %</span>
