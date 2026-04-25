@@ -143,10 +143,7 @@ function SummaryCards({
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-      <Card>
-        <CardContent className="pt-3 pb-2 px-3">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Försäljning</p>
-          <p className="text-lg font-bold font-mono tabular-nums">{fmtKr(totalSales)}</p>
+          <p className="text-lg font-bold font-mono tabular-nums">{fmtC(totalSales)}</p>
         </CardContent>
       </Card>
       <Card>
@@ -160,14 +157,14 @@ function SummaryCards({
       <Card>
         <CardContent className="pt-3 pb-2 px-3">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Utgående lager</p>
-          <p className="text-lg font-bold font-mono tabular-nums">{fmtKr(closingInventory)}</p>
+          <p className="text-lg font-bold font-mono tabular-nums">{fmtC(closingInventory)}</p>
         </CardContent>
       </Card>
       <Card>
         <CardContent className="pt-3 pb-2 px-3">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Lagerförändring</p>
           <p className={`text-lg font-bold font-mono tabular-nums ${inventoryChange >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-            {inventoryChange >= 0 ? "+" : ""}{fmtKr(inventoryChange)}
+            {inventoryChange >= 0 ? "+" : ""}{fmtC(inventoryChange)}
           </p>
         </CardContent>
       </Card>
