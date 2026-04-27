@@ -705,6 +705,20 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
   const [newProducts, setNewProducts] = useState<{ product_id: string; product_name: string; unit: string; quantity: string }[]>([]);
   const [editProductSearch, setEditProductSearch] = useState("");
   const [editHighlightedIndex, setEditHighlightedIndex] = useState(-1);
+  const editQtyRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const focusExistingLine = (productId: string) => {
+    const line = (order.shop_order_lines || []).find((l: any) => l.product_id === productId);
+    if (!line) return;
+    const el = editQtyRefs.current[line.id];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.focus();
+      el.select();
+    }
+    setEditProductSearch("");
+    setEditHighlightedIndex(-1);
+  };
   const [editDeliveryDate, setEditDeliveryDate] = useState<Date | undefined>(
     order.desired_delivery_date ? new Date(order.desired_delivery_date + "T00:00:00") : undefined
   );
