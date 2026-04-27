@@ -31,16 +31,17 @@ import { toast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function MeetingProtocols() {
-  const { activeStoreId, activeStoreName } = useSite();
-  const { data: protocols, isLoading } = useMeetingProtocols(activeStoreId);
+  const { site, activeStoreId, activeStoreName } = useSite();
+  const isShop = site === "shop";
+  const { data: protocols, isLoading } = useMeetingProtocols(isShop ? activeStoreId : null, isShop ? undefined : site);
   const createProtocol = useCreateMeetingProtocol();
   const updateProtocol = useUpdateMeetingProtocol();
   const deleteProtocol = useDeleteMeetingProtocol();
   const addItem = useAddProtocolItem();
   const updateItem = useUpdateProtocolItem();
   const deleteItem = useDeleteProtocolItem();
-  const { updateEvent } = useScheduleEvents("shop", undefined, activeStoreId);
-  const { data: staffMembers } = useStaff(activeStoreId || undefined);
+  const { updateEvent } = useScheduleEvents(site, undefined, isShop ? activeStoreId : null);
+  const { data: staffMembers } = useStaff(isShop ? (activeStoreId || undefined) : undefined);
   const queryClient = useQueryClient();
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -50,7 +51,7 @@ export default function MeetingProtocols() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [newItemText, setNewItemText] = useState<Record<string, string>>({});
 
-  if (!activeStoreId) {
+  if (isShop && !activeStoreId) {
     return (
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-4">Mötesprotokoll</h1>
@@ -59,10 +60,13 @@ export default function MeetingProtocols() {
     );
   }
 
+  const portalLabel = isShop ? activeStoreName : site === "wholesale" ? "Grossist" : site === "production" ? "Produktion" : "";
+
   const handleCreate = async () => {
     if (!newTitle.trim()) return;
     await createProtocol.mutateAsync({
-      store_id: activeStoreId,
+      store_id: isShop ? activeStoreId : null,
+      portal: site,
       title: newTitle,
       meeting_date: newDate,
       attendees: newAttendees || undefined,
