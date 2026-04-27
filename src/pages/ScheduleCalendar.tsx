@@ -204,15 +204,16 @@ export default function ScheduleCalendar() {
         recurrence_end_date: formRecurrenceEnd || null,
         assigned_to: formCategory === "task" && formAssignee !== "none" ? formAssignee : null,
       });
-      if (effectiveFormType === "meeting" && site === "shop" && activeStoreId) {
+      if (effectiveFormType === "meeting" && (isShop ? !!activeStoreId : true)) {
         await createProtocol.mutateAsync({
-          store_id: activeStoreId,
+          store_id: isShop ? activeStoreId : null,
+          portal: site,
           title: formTitle,
           meeting_date: formDate,
           notes: formDesc || undefined,
         });
       }
-      toast({ title: effectiveFormType === "meeting" && site === "shop" ? "Möte tillagt i kalender & mötesprotokoll" : formCategory === "task" ? "Uppgift tillagd" : "Händelse tillagd" });
+      toast({ title: effectiveFormType === "meeting" ? "Möte tillagt i kalender & mötesprotokoll" : formCategory === "task" ? "Uppgift tillagd" : "Händelse tillagd" });
       setShowAddPanel(false);
     } catch {
       toast({ title: "Fel", description: "Kunde inte spara", variant: "destructive" });
