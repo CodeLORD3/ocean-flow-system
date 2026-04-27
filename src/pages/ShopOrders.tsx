@@ -729,12 +729,15 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
     ...newProducts.map(p => p.product_id),
   ]);
 
-  const filteredEditProducts = products.filter(p =>
-    editProductSearch &&
-    (p.name.toLowerCase().includes(editProductSearch.toLowerCase()) ||
-      p.sku.toLowerCase().includes(editProductSearch.toLowerCase())) &&
-    !existingProductIds.has(p.id)
-  ).slice(0, 8);
+  const filteredEditProducts = products
+    .filter(p =>
+      editProductSearch &&
+      (p.name.toLowerCase().includes(editProductSearch.toLowerCase()) ||
+        p.sku.toLowerCase().includes(editProductSearch.toLowerCase()))
+    )
+    .map(p => ({ ...p, _alreadyOnOrder: existingProductIds.has(p.id) }))
+    .sort((a: any, b: any) => Number(a._alreadyOnOrder) - Number(b._alreadyOnOrder))
+    .slice(0, 8);
 
   const addNewProduct = (p: any) => {
     setNewProducts(prev => [{ product_id: p.id, product_name: p.name, unit: p.unit, quantity: "" }, ...prev]);
@@ -1017,22 +1020,29 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
                   if (filteredEditProducts.length === 0) return;
                   if (e.key === "ArrowDown") { e.preventDefault(); setEditHighlightedIndex(prev => (prev + 1) % filteredEditProducts.length); }
                   else if (e.key === "ArrowUp") { e.preventDefault(); setEditHighlightedIndex(prev => (prev <= 0 ? filteredEditProducts.length - 1 : prev - 1)); }
-                  else if (e.key === "Enter" && editHighlightedIndex >= 0) { e.preventDefault(); addNewProduct(filteredEditProducts[editHighlightedIndex]); }
+                  else if (e.key === "Enter" && editHighlightedIndex >= 0) {
+                    e.preventDefault();
+                    const sel: any = filteredEditProducts[editHighlightedIndex];
+                    if (sel && !sel._alreadyOnOrder) addNewProduct(sel);
+                  }
                 }}
                 className="pl-8 h-8 text-xs"
               />
             </div>
             {filteredEditProducts.length > 0 && (
               <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
-                {filteredEditProducts.map((p, idx) => (
+                {filteredEditProducts.map((p: any, idx) => (
                   <button
                     key={p.id}
-                    className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between ${idx === editHighlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
-                    onClick={() => addNewProduct(p)}
+                    disabled={p._alreadyOnOrder}
+                    className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between ${p._alreadyOnOrder ? "opacity-50 cursor-not-allowed" : idx === editHighlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
+                    onClick={() => !p._alreadyOnOrder && addNewProduct(p)}
                     onMouseEnter={() => setEditHighlightedIndex(idx)}
                   >
                     <span className="font-medium text-foreground">{p.name}</span>
-                    <span className="text-muted-foreground font-mono text-[10px]">{p.sku} · {p.unit}</span>
+                    <span className="text-muted-foreground font-mono text-[10px]">
+                      {p._alreadyOnOrder ? "redan på order" : `${p.sku} · ${p.unit}`}
+                    </span>
                   </button>
                 ))}
               </div>
