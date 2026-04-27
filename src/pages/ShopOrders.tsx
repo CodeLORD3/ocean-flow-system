@@ -992,6 +992,7 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
                     <td className="py-2 text-right font-mono text-muted-foreground">{line.old_qty}</td>
                     <td className="py-2 text-right">
                       <Input
+                        ref={el => { editQtyRefs.current[line.line_id] = el; }}
                         type="number"
                         step="0.1"
                         value={line.new_qty}
