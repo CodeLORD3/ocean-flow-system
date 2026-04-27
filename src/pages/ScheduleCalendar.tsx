@@ -96,14 +96,15 @@ export default function ScheduleCalendar() {
   const [showAddPanel, setShowAddPanel] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  const { events, isLoading, addEvent, updateEvent, deleteEvent } = useScheduleEvents(site, year, site === "shop" ? activeStoreId : null);
+  const isShop = site === "shop";
+  const { events, isLoading, addEvent, updateEvent, deleteEvent } = useScheduleEvents(site, year, isShop ? activeStoreId : null);
   const createProtocol = useCreateMeetingProtocol();
   const updateProtocol = useUpdateMeetingProtocol();
   const addProtocolItem = useAddProtocolItem();
   const updateProtocolItem = useUpdateProtocolItem();
   const deleteProtocolItem = useDeleteProtocolItem();
-  const { data: protocols } = useMeetingProtocols(site === "shop" ? activeStoreId : null);
-  const { data: staffMembers } = useStaff(site === "shop" ? (activeStoreId || undefined) : undefined);
+  const { data: protocols } = useMeetingProtocols(isShop ? activeStoreId : null, isShop ? undefined : site);
+  const { data: staffMembers } = useStaff(isShop ? (activeStoreId || undefined) : undefined);
   const queryClient = useQueryClient();
   const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
   const [draggedProtocolItem, setDraggedProtocolItem] = useState<{ id: string; content: string; assigned_to: string | null; deadline: string | null; protocolTitle: string } | null>(null);
