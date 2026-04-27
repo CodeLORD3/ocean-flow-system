@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface MeetingProtocol {
   id: string;
-  store_id: string;
+  store_id: string | null;
+  portal: string;
   meeting_date: string;
   title: string;
   attendees: string | null;
@@ -24,16 +25,25 @@ export interface MeetingProtocolItem {
   staff?: { id: string; first_name: string; last_name: string } | null;
 }
 
-export function useMeetingProtocols(storeId: string | null) {
+/**
+ * Load meeting protocols.
+ * - When `storeId` is provided → return that store's protocols (shop portal).
+ * - Otherwise → return protocols for the given `portal` that have no store
+ *   (used by wholesale / production portals).
+ */
+export function useMeetingProtocols(storeId: string | null, portal?: string) {
   return useQuery({
-    queryKey: ["meeting_protocols", storeId],
-    enabled: !!storeId,
+    queryKey: ["meeting_protocols", storeId, portal ?? null],
+    enabled: !!storeId || !!portal,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const base: any = supabase
         .from("meeting_protocols")
         .select("*, meeting_protocol_items(*, staff:assigned_to(id, first_name, last_name))")
-        .eq("store_id", storeId!)
         .order("meeting_date", { ascending: false });
+      const q = storeId
+        ? base.eq("store_id", storeId)
+        : base.is("store_id", null).eq("portal", portal);
+      const { data, error } = await q;
       if (error) throw error;
       return data as MeetingProtocol[];
     },
@@ -43,8 +53,8 @@ export function useMeetingProtocols(storeId: string | null) {
 export function useCreateMeetingProtocol() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (p: { store_id: string; title: string; meeting_date: string; attendees?: string; notes?: string }) => {
-      const { data, error } = await supabase.from("meeting_protocols").insert(p).select().single();
+    mutationFn: async (p: { store_id: string | null; portal?: string; title: string; meeting_date: string; attendees?: string; notes?: string }) => {
+      const { data, error } = await supabase.from("meeting_protocols").insert(p as any).select().single();
       if (error) throw error;
       return data;
     },

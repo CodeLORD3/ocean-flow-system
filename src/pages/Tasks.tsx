@@ -31,9 +31,10 @@ function getTaskStatus(event: ScheduleEvent): TaskStatus {
 
 export default function Tasks() {
   const { site, activeStoreId } = useSite();
-  const { events, isLoading, addEvent, updateEvent, deleteEvent } = useScheduleEvents(site, undefined, site === "shop" ? activeStoreId : null);
-  const { data: protocols } = useMeetingProtocols(activeStoreId);
-  const { data: staffMembers } = useStaff(activeStoreId || undefined);
+  const isShop = site === "shop";
+  const { events, isLoading, addEvent, updateEvent, deleteEvent } = useScheduleEvents(site, undefined, isShop ? activeStoreId : null);
+  const { data: protocols } = useMeetingProtocols(isShop ? activeStoreId : null, isShop ? undefined : site);
+  const { data: staffMembers } = useStaff(isShop ? (activeStoreId || undefined) : undefined);
   const updateProtocolItem = useUpdateProtocolItem();
   const queryClient = useQueryClient();
 
