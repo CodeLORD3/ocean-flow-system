@@ -97,7 +97,7 @@ export default function PortalChooser() {
           </p>
         </div>
 
-        <div className={`grid gap-4 ${access.length === 3 ? "md:grid-cols-3" : access.length === 2 ? "md:grid-cols-2" : "grid-cols-1"}`}>
+        <div className={`grid gap-4 ${access.length >= 4 ? "md:grid-cols-2 lg:grid-cols-4" : access.length === 3 ? "md:grid-cols-3" : access.length === 2 ? "md:grid-cols-2" : "grid-cols-1"}`}>
           {access.map((key) => {
             const meta = PORTAL_META[key];
             const Icon = meta.icon;

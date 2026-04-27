@@ -96,9 +96,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { staff } = useStaffAuth();
   useSessionTracking();
 
-  const access = staff?.portal_access ?? [];
-  const lockedStoreId = staff?.allowed_store_id ?? null;
-  const lockedStoreIds = staff?.allowed_store_ids ?? [];
+  const rawAccess = staff?.portal_access ?? [];
+  const isAdmin = rawAccess.includes("admin");
+  // Admins implicitly have access to every portal mode
+  const access = isAdmin
+    ? (["wholesale", "production", "shop"] as const)
+    : rawAccess;
+  const lockedStoreId = isAdmin ? null : (staff?.allowed_store_id ?? null);
+  const lockedStoreIds = isAdmin ? [] : (staff?.allowed_store_ids ?? []);
   const allowedSet = new Set<string>([
     ...lockedStoreIds,
     ...(lockedStoreId ? [lockedStoreId] : []),
