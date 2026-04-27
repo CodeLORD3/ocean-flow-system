@@ -139,7 +139,7 @@ export default function MeetingProtocols() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Mötesprotokoll</h1>
-          <p className="text-sm text-muted-foreground">{activeStoreName}</p>
+          <p className="text-sm text-muted-foreground">{portalLabel}</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
