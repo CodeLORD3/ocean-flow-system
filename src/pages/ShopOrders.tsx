@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { displayOrderWeek } from "@/lib/orderWeek";
 import { motion } from "framer-motion";
 import {
@@ -705,6 +705,20 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
   const [newProducts, setNewProducts] = useState<{ product_id: string; product_name: string; unit: string; quantity: string }[]>([]);
   const [editProductSearch, setEditProductSearch] = useState("");
   const [editHighlightedIndex, setEditHighlightedIndex] = useState(-1);
+  const editQtyRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const focusExistingLine = (productId: string) => {
+    const line = (order.shop_order_lines || []).find((l: any) => l.product_id === productId);
+    if (!line) return;
+    const el = editQtyRefs.current[line.id];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.focus();
+      el.select();
+    }
+    setEditProductSearch("");
+    setEditHighlightedIndex(-1);
+  };
   const [editDeliveryDate, setEditDeliveryDate] = useState<Date | undefined>(
     order.desired_delivery_date ? new Date(order.desired_delivery_date + "T00:00:00") : undefined
   );
@@ -992,6 +1006,7 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
                     <td className="py-2 text-right font-mono text-muted-foreground">{line.old_qty}</td>
                     <td className="py-2 text-right">
                       <Input
+                        ref={el => { editQtyRefs.current[line.line_id] = el; }}
                         type="number"
                         step="0.1"
                         value={line.new_qty}
@@ -1023,7 +1038,9 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
                   else if (e.key === "Enter" && editHighlightedIndex >= 0) {
                     e.preventDefault();
                     const sel: any = filteredEditProducts[editHighlightedIndex];
-                    if (sel && !sel._alreadyOnOrder) addNewProduct(sel);
+                    if (!sel) return;
+                    if (sel._alreadyOnOrder) focusExistingLine(sel.id);
+                    else addNewProduct(sel);
                   }
                 }}
                 className="pl-8 h-8 text-xs"
@@ -1034,14 +1051,13 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
                 {filteredEditProducts.map((p: any, idx) => (
                   <button
                     key={p.id}
-                    disabled={p._alreadyOnOrder}
-                    className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between ${p._alreadyOnOrder ? "opacity-50 cursor-not-allowed" : idx === editHighlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
-                    onClick={() => !p._alreadyOnOrder && addNewProduct(p)}
+                    className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between ${idx === editHighlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
+                    onClick={() => p._alreadyOnOrder ? focusExistingLine(p.id) : addNewProduct(p)}
                     onMouseEnter={() => setEditHighlightedIndex(idx)}
                   >
                     <span className="font-medium text-foreground">{p.name}</span>
-                    <span className="text-muted-foreground font-mono text-[10px]">
-                      {p._alreadyOnOrder ? "redan på order" : `${p.sku} · ${p.unit}`}
+                    <span className={`font-mono text-[10px] ${p._alreadyOnOrder ? "text-primary" : "text-muted-foreground"}`}>
+                      {p._alreadyOnOrder ? "ändra antal ↑" : `${p.sku} · ${p.unit}`}
                     </span>
                   </button>
                 ))}
