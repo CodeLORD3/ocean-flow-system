@@ -729,12 +729,15 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
     ...newProducts.map(p => p.product_id),
   ]);
 
-  const filteredEditProducts = products.filter(p =>
-    editProductSearch &&
-    (p.name.toLowerCase().includes(editProductSearch.toLowerCase()) ||
-      p.sku.toLowerCase().includes(editProductSearch.toLowerCase())) &&
-    !existingProductIds.has(p.id)
-  ).slice(0, 8);
+  const filteredEditProducts = products
+    .filter(p =>
+      editProductSearch &&
+      (p.name.toLowerCase().includes(editProductSearch.toLowerCase()) ||
+        p.sku.toLowerCase().includes(editProductSearch.toLowerCase()))
+    )
+    .map(p => ({ ...p, _alreadyOnOrder: existingProductIds.has(p.id) }))
+    .sort((a: any, b: any) => Number(a._alreadyOnOrder) - Number(b._alreadyOnOrder))
+    .slice(0, 8);
 
   const addNewProduct = (p: any) => {
     setNewProducts(prev => [{ product_id: p.id, product_name: p.name, unit: p.unit, quantity: "" }, ...prev]);
