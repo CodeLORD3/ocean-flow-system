@@ -2,7 +2,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Store, Factory, Boxes, LogOut, Loader2 } from "lucide-react";
+import { Store, Factory, Boxes, LogOut, Loader2, Shield } from "lucide-react";
 import { useStaffAuth, type PortalKey } from "@/contexts/StaffAuthContext";
 import { useSite } from "@/contexts/SiteContext";
 import { useStores } from "@/hooks/useStores";
@@ -12,6 +12,7 @@ const PORTAL_META: Record<PortalKey, { title: string; description: string; icon:
   shop: { title: "Butik", description: "Beställningar, lager och rapporter", icon: Store },
   wholesale: { title: "Grossist", description: "Inköp, prissättning och fakturering", icon: Boxes },
   production: { title: "Produktion", description: "Produktionsschema och rapporter", icon: Factory },
+  admin: { title: "Admin", description: "Full åtkomst till alla portaler och data", icon: Shield },
 };
 
 export default function PortalChooser() {
@@ -58,8 +59,12 @@ export default function PortalChooser() {
   }
 
   const enterPortal = (key: PortalKey) => {
-    setSite(key);
-    if (key === "shop") {
+    if (key === "admin") {
+      // Admins land in wholesale view but can switch to any portal
+      setSite("wholesale");
+      setActiveStore(null, null);
+    } else if (key === "shop") {
+      setSite("shop");
       const allowedIds = [
         ...(staff?.allowed_store_ids ?? []),
         ...(staff?.allowed_store_id ? [staff.allowed_store_id] : []),
@@ -72,6 +77,7 @@ export default function PortalChooser() {
         setActiveStore(null, null);
       }
     } else {
+      setSite(key);
       setActiveStore(null, null);
     }
     const saved = sessionStorage.getItem("erp_last_route");
@@ -91,7 +97,7 @@ export default function PortalChooser() {
           </p>
         </div>
 
-        <div className={`grid gap-4 ${access.length === 3 ? "md:grid-cols-3" : access.length === 2 ? "md:grid-cols-2" : "grid-cols-1"}`}>
+        <div className={`grid gap-4 ${access.length >= 4 ? "md:grid-cols-2 lg:grid-cols-4" : access.length === 3 ? "md:grid-cols-3" : access.length === 2 ? "md:grid-cols-2" : "grid-cols-1"}`}>
           {access.map((key) => {
             const meta = PORTAL_META[key];
             const Icon = meta.icon;
