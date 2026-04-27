@@ -1097,7 +1097,8 @@ export type Database = {
           id: string
           meeting_date: string
           notes: string | null
-          store_id: string
+          portal: string
+          store_id: string | null
           title: string
         }
         Insert: {
@@ -1106,7 +1107,8 @@ export type Database = {
           id?: string
           meeting_date?: string
           notes?: string | null
-          store_id: string
+          portal?: string
+          store_id?: string | null
           title?: string
         }
         Update: {
@@ -1115,7 +1117,8 @@ export type Database = {
           id?: string
           meeting_date?: string
           notes?: string | null
-          store_id?: string
+          portal?: string
+          store_id?: string | null
           title?: string
         }
         Relationships: [
