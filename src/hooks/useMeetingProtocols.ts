@@ -36,15 +36,13 @@ export function useMeetingProtocols(storeId: string | null, portal?: string) {
     queryKey: ["meeting_protocols", storeId, portal ?? null],
     enabled: !!storeId || !!portal,
     queryFn: async () => {
-      let q = supabase
+      const base: any = supabase
         .from("meeting_protocols")
         .select("*, meeting_protocol_items(*, staff:assigned_to(id, first_name, last_name))")
         .order("meeting_date", { ascending: false });
-      if (storeId) {
-        q = q.eq("store_id", storeId);
-      } else if (portal) {
-        q = q.is("store_id", null).eq("portal" as any, portal);
-      }
+      const q = storeId
+        ? base.eq("store_id", storeId)
+        : base.is("store_id", null).eq("portal", portal);
       const { data, error } = await q;
       if (error) throw error;
       return data as MeetingProtocol[];
