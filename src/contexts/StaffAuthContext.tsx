@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { supabase } from "@/integrations/supabase/client";
 import type { Session, User } from "@supabase/supabase-js";
 
-export type PortalKey = "shop" | "wholesale" | "production";
+export type PortalKey = "shop" | "wholesale" | "production" | "admin";
 
 export interface StaffProfile {
   id: string;
