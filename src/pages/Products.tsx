@@ -14,7 +14,9 @@ import {
   X,
   History,
   Clock,
+  FileDown,
 } from "lucide-react";
+import PriceListDialog from "@/components/PriceListDialog";
 import { useSite } from "@/contexts/SiteContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -104,6 +106,7 @@ export default function Products() {
     weight_per_piece: "",
   });
   const [historyProduct, setHistoryProduct] = useState<string | null>(null);
+  const [priceListOpen, setPriceListOpen] = useState(false);
 
   // Inline price editing (wholesale only)
   const [inlineEdits, setInlineEdits] = useState<Record<string, InlineEdit>>({});
@@ -738,11 +741,26 @@ export default function Products() {
               <Tag className="h-3.5 w-3.5" /> Generera alla streckkoder ({productsWithout})
             </Button>
           )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 text-xs"
+            onClick={() => setPriceListOpen(true)}
+          >
+            <FileDown className="h-3.5 w-3.5" /> Skapa prislista
+          </Button>
           <Button size="sm" className="gap-1.5 text-xs" onClick={openAdd}>
             <Plus className="h-3.5 w-3.5" /> Lägg till produkt
           </Button>
         </div>
       </div>
+
+      <PriceListDialog
+        open={priceListOpen}
+        onOpenChange={setPriceListOpen}
+        products={products as any}
+        allProducts={allProducts as any}
+      />
 
       {/* Warning: products missing shelf life */}
       {productsMissingShelfLife > 0 && (
