@@ -123,11 +123,12 @@ export default function PriceListDialog({ open, onOpenChange, allProducts }: Pro
         setFreshAllProducts(latestProducts);
       }
       const today = format(new Date(), "yyyy-MM-dd");
-      // Reports created today (or with report_date today)
+      // Only reports with report_date = today (so re-uploaded historical
+      // reports don't pollute "Dagens inköp")
       const { data: reports } = await supabase
         .from("purchase_reports")
-        .select("id, report_date, created_at")
-        .or(`report_date.eq.${today},created_at.gte.${today}T00:00:00`);
+        .select("id, report_date")
+        .eq("report_date", today);
       const reportIds = (reports || []).map((r: any) => r.id);
       let lines: PurchaseLineToday[] = [];
       if (reportIds.length) {
