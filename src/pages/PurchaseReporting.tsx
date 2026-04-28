@@ -847,6 +847,44 @@ export default function PurchaseReporting() {
     },
   });
 
+  const unlockReport = useMutation({
+    mutationFn: async (reportId: string) => {
+      const lines = allLines.filter((l) => l.report_id === reportId);
+      const productLines = lines.filter((l) => l.product_id);
+
+      // Reverse the stock additions made when the report was confirmed
+      for (const line of productLines) {
+        const { data: existing } = await supabase
+          .from("product_stock_locations")
+          .select("id, quantity")
+          .eq("product_id", line.product_id!)
+          .eq("location_id", GROSSIST_FLYTANDE_ID)
+          .maybeSingle();
+
+        if (existing) {
+          const newQty = Math.max(0, Number(existing.quantity) - Number(line.quantity));
+          await supabase
+            .from("product_stock_locations")
+            .update({ quantity: newQty, updated_at: new Date().toISOString() })
+            .eq("id", existing.id);
+        }
+      }
+
+      const { error } = await supabase
+        .from("purchase_reports")
+        .update({ status: "Klar" })
+        .eq("id", reportId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
+      queryClient.invalidateQueries({ queryKey: ["product_stock_locations"] });
+      queryClient.invalidateQueries({ queryKey: ["all_stock_locations"] });
+      toast({ title: "Rapport upplåst", description: "Du kan nu redigera raderna. Bekräfta igen när du är klar." });
+    },
+    onError: (e: any) => toast({ title: "Fel", description: e.message, variant: "destructive" }),
+  });
+
   // Add line from search (existing product)
   const addLineFromProduct = useMutation({
     mutationFn: async (product: any) => {
