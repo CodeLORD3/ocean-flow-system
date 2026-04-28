@@ -346,40 +346,83 @@ export default function PriceListDialog({ open, onOpenChange, products, allProdu
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-8"></TableHead>
-                    <TableHead>Inköpt produkt</TableHead>
-                    <TableHead className="text-right">Antal</TableHead>
-                    <TableHead className="text-right">Inköpspris</TableHead>
+                    <TableHead>Produktgrupp</TableHead>
+                    <TableHead>Inköp (leverantörspriser)</TableHead>
                     <TableHead>Sätt pris i prislistan</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {todayLines.map((line) => {
-                    const fam = familyFor(line.product_id);
-                    return (
-                      <TableRow key={line.id} className="align-top">
+                  {(() => {
+                    // Group today's lines by family (parent product id, or by normalised name when not linked)
+                    const groups = new Map<
+                      string,
+                      { key: string; label: string; family: AnyProduct[]; lines: PurchaseLineToday[] }
+                    >();
+                    const norm = (s: string) =>
+                      s.toLowerCase().replace(/\s+/g, " ").trim();
+                    for (const line of todayLines) {
+                      const fam = familyFor(line.product_id);
+                      let key: string;
+                      let label: string;
+                      if (fam.length > 0) {
+                        const parent =
+                          fam.find((f) => !f.parent_product_id) || fam[0];
+                        key = `pid:${parent.id}`;
+                        label = parent.name;
+                      } else {
+                        key = `name:${norm(line.product_name)}`;
+                        label = line.product_name;
+                      }
+                      const existing = groups.get(key);
+                      if (existing) {
+                        existing.lines.push(line);
+                      } else {
+                        groups.set(key, { key, label, family: fam, lines: [line] });
+                      }
+                    }
+                    const list = Array.from(groups.values());
+                    return list.map((g) => (
+                      <TableRow key={g.key} className="align-top">
                         <TableCell>
-                          {fam.length > 1 && <Layers className="h-3.5 w-3.5 text-muted-foreground" />}
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-xs font-medium">{line.product_name}</div>
-                          {fam.length > 1 && (
-                            <div className="text-[10px] text-muted-foreground">
-                              Grupp: {fam.length} varianter
-                            </div>
+                          {(g.family.length > 1 || g.lines.length > 1) && (
+                            <Layers className="h-3.5 w-3.5 text-muted-foreground" />
                           )}
                         </TableCell>
-                        <TableCell className="text-right text-xs tabular-nums">
-                          {Number(line.quantity).toLocaleString("sv-SE")} {line.unit || ""}
-                        </TableCell>
-                        <TableCell className="text-right text-xs tabular-nums">
-                          {line.unit_price ? Number(line.unit_price).toFixed(2) : "–"}
+                        <TableCell>
+                          <div className="text-xs font-semibold">{g.label}</div>
+                          <div className="text-[10px] text-muted-foreground">
+                            {g.lines.length} inköpsrad{g.lines.length !== 1 ? "er" : ""}
+                            {g.family.length > 1 && ` · ${g.family.length} varianter`}
+                          </div>
                         </TableCell>
                         <TableCell>
-                          {fam.length === 0 ? (
-                            <span className="text-[10px] text-muted-foreground">Ej kopplad till produkt</span>
+                          <div className="space-y-0.5">
+                            {g.lines.map((l) => (
+                              <div
+                                key={l.id}
+                                className="flex items-center justify-between gap-2 text-[11px] tabular-nums"
+                              >
+                                <span className="truncate text-muted-foreground">
+                                  {l.product_name}
+                                </span>
+                                <span className="text-muted-foreground whitespace-nowrap">
+                                  {Number(l.quantity).toLocaleString("sv-SE")} {l.unit || ""}
+                                </span>
+                                <span className="font-medium whitespace-nowrap">
+                                  {l.unit_price ? Number(l.unit_price).toFixed(2) : "–"}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {g.family.length === 0 ? (
+                            <span className="text-[10px] text-muted-foreground">
+                              Ej kopplad till produkt
+                            </span>
                           ) : (
                             <div className="space-y-1">
-                              {fam.map((f) => (
+                              {g.family.map((f) => (
                                 <div key={f.id} className="flex items-center gap-2">
                                   <Checkbox
                                     checked={!!included[f.id]}
@@ -396,8 +439,8 @@ export default function PriceListDialog({ open, onOpenChange, products, allProdu
                           )}
                         </TableCell>
                       </TableRow>
-                    );
-                  })}
+                    ));
+                  })()}
                 </TableBody>
               </Table>
             </div>
