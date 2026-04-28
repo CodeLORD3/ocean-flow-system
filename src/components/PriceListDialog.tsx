@@ -154,7 +154,7 @@ export default function PriceListDialog({ open, onOpenChange, products, allProdu
 
   const includedCount = Object.values(included).filter(Boolean).length;
 
-  const downloadCsv = () => {
+  const downloadPdf = () => {
     const rows: { name: string; sku: string; unit: string; price: number; category: string }[] = [];
     for (const p of allProducts) {
       if (included[p.id]) {
@@ -173,22 +173,53 @@ export default function PriceListDialog({ open, onOpenChange, products, allProdu
     }
     rows.sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
     const dateStr = format(new Date(), "yyyy-MM-dd");
-    const header = ["Kategori", "Produkt", "SKU", "Enhet", "Pris (SEK)"];
-    const csv = [
-      `Prislista;${dateStr}`,
-      "",
-      header.join(";"),
-      ...rows.map((r) =>
-        [r.category, r.name, r.sku, r.unit, r.price.toFixed(2).replace(".", ",")].join(";"),
-      ),
-    ].join("\n");
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `prislista-${dateStr}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text("Prislista", 40, 50);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(120);
+    doc.text(`Datum: ${dateStr}`, 40, 68);
+    doc.text(`${rows.length} produkter`, pageWidth - 40, 68, { align: "right" });
+    doc.setTextColor(0);
+
+    autoTable(doc, {
+      startY: 90,
+      head: [["Kategori", "Produkt", "SKU", "Enhet", "Pris (SEK)"]],
+      body: rows.map((r) => [
+        r.category,
+        r.name,
+        r.sku,
+        r.unit,
+        r.price.toFixed(2).replace(".", ",") + " kr",
+      ]),
+      styles: { font: "helvetica", fontSize: 9, cellPadding: 5 },
+      headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: "bold" },
+      alternateRowStyles: { fillColor: [245, 247, 250] },
+      columnStyles: {
+        0: { cellWidth: 90 },
+        1: { cellWidth: "auto" },
+        2: { cellWidth: 80 },
+        3: { cellWidth: 50, halign: "center" },
+        4: { cellWidth: 80, halign: "right" },
+      },
+      margin: { left: 40, right: 40 },
+      didDrawPage: () => {
+        const pageCount = doc.getNumberOfPages();
+        const current = (doc as any).internal.getCurrentPageInfo().pageNumber;
+        const pageHeight = doc.internal.pageSize.getHeight();
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(`Sida ${current} / ${pageCount}`, pageWidth - 40, pageHeight - 20, { align: "right" });
+        doc.setTextColor(0);
+      },
+    });
+
+    doc.save(`prislista-${dateStr}.pdf`);
     toast({ title: "Prislista nedladdad", description: `${rows.length} produkter` });
   };
 
@@ -354,7 +385,7 @@ export default function PriceListDialog({ open, onOpenChange, products, allProdu
             <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
               Stäng
             </Button>
-            <Button size="sm" onClick={downloadCsv} className="gap-1.5">
+            <Button size="sm" onClick={downloadPdf} className="gap-1.5">
               <FileDown className="h-3.5 w-3.5" /> Ladda ner prislista
             </Button>
           </div>
