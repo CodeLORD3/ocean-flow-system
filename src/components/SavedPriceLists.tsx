@@ -20,20 +20,28 @@ interface PriceListRow {
   created_by: string | null;
 }
 
-export default function SavedPriceLists() {
+interface Props {
+  /** When true, shows all price lists across stores (wholesale view). */
+  allStores?: boolean;
+}
+
+export default function SavedPriceLists({ allStores = false }: Props) {
   const { activeStoreId, activeStoreName } = useSite() as any;
   const { toast } = useToast();
   const qc = useQueryClient();
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const { data: lists = [], isLoading } = useQuery({
-    queryKey: ["price_lists", activeStoreId],
+    queryKey: ["price_lists", allStores ? "all" : activeStoreId],
     queryFn: async () => {
-      let q = supabase.from("price_lists").select("*").order("created_at", { ascending: false });
-      if (activeStoreId) q = q.eq("store_id", activeStoreId);
+      let q = supabase
+        .from("price_lists")
+        .select("*, stores(name)")
+        .order("created_at", { ascending: false });
+      if (!allStores && activeStoreId) q = q.eq("store_id", activeStoreId);
       const { data, error } = await q;
       if (error) throw error;
-      return (data || []) as PriceListRow[];
+      return (data || []) as (PriceListRow & { stores: { name: string } | null })[];
     },
   });
 
