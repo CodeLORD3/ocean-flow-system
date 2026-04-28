@@ -43,6 +43,7 @@ interface Props {
 
 export default function PriceListDialog({ open, onOpenChange, products, allProducts }: Props) {
   const { toast } = useToast();
+  const qc = useQueryClient();
   const { data: stores = [] } = useStores(true);
   const shopStores = useMemo(
     () => (stores as any[]).filter((s) => !s.is_wholesale),
