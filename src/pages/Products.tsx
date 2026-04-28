@@ -17,6 +17,7 @@ import {
   FileDown,
 } from "lucide-react";
 import PriceListDialog from "@/components/PriceListDialog";
+import SavedPriceLists from "@/components/SavedPriceLists";
 import { useSite } from "@/contexts/SiteContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -761,6 +762,8 @@ export default function Products() {
         products={products as any}
         allProducts={allProducts as any}
       />
+
+      {isWholesale && <SavedPriceLists allStores />}
 
       {/* Warning: products missing shelf life */}
       {productsMissingShelfLife > 0 && (

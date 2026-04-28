@@ -20,20 +20,28 @@ interface PriceListRow {
   created_by: string | null;
 }
 
-export default function SavedPriceLists() {
+interface Props {
+  /** When true, shows all price lists across stores (wholesale view). */
+  allStores?: boolean;
+}
+
+export default function SavedPriceLists({ allStores = false }: Props) {
   const { activeStoreId, activeStoreName } = useSite() as any;
   const { toast } = useToast();
   const qc = useQueryClient();
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const { data: lists = [], isLoading } = useQuery({
-    queryKey: ["price_lists", activeStoreId],
+    queryKey: ["price_lists", allStores ? "all" : activeStoreId],
     queryFn: async () => {
-      let q = supabase.from("price_lists").select("*").order("created_at", { ascending: false });
-      if (activeStoreId) q = q.eq("store_id", activeStoreId);
+      let q = supabase
+        .from("price_lists")
+        .select("*, stores(name)")
+        .order("created_at", { ascending: false });
+      if (!allStores && activeStoreId) q = q.eq("store_id", activeStoreId);
       const { data, error } = await q;
       if (error) throw error;
-      return (data || []) as PriceListRow[];
+      return (data || []) as (PriceListRow & { stores: { name: string } | null })[];
     },
   });
 
@@ -45,7 +53,8 @@ export default function SavedPriceLists() {
         .from("price_list_items")
         .select("*")
         .eq("price_list_id", expanded as string)
-        .order("sort_order");
+        .order("category", { ascending: true })
+        .order("product_name", { ascending: true });
       if (error) throw error;
       return data as any[];
     },
@@ -62,12 +71,13 @@ export default function SavedPriceLists() {
     },
   });
 
-  const downloadList = async (list: PriceListRow) => {
+  const downloadList = async (list: PriceListRow & { stores?: { name: string } | null }) => {
     const { data, error } = await supabase
       .from("price_list_items")
       .select("*")
       .eq("price_list_id", list.id)
-      .order("sort_order");
+      .order("category", { ascending: true })
+      .order("product_name", { ascending: true });
     if (error || !data) {
       toast({ title: "Kunde inte hämta prislista", variant: "destructive" });
       return;
@@ -79,7 +89,8 @@ export default function SavedPriceLists() {
       unit: r.unit || "",
       price: Number(r.price),
     }));
-    generatePriceListPdf(activeStoreName || null, rows, {
+    const storeName = (list as any).stores?.name || activeStoreName || null;
+    generatePriceListPdf(storeName, rows, {
       dateStr: format(new Date(list.created_at), "yyyy-MM-dd"),
       listName: list.name,
     });
@@ -107,6 +118,7 @@ export default function SavedPriceLists() {
               <TableRow>
                 <TableHead className="w-8"></TableHead>
                 <TableHead>Namn</TableHead>
+                {allStores && <TableHead>Butik</TableHead>}
                 <TableHead>Datum</TableHead>
                 <TableHead className="text-right">Produkter</TableHead>
                 <TableHead className="text-right">Åtgärder</TableHead>
@@ -129,6 +141,11 @@ export default function SavedPriceLists() {
                         </Button>
                       </TableCell>
                       <TableCell className="text-sm font-medium">{l.name}</TableCell>
+                      {allStores && (
+                        <TableCell className="text-xs">
+                          {(l as any).stores?.name || <span className="text-muted-foreground">—</span>}
+                        </TableCell>
+                      )}
                       <TableCell className="text-xs text-muted-foreground">
                         {format(new Date(l.created_at), "yyyy-MM-dd HH:mm")}
                       </TableCell>
@@ -158,7 +175,7 @@ export default function SavedPriceLists() {
                     </TableRow>
                     {open && (
                       <TableRow key={l.id + "-items"}>
-                        <TableCell colSpan={5} className="bg-muted/30">
+                        <TableCell colSpan={allStores ? 6 : 5} className="bg-muted/30">
                           {items.length === 0 ? (
                             <p className="text-xs text-muted-foreground py-2">Inga rader.</p>
                           ) : (
