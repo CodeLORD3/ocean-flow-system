@@ -1817,6 +1817,95 @@ export type Database = {
           },
         ]
       }
+      price_list_items: {
+        Row: {
+          category: string | null
+          id: string
+          price: number
+          price_list_id: string
+          product_id: string | null
+          product_name: string
+          sku: string | null
+          sort_order: number
+          unit: string | null
+        }
+        Insert: {
+          category?: string | null
+          id?: string
+          price?: number
+          price_list_id: string
+          product_id?: string | null
+          product_name: string
+          sku?: string | null
+          sort_order?: number
+          unit?: string | null
+        }
+        Update: {
+          category?: string | null
+          id?: string
+          price?: number
+          price_list_id?: string
+          product_id?: string | null
+          product_name?: string
+          sku?: string | null
+          sort_order?: number
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_list_items_price_list_id_fkey"
+            columns: ["price_list_id"]
+            isOneToOne: false
+            referencedRelation: "price_lists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "price_list_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      price_lists: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          notes: string | null
+          store_id: string | null
+          total_products: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          store_id?: string | null
+          total_products?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          store_id?: string | null
+          total_products?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_lists_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       price_overrides: {
         Row: {
           article_id: string
