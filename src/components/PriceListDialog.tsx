@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useStores } from "@/hooks/useStores";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -42,10 +43,16 @@ interface Props {
 
 export default function PriceListDialog({ open, onOpenChange, products, allProducts }: Props) {
   const { toast } = useToast();
+  const { data: stores = [] } = useStores(true);
+  const shopStores = useMemo(
+    () => (stores as any[]).filter((s) => !s.is_wholesale),
+    [stores],
+  );
   const [todayLines, setTodayLines] = useState<PurchaseLineToday[]>([]);
   const [loadingLines, setLoadingLines] = useState(false);
   const [prices, setPrices] = useState<Record<string, number>>({}); // product_id -> price
   const [included, setIncluded] = useState<Record<string, boolean>>({});
+  const [selectedStores, setSelectedStores] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState("");
 
   // Map product id -> product
@@ -154,41 +161,28 @@ export default function PriceListDialog({ open, onOpenChange, products, allProdu
 
   const includedCount = Object.values(included).filter(Boolean).length;
 
-  const downloadPdf = () => {
-    const rows: { name: string; sku: string; unit: string; price: number; category: string }[] = [];
-    for (const p of allProducts) {
-      if (included[p.id]) {
-        rows.push({
-          name: p.name,
-          sku: p.sku || "",
-          unit: p.unit || "",
-          category: p.category || "",
-          price: Number(prices[p.id] || 0),
-        });
-      }
-    }
-    if (!rows.length) {
-      toast({ title: "Inga produkter valda", variant: "destructive" });
-      return;
-    }
-    rows.sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
-    const dateStr = format(new Date(), "yyyy-MM-dd");
-
+  const generatePdfForStore = (storeName: string | null, rows: { name: string; sku: string; unit: string; price: number; category: string }[], dateStr: string) => {
     const doc = new jsPDF({ unit: "pt", format: "a4" });
     const pageWidth = doc.internal.pageSize.getWidth();
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
     doc.text("Prislista", 40, 50);
+    if (storeName) {
+      doc.setFontSize(13);
+      doc.setTextColor(60);
+      doc.text(storeName, 40, 70);
+    }
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(120);
-    doc.text(`Datum: ${dateStr}`, 40, 68);
-    doc.text(`${rows.length} produkter`, pageWidth - 40, 68, { align: "right" });
+    const subY = storeName ? 88 : 68;
+    doc.text(`Datum: ${dateStr}`, 40, subY);
+    doc.text(`${rows.length} produkter`, pageWidth - 40, subY, { align: "right" });
     doc.setTextColor(0);
 
     autoTable(doc, {
-      startY: 90,
+      startY: subY + 16,
       head: [["Kategori", "Produkt", "SKU", "Enhet", "Pris (SEK)"]],
       body: rows.map((r) => [
         r.category,
@@ -215,12 +209,48 @@ export default function PriceListDialog({ open, onOpenChange, products, allProdu
         doc.setFontSize(8);
         doc.setTextColor(150);
         doc.text(`Sida ${current} / ${pageCount}`, pageWidth - 40, pageHeight - 20, { align: "right" });
+        if (storeName) {
+          doc.text(storeName, 40, pageHeight - 20);
+        }
         doc.setTextColor(0);
       },
     });
 
-    doc.save(`prislista-${dateStr}.pdf`);
-    toast({ title: "Prislista nedladdad", description: `${rows.length} produkter` });
+    const safeName = storeName ? storeName.replace(/[^a-z0-9-_]+/gi, "_") : "alla";
+    doc.save(`prislista-${safeName}-${dateStr}.pdf`);
+  };
+
+  const downloadPdf = () => {
+    const rows: { name: string; sku: string; unit: string; price: number; category: string }[] = [];
+    for (const p of allProducts) {
+      if (included[p.id]) {
+        rows.push({
+          name: p.name,
+          sku: p.sku || "",
+          unit: p.unit || "",
+          category: p.category || "",
+          price: Number(prices[p.id] || 0),
+        });
+      }
+    }
+    if (!rows.length) {
+      toast({ title: "Inga produkter valda", variant: "destructive" });
+      return;
+    }
+    rows.sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
+    const dateStr = format(new Date(), "yyyy-MM-dd");
+
+    const chosen = shopStores.filter((s) => selectedStores[s.id]);
+    if (chosen.length === 0) {
+      generatePdfForStore(null, rows, dateStr);
+      toast({ title: "Prislista nedladdad", description: `${rows.length} produkter` });
+    } else {
+      chosen.forEach((s) => generatePdfForStore(s.name, rows, dateStr));
+      toast({
+        title: "Prislistor nedladdade",
+        description: `${chosen.length} butik(er) · ${rows.length} produkter`,
+      });
+    }
   };
 
   const renderPriceInput = (p: AnyProduct) => (
@@ -244,6 +274,62 @@ export default function PriceListDialog({ open, onOpenChange, products, allProdu
             Sätt priser på dagens inköp och välj vilka produkter som ska med i prislistan till butikerna.
           </DialogDescription>
         </DialogHeader>
+
+        {/* Store selector */}
+        <section className="space-y-2 border rounded-md p-3 bg-muted/30">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold">Butiker som prislistan gäller</h2>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 text-[10px]"
+                onClick={() =>
+                  setSelectedStores(Object.fromEntries(shopStores.map((s) => [s.id, true])))
+                }
+              >
+                Markera alla
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 text-[10px]"
+                onClick={() => setSelectedStores({})}
+              >
+                Rensa
+              </Button>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {shopStores.length === 0 && (
+              <span className="text-xs text-muted-foreground">Inga butiker tillgängliga.</span>
+            )}
+            {shopStores.map((s) => {
+              const checked = !!selectedStores[s.id];
+              return (
+                <label
+                  key={s.id}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md border cursor-pointer text-xs transition-colors ${
+                    checked
+                      ? "bg-primary/10 border-primary/50 text-foreground"
+                      : "bg-background border-border hover:bg-muted"
+                  }`}
+                >
+                  <Checkbox
+                    checked={checked}
+                    onCheckedChange={(v) =>
+                      setSelectedStores((prev) => ({ ...prev, [s.id]: !!v }))
+                    }
+                  />
+                  <span>{s.name}</span>
+                </label>
+              );
+            })}
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            En separat PDF skapas per vald butik. Om ingen butik väljs skapas en generell prislista.
+          </p>
+        </section>
 
         {/* Section 1: Today's purchases */}
         <section className="space-y-2">
