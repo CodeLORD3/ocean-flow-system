@@ -468,12 +468,21 @@ export default function PriceListDialog({ open, onOpenChange, products, allProdu
           <div className="text-xs text-muted-foreground">
             {includedCount} produkter valda
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
               Stäng
             </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={savePriceList}
+              disabled={saving}
+              className="gap-1.5"
+            >
+              {saving ? "Sparar…" : "Spara prislista"}
+            </Button>
             <Button size="sm" onClick={downloadPdf} className="gap-1.5">
-              <FileDown className="h-3.5 w-3.5" /> Ladda ner prislista
+              <FileDown className="h-3.5 w-3.5" /> Ladda ner PDF
             </Button>
           </div>
         </DialogFooter>
