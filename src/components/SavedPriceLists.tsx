@@ -118,6 +118,7 @@ export default function SavedPriceLists({ allStores = false }: Props) {
               <TableRow>
                 <TableHead className="w-8"></TableHead>
                 <TableHead>Namn</TableHead>
+                {allStores && <TableHead>Butik</TableHead>}
                 <TableHead>Datum</TableHead>
                 <TableHead className="text-right">Produkter</TableHead>
                 <TableHead className="text-right">Åtgärder</TableHead>
