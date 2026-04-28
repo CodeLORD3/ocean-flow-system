@@ -122,13 +122,12 @@ export default function PriceListDialog({ open, onOpenChange, allProducts }: Pro
         latestProducts = productRows as AnyProduct[];
         setFreshAllProducts(latestProducts);
       }
-      const today = format(new Date(), "yyyy-MM-dd");
-      // Only reports with report_date = today (so re-uploaded historical
-      // reports don't pollute "Dagens inköp")
+      // Mirror the Inköpsrapport page: show all non-archived reports
+      // (regardless of report_date, so backdated reports still appear).
       const { data: reports } = await supabase
         .from("purchase_reports")
         .select("id, report_date")
-        .eq("report_date", today);
+        .is("archived_at", null);
       const reportIds = (reports || []).map((r: any) => r.id);
       let lines: PurchaseLineToday[] = [];
       if (reportIds.length) {
