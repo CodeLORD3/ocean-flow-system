@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { generatePriceListPdf, type PriceListPdfRow } from "@/lib/priceListPdf";
+import { useStores } from "@/hooks/useStores";
+import { generatePriceListPdf } from "@/lib/priceListPdf";
 
 type AnyProduct = {
   id: string;
