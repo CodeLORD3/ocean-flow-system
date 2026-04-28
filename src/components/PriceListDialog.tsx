@@ -41,7 +41,7 @@ interface Props {
   allProducts: AnyProduct[];
 }
 
-export default function PriceListDialog({ open, onOpenChange, products, allProducts }: Props) {
+export default function PriceListDialog({ open, onOpenChange, allProducts }: Props) {
   const { toast } = useToast();
   const qc = useQueryClient();
   const { data: stores = [] } = useStores(true);
