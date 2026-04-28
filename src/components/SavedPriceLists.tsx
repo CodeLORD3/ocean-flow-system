@@ -141,6 +141,11 @@ export default function SavedPriceLists({ allStores = false }: Props) {
                         </Button>
                       </TableCell>
                       <TableCell className="text-sm font-medium">{l.name}</TableCell>
+                      {allStores && (
+                        <TableCell className="text-xs">
+                          {(l as any).stores?.name || <span className="text-muted-foreground">—</span>}
+                        </TableCell>
+                      )}
                       <TableCell className="text-xs text-muted-foreground">
                         {format(new Date(l.created_at), "yyyy-MM-dd HH:mm")}
                       </TableCell>
@@ -170,7 +175,7 @@ export default function SavedPriceLists({ allStores = false }: Props) {
                     </TableRow>
                     {open && (
                       <TableRow key={l.id + "-items"}>
-                        <TableCell colSpan={5} className="bg-muted/30">
+                        <TableCell colSpan={allStores ? 6 : 5} className="bg-muted/30">
                           {items.length === 0 ? (
                             <p className="text-xs text-muted-foreground py-2">Inga rader.</p>
                           ) : (
