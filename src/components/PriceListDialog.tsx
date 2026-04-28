@@ -160,70 +160,12 @@ export default function PriceListDialog({ open, onOpenChange, products, allProdu
 
   const includedCount = Object.values(included).filter(Boolean).length;
 
-  const generatePdfForStore = (storeName: string | null, rows: { name: string; sku: string; unit: string; price: number; category: string }[], dateStr: string) => {
-    const doc = new jsPDF({ unit: "pt", format: "a4" });
-    const pageWidth = doc.internal.pageSize.getWidth();
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.text("Prislista", 40, 50);
-    if (storeName) {
-      doc.setFontSize(13);
-      doc.setTextColor(60);
-      doc.text(storeName, 40, 70);
-    }
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(120);
-    const subY = storeName ? 88 : 68;
-    doc.text(`Datum: ${dateStr}`, 40, subY);
-    doc.text(`${rows.length} produkter`, pageWidth - 40, subY, { align: "right" });
-    doc.setTextColor(0);
-
-    autoTable(doc, {
-      startY: subY + 16,
-      head: [["Kategori", "Produkt", "SKU", "Enhet", "Pris (SEK)"]],
-      body: rows.map((r) => [
-        r.category,
-        r.name,
-        r.sku,
-        r.unit,
-        r.price.toFixed(2).replace(".", ",") + " kr",
-      ]),
-      styles: { font: "helvetica", fontSize: 9, cellPadding: 5 },
-      headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: "bold" },
-      alternateRowStyles: { fillColor: [245, 247, 250] },
-      columnStyles: {
-        0: { cellWidth: 90 },
-        1: { cellWidth: "auto" },
-        2: { cellWidth: 80 },
-        3: { cellWidth: 50, halign: "center" },
-        4: { cellWidth: 80, halign: "right" },
-      },
-      margin: { left: 40, right: 40 },
-      didDrawPage: () => {
-        const pageCount = doc.getNumberOfPages();
-        const current = (doc as any).internal.getCurrentPageInfo().pageNumber;
-        const pageHeight = doc.internal.pageSize.getHeight();
-        doc.setFontSize(8);
-        doc.setTextColor(150);
-        doc.text(`Sida ${current} / ${pageCount}`, pageWidth - 40, pageHeight - 20, { align: "right" });
-        if (storeName) {
-          doc.text(storeName, 40, pageHeight - 20);
-        }
-        doc.setTextColor(0);
-      },
-    });
-
-    const safeName = storeName ? storeName.replace(/[^a-z0-9-_]+/gi, "_") : "alla";
-    doc.save(`prislista-${safeName}-${dateStr}.pdf`);
-  };
-
-  const downloadPdf = () => {
-    const rows: { name: string; sku: string; unit: string; price: number; category: string }[] = [];
+  const buildRows = () => {
+    const rows: { name: string; sku: string; unit: string; price: number; category: string; product_id: string }[] = [];
     for (const p of allProducts) {
       if (included[p.id]) {
         rows.push({
+          product_id: p.id,
           name: p.name,
           sku: p.sku || "",
           unit: p.unit || "",
@@ -232,25 +174,85 @@ export default function PriceListDialog({ open, onOpenChange, products, allProdu
         });
       }
     }
+    rows.sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
+    return rows;
+  };
+
+  const downloadPdf = () => {
+    const rows = buildRows();
     if (!rows.length) {
       toast({ title: "Inga produkter valda", variant: "destructive" });
       return;
     }
-    rows.sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
     const dateStr = format(new Date(), "yyyy-MM-dd");
-
     const chosen = shopStores.filter((s) => selectedStores[s.id]);
     if (chosen.length === 0) {
-      generatePdfForStore(null, rows, dateStr);
+      generatePriceListPdf(null, rows, { dateStr });
       toast({ title: "Prislista nedladdad", description: `${rows.length} produkter` });
     } else {
-      chosen.forEach((s) => generatePdfForStore(s.name, rows, dateStr));
+      chosen.forEach((s) => generatePriceListPdf(s.name, rows, { dateStr }));
       toast({
         title: "Prislistor nedladdade",
         description: `${chosen.length} butik(er) · ${rows.length} produkter`,
       });
     }
   };
+
+  const [saving, setSaving] = useState(false);
+  const savePriceList = async () => {
+    const rows = buildRows();
+    if (!rows.length) {
+      toast({ title: "Inga produkter valda", variant: "destructive" });
+      return;
+    }
+    const chosen = shopStores.filter((s) => selectedStores[s.id]);
+    if (chosen.length === 0) {
+      toast({
+        title: "Välj minst en butik",
+        description: "Sparade prislistor kopplas alltid till en butik.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setSaving(true);
+    const dateStr = format(new Date(), "yyyy-MM-dd");
+    try {
+      for (const store of chosen) {
+        const { data: list, error: listErr } = await supabase
+          .from("price_lists")
+          .insert({
+            name: `Prislista ${dateStr}`,
+            store_id: store.id,
+            total_products: rows.length,
+          } as any)
+          .select()
+          .single();
+        if (listErr) throw listErr;
+        const items = rows.map((r, i) => ({
+          price_list_id: (list as any).id,
+          product_id: r.product_id,
+          product_name: r.name,
+          sku: r.sku,
+          unit: r.unit,
+          category: r.category,
+          price: r.price,
+          sort_order: i,
+        }));
+        const { error: itemsErr } = await supabase.from("price_list_items").insert(items as any);
+        if (itemsErr) throw itemsErr;
+      }
+      toast({
+        title: "Prislista sparad",
+        description: `${chosen.length} butik(er) · ${rows.length} produkter`,
+      });
+      onOpenChange(false);
+    } catch (e: any) {
+      toast({ title: "Kunde inte spara", description: e.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
 
   const renderPriceInput = (p: AnyProduct) => (
     <Input
