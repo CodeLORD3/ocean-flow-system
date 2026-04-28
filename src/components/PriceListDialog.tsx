@@ -275,6 +275,62 @@ export default function PriceListDialog({ open, onOpenChange, products, allProdu
           </DialogDescription>
         </DialogHeader>
 
+        {/* Store selector */}
+        <section className="space-y-2 border rounded-md p-3 bg-muted/30">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold">Butiker som prislistan gäller</h2>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 text-[10px]"
+                onClick={() =>
+                  setSelectedStores(Object.fromEntries(shopStores.map((s) => [s.id, true])))
+                }
+              >
+                Markera alla
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 text-[10px]"
+                onClick={() => setSelectedStores({})}
+              >
+                Rensa
+              </Button>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {shopStores.length === 0 && (
+              <span className="text-xs text-muted-foreground">Inga butiker tillgängliga.</span>
+            )}
+            {shopStores.map((s) => {
+              const checked = !!selectedStores[s.id];
+              return (
+                <label
+                  key={s.id}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md border cursor-pointer text-xs transition-colors ${
+                    checked
+                      ? "bg-primary/10 border-primary/50 text-foreground"
+                      : "bg-background border-border hover:bg-muted"
+                  }`}
+                >
+                  <Checkbox
+                    checked={checked}
+                    onCheckedChange={(v) =>
+                      setSelectedStores((prev) => ({ ...prev, [s.id]: !!v }))
+                    }
+                  />
+                  <span>{s.name}</span>
+                </label>
+              );
+            })}
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            En separat PDF skapas per vald butik. Om ingen butik väljs skapas en generell prislista.
+          </p>
+        </section>
+
         {/* Section 1: Today's purchases */}
         <section className="space-y-2">
           <div className="flex items-center gap-2">
