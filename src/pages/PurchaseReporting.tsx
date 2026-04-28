@@ -418,6 +418,7 @@ function ReportSection({
   onDeleteLine,
   onViewDocument,
   onConfirm,
+  onUnlock,
   onRenameReport,
   onUpdateReportDate,
   focusLineId,
@@ -432,6 +433,7 @@ function ReportSection({
   onDeleteLine: (id: string) => void;
   onViewDocument: (reportId: string) => void;
   onConfirm: (reportId: string) => void;
+  onUnlock: (reportId: string) => void;
   onRenameReport: (reportId: string, newName: string) => void;
   onUpdateReportDate: (reportId: string, newDate: string) => void;
   focusLineId: string | null;
@@ -528,9 +530,39 @@ function ReportSection({
           />
         </div>
         {isLocked ? (
-          <Badge className="text-[10px] shrink-0 bg-primary/10 text-primary border-primary/20" variant="outline">
-            <CheckCircle2 className="h-3 w-3 mr-0.5" /> Bekräftad
-          </Badge>
+          <>
+            <Badge className="text-[10px] shrink-0 bg-primary/10 text-primary border-primary/20" variant="outline">
+              <CheckCircle2 className="h-3 w-3 mr-0.5" /> Bekräftad
+            </Badge>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-[10px] px-2 shrink-0"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Pencil className="h-3 w-3 mr-1" /> Redigera
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Lås upp inköpsrapport?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    <strong>{displayName}</strong> kommer att låsas upp så att raderna kan redigeras.
+                    Lagersaldot för Grossist Flytande som tidigare lades till av denna rapport återställs,
+                    och du måste bekräfta inköpet igen för att lägga till varorna på nytt.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => onUnlock(report.id)}>
+                    Lås upp
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
         ) : (
           <Badge variant="secondary" className="text-[10px] shrink-0">Ej bekräftad</Badge>
         )}
@@ -813,6 +845,44 @@ export default function PurchaseReporting() {
       setSelectedReportId(null);
       toast({ title: "Inköp bekräftat", description: "Dokumentet har låsts och varor har lagts till i Grossist Flytande." });
     },
+  });
+
+  const unlockReport = useMutation({
+    mutationFn: async (reportId: string) => {
+      const lines = allLines.filter((l) => l.report_id === reportId);
+      const productLines = lines.filter((l) => l.product_id);
+
+      // Reverse the stock additions made when the report was confirmed
+      for (const line of productLines) {
+        const { data: existing } = await supabase
+          .from("product_stock_locations")
+          .select("id, quantity")
+          .eq("product_id", line.product_id!)
+          .eq("location_id", GROSSIST_FLYTANDE_ID)
+          .maybeSingle();
+
+        if (existing) {
+          const newQty = Math.max(0, Number(existing.quantity) - Number(line.quantity));
+          await supabase
+            .from("product_stock_locations")
+            .update({ quantity: newQty, updated_at: new Date().toISOString() })
+            .eq("id", existing.id);
+        }
+      }
+
+      const { error } = await supabase
+        .from("purchase_reports")
+        .update({ status: "Klar" })
+        .eq("id", reportId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
+      queryClient.invalidateQueries({ queryKey: ["product_stock_locations"] });
+      queryClient.invalidateQueries({ queryKey: ["all_stock_locations"] });
+      toast({ title: "Rapport upplåst", description: "Du kan nu redigera raderna. Bekräfta igen när du är klar." });
+    },
+    onError: (e: any) => toast({ title: "Fel", description: e.message, variant: "destructive" }),
   });
 
   // Add line from search (existing product)
@@ -1206,6 +1276,7 @@ export default function PurchaseReporting() {
                       onDeleteLine={(id) => deleteLine.mutate(id)}
                       onViewDocument={(reportId) => { setSelectedReportId(reportId); setDocExpanded(true); setZoom(1); }}
                       onConfirm={(reportId) => confirmReport.mutate(reportId)}
+                      onUnlock={(reportId) => unlockReport.mutate(reportId)}
                       onRenameReport={(id, name) => renameReport.mutate({ id, name })}
                       onUpdateReportDate={(id, date) => updateReportDate.mutate({ id, date })}
                       focusLineId={focusLineId}
@@ -1231,6 +1302,7 @@ export default function PurchaseReporting() {
                       onDeleteLine={(id) => deleteLine.mutate(id)}
                       onViewDocument={(reportId) => { setSelectedReportId(reportId); setDocExpanded(true); setZoom(1); }}
                       onConfirm={(reportId) => confirmReport.mutate(reportId)}
+                      onUnlock={(reportId) => unlockReport.mutate(reportId)}
                       onRenameReport={(id, name) => renameReport.mutate({ id, name })}
                       onUpdateReportDate={(id, date) => updateReportDate.mutate({ id, date })}
                       focusLineId={focusLineId}
