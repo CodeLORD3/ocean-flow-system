@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { Check, ChevronDown, ChevronRight, DollarSign, History, Layers, Search, Store, X } from "lucide-react";
 import { format } from "date-fns";
+import SavedPriceLists from "@/components/SavedPriceLists";
 
 interface InlineEdit {
   cost_price: number;
