@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { FileDown, Layers, ShoppingBasket, Search } from "lucide-react";
 import { format } from "date-fns";
+import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +43,7 @@ interface Props {
 
 export default function PriceListDialog({ open, onOpenChange, products, allProducts }: Props) {
   const { toast } = useToast();
+  const qc = useQueryClient();
   const { data: stores = [] } = useStores(true);
   const shopStores = useMemo(
     () => (stores as any[]).filter((s) => !s.is_wholesale),
@@ -83,6 +85,9 @@ export default function PriceListDialog({ open, onOpenChange, products, allProdu
   // Load today's purchase report lines when opened
   useEffect(() => {
     if (!open) return;
+    // Force-refresh products so every user (e.g. Baldvin) sees the latest
+    // parent_product_id hierarchy instead of a stale React Query cache.
+    qc.invalidateQueries({ queryKey: ["products"] });
     let cancelled = false;
     (async () => {
       setLoadingLines(true);
