@@ -85,6 +85,9 @@ export default function PriceListDialog({ open, onOpenChange, products, allProdu
   // Load today's purchase report lines when opened
   useEffect(() => {
     if (!open) return;
+    // Force-refresh products so every user (e.g. Baldvin) sees the latest
+    // parent_product_id hierarchy instead of a stale React Query cache.
+    qc.invalidateQueries({ queryKey: ["products"] });
     let cancelled = false;
     (async () => {
       setLoadingLines(true);
