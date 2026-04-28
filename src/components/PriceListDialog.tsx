@@ -55,23 +55,44 @@ export default function PriceListDialog({ open, onOpenChange, products, allProdu
   const [included, setIncluded] = useState<Record<string, boolean>>({});
   const [selectedStores, setSelectedStores] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState("");
+  const [freshAllProducts, setFreshAllProducts] = useState<AnyProduct[] | null>(null);
+
+  const effectiveAllProducts = freshAllProducts || allProducts;
+  const effectiveProducts = useMemo(() => {
+    const source = freshAllProducts || allProducts;
+    const parentProducts = source.filter((p) => !p.parent_product_id);
+    const childMap = new Map<string, AnyProduct[]>();
+
+    for (const p of source) {
+      if (p.parent_product_id) {
+        const existing = childMap.get(p.parent_product_id) || [];
+        existing.push(p);
+        childMap.set(p.parent_product_id, existing);
+      }
+    }
+
+    return parentProducts.map((p) => ({
+      ...p,
+      subproducts: childMap.get(p.id) || [],
+    }));
+  }, [allProducts, freshAllProducts]);
 
   // Map product id -> product
   const productMap = useMemo(() => {
     const m = new Map<string, AnyProduct>();
-    for (const p of allProducts) m.set(p.id, p);
+    for (const p of effectiveAllProducts) m.set(p.id, p);
     return m;
-  }, [allProducts]);
+  }, [effectiveAllProducts]);
 
   // Group siblings by parent (so a purchase row for "Hel torsk" can show all torsk variants)
   const siblingsByParent = useMemo(() => {
     const m = new Map<string, AnyProduct[]>();
-    for (const p of products) {
+    for (const p of effectiveProducts) {
       const family = [p, ...(p.subproducts || [])];
       m.set(p.id, family);
     }
     return m;
-  }, [products]);
+  }, [effectiveProducts]);
 
   // Resolve the "family" for a given product id (returns parent's family)
   const familyFor = (productId: string | null): AnyProduct[] => {
@@ -91,6 +112,16 @@ export default function PriceListDialog({ open, onOpenChange, products, allProdu
     let cancelled = false;
     (async () => {
       setLoadingLines(true);
+      let latestProducts = allProducts;
+      const { data: productRows, error: productError } = await supabase
+        .from("products")
+        .select("id, name, sku, unit, category, wholesale_price, parent_product_id")
+        .eq("active", true)
+        .order("name");
+      if (!productError && productRows) {
+        latestProducts = productRows as AnyProduct[];
+        setFreshAllProducts(latestProducts);
+      }
       const today = format(new Date(), "yyyy-MM-dd");
       // Reports created today (or with report_date today)
       const { data: reports } = await supabase
@@ -112,7 +143,7 @@ export default function PriceListDialog({ open, onOpenChange, products, allProdu
       // Initialise prices from current wholesale_price
       const initPrices: Record<string, number> = {};
       const initInc: Record<string, boolean> = {};
-      for (const p of allProducts) {
+      for (const p of latestProducts) {
         initPrices[p.id] = Number(p.wholesale_price) || 0;
       }
       setPrices(initPrices);
@@ -139,7 +170,7 @@ export default function PriceListDialog({ open, onOpenChange, products, allProdu
   // Other products = all products NOT in today families
   const otherProducts = useMemo(() => {
     const list: AnyProduct[] = [];
-    for (const p of products) {
+    for (const p of effectiveProducts) {
       const family = [p, ...(p.subproducts || [])];
       for (const f of family) {
         if (!todayFamilyIds.has(f.id)) list.push(f);
@@ -153,7 +184,7 @@ export default function PriceListDialog({ open, onOpenChange, products, allProdu
         (p.sku || "").toLowerCase().includes(q) ||
         (p.category || "").toLowerCase().includes(q),
     );
-  }, [products, todayFamilyIds, search]);
+  }, [effectiveProducts, todayFamilyIds, search]);
 
   const setPrice = (id: string, v: number) => setPrices((prev) => ({ ...prev, [id]: v }));
   const toggleInc = (id: string, v: boolean) => setIncluded((prev) => ({ ...prev, [id]: v }));
@@ -162,7 +193,7 @@ export default function PriceListDialog({ open, onOpenChange, products, allProdu
 
   const buildRows = () => {
     const rows: { name: string; sku: string; unit: string; price: number; category: string; product_id: string }[] = [];
-    for (const p of allProducts) {
+    for (const p of effectiveAllProducts) {
       if (included[p.id]) {
         rows.push({
           product_id: p.id,
