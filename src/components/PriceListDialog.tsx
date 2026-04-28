@@ -110,11 +110,6 @@ export default function PriceListDialog({ open, onOpenChange, products, allProdu
       for (const p of allProducts) {
         initPrices[p.id] = Number(p.wholesale_price) || 0;
       }
-      // Auto-include products from today's purchases
-      for (const l of lines) {
-        const fam = familyFor(l.product_id);
-        for (const f of fam) initInc[f.id] = true;
-      }
       setPrices(initPrices);
       setIncluded(initInc);
       setLoadingLines(false);
