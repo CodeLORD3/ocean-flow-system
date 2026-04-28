@@ -70,12 +70,13 @@ export default function SavedPriceLists({ allStores = false }: Props) {
     },
   });
 
-  const downloadList = async (list: PriceListRow) => {
+  const downloadList = async (list: PriceListRow & { stores?: { name: string } | null }) => {
     const { data, error } = await supabase
       .from("price_list_items")
       .select("*")
       .eq("price_list_id", list.id)
-      .order("sort_order");
+      .order("category", { ascending: true })
+      .order("product_name", { ascending: true });
     if (error || !data) {
       toast({ title: "Kunde inte hämta prislista", variant: "destructive" });
       return;
@@ -87,7 +88,8 @@ export default function SavedPriceLists({ allStores = false }: Props) {
       unit: r.unit || "",
       price: Number(r.price),
     }));
-    generatePriceListPdf(activeStoreName || null, rows, {
+    const storeName = (list as any).stores?.name || activeStoreName || null;
+    generatePriceListPdf(storeName, rows, {
       dateStr: format(new Date(list.created_at), "yyyy-MM-dd"),
       listName: list.name,
     });
