@@ -433,81 +433,22 @@ export default function PriceListDialog({ open, onOpenChange, allProducts }: Pro
                         </TableCell>
                         <TableCell>
                           <div className="space-y-0.5">
-                            {(() => {
-                              // Aggregate purchase lines by variant name + unit
-                              const agg = new Map<
-                                string,
-                                {
-                                  name: string;
-                                  unit: string;
-                                  totalQty: number;
-                                  count: number;
-                                  minPrice: number | null;
-                                  maxPrice: number | null;
-                                  weightedSum: number;
-                                  weightedQty: number;
-                                }
-                              >();
-                              for (const l of g.lines) {
-                                const key = `${l.product_name}|${l.unit || ""}`;
-                                const qty = Number(l.quantity) || 0;
-                                const price = l.unit_price != null ? Number(l.unit_price) : null;
-                                const cur = agg.get(key);
-                                if (cur) {
-                                  cur.totalQty += qty;
-                                  cur.count += 1;
-                                  if (price != null) {
-                                    cur.minPrice = cur.minPrice == null ? price : Math.min(cur.minPrice, price);
-                                    cur.maxPrice = cur.maxPrice == null ? price : Math.max(cur.maxPrice, price);
-                                    cur.weightedSum += price * qty;
-                                    cur.weightedQty += qty;
-                                  }
-                                } else {
-                                  agg.set(key, {
-                                    name: l.product_name,
-                                    unit: l.unit || "",
-                                    totalQty: qty,
-                                    count: 1,
-                                    minPrice: price,
-                                    maxPrice: price,
-                                    weightedSum: price != null ? price * qty : 0,
-                                    weightedQty: price != null ? qty : 0,
-                                  });
-                                }
-                              }
-                              const rows = Array.from(agg.values()).sort((a, b) =>
-                                a.name.localeCompare(b.name),
-                              );
-                              return rows.map((r) => {
-                                const avg =
-                                  r.weightedQty > 0 ? r.weightedSum / r.weightedQty : null;
-                                const priceLabel =
-                                  r.minPrice == null
-                                    ? "–"
-                                    : r.minPrice === r.maxPrice
-                                      ? r.minPrice.toFixed(2)
-                                      : `${r.minPrice!.toFixed(2)}–${r.maxPrice!.toFixed(2)}`;
-                                return (
-                                  <div
-                                    key={r.name + r.unit}
-                                    className="flex items-center justify-between gap-2 text-[11px] tabular-nums"
-                                  >
-                                    <span className="truncate text-muted-foreground">
-                                      {r.name}
-                                      {r.count > 1 && (
-                                        <span className="text-[10px] opacity-60"> ×{r.count}</span>
-                                      )}
-                                    </span>
-                                    <span className="text-muted-foreground whitespace-nowrap">
-                                      {r.totalQty.toLocaleString("sv-SE")} {r.unit}
-                                    </span>
-                                    <span className="font-medium whitespace-nowrap" title={avg != null ? `Snittpris: ${avg.toFixed(2)}` : undefined}>
-                                      {priceLabel}
-                                    </span>
-                                  </div>
-                                );
-                              });
-                            })()}
+                            {g.lines.map((l) => (
+                              <div
+                                key={l.id}
+                                className="flex items-center justify-between gap-2 text-[11px] tabular-nums"
+                              >
+                                <span className="truncate text-muted-foreground">
+                                  {l.product_name}
+                                </span>
+                                <span className="text-muted-foreground whitespace-nowrap">
+                                  {Number(l.quantity).toLocaleString("sv-SE")} {l.unit || ""}
+                                </span>
+                                <span className="font-medium whitespace-nowrap">
+                                  {l.unit_price ? Number(l.unit_price).toFixed(2) : "–"}
+                                </span>
+                              </div>
+                            ))}
                           </div>
                         </TableCell>
                         <TableCell>
