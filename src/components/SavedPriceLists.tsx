@@ -53,7 +53,8 @@ export default function SavedPriceLists({ allStores = false }: Props) {
         .from("price_list_items")
         .select("*")
         .eq("price_list_id", expanded as string)
-        .order("sort_order");
+        .order("category", { ascending: true })
+        .order("product_name", { ascending: true });
       if (error) throw error;
       return data as any[];
     },
