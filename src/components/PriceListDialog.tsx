@@ -161,41 +161,28 @@ export default function PriceListDialog({ open, onOpenChange, products, allProdu
 
   const includedCount = Object.values(included).filter(Boolean).length;
 
-  const downloadPdf = () => {
-    const rows: { name: string; sku: string; unit: string; price: number; category: string }[] = [];
-    for (const p of allProducts) {
-      if (included[p.id]) {
-        rows.push({
-          name: p.name,
-          sku: p.sku || "",
-          unit: p.unit || "",
-          category: p.category || "",
-          price: Number(prices[p.id] || 0),
-        });
-      }
-    }
-    if (!rows.length) {
-      toast({ title: "Inga produkter valda", variant: "destructive" });
-      return;
-    }
-    rows.sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
-    const dateStr = format(new Date(), "yyyy-MM-dd");
-
+  const generatePdfForStore = (storeName: string | null, rows: { name: string; sku: string; unit: string; price: number; category: string }[], dateStr: string) => {
     const doc = new jsPDF({ unit: "pt", format: "a4" });
     const pageWidth = doc.internal.pageSize.getWidth();
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
     doc.text("Prislista", 40, 50);
+    if (storeName) {
+      doc.setFontSize(13);
+      doc.setTextColor(60);
+      doc.text(storeName, 40, 70);
+    }
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(120);
-    doc.text(`Datum: ${dateStr}`, 40, 68);
-    doc.text(`${rows.length} produkter`, pageWidth - 40, 68, { align: "right" });
+    const subY = storeName ? 88 : 68;
+    doc.text(`Datum: ${dateStr}`, 40, subY);
+    doc.text(`${rows.length} produkter`, pageWidth - 40, subY, { align: "right" });
     doc.setTextColor(0);
 
     autoTable(doc, {
-      startY: 90,
+      startY: subY + 16,
       head: [["Kategori", "Produkt", "SKU", "Enhet", "Pris (SEK)"]],
       body: rows.map((r) => [
         r.category,
@@ -222,12 +209,48 @@ export default function PriceListDialog({ open, onOpenChange, products, allProdu
         doc.setFontSize(8);
         doc.setTextColor(150);
         doc.text(`Sida ${current} / ${pageCount}`, pageWidth - 40, pageHeight - 20, { align: "right" });
+        if (storeName) {
+          doc.text(storeName, 40, pageHeight - 20);
+        }
         doc.setTextColor(0);
       },
     });
 
-    doc.save(`prislista-${dateStr}.pdf`);
-    toast({ title: "Prislista nedladdad", description: `${rows.length} produkter` });
+    const safeName = storeName ? storeName.replace(/[^a-z0-9-_]+/gi, "_") : "alla";
+    doc.save(`prislista-${safeName}-${dateStr}.pdf`);
+  };
+
+  const downloadPdf = () => {
+    const rows: { name: string; sku: string; unit: string; price: number; category: string }[] = [];
+    for (const p of allProducts) {
+      if (included[p.id]) {
+        rows.push({
+          name: p.name,
+          sku: p.sku || "",
+          unit: p.unit || "",
+          category: p.category || "",
+          price: Number(prices[p.id] || 0),
+        });
+      }
+    }
+    if (!rows.length) {
+      toast({ title: "Inga produkter valda", variant: "destructive" });
+      return;
+    }
+    rows.sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
+    const dateStr = format(new Date(), "yyyy-MM-dd");
+
+    const chosen = shopStores.filter((s) => selectedStores[s.id]);
+    if (chosen.length === 0) {
+      generatePdfForStore(null, rows, dateStr);
+      toast({ title: "Prislista nedladdad", description: `${rows.length} produkter` });
+    } else {
+      chosen.forEach((s) => generatePdfForStore(s.name, rows, dateStr));
+      toast({
+        title: "Prislistor nedladdade",
+        description: `${chosen.length} butik(er) · ${rows.length} produkter`,
+      });
+    }
   };
 
   const renderPriceInput = (p: AnyProduct) => (
