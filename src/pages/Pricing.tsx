@@ -362,6 +362,8 @@ export default function Pricing() {
         </Select>
       </div>
 
+      {isShop && <SavedPriceLists />}
+
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
