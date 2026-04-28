@@ -43,10 +43,16 @@ interface Props {
 
 export default function PriceListDialog({ open, onOpenChange, products, allProducts }: Props) {
   const { toast } = useToast();
+  const { data: stores = [] } = useStores(true);
+  const shopStores = useMemo(
+    () => (stores as any[]).filter((s) => !s.is_wholesale),
+    [stores],
+  );
   const [todayLines, setTodayLines] = useState<PurchaseLineToday[]>([]);
   const [loadingLines, setLoadingLines] = useState(false);
   const [prices, setPrices] = useState<Record<string, number>>({}); // product_id -> price
   const [included, setIncluded] = useState<Record<string, boolean>>({});
+  const [selectedStores, setSelectedStores] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState("");
 
   // Map product id -> product
