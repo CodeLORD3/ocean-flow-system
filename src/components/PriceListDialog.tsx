@@ -9,9 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useStores } from "@/hooks/useStores";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import { generatePriceListPdf, type PriceListPdfRow } from "@/lib/priceListPdf";
 
 type AnyProduct = {
   id: string;
