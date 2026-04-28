@@ -39,11 +39,10 @@ export function generatePriceListPdf(
 
   autoTable(doc, {
     startY: cursorY + 16,
-    head: [["Kategori", "Produkt", "SKU", "Enhet", "Pris (SEK)"]],
+    head: [["Kategori", "Produkt", "Enhet", "Pris (SEK)"]],
     body: rows.map((r) => [
       r.category,
       r.name,
-      r.sku,
       r.unit,
       Number(r.price).toFixed(2).replace(".", ",") + " kr",
     ]),
@@ -53,9 +52,8 @@ export function generatePriceListPdf(
     columnStyles: {
       0: { cellWidth: 90 },
       1: { cellWidth: "auto" },
-      2: { cellWidth: 80 },
-      3: { cellWidth: 50, halign: "center" },
-      4: { cellWidth: 80, halign: "right" },
+      2: { cellWidth: 50, halign: "center" },
+      3: { cellWidth: 80, halign: "right" },
     },
     margin: { left: 40, right: 40 },
     didDrawPage: () => {
