@@ -418,6 +418,7 @@ function ReportSection({
   onDeleteLine,
   onViewDocument,
   onConfirm,
+  onUnlock,
   onRenameReport,
   onUpdateReportDate,
   focusLineId,
@@ -432,6 +433,7 @@ function ReportSection({
   onDeleteLine: (id: string) => void;
   onViewDocument: (reportId: string) => void;
   onConfirm: (reportId: string) => void;
+  onUnlock: (reportId: string) => void;
   onRenameReport: (reportId: string, newName: string) => void;
   onUpdateReportDate: (reportId: string, newDate: string) => void;
   focusLineId: string | null;
