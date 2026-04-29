@@ -82,7 +82,7 @@ const inventoryNav = [
 const orgNav = [
   { title: "Butiker", url: "/stores", icon: Store },
   { title: "Personal", url: "/staff", icon: UserCheck },
-  { title: "Bilar", url: "/vehicles", icon: TruckIcon },
+  { title: "Bilar & Maskiner", url: "/vehicles", icon: TruckIcon },
 ];
 
 const financeNav = [
