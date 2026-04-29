@@ -478,3 +478,48 @@ function CellEditor({
     </button>
   );
 }
+
+function DateCell({
+  value,
+  onSave,
+  compact = false,
+}: {
+  value: string | null;
+  onSave: (val: string | null) => void;
+  compact?: boolean;
+}) {
+  const date = value && isValid(parseISO(value)) ? parseISO(value) : undefined;
+  const display = date
+    ? compact
+      ? `(${format(date, "dd/MM/yy")})`
+      : format(date, "dd/MM/yyyy")
+    : compact
+    ? "(—)"
+    : "—";
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            "inline-flex items-center gap-1 hover:bg-muted/40 rounded px-1 -mx-1 text-left",
+            compact ? "text-[10px] text-muted-foreground" : "text-xs",
+            !date && "text-muted-foreground"
+          )}
+        >
+          {!compact && <CalendarIcon className="h-3 w-3 opacity-60" />}
+          {display}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={date}
+          onSelect={(d) => onSave(d ? format(d, "yyyy-MM-dd") : null)}
+          initialFocus
+          className={cn("p-3 pointer-events-auto")}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
