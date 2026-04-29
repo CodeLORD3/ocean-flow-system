@@ -28,6 +28,7 @@ type Vehicle = {
   fault: string | null;
   comment: string | null;
   next_service: string | null;
+  last_serviced: string | null;
   odometer: string | null;
   odometer_updated_at: string | null;
   cooling_service: string | null;
