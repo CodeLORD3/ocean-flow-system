@@ -3344,6 +3344,7 @@ export type Database = {
           fault: string | null
           finance: string | null
           id: string
+          last_serviced: string | null
           make: string | null
           model_year: number | null
           next_service: string | null
@@ -3362,6 +3363,7 @@ export type Database = {
           fault?: string | null
           finance?: string | null
           id?: string
+          last_serviced?: string | null
           make?: string | null
           model_year?: number | null
           next_service?: string | null
@@ -3380,6 +3382,7 @@ export type Database = {
           fault?: string | null
           finance?: string | null
           id?: string
+          last_serviced?: string | null
           make?: string | null
           model_year?: number | null
           next_service?: string | null

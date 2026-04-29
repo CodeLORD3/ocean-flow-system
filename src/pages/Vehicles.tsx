@@ -28,6 +28,7 @@ type Vehicle = {
   fault: string | null;
   comment: string | null;
   next_service: string | null;
+  last_serviced: string | null;
   odometer: string | null;
   odometer_updated_at: string | null;
   cooling_service: string | null;
@@ -48,6 +49,7 @@ const CORE_COLUMNS: { key: keyof Vehicle; label: string }[] = [
   { key: "make", label: "FABRIKAT" },
   { key: "status", label: "STATUS" },
   { key: "next_service", label: "NÄSTA SERVICE" },
+  { key: "last_serviced", label: "SENAST SERVEAD" },
   { key: "cooling_service", label: "SERVICE PÅ KYLAGGREGAT" },
 ];
 
@@ -367,12 +369,12 @@ export default function Vehicles() {
                           </td>
                         );
                       }
-                      if (c.key === "next_service") {
+                      if (c.key === "next_service" || c.key === "last_serviced") {
                         return (
                           <td key={c.key as string} className="px-3 py-1.5">
                             <DateCell
                               value={value}
-                              onSave={(val) => updateVehicle.mutate({ id: v.id, patch: { next_service: val } })}
+                              onSave={(val) => updateVehicle.mutate({ id: v.id, patch: { [c.key]: val } as Partial<Vehicle> })}
                             />
                           </td>
                         );
