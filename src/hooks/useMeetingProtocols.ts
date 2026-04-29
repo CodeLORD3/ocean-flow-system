@@ -101,7 +101,7 @@ export function useAddProtocolItem() {
 export function useUpdateProtocolItem() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...updates }: { id: string; content?: string; completed?: boolean; sort_order?: number; assigned_to?: string | null; calendar_event_id?: string | null; deadline?: string | null }) => {
+    mutationFn: async ({ id, ...updates }: { id: string; content?: string; completed?: boolean; sort_order?: number; assigned_to?: string | null; calendar_event_id?: string | null; deadline?: string | null; completion_note?: string | null }) => {
       const { data, error } = await supabase.from("meeting_protocol_items").update(updates).eq("id", id).select().single();
       if (error) throw error;
       return data;
