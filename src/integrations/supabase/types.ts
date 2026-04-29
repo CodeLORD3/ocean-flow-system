@@ -3308,6 +3308,87 @@ export type Database = {
           },
         ]
       }
+      vehicle_columns: {
+        Row: {
+          col_type: string
+          created_at: string
+          id: string
+          key: string
+          label: string
+          sort_order: number
+        }
+        Insert: {
+          col_type?: string
+          created_at?: string
+          id?: string
+          key: string
+          label: string
+          sort_order?: number
+        }
+        Update: {
+          col_type?: string
+          created_at?: string
+          id?: string
+          key?: string
+          label?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      vehicles: {
+        Row: {
+          comment: string | null
+          cooling_service: string | null
+          created_at: string
+          extra: Json
+          fault: string | null
+          finance: string | null
+          id: string
+          make: string | null
+          model_year: number | null
+          next_service: string | null
+          odometer: string | null
+          reg_number: string
+          sort_order: number
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          comment?: string | null
+          cooling_service?: string | null
+          created_at?: string
+          extra?: Json
+          fault?: string | null
+          finance?: string | null
+          id?: string
+          make?: string | null
+          model_year?: number | null
+          next_service?: string | null
+          odometer?: string | null
+          reg_number: string
+          sort_order?: number
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          comment?: string | null
+          cooling_service?: string | null
+          created_at?: string
+          extra?: Json
+          fault?: string | null
+          finance?: string | null
+          id?: string
+          make?: string | null
+          model_year?: number | null
+          next_service?: string | null
+          odometer?: string | null
+          reg_number?: string
+          sort_order?: number
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       weekly_report_cost_lines: {
         Row: {
           amount: number

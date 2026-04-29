@@ -39,6 +39,7 @@ import ShopWishes from "@/pages/ShopWishes";
 import MeetingProtocols from "@/pages/MeetingProtocols";
 import Tasks from "@/pages/Tasks";
 import LandingSettings from "@/pages/LandingSettings";
+import Vehicles from "@/pages/Vehicles";
 
 interface RouteEntry {
   component: React.ReactNode;
@@ -83,6 +84,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/meetings": { component: <MeetingProtocols /> },
   "/tasks": { component: <Tasks /> },
   "/landing-settings": { component: <LandingSettings /> },
+  "/vehicles": { component: <Vehicles /> },
 };
 
 /**

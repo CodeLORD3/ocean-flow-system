@@ -21,6 +21,7 @@ import {
   ChevronDown,
   ListTodo,
   LogIn,
+  Truck as TruckIcon,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -81,6 +82,7 @@ const inventoryNav = [
 const orgNav = [
   { title: "Butiker", url: "/stores", icon: Store },
   { title: "Personal", url: "/staff", icon: UserCheck },
+  { title: "Bilar", url: "/vehicles", icon: TruckIcon },
 ];
 
 const financeNav = [
