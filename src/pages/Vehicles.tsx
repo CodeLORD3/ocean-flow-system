@@ -62,10 +62,10 @@ const STATUS_OPTIONS = [
 function statusMeta(status: string | null) {
   if (!status) return null;
   const s = status.toLowerCase();
-  if (s.includes("fungerar") || s.includes("ok") || s.includes("aktiv")) return STATUS_OPTIONS[0];
+  if (s.includes("bokad") || s.includes("service")) return STATUS_OPTIONS[3];
+  if (s.includes("fungerar") || s === "ok" || s.includes("aktiv")) return STATUS_OPTIONS[0];
   if (s.includes("underhåll")) return STATUS_OPTIONS[1];
   if (s.includes("trasig")) return STATUS_OPTIONS[2];
-  if (s.includes("bokad") || s.includes("service")) return STATUS_OPTIONS[3];
   return null;
 }
 
