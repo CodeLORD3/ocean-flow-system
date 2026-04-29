@@ -544,7 +544,7 @@ export default function Products() {
                   max="9999"
                   defaultValue={shelfLifeDays || ""}
                   placeholder="–"
-                  className="w-9 h-6 text-xs font-mono tabular-nums text-right rounded border border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-9 h-6 !text-[11px] font-mono tabular-nums text-right rounded border border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   onBlur={async (e) => {
                     const val = e.target.value ? Number(e.target.value) : null;
                     if (val === shelfLifeDays) return;
@@ -569,7 +569,7 @@ export default function Products() {
         {isWholesale && (
           <td className="px-2 py-0 text-right">
             {isAggregatedParent ? (
-              <span className="text-xs font-mono tabular-nums text-foreground">{fmtNum(agg!.cost_price)}</span>
+              <span className="!text-[11px] font-mono tabular-nums text-foreground">{fmtNum(agg!.cost_price)}</span>
             ) : Number(p.cost_price) === 0 ? (
               <Input
                 type="number"
@@ -582,7 +582,7 @@ export default function Products() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") saveInlineEdit(p);
                 }}
-                className="h-6 w-16 text-right text-xs font-mono tabular-nums ml-auto border-transparent bg-transparent text-muted-foreground/40 hover:border-input focus:border-input focus:bg-background focus:text-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="h-6 w-16 text-right !text-[11px] font-mono tabular-nums ml-auto border-transparent bg-transparent text-muted-foreground/40 hover:border-input focus:border-input focus:bg-background focus:text-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
             ) : (
               <Input
@@ -596,14 +596,14 @@ export default function Products() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") saveInlineEdit(p);
                 }}
-                className="h-6 w-16 text-right text-xs font-mono tabular-nums ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="h-6 w-16 text-right !text-[11px] font-mono tabular-nums ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
             )}
           </td>
         )}
         <td className="px-2 py-0 text-right">
           {isAggregatedParent ? (
-            <span className="text-xs font-mono tabular-nums text-foreground">
+            <span className="!text-[11px] font-mono tabular-nums text-foreground">
               {fmtNum(agg ? agg.wholesale_price : Number(p.wholesale_price))}
             </span>
           ) : isWholesale ? (
@@ -618,16 +618,16 @@ export default function Products() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") saveInlineEdit(p);
               }}
-              className={`h-6 w-16 text-right text-xs font-mono tabular-nums ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background focus:text-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${Number(p.wholesale_price) === 0 ? "text-muted-foreground/40" : ""}`}
+              className={`h-6 w-16 text-right !text-[11px] font-mono tabular-nums ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background focus:text-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${Number(p.wholesale_price) === 0 ? "text-muted-foreground/40" : ""}`}
             />
           ) : (
-            <span className="text-xs font-mono tabular-nums text-foreground">{fmtNum(Number(p.wholesale_price))}</span>
+            <span className="!text-[11px] font-mono tabular-nums text-foreground">{fmtNum(Number(p.wholesale_price))}</span>
           )}
         </td>
         {isWholesale && (
           <td className="px-2 py-0 text-right">
             {isAggregatedParent ? (
-              <span className="inline-flex items-baseline text-xs font-mono tabular-nums text-muted-foreground">
+              <span className="inline-flex items-baseline !text-[11px] font-mono tabular-nums text-muted-foreground">
                 {calcMargin(agg!.cost_price, agg!.wholesale_price)}<span className="text-[10px] text-muted-foreground/50 ml-0.5">%</span>
               </span>
             ) : (
@@ -643,7 +643,7 @@ export default function Products() {
                   onKeyDown={(e) => {
                     if (e.key === "Enter") saveInlineEdit(p);
                   }}
-                  className={`h-6 w-10 text-right text-xs font-mono tabular-nums border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${Number(marginVal) === 0 ? "text-muted-foreground/40" : ""}`}
+                  className={`h-6 w-10 text-right !text-[11px] font-mono tabular-nums border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${Number(marginVal) === 0 ? "text-muted-foreground/40" : ""}`}
                 />
                 <span className="text-[10px] text-muted-foreground/50 ml-0.5">%</span>
               </span>
@@ -651,7 +651,7 @@ export default function Products() {
           </td>
         )}
         {isWholesale && (
-          <td className="px-2 py-0 text-right text-xs font-mono tabular-nums text-muted-foreground">
+          <td className="px-2 py-0 text-right !text-[11px] font-mono tabular-nums text-muted-foreground">
             {(() => {
               const v = agg ? agg.retail_suggested : (p.retail_suggested ? Number(p.retail_suggested) : 0);
               if (!v) return <span className="text-muted-foreground/40">–</span>;
@@ -688,7 +688,7 @@ export default function Products() {
         </td>
 
         {/* Stock */}
-        <td className="px-2 py-0 text-right text-xs font-mono tabular-nums font-medium">
+        <td className="px-2 py-0 text-right !text-[11px] font-mono tabular-nums font-medium">
           {(() => {
             const stockVal = Number(agg ? agg.stock : p.stock);
             if (!stockVal) return <span className="text-muted-foreground/40">–</span>;
