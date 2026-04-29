@@ -29,6 +29,7 @@ type Vehicle = {
   comment: string | null;
   next_service: string | null;
   odometer: string | null;
+  odometer_updated_at: string | null;
   cooling_service: string | null;
   extra: Record<string, any>;
   sort_order: number;
