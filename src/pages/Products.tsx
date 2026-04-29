@@ -60,16 +60,23 @@ const PRODUCERS = ["Inköp", "Produktion", "Inköp/Produktion"];
 
 // ── Shelf life helper ────────────────────────────────────────────────────────
 function ShelfLifeBadge({ days }: { days: number | null }) {
-  if (!days) return <span className="text-[10px] text-muted-foreground/50">–</span>;
+  if (!days) return <span className="text-[11px] text-muted-foreground/40 font-mono tabular-nums">–</span>;
   let color = "bg-emerald-500/10 text-emerald-700 border-emerald-500/20";
   if (days <= 3) color = "bg-destructive/10 text-destructive border-destructive/20";
   else if (days <= 7) color = "bg-amber-500/10 text-amber-700 border-amber-500/20";
   return (
-    <Badge variant="outline" className={`text-[10px] gap-0.5 ${color}`}>
+    <Badge variant="outline" className={`text-[10px] gap-0.5 font-mono tabular-nums ${color}`}>
       <Clock className="h-2.5 w-2.5" />
       {days}d
     </Badge>
   );
+}
+
+// Format a number with Swedish locale, always 2 decimals, muted when zero/empty
+function fmtNum(v: number | string | null | undefined, decimals = 2): string {
+  const n = typeof v === "string" ? Number(v) : v;
+  if (n === null || n === undefined || Number.isNaN(n)) return "–";
+  return n.toLocaleString("sv-SE", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
 interface InlineEdit {
