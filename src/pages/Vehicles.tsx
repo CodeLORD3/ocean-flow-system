@@ -49,6 +49,7 @@ const CORE_COLUMNS: { key: keyof Vehicle; label: string }[] = [
   { key: "make", label: "FABRIKAT" },
   { key: "status", label: "STATUS" },
   { key: "next_service", label: "NÄSTA SERVICE" },
+  { key: "last_serviced", label: "SENAST SERVEAD" },
   { key: "cooling_service", label: "SERVICE PÅ KYLAGGREGAT" },
 ];
 
