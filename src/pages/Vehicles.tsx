@@ -459,7 +459,7 @@ export default function Vehicles() {
                       </td>
                     </tr>
                   )}
-                </>
+                </React.Fragment>
               );
             })}
           </tbody>
