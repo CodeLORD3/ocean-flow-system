@@ -1,10 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Columns3, Truck, CalendarIcon, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Columns3, Truck, CalendarIcon, ChevronDown, ChevronRight, Wrench } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog";
@@ -18,7 +17,7 @@ import { format, parseISO, isValid } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-type Vehicle = {
+type Asset = {
   id: string;
   reg_number: string;
   make: string | null;
@@ -44,7 +43,7 @@ type ExtraColumn = {
   sort_order: number;
 };
 
-const CORE_COLUMNS: { key: keyof Vehicle; label: string }[] = [
+const CORE_COLUMNS: { key: keyof Asset; label: string }[] = [
   { key: "reg_number", label: "REG NUMMER" },
   { key: "make", label: "FABRIKAT" },
   { key: "status", label: "STATUS" },
@@ -53,7 +52,7 @@ const CORE_COLUMNS: { key: keyof Vehicle; label: string }[] = [
   { key: "cooling_service", label: "SERVICE PÅ KYLAGGREGAT" },
 ];
 
-const DETAIL_FIELDS: { key: keyof Vehicle; label: string; type?: "number" | "text" | "textarea" }[] = [
+const DETAIL_FIELDS: { key: keyof Asset; label: string; type?: "number" | "text" | "textarea" }[] = [
   { key: "model_year", label: "Årsmodell", type: "number" },
   { key: "finance", label: "Finans" },
   { key: "fault", label: "Fel", type: "textarea" },
@@ -90,26 +89,83 @@ function StatusPill({ status }: { status: string | null }) {
 }
 
 export default function Vehicles() {
-  const qc = useQueryClient();
+  return (
+    <div className="p-6 space-y-8">
+      <AssetSection
+        title="Bilar"
+        subtitle="Fordonsstatus och underhåll"
+        icon={<Truck className="h-5 w-5 text-sky-400" />}
+        iconBg="bg-sky-500/20"
+        itemTable="vehicles"
+        columnsTable="vehicle_columns"
+        addLabel="Ny bil"
+        regLabel="Registreringsnummer"
+        deleteConfirmLabel={(reg) => `Ta bort bil ${reg}?`}
+        toastAdded="Bil tillagd"
+        toastDeleted="Bil borttagen"
+        emptyLabel="Inga bilar registrerade än."
+      />
+      <AssetSection
+        title="Maskiner"
+        subtitle="Maskinstatus och underhåll"
+        icon={<Wrench className="h-5 w-5 text-amber-400" />}
+        iconBg="bg-amber-500/20"
+        itemTable="machines"
+        columnsTable="machine_columns"
+        addLabel="Ny maskin"
+        regLabel="Beteckning / ID"
+        deleteConfirmLabel={(reg) => `Ta bort maskin ${reg}?`}
+        toastAdded="Maskin tillagd"
+        toastDeleted="Maskin borttagen"
+        emptyLabel="Inga maskiner registrerade än."
+      />
+    </div>
+  );
+}
 
-  const { data: vehicles = [] } = useQuery({
-    queryKey: ["vehicles"],
+type AssetSectionProps = {
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
+  iconBg: string;
+  itemTable: "vehicles" | "machines";
+  columnsTable: "vehicle_columns" | "machine_columns";
+  addLabel: string;
+  regLabel: string;
+  deleteConfirmLabel: (reg: string) => string;
+  toastAdded: string;
+  toastDeleted: string;
+  emptyLabel: string;
+};
+
+function AssetSection({
+  title, subtitle, icon, iconBg,
+  itemTable, columnsTable,
+  addLabel, regLabel, deleteConfirmLabel,
+  toastAdded, toastDeleted, emptyLabel,
+}: AssetSectionProps) {
+  const qc = useQueryClient();
+  const itemsKey = [itemTable];
+  const colsKey = [columnsTable];
+
+  const { data: items = [] } = useQuery({
+    queryKey: itemsKey,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("vehicles")
+      const { data, error } = await (supabase as any)
+        .from(itemTable)
         .select("*")
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as Vehicle[];
+      return (data ?? []) as Asset[];
     },
   });
 
   const { data: extraCols = [] } = useQuery({
-    queryKey: ["vehicle_columns"],
+    queryKey: colsKey,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("vehicle_columns")
+      const { data, error } = await (supabase as any)
+        .from(columnsTable)
         .select("*")
         .order("sort_order", { ascending: true });
       if (error) throw error;
@@ -117,39 +173,39 @@ export default function Vehicles() {
     },
   });
 
-  const updateVehicle = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Partial<Vehicle> }) => {
-      const { error } = await supabase.from("vehicles").update(patch).eq("id", id);
+  const updateItem = useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<Asset> }) => {
+      const { error } = await (supabase as any).from(itemTable).update(patch).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["vehicles"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: itemsKey }),
   });
 
   const updateExtra = useMutation({
     mutationFn: async ({ id, key, value }: { id: string; key: string; value: any }) => {
-      const v = vehicles.find((x) => x.id === id);
+      const v = items.find((x) => x.id === id);
       const newExtra = { ...(v?.extra || {}), [key]: value };
-      const { error } = await supabase.from("vehicles").update({ extra: newExtra }).eq("id", id);
+      const { error } = await (supabase as any).from(itemTable).update({ extra: newExtra }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["vehicles"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: itemsKey }),
   });
 
-  const deleteVehicle = useMutation({
+  const deleteItem = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("vehicles").delete().eq("id", id);
+      const { error } = await (supabase as any).from(itemTable).delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["vehicles"] });
-      toast.success("Bil borttagen");
+      qc.invalidateQueries({ queryKey: itemsKey });
+      toast.success(toastDeleted);
     },
   });
 
-  const addVehicle = useMutation({
+  const addItem = useMutation({
     mutationFn: async (reg: string) => {
-      const maxSort = vehicles.reduce((m, v) => Math.max(m, v.sort_order ?? 0), 0);
-      const { error } = await supabase.from("vehicles").insert({
+      const maxSort = items.reduce((m, v) => Math.max(m, v.sort_order ?? 0), 0);
+      const { error } = await (supabase as any).from(itemTable).insert({
         reg_number: reg,
         sort_order: maxSort + 1,
         extra: {},
@@ -157,8 +213,8 @@ export default function Vehicles() {
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["vehicles"] });
-      toast.success("Bil tillagd");
+      qc.invalidateQueries({ queryKey: itemsKey });
+      toast.success(toastAdded);
     },
   });
 
@@ -166,13 +222,13 @@ export default function Vehicles() {
     mutationFn: async ({ label }: { label: string }) => {
       const key = label.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || `col_${Date.now()}`;
       const maxSort = extraCols.reduce((m, c) => Math.max(m, c.sort_order ?? 0), 0);
-      const { error } = await supabase.from("vehicle_columns").insert({
+      const { error } = await (supabase as any).from(columnsTable).insert({
         key, label, col_type: "text", sort_order: maxSort + 1,
       });
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["vehicle_columns"] });
+      qc.invalidateQueries({ queryKey: colsKey });
       toast.success("Kolumn tillagd");
     },
     onError: (e: any) => toast.error(e?.message ?? "Kunde inte lägga till kolumn"),
@@ -180,11 +236,11 @@ export default function Vehicles() {
 
   const deleteColumn = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("vehicle_columns").delete().eq("id", id);
+      const { error } = await (supabase as any).from(columnsTable).delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["vehicle_columns"] });
+      qc.invalidateQueries({ queryKey: colsKey });
       toast.success("Kolumn borttagen");
     },
   });
@@ -197,15 +253,15 @@ export default function Vehicles() {
   const toggle = (id: string) => setExpanded((p) => ({ ...p, [id]: !p[id] }));
 
   return (
-    <div className="p-6 space-y-4">
+    <section className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-lg bg-sky-500/20 flex items-center justify-center">
-            <Truck className="h-5 w-5 text-sky-400" />
+          <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center", iconBg)}>
+            {icon}
           </div>
           <div>
-            <h1 className="text-2xl font-semibold">Bilar</h1>
-            <p className="text-xs text-muted-foreground">Fordonsstatus och underhåll</p>
+            <h1 className="text-2xl font-semibold">{title}</h1>
+            <p className="text-xs text-muted-foreground">{subtitle}</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -265,15 +321,15 @@ export default function Vehicles() {
           <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm">
-                <Plus className="h-4 w-4 mr-1" /> Ny bil
+                <Plus className="h-4 w-4 mr-1" /> {addLabel}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Ny bil</DialogTitle>
+                <DialogTitle>{addLabel}</DialogTitle>
               </DialogHeader>
               <div className="space-y-2">
-                <Label>Registreringsnummer</Label>
+                <Label>{regLabel}</Label>
                 <Input
                   placeholder="ABC123"
                   value={newReg}
@@ -284,7 +340,7 @@ export default function Vehicles() {
                 <Button
                   onClick={() => {
                     if (!newReg.trim()) return;
-                    addVehicle.mutate(newReg.trim(), {
+                    addItem.mutate(newReg.trim(), {
                       onSuccess: () => {
                         setNewReg("");
                         setAddDialogOpen(false);
@@ -319,18 +375,18 @@ export default function Vehicles() {
             </tr>
           </thead>
           <tbody>
-            {vehicles.length === 0 && (
+            {items.length === 0 && (
               <tr>
                 <td colSpan={CORE_COLUMNS.length + extraCols.length + 2} className="text-center py-8 text-muted-foreground">
-                  Inga bilar registrerade än.
+                  {emptyLabel}
                 </td>
               </tr>
             )}
-            {vehicles.map((v) => {
+            {items.map((v) => {
               const isOpen = !!expanded[v.id];
               return (
                 <React.Fragment key={v.id}>
-                  <tr key={v.id} className="border-b hover:bg-muted/20 group">
+                  <tr className="border-b hover:bg-muted/20 group">
                     <td className="px-1 align-middle">
                       <button
                         type="button"
@@ -348,7 +404,7 @@ export default function Vehicles() {
                           <td key={c.key as string} className="px-3 py-1.5">
                             <Select
                               value={value ?? ""}
-                              onValueChange={(val) => updateVehicle.mutate({ id: v.id, patch: { status: val } })}
+                              onValueChange={(val) => updateItem.mutate({ id: v.id, patch: { status: val } })}
                             >
                               <SelectTrigger className="h-6 w-auto min-w-[90px] px-2 py-0 text-[8px] border-none bg-transparent hover:bg-muted/40 [&>svg]:h-2.5 [&>svg]:w-2.5">
                                 <SelectValue placeholder="—">
@@ -374,7 +430,7 @@ export default function Vehicles() {
                           <td key={c.key as string} className="px-3 py-1.5">
                             <DateCell
                               value={value}
-                              onSave={(val) => updateVehicle.mutate({ id: v.id, patch: { [c.key]: val } as Partial<Vehicle> })}
+                              onSave={(val) => updateItem.mutate({ id: v.id, patch: { [c.key]: val } as Partial<Asset> })}
                             />
                           </td>
                         );
@@ -389,7 +445,7 @@ export default function Vehicles() {
                             onSave={(val) => {
                               const patch: any = {};
                               patch[c.key] = val || null;
-                              updateVehicle.mutate({ id: v.id, patch });
+                              updateItem.mutate({ id: v.id, patch });
                             }}
                           />
                         </td>
@@ -409,7 +465,7 @@ export default function Vehicles() {
                         variant="ghost"
                         className="opacity-0 group-hover:opacity-100"
                         onClick={() => {
-                          if (confirm(`Ta bort bil ${v.reg_number}?`)) deleteVehicle.mutate(v.id);
+                          if (confirm(deleteConfirmLabel(v.reg_number))) deleteItem.mutate(v.id);
                         }}
                       >
                         <Trash2 className="h-3.5 w-3.5 text-destructive" />
@@ -417,7 +473,7 @@ export default function Vehicles() {
                     </td>
                   </tr>
                   {isOpen && (
-                    <tr key={v.id + "-detail"} className="border-b bg-muted/10">
+                    <tr className="border-b bg-muted/10">
                       <td></td>
                       <td colSpan={CORE_COLUMNS.length + extraCols.length + 1} className="px-4 py-3">
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3">
@@ -435,12 +491,12 @@ export default function Vehicles() {
                                 <div className="flex items-center gap-2">
                                   <CellEditor
                                     value={(v[f.key] as any) ?? ""}
-                                    onSave={(val) => updateVehicle.mutate({ id: v.id, patch: { odometer: val || null } })}
+                                    onSave={(val) => updateItem.mutate({ id: v.id, patch: { odometer: val || null } })}
                                   />
                                   <DateCell
                                     value={v.odometer_updated_at}
                                     compact
-                                    onSave={(val) => updateVehicle.mutate({ id: v.id, patch: { odometer_updated_at: val } })}
+                                    onSave={(val) => updateItem.mutate({ id: v.id, patch: { odometer_updated_at: val } })}
                                   />
                                 </div>
                               ) : (
@@ -451,7 +507,7 @@ export default function Vehicles() {
                                     const patch: any = {};
                                     if (f.type === "number") patch[f.key] = val ? Number(val) : null;
                                     else patch[f.key] = val || null;
-                                    updateVehicle.mutate({ id: v.id, patch });
+                                    updateItem.mutate({ id: v.id, patch });
                                   }}
                                 />
                               )}
@@ -467,7 +523,7 @@ export default function Vehicles() {
           </tbody>
         </table>
       </div>
-    </div>
+    </section>
   );
 }
 
