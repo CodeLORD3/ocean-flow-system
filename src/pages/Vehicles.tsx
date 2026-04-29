@@ -326,7 +326,7 @@ export default function Vehicles() {
                           onValueChange={(val) => updateVehicle.mutate({ id: v.id, patch: { status: val } })}
                         >
                           <SelectTrigger className="h-6 w-auto min-w-[90px] px-2 py-0 text-[8px] border-none bg-transparent hover:bg-muted/40 [&>svg]:h-2.5 [&>svg]:w-2.5">
-                            <SelectValue placeholder={<span className="text-muted-foreground text-[8px]">—</span>}>
+                            <SelectValue placeholder="—">
                               <StatusPill status={value} />
                             </SelectValue>
                           </SelectTrigger>
