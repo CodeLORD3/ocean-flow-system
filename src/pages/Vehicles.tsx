@@ -321,11 +321,26 @@ export default function Vehicles() {
                   if (c.key === "status") {
                     return (
                       <td key={c.key as string} className="px-3 py-1.5">
-                        <CellEditor
+                        <Select
                           value={value ?? ""}
-                          onSave={(val) => updateVehicle.mutate({ id: v.id, patch: { status: val } })}
-                          render={(val) => statusBadge(val) ?? <span className="text-muted-foreground">—</span>}
-                        />
+                          onValueChange={(val) => updateVehicle.mutate({ id: v.id, patch: { status: val } })}
+                        >
+                          <SelectTrigger className="h-6 w-auto min-w-[90px] px-2 py-0 text-[8px] border-none bg-transparent hover:bg-muted/40 [&>svg]:h-2.5 [&>svg]:w-2.5">
+                            <SelectValue placeholder={<span className="text-muted-foreground text-[8px]">—</span>}>
+                              <StatusPill status={value} />
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {STATUS_OPTIONS.map((opt) => (
+                              <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                                <span className="inline-flex items-center gap-2">
+                                  <span className={cn("h-2 w-2 rounded-full", opt.dotClass)} />
+                                  {opt.value}
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </td>
                     );
                   }
