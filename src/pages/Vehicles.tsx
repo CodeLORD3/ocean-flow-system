@@ -369,12 +369,12 @@ export default function Vehicles() {
                           </td>
                         );
                       }
-                      if (c.key === "next_service") {
+                      if (c.key === "next_service" || c.key === "last_serviced") {
                         return (
                           <td key={c.key as string} className="px-3 py-1.5">
                             <DateCell
                               value={value}
-                              onSave={(val) => updateVehicle.mutate({ id: v.id, patch: { next_service: val } })}
+                              onSave={(val) => updateVehicle.mutate({ id: v.id, patch: { [c.key]: val } as Partial<Vehicle> })}
                             />
                           </td>
                         );
