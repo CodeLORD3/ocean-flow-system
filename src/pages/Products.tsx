@@ -72,11 +72,16 @@ function ShelfLifeBadge({ days }: { days: number | null }) {
   );
 }
 
-// Format a number with Swedish locale, always 2 decimals, muted when zero/empty
-function fmtNum(v: number | string | null | undefined, decimals = 2): string {
+// Format a number with Swedish locale. Smart decimals: integers stay integers,
+// fractional values keep up to 2 decimals. Returns "–" for null/zero.
+function fmtNum(v: number | string | null | undefined): string {
   const n = typeof v === "string" ? Number(v) : v;
   if (n === null || n === undefined || Number.isNaN(n)) return "–";
-  return n.toLocaleString("sv-SE", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  const isInt = Number.isInteger(n);
+  return n.toLocaleString("sv-SE", {
+    minimumFractionDigits: isInt ? 0 : 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 interface InlineEdit {
