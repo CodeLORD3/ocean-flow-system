@@ -56,7 +56,7 @@ const STATUS_OPTIONS = [
   { value: "Fungerar", dotClass: "bg-emerald-500", textClass: "text-emerald-400" },
   { value: "Underhåll krävs", dotClass: "bg-amber-500", textClass: "text-amber-400" },
   { value: "Trasig", dotClass: "bg-red-500", textClass: "text-red-400" },
-  { value: "Bokad Service", dotClass: "bg-muted-foreground", textClass: "text-muted-foreground" },
+  { value: "Bokad Service", dotClass: "bg-gray-400", textClass: "text-gray-400" },
 ] as const;
 
 function statusMeta(status: string | null) {
