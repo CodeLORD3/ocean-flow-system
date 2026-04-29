@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Columns3, Truck, CalendarIcon } from "lucide-react";
+import { Plus, Trash2, Columns3, Truck, CalendarIcon, ChevronDown, ChevronRight } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog";
@@ -47,13 +47,16 @@ const CORE_COLUMNS: { key: keyof Vehicle; label: string }[] = [
   { key: "reg_number", label: "REG NUMMER" },
   { key: "make", label: "FABRIKAT" },
   { key: "status", label: "STATUS" },
-  { key: "model_year", label: "ÅRSMODELL" },
-  { key: "finance", label: "FINANS" },
-  { key: "fault", label: "FEL" },
-  { key: "comment", label: "KOMMENTAR" },
   { key: "next_service", label: "NÄSTA SERVICE" },
-  { key: "odometer", label: "MÄTARSTÄLLNING (senast uppdaterad)" },
   { key: "cooling_service", label: "SERVICE PÅ KYLAGGREGAT" },
+];
+
+const DETAIL_FIELDS: { key: keyof Vehicle; label: string; type?: "number" | "text" | "textarea" }[] = [
+  { key: "model_year", label: "Årsmodell", type: "number" },
+  { key: "finance", label: "Finans" },
+  { key: "fault", label: "Fel", type: "textarea" },
+  { key: "comment", label: "Kommentar", type: "textarea" },
+  { key: "odometer", label: "Mätarställning" },
 ];
 
 const STATUS_OPTIONS = [
@@ -188,6 +191,8 @@ export default function Vehicles() {
   const [newColLabel, setNewColLabel] = useState("");
   const [colDialogOpen, setColDialogOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const toggle = (id: string) => setExpanded((p) => ({ ...p, [id]: !p[id] }));
 
   return (
     <div className="p-6 space-y-4">
@@ -297,6 +302,7 @@ export default function Vehicles() {
         <table className="w-full text-xs">
           <thead className="bg-muted/40 border-b">
             <tr>
+              <th className="w-8"></th>
               {CORE_COLUMNS.map((c) => (
                 <th key={c.key as string} className="text-left px-3 py-2 font-medium text-muted-foreground whitespace-nowrap">
                   {c.label}
@@ -313,111 +319,149 @@ export default function Vehicles() {
           <tbody>
             {vehicles.length === 0 && (
               <tr>
-                <td colSpan={CORE_COLUMNS.length + extraCols.length + 1} className="text-center py-8 text-muted-foreground">
+                <td colSpan={CORE_COLUMNS.length + extraCols.length + 2} className="text-center py-8 text-muted-foreground">
                   Inga bilar registrerade än.
                 </td>
               </tr>
             )}
-            {vehicles.map((v) => (
-              <tr key={v.id} className="border-b hover:bg-muted/20 group">
-                {CORE_COLUMNS.map((c) => {
-                  const value = v[c.key] as any;
-                  if (c.key === "status") {
-                    return (
-                      <td key={c.key as string} className="px-3 py-1.5">
-                        <Select
-                          value={value ?? ""}
-                          onValueChange={(val) => updateVehicle.mutate({ id: v.id, patch: { status: val } })}
-                        >
-                          <SelectTrigger className="h-6 w-auto min-w-[90px] px-2 py-0 text-[8px] border-none bg-transparent hover:bg-muted/40 [&>svg]:h-2.5 [&>svg]:w-2.5">
-                            <SelectValue placeholder="—">
-                              <StatusPill status={value} />
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {STATUS_OPTIONS.map((opt) => (
-                              <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                                <span className="inline-flex items-center gap-2">
-                                  <span className={cn("h-2 w-2 rounded-full", opt.dotClass)} />
-                                  {opt.value}
-                                </span>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </td>
-                    );
-                  }
-                  if (c.key === "next_service") {
-                    return (
-                      <td key={c.key as string} className="px-3 py-1.5">
-                        <DateCell
-                          value={value}
-                          onSave={(val) => updateVehicle.mutate({ id: v.id, patch: { next_service: val } })}
-                        />
-                      </td>
-                    );
-                  }
-                  if (c.key === "odometer") {
-                    return (
-                      <td key={c.key as string} className="px-3 py-1.5">
-                        <div className="flex items-center gap-2">
+            {vehicles.map((v) => {
+              const isOpen = !!expanded[v.id];
+              return (
+                <React.Fragment key={v.id}>
+                  <tr key={v.id} className="border-b hover:bg-muted/20 group">
+                    <td className="px-1 align-middle">
+                      <button
+                        type="button"
+                        onClick={() => toggle(v.id)}
+                        className="p-1 rounded hover:bg-muted/40 text-muted-foreground"
+                        aria-label={isOpen ? "Dölj detaljer" : "Visa detaljer"}
+                      >
+                        {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                      </button>
+                    </td>
+                    {CORE_COLUMNS.map((c) => {
+                      const value = v[c.key] as any;
+                      if (c.key === "status") {
+                        return (
+                          <td key={c.key as string} className="px-3 py-1.5">
+                            <Select
+                              value={value ?? ""}
+                              onValueChange={(val) => updateVehicle.mutate({ id: v.id, patch: { status: val } })}
+                            >
+                              <SelectTrigger className="h-6 w-auto min-w-[90px] px-2 py-0 text-[8px] border-none bg-transparent hover:bg-muted/40 [&>svg]:h-2.5 [&>svg]:w-2.5">
+                                <SelectValue placeholder="—">
+                                  <StatusPill status={value} />
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent>
+                                {STATUS_OPTIONS.map((opt) => (
+                                  <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                                    <span className="inline-flex items-center gap-2">
+                                      <span className={cn("h-2 w-2 rounded-full", opt.dotClass)} />
+                                      {opt.value}
+                                    </span>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </td>
+                        );
+                      }
+                      if (c.key === "next_service") {
+                        return (
+                          <td key={c.key as string} className="px-3 py-1.5">
+                            <DateCell
+                              value={value}
+                              onSave={(val) => updateVehicle.mutate({ id: v.id, patch: { next_service: val } })}
+                            />
+                          </td>
+                        );
+                      }
+                      return (
+                        <td key={c.key as string} className={cn(
+                          "px-3 py-1.5",
+                          c.key === "reg_number" && "font-mono font-semibold"
+                        )}>
                           <CellEditor
                             value={value ?? ""}
-                            onSave={(val) => updateVehicle.mutate({ id: v.id, patch: { odometer: val || null } })}
+                            onSave={(val) => {
+                              const patch: any = {};
+                              patch[c.key] = val || null;
+                              updateVehicle.mutate({ id: v.id, patch });
+                            }}
                           />
-                          <DateCell
-                            value={v.odometer_updated_at}
-                            compact
-                            onSave={(val) => updateVehicle.mutate({ id: v.id, patch: { odometer_updated_at: val } })}
-                          />
+                        </td>
+                      );
+                    })}
+                    {extraCols.map((c) => (
+                      <td key={c.id} className="px-3 py-1.5">
+                        <CellEditor
+                          value={v.extra?.[c.key] ?? ""}
+                          onSave={(val) => updateExtra.mutate({ id: v.id, key: c.key, value: val })}
+                        />
+                      </td>
+                    ))}
+                    <td className="px-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="opacity-0 group-hover:opacity-100"
+                        onClick={() => {
+                          if (confirm(`Ta bort bil ${v.reg_number}?`)) deleteVehicle.mutate(v.id);
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                      </Button>
+                    </td>
+                  </tr>
+                  {isOpen && (
+                    <tr key={v.id + "-detail"} className="border-b bg-muted/10">
+                      <td></td>
+                      <td colSpan={CORE_COLUMNS.length + extraCols.length + 1} className="px-4 py-3">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3">
+                          {DETAIL_FIELDS.map((f) => (
+                            <div key={f.key as string} className="space-y-1">
+                              <Label className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                {f.label}
+                                {f.key === "odometer" && v.odometer_updated_at && (
+                                  <span className="ml-1 normal-case text-muted-foreground/70">
+                                    (uppdaterad {format(parseISO(v.odometer_updated_at), "dd/MM/yyyy")})
+                                  </span>
+                                )}
+                              </Label>
+                              {f.key === "odometer" ? (
+                                <div className="flex items-center gap-2">
+                                  <CellEditor
+                                    value={(v[f.key] as any) ?? ""}
+                                    onSave={(val) => updateVehicle.mutate({ id: v.id, patch: { odometer: val || null } })}
+                                  />
+                                  <DateCell
+                                    value={v.odometer_updated_at}
+                                    compact
+                                    onSave={(val) => updateVehicle.mutate({ id: v.id, patch: { odometer_updated_at: val } })}
+                                  />
+                                </div>
+                              ) : (
+                                <CellEditor
+                                  value={(v[f.key] as any) ?? ""}
+                                  type={f.type === "number" ? "number" : "text"}
+                                  onSave={(val) => {
+                                    const patch: any = {};
+                                    if (f.type === "number") patch[f.key] = val ? Number(val) : null;
+                                    else patch[f.key] = val || null;
+                                    updateVehicle.mutate({ id: v.id, patch });
+                                  }}
+                                />
+                              )}
+                            </div>
+                          ))}
                         </div>
                       </td>
-                    );
-                  }
-                  return (
-                    <td key={c.key as string} className={cn(
-                      "px-3 py-1.5",
-                      c.key === "reg_number" && "font-mono font-semibold"
-                    )}>
-                      <CellEditor
-                        value={value ?? ""}
-                        type={c.key === "model_year" ? "number" : "text"}
-                        onSave={(val) => {
-                          const patch: any = {};
-                          if (c.key === "model_year") {
-                            patch[c.key] = val ? Number(val) : null;
-                          } else {
-                            patch[c.key] = val || null;
-                          }
-                          updateVehicle.mutate({ id: v.id, patch });
-                        }}
-                      />
-                    </td>
-                  );
-                })}
-                {extraCols.map((c) => (
-                  <td key={c.id} className="px-3 py-1.5">
-                    <CellEditor
-                      value={v.extra?.[c.key] ?? ""}
-                      onSave={(val) => updateExtra.mutate({ id: v.id, key: c.key, value: val })}
-                    />
-                  </td>
-                ))}
-                <td className="px-2">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="opacity-0 group-hover:opacity-100"
-                    onClick={() => {
-                      if (confirm(`Ta bort bil ${v.reg_number}?`)) deleteVehicle.mutate(v.id);
-                    }}
-                  >
-                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                  </Button>
-                </td>
-              </tr>
-            ))}
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            })}
           </tbody>
         </table>
       </div>
