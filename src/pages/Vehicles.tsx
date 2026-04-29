@@ -348,6 +348,33 @@ export default function Vehicles() {
                       </td>
                     );
                   }
+                  if (c.key === "next_service") {
+                    return (
+                      <td key={c.key as string} className="px-3 py-1.5">
+                        <DateCell
+                          value={value}
+                          onSave={(val) => updateVehicle.mutate({ id: v.id, patch: { next_service: val } })}
+                        />
+                      </td>
+                    );
+                  }
+                  if (c.key === "odometer") {
+                    return (
+                      <td key={c.key as string} className="px-3 py-1.5">
+                        <div className="flex items-center gap-2">
+                          <CellEditor
+                            value={value ?? ""}
+                            onSave={(val) => updateVehicle.mutate({ id: v.id, patch: { odometer: val || null } })}
+                          />
+                          <DateCell
+                            value={v.odometer_updated_at}
+                            compact
+                            onSave={(val) => updateVehicle.mutate({ id: v.id, patch: { odometer_updated_at: val } })}
+                          />
+                        </div>
+                      </td>
+                    );
+                  }
                   return (
                     <td key={c.key as string} className={cn(
                       "px-3 py-1.5",
