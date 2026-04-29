@@ -327,7 +327,7 @@ export default function Vehicles() {
             {vehicles.map((v) => {
               const isOpen = !!expanded[v.id];
               return (
-                <>
+                <React.Fragment key={v.id}>
                   <tr key={v.id} className="border-b hover:bg-muted/20 group">
                     <td className="px-1 align-middle">
                       <button
