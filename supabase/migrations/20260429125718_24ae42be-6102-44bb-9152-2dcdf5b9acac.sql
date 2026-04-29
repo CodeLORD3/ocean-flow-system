@@ -1,0 +1,1 @@
+UPDATE public.stores SET name = 'Fiskskaldjur Stockholm' WHERE id = 'eb3b69e6-cf80-4cef-aaba-c5fe2c5151d7';
