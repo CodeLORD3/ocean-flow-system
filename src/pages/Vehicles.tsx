@@ -191,6 +191,8 @@ export default function Vehicles() {
   const [newColLabel, setNewColLabel] = useState("");
   const [colDialogOpen, setColDialogOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const toggle = (id: string) => setExpanded((p) => ({ ...p, [id]: !p[id] }));
 
   return (
     <div className="p-6 space-y-4">
