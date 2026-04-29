@@ -535,39 +535,55 @@ export default function Products() {
           {isAggregatedParent ? (
             <span className="text-[11px] text-muted-foreground/40 font-mono tabular-nums">–</span>
           ) : (
-            <div className="flex items-center gap-1.5">
+            <div className="inline-flex items-center gap-1">
               <ShelfLifeBadge days={shelfLifeDays} />
-              <input
-                type="number"
-                min="1"
-                max="9999"
-                defaultValue={shelfLifeDays || ""}
-                placeholder="–"
-                className="w-10 h-6 text-xs font-mono tabular-nums text-right rounded border border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background focus:outline-none"
-                onBlur={async (e) => {
-                  const val = e.target.value ? Number(e.target.value) : null;
-                  if (val === shelfLifeDays) return;
-                  await supabase
-                    .from("products")
-                    .update({ shelf_life_days: val } as any)
-                    .eq("id", p.id);
-                  qc.invalidateQueries({ queryKey: ["products"] });
-                  toast({
-                    title: "Hållbarhet sparad",
-                    description: `${p.name}: ${val ? `${val} dagar` : "borttagen"}`,
-                  });
-                }}
-              />
-              <span className="text-[10px] text-muted-foreground/60">d</span>
+              <span className="inline-flex items-center">
+                <input
+                  type="number"
+                  min="1"
+                  max="9999"
+                  defaultValue={shelfLifeDays || ""}
+                  placeholder="–"
+                  className="w-9 h-6 text-xs font-mono tabular-nums text-right rounded border border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  onBlur={async (e) => {
+                    const val = e.target.value ? Number(e.target.value) : null;
+                    if (val === shelfLifeDays) return;
+                    await supabase
+                      .from("products")
+                      .update({ shelf_life_days: val } as any)
+                      .eq("id", p.id);
+                    qc.invalidateQueries({ queryKey: ["products"] });
+                    toast({
+                      title: "Hållbarhet sparad",
+                      description: `${p.name}: ${val ? `${val} dagar` : "borttagen"}`,
+                    });
+                  }}
+                />
+                <span className="text-[10px] text-muted-foreground/50 ml-0.5">d</span>
+              </span>
             </div>
           )}
         </td>
 
         {/* Prices */}
         {isWholesale && (
-          <td className="px-2 py-0 text-right text-xs font-mono tabular-nums">
+          <td className="px-2 py-0 text-right">
             {isAggregatedParent ? (
-              <span className="text-foreground">{fmtNum(agg!.cost_price)}</span>
+              <span className="text-xs font-mono tabular-nums text-foreground">{fmtNum(agg!.cost_price)}</span>
+            ) : Number(p.cost_price) === 0 ? (
+              <Input
+                type="number"
+                value={costVal}
+                onFocus={(e) => {
+                  if (!inlineEdits[p.id]) startInlineEdit(p);
+                  e.target.select();
+                }}
+                onChange={(e) => updateInlineCost(p.id, Number(e.target.value))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") saveInlineEdit(p);
+                }}
+                className="h-6 w-16 text-right text-xs font-mono tabular-nums ml-auto border-transparent bg-transparent text-muted-foreground/40 hover:border-input focus:border-input focus:bg-background focus:text-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
             ) : (
               <Input
                 type="number"
@@ -580,14 +596,14 @@ export default function Products() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") saveInlineEdit(p);
                 }}
-                className="h-7 w-20 text-right text-xs font-mono tabular-nums ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
+                className="h-6 w-16 text-right text-xs font-mono tabular-nums ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
             )}
           </td>
         )}
-        <td className="px-2 py-0 text-right text-xs font-mono tabular-nums">
+        <td className="px-2 py-0 text-right">
           {isAggregatedParent ? (
-            <span className="text-foreground">
+            <span className="text-xs font-mono tabular-nums text-foreground">
               {fmtNum(agg ? agg.wholesale_price : Number(p.wholesale_price))}
             </span>
           ) : isWholesale ? (
@@ -602,20 +618,20 @@ export default function Products() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") saveInlineEdit(p);
               }}
-              className="h-7 w-20 text-right text-xs font-mono tabular-nums ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
+              className={`h-6 w-16 text-right text-xs font-mono tabular-nums ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background focus:text-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${Number(p.wholesale_price) === 0 ? "text-muted-foreground/40" : ""}`}
             />
           ) : (
-            <span className="text-foreground">{fmtNum(Number(p.wholesale_price))}</span>
+            <span className="text-xs font-mono tabular-nums text-foreground">{fmtNum(Number(p.wholesale_price))}</span>
           )}
         </td>
         {isWholesale && (
-          <td className="px-2 py-0 text-right text-xs font-mono tabular-nums">
+          <td className="px-2 py-0 text-right">
             {isAggregatedParent ? (
-              <span className="text-muted-foreground">
-                {calcMargin(agg!.cost_price, agg!.wholesale_price)}<span className="text-muted-foreground/60 ml-0.5">%</span>
+              <span className="inline-flex items-baseline text-xs font-mono tabular-nums text-muted-foreground">
+                {calcMargin(agg!.cost_price, agg!.wholesale_price)}<span className="text-[10px] text-muted-foreground/50 ml-0.5">%</span>
               </span>
             ) : (
-              <div className="flex items-center justify-end gap-0.5">
+              <span className="inline-flex items-center justify-end">
                 <Input
                   type="number"
                   value={marginVal}
@@ -627,16 +643,20 @@ export default function Products() {
                   onKeyDown={(e) => {
                     if (e.key === "Enter") saveInlineEdit(p);
                   }}
-                  className="h-7 w-12 text-right text-xs font-mono tabular-nums border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
+                  className={`h-6 w-10 text-right text-xs font-mono tabular-nums border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${Number(marginVal) === 0 ? "text-muted-foreground/40" : ""}`}
                 />
-                <span className="text-[10px] text-muted-foreground/60">%</span>
-              </div>
+                <span className="text-[10px] text-muted-foreground/50 ml-0.5">%</span>
+              </span>
             )}
           </td>
         )}
         {isWholesale && (
           <td className="px-2 py-0 text-right text-xs font-mono tabular-nums text-muted-foreground">
-            {agg ? fmtNum(agg.retail_suggested) : p.retail_suggested ? fmtNum(Number(p.retail_suggested)) : <span className="text-muted-foreground/40">–</span>}
+            {(() => {
+              const v = agg ? agg.retail_suggested : (p.retail_suggested ? Number(p.retail_suggested) : 0);
+              if (!v) return <span className="text-muted-foreground/40">–</span>;
+              return fmtNum(v);
+            })()}
           </td>
         )}
 
@@ -646,11 +666,12 @@ export default function Products() {
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => setBarcodePreview(p)}
-                className="font-mono text-[10px] text-primary hover:underline tabular-nums"
+                className="font-mono text-[10px] text-primary hover:underline tabular-nums truncate max-w-[100px]"
+                title={barcode}
               >
                 {barcode}
               </button>
-              <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => printLabel(p)}>
+              <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0" onClick={() => printLabel(p)}>
                 <Printer className="h-3 w-3" />
               </Button>
             </div>
@@ -672,8 +693,8 @@ export default function Products() {
             const stockVal = Number(agg ? agg.stock : p.stock);
             if (!stockVal) return <span className="text-muted-foreground/40">–</span>;
             return (
-              <span className={stockVal <= 0 ? "text-destructive" : "text-foreground"}>
-                {stockVal.toLocaleString("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+              <span className={stockVal < 0 ? "text-destructive" : "text-foreground"}>
+                {stockVal.toLocaleString("sv-SE", { minimumFractionDigits: Number.isInteger(stockVal) ? 0 : 1, maximumFractionDigits: 1 })}
               </span>
             );
           })()}
