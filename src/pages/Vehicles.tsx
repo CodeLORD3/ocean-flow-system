@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Columns3, Truck } from "lucide-react";
+import { Plus, Trash2, Columns3, Truck, CalendarIcon } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog";
@@ -12,6 +12,9 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format, parseISO, isValid } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +29,7 @@ type Vehicle = {
   comment: string | null;
   next_service: string | null;
   odometer: string | null;
+  odometer_updated_at: string | null;
   cooling_service: string | null;
   extra: Record<string, any>;
   sort_order: number;
@@ -344,6 +348,33 @@ export default function Vehicles() {
                       </td>
                     );
                   }
+                  if (c.key === "next_service") {
+                    return (
+                      <td key={c.key as string} className="px-3 py-1.5">
+                        <DateCell
+                          value={value}
+                          onSave={(val) => updateVehicle.mutate({ id: v.id, patch: { next_service: val } })}
+                        />
+                      </td>
+                    );
+                  }
+                  if (c.key === "odometer") {
+                    return (
+                      <td key={c.key as string} className="px-3 py-1.5">
+                        <div className="flex items-center gap-2">
+                          <CellEditor
+                            value={value ?? ""}
+                            onSave={(val) => updateVehicle.mutate({ id: v.id, patch: { odometer: val || null } })}
+                          />
+                          <DateCell
+                            value={v.odometer_updated_at}
+                            compact
+                            onSave={(val) => updateVehicle.mutate({ id: v.id, patch: { odometer_updated_at: val } })}
+                          />
+                        </div>
+                      </td>
+                    );
+                  }
                   return (
                     <td key={c.key as string} className={cn(
                       "px-3 py-1.5",
@@ -445,5 +476,50 @@ function CellEditor({
         ? String(value)
         : <span className="text-muted-foreground">—</span>}
     </button>
+  );
+}
+
+function DateCell({
+  value,
+  onSave,
+  compact = false,
+}: {
+  value: string | null;
+  onSave: (val: string | null) => void;
+  compact?: boolean;
+}) {
+  const date = value && isValid(parseISO(value)) ? parseISO(value) : undefined;
+  const display = date
+    ? compact
+      ? `(${format(date, "dd/MM/yy")})`
+      : format(date, "dd/MM/yyyy")
+    : compact
+    ? "(—)"
+    : "—";
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            "inline-flex items-center gap-1 hover:bg-muted/40 rounded px-1 -mx-1 text-left",
+            compact ? "text-[10px] text-muted-foreground" : "text-xs",
+            !date && "text-muted-foreground"
+          )}
+        >
+          {!compact && <CalendarIcon className="h-3 w-3 opacity-60" />}
+          {display}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={date}
+          onSelect={(d) => onSave(d ? format(d, "yyyy-MM-dd") : null)}
+          initialFocus
+          className={cn("p-3 pointer-events-auto")}
+        />
+      </PopoverContent>
+    </Popover>
   );
 }
