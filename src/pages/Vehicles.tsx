@@ -47,13 +47,16 @@ const CORE_COLUMNS: { key: keyof Vehicle; label: string }[] = [
   { key: "reg_number", label: "REG NUMMER" },
   { key: "make", label: "FABRIKAT" },
   { key: "status", label: "STATUS" },
-  { key: "model_year", label: "ÅRSMODELL" },
-  { key: "finance", label: "FINANS" },
-  { key: "fault", label: "FEL" },
-  { key: "comment", label: "KOMMENTAR" },
   { key: "next_service", label: "NÄSTA SERVICE" },
-  { key: "odometer", label: "MÄTARSTÄLLNING (senast uppdaterad)" },
   { key: "cooling_service", label: "SERVICE PÅ KYLAGGREGAT" },
+];
+
+const DETAIL_FIELDS: { key: keyof Vehicle; label: string; type?: "number" | "text" | "textarea" }[] = [
+  { key: "model_year", label: "Årsmodell", type: "number" },
+  { key: "finance", label: "Finans" },
+  { key: "fault", label: "Fel", type: "textarea" },
+  { key: "comment", label: "Kommentar", type: "textarea" },
+  { key: "odometer", label: "Mätarställning" },
 ];
 
 const STATUS_OPTIONS = [
