@@ -22,6 +22,7 @@ export interface MeetingProtocolItem {
   assigned_to: string | null;
   calendar_event_id: string | null;
   deadline: string | null;
+  completion_note: string | null;
   staff?: { id: string; first_name: string; last_name: string } | null;
 }
 
