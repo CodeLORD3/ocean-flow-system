@@ -84,6 +84,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/meetings": { component: <MeetingProtocols /> },
   "/tasks": { component: <Tasks /> },
   "/landing-settings": { component: <LandingSettings /> },
+  "/vehicles": { component: <Vehicles /> },
 };
 
 /**
