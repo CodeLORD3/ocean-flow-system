@@ -1047,6 +1047,7 @@ export type Database = {
           assigned_to: string | null
           calendar_event_id: string | null
           completed: boolean
+          completion_note: string | null
           content: string
           deadline: string | null
           id: string
@@ -1057,6 +1058,7 @@ export type Database = {
           assigned_to?: string | null
           calendar_event_id?: string | null
           completed?: boolean
+          completion_note?: string | null
           content?: string
           deadline?: string | null
           id?: string
@@ -1067,6 +1069,7 @@ export type Database = {
           assigned_to?: string | null
           calendar_event_id?: string | null
           completed?: boolean
+          completion_note?: string | null
           content?: string
           deadline?: string | null
           id?: string
