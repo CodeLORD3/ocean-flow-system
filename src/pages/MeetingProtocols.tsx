@@ -267,12 +267,30 @@ export default function MeetingProtocols() {
                             onCheckedChange={() => handleToggleCompleted(item.id, item.completed, item.calendar_event_id)}
                             className="shrink-0"
                           />
-                          <EditableText
-                            value={item.content}
-                            completed={item.completed}
-                            onSave={(val) => updateItem.mutate({ id: item.id, content: val })}
-                            className="flex-1 text-sm"
-                          />
+                          <div className="flex items-center gap-2 min-w-0">
+                            <EditableText
+                              value={item.content}
+                              completed={item.completed}
+                              onSave={(val) => updateItem.mutate({ id: item.id, content: val })}
+                              className="text-sm shrink-0 max-w-[50%]"
+                            />
+                            {item.completed && (
+                              <Input
+                                placeholder="Lägg till anteckning..."
+                                defaultValue={item.completion_note || ""}
+                                className="h-7 text-xs flex-1 min-w-0 italic text-muted-foreground"
+                                onBlur={(e) => {
+                                  const val = e.target.value;
+                                  if (val !== (item.completion_note || "")) {
+                                    updateItem.mutate({ id: item.id, completion_note: val || null });
+                                  }
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                                }}
+                              />
+                            )}
+                          </div>
                           {/* Assignee selector */}
                           <Popover>
                             <PopoverTrigger asChild>
