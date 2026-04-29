@@ -52,16 +52,32 @@ const CORE_COLUMNS: { key: keyof Vehicle; label: string }[] = [
   { key: "cooling_service", label: "SERVICE PÅ KYLAGGREGAT" },
 ];
 
-function statusBadge(status: string | null) {
+const STATUS_OPTIONS = [
+  { value: "Fungerar", dotClass: "bg-emerald-500", textClass: "text-emerald-400" },
+  { value: "Underhåll krävs", dotClass: "bg-amber-500", textClass: "text-amber-400" },
+  { value: "Trasig", dotClass: "bg-red-500", textClass: "text-red-400" },
+  { value: "Bokad Service", dotClass: "bg-muted-foreground", textClass: "text-muted-foreground" },
+] as const;
+
+function statusMeta(status: string | null) {
   if (!status) return null;
-  const s = status.toUpperCase();
-  if (s.includes("TRASIG"))
-    return <Badge variant="destructive" className="text-[10px]">{status}</Badge>;
-  if (s.includes("UNDERHÅLL"))
-    return <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/40 text-[10px]">{status}</Badge>;
-  if (s.includes("OK") || s.includes("AKTIV"))
-    return <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[10px]">{status}</Badge>;
-  return <Badge variant="secondary" className="text-[10px]">{status}</Badge>;
+  const s = status.toLowerCase();
+  if (s.includes("fungerar") || s.includes("ok") || s.includes("aktiv")) return STATUS_OPTIONS[0];
+  if (s.includes("underhåll")) return STATUS_OPTIONS[1];
+  if (s.includes("trasig")) return STATUS_OPTIONS[2];
+  if (s.includes("bokad") || s.includes("service")) return STATUS_OPTIONS[3];
+  return null;
+}
+
+function StatusPill({ status }: { status: string | null }) {
+  const meta = statusMeta(status);
+  if (!status) return <span className="text-muted-foreground text-[10px]">—</span>;
+  return (
+    <span className={cn("inline-flex items-center gap-1 text-[7px] leading-none", meta?.textClass)}>
+      <span className={cn("h-1 w-1 rounded-full", meta?.dotClass ?? "bg-muted-foreground")} />
+      {status}
+    </span>
+  );
 }
 
 export default function Vehicles() {
