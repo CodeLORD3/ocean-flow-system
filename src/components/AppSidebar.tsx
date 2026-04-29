@@ -21,6 +21,7 @@ import {
   ChevronDown,
   ListTodo,
   LogIn,
+  Truck as TruckIcon,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
