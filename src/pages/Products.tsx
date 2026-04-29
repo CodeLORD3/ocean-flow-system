@@ -525,21 +525,20 @@ export default function Products() {
           </Select>
         </td>
 
-        {/* ── NEW: Hållbarhet column ── */}
-        <td className="px-2 py-0 text-center">
+        {/* ── Hållbarhet ── */}
+        <td className="px-2 py-0">
           {isAggregatedParent ? (
-            <span className="text-[10px] text-muted-foreground">–</span>
+            <span className="text-[11px] text-muted-foreground/40 font-mono tabular-nums">–</span>
           ) : (
-            <div className="flex items-center justify-center gap-1">
+            <div className="flex items-center gap-1.5">
               <ShelfLifeBadge days={shelfLifeDays} />
-              {/* Quick inline edit for shelf life */}
               <input
                 type="number"
                 min="1"
                 max="9999"
                 defaultValue={shelfLifeDays || ""}
-                placeholder="dagar"
-                className="w-12 h-6 text-[10px] text-center rounded border border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background focus:outline-none"
+                placeholder="–"
+                className="w-10 h-6 text-xs font-mono tabular-nums text-right rounded border border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background focus:outline-none"
                 onBlur={async (e) => {
                   const val = e.target.value ? Number(e.target.value) : null;
                   if (val === shelfLifeDays) return;
@@ -554,7 +553,7 @@ export default function Products() {
                   });
                 }}
               />
-              <span className="text-[9px] text-muted-foreground">d</span>
+              <span className="text-[10px] text-muted-foreground/60">d</span>
             </div>
           )}
         </td>
@@ -563,7 +562,7 @@ export default function Products() {
         {isWholesale && (
           <td className="px-2 py-0 text-right text-xs font-mono tabular-nums">
             {isAggregatedParent ? (
-              <span className="text-foreground">{agg!.cost_price.toLocaleString("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span className="text-foreground">{fmtNum(agg!.cost_price)}</span>
             ) : (
               <Input
                 type="number"
@@ -576,7 +575,7 @@ export default function Products() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") saveInlineEdit(p);
                 }}
-                className="h-7 w-24 text-right text-xs font-mono tabular-nums ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
+                className="h-7 w-20 text-right text-xs font-mono tabular-nums ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
               />
             )}
           </td>
@@ -584,7 +583,7 @@ export default function Products() {
         <td className="px-2 py-0 text-right text-xs font-mono tabular-nums">
           {isAggregatedParent ? (
             <span className="text-foreground">
-              {(agg ? agg.wholesale_price : Number(p.wholesale_price)).toLocaleString("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {fmtNum(agg ? agg.wholesale_price : Number(p.wholesale_price))}
             </span>
           ) : isWholesale ? (
             <Input
@@ -598,43 +597,41 @@ export default function Products() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") saveInlineEdit(p);
               }}
-              className="h-7 w-24 text-right text-xs font-mono tabular-nums ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
+              className="h-7 w-20 text-right text-xs font-mono tabular-nums ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
             />
           ) : (
-            <span className="text-foreground">{Number(p.wholesale_price).toLocaleString("sv-SE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <span className="text-foreground">{fmtNum(Number(p.wholesale_price))}</span>
           )}
         </td>
         {isWholesale && (
-          <td className="px-2 py-0 text-right">
-            <div className="flex items-center justify-end gap-0.5">
-              {isAggregatedParent ? (
-                <span className="text-muted-foreground text-xs">
-                  {calcMargin(agg!.cost_price, agg!.wholesale_price)}%
-                </span>
-              ) : (
-                <>
-                  <Input
-                    type="number"
-                    value={marginVal}
-                    onFocus={(e) => {
-                      if (!inlineEdits[p.id]) startInlineEdit(p);
-                      e.target.select();
-                    }}
-                    onChange={(e) => updateInlineMargin(p.id, Number(e.target.value))}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") saveInlineEdit(p);
-                    }}
-                    className="h-7 w-14 text-right text-xs border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
-                  />
-                  <span className="text-[10px] text-muted-foreground">%</span>
-                </>
-              )}
-            </div>
+          <td className="px-2 py-0 text-right text-xs font-mono tabular-nums">
+            {isAggregatedParent ? (
+              <span className="text-muted-foreground">
+                {calcMargin(agg!.cost_price, agg!.wholesale_price)}<span className="text-muted-foreground/60 ml-0.5">%</span>
+              </span>
+            ) : (
+              <div className="flex items-center justify-end gap-0.5">
+                <Input
+                  type="number"
+                  value={marginVal}
+                  onFocus={(e) => {
+                    if (!inlineEdits[p.id]) startInlineEdit(p);
+                    e.target.select();
+                  }}
+                  onChange={(e) => updateInlineMargin(p.id, Number(e.target.value))}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveInlineEdit(p);
+                  }}
+                  className="h-7 w-12 text-right text-xs font-mono tabular-nums border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background"
+                />
+                <span className="text-[10px] text-muted-foreground/60">%</span>
+              </div>
+            )}
           </td>
         )}
         {isWholesale && (
-          <td className="px-2 py-0 text-right text-muted-foreground">
-            {agg ? agg.retail_suggested.toFixed(2) : p.retail_suggested ? Number(p.retail_suggested).toFixed(2) : "–"}
+          <td className="px-2 py-0 text-right text-xs font-mono tabular-nums text-muted-foreground">
+            {agg ? fmtNum(agg.retail_suggested) : p.retail_suggested ? fmtNum(Number(p.retail_suggested)) : <span className="text-muted-foreground/40">–</span>}
           </td>
         )}
 
@@ -644,7 +641,7 @@ export default function Products() {
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => setBarcodePreview(p)}
-                className="font-mono text-[10px] text-primary hover:underline"
+                className="font-mono text-[10px] text-primary hover:underline tabular-nums"
               >
                 {barcode}
               </button>
@@ -665,10 +662,16 @@ export default function Products() {
         </td>
 
         {/* Stock */}
-        <td className="px-2 py-0 text-right font-medium">
-          <span className={Number(agg ? agg.stock : p.stock) <= 0 ? "text-destructive" : "text-foreground"}>
-            {Number(agg ? agg.stock : p.stock).toFixed(1)}
-          </span>
+        <td className="px-2 py-0 text-right text-xs font-mono tabular-nums font-medium">
+          {(() => {
+            const stockVal = Number(agg ? agg.stock : p.stock);
+            if (!stockVal) return <span className="text-muted-foreground/40">–</span>;
+            return (
+              <span className={stockVal <= 0 ? "text-destructive" : "text-foreground"}>
+                {stockVal.toLocaleString("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+              </span>
+            );
+          })()}
         </td>
 
         {/* Actions */}
