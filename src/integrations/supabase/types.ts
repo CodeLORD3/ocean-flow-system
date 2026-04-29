@@ -3348,6 +3348,7 @@ export type Database = {
           model_year: number | null
           next_service: string | null
           odometer: string | null
+          odometer_updated_at: string | null
           reg_number: string
           sort_order: number
           status: string | null
@@ -3365,6 +3366,7 @@ export type Database = {
           model_year?: number | null
           next_service?: string | null
           odometer?: string | null
+          odometer_updated_at?: string | null
           reg_number: string
           sort_order?: number
           status?: string | null
@@ -3382,6 +3384,7 @@ export type Database = {
           model_year?: number | null
           next_service?: string | null
           odometer?: string | null
+          odometer_updated_at?: string | null
           reg_number?: string
           sort_order?: number
           status?: string | null
