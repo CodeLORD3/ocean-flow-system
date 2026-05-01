@@ -48,7 +48,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useProductsWithChildren, useAddSubproduct, useUpdateProduct } from "@/hooks/useProducts";
 import { useCategories, useAddCategory } from "@/hooks/useCategories";
-import { usePriceHistory } from "@/hooks/usePriceHistory";
+import { usePriceHistory, useLatestPriceChanges } from "@/hooks/usePriceHistory";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import BarcodeDisplay from "@/components/barcode/BarcodeDisplay";
@@ -96,6 +96,7 @@ export default function Products() {
   const { site } = useSite();
   const isWholesale = site === "wholesale";
   const { data: products = [], allProducts = [], isLoading } = useProductsWithChildren();
+  const { data: latestPriceMap } = useLatestPriceChanges();
   const { data: dbCategories = [] } = useCategories();
   const addCategory = useAddCategory();
   const addSubproduct = useAddSubproduct();
