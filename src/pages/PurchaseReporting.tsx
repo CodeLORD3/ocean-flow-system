@@ -702,6 +702,35 @@ export default function PurchaseReporting() {
     },
   });
 
+  // Latest archived report — used for the empty-state banner so the user can
+  // see when they last added a purchase report and jump to the archive.
+  const { data: latestArchived } = useQuery({
+    queryKey: ["purchase-reports-latest-archived"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("purchase_reports")
+        .select("id, file_name, display_name, created_at, archived_at, total_amount")
+        .not("archived_at", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: archivedCount } = useQuery({
+    queryKey: ["purchase-reports-archived-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("purchase_reports")
+        .select("*", { count: "exact", head: true })
+        .not("archived_at", "is", null);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
   const selectedReport = reports.find((r) => r.id === selectedReportId) ?? null;
 
   // Build lookup: product_id -> category
