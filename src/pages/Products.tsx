@@ -602,6 +602,24 @@ export default function Products() {
             )}
           </td>
         )}
+        {isWholesale && (
+          <td className="px-2 py-0 text-right">
+            {(() => {
+              const last = latestPriceMap?.get(p.id);
+              if (!last) return <span className="!text-[11px] font-mono tabular-nums text-muted-foreground/40">–</span>;
+              return (
+                <button
+                  type="button"
+                  onClick={() => setHistoryProduct(p.id)}
+                  title={`${last.reason || "Prisändring"} · ${fmtNum(Number(last.cost_price))} kr`}
+                  className="!text-[11px] font-mono tabular-nums text-muted-foreground hover:text-foreground hover:underline"
+                >
+                  {format(new Date(last.created_at), "yy-MM-dd")}
+                </button>
+              );
+            })()}
+          </td>
+        )}
         <td className="px-2 py-0 text-right">
           {isAggregatedParent ? (
             <span className="!text-[11px] font-mono tabular-nums text-foreground">
