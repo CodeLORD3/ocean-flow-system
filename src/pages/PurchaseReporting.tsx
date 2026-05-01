@@ -9,7 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Upload, Loader2, Trash2, Plus, ZoomIn, ZoomOut, RotateCcw, FileText, Search, PackagePlus, Lock, ChevronDown, ChevronUp, CheckCircle2, Pencil } from "lucide-react";
+import { Upload, Loader2, Trash2, Plus, ZoomIn, ZoomOut, RotateCcw, FileText, Search, PackagePlus, Lock, ChevronDown, ChevronUp, CheckCircle2, Pencil, Archive } from "lucide-react";
+import { Link } from "react-router-dom";
+import { format as fmtDate } from "date-fns";
+import { sv as svLocale } from "date-fns/locale";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
@@ -702,6 +705,35 @@ export default function PurchaseReporting() {
     },
   });
 
+  // Latest archived report — used for the empty-state banner so the user can
+  // see when they last added a purchase report and jump to the archive.
+  const { data: latestArchived } = useQuery({
+    queryKey: ["purchase-reports-latest-archived"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("purchase_reports")
+        .select("id, file_name, display_name, created_at, archived_at, total_amount")
+        .not("archived_at", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: archivedCount } = useQuery({
+    queryKey: ["purchase-reports-archived-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("purchase_reports")
+        .select("*", { count: "exact", head: true })
+        .not("archived_at", "is", null);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
   const selectedReport = reports.find((r) => r.id === selectedReportId) ?? null;
 
   // Build lookup: product_id -> category
@@ -1259,9 +1291,43 @@ export default function PurchaseReporting() {
 
             <ScrollArea className="flex-1">
               {allLines.length === 0 ? (
-                <p className="text-muted-foreground text-sm text-center py-16">
-                  Inga produkter ännu. Ladda upp en följesedel till höger eller sök efter produkter ovan.
-                </p>
+                <div className="flex flex-col items-center justify-center py-16 px-6 text-center gap-4">
+                  <Archive className="h-10 w-10 text-muted-foreground/40" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-foreground">Inga aktiva rapporter idag</p>
+                    <p className="text-xs text-muted-foreground max-w-md">
+                      Rapporter flyttas automatiskt till arkivet kl 00:01 dagen efter sitt rapportdatum.
+                      Ladda upp en följesedel till höger eller sök efter produkter ovan för att börja en ny rapport.
+                    </p>
+                  </div>
+                  {(archivedCount ?? 0) > 0 && (
+                    <div className="border rounded-md p-3 bg-muted/20 text-left w-full max-w-md space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">Arkiverade rapporter</span>
+                        <span className="font-semibold text-foreground tabular-nums">{archivedCount}</span>
+                      </div>
+                      {latestArchived && (
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">Senaste tillagd</span>
+                          <span className="font-mono tabular-nums text-foreground">
+                            {fmtDate(new Date(latestArchived.created_at), "d MMM yyyy HH:mm", { locale: svLocale })}
+                          </span>
+                        </div>
+                      )}
+                      {latestArchived && (
+                        <div className="text-xs text-muted-foreground truncate">
+                          {latestArchived.display_name || latestArchived.file_name}
+                        </div>
+                      )}
+                      <Link to="/reports" className="block">
+                        <Button variant="outline" size="sm" className="w-full h-7 text-xs gap-1.5">
+                          <Archive className="h-3 w-3" />
+                          Öppna arkivet
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <div>
                   {/* Unlocked reports first */}
