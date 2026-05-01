@@ -87,7 +87,10 @@ export function useUpdateProduct() {
         details: prices,
       });
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["products"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["price_history"] });
+    },
   });
 }
 

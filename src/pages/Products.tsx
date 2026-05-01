@@ -48,7 +48,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useProductsWithChildren, useAddSubproduct, useUpdateProduct } from "@/hooks/useProducts";
 import { useCategories, useAddCategory } from "@/hooks/useCategories";
-import { usePriceHistory } from "@/hooks/usePriceHistory";
+import { usePriceHistory, useLatestPriceChanges } from "@/hooks/usePriceHistory";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import BarcodeDisplay from "@/components/barcode/BarcodeDisplay";
@@ -96,6 +96,7 @@ export default function Products() {
   const { site } = useSite();
   const isWholesale = site === "wholesale";
   const { data: products = [], allProducts = [], isLoading } = useProductsWithChildren();
+  const { data: latestPriceMap } = useLatestPriceChanges();
   const { data: dbCategories = [] } = useCategories();
   const addCategory = useAddCategory();
   const addSubproduct = useAddSubproduct();
@@ -601,6 +602,24 @@ export default function Products() {
             )}
           </td>
         )}
+        {isWholesale && (
+          <td className="px-2 py-0 text-right">
+            {(() => {
+              const last = latestPriceMap?.get(p.id);
+              if (!last) return <span className="!text-[11px] font-mono tabular-nums text-muted-foreground/40">–</span>;
+              return (
+                <button
+                  type="button"
+                  onClick={() => setHistoryProduct(p.id)}
+                  title={`${last.reason || "Prisändring"} · ${fmtNum(Number(last.cost_price))} kr`}
+                  className="!text-[11px] font-mono tabular-nums text-muted-foreground hover:text-foreground hover:underline"
+                >
+                  {format(new Date(last.created_at), "yy-MM-dd")}
+                </button>
+              );
+            })()}
+          </td>
+        )}
         <td className="px-2 py-0 text-right">
           {isAggregatedParent ? (
             <span className="!text-[11px] font-mono tabular-nums text-foreground">
@@ -867,6 +886,7 @@ export default function Products() {
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Prod.</th>
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Håll.</th>
                   {isWholesale && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Ink.pris</th>}
+                  {isWholesale && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider" title="Senaste prisändring">Sen.ink.</th>}
                   <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">
                     {isWholesale ? "Gr.pris" : "Pris"}
                   </th>
@@ -880,7 +900,7 @@ export default function Products() {
               <tbody>
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={isWholesale ? 14 : 11} className="p-8 text-center text-muted-foreground">
+                    <td colSpan={isWholesale ? 15 : 11} className="p-8 text-center text-muted-foreground">
                       Inga produkter hittades.
                     </td>
                   </tr>
