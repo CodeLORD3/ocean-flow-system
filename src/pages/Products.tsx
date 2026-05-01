@@ -868,6 +868,7 @@ export default function Products() {
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Prod.</th>
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Håll.</th>
                   {isWholesale && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Ink.pris</th>}
+                  {isWholesale && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider" title="Senaste prisändring">Sen.ink.</th>}
                   <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">
                     {isWholesale ? "Gr.pris" : "Pris"}
                   </th>
@@ -881,7 +882,7 @@ export default function Products() {
               <tbody>
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={isWholesale ? 14 : 11} className="p-8 text-center text-muted-foreground">
+                    <td colSpan={isWholesale ? 15 : 11} className="p-8 text-center text-muted-foreground">
                       Inga produkter hittades.
                     </td>
                   </tr>
