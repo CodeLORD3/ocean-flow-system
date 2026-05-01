@@ -1105,6 +1105,17 @@ export default function PurchaseReporting() {
                   {" · "}{lockedReports.length} bekräftade
                 </p>
               </div>
+              <Link to="/reports">
+                <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
+                  <Archive className="h-3.5 w-3.5" />
+                  Arkiv
+                  {(archivedCount ?? 0) > 0 && (
+                    <Badge variant="secondary" className="ml-1 h-4 px-1.5 text-[10px] tabular-nums">
+                      {archivedCount}
+                    </Badge>
+                  )}
+                </Button>
+              </Link>
             </div>
 
             {/* Search bar to add existing products + new product button */}
