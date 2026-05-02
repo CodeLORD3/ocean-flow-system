@@ -3,6 +3,7 @@ import { useSite } from "@/contexts/SiteContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getStoreCurrency } from "@/lib/currency";
+import { generateShopReportPdf } from "@/lib/shopReportPdf";
 import {
   useWeeklyReportsList,
   useWeeklyReportDetail,
@@ -445,8 +446,52 @@ function WeeklyReportForm({
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => window.print()}>
-            <Printer className="h-3.5 w-3.5 mr-1" /> Skriv ut
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              generateShopReportPdf({
+                storeName: storeRow?.name || "Butik",
+                city: (storeRow as any)?.city,
+                year,
+                week,
+                weekRange: getWeekDateRange(year, week),
+                status,
+                currency: currencyLabel,
+                openingInventory,
+                closingInventory,
+                inventoryChange,
+                totalCosts,
+                totalSales,
+                grossMargin,
+                grossMarginPct,
+                notes,
+                inventory: invLines
+                  .filter((l) => l.product_id || l._name)
+                  .map((l) => ({
+                    name: l._name || "Okänd produkt",
+                    quantity: Number(l.quantity) || 0,
+                    unit: l.unit || "",
+                    unit_price: Number(l.unit_price) || 0,
+                    total: Number(l.total) || 0,
+                  })),
+                costs: costLines.map((c) => ({ label: c.label, amount: Number(c.amount) || 0 })),
+                sales: salesLines.map((s) => ({
+                  channel: s.channel,
+                  quantity: Number(s.quantity) || 0,
+                  amount: Number(s.amount) || 0,
+                  last_year_amount: s.last_year_amount ? Number(s.last_year_amount) : undefined,
+                })),
+                social: socialLines.map((s) => ({
+                  platform: s.platform,
+                  opening_followers: Number(s.opening_followers) || 0,
+                  closing_followers: Number(s.closing_followers) || 0,
+                  posts_count: Number(s.posts_count) || 0,
+                })),
+              });
+            }}
+          >
+            <Printer className="h-3.5 w-3.5 mr-1" /> Ladda ner PDF
           </Button>
         </div>
       </div>
