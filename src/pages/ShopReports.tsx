@@ -3,6 +3,7 @@ import { useSite } from "@/contexts/SiteContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getStoreCurrency } from "@/lib/currency";
+import { generateShopReportPdf } from "@/lib/shopReportPdf";
 import {
   useWeeklyReportsList,
   useWeeklyReportDetail,
