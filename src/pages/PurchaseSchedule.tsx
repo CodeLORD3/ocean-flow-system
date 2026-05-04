@@ -253,7 +253,53 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
     }
   };
 
-  // Manual entry dialog state
+  // ── PDF purchase list dialog state ──
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+  const [pdfPurchaser, setPdfPurchaser] = useState("");
+  const [pdfNotes, setPdfNotes] = useState("");
+
+  const handleGeneratePurchaseListPdf = (map: Map<number, typeof filteredSchedule>) => {
+    const items: Parameters<typeof generatePurchaseListPdf>[0]["items"] = [];
+    for (const [dayIndex, dayItems] of map.entries()) {
+      for (const item of dayItems) {
+        const key = `${dayIndex}-${item.productName}-${item.productId}`;
+        if (!selectedKeys.has(key)) continue;
+        items.push({
+          productName: item.productName,
+          category: item.category || "Övrigt",
+          quantity: item.totalQuantity,
+          unit: item.unit,
+          shops: item.shops
+            .filter((s) => !s.packed)
+            .map((s) => ({ name: s.name, quantity: s.quantity })),
+          departureDate: format(item.departureDate, "EEE d/M", { locale: sv }),
+          departureTime: item.departureTime,
+        });
+      }
+    }
+    if (items.length === 0) {
+      toast.error("Inga produkter markerade.");
+      return;
+    }
+    try {
+      generatePurchaseListPdf({
+        title: "Inköpslista",
+        week: currentWeek,
+        year: currentYear,
+        weekRange: `${format(weekDates[0], "d MMM", { locale: sv })} – ${format(weekDates[6], "d MMM", { locale: sv })}`,
+        purchaserName: pdfPurchaser || undefined,
+        notes: pdfNotes || undefined,
+        items,
+      });
+      toast.success(`PDF genererad (${items.length} produkter).`);
+      setPdfDialogOpen(false);
+      setPdfPurchaser("");
+      setPdfNotes("");
+    } catch (e) {
+      toast.error("Kunde inte skapa PDF.");
+    }
+  };
+
   const [manualDialogOpen, setManualDialogOpen] = useState(false);
   const [manualProductSearch, setManualProductSearch] = useState("");
   const [manualProductId, setManualProductId] = useState("");
