@@ -1176,6 +1176,14 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
             </div>
             <div className="h-4 w-px bg-border" />
             <Button
+              variant="default"
+              size="sm"
+              className="h-7 text-[11px] gap-1"
+              onClick={() => setPdfDialogOpen(true)}
+            >
+              <FileDown className="h-3.5 w-3.5" /> Skapa inköpslista (PDF)
+            </Button>
+            <Button
               variant="ghost"
               size="sm"
               className="h-7 text-[11px]"
@@ -1185,6 +1193,45 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
             </Button>
           </div>
         )}
+
+        {/* ── PDF dialog ── */}
+        <Dialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-sm">Skapa inköpslista (PDF)</DialogTitle>
+              <DialogDescription className="text-xs">
+                Genererar en utskrivbar inköpslista för {selectedKeys.size} markerade produkt{selectedKeys.size === 1 ? "" : "er"}.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Inköpare (valfritt)</Label>
+                <Input
+                  placeholder="t.ex. Anders Andersson"
+                  value={pdfPurchaser}
+                  onChange={(e) => setPdfPurchaser(e.target.value)}
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Anteckningar (valfritt)</Label>
+                <Textarea
+                  placeholder="Instruktioner till inköparen..."
+                  value={pdfNotes}
+                  onChange={(e) => setPdfNotes(e.target.value)}
+                  className="text-xs min-h-[80px]"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" size="sm" onClick={() => setPdfDialogOpen(false)}>Avbryt</Button>
+              <Button size="sm" onClick={() => handleGeneratePurchaseListPdf(activeMap)} className="gap-1">
+                <FileDown className="h-3.5 w-3.5" /> Ladda ner PDF
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
 
         {/* ── TOTAL WEEK VIEW ── */}
         <TabsContent value="total">
