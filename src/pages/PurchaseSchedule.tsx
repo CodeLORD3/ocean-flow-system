@@ -17,7 +17,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format, startOfWeek, addDays, isSameDay, parseISO, getISOWeek, getYear } from "date-fns";
 import { sv } from "date-fns/locale";
-import { CalendarDays, ChevronLeft, ChevronRight, AlertTriangle, Truck, Settings2, ChevronDown, ListChecks, Ban, Package, PackageCheck, Check, Plus, User, Trash2 } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, AlertTriangle, Truck, Settings2, ChevronDown, ListChecks, Ban, Package, PackageCheck, Check, Plus, User, Trash2, FileDown } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { generatePurchaseListPdf } from "@/lib/purchaseListPdf";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useCreateChangeRequest } from "@/hooks/useOrderChangeRequests";
@@ -251,7 +253,53 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
     }
   };
 
-  // Manual entry dialog state
+  // ── PDF purchase list dialog state ──
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+  const [pdfPurchaser, setPdfPurchaser] = useState("");
+  const [pdfNotes, setPdfNotes] = useState("");
+
+  const handleGeneratePurchaseListPdf = (map: Map<number, typeof filteredSchedule>) => {
+    const items: Parameters<typeof generatePurchaseListPdf>[0]["items"] = [];
+    for (const [dayIndex, dayItems] of map.entries()) {
+      for (const item of dayItems) {
+        const key = `${dayIndex}-${item.productName}-${item.productId}`;
+        if (!selectedKeys.has(key)) continue;
+        items.push({
+          productName: item.productName,
+          category: item.category || "Övrigt",
+          quantity: item.totalQuantity,
+          unit: item.unit,
+          shops: item.shops
+            .filter((s) => !s.packed)
+            .map((s) => ({ name: s.name, quantity: s.quantity })),
+          departureDate: format(item.departureDate, "EEE d/M", { locale: sv }),
+          departureTime: item.departureTime,
+        });
+      }
+    }
+    if (items.length === 0) {
+      toast.error("Inga produkter markerade.");
+      return;
+    }
+    try {
+      generatePurchaseListPdf({
+        title: "Inköpslista",
+        week: currentWeek,
+        year: currentYear,
+        weekRange: `${format(weekDates[0], "d MMM", { locale: sv })} – ${format(weekDates[6], "d MMM", { locale: sv })}`,
+        purchaserName: pdfPurchaser || undefined,
+        notes: pdfNotes || undefined,
+        items,
+      });
+      toast.success(`PDF genererad (${items.length} produkter).`);
+      setPdfDialogOpen(false);
+      setPdfPurchaser("");
+      setPdfNotes("");
+    } catch (e) {
+      toast.error("Kunde inte skapa PDF.");
+    }
+  };
+
   const [manualDialogOpen, setManualDialogOpen] = useState(false);
   const [manualProductSearch, setManualProductSearch] = useState("");
   const [manualProductId, setManualProductId] = useState("");
@@ -1128,6 +1176,14 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
             </div>
             <div className="h-4 w-px bg-border" />
             <Button
+              variant="default"
+              size="sm"
+              className="h-7 text-[11px] gap-1"
+              onClick={() => setPdfDialogOpen(true)}
+            >
+              <FileDown className="h-3.5 w-3.5" /> Skapa inköpslista (PDF)
+            </Button>
+            <Button
               variant="ghost"
               size="sm"
               className="h-7 text-[11px]"
@@ -1137,6 +1193,45 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
             </Button>
           </div>
         )}
+
+        {/* ── PDF dialog ── */}
+        <Dialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-sm">Skapa inköpslista (PDF)</DialogTitle>
+              <DialogDescription className="text-xs">
+                Genererar en utskrivbar inköpslista för {selectedKeys.size} markerade produkt{selectedKeys.size === 1 ? "" : "er"}.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Inköpare (valfritt)</Label>
+                <Input
+                  placeholder="t.ex. Anders Andersson"
+                  value={pdfPurchaser}
+                  onChange={(e) => setPdfPurchaser(e.target.value)}
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Anteckningar (valfritt)</Label>
+                <Textarea
+                  placeholder="Instruktioner till inköparen..."
+                  value={pdfNotes}
+                  onChange={(e) => setPdfNotes(e.target.value)}
+                  className="text-xs min-h-[80px]"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" size="sm" onClick={() => setPdfDialogOpen(false)}>Avbryt</Button>
+              <Button size="sm" onClick={() => handleGeneratePurchaseListPdf(activeMap)} className="gap-1">
+                <FileDown className="h-3.5 w-3.5" /> Ladda ner PDF
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
 
         {/* ── TOTAL WEEK VIEW ── */}
         <TabsContent value="total">
