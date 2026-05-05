@@ -38,6 +38,7 @@ const USERS: SeedUser[] = [
   { email: "vilma.gunnarsson@gmail.com",  password: "Vilma123",   first: "Vilma",   last: "Andersson", portals: ["shop"],         store: null, stores: [STOCKHOLM_STORE_ID] },
   { email: "fredric.lindqvist@calixter.com", password: "Fredric123", first: "Fredric", last: "Lindqvist", portals: ["shop", "wholesale", "production"], store: null, stores: [STOCKHOLM_STORE_ID, TORGET_STORE_ID, AMHULT_STORE_ID, SARO_STORE_ID] },
   { email: "erik.olof.franzen@gmail.com", password: "Erik123", first: "Erik", last: "Franzén", portals: ["shop"], store: SARO_STORE_ID, stores: [SARO_STORE_ID] },
+  { email: "blankaofta@gmail.com", password: "Benny123", first: "Benny", last: "Andersson", portals: ["shop"], store: "857b421c-8319-4a66-97c1-7bff980f4967", stores: ["857b421c-8319-4a66-97c1-7bff980f4967"] },
 ];
 
 Deno.serve(async (req) => {
