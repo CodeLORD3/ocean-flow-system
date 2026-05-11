@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Fragment } from "react";
 import { displayOrderWeek } from "@/lib/orderWeek";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Clock, CheckCircle2, Truck, XCircle, Package, ShoppingCart, ChevronDown, ChevronRight, ArrowRight, Pencil, Plus, X, Send, Trash2, CalendarIcon, FileText, Printer } from "lucide-react";
@@ -596,68 +596,90 @@ function OrderRow({
                       </tr>
                     </thead>
                     <tbody>
-                      {lines.map((line: any) => {
-                        const lineStatus = line.status || "Ny";
-                        const next = getNextStatus(lineStatus);
-                        const prev = getPrevStatus(lineStatus);
-                        const canEditPacked = isGrossist && lineStatus === "Pågående";
+                      {(() => {
+                        const groups = new Map<string, any[]>();
+                        for (const l of lines) {
+                          const cat = l.products?.category || "Övrigt";
+                          if (!groups.has(cat)) groups.set(cat, []);
+                          groups.get(cat)!.push(l);
+                        }
+                        const sortedCats = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b, "sv"));
+                        const colSpan = isGrossist ? 7 : 6;
+                        return sortedCats.map((cat) => {
+                          const catLines = groups.get(cat)!.slice().sort((a: any, b: any) => (a.products?.name || "").localeCompare(b.products?.name || "", "sv"));
+                          return (
+                            <Fragment key={cat}>
+                              <tr className="bg-muted/40">
+                                <td colSpan={colSpan} className="px-1 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                  ▸ {cat}
+                                </td>
+                              </tr>
+                              {catLines.map((line: any) => {
+                                const lineStatus = line.status || "Ny";
+                                const next = getNextStatus(lineStatus);
+                                const prev = getPrevStatus(lineStatus);
+                                const canEditPacked = isGrossist && lineStatus === "Pågående";
 
-                        return (
-                          <tr key={line.id} className={`border-b border-border/30 last:border-0 h-6 ${rowBgByStatus[lineStatus] || ""}`}>
-                            <td className="py-0.5 font-medium text-foreground">{line.products?.name || "—"}</td>
-                            <td className="py-0.5 text-muted-foreground">{line.products?.category || "—"}</td>
-                            <td className="py-0.5 text-right text-foreground">{line.quantity_ordered}</td>
-                            <td className="py-0.5 text-right text-muted-foreground">
-                              {canEditPacked ? (
-                                <PackedInput lineId={line.id} orderId={order.id} defaultValue={line.quantity_ordered} currentDelivered={line.quantity_delivered} onStatusChange={onStatusChange} />
-                              ) : (
-                                Number(line.quantity_delivered || 0) > 0 ? line.quantity_delivered : "–"
-                              )}
-                            </td>
-                            <td className="py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "kg"}</td>
-                            <td className="py-0.5 text-right">
-                              <Badge variant="outline" className={`${statusColor[lineStatus] || statusColor["Ny"]} text-[10px] gap-1`}>
-                                {statusIcon[lineStatus] || statusIcon["Ny"]}
-                                {lineStatus}
-                              </Badge>
-                            </td>
-                            {isGrossist && (
-                              <td className="py-1 text-right">
-                                <div className="flex items-center justify-end gap-1">
-                                  {prev && (
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
-                                      disabled={isPending}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        onStatusChange(line.id, order.id, prev);
-                                      }}
-                                    >
-                                      ← {prev}
-                                    </Button>
-                                  )}
-                                  {next && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="h-6 px-2 text-[10px] gap-1"
-                                      disabled={isPending}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        onStatusChange(line.id, order.id, next);
-                                      }}
-                                    >
-                                      {next} <ArrowRight className="h-3 w-3" />
-                                    </Button>
-                                  )}
-                                </div>
-                              </td>
-                            )}
-                          </tr>
-                        );
-                      })}
+                                return (
+                                  <tr key={line.id} className={`border-b border-border/30 last:border-0 h-6 ${rowBgByStatus[lineStatus] || ""}`}>
+                                    <td className="py-0.5 font-medium text-foreground">{line.products?.name || "—"}</td>
+                                    <td className="py-0.5 text-muted-foreground">{line.products?.category || "—"}</td>
+                                    <td className="py-0.5 text-right text-foreground">{line.quantity_ordered}</td>
+                                    <td className="py-0.5 text-right text-muted-foreground">
+                                      {canEditPacked ? (
+                                        <PackedInput lineId={line.id} orderId={order.id} defaultValue={line.quantity_ordered} currentDelivered={line.quantity_delivered} onStatusChange={onStatusChange} />
+                                      ) : (
+                                        Number(line.quantity_delivered || 0) > 0 ? line.quantity_delivered : "–"
+                                      )}
+                                    </td>
+                                    <td className="py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "kg"}</td>
+                                    <td className="py-0.5 text-right">
+                                      <Badge variant="outline" className={`${statusColor[lineStatus] || statusColor["Ny"]} text-[10px] gap-1`}>
+                                        {statusIcon[lineStatus] || statusIcon["Ny"]}
+                                        {lineStatus}
+                                      </Badge>
+                                    </td>
+                                    {isGrossist && (
+                                      <td className="py-1 text-right">
+                                        <div className="flex items-center justify-end gap-1">
+                                          {prev && (
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                                              disabled={isPending}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                onStatusChange(line.id, order.id, prev);
+                                              }}
+                                            >
+                                              ← {prev}
+                                            </Button>
+                                          )}
+                                          {next && (
+                                            <Button
+                                              size="sm"
+                                              variant="outline"
+                                              className="h-6 px-2 text-[10px] gap-1"
+                                              disabled={isPending}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                onStatusChange(line.id, order.id, next);
+                                              }}
+                                            >
+                                              {next} <ArrowRight className="h-3 w-3" />
+                                            </Button>
+                                          )}
+                                        </div>
+                                      </td>
+                                    )}
+                                  </tr>
+                                );
+                              })}
+                            </Fragment>
+                          );
+                        });
+                      })()}
                     </tbody>
                   </table>
 
@@ -957,32 +979,54 @@ function WholesaleOrderDetail({ order, products, transportSchedules, stores, onC
               </tr>
             </thead>
             <tbody>
-              {order.shop_order_lines?.map((line: any) => {
-                const lineStatus = line.status || "Ny";
-                return (
-                  <tr key={line.id} className={`border-b border-border/30 transition-colors ${rowBgByStatus[lineStatus] || ""}`}>
-                    <td className="p-2.5 font-medium text-foreground">{line.products?.name || "–"}</td>
-                    <td className="p-2.5 text-muted-foreground">{line.products?.category || "–"}</td>
-                    <td className="p-2.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
-                    <td className="p-2.5 text-right font-mono text-foreground">{line.quantity_ordered}</td>
-                    <td className="p-2.5 text-right font-mono text-muted-foreground">{line.quantity_delivered || "–"}</td>
-                    <td className="p-2.5 text-muted-foreground">{line.deviation || "–"}</td>
-                    <td className="p-2.5">
-                      <Badge variant="outline" className={`${statusColor[lineStatus] || statusColor["Ny"]} text-[10px] gap-1`}>
-                        {statusIcon[lineStatus] || statusIcon["Ny"]}
-                        {lineStatus}
-                      </Badge>
-                    </td>
-                    <td className="p-2.5">
-                      {isEditable && (
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteLine(line.id)}>
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
+              {(() => {
+                const all = order.shop_order_lines || [];
+                const groups = new Map<string, any[]>();
+                for (const l of all) {
+                  const cat = l.products?.category || "Övrigt";
+                  if (!groups.has(cat)) groups.set(cat, []);
+                  groups.get(cat)!.push(l);
+                }
+                const sortedCats = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b, "sv"));
+                return sortedCats.map((cat) => {
+                  const catLines = groups.get(cat)!.slice().sort((a: any, b: any) => (a.products?.name || "").localeCompare(b.products?.name || "", "sv"));
+                  return (
+                    <Fragment key={cat}>
+                      <tr className="bg-muted/40">
+                        <td colSpan={8} className="px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          ▸ {cat}
+                        </td>
+                      </tr>
+                      {catLines.map((line: any) => {
+                        const lineStatus = line.status || "Ny";
+                        return (
+                          <tr key={line.id} className={`border-b border-border/30 transition-colors ${rowBgByStatus[lineStatus] || ""}`}>
+                            <td className="p-2.5 font-medium text-foreground">{line.products?.name || "–"}</td>
+                            <td className="p-2.5 text-muted-foreground">{line.products?.category || "–"}</td>
+                            <td className="p-2.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
+                            <td className="p-2.5 text-right font-mono text-foreground">{line.quantity_ordered}</td>
+                            <td className="p-2.5 text-right font-mono text-muted-foreground">{line.quantity_delivered || "–"}</td>
+                            <td className="p-2.5 text-muted-foreground">{line.deviation || "–"}</td>
+                            <td className="p-2.5">
+                              <Badge variant="outline" className={`${statusColor[lineStatus] || statusColor["Ny"]} text-[10px] gap-1`}>
+                                {statusIcon[lineStatus] || statusIcon["Ny"]}
+                                {lineStatus}
+                              </Badge>
+                            </td>
+                            <td className="p-2.5">
+                              {isEditable && (
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteLine(line.id)}>
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </Fragment>
+                  );
+                });
+              })()}
             </tbody>
           </table>
         </div>
