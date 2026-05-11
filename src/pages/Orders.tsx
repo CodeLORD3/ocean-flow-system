@@ -979,32 +979,54 @@ function WholesaleOrderDetail({ order, products, transportSchedules, stores, onC
               </tr>
             </thead>
             <tbody>
-              {order.shop_order_lines?.map((line: any) => {
-                const lineStatus = line.status || "Ny";
-                return (
-                  <tr key={line.id} className={`border-b border-border/30 transition-colors ${rowBgByStatus[lineStatus] || ""}`}>
-                    <td className="p-2.5 font-medium text-foreground">{line.products?.name || "–"}</td>
-                    <td className="p-2.5 text-muted-foreground">{line.products?.category || "–"}</td>
-                    <td className="p-2.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
-                    <td className="p-2.5 text-right font-mono text-foreground">{line.quantity_ordered}</td>
-                    <td className="p-2.5 text-right font-mono text-muted-foreground">{line.quantity_delivered || "–"}</td>
-                    <td className="p-2.5 text-muted-foreground">{line.deviation || "–"}</td>
-                    <td className="p-2.5">
-                      <Badge variant="outline" className={`${statusColor[lineStatus] || statusColor["Ny"]} text-[10px] gap-1`}>
-                        {statusIcon[lineStatus] || statusIcon["Ny"]}
-                        {lineStatus}
-                      </Badge>
-                    </td>
-                    <td className="p-2.5">
-                      {isEditable && (
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteLine(line.id)}>
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
+              {(() => {
+                const all = order.shop_order_lines || [];
+                const groups = new Map<string, any[]>();
+                for (const l of all) {
+                  const cat = l.products?.category || "Övrigt";
+                  if (!groups.has(cat)) groups.set(cat, []);
+                  groups.get(cat)!.push(l);
+                }
+                const sortedCats = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b, "sv"));
+                return sortedCats.map((cat) => {
+                  const catLines = groups.get(cat)!.slice().sort((a: any, b: any) => (a.products?.name || "").localeCompare(b.products?.name || "", "sv"));
+                  return (
+                    <Fragment key={cat}>
+                      <tr className="bg-muted/40">
+                        <td colSpan={8} className="px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          ▸ {cat}
+                        </td>
+                      </tr>
+                      {catLines.map((line: any) => {
+                        const lineStatus = line.status || "Ny";
+                        return (
+                          <tr key={line.id} className={`border-b border-border/30 transition-colors ${rowBgByStatus[lineStatus] || ""}`}>
+                            <td className="p-2.5 font-medium text-foreground">{line.products?.name || "–"}</td>
+                            <td className="p-2.5 text-muted-foreground">{line.products?.category || "–"}</td>
+                            <td className="p-2.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
+                            <td className="p-2.5 text-right font-mono text-foreground">{line.quantity_ordered}</td>
+                            <td className="p-2.5 text-right font-mono text-muted-foreground">{line.quantity_delivered || "–"}</td>
+                            <td className="p-2.5 text-muted-foreground">{line.deviation || "–"}</td>
+                            <td className="p-2.5">
+                              <Badge variant="outline" className={`${statusColor[lineStatus] || statusColor["Ny"]} text-[10px] gap-1`}>
+                                {statusIcon[lineStatus] || statusIcon["Ny"]}
+                                {lineStatus}
+                              </Badge>
+                            </td>
+                            <td className="p-2.5">
+                              {isEditable && (
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => handleDeleteLine(line.id)}>
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </Fragment>
+                  );
+                });
+              })()}
             </tbody>
           </table>
         </div>
