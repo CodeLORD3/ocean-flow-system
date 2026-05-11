@@ -942,6 +942,7 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
             <thead>
               <tr className="border-b border-border bg-muted/30">
                 <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">Produkt</th>
+                <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">Kategori</th>
                 <th className="px-1.5 py-0.5 text-left font-medium text-muted-foreground">Enhet</th>
                 <th className="px-1.5 py-0.5 text-right font-medium text-muted-foreground">Beställt</th>
                 <th className="px-1.5 py-0.5 text-right font-medium text-muted-foreground">Packat</th>
@@ -950,35 +951,58 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
               </tr>
             </thead>
             <tbody>
-              {order.shop_order_lines?.map((line: any) => {
-                const qtyOrdered = line.quantity_ordered || 0;
-                const qtyDelivered = line.quantity_delivered || 0;
-                const hasDiff = qtyDelivered > 0 && qtyDelivered !== qtyOrdered;
-                return (
-                  <tr key={line.id} className={`border-b border-border/30 h-6 transition-colors ${rowBgByStatus[line.status || ""] || ""}`}>
-                    <td className="px-1.5 py-0.5 font-medium text-foreground">{line.products?.name || "–"}</td>
-                    <td className="px-1.5 py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
-                    <td className="px-1.5 py-0.5 text-right font-mono text-foreground">{qtyOrdered}</td>
-                    <td className={`px-1.5 py-0.5 text-right font-mono ${hasDiff ? "text-warning font-bold" : "text-muted-foreground"}`}>
-                      {qtyDelivered > 0 ? qtyDelivered : "–"}
-                    </td>
-                    <td className="px-1.5 py-0.5 text-muted-foreground">{line.deviation || "–"}</td>
-                    <td className="px-1.5 py-0.5">
-                      {line.status ? (
-                        <Badge variant="outline" className={`${statusColor[line.status] || ""} text-[10px] gap-1`}>
-                          {statusIcon[line.status]}
-                          {line.status}
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className={`${statusColor["Ny"]} text-[10px] gap-1`}>
-                          {statusIcon["Ny"]}
-                          Ny
-                        </Badge>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
+              {(() => {
+                const all = order.shop_order_lines || [];
+                const groups = new Map<string, any[]>();
+                for (const l of all) {
+                  const cat = l.products?.category || "Övrigt";
+                  if (!groups.has(cat)) groups.set(cat, []);
+                  groups.get(cat)!.push(l);
+                }
+                const sortedCats = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b, "sv"));
+                return sortedCats.map((cat) => {
+                  const catLines = groups.get(cat)!.slice().sort((a: any, b: any) => (a.products?.name || "").localeCompare(b.products?.name || "", "sv"));
+                  return (
+                    <React.Fragment key={cat}>
+                      <tr className="bg-muted/40">
+                        <td colSpan={7} className="px-1.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          ▸ {cat}
+                        </td>
+                      </tr>
+                      {catLines.map((line: any) => {
+                        const qtyOrdered = line.quantity_ordered || 0;
+                        const qtyDelivered = line.quantity_delivered || 0;
+                        const hasDiff = qtyDelivered > 0 && qtyDelivered !== qtyOrdered;
+                        return (
+                          <tr key={line.id} className={`border-b border-border/30 h-6 transition-colors ${rowBgByStatus[line.status || ""] || ""}`}>
+                            <td className="px-1.5 py-0.5 font-medium text-foreground">{line.products?.name || "–"}</td>
+                            <td className="px-1.5 py-0.5 text-muted-foreground">{line.products?.category || "–"}</td>
+                            <td className="px-1.5 py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
+                            <td className="px-1.5 py-0.5 text-right font-mono text-foreground">{qtyOrdered}</td>
+                            <td className={`px-1.5 py-0.5 text-right font-mono ${hasDiff ? "text-warning font-bold" : "text-muted-foreground"}`}>
+                              {qtyDelivered > 0 ? qtyDelivered : "–"}
+                            </td>
+                            <td className="px-1.5 py-0.5 text-muted-foreground">{line.deviation || "–"}</td>
+                            <td className="px-1.5 py-0.5">
+                              {line.status ? (
+                                <Badge variant="outline" className={`${statusColor[line.status] || ""} text-[10px] gap-1`}>
+                                  {statusIcon[line.status]}
+                                  {line.status}
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className={`${statusColor["Ny"]} text-[10px] gap-1`}>
+                                  {statusIcon["Ny"]}
+                                  Ny
+                                </Badge>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </React.Fragment>
+                  );
+                });
+              })()}
             </tbody>
           </table>
         </div>
