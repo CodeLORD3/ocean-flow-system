@@ -385,6 +385,13 @@ function WeeklyReportForm({
 
   const isPending = createMut.isPending || updateMut.isPending;
 
+  // Parse number tolerantly (accept "12,5" and empty/null/NaN)
+  const parseNum = (v: any): number => {
+    if (v === null || v === undefined || v === "") return 0;
+    const n = typeof v === "number" ? v : Number(String(v).replace(",", "."));
+    return Number.isFinite(n) ? n : 0;
+  };
+
   // Inventory line helpers
   const addInvLine = () => {
     setInvLines((prev) => [...prev, { product_id: "", quantity: 0, unit: "kg", unit_price: 0, total: 0 }]);
@@ -393,10 +400,13 @@ function WeeklyReportForm({
   const updateInvLine = (idx: number, field: string, value: any) => {
     setInvLines((prev) => {
       const updated = [...prev];
-      (updated[idx] as any)[field] = value;
-      if (field === "quantity" || field === "unit_price") {
-        updated[idx].total = updated[idx].quantity * updated[idx].unit_price;
-      }
+      const v = field === "quantity" || field === "unit_price" ? parseNum(value) : value;
+      (updated[idx] as any)[field] = v;
+      const q = parseNum(updated[idx].quantity);
+      const p = parseNum(updated[idx].unit_price);
+      updated[idx].quantity = q;
+      updated[idx].unit_price = p;
+      updated[idx].total = q * p;
       return updated;
     });
   };
