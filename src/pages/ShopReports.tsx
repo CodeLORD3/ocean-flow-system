@@ -320,7 +320,10 @@ function WeeklyReportForm({
   }, [detail, allProducts]);
 
   // Computed values
-  const closingInventory = invLines.reduce((s, l) => s + l.total, 0);
+  const closingInventory = invLines.reduce((s, l) => {
+    const t = Number(l.total);
+    return s + (Number.isFinite(t) ? t : 0);
+  }, 0);
   const inventoryChange = closingInventory - openingInventory;
   const totalCosts = costLines.reduce((s, l) => s + l.amount, 0) + Math.abs(Math.min(0, inventoryChange));
   const totalSales = salesLines.reduce((s, l) => s + l.amount, 0);
