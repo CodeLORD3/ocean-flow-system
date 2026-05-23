@@ -603,13 +603,15 @@ function WeeklyReportForm({
                           products={allProducts}
                           onSelect={(id, name, unit, price) => {
                             const updated = [...invLines];
+                            const safePrice = Number.isFinite(Number(price)) ? Number(price) : 0;
+                            const q = Number(updated[idx].quantity) || 0;
                             updated[idx] = {
                               ...updated[idx],
                               product_id: id,
                               unit,
-                              unit_price: price,
+                              unit_price: safePrice,
                               _name: name,
-                              total: updated[idx].quantity * price,
+                              total: q * safePrice,
                             };
                             setInvLines(updated);
                           }}
