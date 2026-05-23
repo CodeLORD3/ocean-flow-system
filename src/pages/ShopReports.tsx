@@ -320,7 +320,10 @@ function WeeklyReportForm({
   }, [detail, allProducts]);
 
   // Computed values
-  const closingInventory = invLines.reduce((s, l) => s + l.total, 0);
+  const closingInventory = invLines.reduce((s, l) => {
+    const t = Number(l.total);
+    return s + (Number.isFinite(t) ? t : 0);
+  }, 0);
   const inventoryChange = closingInventory - openingInventory;
   const totalCosts = costLines.reduce((s, l) => s + l.amount, 0) + Math.abs(Math.min(0, inventoryChange));
   const totalSales = salesLines.reduce((s, l) => s + l.amount, 0);
@@ -385,6 +388,13 @@ function WeeklyReportForm({
 
   const isPending = createMut.isPending || updateMut.isPending;
 
+  // Parse number tolerantly (accept "12,5" and empty/null/NaN)
+  const parseNum = (v: any): number => {
+    if (v === null || v === undefined || v === "") return 0;
+    const n = typeof v === "number" ? v : Number(String(v).replace(",", "."));
+    return Number.isFinite(n) ? n : 0;
+  };
+
   // Inventory line helpers
   const addInvLine = () => {
     setInvLines((prev) => [...prev, { product_id: "", quantity: 0, unit: "kg", unit_price: 0, total: 0 }]);
@@ -393,10 +403,13 @@ function WeeklyReportForm({
   const updateInvLine = (idx: number, field: string, value: any) => {
     setInvLines((prev) => {
       const updated = [...prev];
-      (updated[idx] as any)[field] = value;
-      if (field === "quantity" || field === "unit_price") {
-        updated[idx].total = updated[idx].quantity * updated[idx].unit_price;
-      }
+      const v = field === "quantity" || field === "unit_price" ? parseNum(value) : value;
+      (updated[idx] as any)[field] = v;
+      const q = parseNum(updated[idx].quantity);
+      const p = parseNum(updated[idx].unit_price);
+      updated[idx].quantity = q;
+      updated[idx].unit_price = p;
+      updated[idx].total = q * p;
       return updated;
     });
   };
@@ -590,13 +603,15 @@ function WeeklyReportForm({
                           products={allProducts}
                           onSelect={(id, name, unit, price) => {
                             const updated = [...invLines];
+                            const safePrice = Number.isFinite(Number(price)) ? Number(price) : 0;
+                            const q = Number(updated[idx].quantity) || 0;
                             updated[idx] = {
                               ...updated[idx],
                               product_id: id,
                               unit,
-                              unit_price: price,
+                              unit_price: safePrice,
                               _name: name,
-                              total: updated[idx].quantity * price,
+                              total: q * safePrice,
                             };
                             setInvLines(updated);
                           }}
