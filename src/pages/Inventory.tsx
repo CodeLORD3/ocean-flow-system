@@ -1534,7 +1534,7 @@ export default function Inventory() {
                   <SelectContent position="popper" className="max-h-[50vh] overflow-y-auto w-[--radix-select-trigger-width]">
                     {locations.map((loc: any) => (
                       <SelectItem key={loc.id} value={loc.id} className="text-xs">
-                        {zoneIcon[loc.zone] || "📍"} {loc.name} ({loc.stores?.name})
+                        <span className="block truncate">{zoneIcon[loc.zone] || "📍"} {loc.name} ({loc.stores?.name})</span>
                       </SelectItem>
                     ))}
                   </SelectContent>
