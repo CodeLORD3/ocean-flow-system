@@ -1433,10 +1433,10 @@ export default function Inventory() {
                           {isOpen && (
                             <div className="p-1.5 space-y-1.5">
                               {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
-                              {allCats.map((cat) => {
+                              {allCats.filter((cat) => (catMap.get(cat)?.length ?? 0) > 0).map((cat) => {
                                 const items = catMap.get(cat) || [];
                                 const catKey = `${loc.id}::${cat}`;
-                                const catOpen = !!openSubLocations[catKey];
+                                const catOpen = openSubLocations[catKey] !== false;
                                 const catQty = items.reduce((s: number, i: any) => s + Number(i.quantity), 0);
                                 const catValue = items.reduce(
                                   (s: number, i: any) =>
@@ -1446,8 +1446,8 @@ export default function Inventory() {
                                   0,
                                 );
                                 return (
-                                  <div key={catKey} className="border border-border/50 rounded-md overflow-hidden">
-                                    <div className="flex items-center gap-1.5 bg-muted/20 pl-2">
+                                  <div key={catKey} className="rounded-md overflow-hidden border border-border/50 bg-card">
+                                    <div className="flex items-center gap-2 bg-accent/10 border-l-2 border-accent pl-2">
                                       <Checkbox
                                         checked={!!printSel[catKey]}
                                         onCheckedChange={() => togglePrintSel(catKey)}
@@ -1457,9 +1457,12 @@ export default function Inventory() {
                                       <button
                                         type="button"
                                         onClick={() =>
-                                          setOpenSubLocations((prev) => ({ ...prev, [catKey]: !prev[catKey] }))
+                                          setOpenSubLocations((prev) => ({
+                                            ...prev,
+                                            [catKey]: prev[catKey] === false ? true : false,
+                                          }))
                                         }
-                                        className="flex-1 flex items-center justify-between gap-2 px-2 py-1.5 hover:bg-muted/40 transition-colors"
+                                        className="flex-1 flex items-center justify-between gap-2 px-2 py-1.5 hover:bg-accent/15 transition-colors"
                                       >
                                         <span className="flex items-center gap-1.5 min-w-0">
                                           {catOpen ? (
@@ -1467,14 +1470,16 @@ export default function Inventory() {
                                           ) : (
                                             <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
                                           )}
-                                          <span className="text-xs font-medium text-foreground truncate">{cat}</span>
+                                          <span className="text-[11px] font-semibold uppercase tracking-wide text-foreground truncate">
+                                            {cat}
+                                          </span>
                                           <Badge variant="secondary" className="text-[9px] h-4">{items.length}</Badge>
                                         </span>
-                                        <span className="flex items-center gap-2 shrink-0">
+                                        <span className="flex items-center gap-2 shrink-0 font-mono tabular-nums">
                                           <span className="text-[10px] text-muted-foreground">
                                             {catQty.toLocaleString("sv-SE")} kg
                                           </span>
-                                          <span className="text-[10px] font-medium text-foreground">{fmt(catValue)}</span>
+                                          <span className="text-[10px] font-semibold text-foreground">{fmt(catValue)}</span>
                                         </span>
                                       </button>
                                     </div>
@@ -1484,6 +1489,32 @@ export default function Inventory() {
                                   </div>
                                 );
                               })}
+                              {(() => {
+                                const empties = allCats.filter((cat) => (catMap.get(cat)?.length ?? 0) === 0);
+                                if (empties.length === 0) return null;
+                                return (
+                                  <div className="rounded-md border border-dashed border-border/60 px-2 py-1.5">
+                                    <div className="text-[9px] uppercase tracking-wide text-muted-foreground mb-1">
+                                      Tomma kategorier (välj för utskrift)
+                                    </div>
+                                    <div className="flex flex-wrap gap-x-3 gap-y-1">
+                                      {empties.map((cat) => {
+                                        const catKey = `${loc.id}::${cat}`;
+                                        return (
+                                          <label key={catKey} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                                            <Checkbox
+                                              checked={!!printSel[catKey]}
+                                              onCheckedChange={() => togglePrintSel(catKey)}
+                                              className="h-3 w-3"
+                                            />
+                                            {cat}
+                                          </label>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
                             </div>
                           )}
                         </div>
