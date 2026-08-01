@@ -1082,9 +1082,10 @@ export default function Inventory() {
 
   const handlePrintSheets = () => {
     const pages = printSelectedIds
-      .map((id) => (locations as any[]).find((l: any) => l.id === id))
-      .filter(Boolean)
-      .map((loc: any) => {
+      .map((key) => {
+        const [locId, cat] = key.split("::");
+        const loc = (locations as any[]).find((l: any) => l.id === locId);
+        if (!loc) return null;
         const parent = loc.parent_location_id
           ? (locations as any[]).find((l: any) => l.id === loc.parent_location_id)
           : null;
@@ -1094,17 +1095,19 @@ export default function Inventory() {
           parent?.name || null,
           loc.name as string,
           loc.zone ? `Zon: ${loc.zone}` : null,
-          loc.category ? `Kategori: ${loc.category}` : null,
+          cat ? `Kategori: ${cat}` : loc.category ? `Kategori: ${loc.category}` : null,
         ].filter(Boolean) as string[];
         return {
-          locationName: loc.name as string,
+          locationName: cat ? `${cat} — ${loc.name}` : (loc.name as string),
           storeName: (loc.stores?.name as string) || null,
           sourceParts,
         };
-      });
+      })
+      .filter(Boolean) as any[];
     if (pages.length === 0) return;
     generateStockSheetPdf(pages);
   };
+
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
