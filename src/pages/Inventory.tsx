@@ -1093,6 +1093,15 @@ export default function Inventory() {
               {expiryAlerts.length} utgångsvarning{expiryAlerts.length > 1 ? "ar" : ""}
             </Button>
           )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none"
+            onClick={() => openNewLocation()}
+          >
+            <Plus className="h-3 w-3" /> Nytt lager
+          </Button>
+
           <Button size="sm" className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none" onClick={() => setReportDialogOpen(true)}>
             <ClipboardList className="h-3 w-3" /> Skapa lagerrapport
           </Button>
