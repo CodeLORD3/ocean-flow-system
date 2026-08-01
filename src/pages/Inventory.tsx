@@ -1475,6 +1475,14 @@ export default function Inventory() {
                                   </span>
                                 </span>
                               </button>
+                              <div className="pr-2">
+                                {renderReportBtn({
+                                  locationId: sub.id,
+                                  locationName: sub.name,
+                                  storeId: sub.store_id,
+                                  items: sub.items,
+                                })}
+                              </div>
                               </div>
                               {isSubOpen && (
                                 <div className="p-1.5">
