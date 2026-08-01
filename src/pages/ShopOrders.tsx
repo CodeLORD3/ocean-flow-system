@@ -590,7 +590,9 @@ export default function ShopOrders() {
                     product_name: l.products?.name || "–",
                     unit: l.unit || l.products?.unit || "ST",
                     quantity: String(l.quantity_ordered || ""),
+                    category: l.products?.category || null,
                   }));
+
                   setOrderLines(copied);
                   toast({ title: "Order kopierad", description: `${copied.length} produkter tillagda från vecka ${displayOrderWeek(picked)}` });
                 }}
