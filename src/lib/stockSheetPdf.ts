@@ -12,7 +12,7 @@ export interface StockSheetPage {
 
 const ROWS_DEFAULT = 20;
 
-export function generateStockSheetPdf(pages: StockSheetPage[], fileName?: string) {
+export function buildStockSheetDoc(pages: StockSheetPage[]) {
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "landscape" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -132,5 +132,10 @@ export function generateStockSheetPdf(pages: StockSheetPage[], fileName?: string
     }
   });
 
+  return doc;
+}
+
+export function generateStockSheetPdf(pages: StockSheetPage[], fileName?: string) {
+  const doc = buildStockSheetDoc(pages);
   doc.save(fileName || `Lagerlistor-${new Date().toISOString().slice(0, 10)}.pdf`);
 }
