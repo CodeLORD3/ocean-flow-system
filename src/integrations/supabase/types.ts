@@ -2960,30 +2960,43 @@ export type Database = {
       }
       storage_locations: {
         Row: {
+          category: string | null
           created_at: string | null
           description: string | null
           id: string
           name: string
+          parent_location_id: string | null
           store_id: string | null
           zone: string | null
         }
         Insert: {
+          category?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
           name: string
+          parent_location_id?: string | null
           store_id?: string | null
           zone?: string | null
         }
         Update: {
+          category?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
           name?: string
+          parent_location_id?: string | null
           store_id?: string | null
           zone?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "storage_locations_parent_location_id_fkey"
+            columns: ["parent_location_id"]
+            isOneToOne: false
+            referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "storage_locations_store_id_fkey"
             columns: ["store_id"]

@@ -79,12 +79,14 @@ const zoneIcon: Record<string, string> = {
   Frys: "🧊",
   Torrt: "📦",
   Produktion: "🏭",
+  Försäljning: "🛒",
 };
 const zoneColor: Record<string, string> = {
   Kyl: "bg-blue-500/10 text-blue-600 border-blue-500/20",
   Frys: "bg-cyan-500/10 text-cyan-600 border-cyan-500/20",
   Torrt: "bg-amber-500/10 text-amber-600 border-amber-500/20",
   Produktion: "bg-purple-500/10 text-purple-600 border-purple-500/20",
+  Försäljning: "bg-green-500/10 text-green-600 border-green-500/20",
 };
 
 // ── Freshness helper ─────────────────────────────────────────────────────────
