@@ -1769,6 +1769,12 @@ export default function Inventory() {
                               {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
                               <span className="text-[10px] text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
                               <span className="text-[10px] font-medium text-foreground">{fmt(loc.totalValue)}</span>
+                              {renderReportBtn({
+                                locationId: loc.id,
+                                locationName: loc.name,
+                                storeId: loc.store_id,
+                                items: loc.items,
+                              })}
                             </div>
                           </div>
                         )}
