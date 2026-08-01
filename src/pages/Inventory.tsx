@@ -29,6 +29,7 @@ import {
   Calendar,
   Thermometer,
   AlertCircle,
+  Printer,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
@@ -61,6 +62,7 @@ import {
 import { useSite } from "@/contexts/SiteContext";
 import { getStoreCurrency } from "@/lib/currency";
 import BarcodeScanner from "@/components/barcode/BarcodeScanner";
+import { generateStockSheetPdf } from "@/lib/stockSheetPdf";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { sv } from "date-fns/locale";
 
@@ -222,6 +224,11 @@ export default function Inventory() {
   const [transformTargetProduct, setTransformTargetProduct] = useState("");
   const [transformNewWeight, setTransformNewWeight] = useState("");
   const [transformProductSearch, setTransformProductSearch] = useState("");
+
+  // Utskriftsval av lagerplatser (för PDF-listor)
+  const [printSel, setPrintSel] = useState<Record<string, boolean>>({});
+  const togglePrintSel = (id: string) =>
+    setPrintSel((prev) => ({ ...prev, [id]: !prev[id] }));
 
   // Expiry alerts panel
   const [showExpiryAlerts, setShowExpiryAlerts] = useState(false);
@@ -1071,6 +1078,20 @@ export default function Inventory() {
     </div>
   );
 
+  const printSelectedIds = Object.keys(printSel).filter((id) => printSel[id]);
+
+  const handlePrintSheets = () => {
+    const pages = printSelectedIds
+      .map((id) => (locations as any[]).find((l: any) => l.id === id))
+      .filter(Boolean)
+      .map((loc: any) => ({
+        locationName: loc.name as string,
+        storeName: (loc.stores?.name as string) || null,
+      }));
+    if (pages.length === 0) return;
+    generateStockSheetPdf(pages);
+  };
+
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
@@ -1091,6 +1112,16 @@ export default function Inventory() {
             >
               <AlertTriangle className="h-3 w-3" />
               {expiryAlerts.length} utgångsvarning{expiryAlerts.length > 1 ? "ar" : ""}
+            </Button>
+          )}
+          {printSelectedIds.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none border-primary/40 text-primary hover:bg-primary/10"
+              onClick={handlePrintSheets}
+            >
+              <Printer className="h-3 w-3" /> Skriv ut / PDF ({printSelectedIds.length})
             </Button>
           )}
           <Button
@@ -1263,12 +1294,19 @@ export default function Inventory() {
                           const isSubOpen = !!openSubLocations[sub.id];
                           return (
                             <div key={sub.id} className="border border-border/50 rounded-md overflow-hidden">
+                              <div className="flex items-center gap-1.5 bg-muted/20 pl-2">
+                                <Checkbox
+                                  checked={!!printSel[sub.id]}
+                                  onCheckedChange={() => togglePrintSel(sub.id)}
+                                  aria-label={`Välj ${sub.name} för utskrift`}
+                                  className="h-3.5 w-3.5"
+                                />
                               <button
                                 type="button"
                                 onClick={() =>
                                   setOpenSubLocations((prev) => ({ ...prev, [sub.id]: !prev[sub.id] }))
                                 }
-                                className="w-full flex items-center justify-between gap-2 px-2 py-1.5 bg-muted/20 hover:bg-muted/40 transition-colors"
+                                className="flex-1 flex items-center justify-between gap-2 px-2 py-1.5 hover:bg-muted/40 transition-colors"
                               >
                                 <span className="flex items-center gap-1.5 min-w-0">
                                   {isSubOpen ? (
@@ -1290,6 +1328,7 @@ export default function Inventory() {
                                   </span>
                                 </span>
                               </button>
+                              </div>
                               {isSubOpen && (
                                 <div className="p-1.5">
                                   {getSelectedForLocation(sub.id).size > 0 && (
@@ -1317,6 +1356,13 @@ export default function Inventory() {
                       const isParentOpen = openSubLocations[loc.id] !== false;
                       return (
                         <div key={loc.id} className="mb-3 border border-border/50 rounded-md overflow-hidden">
+                          <div className="flex items-center gap-1.5 bg-muted/30 pl-2">
+                            <Checkbox
+                              checked={!!printSel[loc.id]}
+                              onCheckedChange={() => togglePrintSel(loc.id)}
+                              aria-label={`Välj ${loc.name} för utskrift`}
+                              className="h-3.5 w-3.5"
+                            />
                           <button
                             type="button"
                             onClick={() =>
@@ -1325,7 +1371,7 @@ export default function Inventory() {
                                 [loc.id]: prev[loc.id] === false ? true : false,
                               }))
                             }
-                            className="w-full flex flex-wrap items-center justify-between gap-2 px-2 py-2 bg-muted/30 hover:bg-muted/50 transition-colors"
+                            className="flex-1 flex flex-wrap items-center justify-between gap-2 px-2 py-2 hover:bg-muted/50 transition-colors"
                           >
                             <span className="flex items-center gap-2 min-w-0">
                               {isParentOpen ? (
@@ -1345,6 +1391,7 @@ export default function Inventory() {
                               <span className="text-[10px] font-semibold text-foreground">{fmt(aggValue)}</span>
                             </span>
                           </button>
+                          </div>
                           {isParentOpen && (
                             <div className="p-1.5 space-y-1.5">
                               {subList}
@@ -1371,6 +1418,12 @@ export default function Inventory() {
                         {showHeader && (
                           <div className="flex flex-wrap items-center justify-between gap-2 px-2 py-1.5 bg-muted/20 rounded-t-md border border-b-0 border-border/50">
                             <div className="flex items-center gap-2 min-w-0">
+                              <Checkbox
+                                checked={!!printSel[loc.id]}
+                                onCheckedChange={() => togglePrintSel(loc.id)}
+                                aria-label={`Välj ${loc.name} för utskrift`}
+                                className="h-3.5 w-3.5"
+                              />
                               <Warehouse className="h-3 w-3 text-muted-foreground shrink-0" />
                               <span className="text-xs font-medium text-foreground truncate">{loc.name}</span>
                               <Badge variant="secondary" className="text-[9px] h-4">{loc.items.length}</Badge>
@@ -1385,6 +1438,14 @@ export default function Inventory() {
                         {!showHeader && (
                           <div className="flex flex-wrap items-center justify-between gap-2 px-2 py-1.5 mb-1">
                             <div className="flex items-center gap-2 flex-wrap">
+                              <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer">
+                                <Checkbox
+                                  checked={!!printSel[loc.id]}
+                                  onCheckedChange={() => togglePrintSel(loc.id)}
+                                  className="h-3.5 w-3.5"
+                                />
+                                Välj för utskrift
+                              </label>
                               {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
                             </div>
                             <div className="flex items-center gap-2 ml-auto">
