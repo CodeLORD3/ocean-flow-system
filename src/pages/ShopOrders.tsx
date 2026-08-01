@@ -39,7 +39,9 @@ type OrderLine = {
   product_name: string;
   unit: string;
   quantity: string;
+  category?: string | null;
 };
+
 
 const statusColor: Record<string, string> = {
   Ny: "",
