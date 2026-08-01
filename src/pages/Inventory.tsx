@@ -649,23 +649,45 @@ export default function Inventory() {
   };
 
   // ── Location + stock dialogs ─────────────────────────────────────────────
+  const openNewLocation = (parentId?: string, storeId?: string) => {
+    setLocName("");
+    setLocDesc("");
+    setLocCategory("");
+    setLocParent(parentId || "none");
+    const parent = parentId ? (locations as any[]).find((l: any) => l.id === parentId) : null;
+    setLocStore(storeId || parent?.store_id || (activeStoreId ?? ""));
+    setLocZone(parent?.zone || "Kyl");
+    setLocationDialogOpen(true);
+  };
+
   const handleCreateLocation = () => {
     if (!locName || !locStore) return;
     createLocation.mutate(
-      { name: locName, store_id: locStore, zone: locZone || undefined, description: locDesc || undefined },
+      {
+        name: locName,
+        store_id: locStore,
+        zone: locZone || undefined,
+        description: locDesc || undefined,
+        parent_location_id: locParent === "none" ? null : locParent,
+        category: locCategory || null,
+      },
       {
         onSuccess: () => {
-          toast({ title: "Lagerställe skapat", description: locName });
+          toast({ title: locParent === "none" ? "Lagerställe skapat" : "Sublager skapat", description: locName });
           setLocationDialogOpen(false);
           setLocName("");
           setLocStore("");
           setLocZone("Kyl");
           setLocDesc("");
+          setLocParent("none");
+          setLocCategory("");
+          queryClient.invalidateQueries({ queryKey: ["storage_locations"] });
         },
         onError: (err) => toast({ title: "Fel", description: err.message, variant: "destructive" }),
       },
     );
   };
+
 
   const handleUpsertStock = () => {
     if (!stockProduct || !stockLocation || !stockQty) return;
