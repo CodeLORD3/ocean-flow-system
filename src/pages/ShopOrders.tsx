@@ -627,29 +627,38 @@ export default function ShopOrders() {
                       </tr>
                     </thead>
                     <tbody>
-                      {orderLines.map((line, idx) => (
-                        <tr key={line.product_id} className="border-b border-border/30">
-                          <td className="py-2 font-medium text-foreground">{line.product_name}</td>
-                          <td className="py-2 text-muted-foreground">{line.unit}</td>
-                          <td className="py-2 text-right">
-                            <Input
-                              type="number"
-                              step="0.1"
-                              value={line.quantity}
-                              onChange={e => updateLine(idx, e.target.value)}
-                              className="h-7 text-xs w-24 ml-auto text-right"
-                              placeholder="0"
-                              autoFocus={idx === orderLines.length - 1}
-                            />
-                          </td>
-                          <td className="py-2">
-                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeLine(idx)}>
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </td>
-                        </tr>
+                      {groupedOrderLines.map(([cat, items]) => (
+                        <React.Fragment key={cat}>
+                          <tr className="bg-muted/40">
+                            <td colSpan={4} className="py-1 px-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                              ▸ {cat} ({items.length})
+                            </td>
+                          </tr>
+                          {items.map(({ line, idx }) => (
+                            <tr key={line.product_id} className="border-b border-border/30">
+                              <td className="py-2 font-medium text-foreground">{line.product_name}</td>
+                              <td className="py-2 text-muted-foreground">{line.unit}</td>
+                              <td className="py-2 text-right">
+                                <Input
+                                  type="number"
+                                  step="0.1"
+                                  value={line.quantity}
+                                  onChange={e => updateLine(idx, e.target.value)}
+                                  className="h-7 text-xs w-24 ml-auto text-right"
+                                  placeholder="0"
+                                />
+                              </td>
+                              <td className="py-2">
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeLine(idx)}>
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </React.Fragment>
                       ))}
                     </tbody>
+
                   </table>
                 </div>
               </div>
