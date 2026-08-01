@@ -680,11 +680,13 @@ export default function Products() {
         {isWholesale && (
           <td className="px-2 py-0 h-8 align-middle text-right">
             {isAggregatedParent ? (
-              <span className="inline-flex items-baseline !text-[11px] font-mono tabular-nums text-muted-foreground">
-                {calcMargin(agg!.cost_price, agg!.wholesale_price)}<span className="text-[10px] text-muted-foreground/50 ml-0.5">%</span>
+              <span className="inline-flex items-center justify-end !text-[11px] font-mono tabular-nums text-muted-foreground">
+                <span className="w-10 text-right">{calcMargin(agg!.cost_price, agg!.wholesale_price)}</span>
+                <span className="text-[10px] text-muted-foreground/50 ml-0.5">%</span>
               </span>
             ) : (
               <span className="inline-flex items-center justify-end">
+
                 <Input
                   type="number"
                   value={marginVal}
