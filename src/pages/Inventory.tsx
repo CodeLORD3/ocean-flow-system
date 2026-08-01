@@ -1531,7 +1531,7 @@ export default function Inventory() {
                   <SelectTrigger className="h-8 text-xs">
                     <SelectValue placeholder="Välj lagerställe" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent position="popper" className="max-h-[50vh] overflow-y-auto w-[--radix-select-trigger-width]">
                     {locations.map((loc: any) => (
                       <SelectItem key={loc.id} value={loc.id} className="text-xs">
                         {zoneIcon[loc.zone] || "📍"} {loc.name} ({loc.stores?.name})
