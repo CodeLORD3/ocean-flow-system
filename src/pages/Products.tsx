@@ -947,11 +947,12 @@ export default function Products() {
       {/* Table */}
       <Card className="shadow-card">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="overflow-auto max-h-[75vh]">
             <table className="w-full text-[10px]">
-              <thead>
-                <tr className="border-b border-border bg-muted/30 h-6">
-                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Produkt</th>
+              <thead className="sticky top-0 z-30">
+                <tr className="border-b border-border bg-muted h-6">
+                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider sticky left-0 z-40 bg-muted border-r border-border/60">Produkt</th>
+
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">SKU</th>
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Kat.</th>
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Enh.</th>
