@@ -10,7 +10,7 @@ export interface StockSheetPage {
   rows?: number;
 }
 
-const ROWS_DEFAULT = 20;
+const ROWS_DEFAULT = 18;
 
 export function buildStockSheetDoc(pages: StockSheetPage[]) {
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "landscape" });
@@ -22,8 +22,27 @@ export function buildStockSheetDoc(pages: StockSheetPage[]) {
   pages.forEach((page, idx) => {
     if (idx > 0) doc.addPage();
 
+    // ── Stor centrerad rubrik ──────────────────────────────────────────────
+    const bigTitle = page.locationName.toUpperCase();
+    doc.setFont("helvetica", "bold");
+    let titleSize = 26;
+    doc.setFontSize(titleSize);
+    while (titleSize > 12 && doc.getTextWidth(bigTitle) > innerWidth - 10) {
+      titleSize -= 1;
+      doc.setFontSize(titleSize);
+    }
+    doc.setTextColor(0);
+    doc.text(bigTitle, pageWidth / 2, margin + 8, { align: "center" });
+    if (page.storeName) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(70);
+      doc.text(page.storeName, pageWidth / 2, margin + 14.5, { align: "center" });
+    }
+    doc.setTextColor(0);
+
     // ── Topprad: DATUM / LAGERSTÄLLE / ANSVARIG ────────────────────────────
-    const boxY = margin;
+    const boxY = margin + (page.storeName ? 19 : 13);
     const boxH = 13;
     doc.setDrawColor(120);
     doc.setLineWidth(0.3);
@@ -88,7 +107,7 @@ export function buildStockSheetDoc(pages: StockSheetPage[]) {
         lineColor: [110, 110, 110],
         lineWidth: 0.2,
         textColor: [0, 0, 0],
-        minCellHeight: 7,
+        minCellHeight: 6,
         valign: "middle",
       },
       headStyles: {
