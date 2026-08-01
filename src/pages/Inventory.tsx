@@ -1101,11 +1101,22 @@ export default function Inventory() {
           loc.zone ? `Zon: ${loc.zone}` : null,
           cat ? `Kategori: ${cat}` : loc.category ? `Kategori: ${loc.category}` : null,
         ].filter(Boolean) as string[];
+        const items = (allStock as any[])
+          .filter((s: any) => s.location_id === locId && Number(s.quantity) > 0)
+          .filter((s: any) => (cat ? (s.products?.category || "Övrigt") === cat : true))
+          .map((s: any) => ({
+            name: s.products?.name || "—",
+            quantity: Number(s.quantity),
+            unit: s.products?.unit || null,
+          }))
+          .sort((a: any, b: any) => a.name.localeCompare(b.name, "sv"));
         return {
           locationName: cat ? `${cat} — ${loc.name}` : (loc.name as string),
           storeName: (loc.stores?.name as string) || null,
+          items,
           sourceParts,
         };
+
       })
       .filter(Boolean) as any[];
     if (pages.length === 0) return;

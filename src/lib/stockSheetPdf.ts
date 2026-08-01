@@ -1,6 +1,13 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+export interface StockSheetItem {
+  name: string;
+  /** Nuvarande saldo (kg eller st) */
+  quantity?: number | null;
+  unit?: string | null;
+}
+
 export interface StockSheetPage {
   /** Lagerställets rubrik, t.ex. "Skaldjur-lager" */
   locationName: string;
@@ -8,11 +15,19 @@ export interface StockSheetPage {
   storeName?: string | null;
   /** Antal tomma rader att fylla i */
   rows?: number;
+  /** Förifyllda produkter med befintligt saldo */
+  items?: StockSheetItem[];
   /** Källkedja, t.ex. ["Makrilltrade", "Amhult Shop", "Försäljningslager"] */
   sourceParts?: string[];
 }
 
 const ROWS_DEFAULT = 18;
+
+const fmtQty = (q?: number | null) =>
+  q === null || q === undefined || Number.isNaN(Number(q))
+    ? ""
+    : Number(q).toLocaleString("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
 
 export function buildStockSheetDoc(pages: StockSheetPage[]) {
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "landscape" });
@@ -82,12 +97,25 @@ export function buildStockSheetDoc(pages: StockSheetPage[]) {
     doc.line(ansvX + 20, baseY + 0.8, margin + innerWidth - 4, baseY + 0.8);
 
     // ── Tabell ─────────────────────────────────────────────────────────────
-    const rowCount = page.rows ?? ROWS_DEFAULT;
+    const items = page.items ?? [];
+    const rowCount = Math.max(page.rows ?? ROWS_DEFAULT, items.length + 4);
     const body: string[][] = [];
     for (let i = 1; i <= rowCount; i++) {
-      body.push([String(i), "", "", "", "", "", "", ""]);
+      const it = items[i - 1];
+      body.push([
+        String(i),
+        it ? it.name : "",
+        it ? fmtQty(it.quantity) : "",
+        "",
+        "",
+        "",
+        "",
+        "",
+      ]);
     }
-    body.push(["", "SUMMA (kg)", "0,0", "0,0", "0,0", "0,0", "", ""]);
+    const startSum = items.reduce((s, i) => s + (Number(i.quantity) || 0), 0);
+    body.push(["", "SUMMA (kg)", items.length ? fmtQty(startSum) : "0,0", "", "0,0", "0,0", "0,0", ""]);
+
 
     autoTable(doc, {
       startY: boxY + boxH + 5,
