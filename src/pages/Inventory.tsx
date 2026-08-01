@@ -1387,7 +1387,10 @@ export default function Inventory() {
                           ...Array.from(catMap.keys()),
                           ...((products as any[]).map((p: any) => p.category).filter(Boolean) as string[]),
                         ]),
-                      ).sort((a, b) => a.localeCompare(b, "sv"));
+                      )
+                        .filter((c) => !HIDDEN_CATEGORIES.has(c.toLowerCase()) || (catMap.get(c)?.length ?? 0) > 0)
+                        .sort((a, b) => a.localeCompare(b, "sv"));
+
 
                       return (
                         <div key={loc.id} className="mb-3 border border-border/50 rounded-md overflow-hidden">
