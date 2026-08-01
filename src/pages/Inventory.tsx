@@ -170,7 +170,7 @@ type InventoryLine = {
 };
 
 /** Kategorier som inte ska visas som lagerkategorier */
-const HIDDEN_CATEGORIES = new Set(["is", "kolonial", "emballage"]);
+const HIDDEN_CATEGORIES = new Set(["is", "kolonial", "emballage", "fisk"]);
 
 
 const fmtFor = (currency: string) => (v: number) =>
