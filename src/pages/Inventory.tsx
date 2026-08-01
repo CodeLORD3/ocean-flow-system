@@ -1257,20 +1257,28 @@ export default function Inventory() {
           subByParent.set(loc.parent_location_id, list);
         });
         subByParent.forEach((list) => list.sort((a, b) => (a.name || "").localeCompare(b.name || "", "sv")));
-        const topLevelLocations = stockByLocation.filter((loc: any) => !loc.parent_location_id);
-        const allItemCount = stockByLocation.reduce((s: number, l: any) => s + l.items.length, 0);
+        const allTopLevel = stockByLocation.filter((loc: any) => !loc.parent_location_id);
+        const isVisible = (loc: any) => !hiddenLocs[loc.id];
+        const topLevelLocations = allTopLevel.filter(isVisible);
+        const allItemCount = topLevelLocations.reduce(
+          (s: number, l: any) =>
+            s + l.items.length + (subByParent.get(l.id) || []).reduce((a: number, x: any) => a + x.items.length, 0),
+          0,
+        );
         allTabs.push({ key: "__all__", label: "Alla", badge: `${allItemCount}`, locations: topLevelLocations });
         
         if (site === "production" || site === "wholesale") {
           groupedByStore.forEach((group) => {
+            const groupLocs = group.locations.filter(isVisible);
+            if (groupLocs.length === 0) return;
             if (group.type === "general") {
               // Standalone tabs (Grossist Flytande, Transportlager)
-              const loc = group.locations[0];
+              const loc = groupLocs[0];
               allTabs.push({ key: loc.id, label: loc.name, badge: `${loc.items.length}`, locations: [loc] });
             } else {
               // Group all locations for this store into ONE tab
-              const totalItems = group.locations.reduce((s: number, l: any) => s + l.items.length, 0);
-              allTabs.push({ key: `store_${group.storeName}`, label: group.storeName, badge: `${totalItems}`, locations: group.locations });
+              const totalItems = groupLocs.reduce((s: number, l: any) => s + l.items.length, 0);
+              allTabs.push({ key: `store_${group.storeName}`, label: group.storeName, badge: `${totalItems}`, locations: groupLocs });
             }
           });
         } else {
@@ -1281,6 +1289,7 @@ export default function Inventory() {
             allTabs.push({ key: loc.id, label: loc.name, badge: `${count}`, locations: [loc] });
           });
         }
+        const hiddenCount = allTopLevel.filter((loc: any) => hiddenLocs[loc.id]).length;
 
         const resolvedTab = activeTab && allTabs.some(t => t.key === activeTab) ? activeTab : (allTabs[0]?.key || "");
         const currentTab = allTabs.find(t => t.key === resolvedTab);
