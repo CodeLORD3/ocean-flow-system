@@ -1327,6 +1327,58 @@ export default function Inventory() {
                 <>
                   {/* Tab bar */}
                   <div className="flex items-center gap-1.5 mb-3 overflow-x-auto scrollbar-thin pb-1">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-[34px] shrink-0 gap-1.5 px-2.5 text-[10px]"
+                        >
+                          <ListFilter className="h-3.5 w-3.5" />
+                          Visa lager
+                          {hiddenCount > 0 && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-md font-semibold bg-muted text-muted-foreground">
+                              {allTopLevel.length - hiddenCount}/{allTopLevel.length}
+                            </span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="start" className="w-72 p-2">
+                        <div className="flex items-center justify-between px-1 pb-1.5">
+                          <p className="text-[11px] font-semibold text-foreground">Lagerplatser att visa</p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 text-[10px]"
+                            onClick={showAllLocs}
+                            disabled={hiddenCount === 0}
+                          >
+                            Visa alla
+                          </Button>
+                        </div>
+                        <div className="max-h-[280px] overflow-y-auto space-y-0.5">
+                          {allTopLevel.map((loc: any) => (
+                            <label
+                              key={loc.id}
+                              className="flex items-center gap-2 px-1.5 py-1.5 rounded-md hover:bg-muted/50 cursor-pointer"
+                            >
+                              <Checkbox
+                                checked={!hiddenLocs[loc.id]}
+                                onCheckedChange={() => toggleHiddenLoc(loc.id)}
+                                className="h-3.5 w-3.5"
+                              />
+                              <span className="text-xs text-foreground truncate flex-1">
+                                {zoneIcon[loc.zone] || "📍"} {loc.name}
+                                {loc.stores?.name ? (
+                                  <span className="text-muted-foreground"> · {loc.stores.name}</span>
+                                ) : null}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground shrink-0">{loc.items.length}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                     {allTabs.map((tab) => (
                       <button
                         key={tab.key}
