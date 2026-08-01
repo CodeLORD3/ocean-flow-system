@@ -167,6 +167,10 @@ type InventoryLine = {
   arrival_date?: string;
 };
 
+/** Kategorier som inte ska visas som lagerkategorier */
+const HIDDEN_CATEGORIES = new Set(["is", "kolonial", "emballage"]);
+
+
 const fmtFor = (currency: string) => (v: number) =>
   new Intl.NumberFormat("sv-SE", {
     style: "currency",
@@ -1383,7 +1387,10 @@ export default function Inventory() {
                           ...Array.from(catMap.keys()),
                           ...((products as any[]).map((p: any) => p.category).filter(Boolean) as string[]),
                         ]),
-                      ).sort((a, b) => a.localeCompare(b, "sv"));
+                      )
+                        .filter((c) => !HIDDEN_CATEGORIES.has(c.toLowerCase()) || (catMap.get(c)?.length ?? 0) > 0)
+                        .sort((a, b) => a.localeCompare(b, "sv"));
+
 
                       return (
                         <div key={loc.id} className="mb-3 border border-border/50 rounded-md overflow-hidden">
@@ -1905,6 +1912,8 @@ export default function Inventory() {
                     {Array.from(
                       new Set((products as any[]).map((p: any) => p.category).filter(Boolean)),
                     )
+                      .filter((c: any) => !HIDDEN_CATEGORIES.has(String(c).toLowerCase()))
+
                       .sort()
                       .map((c: any) => (
                         <SelectItem key={c} value={c} className="text-xs">
