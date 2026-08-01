@@ -1822,6 +1822,15 @@ export default function Inventory() {
         );
       })()}
 
+      {/* ── Inrapportering (excel-liknande lagerlista) ──────────────────────── */}
+      <StockCountDialog
+        open={!!countScope}
+        onOpenChange={(v) => !v && setCountScope(null)}
+        scope={countScope}
+        products={products as any[]}
+        currency={localCurrency}
+      />
+
       {/* ── Expiry Alerts Dialog ───────────────────────────────────────────── */}
       <Dialog open={showExpiryAlerts} onOpenChange={setShowExpiryAlerts}>
         <DialogContent className="sm:max-w-lg">
