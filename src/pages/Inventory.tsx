@@ -167,6 +167,10 @@ type InventoryLine = {
   arrival_date?: string;
 };
 
+/** Kategorier som inte ska visas som lagerkategorier */
+const HIDDEN_CATEGORIES = new Set(["is", "kolonial", "emballage"]);
+
+
 const fmtFor = (currency: string) => (v: number) =>
   new Intl.NumberFormat("sv-SE", {
     style: "currency",
