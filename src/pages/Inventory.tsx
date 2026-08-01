@@ -1624,6 +1624,15 @@ export default function Inventory() {
                                           <span className="text-[10px] font-semibold text-foreground">{fmt(catValue)}</span>
                                         </span>
                                       </button>
+                                      <div className="pr-2">
+                                        {renderReportBtn({
+                                          locationId: loc.id,
+                                          locationName: loc.name,
+                                          storeId: loc.store_id,
+                                          category: cat,
+                                          items,
+                                        })}
+                                      </div>
                                     </div>
                                     {catOpen && (
                                       <div className="p-1.5">{renderLocationTable({ ...loc, items })}</div>
