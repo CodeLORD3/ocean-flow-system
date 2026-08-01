@@ -10,7 +10,7 @@ export interface StockSheetPage {
   rows?: number;
 }
 
-const ROWS_DEFAULT = 20;
+const ROWS_DEFAULT = 18;
 
 export function buildStockSheetDoc(pages: StockSheetPage[]) {
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "landscape" });
