@@ -1116,7 +1116,25 @@ export default function Inventory() {
     </div>
   );
 
+  /** Knapp längst till höger i varje lager-bar: öppnar excel-liknande inrapportering */
+  const renderReportBtn = (scope: StockCountScope) => (
+    <Button
+      variant="outline"
+      size="sm"
+      className="h-6 px-2 gap-1 text-[10px] shrink-0 border-primary/40 text-primary hover:bg-primary/10"
+      onClick={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        setCountScope(scope);
+      }}
+      title="Inrapportera lager"
+    >
+      <ClipboardList className="h-3 w-3" /> Inrapportera
+    </Button>
+  );
+
   const printSelectedIds = Object.keys(printSel).filter((id) => printSel[id]);
+
 
   const handlePrintSheets = () => {
     const pages = printSelectedIds
