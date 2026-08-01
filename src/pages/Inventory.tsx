@@ -184,6 +184,7 @@ export default function Inventory() {
   const [expandedLocations, setExpandedLocations] = useState<Set<string>>(new Set());
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<string>("");
+  const [openSubLocations, setOpenSubLocations] = useState<Record<string, boolean>>({});
 
   // Location form
   const [locName, setLocName] = useState("");
