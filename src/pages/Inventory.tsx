@@ -265,6 +265,9 @@ export default function Inventory() {
   const togglePrintSel = (id: string) =>
     setPrintSel((prev) => ({ ...prev, [id]: !prev[id] }));
 
+  // Inrapportering (excel-liknande lagerlista)
+  const [countScope, setCountScope] = useState<StockCountScope | null>(null);
+
   // Expiry alerts panel
   const [showExpiryAlerts, setShowExpiryAlerts] = useState(false);
 
