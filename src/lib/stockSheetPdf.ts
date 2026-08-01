@@ -97,12 +97,25 @@ export function buildStockSheetDoc(pages: StockSheetPage[]) {
     doc.line(ansvX + 20, baseY + 0.8, margin + innerWidth - 4, baseY + 0.8);
 
     // ── Tabell ─────────────────────────────────────────────────────────────
-    const rowCount = page.rows ?? ROWS_DEFAULT;
+    const items = page.items ?? [];
+    const rowCount = Math.max(page.rows ?? ROWS_DEFAULT, items.length + 4);
     const body: string[][] = [];
     for (let i = 1; i <= rowCount; i++) {
-      body.push([String(i), "", "", "", "", "", "", ""]);
+      const it = items[i - 1];
+      body.push([
+        String(i),
+        it ? it.name : "",
+        it ? fmtQty(it.quantity) : "",
+        "",
+        "",
+        "",
+        "",
+        "",
+      ]);
     }
-    body.push(["", "SUMMA (kg)", "0,0", "0,0", "0,0", "0,0", "", ""]);
+    const startSum = items.reduce((s, i) => s + (Number(i.quantity) || 0), 0);
+    body.push(["", "SUMMA (kg)", items.length ? fmtQty(startSum) : "0,0", "", "0,0", "0,0", "0,0", ""]);
+
 
     autoTable(doc, {
       startY: boxY + boxH + 5,
