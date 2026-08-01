@@ -1,6 +1,13 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+export interface StockSheetItem {
+  name: string;
+  /** Nuvarande saldo (kg eller st) */
+  quantity?: number | null;
+  unit?: string | null;
+}
+
 export interface StockSheetPage {
   /** Lagerställets rubrik, t.ex. "Skaldjur-lager" */
   locationName: string;
@@ -8,11 +15,19 @@ export interface StockSheetPage {
   storeName?: string | null;
   /** Antal tomma rader att fylla i */
   rows?: number;
+  /** Förifyllda produkter med befintligt saldo */
+  items?: StockSheetItem[];
   /** Källkedja, t.ex. ["Makrilltrade", "Amhult Shop", "Försäljningslager"] */
   sourceParts?: string[];
 }
 
 const ROWS_DEFAULT = 18;
+
+const fmtQty = (q?: number | null) =>
+  q === null || q === undefined || Number.isNaN(Number(q))
+    ? ""
+    : Number(q).toLocaleString("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
 
 export function buildStockSheetDoc(pages: StockSheetPage[]) {
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "landscape" });
