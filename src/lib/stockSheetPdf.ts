@@ -8,6 +8,8 @@ export interface StockSheetPage {
   storeName?: string | null;
   /** Antal tomma rader att fylla i */
   rows?: number;
+  /** Källkedja, t.ex. ["Makrilltrade", "Amhult Shop", "Försäljningslager"] */
+  sourceParts?: string[];
 }
 
 const ROWS_DEFAULT = 18;
@@ -153,9 +155,34 @@ export function buildStockSheetDoc(pages: StockSheetPage[]) {
     doc.line(margin + 52, y + 0.8, pageWidth - margin, y + 0.8);
     for (let i = 0; i < 3; i++) {
       y += 5;
-      if (y > pageHeight - margin) break;
+      if (y > pageHeight - margin - 8) break;
       doc.line(margin, y + 0.8, pageWidth - margin, y + 0.8);
     }
+
+    // ── Fotnot: Källa ──────────────────────────────────────────────────────
+    const footY = pageHeight - margin + 2;
+    doc.setDrawColor(180);
+    doc.setLineWidth(0.2);
+    doc.line(margin, footY - 5, pageWidth - margin, footY - 5);
+    const parts =
+      page.sourceParts && page.sourceParts.length > 0
+        ? page.sourceParts
+        : [page.storeName, page.locationName].filter(Boolean) as string[];
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(90);
+    doc.text("Källa:", margin, footY);
+    doc.setFont("helvetica", "normal");
+    doc.text(parts.join(" › "), margin + 10, footY, {
+      maxWidth: innerWidth * 0.6,
+    });
+    doc.text(
+      `Utskriven: ${new Date().toLocaleString("sv-SE", { dateStyle: "short", timeStyle: "short" })}  ·  Sida ${idx + 1}/${pages.length}`,
+      pageWidth - margin,
+      footY,
+      { align: "right" },
+    );
+    doc.setTextColor(0);
   });
 
   return doc;

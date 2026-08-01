@@ -1084,10 +1084,24 @@ export default function Inventory() {
     const pages = printSelectedIds
       .map((id) => (locations as any[]).find((l: any) => l.id === id))
       .filter(Boolean)
-      .map((loc: any) => ({
-        locationName: loc.name as string,
-        storeName: (loc.stores?.name as string) || null,
-      }));
+      .map((loc: any) => {
+        const parent = loc.parent_location_id
+          ? (locations as any[]).find((l: any) => l.id === loc.parent_location_id)
+          : null;
+        const sourceParts = [
+          "Makrilltrade",
+          (loc.stores?.name as string) || null,
+          parent?.name || null,
+          loc.name as string,
+          loc.zone ? `Zon: ${loc.zone}` : null,
+          loc.category ? `Kategori: ${loc.category}` : null,
+        ].filter(Boolean) as string[];
+        return {
+          locationName: loc.name as string,
+          storeName: (loc.stores?.name as string) || null,
+          sourceParts,
+        };
+      });
     if (pages.length === 0) return;
     generateStockSheetPdf(pages);
   };
