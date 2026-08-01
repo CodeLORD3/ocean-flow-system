@@ -1318,7 +1318,7 @@ export default function Inventory() {
             <CardContent className="pt-0">
               {loadingLoc || loadingStock ? (
                 <Skeleton className="h-48" />
-              ) : allTabs.length <= 1 ? (
+              ) : allTopLevel.length === 0 ? (
                 <div className="text-center py-12">
                   <Warehouse className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
                   <p className="text-sm text-muted-foreground">Inga lagerställen</p>
