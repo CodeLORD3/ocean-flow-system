@@ -1563,6 +1563,14 @@ export default function Inventory() {
                                 <span className="text-[10px] font-semibold text-foreground">{fmt(loc.totalValue)}</span>
                               </span>
                             </button>
+                            <div className="pr-2">
+                              {renderReportBtn({
+                                locationId: loc.id,
+                                locationName: loc.name,
+                                storeId: loc.store_id,
+                                items: loc.items,
+                              })}
+                            </div>
                           </div>
                           {isOpen && (
                             <div className="p-1.5 space-y-1.5">
