@@ -191,6 +191,9 @@ export default function Inventory() {
   const [locStore, setLocStore] = useState("");
   const [locZone, setLocZone] = useState("Kyl");
   const [locDesc, setLocDesc] = useState("");
+  const [locParent, setLocParent] = useState<string>("none");
+  const [locCategory, setLocCategory] = useState("");
+
 
   // Stock form
   const [stockProduct, setStockProduct] = useState("");
