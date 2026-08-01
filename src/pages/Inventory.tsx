@@ -65,6 +65,7 @@ import { useSite } from "@/contexts/SiteContext";
 import { getStoreCurrency } from "@/lib/currency";
 import BarcodeScanner from "@/components/barcode/BarcodeScanner";
 import { generateStockSheetPdf } from "@/lib/stockSheetPdf";
+import StockCountDialog, { type StockCountScope } from "@/components/inventory/StockCountDialog";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { sv } from "date-fns/locale";
 
@@ -263,6 +264,9 @@ export default function Inventory() {
   const [printSel, setPrintSel] = useState<Record<string, boolean>>({});
   const togglePrintSel = (id: string) =>
     setPrintSel((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  // Inrapportering (excel-liknande lagerlista)
+  const [countScope, setCountScope] = useState<StockCountScope | null>(null);
 
   // Expiry alerts panel
   const [showExpiryAlerts, setShowExpiryAlerts] = useState(false);
@@ -1112,7 +1116,25 @@ export default function Inventory() {
     </div>
   );
 
+  /** Knapp längst till höger i varje lager-bar: öppnar excel-liknande inrapportering */
+  const renderReportBtn = (scope: StockCountScope) => (
+    <Button
+      variant="outline"
+      size="sm"
+      className="h-6 px-2 gap-1 text-[10px] shrink-0 border-primary/40 text-primary hover:bg-primary/10"
+      onClick={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        setCountScope(scope);
+      }}
+      title="Inrapportera lager"
+    >
+      <ClipboardList className="h-3 w-3" /> Inrapportera
+    </Button>
+  );
+
   const printSelectedIds = Object.keys(printSel).filter((id) => printSel[id]);
+
 
   const handlePrintSheets = () => {
     const pages = printSelectedIds
@@ -1453,6 +1475,14 @@ export default function Inventory() {
                                   </span>
                                 </span>
                               </button>
+                              <div className="pr-2">
+                                {renderReportBtn({
+                                  locationId: sub.id,
+                                  locationName: sub.name,
+                                  storeId: sub.store_id,
+                                  items: sub.items,
+                                })}
+                              </div>
                               </div>
                               {isSubOpen && (
                                 <div className="p-1.5">
@@ -1533,6 +1563,14 @@ export default function Inventory() {
                                 <span className="text-[10px] font-semibold text-foreground">{fmt(loc.totalValue)}</span>
                               </span>
                             </button>
+                            <div className="pr-2">
+                              {renderReportBtn({
+                                locationId: loc.id,
+                                locationName: loc.name,
+                                storeId: loc.store_id,
+                                items: loc.items,
+                              })}
+                            </div>
                           </div>
                           {isOpen && (
                             <div className="p-1.5 space-y-1.5">
@@ -1586,6 +1624,15 @@ export default function Inventory() {
                                           <span className="text-[10px] font-semibold text-foreground">{fmt(catValue)}</span>
                                         </span>
                                       </button>
+                                      <div className="pr-2">
+                                        {renderReportBtn({
+                                          locationId: loc.id,
+                                          locationName: loc.name,
+                                          storeId: loc.store_id,
+                                          category: cat,
+                                          items,
+                                        })}
+                                      </div>
                                     </div>
                                     {catOpen && (
                                       <div className="p-1.5">{renderLocationTable({ ...loc, items })}</div>
@@ -1673,6 +1720,14 @@ export default function Inventory() {
                               <span className="text-[10px] font-semibold text-foreground">{fmt(aggValue)}</span>
                             </span>
                           </button>
+                          <div className="pr-2">
+                            {renderReportBtn({
+                              locationId: loc.id,
+                              locationName: loc.name,
+                              storeId: loc.store_id,
+                              items: loc.items,
+                            })}
+                          </div>
                           </div>
                           {isParentOpen && (
                             <div className="p-1.5 space-y-1.5">
@@ -1714,6 +1769,12 @@ export default function Inventory() {
                               {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
                               <span className="text-[10px] text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
                               <span className="text-[10px] font-medium text-foreground">{fmt(loc.totalValue)}</span>
+                              {renderReportBtn({
+                                locationId: loc.id,
+                                locationName: loc.name,
+                                storeId: loc.store_id,
+                                items: loc.items,
+                              })}
                             </div>
                           </div>
                         )}
@@ -1733,6 +1794,12 @@ export default function Inventory() {
                             <div className="flex items-center gap-2 ml-auto">
                               <span className="text-[10px] text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
                               <span className="text-[10px] font-medium text-foreground">{fmt(loc.totalValue)}</span>
+                              {renderReportBtn({
+                                locationId: loc.id,
+                                locationName: loc.name,
+                                storeId: loc.store_id,
+                                items: loc.items,
+                              })}
                             </div>
                           </div>
                         )}
@@ -1754,6 +1821,15 @@ export default function Inventory() {
           </Card>
         );
       })()}
+
+      {/* ── Inrapportering (excel-liknande lagerlista) ──────────────────────── */}
+      <StockCountDialog
+        open={!!countScope}
+        onOpenChange={(v) => !v && setCountScope(null)}
+        scope={countScope}
+        products={products as any[]}
+        currency={localCurrency}
+      />
 
       {/* ── Expiry Alerts Dialog ───────────────────────────────────────────── */}
       <Dialog open={showExpiryAlerts} onOpenChange={setShowExpiryAlerts}>
