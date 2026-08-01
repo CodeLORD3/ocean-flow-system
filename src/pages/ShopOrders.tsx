@@ -551,20 +551,31 @@ export default function ShopOrders() {
                   />
                 </div>
                 {filteredProducts.length > 0 && (
-                  <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
-                    {filteredProducts.map((p, idx) => (
-                      <button
-                        key={p.id}
-                        className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between ${idx === highlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
-                        onClick={() => addProduct(p)}
-                        onMouseEnter={() => setHighlightedIndex(idx)}
-                      >
-                        <span className="font-medium text-foreground">{p.name}</span>
-                        <span className="text-muted-foreground font-mono text-[10px]">{p.sku} · {p.unit}</span>
-                      </button>
+                  <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    {groupedSearchResults.map(([cat, prods]) => (
+                      <div key={cat}>
+                        <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground bg-muted/50 sticky top-0">
+                          ▸ {cat}
+                        </div>
+                        {prods.map((p: any) => {
+                          const idx = filteredProducts.indexOf(p);
+                          return (
+                            <button
+                              key={p.id}
+                              className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between ${idx === highlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
+                              onClick={() => addProduct(p)}
+                              onMouseEnter={() => setHighlightedIndex(idx)}
+                            >
+                              <span className="font-medium text-foreground">{p.name}</span>
+                              <span className="text-muted-foreground font-mono text-[10px]">{p.sku} · {p.unit}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     ))}
                   </div>
                 )}
+
               </div>
               <Select
                 value=""
