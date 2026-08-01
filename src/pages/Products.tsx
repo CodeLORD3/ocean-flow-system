@@ -508,13 +508,13 @@ export default function Products() {
     return (
       <tr
         key={p.id}
-        className={`border-b border-border/40 hover:bg-primary/20 transition-colors h-7 ${isSubproduct ? "bg-muted/10" : rowIndex % 2 === 1 ? "bg-muted/30" : ""}`}
+        className={`border-b border-border/40 hover:bg-primary/20 transition-colors h-8 max-h-8 ${isSubproduct ? "bg-muted/10" : rowIndex % 2 === 1 ? "bg-muted/30" : ""}`}
       >
         {/* Name */}
-        <td className="px-2 py-0 font-medium text-foreground">
-          <div className="flex items-center gap-1.5">
+        <td className="px-2 py-0 h-8 align-middle font-medium text-foreground">
+          <div className="flex items-center gap-1.5 h-8">
             {!isSubproduct && hasChildren && (
-              <button onClick={() => toggleExpand(p.id)} className="p-0.5 rounded hover:bg-muted">
+              <button onClick={() => toggleExpand(p.id)} className="p-0.5 rounded hover:bg-muted shrink-0">
                 {isExpanded ? (
                   <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                 ) : (
@@ -522,18 +522,19 @@ export default function Products() {
                 )}
               </button>
             )}
-            {isSubproduct && <span className="ml-5 text-muted-foreground">└</span>}
-            {!isSubproduct && !hasChildren && <span className="w-5" />}
-            <span className={isSubproduct ? "text-muted-foreground" : ""}>{p.name}</span>
+            {isSubproduct && <span className="ml-5 text-muted-foreground shrink-0">└</span>}
+            {!isSubproduct && !hasChildren && <span className="w-5 shrink-0" />}
+            <span className={`truncate ${isSubproduct ? "text-muted-foreground" : ""}`} title={p.name}>{p.name}</span>
             {hasChildren && (
-              <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-1">
+              <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-1 rounded-none shrink-0">
                 {p.subproducts.length} del
               </Badge>
             )}
           </div>
         </td>
-        <td className="px-2 py-0 font-mono text-muted-foreground text-[10px]">{p.sku}</td>
-        <td className="px-2 py-0 text-[9px] text-muted-foreground whitespace-nowrap">{p.category}</td>
+        <td className="px-2 py-0 h-8 align-middle font-mono text-muted-foreground text-[10px] whitespace-nowrap">{p.sku}</td>
+        <td className="px-2 py-0 h-8 align-middle whitespace-nowrap"><CategoryBadge name={p.category} /></td>
+
         <td className="px-2 py-0 text-muted-foreground">{p.unit}</td>
         <td className="px-2 py-0 font-mono text-muted-foreground">{(p as any).hs_code || "–"}</td>
         <td className="px-2 py-0">
