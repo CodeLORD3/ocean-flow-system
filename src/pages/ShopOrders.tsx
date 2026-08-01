@@ -39,7 +39,9 @@ type OrderLine = {
   product_name: string;
   unit: string;
   quantity: string;
+  category?: string | null;
 };
+
 
 const statusColor: Record<string, string> = {
   Ny: "",
@@ -309,15 +311,49 @@ export default function ShopOrders() {
     (p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
      p.sku.toLowerCase().includes(productSearch.toLowerCase())) &&
     !orderLines.find(l => l.product_id === p.id)
-  ).slice(0, 8);
+  )
+    .slice()
+    .sort((a: any, b: any) =>
+      (a.category || "Övrigt").localeCompare(b.category || "Övrigt", "sv") ||
+      (a.name || "").localeCompare(b.name || "", "sv")
+    )
+    .slice(0, 12);
+
+  // Sökresultat grupperade per kategori
+  const groupedSearchResults = useMemo(() => {
+    const groups = new Map<string, any[]>();
+    filteredProducts.forEach(p => {
+      const cat = p.category || "Övrigt";
+      if (!groups.has(cat)) groups.set(cat, []);
+      groups.get(cat)!.push(p);
+    });
+    return Array.from(groups.entries());
+  }, [filteredProducts]);
+
+  // Tillagda rader grupperade per kategori (behåller index mot orderLines)
+  const groupedOrderLines = useMemo(() => {
+    const groups = new Map<string, { line: OrderLine; idx: number }[]>();
+    orderLines.forEach((line, idx) => {
+      const cat = line.category || "Övrigt";
+      if (!groups.has(cat)) groups.set(cat, []);
+      groups.get(cat)!.push({ line, idx });
+    });
+    return Array.from(groups.entries())
+      .sort((a, b) => a[0].localeCompare(b[0], "sv"))
+      .map(([cat, items]) => [
+        cat,
+        items.slice().sort((a, b) => a.line.product_name.localeCompare(b.line.product_name, "sv")),
+      ] as [string, { line: OrderLine; idx: number }[]]);
+  }, [orderLines]);
 
   const addProduct = (p: any) => {
     setOrderLines(prev => [{
-      product_id: p.id, product_name: p.name, unit: p.unit, quantity: "",
+      product_id: p.id, product_name: p.name, unit: p.unit, quantity: "", category: p.category || null,
     }, ...prev]);
     setProductSearch("");
     setHighlightedIndex(-1);
   };
+
 
   const updateLine = (idx: number, qty: string) => {
     setOrderLines(prev => prev.map((l, i) => i === idx ? { ...l, quantity: qty } : l));
@@ -515,20 +551,31 @@ export default function ShopOrders() {
                   />
                 </div>
                 {filteredProducts.length > 0 && (
-                  <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto">
-                    {filteredProducts.map((p, idx) => (
-                      <button
-                        key={p.id}
-                        className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between ${idx === highlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
-                        onClick={() => addProduct(p)}
-                        onMouseEnter={() => setHighlightedIndex(idx)}
-                      >
-                        <span className="font-medium text-foreground">{p.name}</span>
-                        <span className="text-muted-foreground font-mono text-[10px]">{p.sku} · {p.unit}</span>
-                      </button>
+                  <div className="absolute z-10 mt-1 w-full bg-popover border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    {groupedSearchResults.map(([cat, prods]) => (
+                      <div key={cat}>
+                        <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground bg-muted/50 sticky top-0">
+                          ▸ {cat}
+                        </div>
+                        {prods.map((p: any) => {
+                          const idx = filteredProducts.indexOf(p);
+                          return (
+                            <button
+                              key={p.id}
+                              className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between ${idx === highlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
+                              onClick={() => addProduct(p)}
+                              onMouseEnter={() => setHighlightedIndex(idx)}
+                            >
+                              <span className="font-medium text-foreground">{p.name}</span>
+                              <span className="text-muted-foreground font-mono text-[10px]">{p.sku} · {p.unit}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     ))}
                   </div>
                 )}
+
               </div>
               <Select
                 value=""
@@ -543,7 +590,9 @@ export default function ShopOrders() {
                     product_name: l.products?.name || "–",
                     unit: l.unit || l.products?.unit || "ST",
                     quantity: String(l.quantity_ordered || ""),
+                    category: l.products?.category || null,
                   }));
+
                   setOrderLines(copied);
                   toast({ title: "Order kopierad", description: `${copied.length} produkter tillagda från vecka ${displayOrderWeek(picked)}` });
                 }}
@@ -580,29 +629,38 @@ export default function ShopOrders() {
                       </tr>
                     </thead>
                     <tbody>
-                      {orderLines.map((line, idx) => (
-                        <tr key={line.product_id} className="border-b border-border/30">
-                          <td className="py-2 font-medium text-foreground">{line.product_name}</td>
-                          <td className="py-2 text-muted-foreground">{line.unit}</td>
-                          <td className="py-2 text-right">
-                            <Input
-                              type="number"
-                              step="0.1"
-                              value={line.quantity}
-                              onChange={e => updateLine(idx, e.target.value)}
-                              className="h-7 text-xs w-24 ml-auto text-right"
-                              placeholder="0"
-                              autoFocus={idx === orderLines.length - 1}
-                            />
-                          </td>
-                          <td className="py-2">
-                            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeLine(idx)}>
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </td>
-                        </tr>
+                      {groupedOrderLines.map(([cat, items]) => (
+                        <React.Fragment key={cat}>
+                          <tr className="bg-muted/40">
+                            <td colSpan={4} className="py-1 px-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                              ▸ {cat} ({items.length})
+                            </td>
+                          </tr>
+                          {items.map(({ line, idx }) => (
+                            <tr key={line.product_id} className="border-b border-border/30">
+                              <td className="py-2 font-medium text-foreground">{line.product_name}</td>
+                              <td className="py-2 text-muted-foreground">{line.unit}</td>
+                              <td className="py-2 text-right">
+                                <Input
+                                  type="number"
+                                  step="0.1"
+                                  value={line.quantity}
+                                  onChange={e => updateLine(idx, e.target.value)}
+                                  className="h-7 text-xs w-24 ml-auto text-right"
+                                  placeholder="0"
+                                />
+                              </td>
+                              <td className="py-2">
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeLine(idx)}>
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </React.Fragment>
                       ))}
                     </tbody>
+
                   </table>
                 </div>
               </div>
