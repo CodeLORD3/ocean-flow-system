@@ -1618,7 +1618,9 @@ export default function Inventory() {
       <Dialog open={locationDialogOpen} onOpenChange={setLocationDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="font-heading">Nytt lagerställe</DialogTitle>
+            <DialogTitle className="font-heading">
+              {locParent === "none" ? "Nytt lagerställe" : "Nytt sublager"}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
@@ -1660,6 +1662,53 @@ export default function Inventory() {
                     <SelectItem value="Produktion" className="text-xs">
                       🏭 Produktion
                     </SelectItem>
+                    <SelectItem value="Försäljning" className="text-xs">
+                      🛒 Försäljning
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Placera under (sublager)</Label>
+                <Select value={locParent} onValueChange={setLocParent}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none" className="text-xs">
+                      — Eget huvudlager —
+                    </SelectItem>
+                    {(locations as any[])
+                      .filter((l: any) => !l.parent_location_id && (!locStore || l.store_id === locStore))
+                      .map((l: any) => (
+                        <SelectItem key={l.id} value={l.id} className="text-xs">
+                          {l.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Produktkategori (valfritt)</Label>
+                <Select value={locCategory || "none"} onValueChange={(v) => setLocCategory(v === "none" ? "" : v)}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Ingen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none" className="text-xs">
+                      — Ingen —
+                    </SelectItem>
+                    {Array.from(
+                      new Set((products as any[]).map((p: any) => p.category).filter(Boolean)),
+                    )
+                      .sort()
+                      .map((c: any) => (
+                        <SelectItem key={c} value={c} className="text-xs">
+                          {c}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -1675,9 +1724,14 @@ export default function Inventory() {
               onClick={handleCreateLocation}
               disabled={!locName || !locStore || createLocation.isPending}
             >
-              {createLocation.isPending ? "Sparar..." : "Skapa lagerställe"}
+              {createLocation.isPending
+                ? "Sparar..."
+                : locParent === "none"
+                  ? "Skapa lagerställe"
+                  : "Skapa sublager"}
             </Button>
           </DialogFooter>
+
         </DialogContent>
       </Dialog>
 
