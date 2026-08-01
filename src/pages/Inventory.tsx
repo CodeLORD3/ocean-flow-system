@@ -1082,9 +1082,10 @@ export default function Inventory() {
 
   const handlePrintSheets = () => {
     const pages = printSelectedIds
-      .map((id) => (locations as any[]).find((l: any) => l.id === id))
-      .filter(Boolean)
-      .map((loc: any) => {
+      .map((key) => {
+        const [locId, cat] = key.split("::");
+        const loc = (locations as any[]).find((l: any) => l.id === locId);
+        if (!loc) return null;
         const parent = loc.parent_location_id
           ? (locations as any[]).find((l: any) => l.id === loc.parent_location_id)
           : null;
@@ -1094,17 +1095,19 @@ export default function Inventory() {
           parent?.name || null,
           loc.name as string,
           loc.zone ? `Zon: ${loc.zone}` : null,
-          loc.category ? `Kategori: ${loc.category}` : null,
+          cat ? `Kategori: ${cat}` : loc.category ? `Kategori: ${loc.category}` : null,
         ].filter(Boolean) as string[];
         return {
-          locationName: loc.name as string,
+          locationName: cat ? `${cat} — ${loc.name}` : (loc.name as string),
           storeName: (loc.stores?.name as string) || null,
           sourceParts,
         };
-      });
+      })
+      .filter(Boolean) as any[];
     if (pages.length === 0) return;
     generateStockSheetPdf(pages);
   };
+
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
@@ -1365,8 +1368,123 @@ export default function Inventory() {
                       </div>
                     );
 
+                    // Försäljningslager: ett lager där produkter sorteras per kategori
+                    if (!loc.parent_location_id && loc.zone === "Försäljning" && !hasSubs) {
+                      const isOpen = openSubLocations[loc.id] !== false;
+                      const catMap = new Map<string, any[]>();
+                      loc.items.forEach((s: any) => {
+                        const c = s.products?.category || "Övrigt";
+                        const list = catMap.get(c) || [];
+                        list.push(s);
+                        catMap.set(c, list);
+                      });
+                      const allCats = Array.from(
+                        new Set<string>([
+                          ...Array.from(catMap.keys()),
+                          ...((products as any[]).map((p: any) => p.category).filter(Boolean) as string[]),
+                        ]),
+                      ).sort((a, b) => a.localeCompare(b, "sv"));
+
+                      return (
+                        <div key={loc.id} className="mb-3 border border-border/50 rounded-md overflow-hidden">
+                          <div className="flex items-center gap-1.5 bg-muted/30 pl-2">
+                            <Checkbox
+                              checked={!!printSel[loc.id]}
+                              onCheckedChange={() => togglePrintSel(loc.id)}
+                              aria-label={`Välj ${loc.name} för utskrift`}
+                              className="h-3.5 w-3.5"
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setOpenSubLocations((prev) => ({
+                                  ...prev,
+                                  [loc.id]: prev[loc.id] === false ? true : false,
+                                }))
+                              }
+                              className="flex-1 flex flex-wrap items-center justify-between gap-2 px-2 py-2 hover:bg-muted/50 transition-colors"
+                            >
+                              <span className="flex items-center gap-2 min-w-0">
+                                {isOpen ? (
+                                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                ) : (
+                                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                )}
+                                <Warehouse className="h-3 w-3 text-muted-foreground shrink-0" />
+                                <span className="text-xs font-semibold text-foreground truncate">{loc.name}</span>
+                                <Badge variant="secondary" className="text-[9px] h-4">{loc.items.length}</Badge>
+                                <span className="text-[9px] text-muted-foreground">sorterat per kategori</span>
+                              </span>
+                              <span className="flex items-center gap-2 shrink-0">
+                                <span className="text-[10px] text-muted-foreground">
+                                  {loc.totalQty.toLocaleString("sv-SE")} kg
+                                </span>
+                                <span className="text-[10px] font-semibold text-foreground">{fmt(loc.totalValue)}</span>
+                              </span>
+                            </button>
+                          </div>
+                          {isOpen && (
+                            <div className="p-1.5 space-y-1.5">
+                              {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
+                              {allCats.map((cat) => {
+                                const items = catMap.get(cat) || [];
+                                const catKey = `${loc.id}::${cat}`;
+                                const catOpen = !!openSubLocations[catKey];
+                                const catQty = items.reduce((s: number, i: any) => s + Number(i.quantity), 0);
+                                const catValue = items.reduce(
+                                  (s: number, i: any) =>
+                                    s +
+                                    Number(i.quantity) *
+                                      (Number(i.unit_cost) || Number(i.products?.cost_price) || 0),
+                                  0,
+                                );
+                                return (
+                                  <div key={catKey} className="border border-border/50 rounded-md overflow-hidden">
+                                    <div className="flex items-center gap-1.5 bg-muted/20 pl-2">
+                                      <Checkbox
+                                        checked={!!printSel[catKey]}
+                                        onCheckedChange={() => togglePrintSel(catKey)}
+                                        aria-label={`Välj ${cat} för utskrift`}
+                                        className="h-3.5 w-3.5"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setOpenSubLocations((prev) => ({ ...prev, [catKey]: !prev[catKey] }))
+                                        }
+                                        className="flex-1 flex items-center justify-between gap-2 px-2 py-1.5 hover:bg-muted/40 transition-colors"
+                                      >
+                                        <span className="flex items-center gap-1.5 min-w-0">
+                                          {catOpen ? (
+                                            <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
+                                          ) : (
+                                            <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                                          )}
+                                          <span className="text-xs font-medium text-foreground truncate">{cat}</span>
+                                          <Badge variant="secondary" className="text-[9px] h-4">{items.length}</Badge>
+                                        </span>
+                                        <span className="flex items-center gap-2 shrink-0">
+                                          <span className="text-[10px] text-muted-foreground">
+                                            {catQty.toLocaleString("sv-SE")} kg
+                                          </span>
+                                          <span className="text-[10px] font-medium text-foreground">{fmt(catValue)}</span>
+                                        </span>
+                                      </button>
+                                    </div>
+                                    {catOpen && (
+                                      <div className="p-1.5">{renderLocationTable({ ...loc, items })}</div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
 
                     if (hasSubs) {
+
                       const isParentOpen = openSubLocations[loc.id] !== false;
                       return (
                         <div key={loc.id} className="mb-3 border border-border/50 rounded-md overflow-hidden">
