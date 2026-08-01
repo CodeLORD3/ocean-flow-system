@@ -65,6 +65,7 @@ import { useSite } from "@/contexts/SiteContext";
 import { getStoreCurrency } from "@/lib/currency";
 import BarcodeScanner from "@/components/barcode/BarcodeScanner";
 import { generateStockSheetPdf } from "@/lib/stockSheetPdf";
+import StockCountDialog, { type StockCountScope } from "@/components/inventory/StockCountDialog";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { sv } from "date-fns/locale";
 
