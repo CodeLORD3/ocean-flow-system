@@ -1438,6 +1438,14 @@ export default function Inventory() {
                         {!showHeader && (
                           <div className="flex flex-wrap items-center justify-between gap-2 px-2 py-1.5 mb-1">
                             <div className="flex items-center gap-2 flex-wrap">
+                              <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer">
+                                <Checkbox
+                                  checked={!!printSel[loc.id]}
+                                  onCheckedChange={() => togglePrintSel(loc.id)}
+                                  className="h-3.5 w-3.5"
+                                />
+                                Välj för utskrift
+                              </label>
                               {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
                             </div>
                             <div className="flex items-center gap-2 ml-auto">
