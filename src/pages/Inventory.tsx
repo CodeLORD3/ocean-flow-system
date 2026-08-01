@@ -1246,6 +1246,52 @@ export default function Inventory() {
                           </div>
                         )}
                         {renderLocationTable(loc)}
+                        {(subByParent.get(loc.id) || []).length > 0 && (
+                          <div className="mt-2 space-y-1.5">
+                            {(subByParent.get(loc.id) || []).map((sub: any) => {
+                              const isOpen = !!openSubLocations[sub.id];
+                              return (
+                                <div key={sub.id} className="border border-border/50 rounded-md overflow-hidden">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setOpenSubLocations((prev) => ({ ...prev, [sub.id]: !prev[sub.id] }))
+                                    }
+                                    className="w-full flex items-center justify-between gap-2 px-2 py-1.5 bg-muted/20 hover:bg-muted/40 transition-colors"
+                                  >
+                                    <span className="flex items-center gap-1.5 min-w-0">
+                                      {isOpen ? (
+                                        <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
+                                      ) : (
+                                        <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                                      )}
+                                      <span className="text-xs font-medium text-foreground truncate">{sub.name}</span>
+                                      <Badge variant="secondary" className="text-[9px] h-4">
+                                        {sub.items.length}
+                                      </Badge>
+                                    </span>
+                                    <span className="flex items-center gap-2 shrink-0">
+                                      <span className="text-[10px] text-muted-foreground">
+                                        {sub.totalQty.toLocaleString("sv-SE")} kg
+                                      </span>
+                                      <span className="text-[10px] font-medium text-foreground">
+                                        {fmt(sub.totalValue)}
+                                      </span>
+                                    </span>
+                                  </button>
+                                  {isOpen && (
+                                    <div className="p-1.5">
+                                      {getSelectedForLocation(sub.id).size > 0 && (
+                                        <div className="mb-1.5">{renderSelectionActions(sub.id)}</div>
+                                      )}
+                                      {renderLocationTable(sub)}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
