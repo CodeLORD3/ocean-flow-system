@@ -666,36 +666,18 @@ export default function Products() {
 
         {/* Prices */}
         {isWholesale && (
-          <td className="px-2 py-0 h-8 align-middle text-right">
+          <td className="px-2 py-0 h-8 align-middle text-right min-w-[92px]">
             {isAggregatedParent ? (
               <span className="!text-[11px] font-mono tabular-nums text-foreground">{fmtNum(agg!.cost_price)}</span>
-            ) : Number(p.cost_price) === 0 ? (
-              <Input
-                type="number"
-                value={costVal}
-                onFocus={(e) => {
-                  if (!inlineEdits[p.id]) startInlineEdit(p);
-                  e.target.select();
-                }}
-                onChange={(e) => updateInlineCost(p.id, Number(e.target.value))}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") saveInlineEdit(p);
-                }}
-                className="h-6 w-16 text-right !text-[11px] font-mono tabular-nums ml-auto border-transparent bg-transparent text-muted-foreground/40 hover:border-input focus:border-input focus:bg-background focus:text-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
             ) : (
-              <Input
-                type="number"
+              <NumCell
                 value={costVal}
-                onFocus={(e) => {
+                muted={Number(p.cost_price) === 0}
+                onFocusStart={() => {
                   if (!inlineEdits[p.id]) startInlineEdit(p);
-                  e.target.select();
                 }}
-                onChange={(e) => updateInlineCost(p.id, Number(e.target.value))}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") saveInlineEdit(p);
-                }}
-                className="h-6 w-16 text-right !text-[11px] font-mono tabular-nums ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                onChange={(n) => updateInlineCost(p.id, n)}
+                onEnter={() => saveInlineEdit(p)}
               />
             )}
           </td>
@@ -718,59 +700,49 @@ export default function Products() {
             })()}
           </td>
         )}
-        <td className="px-2 py-0 h-8 align-middle text-right">
+        <td className="px-2 py-0 h-8 align-middle text-right min-w-[92px]">
           {isAggregatedParent ? (
             <span className="!text-[11px] font-mono tabular-nums text-foreground">
               {fmtNum(agg ? agg.wholesale_price : Number(p.wholesale_price))}
             </span>
           ) : isWholesale ? (
-            <Input
-              type="number"
+            <NumCell
               value={wholesaleVal}
-              onFocus={(e) => {
+              muted={Number(p.wholesale_price) === 0}
+              onFocusStart={() => {
                 if (!inlineEdits[p.id]) startInlineEdit(p);
-                e.target.select();
               }}
-              onChange={(e) => updateInlineWholesale(p.id, Number(e.target.value))}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") saveInlineEdit(p);
-              }}
-              className={`h-6 w-16 text-right !text-[11px] font-mono tabular-nums ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background focus:text-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${Number(p.wholesale_price) === 0 ? "text-muted-foreground/40" : ""}`}
+              onChange={(n) => updateInlineWholesale(p.id, n)}
+              onEnter={() => saveInlineEdit(p)}
             />
           ) : (
             <span className="!text-[11px] font-mono tabular-nums text-foreground">{fmtNum(Number(p.wholesale_price))}</span>
           )}
         </td>
         {isWholesale && (
-          <td className="px-2 py-0 h-8 align-middle text-right">
+          <td className="px-2 py-0 h-8 align-middle text-right min-w-[64px]">
             {isAggregatedParent ? (
-              <span className="inline-flex items-center justify-end !text-[11px] font-mono tabular-nums text-muted-foreground">
-                <span className="w-10 text-right">{calcMargin(agg!.cost_price, agg!.wholesale_price)}</span>
-                <span className="text-[10px] text-muted-foreground/50 ml-0.5">%</span>
+              <span className="!text-[11px] font-mono tabular-nums text-muted-foreground">
+                {calcMargin(agg!.cost_price, agg!.wholesale_price)}%
               </span>
             ) : (
-              <span className="inline-flex items-center justify-end">
-
-                <Input
-                  type="number"
-                  value={marginVal}
-                  onFocus={(e) => {
-                    if (!inlineEdits[p.id]) startInlineEdit(p);
-                    e.target.select();
-                  }}
-                  onChange={(e) => updateInlineMargin(p.id, Number(e.target.value))}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") saveInlineEdit(p);
-                  }}
-                  className={`h-6 w-10 text-right !text-[11px] font-mono tabular-nums border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${Number(marginVal) === 0 ? "text-muted-foreground/40" : ""}`}
-                />
-                <span className="text-[10px] text-muted-foreground/50 ml-0.5">%</span>
-              </span>
+              <NumCell
+                value={marginVal}
+                decimals={0}
+                suffix="%"
+                widthClass="w-14"
+                muted={Number(marginVal) === 0}
+                onFocusStart={() => {
+                  if (!inlineEdits[p.id]) startInlineEdit(p);
+                }}
+                onChange={(n) => updateInlineMargin(p.id, n)}
+                onEnter={() => saveInlineEdit(p)}
+              />
             )}
           </td>
         )}
         {isWholesale && (
-          <td className="px-2 py-0 h-8 align-middle text-right !text-[11px] font-mono tabular-nums text-muted-foreground">
+          <td className="px-2 py-0 h-8 align-middle text-right min-w-[92px] !text-[11px] font-mono tabular-nums text-muted-foreground">
             {(() => {
               const v = agg ? agg.retail_suggested : (p.retail_suggested ? Number(p.retail_suggested) : 0);
               if (!v) return <span className="text-muted-foreground/40">–</span>;
@@ -778,6 +750,7 @@ export default function Products() {
             })()}
           </td>
         )}
+
 
         {/* Barcode */}
         <td className="px-2 py-0 h-8 align-middle">
