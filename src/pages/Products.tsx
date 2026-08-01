@@ -72,15 +72,79 @@ function ShelfLifeBadge({ days }: { days: number | null }) {
   );
 }
 
-// Format a number consistently: always 2 decimals, dot as decimal separator.
+// Parse any numeric input (accepts comma decimals) into a number.
+function parseNumeric(v: number | string | null | undefined): number | null {
+  if (v === null || v === undefined || v === "") return null;
+  const n = typeof v === "number" ? v : Number(String(v).replace(/\s/g, "").replace(",", "."));
+  return Number.isNaN(n) ? null : n;
+}
+
+// Format a number consistently: always exactly 2 decimals, dot as decimal separator.
 function fmtNum(v: number | string | null | undefined): string {
-  const n = typeof v === "string" ? Number(v) : v;
-  if (n === null || n === undefined || Number.isNaN(n)) return "–";
+  const n = parseNumeric(v);
+  if (n === null) return "–";
   return n.toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 }
+
+/** Right-aligned numeric cell input: shows formatted value when idle, raw value while editing. */
+function NumCell({
+  value,
+  onChange,
+  onEnter,
+  onFocusStart,
+  suffix,
+  decimals = 2,
+  muted,
+  widthClass = "w-20",
+}: {
+  value: number;
+  onChange: (n: number) => void;
+  onEnter?: () => void;
+  onFocusStart?: () => void;
+  suffix?: string;
+  decimals?: number;
+  muted?: boolean;
+  widthClass?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const display =
+    decimals === 0
+      ? `${Math.round(value || 0)}${suffix ?? ""}`
+      : `${fmtNum(value)}${suffix ?? ""}`;
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      value={editing ? draft : display}
+      onFocus={(e) => {
+        onFocusStart?.();
+        setDraft(String(value ?? ""));
+        setEditing(true);
+        requestAnimationFrame(() => e.target.select());
+      }}
+      onChange={(e) => {
+        setDraft(e.target.value);
+        const n = parseNumeric(e.target.value);
+        onChange(n ?? 0);
+      }}
+      onBlur={() => setEditing(false)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          setEditing(false);
+          onEnter?.();
+        }
+      }}
+      className={`h-6 ${widthClass} ml-auto block rounded px-1 text-right !text-[11px] font-mono tabular-nums border border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background focus:text-foreground focus:outline-none ${
+        muted ? "text-muted-foreground/40" : "text-foreground"
+      }`}
+    />
+  );
+}
+
 
 // Fixed, distinct color per category name (stable hash → palette index).
 const CATEGORY_COLORS = [
