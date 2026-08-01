@@ -45,7 +45,14 @@ export function buildStockSheetDoc(pages: StockSheetPage[]) {
     const nameLabel = page.storeName
       ? `${page.locationName} — ${page.storeName}`
       : page.locationName;
-    doc.text(nameLabel, nameX, baseY);
+    const maxNameW = margin + innerWidth * 0.72 - nameX - 4;
+    let nameSize = 10;
+    while (nameSize > 6 && doc.getTextWidth(nameLabel) > maxNameW) {
+      nameSize -= 0.5;
+      doc.setFontSize(nameSize);
+    }
+    doc.text(nameLabel, nameX, baseY, { maxWidth: maxNameW });
+    doc.setFontSize(10);
 
     doc.setFont("helvetica", "bold");
     const ansvX = margin + innerWidth * 0.72;
@@ -119,14 +126,14 @@ export function buildStockSheetDoc(pages: StockSheetPage[]) {
     });
 
     // ── Noteringar ─────────────────────────────────────────────────────────
-    let y = ((doc as any).lastAutoTable?.finalY || boxY + boxH + 5) + 8;
+    let y = ((doc as any).lastAutoTable?.finalY || boxY + boxH + 5) + 6;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.text("NOTERINGAR / KOMMENTARER:", margin, y);
     doc.setDrawColor(160);
     doc.line(margin + 52, y + 0.8, pageWidth - margin, y + 0.8);
     for (let i = 0; i < 3; i++) {
-      y += 6;
+      y += 5;
       if (y > pageHeight - margin) break;
       doc.line(margin, y + 0.8, pageWidth - margin, y + 0.8);
     }
