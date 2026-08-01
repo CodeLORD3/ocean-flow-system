@@ -567,6 +567,7 @@ export default function Inventory() {
     >();
     const generalLocations: typeof stockByLocation = [];
     stockByLocation.forEach((loc: any) => {
+      if (loc.parent_location_id) return; // sublager visas i dropdown under sitt huvudlager
       if (generalNames.includes(loc.name)) {
         generalLocations.push(loc);
         return;
