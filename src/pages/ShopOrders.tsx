@@ -311,15 +311,49 @@ export default function ShopOrders() {
     (p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
      p.sku.toLowerCase().includes(productSearch.toLowerCase())) &&
     !orderLines.find(l => l.product_id === p.id)
-  ).slice(0, 8);
+  )
+    .slice()
+    .sort((a: any, b: any) =>
+      (a.category || "Övrigt").localeCompare(b.category || "Övrigt", "sv") ||
+      (a.name || "").localeCompare(b.name || "", "sv")
+    )
+    .slice(0, 12);
+
+  // Sökresultat grupperade per kategori
+  const groupedSearchResults = useMemo(() => {
+    const groups = new Map<string, any[]>();
+    filteredProducts.forEach(p => {
+      const cat = p.category || "Övrigt";
+      if (!groups.has(cat)) groups.set(cat, []);
+      groups.get(cat)!.push(p);
+    });
+    return Array.from(groups.entries());
+  }, [filteredProducts]);
+
+  // Tillagda rader grupperade per kategori (behåller index mot orderLines)
+  const groupedOrderLines = useMemo(() => {
+    const groups = new Map<string, { line: OrderLine; idx: number }[]>();
+    orderLines.forEach((line, idx) => {
+      const cat = line.category || "Övrigt";
+      if (!groups.has(cat)) groups.set(cat, []);
+      groups.get(cat)!.push({ line, idx });
+    });
+    return Array.from(groups.entries())
+      .sort((a, b) => a[0].localeCompare(b[0], "sv"))
+      .map(([cat, items]) => [
+        cat,
+        items.slice().sort((a, b) => a.line.product_name.localeCompare(b.line.product_name, "sv")),
+      ] as [string, { line: OrderLine; idx: number }[]]);
+  }, [orderLines]);
 
   const addProduct = (p: any) => {
     setOrderLines(prev => [{
-      product_id: p.id, product_name: p.name, unit: p.unit, quantity: "",
+      product_id: p.id, product_name: p.name, unit: p.unit, quantity: "", category: p.category || null,
     }, ...prev]);
     setProductSearch("");
     setHighlightedIndex(-1);
   };
+
 
   const updateLine = (idx: number, qty: string) => {
     setOrderLines(prev => prev.map((l, i) => i === idx ? { ...l, quantity: qty } : l));
