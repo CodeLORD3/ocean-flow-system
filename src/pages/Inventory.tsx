@@ -1905,6 +1905,8 @@ export default function Inventory() {
                     {Array.from(
                       new Set((products as any[]).map((p: any) => p.category).filter(Boolean)),
                     )
+                      .filter((c: any) => !HIDDEN_CATEGORIES.has(String(c).toLowerCase()))
+
                       .sort()
                       .map((c: any) => (
                         <SelectItem key={c} value={c} className="text-xs">
