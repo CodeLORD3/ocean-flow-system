@@ -72,15 +72,79 @@ function ShelfLifeBadge({ days }: { days: number | null }) {
   );
 }
 
-// Format a number consistently: always 2 decimals, dot as decimal separator.
+// Parse any numeric input (accepts comma decimals) into a number.
+function parseNumeric(v: number | string | null | undefined): number | null {
+  if (v === null || v === undefined || v === "") return null;
+  const n = typeof v === "number" ? v : Number(String(v).replace(/\s/g, "").replace(",", "."));
+  return Number.isNaN(n) ? null : n;
+}
+
+// Format a number consistently: always exactly 2 decimals, dot as decimal separator.
 function fmtNum(v: number | string | null | undefined): string {
-  const n = typeof v === "string" ? Number(v) : v;
-  if (n === null || n === undefined || Number.isNaN(n)) return "–";
+  const n = parseNumeric(v);
+  if (n === null) return "–";
   return n.toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 }
+
+/** Right-aligned numeric cell input: shows formatted value when idle, raw value while editing. */
+function NumCell({
+  value,
+  onChange,
+  onEnter,
+  onFocusStart,
+  suffix,
+  decimals = 2,
+  muted,
+  widthClass = "w-20",
+}: {
+  value: number;
+  onChange: (n: number) => void;
+  onEnter?: () => void;
+  onFocusStart?: () => void;
+  suffix?: string;
+  decimals?: number;
+  muted?: boolean;
+  widthClass?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const display =
+    decimals === 0
+      ? `${Math.round(value || 0)}${suffix ?? ""}`
+      : `${fmtNum(value)}${suffix ?? ""}`;
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      value={editing ? draft : display}
+      onFocus={(e) => {
+        onFocusStart?.();
+        setDraft(String(value ?? ""));
+        setEditing(true);
+        requestAnimationFrame(() => e.target.select());
+      }}
+      onChange={(e) => {
+        setDraft(e.target.value);
+        const n = parseNumeric(e.target.value);
+        onChange(n ?? 0);
+      }}
+      onBlur={() => setEditing(false)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          setEditing(false);
+          onEnter?.();
+        }
+      }}
+      className={`h-6 ${widthClass} ml-auto block rounded px-1 text-right !text-[11px] font-mono tabular-nums border border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background focus:text-foreground focus:outline-none ${
+        muted ? "text-muted-foreground/40" : "text-foreground"
+      }`}
+    />
+  );
+}
+
 
 // Fixed, distinct color per category name (stable hash → palette index).
 const CATEGORY_COLORS = [
@@ -511,7 +575,7 @@ export default function Products() {
         className={`border-b border-border/40 hover:bg-primary/20 transition-colors h-8 max-h-8 ${isSubproduct ? "bg-muted/10" : rowIndex % 2 === 1 ? "bg-muted/30" : ""}`}
       >
         {/* Name */}
-        <td className="px-2 py-0 h-8 align-middle font-medium text-foreground">
+        <td className="px-2 py-0 h-8 align-middle font-medium text-foreground sticky left-0 z-10 bg-card border-r border-border/60 min-w-[200px]">
           <div className="flex items-center gap-1.5 h-8">
             {!isSubproduct && hasChildren && (
               <button onClick={() => toggleExpand(p.id)} className="p-0.5 rounded hover:bg-muted shrink-0">
@@ -602,36 +666,18 @@ export default function Products() {
 
         {/* Prices */}
         {isWholesale && (
-          <td className="px-2 py-0 h-8 align-middle text-right">
+          <td className="px-2 py-0 h-8 align-middle text-right min-w-[92px]">
             {isAggregatedParent ? (
               <span className="!text-[11px] font-mono tabular-nums text-foreground">{fmtNum(agg!.cost_price)}</span>
-            ) : Number(p.cost_price) === 0 ? (
-              <Input
-                type="number"
-                value={costVal}
-                onFocus={(e) => {
-                  if (!inlineEdits[p.id]) startInlineEdit(p);
-                  e.target.select();
-                }}
-                onChange={(e) => updateInlineCost(p.id, Number(e.target.value))}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") saveInlineEdit(p);
-                }}
-                className="h-6 w-16 text-right !text-[11px] font-mono tabular-nums ml-auto border-transparent bg-transparent text-muted-foreground/40 hover:border-input focus:border-input focus:bg-background focus:text-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
             ) : (
-              <Input
-                type="number"
+              <NumCell
                 value={costVal}
-                onFocus={(e) => {
+                muted={Number(p.cost_price) === 0}
+                onFocusStart={() => {
                   if (!inlineEdits[p.id]) startInlineEdit(p);
-                  e.target.select();
                 }}
-                onChange={(e) => updateInlineCost(p.id, Number(e.target.value))}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") saveInlineEdit(p);
-                }}
-                className="h-6 w-16 text-right !text-[11px] font-mono tabular-nums ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                onChange={(n) => updateInlineCost(p.id, n)}
+                onEnter={() => saveInlineEdit(p)}
               />
             )}
           </td>
@@ -654,59 +700,49 @@ export default function Products() {
             })()}
           </td>
         )}
-        <td className="px-2 py-0 h-8 align-middle text-right">
+        <td className="px-2 py-0 h-8 align-middle text-right min-w-[92px]">
           {isAggregatedParent ? (
             <span className="!text-[11px] font-mono tabular-nums text-foreground">
               {fmtNum(agg ? agg.wholesale_price : Number(p.wholesale_price))}
             </span>
           ) : isWholesale ? (
-            <Input
-              type="number"
+            <NumCell
               value={wholesaleVal}
-              onFocus={(e) => {
+              muted={Number(p.wholesale_price) === 0}
+              onFocusStart={() => {
                 if (!inlineEdits[p.id]) startInlineEdit(p);
-                e.target.select();
               }}
-              onChange={(e) => updateInlineWholesale(p.id, Number(e.target.value))}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") saveInlineEdit(p);
-              }}
-              className={`h-6 w-16 text-right !text-[11px] font-mono tabular-nums ml-auto border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background focus:text-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${Number(p.wholesale_price) === 0 ? "text-muted-foreground/40" : ""}`}
+              onChange={(n) => updateInlineWholesale(p.id, n)}
+              onEnter={() => saveInlineEdit(p)}
             />
           ) : (
             <span className="!text-[11px] font-mono tabular-nums text-foreground">{fmtNum(Number(p.wholesale_price))}</span>
           )}
         </td>
         {isWholesale && (
-          <td className="px-2 py-0 h-8 align-middle text-right">
+          <td className="px-2 py-0 h-8 align-middle text-right min-w-[64px]">
             {isAggregatedParent ? (
-              <span className="inline-flex items-center justify-end !text-[11px] font-mono tabular-nums text-muted-foreground">
-                <span className="w-10 text-right">{calcMargin(agg!.cost_price, agg!.wholesale_price)}</span>
-                <span className="text-[10px] text-muted-foreground/50 ml-0.5">%</span>
+              <span className="!text-[11px] font-mono tabular-nums text-muted-foreground">
+                {calcMargin(agg!.cost_price, agg!.wholesale_price)}%
               </span>
             ) : (
-              <span className="inline-flex items-center justify-end">
-
-                <Input
-                  type="number"
-                  value={marginVal}
-                  onFocus={(e) => {
-                    if (!inlineEdits[p.id]) startInlineEdit(p);
-                    e.target.select();
-                  }}
-                  onChange={(e) => updateInlineMargin(p.id, Number(e.target.value))}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") saveInlineEdit(p);
-                  }}
-                  className={`h-6 w-10 text-right !text-[11px] font-mono tabular-nums border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${Number(marginVal) === 0 ? "text-muted-foreground/40" : ""}`}
-                />
-                <span className="text-[10px] text-muted-foreground/50 ml-0.5">%</span>
-              </span>
+              <NumCell
+                value={marginVal}
+                decimals={0}
+                suffix="%"
+                widthClass="w-14"
+                muted={Number(marginVal) === 0}
+                onFocusStart={() => {
+                  if (!inlineEdits[p.id]) startInlineEdit(p);
+                }}
+                onChange={(n) => updateInlineMargin(p.id, n)}
+                onEnter={() => saveInlineEdit(p)}
+              />
             )}
           </td>
         )}
         {isWholesale && (
-          <td className="px-2 py-0 h-8 align-middle text-right !text-[11px] font-mono tabular-nums text-muted-foreground">
+          <td className="px-2 py-0 h-8 align-middle text-right min-w-[92px] !text-[11px] font-mono tabular-nums text-muted-foreground">
             {(() => {
               const v = agg ? agg.retail_suggested : (p.retail_suggested ? Number(p.retail_suggested) : 0);
               if (!v) return <span className="text-muted-foreground/40">–</span>;
@@ -714,6 +750,7 @@ export default function Products() {
             })()}
           </td>
         )}
+
 
         {/* Barcode */}
         <td className="px-2 py-0 h-8 align-middle">
@@ -910,11 +947,12 @@ export default function Products() {
       {/* Table */}
       <Card className="shadow-card">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="overflow-auto max-h-[75vh]">
             <table className="w-full text-[10px]">
-              <thead>
-                <tr className="border-b border-border bg-muted/30 h-6">
-                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Produkt</th>
+              <thead className="sticky top-0 z-30">
+                <tr className="border-b border-border bg-muted h-6">
+                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider sticky left-0 z-40 bg-muted border-r border-border/60">Produkt</th>
+
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">SKU</th>
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Kat.</th>
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Enh.</th>
