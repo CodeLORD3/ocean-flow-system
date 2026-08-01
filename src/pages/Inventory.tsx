@@ -1122,8 +1122,18 @@ export default function Inventory() {
       {(() => {
         // Build tab list — group Pre-lager + Raw-lager per store, standalone for general locations
         const allTabs: { key: string; label: string; badge?: string; locations: any[] }[] = [];
+        // Sublager (t.ex. kategorilager i Försäljningslager) visas som dropdown under sitt huvudlager
+        const subByParent = new Map<string, any[]>();
+        stockByLocation.forEach((loc: any) => {
+          if (!loc.parent_location_id) return;
+          const list = subByParent.get(loc.parent_location_id) || [];
+          list.push(loc);
+          subByParent.set(loc.parent_location_id, list);
+        });
+        subByParent.forEach((list) => list.sort((a, b) => (a.name || "").localeCompare(b.name || "", "sv")));
+        const topLevelLocations = stockByLocation.filter((loc: any) => !loc.parent_location_id);
         const allItemCount = stockByLocation.reduce((s: number, l: any) => s + l.items.length, 0);
-        allTabs.push({ key: "__all__", label: "Alla", badge: `${allItemCount}`, locations: stockByLocation });
+        allTabs.push({ key: "__all__", label: "Alla", badge: `${allItemCount}`, locations: topLevelLocations });
         
         if (site === "production" || site === "wholesale") {
           groupedByStore.forEach((group) => {
