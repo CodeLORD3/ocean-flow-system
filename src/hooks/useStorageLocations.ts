@@ -52,8 +52,9 @@ export function useAllStockByLocation() {
 export function useCreateStorageLocation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (params: { name: string; store_id: string; zone?: string; description?: string }) => {
-      const { data, error } = await supabase.from("storage_locations").insert(params).select().single();
+    mutationFn: async (params: { name: string; store_id: string; zone?: string; description?: string; parent_location_id?: string | null; category?: string | null }) => {
+      const { data, error } = await supabase.from("storage_locations").insert(params as any).select().single();
+
       if (error) throw error;
       await logActivity({
         action_type: "create",
