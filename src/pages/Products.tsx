@@ -72,17 +72,50 @@ function ShelfLifeBadge({ days }: { days: number | null }) {
   );
 }
 
-// Format a number with Swedish locale. Smart decimals: integers stay integers,
-// fractional values keep up to 2 decimals. Returns "–" for null/zero.
+// Format a number consistently: always 2 decimals, dot as decimal separator.
 function fmtNum(v: number | string | null | undefined): string {
   const n = typeof v === "string" ? Number(v) : v;
   if (n === null || n === undefined || Number.isNaN(n)) return "–";
-  const isInt = Number.isInteger(n);
-  return n.toLocaleString("sv-SE", {
-    minimumFractionDigits: isInt ? 0 : 2,
+  return n.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 }
+
+// Fixed, distinct color per category name (stable hash → palette index).
+const CATEGORY_COLORS = [
+  "bg-sky-500/15 text-sky-700 border-sky-500/30",
+  "bg-emerald-500/15 text-emerald-700 border-emerald-500/30",
+  "bg-amber-500/15 text-amber-700 border-amber-500/30",
+  "bg-violet-500/15 text-violet-700 border-violet-500/30",
+  "bg-rose-500/15 text-rose-700 border-rose-500/30",
+  "bg-teal-500/15 text-teal-700 border-teal-500/30",
+  "bg-indigo-500/15 text-indigo-700 border-indigo-500/30",
+  "bg-orange-500/15 text-orange-700 border-orange-500/30",
+  "bg-cyan-500/15 text-cyan-700 border-cyan-500/30",
+  "bg-lime-500/15 text-lime-700 border-lime-500/30",
+  "bg-fuchsia-500/15 text-fuchsia-700 border-fuchsia-500/30",
+  "bg-blue-500/15 text-blue-700 border-blue-500/30",
+];
+
+function categoryColor(name: string | null | undefined): string {
+  if (!name) return "bg-muted text-muted-foreground border-border";
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 100000;
+  return CATEGORY_COLORS[h % CATEGORY_COLORS.length];
+}
+
+function CategoryBadge({ name }: { name: string | null | undefined }) {
+  if (!name) return <span className="text-[11px] text-muted-foreground/40">–</span>;
+  return (
+    <span
+      className={`inline-block rounded-none border px-1.5 py-[1px] text-[9px] font-medium leading-tight whitespace-nowrap ${categoryColor(name)}`}
+    >
+      {name}
+    </span>
+  );
+}
+
 
 interface InlineEdit {
   cost_price: number;
@@ -475,13 +508,13 @@ export default function Products() {
     return (
       <tr
         key={p.id}
-        className={`border-b border-border/40 hover:bg-primary/20 transition-colors h-7 ${isSubproduct ? "bg-muted/10" : rowIndex % 2 === 1 ? "bg-muted/30" : ""}`}
+        className={`border-b border-border/40 hover:bg-primary/20 transition-colors h-8 max-h-8 ${isSubproduct ? "bg-muted/10" : rowIndex % 2 === 1 ? "bg-muted/30" : ""}`}
       >
         {/* Name */}
-        <td className="px-2 py-0 font-medium text-foreground">
-          <div className="flex items-center gap-1.5">
+        <td className="px-2 py-0 h-8 align-middle font-medium text-foreground">
+          <div className="flex items-center gap-1.5 h-8">
             {!isSubproduct && hasChildren && (
-              <button onClick={() => toggleExpand(p.id)} className="p-0.5 rounded hover:bg-muted">
+              <button onClick={() => toggleExpand(p.id)} className="p-0.5 rounded hover:bg-muted shrink-0">
                 {isExpanded ? (
                   <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                 ) : (
@@ -489,21 +522,22 @@ export default function Products() {
                 )}
               </button>
             )}
-            {isSubproduct && <span className="ml-5 text-muted-foreground">└</span>}
-            {!isSubproduct && !hasChildren && <span className="w-5" />}
-            <span className={isSubproduct ? "text-muted-foreground" : ""}>{p.name}</span>
+            {isSubproduct && <span className="ml-5 text-muted-foreground shrink-0">└</span>}
+            {!isSubproduct && !hasChildren && <span className="w-5 shrink-0" />}
+            <span className={`truncate ${isSubproduct ? "text-muted-foreground" : ""}`} title={p.name}>{p.name}</span>
             {hasChildren && (
-              <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-1">
+              <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-1 rounded-none shrink-0">
                 {p.subproducts.length} del
               </Badge>
             )}
           </div>
         </td>
-        <td className="px-2 py-0 font-mono text-muted-foreground text-[10px]">{p.sku}</td>
-        <td className="px-2 py-0 text-[9px] text-muted-foreground whitespace-nowrap">{p.category}</td>
-        <td className="px-2 py-0 text-muted-foreground">{p.unit}</td>
-        <td className="px-2 py-0 font-mono text-muted-foreground">{(p as any).hs_code || "–"}</td>
-        <td className="px-2 py-0">
+        <td className="px-2 py-0 h-8 align-middle font-mono text-muted-foreground text-[10px] whitespace-nowrap">{p.sku}</td>
+        <td className="px-2 py-0 h-8 align-middle whitespace-nowrap"><CategoryBadge name={p.category} /></td>
+
+        <td className="px-2 py-0 h-8 align-middle text-muted-foreground">{p.unit}</td>
+        <td className="px-2 py-0 h-8 align-middle font-mono text-muted-foreground">{(p as any).hs_code || "–"}</td>
+        <td className="px-2 py-0 h-8 align-middle">
           <Select
             value={(p as any).producer || "__none__"}
             onValueChange={async (val) => {
@@ -532,7 +566,7 @@ export default function Products() {
         </td>
 
         {/* ── Hållbarhet ── */}
-        <td className="px-2 py-0">
+        <td className="px-2 py-0 h-8 align-middle">
           {isAggregatedParent ? (
             <span className="text-[11px] text-muted-foreground/40 font-mono tabular-nums">–</span>
           ) : (
@@ -568,7 +602,7 @@ export default function Products() {
 
         {/* Prices */}
         {isWholesale && (
-          <td className="px-2 py-0 text-right">
+          <td className="px-2 py-0 h-8 align-middle text-right">
             {isAggregatedParent ? (
               <span className="!text-[11px] font-mono tabular-nums text-foreground">{fmtNum(agg!.cost_price)}</span>
             ) : Number(p.cost_price) === 0 ? (
@@ -603,7 +637,7 @@ export default function Products() {
           </td>
         )}
         {isWholesale && (
-          <td className="px-2 py-0 text-right">
+          <td className="px-2 py-0 h-8 align-middle text-right">
             {(() => {
               const last = latestPriceMap?.get(p.id);
               if (!last) return <span className="!text-[11px] font-mono tabular-nums text-muted-foreground/40">–</span>;
@@ -620,7 +654,7 @@ export default function Products() {
             })()}
           </td>
         )}
-        <td className="px-2 py-0 text-right">
+        <td className="px-2 py-0 h-8 align-middle text-right">
           {isAggregatedParent ? (
             <span className="!text-[11px] font-mono tabular-nums text-foreground">
               {fmtNum(agg ? agg.wholesale_price : Number(p.wholesale_price))}
@@ -644,13 +678,15 @@ export default function Products() {
           )}
         </td>
         {isWholesale && (
-          <td className="px-2 py-0 text-right">
+          <td className="px-2 py-0 h-8 align-middle text-right">
             {isAggregatedParent ? (
-              <span className="inline-flex items-baseline !text-[11px] font-mono tabular-nums text-muted-foreground">
-                {calcMargin(agg!.cost_price, agg!.wholesale_price)}<span className="text-[10px] text-muted-foreground/50 ml-0.5">%</span>
+              <span className="inline-flex items-center justify-end !text-[11px] font-mono tabular-nums text-muted-foreground">
+                <span className="w-10 text-right">{calcMargin(agg!.cost_price, agg!.wholesale_price)}</span>
+                <span className="text-[10px] text-muted-foreground/50 ml-0.5">%</span>
               </span>
             ) : (
               <span className="inline-flex items-center justify-end">
+
                 <Input
                   type="number"
                   value={marginVal}
@@ -670,7 +706,7 @@ export default function Products() {
           </td>
         )}
         {isWholesale && (
-          <td className="px-2 py-0 text-right !text-[11px] font-mono tabular-nums text-muted-foreground">
+          <td className="px-2 py-0 h-8 align-middle text-right !text-[11px] font-mono tabular-nums text-muted-foreground">
             {(() => {
               const v = agg ? agg.retail_suggested : (p.retail_suggested ? Number(p.retail_suggested) : 0);
               if (!v) return <span className="text-muted-foreground/40">–</span>;
@@ -680,7 +716,7 @@ export default function Products() {
         )}
 
         {/* Barcode */}
-        <td className="px-2 py-0">
+        <td className="px-2 py-0 h-8 align-middle">
           {barcode ? (
             <div className="flex items-center gap-1.5">
               <button
@@ -707,7 +743,7 @@ export default function Products() {
         </td>
 
         {/* Stock */}
-        <td className="px-2 py-0 text-right !text-[11px] font-mono tabular-nums font-medium">
+        <td className="px-2 py-0 h-8 align-middle text-right !text-[11px] font-mono tabular-nums font-medium">
           {(() => {
             const stockVal = Number(agg ? agg.stock : p.stock);
             if (!stockVal) return <span className="text-muted-foreground/40">–</span>;
@@ -720,7 +756,7 @@ export default function Products() {
         </td>
 
         {/* Actions */}
-        <td className="px-2 py-0 text-center">
+        <td className="px-2 py-0 h-8 align-middle text-center">
           <div className="flex items-center justify-center gap-1">
             {isWholesale && hasChanges && (
               <>
