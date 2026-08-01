@@ -1527,6 +1527,14 @@ export default function Inventory() {
                                   </div>
                                 );
                               })()}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 gap-1 text-[10px] text-muted-foreground"
+                                onClick={() => openNewLocation(loc.id, loc.store_id)}
+                              >
+                                <Plus className="h-3 w-3" /> Nytt sublager
+                              </Button>
                             </div>
                           )}
                         </div>
@@ -1637,6 +1645,14 @@ export default function Inventory() {
                           </div>
                         )}
                         {renderLocationTable(loc)}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 gap-1 text-[10px] text-muted-foreground mt-1"
+                          onClick={() => openNewLocation(loc.id, loc.store_id)}
+                        >
+                          <Plus className="h-3 w-3" /> Nytt sublager
+                        </Button>
                       </div>
                     );
                   })}
