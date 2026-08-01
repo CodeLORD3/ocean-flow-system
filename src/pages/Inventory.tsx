@@ -1151,6 +1151,7 @@ export default function Inventory() {
       .filter(Boolean) as any[];
     if (pages.length === 0) return;
     generateStockSheetPdf(pages);
+    setPrintSel({});
     setSelectedItems(new Map());
   };
 
