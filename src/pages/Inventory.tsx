@@ -1149,8 +1149,10 @@ export default function Inventory() {
           });
         } else {
           // Shop view
-          stockByLocation.forEach((loc: any) => {
-            allTabs.push({ key: loc.id, label: loc.name, badge: `${loc.items.length}`, locations: [loc] });
+          topLevelLocations.forEach((loc: any) => {
+            const subs = subByParent.get(loc.id) || [];
+            const count = loc.items.length + subs.reduce((s: number, l: any) => s + l.items.length, 0);
+            allTabs.push({ key: loc.id, label: loc.name, badge: `${count}`, locations: [loc] });
           });
         }
 
