@@ -192,6 +192,34 @@ export default function Inventory() {
   const [activeTab, setActiveTab] = useState<string>("");
   const [openSubLocations, setOpenSubLocations] = useState<Record<string, boolean>>({});
 
+  // Dolda lagerplatser (sparas automatiskt i webbläsaren)
+  const HIDDEN_LOC_KEY = "inventory_hidden_locations";
+  const [hiddenLocs, setHiddenLocs] = useState<Record<string, boolean>>(() => {
+    try {
+      const raw = localStorage.getItem(HIDDEN_LOC_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  });
+  const toggleHiddenLoc = useCallback((id: string) => {
+    setHiddenLocs((prev) => {
+      const next = { ...prev };
+      if (next[id]) delete next[id];
+      else next[id] = true;
+      try {
+        localStorage.setItem(HIDDEN_LOC_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  }, []);
+  const showAllLocs = useCallback(() => {
+    setHiddenLocs({});
+    try {
+      localStorage.setItem(HIDDEN_LOC_KEY, "{}");
+    } catch {}
+  }, []);
+
   // Location form
   const [locName, setLocName] = useState("");
   const [locStore, setLocStore] = useState("");
