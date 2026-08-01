@@ -191,6 +191,9 @@ export default function Inventory() {
   const [locStore, setLocStore] = useState("");
   const [locZone, setLocZone] = useState("Kyl");
   const [locDesc, setLocDesc] = useState("");
+  const [locParent, setLocParent] = useState<string>("none");
+  const [locCategory, setLocCategory] = useState("");
+
 
   // Stock form
   const [stockProduct, setStockProduct] = useState("");
@@ -646,23 +649,45 @@ export default function Inventory() {
   };
 
   // ── Location + stock dialogs ─────────────────────────────────────────────
+  const openNewLocation = (parentId?: string, storeId?: string) => {
+    setLocName("");
+    setLocDesc("");
+    setLocCategory("");
+    setLocParent(parentId || "none");
+    const parent = parentId ? (locations as any[]).find((l: any) => l.id === parentId) : null;
+    setLocStore(storeId || parent?.store_id || (activeStoreId ?? ""));
+    setLocZone(parent?.zone || "Kyl");
+    setLocationDialogOpen(true);
+  };
+
   const handleCreateLocation = () => {
     if (!locName || !locStore) return;
     createLocation.mutate(
-      { name: locName, store_id: locStore, zone: locZone || undefined, description: locDesc || undefined },
+      {
+        name: locName,
+        store_id: locStore,
+        zone: locZone || undefined,
+        description: locDesc || undefined,
+        parent_location_id: locParent === "none" ? null : locParent,
+        category: locCategory || null,
+      },
       {
         onSuccess: () => {
-          toast({ title: "Lagerställe skapat", description: locName });
+          toast({ title: locParent === "none" ? "Lagerställe skapat" : "Sublager skapat", description: locName });
           setLocationDialogOpen(false);
           setLocName("");
           setLocStore("");
           setLocZone("Kyl");
           setLocDesc("");
+          setLocParent("none");
+          setLocCategory("");
+          queryClient.invalidateQueries({ queryKey: ["storage_locations"] });
         },
         onError: (err) => toast({ title: "Fel", description: err.message, variant: "destructive" }),
       },
     );
   };
+
 
   const handleUpsertStock = () => {
     if (!stockProduct || !stockLocation || !stockQty) return;
@@ -1068,6 +1093,15 @@ export default function Inventory() {
               {expiryAlerts.length} utgångsvarning{expiryAlerts.length > 1 ? "ar" : ""}
             </Button>
           )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none"
+            onClick={() => openNewLocation()}
+          >
+            <Plus className="h-3 w-3" /> Nytt lager
+          </Button>
+
           <Button size="sm" className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none" onClick={() => setReportDialogOpen(true)}>
             <ClipboardList className="h-3 w-3" /> Skapa lagerrapport
           </Button>
@@ -1267,8 +1301,17 @@ export default function Inventory() {
                             </div>
                           );
                         })}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 gap-1 text-[10px] text-muted-foreground"
+                          onClick={() => openNewLocation(loc.id, loc.store_id)}
+                        >
+                          <Plus className="h-3 w-3" /> Nytt sublager
+                        </Button>
                       </div>
                     );
+
 
                     if (hasSubs) {
                       const isParentOpen = openSubLocations[loc.id] !== false;
@@ -1584,7 +1627,9 @@ export default function Inventory() {
       <Dialog open={locationDialogOpen} onOpenChange={setLocationDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="font-heading">Nytt lagerställe</DialogTitle>
+            <DialogTitle className="font-heading">
+              {locParent === "none" ? "Nytt lagerställe" : "Nytt sublager"}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
@@ -1626,6 +1671,53 @@ export default function Inventory() {
                     <SelectItem value="Produktion" className="text-xs">
                       🏭 Produktion
                     </SelectItem>
+                    <SelectItem value="Försäljning" className="text-xs">
+                      🛒 Försäljning
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Placera under (sublager)</Label>
+                <Select value={locParent} onValueChange={setLocParent}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none" className="text-xs">
+                      — Eget huvudlager —
+                    </SelectItem>
+                    {(locations as any[])
+                      .filter((l: any) => !l.parent_location_id && (!locStore || l.store_id === locStore))
+                      .map((l: any) => (
+                        <SelectItem key={l.id} value={l.id} className="text-xs">
+                          {l.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Produktkategori (valfritt)</Label>
+                <Select value={locCategory || "none"} onValueChange={(v) => setLocCategory(v === "none" ? "" : v)}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Ingen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none" className="text-xs">
+                      — Ingen —
+                    </SelectItem>
+                    {Array.from(
+                      new Set((products as any[]).map((p: any) => p.category).filter(Boolean)),
+                    )
+                      .sort()
+                      .map((c: any) => (
+                        <SelectItem key={c} value={c} className="text-xs">
+                          {c}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -1641,9 +1733,14 @@ export default function Inventory() {
               onClick={handleCreateLocation}
               disabled={!locName || !locStore || createLocation.isPending}
             >
-              {createLocation.isPending ? "Sparar..." : "Skapa lagerställe"}
+              {createLocation.isPending
+                ? "Sparar..."
+                : locParent === "none"
+                  ? "Skapa lagerställe"
+                  : "Skapa sublager"}
             </Button>
           </DialogFooter>
+
         </DialogContent>
       </Dialog>
 
