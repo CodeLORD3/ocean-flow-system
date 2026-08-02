@@ -8,6 +8,7 @@ export const PRODUCT_CATEGORIES = [
   "Skaldjur",
   "Sillar",
   "Rökta Produkter",
+  "Konserver & Torkat",
   "Såser & Röror",
   "Löjrom & Kaviar",
   "Delikatesser",
@@ -23,12 +24,26 @@ export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number];
 /** Gamla kategorier: får finnas kvar på befintliga rader men kan inte väljas för nya produkter. */
 export const DEPRECATED_CATEGORIES = ["Fisk", "Is", "kolonial", "Emballage", "Svenska Produkter"];
 
+/**
+ * Normaliserar kategorinamn för jämförelse: unicode-normalisering (NFC) så att
+ * Å/Ä/Ö matchar oavsett om filen är skapad på macOS (NFD) eller Windows,
+ * plus trim, gemener och kollaps av blanksteg.
+ */
+export function normalizeCategoryKey(name: string | null | undefined): string {
+  return String(name ?? "")
+    .normalize("NFC")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
 /** SKU-prefix för autogenererade artikelnummer. */
 export const CATEGORY_SKU_PREFIX: Record<string, string> = {
   "Färsk Fisk": "FS",
   Skaldjur: "SK",
   Sillar: "SI",
   "Rökta Produkter": "RÖ",
+  "Konserver & Torkat": "KT",
   "Såser & Röror": "KK",
   "Löjrom & Kaviar": "LK",
   Delikatesser: "DE",
@@ -41,17 +56,17 @@ export const CATEGORY_SKU_PREFIX: Record<string, string> = {
 
 export function isDeprecatedCategory(name: string | null | undefined): boolean {
   if (!name) return false;
-  return DEPRECATED_CATEGORIES.some((c) => c.toLowerCase() === name.trim().toLowerCase());
+  return DEPRECATED_CATEGORIES.some((c) => normalizeCategoryKey(c) === normalizeCategoryKey(name));
 }
 
 export function isCanonicalCategory(name: string | null | undefined): boolean {
   if (!name) return false;
-  return (PRODUCT_CATEGORIES as readonly string[]).some((c) => c.toLowerCase() === name.trim().toLowerCase());
+  return (PRODUCT_CATEGORIES as readonly string[]).some((c) => normalizeCategoryKey(c) === normalizeCategoryKey(name));
 }
 
 /** Prefix för autogenerering — faller tillbaka på två första bokstäverna om kategorin är okänd. */
 export function skuPrefixForCategory(category: string): string {
-  const match = Object.keys(CATEGORY_SKU_PREFIX).find((c) => c.toLowerCase() === category.trim().toLowerCase());
+  const match = Object.keys(CATEGORY_SKU_PREFIX).find((c) => normalizeCategoryKey(c) === normalizeCategoryKey(category));
   if (match) return CATEGORY_SKU_PREFIX[match];
   return category.trim().slice(0, 2).toUpperCase() || "XX";
 }

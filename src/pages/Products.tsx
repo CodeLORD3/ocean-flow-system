@@ -1322,9 +1322,13 @@ export default function Products() {
                 <Input
                   value={form.hs_code}
                   onChange={(e) => setField("hs_code", e.target.value)}
-                  placeholder="T.ex. 16042090"
+                  placeholder="T.ex. 160420"
                   className="h-8 text-xs"
                 />
+                <p className="text-[10px] text-muted-foreground">
+                  6-siffrigt internationellt HS-nummer. Schweiziska 8-siffriga tulltaxenummer för export ska
+                  verifieras mot tares.ch.
+                </p>
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Vikt/st (KG)</Label>

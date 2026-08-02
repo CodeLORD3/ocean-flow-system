@@ -299,11 +299,20 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
             <div className="space-y-1">
               <p>
                 Obligatoriska kolumner: <code>sku</code>, <code>name</code>, <code>category</code>. Övriga kolumner:{" "}
-                <code>unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier, barcode, hs_code, weight_per_piece, shelf_life_days, parent_sku, active, image_url</code>.
+                <code>unit, cost_price, wholesale_price, retail_suggested, stock, origin, producer, supplier, hs_code, barcode, weight_per_piece, shelf_life_days, active, parent_sku, image_url, latin_name</code>.
+                Kolumnordningen spelar ingen roll och <code>stock</code> ignoreras alltid.
               </p>
               <p>
-                <code>image_url</code> = produktbild. Måste vara en publik https-länk till .jpg, .png eller .webp.
-                Tomt fält lämnar befintlig bild orörd.
+                <code>hs_code</code> = 6-siffrigt internationellt HS-nummer. Schweiziska 8-siffriga tulltaxenummer för
+                export verifieras mot tares.ch. <code>weight_per_piece</code> fylls bara i för st-varor.
+              </p>
+              <p>
+                <code>active = FALSE</code> inaktiverar raden (den raderas inte) — utfasade SKU:er och rader märkta
+                "UTGÅTT:" är alltså inte fel. Nya kategorier visas som varning, inte fel.
+              </p>
+              <p>
+                <code>image_url</code> = produktbild. Måste vara en publik https-länk till .jpg, .png eller .webp
+                (filändelsen behålls som den är). Tomt fält lämnar befintlig bild orörd.
               </p>
               <p>
                 <code>sku</code> är nyckeln — befintlig SKU uppdateras, ny skapas. Produkter som saknas i filen rörs

@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import { PRODUCT_CATEGORIES, normalizeCategoryKey } from "@/lib/productCategories";
 
 export const IMPORT_COLUMNS = [
   "sku",
@@ -266,7 +267,9 @@ export function buildDiff({ rows, existing, categories, suppliers }: BuildDiffAr
   const bySku = new Map(existing.map((p) => [p.sku.toLowerCase(), p]));
   const byId = new Map(existing.map((p) => [p.id, p]));
   const supplierByName = new Map(suppliers.map((s) => [s.name.toLowerCase(), s]));
-  const knownCategories = new Set(categories.map((c) => c.toLowerCase()));
+  const knownCategories = new Set(
+    [...categories, ...PRODUCT_CATEGORIES].map((c) => normalizeCategoryKey(c)),
+  );
   const barcodeOwner = new Map<string, string>();
   existing.forEach((p) => {
     if (p.barcode) barcodeOwner.set(p.barcode, p.sku.toLowerCase());
@@ -332,7 +335,8 @@ export function buildDiff({ rows, existing, categories, suppliers }: BuildDiffAr
       }
     }
 
-    if (row.category && !knownCategories.has(row.category.toLowerCase())) warnings.push(`ny kategori: ${row.category}`);
+    if (row.category && !knownCategories.has(normalizeCategoryKey(row.category)))
+      warnings.push(`ny kategori: ${row.category}`);
     if (row.unit && !VALID_UNITS.includes(row.unit.toLowerCase())) warnings.push(`ovanlig enhet: ${row.unit}`);
 
     if (errors.length > 0) {
