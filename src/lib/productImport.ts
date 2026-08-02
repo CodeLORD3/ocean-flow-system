@@ -263,10 +263,44 @@ export interface BuildDiffArgs {
   suppliers: { id: string; name: string }[];
 }
 
+
+/** Normaliserad nyckel + alias för leverantörsnamn ("GFA (Göteborgs Fiskauktion)"). */
+export function supplierAliasKeys(name: string): string[] {
+  const base = name.normalize("NFC").trim().toLowerCase().replace(/\s+/g, " ");
+  const keys = new Set<string>([base]);
+  const inside = base.match(/\(([^)]+)\)/);
+  if (inside) keys.add(inside[1].trim());
+  const before = base.replace(/\s*\([^)]*\)\s*/g, " ").trim();
+  if (before) keys.add(before);
+  return [...keys].filter(Boolean);
+}
+
+export function buildSupplierIndex<T extends { id: string; name: string }>(suppliers: T[]) {
+  const index = new Map<string, T>();
+  suppliers.forEach((s) => {
+    supplierAliasKeys(s.name).forEach((k) => {
+      if (!index.has(k)) index.set(k, s);
+    });
+  });
+  return index;
+}
+
+export function lookupSupplier<T extends { id: string; name: string }>(
+  index: Map<string, T>,
+  raw: string,
+): T | undefined {
+  for (const k of supplierAliasKeys(raw)) {
+    const hit = index.get(k);
+    if (hit) return hit;
+  }
+  return undefined;
+}
+
 export function buildDiff({ rows, existing, categories, suppliers }: BuildDiffArgs): DiffRow[] {
   const bySku = new Map(existing.map((p) => [p.sku.toLowerCase(), p]));
   const byId = new Map(existing.map((p) => [p.id, p]));
-  const supplierByName = new Map(suppliers.map((s) => [s.name.toLowerCase(), s]));
+  const supplierIndex = buildSupplierIndex(suppliers);
+
   const knownCategories = new Set(
     [...categories, ...PRODUCT_CATEGORIES].map((c) => normalizeCategoryKey(c)),
   );
@@ -326,14 +360,15 @@ export function buildDiff({ rows, existing, categories, suppliers }: BuildDiffAr
 
     let supplierId: string | null = current?.supplier_id ?? null;
     if (row.supplier) {
-      const sup = supplierByName.get(row.supplier.toLowerCase());
+      const sup = lookupSupplier(supplierIndex, row.supplier);
       if (!sup) {
-        warnings.push(`okänd leverantör: ${row.supplier} (lämnas tom)`);
+        warnings.push(`ny leverantör skapas: ${row.supplier}`);
         supplierId = current?.supplier_id ?? null;
       } else {
         supplierId = sup.id;
       }
     }
+
 
     if (row.category && !knownCategories.has(normalizeCategoryKey(row.category)))
       warnings.push(`ny kategori: ${row.category}`);
