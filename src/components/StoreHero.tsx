@@ -73,6 +73,7 @@ export function StoreHero() {
     try {
       await setCover.mutateAsync({ entityType: "store", entityId: activeStoreId, imageId });
       setPickerOpen(false);
+      setFocalDraft(null);
       toast.success("Omslagsbild uppdaterad");
     } catch (e: any) {
       toast.error(e?.message ?? "Kunde inte byta bild");
@@ -210,7 +211,13 @@ export function StoreHero() {
 
           {cover && (
             <>
-              <Popover open={cropOpen} onOpenChange={setCropOpen}>
+              <Popover
+                open={cropOpen}
+                onOpenChange={(o) => {
+                  setCropOpen(o);
+                  if (!o) setFocalDraft(null);
+                }}
+              >
                 <PopoverTrigger asChild>
                   <Button size="sm" variant="secondary" className="h-7 gap-1 text-[11px]" disabled={busy} title="Beskär bilden">
                     <Crop className="h-3 w-3" /> Beskär
