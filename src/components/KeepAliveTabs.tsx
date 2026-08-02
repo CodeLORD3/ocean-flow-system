@@ -4,6 +4,7 @@ import { useTabs } from "@/contexts/TabsContext";
 // Eagerly import all page components so they stay mounted
 import Dashboard from "@/pages/Dashboard";
 import Inventory from "@/pages/Inventory";
+import InventoryRouter from "@/pages/InventoryRouter";
 import OrdersRouter from "@/pages/OrdersRouter";
 import Receiving from "@/pages/Receiving";
 import Suppliers from "@/pages/Suppliers";
@@ -47,7 +48,7 @@ interface RouteEntry {
 
 const ROUTE_MAP: Record<string, RouteEntry> = {
   "/": { component: <Dashboard /> },
-  "/inventory": { component: <Inventory /> },
+  "/inventory": { component: <InventoryRouter /> },
   "/orders": { component: <OrdersRouter /> },
   "/suppliers": { component: <Suppliers /> },
   "/customers": { component: <Customers /> },
