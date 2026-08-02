@@ -89,34 +89,56 @@ function KpiCard({
 }
 
 export default function OrganisationOverview() {
+  const { site, activeStoreId, activeStoreName } = useSite();
+  const isShop = site === "shop" && !!activeStoreId;
+  const { switchTab } = useTabs();
+
   const { data: products = [] } = useProducts();
   const { data: stores = [] } = useStores(true);
   const { data: allCustomers = [] } = useCustomers();
   const { data: suppliers = [] } = useSuppliers();
   const covers = useStoreCoverImages();
 
+  // Storage locations for the active store (shop scope)
+  const { data: shopLocations = [] } = useQuery({
+    queryKey: ["overview-shop-locations", activeStoreId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("storage_locations")
+        .select("id")
+        .eq("store_id", activeStoreId!);
+      if (error) throw error;
+      return data;
+    },
+    enabled: isShop,
+  });
+  const shopLocationIds = shopLocations.map((l: any) => l.id);
 
   // Shop orders with lines for sales calculation
   const { data: shopOrders = [] } = useQuery({
-    queryKey: ["shop-orders-overview"],
+    queryKey: ["shop-orders-overview", isShop ? activeStoreId : "all"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("shop_orders")
         .select("*, stores(name), shop_order_lines(quantity_ordered, quantity_delivered, unit, product_id, products(name, wholesale_price, cost_price, category))")
         .order("created_at", { ascending: false });
+      if (isShop) q = q.eq("store_id", activeStoreId!);
+      const { data, error } = await q;
       if (error) throw error;
       return data;
     },
   });
 
-  // Delivery notes (outgoing to shops)
+  // Delivery notes (outgoing to shops / incoming for a shop)
   const { data: deliveryNotes = [] } = useQuery({
-    queryKey: ["delivery-notes-overview"],
+    queryKey: ["delivery-notes-overview", isShop ? activeStoreId : "all"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("delivery_notes")
         .select("*, stores(name), delivery_note_lines(quantity, wholesale_price, total)")
         .order("delivery_date", { ascending: false });
+      if (isShop) q = q.eq("store_id", activeStoreId!);
+      const { data, error } = await q;
       if (error) throw error;
       return data;
     },
@@ -133,19 +155,24 @@ export default function OrganisationOverview() {
       if (error) throw error;
       return data;
     },
+    enabled: !isShop,
   });
 
   // Fetch real stock from product_stock_locations
   const { data: stockLocations = [] } = useQuery({
-    queryKey: ["stock-locations-overview"],
+    queryKey: ["stock-locations-overview", isShop ? shopLocationIds : "all"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("product_stock_locations")
         .select("product_id, quantity, unit_cost, location_id, storage_locations(name, zone)");
+      if (isShop) q = q.in("location_id", shopLocationIds);
+      const { data, error } = await q;
       if (error) throw error;
       return data;
     },
+    enabled: !isShop || shopLocationIds.length > 0,
   });
+
 
   // --- Computed KPIs ---
   const totalInventoryValue = stockLocations.reduce((sum, sl: any) => {
