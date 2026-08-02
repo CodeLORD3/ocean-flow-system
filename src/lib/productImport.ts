@@ -256,6 +256,14 @@ export async function parseProductFile(file: File): Promise<ParseResult> {
 
 const VALID_UNITS = ["kg", "st", "låda", "förp", "l"];
 
+export interface BuildDiffArgs {
+  rows: ParsedRow[];
+  existing: ExistingProduct[];
+  categories: string[];
+  suppliers: { id: string; name: string }[];
+}
+
+
 /** Normaliserad nyckel + alias för leverantörsnamn ("GFA (Göteborgs Fiskauktion)"). */
 export function supplierAliasKeys(name: string): string[] {
   const base = name.normalize("NFC").trim().toLowerCase().replace(/\s+/g, " ");
