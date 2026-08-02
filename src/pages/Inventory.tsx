@@ -190,6 +190,8 @@ export default function Inventory() {
   const { toast } = useToast();
   const { activeStoreId, activeStoreName, site } = useSite();
   const [search, setSearch] = useState("");
+  const [viewMode, setViewMode] = useState<"overview" | "locations">("overview");
+
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
   const [stockDialogOpen, setStockDialogOpen] = useState(false);
