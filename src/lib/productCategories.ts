@@ -56,17 +56,17 @@ export const CATEGORY_SKU_PREFIX: Record<string, string> = {
 
 export function isDeprecatedCategory(name: string | null | undefined): boolean {
   if (!name) return false;
-  return DEPRECATED_CATEGORIES.some((c) => c.toLowerCase() === name.trim().toLowerCase());
+  return DEPRECATED_CATEGORIES.some((c) => normalizeCategoryKey(c) === normalizeCategoryKey(name));
 }
 
 export function isCanonicalCategory(name: string | null | undefined): boolean {
   if (!name) return false;
-  return (PRODUCT_CATEGORIES as readonly string[]).some((c) => c.toLowerCase() === name.trim().toLowerCase());
+  return (PRODUCT_CATEGORIES as readonly string[]).some((c) => normalizeCategoryKey(c) === normalizeCategoryKey(name));
 }
 
 /** Prefix för autogenerering — faller tillbaka på två första bokstäverna om kategorin är okänd. */
 export function skuPrefixForCategory(category: string): string {
-  const match = Object.keys(CATEGORY_SKU_PREFIX).find((c) => c.toLowerCase() === category.trim().toLowerCase());
+  const match = Object.keys(CATEGORY_SKU_PREFIX).find((c) => normalizeCategoryKey(c) === normalizeCategoryKey(category));
   if (match) return CATEGORY_SKU_PREFIX[match];
   return category.trim().slice(0, 2).toUpperCase() || "XX";
 }
