@@ -119,7 +119,8 @@ export function OurStoresSection({ storeFilterId }: { storeFilterId?: string | n
             >
               <div className="relative aspect-video overflow-hidden bg-muted">
                 <img
-                  src={store.logo_url || storeHero}
+                  src={photoByStore[store.id] || store.logo_url || storeHero}
+
                   alt={`Butiksfasad för ${store.name}`}
                   loading="lazy"
                   width={1280}
