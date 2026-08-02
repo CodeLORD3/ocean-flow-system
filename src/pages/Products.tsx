@@ -356,6 +356,29 @@ export default function Products() {
     });
   };
 
+  const imageFileRef = useRef<HTMLInputElement>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const uploadProductImage = async (file: File) => {
+    setUploadingImage(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const key = `product-images/${(form.sku || "ny").replace(/[^a-zA-Z0-9-_]/g, "")}/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("logos").upload(key, file, { upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from("logos").getPublicUrl(key);
+      setField("image_url", data.publicUrl);
+    } catch (e) {
+      toast({
+        title: "Uppladdning misslyckades",
+        description: e instanceof Error ? e.message : "Okänt fel",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const openAdd = () => {
     setEditId(null);
     setFormState({
@@ -371,6 +394,7 @@ export default function Products() {
       origin: "",
       producer: "",
       shelf_life_days: "",
+      image_url: "",
     });
     setDialogOpen(true);
   };
@@ -390,6 +414,7 @@ export default function Products() {
       origin: p.origin || "",
       producer: (p as any).producer || "",
       shelf_life_days: String((p as any).shelf_life_days || ""), // NEW
+      image_url: (p as any).image_url || "",
     });
     setDialogOpen(true);
   };
@@ -440,6 +465,7 @@ export default function Products() {
       origin: form.origin || null,
       producer: form.producer || null,
       shelf_life_days: form.shelf_life_days ? Number(form.shelf_life_days) : null, // NEW
+      image_url: form.image_url.trim() || null,
     };
 
     if (editId) {
@@ -1054,6 +1080,54 @@ export default function Products() {
             <div className="space-y-1.5">
               <Label className="text-xs">Produktnamn *</Label>
               <Input value={form.name} onChange={(e) => setField("name", e.target.value)} className="h-8 text-xs" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Produktbild</Label>
+              <div className="flex items-center gap-2">
+                <ProductThumb src={form.image_url} alt={form.name || "Produktbild"} static />
+                <div className="flex-1 space-y-1.5">
+                  <Input
+                    value={form.image_url}
+                    onChange={(e) => setField("image_url", e.target.value)}
+                    placeholder="https://..."
+                    className="h-8 text-xs"
+                  />
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={imageFileRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) uploadProductImage(file);
+                        e.target.value = "";
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-[11px]"
+                      disabled={uploadingImage}
+                      onClick={() => imageFileRef.current?.click()}
+                    >
+                      {uploadingImage ? "Laddar upp..." : "Ladda upp bild"}
+                    </Button>
+                    {form.image_url && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-[11px] text-muted-foreground"
+                        onClick={() => setField("image_url", "")}
+                      >
+                        Ta bort
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
