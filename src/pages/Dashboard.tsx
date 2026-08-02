@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { useProducts } from "@/hooks/useProducts";
 import { useStores } from "@/hooks/useStores";
+import { OurStoresSection } from "@/components/dashboard/OurStoresSection";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import { useQuery } from "@tanstack/react-query";
@@ -255,6 +256,11 @@ export default function Dashboard() {
           </motion.div>
         ))}
       </div>
+
+      {/* Our stores */}
+      <OurStoresSection storeFilterId={isShop ? activeStoreId : null} />
+
+
 
       {/* Charts */}
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
