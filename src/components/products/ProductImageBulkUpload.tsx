@@ -340,7 +340,9 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
             <ImageIcon className="h-4 w-4 text-primary" /> Produktbilder — bulkuppladdning
           </DialogTitle>
           <DialogDescription className="text-xs">
-            Filnamnet tolkas först som SKU (t.ex. <span className="font-mono">FS-045.jpg</span>), annars matchas det
+            Produkter som redan har en bild matchas aldrig automatiskt — de måste väljas manuellt. Om flera filer pekar
+            på samma produkt vinner högsta nivån i filnamnet (basic → lyx → premium) och övriga filer måste kopplas
+            manuellt. Filnamnet tolkas först som SKU (t.ex. <span className="font-mono">FS-045.jpg</span>), annars matchas det
             mot produktnamn — även liknande namn och kopiesuffix (t.ex. <span className="font-mono">bergtungafil-2.jpg</span>{" "}
             → Bergtungafilé). Klicka på produktnamnet i listan för att välja en annan produkt manuellt. Bilderna är endast
             för internt bruk.
@@ -421,6 +423,9 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
                                       className="text-xs"
                                     >
                                       <span className="truncate">{c.name}</span>
+                                      {c.hasImage && (
+                                        <Badge variant="outline" className="ml-1 text-[9px] text-amber-600">har bild</Badge>
+                                      )}
                                       <span className="ml-auto font-mono text-[10px] text-muted-foreground">{c.sku}</span>
                                     </CommandItem>
                                   ))}
@@ -435,6 +440,9 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
                                     className="text-xs"
                                   >
                                     <span className="truncate">{p.name}</span>
+                                    {p.hasImage && (
+                                      <Badge variant="outline" className="ml-1 text-[9px] text-amber-600">har bild</Badge>
+                                    )}
                                     <span className="ml-auto font-mono text-[10px] text-muted-foreground">{p.sku}</span>
                                   </CommandItem>
                                 ))}
@@ -467,6 +475,9 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
+                      {r.tier && r.tier !== "basic" && (
+                        <Badge variant="outline" className="ml-1 text-[9px]">{r.tier}</Badge>
+                      )}
                     </td>
                     <td className="px-2">
                       {r.status === "uploading" && (
@@ -485,7 +496,11 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
                           <X className="h-3 w-3" /> {r.message}
                         </span>
                       )}
-                      {r.status === "pending" && <span className="text-muted-foreground">klar att ladda upp</span>}
+                      {r.status === "pending" && (
+                        <span className={r.productHasImage ? "text-amber-600" : "text-muted-foreground"}>
+                          {r.productHasImage ? "ersätter befintlig bild" : "klar att ladda upp"}
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}
