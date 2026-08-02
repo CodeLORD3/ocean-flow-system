@@ -1814,12 +1814,18 @@ export default function Inventory() {
                             <div className="flex items-center gap-2 ml-auto">
                               <span className="text-[10px] text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
                               <span className="text-[10px] font-medium text-foreground">{fmt(loc.totalValue)}</span>
+                              <EntityImagesButton
+                                entityType="storage_location"
+                                entityId={loc.id}
+                                title={`Bilder – ${loc.name}`}
+                              />
                               {renderReportBtn({
                                 locationId: loc.id,
                                 locationName: loc.name,
                                 storeId: loc.store_id,
                                 items: loc.items,
                               })}
+
                             </div>
                           </div>
                         )}
