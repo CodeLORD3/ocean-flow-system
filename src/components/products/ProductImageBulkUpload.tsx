@@ -30,10 +30,46 @@ interface FileRow {
   message?: string;
   productName?: string;
   productId?: string;
+  productSku?: string;
+  matchType?: "sku" | "namn" | "liknande";
   url?: string;
 }
 
 const skuFromFileName = (name: string) => name.replace(/\.[^.]+$/, "").trim();
+
+/** tar bort filändelse, kopiesuffix (-2, _1, (1), " kopia") och normaliserar */
+const baseFromFileName = (name: string) =>
+  name
+    .replace(/\.[^.]+$/, "")
+    .replace(/\s*\((\d+)\)\s*$/, "")
+    .replace(/[-_\s]+(kopia|copy)\s*\d*$/i, "")
+    .replace(/[-_\s]+\d{1,2}$/, "")
+    .trim();
+
+const norm = (v: string) =>
+  v
+    .normalize("NFC")
+    .toLowerCase()
+    .replace(/[åä]/g, "a")
+    .replace(/ö/g, "o")
+    .replace(/[^a-z0-9]/g, "");
+
+/** enkel likhet 0-1 (Levenshtein-baserad) */
+const similarity = (a: string, b: string) => {
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  const m = a.length;
+  const n = b.length;
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return 1 - prev[n] / Math.max(m, n);
+};
 
 export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
   const { toast } = useToast();
@@ -55,19 +91,57 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
   const pickFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const list = Array.from(files);
-    const skus = list.map((f) => skuFromFileName(f.name));
-    const { data } = await supabase
-      .from("products")
-      .select("id, sku, name")
-      .in("sku", skus);
-    const bySku = new Map((data ?? []).map((p) => [String(p.sku).toLowerCase(), p]));
+    const { data } = await supabase.from("products").select("id, sku, name");
+    const products = data ?? [];
+    const bySku = new Map(products.map((p) => [norm(String(p.sku ?? "")), p]));
+    const byName = new Map(products.map((p) => [norm(String(p.name ?? "")), p]));
+
     setRows(
       list.map((file) => {
-        const sku = skuFromFileName(file.name);
-        const match = bySku.get(sku.toLowerCase());
+        const raw = skuFromFileName(file.name);
+        const base = baseFromFileName(file.name);
+        const keyRaw = norm(raw);
+        const keyBase = norm(base);
+
+        // 1) exakt SKU (med eller utan kopiesuffix)
+        let match = bySku.get(keyRaw) ?? bySku.get(keyBase);
+        let matchType: FileRow["matchType"] = match ? "sku" : undefined;
+
+        // 2) exakt produktnamn
+        if (!match) {
+          match = byName.get(keyRaw) ?? byName.get(keyBase);
+          if (match) matchType = "namn";
+        }
+
+        // 3) liknande namn (prefix/innehåll eller hög likhet)
+        if (!match && keyBase.length >= 4) {
+          let best: { p: (typeof products)[number]; score: number } | null = null;
+          for (const p of products) {
+            const nk = norm(String(p.name ?? ""));
+            if (nk.length < 3) continue;
+            let score = similarity(keyBase, nk);
+            if (nk.startsWith(keyBase) || keyBase.startsWith(nk)) {
+              score = Math.max(score, 0.93 - Math.abs(nk.length - keyBase.length) / 100);
+            }
+            if (!best || score > best.score) best = { p, score };
+          }
+          if (best && best.score >= 0.82) {
+            match = best.p;
+            matchType = "liknande";
+          }
+        }
+
         return match
-          ? { file, sku, status: "pending" as const, productName: match.name, productId: match.id }
-          : { file, sku, status: "skipped" as const, message: "ingen produkt med detta SKU" };
+          ? {
+              file,
+              sku: String(match.sku ?? raw),
+              status: "pending" as const,
+              productName: match.name,
+              productId: match.id,
+              productSku: String(match.sku ?? ""),
+              matchType,
+            }
+          : { file, sku: raw, status: "skipped" as const, message: "ingen matchande produkt" };
       }),
     );
   };
@@ -107,7 +181,7 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
     const ok = next.filter((r) => r.status === "done").length;
     toast({
       title: "Bilduppladdning klar",
-      description: `${ok} bilder kopplade, ${next.filter((r) => r.status === "skipped").length} utan matchande SKU.`,
+      description: `${ok} bilder kopplade, ${next.filter((r) => r.status === "skipped").length} utan matchande produkt.`,
     });
   };
 
@@ -124,8 +198,9 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
             <ImageIcon className="h-4 w-4 text-primary" /> Produktbilder — bulkuppladdning
           </DialogTitle>
           <DialogDescription className="text-xs">
-            Filnamnet utan ändelse tolkas som SKU (t.ex. <span className="font-mono">FS-045.jpg</span>) och kopplas
-            till produkten med samma SKU. Bilderna är endast för internt bruk.
+            Filnamnet tolkas först som SKU (t.ex. <span className="font-mono">FS-045.jpg</span>), annars matchas det
+            mot produktnamn — även liknande namn och kopiesuffix (t.ex. <span className="font-mono">bergtungafil-2.jpg</span>{" "}
+            → Bergtungafilé). Bilderna är endast för internt bruk.
           </DialogDescription>
         </DialogHeader>
 
@@ -147,7 +222,7 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
               <Badge variant="outline" className="text-[10px]">{counts.total} filer</Badge>
               <Badge variant="outline" className="text-[10px]">{counts.matched} matchade</Badge>
               {counts.unmatched > 0 && (
-                <Badge variant="outline" className="text-[10px] text-amber-600">{counts.unmatched} utan SKU-match</Badge>
+                <Badge variant="outline" className="text-[10px] text-amber-600">{counts.unmatched} utan match</Badge>
               )}
               {counts.error > 0 && (
                 <Badge variant="destructive" className="text-[10px]">{counts.error} fel</Badge>
@@ -164,6 +239,7 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
                   <th className="px-2 text-left font-medium text-muted-foreground">Fil</th>
                   <th className="px-2 text-left font-medium text-muted-foreground">SKU</th>
                   <th className="px-2 text-left font-medium text-muted-foreground">Produkt</th>
+                  <th className="px-2 text-left font-medium text-muted-foreground">Match</th>
                   <th className="px-2 text-left font-medium text-muted-foreground">Status</th>
                 </tr>
               </thead>
@@ -173,6 +249,18 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
                     <td className="px-2 font-mono text-[10px] text-muted-foreground">{r.file.name}</td>
                     <td className="px-2 font-mono">{r.sku}</td>
                     <td className="px-2">{r.productName ?? <span className="text-muted-foreground">—</span>}</td>
+                    <td className="px-2">
+                      {r.matchType ? (
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] ${r.matchType === "liknande" ? "text-amber-600" : ""}`}
+                        >
+                          {r.matchType}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
                     <td className="px-2">
                       {r.status === "uploading" && (
                         <span className="inline-flex items-center gap-1 text-muted-foreground">
