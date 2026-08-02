@@ -1181,14 +1181,50 @@ export default function Inventory() {
 
 
   // ─────────────────────────────────────────────────────────────────────────
+  const productsById = useMemo(() => {
+    const m = new Map<string, any>();
+    (products as any[]).forEach((p: any) => m.set(p.id, p));
+    return m;
+  }, [products]);
+
+  /** Rader som ska visas i den samlade lagervyn (portal-/butiksfiltrerade) */
+  const overviewRows = useMemo(() => {
+    const allowed = new Set(portalLocations.map((l: any) => l.id));
+    return (allStock as any[]).filter((s: any) => allowed.has(s.location_id) && !hiddenLocs[s.location_id]);
+  }, [allStock, portalLocations, hiddenLocs]);
+
+  const handleOverviewAction = useCallback(
+    (action: "move" | "delete" | "split" | "count", row: any) => {
+      const locId = row?.location_id;
+      if (!locId) return;
+      if (action === "count") {
+        const loc = (locations as any[]).find((l: any) => l.id === locId);
+        setCountScope({
+          locationId: locId,
+          locationName: loc?.name || "Lager",
+          storeId: loc?.store_id ?? null,
+          storeName: loc?.stores?.name ?? null,
+          items: (allStock as any[]).filter((s: any) => s.location_id === locId),
+        });
+        return;
+      }
+      setSelectedItems(new Map([[locId, new Set([row.id])]]));
+      setActiveLocationId(locId);
+      if (action === "move") setMoveDialogOpen(true);
+      if (action === "delete") setDeleteDialogOpen(true);
+      if (action === "split") setSplitDialogOpen(true);
+    },
+    [locations, allStock],
+  );
+
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg sm:text-xl font-heading font-bold text-foreground">
+          <h2 className="text-lg sm:text-2xl font-heading font-bold text-foreground">
             Lager {activeStoreName ? `— ${activeStoreName}` : ""}
           </h2>
-          <p className="text-xs text-muted-foreground">Lageröversikt och lagerrapporter</p>
+          <p className="text-xs text-muted-foreground">Samlad lagerbild — alla lagerplatser</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {expiryAlerts.length > 0 && (
@@ -1227,6 +1263,36 @@ export default function Inventory() {
         </div>
       </div>
 
+      {/* Vyväxling: samlad lagerbild (ny look) vs. per lagerplats (detaljvy) */}
+      <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1 w-fit">
+        {[
+          { v: "overview" as const, l: "Samlad lagerbild" },
+          { v: "locations" as const, l: "Per lagerplats" },
+        ].map((o) => (
+          <button
+            key={o.v}
+            onClick={() => setViewMode(o.v)}
+            className={`px-3 py-1.5 text-sm font-semibold rounded-md transition-colors ${
+              viewMode === o.v ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            {o.l}
+          </button>
+        ))}
+      </div>
+
+      {viewMode === "overview" && (
+        <StockOverview
+          rows={overviewRows as any}
+          productsById={productsById}
+          fmt={fmtLocal}
+          currency={localCurrency}
+          onLineAction={handleOverviewAction}
+        />
+      )}
+
+      {viewMode === "locations" && (
+      <>
       {/* KPIs — now with expiry count */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Card className="shadow-card">
@@ -1268,6 +1334,7 @@ export default function Inventory() {
           </CardContent>
         </Card>
       </div>
+
 
       {/* Rest of location rendering — kept same structure as original, 
           but using updated renderLocationTable which now includes expiry columns.
