@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, ShoppingCart, Users, Fish, Package, Truck, Store, UserCheck, BarChart3, Settings, Anchor, CreditCard, ClipboardList, CalendarDays, Star, BookOpen, ListTodo, ChevronDown, FileText, SlidersHorizontal, MessageSquare,
+  LayoutDashboard, ShoppingCart, Users, Fish, Package, Truck, Store, UserCheck, BarChart3, Settings, Anchor, CreditCard, ClipboardList, CalendarDays, Star, BookOpen, ListTodo, ChevronDown, FileText, SlidersHorizontal, MessageSquare, ClipboardCheck,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 const overviewNav = [
   { title: "Översikt", url: "/organisation", icon: LayoutDashboard },
   { title: "Chatt", url: "/chat", icon: MessageSquare },
+  { title: "Checklista", url: "/checklist", icon: ClipboardCheck },
 ];
 
 const calendarNav = [

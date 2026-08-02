@@ -90,6 +90,7 @@ const orgNav = [
 
 const financeNav = [
   { title: "Rapporter", url: "/reports", icon: BarChart3 },
+  { title: "Checklistor", url: "/checklist", icon: ClipboardCheck },
   { title: "Ekonomi", url: "/finance", icon: CreditCard },
   { title: "Prognoser", url: "/forecasts", icon: TrendingUp },
 ];
