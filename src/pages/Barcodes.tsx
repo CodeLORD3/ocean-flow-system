@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useProducts } from "@/hooks/useProducts";
 import { useStores } from "@/hooks/useStores";
 import { useStorageLocations, useUpsertStockLocation } from "@/hooks/useStorageLocations";
+import { productDisplayName } from "@/lib/productCategories";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import BarcodeScanner from "@/components/barcode/BarcodeScanner";
@@ -132,7 +133,7 @@ export default function BarcodePage() {
     if (!printWindow) return;
     const labels = filteredProducts.map((p: any) => `
       <div class="label">
-        <div class="name">${p.name}</div>
+        <div class="name">${productDisplayName(p.name, p.latin_name)}</div>
         <div class="sku">${p.sku}</div>
         <svg id="bc-${p.id}"></svg>
         <div class="price">${Number(p.wholesale_price)} kr/${p.unit}</div>
