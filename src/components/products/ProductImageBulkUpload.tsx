@@ -41,6 +41,8 @@ interface FileRow {
   productId?: string;
   productSku?: string;
   matchType?: "sku" | "namn" | "liknande" | "manuell";
+  tier?: Tier;
+  productHasImage?: boolean;
   candidates?: ProductOption[];
   url?: string;
 }
@@ -49,7 +51,21 @@ interface ProductOption {
   id: string;
   sku: string;
   name: string;
+  hasImage?: boolean;
 }
+
+/** Kvalitetsnivå tolkad från filnamnet: premium > lyx > basic */
+const TIERS = ["basic", "lyx", "premium"] as const;
+type Tier = (typeof TIERS)[number];
+
+const tierFromFileName = (name: string): Tier => {
+  const n = name.toLowerCase();
+  if (/premium/.test(n)) return "premium";
+  if (/(lyx|lux|deluxe)/.test(n)) return "lyx";
+  return "basic";
+};
+
+const tierRank = (t: Tier) => TIERS.indexOf(t);
 
 const skuFromFileName = (name: string) => name.replace(/\.[^.]+$/, "").trim();
 
@@ -109,95 +125,155 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
   const pickFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const list = Array.from(files);
-    const { data } = await supabase.from("products").select("id, sku, name");
+    const { data } = await supabase.from("products").select("id, sku, name, image_url");
     const all: ProductOption[] = (data ?? []).map((p) => ({
       id: String(p.id),
       sku: String(p.sku ?? ""),
       name: String(p.name ?? ""),
+      hasImage: !!(p as any).image_url,
     }));
     setProducts(all);
     const bySku = new Map(all.map((p) => [norm(p.sku), p]));
     const byName = new Map(all.map((p) => [norm(p.name), p]));
 
+    const prepared = list.map((file) => {
+      const raw = skuFromFileName(file.name);
+      const base = baseFromFileName(file.name);
+      const keyRaw = norm(raw);
+      const keyBase = norm(base);
+      const tier = tierFromFileName(file.name);
+
+      // 1) exakt SKU (med eller utan kopiesuffix)
+      let match = bySku.get(keyRaw) ?? bySku.get(keyBase);
+      let matchType: FileRow["matchType"] = match ? "sku" : undefined;
+
+      // 2) exakt produktnamn
+      if (!match) {
+        match = byName.get(keyRaw) ?? byName.get(keyBase);
+        if (match) matchType = "namn";
+      }
+
+      // 3) liknande namn — rangordna kandidater
+      const scored = keyBase.length >= 3
+        ? all
+            .map((p) => {
+              const nk = norm(p.name);
+              if (nk.length < 3) return { p, score: 0 };
+              let score = similarity(keyBase, nk);
+              if (nk.startsWith(keyBase) || keyBase.startsWith(nk)) {
+                score = Math.max(score, 0.93 - Math.abs(nk.length - keyBase.length) / 100);
+              }
+              return { p, score };
+            })
+            .filter((c) => c.score >= 0.6)
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 6)
+        : [];
+
+      if (!match && scored.length > 0 && scored[0].score >= 0.82) {
+        match = scored[0].p;
+        matchType = "liknande";
+      }
+
+      const candidates = [
+        ...(match ? [match] : []),
+        ...scored.map((c) => c.p),
+      ].filter((p, idx, arr) => arr.findIndex((x) => x.id === p.id) === idx);
+
+      if (!match) {
+        return {
+          file,
+          sku: raw,
+          tier,
+          status: "skipped" as const,
+          message: candidates.length > 0 ? "välj produkt manuellt" : "ingen matchande produkt",
+          candidates,
+        } as FileRow;
+      }
+
+      // Produkter som redan har en bild matchas aldrig automatiskt — kräver manuellt val
+      if (match.hasImage) {
+        return {
+          file,
+          sku: match.sku || raw,
+          tier,
+          status: "skipped" as const,
+          message: "har redan bild — välj manuellt",
+          candidates,
+          productHasImage: true,
+        } as FileRow;
+      }
+
+      return {
+        file,
+        sku: match.sku || raw,
+        tier,
+        status: "pending" as const,
+        productName: match.name,
+        productId: match.id,
+        productSku: match.sku,
+        matchType,
+        candidates,
+      } as FileRow;
+    });
+
+    // Samma produkt får bara en bild per omgång — högsta nivån vinner (premium > lyx > basic)
+    const bestByProduct = new Map<string, number>();
+    prepared.forEach((r, i) => {
+      if (!r.productId) return;
+      const cur = bestByProduct.get(r.productId);
+      if (cur === undefined) return void bestByProduct.set(r.productId, i);
+      const better = tierRank(r.tier ?? "basic") > tierRank(prepared[cur].tier ?? "basic");
+      if (better) bestByProduct.set(r.productId, i);
+    });
+
     setRows(
-      list.map((file) => {
-        const raw = skuFromFileName(file.name);
-        const base = baseFromFileName(file.name);
-        const keyRaw = norm(raw);
-        const keyBase = norm(base);
-
-        // 1) exakt SKU (med eller utan kopiesuffix)
-        let match = bySku.get(keyRaw) ?? bySku.get(keyBase);
-        let matchType: FileRow["matchType"] = match ? "sku" : undefined;
-
-        // 2) exakt produktnamn
-        if (!match) {
-          match = byName.get(keyRaw) ?? byName.get(keyBase);
-          if (match) matchType = "namn";
-        }
-
-        // 3) liknande namn — rangordna kandidater
-        const scored = keyBase.length >= 3
-          ? all
-              .map((p) => {
-                const nk = norm(p.name);
-                if (nk.length < 3) return { p, score: 0 };
-                let score = similarity(keyBase, nk);
-                if (nk.startsWith(keyBase) || keyBase.startsWith(nk)) {
-                  score = Math.max(score, 0.93 - Math.abs(nk.length - keyBase.length) / 100);
-                }
-                return { p, score };
-              })
-              .filter((c) => c.score >= 0.6)
-              .sort((a, b) => b.score - a.score)
-              .slice(0, 6)
-          : [];
-
-        if (!match && scored.length > 0 && scored[0].score >= 0.82) {
-          match = scored[0].p;
-          matchType = "liknande";
-        }
-
-        const candidates = scored.map((c) => c.p).filter((p) => p.id !== match?.id);
-
-        return match
-          ? {
-              file,
-              sku: match.sku || raw,
-              status: "pending" as const,
-              productName: match.name,
-              productId: match.id,
-              productSku: match.sku,
-              matchType,
-              candidates,
-            }
-          : {
-              file,
-              sku: raw,
-              status: "skipped" as const,
-              message: candidates.length > 0 ? "välj produkt manuellt" : "ingen matchande produkt",
-              candidates,
-            };
+      prepared.map((r, i) => {
+        if (!r.productId) return r;
+        if (bestByProduct.get(r.productId) === i) return r;
+        const winner = prepared[bestByProduct.get(r.productId)!];
+        return {
+          ...r,
+          productId: undefined,
+          productName: undefined,
+          productSku: undefined,
+          matchType: undefined,
+          status: "skipped" as const,
+          message: `produkten tas av ${winner.file.name} (${winner.tier}) — välj annan produkt manuellt`,
+        };
       }),
     );
   };
 
   const assignProduct = (index: number, product: ProductOption) => {
     setRows((prev) =>
-      prev.map((r, i) =>
-        i === index
+      prev.map((r, i) => {
+        // Ta bort samma produkt från andra rader — en produkt kan bara få en bild per omgång
+        if (i !== index && r.productId === product.id && r.status !== "done") {
+          return {
+            ...r,
+            productId: undefined,
+            productName: undefined,
+            productSku: undefined,
+            matchType: undefined,
+            status: "skipped" as const,
+            message: "produkten kopplad till en annan fil",
+          };
+        }
+        return i === index
           ? {
               ...r,
               productId: product.id,
               productName: product.name,
               productSku: product.sku,
               sku: product.sku || r.sku,
-              matchType: "manuell",
-              status: r.status === "done" ? r.status : "pending",
-              message: undefined,
+              matchType: "manuell" as const,
+              status: r.status === "done" ? r.status : ("pending" as const),
+              productHasImage: product.hasImage,
+              message: product.hasImage ? "ersätter befintlig bild" : undefined,
             }
-          : r,
-      ),
+          : r;
+      }),
     );
     setPickerOpen(null);
   };
