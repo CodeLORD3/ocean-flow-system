@@ -75,6 +75,21 @@ export function ShopSidebar() {
   const { data: stores } = useStores();
   const activeStore = stores?.find(s => s.id === activeStoreId);
 
+  const { hiddenUrls } = useStoreSidebarPrefs();
+  const [customizeOpen, setCustomizeOpen] = useState(false);
+  const LOCKED_URLS = ["/organisation"];
+
+  const visibleSections = sections
+    .map(section => ({
+      ...section,
+      items: section.items.filter(
+        item => LOCKED_URLS.includes(item.url) || !hiddenUrls.includes(item.url)
+      ),
+    }))
+    .filter(section => section.items.length > 0);
+
+
+
   const calendarRoutes = calendarNav.map(n => n.url);
   const isCalendarActive = calendarRoutes.some(r => isActive(r));
   const [calendarOpen, setCalendarOpen] = useState(isCalendarActive);
