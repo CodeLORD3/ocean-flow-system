@@ -30,6 +30,7 @@ import {
   type DiffRow,
   type ExistingProduct,
 } from "@/lib/productImport";
+import ImportHistory from "@/components/products/ImportHistory";
 
 
 interface Props {
@@ -114,12 +115,42 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
     }
   };
 
+  const rejectedRows = useMemo(() => (diff ?? []).filter((d) => d.status === "error"), [diff]);
+
+  const buildRejectedPayload = () =>
+    rejectedRows.slice(0, 200).map((d) => ({
+      line: d.row.rowNumber,
+      sku: d.row.sku,
+      name: d.row.name,
+      errors: d.errors,
+    }));
+
   const runImport = async () => {
     if (!diff) return;
     const importable = diff.filter((d) => d.status === "new" || d.status === "changed");
-    if (importable.length === 0) return;
+    if (importable.length === 0) {
+      if (rejectedRows.length === 0) return;
+      // Inget kunde importeras — logga ändå de avvisade raderna så de kan spåras i efterhand
+      await logActivity({
+        action_type: "product_import",
+        description: `Produktimport: 0 nya, 0 uppdaterade, ${rejectedRows.length} avvisade (${fileName ?? "fil"})`,
+        entity_type: "products",
+        details: {
+          inserted: 0,
+          updated: 0,
+          skipped: rejectedRows.length,
+          rejected_total: rejectedRows.length,
+          rejected: buildRejectedPayload(),
+          file: fileName,
+        },
+      });
+      toast({ title: "Inget importerat", description: `${rejectedRows.length} rader avvisades.` });
+      handleClose(false);
+      return;
+    }
     setImporting(true);
     try {
+
       const supplierIndex = buildSupplierIndex(suppliers.map((s) => ({ id: s.id, name: s.name })));
       const existingBySku = new Map(existing.map((p) => [p.sku.toLowerCase(), p]));
 
@@ -203,14 +234,25 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
 
       await logActivity({
         action_type: "product_import",
-        description: `Produktimport: ${inserted} nya, ${updated} uppdaterade (${fileName ?? "fil"})`,
+        description: `Produktimport: ${inserted} nya, ${updated} uppdaterade${
+          rejectedRows.length ? `, ${rejectedRows.length} avvisade` : ""
+        } (${fileName ?? "fil"})`,
         entity_type: "products",
-        details: { inserted, updated, skipped: counts.error, file: fileName },
+        details: {
+          inserted,
+          updated,
+          skipped: counts.error,
+          rejected_total: rejectedRows.length,
+          rejected: buildRejectedPayload(),
+          file: fileName,
+        },
       });
 
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["categories"] });
       qc.invalidateQueries({ queryKey: ["suppliers"] });
+      qc.invalidateQueries({ queryKey: ["product-import-history"] });
+
 
       toast({
         title: "Import klar",
@@ -321,6 +363,9 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
             <span>{fatal}</span>
           </div>
         )}
+
+        {!diff && !fatal && <ImportHistory />}
+
 
         {!diff && !fatal && (
           <div className="flex items-start gap-2 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
