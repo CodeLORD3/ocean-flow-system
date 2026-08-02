@@ -42,6 +42,7 @@ import Tasks from "@/pages/Tasks";
 import LandingSettings from "@/pages/LandingSettings";
 import Vehicles from "@/pages/Vehicles";
 import Chat from "@/pages/Chat";
+import Checklist from "@/pages/Checklist";
 
 interface RouteEntry {
   component: React.ReactNode;
@@ -88,6 +89,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/landing-settings": { component: <LandingSettings /> },
   "/vehicles": { component: <Vehicles /> },
   "/chat": { component: <Chat /> },
+  "/checklist": { component: <Checklist /> },
 };
 
 /**

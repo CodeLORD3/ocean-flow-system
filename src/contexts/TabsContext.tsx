@@ -36,6 +36,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/meetings": "Mötesprotokoll",
   "/landing-settings": "Inloggningssida",
   "/chat": "Chatt",
+  "/checklist": "Checklista",
   "/vehicles": "Bilar & Maskiner",
 };
 

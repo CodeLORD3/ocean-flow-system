@@ -23,6 +23,7 @@ import { useSite } from "@/contexts/SiteContext";
 import { useTabs } from "@/contexts/TabsContext";
 import { EntityImageGallery } from "@/components/images/EntityImageGallery";
 import { ChatPanel } from "@/components/chat/ChatPanel";
+import { ChecklistCard } from "@/components/checklist/ChecklistCard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -318,6 +319,11 @@ export default function OrganisationOverview() {
             icon={Store}
           />
         </div>
+      )}
+
+      {/* Shop: daily checklist */}
+      {isShop && (
+        <ChecklistCard storeId={activeStoreId!} onOpenFull={() => switchTab("/checklist")} />
       )}
 
       {/* Shop: photos + chat */}

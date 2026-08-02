@@ -282,6 +282,166 @@ export type Database = {
           },
         ]
       }
+      checklist_days: {
+        Row: {
+          checklist_date: string
+          completed_at: string | null
+          completed_by_name: string | null
+          created_at: string
+          id: string
+          responsible_name: string | null
+          responsible_staff_id: string | null
+          shift: string
+          status: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          checklist_date: string
+          completed_at?: string | null
+          completed_by_name?: string | null
+          created_at?: string
+          id?: string
+          responsible_name?: string | null
+          responsible_staff_id?: string | null
+          shift?: string
+          status?: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          checklist_date?: string
+          completed_at?: string | null
+          completed_by_name?: string | null
+          created_at?: string
+          id?: string
+          responsible_name?: string | null
+          responsible_staff_id?: string | null
+          shift?: string
+          status?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_days_responsible_staff_id_fkey"
+            columns: ["responsible_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_days_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_items: {
+        Row: {
+          category: string | null
+          created_at: string
+          day_id: string
+          done: boolean
+          done_at: string | null
+          id: string
+          note: string | null
+          section: string
+          signature: string | null
+          sort_order: number
+          task: string
+          time_label: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          day_id: string
+          done?: boolean
+          done_at?: string | null
+          id?: string
+          note?: string | null
+          section: string
+          signature?: string | null
+          sort_order?: number
+          task: string
+          time_label?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          day_id?: string
+          done?: boolean
+          done_at?: string | null
+          id?: string
+          note?: string | null
+          section?: string
+          signature?: string | null
+          sort_order?: number
+          task?: string
+          time_label?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_items_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_template_items: {
+        Row: {
+          active: boolean
+          category: string | null
+          created_at: string
+          id: string
+          section: string
+          sort_order: number
+          store_id: string | null
+          task: string
+          time_label: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string | null
+          created_at?: string
+          id?: string
+          section: string
+          sort_order?: number
+          store_id?: string | null
+          task: string
+          time_label?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string | null
+          created_at?: string
+          id?: string
+          section?: string
+          sort_order?: number
+          store_id?: string | null
+          task?: string
+          time_label?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_template_items_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address: string | null
