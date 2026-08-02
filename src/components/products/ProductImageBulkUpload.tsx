@@ -16,8 +16,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ProductThumb } from "@/components/products/ProductThumb";
 
 export const PRODUCT_IMAGE_BUCKET = "produktbilder";
-/** ~10 år — bilderna används bara i inloggade vyer. */
-const SIGNED_URL_TTL = 60 * 60 * 24 * 365 * 10;
+
 
 interface Props {
   open: boolean;
