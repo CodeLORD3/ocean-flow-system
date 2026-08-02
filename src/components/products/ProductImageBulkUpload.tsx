@@ -1,4 +1,6 @@
 import { useMemo, useRef, useState } from "react";
+import { compareKey, storageKey } from "@/lib/asciiFold";
+
 import { Image as ImageIcon, Upload, Check, X, Loader2, ChevronsUpDown } from "lucide-react";
 import {
   Dialog,
