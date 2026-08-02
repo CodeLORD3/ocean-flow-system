@@ -982,8 +982,9 @@ export default function Products() {
         <div className="flex items-center gap-2 px-3 py-2 rounded-md border border-amber-500/30 bg-amber-500/5 text-xs text-amber-700">
           <Clock className="h-3.5 w-3.5 shrink-0" />
           <span>
-            <span className="font-medium">{productsMissingShelfLife} produkter</span> saknar hållbarhetsinställning —
-            ange antal dagar direkt i tabellen för att aktivera automatisk utgångsdatum.
+            <span className="font-medium">{productsMissingShelfLife} produkter</span> saknar hållbarhet —
+            ange antal dagar direkt i tabellen för att aktivera automatiskt utgångsdatum.
+
           </span>
         </div>
       )}
