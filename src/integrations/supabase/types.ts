@@ -153,6 +153,106 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_conversations: {
+        Row: {
+          created_at: string
+          created_by_staff_id: string | null
+          id: string
+          last_message_at: string
+          title: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by_staff_id?: string | null
+          id?: string
+          last_message_at?: string
+          title?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by_staff_id?: string | null
+          id?: string
+          last_message_at?: string
+          title?: string | null
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          body: string | null
+          conversation_id: string
+          created_at: string
+          id: string
+          image_url: string | null
+          sender_name: string | null
+          sender_portal_key: string
+          sender_portal_name: string | null
+          sender_staff_id: string | null
+        }
+        Insert: {
+          body?: string | null
+          conversation_id: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          sender_name?: string | null
+          sender_portal_key: string
+          sender_portal_name?: string | null
+          sender_staff_id?: string | null
+        }
+        Update: {
+          body?: string | null
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          sender_name?: string | null
+          sender_portal_key?: string
+          sender_portal_name?: string | null
+          sender_staff_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_participants: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          id: string
+          portal_key: string
+          portal_name: string | null
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          id?: string
+          portal_key: string
+          portal_name?: string | null
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          portal_key?: string
+          portal_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_participants_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address: string | null
