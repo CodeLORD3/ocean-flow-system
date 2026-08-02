@@ -15,8 +15,9 @@ import {
   History,
   Clock,
   FileDown,
+  Upload,
 } from "lucide-react";
-import PriceListDialog from "@/components/PriceListDialog";
+import ProductImportDialog from "@/components/products/ProductImportDialog";
 import SavedPriceLists from "@/components/SavedPriceLists";
 import { useSite } from "@/contexts/SiteContext";
 import { Card, CardContent } from "@/components/ui/card";
