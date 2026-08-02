@@ -105,7 +105,13 @@ export default function ImportHistory() {
                     {rejectedTotal} avvisade
                   </Badge>
                 )}
+                {rejectedTotal > rejected.length && rejected.length > 0 && (
+                  <span className="text-[10px] text-muted-foreground">
+                    (loggen visar {rejected.length} av {rejectedTotal} — ladda upp filen igen för komplett CSV)
+                  </span>
+                )}
                 {rejected.length > 0 && (
+
                   <div className="ml-auto flex items-center gap-1">
                     <Button
                       size="sm"
