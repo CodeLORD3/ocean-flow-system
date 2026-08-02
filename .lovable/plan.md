@@ -21,7 +21,7 @@ Idag har `products` ingen bildkolumn (verifierat i schemat), och varken Produkte
 4. **Produktinleverans (`src/pages/Receiving.tsx`)**
    - Samma thumbnail till vänster om produktnamnet på varje inleveransrad (både i listan och i mottagningsdetaljen), så man snabbt känner igen varan fysiskt.
 
-4. **Import/export + regler**
+5. **Import/export + regler**
    - `image_url` läggs till i `IMPORT_COLUMNS` i `src/lib/productImport.ts` med svenska alias (`bild`, `bild_url`, `bildlank`).
    - Kolumnen ingår i diff-motorn (visas som ändring) och i exportfilen.
    - Regeltexten i `src/components/products/ProductImportDialog.tsx` uppdateras med `image_url` och krav på formatet.
