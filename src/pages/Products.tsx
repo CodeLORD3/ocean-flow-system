@@ -220,6 +220,7 @@ export default function Products() {
   });
   const [historyProduct, setHistoryProduct] = useState<string | null>(null);
   const [priceListOpen, setPriceListOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   // Inline price editing (wholesale only)
   const [inlineEdits, setInlineEdits] = useState<Record<string, InlineEdit>>({});
