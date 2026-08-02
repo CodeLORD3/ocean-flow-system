@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, ShoppingCart, Users, Fish, Package, Truck, Store, UserCheck, BarChart3, Settings, Anchor, CreditCard, ClipboardList, CalendarDays, Star, BookOpen, ListTodo, ChevronDown, FileText,
+  LayoutDashboard, ShoppingCart, Users, Fish, Package, Truck, Store, UserCheck, BarChart3, Settings, Anchor, CreditCard, ClipboardList, CalendarDays, Star, BookOpen, ListTodo, ChevronDown, FileText, SlidersHorizontal,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -9,12 +9,15 @@ import { useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useSite } from "@/contexts/SiteContext";
 import { useStores } from "@/hooks/useStores";
+import { useStoreSidebarPrefs } from "@/hooks/useStoreSidebarPrefs";
+import { SidebarVisibilityDialog } from "@/components/SidebarVisibilityDialog";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+
 
 const overviewNav = [
   { title: "Översikt", url: "/organisation", icon: LayoutDashboard },
