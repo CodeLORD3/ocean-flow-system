@@ -647,34 +647,43 @@ export type Database = {
           batch_number: string | null
           best_before: string | null
           delivery_id: string
+          faktiskt_fangstomrade: string | null
           id: string
           notes: string | null
           product_id: string
           quantity: number
+          redskapskategori: string | null
           total_cost: number | null
           unit_cost: number
+          upptinad: boolean
         }
         Insert: {
           batch_number?: string | null
           best_before?: string | null
           delivery_id: string
+          faktiskt_fangstomrade?: string | null
           id?: string
           notes?: string | null
           product_id: string
           quantity: number
+          redskapskategori?: string | null
           total_cost?: number | null
           unit_cost: number
+          upptinad?: boolean
         }
         Update: {
           batch_number?: string | null
           best_before?: string | null
           delivery_id?: string
+          faktiskt_fangstomrade?: string | null
           id?: string
           notes?: string | null
           product_id?: string
           quantity?: number
+          redskapskategori?: string | null
           total_cost?: number | null
           unit_cost?: number
+          upptinad?: boolean
         }
         Relationships: [
           {
@@ -2302,6 +2311,7 @@ export type Database = {
           hs_code: string | null
           id: string
           image_url: string | null
+          latin_name: string | null
           name: string
           origin: string | null
           parent_product_id: string | null
@@ -2325,6 +2335,7 @@ export type Database = {
           hs_code?: string | null
           id?: string
           image_url?: string | null
+          latin_name?: string | null
           name: string
           origin?: string | null
           parent_product_id?: string | null
@@ -2348,6 +2359,7 @@ export type Database = {
           hs_code?: string | null
           id?: string
           image_url?: string | null
+          latin_name?: string | null
           name?: string
           origin?: string | null
           parent_product_id?: string | null
