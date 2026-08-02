@@ -8,17 +8,20 @@ Idag har `products` ingen bildkolumn (verifierat i schemat), och varken Produkte
    - Ny kolumn `image_url` (text, nullable) på `products`.
    - Bilder lagras i befintlig publik bucket `logos` under `product-images/<sku>/...` när man laddar upp manuellt.
 
-2. **Produkter-sidan (`src/pages/Products.tsx`)**
-   - Liten kvadratisk bildthumbnail (32px, rundad) längst till vänster i den pinnade Produkt-kolumnen, både för huvudprodukter och varianter.
-   - Saknas bild visas en neutral platshållarikon.
+2. **Bildstorlek (enligt referensbilden)**
+   - Liggande thumbnail i 4:3-format, ca 80x56 px (`w-20 h-14`), `object-cover`, lätt rundade hörn och tunn ram.
+   - Placeras direkt till vänster om produktnamnet, vertikalt centrerad; radhöjden ökas så bilden får plats utan att texten trängs.
+   - Saknas bild visas en neutral platshållarruta i samma storlek (fiskikon på dämpad bakgrund) så kolumnbredden alltid är lika.
+
+3. **Produkter-sidan (`src/pages/Products.tsx`)**
+   - Thumbnail längst till vänster i den pinnade Produkt-kolumnen, både för huvudprodukter och varianter.
    - Klick på thumbnail öppnar bilden i större vy (lightbox).
    - I produktredigeringen: fält för bild-URL + uppladdningsknapp som lägger filen i `logos` och sparar URL:en.
 
-3. **Produktinleverans (`src/pages/Receiving.tsx`)**
-   - Samma thumbnail visas till vänster om produktnamnet på varje inleveransrad (både i listan och i mottagningsdetaljen), så man snabbt känner igen varan fysiskt.
-   - Fallback-ikon när bild saknas.
+4. **Produktinleverans (`src/pages/Receiving.tsx`)**
+   - Samma thumbnail till vänster om produktnamnet på varje inleveransrad (både i listan och i mottagningsdetaljen), så man snabbt känner igen varan fysiskt.
 
-4. **Import/export + regler**
+5. **Import/export + regler**
    - `image_url` läggs till i `IMPORT_COLUMNS` i `src/lib/productImport.ts` med svenska alias (`bild`, `bild_url`, `bildlank`).
    - Kolumnen ingår i diff-motorn (visas som ändring) och i exportfilen.
    - Regeltexten i `src/components/products/ProductImportDialog.tsx` uppdateras med `image_url` och krav på formatet.
