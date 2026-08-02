@@ -232,10 +232,18 @@ export default function Dashboard() {
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-4">
       {/* Title for shop */}
       {isShop && (
-        <motion.div variants={fadeUp}>
+        <motion.div variants={fadeUp} className="space-y-3">
           <h1 className="text-lg font-heading font-bold text-foreground">{activeStoreName} — Översikt</h1>
+          <EntityImageGallery
+            entityType="store"
+            entityId={activeStoreId!}
+            title="Bilder på butiken"
+            description="Ladda upp en eller flera bilder av butiken"
+            columnsClassName="grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
+          />
         </motion.div>
       )}
+
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
