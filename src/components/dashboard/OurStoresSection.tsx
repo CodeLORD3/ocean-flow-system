@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { focalClass } from "@/lib/imageFocal";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -74,7 +75,7 @@ export function OurStoresSection({ storeFilterId }: { storeFilterId?: string | n
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entity_images")
-        .select("entity_id, url, sort_order, is_cover")
+        .select("entity_id, url, sort_order, is_cover, focal_point")
         .eq("entity_type", "store")
         .order("is_cover", { ascending: false })
         .order("sort_order");
@@ -83,9 +84,9 @@ export function OurStoresSection({ storeFilterId }: { storeFilterId?: string | n
     },
   });
 
-  const photoByStore: Record<string, string> = {};
+  const photoByStore: Record<string, { url: string; focal_point: string | null }> = {};
   storePhotos.forEach((p: any) => {
-    if (!photoByStore[p.entity_id]) photoByStore[p.entity_id] = p.url;
+    if (!photoByStore[p.entity_id]) photoByStore[p.entity_id] = { url: p.url, focal_point: p.focal_point ?? "center" };
   });
 
 
@@ -138,13 +139,13 @@ export function OurStoresSection({ storeFilterId }: { storeFilterId?: string | n
             >
               <div className="relative aspect-video overflow-hidden bg-muted">
                 <img
-                  src={photoByStore[store.id] || store.logo_url || storeHero}
+                  src={photoByStore[store.id]?.url || store.logo_url || storeHero}
 
                   alt={`Butiksfasad för ${store.name}`}
                   loading="lazy"
                   width={1280}
                   height={720}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                  className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03] ${focalClass(photoByStore[store.id]?.focal_point)}`}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/10 to-transparent" />
                 <Badge
