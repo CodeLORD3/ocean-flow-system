@@ -64,6 +64,8 @@ import {
 import { useSite } from "@/contexts/SiteContext";
 import { getStoreCurrency } from "@/lib/currency";
 import BarcodeScanner from "@/components/barcode/BarcodeScanner";
+import { EntityImagesButton } from "@/components/images/EntityImageGallery";
+
 import { generateStockSheetPdf } from "@/lib/stockSheetPdf";
 import StockCountDialog, { type StockCountScope } from "@/components/inventory/StockCountDialog";
 import { format, differenceInDays, parseISO } from "date-fns";
@@ -1563,7 +1565,12 @@ export default function Inventory() {
                                 <span className="text-[10px] font-semibold text-foreground">{fmt(loc.totalValue)}</span>
                               </span>
                             </button>
-                            <div className="pr-2">
+                            <div className="pr-2 flex items-center gap-1">
+                              <EntityImagesButton
+                                entityType="storage_location"
+                                entityId={loc.id}
+                                title={`Bilder – ${loc.name}`}
+                              />
                               {renderReportBtn({
                                 locationId: loc.id,
                                 locationName: loc.name,
@@ -1571,6 +1578,7 @@ export default function Inventory() {
                                 items: loc.items,
                               })}
                             </div>
+
                           </div>
                           {isOpen && (
                             <div className="p-1.5 space-y-1.5">
@@ -1720,7 +1728,12 @@ export default function Inventory() {
                               <span className="text-[10px] font-semibold text-foreground">{fmt(aggValue)}</span>
                             </span>
                           </button>
-                          <div className="pr-2">
+                          <div className="pr-2 flex items-center gap-1">
+                            <EntityImagesButton
+                              entityType="storage_location"
+                              entityId={loc.id}
+                              title={`Bilder – ${loc.name}`}
+                            />
                             {renderReportBtn({
                               locationId: loc.id,
                               locationName: loc.name,
@@ -1728,6 +1741,7 @@ export default function Inventory() {
                               items: loc.items,
                             })}
                           </div>
+
                           </div>
                           {isParentOpen && (
                             <div className="p-1.5 space-y-1.5">
@@ -1769,12 +1783,18 @@ export default function Inventory() {
                               {getSelectedForLocation(loc.id).size > 0 && renderSelectionActions(loc.id)}
                               <span className="text-[10px] text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
                               <span className="text-[10px] font-medium text-foreground">{fmt(loc.totalValue)}</span>
+                              <EntityImagesButton
+                                entityType="storage_location"
+                                entityId={loc.id}
+                                title={`Bilder – ${loc.name}`}
+                              />
                               {renderReportBtn({
                                 locationId: loc.id,
                                 locationName: loc.name,
                                 storeId: loc.store_id,
                                 items: loc.items,
                               })}
+
                             </div>
                           </div>
                         )}
@@ -1794,12 +1814,18 @@ export default function Inventory() {
                             <div className="flex items-center gap-2 ml-auto">
                               <span className="text-[10px] text-muted-foreground">{loc.totalQty.toLocaleString("sv-SE")} kg</span>
                               <span className="text-[10px] font-medium text-foreground">{fmt(loc.totalValue)}</span>
+                              <EntityImagesButton
+                                entityType="storage_location"
+                                entityId={loc.id}
+                                title={`Bilder – ${loc.name}`}
+                              />
                               {renderReportBtn({
                                 locationId: loc.id,
                                 locationName: loc.name,
                                 storeId: loc.store_id,
                                 items: loc.items,
                               })}
+
                             </div>
                           </div>
                         )}

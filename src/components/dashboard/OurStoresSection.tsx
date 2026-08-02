@@ -69,6 +69,24 @@ export function OurStoresSection({ storeFilterId }: { storeFilterId?: string | n
       return data;
     },
   });
+  const { data: storePhotos = [] } = useQuery({
+    queryKey: ["our-stores-photos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entity_images")
+        .select("entity_id, url, sort_order")
+        .eq("entity_type", "store")
+        .order("sort_order");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const photoByStore: Record<string, string> = {};
+  storePhotos.forEach((p: any) => {
+    if (!photoByStore[p.entity_id]) photoByStore[p.entity_id] = p.url;
+  });
+
 
   const storeByLocation = new Map(locations.map((l) => [l.id, l.store_id]));
   const kgByStore: Record<string, number> = {};
@@ -119,7 +137,8 @@ export function OurStoresSection({ storeFilterId }: { storeFilterId?: string | n
             >
               <div className="relative aspect-video overflow-hidden bg-muted">
                 <img
-                  src={store.logo_url || storeHero}
+                  src={photoByStore[store.id] || store.logo_url || storeHero}
+
                   alt={`Butiksfasad för ${store.name}`}
                   loading="lazy"
                   width={1280}
