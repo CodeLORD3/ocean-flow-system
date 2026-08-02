@@ -19,8 +19,13 @@ import { focalStyle } from "@/lib/imageFocal";
 import storeHero from "@/assets/store-hero.jpg";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useSuppliers } from "@/hooks/useSuppliers";
+import { useSite } from "@/contexts/SiteContext";
+import { useTabs } from "@/contexts/TabsContext";
+import { EntityImageGallery } from "@/components/images/EntityImageGallery";
+import { ChatPanel } from "@/components/chat/ChatPanel";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+
 import {
   BarChart,
   Bar,
