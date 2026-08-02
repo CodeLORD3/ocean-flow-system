@@ -15,7 +15,9 @@ import {
   History,
   Clock,
   FileDown,
+  Upload,
 } from "lucide-react";
+import ProductImportDialog from "@/components/products/ProductImportDialog";
 import PriceListDialog from "@/components/PriceListDialog";
 import SavedPriceLists from "@/components/SavedPriceLists";
 import { useSite } from "@/contexts/SiteContext";
@@ -218,6 +220,7 @@ export default function Products() {
   });
   const [historyProduct, setHistoryProduct] = useState<string | null>(null);
   const [priceListOpen, setPriceListOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   // Inline price editing (wholesale only)
   const [inlineEdits, setInlineEdits] = useState<Record<string, InlineEdit>>({});
@@ -878,6 +881,9 @@ export default function Products() {
           >
             <FileDown className="h-3.5 w-3.5" /> Skapa prislista
           </Button>
+          <Button size="sm" variant="outline" className="gap-1.5 text-xs" onClick={() => setImportOpen(true)}>
+            <Upload className="h-3.5 w-3.5" /> Import / Export
+          </Button>
           <Button size="sm" className="gap-1.5 text-xs" onClick={openAdd}>
             <Plus className="h-3.5 w-3.5" /> Lägg till produkt
           </Button>
@@ -890,6 +896,8 @@ export default function Products() {
         products={products as any}
         allProducts={allProducts as any}
       />
+
+      <ProductImportDialog open={importOpen} onOpenChange={setImportOpen} />
 
       {isWholesale && <SavedPriceLists allStores />}
 
