@@ -566,6 +566,7 @@ export type Database = {
           entity_id: string
           entity_type: string
           id: string
+          is_cover: boolean
           sort_order: number
           url: string
         }
@@ -575,6 +576,7 @@ export type Database = {
           entity_id: string
           entity_type: string
           id?: string
+          is_cover?: boolean
           sort_order?: number
           url: string
         }
@@ -584,6 +586,7 @@ export type Database = {
           entity_id?: string
           entity_type?: string
           id?: string
+          is_cover?: boolean
           sort_order?: number
           url?: string
         }
