@@ -125,6 +125,25 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
       errors: d.errors,
     }));
 
+  /** Komplett lista från valideringen i webbläsaren — aldrig trunkerad som loggen */
+  const downloadRejectedCsv = () => {
+    const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    const lines = [
+      ["rad", "sku", "name", "fel"].join(","),
+      ...rejectedRows.map((d) =>
+        [String(d.row.rowNumber), d.row.sku, d.row.name, d.errors.join("; ")].map(esc).join(","),
+      ),
+    ];
+    const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `avvisade_rader_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+
   const runImport = async () => {
     if (!diff) return;
     const importable = diff.filter((d) => d.status === "new" || d.status === "changed");
