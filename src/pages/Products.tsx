@@ -594,7 +594,19 @@ export default function Products() {
   };
 
   const productsWithout = allProducts.filter((p: any) => !(p as any).barcode).length;
-  const productsMissingShelfLife = products.filter((p: any) => !(p as any).shelf_life_days && p.active).length;
+  // Paraplyrader (produkter med varianter under sig) och icke-färskvaror ska inte räknas
+  const SHELF_LIFE_EXEMPT_CATEGORIES = ["Emballage & Förbrukning", "Råvaror & Storhushåll"];
+  const parentIdsWithChildren = new Set(
+    allProducts.map((p: any) => p.parent_product_id).filter(Boolean),
+  );
+  const productsMissingShelfLife = allProducts.filter(
+    (p: any) =>
+      p.active &&
+      !p.shelf_life_days &&
+      !parentIdsWithChildren.has(p.id) &&
+      !SHELF_LIFE_EXEMPT_CATEGORIES.includes(p.category),
+  ).length;
+
 
   const getAggregated = (p: any) => {
     if (!p.subproducts || p.subproducts.length === 0) return null;
@@ -970,8 +982,9 @@ export default function Products() {
         <div className="flex items-center gap-2 px-3 py-2 rounded-md border border-amber-500/30 bg-amber-500/5 text-xs text-amber-700">
           <Clock className="h-3.5 w-3.5 shrink-0" />
           <span>
-            <span className="font-medium">{productsMissingShelfLife} produkter</span> saknar hållbarhetsinställning —
-            ange antal dagar direkt i tabellen för att aktivera automatisk utgångsdatum.
+            <span className="font-medium">{productsMissingShelfLife} produkter</span> saknar hållbarhet —
+            ange antal dagar direkt i tabellen för att aktivera automatiskt utgångsdatum.
+
           </span>
         </div>
       )}
