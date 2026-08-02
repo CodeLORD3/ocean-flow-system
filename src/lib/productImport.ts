@@ -17,6 +17,7 @@ export const IMPORT_COLUMNS = [
   "shelf_life_days",
   "parent_sku",
   "active",
+  "image_url",
 ] as const;
 
 export type ImportColumn = (typeof IMPORT_COLUMNS)[number];
@@ -39,6 +40,7 @@ export interface ParsedRow {
   shelf_life_days: number | null;
   parent_sku: string | null;
   active: boolean;
+  image_url: string | null;
 }
 
 export type DiffStatus = "new" | "changed" | "unchanged" | "error";
@@ -76,6 +78,7 @@ export interface ExistingProduct {
   shelf_life_days: number | null;
   parent_product_id: string | null;
   active: boolean | null;
+  image_url: string | null;
 }
 
 const HEADER_ALIASES: Record<string, ImportColumn> = {
@@ -96,6 +99,12 @@ const HEADER_ALIASES: Record<string, ImportColumn> = {
   vikt_per_styck: "weight_per_piece",
   hallbarhet_dagar: "shelf_life_days",
   aktiv: "active",
+  bild: "image_url",
+  bild_url: "image_url",
+  bildlank: "image_url",
+  bildadress: "image_url",
+  image: "image_url",
+  bild_lank: "image_url",
 };
 
 function normalizeHeader(raw: string): string | null {
@@ -212,6 +221,7 @@ export async function parseProductFile(file: File): Promise<ParseResult> {
       })(),
       parent_sku: nullableStr(get("parent_sku")),
       active: parseBool(get("active")),
+      image_url: nullableStr(get("image_url")),
     };
   });
 
@@ -276,6 +286,8 @@ export function buildDiff({ rows, existing, categories, suppliers }: BuildDiffAr
     if (row.sku && (skuCounts.get(row.sku.toLowerCase()) ?? 0) > 1) errors.push("dubblett på sku i filen");
     if (row.barcode && (barcodeCounts.get(row.barcode) ?? 0) > 1) errors.push("dubblett på barcode i filen");
     if (row.barcode && !/^\d+$/.test(row.barcode)) errors.push("barcode får bara innehålla siffror");
+    if (row.image_url && !/^https:\/\/\S+\.(jpe?g|png|webp)(\?\S*)?$/i.test(row.image_url))
+      errors.push("image_url måste vara en https-länk till .jpg, .png eller .webp");
 
     const current = row.sku ? bySku.get(row.sku.toLowerCase()) : undefined;
 
@@ -341,6 +353,7 @@ export function buildDiff({ rows, existing, categories, suppliers }: BuildDiffAr
     cmp("weight_per_piece", current.weight_per_piece ?? "", row.weight_per_piece ?? "");
     cmp("shelf_life_days", current.shelf_life_days ?? "", row.shelf_life_days ?? "");
     cmp("active", current.active !== false, row.active);
+    cmp("image_url", current.image_url, row.image_url);
     cmp(
       "parent_sku",
       current.parent_product_id ? byId.get(current.parent_product_id)?.sku ?? "" : "",
@@ -374,6 +387,7 @@ export interface UpsertPayload {
   weight_per_piece: number | null;
   shelf_life_days: number | null;
   active: boolean;
+  image_url: string | null;
   supplier_id?: string | null;
   parent_product_id?: string | null;
 }
@@ -394,9 +408,10 @@ export function toPayload(row: ParsedRow): UpsertPayload {
     weight_per_piece: row.weight_per_piece,
     shelf_life_days: row.shelf_life_days,
     active: row.active,
+    image_url: row.image_url,
   };
 }
 
 export function buildTemplateCsv(): string {
-  return `${IMPORT_COLUMNS.join(",")}\nFS-045,Lax filé,Fisk,kg,120.00,162.00,199.00,Norge,Salmar,,7311234567890,0304,,5,,TRUE\n`;
+  return `${IMPORT_COLUMNS.join(",")}\nFS-045,Lax filé,Fisk,kg,120.00,162.00,199.00,Norge,Salmar,,7311234567890,0304,,5,,TRUE,https://exempel.se/bilder/lax-file.jpg\n`;
 }

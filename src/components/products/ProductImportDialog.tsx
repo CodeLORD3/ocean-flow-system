@@ -90,7 +90,7 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
       const { data, error } = await supabase
         .from("products")
         .select(
-          "id, sku, name, category, unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier_id, barcode, hs_code, weight_per_piece, shelf_life_days, parent_product_id, active",
+          "id, sku, name, category, unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier_id, barcode, hs_code, weight_per_piece, shelf_life_days, parent_product_id, active, image_url",
         );
       if (error) throw error;
       const existingRows = (data ?? []) as unknown as ExistingProduct[];
@@ -203,7 +203,7 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
     const { data, error } = await supabase
       .from("products")
       .select(
-        "sku, name, category, unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier_id, barcode, hs_code, weight_per_piece, shelf_life_days, parent_product_id, active",
+        "sku, name, category, unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier_id, barcode, hs_code, weight_per_piece, shelf_life_days, parent_product_id, active, image_url",
       )
       .order("category")
       .order("name");
@@ -231,6 +231,7 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
       shelf_life_days: p.shelf_life_days ?? "",
       parent_sku: p.parent_product_id ? skuById.get(p.parent_product_id) ?? "" : "",
       active: p.active === false ? "FALSE" : "TRUE",
+      image_url: (p as any).image_url ?? "",
     }));
     const ws = XLSX.utils.json_to_sheet(rows, { header: [...IMPORT_COLUMNS] });
     const wb = XLSX.utils.book_new();
@@ -297,7 +298,11 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
             <div className="space-y-1">
               <p>
                 Obligatoriska kolumner: <code>sku</code>, <code>name</code>, <code>category</code>. Övriga kolumner:{" "}
-                <code>unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier, barcode, hs_code, weight_per_piece, shelf_life_days, parent_sku, active</code>.
+                <code>unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier, barcode, hs_code, weight_per_piece, shelf_life_days, parent_sku, active, image_url</code>.
+              </p>
+              <p>
+                <code>image_url</code> = produktbild. Måste vara en publik https-länk till .jpg, .png eller .webp.
+                Tomt fält lämnar befintlig bild orörd.
               </p>
               <p>
                 <code>sku</code> är nyckeln — befintlig SKU uppdateras, ny skapas. Produkter som saknas i filen rörs

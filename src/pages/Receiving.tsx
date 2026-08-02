@@ -40,6 +40,7 @@ import { format, differenceInDays, parseISO } from "date-fns";
 import { sv } from "date-fns/locale";
 import { getStoreCurrency, fmtCur } from "@/lib/currency";
 import { useCurrencySettings, convertSekToChfCost } from "@/hooks/useCurrencySettings";
+import { ProductThumb } from "@/components/products/ProductThumb";
 
 const REPORT_TYPES = ["Skadad", "Fel kvantitet", "Dålig kvalitet", "Saknas", "Annat"];
 
@@ -104,7 +105,7 @@ export default function Receiving() {
       if (!activeStoreId) return [];
       const { data, error } = await supabase
         .from("shop_orders")
-        .select("*, stores(name), shop_order_lines(*, products(name, unit, category, cost_price))")
+        .select("*, stores(name), shop_order_lines(*, products(name, unit, category, cost_price, image_url))")
         .eq("store_id", activeStoreId)
         .eq("status", "Skickad")
         .order("created_at", { ascending: false });
@@ -132,7 +133,7 @@ export default function Receiving() {
       if (!activeStoreId) return [];
       const { data, error } = await supabase
         .from("shop_orders")
-        .select("*, stores(name), shop_order_lines(*, products(name, unit, category))")
+        .select("*, stores(name), shop_order_lines(*, products(name, unit, category, image_url))")
         .eq("store_id", activeStoreId)
         .eq("status", "Levererad")
         .order("created_at", { ascending: false });
@@ -600,6 +601,7 @@ export default function Receiving() {
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           {isConfirmed && <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0" />}
+                          <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} />
                           <span className="text-xs font-medium text-foreground">{line.products?.name || "Okänd"}</span>
                           <Badge variant="secondary" className="text-[9px] h-4">
                             {line.products?.category}
@@ -812,7 +814,10 @@ export default function Receiving() {
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-medium">{line.products?.name}</span>
+                        <div className="flex items-center gap-2">
+                          <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static />
+                          <span className="font-medium">{line.products?.name}</span>
+                        </div>
                         <Badge
                           variant="outline"
                           className={`text-[10px] ${

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import {
   Plus,
   Search,
@@ -23,6 +23,7 @@ import SavedPriceLists from "@/components/SavedPriceLists";
 import { useSite } from "@/contexts/SiteContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ProductThumb } from "@/components/products/ProductThumb";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -323,6 +324,7 @@ export default function Products() {
     origin: "",
     producer: "",
     shelf_life_days: "", // NEW
+    image_url: "",
   });
 
   const setField = (key: string, value: string) => {
@@ -354,6 +356,29 @@ export default function Products() {
     });
   };
 
+  const imageFileRef = useRef<HTMLInputElement>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const uploadProductImage = async (file: File) => {
+    setUploadingImage(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const key = `product-images/${(form.sku || "ny").replace(/[^a-zA-Z0-9-_]/g, "")}/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("logos").upload(key, file, { upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from("logos").getPublicUrl(key);
+      setField("image_url", data.publicUrl);
+    } catch (e) {
+      toast({
+        title: "Uppladdning misslyckades",
+        description: e instanceof Error ? e.message : "Okänt fel",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const openAdd = () => {
     setEditId(null);
     setFormState({
@@ -369,6 +394,7 @@ export default function Products() {
       origin: "",
       producer: "",
       shelf_life_days: "",
+      image_url: "",
     });
     setDialogOpen(true);
   };
@@ -388,6 +414,7 @@ export default function Products() {
       origin: p.origin || "",
       producer: (p as any).producer || "",
       shelf_life_days: String((p as any).shelf_life_days || ""), // NEW
+      image_url: (p as any).image_url || "",
     });
     setDialogOpen(true);
   };
@@ -438,6 +465,7 @@ export default function Products() {
       origin: form.origin || null,
       producer: form.producer || null,
       shelf_life_days: form.shelf_life_days ? Number(form.shelf_life_days) : null, // NEW
+      image_url: form.image_url.trim() || null,
     };
 
     if (editId) {
@@ -575,11 +603,11 @@ export default function Products() {
     return (
       <tr
         key={p.id}
-        className={`border-b border-border/40 hover:bg-primary/20 transition-colors h-8 max-h-8 ${isSubproduct ? "bg-muted/10" : rowIndex % 2 === 1 ? "bg-muted/30" : ""}`}
+        className={`border-b border-border/40 hover:bg-primary/20 transition-colors h-16 ${isSubproduct ? "bg-muted/10" : rowIndex % 2 === 1 ? "bg-muted/30" : ""}`}
       >
         {/* Name */}
-        <td className="px-2 py-0 h-8 align-middle font-medium text-foreground sticky left-0 z-10 bg-card border-r border-border/60 min-w-[200px]">
-          <div className="flex items-center gap-1.5 h-8">
+        <td className="px-2 py-1 align-middle font-medium text-foreground sticky left-0 z-10 bg-card border-r border-border/60 min-w-[300px]">
+          <div className="flex items-center gap-1.5">
             {!isSubproduct && hasChildren && (
               <button onClick={() => toggleExpand(p.id)} className="p-0.5 rounded hover:bg-muted shrink-0">
                 {isExpanded ? (
@@ -591,6 +619,7 @@ export default function Products() {
             )}
             {isSubproduct && <span className="ml-5 text-muted-foreground shrink-0">└</span>}
             {!isSubproduct && !hasChildren && <span className="w-5 shrink-0" />}
+            <ProductThumb src={(p as any).image_url} alt={p.name} />
             <span className={`truncate ${isSubproduct ? "text-muted-foreground" : ""}`} title={p.name}>{p.name}</span>
             {hasChildren && (
               <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-1 rounded-none shrink-0">
@@ -599,12 +628,12 @@ export default function Products() {
             )}
           </div>
         </td>
-        <td className="px-2 py-0 h-8 align-middle font-mono text-muted-foreground text-[10px] whitespace-nowrap">{p.sku}</td>
-        <td className="px-2 py-0 h-8 align-middle whitespace-nowrap"><CategoryBadge name={p.category} /></td>
+        <td className="px-2 py-0 align-middle font-mono text-muted-foreground text-[10px] whitespace-nowrap">{p.sku}</td>
+        <td className="px-2 py-0 align-middle whitespace-nowrap"><CategoryBadge name={p.category} /></td>
 
-        <td className="px-2 py-0 h-8 align-middle text-muted-foreground">{p.unit}</td>
-        <td className="px-2 py-0 h-8 align-middle font-mono text-muted-foreground">{(p as any).hs_code || "–"}</td>
-        <td className="px-2 py-0 h-8 align-middle">
+        <td className="px-2 py-0 align-middle text-muted-foreground">{p.unit}</td>
+        <td className="px-2 py-0 align-middle font-mono text-muted-foreground">{(p as any).hs_code || "–"}</td>
+        <td className="px-2 py-0 align-middle">
           <Select
             value={(p as any).producer || "__none__"}
             onValueChange={async (val) => {
@@ -633,7 +662,7 @@ export default function Products() {
         </td>
 
         {/* ── Hållbarhet ── */}
-        <td className="px-2 py-0 h-8 align-middle">
+        <td className="px-2 py-0 align-middle">
           {isAggregatedParent ? (
             <span className="text-[11px] text-muted-foreground/40 font-mono tabular-nums">–</span>
           ) : (
@@ -669,7 +698,7 @@ export default function Products() {
 
         {/* Prices */}
         {isWholesale && (
-          <td className="px-2 py-0 h-8 align-middle text-right min-w-[92px]">
+          <td className="px-2 py-0 align-middle text-right min-w-[92px]">
             {isAggregatedParent ? (
               <span className="!text-[11px] font-mono tabular-nums text-foreground">{fmtNum(agg!.cost_price)}</span>
             ) : (
@@ -686,7 +715,7 @@ export default function Products() {
           </td>
         )}
         {isWholesale && (
-          <td className="px-2 py-0 h-8 align-middle text-right">
+          <td className="px-2 py-0 align-middle text-right">
             {(() => {
               const last = latestPriceMap?.get(p.id);
               if (!last) return <span className="!text-[11px] font-mono tabular-nums text-muted-foreground/40">–</span>;
@@ -703,7 +732,7 @@ export default function Products() {
             })()}
           </td>
         )}
-        <td className="px-2 py-0 h-8 align-middle text-right min-w-[92px]">
+        <td className="px-2 py-0 align-middle text-right min-w-[92px]">
           {isAggregatedParent ? (
             <span className="!text-[11px] font-mono tabular-nums text-foreground">
               {fmtNum(agg ? agg.wholesale_price : Number(p.wholesale_price))}
@@ -723,7 +752,7 @@ export default function Products() {
           )}
         </td>
         {isWholesale && (
-          <td className="px-2 py-0 h-8 align-middle text-right min-w-[64px]">
+          <td className="px-2 py-0 align-middle text-right min-w-[64px]">
             {isAggregatedParent ? (
               <span className="!text-[11px] font-mono tabular-nums text-muted-foreground">
                 {calcMargin(agg!.cost_price, agg!.wholesale_price)}%
@@ -745,7 +774,7 @@ export default function Products() {
           </td>
         )}
         {isWholesale && (
-          <td className="px-2 py-0 h-8 align-middle text-right min-w-[92px] !text-[11px] font-mono tabular-nums text-muted-foreground">
+          <td className="px-2 py-0 align-middle text-right min-w-[92px] !text-[11px] font-mono tabular-nums text-muted-foreground">
             {(() => {
               const v = agg ? agg.retail_suggested : (p.retail_suggested ? Number(p.retail_suggested) : 0);
               if (!v) return <span className="text-muted-foreground/40">–</span>;
@@ -756,7 +785,7 @@ export default function Products() {
 
 
         {/* Barcode */}
-        <td className="px-2 py-0 h-8 align-middle">
+        <td className="px-2 py-0 align-middle">
           {barcode ? (
             <div className="flex items-center gap-1.5">
               <button
@@ -783,7 +812,7 @@ export default function Products() {
         </td>
 
         {/* Stock */}
-        <td className="px-2 py-0 h-8 align-middle text-right !text-[11px] font-mono tabular-nums font-medium">
+        <td className="px-2 py-0 align-middle text-right !text-[11px] font-mono tabular-nums font-medium">
           {(() => {
             const stockVal = Number(agg ? agg.stock : p.stock);
             if (!stockVal) return <span className="text-muted-foreground/40">–</span>;
@@ -796,7 +825,7 @@ export default function Products() {
         </td>
 
         {/* Actions */}
-        <td className="px-2 py-0 h-8 align-middle text-center">
+        <td className="px-2 py-0 align-middle text-center">
           <div className="flex items-center justify-center gap-1">
             {isWholesale && hasChanges && (
               <>
@@ -1051,6 +1080,54 @@ export default function Products() {
             <div className="space-y-1.5">
               <Label className="text-xs">Produktnamn *</Label>
               <Input value={form.name} onChange={(e) => setField("name", e.target.value)} className="h-8 text-xs" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Produktbild</Label>
+              <div className="flex items-center gap-2">
+                <ProductThumb src={form.image_url} alt={form.name || "Produktbild"} static />
+                <div className="flex-1 space-y-1.5">
+                  <Input
+                    value={form.image_url}
+                    onChange={(e) => setField("image_url", e.target.value)}
+                    placeholder="https://..."
+                    className="h-8 text-xs"
+                  />
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={imageFileRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) uploadProductImage(file);
+                        e.target.value = "";
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-[11px]"
+                      disabled={uploadingImage}
+                      onClick={() => imageFileRef.current?.click()}
+                    >
+                      {uploadingImage ? "Laddar upp..." : "Ladda upp bild"}
+                    </Button>
+                    {form.image_url && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-[11px] text-muted-foreground"
+                        onClick={() => setField("image_url", "")}
+                      >
+                        Ta bort
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
