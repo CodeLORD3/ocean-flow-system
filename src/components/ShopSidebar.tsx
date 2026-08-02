@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, ShoppingCart, Users, Fish, Package, Truck, Store, UserCheck, BarChart3, Settings, Anchor, CreditCard, ClipboardList, CalendarDays, Star, BookOpen, ListTodo, ChevronDown, FileText,
+  LayoutDashboard, ShoppingCart, Users, Fish, Package, Truck, Store, UserCheck, BarChart3, Settings, Anchor, CreditCard, ClipboardList, CalendarDays, Star, BookOpen, ListTodo, ChevronDown, FileText, SlidersHorizontal,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -9,12 +9,15 @@ import { useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useSite } from "@/contexts/SiteContext";
 import { useStores } from "@/hooks/useStores";
+import { useStoreSidebarPrefs } from "@/hooks/useStoreSidebarPrefs";
+import { SidebarVisibilityDialog } from "@/components/SidebarVisibilityDialog";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+
 
 const overviewNav = [
   { title: "Översikt", url: "/organisation", icon: LayoutDashboard },
@@ -71,6 +74,21 @@ export function ShopSidebar() {
   const { activeStoreId, activeStoreName } = useSite();
   const { data: stores } = useStores();
   const activeStore = stores?.find(s => s.id === activeStoreId);
+
+  const { hiddenUrls } = useStoreSidebarPrefs();
+  const [customizeOpen, setCustomizeOpen] = useState(false);
+  const LOCKED_URLS = ["/organisation"];
+
+  const visibleSections = sections
+    .map(section => ({
+      ...section,
+      items: section.items.filter(
+        item => LOCKED_URLS.includes(item.url) || !hiddenUrls.includes(item.url)
+      ),
+    }))
+    .filter(section => section.items.length > 0);
+
+
 
   const calendarRoutes = calendarNav.map(n => n.url);
   const isCalendarActive = calendarRoutes.some(r => isActive(r));
@@ -159,11 +177,17 @@ export function ShopSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {sections.map(section => renderSection(section))}
+        {visibleSections.map(section => renderSection(section))}
       </SidebarContent>
 
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={() => setCustomizeOpen(true)}>
+              <SlidersHorizontal className="h-4 w-4" />
+              {!collapsed && <span>Anpassa meny</span>}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isActive("/settings")}>
               <NavLink to="/settings" end>
@@ -174,6 +198,17 @@ export function ShopSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+
+      <SidebarVisibilityDialog
+        open={customizeOpen}
+        onOpenChange={setCustomizeOpen}
+        sections={sections.map(s => ({
+          label: s.label,
+          items: s.items.map(i => ({ title: i.title, url: i.url })),
+        }))}
+        lockedUrls={LOCKED_URLS}
+      />
     </Sidebar>
   );
+
 }
