@@ -428,6 +428,18 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
               <Badge variant="outline" className="border-destructive/40 text-destructive">
                 {counts.error} fel
               </Badge>
+              {rejectedRows.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 px-2 text-[11px]"
+                  onClick={downloadRejectedCsv}
+                >
+                  <Download className="mr-1 h-3 w-3" />
+                  Alla avvisade rader (CSV)
+                </Button>
+              )}
+
               <label className="ml-auto flex items-center gap-1.5 cursor-pointer">
                 <Checkbox
                   checked={showUnchanged}
