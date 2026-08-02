@@ -15,6 +15,8 @@ import { StaffAuthProvider, useStaffAuth } from "@/contexts/StaffAuthContext";
 import Landing from "@/pages/Landing";
 import PortalChooser from "@/pages/PortalChooser";
 import FirstLoginPasswordChange from "@/pages/FirstLoginPasswordChange";
+import StaffForgotPassword from "@/pages/StaffForgotPassword";
+import StaffResetPassword from "@/pages/StaffResetPassword";
 import { Loader2 } from "lucide-react";
 
 // Investor Portal
@@ -77,6 +79,8 @@ const AppContent = () => {
             {/* Public landing with login (root) */}
             <Route path="/" element={<Landing />} />
             <Route path="/choose-portal" element={<PortalChooser />} />
+            <Route path="/forgot-password" element={<StaffForgotPassword />} />
+            <Route path="/reset-password" element={<StaffResetPassword />} />
 
             {/* Investor Portal (separate auth) */}
             <Route path="/portal/login" element={<PortalLogin />} />
