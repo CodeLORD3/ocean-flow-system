@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -100,6 +100,12 @@ export default function Landing() {
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Logga in"}
             </Button>
           </form>
+
+          <div className="mt-3 text-center">
+            <Link to="/forgot-password" className="text-xs text-muted-foreground hover:text-foreground underline">
+              Glömt lösenord?
+            </Link>
+          </div>
         </CardContent>
       </Card>
 
