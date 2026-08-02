@@ -75,6 +75,7 @@ type NavSection = { label: string; items: typeof overviewNav };
 
 const sections: NavSection[] = [
   { label: "Översikt", items: overviewNav },
+  { label: "Inköp", items: purchaseNav },
   { label: "Produktion", items: produktionSectionNav },
   { label: "Lagerstyrning", items: inventoryNav },
   { label: "Ekonomi & Rapporter", items: financeNav },
@@ -103,7 +104,7 @@ export function ProductionSidebar() {
           iconColorClass="text-amber-400"
           iconBgClass="bg-amber-500/20"
           title="FiskHandel"
-          subtitle="Produktion"
+          subtitle="Grossist"
           collapsed={collapsed}
         />
       </SidebarHeader>
