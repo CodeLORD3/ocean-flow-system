@@ -1,5 +1,6 @@
 import * as XLSX from "xlsx";
 import { PRODUCT_CATEGORIES, normalizeCategoryKey } from "@/lib/productCategories";
+import { skuKey } from "@/lib/asciiFold";
 
 export const IMPORT_COLUMNS = [
   "sku",
@@ -297,7 +298,7 @@ export function lookupSupplier<T extends { id: string; name: string }>(
 }
 
 export function buildDiff({ rows, existing, categories, suppliers }: BuildDiffArgs): DiffRow[] {
-  const bySku = new Map(existing.map((p) => [p.sku.toLowerCase(), p]));
+  const bySku = new Map(existing.map((p) => [skuKey(p.sku), p]));
   const byId = new Map(existing.map((p) => [p.id, p]));
   const supplierIndex = buildSupplierIndex(suppliers);
 
@@ -306,18 +307,18 @@ export function buildDiff({ rows, existing, categories, suppliers }: BuildDiffAr
   );
   const barcodeOwner = new Map<string, string>();
   existing.forEach((p) => {
-    if (p.barcode) barcodeOwner.set(p.barcode, p.sku.toLowerCase());
+    if (p.barcode) barcodeOwner.set(p.barcode, skuKey(p.sku));
   });
 
   const skuCounts = new Map<string, number>();
   const barcodeCounts = new Map<string, number>();
   rows.forEach((r) => {
-    if (r.sku) skuCounts.set(r.sku.toLowerCase(), (skuCounts.get(r.sku.toLowerCase()) ?? 0) + 1);
+    if (r.sku) skuCounts.set(skuKey(r.sku), (skuCounts.get(skuKey(r.sku)) ?? 0) + 1);
     if (r.barcode) barcodeCounts.set(r.barcode, (barcodeCounts.get(r.barcode) ?? 0) + 1);
   });
-  const fileSkus = new Set(rows.map((r) => r.sku.toLowerCase()).filter(Boolean));
+  const fileSkus = new Set(rows.map((r) => skuKey(r.sku)).filter(Boolean));
   const fileVariantSkus = new Set(
-    rows.filter((r) => r.parent_sku).map((r) => r.sku.toLowerCase()),
+    rows.filter((r) => r.parent_sku).map((r) => skuKey(r.sku)),
   );
 
   return rows.map((row) => {
@@ -329,28 +330,28 @@ export function buildDiff({ rows, existing, categories, suppliers }: BuildDiffAr
     if (!row.name) errors.push("name saknas");
     if (!row.category) errors.push("category saknas");
     if (numberErrors.length) errors.push(`ogiltigt tal i: ${[...new Set(numberErrors)].join(", ")}`);
-    if (row.sku && (skuCounts.get(row.sku.toLowerCase()) ?? 0) > 1) errors.push("dubblett på sku i filen");
+    if (row.sku && (skuCounts.get(skuKey(row.sku)) ?? 0) > 1) errors.push("dubblett på sku i filen");
     if (row.barcode && (barcodeCounts.get(row.barcode) ?? 0) > 1) errors.push("dubblett på barcode i filen");
     if (row.barcode && !/^\d+$/.test(row.barcode)) errors.push("barcode får bara innehålla siffror");
     if (row.image_url && !/^https:\/\/\S+\.(jpe?g|png|webp)(\?\S*)?$/i.test(row.image_url))
       errors.push("image_url måste vara en https-länk till .jpg, .png eller .webp");
 
-    const current = row.sku ? bySku.get(row.sku.toLowerCase()) : undefined;
+    const current = row.sku ? bySku.get(skuKey(row.sku)) : undefined;
 
     if (row.barcode) {
       const owner = barcodeOwner.get(row.barcode);
-      if (owner && owner !== row.sku.toLowerCase()) errors.push(`barcode används redan av ${owner.toUpperCase()}`);
+      if (owner && owner !== skuKey(row.sku)) errors.push(`barcode används redan av ${owner.toUpperCase()}`);
     }
 
     let parentId: string | null = current?.parent_product_id ?? null;
     if (row.parent_sku) {
-      if (row.parent_sku.toLowerCase() === row.sku.toLowerCase()) {
+      if (skuKey(row.parent_sku) === skuKey(row.sku)) {
         errors.push("parent_sku pekar på sig själv");
       } else {
-        const parent = bySku.get(row.parent_sku.toLowerCase());
-        const parentInFile = fileSkus.has(row.parent_sku.toLowerCase());
+        const parent = bySku.get(skuKey(row.parent_sku));
+        const parentInFile = fileSkus.has(skuKey(row.parent_sku));
         if (!parent && !parentInFile) errors.push(`okänd parent_sku: ${row.parent_sku}`);
-        if (parent?.parent_product_id || fileVariantSkus.has(row.parent_sku.toLowerCase()))
+        if (parent?.parent_product_id || fileVariantSkus.has(skuKey(row.parent_sku)))
           errors.push("parent_sku är själv en variant (max två nivåer)");
         parentId = parent?.id ?? null;
       }

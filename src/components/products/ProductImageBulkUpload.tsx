@@ -1,4 +1,6 @@
 import { useMemo, useRef, useState } from "react";
+import { compareKey, storageKey } from "@/lib/asciiFold";
+
 import { Image as ImageIcon, Upload, Check, X, Loader2, ChevronsUpDown } from "lucide-react";
 import {
   Dialog,
@@ -78,13 +80,8 @@ const baseFromFileName = (name: string) =>
     .replace(/[-_\s]+\d{1,2}$/, "")
     .trim();
 
-const norm = (v: string) =>
-  v
-    .normalize("NFC")
-    .toLowerCase()
-    .replace(/[åä]/g, "a")
-    .replace(/ö/g, "o")
-    .replace(/[^a-z0-9]/g, "");
+const norm = (v: string) => compareKey(v);
+
 
 /** enkel likhet 0-1 (Levenshtein-baserad) */
 const similarity = (a: string, b: string) => {
@@ -298,7 +295,7 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
       setRows([...next]);
       try {
         const ext = row.file.name.split(".").pop()?.toLowerCase() || "jpg";
-        const key = `${row.sku.replace(/[^a-zA-Z0-9ÅÄÖåäö\-_.]/g, "_")}.${ext}`;
+        const key = `${storageKey(row.sku)}.${ext}`;
         const { error: upErr } = await supabase.storage
           .from(PRODUCT_IMAGE_BUCKET)
           .upload(key, row.file, { upsert: true, contentType: row.file.type || undefined });
@@ -344,8 +341,11 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
             på samma produkt vinner högsta nivån i filnamnet (basic → lyx → premium) och övriga filer måste kopplas
             manuellt. Filnamnet tolkas först som SKU (t.ex. <span className="font-mono">FS-045.jpg</span>), annars matchas det
             mot produktnamn — även liknande namn och kopiesuffix (t.ex. <span className="font-mono">bergtungafil-2.jpg</span>{" "}
-            → Bergtungafilé). Klicka på produktnamnet i listan för att välja en annan produkt manuellt. Bilderna är endast
-            för internt bruk.
+            → Bergtungafilé). Svenska tecken hanteras automatiskt: döp filen till{" "}
+            <span className="font-mono">RO-013.png</span> även om SKU:n är <span className="font-mono">RÖ-013</span> — bilden
+            sparas alltid med ASCII-filnamn. Klicka på produktnamnet i listan för att välja en annan produkt manuellt.
+            Bilderna är endast för internt bruk.
+
           </DialogDescription>
         </DialogHeader>
 
