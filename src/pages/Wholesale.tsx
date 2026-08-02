@@ -46,7 +46,7 @@ const statusColor: Record<string, string> = {
 };
 
 interface FSLineInput { product_id: string; qty: string; }
-interface ILLineInput { product_id: string; qty: string; unit_cost: string; batch_number: string; best_before: string; }
+interface ILLineInput { product_id: string; qty: string; unit_cost: string; batch_number: string; best_before: string; redskapskategori: string; upptinad: boolean; faktiskt_fangstomrade: string; }
 
 export default function Wholesale() {
   const [search, setSearch] = useState("");
@@ -75,7 +75,7 @@ export default function Wholesale() {
   const [ilDate, setIlDate] = useState(new Date().toISOString().slice(0, 10));
   const [ilReceivedBy, setIlReceivedBy] = useState("");
   const [ilNote, setIlNote] = useState("");
-  const [ilLines, setIlLines] = useState<ILLineInput[]>([{ product_id: "", qty: "", unit_cost: "", batch_number: "", best_before: "" }]);
+  const [ilLines, setIlLines] = useState<ILLineInput[]>([{ product_id: "", qty: "", unit_cost: "", batch_number: "", best_before: "", redskapskategori: "", upptinad: false, faktiskt_fangstomrade: "" }]);
 
   // Batch form
   const [batchProductId, setBatchProductId] = useState("");
@@ -116,10 +116,10 @@ export default function Wholesale() {
   });
 
   // IL helpers
-  const resetIlForm = () => { setIlSupplier(""); setIlDate(new Date().toISOString().slice(0, 10)); setIlReceivedBy(""); setIlNote(""); setIlLines([{ product_id: "", qty: "", unit_cost: "", batch_number: "", best_before: "" }]); };
-  const addIlLine = () => setIlLines([...ilLines, { product_id: "", qty: "", unit_cost: "", batch_number: "", best_before: "" }]);
+  const resetIlForm = () => { setIlSupplier(""); setIlDate(new Date().toISOString().slice(0, 10)); setIlReceivedBy(""); setIlNote(""); setIlLines([{ product_id: "", qty: "", unit_cost: "", batch_number: "", best_before: "", redskapskategori: "", upptinad: false, faktiskt_fangstomrade: "" }]); };
+  const addIlLine = () => setIlLines([...ilLines, { product_id: "", qty: "", unit_cost: "", batch_number: "", best_before: "", redskapskategori: "", upptinad: false, faktiskt_fangstomrade: "" }]);
   const removeIlLine = (i: number) => setIlLines(ilLines.filter((_, idx) => idx !== i));
-  const updateIlLine = (i: number, field: keyof ILLineInput, value: string) => { const u = [...ilLines]; u[i] = { ...u[i], [field]: value }; setIlLines(u); };
+  const updateIlLine = (i: number, field: keyof ILLineInput, value: string | boolean) => { const u = [...ilLines]; u[i] = { ...u[i], [field]: value } as ILLineInput; setIlLines(u); };
 
   const filtered = products.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase())
@@ -178,6 +178,10 @@ export default function Wholesale() {
     const validLines = ilLines.filter(l => l.product_id && l.qty && l.unit_cost).map(l => ({
       product_id: l.product_id, quantity: Number(l.qty), unit_cost: Number(l.unit_cost),
       batch_number: l.batch_number || undefined, best_before: l.best_before || undefined,
+      redskapskategori: l.redskapskategori || null,
+      upptinad: l.upptinad,
+      faktiskt_fangstomrade:
+        l.faktiskt_fangstomrade || products.find(p => p.id === l.product_id)?.origin || null,
     }));
     createIncomingDelivery.mutate({
       supplier_id: ilSupplier,
@@ -719,7 +723,12 @@ export default function Wholesale() {
                 <div className="grid grid-cols-12 gap-2 items-end">
                   <div className="col-span-4 space-y-1">
                     <Label className="text-[10px]">Produkt *</Label>
-                    <Select value={line.product_id} onValueChange={v => updateIlLine(i, "product_id", v)}>
+                    <Select value={line.product_id} onValueChange={v => {
+                      const u = [...ilLines];
+                      const prod = products.find(p => p.id === v);
+                      u[i] = { ...u[i], product_id: v, faktiskt_fangstomrade: u[i].faktiskt_fangstomrade || prod?.origin || "" };
+                      setIlLines(u);
+                    }}>
                       <SelectTrigger className="h-7 text-[11px]"><SelectValue placeholder="Välj" /></SelectTrigger>
                       <SelectContent>{products.map(p => <SelectItem key={p.id} value={p.id} className="text-xs">{p.name}</SelectItem>)}</SelectContent>
                     </Select>
@@ -739,6 +748,38 @@ export default function Wholesale() {
                   <div className="col-span-2 space-y-1">
                     <Label className="text-[10px]">Bäst före</Label>
                     <Input type="date" value={line.best_before} onChange={e => updateIlLine(i, "best_before", e.target.value)} className="h-7 text-[11px]" />
+                  </div>
+                </div>
+                {/* Partiuppgifter enligt EU 1379/2013 */}
+                <div className="grid grid-cols-12 gap-2 items-end">
+                  {isWildCaught(products.find(p => p.id === line.product_id)?.origin) && (
+                    <div className="col-span-4 space-y-1">
+                      <Label className="text-[10px]">Redskapskategori</Label>
+                      <Select value={line.redskapskategori || "none"} onValueChange={v => updateIlLine(i, "redskapskategori", v === "none" ? "" : v)}>
+                        <SelectTrigger className="h-7 text-[11px]"><SelectValue placeholder="Välj" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none" className="text-xs text-muted-foreground">— ingen —</SelectItem>
+                          {GEAR_CATEGORIES.map(g => <SelectItem key={g} value={g} className="text-xs">{g}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  <div className="col-span-5 space-y-1">
+                    <Label className="text-[10px]">Faktiskt fångstområde</Label>
+                    <Input
+                      value={line.faktiskt_fangstomrade}
+                      onChange={e => updateIlLine(i, "faktiskt_fangstomrade", e.target.value)}
+                      placeholder={products.find(p => p.id === line.product_id)?.origin || "T.ex. Fångad i Skagerrak"}
+                      className="h-7 text-[11px]"
+                    />
+                  </div>
+                  <div className="col-span-3 flex items-center gap-2 pb-1">
+                    <Checkbox
+                      id={`upptinad-${i}`}
+                      checked={line.upptinad}
+                      onCheckedChange={v => updateIlLine(i, "upptinad", v === true)}
+                    />
+                    <Label htmlFor={`upptinad-${i}`} className="text-[10px] cursor-pointer">Upptinad</Label>
                   </div>
                 </div>
               </div>
