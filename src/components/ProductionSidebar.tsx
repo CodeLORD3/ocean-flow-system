@@ -40,6 +40,12 @@ const overviewNav = [
   { title: "Kalender", url: "/schedule", icon: CalendarDays },
 ];
 
+const purchaseNav = [
+  { title: "Inköpsschema", url: "/purchase-schedule", icon: CalendarDays },
+  { title: "Inköpsrapportering", url: "/purchase-reporting", icon: FileText },
+  { title: "Leverantörer", url: "/suppliers", icon: Truck },
+];
+
 const produktionSectionNav = [
   { title: "Ordrar", url: "/orders", icon: ShoppingCart },
   { title: "Produktionsschema", url: "/production-schedule", icon: CalendarDays },
