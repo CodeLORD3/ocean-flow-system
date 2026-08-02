@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Image as ImageIcon, Upload, Check, X, Loader2 } from "lucide-react";
+import { Image as ImageIcon, Upload, Check, X, Loader2, ChevronsUpDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,15 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { ProductThumb } from "@/components/products/ProductThumb";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
 export const PRODUCT_IMAGE_BUCKET = "produktbilder";
 
@@ -31,8 +40,15 @@ interface FileRow {
   productName?: string;
   productId?: string;
   productSku?: string;
-  matchType?: "sku" | "namn" | "liknande";
+  matchType?: "sku" | "namn" | "liknande" | "manuell";
+  candidates?: ProductOption[];
   url?: string;
+}
+
+interface ProductOption {
+  id: string;
+  sku: string;
+  name: string;
 }
 
 const skuFromFileName = (name: string) => name.replace(/\.[^.]+$/, "").trim();
@@ -77,6 +93,8 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<FileRow[]>([]);
   const [running, setRunning] = useState(false);
+  const [products, setProducts] = useState<ProductOption[]>([]);
+  const [pickerOpen, setPickerOpen] = useState<number | null>(null);
 
   const counts = useMemo(() => {
     return {
@@ -92,9 +110,14 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
     if (!files || files.length === 0) return;
     const list = Array.from(files);
     const { data } = await supabase.from("products").select("id, sku, name");
-    const products = data ?? [];
-    const bySku = new Map(products.map((p) => [norm(String(p.sku ?? "")), p]));
-    const byName = new Map(products.map((p) => [norm(String(p.name ?? "")), p]));
+    const all: ProductOption[] = (data ?? []).map((p) => ({
+      id: String(p.id),
+      sku: String(p.sku ?? ""),
+      name: String(p.name ?? ""),
+    }));
+    setProducts(all);
+    const bySku = new Map(all.map((p) => [norm(p.sku), p]));
+    const byName = new Map(all.map((p) => [norm(p.name), p]));
 
     setRows(
       list.map((file) => {
@@ -113,36 +136,79 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
           if (match) matchType = "namn";
         }
 
-        // 3) liknande namn (prefix/innehåll eller hög likhet)
-        if (!match && keyBase.length >= 4) {
-          let best: { p: (typeof products)[number]; score: number } | null = null;
-          for (const p of products) {
-            const nk = norm(String(p.name ?? ""));
-            if (nk.length < 3) continue;
-            let score = similarity(keyBase, nk);
-            if (nk.startsWith(keyBase) || keyBase.startsWith(nk)) {
-              score = Math.max(score, 0.93 - Math.abs(nk.length - keyBase.length) / 100);
-            }
-            if (!best || score > best.score) best = { p, score };
-          }
-          if (best && best.score >= 0.82) {
-            match = best.p;
-            matchType = "liknande";
-          }
+        // 3) liknande namn — rangordna kandidater
+        const scored = keyBase.length >= 3
+          ? all
+              .map((p) => {
+                const nk = norm(p.name);
+                if (nk.length < 3) return { p, score: 0 };
+                let score = similarity(keyBase, nk);
+                if (nk.startsWith(keyBase) || keyBase.startsWith(nk)) {
+                  score = Math.max(score, 0.93 - Math.abs(nk.length - keyBase.length) / 100);
+                }
+                return { p, score };
+              })
+              .filter((c) => c.score >= 0.6)
+              .sort((a, b) => b.score - a.score)
+              .slice(0, 6)
+          : [];
+
+        if (!match && scored.length > 0 && scored[0].score >= 0.82) {
+          match = scored[0].p;
+          matchType = "liknande";
         }
+
+        const candidates = scored.map((c) => c.p).filter((p) => p.id !== match?.id);
 
         return match
           ? {
               file,
-              sku: String(match.sku ?? raw),
+              sku: match.sku || raw,
               status: "pending" as const,
               productName: match.name,
               productId: match.id,
-              productSku: String(match.sku ?? ""),
+              productSku: match.sku,
               matchType,
+              candidates,
             }
-          : { file, sku: raw, status: "skipped" as const, message: "ingen matchande produkt" };
+          : {
+              file,
+              sku: raw,
+              status: "skipped" as const,
+              message: candidates.length > 0 ? "välj produkt manuellt" : "ingen matchande produkt",
+              candidates,
+            };
       }),
+    );
+  };
+
+  const assignProduct = (index: number, product: ProductOption) => {
+    setRows((prev) =>
+      prev.map((r, i) =>
+        i === index
+          ? {
+              ...r,
+              productId: product.id,
+              productName: product.name,
+              productSku: product.sku,
+              sku: product.sku || r.sku,
+              matchType: "manuell",
+              status: r.status === "done" ? r.status : "pending",
+              message: undefined,
+            }
+          : r,
+      ),
+    );
+    setPickerOpen(null);
+  };
+
+  const clearProduct = (index: number) => {
+    setRows((prev) =>
+      prev.map((r, i) =>
+        i === index
+          ? { ...r, productId: undefined, productName: undefined, productSku: undefined, matchType: undefined, status: "skipped", message: "ingen produkt vald" }
+          : r,
+      ),
     );
   };
 
@@ -200,7 +266,8 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
           <DialogDescription className="text-xs">
             Filnamnet tolkas först som SKU (t.ex. <span className="font-mono">FS-045.jpg</span>), annars matchas det
             mot produktnamn — även liknande namn och kopiesuffix (t.ex. <span className="font-mono">bergtungafil-2.jpg</span>{" "}
-            → Bergtungafilé). Bilderna är endast för internt bruk.
+            → Bergtungafilé). Klicka på produktnamnet i listan för att välja en annan produkt manuellt. Bilderna är endast
+            för internt bruk.
           </DialogDescription>
         </DialogHeader>
 
@@ -248,7 +315,71 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
                   <tr key={`${r.file.name}-${i}`} className="border-t border-border/60 h-9">
                     <td className="px-2 font-mono text-[10px] text-muted-foreground">{r.file.name}</td>
                     <td className="px-2 font-mono">{r.sku}</td>
-                    <td className="px-2">{r.productName ?? <span className="text-muted-foreground">—</span>}</td>
+                    <td className="px-2">
+                      <Popover open={pickerOpen === i} onOpenChange={(o) => setPickerOpen(o ? i : null)}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-1.5 text-[11px] justify-between gap-1 max-w-[220px]"
+                            disabled={running}
+                          >
+                            <span className={`truncate ${r.productName ? "" : "text-muted-foreground"}`}>
+                              {r.productName ?? "Välj produkt"}
+                            </span>
+                            <ChevronsUpDown className="h-3 w-3 opacity-50 shrink-0" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[320px] p-0" align="start">
+                          <Command>
+                            <CommandInput placeholder="Sök produkt eller SKU..." className="h-8 text-xs" />
+                            <CommandList>
+                              <CommandEmpty className="py-4 text-center text-xs">Ingen produkt hittad</CommandEmpty>
+                              {(r.candidates?.length ?? 0) > 0 && (
+                                <CommandGroup heading="Föreslagna matchningar">
+                                  {r.candidates!.map((c) => (
+                                    <CommandItem
+                                      key={`cand-${c.id}`}
+                                      value={`${c.name} ${c.sku}`}
+                                      onSelect={() => assignProduct(i, c)}
+                                      className="text-xs"
+                                    >
+                                      <span className="truncate">{c.name}</span>
+                                      <span className="ml-auto font-mono text-[10px] text-muted-foreground">{c.sku}</span>
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              )}
+                              <CommandGroup heading="Alla produkter">
+                                {products.map((p) => (
+                                  <CommandItem
+                                    key={p.id}
+                                    value={`${p.name} ${p.sku}`}
+                                    onSelect={() => assignProduct(i, p)}
+                                    className="text-xs"
+                                  >
+                                    <span className="truncate">{p.name}</span>
+                                    <span className="ml-auto font-mono text-[10px] text-muted-foreground">{p.sku}</span>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      {r.productId && r.status !== "done" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 text-muted-foreground"
+                          onClick={() => clearProduct(i)}
+                          disabled={running}
+                          aria-label="Ta bort koppling"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </td>
                     <td className="px-2">
                       {r.matchType ? (
                         <Badge
