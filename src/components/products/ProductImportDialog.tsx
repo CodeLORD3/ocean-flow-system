@@ -116,8 +116,30 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
     if (importable.length === 0) return;
     setImporting(true);
     try {
-      const supplierByName = new Map(suppliers.map((s) => [s.name.toLowerCase(), s.id]));
+      const supplierIndex = buildSupplierIndex(suppliers.map((s) => ({ id: s.id, name: s.name })));
       const existingBySku = new Map(existing.map((p) => [p.sku.toLowerCase(), p]));
+
+      // Skapa leverantörer som saknas i registret
+      const missingSuppliers = new Map<string, string>();
+      importable.forEach((d) => {
+        const raw = d.row.supplier?.trim();
+        if (!raw) return;
+        if (lookupSupplier(supplierIndex, raw)) return;
+        missingSuppliers.set(raw.toLowerCase(), raw);
+      });
+      if (missingSuppliers.size > 0) {
+        const { data: created, error: supErr } = await supabase
+          .from("suppliers")
+          .insert([...missingSuppliers.values()].map((name) => ({ name })))
+          .select("id, name");
+        if (supErr) throw supErr;
+        (created ?? []).forEach((s) => {
+          supplierAliasKeys(s.name).forEach((k) => {
+            if (!supplierIndex.has(k)) supplierIndex.set(k, { id: s.id, name: s.name });
+          });
+        });
+      }
+
 
       // Ensure new categories exist
       const knownCats = new Set(categories.map((c) => c.name.toLowerCase()));
