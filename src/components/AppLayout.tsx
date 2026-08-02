@@ -40,6 +40,7 @@ const pageTitles: Record<string, { title: string; breadcrumb: string[] }> = {
   "/products": { title: "Produkter", breadcrumb: ["Hem", "Lagerstyrning", "Produkter"] },
   "/receiving": { title: "Inleveranser", breadcrumb: ["Hem", "Lagerstyrning", "Inleveranser"] },
   "/barcodes": { title: "Streckkoder", breadcrumb: ["Hem", "Lagerstyrning", "Streckkoder"] },
+  "/chat": { title: "Chatt", breadcrumb: ["Hem", "Chatt"] },
 };
 
 function AccountMenu() {

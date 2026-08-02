@@ -14,6 +14,7 @@ import {
   ClipboardList,
   TrendingUp,
   ScanLine,
+  MessageSquare,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -38,6 +39,7 @@ import {
 const overviewNav = [
   { title: "Översikt", url: "/organisation", icon: LayoutDashboard },
   { title: "Kalender", url: "/schedule", icon: CalendarDays },
+  { title: "Chatt", url: "/chat", icon: MessageSquare },
 ];
 
 const purchaseNav = [
