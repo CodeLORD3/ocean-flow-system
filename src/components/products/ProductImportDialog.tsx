@@ -364,6 +364,9 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
           </div>
         )}
 
+        {!diff && !fatal && <ImportHistory />}
+
+
         {!diff && !fatal && (
           <div className="flex items-start gap-2 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
             <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
