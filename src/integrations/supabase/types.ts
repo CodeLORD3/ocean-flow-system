@@ -3084,6 +3084,41 @@ export type Database = {
         }
         Relationships: []
       }
+      store_sidebar_prefs: {
+        Row: {
+          created_at: string
+          hidden: boolean
+          id: string
+          nav_url: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          hidden?: boolean
+          id?: string
+          nav_url: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          hidden?: boolean
+          id?: string
+          nav_url?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_sidebar_prefs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stores: {
         Row: {
           active: boolean
