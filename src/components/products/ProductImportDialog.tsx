@@ -20,13 +20,17 @@ import { useSuppliers } from "@/hooks/useSuppliers";
 import { logActivity } from "@/hooks/useActivityLog";
 import {
   buildDiff,
+  buildSupplierIndex,
   buildTemplateCsv,
   IMPORT_COLUMNS,
+  lookupSupplier,
   parseProductFile,
+  supplierAliasKeys,
   toPayload,
   type DiffRow,
   type ExistingProduct,
 } from "@/lib/productImport";
+
 
 interface Props {
   open: boolean;
