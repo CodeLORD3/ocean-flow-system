@@ -58,6 +58,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import BarcodeDisplay from "@/components/barcode/BarcodeDisplay";
 import { generateEAN13 } from "@/lib/barcode";
 import { format } from "date-fns";
+import { fetchLatestBatchInfo, batchInfoLines } from "@/lib/labelData";
 import {
   PRODUCT_CATEGORIES,
   generateSku,
@@ -572,14 +573,19 @@ export default function Products() {
     toast({ title: "Klart!", description: `${without.length} streckkoder genererade` });
   };
 
-  const printLabel = (p: any) => {
+  const printLabel = async (p: any) => {
+    const infoMap = await fetchLatestBatchInfo([{ id: p.id, origin: p.origin }]);
+    const infoLines = batchInfoLines(infoMap[p.id])
+      .map((l) => `<div class="meta">${l}</div>`)
+      .join("");
     const w = window.open("", "_blank");
     if (!w) return;
     w.document.write(`<!DOCTYPE html><html><head><title>Etikett</title>
       <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
-      <style>body{font-family:Arial;text-align:center;padding:20px;} .name{font-size:14px;font-weight:bold;} .sku{font-size:10px;color:#666;} .price{font-size:13px;font-weight:bold;margin-top:4px;} svg{max-width:200px;height:60px;}</style>
+      <style>body{font-family:Arial;text-align:center;padding:20px;} .name{font-size:14px;font-weight:bold;} .sku{font-size:10px;color:#666;} .meta{font-size:10px;color:#333;} .price{font-size:13px;font-weight:bold;margin-top:4px;} svg{max-width:200px;height:60px;}</style>
       </head><body>
       <div class="name">${productDisplayName(p.name, (p as any).latin_name)}</div><div class="sku">${p.sku}</div>
+      ${infoLines}
       <svg id="bc"></svg>
       <div class="price">${Number(p.wholesale_price).toFixed(2)} kr/${p.unit}</div>
       <script>try{JsBarcode("#bc","${(p as any).barcode}",{format:"EAN13",width:2,height:50,displayValue:true,fontSize:12,margin:8})}catch(e){};setTimeout(()=>window.print(),400)<\/script>

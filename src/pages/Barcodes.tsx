@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useProducts } from "@/hooks/useProducts";
 import { useStores } from "@/hooks/useStores";
 import { useStorageLocations, useUpsertStockLocation } from "@/hooks/useStorageLocations";
+import { fetchLatestBatchInfo, batchInfoLines } from "@/lib/labelData";
 import { productDisplayName } from "@/lib/productCategories";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -128,13 +129,17 @@ export default function BarcodePage() {
     ((p as any).barcode || "").includes(search)
   );
 
-  const handlePrintAll = () => {
+  const handlePrintAll = async () => {
+    const infoMap = await fetchLatestBatchInfo(
+      filteredProducts.map((p: any) => ({ id: p.id, origin: p.origin })),
+    );
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
     const labels = filteredProducts.map((p: any) => `
       <div class="label">
         <div class="name">${productDisplayName(p.name, p.latin_name)}</div>
         <div class="sku">${p.sku}</div>
+        ${batchInfoLines(infoMap[p.id]).map((l) => `<div class="meta">${l}</div>`).join("")}
         <svg id="bc-${p.id}"></svg>
         <div class="price">${Number(p.wholesale_price)} kr/${p.unit}</div>
       </div>
@@ -149,6 +154,7 @@ export default function BarcodePage() {
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .label { border: 1px solid #ddd; padding: 8px; text-align: center; break-inside: avoid; }
         .name { font-size: 11px; font-weight: bold; }
+        .meta { font-size: 8px; color: #333; }
         .sku { font-size: 9px; color: #666; margin-bottom: 4px; }
         .price { font-size: 11px; font-weight: bold; margin-top: 2px; }
         svg { max-width: 100%; height: 50px; }
