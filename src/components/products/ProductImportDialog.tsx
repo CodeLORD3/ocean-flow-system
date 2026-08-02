@@ -233,14 +233,25 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
 
       await logActivity({
         action_type: "product_import",
-        description: `Produktimport: ${inserted} nya, ${updated} uppdaterade (${fileName ?? "fil"})`,
+        description: `Produktimport: ${inserted} nya, ${updated} uppdaterade${
+          rejectedRows.length ? `, ${rejectedRows.length} avvisade` : ""
+        } (${fileName ?? "fil"})`,
         entity_type: "products",
-        details: { inserted, updated, skipped: counts.error, file: fileName },
+        details: {
+          inserted,
+          updated,
+          skipped: counts.error,
+          rejected_total: rejectedRows.length,
+          rejected: buildRejectedPayload(),
+          file: fileName,
+        },
       });
 
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["categories"] });
       qc.invalidateQueries({ queryKey: ["suppliers"] });
+      qc.invalidateQueries({ queryKey: ["product-import-history"] });
+
 
       toast({
         title: "Import klar",
