@@ -87,6 +87,8 @@ export default function OrganisationOverview() {
   const { data: stores = [] } = useStores(true);
   const { data: allCustomers = [] } = useCustomers();
   const { data: suppliers = [] } = useSuppliers();
+  const covers = useStoreCoverImages();
+
 
   // Shop orders with lines for sales calculation
   const { data: shopOrders = [] } = useQuery({
