@@ -321,11 +321,6 @@ export default function OrganisationOverview() {
         </div>
       )}
 
-      {/* Shop: daily checklist */}
-      {isShop && (
-        <ChecklistCard storeId={activeStoreId!} onOpenFull={() => switchTab("/checklist")} />
-      )}
-
       {/* Shop: photos + chat */}
       {isShop && (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
@@ -339,6 +334,12 @@ export default function OrganisationOverview() {
           <ChatPanel compact onOpenFull={() => switchTab("/chat")} />
         </div>
       )}
+
+      {/* Shop: daily checklist */}
+      {isShop && (
+        <ChecklistCard storeId={activeStoreId!} onOpenFull={() => switchTab("/checklist")} />
+      )}
+
 
       {/* Stores with cover images (ej i butiksportalen) */}
       {!isShop && stores.length > 0 && (
