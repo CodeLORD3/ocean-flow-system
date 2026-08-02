@@ -1914,6 +1914,9 @@ export default function Inventory() {
           </Card>
         );
       })()}
+      </>
+      )}
+
 
       {/* ── Inrapportering (excel-liknande lagerlista) ──────────────────────── */}
       <StockCountDialog
