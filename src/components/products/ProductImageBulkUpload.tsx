@@ -295,7 +295,7 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
       setRows([...next]);
       try {
         const ext = row.file.name.split(".").pop()?.toLowerCase() || "jpg";
-        const key = `${row.sku.replace(/[^a-zA-Z0-9ÅÄÖåäö\-_.]/g, "_")}.${ext}`;
+        const key = `${storageKey(row.sku)}.${ext}`;
         const { error: upErr } = await supabase.storage
           .from(PRODUCT_IMAGE_BUCKET)
           .upload(key, row.file, { upsert: true, contentType: row.file.type || undefined });
