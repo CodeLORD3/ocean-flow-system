@@ -13,7 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { MapPin, Store as StoreIcon, Upload, Images, Pencil, Trash2, Check, X, Loader2 } from "lucide-react";
+import { focalClass, FOCAL_OPTIONS } from "@/lib/imageFocal";
+import { MapPin, Store as StoreIcon, Upload, Images, Pencil, Trash2, Check, X, Loader2, Crop } from "lucide-react";
 
 /**
  * Hero/cover image shown at the top of every page inside a shop portal.
@@ -34,6 +35,7 @@ export function StoreHero() {
   const [editingCaption, setEditingCaption] = useState(false);
   const [captionDraft, setCaptionDraft] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [cropOpen, setCropOpen] = useState(false);
 
   if (site !== "shop" || !activeStoreId) return null;
 
@@ -86,6 +88,17 @@ export function StoreHero() {
     }
   };
 
+  const handleFocal = async (focal: string) => {
+    if (!cover) return;
+    try {
+      await updateImage.mutateAsync({ id: cover.id, focal_point: focal });
+      setCropOpen(false);
+      toast.success("Beskärning uppdaterad");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Kunde inte spara beskärningen");
+    }
+  };
+
   const handleDelete = async () => {
     if (!cover) return;
     try {
@@ -102,7 +115,7 @@ export function StoreHero() {
         <img
           src={url}
           alt={cover?.caption || `Omslagsbild för ${activeStoreName ?? "butiken"}`}
-          className="h-full w-full object-cover"
+          className={`h-full w-full object-cover ${focalClass(cover?.focal_point)}`}
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center">
@@ -195,6 +208,31 @@ export function StoreHero() {
 
           {cover && (
             <>
+              <Popover open={cropOpen} onOpenChange={setCropOpen}>
+                <PopoverTrigger asChild>
+                  <Button size="sm" variant="secondary" className="h-7 gap-1 text-[11px]" disabled={busy} title="Beskär bilden">
+                    <Crop className="h-3 w-3" /> Beskär
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-44 p-2">
+                  <p className="mb-2 text-[11px] font-medium text-muted-foreground">Visa del av bilden</p>
+                  <div className="flex flex-col gap-1">
+                    {FOCAL_OPTIONS.map((opt) => (
+                      <Button
+                        key={opt.value}
+                        size="sm"
+                        variant={(cover.focal_point ?? "center") === opt.value ? "default" : "ghost"}
+                        className="h-7 justify-start text-[11px]"
+                        onClick={() => handleFocal(opt.value)}
+                        disabled={busy}
+                      >
+                        {opt.label}
+                      </Button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+
               <Button
                 size="icon"
                 variant="secondary"

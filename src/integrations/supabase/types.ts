@@ -565,6 +565,7 @@ export type Database = {
           created_at: string
           entity_id: string
           entity_type: string
+          focal_point: string
           id: string
           is_cover: boolean
           sort_order: number
@@ -575,6 +576,7 @@ export type Database = {
           created_at?: string
           entity_id: string
           entity_type: string
+          focal_point?: string
           id?: string
           is_cover?: boolean
           sort_order?: number
@@ -585,6 +587,7 @@ export type Database = {
           created_at?: string
           entity_id?: string
           entity_type?: string
+          focal_point?: string
           id?: string
           is_cover?: boolean
           sort_order?: number

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { ImagePlus, Trash2, Loader2, ImageIcon, X, Star } from "lucide-react";
+import { ImagePlus, Trash2, Loader2, ImageIcon, X, Star, Crop } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import {
   useSetCoverImage,
 } from "@/hooks/useEntityImages";
 import { cn } from "@/lib/utils";
+import { focalClass, nextFocal, FOCAL_OPTIONS } from "@/lib/imageFocal";
 
 type Props = {
   entityType: string;
@@ -123,7 +124,7 @@ export function EntityImageGallery({
                   src={img.url}
                   alt={img.caption || `${title} bild`}
                   loading="lazy"
-                  className="h-full w-full object-cover transition-transform group-hover:scale-[1.03]"
+                  className={cn("h-full w-full object-cover transition-transform group-hover:scale-[1.03]", focalClass(img.focal_point))}
                 />
               </button>
               {img.is_cover && (
@@ -175,6 +176,24 @@ export function EntityImageGallery({
                   <span className="text-[11px] text-muted-foreground truncate flex-1 px-1">
                     {img.caption || "—"}
                   </span>
+                )}
+                {editable && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground shrink-0"
+                        aria-label="Ändra beskärning"
+                        onClick={() => updateImage.mutate({ id: img.id, focal_point: nextFocal(img.focal_point) })}
+                      >
+                        <Crop className="h-3 w-3" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs">
+                      Beskärning: {FOCAL_OPTIONS.find((o) => o.value === (img.focal_point ?? "center"))?.label} – klicka för att byta
+                    </TooltipContent>
+                  </Tooltip>
                 )}
                 {editable && (
                   <Button

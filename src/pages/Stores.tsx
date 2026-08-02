@@ -12,6 +12,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useStores, useUpdateStore, Store } from "@/hooks/useStores";
 import { useStoreCoverImages } from "@/hooks/useStoreCoverImages";
+import { focalClass } from "@/lib/imageFocal";
 import { supabase } from "@/integrations/supabase/client";
 import storeHero from "@/assets/store-hero.jpg";
 
@@ -123,12 +124,12 @@ export default function Stores() {
             <Card key={store.id} className="shadow-card hover:shadow-card-hover transition-shadow overflow-hidden">
               <div className="relative aspect-video overflow-hidden bg-muted">
                 <img
-                  src={covers[store.id] || store.logo_url || storeHero}
+                  src={covers[store.id]?.url || store.logo_url || storeHero}
                   alt={`Butiksbild för ${store.name}`}
                   loading="lazy"
                   width={1280}
                   height={720}
-                  className="h-full w-full object-cover"
+                  className={`h-full w-full object-cover ${focalClass(covers[store.id]?.focal_point)}`}
                 />
               </div>
               <CardContent className="p-4">

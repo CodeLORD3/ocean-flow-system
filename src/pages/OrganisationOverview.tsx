@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useProducts } from "@/hooks/useProducts";
 import { useStores } from "@/hooks/useStores";
 import { useStoreCoverImages } from "@/hooks/useStoreCoverImages";
+import { focalClass } from "@/lib/imageFocal";
 import storeHero from "@/assets/store-hero.jpg";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useSuppliers } from "@/hooks/useSuppliers";
@@ -278,12 +279,12 @@ export default function OrganisationOverview() {
                 <div key={store.id} className="flex items-center gap-3 py-1.5 border-b border-border/30 last:border-0">
                   <div className="h-11 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
                     <img
-                      src={covers[store.id] || store.logo_url || storeHero}
+                      src={covers[store.id]?.url || store.logo_url || storeHero}
                       alt={`Butiksbild för ${store.name}`}
                       loading="lazy"
                       width={320}
                       height={220}
-                      className="h-full w-full object-cover"
+                      className={`h-full w-full object-cover ${focalClass(covers[store.id]?.focal_point)}`}
                     />
                   </div>
                   <div className="min-w-0">

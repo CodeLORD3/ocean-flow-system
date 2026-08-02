@@ -9,6 +9,8 @@ export type EntityImage = {
   caption: string | null;
   sort_order: number;
   is_cover: boolean;
+  /** Vilken del av bilden som visas vid beskärning: top | center | bottom */
+  focal_point: string | null;
   created_at: string;
 };
 
@@ -83,10 +85,21 @@ export function useUploadEntityImage() {
 export function useUpdateEntityImage() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, caption, sort_order }: { id: string; caption?: string | null; sort_order?: number }) => {
+    mutationFn: async ({
+      id,
+      caption,
+      sort_order,
+      focal_point,
+    }: {
+      id: string;
+      caption?: string | null;
+      sort_order?: number;
+      focal_point?: string;
+    }) => {
       const patch: Record<string, unknown> = {};
       if (caption !== undefined) patch.caption = caption;
       if (sort_order !== undefined) patch.sort_order = sort_order;
+      if (focal_point !== undefined) patch.focal_point = focal_point;
       const { error } = await supabase.from("entity_images").update(patch).eq("id", id);
       if (error) throw error;
     },

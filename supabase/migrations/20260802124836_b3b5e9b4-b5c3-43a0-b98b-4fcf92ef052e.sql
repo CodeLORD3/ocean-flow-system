@@ -1,0 +1,1 @@
+ALTER TABLE public.entity_images ADD COLUMN IF NOT EXISTS focal_point text NOT NULL DEFAULT 'center';
