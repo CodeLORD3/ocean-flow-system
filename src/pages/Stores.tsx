@@ -11,7 +11,9 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useStores, useUpdateStore, Store } from "@/hooks/useStores";
+import { useStoreCoverImages } from "@/hooks/useStoreCoverImages";
 import { supabase } from "@/integrations/supabase/client";
+import storeHero from "@/assets/store-hero.jpg";
 
 export default function Stores() {
   const { data: stores = [], isLoading } = useStores(true);
