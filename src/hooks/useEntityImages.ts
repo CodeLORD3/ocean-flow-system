@@ -90,7 +90,11 @@ export function useUpdateEntityImage() {
       const { error } = await supabase.from("entity_images").update(patch).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["entity-images"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["entity-images"] });
+      qc.invalidateQueries({ queryKey: ["store-cover-images"] });
+      qc.invalidateQueries({ queryKey: ["our-stores-photos"] });
+    },
   });
 }
 
@@ -101,7 +105,11 @@ export function useDeleteEntityImage() {
       const { error } = await supabase.from("entity_images").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["entity-images"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["entity-images"] });
+      qc.invalidateQueries({ queryKey: ["store-cover-images"] });
+      qc.invalidateQueries({ queryKey: ["our-stores-photos"] });
+    },
   });
 }
 
@@ -132,6 +140,7 @@ export function useSetCoverImage() {
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["entity-images", vars.entityType, vars.entityId] });
+      qc.invalidateQueries({ queryKey: ["store-cover-images"] });
       qc.invalidateQueries({ queryKey: ["our-stores-photos"] });
     },
   });
