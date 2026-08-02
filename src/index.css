@@ -113,3 +113,15 @@
             mask-image: none;
   }
 }
+
+@layer utilities {
+  /* Vit kontur runt text, för läsbarhet ovanpå foton (t.ex. butiksnamn i heron) */
+  .text-outline-white {
+    -webkit-text-stroke: 3px hsl(0 0% 100%);
+    paint-order: stroke fill;
+  }
+  .text-outline-white-thin {
+    -webkit-text-stroke: 2px hsl(0 0% 100%);
+    paint-order: stroke fill;
+  }
+}
