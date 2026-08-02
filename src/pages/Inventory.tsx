@@ -68,6 +68,8 @@ import { EntityImagesButton } from "@/components/images/EntityImageGallery";
 
 import { generateStockSheetPdf } from "@/lib/stockSheetPdf";
 import StockCountDialog, { type StockCountScope } from "@/components/inventory/StockCountDialog";
+import StockOverview from "@/components/inventory/StockOverview";
+
 import { format, differenceInDays, parseISO } from "date-fns";
 import { sv } from "date-fns/locale";
 
