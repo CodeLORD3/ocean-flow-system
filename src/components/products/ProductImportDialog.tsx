@@ -30,6 +30,7 @@ import {
   type DiffRow,
   type ExistingProduct,
 } from "@/lib/productImport";
+import ImportHistory from "@/components/products/ImportHistory";
 
 
 interface Props {
