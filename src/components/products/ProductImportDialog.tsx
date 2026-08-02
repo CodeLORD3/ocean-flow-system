@@ -210,6 +210,8 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
 
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["categories"] });
+      qc.invalidateQueries({ queryKey: ["suppliers"] });
+
       toast({
         title: "Import klar",
         description: `${inserted} nya, ${updated} uppdaterade, ${counts.error} hoppade över.`,
