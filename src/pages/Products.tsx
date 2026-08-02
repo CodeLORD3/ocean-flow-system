@@ -1357,6 +1357,18 @@ export default function Products() {
                 />
               </div>
             </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Vetenskapligt namn</Label>
+              <Input
+                value={form.latin_name}
+                onChange={(e) => setField("latin_name", e.target.value)}
+                placeholder="T.ex. Gadus morhua"
+                className="h-8 text-xs italic"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Krävs för fiskeri- och vattenbruksprodukter enligt EU 1379/2013, t.ex. Gadus morhua
+              </p>
+            </div>
             {!editId && (
               <div className="space-y-1.5">
                 <Label className="text-xs">SKU (auto om tomt)</Label>
