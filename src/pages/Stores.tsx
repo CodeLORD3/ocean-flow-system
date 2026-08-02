@@ -12,6 +12,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useStores, useUpdateStore, Store } from "@/hooks/useStores";
 import { useStoreCoverImages } from "@/hooks/useStoreCoverImages";
+import { focalClass } from "@/lib/imageFocal";
 import { supabase } from "@/integrations/supabase/client";
 import storeHero from "@/assets/store-hero.jpg";
 
