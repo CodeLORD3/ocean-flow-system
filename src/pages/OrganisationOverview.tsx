@@ -406,6 +406,7 @@ export default function OrganisationOverview() {
         )}
 
         {/* Inventory by Category */}
+        {!isShop && (
         <Card className="shadow-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-heading">Lager per kategori (kg)</CardTitle>
@@ -437,11 +438,13 @@ export default function OrganisationOverview() {
             )}
           </CardContent>
         </Card>
+        )}
       </div>
 
       {/* Bottom Row: Orders + Recent activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Order status */}
+        {!isShop && (
         <Card className="shadow-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-heading flex items-center gap-1.5">
@@ -466,8 +469,10 @@ export default function OrganisationOverview() {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Recent outgoing deliveries */}
+        {!isShop && (
         <Card className="shadow-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-heading flex items-center gap-1.5">
@@ -495,6 +500,7 @@ export default function OrganisationOverview() {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Recent purchases */}
         {!isShop && (
