@@ -341,8 +341,11 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
             på samma produkt vinner högsta nivån i filnamnet (basic → lyx → premium) och övriga filer måste kopplas
             manuellt. Filnamnet tolkas först som SKU (t.ex. <span className="font-mono">FS-045.jpg</span>), annars matchas det
             mot produktnamn — även liknande namn och kopiesuffix (t.ex. <span className="font-mono">bergtungafil-2.jpg</span>{" "}
-            → Bergtungafilé). Klicka på produktnamnet i listan för att välja en annan produkt manuellt. Bilderna är endast
-            för internt bruk.
+            → Bergtungafilé). Svenska tecken hanteras automatiskt: döp filen till{" "}
+            <span className="font-mono">RO-013.png</span> även om SKU:n är <span className="font-mono">RÖ-013</span> — bilden
+            sparas alltid med ASCII-filnamn. Klicka på produktnamnet i listan för att välja en annan produkt manuellt.
+            Bilderna är endast för internt bruk.
+
           </DialogDescription>
         </DialogHeader>
 
