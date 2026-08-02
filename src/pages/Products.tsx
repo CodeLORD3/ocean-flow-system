@@ -594,7 +594,19 @@ export default function Products() {
   };
 
   const productsWithout = allProducts.filter((p: any) => !(p as any).barcode).length;
-  const productsMissingShelfLife = products.filter((p: any) => !(p as any).shelf_life_days && p.active).length;
+  // Paraplyrader (produkter med varianter under sig) och icke-färskvaror ska inte räknas
+  const SHELF_LIFE_EXEMPT_CATEGORIES = ["Emballage & Förbrukning", "Råvaror & Storhushåll"];
+  const parentIdsWithChildren = new Set(
+    allProducts.map((p: any) => p.parent_product_id).filter(Boolean),
+  );
+  const productsMissingShelfLife = allProducts.filter(
+    (p: any) =>
+      p.active &&
+      !p.shelf_life_days &&
+      !parentIdsWithChildren.has(p.id) &&
+      !SHELF_LIFE_EXEMPT_CATEGORIES.includes(p.category),
+  ).length;
+
 
   const getAggregated = (p: any) => {
     if (!p.subproducts || p.subproducts.length === 0) return null;
