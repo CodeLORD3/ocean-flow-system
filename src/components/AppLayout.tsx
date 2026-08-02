@@ -253,8 +253,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           <main className="flex-1 overflow-auto p-3 sm:p-4 lg:p-6">
+            <StoreHero />
             {children}
           </main>
+
 
           {/* Footer — hidden on mobile to save vertical space */}
           <div className="hidden sm:flex h-6 items-center justify-between border-t border-border bg-muted/30 px-4 text-[10px] text-muted-foreground shrink-0">
