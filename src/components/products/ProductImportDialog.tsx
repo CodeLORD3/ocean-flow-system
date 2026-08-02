@@ -114,12 +114,42 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
     }
   };
 
+  const rejectedRows = useMemo(() => (diff ?? []).filter((d) => d.status === "error"), [diff]);
+
+  const buildRejectedPayload = () =>
+    rejectedRows.slice(0, 200).map((d) => ({
+      line: d.row.rowNumber,
+      sku: d.row.sku,
+      name: d.row.name,
+      errors: d.errors,
+    }));
+
   const runImport = async () => {
     if (!diff) return;
     const importable = diff.filter((d) => d.status === "new" || d.status === "changed");
-    if (importable.length === 0) return;
+    if (importable.length === 0) {
+      if (rejectedRows.length === 0) return;
+      // Inget kunde importeras — logga ändå de avvisade raderna så de kan spåras i efterhand
+      await logActivity({
+        action_type: "product_import",
+        description: `Produktimport: 0 nya, 0 uppdaterade, ${rejectedRows.length} avvisade (${fileName ?? "fil"})`,
+        entity_type: "products",
+        details: {
+          inserted: 0,
+          updated: 0,
+          skipped: rejectedRows.length,
+          rejected_total: rejectedRows.length,
+          rejected: buildRejectedPayload(),
+          file: fileName,
+        },
+      });
+      toast({ title: "Inget importerat", description: `${rejectedRows.length} rader avvisades.` });
+      handleClose(false);
+      return;
+    }
     setImporting(true);
     try {
+
       const supplierIndex = buildSupplierIndex(suppliers.map((s) => ({ id: s.id, name: s.name })));
       const existingBySku = new Map(existing.map((p) => [p.sku.toLowerCase(), p]));
 
