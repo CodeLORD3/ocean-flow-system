@@ -522,6 +522,7 @@ export default function OrganisationOverview() {
             )}
           </CardContent>
         </Card>
+        )}
       </div>
     </motion.div>
   );
