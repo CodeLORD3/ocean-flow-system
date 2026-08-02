@@ -57,20 +57,28 @@ export function useUploadEntityImage() {
       const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: true });
       if (upErr) throw upErr;
       const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(path);
-      const { error } = await supabase.from("entity_images").insert({
-        entity_type: entityType,
-        entity_id: entityId,
-        url: urlData.publicUrl,
-        caption: caption || null,
-        sort_order: sortOrder ?? 0,
-      });
+      const { data: inserted, error } = await supabase
+        .from("entity_images")
+        .insert({
+          entity_type: entityType,
+          entity_id: entityId,
+          url: urlData.publicUrl,
+          caption: caption || null,
+          sort_order: sortOrder ?? 0,
+        })
+        .select("id")
+        .single();
       if (error) throw error;
+      return inserted?.id as string;
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["entity-images", vars.entityType, vars.entityId] });
+      qc.invalidateQueries({ queryKey: ["store-cover-images"] });
+      qc.invalidateQueries({ queryKey: ["our-stores-photos"] });
     },
   });
 }
+
 
 export function useUpdateEntityImage() {
   const qc = useQueryClient();
@@ -82,7 +90,11 @@ export function useUpdateEntityImage() {
       const { error } = await supabase.from("entity_images").update(patch).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["entity-images"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["entity-images"] });
+      qc.invalidateQueries({ queryKey: ["store-cover-images"] });
+      qc.invalidateQueries({ queryKey: ["our-stores-photos"] });
+    },
   });
 }
 
@@ -93,7 +105,11 @@ export function useDeleteEntityImage() {
       const { error } = await supabase.from("entity_images").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["entity-images"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["entity-images"] });
+      qc.invalidateQueries({ queryKey: ["store-cover-images"] });
+      qc.invalidateQueries({ queryKey: ["our-stores-photos"] });
+    },
   });
 }
 
@@ -124,6 +140,7 @@ export function useSetCoverImage() {
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["entity-images", vars.entityType, vars.entityId] });
+      qc.invalidateQueries({ queryKey: ["store-cover-images"] });
       qc.invalidateQueries({ queryKey: ["our-stores-photos"] });
     },
   });
