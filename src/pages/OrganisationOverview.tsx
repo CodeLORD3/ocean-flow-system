@@ -14,6 +14,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useProducts } from "@/hooks/useProducts";
 import { useStores } from "@/hooks/useStores";
+import { useStoreCoverImages } from "@/hooks/useStoreCoverImages";
+import storeHero from "@/assets/store-hero.jpg";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import { useQuery } from "@tanstack/react-query";
