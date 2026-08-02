@@ -2298,6 +2298,7 @@ export type Database = {
           created_at: string | null
           hs_code: string | null
           id: string
+          image_url: string | null
           name: string
           origin: string | null
           parent_product_id: string | null
@@ -2320,6 +2321,7 @@ export type Database = {
           created_at?: string | null
           hs_code?: string | null
           id?: string
+          image_url?: string | null
           name: string
           origin?: string | null
           parent_product_id?: string | null
@@ -2342,6 +2344,7 @@ export type Database = {
           created_at?: string | null
           hs_code?: string | null
           id?: string
+          image_url?: string | null
           name?: string
           origin?: string | null
           parent_product_id?: string | null
