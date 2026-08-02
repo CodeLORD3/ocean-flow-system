@@ -8,6 +8,7 @@ export const PRODUCT_CATEGORIES = [
   "Skaldjur",
   "Sillar",
   "Rökta Produkter",
+  "Konserver & Torkat",
   "Såser & Röror",
   "Löjrom & Kaviar",
   "Delikatesser",
@@ -23,12 +24,26 @@ export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number];
 /** Gamla kategorier: får finnas kvar på befintliga rader men kan inte väljas för nya produkter. */
 export const DEPRECATED_CATEGORIES = ["Fisk", "Is", "kolonial", "Emballage", "Svenska Produkter"];
 
+/**
+ * Normaliserar kategorinamn för jämförelse: unicode-normalisering (NFC) så att
+ * Å/Ä/Ö matchar oavsett om filen är skapad på macOS (NFD) eller Windows,
+ * plus trim, gemener och kollaps av blanksteg.
+ */
+export function normalizeCategoryKey(name: string | null | undefined): string {
+  return String(name ?? "")
+    .normalize("NFC")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
 /** SKU-prefix för autogenererade artikelnummer. */
 export const CATEGORY_SKU_PREFIX: Record<string, string> = {
   "Färsk Fisk": "FS",
   Skaldjur: "SK",
   Sillar: "SI",
   "Rökta Produkter": "RÖ",
+  "Konserver & Torkat": "KT",
   "Såser & Röror": "KK",
   "Löjrom & Kaviar": "LK",
   Delikatesser: "DE",
