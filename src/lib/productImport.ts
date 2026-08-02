@@ -18,6 +18,7 @@ export const IMPORT_COLUMNS = [
   "parent_sku",
   "active",
   "image_url",
+  "latin_name",
 ] as const;
 
 export type ImportColumn = (typeof IMPORT_COLUMNS)[number];
@@ -41,6 +42,8 @@ export interface ParsedRow {
   parent_sku: string | null;
   active: boolean;
   image_url: string | null;
+  /** null = kolumnen saknas eller är tom → befintligt värde lämnas orört */
+  latin_name: string | null;
 }
 
 export type DiffStatus = "new" | "changed" | "unchanged" | "error";
@@ -79,6 +82,7 @@ export interface ExistingProduct {
   parent_product_id: string | null;
   active: boolean | null;
   image_url: string | null;
+  latin_name: string | null;
 }
 
 const HEADER_ALIASES: Record<string, ImportColumn> = {
@@ -105,6 +109,10 @@ const HEADER_ALIASES: Record<string, ImportColumn> = {
   bildadress: "image_url",
   image: "image_url",
   bild_lank: "image_url",
+  latinskt_namn: "latin_name",
+  vetenskapligt_namn: "latin_name",
+  latin: "latin_name",
+  latinname: "latin_name",
 };
 
 function normalizeHeader(raw: string): string | null {
@@ -222,6 +230,7 @@ export async function parseProductFile(file: File): Promise<ParseResult> {
       parent_sku: nullableStr(get("parent_sku")),
       active: parseBool(get("active")),
       image_url: nullableStr(get("image_url")),
+      latin_name: nullableStr(get("latin_name")),
     };
   });
 
@@ -354,6 +363,7 @@ export function buildDiff({ rows, existing, categories, suppliers }: BuildDiffAr
     cmp("shelf_life_days", current.shelf_life_days ?? "", row.shelf_life_days ?? "");
     cmp("active", current.active !== false, row.active);
     cmp("image_url", current.image_url, row.image_url);
+    if (row.latin_name !== null) cmp("latin_name", current.latin_name, row.latin_name);
     cmp(
       "parent_sku",
       current.parent_product_id ? byId.get(current.parent_product_id)?.sku ?? "" : "",
@@ -388,6 +398,7 @@ export interface UpsertPayload {
   shelf_life_days: number | null;
   active: boolean;
   image_url: string | null;
+  latin_name?: string | null;
   supplier_id?: string | null;
   parent_product_id?: string | null;
 }
@@ -409,9 +420,11 @@ export function toPayload(row: ParsedRow): UpsertPayload {
     shelf_life_days: row.shelf_life_days,
     active: row.active,
     image_url: row.image_url,
+    // tom cell = ingen ändring: fältet utesluts helt ur payloaden
+    ...(row.latin_name !== null ? { latin_name: row.latin_name } : {}),
   };
 }
 
 export function buildTemplateCsv(): string {
-  return `${IMPORT_COLUMNS.join(",")}\nFS-045,Lax filé,Fisk,kg,120.00,162.00,199.00,Norge,Salmar,,7311234567890,0304,,5,,TRUE,https://exempel.se/bilder/lax-file.jpg\n`;
+  return `${IMPORT_COLUMNS.join(",")}\nFS-045,Lax filé,Färsk Fisk,kg,120.00,162.00,199.00,Norge,Salmar,,7311234567890,0304,,5,,TRUE,https://exempel.se/bilder/lax-file.jpg,Salmo salar\n`;
 }

@@ -16,6 +16,7 @@ import {
   Clock,
   FileDown,
   Upload,
+  Image as ImageIcon,
 } from "lucide-react";
 import ProductImportDialog from "@/components/products/ProductImportDialog";
 import PriceListDialog from "@/components/PriceListDialog";
@@ -57,6 +58,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import BarcodeDisplay from "@/components/barcode/BarcodeDisplay";
 import { generateEAN13 } from "@/lib/barcode";
 import { format } from "date-fns";
+import { fetchLatestBatchInfo, batchInfoLines } from "@/lib/labelData";
+import {
+  PRODUCT_CATEGORIES,
+  generateSku,
+  isDeprecatedCategory,
+  productDisplayName,
+  selectableCategories,
+} from "@/lib/productCategories";
+import ProductImageBulkUpload from "@/components/products/ProductImageBulkUpload";
 
 const UNITS = ["KG", "ST", "L", "FÖRP"];
 const PRODUCERS = ["Inköp", "Produktion", "Inköp/Produktion"];
@@ -222,6 +232,7 @@ export default function Products() {
   const [historyProduct, setHistoryProduct] = useState<string | null>(null);
   const [priceListOpen, setPriceListOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [imageUploadOpen, setImageUploadOpen] = useState(false);
 
   // Inline price editing (wholesale only)
   const [inlineEdits, setInlineEdits] = useState<Record<string, InlineEdit>>({});
@@ -307,9 +318,19 @@ export default function Products() {
     );
   };
 
+  /** Kategorier som kan väljas för nya produkter: de 12 kanoniska + egna, icke-utgångna kategorier. */
   const CATEGORIES = useMemo(() => {
-    return dbCategories.map((c) => c.name).sort((a, b) => a.localeCompare(b, "sv"));
+    const extra = dbCategories
+      .map((c) => c.name)
+      .filter((n) => !isDeprecatedCategory(n));
+    return selectableCategories(null, extra);
   }, [dbCategories]);
+
+  /** Filtret får även visa utgångna kategorier som fortfarande finns på produkter. */
+  const FILTER_CATEGORIES = useMemo(() => {
+    const used = [...new Set(allProducts.map((p: any) => p.category).filter(Boolean))] as string[];
+    return selectableCategories(null, [...dbCategories.map((c) => c.name), ...used]);
+  }, [dbCategories, allProducts]);
 
   const [form, setFormState] = useState({
     name: "",
@@ -325,6 +346,7 @@ export default function Products() {
     producer: "",
     shelf_life_days: "", // NEW
     image_url: "",
+    latin_name: "",
   });
 
   const setField = (key: string, value: string) => {
@@ -395,6 +417,7 @@ export default function Products() {
       producer: "",
       shelf_life_days: "",
       image_url: "",
+      latin_name: "",
     });
     setDialogOpen(true);
   };
@@ -415,6 +438,7 @@ export default function Products() {
       producer: (p as any).producer || "",
       shelf_life_days: String((p as any).shelf_life_days || ""), // NEW
       image_url: (p as any).image_url || "",
+      latin_name: (p as any).latin_name || "",
     });
     setDialogOpen(true);
   };
@@ -454,7 +478,7 @@ export default function Products() {
 
   const handleSave = async () => {
     if (!form.name || !form.category) return;
-    const sku = form.sku || `${form.category.slice(0, 2).toUpperCase()}-${Date.now().toString(36)}`;
+    const sku = form.sku || generateSku(form.category);
     const payload: any = {
       name: form.name,
       category: form.category,
@@ -466,6 +490,7 @@ export default function Products() {
       producer: form.producer || null,
       shelf_life_days: form.shelf_life_days ? Number(form.shelf_life_days) : null, // NEW
       image_url: form.image_url.trim() || null,
+      latin_name: form.latin_name.trim() || null,
     };
 
     if (editId) {
@@ -548,14 +573,19 @@ export default function Products() {
     toast({ title: "Klart!", description: `${without.length} streckkoder genererade` });
   };
 
-  const printLabel = (p: any) => {
+  const printLabel = async (p: any) => {
+    const infoMap = await fetchLatestBatchInfo([{ id: p.id, origin: p.origin }]);
+    const infoLines = batchInfoLines(infoMap[p.id])
+      .map((l) => `<div class="meta">${l}</div>`)
+      .join("");
     const w = window.open("", "_blank");
     if (!w) return;
     w.document.write(`<!DOCTYPE html><html><head><title>Etikett</title>
       <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
-      <style>body{font-family:Arial;text-align:center;padding:20px;} .name{font-size:14px;font-weight:bold;} .sku{font-size:10px;color:#666;} .price{font-size:13px;font-weight:bold;margin-top:4px;} svg{max-width:200px;height:60px;}</style>
+      <style>body{font-family:Arial;text-align:center;padding:20px;} .name{font-size:14px;font-weight:bold;} .sku{font-size:10px;color:#666;} .meta{font-size:10px;color:#333;} .price{font-size:13px;font-weight:bold;margin-top:4px;} svg{max-width:200px;height:60px;}</style>
       </head><body>
-      <div class="name">${p.name}</div><div class="sku">${p.sku}</div>
+      <div class="name">${productDisplayName(p.name, (p as any).latin_name)}</div><div class="sku">${p.sku}</div>
+      ${infoLines}
       <svg id="bc"></svg>
       <div class="price">${Number(p.wholesale_price).toFixed(2)} kr/${p.unit}</div>
       <script>try{JsBarcode("#bc","${(p as any).barcode}",{format:"EAN13",width:2,height:50,displayValue:true,fontSize:12,margin:8})}catch(e){};setTimeout(()=>window.print(),400)<\/script>
@@ -913,6 +943,9 @@ export default function Products() {
           <Button size="sm" variant="outline" className="gap-1.5 text-xs" onClick={() => setImportOpen(true)}>
             <Upload className="h-3.5 w-3.5" /> Import / Export
           </Button>
+          <Button size="sm" variant="outline" className="gap-1.5 text-xs" onClick={() => setImageUploadOpen(true)}>
+            <ImageIcon className="h-3.5 w-3.5" /> Bilder (bulk)
+          </Button>
           <Button size="sm" className="gap-1.5 text-xs" onClick={openAdd}>
             <Plus className="h-3.5 w-3.5" /> Lägg till produkt
           </Button>
@@ -927,6 +960,8 @@ export default function Products() {
       />
 
       <ProductImportDialog open={importOpen} onOpenChange={setImportOpen} />
+
+      <ProductImageBulkUpload open={imageUploadOpen} onOpenChange={setImageUploadOpen} />
 
       {isWholesale && <SavedPriceLists allStores />}
 
@@ -969,7 +1004,7 @@ export default function Products() {
             <SelectItem value="all" className="text-xs">
               Alla kategorier
             </SelectItem>
-            {CATEGORIES.map((c) => (
+            {FILTER_CATEGORIES.map((c) => (
               <SelectItem key={c} value={c} className="text-xs">
                 {c}
               </SelectItem>
@@ -1137,9 +1172,10 @@ export default function Products() {
                     <SelectValue placeholder="Välj" />
                   </SelectTrigger>
                   <SelectContent>
-                    {CATEGORIES.map((c) => (
+                    {selectableCategories(form.category, CATEGORIES).map((c) => (
                       <SelectItem key={c} value={c} className="text-xs">
                         {c}
+                        {isDeprecatedCategory(c) ? " (utgången)" : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1326,6 +1362,18 @@ export default function Products() {
                   className="h-8 text-xs"
                 />
               </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Vetenskapligt namn</Label>
+              <Input
+                value={form.latin_name}
+                onChange={(e) => setField("latin_name", e.target.value)}
+                placeholder="T.ex. Gadus morhua"
+                className="h-8 text-xs italic"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Krävs för fiskeri- och vattenbruksprodukter enligt EU 1379/2013, t.ex. Gadus morhua
+              </p>
             </div>
             {!editId && (
               <div className="space-y-1.5">

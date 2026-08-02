@@ -24,7 +24,16 @@ export function useCreateIncomingDelivery() {
       received_date: string;
       received_by: string;
       notes?: string;
-      lines: { product_id: string; quantity: number; unit_cost: number; batch_number?: string; best_before?: string }[];
+      lines: {
+        product_id: string;
+        quantity: number;
+        unit_cost: number;
+        batch_number?: string;
+        best_before?: string;
+        redskapskategori?: string | null;
+        upptinad?: boolean;
+        faktiskt_fangstomrade?: string | null;
+      }[];
     }) => {
       const { count } = await supabase.from("incoming_deliveries").select("*", { count: "exact", head: true });
       const num = (count || 0) + 1;
@@ -50,6 +59,9 @@ export function useCreateIncomingDelivery() {
         unit_cost: l.unit_cost,
         batch_number: l.batch_number,
         best_before: l.best_before,
+        redskapskategori: l.redskapskategori ?? null,
+        upptinad: l.upptinad ?? false,
+        faktiskt_fangstomrade: l.faktiskt_fangstomrade ?? null,
       }));
       const { error: lineErr } = await supabase.from("incoming_delivery_lines").insert(lines);
       if (lineErr) throw lineErr;

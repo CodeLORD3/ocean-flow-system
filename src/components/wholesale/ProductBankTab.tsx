@@ -15,6 +15,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useProducts } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
+import { generateSku } from "@/lib/productCategories";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -61,7 +62,7 @@ export default function ProductBankTab() {
 
   const handleSave = async () => {
     if (!formName || !formCategory) return;
-    const sku = formSku || `${formCategory.slice(0, 2).toUpperCase()}-${Date.now().toString(36)}`;
+    const sku = formSku || generateSku(formCategory);
     const payload = {
       name: formName,
       category: formCategory,

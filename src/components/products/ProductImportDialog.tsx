@@ -90,7 +90,7 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
       const { data, error } = await supabase
         .from("products")
         .select(
-          "id, sku, name, category, unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier_id, barcode, hs_code, weight_per_piece, shelf_life_days, parent_product_id, active, image_url",
+          "id, sku, name, category, unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier_id, barcode, hs_code, weight_per_piece, shelf_life_days, parent_product_id, active, image_url, latin_name",
         );
       if (error) throw error;
       const existingRows = (data ?? []) as unknown as ExistingProduct[];
@@ -203,7 +203,7 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
     const { data, error } = await supabase
       .from("products")
       .select(
-        "sku, name, category, unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier_id, barcode, hs_code, weight_per_piece, shelf_life_days, parent_product_id, active, image_url",
+        "sku, name, category, unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier_id, barcode, hs_code, weight_per_piece, shelf_life_days, parent_product_id, active, image_url, latin_name",
       )
       .order("category")
       .order("name");
@@ -232,6 +232,7 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
       parent_sku: p.parent_product_id ? skuById.get(p.parent_product_id) ?? "" : "",
       active: p.active === false ? "FALSE" : "TRUE",
       image_url: (p as any).image_url ?? "",
+      latin_name: (p as any).latin_name ?? "",
     }));
     const ws = XLSX.utils.json_to_sheet(rows, { header: [...IMPORT_COLUMNS] });
     const wb = XLSX.utils.book_new();
