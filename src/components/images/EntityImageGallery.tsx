@@ -15,7 +15,7 @@ import {
   useSetCoverImage,
 } from "@/hooks/useEntityImages";
 import { cn } from "@/lib/utils";
-import { focalClass, nextFocal, FOCAL_OPTIONS } from "@/lib/imageFocal";
+import { focalStyle, focalPercent, focalLabel } from "@/lib/imageFocal";
 
 type Props = {
   entityType: string;
@@ -124,7 +124,8 @@ export function EntityImageGallery({
                   src={img.url}
                   alt={img.caption || `${title} bild`}
                   loading="lazy"
-                  className={cn("h-full w-full object-cover transition-transform group-hover:scale-[1.03]", focalClass(img.focal_point))}
+                  className="h-full w-full object-cover transition-transform group-hover:scale-[1.03]"
+                  style={focalStyle(img.focal_point)}
                 />
               </button>
               {img.is_cover && (

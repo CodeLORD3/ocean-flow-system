@@ -12,7 +12,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useStores, useUpdateStore, Store } from "@/hooks/useStores";
 import { useStoreCoverImages } from "@/hooks/useStoreCoverImages";
-import { focalClass } from "@/lib/imageFocal";
+import { focalStyle } from "@/lib/imageFocal";
 import { supabase } from "@/integrations/supabase/client";
 import storeHero from "@/assets/store-hero.jpg";
 
@@ -129,7 +129,8 @@ export default function Stores() {
                   loading="lazy"
                   width={1280}
                   height={720}
-                  className={`h-full w-full object-cover ${focalClass(covers[store.id]?.focal_point)}`}
+                  className="h-full w-full object-cover"
+                  style={focalStyle(covers[store.id]?.focal_point)}
                 />
               </div>
               <CardContent className="p-4">
