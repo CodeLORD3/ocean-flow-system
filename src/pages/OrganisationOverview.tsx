@@ -14,6 +14,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useProducts } from "@/hooks/useProducts";
 import { useStores } from "@/hooks/useStores";
+import { useStoreCoverImages } from "@/hooks/useStoreCoverImages";
+import storeHero from "@/assets/store-hero.jpg";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import { useQuery } from "@tanstack/react-query";
@@ -85,6 +87,8 @@ export default function OrganisationOverview() {
   const { data: stores = [] } = useStores(true);
   const { data: allCustomers = [] } = useCustomers();
   const { data: suppliers = [] } = useSuppliers();
+  const covers = useStoreCoverImages();
+
 
   // Shop orders with lines for sales calculation
   const { data: shopOrders = [] } = useQuery({
@@ -259,6 +263,41 @@ export default function OrganisationOverview() {
           icon={Store}
         />
       </div>
+
+      {/* Stores with cover images */}
+      {stores.length > 0 && (
+        <Card className="shadow-card">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-heading flex items-center gap-1.5">
+              <Store className="h-4 w-4 text-primary" /> Butiker
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+              {stores.map((store) => (
+                <div key={store.id} className="flex items-center gap-3 py-1.5 border-b border-border/30 last:border-0">
+                  <div className="h-11 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
+                    <img
+                      src={covers[store.id] || store.logo_url || storeHero}
+                      alt={`Butiksbild för ${store.name}`}
+                      loading="lazy"
+                      width={320}
+                      height={220}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-foreground truncate">{store.name}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{store.city}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

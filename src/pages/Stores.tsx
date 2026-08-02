@@ -11,12 +11,15 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useStores, useUpdateStore, Store } from "@/hooks/useStores";
+import { useStoreCoverImages } from "@/hooks/useStoreCoverImages";
 import { supabase } from "@/integrations/supabase/client";
+import storeHero from "@/assets/store-hero.jpg";
 
 export default function Stores() {
   const { data: stores = [], isLoading } = useStores(true);
   const updateStore = useUpdateStore();
   const { toast } = useToast();
+  const covers = useStoreCoverImages();
   const [editStore, setEditStore] = useState<Store | null>(null);
   const [hoveredStore, setHoveredStore] = useState<string | null>(null);
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
@@ -117,8 +120,19 @@ export default function Stores() {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
           {stores.map((store) => (
-            <Card key={store.id} className="shadow-card hover:shadow-card-hover transition-shadow">
+            <Card key={store.id} className="shadow-card hover:shadow-card-hover transition-shadow overflow-hidden">
+              <div className="relative aspect-video overflow-hidden bg-muted">
+                <img
+                  src={covers[store.id] || store.logo_url || storeHero}
+                  alt={`Butiksbild för ${store.name}`}
+                  loading="lazy"
+                  width={1280}
+                  height={720}
+                  className="h-full w-full object-cover"
+                />
+              </div>
               <CardContent className="p-4">
+
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div
