@@ -165,10 +165,11 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
       const buildRow = (d: DiffRow, parentId: string | null) => {
         const payload = toPayload(d.row);
         const supplierId = d.row.supplier
-          ? supplierByName.get(d.row.supplier.toLowerCase()) ??
+          ? lookupSupplier(supplierIndex, d.row.supplier)?.id ??
             existingBySku.get(d.row.sku.toLowerCase())?.supplier_id ??
             null
           : existingBySku.get(d.row.sku.toLowerCase())?.supplier_id ?? null;
+
         return { ...payload, supplier_id: supplierId, parent_product_id: parentId };
       };
 
