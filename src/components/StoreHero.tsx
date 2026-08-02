@@ -126,7 +126,7 @@ export function StoreHero() {
 
       <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between gap-3 p-3 sm:p-4">
         <div className="min-w-0">
-          <h2 className="truncate text-base sm:text-xl font-semibold text-foreground">
+          <h2 className="truncate text-base sm:text-xl font-semibold text-foreground text-outline-white-thin sm:text-outline-white">
             {activeStoreName ?? store?.name ?? "Butik"}
           </h2>
           {editingCaption ? (
