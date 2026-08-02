@@ -372,8 +372,9 @@ export default function OrganisationOverview() {
 
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className={`grid grid-cols-1 gap-4 ${isShop ? "" : "lg:grid-cols-2"}`}>
         {/* Sales by Store */}
+        {!isShop && (
         <Card className="shadow-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-heading">Försäljning per butik</CardTitle>
@@ -402,6 +403,7 @@ export default function OrganisationOverview() {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Inventory by Category */}
         <Card className="shadow-card">
@@ -495,6 +497,7 @@ export default function OrganisationOverview() {
         </Card>
 
         {/* Recent purchases */}
+        {!isShop && (
         <Card className="shadow-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-heading flex items-center gap-1.5">
