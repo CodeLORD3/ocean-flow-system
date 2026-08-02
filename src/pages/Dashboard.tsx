@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { useProducts } from "@/hooks/useProducts";
 import { useStores } from "@/hooks/useStores";
 import { OurStoresSection } from "@/components/dashboard/OurStoresSection";
+import { EntityImageGallery } from "@/components/images/EntityImageGallery";
+
 import { useCustomers } from "@/hooks/useCustomers";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import { useQuery } from "@tanstack/react-query";
