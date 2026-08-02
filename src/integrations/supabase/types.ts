@@ -559,6 +559,36 @@ export type Database = {
           },
         ]
       }
+      entity_images: {
+        Row: {
+          caption: string | null
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          sort_order: number
+          url: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          sort_order?: number
+          url: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          sort_order?: number
+          url?: string
+        }
+        Relationships: []
+      }
       incoming_deliveries: {
         Row: {
           created_at: string | null
