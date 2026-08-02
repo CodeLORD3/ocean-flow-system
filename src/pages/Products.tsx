@@ -878,6 +878,9 @@ export default function Products() {
           >
             <FileDown className="h-3.5 w-3.5" /> Skapa prislista
           </Button>
+          <Button size="sm" variant="outline" className="gap-1.5 text-xs" onClick={() => setImportOpen(true)}>
+            <Upload className="h-3.5 w-3.5" /> Import / Export
+          </Button>
           <Button size="sm" className="gap-1.5 text-xs" onClick={openAdd}>
             <Plus className="h-3.5 w-3.5" /> Lägg till produkt
           </Button>
@@ -890,6 +893,8 @@ export default function Products() {
         products={products as any}
         allProducts={allProducts as any}
       />
+
+      <ProductImportDialog open={importOpen} onOpenChange={setImportOpen} />
 
       {isWholesale && <SavedPriceLists allStores />}
 
