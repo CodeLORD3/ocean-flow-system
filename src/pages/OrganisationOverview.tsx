@@ -19,8 +19,13 @@ import { focalStyle } from "@/lib/imageFocal";
 import storeHero from "@/assets/store-hero.jpg";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useSuppliers } from "@/hooks/useSuppliers";
+import { useSite } from "@/contexts/SiteContext";
+import { useTabs } from "@/contexts/TabsContext";
+import { EntityImageGallery } from "@/components/images/EntityImageGallery";
+import { ChatPanel } from "@/components/chat/ChatPanel";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+
 import {
   BarChart,
   Bar,
@@ -84,34 +89,56 @@ function KpiCard({
 }
 
 export default function OrganisationOverview() {
+  const { site, activeStoreId, activeStoreName } = useSite();
+  const isShop = site === "shop" && !!activeStoreId;
+  const { switchTab } = useTabs();
+
   const { data: products = [] } = useProducts();
   const { data: stores = [] } = useStores(true);
   const { data: allCustomers = [] } = useCustomers();
   const { data: suppliers = [] } = useSuppliers();
   const covers = useStoreCoverImages();
 
+  // Storage locations for the active store (shop scope)
+  const { data: shopLocations = [] } = useQuery({
+    queryKey: ["overview-shop-locations", activeStoreId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("storage_locations")
+        .select("id")
+        .eq("store_id", activeStoreId!);
+      if (error) throw error;
+      return data;
+    },
+    enabled: isShop,
+  });
+  const shopLocationIds = shopLocations.map((l: any) => l.id);
 
   // Shop orders with lines for sales calculation
   const { data: shopOrders = [] } = useQuery({
-    queryKey: ["shop-orders-overview"],
+    queryKey: ["shop-orders-overview", isShop ? activeStoreId : "all"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("shop_orders")
         .select("*, stores(name), shop_order_lines(quantity_ordered, quantity_delivered, unit, product_id, products(name, wholesale_price, cost_price, category))")
         .order("created_at", { ascending: false });
+      if (isShop) q = q.eq("store_id", activeStoreId!);
+      const { data, error } = await q;
       if (error) throw error;
       return data;
     },
   });
 
-  // Delivery notes (outgoing to shops)
+  // Delivery notes (outgoing to shops / incoming for a shop)
   const { data: deliveryNotes = [] } = useQuery({
-    queryKey: ["delivery-notes-overview"],
+    queryKey: ["delivery-notes-overview", isShop ? activeStoreId : "all"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("delivery_notes")
         .select("*, stores(name), delivery_note_lines(quantity, wholesale_price, total)")
         .order("delivery_date", { ascending: false });
+      if (isShop) q = q.eq("store_id", activeStoreId!);
+      const { data, error } = await q;
       if (error) throw error;
       return data;
     },
@@ -128,19 +155,24 @@ export default function OrganisationOverview() {
       if (error) throw error;
       return data;
     },
+    enabled: !isShop,
   });
 
   // Fetch real stock from product_stock_locations
   const { data: stockLocations = [] } = useQuery({
-    queryKey: ["stock-locations-overview"],
+    queryKey: ["stock-locations-overview", isShop ? shopLocationIds : "all"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("product_stock_locations")
         .select("product_id, quantity, unit_cost, location_id, storage_locations(name, zone)");
+      if (isShop) q = q.in("location_id", shopLocationIds);
+      const { data, error } = await q;
       if (error) throw error;
       return data;
     },
+    enabled: !isShop || shopLocationIds.length > 0,
   });
+
 
   // --- Computed KPIs ---
   const totalInventoryValue = stockLocations.reduce((sum, sl: any) => {
@@ -224,49 +256,86 @@ export default function OrganisationOverview() {
     .slice(0, 5);
   const recentPurchases = incomingDeliveries.slice(0, 5);
 
+  const openOrders = shopOrders.filter((o: any) => o.status !== "Levererad").length;
+  const openDeliveryNotes = deliveryNotes.filter((dn: any) => dn.status !== "Levererad").length;
+
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-xl font-heading font-bold text-foreground flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-primary" /> Organisationsöversikt
+          <BarChart3 className="h-5 w-5 text-primary" />
+          {isShop ? `${activeStoreName} — Översikt` : "Organisationsöversikt"}
         </h1>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Samlad vy över alla butiker — försäljning, lager, inköp och beställningar.
+          {isShop
+            ? "Butikens lager, ordrar, bilder och chatt med övriga portaler."
+            : "Samlad vy över alla butiker — försäljning, lager, inköp och beställningar."}
         </p>
       </div>
 
       {/* KPI Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard
-          title="Total försäljning (levererat)"
-          value={`${Math.round(totalSales).toLocaleString("sv-SE")} kr`}
-          subtitle={`${Math.round(totalOrderedValue).toLocaleString("sv-SE")} kr beställt totalt`}
-          icon={DollarSign}
-          trend={{ value: `${grossMargin}% bruttomarginal`, positive: Number(grossMargin) > 0 }}
-        />
-        <KpiCard
-          title="Lagervärde (kostnad)"
-          value={`${Math.round(totalInventoryValue).toLocaleString("sv-SE")} kr`}
-          subtitle={`${Math.round(totalStock).toLocaleString("sv-SE")} kg · grossistvärde ${Math.round(totalInventoryWholesale).toLocaleString("sv-SE")} kr`}
-          icon={Package}
-        />
-        <KpiCard
-          title="Beställningar"
-          value={`${shopOrders.length} st`}
-          subtitle={`${incomingDeliveries.length} inkommande leveranser`}
-          icon={Truck}
-        />
-        <KpiCard
-          title="Butiker / Produkter"
-          value={`${stores.length} / ${activeProducts}`}
-          subtitle={`${suppliers.length} leverantörer`}
-          icon={Store}
-        />
-      </div>
+      {isShop ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <KpiCard
+            title="Lagervärde (kostnad)"
+            value={`${Math.round(totalInventoryValue).toLocaleString("sv-SE")} kr`}
+            subtitle={`${Math.round(totalStock).toLocaleString("sv-SE")} kg · grossistvärde ${Math.round(totalInventoryWholesale).toLocaleString("sv-SE")} kr`}
+            icon={Package}
+          />
+          <KpiCard
+            title="Ordrar"
+            value={`${shopOrders.length} st`}
+            subtitle={`${openOrders} aktuella ordrar · ${openDeliveryNotes} aktuella inleveranser`}
+            icon={ShoppingCart}
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <KpiCard
+            title="Total försäljning (levererat)"
+            value={`${Math.round(totalSales).toLocaleString("sv-SE")} kr`}
+            subtitle={`${Math.round(totalOrderedValue).toLocaleString("sv-SE")} kr beställt totalt`}
+            icon={DollarSign}
+            trend={{ value: `${grossMargin}% bruttomarginal`, positive: Number(grossMargin) > 0 }}
+          />
+          <KpiCard
+            title="Lagervärde (kostnad)"
+            value={`${Math.round(totalInventoryValue).toLocaleString("sv-SE")} kr`}
+            subtitle={`${Math.round(totalStock).toLocaleString("sv-SE")} kg · grossistvärde ${Math.round(totalInventoryWholesale).toLocaleString("sv-SE")} kr`}
+            icon={Package}
+          />
+          <KpiCard
+            title="Beställningar"
+            value={`${shopOrders.length} st`}
+            subtitle={`${incomingDeliveries.length} inkommande leveranser`}
+            icon={Truck}
+          />
+          <KpiCard
+            title="Butiker / Produkter"
+            value={`${stores.length} / ${activeProducts}`}
+            subtitle={`${suppliers.length} leverantörer`}
+            icon={Store}
+          />
+        </div>
+      )}
 
-      {/* Stores with cover images */}
-      {stores.length > 0 && (
+      {/* Shop: photos + chat */}
+      {isShop && (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <EntityImageGallery
+            entityType="store"
+            entityId={activeStoreId!}
+            title="Bilder från butiken"
+            description="Ladda upp foton från butiken — dra och släpp eller klicka för att ladda upp"
+            columnsClassName="grid-cols-1 sm:grid-cols-2"
+          />
+          <ChatPanel compact onOpenFull={() => switchTab("/chat")} />
+        </div>
+      )}
+
+      {/* Stores with cover images (ej i butiksportalen) */}
+      {!isShop && stores.length > 0 && (
         <Card className="shadow-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-heading flex items-center gap-1.5">
@@ -301,9 +370,11 @@ export default function OrganisationOverview() {
 
 
 
+
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className={`grid grid-cols-1 gap-4 ${isShop ? "" : "lg:grid-cols-2"}`}>
         {/* Sales by Store */}
+        {!isShop && (
         <Card className="shadow-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-heading">Försäljning per butik</CardTitle>
@@ -332,6 +403,7 @@ export default function OrganisationOverview() {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Inventory by Category */}
         <Card className="shadow-card">
@@ -425,6 +497,7 @@ export default function OrganisationOverview() {
         </Card>
 
         {/* Recent purchases */}
+        {!isShop && (
         <Card className="shadow-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-heading flex items-center gap-1.5">
@@ -449,6 +522,7 @@ export default function OrganisationOverview() {
             )}
           </CardContent>
         </Card>
+        )}
       </div>
     </motion.div>
   );

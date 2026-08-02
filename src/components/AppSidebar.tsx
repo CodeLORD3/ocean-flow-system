@@ -22,6 +22,7 @@ import {
   ListTodo,
   LogIn,
   Truck as TruckIcon,
+  MessageSquare,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -47,6 +48,7 @@ import { cn } from "@/lib/utils";
 
 const overviewNav = [
   { title: "Översikt", url: "/organisation", icon: BarChart3 },
+  { title: "Chatt", url: "/chat", icon: MessageSquare },
 ];
 
 const calendarNav = [
