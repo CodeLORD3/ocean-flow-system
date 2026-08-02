@@ -360,14 +360,15 @@ export function buildDiff({ rows, existing, categories, suppliers }: BuildDiffAr
 
     let supplierId: string | null = current?.supplier_id ?? null;
     if (row.supplier) {
-      const sup = supplierByName.get(row.supplier.toLowerCase());
+      const sup = lookupSupplier(supplierIndex, row.supplier);
       if (!sup) {
-        warnings.push(`okänd leverantör: ${row.supplier} (lämnas tom)`);
+        warnings.push(`ny leverantör skapas: ${row.supplier}`);
         supplierId = current?.supplier_id ?? null;
       } else {
         supplierId = sup.id;
       }
     }
+
 
     if (row.category && !knownCategories.has(normalizeCategoryKey(row.category)))
       warnings.push(`ny kategori: ${row.category}`);
