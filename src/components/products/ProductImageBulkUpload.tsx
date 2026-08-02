@@ -78,13 +78,8 @@ const baseFromFileName = (name: string) =>
     .replace(/[-_\s]+\d{1,2}$/, "")
     .trim();
 
-const norm = (v: string) =>
-  v
-    .normalize("NFC")
-    .toLowerCase()
-    .replace(/[åä]/g, "a")
-    .replace(/ö/g, "o")
-    .replace(/[^a-z0-9]/g, "");
+const norm = (v: string) => compareKey(v);
+
 
 /** enkel likhet 0-1 (Levenshtein-baserad) */
 const similarity = (a: string, b: string) => {
