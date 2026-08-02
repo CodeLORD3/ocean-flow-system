@@ -220,3 +220,65 @@ export function conversationTitle(conv: ChatConversation, myKey?: string | null)
   const others = conv.participants.filter((p) => p.portal_key !== myKey);
   return others.map((p) => p.portal_name || p.portal_key).join(", ") || "Chatt";
 }
+
+/** Antal olästa meddelanden per chatt, samt totalt, för den aktiva portalen. */
+export function useChatUnread() {
+  const portal = useCurrentPortal();
+  const { data } = useQuery({
+    queryKey: ["chat-unread", portal?.key],
+    queryFn: async () => {
+      const { data: mine, error: mineErr } = await supabase
+        .from("chat_participants")
+        .select("conversation_id")
+        .eq("portal_key", portal!.key);
+      if (mineErr) throw mineErr;
+      const ids = (mine || []).map((r: any) => r.conversation_id);
+      if (ids.length === 0) return { total: 0, byConv: {} as Record<string, number> };
+
+      const [{ data: reads, error: rErr }, { data: msgs, error: mErr }] = await Promise.all([
+        supabase.from("chat_reads").select("conversation_id, last_read_at").eq("portal_key", portal!.key),
+        supabase
+          .from("chat_messages")
+          .select("id, conversation_id, sender_portal_key, created_at")
+          .in("conversation_id", ids),
+      ]);
+      if (rErr) throw rErr;
+      if (mErr) throw mErr;
+
+      const readAt = new Map<string, string>();
+      (reads || []).forEach((r: any) => readAt.set(r.conversation_id, r.last_read_at));
+
+      const byConv: Record<string, number> = {};
+      (msgs || []).forEach((m: any) => {
+        if (m.sender_portal_key === portal!.key) return;
+        const last = readAt.get(m.conversation_id);
+        if (last && new Date(m.created_at) <= new Date(last)) return;
+        byConv[m.conversation_id] = (byConv[m.conversation_id] || 0) + 1;
+      });
+      const total = Object.values(byConv).reduce((a, b) => a + b, 0);
+      return { total, byConv };
+    },
+    enabled: !!portal?.key,
+    refetchInterval: 8000,
+  });
+  return data ?? { total: 0, byConv: {} as Record<string, number> };
+}
+
+/** Markerar en chatt som läst för den aktiva portalen. */
+export function useMarkConversationRead() {
+  const qc = useQueryClient();
+  const portal = useCurrentPortal();
+  return useMutation({
+    mutationFn: async (conversationId: string) => {
+      if (!portal || !conversationId) return;
+      const { error } = await supabase
+        .from("chat_reads")
+        .upsert(
+          { conversation_id: conversationId, portal_key: portal.key, last_read_at: new Date().toISOString() },
+          { onConflict: "conversation_id,portal_key" }
+        );
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["chat-unread"] }),
+  });
+}

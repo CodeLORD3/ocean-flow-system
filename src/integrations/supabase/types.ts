@@ -253,6 +253,35 @@ export type Database = {
           },
         ]
       }
+      chat_reads: {
+        Row: {
+          conversation_id: string
+          id: string
+          last_read_at: string
+          portal_key: string
+        }
+        Insert: {
+          conversation_id: string
+          id?: string
+          last_read_at?: string
+          portal_key: string
+        }
+        Update: {
+          conversation_id?: string
+          id?: string
+          last_read_at?: string
+          portal_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_reads_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address: string | null
