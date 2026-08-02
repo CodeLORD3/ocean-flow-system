@@ -177,11 +177,17 @@ export function ShopSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {sections.map(section => renderSection(section))}
+        {visibleSections.map(section => renderSection(section))}
       </SidebarContent>
 
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={() => setCustomizeOpen(true)}>
+              <SlidersHorizontal className="h-4 w-4" />
+              {!collapsed && <span>Anpassa meny</span>}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isActive("/settings")}>
               <NavLink to="/settings" end>
@@ -192,6 +198,17 @@ export function ShopSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+
+      <SidebarVisibilityDialog
+        open={customizeOpen}
+        onOpenChange={setCustomizeOpen}
+        sections={sections.map(s => ({
+          label: s.label,
+          items: s.items.map(i => ({ title: i.title, url: i.url })),
+        }))}
+        lockedUrls={LOCKED_URLS}
+      />
     </Sidebar>
   );
+
 }
