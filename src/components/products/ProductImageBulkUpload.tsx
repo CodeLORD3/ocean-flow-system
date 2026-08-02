@@ -16,8 +16,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ProductThumb } from "@/components/products/ProductThumb";
 
 export const PRODUCT_IMAGE_BUCKET = "produktbilder";
-/** ~10 år — bilderna används bara i inloggade vyer. */
-const SIGNED_URL_TTL = 60 * 60 * 24 * 365 * 10;
+
 
 interface Props {
   open: boolean;
@@ -88,16 +87,16 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
           .from(PRODUCT_IMAGE_BUCKET)
           .upload(key, row.file, { upsert: true, contentType: row.file.type || undefined });
         if (upErr) throw upErr;
-        const { data: signed, error: signErr } = await supabase.storage
-          .from(PRODUCT_IMAGE_BUCKET)
-          .createSignedUrl(key, SIGNED_URL_TTL);
-        if (signErr || !signed?.signedUrl) throw signErr ?? new Error("Kunde inte skapa bildlänk");
+        const { data: pub } = supabase.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(key);
+        const publicUrl = pub?.publicUrl;
+        if (!publicUrl) throw new Error("Kunde inte skapa bildlänk");
         const { error: updErr } = await supabase
           .from("products")
-          .update({ image_url: signed.signedUrl })
+          .update({ image_url: publicUrl })
           .eq("id", row.productId);
         if (updErr) throw updErr;
-        next[i] = { ...row, status: "done", url: signed.signedUrl };
+        next[i] = { ...row, status: "done", url: publicUrl };
+
       } catch (e) {
         next[i] = { ...row, status: "error", message: e instanceof Error ? e.message : "Okänt fel" };
       }
