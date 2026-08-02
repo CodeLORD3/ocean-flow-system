@@ -23,6 +23,7 @@ import SavedPriceLists from "@/components/SavedPriceLists";
 import { useSite } from "@/contexts/SiteContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ProductThumb } from "@/components/products/ProductThumb";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -323,6 +324,7 @@ export default function Products() {
     origin: "",
     producer: "",
     shelf_life_days: "", // NEW
+    image_url: "",
   });
 
   const setField = (key: string, value: string) => {
@@ -575,11 +577,11 @@ export default function Products() {
     return (
       <tr
         key={p.id}
-        className={`border-b border-border/40 hover:bg-primary/20 transition-colors h-8 max-h-8 ${isSubproduct ? "bg-muted/10" : rowIndex % 2 === 1 ? "bg-muted/30" : ""}`}
+        className={`border-b border-border/40 hover:bg-primary/20 transition-colors h-16 ${isSubproduct ? "bg-muted/10" : rowIndex % 2 === 1 ? "bg-muted/30" : ""}`}
       >
         {/* Name */}
-        <td className="px-2 py-0 h-8 align-middle font-medium text-foreground sticky left-0 z-10 bg-card border-r border-border/60 min-w-[200px]">
-          <div className="flex items-center gap-1.5 h-8">
+        <td className="px-2 py-1 align-middle font-medium text-foreground sticky left-0 z-10 bg-card border-r border-border/60 min-w-[300px]">
+          <div className="flex items-center gap-1.5">
             {!isSubproduct && hasChildren && (
               <button onClick={() => toggleExpand(p.id)} className="p-0.5 rounded hover:bg-muted shrink-0">
                 {isExpanded ? (
@@ -591,6 +593,7 @@ export default function Products() {
             )}
             {isSubproduct && <span className="ml-5 text-muted-foreground shrink-0">└</span>}
             {!isSubproduct && !hasChildren && <span className="w-5 shrink-0" />}
+            <ProductThumb src={(p as any).image_url} alt={p.name} />
             <span className={`truncate ${isSubproduct ? "text-muted-foreground" : ""}`} title={p.name}>{p.name}</span>
             {hasChildren && (
               <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-1 rounded-none shrink-0">
@@ -599,12 +602,12 @@ export default function Products() {
             )}
           </div>
         </td>
-        <td className="px-2 py-0 h-8 align-middle font-mono text-muted-foreground text-[10px] whitespace-nowrap">{p.sku}</td>
-        <td className="px-2 py-0 h-8 align-middle whitespace-nowrap"><CategoryBadge name={p.category} /></td>
+        <td className="px-2 py-0 align-middle font-mono text-muted-foreground text-[10px] whitespace-nowrap">{p.sku}</td>
+        <td className="px-2 py-0 align-middle whitespace-nowrap"><CategoryBadge name={p.category} /></td>
 
-        <td className="px-2 py-0 h-8 align-middle text-muted-foreground">{p.unit}</td>
-        <td className="px-2 py-0 h-8 align-middle font-mono text-muted-foreground">{(p as any).hs_code || "–"}</td>
-        <td className="px-2 py-0 h-8 align-middle">
+        <td className="px-2 py-0 align-middle text-muted-foreground">{p.unit}</td>
+        <td className="px-2 py-0 align-middle font-mono text-muted-foreground">{(p as any).hs_code || "–"}</td>
+        <td className="px-2 py-0 align-middle">
           <Select
             value={(p as any).producer || "__none__"}
             onValueChange={async (val) => {
@@ -633,7 +636,7 @@ export default function Products() {
         </td>
 
         {/* ── Hållbarhet ── */}
-        <td className="px-2 py-0 h-8 align-middle">
+        <td className="px-2 py-0 align-middle">
           {isAggregatedParent ? (
             <span className="text-[11px] text-muted-foreground/40 font-mono tabular-nums">–</span>
           ) : (
@@ -669,7 +672,7 @@ export default function Products() {
 
         {/* Prices */}
         {isWholesale && (
-          <td className="px-2 py-0 h-8 align-middle text-right min-w-[92px]">
+          <td className="px-2 py-0 align-middle text-right min-w-[92px]">
             {isAggregatedParent ? (
               <span className="!text-[11px] font-mono tabular-nums text-foreground">{fmtNum(agg!.cost_price)}</span>
             ) : (
@@ -686,7 +689,7 @@ export default function Products() {
           </td>
         )}
         {isWholesale && (
-          <td className="px-2 py-0 h-8 align-middle text-right">
+          <td className="px-2 py-0 align-middle text-right">
             {(() => {
               const last = latestPriceMap?.get(p.id);
               if (!last) return <span className="!text-[11px] font-mono tabular-nums text-muted-foreground/40">–</span>;
@@ -703,7 +706,7 @@ export default function Products() {
             })()}
           </td>
         )}
-        <td className="px-2 py-0 h-8 align-middle text-right min-w-[92px]">
+        <td className="px-2 py-0 align-middle text-right min-w-[92px]">
           {isAggregatedParent ? (
             <span className="!text-[11px] font-mono tabular-nums text-foreground">
               {fmtNum(agg ? agg.wholesale_price : Number(p.wholesale_price))}
@@ -723,7 +726,7 @@ export default function Products() {
           )}
         </td>
         {isWholesale && (
-          <td className="px-2 py-0 h-8 align-middle text-right min-w-[64px]">
+          <td className="px-2 py-0 align-middle text-right min-w-[64px]">
             {isAggregatedParent ? (
               <span className="!text-[11px] font-mono tabular-nums text-muted-foreground">
                 {calcMargin(agg!.cost_price, agg!.wholesale_price)}%
@@ -745,7 +748,7 @@ export default function Products() {
           </td>
         )}
         {isWholesale && (
-          <td className="px-2 py-0 h-8 align-middle text-right min-w-[92px] !text-[11px] font-mono tabular-nums text-muted-foreground">
+          <td className="px-2 py-0 align-middle text-right min-w-[92px] !text-[11px] font-mono tabular-nums text-muted-foreground">
             {(() => {
               const v = agg ? agg.retail_suggested : (p.retail_suggested ? Number(p.retail_suggested) : 0);
               if (!v) return <span className="text-muted-foreground/40">–</span>;
@@ -756,7 +759,7 @@ export default function Products() {
 
 
         {/* Barcode */}
-        <td className="px-2 py-0 h-8 align-middle">
+        <td className="px-2 py-0 align-middle">
           {barcode ? (
             <div className="flex items-center gap-1.5">
               <button
@@ -783,7 +786,7 @@ export default function Products() {
         </td>
 
         {/* Stock */}
-        <td className="px-2 py-0 h-8 align-middle text-right !text-[11px] font-mono tabular-nums font-medium">
+        <td className="px-2 py-0 align-middle text-right !text-[11px] font-mono tabular-nums font-medium">
           {(() => {
             const stockVal = Number(agg ? agg.stock : p.stock);
             if (!stockVal) return <span className="text-muted-foreground/40">–</span>;
@@ -796,7 +799,7 @@ export default function Products() {
         </td>
 
         {/* Actions */}
-        <td className="px-2 py-0 h-8 align-middle text-center">
+        <td className="px-2 py-0 align-middle text-center">
           <div className="flex items-center justify-center gap-1">
             {isWholesale && hasChanges && (
               <>
