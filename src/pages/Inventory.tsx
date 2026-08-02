@@ -1720,7 +1720,12 @@ export default function Inventory() {
                               <span className="text-[10px] font-semibold text-foreground">{fmt(aggValue)}</span>
                             </span>
                           </button>
-                          <div className="pr-2">
+                          <div className="pr-2 flex items-center gap-1">
+                            <EntityImagesButton
+                              entityType="storage_location"
+                              entityId={loc.id}
+                              title={`Bilder – ${loc.name}`}
+                            />
                             {renderReportBtn({
                               locationId: loc.id,
                               locationName: loc.name,
@@ -1728,6 +1733,7 @@ export default function Inventory() {
                               items: loc.items,
                             })}
                           </div>
+
                           </div>
                           {isParentOpen && (
                             <div className="p-1.5 space-y-1.5">
