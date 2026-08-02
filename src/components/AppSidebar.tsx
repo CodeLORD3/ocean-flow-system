@@ -13,6 +13,7 @@ import {
   FileText,
   CreditCard,
   ClipboardList,
+  ClipboardCheck,
   TrendingUp,
   Shield,
   Factory,
