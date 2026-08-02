@@ -13,7 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { MapPin, Store as StoreIcon, Upload, Images, Pencil, Trash2, Check, X, Loader2 } from "lucide-react";
+import { focalClass, FOCAL_OPTIONS } from "@/lib/imageFocal";
+import { MapPin, Store as StoreIcon, Upload, Images, Pencil, Trash2, Check, X, Loader2, Crop } from "lucide-react";
 
 /**
  * Hero/cover image shown at the top of every page inside a shop portal.
@@ -102,7 +103,7 @@ export function StoreHero() {
         <img
           src={url}
           alt={cover?.caption || `Omslagsbild för ${activeStoreName ?? "butiken"}`}
-          className="h-full w-full object-cover"
+          className={`h-full w-full object-cover ${focalClass(cover?.focal_point)}`}
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center">
