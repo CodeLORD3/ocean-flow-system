@@ -32,6 +32,8 @@ import ShopOrderTab from "@/components/wholesale/ShopOrderTab";
 import TtottiiiTab from "@/components/wholesale/TtottiiiTab";
 import FakturaChTab from "@/components/wholesale/FakturaChTab";
 import ProductBankTab from "@/components/wholesale/ProductBankTab";
+import { Checkbox } from "@/components/ui/checkbox";
+import { GEAR_CATEGORIES, isWildCaught } from "@/lib/productCategories";
 
 const statusColor: Record<string, string> = {
   "Skickad": "bg-primary/10 text-primary border-primary/20",
