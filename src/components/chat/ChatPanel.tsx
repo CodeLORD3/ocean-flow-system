@@ -20,6 +20,8 @@ import {
   useCurrentPortal,
   usePortalProfiles,
   useSendChatMessage,
+  useChatUnread,
+  useMarkConversationRead,
 } from "@/hooks/useChat";
 
 function portalIcon(kind: PortalProfile["kind"]) {
@@ -58,6 +60,8 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
 
   const createConv = useCreateConversation();
   const send = useSendChatMessage();
+  const unread = useChatUnread();
+  const markRead = useMarkConversationRead();
 
   const activeConv: ChatConversation | undefined =
     conversations.find((c) => c.id === activeId) ?? conversations[0];
@@ -66,6 +70,13 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages.length, activeConv?.id]);
+
+  // Markera den öppna chatten som läst när nya meddelanden visas
+  const convId = activeConv?.id;
+  useEffect(() => {
+    if (convId) markRead.mutate(convId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [convId, messages.length]);
 
   const otherProfiles = useMemo(
     () => profiles.filter((p) => p.key !== portal?.key),
@@ -161,8 +172,13 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                     <span className="text-xs font-medium text-foreground truncate">
                       {conversationTitle(c, portal.key)}
                     </span>
-                    <span className="text-[9px] text-muted-foreground shrink-0">
-                      {timeLabel(c.last_message_at)}
+                    <span className="flex items-center gap-1 shrink-0">
+                      {(unread.byConv[c.id] || 0) > 0 && !isActive && (
+                        <Badge variant="destructive" className="h-4 min-w-4 px-1 text-[9px] rounded-full">
+                          {unread.byConv[c.id]}
+                        </Badge>
+                      )}
+                      <span className="text-[9px] text-muted-foreground">{timeLabel(c.last_message_at)}</span>
                     </span>
                   </div>
                   <p className="text-[10px] text-muted-foreground truncate">
