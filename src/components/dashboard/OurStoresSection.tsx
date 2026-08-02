@@ -74,8 +74,9 @@ export function OurStoresSection({ storeFilterId }: { storeFilterId?: string | n
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entity_images")
-        .select("entity_id, url, sort_order")
+        .select("entity_id, url, sort_order, is_cover")
         .eq("entity_type", "store")
+        .order("is_cover", { ascending: false })
         .order("sort_order");
       if (error) throw error;
       return data;

@@ -1,8 +1,10 @@
 import { useRef, useState } from "react";
-import { ImagePlus, Trash2, Loader2, ImageIcon, X } from "lucide-react";
+import { ImagePlus, Trash2, Loader2, ImageIcon, X, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -10,6 +12,7 @@ import {
   useUploadEntityImage,
   useUpdateEntityImage,
   useDeleteEntityImage,
+  useSetCoverImage,
 } from "@/hooks/useEntityImages";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +44,7 @@ export function EntityImageGallery({
   const upload = useUploadEntityImage();
   const updateImage = useUpdateEntityImage();
   const removeImage = useDeleteEntityImage();
+  const setCover = useSetCoverImage();
 
   const handleFiles = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -109,7 +113,7 @@ export function EntityImageGallery({
       ) : (
         <div className={cn("grid gap-2", columnsClassName)}>
           {images.map((img) => (
-            <Card key={img.id} className="overflow-hidden group">
+            <Card key={img.id} className="overflow-hidden group relative">
               <button
                 type="button"
                 onClick={() => setLightbox(img.url)}
@@ -122,6 +126,40 @@ export function EntityImageGallery({
                   className="h-full w-full object-cover transition-transform group-hover:scale-[1.03]"
                 />
               </button>
+              {img.is_cover && (
+                <Badge className="absolute top-1 left-1 h-4 gap-1 px-1.5 text-[9px] pointer-events-none">
+                  <Star className="h-2.5 w-2.5 fill-current" />
+                  Omslag
+                </Badge>
+              )}
+              {editable && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label={img.is_cover ? "Ta bort som omslagsbild" : "Använd som omslagsbild"}
+                      onClick={() =>
+                        setCover.mutate({
+                          entityType,
+                          entityId,
+                          imageId: img.is_cover ? null : img.id,
+                        })
+                      }
+                      className={cn(
+                        "absolute top-1 right-1 h-6 w-6 rounded-full bg-background/80 backdrop-blur flex items-center justify-center border transition-opacity",
+                        img.is_cover
+                          ? "text-primary border-primary"
+                          : "text-muted-foreground border-border opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                      )}
+                    >
+                      <Star className={cn("h-3 w-3", img.is_cover && "fill-current")} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left" className="text-xs">
+                    {img.is_cover ? "Omslagsbild – klicka för att ta bort" : "Sätt som omslagsbild"}
+                  </TooltipContent>
+                </Tooltip>
+              )}
               <div className="p-1.5 flex items-center gap-1">
                 {editable ? (
                   <Input

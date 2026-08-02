@@ -8,6 +8,7 @@ export type EntityImage = {
   url: string;
   caption: string | null;
   sort_order: number;
+  is_cover: boolean;
   created_at: string;
 };
 
@@ -21,6 +22,7 @@ export function useEntityImages(entityType: string, entityId?: string | null) {
         .select("*")
         .eq("entity_type", entityType)
         .eq("entity_id", entityId!)
+        .order("is_cover", { ascending: false })
         .order("sort_order")
         .order("created_at");
       if (error) throw error;
@@ -92,5 +94,37 @@ export function useDeleteEntityImage() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["entity-images"] }),
+  });
+}
+
+/** Sätter (eller rensar) omslagsbild för ett objekt. Endast en bild per objekt kan vara omslag. */
+export function useSetCoverImage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      entityType,
+      entityId,
+      imageId,
+    }: {
+      entityType: string;
+      entityId: string;
+      imageId: string | null;
+    }) => {
+      const { error: clearErr } = await supabase
+        .from("entity_images")
+        .update({ is_cover: false })
+        .eq("entity_type", entityType)
+        .eq("entity_id", entityId)
+        .eq("is_cover", true);
+      if (clearErr) throw clearErr;
+      if (imageId) {
+        const { error } = await supabase.from("entity_images").update({ is_cover: true }).eq("id", imageId);
+        if (error) throw error;
+      }
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["entity-images", vars.entityType, vars.entityId] });
+      qc.invalidateQueries({ queryKey: ["our-stores-photos"] });
+    },
   });
 }
