@@ -1,0 +1,1 @@
+UPDATE public.stores SET name = 'Ålstens Fisk' WHERE name = 'Fiskskaldjur Stockholm';

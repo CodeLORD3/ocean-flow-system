@@ -198,7 +198,7 @@ export function AppSidebar() {
           iconColorClass="text-sky-400"
           iconBgClass="bg-sky-500/20"
           title="FiskHandel"
-          subtitle="Enterprise Resource Planning"
+          subtitle="Admin"
           collapsed={collapsed}
         />
       </SidebarHeader>

@@ -40,6 +40,12 @@ const overviewNav = [
   { title: "Kalender", url: "/schedule", icon: CalendarDays },
 ];
 
+const purchaseNav = [
+  { title: "Inköpsschema", url: "/purchase-schedule", icon: CalendarDays },
+  { title: "Inköpsrapportering", url: "/purchase-reporting", icon: FileText },
+  { title: "Leverantörer", url: "/suppliers", icon: Truck },
+];
+
 const produktionSectionNav = [
   { title: "Ordrar", url: "/orders", icon: ShoppingCart },
   { title: "Produktionsschema", url: "/production-schedule", icon: CalendarDays },
@@ -69,6 +75,7 @@ type NavSection = { label: string; items: typeof overviewNav };
 
 const sections: NavSection[] = [
   { label: "Översikt", items: overviewNav },
+  { label: "Inköp", items: purchaseNav },
   { label: "Produktion", items: produktionSectionNav },
   { label: "Lagerstyrning", items: inventoryNav },
   { label: "Ekonomi & Rapporter", items: financeNav },
@@ -97,7 +104,7 @@ export function ProductionSidebar() {
           iconColorClass="text-amber-400"
           iconBgClass="bg-amber-500/20"
           title="FiskHandel"
-          subtitle="Produktion"
+          subtitle="Grossist"
           collapsed={collapsed}
         />
       </SidebarHeader>

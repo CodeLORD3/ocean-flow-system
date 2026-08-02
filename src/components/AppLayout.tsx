@@ -6,7 +6,7 @@ import { StoreHero } from "@/components/StoreHero";
 
 
 import { useLocation, useNavigate } from "react-router-dom";
-import { Bell, ChevronRight, Search, User, ArrowLeftRight, Factory, Store, ChevronDown, X, Check, LogOut } from "lucide-react";
+import { Bell, ChevronRight, Search, User, ArrowLeftRight, Factory, Store, ChevronDown, X, Check, LogOut, Shield } from "lucide-react";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -123,7 +123,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="hidden sm:flex h-8 items-center justify-between bg-sidebar-background px-4 text-xs text-foreground shrink-0">
             <div className="flex items-center gap-4">
               <span>
-                {site === "shop" ? `Butik: ${activeStoreName || "–"}` : site === "production" ? "Produktion" : "Grossist"}
+                {site === "shop" ? `Butik: ${activeStoreName || "–"}` : site === "production" ? "Grossist" : "Admin"}
               </span>
             </div>
             <div className="flex items-center gap-3">
@@ -135,7 +135,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     className="h-6 text-[10px] gap-1 text-foreground hover:text-foreground hover:bg-sidebar-accent"
                   >
                     <ArrowLeftRight className="h-3 w-3" />
-                    {site === "shop" ? activeStoreName || "Butik" : site === "production" ? "Produktion" : "Grossist"}
+                    {site === "shop" ? activeStoreName || "Butik" : site === "production" ? "Grossist" : "Admin"}
                     <ChevronDown className="h-2.5 w-2.5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -147,7 +147,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                       className={`text-xs gap-2 ${site === "wholesale" ? "bg-muted font-medium" : ""}`}
                       onClick={() => { setSite("wholesale"); setActiveStore(null, null); switchTab("/organisation"); }}
                     >
-                      <Factory className="h-3 w-3" /> Grossist
+                      <Shield className="h-3 w-3" /> Admin
                     </DropdownMenuItem>
                   )}
                   {access.includes("production") && (
@@ -155,7 +155,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                       className={`text-xs gap-2 ${site === "production" ? "bg-muted font-medium" : ""}`}
                       onClick={() => { setSite("production"); setActiveStore(null, null); switchTab("/organisation"); }}
                     >
-                      <Factory className="h-3 w-3" /> Produktion
+                      <Factory className="h-3 w-3" /> Grossist
                     </DropdownMenuItem>
                   )}
                   {access.includes("shop") && (

@@ -10,8 +10,8 @@ import FirstLoginPasswordChange from "./FirstLoginPasswordChange";
 
 const PORTAL_META: Record<PortalKey, { title: string; description: string; icon: any }> = {
   shop: { title: "Butik", description: "Beställningar, lager och rapporter", icon: Store },
-  wholesale: { title: "Grossist", description: "Inköp, prissättning och fakturering", icon: Boxes },
-  production: { title: "Produktion", description: "Produktionsschema och rapporter", icon: Factory },
+  wholesale: { title: "Admin", description: "Full insyn i all data från alla portaler", icon: Shield },
+  production: { title: "Grossist", description: "Inköp, produktion och försäljning till butik", icon: Factory },
   admin: { title: "Admin", description: "Full åtkomst till alla portaler och data", icon: Shield },
 };
 
