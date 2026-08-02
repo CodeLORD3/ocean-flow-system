@@ -13,7 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { focalClass, FOCAL_OPTIONS } from "@/lib/imageFocal";
+import { focalStyle, focalPercent, focalLabel, FOCAL_OPTIONS } from "@/lib/imageFocal";
+import { Slider } from "@/components/ui/slider";
 import { MapPin, Store as StoreIcon, Upload, Images, Pencil, Trash2, Check, X, Loader2, Crop } from "lucide-react";
 
 /**
@@ -36,6 +37,7 @@ export function StoreHero() {
   const [captionDraft, setCaptionDraft] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [cropOpen, setCropOpen] = useState(false);
+  const [focalDraft, setFocalDraft] = useState<number | null>(null);
 
   if (site !== "shop" || !activeStoreId) return null;
 
@@ -71,6 +73,7 @@ export function StoreHero() {
     try {
       await setCover.mutateAsync({ entityType: "store", entityId: activeStoreId, imageId });
       setPickerOpen(false);
+      setFocalDraft(null);
       toast.success("Omslagsbild uppdaterad");
     } catch (e: any) {
       toast.error(e?.message ?? "Kunde inte byta bild");
@@ -92,8 +95,7 @@ export function StoreHero() {
     if (!cover) return;
     try {
       await updateImage.mutateAsync({ id: cover.id, focal_point: focal });
-      setCropOpen(false);
-      toast.success("Beskärning uppdaterad");
+      setFocalDraft(Number(focal));
     } catch (e: any) {
       toast.error(e?.message ?? "Kunde inte spara beskärningen");
     }
@@ -115,7 +117,8 @@ export function StoreHero() {
         <img
           src={url}
           alt={cover?.caption || `Omslagsbild för ${activeStoreName ?? "butiken"}`}
-          className={`h-full w-full object-cover ${focalClass(cover?.focal_point)}`}
+          className="h-full w-full object-cover"
+          style={focalStyle(focalDraft != null ? String(focalDraft) : cover?.focal_point)}
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center">
@@ -208,22 +211,49 @@ export function StoreHero() {
 
           {cover && (
             <>
-              <Popover open={cropOpen} onOpenChange={setCropOpen}>
+              <Popover
+                open={cropOpen}
+                onOpenChange={(o) => {
+                  setCropOpen(o);
+                  if (!o) setFocalDraft(null);
+                }}
+              >
                 <PopoverTrigger asChild>
                   <Button size="sm" variant="secondary" className="h-7 gap-1 text-[11px]" disabled={busy} title="Beskär bilden">
                     <Crop className="h-3 w-3" /> Beskär
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent align="end" className="w-44 p-2">
-                  <p className="mb-2 text-[11px] font-medium text-muted-foreground">Visa del av bilden</p>
-                  <div className="flex flex-col gap-1">
+                <PopoverContent align="end" className="w-64 p-3">
+                  <p className="mb-2 text-[11px] font-medium text-muted-foreground">
+                    Bildposition: {focalLabel(focalDraft != null ? String(focalDraft) : cover.focal_point)}
+                  </p>
+                  <Slider
+                    value={[focalDraft ?? focalPercent(cover.focal_point)]}
+                    min={0}
+                    max={100}
+                    step={1}
+                    onValueChange={(v) => setFocalDraft(v[0])}
+                    onValueCommit={(v) => handleFocal(String(v[0]))}
+                  />
+                  <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+                    <span>Överkant</span>
+                    <span>Nederkant</span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1">
                     {FOCAL_OPTIONS.map((opt) => (
                       <Button
                         key={opt.value}
                         size="sm"
-                        variant={(cover.focal_point ?? "center") === opt.value ? "default" : "ghost"}
-                        className="h-7 justify-start text-[11px]"
-                        onClick={() => handleFocal(opt.value)}
+                        variant={
+                          focalPercent(focalDraft != null ? String(focalDraft) : cover.focal_point) === Number(opt.value)
+                            ? "default"
+                            : "outline"
+                        }
+                        className="h-6 flex-1 text-[10px]"
+                        onClick={() => {
+                          setFocalDraft(Number(opt.value));
+                          handleFocal(opt.value);
+                        }}
                         disabled={busy}
                       >
                         {opt.label}

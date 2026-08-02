@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -15,7 +17,7 @@ import {
   useSetCoverImage,
 } from "@/hooks/useEntityImages";
 import { cn } from "@/lib/utils";
-import { focalClass, nextFocal, FOCAL_OPTIONS } from "@/lib/imageFocal";
+import { focalStyle, focalPercent, focalLabel } from "@/lib/imageFocal";
 
 type Props = {
   entityType: string;
@@ -124,7 +126,8 @@ export function EntityImageGallery({
                   src={img.url}
                   alt={img.caption || `${title} bild`}
                   loading="lazy"
-                  className={cn("h-full w-full object-cover transition-transform group-hover:scale-[1.03]", focalClass(img.focal_point))}
+                  className="h-full w-full object-cover transition-transform group-hover:scale-[1.03]"
+                  style={focalStyle(img.focal_point)}
                 />
               </button>
               {img.is_cover && (
@@ -178,22 +181,35 @@ export function EntityImageGallery({
                   </span>
                 )}
                 {editable && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
+                  <Popover>
+                    <PopoverTrigger asChild>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 text-muted-foreground shrink-0"
-                        aria-label="Ändra beskärning"
-                        onClick={() => updateImage.mutate({ id: img.id, focal_point: nextFocal(img.focal_point) })}
+                        aria-label="Justera beskärning"
+                        title={`Beskärning: ${focalLabel(img.focal_point)}`}
                       >
                         <Crop className="h-3 w-3" />
                       </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="text-xs">
-                      Beskärning: {FOCAL_OPTIONS.find((o) => o.value === (img.focal_point ?? "center"))?.label} – klicka för att byta
-                    </TooltipContent>
-                  </Tooltip>
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="w-56 p-3">
+                      <p className="mb-2 text-[11px] font-medium text-muted-foreground">
+                        Bildposition: {focalLabel(img.focal_point)}
+                      </p>
+                      <Slider
+                        value={[focalPercent(img.focal_point)]}
+                        min={0}
+                        max={100}
+                        step={1}
+                        onValueChange={(v) => updateImage.mutate({ id: img.id, focal_point: String(v[0]) })}
+                      />
+                      <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+                        <span>Överkant</span>
+                        <span>Nederkant</span>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 )}
                 {editable && (
                   <Button

@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { focalClass } from "@/lib/imageFocal";
+import { focalStyle } from "@/lib/imageFocal";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -145,7 +145,8 @@ export function OurStoresSection({ storeFilterId }: { storeFilterId?: string | n
                   loading="lazy"
                   width={1280}
                   height={720}
-                  className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03] ${focalClass(photoByStore[store.id]?.focal_point)}`}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                  style={focalStyle(photoByStore[store.id]?.focal_point)}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/10 to-transparent" />
                 <Badge

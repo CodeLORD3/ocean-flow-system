@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useProducts } from "@/hooks/useProducts";
 import { useStores } from "@/hooks/useStores";
 import { useStoreCoverImages } from "@/hooks/useStoreCoverImages";
-import { focalClass } from "@/lib/imageFocal";
+import { focalStyle } from "@/lib/imageFocal";
 import storeHero from "@/assets/store-hero.jpg";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useSuppliers } from "@/hooks/useSuppliers";
@@ -284,7 +284,8 @@ export default function OrganisationOverview() {
                       loading="lazy"
                       width={320}
                       height={220}
-                      className={`h-full w-full object-cover ${focalClass(covers[store.id]?.focal_point)}`}
+                      className="h-full w-full object-cover"
+                      style={focalStyle(covers[store.id]?.focal_point)}
                     />
                   </div>
                   <div className="min-w-0">
