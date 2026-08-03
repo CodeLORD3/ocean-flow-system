@@ -185,9 +185,13 @@ export function isProcessedForm(form: string): boolean {
 }
 
 /**
- * Fördelar partiets totala råvarukostnad över styckdetaljerna.
- * Fördelningsnyckel = kg × marginalvikt, så att dyra detaljer (loin/rygg) bär
- * mer av råvarukostnaden än billiga (slag/bitar).
+ * Fördelar partiets totala råvarukostnad JÄMNT PER KILO över styckdetaljerna:
+ * total råvarukostnad / summa färdiga kilo. Alla detaljer får alltså samma
+ * kostpris per kg.
+ *
+ * Marginalvikten används medvetet INTE här — den påverkar bara det effektiva
+ * marginalmålet (se weightedTarget). Annars skulle vikten räknas två gånger och
+ * partiets marginal hamna långt över målet.
  *
  * Vid en enda detalj blir resultatet identiskt med inköpspris / utbyte.
  */
@@ -197,11 +201,7 @@ export function allocateRawCost(
   rawQtyKg: number,
 ): number[] {
   const totalRawCost = (Number(purchasePricePerKg) || 0) * (Number(rawQtyKg) || 0);
-  const keys = details.map((d) => Math.max(0, Number(d.qtyKg) || 0) * (Number(d.marginWeight) || 1));
-  const keySum = keys.reduce((a, b) => a + b, 0);
-  return details.map((d, i) => {
-    const qty = Number(d.qtyKg) || 0;
-    if (qty <= 0 || keySum <= 0) return 0;
-    return (totalRawCost * (keys[i] / keySum)) / qty;
-  });
+  const totalQty = details.reduce((s, d) => s + Math.max(0, Number(d.qtyKg) || 0), 0);
+  const perKg = totalQty > 0 ? totalRawCost / totalQty : 0;
+  return details.map((d) => ((Number(d.qtyKg) || 0) > 0 ? perKg : 0));
 }
