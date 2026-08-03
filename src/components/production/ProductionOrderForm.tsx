@@ -518,7 +518,7 @@ export function ProductionOrderForm() {
                             step="0.1"
                             value={d.pct}
                             onChange={(e) => setDetail(d.key, { pct: parseFloat(e.target.value) || 0 })}
-                            className="h-7 text-[11px] text-right font-mono tabular-nums"
+                            className="h-7 px-1 text-[11px] text-right font-mono tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                         </TableCell>
                         <TableCell className="text-[11px] text-right font-mono tabular-nums">{fmt(qty, 1)}</TableCell>
@@ -528,7 +528,7 @@ export function ProductionOrderForm() {
                             step="0.05"
                             value={d.marginWeight}
                             onChange={(e) => setDetail(d.key, { marginWeight: parseFloat(e.target.value) || 1 })}
-                            className="h-7 text-[11px] text-right font-mono tabular-nums"
+                            className="h-7 px-1 text-[11px] text-right font-mono tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                         </TableCell>
                         <TableCell className="text-[11px] text-right font-mono tabular-nums">
