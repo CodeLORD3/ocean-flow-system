@@ -20,12 +20,13 @@ const PAGE_SIZE = 20;
 
 function MetaCell({ label, value }: { label: string; value: string }) {
   return (
-    <div className="px-4 py-2.5">
-      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="text-sm font-semibold text-foreground mt-0.5">{value}</p>
+    <div className="px-3 py-2 sm:px-4 sm:py-2.5">
+      <p className="text-[9px] sm:text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="text-xs sm:text-sm font-semibold text-foreground mt-0.5 truncate">{value}</p>
     </div>
   );
 }
+
 
 export function ChecklistTable({
   day,
@@ -77,73 +78,134 @@ export function ChecklistTable({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
           {onBack && (
-            <Button variant="ghost" size="icon" onClick={onBack} aria-label="Tillbaka">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onBack} aria-label="Tillbaka">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           )}
-          <h1 className="text-xl font-heading font-bold text-foreground truncate">{title}</h1>
+          <h1 className="text-base sm:text-xl font-heading font-bold text-foreground truncate">{title}</h1>
           {isCompleted && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 text-emerald-600 px-2 py-0.5 text-[11px] font-semibold">
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 text-emerald-600 px-2 py-0.5 text-[10px] font-semibold">
               <CheckCircle2 className="h-3 w-3" /> Slutförd
             </span>
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={() => window.print()}>
-            <Printer className="h-4 w-4 mr-1.5" /> Skriv ut
+          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => window.print()}>
+            <Printer className="h-3.5 w-3.5 sm:mr-1.5" /> <span className="hidden sm:inline">Skriv ut</span>
           </Button>
           {!locked && (
             <Button
               size="sm"
+              className="h-8 text-xs"
               onClick={() =>
                 markAll.mutate(day.id, {
                   onSuccess: () => toast.success("Alla uppgifter markerade som klara."),
                 })
               }
             >
-              <CheckCheck className="h-4 w-4 mr-1.5" /> Markera alla klara
+              <CheckCheck className="h-3.5 w-3.5 mr-1.5" /> Markera alla
             </Button>
           )}
         </div>
       </div>
 
       {/* Meta bar */}
-      <div className="rounded-lg border border-border bg-card shadow-card">
-        <div className="flex flex-wrap items-stretch divide-x divide-border">
+      <div className="rounded-lg border border-border bg-card shadow-card overflow-hidden">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-stretch divide-x divide-y sm:divide-y-0 divide-border">
           <MetaCell label="Datum" value={day.checklist_date} />
           <MetaCell label="Veckodag" value={weekdayName(day.checklist_date)} />
           <MetaCell label="Ansvarig" value={day.responsible_name || "–"} />
           <MetaCell label="Pass" value={day.shift} />
-          <div className="px-4 py-2.5 flex-1 min-w-[180px]">
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Framsteg</p>
+          <div className="col-span-2 px-3 py-2 sm:px-4 sm:py-2.5 flex-1 sm:min-w-[180px]">
+            <p className="text-[9px] sm:text-[10px] uppercase tracking-wide text-muted-foreground">Framsteg</p>
             <Progress value={pct} className="h-2 mt-1.5" />
             <p className="text-[10px] text-muted-foreground mt-1">
               {doneCount} av {items.length} klara ({pct}%)
             </p>
           </div>
-          <div className="px-4 py-2.5 flex flex-col items-center justify-center gap-1">
+          <div className="col-span-2 px-3 py-2 sm:px-4 sm:py-2.5 flex items-center justify-center gap-2">
+            <Button variant="outline" size="icon" className="h-8 w-8" disabled={current === 0} onClick={() => setPage(current - 1)}>
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </Button>
             <p className="text-[11px] text-muted-foreground">
               Sida {current + 1} av {pages}
             </p>
-            <div className="flex gap-1">
-              <Button variant="outline" size="icon" className="h-7 w-7" disabled={current === 0} onClick={() => setPage(current - 1)}>
-                <ChevronLeft className="h-3.5 w-3.5" />
-              </Button>
-              <Button variant="outline" size="icon" className="h-7 w-7" disabled={current >= pages - 1} onClick={() => setPage(current + 1)}>
-                <ChevronRight className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+            <Button variant="outline" size="icon" className="h-8 w-8" disabled={current >= pages - 1} onClick={() => setPage(current + 1)}>
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-lg border border-border bg-card shadow-card overflow-hidden">
+      {/* Mobil: kortlista med stora kryssrutor — ingen sidledes scroll */}
+      <div className="md:hidden space-y-2">
+        {rows.map((row) =>
+          row.kind === "section" ? (
+            <p
+              key={`ms-${row.label}`}
+              className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground pt-1"
+            >
+              {row.label}
+            </p>
+          ) : (
+            <div
+              key={`m-${row.item.id}`}
+              className={cn(
+                "rounded-lg border border-border bg-card shadow-card p-2.5",
+                row.item.done && "border-emerald-600/40 bg-emerald-500/10"
+              )}
+            >
+              <div className="flex items-start gap-2.5">
+                <label className="flex items-center justify-center h-10 w-10 shrink-0 -m-1 cursor-pointer">
+                  <Checkbox
+                    checked={row.item.done}
+                    disabled={locked}
+                    onCheckedChange={(v) => toggle.mutate({ id: row.item.id, done: !!v })}
+                    className="h-6 w-6 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                    aria-label={`Markera klar: ${row.item.task}`}
+                  />
+                </label>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] leading-snug text-foreground break-words">{row.item.task}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2">
+                    {row.item.time_label && (
+                      <span className="font-mono tabular-nums">{row.item.time_label}</span>
+                    )}
+                    {row.item.category && <span>{row.item.category}</span>}
+                    {row.item.signature && <span className="font-semibold text-foreground">✓ {row.item.signature}</span>}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-1.5 pl-[3.25rem]">
+                {locked ? (
+                  <p className="text-[11px] text-muted-foreground">
+                    {row.item.note ? `Kommentar: ${row.item.note}` : "Ingen kommentar"}
+                  </p>
+                ) : (
+                  <Input
+                    value={noteDrafts[row.item.id] ?? row.item.note ?? ""}
+                    placeholder="Kommentar / avvikelse"
+                    className="h-8 text-xs"
+                    onChange={(e) => setNoteDrafts((d) => ({ ...d, [row.item.id]: e.target.value }))}
+                    onBlur={(e) => {
+                      const v = e.target.value;
+                      if (v !== (row.item.note ?? "")) setNote.mutate({ id: row.item.id, note: v });
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+          )
+        )}
+      </div>
+
+      {/* Desktop: tabell */}
+      <div className="hidden md:block rounded-lg border border-border bg-card shadow-card overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-muted/50 text-[11px] uppercase tracking-wide text-muted-foreground">
@@ -212,8 +274,8 @@ export function ChecklistTable({
       </div>
 
       {/* Footer */}
-      <div className="rounded-lg border border-border bg-card shadow-card px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="rounded-lg border border-border bg-card shadow-card px-3 py-2.5 sm:px-4 sm:py-3 space-y-2 sm:space-y-0 sm:flex sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
+        <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
           {current < pages - 1 ? (
             <>
               Fler uppgifter fortsätter på nästa sida <ArrowRight className="h-4 w-4" />
@@ -226,7 +288,7 @@ export function ChecklistTable({
             </>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {Array.from({ length: pages }).map((_, i) => (
             <Button
               key={i}
@@ -243,7 +305,7 @@ export function ChecklistTable({
           </Button>
           {!readOnly && (
             <Button
-              className="ml-2 bg-emerald-600 hover:bg-emerald-700 text-primary-foreground"
+              className="flex-1 sm:flex-none sm:ml-2 bg-emerald-600 hover:bg-emerald-700 text-primary-foreground"
               disabled={isCompleted || complete.isPending}
               onClick={handleComplete}
             >
@@ -256,3 +318,4 @@ export function ChecklistTable({
     </div>
   );
 }
+

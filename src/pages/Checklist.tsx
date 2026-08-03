@@ -83,29 +83,29 @@ function ChecklistReports() {
           ) : reports.length === 0 ? (
             <p className="text-xs text-muted-foreground">Inga checklistor har rapporterats in ännu.</p>
           ) : (
-            <table className="w-full text-sm">
+            <table className="w-full text-sm table-fixed">
               <thead>
-                <tr className="text-[11px] uppercase tracking-wide text-muted-foreground border-b border-border">
+                <tr className="text-[10px] sm:text-[11px] uppercase tracking-wide text-muted-foreground border-b border-border">
                   <th className="text-left font-semibold py-2">Datum</th>
-                  <th className="text-left font-semibold py-2">Veckodag</th>
+                  <th className="text-left font-semibold py-2 hidden md:table-cell">Veckodag</th>
                   <th className="text-left font-semibold py-2">Butik</th>
-                  <th className="text-left font-semibold py-2">Ansvarig</th>
-                  <th className="text-center font-semibold py-2">Klara</th>
-                  <th className="text-left font-semibold py-2">Status</th>
-                  <th />
+                  <th className="text-left font-semibold py-2 hidden md:table-cell">Ansvarig</th>
+                  <th className="text-center font-semibold py-2 w-14">Klara</th>
+                  <th className="text-left font-semibold py-2 hidden sm:table-cell">Status</th>
+                  <th className="w-16" />
                 </tr>
               </thead>
               <tbody>
                 {reports.map((r: any) => (
                   <tr key={r.id} className="border-b border-border/60 hover:bg-muted/30">
-                    <td className="py-2 font-mono tabular-nums text-xs">{r.checklist_date}</td>
-                    <td className="py-2 text-xs text-muted-foreground">{weekdayName(r.checklist_date)}</td>
-                    <td className="py-2">{r.storeName}</td>
-                    <td className="py-2 text-xs text-muted-foreground">{r.responsible_name || "–"}</td>
-                    <td className="py-2 text-center font-mono tabular-nums text-xs">
+                    <td className="py-2 font-mono tabular-nums text-[11px] sm:text-xs">{r.checklist_date}</td>
+                    <td className="py-2 text-xs text-muted-foreground hidden md:table-cell">{weekdayName(r.checklist_date)}</td>
+                    <td className="py-2 text-xs sm:text-sm truncate pr-2">{r.storeName}</td>
+                    <td className="py-2 text-xs text-muted-foreground hidden md:table-cell">{r.responsible_name || "–"}</td>
+                    <td className="py-2 text-center font-mono tabular-nums text-[11px] sm:text-xs">
                       {r.doneCount}/{r.total}
                     </td>
-                    <td className="py-2">
+                    <td className="py-2 hidden sm:table-cell">
                       {r.status === "completed" ? (
                         <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
                           <CheckCircle2 className="h-3 w-3" /> Slutförd
@@ -117,7 +117,7 @@ function ChecklistReports() {
                       )}
                     </td>
                     <td className="py-2 text-right">
-                      <Button variant="outline" size="sm" onClick={() => setOpenId(r.id)}>
+                      <Button variant="outline" size="sm" className="h-8 text-xs px-2" onClick={() => setOpenId(r.id)}>
                         Visa
                       </Button>
                     </td>
@@ -125,6 +125,7 @@ function ChecklistReports() {
                 ))}
               </tbody>
             </table>
+
           )}
         </CardContent>
       </Card>
