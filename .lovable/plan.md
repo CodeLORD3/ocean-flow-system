@@ -117,11 +117,19 @@ utbytet inte är `is_estimate = true`. Övriga hamnar i manuell granskning.
 
 ## 6. Verifieringstest
 
-`src/test/fillet.test.ts` utökas med torskexemplet: 100 kg à 60 kr, utbyte 47 %,
-loin_four 55/20/15/10, påslag 35, moms 6 %, priser 698/249/129/398 →
+Riktning C — auktionskalkylen (befintligt exempel behålls): torsk 100 kg à 60 kr,
+utbyte 47 %, loin_four 55/20/15/10, påslag 35, moms 6 %, priser 698/249/129/398 →
 intäkt 21 853 kr, kostnad 7 645 kr, marginal ink. arbete 65,0 %, maxpris 104 kr/kg
-(45 %) och 82 kr/kg (55 %). Plus test att modellen aldrig föreslår detaljer utanför
-`cut_model`.
+(45 %) och 82 kr/kg (55 %).
+
+Riktning B — biproduktsmetoden (nytt test): samma parti, Göteborg 45 %,
+biprodukter satta till 249/129/398 → golvpris 379 kr för ryggen, och partiets
+marginal ink. arbete blir 45 % plus avrundningseffekt.
+
+Plus test att modellen aldrig föreslår detaljer utanför `cut_model`, samt att de
+tre skyddsspärrarna (25 %-avvikelse, golv under högsta biproduktpris, biprodukt
+utan pris) utlöses korrekt.
+
 
 ## 7. Kvarstående från tidigare
 
@@ -130,14 +138,18 @@ utfallen och täckningskontrollen mot verkliga produkter i databasen behålls so
 
 ## Teknisk sammanfattning
 
-- Migration: `species_cut_models` (ny), `cut_splits.role`, `byproduct_prices` (ny),
-  `auction_calcs` (ny), `products.requires_processing`, seed av modeller, splits,
-  utbyten och torskpriser. Alla nya tabeller får GRANT + RLS.
-- `src/lib/filletMath.ts`: biproduktsmetod, normaliserad viktfördelning,
-  omvänd auktionsberäkning; gamla per-detalj-prissättningen tas bort.
+- Migration: `species_cut_models` (ny), `cut_splits.role`, `byproduct_prices` (ny,
+  endast biprodukter), `detail_prices` med `last_set_price` per art/detalj (alla
+  roller), `auction_calcs` (ny), `products.requires_processing`, seed av modeller,
+  splits, utbyten och torskpriser. Alla nya tabeller får GRANT + RLS.
+- `src/lib/filletMath.ts`: biproduktsmetod med golvpris, normaliserad
+  viktfördelning, skyddsspärrar, omvänd auktionsberäkning; gamla
+  per-detalj-prissättningen tas bort.
 - `src/lib/cutModels.ts` (ny): modelldefinitioner, artmappning, alias för benfri filé.
 - `src/components/production/ProductionOrderForm.tsx`: modellstyrda detaljrader,
-  manuella biproduktpriser, viktvarning under 3 kg, två marginaltal.
+  manuella biproduktpriser, tre priskolumner (golv / senast / föreslaget),
+  varningsrader, viktvarning under 3 kg, två marginaltal.
+
 - `src/components/production/AuctionCalculator.tsx` (ny) + flik i `src/pages/Production.tsx`.
 - `src/hooks/useProductionYields.ts`: hooks för modeller, biproduktpriser, kalkyler.
 - `src/test/fillet.test.ts`: verifieringsexemplet ovan.
