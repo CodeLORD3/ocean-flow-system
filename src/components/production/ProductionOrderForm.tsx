@@ -476,9 +476,9 @@ export function ProductionOrderForm() {
                     <TableHead className="w-[36px]" />
                     <TableHead className="text-[11px] min-w-[150px]">Detalj</TableHead>
                     <TableHead className="text-[11px] w-[150px]">Produkt (lager/pris)</TableHead>
-                    <TableHead className="text-[11px] w-[80px] text-right">% av råvara</TableHead>
-                    <TableHead className="text-[11px] w-[80px] text-right">kg</TableHead>
-                    <TableHead className="text-[11px] w-[80px] text-right">Marg.vikt</TableHead>
+                    <TableHead className="text-[11px] w-[92px] text-right">% av råvara</TableHead>
+                    <TableHead className="text-[11px] w-[70px] text-right">kg</TableHead>
+                    <TableHead className="text-[11px] w-[92px] text-right">Marg.vikt</TableHead>
                     <TableHead className="text-[11px] w-[90px] text-right">Kostpris</TableHead>
                     <TableHead className="text-[11px] w-[70px] text-right">Påslag</TableHead>
                     {regionTargets.map((r) => (
