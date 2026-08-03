@@ -27,6 +27,7 @@ import {
   useYieldActuals,
 } from "@/hooks/useProductionYields";
 import { calcDetailPrice, allocateRawCost, batchMargin, fmt, FORMS, isProcessedForm } from "@/lib/filletMath";
+import { SPECIES_GROUP_SUGGESTIONS } from "@/lib/speciesGroups";
 import { addStock, withdrawStock } from "@/lib/productionStock";
 
 export interface FilletPrefill {
@@ -91,8 +92,12 @@ export function ProductionOrderForm() {
   const [applyRegion, setApplyRegion] = useState<string>("");
   const [previewOpen, setPreviewOpen] = useState(false);
 
+  // Artgrupper med utbyte först, därefter förslagslistan som hjälp i formuläret.
   const speciesOptions = useMemo(
-    () => [...new Set(yields.map((y) => y.species_group))].sort((a, b) => a.localeCompare(b, "sv")),
+    () =>
+      [...new Set([...yields.map((y) => y.species_group), ...SPECIES_GROUP_SUGGESTIONS])].sort((a, b) =>
+        a.localeCompare(b, "sv"),
+      ),
     [yields]
   );
 
@@ -246,6 +251,7 @@ export function ProductionOrderForm() {
       lines: priced.map((p) => ({
         qty: p.qty,
         priceExVat: p.byRegion.find((b) => b.region === r.region)?.priceExVat ?? 0,
+        surchargePerKg: p.surcharge,
       })),
     }),
   }));
@@ -482,8 +488,11 @@ export function ProductionOrderForm() {
                     <TableHead className="text-[11px] w-[90px] text-right">Kostpris</TableHead>
                     <TableHead className="text-[11px] w-[70px] text-right">Påslag</TableHead>
                     {regionTargets.map((r) => (
-                      <TableHead key={r.region} className="text-[11px] text-right w-[130px]">
+                      <TableHead key={r.region} className="text-[11px] text-right w-[190px] leading-tight">
                         {r.label.split(" (")[0]} ({fmt(r.target, 0)} %)
+                        <span className="block text-[9px] font-normal text-muted-foreground">
+                          pris · marg. råvara · ink. arbete
+                        </span>
                       </TableHead>
                     ))}
                     <TableHead className="w-[36px]" />
@@ -539,12 +548,30 @@ export function ProductionOrderForm() {
                         </TableCell>
                         {regionTargets.map((r) => {
                           const b = p?.byRegion.find((x) => x.region === r.region);
+                          const workColor = !b
+                            ? ""
+                            : b.marginInclWorkPct < r.target - 5
+                            ? "text-destructive"
+                            : b.marginInclWorkPct < r.target
+                            ? "text-amber-600"
+                            : "text-emerald-600";
                           return (
                             <TableCell key={r.region} className="py-0.5 text-right text-[11px]">
                               {b ? (
                                 <div className="flex items-center justify-end gap-1">
                                   <span className="font-mono tabular-nums font-medium">{fmt(b.priceIncVat, 0)} kr</span>
-                                  <span className="text-[10px] text-muted-foreground">{fmt(b.actualMarginPct, 0)} %</span>
+                                  <span
+                                    className="font-mono text-[10px] tabular-nums text-muted-foreground"
+                                    title="Marginal på råvara"
+                                  >
+                                    {fmt(b.marginOnRawPct, 0)} %
+                                  </span>
+                                  <span
+                                    className={`font-mono text-[10px] tabular-nums font-semibold ${workColor}`}
+                                    title="Marginal inklusive arbete (jämförs med målet)"
+                                  >
+                                    {fmt(b.marginInclWorkPct, 0)} %
+                                  </span>
                                   {d.productId && (
                                     <Button
                                       size="sm"
@@ -582,14 +609,31 @@ export function ProductionOrderForm() {
             <div className="flex flex-wrap items-center justify-between gap-3 border-t p-3">
               <div className="flex flex-wrap gap-3 text-[11px]">
                 {batchMargins.map((b) => (
-                  <div key={b.region} className="rounded-md border px-2 py-1">
-                    <span className="text-muted-foreground">Partiets marginal {b.label.split(" (")[0]}: </span>
-                    <span className={`font-mono tabular-nums font-semibold ${b.marginPct < b.target ? "text-destructive" : "text-emerald-600"}`}>
-                      {fmt(b.marginPct, 1)} %
-                    </span>
-                    <span className="ml-1 text-muted-foreground">
-                      (intäkt {fmt(b.revenueExVat, 0)} kr / råvara {fmt(b.rawCost, 0)} kr)
-                    </span>
+                  <div key={b.region} className="rounded-md border px-2 py-1 leading-tight">
+                    <div className="text-muted-foreground">
+                      Partiet {b.label.split(" (")[0]} · mål {fmt(b.target, 0)} %
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">På råvara: </span>
+                      <span className="font-mono tabular-nums">{fmt(b.marginOnRawPct, 1)} %</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Ink. arbete: </span>
+                      <span
+                        className={`font-mono tabular-nums font-semibold ${
+                          b.marginInclWorkPct < b.target - 5
+                            ? "text-destructive"
+                            : b.marginInclWorkPct < b.target
+                            ? "text-amber-600"
+                            : "text-emerald-600"
+                        }`}
+                      >
+                        {fmt(b.marginInclWorkPct, 1)} %
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-muted-foreground">
+                      intäkt {fmt(b.revenueExVat, 0)} kr / råvara {fmt(b.rawCost, 0)} kr / arbete {fmt(b.surchargeCost, 0)} kr
+                    </div>
                   </div>
                 ))}
               </div>

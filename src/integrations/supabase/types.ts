@@ -2865,6 +2865,7 @@ export type Database = {
           retail_suggested: number | null
           shelf_life_days: number | null
           sku: string
+          species_group: string | null
           stock: number
           supplier_id: string | null
           unit: string
@@ -2889,6 +2890,7 @@ export type Database = {
           retail_suggested?: number | null
           shelf_life_days?: number | null
           sku: string
+          species_group?: string | null
           stock?: number
           supplier_id?: string | null
           unit?: string
@@ -2913,6 +2915,7 @@ export type Database = {
           retail_suggested?: number | null
           shelf_life_days?: number | null
           sku?: string
+          species_group?: string | null
           stock?: number
           supplier_id?: string | null
           unit?: string

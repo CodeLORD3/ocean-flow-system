@@ -1,6 +1,7 @@
 import * as XLSX from "xlsx";
 import { PRODUCT_CATEGORIES, normalizeCategoryKey } from "@/lib/productCategories";
 import { skuKey } from "@/lib/asciiFold";
+import { normalizeSpeciesGroup } from "@/lib/speciesGroups";
 
 export const IMPORT_COLUMNS = [
   "sku",
@@ -21,6 +22,7 @@ export const IMPORT_COLUMNS = [
   "active",
   "image_url",
   "latin_name",
+  "species_group",
 ] as const;
 
 export type ImportColumn = (typeof IMPORT_COLUMNS)[number];
@@ -46,6 +48,8 @@ export interface ParsedRow {
   image_url: string | null;
   /** null = kolumnen saknas eller är tom → befintligt värde lämnas orört */
   latin_name: string | null;
+  /** null = kolumnen saknas eller är tom → befintligt värde lämnas orört */
+  species_group: string | null;
 }
 
 export type DiffStatus = "new" | "changed" | "unchanged" | "error";
@@ -115,6 +119,11 @@ const HEADER_ALIASES: Record<string, ImportColumn> = {
   vetenskapligt_namn: "latin_name",
   latin: "latin_name",
   latinname: "latin_name",
+  artgrupp: "species_group",
+  artgrupper: "species_group",
+  art: "species_group",
+  speciesgroup: "species_group",
+  species: "species_group",
 };
 
 function normalizeHeader(raw: string): string | null {
@@ -233,6 +242,7 @@ export async function parseProductFile(file: File): Promise<ParseResult> {
       active: parseBool(get("active")),
       image_url: nullableStr(get("image_url")),
       latin_name: nullableStr(get("latin_name")),
+      species_group: normalizeSpeciesGroup(get("species_group")),
     };
   });
 
@@ -404,6 +414,7 @@ export function buildDiff({ rows, existing, categories, suppliers }: BuildDiffAr
     cmp("active", current.active !== false, row.active);
     cmp("image_url", current.image_url, row.image_url);
     if (row.latin_name !== null) cmp("latin_name", current.latin_name, row.latin_name);
+    if (row.species_group !== null) cmp("species_group", (current as any).species_group, row.species_group);
     cmp(
       "parent_sku",
       current.parent_product_id ? byId.get(current.parent_product_id)?.sku ?? "" : "",
@@ -439,6 +450,7 @@ export interface UpsertPayload {
   active: boolean;
   image_url: string | null;
   latin_name?: string | null;
+  species_group?: string | null;
   supplier_id?: string | null;
   parent_product_id?: string | null;
 }
@@ -462,9 +474,10 @@ export function toPayload(row: ParsedRow): UpsertPayload {
     image_url: row.image_url,
     // tom cell = ingen ändring: fältet utesluts helt ur payloaden
     ...(row.latin_name !== null ? { latin_name: row.latin_name } : {}),
+    ...(row.species_group !== null ? { species_group: row.species_group } : {}),
   };
 }
 
 export function buildTemplateCsv(): string {
-  return `${IMPORT_COLUMNS.join(",")}\nFS-045,Lax filé,Färsk Fisk,kg,120.00,162.00,199.00,Norge,Salmar,,7311234567890,0304,,5,,TRUE,https://exempel.se/bilder/lax-file.jpg,Salmo salar\n`;
+  return `${IMPORT_COLUMNS.join(",")}\nFS-045,Lax filé,Färsk Fisk,kg,120.00,162.00,199.00,Norge,Salmar,,7311234567890,0304,,5,,TRUE,https://exempel.se/bilder/lax-file.jpg,Salmo salar,lax\n`;
 }

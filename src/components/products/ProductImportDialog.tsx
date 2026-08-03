@@ -95,7 +95,7 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
       const { data, error } = await supabase
         .from("products")
         .select(
-          "id, sku, name, category, unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier_id, barcode, hs_code, weight_per_piece, shelf_life_days, parent_product_id, active, image_url, latin_name",
+          "id, sku, name, category, unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier_id, barcode, hs_code, weight_per_piece, shelf_life_days, parent_product_id, active, image_url, latin_name, species_group",
         );
       if (error) throw error;
       const existingRows = (data ?? []) as unknown as ExistingProduct[];
@@ -293,7 +293,7 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
     const { data, error } = await supabase
       .from("products")
       .select(
-        "sku, name, category, unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier_id, barcode, hs_code, weight_per_piece, shelf_life_days, parent_product_id, active, image_url, latin_name",
+        "sku, name, category, unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier_id, barcode, hs_code, weight_per_piece, shelf_life_days, parent_product_id, active, image_url, latin_name, species_group",
       )
       .order("category")
       .order("name");
@@ -323,6 +323,7 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
       active: p.active === false ? "FALSE" : "TRUE",
       image_url: (p as any).image_url ?? "",
       latin_name: (p as any).latin_name ?? "",
+      species_group: (p as any).species_group ?? "",
     }));
     const ws = XLSX.utils.json_to_sheet(rows, { header: [...IMPORT_COLUMNS] });
     const wb = XLSX.utils.book_new();
@@ -392,7 +393,7 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
             <div className="space-y-1">
               <p>
                 Obligatoriska kolumner: <code>sku</code>, <code>name</code>, <code>category</code>. Övriga kolumner:{" "}
-                <code>unit, cost_price, wholesale_price, retail_suggested, stock, origin, producer, supplier, hs_code, barcode, weight_per_piece, shelf_life_days, active, parent_sku, image_url, latin_name</code>.
+                <code>unit, cost_price, wholesale_price, retail_suggested, stock, origin, producer, supplier, hs_code, barcode, weight_per_piece, shelf_life_days, active, parent_sku, image_url, latin_name, species_group</code>.
                 Kolumnordningen spelar ingen roll och <code>stock</code> ignoreras alltid.
               </p>
               <p>

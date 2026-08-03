@@ -69,7 +69,18 @@ export interface DetailPriceResult {
   priceIncVat: number;
   /** Pris exkl moms räknat tillbaka från butikspriset */
   priceExVat: number;
-  /** Faktisk marginal (%) efter avrundning, påslaget räknas som intäkt */
+  /**
+   * Marginal på råvara (%): (pris exkl moms − råvarukostnad) / pris exkl moms.
+   * Förädlingspåslaget räknas här som intäkt.
+   */
+  marginOnRawPct: number;
+  /**
+   * Marginal inklusive arbete (%):
+   * (pris exkl moms − råvarukostnad − påslag) / pris exkl moms.
+   * Det här är talet som är jämförbart med bokföringen.
+   */
+  marginInclWorkPct: number;
+  /** @deprecated alias för marginOnRawPct */
   actualMarginPct: number;
   /** Effektivt marginalmål (%) efter marginalvikt */
   effectiveTargetPct: number;
@@ -92,7 +103,8 @@ export function calcDetailPrice(input: DetailPriceInput & { rawCostOverride?: nu
   const priceIncVatRaw = priceExVatRaw * vatFactor;
   const priceIncVat = roundUpToAllowedPrice(priceIncVatRaw);
   const priceExVat = vatFactor > 0 ? priceIncVat / vatFactor : 0;
-  const actualMarginPct = priceExVat > 0 ? ((priceExVat - rawCostPerKg) / priceExVat) * 100 : 0;
+  const marginOnRawPct = priceExVat > 0 ? ((priceExVat - rawCostPerKg) / priceExVat) * 100 : 0;
+  const marginInclWorkPct = priceExVat > 0 ? ((priceExVat - rawCostPerKg - surcharge) / priceExVat) * 100 : 0;
 
   return {
     rawCostPerKg,
@@ -101,24 +113,38 @@ export function calcDetailPrice(input: DetailPriceInput & { rawCostOverride?: nu
     priceIncVatRaw,
     priceIncVat,
     priceExVat,
-    actualMarginPct,
+    marginOnRawPct,
+    marginInclWorkPct,
+    actualMarginPct: marginOnRawPct,
     effectiveTargetPct: effTarget * 100,
   };
 }
 
 /**
- * Partiets samlade marginal: total intäkt exkl moms mot total råvarukostnad
- * för hela partiet (inköpspris × råvarukvantitet).
+ * Partiets samlade marginal: total intäkt exkl moms mot partiets kostnader.
+ *
+ *  - marginOnRawPct: bara råvarukostnaden räknas som kostnad
+ *  - marginInclWorkPct: råvarukostnad + förädlingspåslag (kr/kg × kg) räknas
+ *    som kostnad. Detta tal jämförs med regionens marginalmål.
  */
 export function batchMargin(params: {
   purchasePricePerKg: number;
   rawQuantity: number;
-  lines: { qty: number; priceExVat: number }[];
-}): { revenueExVat: number; rawCost: number; marginPct: number } {
+  lines: { qty: number; priceExVat: number; surchargePerKg?: number }[];
+}): {
+  revenueExVat: number;
+  rawCost: number;
+  surchargeCost: number;
+  marginOnRawPct: number;
+  marginInclWorkPct: number;
+} {
   const rawCost = (Number(params.purchasePricePerKg) || 0) * (Number(params.rawQuantity) || 0);
   const revenueExVat = params.lines.reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.priceExVat) || 0), 0);
-  const marginPct = revenueExVat > 0 ? ((revenueExVat - rawCost) / revenueExVat) * 100 : 0;
-  return { revenueExVat, rawCost, marginPct };
+  const surchargeCost = params.lines.reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.surchargePerKg) || 0), 0);
+  const marginOnRawPct = revenueExVat > 0 ? ((revenueExVat - rawCost) / revenueExVat) * 100 : 0;
+  const marginInclWorkPct =
+    revenueExVat > 0 ? ((revenueExVat - rawCost - surchargeCost) / revenueExVat) * 100 : 0;
+  return { revenueExVat, rawCost, surchargeCost, marginOnRawPct, marginInclWorkPct };
 }
 
 export const fmt = (n: number, decimals = 2) =>
@@ -159,9 +185,13 @@ export function isProcessedForm(form: string): boolean {
 }
 
 /**
- * Fördelar partiets totala råvarukostnad över styckdetaljerna.
- * Fördelningsnyckel = kg × marginalvikt, så att dyra detaljer (loin/rygg) bär
- * mer av råvarukostnaden än billiga (slag/bitar).
+ * Fördelar partiets totala råvarukostnad JÄMNT PER KILO över styckdetaljerna:
+ * total råvarukostnad / summa färdiga kilo. Alla detaljer får alltså samma
+ * kostpris per kg.
+ *
+ * Marginalvikten används medvetet INTE här — den påverkar bara det effektiva
+ * marginalmålet (se weightedTarget). Annars skulle vikten räknas två gånger och
+ * partiets marginal hamna långt över målet.
  *
  * Vid en enda detalj blir resultatet identiskt med inköpspris / utbyte.
  */
@@ -171,11 +201,7 @@ export function allocateRawCost(
   rawQtyKg: number,
 ): number[] {
   const totalRawCost = (Number(purchasePricePerKg) || 0) * (Number(rawQtyKg) || 0);
-  const keys = details.map((d) => Math.max(0, Number(d.qtyKg) || 0) * (Number(d.marginWeight) || 1));
-  const keySum = keys.reduce((a, b) => a + b, 0);
-  return details.map((d, i) => {
-    const qty = Number(d.qtyKg) || 0;
-    if (qty <= 0 || keySum <= 0) return 0;
-    return (totalRawCost * (keys[i] / keySum)) / qty;
-  });
+  const totalQty = details.reduce((s, d) => s + Math.max(0, Number(d.qtyKg) || 0), 0);
+  const perKg = totalQty > 0 ? totalRawCost / totalQty : 0;
+  return details.map((d) => ((Number(d.qtyKg) || 0) > 0 ? perKg : 0));
 }
