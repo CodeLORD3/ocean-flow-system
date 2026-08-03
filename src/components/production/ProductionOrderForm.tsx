@@ -246,6 +246,7 @@ export function ProductionOrderForm() {
       lines: priced.map((p) => ({
         qty: p.qty,
         priceExVat: p.byRegion.find((b) => b.region === r.region)?.priceExVat ?? 0,
+        surchargePerKg: p.surcharge,
       })),
     }),
   }));
