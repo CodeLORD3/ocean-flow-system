@@ -70,6 +70,8 @@ import { generateStockSheetPdf } from "@/lib/stockSheetPdf";
 import StockCountDialog, { type StockCountScope } from "@/components/inventory/StockCountDialog";
 import StockOverview from "@/components/inventory/StockOverview";
 import StockMovementsView from "@/components/inventory/StockMovementsView";
+import LotTraceabilityView from "@/components/inventory/LotTraceabilityView";
+
 import WasteDialog from "@/components/inventory/WasteDialog";
 
 
