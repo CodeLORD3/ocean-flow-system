@@ -652,12 +652,12 @@ function ReportSection({
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-medium text-muted-foreground">Partinummer från följesedeln</span>
               <span className="text-[10px] text-muted-foreground tabular-nums">
-                {lines.filter((l) => plausibleLots(l).length > 0).length} av {lines.length} rader
+                {lines.filter((l) => plausibleLots(l as any).length > 0).length} av {lines.length} rader
               </span>
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
               {lines.map((l) => {
-                const lots = plausibleLots(l);
+                const lots = plausibleLots(l as any);
                 const raw = ((l as any).lot_numbers ?? []).filter(Boolean) as string[];
                 return (
                   <div key={l.id} className="flex items-center gap-1.5 text-[11px] min-w-0">
