@@ -229,12 +229,30 @@ export function AuctionCalculator() {
                   <p className="text-[11px] text-muted-foreground">
                     {r.label.split(" (")[0]} · mål {fmt(r.target, 0)} %
                   </p>
-                  <p className="font-mono text-2xl font-semibold tabular-nums">{fmt(r.maxPricePerKg, 0)} kr/kg</p>
+                  <div className="flex flex-wrap items-end gap-4">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Partiet håller</p>
+                      <p className="font-mono text-2xl font-semibold tabular-nums">{fmt(r.maxPricePerKg, 2)} kr/kg</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Alla detaljer håller</p>
+                      <p className="font-mono text-2xl font-semibold tabular-nums">
+                        {fmt(r.maxPricePerKgAllDetails, 2)} kr/kg
+                      </p>
+                    </div>
+                  </div>
+                  {r.maxPricePerKgAllDetails < r.maxPricePerKg && (
+                    <p className="text-[10px] text-amber-600">
+                      Den billigaste detaljen är styrande — över {fmt(r.maxPricePerKgAllDetails, 2)} kr/kg hamnar minst en
+                      detalj under målet även om partiet håller.
+                    </p>
+                  )}
                   <p className="text-[10px] text-muted-foreground">
                     intäkt {fmt(r.revenueExVat, 0)} kr · tillåten kostnad {fmt(r.allowedTotalCost, 0)} kr · arbete{" "}
                     {fmt(r.surchargeCost, 0)} kr
                   </p>
                 </CardContent>
+
               </Card>
             ))}
           </div>
