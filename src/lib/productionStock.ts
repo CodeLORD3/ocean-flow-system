@@ -1,7 +1,8 @@
 import { recordMovement, currentBalance } from "@/lib/stockLedger";
+import { GROSSIST_FLYTANDE_ID } from "@/lib/locations";
 
 /** Grossist Flytande — lagerplatsen där råvara och tillverkade detaljer ligger. */
-export const GROSSIST_FLYTANDE_ID = "5da57ad6-f72c-4a84-9873-87174d194e10";
+export { GROSSIST_FLYTANDE_ID };
 
 /**
  * Lägger till kvantitet på en lagerplats via lagerrörelseloggen.
