@@ -44,8 +44,10 @@ import {
   CutModel,
   MODEL_MIN_PIECE_WEIGHT,
   detailFormLabel,
+  effectiveCutModel,
   modelForSpecies,
   normalizeDetailForm,
+  pickYieldRow,
 } from "@/lib/cutModels";
 import { SPECIES_GROUP_SUGGESTIONS } from "@/lib/speciesGroups";
 import { speciesKey } from "@/lib/asciiFold";
@@ -102,6 +104,8 @@ export function ProductionOrderForm() {
   const [rawSku, setRawSku] = useState("");
   const [species, setSpecies] = useState("");
   const [rawForm, setRawForm] = useState("hel");
+  /** Sortering på råvaran ("" = okänd). Styr både utbyte och styckningsmodell. */
+  const [grade, setGrade] = useState("");
   const [rawQty, setRawQty] = useState("");
   const [pieceWeight, setPieceWeight] = useState("");
   const [price, setPrice] = useState("");
@@ -145,11 +149,15 @@ export function ProductionOrderForm() {
 
   /* ── Artens styckningsmodell ─────────────────────────────── */
   const modelRow = cutModels.find((c) => speciesKey(c.species_group) === speciesKey(species));
-  const cutModel = (modelRow?.cut_model as CutModel) ?? modelForSpecies(species);
+  const baseCutModel = (modelRow?.cut_model as CutModel) ?? modelForSpecies(species);
+  const gradeLimit = (modelRow as any)?.grade_limit ?? null;
+  const cutModel = effectiveCutModel(baseCutModel, grade, gradeLimit);
+  const gradeForcedSingle = cutModel !== baseCutModel;
   const minPieceWeight =
     modelRow?.min_piece_weight_kg != null
       ? Number(modelRow.min_piece_weight_kg)
       : MODEL_MIN_PIECE_WEIGHT[cutModel] ?? null;
+
 
   const modelDetails = useMemo(() => {
     const rows = modelSplits.filter((s) => s.cut_model === cutModel);
@@ -240,16 +248,13 @@ export function ProductionOrderForm() {
   /* ── Föreslå detaljer utifrån modell och utbyte ───────────── */
   const suggest = () => {
     if (!species) return;
-    const rows = yields.filter((y) => speciesKey(y.species_group) === speciesKey(species) && y.from_form === rawForm);
     const isFilletRow = (toForm: string) =>
       toForm.includes("filé") || toForm.includes("sida") || toForm === "loin" || toForm.includes("stjärt");
-    const filletRow = rows
-      .filter((y) => isFilletRow(y.to_form))
-      .sort((a, b) => Number(b.yield_pct) - Number(a.yield_pct))[0];
+    const filletRow = pickYieldRow(yields as any, species, rawForm, grade, isFilletRow);
     if (!filletRow) {
       toast({
         title: "Ingen utbytesrad",
-        description: `Saknar utbyte för ${species} från "${rawForm}".`,
+        description: `Saknar utbyte för ${species} från "${rawForm}"${grade ? ` (sortering ${grade})` : ""}.`,
         variant: "destructive",
       });
       return;
@@ -645,6 +650,23 @@ export function ProductionOrderForm() {
               </Select>
               {species && (
                 <p className="text-[10px] text-muted-foreground">{CUT_MODEL_LABELS[cutModel]}</p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[11px]">Sortering</Label>
+              <Select value={grade || "okand"} onValueChange={(v) => setGrade(v === "okand" ? "" : v)}>
+                <SelectTrigger className="h-10 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="okand" className="text-xs">Okänd</SelectItem>
+                  {["1", "2", "3", "4", "5"].map((g) => (
+                    <SelectItem key={g} value={g} className="text-xs">{g}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {gradeForcedSingle && (
+                <p className="text-[10px] text-muted-foreground">
+                  Sortering {grade} styckas som hel filé
+                </p>
               )}
             </div>
             <div className="space-y-1">

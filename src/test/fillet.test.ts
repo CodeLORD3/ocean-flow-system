@@ -9,7 +9,7 @@ import {
   auctionMaxRawPrice,
 } from "@/lib/filletMath";
 
-import { CUT_MODEL_TEMPLATES, SPECIES_CUT_MODEL, hasCutModel, modelForSpecies, normalizeDetailForm } from "@/lib/cutModels";
+import { CUT_MODEL_TEMPLATES, SPECIES_CUT_MODEL, effectiveCutModel, hasCutModel, modelForSpecies, normalizeDetailForm, pickYieldRow } from "@/lib/cutModels";
 
 /* Torskpartiet i specen: 100 kg à 60 kr/kg, utbyte 47 %, loin_four 55/20/15/10 */
 const RAW_QTY = 100;
@@ -187,5 +187,39 @@ describe("species keys", () => {
     expect(modelForSpecies("långa")).toBe("loin_four");
     // Alla förslagsnycklar är redan normaliserade.
     for (const k of SPECIES_GROUP_KEYS) expect(k).toBe(speciesKey(k));
+  });
+});
+
+describe("sortering styr styckning och utbyte", () => {
+  const rows = [
+    { species_group: "torsk", from_form: "hel", to_form: "filé utan skinn", grade: "", yield_pct: 40 },
+    { species_group: "torsk", from_form: "hel", to_form: "filé utan skinn", grade: "1", yield_pct: 50 },
+    { species_group: "torsk", from_form: "hel", to_form: "filé utan skinn", grade: "4", yield_pct: 45 },
+    { species_group: "torsk", from_form: "rensad", to_form: "filé utan skinn", grade: "", yield_pct: 48 },
+  ];
+
+  it("sortering under gränsen behåller artens modell", () => {
+    expect(effectiveCutModel("loin_four", "1", 3)).toBe("loin_four");
+    expect(effectiveCutModel("loin_four", "2", 3)).toBe("loin_four");
+  });
+
+  it("sortering från gränsen och uppåt styckas som hel filé", () => {
+    expect(effectiveCutModel("loin_four", "3", 3)).toBe("single");
+    expect(effectiveCutModel("loin_four", "5", 3)).toBe("single");
+  });
+
+  it("okänd sortering eller saknad gräns ändrar inte modellen", () => {
+    expect(effectiveCutModel("loin_four", "", 3)).toBe("loin_four");
+    expect(effectiveCutModel("loin_four", "4", null)).toBe("loin_four");
+  });
+
+  it("utbytesraden för sorteringen går före den generella", () => {
+    expect(Number(pickYieldRow(rows as any, "torsk", "hel", "1")!.yield_pct)).toBe(50);
+    expect(Number(pickYieldRow(rows as any, "torsk", "hel", "4")!.yield_pct)).toBe(45);
+  });
+
+  it("saknas sorteringsrad används den generella raden", () => {
+    expect(Number(pickYieldRow(rows as any, "torsk", "hel", "2")!.yield_pct)).toBe(40);
+    expect(Number(pickYieldRow(rows as any, "torsk", "rensad", "3")!.yield_pct)).toBe(48);
   });
 });

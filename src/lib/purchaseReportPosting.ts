@@ -234,8 +234,11 @@ export function buildPostingPlan(
 }
 
 /**
- * Bokför planen: skapar partier med preliminärt pris, en inleveransrörelse per
- * parti mot Grossist Flytande, och kopplar raderna till sitt parti.
+ * Bokför planen i en enda databastransaktion: partier med preliminärt pris,
+ * en inleveransrörelse per parti mot Grossist Flytande och kopplade rader.
+ * Allt eller inget — vid fel skrivs ingenting. Interna partinummer sätts av
+ * databasen (IL-ÅÅÅÅ-NNNN); leverantörens partinummer sparas som
+ * supplier_lot_id och behöver därför inte vara unikt.
  */
 export async function postPurchaseReport(params: {
   reportId: string;
@@ -249,75 +252,35 @@ export async function postPurchaseReport(params: {
     throw new Error("Inga rader kunde bokföras.");
   }
 
-  const lotIds: string[] = [];
-  for (const lot of plan.lots) {
-    const { data: created, error } = await supabase
-      .from("lots")
-      .insert({
-        lot_number: lot.lotNumber,
-        product_id: lot.productId,
-        quantity_kg: lot.quantityKg,
-        best_before: lot.bestBefore,
-        catch_area: lot.catchArea,
-        catch_date_from: lot.catchDateFrom,
-        fishing_gear: lot.fishingGear,
-        vessel_name: lot.vesselName,
-        presentation: lot.presentation,
-        species_fao_code: lot.faoCode,
-        latin_name: lot.latinName,
-        unit_cost: lot.unitCost,
-        price_status: "preliminar",
-        traceability_required: true,
-        status: "aktiv",
-      } as any)
-      .select("id")
-      .single();
-    if (error) throw error;
+  const payload = plan.lots.map((lot) => ({
+    supplier_lot_number: lot.lotNumber,
+    product_id: lot.productId,
+    quantity_kg: lot.quantityKg,
+    unit_cost: lot.unitCost || null,
+    best_before: lot.bestBefore,
+    catch_area: lot.catchArea,
+    catch_date_from: lot.catchDateFrom,
+    fishing_gear: lot.fishingGear,
+    vessel_name: lot.vesselName,
+    presentation: lot.presentation,
+    fao_code: lot.faoCode,
+    latin_name: lot.latinName,
+    line_ids: lot.lineIds,
+    parent_line_id: lot.parentLineId,
+  }));
 
-    const lotId = created.id as string;
-    lotIds.push(lotId);
-
-    const movement = await recordMovement({
-      productId: lot.productId,
-      locationId: GROSSIST_FLYTANDE_ID,
-      quantityKg: lot.quantityKg,
-      movementType: "inleverans",
-      lotId,
-      unitCost: lot.unitCost || null,
-      referenceType: "purchase_report",
-      referenceId: reportId,
-      note: `Följesedel — parti ${lot.lotNumber}`,
-    });
-
-    // Raderna pekar på sitt parti; klubbslagen behålls som underrader.
-    const { error: lineErr } = await supabase
-      .from("purchase_report_lines")
-      .update({
-        lot_id: lotId,
-        movement_id: movement?.id ?? null,
-        parent_line_id: null,
-      } as any)
-      .in("id", lot.lineIds);
-    if (lineErr) throw lineErr;
-
-    const children = lot.lineIds.filter((id) => id !== lot.parentLineId);
-    if (children.length) {
-      const { error: childErr } = await supabase
-        .from("purchase_report_lines")
-        .update({ parent_line_id: lot.parentLineId } as any)
-        .in("id", children);
-      if (childErr) throw childErr;
-    }
+  const { data, error } = await (supabase as any).rpc("post_purchase_report", {
+    p_report_id: reportId,
+    p_location_id: GROSSIST_FLYTANDE_ID,
+    p_lots: payload,
+  });
+  if (error) {
+    throw new Error(error.message || "Bokföringen misslyckades. Inget har sparats.");
   }
 
-  const { error: reportErr } = await supabase
-    .from("purchase_reports")
-    .update({ posted_at: new Date().toISOString() } as any)
-    .eq("id", reportId);
-  if (reportErr) throw reportErr;
-
-  return { lotIds };
+  return { lotIds: (data as string[] | null) ?? [] };
 }
+
 
 /** Motbokar en tidigare bokförd rapport så saldot aldrig suddas ut. */
 export async function unpostPurchaseReport(reportId: string): Promise<void> {
@@ -360,7 +323,7 @@ export async function unpostPurchaseReport(reportId: string): Promise<void> {
     }
     await supabase
       .from("lots")
-      .update({ status: "avslutad", terminated_reason: "Följesedel avbokad" } as any)
+      .update({ status: "terminerad", terminated_reason: "Följesedel avbokad" } as any)
       .eq("id", lotId);
   }
 

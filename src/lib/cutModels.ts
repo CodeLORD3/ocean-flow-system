@@ -127,9 +127,50 @@ export function modelForSpecies(species: string): CutModel {
   return SPECIES_CUT_MODEL[speciesKey(species)] ?? "single";
 }
 
+/**
+ * Sorteringen avgör styckningen. Från och med `gradeLimit` (t.ex. 3 för torsk)
+ * är fisken för liten för fyrdelning och styckas som hel filé.
+ */
+export function effectiveCutModel(
+  baseModel: CutModel,
+  grade?: string | number | null,
+  gradeLimit?: number | null,
+): CutModel {
+  const g = Number(String(grade ?? "").trim());
+  const limit = Number(gradeLimit ?? 0);
+  if (limit > 0 && Number.isFinite(g) && g >= limit) return "single";
+  return baseModel;
+}
+
 /** Finns arten i modellregistret (efter normalisering)? */
 export function hasCutModel(species: string): boolean {
   return speciesKey(species) in SPECIES_CUT_MODEL;
+}
+
+/**
+ * Utbytesrad för art/form. En rad med matchande sortering går före den
+ * generella raden (grade = ''), som gäller alla sorteringar.
+ */
+export function pickYieldRow<T extends { species_group: string; from_form: string; to_form: string; grade?: string | null; yield_pct: number | string }>(
+  rows: T[],
+  species: string,
+  fromForm: string,
+  grade?: string | number | null,
+  isMatchingToForm: (toForm: string) => boolean = () => true,
+): T | null {
+  const g = String(grade ?? "").trim();
+  const candidates = rows.filter(
+    (r) =>
+      speciesKey(r.species_group) === speciesKey(species) &&
+      r.from_form === fromForm &&
+      isMatchingToForm(r.to_form),
+  );
+  const best = (list: T[]) => list.sort((a, b) => Number(b.yield_pct) - Number(a.yield_pct))[0] ?? null;
+  if (g) {
+    const exact = best(candidates.filter((r) => String(r.grade ?? "").trim() === g));
+    if (exact) return exact;
+  }
+  return best(candidates.filter((r) => !String(r.grade ?? "").trim()));
 }
 
 export { speciesKey };

@@ -27,8 +27,10 @@ import {
   CUT_MODEL_TEMPLATES,
   CutModel,
   detailFormLabel,
+  effectiveCutModel,
   modelForSpecies,
   normalizeDetailForm,
+  pickYieldRow,
 } from "@/lib/cutModels";
 import { SPECIES_GROUP_SUGGESTIONS } from "@/lib/speciesGroups";
 import { speciesKey } from "@/lib/asciiFold";
@@ -55,6 +57,8 @@ export function AuctionCalculator() {
   const [species, setSpecies] = useState("");
   const [rawQty, setRawQty] = useState("100");
   const [yieldPct, setYieldPct] = useState("");
+  /** Sortering på råvaran ("" = okänd). */
+  const [grade, setGrade] = useState("");
   const [rows, setRows] = useState<Row[]>([]);
   const [bid, setBid] = useState("");
 
@@ -67,7 +71,9 @@ export function AuctionCalculator() {
   );
 
   const modelRow = cutModels.find((c) => speciesKey(c.species_group) === speciesKey(species));
-  const cutModel = (modelRow?.cut_model as CutModel) ?? modelForSpecies(species);
+  const baseCutModel = (modelRow?.cut_model as CutModel) ?? modelForSpecies(species);
+  const cutModel = effectiveCutModel(baseCutModel, grade, (modelRow as any)?.grade_limit ?? null);
+  const gradeForcedSingle = cutModel !== baseCutModel;
   const vatPct = vatFor(vats, "Färsk Fisk");
   const surcharge = surchargeFor(surcharges, "Färsk Fisk");
   const rawQtyNum = parseFloat(rawQty) || 0;
@@ -86,15 +92,13 @@ export function AuctionCalculator() {
       .map((d) => ({ form: d.form, name: d.name, pctOfFillet: d.pctOfFillet }));
   }, [modelSplits, cutModel]);
 
-  // Utbyte förifylls från registret när arten byts.
+  // Utbyte förifylls från registret när art eller sortering byts.
   useEffect(() => {
     if (!species) return;
-    const y = yields
-      .filter((r) => speciesKey(r.species_group) === speciesKey(species) && r.from_form === "hel")
-      .sort((a, b) => Number(b.yield_pct) - Number(a.yield_pct))[0];
+    const y = pickYieldRow(yields as any, species, "hel", grade);
     if (y) setYieldPct(String(Number(y.yield_pct)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [species, yields.length]);
+  }, [species, grade, yields.length]);
 
   const build = () => {
     const fillet = (rawQtyNum * yieldNum) / 100;
@@ -176,6 +180,21 @@ export function AuctionCalculator() {
                 </SelectContent>
               </Select>
               {species && <p className="text-[10px] text-muted-foreground">{CUT_MODEL_LABELS[cutModel]}</p>}
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[11px]">Sortering</Label>
+              <Select value={grade || "okand"} onValueChange={(v) => setGrade(v === "okand" ? "" : v)}>
+                <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="okand" className="text-xs">Okänd</SelectItem>
+                  {["1", "2", "3", "4", "5"].map((g) => (
+                    <SelectItem key={g} value={g} className="text-xs">{g}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {gradeForcedSingle && (
+                <p className="text-[10px] text-muted-foreground">Styckas som hel filé</p>
+              )}
             </div>
             <div className="space-y-1">
               <Label className="text-[11px]">Råvara (kg)</Label>
