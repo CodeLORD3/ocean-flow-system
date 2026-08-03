@@ -1,67 +1,99 @@
-# Systemåterställning: import, partinummer, atomisk bokföring, lagervärde
+# Systemåterställning: import, partinummer, atomisk bokföring, utbyten per sortering, NRV
 
-Körs i din ordning. Varje steg avslutas med ett verifieringsutdrag ur databasen innan nästa steg börjar.
+Körs i din ordning. Varje steg avslutas med ett verifieringsutdrag ur databasen innan nästa steg börjar. Inga tal skrivs om för att matcha en förväntan — utfallet redovisas som det blir.
 
-## Utgångsläge (verifierat nu)
+## Utgångsläge (verifierat)
 
-- Ny fil `produkter_import_KLAR-2.xlsx`: 762 rader, 21 kolumner. `species_group` och `fao_code` ifyllda på samma 511 rader. `fao_code` ligger direkt efter `species_group`.
-- Importeraren läser redan `latin_name`, `species_group` och `image_url`, men saknar `fao_code`.
-- Smutsigt läge i databasen: två partier med `lot_number` `2` och `3` skapade 17:54 med tillhörande lagerrörelser, medan rapportens `posted_at` fortfarande är NULL.
-- Kraschen kommer av att radernas `lot_numbers` (kollital som "2" och "3") användes som unik nyckel i `lots.lot_number`.
+- `produkter_import_KLAR-2.xlsx`: 762 rader, 21 kolumner. `species_group` och `fao_code` ifyllda på samma 511 rader.
+- Importeraren läser `latin_name`, `species_group`, `image_url` men saknar `fao_code`.
+- Smutsigt läge: två partier med `lot_number` `2` och `3` skapade 17:54 med lagerrörelser, medan rapportens `posted_at` är NULL. Orsak: radernas kollital användes som unik nyckel i `lots.lot_number`.
+- `species_cut_models` styr styckning på **vikt**, inte sortering: torsk och övriga rundfiskar har `cut_model = loin_four` med `min_piece_weight_kg = 3`. Ingen gradkolumn finns.
+- `yields` har `is_estimate` och `calibrated_count`, men **ingen kolumn för sortering**.
+- `detail_prices` torsk `butik_goteborg`: rygg 698, benfri filé 249, slag 129, kontrarygg 398. **Ingen rad för hel filé.**
+- `marulk` saknar `hel`-rad; endast `rensad stjärt` 65 procent, uppmätt.
 
 ## Steg 1 — Importera om produktfilen
 
-- Lägg till `fao_code` i importerarens kolumnmappning.
-- Lägg till varning i torrkörningen när en förväntad kolumn saknas i filen, så att en tystnad som förra gången inte kan upprepas.
-- Kör importen med `sku` som nyckel, uppdaterande.
-- Verifiering: antal produkter med ifylld `species_group` ska bli 511, med `fao_code` 511, och antal aktiva utan artgrupp ska stämma mot filen.
+- `fao_code` läggs till i kolumnmappningen.
+- Torrkörningen varnar när en förväntad kolumn saknas i filen, så en tystnad som förra gången inte kan upprepas.
+- Import med `sku` som nyckel, uppdaterande.
+- Verifiering: 511 produkter med `species_group`, 511 med `fao_code`.
 
 ## Steg 2 — Rätta partinummerläsningen
 
-- Skärp tolkningen av följesedeln så att GFA:s format `10012.NNNNNNN` läses som partinummer och rena kollital inte gör det.
-- Partinummer från leverantören sparas i `lots.supplier_lot_id`, aldrig i `lots.lot_number`.
+- GFA:s format `10012.NNNNNNN` läses som partinummer, rena kollital gör det inte.
+- Leverantörens nummer sparas i `lots.supplier_lot_id`, aldrig i `lots.lot_number`.
 - Verifiering: läs om FS_2026-07-28 och visa partinumren per rad.
 
 ## Steg 3 — Atomisk bokföring och egna partinummer
 
-- `lot_number` genereras i databasen via en sekvens, inte i klienten.
-- Hela bokföringen flyttas till en databasfunktion så att partier, rörelser och `posted_at` sätts i samma transaktion. Avbryts något sparas ingenting.
+- `lot_number` genereras av en databassekvens, inte i klienten.
+- Bokföringen flyttas till en databasfunktion: partier, rörelser och `posted_at` i samma transaktion. Avbryts något sparas ingenting.
 - Felmeddelanden på svenska.
-- Städa bort de två partierna från 17:54 med tillhörande rörelser innan något nytt bokförs.
-- Test: bokför samma rapport två gånger. Andra försöket ska nekas med tydligt svenskt meddelande och inte lämna spår.
+- De två partierna från 17:54 städas bort med tillhörande rörelser innan något nytt bokförs.
+- Test: bokför samma rapport två gånger. Andra försöket nekas och lämnar inga spår.
 
 ## Steg 4 — Bind rapporterna till leverantör
 
-- Sätt `supplier_id` och `document_date` på rapporter som saknar dem, utifrån dokumentets uppgifter.
+- `supplier_id` och `document_date` sätts på rapporter som saknar dem, utifrån dokumentets uppgifter.
 - Verifiering: antal rapporter utan leverantörskoppling före och efter.
 
 ## Steg 5 — Bokför FS-2026-07-28
 
-- Kör bokföringen skarpt.
-- Verifiering: skapade partier med både internt `lot_number` och `supplier_lot_id`, antal lagerrörelser, samt att `posted_at` är satt.
+- Verifiering: skapade partier med både internt `lot_number` och `supplier_lot_id`, antal lagerrörelser, `posted_at` satt.
 
-## Steg 6 — Lagervärde från avg_cost
+## Steg 6 — Utbyten för rensad råvara, per sortering
 
-- Lagervärdet ska räknas från partiernas `avg_cost`, inte från fasta kostpriser.
-- Därefter valideringsfallet: tillverkningsorder på torsk, 29 kg à 146 kr.
+`yields` utökas med en sorteringskolumn. NULL betyder artens grundvärde och är fallbacken när sorteringsraden saknas — tillverkningsordern markerar då att grundvärdet användes.
 
-### Beslut som behövs innan steg 6
+Befintliga `hel`-rader lämnas orörda. Alla nya rader får `is_estimate = true` och kalibreras mot `yield_actuals` när tre partier vägts.
 
-Utbytestabellen har idag för torsk endast två rader, båda från hel råvara: filé med skinn 47 procent, filé utan skinn 40 procent. Det finns ingen rad för rensad råvara, vilket är den form torsken kom in i. Ditt testfall räknar med 55 procent. NRV-utfallet kan alltså inte träffa de förväntade talen förrän utbytet är bestämt. Jag rättar inte utbytesdata på eget bevåg — säg vilket som gäller:
+Rensad till filé utan skinn, per sortering:
 
-1. Ny rad rensad till filé utan skinn 55 procent, och 40 procent från hel lämnas orörd.
-2. Befintlig rad hel till filé utan skinn rättas från 40 till 55 procent.
-3. 40 procent är rätt, och jag redovisar de tal som faktiskt kommer ut.
+```text
+torsk   grad 1  50   grad 2  49   grad 3  47   grad 4  45   grad 5  43
+kolja   grad 1  48   grad 2  46   grad 3  44   grad 4  42
+sej     grad 1  47   grad 2  45   grad 3  43   grad 4  41
+```
 
-## Steg 7 — Ta bort useUpdateStock
+Artgrundvärden för rensad, utan sortering: torsk 48, kolja 46, sej 45.
 
-- Den skriver direkt mot `products.stock` och blockeras redan av spärren, alltså död kod. Tas bort tillsammans med anropsställen.
-- Verifiering: sökning som visar noll återstående träffar, plus att testsviten fortsatt går igenom.
+Övriga arter får en rensad-rad satt till hel-värdet delat med 0,85, avrundat till heltal: kummel, langa, rodtunga, piggvar, slatvar, sjotunga, rodspatta. **Marulk utesluts** — arten har ingen hel-rad att räkna från, bara en uppmätt `rensad stjärt` på 65 procent som inte ska skrivas över. Jag redovisar de framräknade procenten per art innan de skrivs.
+
+### Sortering till styckningsmodell
+
+`species_cut_models` avgör idag på vikt, inte grad. Din regel — grad 1 och 2 ger `loin_four`, grad 3 och högre ger `single` — måste därför byggas in som en uttalad gradgräns istället för att härledas ur viktgränsen. Jag lägger en gradgräns i modellen och behåller viktgränsen som fallback när sortering saknas på partiet.
+
+## Steg 7 — Prissättning vid single och hel filé
+
+- `cut_form = 'hel filé'` läggs in i `detail_prices` för arter med `cut_model = single`, markerade som pris saknas till värdet är satt.
+- När modellen är `single` visar gränssnittet inte en tabell med en rad och 100 procents intäktsandel, utan kostnad per kg, pris och marginal direkt. Formeln är oförändrad.
+
+## Steg 8 — Lagervärde från avg_cost och verifieringsfall
+
+Lagervärdet räknas från partiernas `avg_cost`, inte från fasta kostpriser.
+
+**Fall A, loin_four:** torsk 29 kg à 146 kr, utbyte 48 procent, uppdelning 55/20/15/10, påslag 35 kr/kg, moms 6 procent.
+
+Här behövs ett beslut. Dina förväntade tal bygger på priserna 798/249/198/398, men databasen har rygg 698 och slag 129. Intäktsandelarna och därmed NRV-fördelningen blir andra med databasens priser, och partimarginalen lägre än de 35 procent du räknar med. Jag kör inte förbi det tysta valet:
+
+1. Kör mot databasens priser (698/249/129/398) och redovisa utfallet som det blir.
+2. Uppdatera `detail_prices` till 798 och 198 först, eftersom det är den prislista som gäller, och kör därefter.
+
+**Fall B, single:** torsk 4 rensad, 35 kg à 89 kr/kg, GFA 2026-07-23, parti 10012.6121679, utbyte 45 procent, påslag 35 kr/kg, moms 6 procent. Förväntat: filé 15,750 kg, kostnad 197,78 kr/kg, med påslag 232,78 kr, butikspris 449 kr inkl moms, grossist 298,44 kr ex moms.
+
+Båda fallen redovisas sida vid sida så att skillnaden mellan grad 1 och grad 4 för samma art syns.
+
+## Steg 9 — Ta bort useUpdateStock
+
+- Skriver direkt mot `products.stock`, blockeras redan av spärren, alltså död kod. Tas bort med anropsställen.
+- Verifiering: noll återstående träffar, testsviten går igenom.
 
 ## Tekniska detaljer
 
 - `src/lib/productImport.ts`: `fao_code` i mappningen, varning för saknade kolumner i torrkörning.
-- Migration: sekvens för `lot_number`, databasfunktion för bokföring, städning av de två felaktiga partierna.
-- `src/lib/purchaseReportPosting.ts`: anropar databasfunktionen istället för att bygga skrivningar radvis.
-- `src/pages/PurchaseReporting.tsx`: knappen kopplas till det nya anropet, partinumren visas per rad.
+- Migrationer: sekvens för `lot_number`; databasfunktion för bokföring; städning av de två felaktiga partierna; sorteringskolumn på `yields` plus de nya raderna; gradgräns i `species_cut_models`; `hel filé` i `detail_prices`.
+- `src/lib/purchaseReportPosting.ts`: anropar databasfunktionen istället för radvisa skrivningar.
+- `src/pages/PurchaseReporting.tsx`: knappen mot det nya anropet, partinummer per rad.
+- Utbytesuppslag: sortering först, artgrundvärde som fallback med markering i tillverkningsordern.
 - `src/hooks/useProducts.ts`: `useUpdateStock` bort.
