@@ -52,27 +52,81 @@ export function useCreateIncomingDelivery() {
       }).select().single();
       if (error) throw error;
 
-      const lines = params.lines.map(l => ({
-        delivery_id: del.id,
-        product_id: l.product_id,
-        quantity: l.quantity,
-        unit_cost: l.unit_cost,
-        batch_number: l.batch_number,
-        best_before: l.best_before,
-        redskapskategori: l.redskapskategori ?? null,
-        upptinad: l.upptinad ?? false,
-        faktiskt_fangstomrade: l.faktiskt_fangstomrade ?? null,
-      }));
-      const { error: lineErr } = await supabase.from("incoming_delivery_lines").insert(lines);
-      if (lineErr) throw lineErr;
+      // Mållagerplats för inleveransen: Grossist Flytande (fallback: ingen lagerbokning)
+      const { data: gfLocs } = await supabase
+        .from("storage_locations")
+        .select("id")
+        .ilike("name", "Grossist Flytande")
+        .limit(1);
+      const targetLocationId: string | null = gfLocs?.[0]?.id ?? null;
 
-      // Increase stock for each product
-      for (const line of params.lines) {
-        const { data: prod } = await supabase.from("products").select("stock").eq("id", line.product_id).single();
-        if (prod) {
-          await supabase.from("products").update({ stock: Number(prod.stock) + line.quantity }).eq("id", line.product_id);
+      // Ett parti per inleveransrad — grunden för spårbarhet
+      const staffId = await currentStaffId();
+      const movements: StockMovementInput[] = [];
+
+      for (let i = 0; i < params.lines.length; i++) {
+        const l = params.lines[i];
+        const { data: prod } = await supabase
+          .from("products")
+          .select("latin_name, fao_code, name, traceability_exempt")
+          .eq("id", l.product_id)
+          .maybeSingle();
+
+        const { data: lot, error: lotErr } = await supabase
+          .from("lots")
+          .insert({
+            lot_number: `${deliveryNumber}-${String(i + 1).padStart(2, "0")}`,
+            supplier_lot_id: l.batch_number || null,
+            product_id: l.product_id,
+            supplier_id: params.supplier_id,
+            species_fao_code: (prod as any)?.fao_code ?? null,
+            latin_name: (prod as any)?.latin_name ?? null,
+            commercial_name: (prod as any)?.name ?? null,
+            catch_area: l.faktiskt_fangstomrade ?? null,
+            fishing_gear: l.redskapskategori ?? null,
+            is_thawed: l.upptinad ?? false,
+            best_before: l.best_before || null,
+            quantity_kg: l.quantity,
+            unit_cost: l.unit_cost,
+            traceability_required: !(prod as any)?.traceability_exempt,
+            created_by: staffId,
+          })
+          .select("id")
+          .single();
+        if (lotErr) throw lotErr;
+
+        const { error: lineErr } = await supabase.from("incoming_delivery_lines").insert({
+          delivery_id: del.id,
+          product_id: l.product_id,
+          quantity: l.quantity,
+          unit_cost: l.unit_cost,
+          batch_number: l.batch_number,
+          best_before: l.best_before,
+          redskapskategori: l.redskapskategori ?? null,
+          upptinad: l.upptinad ?? false,
+          faktiskt_fangstomrade: l.faktiskt_fangstomrade ?? null,
+          lot_id: lot!.id,
+          location_id: targetLocationId,
+        });
+        if (lineErr) throw lineErr;
+
+        if (targetLocationId && l.quantity > 0) {
+          movements.push({
+            productId: l.product_id,
+            locationId: targetLocationId,
+            lotId: lot!.id,
+            quantityKg: l.quantity,
+            movementType: "inleverans",
+            unitCost: l.unit_cost,
+            referenceType: "incoming_delivery",
+            referenceId: del.id,
+            note: `Inleverans ${deliveryNumber}`,
+          });
         }
       }
+
+      if (movements.length) await recordMovements(movements);
+
 
       await logActivity({
         action_type: "create",
