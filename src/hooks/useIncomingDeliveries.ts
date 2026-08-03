@@ -54,13 +54,10 @@ export function useCreateIncomingDelivery() {
       }).select().single();
       if (error) throw error;
 
-      // Mållagerplats för inleveransen: Grossist Flytande (fallback: ingen lagerbokning)
-      const { data: gfLocs } = await supabase
-        .from("storage_locations")
-        .select("id")
-        .ilike("name", "Grossist Flytande")
-        .limit(1);
-      const targetLocationId: string | null = gfLocs?.[0]?.id ?? null;
+      // Mållagerplats för inleveransen: Grossist Flytande, uppslaget på id
+      // eftersom sex lagerplatser bär samma namn.
+      const targetLocationId: string | null = GROSSIST_FLYTANDE_ID;
+
 
       // Ett parti per inleveransrad — grunden för spårbarhet
       const staffId = await currentStaffId();
