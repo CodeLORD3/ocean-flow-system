@@ -1269,22 +1269,33 @@ export default function Inventory() {
         </div>
       </div>
 
-      {/* Vyväxling: samlad lagerbild (ny look) vs. per lagerplats (detaljvy) */}
-      <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1 w-fit">
-        {[
-          { v: "overview" as const, l: "Samlad lagerbild" },
-          { v: "locations" as const, l: "Per lagerplats" },
-        ].map((o) => (
-          <button
-            key={o.v}
-            onClick={() => setViewMode(o.v)}
-            className={`px-3 py-1.5 text-sm font-semibold rounded-md transition-colors ${
-              viewMode === o.v ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"
-            }`}
-          >
-            {o.l}
-          </button>
-        ))}
+      {/* Vyväxling: samlad lagerbild (ny look) vs. per lagerplats (detaljvy) vs. rörelser */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1 w-fit">
+          {[
+            { v: "overview" as const, l: "Samlad lagerbild" },
+            { v: "locations" as const, l: "Per lagerplats" },
+            { v: "movements" as const, l: "Lagerrörelser" },
+          ].map((o) => (
+            <button
+              key={o.v}
+              onClick={() => setViewMode(o.v)}
+              className={`px-3 py-1.5 text-sm font-semibold rounded-md transition-colors ${
+                viewMode === o.v ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              {o.l}
+            </button>
+          ))}
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 gap-1 text-xs"
+          onClick={() => setWasteOpen(true)}
+        >
+          <Trash2 className="h-3 w-3" /> Bokför svinn
+        </Button>
       </div>
 
       {viewMode === "overview" && (
@@ -1296,6 +1307,15 @@ export default function Inventory() {
           onLineAction={handleOverviewAction}
         />
       )}
+
+      {viewMode === "movements" && (
+        <StockMovementsView
+          locationIds={(stockByLocation as any[]).map((l: any) => l.id).filter(Boolean)}
+          currency={localCurrency}
+        />
+      )}
+
+
 
       {viewMode === "locations" && (
       <>
