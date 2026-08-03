@@ -27,8 +27,10 @@ import {
   CUT_MODEL_TEMPLATES,
   CutModel,
   detailFormLabel,
+  effectiveCutModel,
   modelForSpecies,
   normalizeDetailForm,
+  pickYieldRow,
 } from "@/lib/cutModels";
 import { SPECIES_GROUP_SUGGESTIONS } from "@/lib/speciesGroups";
 import { speciesKey } from "@/lib/asciiFold";
