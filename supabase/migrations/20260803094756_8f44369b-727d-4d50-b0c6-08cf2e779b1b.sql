@@ -1,0 +1,43 @@
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS species_group text;
+CREATE INDEX IF NOT EXISTS idx_products_species_group ON public.products (species_group);
+
+INSERT INTO public.yields (species_group, from_form, to_form, yield_pct, is_estimate, note) VALUES
+('hälleflundra','urtagen utan huvud','filé utan skinn',65,true,'Branschvärde'),
+('blåkveite','urtagen utan huvud','filé utan skinn',60,true,'Branschvärde'),
+('rödspätta','hel','filé utan skinn',45,true,'Branschvärde'),
+('sjötunga','hel','filé utan skinn',45,true,'Branschvärde'),
+('rödtunga','hel','filé utan skinn',42,true,'Branschvärde'),
+('slätvar','hel','filé utan skinn',45,true,'Branschvärde'),
+('sillflundra','hel','filé utan skinn',42,true,'Branschvärde'),
+('långa','hel','filé utan skinn',42,true,'Branschvärde'),
+('gös','hel','filé utan skinn',42,true,'Branschvärde'),
+('gädda','hel','filé utan skinn',40,true,'Branschvärde'),
+('havsöring','hel','sida med skinn',58,true,'Branschvärde'),
+('regnbåge','hel','sida med skinn',58,true,'Branschvärde'),
+('röding','hel','sida med skinn',55,true,'Branschvärde'),
+('stillahavslax','hel','sida med skinn',55,true,'Branschvärde'),
+('svärdfisk','hel','loin',55,true,'Branschvärde'),
+('blåfenad-tonfisk','hel','loin',55,true,'Branschvärde'),
+('bläckfisk','rensad','säljbar',65,true,'Branschvärde'),
+('fjärsing','hel','filé utan skinn',35,true,'Branschvärde'),
+('havskräfta','hel','säljbar',90,false,'Bortsortering, ej kokförlust'),
+('signalkräfta','hel','säljbar',100,false,'Säljs som köpt'),
+('flodkräfta','hel','säljbar',100,false,'Säljs som köpt'),
+('räka-nordhav','hel','säljbar',100,false,'Säljs som köpt'),
+('räka-nordhav','hel','kött',40,true,'Handskalade räkor'),
+('vannameiräka','hel','säljbar',100,false,'Säljs som köpt'),
+('tigerräka','hel','säljbar',100,false,'Säljs som köpt'),
+('argentinsk-rödräka','hel','säljbar',100,false,'Säljs som köpt'),
+('snökrabba','hel','säljbar',100,false,'Säljs hel'),
+('snökrabba','hel','kött',25,true,'Rensning'),
+('blåmussla','hel','säljbar',100,false,'Säljs hel'),
+('blåmussla','hel','kött',25,true,'Rensning'),
+('grönmussla','hel','säljbar',100,false,'Säljs hel'),
+('hjärtmussla','hel','säljbar',100,false,'Säljs hel'),
+('strandsnäcka','hel','säljbar',100,false,'Säljs som köpt'),
+('valthornssnäcka','hel','säljbar',100,false,'Säljs som köpt')
+ON CONFLICT (species_group, from_form, to_form) DO UPDATE
+SET yield_pct = EXCLUDED.yield_pct,
+    is_estimate = EXCLUDED.is_estimate,
+    note = EXCLUDED.note,
+    updated_at = now();
