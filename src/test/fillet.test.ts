@@ -7,6 +7,8 @@ import {
   batchMargin,
   priceByNrv,
   auctionMaxRawPrice,
+  priceByScaleFactor,
+  scaleFactorOutsideBand,
 } from "@/lib/filletMath";
 
 import { CUT_MODEL_TEMPLATES, SPECIES_CUT_MODEL, effectiveCutModel, hasCutModel, modelForSpecies, normalizeDetailForm, pickYieldRow } from "@/lib/cutModels";
