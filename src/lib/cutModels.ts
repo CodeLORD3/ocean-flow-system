@@ -1,3 +1,4 @@
+import { speciesKey } from "@/lib/asciiFold";
 /**
  * Styckningsmodeller per art.
  *
@@ -62,13 +63,18 @@ export const MODEL_MIN_PIECE_WEIGHT: Partial<Record<CutModel, number>> = {
   loin_four: 3,
 };
 
-/** Artgrupp → modell, fallback när databasen saknar rad. */
+/**
+ * Artgrupp → modell, fallback när databasen saknar rad.
+ * Nycklarna är ASCII-normaliserade (speciesKey): å/ä → a, ö → o. Uppslagning
+ * sker alltid via modelForSpecies() som normaliserar sin indata på samma sätt,
+ * så både "långa" och "langa" hittar rätt modell.
+ */
 export const SPECIES_CUT_MODEL: Record<string, CutModel> = {
   torsk: "loin_four",
   sej: "loin_four",
   kolja: "loin_four",
   kummel: "loin_four",
-  långa: "loin_four",
+  langa: "loin_four",
   lubb: "loin_four",
   havskatt: "loin_four",
   kolfisk: "loin_four",
@@ -76,23 +82,23 @@ export const SPECIES_CUT_MODEL: Record<string, CutModel> = {
   kapkummel: "loin_four",
 
   tonfisk: "loin_whole",
-  "blåfenad-tonfisk": "loin_whole",
-  svärdfisk: "loin_whole",
+  "blafenad-tonfisk": "loin_whole",
+  svardfisk: "loin_whole",
   seriola: "loin_whole",
 
   lax: "salmon_side",
-  regnbåge: "salmon_side",
-  havsöring: "salmon_side",
-  röding: "salmon_side",
+  regnbage: "salmon_side",
+  havsoring: "salmon_side",
+  roding: "salmon_side",
 
-  hälleflundra: "flatfish",
-  blåkveite: "flatfish",
+  halleflundra: "flatfish",
+  blakveite: "flatfish",
   piggvar: "flatfish",
-  slätvar: "flatfish",
-  rödspätta: "flatfish",
-  sjötunga: "flatfish",
+  slatvar: "flatfish",
+  rodspatta: "flatfish",
+  sjotunga: "flatfish",
   bergtunga: "flatfish",
-  rödtunga: "flatfish",
+  rodtunga: "flatfish",
   sillflundra: "flatfish",
 
   marulk: "tail_only",
@@ -118,5 +124,12 @@ export function detailFormLabel(form: string): string {
 }
 
 export function modelForSpecies(species: string): CutModel {
-  return SPECIES_CUT_MODEL[(species || "").trim().toLowerCase()] ?? "single";
+  return SPECIES_CUT_MODEL[speciesKey(species)] ?? "single";
 }
+
+/** Finns arten i modellregistret (efter normalisering)? */
+export function hasCutModel(species: string): boolean {
+  return speciesKey(species) in SPECIES_CUT_MODEL;
+}
+
+export { speciesKey };

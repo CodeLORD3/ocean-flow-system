@@ -31,6 +31,7 @@ import {
   normalizeDetailForm,
 } from "@/lib/cutModels";
 import { SPECIES_GROUP_SUGGESTIONS } from "@/lib/speciesGroups";
+import { speciesKey } from "@/lib/asciiFold";
 
 interface Row {
   form: string;
@@ -65,7 +66,7 @@ export function AuctionCalculator() {
     [cutModels, yields],
   );
 
-  const modelRow = cutModels.find((c) => c.species_group.toLowerCase() === species.toLowerCase());
+  const modelRow = cutModels.find((c) => speciesKey(c.species_group) === speciesKey(species));
   const cutModel = (modelRow?.cut_model as CutModel) ?? modelForSpecies(species);
   const vatPct = vatFor(vats, "Färsk Fisk");
   const surcharge = surchargeFor(surcharges, "Färsk Fisk");
@@ -89,7 +90,7 @@ export function AuctionCalculator() {
   useEffect(() => {
     if (!species) return;
     const y = yields
-      .filter((r) => r.species_group === species && r.from_form === "hel")
+      .filter((r) => speciesKey(r.species_group) === speciesKey(species) && r.from_form === "hel")
       .sort((a, b) => Number(b.yield_pct) - Number(a.yield_pct))[0];
     if (y) setYieldPct(String(Number(y.yield_pct)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -101,7 +102,7 @@ export function AuctionCalculator() {
       modelDetails.map((m) => {
         const ref = detailPrices.find(
           (d) =>
-            d.species_group.toLowerCase() === species.toLowerCase() &&
+            speciesKey(d.species_group) === speciesKey(species) &&
             normalizeDetailForm(d.detail_form) === normalizeDetailForm(m.form),
         );
         const last = Number(ref?.last_set_price) || 0;

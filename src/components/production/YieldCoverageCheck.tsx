@@ -1,3 +1,4 @@
+import { speciesKey } from "@/lib/asciiFold";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,12 +35,12 @@ export function YieldCoverageCheck() {
       if (pErr) throw pErr;
       if (yErr) throw yErr;
 
-      const covered = new Set((yields ?? []).map((y) => String(y.species_group).trim().toLowerCase()));
+      const covered = new Set((yields ?? []).map((y) => speciesKey(y.species_group)));
       const map = new Map<string, { sku: string; name: string }[]>();
       const without: { sku: string; name: string }[] = [];
 
       for (const p of products ?? []) {
-        const g = String((p as any).species_group ?? "").trim().toLowerCase();
+        const g = speciesKey((p as any).species_group);
         const entry = { sku: p.sku as string, name: p.name as string };
         if (!g) {
           without.push(entry);
