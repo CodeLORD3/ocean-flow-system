@@ -1,43 +1,23 @@
-# Luckor i inleverans, pris, lager och Filé/Tillverkning
+# Underlag till Claude: kravgranskning av inleverans, lager, pris och tillverkning
 
-Genomgång av koden mot hur branschsystem för fisk (Wisefish, inecta, Loop ERP, SeafSoft) bygger samma flöden. Nedan är verifierade luckor plus förslag i prioritetsordning.
+Målet är en fil du kan klistra in hos Claude, som i sin tur returnerar ett komplett och exekverbart prompt tillbaka till mig. Filen ska både beskriva vad systemet gör idag och ställa de frågor som får Claude att hitta luckorna.
 
-## Verifierat i koden idag
+## Vad som skapas
 
-- Leverantörsinleveransen (`useIncomingDeliveries`) skriver bara till `products.stock` (ett globalt tal) och till inleveransraderna. Den skapar ingen rad i `product_stock_locations`, så batchnummer och bäst-före från inleveransen hamnar aldrig på en lagerplats.
-- Butiksmottagningen (`Receiving.tsx`) gör det motsatta: den skriver `expiry_date` och ankomstdatum direkt på `product_stock_locations`. Två parallella lagerspår som inte möts.
-- Det finns ingen transaktionslogg för lager. I databasen finns bara `deleted_stock_log`; alla plus och minus skrivs som direkta uppdateringar av `quantity` (`productionStock.ts`, `stockTransfer.ts`, `StockCountDialog`). Går inte att svara på "varför ändrades saldot".
-- Lagerinventeringen sätter nytt saldo rakt över det gamla utan att spara differensen som ett inventeringsresultat.
-- Prissättningen (`Pricing.tsx`) räknar marginal produkt för produkt mot `cost_price`; den använder inte det viktade snittkostpriset som faktiskt ligger på lagerplatsen.
+En fil, `/mnt/documents/claude-kravgranskning-prompt.md`, med följande delar:
 
-## Föreslagna åtgärder
+1. **Roll och uppgift till Claude** — agera som lösningsarkitekt för fisk- och skaldjursgrossist med butikskedja, och returnera ett färdigt byggprompt till Lovable, inte en diskussion.
+2. **Nulägesbeskrivning** — kort men exakt: produktregister med föräldrar och varianter, kategorier och SKU-mönster, inleverans från leverantör, butiksmottagning av följesedel, lagerplatser med sublager per kategori, inventering via lagerlapp, prissättning med marginal per butik och region, Filé/Tillverkning med utbyten, styckningsmodeller, biproduktsmetod och golvpris, auktionskalkyl, kassa, portalstruktur.
+3. **Kända luckor som redan är kartlagda** — två parallella lagerspår (leverantörsinleverans skriver bara ett globalt saldo medan butiksmottagning skriver på lagerplats), ingen transaktionslogg för lager, inventering utan sparad differens, prissättning som räknar på manuellt kostpris i stället för lagrets snittkostpris, tillverkningsorder som inte låser vilket parti som konsumeras.
+4. **Referenssystem att jämföra mot** — Pyramid och Vitec Unikum för handel och grossist på den svenska sidan, samt Wisefish, inecta, Loop ERP och SeafSoft på fiskspecifik sida. Funktionslistorna att stämma av mot: batch- och partihantering, serienummer, flytande inventering, lagerplatser, behovsanalys och beställningsförslag, inköpsanmodan vid orderläggning, prisavtal och prislistor och kampanjer per kund, flervaluta, leveransbevakning och avisering, reklamationshantering, EDI och fakturamatchning, statistik och lönsamhetsuppföljning, samt catch weight, FEFO, kylkedja och spårbarhet från fångst till kund.
+5. **Frågorna Claude ska besvara** — vilka funktioner i referenssystemen som saknas hos oss och verkligen behövs för en fiskgrossist med egna butiker, vilka som är överkurs, vilken ordning de bör byggas i, och vilka datamodellsändringar varje del kräver.
+6. **Format på svaret** — Claude ska returnera ett prompt med numrerade arbetspaket, där varje paket har syfte, datamodell, beräkningsregler med formler, gränssnitt, acceptanskriterier och testfall. Svenska rubriker, svensk terminologi, inga påhittade tabellnamn utöver de som anges.
+7. **Hårda regler** — inga mockdata, kvantiteter i kilo med tre decimaler, priser med två, momssatser och regionmarginaler tas från databasen, lagerförändringar ska alltid gå via en bokförd rörelse, allt användarsynligt på svenska.
 
-### 1. Ett gemensamt lagerhuvudbokstabell (högst prioritet)
-En tabell `stock_movements` med produkt, lagerplats, kvantitet med tecken, typ (inleverans, tillverkning, försäljning, flytt, inventering, svinn), kostpris, referens till källdokument och användare. Alla befintliga skrivvägar går via en hjälpfunktion som bokför raden och uppdaterar saldot. Ger spårbarhet, felsökning och underlag för svinnrapport.
+## Bilaga i filen
 
-### 2. Koppla leverantörsinleveransen till lagerplats och batch
-Inleveransformuläret väljer mottagande lagerplats. Varje rad skapar saldo på den platsen med batchnummer, bäst-före och inköpspris som kostpris, i stället för att bara öka `products.stock`. Bäst-före räknas fram från produktens hållbarhetsdagar om det inte anges.
+En kompakt tabellöversikt över befintliga tabeller som berör flödena (produkter, lagerplatser, saldon per plats, inleveranser med rader, följesedlar, inköps- och produktionsrapporter, utbyten, styckningsmodeller, detalj- och biproduktpriser, auktionskalkyler, prislistor) så att Claude inte hittar på egna namn.
 
-### 3. FEFO-plockning och svinn
-När lager tas i anspråk (tillverkning, order, kassa) väljs partiet med tidigast bäst-före först. Utgångna partier flaggas och kan skrivas av som svinn med orsak, vilket bokförs i huvudboken.
+## Efter att du kört filen genom Claude
 
-### 4. Inventeringsdifferens som eget resultat
-Inventeringen sparar räknat mot förväntat, differens i kilo och kronor per rad, och bokför justeringen som en rörelse. Ger en inventeringshistorik per butik och period.
-
-### 5. Kostpris från lagret in i prissättningen
-Prissättningen visar verkligt viktat snittkostpris per produkt från `product_stock_locations` sida vid sida med det manuellt satta `cost_price`, och varnar när marginalen räknas på ett kostpris som avviker mer än tio procent från lagrets. Marginalmålen per region (Sthlm 55 procent, Gbg 45 procent) som redan finns i Filé/Tillverkning används som färgmarkering även här.
-
-### 6. Kopplingar i Filé/Tillverkning som saknas
-Tillverkningsordern konsumerar råvara utan att låsa vilket parti som gick in. Med batch på inleveransen kan ordern referera partiet, så detaljerna ärver fångstområde, redskap och bäst-före. Det är den spårbarhet branschsystemen bygger hela sitt regelverk kring, och den behövs för märkning.
-
-## Teknisk sammanfattning
-
-- Ny tabell `stock_movements` i public med grants och RLS enligt mönstret för övriga tabeller, plus index på produkt, plats och datum.
-- Ny modul `src/lib/stockLedger.ts` som ersätter direktskrivningarna i `productionStock.ts`, `stockTransfer.ts`, `StockCountDialog.tsx` och inleveranshooken.
-- `useIncomingDeliveries` utökas med `location_id` och skriver via huvudboken; formuläret i mottagningsvyn får val av lagerplats.
-- FEFO-hjälpfunktion som sorterar partier på `expiry_date` och används av tillverkning och orderplock.
-- `Pricing.tsx` läser snittkostpris per produkt och visar avvikelse mot satt kostpris.
-
-## Ordning
-
-Punkt 1 och 2 först, eftersom resten bygger på dem. Därefter 4 och 5, som är små när huvudboken finns. Punkt 3 och 6 sist.
+Du klistrar in Claudes svar här, och jag går igenom det mot koden innan något byggs — dels för att verifiera att arbetspaketen stämmer med verkligt schema, dels för att sortera bort det som redan finns.
