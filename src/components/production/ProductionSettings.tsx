@@ -164,7 +164,8 @@ export function ProductionSettings() {
           </Table>
         </CardContent>
       </Card>
-          <YieldCoverageCheck />
+      <YieldCoverageCheck />
+
     </div>
   );
 }
