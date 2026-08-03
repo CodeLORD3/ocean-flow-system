@@ -1,22 +1,25 @@
 import { supabase } from "@/integrations/supabase/client";
+import { recordMovements, transferStock, currentBalance } from "@/lib/stockLedger";
 
 const TRANSPORTLAGER_NAME = "Transportlager";
 
 /**
- * Find or get the Transportlager location ID.
+ * Ordertaggade transportlagerrader finns inte längre som egna saldorader.
+ * Istället bokförs varje flytt som overforing_ut + overforing_in i
+ * stock_movements med reference_type = 'shop_order' och reference_id = orderId.
+ * Kvarvarande kvantitet per order räknas fram ur loggen.
  */
+const REF_TYPE = "shop_order";
+
 async function getTransportlagerId(): Promise<string | null> {
   const { data } = await supabase
     .from("storage_locations")
     .select("id")
     .eq("name", TRANSPORTLAGER_NAME)
-    .single();
-  return data?.id || null;
+    .limit(1);
+  return data?.[0]?.id || null;
 }
 
-/**
- * Find the "Raw Lager" (or "Raw") location for a given store.
- */
 async function getRawLagerId(storeId: string): Promise<string | null> {
   const { data } = await supabase
     .from("storage_locations")
@@ -27,47 +30,33 @@ async function getRawLagerId(storeId: string): Promise<string | null> {
   return data?.[0]?.id || null;
 }
 
-/**
- * Add quantity to a destination location, handling multiple existing rows safely.
- */
-async function addToLocation(productId: string, locationId: string, quantity: number, shopOrderId?: string, unitCost?: number) {
-  // Find existing row(s) — use limit(1) to avoid maybeSingle errors with split rows
-  const q = supabase
-    .from("product_stock_locations")
-    .select("id, quantity")
-    .eq("product_id", productId)
-    .eq("location_id", locationId);
+/** Nettokvantitet per produkt som ligger på transportlagret för en given order. */
+export async function transportBalanceForOrder(
+  orderId: string,
+  transportId: string,
+): Promise<Record<string, number>> {
+  const { data } = await supabase
+    .from("stock_movements")
+    .select("product_id, quantity_kg")
+    .eq("location_id", transportId)
+    .eq("reference_type", REF_TYPE)
+    .eq("reference_id", orderId);
 
-  if (shopOrderId) {
-    q.eq("shop_order_id", shopOrderId);
-  } else {
-    q.is("shop_order_id", null);
+  const acc: Record<string, number> = {};
+  for (const row of data || []) {
+    const key = (row as any).product_id as string;
+    acc[key] = (acc[key] || 0) + Number((row as any).quantity_kg || 0);
   }
-
-  const { data: existing } = await q.limit(1);
-  const row = existing?.[0];
-
-  if (row) {
-    const update: any = { quantity: Number(row.quantity) + quantity, updated_at: new Date().toISOString() };
-    if (unitCost != null) update.unit_cost = unitCost;
-    await supabase.from("product_stock_locations").update(update).eq("id", row.id);
-  } else {
-    await supabase.from("product_stock_locations").insert({
-      product_id: productId,
-      location_id: locationId,
-      quantity: quantity,
-      shop_order_id: shopOrderId || null,
-      unit_cost: unitCost ?? null,
-      updated_at: new Date().toISOString(),
-    });
+  for (const key of Object.keys(acc)) {
+    acc[key] = Math.round(acc[key] * 1000) / 1000;
+    if (acc[key] <= 0) delete acc[key];
   }
+  return acc;
 }
 
 /**
- * When an order is marked as "Skickad", move all ordered products
- * from Pre-{store} locations to Transportlager.
- * Also checks Grossist Flytande as fallback if Pre-locations don't have enough stock.
- * Each product gets its own row tagged with shop_order_id.
+ * När en order markeras "Skickad": flytta orderns produkter från butikens
+ * Pre-lager (och Grossist Flytande som reserv) till Transportlager.
  */
 export async function moveStockToTransport(orderId: string) {
   const transportId = await getTransportlagerId();
@@ -76,7 +65,6 @@ export async function moveStockToTransport(orderId: string) {
     return;
   }
 
-  // Get order with lines and store info
   const { data: order } = await supabase
     .from("shop_orders")
     .select("store_id, shop_order_lines(product_id, quantity_delivered, quantity_ordered)")
@@ -85,87 +73,69 @@ export async function moveStockToTransport(orderId: string) {
 
   if (!order?.store_id || !order.shop_order_lines?.length) return;
 
-  // Find all Pre- locations for this store
   const { data: preLocations } = await supabase
     .from("storage_locations")
     .select("id")
     .eq("store_id", order.store_id)
     .ilike("name", "Pre-%");
-
   const preLocationIds = (preLocations || []).map((l) => l.id);
 
-  // Find Grossist Flytande as fallback source
-  const { data: gfLoc } = await supabase
+  const { data: gfLocs } = await supabase
     .from("storage_locations")
     .select("id")
     .ilike("name", "Grossist Flytande")
-    .single();
+    .limit(1);
+  const gfLocId = gfLocs?.[0]?.id || null;
 
-  // For each order line, deduct from Pre- locations (then Grossist Flytande as fallback) and create tagged Transportlager entry
   for (const line of order.shop_order_lines) {
     let remaining = Number(line.quantity_delivered || line.quantity_ordered) || 0;
     if (remaining <= 0) continue;
 
-    let totalDeducted = 0;
+    // Källor i prioritetsordning: Pre-lager, sedan Grossist Flytande.
+    const sourceIds = [...preLocationIds, ...(gfLocId ? [gfLocId] : [])];
+    if (!sourceIds.length) continue;
 
-    // 1) Try deducting from Pre- locations first
-    if (preLocationIds.length) {
-      const { data: preStocks } = await supabase
-        .from("product_stock_locations")
-        .select("id, location_id, quantity")
-        .eq("product_id", line.product_id)
-        .in("location_id", preLocationIds)
-        .gt("quantity", 0);
+    const { data: stocks } = await supabase
+      .from("product_stock_locations")
+      .select("location_id, quantity, avg_cost")
+      .eq("product_id", line.product_id)
+      .in("location_id", sourceIds)
+      .gt("quantity", 0);
 
-      for (const stock of preStocks || []) {
-        if (remaining <= 0) break;
-        const moveQty = Math.min(remaining, Number(stock.quantity));
-        const newQty = Math.max(0, Number(stock.quantity) - moveQty);
-        await supabase
-          .from("product_stock_locations")
-          .update({ quantity: newQty, updated_at: new Date().toISOString() })
-          .eq("id", stock.id);
-        remaining -= moveQty;
-        totalDeducted += moveQty;
-      }
-    }
+    const ordered = (stocks || []).sort(
+      (a: any, b: any) => sourceIds.indexOf(a.location_id) - sourceIds.indexOf(b.location_id),
+    );
 
-    // 2) If still remaining, deduct from Grossist Flytande
-    if (remaining > 0 && gfLoc) {
-      const { data: gfStocks } = await supabase
-        .from("product_stock_locations")
-        .select("id, quantity")
-        .eq("product_id", line.product_id)
-        .eq("location_id", gfLoc.id)
-        .gt("quantity", 0);
+    for (const stock of ordered) {
+      if (remaining <= 0) break;
+      const available = Number((stock as any).quantity) || 0;
+      const moveQty = Math.min(remaining, available);
+      if (moveQty <= 0) continue;
 
-      for (const stock of gfStocks || []) {
-        if (remaining <= 0) break;
-        const moveQty = Math.min(remaining, Number(stock.quantity));
-        const newQty = Math.max(0, Number(stock.quantity) - moveQty);
-        await supabase
-          .from("product_stock_locations")
-          .update({ quantity: newQty, updated_at: new Date().toISOString() })
-          .eq("id", stock.id);
-        remaining -= moveQty;
-        totalDeducted += moveQty;
-      }
-    }
-
-    // Create a dedicated Transportlager entry tagged with this order
-    if (totalDeducted > 0) {
-      await addToLocation(line.product_id, transportId, totalDeducted, orderId);
+      await transferStock({
+        productId: line.product_id,
+        fromLocationId: (stock as any).location_id,
+        toLocationId: transportId,
+        quantityKg: moveQty,
+        unitCost: Number((stock as any).avg_cost) || null,
+        referenceType: REF_TYPE,
+        referenceId: orderId,
+        note: "Order skickad till transportlager",
+      });
+      remaining -= moveQty;
     }
 
     if (remaining > 0) {
-      console.warn(`moveStockToTransport: Could not find enough stock for product ${line.product_id}. Missing: ${remaining}`);
+      console.warn(
+        `moveStockToTransport: otillräckligt saldo för produkt ${line.product_id}, ${remaining} kg kunde inte flyttas`,
+      );
     }
   }
 }
 
 /**
- * When a shop approves an inleverans, move products from Transportlager
- * to the shop's Raw-lager, then delete the order-tagged Transportlager entries.
+ * När butiken godkänner inleveransen: flytta orderns kvantiteter från
+ * Transportlager till butikens Raw-lager.
  */
 export async function moveStockToRawLager(
   orderId: string,
@@ -184,27 +154,50 @@ export async function moveStockToRawLager(
     return;
   }
 
-  const { data: transportEntries } = await supabase
-    .from("product_stock_locations")
-    .select("id, product_id, quantity")
-    .eq("location_id", transportId)
-    .eq("shop_order_id", orderId);
-
-  if (!transportEntries?.length) {
-    console.warn(`moveStockToRawLager: No tagged Transportlager entries found for order ${orderId}. Stock may not have been transferred to Transportlager.`);
+  const balances = await transportBalanceForOrder(orderId, transportId);
+  const productIds = Object.keys(balances);
+  if (!productIds.length) {
+    console.warn(
+      `moveStockToRawLager: inga transportlagerrörelser hittades för order ${orderId}.`,
+    );
     return;
   }
 
-  for (const entry of transportEntries) {
-    const qty = Number(entry.quantity) || 0;
+  for (const productId of productIds) {
+    const qty = balances[productId];
     if (qty <= 0) continue;
+    const cost =
+      unitCostByProductId?.[productId] ??
+      (await currentBalance(productId, transportId)).avgCost ??
+      null;
 
-    const unitCost = unitCostByProductId?.[entry.product_id];
-    await addToLocation(entry.product_id, rawLagerId, qty, undefined, unitCost);
-
-    await supabase
-      .from("product_stock_locations")
-      .delete()
-      .eq("id", entry.id);
+    await transferStock({
+      productId,
+      fromLocationId: transportId,
+      toLocationId: rawLagerId,
+      quantityKg: qty,
+      unitCost: cost || null,
+      referenceType: REF_TYPE,
+      referenceId: orderId,
+      note: "Inleverans godkänd i butik",
+    });
   }
+}
+
+/** Bokför en manuell justering (endast via loggen). */
+export async function adjustStock(params: {
+  productId: string;
+  locationId: string;
+  quantityKg: number;
+  note?: string;
+}) {
+  await recordMovements([
+    {
+      productId: params.productId,
+      locationId: params.locationId,
+      quantityKg: params.quantityKg,
+      movementType: "justering",
+      note: params.note ?? null,
+    },
+  ]);
 }

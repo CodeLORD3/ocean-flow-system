@@ -1,14 +1,15 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { moveStockToTransport } from "@/lib/stockTransfer";
+import { transferStock } from "@/lib/stockLedger";
 import { logActivity } from "@/hooks/useActivityLog";
 
 const STATUS_FLOW = ["Ny", "Pågående", "Packad", "Skickad"] as const;
 
 /**
- * When a line moves to "Packad", transfer only the DELTA quantity
- * from "Grossist Flytande" to the store's "Pre-" location.
- * deltaQty > 0 means move TO pre-location, < 0 means move back.
+ * När en rad blir "Packad" flyttas endast DELTA-kvantiteten från
+ * "Grossist Flytande" till butikens "Pre-"lager. Negativt delta flyttar tillbaka.
+ * Allt bokförs via lagerrörelser — saldot skrivs aldrig direkt.
  */
 async function transferDeltaToPreLocation(lineId: string, orderId: string, deltaQty: number) {
   if (deltaQty === 0) return;
@@ -27,15 +28,14 @@ async function transferDeltaToPreLocation(lineId: string, orderId: string, delta
     .single();
   if (!order?.store_id) return;
 
-  // Find "Grossist Flytande" location
-  const { data: gfLoc } = await supabase
+  const { data: gfLocs } = await supabase
     .from("storage_locations")
     .select("id")
     .ilike("name", "Grossist Flytande")
-    .single();
+    .limit(1);
+  const gfLoc = gfLocs?.[0];
   if (!gfLoc) return;
 
-  // Find the Pre- location for this store
   const { data: preLocs } = await supabase
     .from("storage_locations")
     .select("id, name")
@@ -46,77 +46,21 @@ async function transferDeltaToPreLocation(lineId: string, orderId: string, delta
   if (!preLoc) return;
 
   const absDelta = Math.abs(deltaQty);
+  const from = deltaQty > 0 ? gfLoc.id : preLoc.id;
+  const to = deltaQty > 0 ? preLoc.id : gfLoc.id;
 
-  if (deltaQty > 0) {
-    // Move FROM Grossist Flytande TO Pre-location
-    const { data: srcStock } = await supabase
-      .from("product_stock_locations")
-      .select("id, quantity")
-      .eq("product_id", line.product_id)
-      .eq("location_id", gfLoc.id)
-      .single();
-    if (srcStock) {
-      await supabase
-        .from("product_stock_locations")
-        .update({ quantity: Math.max(0, Number(srcStock.quantity) - absDelta), updated_at: new Date().toISOString() })
-        .eq("id", srcStock.id);
-    }
-
-    const { data: destStock } = await supabase
-      .from("product_stock_locations")
-      .select("id, quantity")
-      .eq("product_id", line.product_id)
-      .eq("location_id", preLoc.id)
-      .maybeSingle();
-    if (destStock) {
-      await supabase
-        .from("product_stock_locations")
-        .update({ quantity: Number(destStock.quantity) + absDelta, updated_at: new Date().toISOString() })
-        .eq("id", destStock.id);
-    } else {
-      await supabase.from("product_stock_locations").insert({
-        product_id: line.product_id,
-        location_id: preLoc.id,
-        quantity: absDelta,
-        updated_at: new Date().toISOString(),
-      });
-    }
-  } else {
-    // Move FROM Pre-location BACK TO Grossist Flytande
-    const { data: preStock } = await supabase
-      .from("product_stock_locations")
-      .select("id, quantity")
-      .eq("product_id", line.product_id)
-      .eq("location_id", preLoc.id)
-      .single();
-    if (preStock) {
-      await supabase
-        .from("product_stock_locations")
-        .update({ quantity: Math.max(0, Number(preStock.quantity) - absDelta), updated_at: new Date().toISOString() })
-        .eq("id", preStock.id);
-    }
-
-    const { data: gfStock } = await supabase
-      .from("product_stock_locations")
-      .select("id, quantity")
-      .eq("product_id", line.product_id)
-      .eq("location_id", gfLoc.id)
-      .maybeSingle();
-    if (gfStock) {
-      await supabase
-        .from("product_stock_locations")
-        .update({ quantity: Number(gfStock.quantity) + absDelta, updated_at: new Date().toISOString() })
-        .eq("id", gfStock.id);
-    } else {
-      await supabase.from("product_stock_locations").insert({
-        product_id: line.product_id,
-        location_id: gfLoc.id,
-        quantity: absDelta,
-        updated_at: new Date().toISOString(),
-      });
-    }
-  }
+  await transferStock({
+    productId: line.product_id,
+    fromLocationId: from,
+    toLocationId: to,
+    quantityKg: absDelta,
+    referenceType: "shop_order",
+    referenceId: orderId,
+    note: deltaQty > 0 ? "Packad till Pre-lager" : "Återförd från Pre-lager",
+  });
 }
+
+
 
 // transferFromPreLocationBack is now handled by transferDeltaToPreLocation with negative delta
 

@@ -70,6 +70,8 @@ import { generateStockSheetPdf } from "@/lib/stockSheetPdf";
 import StockCountDialog, { type StockCountScope } from "@/components/inventory/StockCountDialog";
 import StockOverview from "@/components/inventory/StockOverview";
 import StockMovementsView from "@/components/inventory/StockMovementsView";
+import LotTraceabilityView from "@/components/inventory/LotTraceabilityView";
+
 import WasteDialog from "@/components/inventory/WasteDialog";
 
 
@@ -193,7 +195,7 @@ export default function Inventory() {
   const { toast } = useToast();
   const { activeStoreId, activeStoreName, site } = useSite();
   const [search, setSearch] = useState("");
-  const [viewMode, setViewMode] = useState<"overview" | "locations" | "movements">("overview");
+  const [viewMode, setViewMode] = useState<"overview" | "locations" | "movements" | "lots">("overview");
   const [wasteOpen, setWasteOpen] = useState(false);
 
 
@@ -1279,7 +1281,9 @@ export default function Inventory() {
             { v: "overview" as const, l: "Samlad lagerbild" },
             { v: "locations" as const, l: "Per lagerplats" },
             { v: "movements" as const, l: "Lagerrörelser" },
+            { v: "lots" as const, l: "Spårbarhet" },
           ].map((o) => (
+
             <button
               key={o.v}
               onClick={() => setViewMode(o.v)}
@@ -1317,6 +1321,10 @@ export default function Inventory() {
           currency={localCurrency}
         />
       )}
+
+      {viewMode === "lots" && <LotTraceabilityView currency={localCurrency} />}
+
+
 
 
 
