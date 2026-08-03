@@ -1,3 +1,4 @@
+import { evaluateAutoApproval } from "@/lib/autoApproval";
 import { describe, it, expect } from "vitest";
 import {
   roundUpToAllowedPrice,
@@ -192,5 +193,23 @@ describe("styckningsmodeller", () => {
   it("alias för benfri filé pekar på samma detalj", () => {
     expect(normalizeDetailForm("stjärtbit")).toBe("benfri filé");
     expect(normalizeDetailForm("Benfri file")).toBe("benfri filé");
+  });
+});
+
+// ── Auto-godkännande (avsnitt 5) ──
+describe("evaluateAutoApproval", () => {
+  const base = { requiresProcessing: false, yieldConfirmed: true, marginInclWorkPct: 50, targetMarginPct: 45 };
+  it("godkänner färdigvara över målet med säkerställt utbyte", () => {
+    expect(evaluateAutoApproval(base).approved).toBe(true);
+  });
+  it("blockerar när produkten kräver hantering", () => {
+    const r = evaluateAutoApproval({ ...base, requiresProcessing: true });
+    expect(r.approved).toBe(false);
+    expect(r.reasons[0]).toMatch(/Kräver hantering/);
+  });
+  it("blockerar osäkert utbyte och marginal under mål", () => {
+    const r = evaluateAutoApproval({ ...base, yieldConfirmed: false, marginInclWorkPct: 30 });
+    expect(r.approved).toBe(false);
+    expect(r.reasons).toHaveLength(2);
   });
 });
