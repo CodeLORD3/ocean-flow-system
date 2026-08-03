@@ -1015,6 +1015,21 @@ export default function PurchaseReporting() {
 
       setUploading(true);
       try {
+        // Dubblettspärr steg 1: samma fil har redan lästs in.
+        const fileHash = await sha256Hex(file);
+        const { data: sameFile } = await supabase
+          .from("purchase_reports")
+          .select("id, file_name, report_date")
+          .eq("file_hash", fileHash)
+          .limit(1)
+          .maybeSingle();
+        if (sameFile) {
+          const proceed = window.confirm(
+            `Filen är redan inläst som "${(sameFile as any).file_name}" (${(sameFile as any).report_date}). Läsa in igen?`,
+          );
+          if (!proceed) return;
+        }
+
         const ext = file.name.split(".").pop();
         const path = `${crypto.randomUUID()}.${ext}`;
 
@@ -1028,7 +1043,7 @@ export default function PurchaseReporting() {
 
         const { data: report, error: reportError } = await supabase
           .from("purchase_reports")
-          .insert({ file_name: file.name, file_url: fileUrl, status: "Bearbetar", report_date: format(new Date(), "yyyy-MM-dd") } as any)
+          .insert({ file_name: file.name, file_url: fileUrl, status: "Bearbetar", report_date: format(new Date(), "yyyy-MM-dd"), file_hash: fileHash } as any)
           .select()
           .single();
         if (reportError) throw reportError;
@@ -1038,30 +1053,138 @@ export default function PurchaseReporting() {
 
         setParsing(true);
         const { data: fnData, error: fnError } = await supabase.functions.invoke("parse-foljesedel", {
-          body: { fileUrl },
+          body: { fileUrl, fileHash },
         });
 
         if (fnError) throw fnError;
         if (fnData?.error) throw new Error(fnData.error);
 
         const parsedProducts = fnData.products || [];
+        const doc = fnData.document || {};
+
+        // Leverantörsbindning med produktimportens normalisering.
+        const supplierIndex = buildSupplierIndex(suppliers as any);
+        const supplierId = doc.supplier_name
+          ? lookupSupplier(supplierIndex, String(doc.supplier_name))?.id ?? null
+          : null;
+
+        // Dubblettspärr steg 2: samma dokumentnummer (eller dokumentdatum när
+        // numret saknas, som på auktionsavräkningar) från samma leverantör.
+        if (supplierId) {
+          let dupQuery = supabase
+            .from("purchase_reports")
+            .select("id, file_name")
+            .eq("supplier_id", supplierId)
+            .neq("id", report.id);
+          dupQuery = doc.document_number
+            ? dupQuery.eq("document_number", String(doc.document_number))
+            : dupQuery.eq("document_date", doc.document_date ?? format(new Date(), "yyyy-MM-dd"));
+          const { data: dup } = await dupQuery.limit(1).maybeSingle();
+          if (dup) {
+            toast({
+              title: "Möjlig dubblett",
+              description: `Samma leverantör och ${doc.document_number ? "dokumentnummer" : "dokumentdatum"} finns redan som "${(dup as any).file_name}".`,
+              variant: "destructive",
+            });
+          }
+        }
+
+        // Dokumentdatumet från handlingen styr rapportdatumet.
+        const docDate = doc.document_date || doc.delivery_date || null;
+        await supabase
+          .from("purchase_reports")
+          .update({
+            supplier_id: supplierId,
+            supplier_name_raw: doc.supplier_name ?? null,
+            document_number: doc.document_number ?? null,
+            document_type: doc.document_type ?? "foljesedel",
+            document_date: doc.document_date ?? null,
+            delivery_date: doc.delivery_date ?? null,
+            total_ex_vat: doc.total_ex_vat ?? null,
+            notes: doc.notes ?? null,
+            ...(docDate ? { report_date: docDate } : {}),
+          } as any)
+          .eq("id", report.id);
 
         if (parsedProducts.length > 0) {
-          const lines = parsedProducts.map((p: any) => ({
-            report_id: report.id,
-            product_name: p.product_name,
-            quantity: p.quantity ?? 0,
-            unit: p.unit ?? "kg",
-            unit_price: p.unit_price ?? 0,
-            line_total: p.line_total ?? 0,
-            status: "Inköpt",
-            purchase_date: format(new Date(), "yyyy-MM-dd"),
-          }));
+          const { data: aliases } = await supabase.from("species_latin_aliases").select("alias, latin_name");
+          const { data: articleMap } = await supabase
+            .from("supplier_article_map")
+            .select("supplier_id, supplier_article_no, product_id");
 
-          const { error: linesError } = await supabase.from("purchase_report_lines").insert(lines);
-          if (linesError) throw linesError;
+          const accepted: any[] = [];
+          const rejected: any[] = [];
 
-          const total = parsedProducts.reduce((s: number, p: any) => s + (p.line_total ?? 0), 0);
+          parsedProducts.forEach((p: any, index: number) => {
+            if (!p.product_name || !(Number(p.quantity) > 0)) {
+              rejected.push({
+                report_id: report.id,
+                row_index: index + 1,
+                reason: !p.product_name ? "Produktnamn saknas" : "Kvantitet saknas eller är noll",
+                raw_data: p,
+              });
+              return;
+            }
+
+            const match = matchProduct(p, {
+              products: products as any,
+              aliases: (aliases ?? []) as any,
+              articleMap: (articleMap ?? []) as any,
+              supplierId,
+            });
+
+            const qty = Number(p.quantity) || 0;
+            const unitPrice = Number(p.unit_price ?? 0) || 0;
+            const lineTotal = Number(p.line_total ?? 0) || 0;
+            const ordered = Number(p.ordered_quantity ?? 0) || null;
+
+            accepted.push({
+              report_id: report.id,
+              product_name: p.product_name,
+              product_id: match.needsConfirmation ? null : match.productId,
+              match_method: match.method,
+              supplier_article_no: p.supplier_article_no ?? null,
+              quantity: qty,
+              ordered_quantity: ordered,
+              qty_variance_flag: !!ordered && Math.abs(qty - ordered) / ordered > 0.1,
+              unit: p.unit ?? "kg",
+              unit_price: unitPrice,
+              line_total: lineTotal,
+              amount_mismatch:
+                lineTotal > 0 && unitPrice > 0 &&
+                Math.abs(lineTotal - unitPrice * qty) > Math.max(1, lineTotal * 0.02),
+              latin_name: p.latin_name ?? null,
+              species_fao_code: p.species_fao_code ?? null,
+              lot_numbers: Array.isArray(p.lot_numbers) ? p.lot_numbers.filter(Boolean) : [],
+              best_before: p.best_before ?? null,
+              catch_area: p.catch_area ?? null,
+              catch_date_from: p.catch_date_from ?? null,
+              catch_date_to: p.catch_date_to ?? null,
+              fishing_gear: p.fishing_gear ?? null,
+              fishing_gear_code: p.fishing_gear_code ?? null,
+              vessel_name: p.vessel_name ?? null,
+              vessel_reg: p.vessel_reg ?? null,
+              vessel_nation: p.vessel_nation ?? null,
+              presentation: p.presentation ?? null,
+              condition: p.condition ?? null,
+              grade: p.grade ?? null,
+              certificate: p.certificate ?? null,
+              supplier_name: doc.supplier_name ?? null,
+              status: "Inköpt",
+              purchase_date: docDate || format(new Date(), "yyyy-MM-dd"),
+            });
+          });
+
+          if (rejected.length) {
+            await supabase.from("purchase_report_rejected_lines").insert(rejected);
+          }
+
+          if (accepted.length) {
+            const { error: linesError } = await supabase.from("purchase_report_lines").insert(accepted);
+            if (linesError) throw linesError;
+          }
+
+          const total = accepted.reduce((s: number, p: any) => s + (p.line_total ?? 0), 0);
           await supabase.from("purchase_reports").update({ status: "Klar", total_amount: total }).eq("id", report.id);
         } else {
           await supabase.from("purchase_reports").update({ status: "Inga produkter hittades" }).eq("id", report.id);
@@ -1079,7 +1202,7 @@ export default function PurchaseReporting() {
         e.target.value = "";
       }
     },
-    [queryClient]
+    [queryClient, products, suppliers]
   );
 
   const currentIdx = reports.findIndex((r) => r.id === selectedReportId);
