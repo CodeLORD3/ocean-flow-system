@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { moveStockToTransport } from "@/lib/stockTransfer";
 import { transferStock } from "@/lib/stockLedger";
 import { logActivity } from "@/hooks/useActivityLog";
+import { GROSSIST_FLYTANDE_ID, uniqueLocationIdByName } from "@/lib/locations";
 
 const STATUS_FLOW = ["Ny", "Pågående", "Packad", "Skickad"] as const;
 
