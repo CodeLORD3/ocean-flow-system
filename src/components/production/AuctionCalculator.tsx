@@ -57,6 +57,8 @@ export function AuctionCalculator() {
   const [species, setSpecies] = useState("");
   const [rawQty, setRawQty] = useState("100");
   const [yieldPct, setYieldPct] = useState("");
+  /** Sortering på råvaran ("" = okänd). */
+  const [grade, setGrade] = useState("");
   const [rows, setRows] = useState<Row[]>([]);
   const [bid, setBid] = useState("");
 
@@ -69,7 +71,9 @@ export function AuctionCalculator() {
   );
 
   const modelRow = cutModels.find((c) => speciesKey(c.species_group) === speciesKey(species));
-  const cutModel = (modelRow?.cut_model as CutModel) ?? modelForSpecies(species);
+  const baseCutModel = (modelRow?.cut_model as CutModel) ?? modelForSpecies(species);
+  const cutModel = effectiveCutModel(baseCutModel, grade, (modelRow as any)?.grade_limit ?? null);
+  const gradeForcedSingle = cutModel !== baseCutModel;
   const vatPct = vatFor(vats, "Färsk Fisk");
   const surcharge = surchargeFor(surcharges, "Färsk Fisk");
   const rawQtyNum = parseFloat(rawQty) || 0;
