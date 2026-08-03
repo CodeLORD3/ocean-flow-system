@@ -137,9 +137,10 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
     queryFn: async () => {
       const { data, error } = await supabase
         .from("product_stock_locations")
-        .select("product_id, quantity, storage_locations!inner(name)")
-        .eq("storage_locations.name", "Grossist Flytande")
+        .select("product_id, quantity")
+        .eq("location_id", GROSSIST_FLYTANDE_ID)
         .gt("quantity", 0);
+
       if (error) throw error;
       return data as { product_id: string; quantity: number }[];
     },
