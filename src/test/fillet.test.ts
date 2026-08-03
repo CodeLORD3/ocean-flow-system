@@ -4,11 +4,11 @@ import { evaluateAutoApproval } from "@/lib/autoApproval";
 import { describe, it, expect } from "vitest";
 import {
   roundUpToAllowedPrice,
-  allocateRawCost,
   batchMargin,
-  priceByByproductMethod,
+  priceByNrv,
   auctionMaxRawPrice,
 } from "@/lib/filletMath";
+
 import { CUT_MODEL_TEMPLATES, SPECIES_CUT_MODEL, hasCutModel, modelForSpecies, normalizeDetailForm } from "@/lib/cutModels";
 
 /* Torskpartiet i specen: 100 kg à 60 kr/kg, utbyte 47 %, loin_four 55/20/15/10 */
