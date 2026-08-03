@@ -77,12 +77,8 @@ export async function moveStockToTransport(orderId: string) {
     .ilike("name", "Pre-%");
   const preLocationIds = (preLocations || []).map((l) => l.id);
 
-  const { data: gfLocs } = await supabase
-    .from("storage_locations")
-    .select("id")
-    .ilike("name", "Grossist Flytande")
-    .limit(1);
-  const gfLocId = gfLocs?.[0]?.id || null;
+  const gfLocId = GROSSIST_FLYTANDE_ID;
+
 
   for (const line of order.shop_order_lines) {
     let remaining = Number(line.quantity_delivered || line.quantity_ordered) || 0;
