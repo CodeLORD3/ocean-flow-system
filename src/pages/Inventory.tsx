@@ -1279,7 +1279,9 @@ export default function Inventory() {
             { v: "overview" as const, l: "Samlad lagerbild" },
             { v: "locations" as const, l: "Per lagerplats" },
             { v: "movements" as const, l: "Lagerrörelser" },
+            { v: "lots" as const, l: "Spårbarhet" },
           ].map((o) => (
+
             <button
               key={o.v}
               onClick={() => setViewMode(o.v)}
