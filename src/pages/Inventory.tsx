@@ -69,6 +69,9 @@ import { EntityImagesButton } from "@/components/images/EntityImageGallery";
 import { generateStockSheetPdf } from "@/lib/stockSheetPdf";
 import StockCountDialog, { type StockCountScope } from "@/components/inventory/StockCountDialog";
 import StockOverview from "@/components/inventory/StockOverview";
+import StockMovementsView from "@/components/inventory/StockMovementsView";
+import WasteDialog from "@/components/inventory/WasteDialog";
+
 
 import { format, differenceInDays, parseISO } from "date-fns";
 import { sv } from "date-fns/locale";
@@ -190,7 +193,9 @@ export default function Inventory() {
   const { toast } = useToast();
   const { activeStoreId, activeStoreName, site } = useSite();
   const [search, setSearch] = useState("");
-  const [viewMode, setViewMode] = useState<"overview" | "locations">("overview");
+  const [viewMode, setViewMode] = useState<"overview" | "locations" | "movements">("overview");
+  const [wasteOpen, setWasteOpen] = useState(false);
+
 
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
@@ -1267,22 +1272,33 @@ export default function Inventory() {
         </div>
       </div>
 
-      {/* Vyväxling: samlad lagerbild (ny look) vs. per lagerplats (detaljvy) */}
-      <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1 w-fit">
-        {[
-          { v: "overview" as const, l: "Samlad lagerbild" },
-          { v: "locations" as const, l: "Per lagerplats" },
-        ].map((o) => (
-          <button
-            key={o.v}
-            onClick={() => setViewMode(o.v)}
-            className={`px-3 py-1.5 text-sm font-semibold rounded-md transition-colors ${
-              viewMode === o.v ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"
-            }`}
-          >
-            {o.l}
-          </button>
-        ))}
+      {/* Vyväxling: samlad lagerbild (ny look) vs. per lagerplats (detaljvy) vs. rörelser */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1 w-fit">
+          {[
+            { v: "overview" as const, l: "Samlad lagerbild" },
+            { v: "locations" as const, l: "Per lagerplats" },
+            { v: "movements" as const, l: "Lagerrörelser" },
+          ].map((o) => (
+            <button
+              key={o.v}
+              onClick={() => setViewMode(o.v)}
+              className={`px-3 py-1.5 text-sm font-semibold rounded-md transition-colors ${
+                viewMode === o.v ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              {o.l}
+            </button>
+          ))}
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 gap-1 text-xs"
+          onClick={() => setWasteOpen(true)}
+        >
+          <Trash2 className="h-3 w-3" /> Bokför svinn
+        </Button>
       </div>
 
       {viewMode === "overview" && (
@@ -1294,6 +1310,15 @@ export default function Inventory() {
           onLineAction={handleOverviewAction}
         />
       )}
+
+      {viewMode === "movements" && (
+        <StockMovementsView
+          locationIds={(stockByLocation as any[]).map((l: any) => l.id).filter(Boolean)}
+          currency={localCurrency}
+        />
+      )}
+
+
 
       {viewMode === "locations" && (
       <>
@@ -1930,6 +1955,17 @@ export default function Inventory() {
         products={products as any[]}
         currency={localCurrency}
       />
+
+      {/* ── Kassation / svinn ──────────────────────────────────────────────── */}
+      <WasteDialog
+        open={wasteOpen}
+        onOpenChange={setWasteOpen}
+        items={allStock as any[]}
+        locationName={activeStoreName || undefined}
+        storeId={activeStoreId ?? null}
+        currency={localCurrency}
+      />
+
 
       {/* ── Expiry Alerts Dialog ───────────────────────────────────────────── */}
       <Dialog open={showExpiryAlerts} onOpenChange={setShowExpiryAlerts}>
