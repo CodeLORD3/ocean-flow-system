@@ -182,6 +182,21 @@ export function AuctionCalculator() {
               {species && <p className="text-[10px] text-muted-foreground">{CUT_MODEL_LABELS[cutModel]}</p>}
             </div>
             <div className="space-y-1">
+              <Label className="text-[11px]">Sortering</Label>
+              <Select value={grade || "okand"} onValueChange={(v) => setGrade(v === "okand" ? "" : v)}>
+                <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="okand" className="text-xs">Okänd</SelectItem>
+                  {["1", "2", "3", "4", "5"].map((g) => (
+                    <SelectItem key={g} value={g} className="text-xs">{g}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {gradeForcedSingle && (
+                <p className="text-[10px] text-muted-foreground">Styckas som hel filé</p>
+              )}
+            </div>
+            <div className="space-y-1">
               <Label className="text-[11px]">Råvara (kg)</Label>
               <Input type="number" step="1" value={rawQty} onChange={(e) => setRawQty(e.target.value)} className="h-9 text-xs text-right font-mono tabular-nums" />
             </div>
