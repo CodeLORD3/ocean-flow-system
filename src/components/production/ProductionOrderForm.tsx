@@ -115,6 +115,7 @@ export function ProductionOrderForm() {
   const [productSearch, setProductSearch] = useState("");
   const [applyRegion, setApplyRegion] = useState<string>("");
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [splitWarning, setSplitWarning] = useState<{ picks: RawPick[]; detailCount: number } | null>(null);
 
   const speciesOptions = useMemo(
     () =>
