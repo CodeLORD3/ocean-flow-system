@@ -60,7 +60,7 @@ async function transferDeltaToPreLocation(lineId: string, orderId: string, delta
   });
 }
 
-}
+
 
 // transferFromPreLocationBack is now handled by transferDeltaToPreLocation with negative delta
 
