@@ -141,13 +141,32 @@ export function ProductionOrderForm() {
       return;
     }
     const out: DetailRow[] = [];
+    const isFilletRow = (toForm: string) => toForm.includes("filé") || toForm.includes("sida") || toForm === "loin";
+    // Bara EN filéväg får expanderas till styckdetaljer — annars dubbelräknas råvaran.
+    const filletRows = rows.filter((y) => isFilletRow(y.to_form)).sort((a, b) => Number(b.yield_pct) - Number(a.yield_pct));
+    const primaryFillet = filletRows[0];
     rows.forEach((y, ri) => {
       const basePct = Number(y.yield_pct);
       const group = splits.some((s) => s.species_group === species) ? species : templateGroup(y.note, y.to_form);
       const rowSplits = group ? splits.filter((s) => s.species_group === group && !s.is_optional) : [];
-      const isFillet = y.to_form.includes("filé") || y.to_form.includes("sida");
+      const isFillet = isFilletRow(y.to_form);
+      if (isFillet && y.id !== primaryFillet?.id) {
+        // Alternativ filéväg: läggs in avmarkerad så att den kan väljas manuellt.
+        out.push({
+          key: `${y.id}-alt`,
+          included: false,
+          name: `${species} ${y.to_form}`,
+          form: y.to_form,
+          pct: basePct,
+          marginWeight: 1,
+          isProcessed: isProcessedForm(y.to_form),
+          productId: null,
+          category: null,
+        });
+        return;
+      }
       if (isFillet && rowSplits.length > 0) {
-        rowSplits.forEach((s, si) => {
+        rowSplits.forEach((s) => {
           out.push({
             key: `${y.id}-${s.id}`,
             included: true,
