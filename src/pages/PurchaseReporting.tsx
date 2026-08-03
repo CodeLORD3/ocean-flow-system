@@ -124,6 +124,7 @@ function EditableRow({
   onQtyFocused?: () => void;
   locked?: boolean;
 }) {
+  const navigate = useNavigate();
   const [productSearch, setProductSearch] = useState("");
   const [productOpen, setProductOpen] = useState(false);
   const [productIdx, setProductIdx] = useState(0);
