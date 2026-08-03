@@ -650,6 +650,42 @@ export type Database = {
           },
         ]
       }
+      cut_splits: {
+        Row: {
+          created_at: string
+          detail_form: string
+          id: string
+          is_optional: boolean
+          margin_weight: number
+          pct_of_fillet: number
+          sort_order: number
+          species_group: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          detail_form: string
+          id?: string
+          is_optional?: boolean
+          margin_weight?: number
+          pct_of_fillet: number
+          sort_order?: number
+          species_group: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          detail_form?: string
+          id?: string
+          is_optional?: boolean
+          margin_weight?: number
+          pct_of_fillet?: number
+          sort_order?: number
+          species_group?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       deleted_stock_log: {
         Row: {
           deleted_at: string
@@ -1462,6 +1498,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      margin_targets: {
+        Row: {
+          created_at: string
+          id: string
+          label: string | null
+          region: string
+          store_id: string | null
+          target_pct: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          region: string
+          store_id?: string | null
+          target_pct: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          region?: string
+          store_id?: string | null
+          target_pct?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "margin_targets_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       meeting_protocol_items: {
         Row: {
@@ -2374,6 +2448,33 @@ export type Database = {
           },
         ]
       }
+      processing_surcharges: {
+        Row: {
+          applies: boolean
+          category: string
+          created_at: string
+          id: string
+          surcharge_per_kg: number
+          updated_at: string
+        }
+        Insert: {
+          applies?: boolean
+          category: string
+          created_at?: string
+          id?: string
+          surcharge_per_kg?: number
+          updated_at?: string
+        }
+        Update: {
+          applies?: boolean
+          category?: string
+          created_at?: string
+          id?: string
+          surcharge_per_kg?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       product_stock_locations: {
         Row: {
           arrival_date: string | null
@@ -2490,6 +2591,162 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_order_lines: {
+        Row: {
+          actual_qty: number | null
+          cost_price: number
+          created_at: string
+          detail_form: string
+          detail_name: string
+          id: string
+          is_processed: boolean
+          margin_weight: number
+          order_id: string
+          planned_pct: number
+          planned_qty: number
+          product_id: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          actual_qty?: number | null
+          cost_price?: number
+          created_at?: string
+          detail_form: string
+          detail_name: string
+          id?: string
+          is_processed?: boolean
+          margin_weight?: number
+          order_id: string
+          planned_pct?: number
+          planned_qty?: number
+          product_id?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          actual_qty?: number | null
+          cost_price?: number
+          created_at?: string
+          detail_form?: string
+          detail_name?: string
+          id?: string
+          is_processed?: boolean
+          margin_weight?: number
+          order_id?: string
+          planned_pct?: number
+          planned_qty?: number
+          product_id?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_order_lines_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "production_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_order_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      production_orders: {
+        Row: {
+          actual_waste_pct: number | null
+          batch_number: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          order_number: string | null
+          production_date: string
+          purchase_price_per_kg: number
+          purchase_report_line_id: string | null
+          raw_form: string
+          raw_name: string
+          raw_product_id: string | null
+          raw_quantity: number
+          raw_sku: string | null
+          raw_unit: string
+          species_group: string | null
+          status: string
+          store_id: string | null
+          supplier_name: string | null
+          updated_at: string
+          waste_pct: number
+        }
+        Insert: {
+          actual_waste_pct?: number | null
+          batch_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          order_number?: string | null
+          production_date?: string
+          purchase_price_per_kg?: number
+          purchase_report_line_id?: string | null
+          raw_form?: string
+          raw_name: string
+          raw_product_id?: string | null
+          raw_quantity: number
+          raw_sku?: string | null
+          raw_unit?: string
+          species_group?: string | null
+          status?: string
+          store_id?: string | null
+          supplier_name?: string | null
+          updated_at?: string
+          waste_pct?: number
+        }
+        Update: {
+          actual_waste_pct?: number | null
+          batch_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          order_number?: string | null
+          production_date?: string
+          purchase_price_per_kg?: number
+          purchase_report_line_id?: string | null
+          raw_form?: string
+          raw_name?: string
+          raw_product_id?: string | null
+          raw_quantity?: number
+          raw_sku?: string | null
+          raw_unit?: string
+          species_group?: string | null
+          status?: string
+          store_id?: string | null
+          supplier_name?: string | null
+          updated_at?: string
+          waste_pct?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_orders_raw_product_id_fkey"
+            columns: ["raw_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
@@ -3783,6 +4040,39 @@ export type Database = {
           },
         ]
       }
+      vat_rates: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          note: string | null
+          rate: number
+          updated_at: string
+          valid_from: string
+          valid_to: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          rate: number
+          updated_at?: string
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          rate?: number
+          updated_at?: string
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Relationships: []
+      }
       vehicle_columns: {
         Row: {
           col_type: string
@@ -4087,6 +4377,95 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      yield_actuals: {
+        Row: {
+          actual_pct: number
+          created_at: string
+          deviation_pct: number | null
+          from_form: string
+          id: string
+          order_id: string | null
+          quantity_in: number
+          quantity_out: number
+          species_group: string
+          standard_pct: number | null
+          to_form: string
+        }
+        Insert: {
+          actual_pct: number
+          created_at?: string
+          deviation_pct?: number | null
+          from_form: string
+          id?: string
+          order_id?: string | null
+          quantity_in: number
+          quantity_out: number
+          species_group: string
+          standard_pct?: number | null
+          to_form: string
+        }
+        Update: {
+          actual_pct?: number
+          created_at?: string
+          deviation_pct?: number | null
+          from_form?: string
+          id?: string
+          order_id?: string | null
+          quantity_in?: number
+          quantity_out?: number
+          species_group?: string
+          standard_pct?: number | null
+          to_form?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "yield_actuals_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "production_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      yields: {
+        Row: {
+          calibrated_count: number
+          created_at: string
+          from_form: string
+          id: string
+          is_estimate: boolean
+          note: string | null
+          species_group: string
+          to_form: string
+          updated_at: string
+          yield_pct: number
+        }
+        Insert: {
+          calibrated_count?: number
+          created_at?: string
+          from_form: string
+          id?: string
+          is_estimate?: boolean
+          note?: string | null
+          species_group: string
+          to_form: string
+          updated_at?: string
+          yield_pct: number
+        }
+        Update: {
+          calibrated_count?: number
+          created_at?: string
+          from_form?: string
+          id?: string
+          is_estimate?: boolean
+          note?: string | null
+          species_group?: string
+          to_form?: string
+          updated_at?: string
+          yield_pct?: number
+        }
+        Relationships: []
       }
     }
     Views: {
