@@ -5223,7 +5223,7 @@ export type Database = {
           calibrated_count: number
           created_at: string
           from_form: string
-          grade: string | null
+          grade: string
           id: string
           is_estimate: boolean
           note: string | null
@@ -5236,7 +5236,7 @@ export type Database = {
           calibrated_count?: number
           created_at?: string
           from_form: string
-          grade?: string | null
+          grade?: string
           id?: string
           is_estimate?: boolean
           note?: string | null
@@ -5249,7 +5249,7 @@ export type Database = {
           calibrated_count?: number
           created_at?: string
           from_form?: string
-          grade?: string | null
+          grade?: string
           id?: string
           is_estimate?: boolean
           note?: string | null
