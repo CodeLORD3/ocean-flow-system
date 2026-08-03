@@ -4094,6 +4094,7 @@ export type Database = {
         Row: {
           created_at: string
           cut_model: string
+          grade_limit: number | null
           id: string
           min_piece_weight_kg: number | null
           note: string | null
@@ -4103,6 +4104,7 @@ export type Database = {
         Insert: {
           created_at?: string
           cut_model: string
+          grade_limit?: number | null
           id?: string
           min_piece_weight_kg?: number | null
           note?: string | null
@@ -4112,6 +4114,7 @@ export type Database = {
         Update: {
           created_at?: string
           cut_model?: string
+          grade_limit?: number | null
           id?: string
           min_piece_weight_kg?: number | null
           note?: string | null
@@ -5220,6 +5223,7 @@ export type Database = {
           calibrated_count: number
           created_at: string
           from_form: string
+          grade: string | null
           id: string
           is_estimate: boolean
           note: string | null
@@ -5232,6 +5236,7 @@ export type Database = {
           calibrated_count?: number
           created_at?: string
           from_form: string
+          grade?: string | null
           id?: string
           is_estimate?: boolean
           note?: string | null
@@ -5244,6 +5249,7 @@ export type Database = {
           calibrated_count?: number
           created_at?: string
           from_form?: string
+          grade?: string | null
           id?: string
           is_estimate?: boolean
           note?: string | null
@@ -5293,6 +5299,11 @@ export type Database = {
         Returns: boolean
       }
       latin_norm: { Args: { v: string }; Returns: string }
+      next_internal_lot_number: { Args: never; Returns: string }
+      post_purchase_report: {
+        Args: { p_location_id: string; p_lots: Json; p_report_id: string }
+        Returns: string[]
+      }
       product_traceability_required: {
         Args: { _exempt: boolean; _hs_code: string }
         Returns: boolean

@@ -56,6 +56,7 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
   const [parsing, setParsing] = useState(false);
   const [importing, setImporting] = useState(false);
   const [fatal, setFatal] = useState<string | null>(null);
+  const [missingOptional, setMissingOptional] = useState<string[]>([]);
   const [diff, setDiff] = useState<DiffRow[] | null>(null);
   const [showUnchanged, setShowUnchanged] = useState(false);
   const [existing, setExisting] = useState<ExistingProduct[]>([]);
@@ -72,6 +73,7 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
     setFileName(null);
     setDiff(null);
     setFatal(null);
+    setMissingOptional([]);
     setExisting([]);
     if (fileRef.current) fileRef.current.value = "";
   };
@@ -92,10 +94,11 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
         setFatal(parsed.fatal);
         return;
       }
+      setMissingOptional(parsed.missingOptionalColumns);
       const { data, error } = await supabase
         .from("products")
         .select(
-          "id, sku, name, category, unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier_id, barcode, hs_code, weight_per_piece, shelf_life_days, parent_product_id, active, image_url, latin_name, species_group",
+          "id, sku, name, category, unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier_id, barcode, hs_code, weight_per_piece, shelf_life_days, parent_product_id, active, image_url, latin_name, species_group, fao_code",
         );
       if (error) throw error;
       const existingRows = (data ?? []) as unknown as ExistingProduct[];
@@ -381,6 +384,16 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
           <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-2 text-xs text-destructive">
             <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
             <span>{fatal}</span>
+          </div>
+        )}
+
+        {missingOptional.length > 0 && !fatal && (
+          <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/5 p-2 text-xs text-amber-600 dark:text-amber-400">
+            <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+            <span>
+              Filen saknar kolumnerna <span className="font-mono">{missingOptional.join(", ")}</span>. Dessa fält lämnas
+              orörda på befintliga produkter och tomma på nya.
+            </span>
           </div>
         )}
 

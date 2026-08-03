@@ -23,6 +23,7 @@ export const IMPORT_COLUMNS = [
   "image_url",
   "latin_name",
   "species_group",
+  "fao_code",
 ] as const;
 
 export type ImportColumn = (typeof IMPORT_COLUMNS)[number];
@@ -50,6 +51,8 @@ export interface ParsedRow {
   latin_name: string | null;
   /** null = kolumnen saknas eller är tom → befintligt värde lämnas orört */
   species_group: string | null;
+  /** null = kolumnen saknas eller är tom → befintligt värde lämnas orört */
+  fao_code: string | null;
 }
 
 export type DiffStatus = "new" | "changed" | "unchanged" | "error";
@@ -89,6 +92,8 @@ export interface ExistingProduct {
   active: boolean | null;
   image_url: string | null;
   latin_name: string | null;
+  species_group?: string | null;
+  fao_code?: string | null;
 }
 
 const HEADER_ALIASES: Record<string, ImportColumn> = {
@@ -124,6 +129,10 @@ const HEADER_ALIASES: Record<string, ImportColumn> = {
   art: "species_group",
   speciesgroup: "species_group",
   species: "species_group",
+  faokod: "fao_code",
+  fao: "fao_code",
+  faocode: "fao_code",
+  artkod: "fao_code",
 };
 
 function normalizeHeader(raw: string): string | null {
@@ -171,11 +180,15 @@ function nullableStr(value: unknown): string | null {
 export interface ParseResult {
   rows: ParsedRow[];
   missingColumns: string[];
+  /** Kolumner som inte är obligatoriska men som saknas i filen → fälten lämnas orörda */
+  missingOptionalColumns: string[];
   unknownColumns: string[];
   fatal?: string;
 }
 
 const REQUIRED_COLUMNS: ImportColumn[] = ["sku", "name", "category"];
+/** Saknas någon av dessa i filen varnar torrkörningen — de rör spårbarhet och prissättning. */
+const NOTIFY_IF_MISSING: ImportColumn[] = ["species_group", "fao_code", "latin_name", "image_url", "parent_sku"];
 
 export async function parseProductFile(file: File): Promise<ParseResult> {
   const buffer = await file.arrayBuffer();
@@ -183,18 +196,18 @@ export async function parseProductFile(file: File): Promise<ParseResult> {
   try {
     workbook = XLSX.read(buffer, { type: "array", raw: false });
   } catch {
-    return { rows: [], missingColumns: [], unknownColumns: [], fatal: "Kunde inte läsa filen. Använd .csv eller .xlsx." };
+    return { rows: [], missingColumns: [], missingOptionalColumns: [], unknownColumns: [], fatal: "Kunde inte läsa filen. Använd .csv eller .xlsx." };
   }
   const sheetName = workbook.SheetNames[0];
   if (!sheetName) {
-    return { rows: [], missingColumns: [], unknownColumns: [], fatal: "Filen innehåller inga blad." };
+    return { rows: [], missingColumns: [], missingOptionalColumns: [], unknownColumns: [], fatal: "Filen innehåller inga blad." };
   }
   const raw = XLSX.utils.sheet_to_json<Record<string, unknown>>(workbook.Sheets[sheetName], {
     defval: "",
     raw: false,
   });
   if (raw.length === 0) {
-    return { rows: [], missingColumns: [], unknownColumns: [], fatal: "Filen innehåller inga rader." };
+    return { rows: [], missingColumns: [], missingOptionalColumns: [], unknownColumns: [], fatal: "Filen innehåller inga rader." };
   }
 
   const headerKeys = Object.keys(raw[0]);
@@ -209,7 +222,7 @@ export async function parseProductFile(file: File): Promise<ParseResult> {
   const present = new Set(map.values());
   const missingColumns = REQUIRED_COLUMNS.filter((c) => !present.has(c));
   if (missingColumns.length > 0) {
-    return { rows: [], missingColumns, unknownColumns, fatal: `Obligatoriska kolumner saknas: ${missingColumns.join(", ")}` };
+    return { rows: [], missingColumns, missingOptionalColumns: [], unknownColumns, fatal: `Obligatoriska kolumner saknas: ${missingColumns.join(", ")}` };
   }
 
   const rows: ParsedRow[] = raw.map((r, i) => {
@@ -243,6 +256,10 @@ export async function parseProductFile(file: File): Promise<ParseResult> {
       image_url: nullableStr(get("image_url")),
       latin_name: nullableStr(get("latin_name")),
       species_group: normalizeSpeciesGroup(get("species_group")),
+      fao_code: (() => {
+        const v = nullableStr(get("fao_code"));
+        return v === null ? null : v.toUpperCase();
+      })(),
     };
   });
 
@@ -262,7 +279,8 @@ export async function parseProductFile(file: File): Promise<ParseResult> {
     }
   });
 
-  return { rows, missingColumns: [], unknownColumns };
+  const missingOptionalColumns = NOTIFY_IF_MISSING.filter((c) => !present.has(c));
+  return { rows, missingColumns: [], missingOptionalColumns, unknownColumns };
 }
 
 const VALID_UNITS = ["kg", "st", "låda", "förp", "l"];
@@ -415,6 +433,7 @@ export function buildDiff({ rows, existing, categories, suppliers }: BuildDiffAr
     cmp("image_url", current.image_url, row.image_url);
     if (row.latin_name !== null) cmp("latin_name", current.latin_name, row.latin_name);
     if (row.species_group !== null) cmp("species_group", (current as any).species_group, row.species_group);
+    if (row.fao_code !== null) cmp("fao_code", (current as any).fao_code, row.fao_code);
     cmp(
       "parent_sku",
       current.parent_product_id ? byId.get(current.parent_product_id)?.sku ?? "" : "",
@@ -451,6 +470,7 @@ export interface UpsertPayload {
   image_url: string | null;
   latin_name?: string | null;
   species_group?: string | null;
+  fao_code?: string | null;
   supplier_id?: string | null;
   parent_product_id?: string | null;
 }
@@ -475,9 +495,10 @@ export function toPayload(row: ParsedRow): UpsertPayload {
     // tom cell = ingen ändring: fältet utesluts helt ur payloaden
     ...(row.latin_name !== null ? { latin_name: row.latin_name } : {}),
     ...(row.species_group !== null ? { species_group: row.species_group } : {}),
+    ...(row.fao_code !== null ? { fao_code: row.fao_code } : {}),
   };
 }
 
 export function buildTemplateCsv(): string {
-  return `${IMPORT_COLUMNS.join(",")}\nFS-045,Lax filé,Färsk Fisk,kg,120.00,162.00,199.00,Norge,Salmar,,7311234567890,0304,,5,,TRUE,https://exempel.se/bilder/lax-file.jpg,Salmo salar,lax\n`;
+  return `${IMPORT_COLUMNS.join(",")}\nFS-045,Lax filé,Färsk Fisk,kg,120.00,162.00,199.00,Norge,Salmar,,7311234567890,0304,,5,,TRUE,https://exempel.se/bilder/lax-file.jpg,Salmo salar,lax,SAL\n`;
 }
