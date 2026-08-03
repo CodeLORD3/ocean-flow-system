@@ -1,5 +1,4 @@
 import { speciesKey } from "@/lib/asciiFold";
-import { SPECIES_CUT_MODEL, hasCutModel, modelForSpecies } from "@/lib/cutModels";
 import { SPECIES_GROUP_KEYS } from "@/lib/speciesGroups";
 import { evaluateAutoApproval } from "@/lib/autoApproval";
 import { describe, it, expect } from "vitest";
@@ -10,7 +9,7 @@ import {
   priceByByproductMethod,
   auctionMaxRawPrice,
 } from "@/lib/filletMath";
-import { CUT_MODEL_TEMPLATES, modelForSpecies, normalizeDetailForm } from "@/lib/cutModels";
+import { CUT_MODEL_TEMPLATES, SPECIES_CUT_MODEL, hasCutModel, modelForSpecies, normalizeDetailForm } from "@/lib/cutModels";
 
 /* Torskpartiet i specen: 100 kg à 60 kr/kg, utbyte 47 %, loin_four 55/20/15/10 */
 const RAW_QTY = 100;
