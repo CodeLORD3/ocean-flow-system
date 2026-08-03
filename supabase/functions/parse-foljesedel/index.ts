@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 // Convert a URL to a base64 data URL so the AI gateway can process it
-async function toDataUrl(fileUrl: string): Promise<{ dataUrl: string; mimeType: string }> {
+async function toDataUrl(fileUrl: string): Promise<{ dataUrl: string; mimeType: string; hash: string }> {
   const res = await fetch(fileUrl);
   if (!res.ok) throw new Error(`Failed to fetch file: ${res.status}`);
 
@@ -22,9 +22,15 @@ async function toDataUrl(fileUrl: string): Promise<{ dataUrl: string; mimeType: 
   }
   const base64 = btoa(binary);
 
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  const hash = Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
   return {
     dataUrl: `data:${contentType};base64,${base64}`,
     mimeType: contentType,
+    hash,
   };
 }
 
@@ -32,8 +38,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { fileUrl } = await req.json();
+    const { fileUrl, fileHash: providedHash } = await req.json();
     if (!fileUrl) throw new Error("fileUrl is required");
+    let fileHash: string | null = providedHash ?? null;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -48,7 +55,8 @@ serve(async (req) => {
 
     if (isPdf) {
       // Download and convert to base64 data URL for PDF
-      const { dataUrl } = await toDataUrl(fileUrl);
+      const { dataUrl, hash } = await toDataUrl(fileUrl);
+      fileHash = fileHash ?? hash;
       imageContent = {
         type: "file",
         file: {
@@ -69,7 +77,8 @@ serve(async (req) => {
         };
       } else {
         // Unknown format — download and send as data URL
-        const { dataUrl } = await toDataUrl(fileUrl);
+        const { dataUrl, hash } = await toDataUrl(fileUrl);
+        fileHash = fileHash ?? hash;
         imageContent = {
           type: "image_url",
           image_url: { url: dataUrl },
@@ -88,10 +97,20 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are an expert at reading Swedish delivery notes (följesedlar) for a fish/seafood wholesale business. 
-Extract ALL product lines from the document. For each line return: product_name, quantity, unit (kg/st/liter/förp), unit_price, line_total.
-If you cannot determine a value, use null. Always return a JSON array of objects. Only return the JSON array, no other text.
-Example: [{"product_name":"Lax färsk","quantity":10,"unit":"kg","unit_price":89.50,"line_total":895.00}]`,
+            content: `You are an expert at reading Swedish delivery notes (följesedlar), auction notes (auktionsavräkningar) and invoices for a fish/seafood wholesale business.
+
+Extract BOTH the document header and ALL product lines.
+
+Header: supplier_name, supplier_org_no, document_number (följesedelsnummer/fakturanummer/avräkningsnummer), document_type (foljesedel|faktura|auktionsavrakning), document_date, delivery_date, total_ex_vat, total_amount, notes.
+If the document has no number at all (common on auction notes), leave document_number null — do not invent one.
+
+Each line: product_name, supplier_article_no, quantity, unit (kg/st/förp/låda), unit_price, line_total, ordered_quantity (only if the document shows both ordered and delivered), latin_name, species_fao_code, lot_numbers (array — every parti-/batch-/klubbslagsnummer printed on the line), best_before, catch_area (FAO area), catch_date_from, catch_date_to, fishing_gear, fishing_gear_code, vessel_name, vessel_reg, vessel_nation, presentation (hel/urtagen/filé/skalad), condition (färsk/fryst/kokt), grade, certificate.
+
+Rules:
+- Report DELIVERED quantity in quantity, never ordered quantity.
+- Copy latin names and batch numbers exactly as printed, including misspellings.
+- Dates as YYYY-MM-DD.
+- Use null for anything not printed on the document. Never guess.`,
           },
           {
             role: "user",
@@ -99,7 +118,7 @@ Example: [{"product_name":"Lax färsk","quantity":10,"unit":"kg","unit_price":89
               imageContent as any,
               {
                 type: "text",
-                text: "Extract all product lines from this följesedel (delivery note). Return a JSON array.",
+                text: "Extract the document header and all product lines from this document.",
               },
             ],
           },
@@ -109,22 +128,55 @@ Example: [{"product_name":"Lax färsk","quantity":10,"unit":"kg","unit_price":89
             type: "function",
             function: {
               name: "extract_products",
-              description: "Extract product lines from a delivery note",
+              description: "Extract document header and product lines from a delivery note",
               parameters: {
                 type: "object",
                 properties: {
+                  document: {
+                    type: "object",
+                    properties: {
+                      supplier_name: { type: ["string", "null"] },
+                      supplier_org_no: { type: ["string", "null"] },
+                      document_number: { type: ["string", "null"] },
+                      document_type: { type: ["string", "null"] },
+                      document_date: { type: ["string", "null"] },
+                      delivery_date: { type: ["string", "null"] },
+                      total_ex_vat: { type: ["number", "null"] },
+                      total_amount: { type: ["number", "null"] },
+                      notes: { type: ["string", "null"] },
+                    },
+                    additionalProperties: false,
+                  },
                   products: {
                     type: "array",
                     items: {
                       type: "object",
                       properties: {
                         product_name: { type: "string" },
-                        quantity: { type: "number" },
-                        unit: { type: "string" },
-                        unit_price: { type: "number" },
-                        line_total: { type: "number" },
+                        supplier_article_no: { type: ["string", "null"] },
+                        quantity: { type: ["number", "null"] },
+                        unit: { type: ["string", "null"] },
+                        unit_price: { type: ["number", "null"] },
+                        line_total: { type: ["number", "null"] },
+                        ordered_quantity: { type: ["number", "null"] },
+                        latin_name: { type: ["string", "null"] },
+                        species_fao_code: { type: ["string", "null"] },
+                        lot_numbers: { type: "array", items: { type: "string" } },
+                        best_before: { type: ["string", "null"] },
+                        catch_area: { type: ["string", "null"] },
+                        catch_date_from: { type: ["string", "null"] },
+                        catch_date_to: { type: ["string", "null"] },
+                        fishing_gear: { type: ["string", "null"] },
+                        fishing_gear_code: { type: ["string", "null"] },
+                        vessel_name: { type: ["string", "null"] },
+                        vessel_reg: { type: ["string", "null"] },
+                        vessel_nation: { type: ["string", "null"] },
+                        presentation: { type: ["string", "null"] },
+                        condition: { type: ["string", "null"] },
+                        grade: { type: ["string", "null"] },
+                        certificate: { type: ["string", "null"] },
                       },
-                      required: ["product_name", "quantity"],
+                      required: ["product_name"],
                       additionalProperties: false,
                     },
                   },
@@ -137,6 +189,7 @@ Example: [{"product_name":"Lax färsk","quantity":10,"unit":"kg","unit_price":89
         ],
         tool_choice: { type: "function", function: { name: "extract_products" } },
       }),
+
     });
 
     if (!response.ok) {
@@ -162,12 +215,14 @@ Example: [{"product_name":"Lax färsk","quantity":10,"unit":"kg","unit_price":89
 
     const data = await response.json();
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    let products = [];
+    let products: unknown[] = [];
+    let document: Record<string, unknown> = {};
 
     if (toolCall?.function?.arguments) {
       try {
         const parsed = JSON.parse(toolCall.function.arguments);
         products = parsed.products || [];
+        document = parsed.document || {};
       } catch {
         const content = data.choices?.[0]?.message?.content || "";
         const match = content.match(/\[[\s\S]*\]/);
@@ -175,7 +230,8 @@ Example: [{"product_name":"Lax färsk","quantity":10,"unit":"kg","unit_price":89
       }
     }
 
-    return new Response(JSON.stringify({ products }), {
+    // Filhashen används för dubblettspärren i klienten.
+    return new Response(JSON.stringify({ products, document, fileHash }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
