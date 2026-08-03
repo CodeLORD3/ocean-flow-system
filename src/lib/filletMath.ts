@@ -157,3 +157,25 @@ export function isProcessedForm(form: string): boolean {
   if (f === "hel" || f === "säljbar") return false;
   return true;
 }
+
+/**
+ * Fördelar partiets totala råvarukostnad över styckdetaljerna.
+ * Fördelningsnyckel = kg × marginalvikt, så att dyra detaljer (loin/rygg) bär
+ * mer av råvarukostnaden än billiga (slag/bitar).
+ *
+ * Vid en enda detalj blir resultatet identiskt med inköpspris / utbyte.
+ */
+export function allocateRawCost(
+  details: { qtyKg: number; marginWeight?: number | null }[],
+  purchasePricePerKg: number,
+  rawQtyKg: number,
+): number[] {
+  const totalRawCost = (Number(purchasePricePerKg) || 0) * (Number(rawQtyKg) || 0);
+  const keys = details.map((d) => Math.max(0, Number(d.qtyKg) || 0) * (Number(d.marginWeight) || 1));
+  const keySum = keys.reduce((a, b) => a + b, 0);
+  return details.map((d, i) => {
+    const qty = Number(d.qtyKg) || 0;
+    if (qty <= 0 || keySum <= 0) return 0;
+    return (totalRawCost * (keys[i] / keySum)) / qty;
+  });
+}
