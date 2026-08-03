@@ -248,7 +248,7 @@ function EditableRow({
 
   if (locked) {
     return (
-      <TableRow className="h-8 opacity-75">
+      <TableRow data-line-id={line.id} className="h-8 opacity-75">
         <TableCell className="py-0.5 px-1.5 text-[11px] min-w-[140px]">{line.product_name}</TableCell>
         <TableCell className="py-0.5 px-1 text-[11px] text-right w-[50px]">{line.quantity}</TableCell>
         <TableCell className="py-0.5 px-1 text-[11px] w-[42px]">{line.unit || "kg"}</TableCell>
@@ -264,7 +264,7 @@ function EditableRow({
 
 
   return (
-    <TableRow className="h-8 group/row">
+    <TableRow data-line-id={line.id} className="h-8 group/row">
       <TableCell className="py-0.5 px-1.5 min-w-[140px]">
         <Popover open={productOpen} onOpenChange={setProductOpen}>
           <PopoverTrigger asChild>
@@ -438,7 +438,19 @@ function EditableRow({
   );
 }
 
+/**
+ * Ett partinummer på en följesedel är flera tecken långt (GFA: 10012.NNNNNNN).
+ * Enstaka siffror är nästan alltid kollital som hamnat i fel fält vid inläsningen,
+ * så de räknas inte som partinummer.
+ */
+export function plausibleLots(line: { lot_numbers?: string[] | null }): string[] {
+  return ((line.lot_numbers ?? []) as string[])
+    .map((n) => String(n).trim())
+    .filter((n) => n.length >= 4);
+}
+
 // Collapsible report section
+
 function ReportSection({
   report,
   lines,
@@ -634,6 +646,39 @@ function ReportSection({
               ))}
             </TableBody>
           </Table>
+
+          {/* Partinummer per rad — visar om följesedelns batchnummer lästes in */}
+          <div className="px-3 py-2 border-t bg-muted/10 space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-medium text-muted-foreground">Partinummer från följesedeln</span>
+              <span className="text-[10px] text-muted-foreground tabular-nums">
+                {lines.filter((l) => plausibleLots(l as any).length > 0).length} av {lines.length} rader
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+              {lines.map((l) => {
+                const lots = plausibleLots(l as any);
+                const raw = ((l as any).lot_numbers ?? []).filter(Boolean) as string[];
+                return (
+                  <div key={l.id} className="flex items-center gap-1.5 text-[11px] min-w-0">
+                    <span className="truncate flex-1 text-muted-foreground">{l.product_name}</span>
+                    {lots.length > 0 ? (
+                      lots.map((n) => (
+                        <span key={n} className="font-mono tabular-nums text-foreground">{n}</span>
+                      ))
+                    ) : raw.length > 0 ? (
+                      <span className="font-mono tabular-nums text-amber-600" title="Inläst värde ser inte ut som ett partinummer">
+                        {raw.join(", ")}?
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground/60">saknas</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
 
           {/* Confirm button for unlocked sections */}
           {!isLocked && lines.length > 0 && (
@@ -1214,6 +1259,45 @@ export default function PurchaseReporting() {
     [allLines, selectedReportId],
   );
 
+  // Ett spärrat läge ska alltid säga vad man gör åt det: här räknas exakt vad
+  // som hindrar "Bokför inleverans" och vilka rader det gäller.
+  const postBlock = useMemo(() => {
+    if (!selectedReport) {
+      const only = reports.length === 1 ? reports[0] : null;
+      return {
+        text: only
+          ? `Ingen rapport är vald — välj ${only.display_name || only.file_name}`
+          : "Ingen rapport är vald — klicka på en följesedel i dokumentlistan till höger",
+        action: only ? { label: "Välj rapporten", id: only.id } : null,
+        lineIds: [] as string[],
+      };
+    }
+    if (selectedLines.length === 0) {
+      return { text: "Rapporten saknar rader", action: null, lineIds: [] as string[] };
+    }
+    const missingProduct = selectedLines.filter((l) => !l.product_id);
+    if (missingProduct.length > 0) {
+      return {
+        text: `${missingProduct.length} ${missingProduct.length === 1 ? "rad" : "rader"} saknar produktkoppling`,
+        action: null,
+        lineIds: missingProduct.map((l) => l.id),
+      };
+    }
+    return null;
+  }, [selectedReport, selectedLines, reports]);
+
+  // Icke-blockerande varningar, visade när knappen är klickbar.
+  const postWarnings = useMemo(() => {
+    if (postBlock || !selectedReport) return [] as string[];
+    const w: string[] = [];
+    const noLot = selectedLines.filter((l) => plausibleLots(l as any).length === 0);
+    if (noLot.length > 0) w.push(`Partinummer saknas på ${noLot.length} ${noLot.length === 1 ? "rad" : "rader"}`);
+    const zero = selectedLines.filter((l) => !l.unit_price);
+    if (zero.length > 0) w.push(`${zero.length} ${zero.length === 1 ? "rad" : "rader"} har nollpris och måste bekräftas i dialogen`);
+    return w;
+  }, [postBlock, selectedReport, selectedLines]);
+
+
   const grandTotal = allLines.reduce((s, l) => s + (l.line_total ?? 0), 0);
 
   const searchedProducts = products.filter((p) =>
@@ -1235,17 +1319,47 @@ export default function PurchaseReporting() {
                   {" · "}{lockedReports.length} bekräftade
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={selectedReport && !(selectedReport as any).posted_at ? "default" : "outline"}
-                  size="sm"
-                  className="gap-1.5 h-8 text-xs"
-                  disabled={!selectedReport || selectedLines.length === 0}
-                  onClick={() => setPostOpen(true)}
-                >
-                  <PackageCheck className="h-3.5 w-3.5" />
-                  {selectedReport && (selectedReport as any).posted_at ? "Bokförd" : "Bokför inleverans"}
-                </Button>
+              <div className="flex items-start gap-2">
+                <div className="flex flex-col items-end gap-1">
+                  <Button
+                    variant={selectedReport && !(selectedReport as any).posted_at ? "default" : "outline"}
+                    size="sm"
+                    className="gap-1.5 h-8 text-xs"
+                    disabled={!!postBlock}
+                    onClick={() => setPostOpen(true)}
+                  >
+                    <PackageCheck className="h-3.5 w-3.5" />
+                    {selectedReport && (selectedReport as any).posted_at ? "Bokförd" : "Bokför inleverans"}
+                  </Button>
+                  {postBlock ? (
+                    <p className="text-[11px] text-amber-600 max-w-[280px] text-right leading-tight">
+                      {postBlock.text}
+                      {postBlock.action && (
+                        <button
+                          className="ml-1 underline hover:no-underline"
+                          onClick={() => { setSelectedReportId(postBlock.action!.id); setDocExpanded(true); }}
+                        >
+                          {postBlock.action.label}
+                        </button>
+                      )}
+                      {postBlock.lineIds.length > 0 && (
+                        <button
+                          className="ml-1 underline hover:no-underline"
+                          onClick={() => {
+                            setFocusLineId(postBlock.lineIds[0]);
+                            document.querySelector(`[data-line-id="${postBlock.lineIds[0]}"]`)?.scrollIntoView({ block: "center" });
+                          }}
+                        >
+                          Visa raderna
+                        </button>
+                      )}
+                    </p>
+                  ) : postWarnings.length > 0 ? (
+                    <p className="text-[11px] text-muted-foreground max-w-[280px] text-right leading-tight">
+                      {postWarnings.join(" · ")}
+                    </p>
+                  ) : null}
+                </div>
               <Link to="/reports">
                 <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
                   <Archive className="h-3.5 w-3.5" />
@@ -1258,6 +1372,7 @@ export default function PurchaseReporting() {
                 </Button>
               </Link>
               </div>
+
             </div>
 
             <PostIncomingDialog
