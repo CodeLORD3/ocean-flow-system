@@ -1,5 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { markOrderLinesBehandlas } from "@/lib/orderStatusSync";
+import { recordMovement } from "@/lib/stockLedger";
+
 import { PdfViewer } from "@/components/PdfViewer";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -867,30 +869,19 @@ export default function PurchaseReporting() {
       // Transfer confirmed lines to Grossist Flytande storage
       const productLines = lines.filter((l) => l.product_id);
       for (const line of productLines) {
-        // Check if there's already stock for this product at Grossist Flytande
-        const { data: existing } = await supabase
-          .from("product_stock_locations")
-          .select("id, quantity, unit_cost")
-          .eq("product_id", line.product_id!)
-          .eq("location_id", GROSSIST_FLYTANDE_ID)
-          .maybeSingle();
-
-        if (existing) {
-          // Weighted average unit cost
-          const oldTotal = Number(existing.quantity) * Number(existing.unit_cost || 0);
-          const newTotal = Number(line.quantity) * Number(line.unit_price || 0);
-          const combinedQty = Number(existing.quantity) + Number(line.quantity);
-          const avgCost = combinedQty > 0 ? (oldTotal + newTotal) / combinedQty : 0;
-          await supabase
-            .from("product_stock_locations")
-            .update({ quantity: combinedQty, unit_cost: avgCost, updated_at: new Date().toISOString() })
-            .eq("id", existing.id);
-        } else {
-          await supabase
-            .from("product_stock_locations")
-            .insert({ product_id: line.product_id!, location_id: GROSSIST_FLYTANDE_ID, quantity: Number(line.quantity), unit_cost: Number(line.unit_price || 0) });
-        }
+        // Inleveransen bokförs som rörelse; vägt kostpris räknas ut av triggern.
+        await recordMovement({
+          productId: line.product_id!,
+          locationId: GROSSIST_FLYTANDE_ID,
+          quantityKg: Number(line.quantity),
+          movementType: "inleverans",
+          unitCost: Number(line.unit_price || 0) || null,
+          referenceType: "purchase_report",
+          referenceId: reportId,
+          note: "Bekräftad inköpsrapport",
+        });
       }
+
 
       // Auto-update order line statuses (no-op, kept for compatibility)
       const confirmedProductIds = productLines.map((l) => l.product_id!).filter(Boolean);
@@ -911,23 +902,19 @@ export default function PurchaseReporting() {
       const lines = allLines.filter((l) => l.report_id === reportId);
       const productLines = lines.filter((l) => l.product_id);
 
-      // Reverse the stock additions made when the report was confirmed
+      // Upplåsningen motbokas som egen rörelse — inleveransen suddas aldrig ut.
       for (const line of productLines) {
-        const { data: existing } = await supabase
-          .from("product_stock_locations")
-          .select("id, quantity")
-          .eq("product_id", line.product_id!)
-          .eq("location_id", GROSSIST_FLYTANDE_ID)
-          .maybeSingle();
-
-        if (existing) {
-          const newQty = Math.max(0, Number(existing.quantity) - Number(line.quantity));
-          await supabase
-            .from("product_stock_locations")
-            .update({ quantity: newQty, updated_at: new Date().toISOString() })
-            .eq("id", existing.id);
-        }
+        await recordMovement({
+          productId: line.product_id!,
+          locationId: GROSSIST_FLYTANDE_ID,
+          quantityKg: -Number(line.quantity),
+          movementType: "justering",
+          referenceType: "purchase_report",
+          referenceId: reportId,
+          note: "Inköpsrapport upplåst — inleverans återförd",
+        });
       }
+
 
       const { error } = await supabase
         .from("purchase_reports")

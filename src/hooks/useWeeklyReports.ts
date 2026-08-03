@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { logActivity } from "@/hooks/useActivityLog";
+import { setBalance } from "@/lib/stockLedger";
 
 export type InventoryLine = {
   product_id: string;
@@ -192,7 +193,7 @@ export function useCreateWeeklyReportFull() {
 
       // If finalized, update stock
       if (params.status === "finalized" && inventoryLines.length > 0) {
-        await syncInventoryToStock(reportId, inventoryLines);
+        await syncInventoryToStock(reportId, inventoryLines, params.store_id);
       }
 
       await logActivity({
@@ -264,7 +265,7 @@ export function useUpdateWeeklyReportFull() {
       await Promise.all(promises);
 
       if (params.status === "finalized" && inventoryLines.length > 0) {
-        await syncInventoryToStock(id, inventoryLines);
+        await syncInventoryToStock(id, inventoryLines, store_id);
       }
 
       await logActivity({
@@ -283,20 +284,38 @@ export function useUpdateWeeklyReportFull() {
   });
 }
 
-async function syncInventoryToStock(reportId: string, lines: InventoryLine[]) {
-  // Update each product's stock to the counted quantity
+async function syncInventoryToStock(reportId: string, lines: InventoryLine[], storeId: string) {
+  // Inventeringen i veckorapporten är en räkning på butikens lagerplats.
+  // Den bokförs via rörelseloggen — products.stock härleds av triggern.
+  const { data: locations } = await supabase
+    .from("storage_locations")
+    .select("id, name")
+    .eq("store_id", storeId);
+
+  const pick =
+    (locations || []).find((l: any) => /f(ö|o)rs(ä|a)ljningslager/i.test(l.name || "")) ||
+    (locations || []).find((l: any) => /^raw-/i.test(l.name || "")) ||
+    (locations || [])[0];
+
+  if (!pick) {
+    throw new Error("Butiken saknar lagerplats — inventeringen kan inte bokföras.");
+  }
+
   for (const line of lines) {
-    await supabase
-      .from("products")
-      .update({ stock: line.quantity, updated_at: new Date().toISOString() })
-      .eq("id", line.product_id);
+    await setBalance({
+      productId: line.product_id,
+      locationId: pick.id,
+      targetQuantityKg: Number(line.quantity),
+      movementType: "inventering",
+      note: "Inventering via veckorapport",
+    });
 
     await logActivity({
       action_type: "update",
       description: `Lagerkorrigering via veckorapport`,
       entity_type: "product",
       entity_id: line.product_id,
-      details: { quantity: line.quantity, report_id: reportId },
+      details: { quantity: line.quantity, report_id: reportId, location_id: pick.id },
     });
   }
 }

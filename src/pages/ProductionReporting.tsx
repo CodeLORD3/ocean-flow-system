@@ -15,6 +15,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useProducts } from "@/hooks/useProducts";
+import { recordMovement } from "@/lib/stockLedger";
+
 import { format } from "date-fns";
 
 type ProdReportLine = {
@@ -487,32 +489,21 @@ export default function ProductionReporting() {
       // Transfer each produced line to Grossist Flytande
       for (const line of lines) {
         if (!line.product_id || line.quantity <= 0) continue;
-
-        // Check if product already exists at Grossist Flytande
-        const { data: existing } = await supabase
-          .from("product_stock_locations")
-          .select("id, quantity, unit_cost")
-          .eq("product_id", line.product_id)
-          .eq("location_id", flytandeLoc.id)
-          .maybeSingle();
-
-        // Get product cost_price for unit_cost
         const product = products.find((p: any) => p.id === line.product_id);
         const unitCost = Number(product?.cost_price) || 0;
-
-        if (existing) {
-          const oldTotal = Number(existing.quantity) * (Number(existing.unit_cost) || 0);
-          const newTotal = line.quantity * unitCost;
-          const combinedQty = Number(existing.quantity) + line.quantity;
-          const avgCost = combinedQty > 0 ? (oldTotal + newTotal) / combinedQty : 0;
-          await supabase.from("product_stock_locations")
-            .update({ quantity: combinedQty, unit_cost: avgCost, updated_at: new Date().toISOString() })
-            .eq("id", existing.id);
-        } else {
-          await supabase.from("product_stock_locations")
-            .insert({ product_id: line.product_id, location_id: flytandeLoc.id, quantity: line.quantity, unit_cost: unitCost });
-        }
+        // Producerade varor bokförs som tillverkning in via rörelseloggen.
+        await recordMovement({
+          productId: line.product_id,
+          locationId: flytandeLoc.id,
+          quantityKg: line.quantity,
+          movementType: "tillverkning_in",
+          unitCost: unitCost || null,
+          referenceType: "production_report",
+          referenceId: reportId,
+          note: "Bekräftad produktionsrapport",
+        });
       }
+
 
       // Auto-update order line statuses (no-op, kept for compatibility)
       const confirmedProductIds = lines.map((l) => l.product_id!).filter(Boolean);

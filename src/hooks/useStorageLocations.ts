@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { logActivity } from "@/hooks/useActivityLog";
+import { setBalance, setMinStock } from "@/lib/stockLedger";
+
 
 export function useStorageLocations(storeId?: string) {
   return useQuery({
@@ -73,16 +75,22 @@ export function useUpsertStockLocation() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (params: { product_id: string; location_id: string; quantity: number; min_stock?: number }) => {
-      const { error } = await supabase
-        .from("product_stock_locations")
-        .upsert({
-          product_id: params.product_id,
-          location_id: params.location_id,
-          quantity: params.quantity,
-          min_stock: params.min_stock || 0,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: "product_id,location_id" });
-      if (error) throw error;
+      // Miniminivån är en inställning; saldot sätts via rörelseloggen.
+      if (params.min_stock !== undefined) {
+        await setMinStock({
+          productId: params.product_id,
+          locationId: params.location_id,
+          minStock: params.min_stock || 0,
+        });
+      }
+      await setBalance({
+        productId: params.product_id,
+        locationId: params.location_id,
+        targetQuantityKg: Number(params.quantity),
+        movementType: "justering",
+        note: "Saldo satt manuellt",
+      });
+
       
       const { markOrderLinesPackad, revertOrderLinesIfStockGone } = await import("@/lib/orderStatusSync");
       await revertOrderLinesIfStockGone();

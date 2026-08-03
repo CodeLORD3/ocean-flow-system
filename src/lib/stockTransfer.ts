@@ -1,5 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
-import { recordMovements, transferStock, currentBalance } from "@/lib/stockLedger";
+import {
+  recordMovements,
+  transferStock,
+  currentBalance,
+  lotBalancesAtLocation,
+  lotBalancesForReference,
+} from "@/lib/stockLedger";
+
 
 const TRANSPORTLAGER_NAME = "Transportlager";
 
@@ -109,21 +116,40 @@ export async function moveStockToTransport(orderId: string) {
     for (const stock of ordered) {
       if (remaining <= 0) break;
       const available = Number((stock as any).quantity) || 0;
-      const moveQty = Math.min(remaining, available);
-      if (moveQty <= 0) continue;
+      if (available <= 0) continue;
+      const sourceId = (stock as any).location_id as string;
+      const cost = Number((stock as any).avg_cost) || null;
 
-      await transferStock({
-        productId: line.product_id,
-        fromLocationId: (stock as any).location_id,
-        toLocationId: transportId,
-        quantityKg: moveQty,
-        unitCost: Number((stock as any).avg_cost) || null,
-        referenceType: REF_TYPE,
-        referenceId: orderId,
-        note: "Order skickad till transportlager",
-      });
-      remaining -= moveQty;
+      // Plocka parti för parti (FIFO på bäst före) så partiet följer med flytten.
+      const lots = await lotBalancesAtLocation(line.product_id, sourceId);
+      const picks: { lotId: string | null; qty: number }[] = [];
+      let fromThisSource = Math.min(remaining, available);
+      for (const lot of lots) {
+        if (fromThisSource <= 0) break;
+        const take = Math.min(fromThisSource, lot.quantityKg);
+        if (take <= 0) continue;
+        picks.push({ lotId: lot.lotId, qty: take });
+        fromThisSource -= take;
+      }
+      // Saldo utan partihistorik: flytta ändå, utan parti.
+      if (fromThisSource > 0) picks.push({ lotId: null, qty: fromThisSource });
+
+      for (const pick of picks) {
+        await transferStock({
+          productId: line.product_id,
+          fromLocationId: sourceId,
+          toLocationId: transportId,
+          quantityKg: pick.qty,
+          lotId: pick.lotId,
+          unitCost: cost,
+          referenceType: REF_TYPE,
+          referenceId: orderId,
+          note: "Order skickad till transportlager",
+        });
+        remaining -= pick.qty;
+      }
     }
+
 
     if (remaining > 0) {
       console.warn(
@@ -154,34 +180,42 @@ export async function moveStockToRawLager(
     return;
   }
 
-  const balances = await transportBalanceForOrder(orderId, transportId);
-  const productIds = Object.keys(balances);
-  if (!productIds.length) {
+  // Partivis kvarvarande kvantitet på transportlagret för just den här ordern.
+  const perProduct = await lotBalancesForReference({
+    locationId: transportId,
+    referenceType: REF_TYPE,
+    referenceId: orderId,
+  });
+  if (!perProduct.length) {
     console.warn(
       `moveStockToRawLager: inga transportlagerrörelser hittades för order ${orderId}.`,
     );
     return;
   }
 
-  for (const productId of productIds) {
-    const qty = balances[productId];
-    if (qty <= 0) continue;
+  for (const { productId, lots } of perProduct) {
     const cost =
       unitCostByProductId?.[productId] ??
       (await currentBalance(productId, transportId)).avgCost ??
       null;
 
-    await transferStock({
-      productId,
-      fromLocationId: transportId,
-      toLocationId: rawLagerId,
-      quantityKg: qty,
-      unitCost: cost || null,
-      referenceType: REF_TYPE,
-      referenceId: orderId,
-      note: "Inleverans godkänd i butik",
-    });
+    for (const lot of lots) {
+      if (lot.quantityKg <= 0) continue;
+      await transferStock({
+        productId,
+        fromLocationId: transportId,
+        toLocationId: rawLagerId,
+        quantityKg: lot.quantityKg,
+        // Samma parti som grossisten skapade — inget nytt parti i butiksledet.
+        lotId: lot.lotId,
+        unitCost: cost || null,
+        referenceType: REF_TYPE,
+        referenceId: orderId,
+        note: "Inleverans godkänd i butik",
+      });
+    }
   }
+
 }
 
 /** Bokför en manuell justering (endast via loggen). */

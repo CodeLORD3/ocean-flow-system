@@ -73,6 +73,13 @@ import StockMovementsView from "@/components/inventory/StockMovementsView";
 import LotTraceabilityView from "@/components/inventory/LotTraceabilityView";
 
 import WasteDialog from "@/components/inventory/WasteDialog";
+import {
+  lotBalancesAtLocation,
+  recordMovement,
+  transferStock,
+  setBalance,
+} from "@/lib/stockLedger";
+
 
 
 import { format, differenceInDays, parseISO } from "date-fns";
@@ -347,34 +354,32 @@ export default function Inventory() {
     try {
       const items = getSelectedStockItems(activeLocationId);
       for (const item of items) {
-        const { data: existing } = await supabase
-          .from("product_stock_locations")
-          .select("id, quantity, unit_cost")
-          .eq("product_id", item.product_id)
-          .eq("location_id", targetLocationId)
-          .maybeSingle();
-        const itemCost = Number(item.unit_cost) || 0;
-        if (existing) {
-          const oldTotal = Number(existing.quantity) * (Number(existing.unit_cost) || 0);
-          const newTotal = Number(item.quantity) * itemCost;
-          const combinedQty = Number(existing.quantity) + Number(item.quantity);
-          const avgCost = combinedQty > 0 ? (oldTotal + newTotal) / combinedQty : 0;
-          await supabase
-            .from("product_stock_locations")
-            .update({ quantity: combinedQty, unit_cost: avgCost, updated_at: new Date().toISOString() })
-            .eq("id", existing.id);
-        } else {
-          await supabase.from("product_stock_locations").insert({
-            product_id: item.product_id,
-            location_id: targetLocationId,
-            quantity: Number(item.quantity),
-            unit_cost: itemCost,
-            expiry_date: item.expiry_date || null,
-            arrival_date: item.arrival_date || null,
+        // Flytten bokförs som två motbokade rörelser — saldot härleds av loggen.
+        const lots = await lotBalancesAtLocation(item.product_id, item.location_id);
+        let remaining = Number(item.quantity) || 0;
+        const picks: { lotId: string | null; qty: number }[] = [];
+        for (const lot of lots) {
+          if (remaining <= 0) break;
+          const take = Math.min(remaining, lot.quantityKg);
+          if (take <= 0) continue;
+          picks.push({ lotId: lot.lotId, qty: take });
+          remaining -= take;
+        }
+        if (remaining > 0) picks.push({ lotId: null, qty: remaining });
+
+        for (const pick of picks) {
+          await transferStock({
+            productId: item.product_id,
+            fromLocationId: item.location_id,
+            toLocationId: targetLocationId,
+            quantityKg: pick.qty,
+            lotId: pick.lotId,
+            unitCost: Number(item.unit_cost) || null,
+            note: "Flyttat i lagervyn",
           });
         }
-        await supabase.from("product_stock_locations").delete().eq("id", item.id);
       }
+
       await revertOrderLinesIfStockGone();
       const movedProductIds = items.map((i: any) => i.product_id);
       await markOrderLinesPackad(movedProductIds, targetLocationId);
@@ -407,8 +412,17 @@ export default function Inventory() {
           quantity: Number(item.quantity),
           reason: deleteReason.trim(),
         });
-        await supabase.from("product_stock_locations").delete().eq("id", item.id);
+        // Utflödet bokförs som svinn med orsak — raden raderas aldrig tyst.
+        await recordMovement({
+          productId: item.product_id,
+          locationId: item.location_id,
+          quantityKg: Number(item.quantity),
+          movementType: "svinn",
+          unitCost: Number(item.unit_cost) || null,
+          note: deleteReason.trim(),
+        });
       }
+
       await revertOrderLinesIfStockGone();
       clearSelection(activeLocationId);
       invalidateStock();
@@ -441,48 +455,44 @@ export default function Inventory() {
         setActionLoading(false);
         return;
       }
-      await supabase
-        .from("product_stock_locations")
-        .update({ quantity: remaining, updated_at: new Date().toISOString() })
-        .eq("id", item.id);
       const itemCost = Number(item.unit_cost) || 0;
-      if (splitTargetLocation === activeLocationId) {
-        await supabase.from("product_stock_locations").insert({
-          product_id: item.product_id,
-          location_id: splitTargetLocation,
-          quantity: splitAmount,
-          unit_cost: itemCost,
-          expiry_date: item.expiry_date || null,
-          arrival_date: item.arrival_date || null,
+      if (splitTargetLocation === item.location_id) {
+        // Samma lagerplats har bara en saldorad per produkt — en split dit
+        // skulle inte flytta någonting.
+        toast({
+          title: "Välj en annan lagerplats",
+          description: "En del av saldot måste flyttas till en annan lagerplats.",
+          variant: "destructive",
         });
-      } else {
-        const { data: existing } = await supabase
-          .from("product_stock_locations")
-          .select("id, quantity, unit_cost")
-          .eq("product_id", item.product_id)
-          .eq("location_id", splitTargetLocation)
-          .maybeSingle();
-        if (existing) {
-          const combinedQty = Number(existing.quantity) + splitAmount;
-          const avgCost =
-            combinedQty > 0
-              ? (Number(existing.quantity) * (Number(existing.unit_cost) || 0) + splitAmount * itemCost) / combinedQty
-              : 0;
-          await supabase
-            .from("product_stock_locations")
-            .update({ quantity: combinedQty, unit_cost: avgCost, updated_at: new Date().toISOString() })
-            .eq("id", existing.id);
-        } else {
-          await supabase.from("product_stock_locations").insert({
-            product_id: item.product_id,
-            location_id: splitTargetLocation,
-            quantity: splitAmount,
-            unit_cost: itemCost,
-            expiry_date: item.expiry_date || null,
-            arrival_date: item.arrival_date || null,
-          });
-        }
+        setActionLoading(false);
+        return;
       }
+
+      // Plocka parti för parti så spårbarheten följer med den flyttade delen.
+      const lots = await lotBalancesAtLocation(item.product_id, item.location_id);
+      let toMove = splitAmount;
+      const picks: { lotId: string | null; qty: number }[] = [];
+      for (const lot of lots) {
+        if (toMove <= 0) break;
+        const take = Math.min(toMove, lot.quantityKg);
+        if (take <= 0) continue;
+        picks.push({ lotId: lot.lotId, qty: take });
+        toMove -= take;
+      }
+      if (toMove > 0) picks.push({ lotId: null, qty: toMove });
+
+      for (const pick of picks) {
+        await transferStock({
+          productId: item.product_id,
+          fromLocationId: item.location_id,
+          toLocationId: splitTargetLocation,
+          quantityKg: pick.qty,
+          lotId: pick.lotId,
+          unitCost: itemCost || null,
+          note: "Split i lagervyn",
+        });
+      }
+
       clearSelection(activeLocationId);
       invalidateStock();
       toast({ title: "Splittat", description: `${splitAmount} ${item.products?.unit || "kg"} flyttades` });
@@ -512,13 +522,23 @@ export default function Inventory() {
       const itemCost = Number(item.unit_cost) || 0;
       const totalCostTransfer = oldWeight * itemCost;
       const newUnitCost = newWeight > 0 ? totalCostTransfer / newWeight : 0;
-      await supabase.from("product_stock_locations").delete().eq("id", item.id);
-      await supabase.from("product_stock_locations").insert({
-        product_id: transformTargetProduct,
-        location_id: item.location_id,
-        quantity: newWeight,
-        unit_cost: newUnitCost,
-        arrival_date: new Date().toISOString().slice(0, 10),
+      // Omvandling = tillverkning: hela råvaran ut, styckdetaljen in, viktförlusten
+      // som svinn. Allt via loggen så både kostpris och spårbarhet följer med.
+      await recordMovement({
+        productId: item.product_id,
+        locationId: item.location_id,
+        quantityKg: oldWeight,
+        movementType: "tillverkning_ut",
+        unitCost: itemCost || null,
+        note: `Omvandling till ${products.find((p) => p.id === transformTargetProduct)?.name || "okänd"}`,
+      });
+      await recordMovement({
+        productId: transformTargetProduct,
+        locationId: item.location_id,
+        quantityKg: newWeight,
+        movementType: "tillverkning_in",
+        unitCost: newUnitCost || null,
+        note: `Omvandlad från ${item.products?.name || "okänd"}`,
       });
       await supabase.from("deleted_stock_log").insert({
         product_id: item.product_id,
@@ -526,6 +546,7 @@ export default function Inventory() {
         quantity: weightLoss,
         reason: `Omvandling: ${item.products?.name} → ${products.find((p) => p.id === transformTargetProduct)?.name || "okänd"} (svinn ${weightLoss.toFixed(2)} ${item.products?.unit || "kg"})`,
       });
+
       clearSelection(activeLocationId);
       invalidateStock();
       toast({
@@ -820,34 +841,17 @@ export default function Inventory() {
     setInvSaving(true);
     try {
       for (const line of validLines) {
-        // Insert stock with expiry + arrival date
-        const { data: existing } = await supabase
-          .from("product_stock_locations")
-          .select("id")
-          .eq("product_id", line.product_id)
-          .eq("location_id", invLocation)
-          .maybeSingle();
-
-        if (existing) {
-          await supabase
-            .from("product_stock_locations")
-            .update({
-              quantity: Number(line.quantity),
-              expiry_date: line.expiry_date || null,
-              arrival_date: line.arrival_date || null,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", existing.id);
-        } else {
-          await supabase.from("product_stock_locations").insert({
-            product_id: line.product_id,
-            location_id: invLocation,
-            quantity: Number(line.quantity),
-            expiry_date: line.expiry_date || null,
-            arrival_date: line.arrival_date || null,
-          });
-        }
+        // Inventeringen sätter saldot genom att bokföra differensen.
+        await setBalance({
+          productId: line.product_id,
+          locationId: invLocation,
+          targetQuantityKg: Number(line.quantity),
+          movementType: "inventering",
+          unitCost: Number(line.cost_price) || null,
+          note: "Lagerrapport",
+        });
       }
+
 
       const loc = locations.find((l) => l.id === invLocation);
       const totalValue = validLines.reduce((sum, l) => sum + Number(l.quantity) * l.cost_price, 0);

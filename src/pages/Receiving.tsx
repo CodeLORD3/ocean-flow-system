@@ -36,6 +36,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSubmitReceivingReport } from "@/hooks/useDeliveryReceivingReports";
 import { moveStockToRawLager } from "@/lib/stockTransfer";
+import { lotBalancesAtLocation } from "@/lib/stockLedger";
+
 import { format, differenceInDays, parseISO } from "date-fns";
 import { sv } from "date-fns/locale";
 import { getStoreCurrency, fmtCur } from "@/lib/currency";
@@ -256,32 +258,69 @@ export default function Receiving() {
         console.error("Stock transfer to Raw-lager error:", err);
       }
 
-      // NEW: Update stock with expiry + arrival dates for each line
-      for (const [lineId, report] of Object.entries(lineReports)) {
-        if (!report.arrival_date && !report.expiry_date) continue;
-        // Find the product_id for this line
-        const line = (selectedOrder.shop_order_lines || []).find((l: any) => l.id === lineId);
-        if (!line) continue;
+      // Bäst före och ankomstdatum hör till partiet, inte till lagerplatsraden.
+      // Partiet följer med från grossistens inleverans hela vägen till hyllan.
+      const { data: rawLocation } = await supabase
+        .from("storage_locations")
+        .select("id")
+        .eq("store_id", activeStoreId)
+        .ilike("name", "Raw-%")
+        .maybeSingle();
 
-        // Find the raw-lager location for this store
-        const { data: rawLocation } = await supabase
-          .from("storage_locations")
-          .select("id")
-          .eq("store_id", activeStoreId)
-          .ilike("name", "Raw-%")
-          .maybeSingle();
+      if (rawLocation) {
+        for (const [lineId, report] of Object.entries(lineReports)) {
+          if (!report.arrival_date && !report.expiry_date) continue;
+          const line = (selectedOrder.shop_order_lines || []).find((l: any) => l.id === lineId);
+          if (!line) continue;
 
-        if (rawLocation) {
-          await supabase
-            .from("product_stock_locations")
-            .update({
-              arrival_date: report.arrival_date || null,
-              expiry_date: report.expiry_date || null,
-            } as any)
-            .eq("product_id", line.product_id)
-            .eq("location_id", rawLocation.id);
+          const lots = await lotBalancesAtLocation(line.product_id, rawLocation.id);
+          const lotIds = lots.map((l) => l.lotId).filter((id): id is string => !!id);
+
+          if (lotIds.length) {
+            await supabase
+              .from("lots")
+              .update({
+                best_before: report.expiry_date || null,
+                updated_at: new Date().toISOString(),
+              })
+              .in("id", lotIds);
+          } else {
+            // Rader från tiden före partiskapandet: skapa parti med okänd härkomst
+            // istället för att tysta ner att spårbarheten saknas.
+            const qty =
+              Number(report.quantity_received) ||
+              Number(line.quantity_delivered) ||
+              Number(line.quantity_ordered) ||
+              0;
+            const lotNumber = `OKÄND-${new Date().toISOString().slice(0, 10)}-${lineId.slice(0, 8)}`;
+            const { data: newLot } = await supabase
+              .from("lots")
+              .insert({
+                lot_number: lotNumber,
+                product_id: line.product_id,
+                quantity_kg: qty,
+                best_before: report.expiry_date || null,
+                traceability_required: true,
+                status: "aktiv",
+                terminated_reason: null,
+                catch_area: "Okänd härkomst — parti saknades vid mottagning",
+              } as any)
+              .select("id")
+              .maybeSingle();
+            if (newLot?.id) {
+              await supabase
+                .from("stock_movements")
+                .update({ lot_id: newLot.id })
+                .eq("product_id", line.product_id)
+                .eq("location_id", rawLocation.id)
+                .eq("reference_type", "shop_order")
+                .eq("reference_id", selectedOrder.id)
+                .is("lot_id", null);
+            }
+          }
         }
       }
+
 
       const hasIssues = Object.values(lineReports).some((r) => r.status === "Rapporterad");
       toast({

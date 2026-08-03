@@ -147,3 +147,144 @@ export async function transferStock(params: {
     },
   ]);
 }
+
+/** Ett partis kvarvarande kvantitet på en lagerplats. */
+export interface LotBalance {
+  lotId: string | null;
+  quantityKg: number;
+  bestBefore?: string | null;
+}
+
+function accumulateLots(rows: any[]): Map<string | null, number> {
+  const acc = new Map<string | null, number>();
+  for (const row of rows) {
+    const key = (row.lot_id ?? null) as string | null;
+    acc.set(key, round3((acc.get(key) || 0) + Number(row.quantity_kg || 0)));
+  }
+  for (const [key, value] of acc) if (value <= 0) acc.delete(key);
+  return acc;
+}
+
+/**
+ * Kvarvarande kvantitet per parti för en produkt på en lagerplats, härlett ur
+ * rörelseloggen. Sorteras FIFO på bäst före — äldsta partiet plockas först.
+ * Rader utan parti (historik före partiskapandet) hamnar sist.
+ */
+export async function lotBalancesAtLocation(
+  productId: string,
+  locationId: string,
+): Promise<LotBalance[]> {
+  const { data } = await supabase
+    .from("stock_movements")
+    .select("lot_id, quantity_kg")
+    .eq("product_id", productId)
+    .eq("location_id", locationId);
+
+  const acc = accumulateLots(data || []);
+  const lotIds = [...acc.keys()].filter((id): id is string => !!id);
+  const bestBefore = new Map<string, string | null>();
+  if (lotIds.length) {
+    const { data: lots } = await supabase
+      .from("lots")
+      .select("id, best_before")
+      .in("id", lotIds);
+    for (const lot of lots || []) bestBefore.set((lot as any).id, (lot as any).best_before ?? null);
+  }
+
+  return [...acc.entries()]
+    .map(([lotId, quantityKg]) => ({
+      lotId,
+      quantityKg,
+      bestBefore: lotId ? bestBefore.get(lotId) ?? null : null,
+    }))
+    .sort((a, b) => {
+      if (!a.lotId) return 1;
+      if (!b.lotId) return -1;
+      if (a.bestBefore && b.bestBefore) return a.bestBefore.localeCompare(b.bestBefore);
+      if (a.bestBefore) return -1;
+      if (b.bestBefore) return 1;
+      return 0;
+    });
+}
+
+/**
+ * Kvarvarande kvantitet per produkt och parti på en lagerplats för en given
+ * referens (t.ex. en butiksorder på transportlagret).
+ */
+export async function lotBalancesForReference(params: {
+  locationId: string;
+  referenceType: string;
+  referenceId: string;
+}): Promise<{ productId: string; lots: LotBalance[] }[]> {
+  const { data } = await supabase
+    .from("stock_movements")
+    .select("product_id, lot_id, quantity_kg")
+    .eq("location_id", params.locationId)
+    .eq("reference_type", params.referenceType)
+    .eq("reference_id", params.referenceId);
+
+  const byProduct = new Map<string, any[]>();
+  for (const row of data || []) {
+    const pid = (row as any).product_id as string;
+    if (!byProduct.has(pid)) byProduct.set(pid, []);
+    byProduct.get(pid)!.push(row);
+  }
+
+  const out: { productId: string; lots: LotBalance[] }[] = [];
+  for (const [productId, rows] of byProduct) {
+    const acc = accumulateLots(rows);
+    const lots = [...acc.entries()].map(([lotId, quantityKg]) => ({ lotId, quantityKg }));
+    if (lots.length) out.push({ productId, lots });
+  }
+  return out;
+}
+
+/**
+ * Sätter saldot på en lagerplats till ett målvärde genom att bokföra
+ * differensen som en rörelse. Enda vägen att "skriva" ett saldo.
+ */
+export async function setBalance(params: {
+  productId: string;
+  locationId: string;
+  targetQuantityKg: number;
+  movementType?: MovementType;
+  unitCost?: number | null;
+  lotId?: string | null;
+  note?: string | null;
+}) {
+  const current = await currentBalance(params.productId, params.locationId);
+  const delta = round3(params.targetQuantityKg - current.quantity);
+  if (delta === 0) return null;
+  return recordMovement({
+    productId: params.productId,
+    locationId: params.locationId,
+    quantityKg: delta,
+    movementType: params.movementType ?? "justering",
+    lotId: params.lotId ?? null,
+    unitCost: params.unitCost ?? null,
+    note: params.note ?? null,
+  });
+}
+
+/**
+ * Miniminivå är en inställning, inte ett saldo — den skrivs direkt på raden.
+ * Ligger här så att product_stock_locations bara skrivs från denna fil.
+ */
+export async function setMinStock(params: {
+  productId: string;
+  locationId: string;
+  minStock: number;
+}) {
+  const { error } = await supabase
+    .from("product_stock_locations")
+    .upsert(
+      {
+        product_id: params.productId,
+        location_id: params.locationId,
+        min_stock: params.minStock,
+        updated_at: new Date().toISOString(),
+      } as any,
+      { onConflict: "product_id,location_id" },
+    );
+  if (error) throw error;
+}
