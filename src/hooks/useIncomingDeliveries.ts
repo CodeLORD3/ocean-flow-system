@@ -125,9 +125,23 @@ export function useCreateIncomingDelivery() {
             note: `Inleverans ${deliveryNumber}`,
           });
         }
+
+        // Behåll det globala produktsaldot tills lagerbegreppet är enat (AP-2)
+        const { data: prodStock } = await supabase
+          .from("products")
+          .select("stock")
+          .eq("id", l.product_id)
+          .maybeSingle();
+        if (prodStock) {
+          await supabase
+            .from("products")
+            .update({ stock: Number((prodStock as any).stock || 0) + l.quantity })
+            .eq("id", l.product_id);
+        }
       }
 
       if (movements.length) await recordMovements(movements);
+
 
 
       await logActivity({
