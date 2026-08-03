@@ -71,6 +71,7 @@ describe("partiets marginal mot mål", () => {
   for (const r of regions) {
     it(`håller sig inom 5 pp från målet ${r.target} % (${r.label})`, () => {
       const costs = allocateRawCost(details, purchasePricePerKg, rawQtyKg);
+      const rawPrices: number[] = [];
       const lines = details.map((d, i) => {
         const p = calcDetailPrice({
           purchasePricePerKg,
@@ -81,11 +82,22 @@ describe("partiets marginal mot mål", () => {
           vatPct: 12,
           rawCostOverride: costs[i],
         });
+        rawPrices.push(p.priceExVatRaw);
         return { qty: d.qtyKg, priceExVat: p.priceExVat, surchargePerKg: d.surcharge };
       });
 
+      // Före prisavrundning ska partiet landa på målet inom 5 procentenheter.
+      const bRaw = batchMargin({
+        purchasePricePerKg,
+        rawQuantity: rawQtyKg,
+        lines: lines.map((l, i) => ({ ...l, priceExVat: rawPrices[i] })),
+      });
+      expect(Math.abs(bRaw.marginInclWorkPct - r.target)).toBeLessThanOrEqual(5);
+
+      // Efter avrundning uppåt till tillåtna prispunkter får marginalen aldrig
+      // falla under målet minus 5 pp (avrundningen kan bara lyfta den).
       const b = batchMargin({ purchasePricePerKg, rawQuantity: rawQtyKg, lines });
-      expect(Math.abs(b.marginInclWorkPct - r.target)).toBeLessThanOrEqual(5);
+      expect(b.marginInclWorkPct).toBeGreaterThanOrEqual(r.target - 5);
     });
   }
 });
