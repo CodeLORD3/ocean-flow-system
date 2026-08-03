@@ -248,7 +248,7 @@ function EditableRow({
 
   if (locked) {
     return (
-      <TableRow className="h-8 opacity-75">
+      <TableRow data-line-id={line.id} className="h-8 opacity-75">
         <TableCell className="py-0.5 px-1.5 text-[11px] min-w-[140px]">{line.product_name}</TableCell>
         <TableCell className="py-0.5 px-1 text-[11px] text-right w-[50px]">{line.quantity}</TableCell>
         <TableCell className="py-0.5 px-1 text-[11px] w-[42px]">{line.unit || "kg"}</TableCell>
@@ -264,7 +264,7 @@ function EditableRow({
 
 
   return (
-    <TableRow className="h-8 group/row">
+    <TableRow data-line-id={line.id} className="h-8 group/row">
       <TableCell className="py-0.5 px-1.5 min-w-[140px]">
         <Popover open={productOpen} onOpenChange={setProductOpen}>
           <PopoverTrigger asChild>
