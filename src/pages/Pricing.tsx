@@ -364,6 +364,9 @@ export default function Pricing() {
 
       {isShop && <SavedPriceLists />}
 
+      <ReferencePricesPanel />
+
+
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
