@@ -119,21 +119,32 @@ export function calcDetailPrice(input: DetailPriceInput & { rawCostOverride?: nu
     effectiveTargetPct: effTarget * 100,
   };
 }
-}
 
 /**
- * Partiets samlade marginal: total intäkt exkl moms mot total råvarukostnad
- * för hela partiet (inköpspris × råvarukvantitet).
+ * Partiets samlade marginal: total intäkt exkl moms mot partiets kostnader.
+ *
+ *  - marginOnRawPct: bara råvarukostnaden räknas som kostnad
+ *  - marginInclWorkPct: råvarukostnad + förädlingspåslag (kr/kg × kg) räknas
+ *    som kostnad. Detta tal jämförs med regionens marginalmål.
  */
 export function batchMargin(params: {
   purchasePricePerKg: number;
   rawQuantity: number;
-  lines: { qty: number; priceExVat: number }[];
-}): { revenueExVat: number; rawCost: number; marginPct: number } {
+  lines: { qty: number; priceExVat: number; surchargePerKg?: number }[];
+}): {
+  revenueExVat: number;
+  rawCost: number;
+  surchargeCost: number;
+  marginOnRawPct: number;
+  marginInclWorkPct: number;
+} {
   const rawCost = (Number(params.purchasePricePerKg) || 0) * (Number(params.rawQuantity) || 0);
   const revenueExVat = params.lines.reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.priceExVat) || 0), 0);
-  const marginPct = revenueExVat > 0 ? ((revenueExVat - rawCost) / revenueExVat) * 100 : 0;
-  return { revenueExVat, rawCost, marginPct };
+  const surchargeCost = params.lines.reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.surchargePerKg) || 0), 0);
+  const marginOnRawPct = revenueExVat > 0 ? ((revenueExVat - rawCost) / revenueExVat) * 100 : 0;
+  const marginInclWorkPct =
+    revenueExVat > 0 ? ((revenueExVat - rawCost - surchargeCost) / revenueExVat) * 100 : 0;
+  return { revenueExVat, rawCost, surchargeCost, marginOnRawPct, marginInclWorkPct };
 }
 
 export const fmt = (n: number, decimals = 2) =>
