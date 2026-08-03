@@ -192,33 +192,6 @@ export type Database = {
           },
         ]
       }
-      byproduct_prices: {
-        Row: {
-          created_at: string
-          detail_form: string
-          id: string
-          price_incl_vat: number
-          species_group: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          detail_form: string
-          id?: string
-          price_incl_vat?: number
-          species_group: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          detail_form?: string
-          id?: string
-          price_incl_vat?: number
-          species_group?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       categories: {
         Row: {
           created_at: string | null
@@ -1016,30 +989,42 @@ export type Database = {
       detail_prices: {
         Row: {
           created_at: string
+          cut_form: string | null
           detail_form: string
           id: string
           last_set_price: number
+          price_incl_vat: number | null
+          price_list: string
           role: string | null
           species_group: string
           updated_at: string
+          valid_from: string
         }
         Insert: {
           created_at?: string
+          cut_form?: string | null
           detail_form: string
           id?: string
           last_set_price?: number
+          price_incl_vat?: number | null
+          price_list?: string
           role?: string | null
           species_group: string
           updated_at?: string
+          valid_from?: string
         }
         Update: {
           created_at?: string
+          cut_form?: string | null
           detail_form?: string
           id?: string
           last_set_price?: number
+          price_incl_vat?: number | null
+          price_list?: string
           role?: string | null
           species_group?: string
           updated_at?: string
+          valid_from?: string
         }
         Relationships: []
       }
@@ -1908,27 +1893,33 @@ export type Database = {
       }
       margin_targets: {
         Row: {
+          applies_to: string
           created_at: string
           id: string
           label: string | null
+          price_list: string
           region: string
           store_id: string | null
           target_pct: number
           updated_at: string
         }
         Insert: {
+          applies_to?: string
           created_at?: string
           id?: string
           label?: string | null
+          price_list: string
           region: string
           store_id?: string | null
           target_pct: number
           updated_at?: string
         }
         Update: {
+          applies_to?: string
           created_at?: string
           id?: string
           label?: string | null
+          price_list?: string
           region?: string
           store_id?: string | null
           target_pct?: number

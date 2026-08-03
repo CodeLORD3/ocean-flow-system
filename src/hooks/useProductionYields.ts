@@ -13,8 +13,12 @@ export type VatRate = Tables<"vat_rates">;
 export type SpeciesCutModel = Tables<"species_cut_models">;
 export type CutModelSplit = Tables<"cut_model_splits">;
 export type DetailPrice = Tables<"detail_prices">;
-export type ByproductPrice = Tables<"byproduct_prices">;
 export type AuctionCalc = Tables<"auction_calcs">;
+
+/** Kanalprislistor. Butiken räknar inkl moms, grossisten exkl moms. */
+export const PRICE_LIST_BUTIK = "butik_goteborg";
+export const PRICE_LIST_GROSSIST = "grossist";
+
 
 /* ── Styckningsmodeller ──────────────────────────────────────── */
 
@@ -60,39 +64,47 @@ export function useDetailPrices() {
 export function useUpsertDetailPrice() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (row: { species_group: string; detail_form: string; last_set_price: number; role?: string }) => {
+    mutationFn: async (row: {
+      species_group: string;
+      detail_form: string;
+      price_list: string;
+      price_incl_vat: number;
+      role?: string;
+    }) => {
       const { error } = await supabase
         .from("detail_prices")
-        .upsert(row as any, { onConflict: "species_group,detail_form" });
+        .upsert(
+          {
+            ...row,
+            cut_form: row.detail_form,
+            last_set_price: row.price_incl_vat,
+            valid_from: new Date().toISOString().slice(0, 10),
+          } as any,
+          { onConflict: "price_list,species_group,detail_form" },
+        );
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["detail_prices"] }),
   });
 }
 
-export function useByproductPrices() {
-  return useQuery({
-    queryKey: ["byproduct_prices"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("byproduct_prices").select("*").order("species_group");
-      if (error) throw error;
-      return data as ByproductPrice[];
-    },
-  });
+/** Pris för en detalj i en given prislista (null = pris saknas). */
+export function priceFor(
+  list: DetailPrice[],
+  priceList: string,
+  species: string,
+  detailForm: string,
+): number | null {
+  const row = list.find(
+    (p) =>
+      p.price_list === priceList &&
+      (p.species_group ?? "").toLowerCase() === (species ?? "").toLowerCase() &&
+      (p.detail_form ?? "").toLowerCase() === (detailForm ?? "").toLowerCase(),
+  );
+  const v = Number(row?.price_incl_vat ?? row?.last_set_price ?? 0);
+  return v > 0 ? v : null;
 }
 
-export function useUpsertByproductPrice() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (row: { species_group: string; detail_form: string; price_incl_vat: number }) => {
-      const { error } = await supabase
-        .from("byproduct_prices")
-        .upsert(row as any, { onConflict: "species_group,detail_form" });
-      if (error) throw error;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["byproduct_prices"] }),
-  });
-}
 
 /* ── Auktionskalkyler ────────────────────────────────────────── */
 
