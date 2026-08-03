@@ -329,3 +329,151 @@ export function allocateRawCost(
   const perKg = totalQty > 0 ? totalRawCost / totalQty : 0;
   return details.map((d) => ((Number(d.qtyKg) || 0) > 0 ? perKg : 0));
 }
+
+/* ── Relativ prissättning: referenspris × skalfaktor ─────────────
+ *
+ * detail_prices är inte fasta utpriser utan en RELATIV värdering per detalj.
+ * Förhållandet mellan detaljerna speglar marknaden och ändras sällan; nivån
+ * följer råvarukostnaden. Skalfaktorn räknas på partiets snittkostnad
+ * (avg_cost), inte på ett enskilt inköp, så diskpriset rör sig mjukt.
+ */
+
+export interface ScaleLineInput {
+  key: string;
+  qtyKg: number;
+  /** Referenspris i prislistans valör (inkl moms för butik, exkl för grossist). */
+  referencePrice: number | null;
+  /** Momssats i procent, används bara när prislistan är inkl moms. */
+  vatPct: number;
+  surchargePerKg?: number;
+}
+
+export interface ScaleLineResult {
+  key: string;
+  qtyKg: number;
+  referencePrice: number | null;
+  /** Referenspris × skalfaktor före avrundning. */
+  rawSuggested: number;
+  /** Föreslaget pris i prislistans valör, avrundat. */
+  suggestedPrice: number;
+}
+
+export interface ScalePricingResult {
+  rawCost: number;
+  surchargeCost: number;
+  totalCost: number;
+  /** Intäkt exkl moms om referenspriserna användes. */
+  referenceRevenueExVat: number;
+  /** Intäkt exkl moms som krävs för att nå marginalmålet. */
+  requiredRevenueExVat: number;
+  scaleFactor: number;
+  lines: ScaleLineResult[];
+  missingReferenceKeys: string[];
+  outputKg: number;
+}
+
+/**
+ * Skalar referenspriserna till partiets verkliga kostnad.
+ *
+ *  a. kostnad        = avg_cost × råvarukg + påslag × färdiga kg
+ *  b. referensintäkt = Σ detaljkg × referenspris exkl moms
+ *  c. krävd intäkt   = kostnad / (1 − marginalmål)
+ *  d. skalfaktor     = krävd intäkt / referensintäkt
+ *  e. pris/detalj    = referenspris × skalfaktor, avrundat uppåt
+ */
+export function priceByScaleFactor(params: {
+  avgCostPerKg: number;
+  rawQuantity: number;
+  targetMarginPct: number;
+  /** Prislistan räknar inkl moms (butik) eller exkl moms (grossist). */
+  inclVat: boolean;
+  lines: ScaleLineInput[];
+}): ScalePricingResult {
+  const target = pctToFrac(params.targetMarginPct);
+  const rawCost = (Number(params.avgCostPerKg) || 0) * (Number(params.rawQuantity) || 0);
+  const rows = params.lines.map((l) => ({
+    ...l,
+    qtyKg: Math.max(0, Number(l.qtyKg) || 0),
+    surcharge: Number(l.surchargePerKg) || 0,
+    ref: Number(l.referencePrice) > 0 ? Number(l.referencePrice) : 0,
+  }));
+
+  const outputKg = rows.reduce((s, l) => s + l.qtyKg, 0);
+  const surchargeCost = rows.reduce((s, l) => s + l.qtyKg * l.surcharge, 0);
+  const totalCost = rawCost + surchargeCost;
+
+  const referenceRevenueExVat = rows.reduce((s, l) => {
+    const ex = params.inclVat ? l.ref / (1 + (Number(l.vatPct) || 0) / 100) : l.ref;
+    return s + l.qtyKg * ex;
+  }, 0);
+
+  const requiredRevenueExVat = target < 1 ? totalCost / (1 - target) : 0;
+  const scaleFactor =
+    referenceRevenueExVat > 0 && requiredRevenueExVat > 0
+      ? requiredRevenueExVat / referenceRevenueExVat
+      : 0;
+
+  const lines: ScaleLineResult[] = rows.map((l) => {
+    const rawSuggested = l.ref * scaleFactor;
+    const suggestedPrice =
+      l.ref <= 0 || scaleFactor <= 0
+        ? 0
+        : params.inclVat
+          ? roundUpToAllowedPrice(rawSuggested)
+          : Math.round(rawSuggested * 100) / 100;
+    return {
+      key: l.key,
+      qtyKg: l.qtyKg,
+      referencePrice: l.ref > 0 ? l.ref : null,
+      rawSuggested,
+      suggestedPrice,
+    };
+  });
+
+  return {
+    rawCost,
+    surchargeCost,
+    totalCost,
+    referenceRevenueExVat,
+    requiredRevenueExVat,
+    scaleFactor,
+    lines,
+    missingReferenceKeys: rows.filter((l) => l.ref <= 0 && l.qtyKg > 0).map((l) => l.key),
+    outputKg,
+  };
+}
+
+/** Standardband för skalfaktorn när prislistan saknar egna gränser. */
+export const DEFAULT_SCALE_BAND = { low: 0.75, high: 1.25 };
+
+/**
+ * Ligger skalfaktorn utanför prislistans band? Enbart information — aldrig en
+ * spärr. Utanför bandet ligger inköpspriset långt från referensnivån.
+ */
+export function scaleFactorOutsideBand(
+  factor: number,
+  low?: number | null,
+  high?: number | null,
+): "low" | "high" | null {
+  const lo = Number(low) > 0 ? Number(low) : DEFAULT_SCALE_BAND.low;
+  const hi = Number(high) > 0 ? Number(high) : DEFAULT_SCALE_BAND.high;
+  if (!(factor > 0)) return null;
+  if (factor < lo - 1e-9) return "low";
+  if (factor > hi + 1e-9) return "high";
+  return null;
+}
+
+/** Rullande snitt av de tre senaste inköpen (kr/kg), null om inget inköp finns. */
+export function rollingPurchaseAverage(
+  rows: { unit_price: number | string | null; purchase_date?: string | null; created_at?: string | null }[],
+  count = 3,
+): number | null {
+  const sorted = [...rows]
+    .sort((a, b) =>
+      String(b.purchase_date ?? b.created_at ?? "").localeCompare(String(a.purchase_date ?? a.created_at ?? "")),
+    )
+    .filter((r) => Number(r.unit_price) > 0)
+    .slice(0, count);
+  if (sorted.length === 0) return null;
+  return sorted.reduce((s, r) => s + Number(r.unit_price), 0) / sorted.length;
+}
