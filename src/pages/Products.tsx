@@ -347,6 +347,7 @@ export default function Products() {
     shelf_life_days: "", // NEW
     image_url: "",
     latin_name: "",
+    requires_processing: false,
   });
 
   const setField = (key: string, value: string) => {
@@ -418,6 +419,7 @@ export default function Products() {
       shelf_life_days: "",
       image_url: "",
       latin_name: "",
+      requires_processing: false,
     });
     setDialogOpen(true);
   };
@@ -439,6 +441,7 @@ export default function Products() {
       shelf_life_days: String((p as any).shelf_life_days || ""), // NEW
       image_url: (p as any).image_url || "",
       latin_name: (p as any).latin_name || "",
+      requires_processing: Boolean((p as any).requires_processing),
     });
     setDialogOpen(true);
   };
@@ -491,6 +494,7 @@ export default function Products() {
       shelf_life_days: form.shelf_life_days ? Number(form.shelf_life_days) : null, // NEW
       image_url: form.image_url.trim() || null,
       latin_name: form.latin_name.trim() || null,
+      requires_processing: form.requires_processing,
     };
 
     if (editId) {
@@ -1253,6 +1257,22 @@ export default function Products() {
                 ))}
               </div>
             </div>
+            {/* Kräver hantering — blockerar auto-godkännande av pris */}
+            <label className="flex cursor-pointer items-start gap-2 rounded-md border p-2">
+              <input
+                type="checkbox"
+                checked={form.requires_processing}
+                onChange={(e) => setField("requires_processing", e.target.checked as any)}
+                className="mt-0.5 h-4 w-4 accent-primary"
+              />
+              <span className="text-xs">
+                Kräver hantering (styckning/beredning)
+                <span className="block text-[10px] text-muted-foreground">
+                  Blockerar auto-godkännande av pris — priset måste granskas manuellt.
+                </span>
+              </span>
+            </label>
+
 
             {editId ? (
               <>

@@ -1,10 +1,27 @@
+import { evaluateAutoApproval } from "@/lib/autoApproval";
 import { describe, it, expect } from "vitest";
 import {
   roundUpToAllowedPrice,
-  calcDetailPrice,
   allocateRawCost,
   batchMargin,
+  priceByByproductMethod,
+  auctionMaxRawPrice,
 } from "@/lib/filletMath";
+import { CUT_MODEL_TEMPLATES, modelForSpecies, normalizeDetailForm } from "@/lib/cutModels";
+
+/* Torskpartiet i specen: 100 kg à 60 kr/kg, utbyte 47 %, loin_four 55/20/15/10 */
+const RAW_QTY = 100;
+const RAW_PRICE = 60;
+const FILLET = 47; // kg
+const QTY = {
+  rygg: FILLET * 0.55,
+  benfri: FILLET * 0.2,
+  slag: FILLET * 0.15,
+  kontra: FILLET * 0.1,
+};
+const SURCHARGE = 35;
+const VAT = 6;
+const exVat = (inc: number) => inc / 1.06;
 
 describe("rounding", () => {
   it("rounds up", () => {
@@ -12,19 +29,6 @@ describe("rounding", () => {
     expect(roundUpToAllowedPrice(150.1)).toBe(179);
     expect(roundUpToAllowedPrice(180)).toBe(198);
     expect(roundUpToAllowedPrice(12)).toBe(19);
-  });
-  it("prices with margin >= target", () => {
-    const r = calcDetailPrice({
-      purchasePricePerKg: 100,
-      totalYieldPct: 40,
-      surchargePerKg: 35,
-      targetMarginPct: 45,
-      marginWeight: 1,
-      vatPct: 6,
-    });
-    expect(r.rawCostPerKg).toBe(250);
-    expect(r.marginOnRawPct).toBeGreaterThanOrEqual(45);
-    expect(r.marginInclWorkPct).toBeLessThan(r.marginOnRawPct);
   });
 });
 
@@ -39,7 +43,6 @@ describe("allocateRawCost", () => {
     expect(costs[0]).toBeCloseTo(127.66, 1);
     expect(costs[1]).toBeCloseTo(127.66, 1);
     expect(costs[2]).toBeCloseTo(127.66, 1);
-    // total återfördelad kostnad = partiets kostnad
     const total = details.reduce((s, d, i) => s + d.qtyKg * costs[i], 0);
     expect(total).toBeCloseTo(6000, 2);
   });
@@ -50,54 +53,163 @@ describe("allocateRawCost", () => {
   });
 });
 
-/**
- * Partiets samlade marginal (inklusive arbete) får inte avvika mer än
- * 5 procentenheter från regionens marginalmål.
- */
-describe("partiets marginal mot mål", () => {
-  const regions: { label: string; target: number }[] = [
-    { label: "Väst", target: 55 },
-    { label: "Öst", target: 45 },
+/* ── Riktning C: auktionskalkylen (verifieringsexemplet i specen) ─── */
+describe("riktning C — auktionskalkyl", () => {
+  const lines = [
+    { qtyKg: QTY.rygg, priceExVat: exVat(698), surchargePerKg: SURCHARGE },
+    { qtyKg: QTY.benfri, priceExVat: exVat(249), surchargePerKg: SURCHARGE },
+    { qtyKg: QTY.slag, priceExVat: exVat(129), surchargePerKg: SURCHARGE },
+    { qtyKg: QTY.kontra, priceExVat: exVat(398), surchargePerKg: SURCHARGE },
   ];
 
-  const details = [
-    { name: "rygg", qtyKg: 20, marginWeight: 1.4, surcharge: 12 },
-    { name: "mellan", qtyKg: 15, marginWeight: 1.0, surcharge: 12 },
-    { name: "slag", qtyKg: 12, marginWeight: 0.6, surcharge: 8 },
-  ];
-  const purchasePricePerKg = 60;
-  const rawQtyKg = 100;
+  it("intäkt, kostnad och marginal enligt specen", () => {
+    const b = batchMargin({ purchasePricePerKg: RAW_PRICE, rawQuantity: RAW_QTY, lines: lines.map((l) => ({ qty: l.qtyKg, priceExVat: l.priceExVat, surchargePerKg: l.surchargePerKg })) });
+    expect(Math.round(b.revenueExVat)).toBe(21853);
+    expect(Math.round(b.rawCost + b.surchargeCost)).toBe(7645);
+    expect(b.marginInclWorkPct).toBeCloseTo(65.0, 1);
+  });
 
-  for (const r of regions) {
-    it(`håller sig inom 5 pp från målet ${r.target} % (${r.label})`, () => {
-      const costs = allocateRawCost(details, purchasePricePerKg, rawQtyKg);
-      const rawPrices: number[] = [];
-      const lines = details.map((d, i) => {
-        const p = calcDetailPrice({
-          purchasePricePerKg,
-          totalYieldPct: (d.qtyKg / rawQtyKg) * 100,
-          surchargePerKg: d.surcharge,
-          targetMarginPct: r.target,
-          marginWeight: d.marginWeight,
-          vatPct: 12,
-          rawCostOverride: costs[i],
-        });
-        rawPrices.push(p.priceExVatRaw);
-        return { qty: d.qtyKg, priceExVat: p.priceExVat, surchargePerKg: d.surcharge };
-      });
+  it("maxpris per kg råvara: 104 kr vid 45 % och 82 kr vid 55 %", () => {
+    const gbg = auctionMaxRawPrice({ rawQuantity: RAW_QTY, targetMarginPct: 45, lines });
+    const sthlm = auctionMaxRawPrice({ rawQuantity: RAW_QTY, targetMarginPct: 55, lines });
+    expect(Math.round(gbg.maxPricePerKg)).toBe(104);
+    expect(Math.round(sthlm.maxPricePerKg)).toBe(82);
+  });
+});
 
-      // Före prisavrundning ska partiet landa på målet inom 5 procentenheter.
-      const bRaw = batchMargin({
-        purchasePricePerKg,
-        rawQuantity: rawQtyKg,
-        lines: lines.map((l, i) => ({ ...l, priceExVat: rawPrices[i] })),
-      });
-      expect(Math.abs(bRaw.marginInclWorkPct - r.target)).toBeLessThanOrEqual(5);
-
-      // Efter avrundning uppåt till tillåtna prispunkter får marginalen aldrig
-      // falla under målet minus 5 pp (avrundningen kan bara lyfta den).
-      const b = batchMargin({ purchasePricePerKg, rawQuantity: rawQtyKg, lines });
-      expect(b.marginInclWorkPct).toBeGreaterThanOrEqual(r.target - 5);
+/* ── Riktning B: biproduktsmetoden ────────────────────────────────── */
+describe("riktning B — biproduktsmetoden", () => {
+  const run = (targetMarginPct: number, byproductPrices = { benfri: 249, slag: 129, kontra: 398 }) =>
+    priceByByproductMethod({
+      purchasePricePerKg: RAW_PRICE,
+      rawQuantity: RAW_QTY,
+      targetMarginPct,
+      vatPct: VAT,
+      primaries: [{ key: "rygg", qtyKg: QTY.rygg, marginWeight: 1, surchargePerKg: SURCHARGE, lastSetPrice: 698 }],
+      byproducts: [
+        { key: "benfri", qtyKg: QTY.benfri, priceInclVat: byproductPrices.benfri, surchargePerKg: SURCHARGE },
+        { key: "slag", qtyKg: QTY.slag, priceInclVat: byproductPrices.slag, surchargePerKg: SURCHARGE },
+        { key: "kontra", qtyKg: QTY.kontra, priceInclVat: byproductPrices.kontra, surchargePerKg: SURCHARGE },
+      ],
     });
-  }
+
+  it("golvpris för ryggen blir 379 kr vid Göteborg 45 %", () => {
+    const r = run(45);
+    expect(r.primaries[0].floorInclVat).toBe(379);
+  });
+
+  it("partiets marginal blir målet plus avrundningseffekt", () => {
+    const r = run(45);
+    expect(r.batchAtFloor.marginInclWorkPct).toBeGreaterThanOrEqual(45);
+    expect(r.batchAtFloor.marginInclWorkPct).toBeLessThanOrEqual(45 + 3);
+  });
+
+  it("föreslaget pris är det högsta av golv och senast fastställt", () => {
+    const cheap = run(45);
+    // Senast fastställt 698 ligger högt över golvet → priset sänks inte.
+    expect(cheap.primaries[0].suggestedInclVat).toBe(698);
+    expect(cheap.primaries[0].lastSetPrice).toBe(698);
+  });
+
+  it("varnar när golvet ligger mer än 25 % över senast fastställt pris", () => {
+    const r = priceByByproductMethod({
+      purchasePricePerKg: 260,
+      rawQuantity: RAW_QTY,
+      targetMarginPct: 55,
+      vatPct: VAT,
+      primaries: [{ key: "rygg", qtyKg: QTY.rygg, marginWeight: 1, surchargePerKg: SURCHARGE, lastSetPrice: 698 }],
+      byproducts: [{ key: "slag", qtyKg: QTY.slag, priceInclVat: 129, surchargePerKg: SURCHARGE }],
+    });
+    expect(r.primaries[0].floorInclVat).toBeGreaterThan(698 * 1.25);
+    expect(r.primaries[0].floorAboveLastPct).toBeGreaterThan(25);
+    expect(r.warnings.some((w) => w.includes("råvaran är dyr"))).toBe(true);
+  });
+
+  it("varnar när golvet hamnar under högsta biproduktpriset", () => {
+    const r = priceByByproductMethod({
+      purchasePricePerKg: 5,
+      rawQuantity: RAW_QTY,
+      targetMarginPct: 45,
+      vatPct: VAT,
+      primaries: [{ key: "rygg", qtyKg: QTY.rygg, marginWeight: 1, surchargePerKg: 0, lastSetPrice: 698 }],
+      byproducts: [{ key: "kontra", qtyKg: QTY.kontra, priceInclVat: 998, surchargePerKg: 0 }],
+    });
+    expect(r.primaries[0].floorInclVat).toBeLessThan(998);
+    expect(r.warnings.some((w) => w.includes("fel klassade"))).toBe(true);
+  });
+
+  it("biprodukt utan pris ger 0 kr intäkt men kilona bär arbete och höjer golvet", () => {
+    const withPrice = run(45);
+    const withoutPrice = priceByByproductMethod({
+      purchasePricePerKg: RAW_PRICE,
+      rawQuantity: RAW_QTY,
+      targetMarginPct: 45,
+      vatPct: VAT,
+      primaries: [{ key: "rygg", qtyKg: QTY.rygg, marginWeight: 1, surchargePerKg: SURCHARGE, lastSetPrice: 698 }],
+      byproducts: [
+        { key: "benfri", qtyKg: QTY.benfri, priceInclVat: null, surchargePerKg: SURCHARGE },
+        { key: "slag", qtyKg: QTY.slag, priceInclVat: 129, surchargePerKg: SURCHARGE },
+        { key: "kontra", qtyKg: QTY.kontra, priceInclVat: 398, surchargePerKg: SURCHARGE },
+      ],
+    });
+    expect(withoutPrice.missingPriceKeys).toContain("benfri");
+    expect(withoutPrice.surchargeCost).toBeCloseTo(withPrice.surchargeCost, 6);
+    expect(withoutPrice.primaries[0].floorExVat).toBeGreaterThan(withPrice.primaries[0].floorExVat);
+  });
+
+  it("flera huvudprodukter: viktat snitt av marginalvikten är 1", () => {
+    const r = priceByByproductMethod({
+      purchasePricePerKg: RAW_PRICE,
+      rawQuantity: RAW_QTY,
+      targetMarginPct: 45,
+      vatPct: VAT,
+      primaries: [
+        { key: "a", qtyKg: 20, marginWeight: 1.4, surchargePerKg: SURCHARGE },
+        { key: "b", qtyKg: 10, marginWeight: 0.6, surchargePerKg: SURCHARGE },
+      ],
+      byproducts: [{ key: "slag", qtyKg: 7, priceInclVat: 129, surchargePerKg: SURCHARGE }],
+    });
+    const revenue = r.primaries.reduce((s, p) => s + p.qtyKg * p.floorExVat, 0);
+    expect(revenue).toBeCloseTo(r.primaryRevenueExVat, 4);
+  });
+});
+
+describe("styckningsmodeller", () => {
+  it("kopplar art till rätt modell", () => {
+    expect(modelForSpecies("torsk")).toBe("loin_four");
+    expect(modelForSpecies("hälleflundra")).toBe("flatfish");
+    expect(modelForSpecies("marulk")).toBe("tail_only");
+    expect(modelForSpecies("makrill")).toBe("single");
+  });
+
+  it("erbjuder aldrig detaljer utanför modellen", () => {
+    const flat = CUT_MODEL_TEMPLATES[modelForSpecies("sjötunga")].map((d) => d.form);
+    expect(flat).not.toContain("rygg");
+    expect(flat).not.toContain("slag");
+    const single = CUT_MODEL_TEMPLATES[modelForSpecies("makrill")].map((d) => d.form);
+    expect(single).toEqual(["hel filé"]);
+  });
+
+  it("alias för benfri filé pekar på samma detalj", () => {
+    expect(normalizeDetailForm("stjärtbit")).toBe("benfri filé");
+    expect(normalizeDetailForm("Benfri file")).toBe("benfri filé");
+  });
+});
+
+// ── Auto-godkännande (avsnitt 5) ──
+describe("evaluateAutoApproval", () => {
+  const base = { requiresProcessing: false, yieldConfirmed: true, marginInclWorkPct: 50, targetMarginPct: 45 };
+  it("godkänner färdigvara över målet med säkerställt utbyte", () => {
+    expect(evaluateAutoApproval(base).approved).toBe(true);
+  });
+  it("blockerar när produkten kräver hantering", () => {
+    const r = evaluateAutoApproval({ ...base, requiresProcessing: true });
+    expect(r.approved).toBe(false);
+    expect(r.reasons[0]).toMatch(/Kräver hantering/);
+  });
+  it("blockerar osäkert utbyte och marginal under mål", () => {
+    const r = evaluateAutoApproval({ ...base, yieldConfirmed: false, marginInclWorkPct: 30 });
+    expect(r.approved).toBe(false);
+    expect(r.reasons).toHaveLength(2);
+  });
 });

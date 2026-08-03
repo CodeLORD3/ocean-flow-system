@@ -94,6 +94,63 @@ export type Database = {
           },
         ]
       }
+      auction_calcs: {
+        Row: {
+          actual_price: number | null
+          bid_price: number | null
+          calc_date: string
+          created_at: string
+          created_by: string | null
+          cut_model: string | null
+          detail_prices: Json
+          id: string
+          max_price_gbg: number | null
+          max_price_sthlm: number | null
+          note: string | null
+          raw_form: string
+          raw_quantity: number
+          species_group: string
+          updated_at: string
+          yield_pct: number | null
+        }
+        Insert: {
+          actual_price?: number | null
+          bid_price?: number | null
+          calc_date?: string
+          created_at?: string
+          created_by?: string | null
+          cut_model?: string | null
+          detail_prices?: Json
+          id?: string
+          max_price_gbg?: number | null
+          max_price_sthlm?: number | null
+          note?: string | null
+          raw_form?: string
+          raw_quantity?: number
+          species_group: string
+          updated_at?: string
+          yield_pct?: number | null
+        }
+        Update: {
+          actual_price?: number | null
+          bid_price?: number | null
+          calc_date?: string
+          created_at?: string
+          created_by?: string | null
+          cut_model?: string | null
+          detail_prices?: Json
+          id?: string
+          max_price_gbg?: number | null
+          max_price_sthlm?: number | null
+          note?: string | null
+          raw_form?: string
+          raw_quantity?: number
+          species_group?: string
+          updated_at?: string
+          yield_pct?: number | null
+        }
+        Relationships: []
+      }
       batch_allocations: {
         Row: {
           allocated_at: string
@@ -134,6 +191,33 @@ export type Database = {
             referencedColumns: ["batch_id"]
           },
         ]
+      }
+      byproduct_prices: {
+        Row: {
+          created_at: string
+          detail_form: string
+          id: string
+          price_incl_vat: number
+          species_group: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          detail_form: string
+          id?: string
+          price_incl_vat?: number
+          species_group: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          detail_form?: string
+          id?: string
+          price_incl_vat?: number
+          species_group?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       categories: {
         Row: {
@@ -650,6 +734,48 @@ export type Database = {
           },
         ]
       }
+      cut_model_splits: {
+        Row: {
+          created_at: string
+          cut_model: string
+          detail_form: string
+          detail_name: string | null
+          id: string
+          is_optional: boolean
+          margin_weight: number
+          pct_of_fillet: number
+          role: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          cut_model: string
+          detail_form: string
+          detail_name?: string | null
+          id?: string
+          is_optional?: boolean
+          margin_weight?: number
+          pct_of_fillet?: number
+          role?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          cut_model?: string
+          detail_form?: string
+          detail_name?: string | null
+          id?: string
+          is_optional?: boolean
+          margin_weight?: number
+          pct_of_fillet?: number
+          role?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cut_splits: {
         Row: {
           created_at: string
@@ -658,6 +784,7 @@ export type Database = {
           is_optional: boolean
           margin_weight: number
           pct_of_fillet: number
+          role: string
           sort_order: number
           species_group: string
           updated_at: string
@@ -669,6 +796,7 @@ export type Database = {
           is_optional?: boolean
           margin_weight?: number
           pct_of_fillet: number
+          role?: string
           sort_order?: number
           species_group: string
           updated_at?: string
@@ -680,6 +808,7 @@ export type Database = {
           is_optional?: boolean
           margin_weight?: number
           pct_of_fillet?: number
+          role?: string
           sort_order?: number
           species_group?: string
           updated_at?: string
@@ -883,6 +1012,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      detail_prices: {
+        Row: {
+          created_at: string
+          detail_form: string
+          id: string
+          last_set_price: number
+          role: string | null
+          species_group: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          detail_form: string
+          id?: string
+          last_set_price?: number
+          role?: string | null
+          species_group: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          detail_form?: string
+          id?: string
+          last_set_price?: number
+          role?: string | null
+          species_group?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       entity_images: {
         Row: {
@@ -2862,6 +3021,7 @@ export type Database = {
           origin: string | null
           parent_product_id: string | null
           producer: string | null
+          requires_processing: boolean
           retail_suggested: number | null
           shelf_life_days: number | null
           sku: string
@@ -2887,6 +3047,7 @@ export type Database = {
           origin?: string | null
           parent_product_id?: string | null
           producer?: string | null
+          requires_processing?: boolean
           retail_suggested?: number | null
           shelf_life_days?: number | null
           sku: string
@@ -2912,6 +3073,7 @@ export type Database = {
           origin?: string | null
           parent_product_id?: string | null
           producer?: string | null
+          requires_processing?: boolean
           retail_suggested?: number | null
           shelf_life_days?: number | null
           sku?: string
@@ -3488,6 +3650,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      species_cut_models: {
+        Row: {
+          created_at: string
+          cut_model: string
+          id: string
+          min_piece_weight_kg: number | null
+          note: string | null
+          species_group: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          cut_model: string
+          id?: string
+          min_piece_weight_kg?: number | null
+          note?: string | null
+          species_group: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          cut_model?: string
+          id?: string
+          min_piece_weight_kg?: number | null
+          note?: string | null
+          species_group?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       staff: {
         Row: {

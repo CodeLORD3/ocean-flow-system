@@ -16,19 +16,41 @@ import { useProducts } from "@/hooks/useProducts";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import {
   useYields,
-  useCutSplits,
   useProcessingSurcharges,
   useMarginTargets,
   useVatRates,
   useCreateProductionOrder,
+  useSpeciesCutModels,
+  useCutModelSplits,
+  useDetailPrices,
+  useByproductPrices,
+  useUpsertDetailPrice,
+  useUpsertByproductPrice,
   surchargeFor,
   vatFor,
   rollingAverage,
   useYieldActuals,
 } from "@/hooks/useProductionYields";
-import { calcDetailPrice, allocateRawCost, batchMargin, fmt, FORMS, isProcessedForm } from "@/lib/filletMath";
+import {
+  allocateRawCost,
+  batchMargin,
+  priceByByproductMethod,
+  fmt,
+  FORMS,
+  isProcessedForm,
+} from "@/lib/filletMath";
+import {
+  CUT_MODEL_LABELS,
+  CUT_MODEL_TEMPLATES,
+  CutModel,
+  MODEL_MIN_PIECE_WEIGHT,
+  detailFormLabel,
+  modelForSpecies,
+  normalizeDetailForm,
+} from "@/lib/cutModels";
 import { SPECIES_GROUP_SUGGESTIONS } from "@/lib/speciesGroups";
 import { addStock, withdrawStock } from "@/lib/productionStock";
+import { evaluateAutoApproval } from "@/lib/autoApproval";
 
 export interface FilletPrefill {
   product_id?: string | null;
@@ -49,30 +71,28 @@ interface DetailRow {
   name: string;
   form: string;
   pct: number; // procent av råvaran
+  role: "primary" | "byproduct";
   marginWeight: number;
+  /** Manuellt marknadspris inkl moms för biprodukter. */
+  byproductPrice: string;
   isProcessed: boolean;
   productId: string | null;
   category: string | null;
 }
 
-/** Mall-grupp för uppdelning när arten saknar egna rader. */
-function templateGroup(note: string | null, toForm: string): string | null {
-  const n = (note ?? "").toLowerCase();
-  if (n.includes("plattfisk")) return "plattfisk";
-  if (n.includes("laxfisk")) return "laxfisk";
-  if (toForm.includes("filé")) return "rundfisk";
-  if (toForm.includes("sida")) return "laxfisk";
-  return null;
-}
-
 export function ProductionOrderForm() {
   const { data: yields = [] } = useYields();
-  const { data: splits = [] } = useCutSplits();
   const { data: actuals = [] } = useYieldActuals();
   const { data: surcharges = [] } = useProcessingSurcharges();
   const { data: margins = [] } = useMarginTargets();
   const { data: vats = [] } = useVatRates();
   const { data: products = [] } = useProducts();
+  const { data: cutModels = [] } = useSpeciesCutModels();
+  const { data: modelSplits = [] } = useCutModelSplits();
+  const { data: detailPrices = [] } = useDetailPrices();
+  const { data: byproductPrices = [] } = useByproductPrices();
+  const upsertDetailPrice = useUpsertDetailPrice();
+  const upsertByproductPrice = useUpsertByproductPrice();
   const { staff } = useStaffAuth();
   const createOrder = useCreateProductionOrder();
   const qc = useQueryClient();
@@ -83,6 +103,7 @@ export function ProductionOrderForm() {
   const [species, setSpecies] = useState("");
   const [rawForm, setRawForm] = useState("hel");
   const [rawQty, setRawQty] = useState("");
+  const [pieceWeight, setPieceWeight] = useState("");
   const [price, setPrice] = useState("");
   const [supplier, setSupplier] = useState("");
   const [batch, setBatch] = useState("");
@@ -92,18 +113,54 @@ export function ProductionOrderForm() {
   const [applyRegion, setApplyRegion] = useState<string>("");
   const [previewOpen, setPreviewOpen] = useState(false);
 
-  // Artgrupper med utbyte först, därefter förslagslistan som hjälp i formuläret.
   const speciesOptions = useMemo(
     () =>
-      [...new Set([...yields.map((y) => y.species_group), ...SPECIES_GROUP_SUGGESTIONS])].sort((a, b) =>
-        a.localeCompare(b, "sv"),
-      ),
-    [yields]
+      [
+        ...new Set([
+          ...cutModels.map((c) => c.species_group),
+          ...yields.map((y) => y.species_group),
+          ...SPECIES_GROUP_SUGGESTIONS,
+        ]),
+      ].sort((a, b) => a.localeCompare(b, "sv")),
+    [yields, cutModels],
   );
 
   useEffect(() => {
     if (!applyRegion && margins.length) setApplyRegion(margins[0].region);
   }, [margins, applyRegion]);
+
+  /* ── Artens styckningsmodell ─────────────────────────────── */
+  const modelRow = cutModels.find((c) => c.species_group.toLowerCase() === species.toLowerCase());
+  const cutModel = (modelRow?.cut_model as CutModel) ?? modelForSpecies(species);
+  const minPieceWeight =
+    modelRow?.min_piece_weight_kg != null
+      ? Number(modelRow.min_piece_weight_kg)
+      : MODEL_MIN_PIECE_WEIGHT[cutModel] ?? null;
+
+  const modelDetails = useMemo(() => {
+    const rows = modelSplits.filter((s) => s.cut_model === cutModel);
+    if (rows.length > 0)
+      return rows.map((s) => ({
+        form: s.detail_form,
+        name: s.detail_name || detailFormLabel(s.detail_form),
+        pctOfFillet: Number(s.pct_of_fillet),
+        role: (s.role === "primary" ? "primary" : "byproduct") as "primary" | "byproduct",
+        optional: s.is_optional,
+        marginWeight: Number(s.margin_weight) || 1,
+      }));
+    return CUT_MODEL_TEMPLATES[cutModel].map((d) => ({
+      form: d.form,
+      name: d.name,
+      pctOfFillet: d.pctOfFillet,
+      role: d.role,
+      optional: !!d.optional,
+      marginWeight: 1,
+    }));
+  }, [modelSplits, cutModel]);
+
+  const pieceWeightNum = parseFloat(pieceWeight) || 0;
+  const pieceWeightWarning =
+    minPieceWeight != null && pieceWeightNum > 0 && pieceWeightNum < minPieceWeight;
 
   /* ── Prefill från inköpsrapportering ─────────────────────── */
   const applyPrefill = (p: FilletPrefill) => {
@@ -137,66 +194,55 @@ export function ProductionOrderForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [speciesOptions.length]);
 
-  /* ── Föreslå detaljer utifrån utbytesregistret ────────────── */
+  const lastSetFor = (form: string) => {
+    const f = normalizeDetailForm(form);
+    const row = detailPrices.find(
+      (d) => d.species_group.toLowerCase() === species.toLowerCase() && normalizeDetailForm(d.detail_form) === f,
+    );
+    return Number(row?.last_set_price) || 0;
+  };
+
+  const byproductPriceFor = (form: string) => {
+    const f = normalizeDetailForm(form);
+    const row = byproductPrices.find(
+      (d) => d.species_group.toLowerCase() === species.toLowerCase() && normalizeDetailForm(d.detail_form) === f,
+    );
+    return Number(row?.price_incl_vat) || 0;
+  };
+
+  /* ── Föreslå detaljer utifrån modell och utbyte ───────────── */
   const suggest = () => {
     if (!species) return;
     const rows = yields.filter((y) => y.species_group === species && y.from_form === rawForm);
-    if (rows.length === 0) {
-      toast({ title: "Ingen utbytesrad", description: `Saknar rader för ${species} från "${rawForm}".`, variant: "destructive" });
+    const isFilletRow = (toForm: string) =>
+      toForm.includes("filé") || toForm.includes("sida") || toForm === "loin" || toForm.includes("stjärt");
+    const filletRow = rows
+      .filter((y) => isFilletRow(y.to_form))
+      .sort((a, b) => Number(b.yield_pct) - Number(a.yield_pct))[0];
+    if (!filletRow) {
+      toast({
+        title: "Ingen utbytesrad",
+        description: `Saknar utbyte för ${species} från "${rawForm}".`,
+        variant: "destructive",
+      });
       return;
     }
-    const out: DetailRow[] = [];
-    const isFilletRow = (toForm: string) => toForm.includes("filé") || toForm.includes("sida") || toForm === "loin";
-    // Bara EN filéväg får expanderas till styckdetaljer — annars dubbelräknas råvaran.
-    const filletRows = rows.filter((y) => isFilletRow(y.to_form)).sort((a, b) => Number(b.yield_pct) - Number(a.yield_pct));
-    const primaryFillet = filletRows[0];
-    rows.forEach((y, ri) => {
-      const basePct = Number(y.yield_pct);
-      const group = splits.some((s) => s.species_group === species) ? species : templateGroup(y.note, y.to_form);
-      const rowSplits = group ? splits.filter((s) => s.species_group === group && !s.is_optional) : [];
-      const isFillet = isFilletRow(y.to_form);
-      if (isFillet && y.id !== primaryFillet?.id) {
-        // Alternativ filéväg: läggs in avmarkerad så att den kan väljas manuellt.
-        out.push({
-          key: `${y.id}-alt`,
-          included: false,
-          name: `${species} ${y.to_form}`,
-          form: y.to_form,
-          pct: basePct,
-          marginWeight: 1,
-          isProcessed: isProcessedForm(y.to_form),
-          productId: null,
-          category: null,
-        });
-        return;
-      }
-      if (isFillet && rowSplits.length > 0) {
-        rowSplits.forEach((s) => {
-          out.push({
-            key: `${y.id}-${s.id}`,
-            included: true,
-            name: `${species} ${s.detail_form}`,
-            form: s.detail_form,
-            pct: Number(((basePct * Number(s.pct_of_fillet)) / 100).toFixed(2)),
-            marginWeight: Number(s.margin_weight),
-            isProcessed: isProcessedForm(s.detail_form),
-            productId: null,
-            category: null,
-          });
-        });
-      } else {
-        out.push({
-          key: `${y.id}-${ri}`,
-          included: !y.to_form.includes("huvud") && !y.to_form.includes("ben"),
-          name: `${species} ${y.to_form}`,
-          form: y.to_form,
-          pct: basePct,
-          marginWeight: 1,
-          isProcessed: isProcessedForm(y.to_form),
-          productId: null,
-          category: null,
-        });
-      }
+    const basePct = Number(filletRow.yield_pct);
+    const out: DetailRow[] = modelDetails.map((m, i) => {
+      const bp = m.role === "byproduct" ? byproductPriceFor(m.form) : 0;
+      return {
+        key: `${m.form}-${i}`,
+        included: !m.optional,
+        name: `${species} ${detailFormLabel(m.form)}`,
+        form: m.form,
+        pct: Number(((basePct * m.pctOfFillet) / 100).toFixed(2)),
+        role: m.role,
+        marginWeight: m.marginWeight,
+        byproductPrice: bp > 0 ? String(bp) : "",
+        isProcessed: isProcessedForm(m.form),
+        productId: null,
+        category: null,
+      };
     });
     setDetails(out);
   };
@@ -208,14 +254,17 @@ export function ProductionOrderForm() {
   const wastePct = 100 - pctSum;
   const deviates = pctSum > 100.01;
 
-  const regionTargets = margins.map((m) => ({ region: m.region, label: m.label || m.region, target: Number(m.target_pct) }));
+  const regionTargets = margins.map((m) => ({
+    region: m.region,
+    label: m.label || m.region,
+    target: Number(m.target_pct),
+  }));
 
-  const priced = useMemo(() => {
+  /** Kilo, påslag, moms och kostpris per detalj. */
+  const base = useMemo(() => {
     const qtys = included.map((d) => (rawQtyNum * (Number(d.pct) || 0)) / 100);
-    // Råvarukostnaden fördelas över detaljerna (kg × marginalvikt) så att partiet
-    // totalt bär exakt inköpskostnaden. Vid en enda detalj = inköpspris / utbyte.
     const rawCosts = allocateRawCost(
-      included.map((d, i) => ({ qtyKg: qtys[i], marginWeight: Number(d.marginWeight) || 1 })),
+      included.map((d, i) => ({ qtyKg: qtys[i] })),
       priceNum,
       rawQtyNum,
     );
@@ -224,42 +273,70 @@ export function ProductionOrderForm() {
       const category = product?.category ?? d.category;
       const surcharge = d.isProcessed ? surchargeFor(surcharges, category ?? "Färsk Fisk") : 0;
       const vat = vatFor(vats, category);
-      const qty = qtys[i];
-      const byRegion = regionTargets.map((r) => ({
-        region: r.region,
-        label: r.label,
-        ...calcDetailPrice({
-          purchasePricePerKg: priceNum,
-          totalYieldPct: Number(d.pct) || 0,
-          rawCostOverride: rawCosts[i],
-          surchargePerKg: surcharge,
-          targetMarginPct: r.target,
-          marginWeight: Number(d.marginWeight) || 1,
-          vatPct: vat,
-        }),
-      }));
-      return { detail: d, qty, surcharge, vat, byRegion, product };
+      return {
+        detail: d,
+        qty: qtys[i],
+        rawCostPerKg: rawCosts[i],
+        surcharge,
+        vat,
+        product,
+        lastSetPrice: lastSetFor(d.form),
+        byproductPrice: parseFloat(d.byproductPrice) || 0,
+      };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [details, products, surcharges, vats, margins, rawQty, price]);
+  }, [details, products, surcharges, vats, rawQty, price, detailPrices]);
 
-  const batchMargins = regionTargets.map((r) => ({
-    ...r,
-    ...batchMargin({
-      purchasePricePerKg: priceNum,
-      rawQuantity: rawQtyNum,
-      lines: priced.map((p) => ({
-        qty: p.qty,
-        priceExVat: p.byRegion.find((b) => b.region === r.region)?.priceExVat ?? 0,
-        surchargePerKg: p.surcharge,
-      })),
-    }),
-  }));
+  /** Biproduktsmetoden per region. */
+  const byRegion = useMemo(() => {
+    const vatPct = base[0]?.vat ?? 6;
+    return regionTargets.map((r) => {
+      const res = priceByByproductMethod({
+        purchasePricePerKg: priceNum,
+        rawQuantity: rawQtyNum,
+        targetMarginPct: r.target,
+        vatPct,
+        primaries: base
+          .filter((b) => b.detail.role === "primary")
+          .map((b) => ({
+            key: b.detail.key,
+            qtyKg: b.qty,
+            marginWeight: b.detail.marginWeight,
+            surchargePerKg: b.surcharge,
+            lastSetPrice: b.lastSetPrice,
+            vatPct: b.vat,
+          })),
+        byproducts: base
+          .filter((b) => b.detail.role === "byproduct")
+          .map((b) => ({
+            key: b.detail.key,
+            qtyKg: b.qty,
+            priceInclVat: b.byproductPrice || null,
+            surchargePerKg: b.surcharge,
+            vatPct: b.vat,
+          })),
+      });
+      // Partiets marginal när huvudprodukterna säljs på FÖRESLAGET pris.
+      const atSuggested = batchMargin({
+        purchasePricePerKg: priceNum,
+        rawQuantity: rawQtyNum,
+        lines: base.map((b) => {
+          const p = res.primaries.find((x) => x.key === b.detail.key);
+          const inc = p ? p.suggestedInclVat : b.byproductPrice;
+          return { qty: b.qty, priceExVat: inc / (1 + b.vat / 100), surchargePerKg: b.surcharge };
+        }),
+      });
+      return { ...r, res, atSuggested };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [base, margins, priceNum, rawQtyNum]);
 
   const filteredProducts = useMemo(() => {
     const q = productSearch.trim().toLowerCase();
     if (!q) return [];
-    return products.filter((p) => p.name.toLowerCase().includes(q) || (p.sku ?? "").toLowerCase().includes(q)).slice(0, 8);
+    return products
+      .filter((p) => p.name.toLowerCase().includes(q) || (p.sku ?? "").toLowerCase().includes(q))
+      .slice(0, 8);
   }, [products, productSearch]);
 
   const setDetail = (key: string, patch: Partial<DetailRow>) =>
@@ -273,6 +350,31 @@ export function ProductionOrderForm() {
     });
   }, [yields, actuals, species, rawForm]);
 
+  // Auto-godkännande: blockeras av requires_processing, osäkert utbyte eller marginal under mål.
+  const rawRequiresProcessing = Boolean(
+    (products.find((p) => p.id === rawProductId) as any)?.requires_processing,
+  );
+  const yieldConfirmed = yieldWarning.length === 0;
+  const approvalByRegion = (region: { target: number; marginInclWorkPct: number }) =>
+    evaluateAutoApproval({
+      requiresProcessing: rawRequiresProcessing,
+      yieldConfirmed,
+      marginInclWorkPct: region.marginInclWorkPct,
+      targetMarginPct: region.target,
+    });
+
+  const saveByproductPrice = (d: DetailRow) => {
+    const value = parseFloat(d.byproductPrice) || 0;
+    if (!species || d.role !== "byproduct" || value <= 0) return;
+    upsertByproductPrice.mutate({ species_group: species, detail_form: normalizeDetailForm(d.form), price_incl_vat: value });
+    upsertDetailPrice.mutate({
+      species_group: species,
+      detail_form: normalizeDetailForm(d.form),
+      last_set_price: value,
+      role: "byproduct",
+    });
+  };
+
   /* ── Registrera tillverkningsorder ───────────────────────── */
   const register = async () => {
     if (!rawName || rawQtyNum <= 0 || included.length === 0) {
@@ -280,20 +382,17 @@ export function ProductionOrderForm() {
       return;
     }
     try {
-      const lines = included.map((d, i) => {
-        const p = priced.find((x) => x.detail.key === d.key)!;
-        return {
-          product_id: d.productId,
-          detail_name: d.name,
-          detail_form: d.form,
-          planned_pct: Number(d.pct) || 0,
-          planned_qty: p.qty,
-          cost_price: p.byRegion[0]?.rawCostPerKg ?? 0,
-          margin_weight: Number(d.marginWeight) || 1,
-          is_processed: d.isProcessed,
-          sort_order: i,
-        };
-      });
+      const lines = base.map((b, i) => ({
+        product_id: b.detail.productId,
+        detail_name: b.detail.name,
+        detail_form: b.detail.form,
+        planned_pct: Number(b.detail.pct) || 0,
+        planned_qty: b.qty,
+        cost_price: b.rawCostPerKg,
+        margin_weight: Number(b.detail.marginWeight) || 1,
+        is_processed: b.detail.isProcessed,
+        sort_order: i,
+      }));
 
       const order = await createOrder.mutateAsync({
         order: {
@@ -314,7 +413,6 @@ export function ProductionOrderForm() {
         lines,
       });
 
-      // Uttag av råvaran + inleverans av varje styckdetalj
       if (rawProductId) await withdrawStock(rawProductId, rawQtyNum);
       for (const l of lines) {
         if (l.product_id) await addStock(l.product_id, l.planned_qty, l.cost_price);
@@ -339,25 +437,41 @@ export function ProductionOrderForm() {
     }
   };
 
-  /* ── Använd föreslaget pris ──────────────────────────────── */
-  const applyPrice = async (productId: string, priceIncVat: number, label: string) => {
-    const { error } = await supabase.from("products").update({ retail_suggested: priceIncVat }).eq("id", productId);
-    if (error) {
-      toast({ title: "Fel", description: error.message, variant: "destructive" });
-      return;
+  /* ── Fastställ pris ──────────────────────────────────────── */
+  const applyPrice = async (d: DetailRow, priceIncVat: number, label: string) => {
+    if (d.productId) {
+      const { error } = await supabase.from("products").update({ retail_suggested: priceIncVat }).eq("id", d.productId);
+      if (error) {
+        toast({ title: "Fel", description: error.message, variant: "destructive" });
+        return;
+      }
+      qc.invalidateQueries({ queryKey: ["products"] });
     }
-    qc.invalidateQueries({ queryKey: ["products"] });
-    toast({ title: "Pris uppdaterat", description: `${label}: ${fmt(priceIncVat, 0)} kr` });
+    if (species) {
+      upsertDetailPrice.mutate({
+        species_group: species,
+        detail_form: normalizeDetailForm(d.form),
+        last_set_price: priceIncVat,
+        role: d.role,
+      });
+    }
+    toast({ title: "Pris fastställt", description: `${label}: ${fmt(priceIncVat, 0)} kr` });
   };
 
-  const massRows = priced
-    .filter((p) => p.detail.productId)
-    .map((p) => ({
-      productId: p.detail.productId!,
-      name: p.detail.name,
-      current: Number(p.product?.retail_suggested ?? 0),
-      suggested: p.byRegion.find((b) => b.region === applyRegion)?.priceIncVat ?? 0,
-    }));
+  const activeRegion = byRegion.find((r) => r.region === applyRegion) ?? byRegion[0];
+
+  const massRows = base
+    .filter((b) => b.detail.productId)
+    .map((b) => {
+      const p = activeRegion?.res.primaries.find((x) => x.key === b.detail.key);
+      return {
+        productId: b.detail.productId!,
+        name: b.detail.name,
+        current: Number(b.product?.retail_suggested ?? 0),
+        suggested: p ? p.suggestedInclVat : b.byproductPrice,
+      };
+    })
+    .filter((r) => r.suggested > 0);
 
   const applyAll = async () => {
     for (const r of massRows) {
@@ -367,6 +481,8 @@ export function ProductionOrderForm() {
     setPreviewOpen(false);
     toast({ title: "Priser uppdaterade", description: `${massRows.length} produkter fick nytt föreslaget pris.` });
   };
+
+  const allWarnings = [...new Set(byRegion.flatMap((r) => r.res.warnings))];
 
   return (
     <div className="space-y-4">
@@ -416,6 +532,9 @@ export function ProductionOrderForm() {
                   {speciesOptions.map((s) => <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>)}
                 </SelectContent>
               </Select>
+              {species && (
+                <p className="text-[10px] text-muted-foreground">{CUT_MODEL_LABELS[cutModel]}</p>
+              )}
             </div>
             <div className="space-y-1">
               <Label className="text-[11px]">Form in</Label>
@@ -429,6 +548,10 @@ export function ProductionOrderForm() {
             <div className="space-y-1">
               <Label className="text-[11px]">Kvantitet (kg)</Label>
               <Input type="number" step="0.1" value={rawQty} onChange={(e) => setRawQty(e.target.value)} className="h-8 text-xs text-right font-mono tabular-nums" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[11px]">Styckvikt (kg/fisk)</Label>
+              <Input type="number" step="0.1" value={pieceWeight} onChange={(e) => setPieceWeight(e.target.value)} className="h-8 text-xs text-right font-mono tabular-nums" />
             </div>
             <div className="space-y-1">
               <Label className="text-[11px]">Inköpspris (kr/kg)</Label>
@@ -447,6 +570,12 @@ export function ProductionOrderForm() {
             <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={suggest} disabled={!species}>
               <Plus className="h-3.5 w-3.5" /> Föreslå styckdetaljer
             </Button>
+            {pieceWeightWarning && (
+              <Badge variant="outline" className="gap-1 border-amber-400 text-[10px] text-amber-600">
+                <AlertTriangle className="h-3 w-3" /> Styckvikten under {fmt(minPieceWeight ?? 0, 1)} kg — fyrdelning
+                är svår, överväg endast hel filé
+              </Badge>
+            )}
             {yieldWarning.length > 0 && (
               <Badge variant="outline" className="gap-1 border-amber-400 text-[10px] text-amber-600">
                 <AlertTriangle className="h-3 w-3" /> {yieldWarning.length} utbytesrad(er) är branschvärden, ej kalibrerade mot 3 partier
@@ -459,7 +588,7 @@ export function ProductionOrderForm() {
       {details.length > 0 && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between py-3">
-            <CardTitle className="text-sm">Styckdetaljer ut</CardTitle>
+            <CardTitle className="text-sm">Styckdetaljer ut · biproduktsmetoden</CardTitle>
             <div className="flex items-center gap-2 text-[11px]">
               <span className="font-mono tabular-nums">Summa detaljer: {fmt(pctSum, 1)} %</span>
               <span className="font-mono tabular-nums">Svinn: {fmt(Math.max(0, wastePct), 1)} %</span>
@@ -475,23 +604,34 @@ export function ProductionOrderForm() {
             </div>
           </CardHeader>
           <CardContent className="p-0">
+            {allWarnings.length > 0 && (
+              <div className="space-y-1 border-b bg-amber-50 px-3 py-2 dark:bg-amber-950/30">
+                {allWarnings.map((w) => (
+                  <p key={w} className="flex items-start gap-1.5 text-[11px] text-amber-700 dark:text-amber-400">
+                    <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" /> {w}
+                  </p>
+                ))}
+              </div>
+            )}
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="h-8">
                     <TableHead className="w-[36px]" />
                     <TableHead className="text-[11px] min-w-[150px]">Detalj</TableHead>
+                    <TableHead className="text-[11px] w-[90px]">Roll</TableHead>
                     <TableHead className="text-[11px] w-[150px]">Produkt (lager/pris)</TableHead>
-                    <TableHead className="text-[11px] w-[92px] text-right">% av råvara</TableHead>
-                    <TableHead className="text-[11px] w-[70px] text-right">kg</TableHead>
-                    <TableHead className="text-[11px] w-[92px] text-right">Marg.vikt</TableHead>
-                    <TableHead className="text-[11px] w-[90px] text-right">Kostpris</TableHead>
-                    <TableHead className="text-[11px] w-[70px] text-right">Påslag</TableHead>
+                    <TableHead className="text-[11px] w-[86px] text-right">% av råvara</TableHead>
+                    <TableHead className="text-[11px] w-[64px] text-right">kg</TableHead>
+                    <TableHead className="text-[11px] w-[80px] text-right">Marg.vikt</TableHead>
+                    <TableHead className="text-[11px] w-[86px] text-right">Kostpris</TableHead>
+                    <TableHead className="text-[11px] w-[60px] text-right">Påslag</TableHead>
+                    <TableHead className="text-[11px] w-[110px] text-right">Marknadspris</TableHead>
                     {regionTargets.map((r) => (
-                      <TableHead key={r.region} className="text-[11px] text-right w-[190px] leading-tight">
+                      <TableHead key={r.region} className="text-[11px] text-right w-[210px] leading-tight">
                         {r.label.split(" (")[0]} ({fmt(r.target, 0)} %)
                         <span className="block text-[9px] font-normal text-muted-foreground">
-                          pris · marg. råvara · ink. arbete
+                          golv · senast · föreslaget
                         </span>
                       </TableHead>
                     ))}
@@ -500,15 +640,28 @@ export function ProductionOrderForm() {
                 </TableHeader>
                 <TableBody>
                   {details.map((d) => {
-                    const p = priced.find((x) => x.detail.key === d.key);
+                    const b = base.find((x) => x.detail.key === d.key);
                     const qty = (rawQtyNum * (Number(d.pct) || 0)) / 100;
+                    const missingPrice = d.role === "byproduct" && !(parseFloat(d.byproductPrice) > 0);
                     return (
-                      <TableRow key={d.key} className={`h-9 ${d.included ? "" : "opacity-50"}`}>
+                      <TableRow
+                        key={d.key}
+                        className={`h-9 ${d.included ? "" : "opacity-50"} ${missingPrice && d.included ? "bg-amber-50 dark:bg-amber-950/20" : ""}`}
+                      >
                         <TableCell className="py-0.5">
                           <Checkbox checked={d.included} onCheckedChange={(v) => setDetail(d.key, { included: !!v })} />
                         </TableCell>
                         <TableCell className="py-0.5">
                           <Input value={d.name} onChange={(e) => setDetail(d.key, { name: e.target.value })} className="h-7 text-[11px]" />
+                        </TableCell>
+                        <TableCell className="py-0.5">
+                          <Select value={d.role} onValueChange={(v) => setDetail(d.key, { role: v as DetailRow["role"] })}>
+                            <SelectTrigger className="h-7 text-[10px]"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="primary" className="text-xs">Huvudprodukt</SelectItem>
+                              <SelectItem value="byproduct" className="text-xs">Biprodukt</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </TableCell>
                         <TableCell className="py-0.5">
                           <Select value={d.productId ?? "none"} onValueChange={(v) => setDetail(d.key, { productId: v === "none" ? null : v })}>
@@ -535,57 +688,73 @@ export function ProductionOrderForm() {
                           <Input
                             type="number"
                             step="0.05"
+                            disabled={d.role !== "primary"}
                             value={d.marginWeight}
                             onChange={(e) => setDetail(d.key, { marginWeight: parseFloat(e.target.value) || 1 })}
                             className="h-7 px-1 text-[11px] text-right font-mono tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                         </TableCell>
                         <TableCell className="text-[11px] text-right font-mono tabular-nums">
-                          {p ? fmt(p.byRegion[0]?.rawCostPerKg ?? 0) : "—"}
+                          {b ? fmt(b.rawCostPerKg) : "—"}
                         </TableCell>
                         <TableCell className="py-0.5 text-right">
                           <Checkbox checked={d.isProcessed} onCheckedChange={(v) => setDetail(d.key, { isProcessed: !!v })} />
                         </TableCell>
-                        {regionTargets.map((r) => {
-                          const b = p?.byRegion.find((x) => x.region === r.region);
-                          const workColor = !b
-                            ? ""
-                            : b.marginInclWorkPct < r.target - 5
-                            ? "text-destructive"
-                            : b.marginInclWorkPct < r.target
-                            ? "text-amber-600"
-                            : "text-emerald-600";
+                        <TableCell className="py-0.5">
+                          {d.role === "byproduct" ? (
+                            <Input
+                              type="number"
+                              step="1"
+                              placeholder="kr ink moms"
+                              value={d.byproductPrice}
+                              onChange={(e) => setDetail(d.key, { byproductPrice: e.target.value })}
+                              onBlur={() => saveByproductPrice(d)}
+                              className="h-7 px-1 text-[11px] text-right font-mono tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                          ) : (
+                            <span className="block text-right text-[10px] text-muted-foreground">residual</span>
+                          )}
+                        </TableCell>
+                        {byRegion.map((r) => {
+                          const p = r.res.primaries.find((x) => x.key === d.key);
+                          if (d.role === "byproduct" || !p) {
+                            const inc = parseFloat(d.byproductPrice) || 0;
+                            return (
+                              <TableCell key={r.region} className="py-0.5 text-right text-[11px]">
+                                {inc > 0 ? (
+                                  <span className="font-mono tabular-nums">{fmt(inc, 0)} kr manuellt</span>
+                                ) : (
+                                  <span className="text-[10px] text-amber-600">saknar pris — höjer golvet</span>
+                                )}
+                              </TableCell>
+                            );
+                          }
+                          const alert = p.alertExpensive || p.alertRoleMismatch;
                           return (
                             <TableCell key={r.region} className="py-0.5 text-right text-[11px]">
-                              {b ? (
-                                <div className="flex items-center justify-end gap-1">
-                                  <span className="font-mono tabular-nums font-medium">{fmt(b.priceIncVat, 0)} kr</span>
-                                  <span
-                                    className="font-mono text-[10px] tabular-nums text-muted-foreground"
-                                    title="Marginal på råvara"
-                                  >
-                                    {fmt(b.marginOnRawPct, 0)} %
-                                  </span>
-                                  <span
-                                    className={`font-mono text-[10px] tabular-nums font-semibold ${workColor}`}
-                                    title="Marginal inklusive arbete (jämförs med målet)"
-                                  >
-                                    {fmt(b.marginInclWorkPct, 0)} %
-                                  </span>
-                                  {d.productId && (
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-6 px-1 text-[10px]"
-                                      onClick={() => applyPrice(d.productId!, b.priceIncVat, `${d.name} · ${r.label}`)}
-                                    >
-                                      Använd
-                                    </Button>
-                                  )}
-                                </div>
-                              ) : (
-                                "—"
-                              )}
+                              <div className="flex items-center justify-end gap-1.5">
+                                <span
+                                  className={`font-mono tabular-nums ${alert ? "text-destructive font-semibold" : "text-muted-foreground"}`}
+                                  title="Golvpris (residual mot marginalmålet)"
+                                >
+                                  {fmt(p.floorInclVat, 0)}
+                                </span>
+                                <span className="font-mono text-[10px] tabular-nums text-muted-foreground" title="Senast fastställt pris">
+                                  {p.lastSetPrice > 0 ? fmt(p.lastSetPrice, 0) : "—"}
+                                </span>
+                                <span className="font-mono tabular-nums font-semibold" title="Föreslaget pris (högsta av golv och senast)">
+                                  {fmt(p.suggestedInclVat, 0)} kr
+                                </span>
+                                {alert && <AlertTriangle className="h-3 w-3 text-destructive" />}
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 px-1 text-[10px]"
+                                  onClick={() => applyPrice(d, p.suggestedInclVat, `${d.name} · ${r.label}`)}
+                                >
+                                  Fastställ
+                                </Button>
+                              </div>
                             </TableCell>
                           );
                         })}
@@ -608,34 +777,48 @@ export function ProductionOrderForm() {
 
             <div className="flex flex-wrap items-center justify-between gap-3 border-t p-3">
               <div className="flex flex-wrap gap-3 text-[11px]">
-                {batchMargins.map((b) => (
-                  <div key={b.region} className="rounded-md border px-2 py-1 leading-tight">
-                    <div className="text-muted-foreground">
-                      Partiet {b.label.split(" (")[0]} · mål {fmt(b.target, 0)} %
+                {byRegion.map((r) => {
+                  const m = r.atSuggested;
+                  const color =
+                    m.marginInclWorkPct < r.target - 5
+                      ? "text-destructive"
+                      : m.marginInclWorkPct < r.target
+                      ? "text-amber-600"
+                      : "text-emerald-600";
+                  return (
+                    <div key={r.region} className="rounded-md border px-2 py-1 leading-tight">
+                      <div className="text-muted-foreground">
+                        Partiet {r.label.split(" (")[0]} · mål {fmt(r.target, 0)} %
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">På råvara: </span>
+                        <span className="font-mono tabular-nums">{fmt(m.marginOnRawPct, 1)} %</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Ink. arbete: </span>
+                        <span className={`font-mono tabular-nums font-semibold ${color}`}>
+                          {fmt(m.marginInclWorkPct, 1)} %
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">
+                        intäkt {fmt(m.revenueExVat, 0)} kr / råvara {fmt(m.rawCost, 0)} kr / arbete {fmt(m.surchargeCost, 0)} kr
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">
+                        biprodukter {fmt(r.res.byproductRevenueExVat, 0)} kr · krävd intäkt {fmt(r.res.requiredRevenueExVat, 0)} kr
+                      </div>
+                      {(() => {
+                        const a = approvalByRegion({ target: r.target, marginInclWorkPct: m.marginInclWorkPct });
+                        return a.approved ? (
+                          <div className="mt-0.5 text-[10px] font-medium text-emerald-600">Auto-godkänns</div>
+                        ) : (
+                          <div className="mt-0.5 text-[10px] font-medium text-amber-600">
+                            Manuell granskning: {a.reasons[0]}
+                          </div>
+                        );
+                      })()}
                     </div>
-                    <div>
-                      <span className="text-muted-foreground">På råvara: </span>
-                      <span className="font-mono tabular-nums">{fmt(b.marginOnRawPct, 1)} %</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Ink. arbete: </span>
-                      <span
-                        className={`font-mono tabular-nums font-semibold ${
-                          b.marginInclWorkPct < b.target - 5
-                            ? "text-destructive"
-                            : b.marginInclWorkPct < b.target
-                            ? "text-amber-600"
-                            : "text-emerald-600"
-                        }`}
-                      >
-                        {fmt(b.marginInclWorkPct, 1)} %
-                      </span>
-                    </div>
-                    <div className="text-[10px] text-muted-foreground">
-                      intäkt {fmt(b.revenueExVat, 0)} kr / råvara {fmt(b.rawCost, 0)} kr / arbete {fmt(b.surchargeCost, 0)} kr
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <div className="flex items-center gap-2">
                 <Select value={applyRegion} onValueChange={setApplyRegion}>
