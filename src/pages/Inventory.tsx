@@ -1956,6 +1956,17 @@ export default function Inventory() {
         currency={localCurrency}
       />
 
+      {/* ── Kassation / svinn ──────────────────────────────────────────────── */}
+      <WasteDialog
+        open={wasteOpen}
+        onOpenChange={setWasteOpen}
+        items={allStock as any[]}
+        locationName={activeStoreName || undefined}
+        storeId={activeStoreId ?? null}
+        currency={localCurrency}
+      />
+
+
       {/* ── Expiry Alerts Dialog ───────────────────────────────────────────── */}
       <Dialog open={showExpiryAlerts} onOpenChange={setShowExpiryAlerts}>
         <DialogContent className="sm:max-w-lg">
