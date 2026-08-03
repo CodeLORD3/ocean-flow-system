@@ -1,3 +1,6 @@
+import { speciesKey } from "@/lib/asciiFold";
+import { SPECIES_CUT_MODEL, hasCutModel, modelForSpecies } from "@/lib/cutModels";
+import { SPECIES_GROUP_KEYS } from "@/lib/speciesGroups";
 import { evaluateAutoApproval } from "@/lib/autoApproval";
 import { describe, it, expect } from "vitest";
 import {
@@ -211,5 +214,49 @@ describe("evaluateAutoApproval", () => {
     const r = evaluateAutoApproval({ ...base, yieldConfirmed: false, marginInclWorkPct: 30 });
     expect(r.approved).toBe(false);
     expect(r.reasons).toHaveLength(2);
+  });
+});
+
+// ── Artnycklar: alla artgrupper måste matcha efter normalisering ──
+describe("species keys", () => {
+  it("normaliserar svenska tecken till samma nyckel", () => {
+    expect(speciesKey("Långa")).toBe("langa");
+    expect(speciesKey(" Hälleflundra ")).toBe("halleflundra");
+    expect(speciesKey("Rödspätta")).toBe("rodspatta");
+    expect(speciesKey("Blåkveite")).toBe("blakveite");
+    expect(speciesKey("Regnbåge")).toBe("regnbage");
+    expect(speciesKey("Svärdfisk")).toBe("svardfisk");
+    expect(speciesKey("Havsöring")).toBe("havsoring");
+    expect(speciesKey("Blåkveitø")).toBe("blakveito");
+    expect(speciesKey("Purée")).toBe("puree");
+  });
+
+  it("SPECIES_CUT_MODEL har enbart ASCII-normaliserade nycklar", () => {
+    for (const key of Object.keys(SPECIES_CUT_MODEL)) {
+      expect(key).toBe(speciesKey(key));
+    }
+  });
+
+  it("varje art med egen styckningsmodell hittas oavsett stavning", () => {
+    // Artgrupperna som finns i produkt-/utbytesregistret, i svensk stavning.
+    const dbSpecies = [
+      "torsk", "sej", "kolja", "kummel", "kapkummel", "långa", "lubb", "havskatt", "kolfisk", "bleka",
+      "tonfisk", "blåfenad-tonfisk", "svärdfisk", "seriola",
+      "lax", "regnbåge", "havsöring", "röding",
+      "hälleflundra", "blåkveite", "piggvar", "slätvar", "rödspätta", "sjötunga", "bergtunga",
+      "rödtunga", "sillflundra", "marulk",
+    ];
+    for (const s of dbSpecies) {
+      expect(hasCutModel(s), `${s} saknar styckningsmodell`).toBe(true);
+      expect(modelForSpecies(s)).not.toBe("single");
+    }
+    // Plattfiskgruppen och laxfiskarna får rätt modell.
+    expect(modelForSpecies("Hälleflundra")).toBe("flatfish");
+    expect(modelForSpecies("rödspätta")).toBe("flatfish");
+    expect(modelForSpecies("Regnbåge")).toBe("salmon_side");
+    expect(modelForSpecies("havsöring")).toBe("salmon_side");
+    expect(modelForSpecies("långa")).toBe("loin_four");
+    // Alla förslagsnycklar är redan normaliserade.
+    for (const k of SPECIES_GROUP_KEYS) expect(k).toBe(speciesKey(k));
   });
 });
