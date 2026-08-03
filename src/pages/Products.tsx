@@ -1257,6 +1257,22 @@ export default function Products() {
                 ))}
               </div>
             </div>
+            {/* Kräver hantering — blockerar auto-godkännande av pris */}
+            <label className="flex cursor-pointer items-start gap-2 rounded-md border p-2">
+              <input
+                type="checkbox"
+                checked={form.requires_processing}
+                onChange={(e) => setField("requires_processing", e.target.checked as any)}
+                className="mt-0.5 h-4 w-4 accent-primary"
+              />
+              <span className="text-xs">
+                Kräver hantering (styckning/beredning)
+                <span className="block text-[10px] text-muted-foreground">
+                  Blockerar auto-godkännande av pris — priset måste granskas manuellt.
+                </span>
+              </span>
+            </label>
+
 
             {editId ? (
               <>
