@@ -440,8 +440,11 @@ export function ProductionOrderForm() {
       targetMarginPct: list.target,
     });
 
-  /** Sparar ett manuellt satt pris i prislistan. Skriver aldrig över automatiskt. */
-  const savePrice = (d: DetailRow, listKey: string) => {
+  /**
+   * Flyttar REFERENSPRISET, alltså den relativa värderingen. Görs bara medvetet
+   * här; ett skalat eller manuellt satt orderpris ändrar aldrig referensen.
+   */
+  const saveAsReference = (d: DetailRow, listKey: string) => {
     const value = parseFloat(d.prices?.[listKey] ?? "") || 0;
     if (!species || value <= 0) return;
     upsertDetailPrice.mutate(
@@ -450,14 +453,27 @@ export function ProductionOrderForm() {
         detail_form: normalizeDetailForm(d.form),
         price_list: listKey,
         price_incl_vat: value,
+        reference_cost_per_kg: priceNum > 0 ? priceNum : undefined,
         role: d.role,
       },
-      { onSuccess: () => toast({ title: t("saved"), description: `${d.name}: ${fmt(value, 2)} kr` }) },
+      {
+        onSuccess: () =>
+          toast({
+            title: "Referenspris flyttat",
+            description: `${d.name}: ${fmt(value, 2)} kr vid ${fmt(priceNum, 2)} kr/kg råvara`,
+          }),
+      },
     );
   };
 
-  /** Startförslag när priset saknas — fylls i fältet, sparas inte automatiskt. */
+  /** Fyller fältet med referenspris × skalfaktor. Sparas inte automatiskt. */
   const fillSuggestion = (d: DetailRow, listKey: string) => {
+    const suggested = suggestedPriceFor(d, listKey);
+    if (suggested > 0) {
+      setDetailPriceField(d.key, listKey, String(suggested));
+      return;
+    }
+    // Referenspris saknas — fall tillbaka på ett kostnadsbaserat startförslag.
     const b = base.find((x) => x.detail.key === d.key);
     const pl = priceLists.find((p) => p.key === listKey);
     if (!b || !pl) return;
@@ -473,6 +489,20 @@ export function ProductionOrderForm() {
       : Math.round(ex * 100) / 100;
     setDetailPriceField(d.key, listKey, String(value));
   };
+
+  /** Fyller alla detaljer i en prislista med de skalade förslagen. */
+  const fillAllSuggestions = (listKey: string) => {
+    const s = scaleFor(listKey);
+    if (!s) return;
+    setDetails((prev) =>
+      prev.map((d) => {
+        const line = s.res.lines.find((l) => l.key === d.key);
+        if (!line || !(line.suggestedPrice > 0)) return d;
+        return { ...d, prices: { ...d.prices, [listKey]: String(line.suggestedPrice) } };
+      }),
+    );
+  };
+
 
   /* ── Registrera tillverkningsorder ───────────────────────── */
   /**
