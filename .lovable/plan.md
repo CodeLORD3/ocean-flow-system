@@ -69,20 +69,34 @@ Artgrundvärden för rensad, utan sortering: torsk 48, kolja 46, sej 45.
 - `cut_form = 'hel filé'` läggs in i `detail_prices` för arter med `cut_model = single`, markerade som pris saknas till värdet är satt.
 - När modellen är `single` visar gränssnittet inte en tabell med en rad och 100 procents intäktsandel, utan kostnad per kg, pris och marginal direkt. Formeln är oförändrad.
 
-## Steg 8 — Lagervärde från avg_cost och verifieringsfall
+## Steg 8 — Gällande priser, lagervärde från avg_cost och verifieringsfall
+
+Först uppdateras `detail_prices` för torsk på `butik_goteborg` till gällande priser inklusive moms: rygg 798, kontrarygg 398, benfri filé 249, slag 198. De nuvarande 698 och 129 är gamla värden.
 
 Lagervärdet räknas från partiernas `avg_cost`, inte från fasta kostpriser.
 
-**Fall A, loin_four:** torsk 29 kg à 146 kr, utbyte 48 procent, uppdelning 55/20/15/10, påslag 35 kr/kg, moms 6 procent.
+**Fall A, loin_four, Torsk 1 (grad 1):** rensad, 29 kg à 146 kr, utbyte 50 procent enligt sorteringstabellen, uppdelning 55/20/15/10, påslag 35 kr/kg, moms 6 procent.
 
-Här behövs ett beslut. Dina förväntade tal bygger på priserna 798/249/198/398, men databasen har rygg 698 och slag 129. Intäktsandelarna och därmed NRV-fördelningen blir andra med databasens priser, och partimarginalen lägre än de 35 procent du räknar med. Jag kör inte förbi det tysta valet:
+Förväntat:
 
-1. Kör mot databasens priser (698/249/129/398) och redovisa utfallet som det blir.
-2. Uppdatera `detail_prices` till 798 och 198 först, eftersom det är den prislista som gäller, och kör därefter.
+```text
+filé            14,500 kg
+rygg             7,975 kg  andel 78,6 %  kostnad 417,44  marginal 39,9 %
+kontrarygg       1,450 kg  andel  7,1 %  kostnad 208,20  marginal 35,2 %
+benfri filé      2,900 kg  andel  8,9 %  kostnad 130,25  marginal 29,7 %
+slag             2,175 kg  andel  5,3 %  kostnad 103,58  marginal 25,8 %
+V per kg filé   526,60 kr
+intäkt        7 635,75 kr ex moms
+kostnad       4 741,50 kr  (4 234,00 råvara + 507,50 arbete)
+partimarginal    37,9 %
+```
 
-**Fall B, single:** torsk 4 rensad, 35 kg à 89 kr/kg, GFA 2026-07-23, parti 10012.6121679, utbyte 45 procent, påslag 35 kr/kg, moms 6 procent. Förväntat: filé 15,750 kg, kostnad 197,78 kr/kg, med påslag 232,78 kr, butikspris 449 kr inkl moms, grossist 298,44 kr ex moms.
+**Fall B, single, Torsk 4:** rensad, 35 kg à 89 kr/kg, GFA 2026-07-23, parti 10012.6121679, utbyte 45 procent, påslag 35 kr/kg, moms 6 procent.
 
-Båda fallen redovisas sida vid sida så att skillnaden mellan grad 1 och grad 4 för samma art syns.
+Förväntat: filé 15,750 kg, kostnad 197,78 kr/kg, med påslag 232,78 kr, butikspris 448,63 avrundat uppåt till 449 kr inkl moms, grossist 298,43 kr ex moms.
+
+Utfallet redovisas som det blir. Avviker något anges vilket utbyte och vilka priser systemet faktiskt använde. Båda fallen redovisas sida vid sida så att skillnaden mellan grad 1 och grad 4 för samma art syns.
+
 
 ## Steg 9 — Ta bort useUpdateStock
 
