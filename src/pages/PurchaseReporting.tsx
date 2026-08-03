@@ -424,6 +424,7 @@ function EditableRow({
               <FileText className="h-3 w-3 text-muted-foreground" />
             </Button>
           )}
+          {filletButton}
         </div>
       </TableCell>
       <TableCell className="py-0.5 px-0 w-6">
