@@ -1258,6 +1258,41 @@ export function ProductionOrderForm() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Priset är redan satt idag — bekräfta innan diskpriset ändras igen. */}
+      <Dialog open={!!confirmChange} onOpenChange={(o) => !o && setConfirmChange(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-sm">Priset har redan ändrats idag</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 text-xs">
+            <p className="text-muted-foreground">
+              Följande produkter fick ett nytt pris inom det senaste dygnet. Vill du ändra priset igen?
+            </p>
+            <div className="space-y-1">
+              {(confirmChange?.rows ?? [])
+                .filter((r) => isSameDayApplication(r.previous))
+                .map((r) => (
+                  <div key={`${r.detail.key}-${r.listKey}`} className="flex justify-between rounded-md border px-2 py-1">
+                    <span>{r.detail.name}</span>
+                    <span className="font-mono tabular-nums">
+                      {fmt(Number(r.previous?.price ?? 0), 2)} → {fmt(r.price, 2)} kr
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setConfirmChange(null)}>
+              Avbryt
+            </Button>
+            <Button size="sm" onClick={() => confirmChange && void commitApply(confirmChange.rows)}>
+              Ändra priset igen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
