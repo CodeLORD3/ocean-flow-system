@@ -50,6 +50,7 @@ import {
 } from "@/lib/cutModels";
 import { SPECIES_GROUP_SUGGESTIONS } from "@/lib/speciesGroups";
 import { addStock, withdrawStock } from "@/lib/productionStock";
+import { evaluateAutoApproval } from "@/lib/autoApproval";
 
 export interface FilletPrefill {
   product_id?: string | null;
