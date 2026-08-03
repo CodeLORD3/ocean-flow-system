@@ -10,6 +10,130 @@ export type YieldActual = Tables<"yield_actuals">;
 export type ProcessingSurcharge = Tables<"processing_surcharges">;
 export type MarginTarget = Tables<"margin_targets">;
 export type VatRate = Tables<"vat_rates">;
+export type SpeciesCutModel = Tables<"species_cut_models">;
+export type CutModelSplit = Tables<"cut_model_splits">;
+export type DetailPrice = Tables<"detail_prices">;
+export type ByproductPrice = Tables<"byproduct_prices">;
+export type AuctionCalc = Tables<"auction_calcs">;
+
+/* ── Styckningsmodeller ──────────────────────────────────────── */
+
+export function useSpeciesCutModels() {
+  return useQuery({
+    queryKey: ["species_cut_models"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("species_cut_models").select("*").order("species_group");
+      if (error) throw error;
+      return data as SpeciesCutModel[];
+    },
+  });
+}
+
+export function useCutModelSplits() {
+  return useQuery({
+    queryKey: ["cut_model_splits"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cut_model_splits")
+        .select("*")
+        .order("cut_model")
+        .order("sort_order");
+      if (error) throw error;
+      return data as CutModelSplit[];
+    },
+  });
+}
+
+/* ── Referenspriser ──────────────────────────────────────────── */
+
+export function useDetailPrices() {
+  return useQuery({
+    queryKey: ["detail_prices"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("detail_prices").select("*").order("species_group");
+      if (error) throw error;
+      return data as DetailPrice[];
+    },
+  });
+}
+
+export function useUpsertDetailPrice() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (row: { species_group: string; detail_form: string; last_set_price: number; role?: string }) => {
+      const { error } = await supabase
+        .from("detail_prices")
+        .upsert(row as any, { onConflict: "species_group,detail_form" });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["detail_prices"] }),
+  });
+}
+
+export function useByproductPrices() {
+  return useQuery({
+    queryKey: ["byproduct_prices"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("byproduct_prices").select("*").order("species_group");
+      if (error) throw error;
+      return data as ByproductPrice[];
+    },
+  });
+}
+
+export function useUpsertByproductPrice() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (row: { species_group: string; detail_form: string; price_incl_vat: number }) => {
+      const { error } = await supabase
+        .from("byproduct_prices")
+        .upsert(row as any, { onConflict: "species_group,detail_form" });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["byproduct_prices"] }),
+  });
+}
+
+/* ── Auktionskalkyler ────────────────────────────────────────── */
+
+export function useAuctionCalcs() {
+  return useQuery({
+    queryKey: ["auction_calcs"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("auction_calcs")
+        .select("*")
+        .order("calc_date", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data as AuctionCalc[];
+    },
+  });
+}
+
+export function useSaveAuctionCalc() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (row: Partial<AuctionCalc> & { species_group: string }) => {
+      const { error } = await supabase.from("auction_calcs").insert(row as any);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["auction_calcs"] }),
+  });
+}
+
+export function useUpdateAuctionCalc() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string } & Record<string, any>) => {
+      const { error } = await supabase.from("auction_calcs").update(updates as any).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["auction_calcs"] }),
+  });
+}
+
 
 /* ── Utbytesregister ─────────────────────────────────────────── */
 

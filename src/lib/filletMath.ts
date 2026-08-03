@@ -31,94 +31,229 @@ export function roundUpToAllowedPrice(value: number): number {
 export const pctToFrac = (pct: number) => (Number(pct) || 0) / 100;
 
 /**
- * Effektivt marginalmål för en detalj utifrån partiets mål och detaljens
- * marginalvikt. Vikt > 1 → detaljen bär mer av marginalen (t.ex. rygg).
+ * Marginalvikten används ENBART för att fördela huvudproduktens intäkt när ett
+ * parti har flera primary-detaljer. Vikterna normaliseras så att det kilo-viktade
+ * snittet blir exakt 1,0.
  */
-export function weightedTarget(targetPct: number, marginWeight: number): number {
-  const t = pctToFrac(targetPct);
-  const w = Number(marginWeight) || 1;
-  const eff = 1 - (1 - t) / w;
-  return Math.min(0.85, Math.max(0.05, eff));
+export function normalizeWeights(lines: { qtyKg: number; marginWeight?: number | null }[]): number[] {
+  const totalQty = lines.reduce((s, l) => s + Math.max(0, Number(l.qtyKg) || 0), 0);
+  const weighted = lines.reduce(
+    (s, l) => s + Math.max(0, Number(l.qtyKg) || 0) * (Number(l.marginWeight) || 1),
+    0,
+  );
+  const factor = weighted > 0 ? totalQty / weighted : 1;
+  return lines.map((l) => (Number(l.marginWeight) || 1) * factor);
 }
 
-export interface DetailPriceInput {
-  /** Inköpspris per kg råvara (SEK) */
+/* ── Biproduktsmetoden ───────────────────────────────────────────────
+ *
+ * Biprodukter tilldelas ingen andel av den gemensamma kostnaden. Deras intäkt
+ * dras i stället av från partiets krävda intäkt, och huvudprodukten bär resten.
+ * Residualen är ett GOLVPRIS — inte ett pris som ersätter ett redan fastställt.
+ */
+
+export interface PrimaryInput {
+  key: string;
+  qtyKg: number;
+  marginWeight?: number | null;
+  surchargePerKg?: number;
+  /** Senast fastställt butikspris inkl moms (referensvärde). */
+  lastSetPrice?: number | null;
+  vatPct?: number;
+}
+
+export interface ByproductInput {
+  key: string;
+  qtyKg: number;
+  /** Manuellt satt marknadspris inkl moms. null/0 = inget pris satt. */
+  priceInclVat?: number | null;
+  surchargePerKg?: number;
+  vatPct?: number;
+}
+
+export interface PrimaryResult {
+  key: string;
+  qtyKg: number;
+  /** Golvpris exkl moms (residualen). */
+  floorExVat: number;
+  /** Golvpris inkl moms, avrundat uppåt till tillåten slutsiffra. */
+  floorInclVat: number;
+  /** Senast fastställt pris inkl moms (0 om okänt). */
+  lastSetPrice: number;
+  /** Föreslaget pris = högsta av golv och senast fastställt. */
+  suggestedInclVat: number;
+  /** Hur många procent golvet ligger över senast fastställt pris. */
+  floorAboveLastPct: number;
+  /** Golvet ligger mer än 25 % över senast fastställt pris. */
+  alertExpensive: boolean;
+  /** Golvet ligger under det högsta biproduktpriset → rollerna är fel klassade. */
+  alertRoleMismatch: boolean;
+}
+
+export interface ByproductMethodResult {
+  rawCost: number;
+  surchargeCost: number;
+  totalCost: number;
+  byproductRevenueExVat: number;
+  requiredRevenueExVat: number;
+  primaryRevenueExVat: number;
+  primaries: PrimaryResult[];
+  /** Biprodukter som saknar pris (räknas som 0 kr intäkt). */
+  missingPriceKeys: string[];
+  warnings: string[];
+  /** Partiets marginal när huvudprodukterna säljs på golvpriset. */
+  batchAtFloor: ReturnType<typeof batchMargin>;
+}
+
+export function priceByByproductMethod(params: {
   purchasePricePerKg: number;
-  /** Sammanlagt utbyte från råvara till denna detalj, i procent (utbyte × uppdelning) */
-  totalYieldPct: number;
-  /** Förädlingspåslag kr/färdigt kg (0 om varan säljs som den köps) */
-  surchargePerKg: number;
-  /** Marginalmål för regionen i procent */
+  rawQuantity: number;
   targetMarginPct: number;
-  /** Marginalvikt för detaljen */
-  marginWeight: number;
-  /** Momssats i procent */
   vatPct: number;
-}
+  primaries: PrimaryInput[];
+  byproducts: ByproductInput[];
+}): ByproductMethodResult {
+  const vatFactor = 1 + pctToFrac(params.vatPct);
+  const target = pctToFrac(params.targetMarginPct);
 
-export interface DetailPriceResult {
-  /** Råvarukostnad per säljbart kg */
-  rawCostPerKg: number;
-  /** Råvarukostnad + förädlingspåslag */
-  costWithSurcharge: number;
-  /** Utpris exkl moms före avrundning */
-  priceExVatRaw: number;
-  /** Utpris inkl moms före avrundning */
-  priceIncVatRaw: number;
-  /** Butikspris inkl moms, avrundat uppåt */
-  priceIncVat: number;
-  /** Pris exkl moms räknat tillbaka från butikspriset */
-  priceExVat: number;
-  /**
-   * Marginal på råvara (%): (pris exkl moms − råvarukostnad) / pris exkl moms.
-   * Förädlingspåslaget räknas här som intäkt.
-   */
-  marginOnRawPct: number;
-  /**
-   * Marginal inklusive arbete (%):
-   * (pris exkl moms − råvarukostnad − påslag) / pris exkl moms.
-   * Det här är talet som är jämförbart med bokföringen.
-   */
-  marginInclWorkPct: number;
-  /** @deprecated alias för marginOnRawPct */
-  actualMarginPct: number;
-  /** Effektivt marginalmål (%) efter marginalvikt */
-  effectiveTargetPct: number;
-}
+  const all = [...params.primaries, ...params.byproducts];
+  const rawCost = (Number(params.purchasePricePerKg) || 0) * (Number(params.rawQuantity) || 0);
+  // Alla kilon bär förädlingspåslag, även biprodukter utan satt pris.
+  const surchargeCost = all.reduce(
+    (s, l) => s + (Number(l.qtyKg) || 0) * (Number(l.surchargePerKg) || 0),
+    0,
+  );
+  const totalCost = rawCost + surchargeCost;
 
-export function calcDetailPrice(input: DetailPriceInput & { rawCostOverride?: number }): DetailPriceResult {
-  const yieldFrac = pctToFrac(input.totalYieldPct);
-  const rawCostPerKg =
-    input.rawCostOverride != null && input.rawCostOverride > 0
-      ? input.rawCostOverride
-      : yieldFrac > 0
-      ? input.purchasePricePerKg / yieldFrac
-      : 0;
-  const surcharge = Number(input.surchargePerKg) || 0;
-  const costWithSurcharge = rawCostPerKg + surcharge;
+  const missingPriceKeys = params.byproducts
+    .filter((b) => !(Number(b.priceInclVat) > 0))
+    .map((b) => b.key);
 
-  const effTarget = weightedTarget(input.targetMarginPct, input.marginWeight);
-  const priceExVatRaw = costWithSurcharge > 0 ? costWithSurcharge / (1 - effTarget) : 0;
-  const vatFactor = 1 + pctToFrac(input.vatPct);
-  const priceIncVatRaw = priceExVatRaw * vatFactor;
-  const priceIncVat = roundUpToAllowedPrice(priceIncVatRaw);
-  const priceExVat = vatFactor > 0 ? priceIncVat / vatFactor : 0;
-  const marginOnRawPct = priceExVat > 0 ? ((priceExVat - rawCostPerKg) / priceExVat) * 100 : 0;
-  const marginInclWorkPct = priceExVat > 0 ? ((priceExVat - rawCostPerKg - surcharge) / priceExVat) * 100 : 0;
+  const bpVat = (b: ByproductInput) => 1 + pctToFrac(b.vatPct ?? params.vatPct);
+  const byproductRevenueExVat = params.byproducts.reduce(
+    (s, b) => s + (Number(b.qtyKg) || 0) * ((Number(b.priceInclVat) || 0) / bpVat(b)),
+    0,
+  );
+  const maxByproductInclVat = params.byproducts.reduce(
+    (m, b) => Math.max(m, Number(b.priceInclVat) || 0),
+    0,
+  );
 
+  const requiredRevenueExVat = target < 1 ? totalCost / (1 - target) : 0;
+  const primaryRevenueExVat = Math.max(0, requiredRevenueExVat - byproductRevenueExVat);
+
+  const primaryQty = params.primaries.reduce((s, p) => s + Math.max(0, Number(p.qtyKg) || 0), 0);
+  const weights = normalizeWeights(params.primaries);
+  const basePerKg = primaryQty > 0 ? primaryRevenueExVat / primaryQty : 0;
+
+  const warnings: string[] = [];
+  const primaries: PrimaryResult[] = params.primaries.map((p, i) => {
+    const floorExVat = basePerKg * weights[i];
+    const vf = 1 + pctToFrac(p.vatPct ?? params.vatPct);
+    const floorInclVat = roundUpToAllowedPrice(floorExVat * vf);
+    const lastSetPrice = Number(p.lastSetPrice) || 0;
+    const suggestedInclVat = Math.max(floorInclVat, lastSetPrice);
+    const floorAboveLastPct = lastSetPrice > 0 ? ((floorInclVat - lastSetPrice) / lastSetPrice) * 100 : 0;
+    const alertExpensive = lastSetPrice > 0 && floorAboveLastPct > 25;
+    const alertRoleMismatch = maxByproductInclVat > 0 && floorInclVat < maxByproductInclVat;
+    return {
+      key: p.key,
+      qtyKg: Number(p.qtyKg) || 0,
+      floorExVat,
+      floorInclVat,
+      lastSetPrice,
+      suggestedInclVat,
+      floorAboveLastPct,
+      alertExpensive,
+      alertRoleMismatch,
+    };
+  });
+
+  if (primaries.some((p) => p.alertExpensive)) {
+    warnings.push(
+      "råvaran är dyr eller biprodukterna säljs för billigt, kontrollera innan du fastställer priset",
+    );
+  }
+  if (primaries.some((p) => p.alertRoleMismatch)) {
+    warnings.push("golvpriset ligger under högsta biproduktpriset — rollerna är troligen fel klassade");
+  }
+  if (missingPriceKeys.length > 0) {
+    warnings.push(
+      `${missingPriceKeys.length} biprodukt(er) saknar pris och räknas som 0 kr intäkt, vilket drar upp huvudproduktens golvpris`,
+    );
+  }
+
+  const batchAtFloor = batchMargin({
+    purchasePricePerKg: params.purchasePricePerKg,
+    rawQuantity: params.rawQuantity,
+    lines: [
+      ...primaries.map((p, i) => ({
+        qty: p.qtyKg,
+        priceExVat: p.floorInclVat / (1 + pctToFrac(params.primaries[i].vatPct ?? params.vatPct)),
+        surchargePerKg: Number(params.primaries[i].surchargePerKg) || 0,
+      })),
+      ...params.byproducts.map((b) => ({
+        qty: Number(b.qtyKg) || 0,
+        priceExVat: (Number(b.priceInclVat) || 0) / bpVat(b),
+        surchargePerKg: Number(b.surchargePerKg) || 0,
+      })),
+    ],
+  });
+
+  void vatFactor;
   return {
-    rawCostPerKg,
-    costWithSurcharge,
-    priceExVatRaw,
-    priceIncVatRaw,
-    priceIncVat,
-    priceExVat,
-    marginOnRawPct,
-    marginInclWorkPct,
-    actualMarginPct: marginOnRawPct,
-    effectiveTargetPct: effTarget * 100,
+    rawCost,
+    surchargeCost,
+    totalCost,
+    byproductRevenueExVat,
+    requiredRevenueExVat,
+    primaryRevenueExVat,
+    primaries,
+    missingPriceKeys,
+    warnings,
+    batchAtFloor,
   };
 }
+
+/**
+ * Auktionskalkyl (omvänd beräkning): alla utpriser kända → högsta försvarbara
+ * inköpspris per kg råvara.
+ */
+export function auctionMaxRawPrice(params: {
+  rawQuantity: number;
+  targetMarginPct: number;
+  lines: { qtyKg: number; priceExVat: number; surchargePerKg?: number }[];
+}): {
+  revenueExVat: number;
+  allowedTotalCost: number;
+  surchargeCost: number;
+  maxRawCost: number;
+  maxPricePerKg: number;
+} {
+  const revenueExVat = params.lines.reduce(
+    (s, l) => s + (Number(l.qtyKg) || 0) * (Number(l.priceExVat) || 0),
+    0,
+  );
+  const allowedTotalCost = revenueExVat * (1 - pctToFrac(params.targetMarginPct));
+  const surchargeCost = params.lines.reduce(
+    (s, l) => s + (Number(l.qtyKg) || 0) * (Number(l.surchargePerKg) || 0),
+    0,
+  );
+  const maxRawCost = allowedTotalCost - surchargeCost;
+  const rawQty = Number(params.rawQuantity) || 0;
+  return {
+    revenueExVat,
+    allowedTotalCost,
+    surchargeCost,
+    maxRawCost,
+    maxPricePerKg: rawQty > 0 ? maxRawCost / rawQty : 0,
+  };
+}
+
+
+/* Den tidigare per-detalj-prissättningen (calcDetailPrice/weightedTarget) är
+ * borttagen. Priser sätts nu med biproduktsmetoden ovan. */
+
 
 /**
  * Partiets samlade marginal: total intäkt exkl moms mot partiets kostnader.
@@ -156,10 +291,15 @@ export const FORMS = [
   "urtagen utan huvud",
   "filé med skinn",
   "filé utan skinn",
+  "hel filé",
   "rygg",
   "kontrarygg",
   "slag",
+  "benfri filé",
+  "buk",
+  "fletch",
   "stjärtbit",
+
   "kotlett",
   "sida",
   "sida med skinn",
