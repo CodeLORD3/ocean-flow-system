@@ -92,15 +92,13 @@ export function AuctionCalculator() {
       .map((d) => ({ form: d.form, name: d.name, pctOfFillet: d.pctOfFillet }));
   }, [modelSplits, cutModel]);
 
-  // Utbyte förifylls från registret när arten byts.
+  // Utbyte förifylls från registret när art eller sortering byts.
   useEffect(() => {
     if (!species) return;
-    const y = yields
-      .filter((r) => speciesKey(r.species_group) === speciesKey(species) && r.from_form === "hel")
-      .sort((a, b) => Number(b.yield_pct) - Number(a.yield_pct))[0];
+    const y = pickYieldRow(yields as any, species, "hel", grade);
     if (y) setYieldPct(String(Number(y.yield_pct)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [species, yields.length]);
+  }, [species, grade, yields.length]);
 
   const build = () => {
     const fillet = (rawQtyNum * yieldNum) / 100;
