@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { asciiFold } from "@/lib/asciiFold";
 import { lotBalancesAtLocation } from "@/lib/stockLedger";
 
 /**
@@ -81,17 +82,34 @@ export interface OutputLotInput {
   quantityKg: number;
   unitCost?: number | null;
   detailName?: string | null;
+  detailForm?: string | null;
   bestBefore?: string | null;
 }
 
 /**
- * Skapar ett detaljparti som ärver härkomsten från råvarupartiet.
+ * Kort detaljkod ur detaljens form/namn, t.ex. "rygg" → RYG.
+ * Används i partinumret så härkomsten syns i lagerlistan: IL-2026-0001-01-RYG.
+ */
+export function detailLotCode(input?: string | null): string {
+  const folded = asciiFold(String(input ?? ""))
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+  return folded.slice(0, 3) || "DET";
+}
+
+/**
+ * Skapar ett detaljparti som ärver härkomsten från exakt ett råvaruparti.
+ * Ett detaljparti får aldrig blandas ur två råvarupartier — fångstområde,
+ * fartyg och fångstdatum kan bara bära ett värde, och ett arv från "första
+ * partiet" ger fel uppgift på skylten och missad framåtspårning.
  * Utan råvaruparti märks partiet som okänd härkomst.
  */
 export async function createOutputLot(
   sourceLotId: string | null,
   out: OutputLotInput,
   orderRef: string,
+  /** Löpnummer för råvarupartiet i plocket (1-baserat). */
+  sourceIndex = 1,
 ): Promise<string | null> {
   const source = sourceLotId ? await fetchLot(sourceLotId) : null;
   const inherited: Record<string, any> = {};
@@ -103,10 +121,11 @@ export async function createOutputLot(
     inherited.origin_lot_id = source.origin_lot_id || source.lot_number || null;
   }
 
-  const suffix = `${orderRef.slice(0, 8)}-${Math.random().toString(36).slice(2, 6)}`;
+  const seq = String(sourceIndex).padStart(2, "0");
+  const code = detailLotCode(out.detailForm || out.detailName);
   const lotNumber = source
-    ? `${source.lot_number}-T${suffix}`
-    : `OKÄND-${new Date().toISOString().slice(0, 10)}-${suffix}`;
+    ? `${source.lot_number}-${seq}-${code}`
+    : `OKAND-${new Date().toISOString().slice(0, 10)}-${orderRef.slice(0, 8)}-${seq}-${code}`;
 
   const { data, error } = await supabase
     .from("lots")
@@ -127,6 +146,7 @@ export async function createOutputLot(
   if (error) throw error;
   return (data as any)?.id ?? null;
 }
+
 
 /** Loggar omvandlingen råvaruparti → detaljparti. */
 export async function recordLotTransformation(params: {

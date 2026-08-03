@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { moveStockToTransport } from "@/lib/stockTransfer";
 import { transferStock } from "@/lib/stockLedger";
 import { logActivity } from "@/hooks/useActivityLog";
+import { GROSSIST_FLYTANDE_ID, uniqueLocationIdByName } from "@/lib/locations";
 
 const STATUS_FLOW = ["Ny", "Pågående", "Packad", "Skickad"] as const;
 
@@ -28,26 +29,15 @@ async function transferDeltaToPreLocation(lineId: string, orderId: string, delta
     .single();
   if (!order?.store_id) return;
 
-  const { data: gfLocs } = await supabase
-    .from("storage_locations")
-    .select("id")
-    .ilike("name", "Grossist Flytande")
-    .limit(1);
-  const gfLoc = gfLocs?.[0];
-  if (!gfLoc) return;
+  const gfLocId = GROSSIST_FLYTANDE_ID;
 
-  const { data: preLocs } = await supabase
-    .from("storage_locations")
-    .select("id, name")
-    .eq("store_id", order.store_id)
-    .ilike("name", "Pre-%")
-    .limit(1);
-  const preLoc = preLocs?.[0];
-  if (!preLoc) return;
+  const preLocId = await uniqueLocationIdByName("Pre-%", order.store_id);
+  if (!preLocId) return;
 
   const absDelta = Math.abs(deltaQty);
-  const from = deltaQty > 0 ? gfLoc.id : preLoc.id;
-  const to = deltaQty > 0 ? preLoc.id : gfLoc.id;
+  const from = deltaQty > 0 ? gfLocId : preLocId;
+  const to = deltaQty > 0 ? preLocId : gfLocId;
+
 
   await transferStock({
     productId: line.product_id,

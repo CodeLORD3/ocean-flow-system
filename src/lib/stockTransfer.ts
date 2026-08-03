@@ -6,9 +6,8 @@ import {
   lotBalancesAtLocation,
   lotBalancesForReference,
 } from "@/lib/stockLedger";
+import { GROSSIST_FLYTANDE_ID, TRANSPORTLAGER_ID, uniqueLocationIdByName } from "@/lib/locations";
 
-
-const TRANSPORTLAGER_NAME = "Transportlager";
 
 /**
  * Ordertaggade transportlagerrader finns inte längre som egna saldorader.
@@ -18,24 +17,15 @@ const TRANSPORTLAGER_NAME = "Transportlager";
  */
 const REF_TYPE = "shop_order";
 
+/** Lagerplatser slås upp på id. Namnen är inte unika. */
 async function getTransportlagerId(): Promise<string | null> {
-  const { data } = await supabase
-    .from("storage_locations")
-    .select("id")
-    .eq("name", TRANSPORTLAGER_NAME)
-    .limit(1);
-  return data?.[0]?.id || null;
+  return TRANSPORTLAGER_ID;
 }
 
 async function getRawLagerId(storeId: string): Promise<string | null> {
-  const { data } = await supabase
-    .from("storage_locations")
-    .select("id, name")
-    .eq("store_id", storeId)
-    .ilike("name", "Raw%")
-    .limit(1);
-  return data?.[0]?.id || null;
+  return uniqueLocationIdByName("Raw%", storeId);
 }
+
 
 /** Nettokvantitet per produkt som ligger på transportlagret för en given order. */
 export async function transportBalanceForOrder(
@@ -87,12 +77,8 @@ export async function moveStockToTransport(orderId: string) {
     .ilike("name", "Pre-%");
   const preLocationIds = (preLocations || []).map((l) => l.id);
 
-  const { data: gfLocs } = await supabase
-    .from("storage_locations")
-    .select("id")
-    .ilike("name", "Grossist Flytande")
-    .limit(1);
-  const gfLocId = gfLocs?.[0]?.id || null;
+  const gfLocId = GROSSIST_FLYTANDE_ID;
+
 
   for (const line of order.shop_order_lines) {
     let remaining = Number(line.quantity_delivered || line.quantity_ordered) || 0;
