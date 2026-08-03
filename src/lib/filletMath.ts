@@ -69,7 +69,18 @@ export interface DetailPriceResult {
   priceIncVat: number;
   /** Pris exkl moms räknat tillbaka från butikspriset */
   priceExVat: number;
-  /** Faktisk marginal (%) efter avrundning, påslaget räknas som intäkt */
+  /**
+   * Marginal på råvara (%): (pris exkl moms − råvarukostnad) / pris exkl moms.
+   * Förädlingspåslaget räknas här som intäkt.
+   */
+  marginOnRawPct: number;
+  /**
+   * Marginal inklusive arbete (%):
+   * (pris exkl moms − råvarukostnad − påslag) / pris exkl moms.
+   * Det här är talet som är jämförbart med bokföringen.
+   */
+  marginInclWorkPct: number;
+  /** @deprecated alias för marginOnRawPct */
   actualMarginPct: number;
   /** Effektivt marginalmål (%) efter marginalvikt */
   effectiveTargetPct: number;
