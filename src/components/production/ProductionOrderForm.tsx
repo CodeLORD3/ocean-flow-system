@@ -583,14 +583,31 @@ export function ProductionOrderForm() {
             <div className="flex flex-wrap items-center justify-between gap-3 border-t p-3">
               <div className="flex flex-wrap gap-3 text-[11px]">
                 {batchMargins.map((b) => (
-                  <div key={b.region} className="rounded-md border px-2 py-1">
-                    <span className="text-muted-foreground">Partiets marginal {b.label.split(" (")[0]}: </span>
-                    <span className={`font-mono tabular-nums font-semibold ${b.marginPct < b.target ? "text-destructive" : "text-emerald-600"}`}>
-                      {fmt(b.marginPct, 1)} %
-                    </span>
-                    <span className="ml-1 text-muted-foreground">
-                      (intäkt {fmt(b.revenueExVat, 0)} kr / råvara {fmt(b.rawCost, 0)} kr)
-                    </span>
+                  <div key={b.region} className="rounded-md border px-2 py-1 leading-tight">
+                    <div className="text-muted-foreground">
+                      Partiet {b.label.split(" (")[0]} · mål {fmt(b.target, 0)} %
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">På råvara: </span>
+                      <span className="font-mono tabular-nums">{fmt(b.marginOnRawPct, 1)} %</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Ink. arbete: </span>
+                      <span
+                        className={`font-mono tabular-nums font-semibold ${
+                          b.marginInclWorkPct < b.target - 5
+                            ? "text-destructive"
+                            : b.marginInclWorkPct < b.target
+                            ? "text-amber-600"
+                            : "text-emerald-600"
+                        }`}
+                      >
+                        {fmt(b.marginInclWorkPct, 1)} %
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-muted-foreground">
+                      intäkt {fmt(b.revenueExVat, 0)} kr / råvara {fmt(b.rawCost, 0)} kr / arbete {fmt(b.surchargeCost, 0)} kr
+                    </div>
                   </div>
                 ))}
               </div>
