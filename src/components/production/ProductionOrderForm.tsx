@@ -23,18 +23,17 @@ import {
   useSpeciesCutModels,
   useCutModelSplits,
   useDetailPrices,
-  useByproductPrices,
   useUpsertDetailPrice,
-  useUpsertByproductPrice,
+  priceFor,
   surchargeFor,
   vatFor,
   rollingAverage,
   useYieldActuals,
 } from "@/hooks/useProductionYields";
 import {
-  allocateRawCost,
-  batchMargin,
-  priceByByproductMethod,
+  priceByNrv,
+  nrvStartSuggestionExVat,
+  roundUpToAllowedPrice,
   fmt,
   FORMS,
   isProcessedForm,
@@ -52,6 +51,7 @@ import { SPECIES_GROUP_SUGGESTIONS } from "@/lib/speciesGroups";
 import { speciesKey } from "@/lib/asciiFold";
 import { addStock, withdrawStock, GROSSIST_FLYTANDE_ID } from "@/lib/productionStock";
 import { pickRawLots, createOutputLot, recordLotTransformation, type RawPick } from "@/lib/lotTransformation";
+import { t } from "@/lib/i18n";
 
 import { evaluateAutoApproval } from "@/lib/autoApproval";
 
@@ -75,9 +75,8 @@ interface DetailRow {
   form: string;
   pct: number; // procent av råvaran
   role: "primary" | "byproduct";
-  marginWeight: number;
-  /** Manuellt marknadspris inkl moms för biprodukter. */
-  byproductPrice: string;
+  /** Manuellt satt pris per prislista, som texten står i fältet. */
+  prices: Record<string, string>;
   isProcessed: boolean;
   productId: string | null;
   category: string | null;
@@ -93,9 +92,7 @@ export function ProductionOrderForm() {
   const { data: cutModels = [] } = useSpeciesCutModels();
   const { data: modelSplits = [] } = useCutModelSplits();
   const { data: detailPrices = [] } = useDetailPrices();
-  const { data: byproductPrices = [] } = useByproductPrices();
   const upsertDetailPrice = useUpsertDetailPrice();
-  const upsertByproductPrice = useUpsertByproductPrice();
   const { staff } = useStaffAuth();
   const createOrder = useCreateProductionOrder();
   const qc = useQueryClient();
@@ -108,14 +105,27 @@ export function ProductionOrderForm() {
   const [rawQty, setRawQty] = useState("");
   const [pieceWeight, setPieceWeight] = useState("");
   const [price, setPrice] = useState("");
+  const [avgCostInfo, setAvgCostInfo] = useState<string | null>(null);
   const [supplier, setSupplier] = useState("");
   const [batch, setBatch] = useState("");
   const [lineId, setLineId] = useState<string | null>(null);
   const [details, setDetails] = useState<DetailRow[]>([]);
   const [productSearch, setProductSearch] = useState("");
-  const [applyRegion, setApplyRegion] = useState<string>("");
+  const [applyList, setApplyList] = useState<string>("");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [splitWarning, setSplitWarning] = useState<{ picks: RawPick[]; detailCount: number } | null>(null);
+
+  /** Prislistor per kanal: butiken räknar inkl moms, grossisten exkl moms. */
+  const priceLists = useMemo(
+    () =>
+      margins.map((m) => ({
+        key: (m as any).price_list as string,
+        label: m.label || m.region,
+        target: Number(m.target_pct),
+        inclVat: ((m as any).applies_to ?? "butik") === "butik",
+      })),
+    [margins],
+  );
 
   const speciesOptions = useMemo(
     () =>
@@ -130,8 +140,8 @@ export function ProductionOrderForm() {
   );
 
   useEffect(() => {
-    if (!applyRegion && margins.length) setApplyRegion(margins[0].region);
-  }, [margins, applyRegion]);
+    if (!applyList && priceLists.length) setApplyList(priceLists[0].key);
+  }, [priceLists, applyList]);
 
   /* ── Artens styckningsmodell ─────────────────────────────── */
   const modelRow = cutModels.find((c) => speciesKey(c.species_group) === speciesKey(species));
@@ -150,7 +160,6 @@ export function ProductionOrderForm() {
         pctOfFillet: Number(s.pct_of_fillet),
         role: (s.role === "primary" ? "primary" : "byproduct") as "primary" | "byproduct",
         optional: s.is_optional,
-        marginWeight: Number(s.margin_weight) || 1,
       }));
     return CUT_MODEL_TEMPLATES[cutModel].map((d) => ({
       form: d.form,
@@ -158,7 +167,6 @@ export function ProductionOrderForm() {
       pctOfFillet: d.pctOfFillet,
       role: d.role,
       optional: !!d.optional,
-      marginWeight: 1,
     }));
   }, [modelSplits, cutModel]);
 
@@ -198,21 +206,36 @@ export function ProductionOrderForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [speciesOptions.length]);
 
-  const lastSetFor = (form: string) => {
-    const f = normalizeDetailForm(form);
-    const row = detailPrices.find(
-      (d) => speciesKey(d.species_group) === speciesKey(species) && normalizeDetailForm(d.detail_form) === f,
-    );
-    return Number(row?.last_set_price) || 0;
-  };
+  /** Råvarukostnaden hämtas ur lagrets viktade snittkostpris, inte manuellt. */
+  useEffect(() => {
+    let cancelled = false;
+    if (!rawProductId) {
+      setAvgCostInfo(null);
+      return;
+    }
+    (async () => {
+      const { data } = await supabase
+        .from("product_stock_locations")
+        .select("avg_cost, quantity")
+        .eq("product_id", rawProductId)
+        .eq("location_id", GROSSIST_FLYTANDE_ID)
+        .maybeSingle();
+      if (cancelled) return;
+      const avg = Number((data as any)?.avg_cost) || 0;
+      if (avg > 0) {
+        setPrice(String(avg));
+        setAvgCostInfo(`Viktat snittkostpris i Grossist Flytande: ${fmt(avg)} kr/kg`);
+      } else {
+        setAvgCostInfo("Lagret saknar snittkostpris för råvaran — kontrollera inleveransen");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [rawProductId]);
 
-  const byproductPriceFor = (form: string) => {
-    const f = normalizeDetailForm(form);
-    const row = byproductPrices.find(
-      (d) => speciesKey(d.species_group) === speciesKey(species) && normalizeDetailForm(d.detail_form) === f,
-    );
-    return Number(row?.price_incl_vat) || 0;
-  };
+  const storedPrice = (form: string, list: string) =>
+    priceFor(detailPrices, list, species, normalizeDetailForm(form));
 
   /* ── Föreslå detaljer utifrån modell och utbyte ───────────── */
   const suggest = () => {
@@ -233,7 +256,11 @@ export function ProductionOrderForm() {
     }
     const basePct = Number(filletRow.yield_pct);
     const out: DetailRow[] = modelDetails.map((m, i) => {
-      const bp = m.role === "byproduct" ? byproductPriceFor(m.form) : 0;
+      const prices: Record<string, string> = {};
+      for (const pl of priceLists) {
+        const v = storedPrice(m.form, pl.key);
+        prices[pl.key] = v ? String(v) : "";
+      }
       return {
         key: `${m.form}-${i}`,
         included: !m.optional,
@@ -241,8 +268,7 @@ export function ProductionOrderForm() {
         form: m.form,
         pct: Number(((basePct * m.pctOfFillet) / 100).toFixed(2)),
         role: m.role,
-        marginWeight: m.marginWeight,
-        byproductPrice: bp > 0 ? String(bp) : "",
+        prices,
         isProcessed: isProcessedForm(m.form),
         productId: null,
         category: null,
@@ -258,82 +284,52 @@ export function ProductionOrderForm() {
   const wastePct = 100 - pctSum;
   const deviates = pctSum > 100.01;
 
-  const regionTargets = margins.map((m) => ({
-    region: m.region,
-    label: m.label || m.region,
-    target: Number(m.target_pct),
-  }));
-
-  /** Kilo, påslag, moms och kostpris per detalj. */
+  /** Kilo, påslag och moms per detalj. */
   const base = useMemo(() => {
-    const qtys = included.map((d) => (rawQtyNum * (Number(d.pct) || 0)) / 100);
-    const rawCosts = allocateRawCost(
-      included.map((d, i) => ({ qtyKg: qtys[i] })),
-      priceNum,
-      rawQtyNum,
-    );
-    return included.map((d, i) => {
+    return included.map((d) => {
       const product = products.find((p) => p.id === d.productId);
       const category = product?.category ?? d.category;
       const surcharge = d.isProcessed ? surchargeFor(surcharges, category ?? "Färsk Fisk") : 0;
       const vat = vatFor(vats, category);
       return {
         detail: d,
-        qty: qtys[i],
-        rawCostPerKg: rawCosts[i],
+        qty: (rawQtyNum * (Number(d.pct) || 0)) / 100,
         surcharge,
         vat,
         product,
-        lastSetPrice: lastSetFor(d.form),
-        byproductPrice: parseFloat(d.byproductPrice) || 0,
       };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [details, products, surcharges, vats, rawQty, price, detailPrices]);
+  }, [details, products, surcharges, vats, rawQty]);
 
-  /** Biproduktsmetoden per region. */
-  const byRegion = useMemo(() => {
-    const vatPct = base[0]?.vat ?? 6;
-    return regionTargets.map((r) => {
-      const res = priceByByproductMethod({
+  const outputKg = base.reduce((s, b) => s + b.qty, 0);
+
+  /** Priset i en detaljs fält omräknat till kr/kg exkl moms. */
+  const priceExFor = (d: DetailRow, listKey: string, vat: number): number | null => {
+    const raw = parseFloat(d.prices?.[listKey] ?? "");
+    if (!(raw > 0)) return null;
+    const pl = priceLists.find((p) => p.key === listKey);
+    return pl?.inclVat ? raw / (1 + vat / 100) : raw;
+  };
+
+  /** NRV-kalkyl per prislista. */
+  const byList = useMemo(() => {
+    return priceLists.map((pl) => {
+      const res = priceByNrv({
         purchasePricePerKg: priceNum,
         rawQuantity: rawQtyNum,
-        targetMarginPct: r.target,
-        vatPct,
-        primaries: base
-          .filter((b) => b.detail.role === "primary")
-          .map((b) => ({
-            key: b.detail.key,
-            qtyKg: b.qty,
-            marginWeight: b.detail.marginWeight,
-            surchargePerKg: b.surcharge,
-            lastSetPrice: b.lastSetPrice,
-            vatPct: b.vat,
-          })),
-        byproducts: base
-          .filter((b) => b.detail.role === "byproduct")
-          .map((b) => ({
-            key: b.detail.key,
-            qtyKg: b.qty,
-            priceInclVat: b.byproductPrice || null,
-            surchargePerKg: b.surcharge,
-            vatPct: b.vat,
-          })),
+        targetMarginPct: pl.target,
+        lines: base.map((b) => ({
+          key: b.detail.key,
+          qtyKg: b.qty,
+          priceExVat: priceExFor(b.detail, pl.key, b.vat),
+          surchargePerKg: b.surcharge,
+        })),
       });
-      // Partiets marginal när huvudprodukterna säljs på FÖRESLAGET pris.
-      const atSuggested = batchMargin({
-        purchasePricePerKg: priceNum,
-        rawQuantity: rawQtyNum,
-        lines: base.map((b) => {
-          const p = res.primaries.find((x) => x.key === b.detail.key);
-          const inc = p ? p.suggestedInclVat : b.byproductPrice;
-          return { qty: b.qty, priceExVat: inc / (1 + b.vat / 100), surchargePerKg: b.surcharge };
-        }),
-      });
-      return { ...r, res, atSuggested };
+      return { ...pl, res };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [base, margins, priceNum, rawQtyNum]);
+  }, [base, priceLists, priceNum, rawQtyNum, details]);
 
   const filteredProducts = useMemo(() => {
     const q = productSearch.trim().toLowerCase();
@@ -345,6 +341,11 @@ export function ProductionOrderForm() {
 
   const setDetail = (key: string, patch: Partial<DetailRow>) =>
     setDetails((prev) => prev.map((d) => (d.key === key ? { ...d, ...patch } : d)));
+
+  const setDetailPriceField = (key: string, listKey: string, value: string) =>
+    setDetails((prev) =>
+      prev.map((d) => (d.key === key ? { ...d, prices: { ...d.prices, [listKey]: value } } : d)),
+    );
 
   const yieldWarning = useMemo(() => {
     const rows = yields.filter((y) => speciesKey(y.species_group) === speciesKey(species) && y.from_form === rawForm);
@@ -359,24 +360,46 @@ export function ProductionOrderForm() {
     (products.find((p) => p.id === rawProductId) as any)?.requires_processing,
   );
   const yieldConfirmed = yieldWarning.length === 0;
-  const approvalByRegion = (region: { target: number; marginInclWorkPct: number }) =>
+  const approvalForList = (list: { target: number; marginInclWorkPct: number }) =>
     evaluateAutoApproval({
       requiresProcessing: rawRequiresProcessing,
       yieldConfirmed,
-      marginInclWorkPct: region.marginInclWorkPct,
-      targetMarginPct: region.target,
+      marginInclWorkPct: list.marginInclWorkPct,
+      targetMarginPct: list.target,
     });
 
-  const saveByproductPrice = (d: DetailRow) => {
-    const value = parseFloat(d.byproductPrice) || 0;
-    if (!species || d.role !== "byproduct" || value <= 0) return;
-    upsertByproductPrice.mutate({ species_group: species, detail_form: normalizeDetailForm(d.form), price_incl_vat: value });
-    upsertDetailPrice.mutate({
-      species_group: species,
-      detail_form: normalizeDetailForm(d.form),
-      last_set_price: value,
-      role: "byproduct",
+  /** Sparar ett manuellt satt pris i prislistan. Skriver aldrig över automatiskt. */
+  const savePrice = (d: DetailRow, listKey: string) => {
+    const value = parseFloat(d.prices?.[listKey] ?? "") || 0;
+    if (!species || value <= 0) return;
+    upsertDetailPrice.mutate(
+      {
+        species_group: species,
+        detail_form: normalizeDetailForm(d.form),
+        price_list: listKey,
+        price_incl_vat: value,
+        role: d.role,
+      },
+      { onSuccess: () => toast({ title: t("saved"), description: `${d.name}: ${fmt(value, 2)} kr` }) },
+    );
+  };
+
+  /** Startförslag när priset saknas — fylls i fältet, sparas inte automatiskt. */
+  const fillSuggestion = (d: DetailRow, listKey: string) => {
+    const b = base.find((x) => x.detail.key === d.key);
+    const pl = priceLists.find((p) => p.key === listKey);
+    if (!b || !pl) return;
+    const ex = nrvStartSuggestionExVat({
+      purchasePricePerKg: priceNum,
+      rawQuantity: rawQtyNum,
+      outputKg,
+      surchargePerKg: b.surcharge,
+      targetMarginPct: pl.target,
     });
+    const value = pl.inclVat
+      ? roundUpToAllowedPrice(ex * (1 + b.vat / 100))
+      : Math.round(ex * 100) / 100;
+    setDetailPriceField(d.key, listKey, String(value));
   };
 
   /* ── Registrera tillverkningsorder ───────────────────────── */
@@ -407,17 +430,21 @@ export function ProductionOrderForm() {
 
   const runRegister = async (picks: RawPick[]) => {
     try {
-      const lines = base.map((b, i) => ({
-        product_id: b.detail.productId,
-        detail_name: b.detail.name,
-        detail_form: b.detail.form,
-        planned_pct: Number(b.detail.pct) || 0,
-        planned_qty: b.qty,
-        cost_price: b.rawCostPerKg,
-        margin_weight: Number(b.detail.marginWeight) || 1,
-        is_processed: b.detail.isProcessed,
-        sort_order: i,
-      }));
+      const activeRes = byList.find((l) => l.key === applyList)?.res ?? byList[0]?.res;
+      const lines = base.map((b, i) => {
+        const r = activeRes?.lines.find((x) => x.key === b.detail.key);
+        return {
+          product_id: b.detail.productId,
+          detail_name: b.detail.name,
+          detail_form: b.detail.form,
+          planned_pct: Number(b.detail.pct) || 0,
+          planned_qty: b.qty,
+          cost_price: r ? r.rawCostPerKg : 0,
+          margin_weight: 1,
+          is_processed: b.detail.isProcessed,
+          sort_order: i,
+        };
+      });
 
       const order = await createOrder.mutateAsync({
         order: {
@@ -513,41 +540,17 @@ export function ProductionOrderForm() {
     }
   };
 
-
-  /* ── Fastställ pris ──────────────────────────────────────── */
-  const applyPrice = async (d: DetailRow, priceIncVat: number, label: string) => {
-    if (d.productId) {
-      const { error } = await supabase.from("products").update({ retail_suggested: priceIncVat }).eq("id", d.productId);
-      if (error) {
-        toast({ title: "Fel", description: error.message, variant: "destructive" });
-        return;
-      }
-      qc.invalidateQueries({ queryKey: ["products"] });
-    }
-    if (species) {
-      upsertDetailPrice.mutate({
-        species_group: species,
-        detail_form: normalizeDetailForm(d.form),
-        last_set_price: priceIncVat,
-        role: d.role,
-      });
-    }
-    toast({ title: "Pris fastställt", description: `${label}: ${fmt(priceIncVat, 0)} kr` });
-  };
-
-  const activeRegion = byRegion.find((r) => r.region === applyRegion) ?? byRegion[0];
+  /* ── Fastställ pris på produkten ─────────────────────────── */
+  const activeList = byList.find((l) => l.key === applyList) ?? byList[0];
 
   const massRows = base
     .filter((b) => b.detail.productId)
-    .map((b) => {
-      const p = activeRegion?.res.primaries.find((x) => x.key === b.detail.key);
-      return {
-        productId: b.detail.productId!,
-        name: b.detail.name,
-        current: Number(b.product?.retail_suggested ?? 0),
-        suggested: p ? p.suggestedInclVat : b.byproductPrice,
-      };
-    })
+    .map((b) => ({
+      productId: b.detail.productId!,
+      name: b.detail.name,
+      current: Number(b.product?.retail_suggested ?? 0),
+      suggested: parseFloat(b.detail.prices?.[activeList?.key ?? ""] ?? "") || 0,
+    }))
     .filter((r) => r.suggested > 0);
 
   const applyAll = async () => {
@@ -556,10 +559,41 @@ export function ProductionOrderForm() {
     }
     qc.invalidateQueries({ queryKey: ["products"] });
     setPreviewOpen(false);
-    toast({ title: "Priser uppdaterade", description: `${massRows.length} produkter fick nytt föreslaget pris.` });
+    toast({ title: "Priser uppdaterade", description: `${massRows.length} produkter fick nytt pris.` });
   };
 
-  const allWarnings = [...new Set(byRegion.flatMap((r) => r.res.warnings))];
+  const applyPriceToProduct = async (d: DetailRow, value: number, label: string) => {
+    if (!d.productId) return;
+    const { error } = await supabase.from("products").update({ retail_suggested: value }).eq("id", d.productId);
+    if (error) {
+      toast({ title: "Fel", description: error.message, variant: "destructive" });
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["products"] });
+    toast({ title: "Pris fastställt", description: `${label}: ${fmt(value, 2)} kr` });
+  };
+
+  const warnings = useMemo(() => {
+    const out: string[] = [];
+    for (const l of byList) {
+      if (l.res.missingPriceKeys.length > 0)
+        out.push(`${l.label}: ${l.res.missingPriceKeys.length} detalj(er) saknar pris — kalkylen är ofullständig`);
+      if (l.res.batchBelowTarget)
+        out.push(
+          `${l.label}: partiets marginal ${fmt(l.res.batchMarginPct, 1)} % ligger under målet ${fmt(l.target, 0)} %`,
+        );
+    }
+    for (const b of base) {
+      for (const l of byList) {
+        const entered = parseFloat(b.detail.prices?.[l.key] ?? "") || 0;
+        const stored = storedPrice(b.detail.form, l.key) ?? 0;
+        if (entered > 0 && stored > 0 && Math.abs(entered - stored) / stored > 0.25)
+          out.push(`${b.detail.name} (${l.label}): priset avviker mer än 25 % från senast satta ${fmt(stored, 2)} kr`);
+      }
+    }
+    return [...new Set(out)];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [byList, base, detailPrices]);
 
   return (
     <div className="space-y-4">
@@ -571,14 +605,14 @@ export function ProductionOrderForm() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1">
               <Label className="text-[11px]">Råvara</Label>
-              <Input value={rawName} onChange={(e) => setRawName(e.target.value)} className="h-8 text-xs" placeholder="t.ex. Torsk hel" />
+              <Input value={rawName} onChange={(e) => setRawName(e.target.value)} className="h-10 text-xs" placeholder="t.ex. Torsk hel" />
             </div>
             <div className="space-y-1">
               <Label className="text-[11px]">Koppla produkt (för lageruttag)</Label>
               <Input
                 value={productSearch}
                 onChange={(e) => setProductSearch(e.target.value)}
-                className="h-8 text-xs"
+                className="h-10 text-xs"
                 placeholder="Sök sku eller namn…"
               />
               {filteredProducts.length > 0 && (
@@ -586,7 +620,7 @@ export function ProductionOrderForm() {
                   {filteredProducts.map((p) => (
                     <button
                       key={p.id}
-                      className="block w-full px-2 py-1 text-left text-[11px] hover:bg-muted"
+                      className="block w-full px-2 py-2 text-left text-[11px] hover:bg-muted"
                       onClick={() => {
                         setRawProductId(p.id);
                         setRawSku(p.sku);
@@ -604,7 +638,7 @@ export function ProductionOrderForm() {
             <div className="space-y-1">
               <Label className="text-[11px]">Art</Label>
               <Select value={species} onValueChange={setSpecies}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Välj art" /></SelectTrigger>
+                <SelectTrigger className="h-10 text-xs"><SelectValue placeholder="Välj art" /></SelectTrigger>
                 <SelectContent className="max-h-72">
                   {speciesOptions.map((s) => <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>)}
                 </SelectContent>
@@ -616,7 +650,7 @@ export function ProductionOrderForm() {
             <div className="space-y-1">
               <Label className="text-[11px]">Form in</Label>
               <Select value={rawForm} onValueChange={setRawForm}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="h-10 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent className="max-h-72">
                   {FORMS.map((f) => <SelectItem key={f} value={f} className="text-xs">{f}</SelectItem>)}
                 </SelectContent>
@@ -624,27 +658,28 @@ export function ProductionOrderForm() {
             </div>
             <div className="space-y-1">
               <Label className="text-[11px]">Kvantitet (kg)</Label>
-              <Input type="number" step="0.1" value={rawQty} onChange={(e) => setRawQty(e.target.value)} className="h-8 text-xs text-right font-mono tabular-nums" />
+              <Input type="number" step="0.1" value={rawQty} onChange={(e) => setRawQty(e.target.value)} className="h-10 text-xs text-right font-mono tabular-nums" />
             </div>
             <div className="space-y-1">
               <Label className="text-[11px]">Styckvikt (kg/fisk)</Label>
-              <Input type="number" step="0.1" value={pieceWeight} onChange={(e) => setPieceWeight(e.target.value)} className="h-8 text-xs text-right font-mono tabular-nums" />
+              <Input type="number" step="0.1" value={pieceWeight} onChange={(e) => setPieceWeight(e.target.value)} className="h-10 text-xs text-right font-mono tabular-nums" />
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px]">Inköpspris (kr/kg)</Label>
-              <Input type="number" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} className="h-8 text-xs text-right font-mono tabular-nums" />
+              <Label className="text-[11px]">Råvarukostnad (kr/kg, från lagret)</Label>
+              <Input type="number" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} className="h-10 text-xs text-right font-mono tabular-nums" />
+              {avgCostInfo && <p className="text-[10px] text-muted-foreground">{avgCostInfo}</p>}
             </div>
             <div className="space-y-1">
               <Label className="text-[11px]">Leverantör</Label>
-              <Input value={supplier} onChange={(e) => setSupplier(e.target.value)} className="h-8 text-xs" />
+              <Input value={supplier} onChange={(e) => setSupplier(e.target.value)} className="h-10 text-xs" />
             </div>
             <div className="space-y-1">
               <Label className="text-[11px]">Parti</Label>
-              <Input value={batch} onChange={(e) => setBatch(e.target.value)} className="h-8 text-xs" />
+              <Input value={batch} onChange={(e) => setBatch(e.target.value)} className="h-10 text-xs" />
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={suggest} disabled={!species}>
+            <Button size="sm" variant="outline" className="h-10 gap-1.5 text-xs" onClick={suggest} disabled={!species}>
               <Plus className="h-3.5 w-3.5" /> Föreslå styckdetaljer
             </Button>
             {pieceWeightWarning && (
@@ -665,7 +700,7 @@ export function ProductionOrderForm() {
       {details.length > 0 && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between py-3">
-            <CardTitle className="text-sm">Styckdetaljer ut · biproduktsmetoden</CardTitle>
+            <CardTitle className="text-sm">Styckdetaljer ut · NRV-prissättning</CardTitle>
             <div className="flex items-center gap-2 text-[11px]">
               <span className="font-mono tabular-nums">Summa detaljer: {fmt(pctSum, 1)} %</span>
               <span className="font-mono tabular-nums">Svinn: {fmt(Math.max(0, wastePct), 1)} %</span>
@@ -681,9 +716,9 @@ export function ProductionOrderForm() {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            {allWarnings.length > 0 && (
+            {warnings.length > 0 && (
               <div className="space-y-1 border-b bg-amber-50 px-3 py-2 dark:bg-amber-950/30">
-                {allWarnings.map((w) => (
+                {warnings.map((w) => (
                   <p key={w} className="flex items-start gap-1.5 text-[11px] text-amber-700 dark:text-amber-400">
                     <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" /> {w}
                   </p>
@@ -696,19 +731,16 @@ export function ProductionOrderForm() {
                   <TableRow className="h-8">
                     <TableHead className="w-[36px]" />
                     <TableHead className="text-[11px] min-w-[150px]">Detalj</TableHead>
-                    <TableHead className="text-[11px] w-[90px]">Roll</TableHead>
                     <TableHead className="text-[11px] w-[150px]">Produkt (lager/pris)</TableHead>
                     <TableHead className="text-[11px] w-[86px] text-right">% av råvara</TableHead>
                     <TableHead className="text-[11px] w-[64px] text-right">kg</TableHead>
-                    <TableHead className="text-[11px] w-[80px] text-right">Marg.vikt</TableHead>
-                    <TableHead className="text-[11px] w-[86px] text-right">Kostpris</TableHead>
                     <TableHead className="text-[11px] w-[60px] text-right">Påslag</TableHead>
-                    <TableHead className="text-[11px] w-[110px] text-right">Marknadspris</TableHead>
-                    {regionTargets.map((r) => (
-                      <TableHead key={r.region} className="text-[11px] text-right w-[210px] leading-tight">
-                        {r.label.split(" (")[0]} ({fmt(r.target, 0)} %)
+                    {priceLists.map((pl) => (
+                      <TableHead key={pl.key} className="text-[11px] text-right w-[260px] leading-tight">
+                        {pl.label.split(" (")[0]} ({fmt(pl.target, 0)} % {t("target").toLowerCase()})
                         <span className="block text-[9px] font-normal text-muted-foreground">
-                          golv · senast · föreslaget
+                          {pl.inclVat ? t("price_incl_vat") : t("price_ex_vat")} · {t("revenue_share").toLowerCase()} ·{" "}
+                          {t("cost_per_kg").toLowerCase()} · {t("margin").toLowerCase()}
                         </span>
                       </TableHead>
                     ))}
@@ -719,30 +751,17 @@ export function ProductionOrderForm() {
                   {details.map((d) => {
                     const b = base.find((x) => x.detail.key === d.key);
                     const qty = (rawQtyNum * (Number(d.pct) || 0)) / 100;
-                    const missingPrice = d.role === "byproduct" && !(parseFloat(d.byproductPrice) > 0);
                     return (
-                      <TableRow
-                        key={d.key}
-                        className={`h-9 ${d.included ? "" : "opacity-50"} ${missingPrice && d.included ? "bg-amber-50 dark:bg-amber-950/20" : ""}`}
-                      >
+                      <TableRow key={d.key} className={`h-10 ${d.included ? "" : "opacity-50"}`}>
                         <TableCell className="py-0.5">
                           <Checkbox checked={d.included} onCheckedChange={(v) => setDetail(d.key, { included: !!v })} />
                         </TableCell>
                         <TableCell className="py-0.5">
-                          <Input value={d.name} onChange={(e) => setDetail(d.key, { name: e.target.value })} className="h-7 text-[11px]" />
-                        </TableCell>
-                        <TableCell className="py-0.5">
-                          <Select value={d.role} onValueChange={(v) => setDetail(d.key, { role: v as DetailRow["role"] })}>
-                            <SelectTrigger className="h-7 text-[10px]"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="primary" className="text-xs">Huvudprodukt</SelectItem>
-                              <SelectItem value="byproduct" className="text-xs">Biprodukt</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <Input value={d.name} onChange={(e) => setDetail(d.key, { name: e.target.value })} className="h-9 text-[11px]" />
                         </TableCell>
                         <TableCell className="py-0.5">
                           <Select value={d.productId ?? "none"} onValueChange={(v) => setDetail(d.key, { productId: v === "none" ? null : v })}>
-                            <SelectTrigger className="h-7 text-[11px]"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="h-9 text-[11px]"><SelectValue /></SelectTrigger>
                             <SelectContent className="max-h-72">
                               <SelectItem value="none" className="text-xs">Ej kopplad</SelectItem>
                               {products.map((pr) => (
@@ -757,80 +776,73 @@ export function ProductionOrderForm() {
                             step="0.1"
                             value={d.pct}
                             onChange={(e) => setDetail(d.key, { pct: parseFloat(e.target.value) || 0 })}
-                            className="h-7 px-1 text-[11px] text-right font-mono tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="h-9 px-1 text-[11px] text-right font-mono tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
                         </TableCell>
                         <TableCell className="text-[11px] text-right font-mono tabular-nums">{fmt(qty, 1)}</TableCell>
-                        <TableCell className="py-0.5">
-                          <Input
-                            type="number"
-                            step="0.05"
-                            disabled={d.role !== "primary"}
-                            value={d.marginWeight}
-                            onChange={(e) => setDetail(d.key, { marginWeight: parseFloat(e.target.value) || 1 })}
-                            className="h-7 px-1 text-[11px] text-right font-mono tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          />
-                        </TableCell>
-                        <TableCell className="text-[11px] text-right font-mono tabular-nums">
-                          {b ? fmt(b.rawCostPerKg) : "—"}
-                        </TableCell>
                         <TableCell className="py-0.5 text-right">
                           <Checkbox checked={d.isProcessed} onCheckedChange={(v) => setDetail(d.key, { isProcessed: !!v })} />
                         </TableCell>
-                        <TableCell className="py-0.5">
-                          {d.role === "byproduct" ? (
-                            <Input
-                              type="number"
-                              step="1"
-                              placeholder="kr ink moms"
-                              value={d.byproductPrice}
-                              onChange={(e) => setDetail(d.key, { byproductPrice: e.target.value })}
-                              onBlur={() => saveByproductPrice(d)}
-                              className="h-7 px-1 text-[11px] text-right font-mono tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            />
-                          ) : (
-                            <span className="block text-right text-[10px] text-muted-foreground">residual</span>
-                          )}
-                        </TableCell>
-                        {byRegion.map((r) => {
-                          const p = r.res.primaries.find((x) => x.key === d.key);
-                          if (d.role === "byproduct" || !p) {
-                            const inc = parseFloat(d.byproductPrice) || 0;
-                            return (
-                              <TableCell key={r.region} className="py-0.5 text-right text-[11px]">
-                                {inc > 0 ? (
-                                  <span className="font-mono tabular-nums">{fmt(inc, 0)} kr manuellt</span>
-                                ) : (
-                                  <span className="text-[10px] text-amber-600">saknar pris — höjer golvet</span>
-                                )}
-                              </TableCell>
-                            );
-                          }
-                          const alert = p.alertExpensive || p.alertRoleMismatch;
+                        {byList.map((pl) => {
+                          const r = pl.res.lines.find((x) => x.key === d.key);
+                          const value = d.prices?.[pl.key] ?? "";
+                          const hasPrice = parseFloat(value) > 0;
+                          const lowest = pl.res.lowestMarginKey === d.key;
                           return (
-                            <TableCell key={r.region} className="py-0.5 text-right text-[11px]">
+                            <TableCell key={pl.key} className="py-0.5 text-right text-[11px]">
                               <div className="flex items-center justify-end gap-1.5">
-                                <span
-                                  className={`font-mono tabular-nums ${alert ? "text-destructive font-semibold" : "text-muted-foreground"}`}
-                                  title="Golvpris (residual mot marginalmålet)"
-                                >
-                                  {fmt(p.floorInclVat, 0)}
-                                </span>
-                                <span className="font-mono text-[10px] tabular-nums text-muted-foreground" title="Senast fastställt pris">
-                                  {p.lastSetPrice > 0 ? fmt(p.lastSetPrice, 0) : "—"}
-                                </span>
-                                <span className="font-mono tabular-nums font-semibold" title="Föreslaget pris (högsta av golv och senast)">
-                                  {fmt(p.suggestedInclVat, 0)} kr
-                                </span>
-                                {alert && <AlertTriangle className="h-3 w-3 text-destructive" />}
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-6 px-1 text-[10px]"
-                                  onClick={() => applyPrice(d, p.suggestedInclVat, `${d.name} · ${r.label}`)}
-                                >
-                                  Fastställ
-                                </Button>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  placeholder={pl.inclVat ? "kr ink moms" : "kr ex moms"}
+                                  value={value}
+                                  onChange={(e) => setDetailPriceField(d.key, pl.key, e.target.value)}
+                                  onBlur={() => savePrice({ ...d, prices: { ...d.prices } }, pl.key)}
+                                  className="h-9 w-24 px-1 text-[11px] text-right font-mono tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                />
+                                {hasPrice && r ? (
+                                  <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+                                    {fmt(r.revenueShare * 100, 1)} % · {fmt(r.totalCostPerKg, 2)} kr
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] text-amber-600">{t("missing_price")}</span>
+                                )}
+                                {hasPrice && r && (
+                                  <span
+                                    className={`font-mono tabular-nums font-semibold ${
+                                      r.belowTarget ? "text-destructive" : "text-emerald-600"
+                                    }`}
+                                    title={t("margin")}
+                                  >
+                                    {fmt(r.marginPct, 1)} %
+                                  </span>
+                                )}
+                                {lowest && hasPrice && (
+                                  <Badge variant="outline" className="h-5 px-1 text-[9px]">{t("lowest_margin")}</Badge>
+                                )}
+                                {!hasPrice ? (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 px-1 text-[10px]"
+                                    onClick={() => fillSuggestion(d, pl.key)}
+                                  >
+                                    {t("use_suggested")}
+                                  </Button>
+                                ) : (
+                                  d.productId && (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-8 px-1 text-[10px]"
+                                      onClick={() =>
+                                        applyPriceToProduct(d, parseFloat(value), `${d.name} · ${pl.label}`)
+                                      }
+                                    >
+                                      Fastställ
+                                    </Button>
+                                  )
+                                )}
                               </div>
                             </TableCell>
                           );
@@ -839,12 +851,13 @@ export function ProductionOrderForm() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6"
+                            className="h-8 w-8"
                             onClick={() => setDetails((prev) => prev.filter((x) => x.key !== d.key))}
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
                         </TableCell>
+                        {void b}
                       </TableRow>
                     );
                   })}
@@ -854,42 +867,39 @@ export function ProductionOrderForm() {
 
             <div className="flex flex-wrap items-center justify-between gap-3 border-t p-3">
               <div className="flex flex-wrap gap-3 text-[11px]">
-                {byRegion.map((r) => {
-                  const m = r.atSuggested;
-                  const color =
-                    m.marginInclWorkPct < r.target - 5
+                {byList.map((pl) => {
+                  const m = pl.res;
+                  const color = m.batchBelowTarget
+                    ? m.batchMarginPct < pl.target - 5
                       ? "text-destructive"
-                      : m.marginInclWorkPct < r.target
-                      ? "text-amber-600"
-                      : "text-emerald-600";
+                      : "text-amber-600"
+                    : "text-emerald-600";
                   return (
-                    <div key={r.region} className="rounded-md border px-2 py-1 leading-tight">
+                    <div key={pl.key} className="rounded-md border px-2 py-1 leading-tight">
                       <div className="text-muted-foreground">
-                        Partiet {r.label.split(" (")[0]} · mål {fmt(r.target, 0)} %
+                        Partiet {pl.label.split(" (")[0]} · {t("target").toLowerCase()} {fmt(pl.target, 0)} %
                       </div>
                       <div>
-                        <span className="text-muted-foreground">På råvara: </span>
-                        <span className="font-mono tabular-nums">{fmt(m.marginOnRawPct, 1)} %</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Ink. arbete: </span>
+                        <span className="text-muted-foreground">{t("margin")}: </span>
                         <span className={`font-mono tabular-nums font-semibold ${color}`}>
-                          {fmt(m.marginInclWorkPct, 1)} %
+                          {fmt(m.batchMarginPct, 1)} %
                         </span>
                       </div>
                       <div className="text-[10px] text-muted-foreground">
                         intäkt {fmt(m.revenueExVat, 0)} kr / råvara {fmt(m.rawCost, 0)} kr / arbete {fmt(m.surchargeCost, 0)} kr
                       </div>
                       <div className="text-[10px] text-muted-foreground">
-                        biprodukter {fmt(r.res.byproductRevenueExVat, 0)} kr · krävd intäkt {fmt(r.res.requiredRevenueExVat, 0)} kr
+                        intäkt per färdigt kilo {fmt(m.revenuePerOutputKg, 2)} kr
                       </div>
                       {(() => {
-                        const a = approvalByRegion({ target: r.target, marginInclWorkPct: m.marginInclWorkPct });
+                        const a = approvalForList({ target: pl.target, marginInclWorkPct: m.batchMarginPct });
                         return a.approved ? (
-                          <div className="mt-0.5 text-[10px] font-medium text-emerald-600">Auto-godkänns</div>
+                          <div className="mt-0.5 flex items-center gap-1 text-[10px] font-medium text-emerald-600">
+                            <Check className="h-3 w-3" /> Auto-godkänns
+                          </div>
                         ) : (
-                          <div className="mt-0.5 text-[10px] font-medium text-amber-600">
-                            Manuell granskning: {a.reasons[0]}
+                          <div className="mt-0.5 flex items-center gap-1 text-[10px] font-medium text-amber-600">
+                            <AlertTriangle className="h-3 w-3" /> Manuell granskning: {a.reasons[0]}
                           </div>
                         );
                       })()}
@@ -898,16 +908,16 @@ export function ProductionOrderForm() {
                 })}
               </div>
               <div className="flex items-center gap-2">
-                <Select value={applyRegion} onValueChange={setApplyRegion}>
-                  <SelectTrigger className="h-8 w-40 text-xs"><SelectValue placeholder="Region" /></SelectTrigger>
+                <Select value={applyList} onValueChange={setApplyList}>
+                  <SelectTrigger className="h-10 w-44 text-xs"><SelectValue placeholder={t("price_list")} /></SelectTrigger>
                   <SelectContent>
-                    {regionTargets.map((r) => <SelectItem key={r.region} value={r.region} className="text-xs">{r.label}</SelectItem>)}
+                    {priceLists.map((pl) => <SelectItem key={pl.key} value={pl.key} className="text-xs">{pl.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
                   <DialogTrigger asChild>
-                    <Button size="sm" variant="outline" className="h-8 text-xs" disabled={massRows.length === 0}>
-                      Använd föreslagna priser ({massRows.length})
+                    <Button size="sm" variant="outline" className="h-10 text-xs" disabled={massRows.length === 0}>
+                      {t("use_suggested")} ({massRows.length})
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
@@ -924,8 +934,8 @@ export function ProductionOrderForm() {
                         {massRows.map((r) => (
                           <TableRow key={r.productId} className="h-8">
                             <TableCell className="text-[11px]">{r.name}</TableCell>
-                            <TableCell className="text-[11px] text-right font-mono tabular-nums">{fmt(r.current, 0)} kr</TableCell>
-                            <TableCell className="text-[11px] text-right font-mono tabular-nums font-semibold">{fmt(r.suggested, 0)} kr</TableCell>
+                            <TableCell className="text-[11px] text-right font-mono tabular-nums">{fmt(r.current, 2)} kr</TableCell>
+                            <TableCell className="text-[11px] text-right font-mono tabular-nums font-semibold">{fmt(r.suggested, 2)} kr</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -936,7 +946,7 @@ export function ProductionOrderForm() {
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
-                <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={register} disabled={createOrder.isPending}>
+                <Button size="sm" className="h-10 gap-1.5 text-xs" onClick={register} disabled={createOrder.isPending}>
                   <Factory className="h-3.5 w-3.5" /> Registrera tillverkning
                 </Button>
               </div>
@@ -990,4 +1000,3 @@ export function ProductionOrderForm() {
     </div>
   );
 }
-
