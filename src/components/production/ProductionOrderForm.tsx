@@ -1276,7 +1276,7 @@ export function ProductionOrderForm() {
                   <div key={`${r.detail.key}-${r.listKey}`} className="flex justify-between rounded-md border px-2 py-1">
                     <span>{r.detail.name}</span>
                     <span className="font-mono tabular-nums">
-                      {fmt(Number(r.previous?.price ?? 0), 2)} → {fmt(r.price, 2)} kr
+                      {fmt(Number(r.previous?.applied_price ?? 0), 2)} → {fmt(r.price, 2)} kr
                     </span>
                   </div>
                 ))}
