@@ -1320,6 +1320,10 @@ export default function Inventory() {
         />
       )}
 
+      {viewMode === "lots" && <LotTraceabilityView currency={localCurrency} />}
+
+
+
 
 
       {viewMode === "locations" && (
