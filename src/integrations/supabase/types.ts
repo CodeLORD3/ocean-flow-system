@@ -986,6 +986,68 @@ export type Database = {
           },
         ]
       }
+      detail_price_applications: {
+        Row: {
+          applied_by: string | null
+          applied_price: number
+          avg_cost_per_kg: number | null
+          created_at: string
+          detail_form: string
+          id: string
+          manual_override: boolean
+          price_list: string
+          product_id: string | null
+          production_order_id: string | null
+          reference_price: number | null
+          scale_factor: number | null
+          species_group: string
+          updated_at: string
+          yield_pct: number | null
+        }
+        Insert: {
+          applied_by?: string | null
+          applied_price: number
+          avg_cost_per_kg?: number | null
+          created_at?: string
+          detail_form: string
+          id?: string
+          manual_override?: boolean
+          price_list: string
+          product_id?: string | null
+          production_order_id?: string | null
+          reference_price?: number | null
+          scale_factor?: number | null
+          species_group: string
+          updated_at?: string
+          yield_pct?: number | null
+        }
+        Update: {
+          applied_by?: string | null
+          applied_price?: number
+          avg_cost_per_kg?: number | null
+          created_at?: string
+          detail_form?: string
+          id?: string
+          manual_override?: boolean
+          price_list?: string
+          product_id?: string | null
+          production_order_id?: string | null
+          reference_price?: number | null
+          scale_factor?: number | null
+          species_group?: string
+          updated_at?: string
+          yield_pct?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "detail_price_applications_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       detail_prices: {
         Row: {
           created_at: string
@@ -995,6 +1057,7 @@ export type Database = {
           last_set_price: number
           price_incl_vat: number | null
           price_list: string
+          reference_cost_per_kg: number | null
           role: string | null
           species_group: string
           updated_at: string
@@ -1008,6 +1071,7 @@ export type Database = {
           last_set_price?: number
           price_incl_vat?: number | null
           price_list?: string
+          reference_cost_per_kg?: number | null
           role?: string | null
           species_group: string
           updated_at?: string
@@ -1021,6 +1085,7 @@ export type Database = {
           last_set_price?: number
           price_incl_vat?: number | null
           price_list?: string
+          reference_cost_per_kg?: number | null
           role?: string | null
           species_group?: string
           updated_at?: string
@@ -1902,6 +1967,8 @@ export type Database = {
           label: string | null
           price_list: string
           region: string
+          scale_warn_high: number
+          scale_warn_low: number
           store_id: string | null
           target_pct: number
           updated_at: string
@@ -1913,6 +1980,8 @@ export type Database = {
           label?: string | null
           price_list: string
           region: string
+          scale_warn_high?: number
+          scale_warn_low?: number
           store_id?: string | null
           target_pct: number
           updated_at?: string
@@ -1924,6 +1993,8 @@ export type Database = {
           label?: string | null
           price_list?: string
           region?: string
+          scale_warn_high?: number
+          scale_warn_low?: number
           store_id?: string | null
           target_pct?: number
           updated_at?: string
