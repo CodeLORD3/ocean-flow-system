@@ -642,38 +642,92 @@ export function ProductionOrderForm() {
     }
   };
 
-  /* ── Fastställ pris på produkten ─────────────────────────── */
+  /* ── Applicera pris på produkten ─────────────────────────── */
   const activeList = byList.find((l) => l.key === applyList) ?? byList[0];
 
   const massRows = base
     .filter((b) => b.detail.productId)
-    .map((b) => ({
-      productId: b.detail.productId!,
-      name: b.detail.name,
-      current: Number(b.product?.retail_suggested ?? 0),
-      suggested: parseFloat(b.detail.prices?.[activeList?.key ?? ""] ?? "") || 0,
-    }))
+    .map((b) => {
+      const listKey = activeList?.key ?? "";
+      const previous = lastApplicationFor(b.detail, listKey);
+      return {
+        detail: b.detail,
+        listKey,
+        productId: b.detail.productId!,
+        name: b.detail.name,
+        current: Number(
+          activeList?.inclVat ? b.product?.retail_suggested ?? 0 : (b.product as any)?.wholesale_price ?? 0,
+        ),
+        suggested: parseFloat(b.detail.prices?.[listKey] ?? "") || 0,
+        previous,
+      };
+    })
     .filter((r) => r.suggested > 0);
 
-  const applyAll = async () => {
-    for (const r of massRows) {
-      await supabase.from("products").update({ retail_suggested: r.suggested }).eq("id", r.productId);
-    }
-    qc.invalidateQueries({ queryKey: ["products"] });
-    setPreviewOpen(false);
-    toast({ title: "Priser uppdaterade", description: `${massRows.length} produkter fick nytt pris.` });
+  /** Skriver ett pris till produkten, prishistoriken och appliceringsloggen. */
+  const writePrice = async (d: DetailRow, listKey: string, value: number) => {
+    const pl = priceLists.find((p) => p.key === listKey);
+    const s = scaleFor(listKey);
+    const line = s?.res.lines.find((l) => l.key === d.key) ?? null;
+    if (!d.productId || !pl) return;
+    await applyPrice.mutateAsync({
+      priceList: listKey,
+      inclVat: pl.inclVat,
+      speciesGroup: species || "okänd",
+      detailForm: normalizeDetailForm(d.form),
+      productId: d.productId,
+      price: value,
+      referencePrice: line?.referencePrice ?? null,
+      scaleFactor: s?.res.scaleFactor ?? null,
+      avgCostPerKg: priceNum || null,
+      yieldPct: Number(d.pct) || null,
+      manualOverride: line ? Math.abs((line.suggestedPrice || 0) - value) > 0.009 : true,
+      appliedBy: staff ? `${staff.first_name} ${staff.last_name}` : null,
+      orderLabel: batch || null,
+    });
   };
 
-  const applyPriceToProduct = async (d: DetailRow, value: number, label: string) => {
-    if (!d.productId) return;
-    const { error } = await supabase.from("products").update({ retail_suggested: value }).eq("id", d.productId);
-    if (error) {
-      toast({ title: "Fel", description: error.message, variant: "destructive" });
+  /**
+   * Samma dygn-kontroll: har produkten redan fått ett pris i prislistan inom
+   * 24 timmar krävs bekräftelse, annars skulle diskpriset ändras mitt på dagen.
+   */
+  const requestApply = async (
+    rows: { detail: DetailRow; listKey: string; price: number; previous: DetailPriceApplication | null }[],
+  ) => {
+    const needsConfirm = rows.filter((r) => isSameDayApplication(r.previous));
+    if (needsConfirm.length > 0) {
+      setConfirmChange({ rows });
       return;
     }
-    qc.invalidateQueries({ queryKey: ["products"] });
-    toast({ title: "Pris fastställt", description: `${label}: ${fmt(value, 2)} kr` });
+    await commitApply(rows);
   };
+
+  const commitApply = async (
+    rows: { detail: DetailRow; listKey: string; price: number; previous: DetailPriceApplication | null }[],
+  ) => {
+    try {
+      for (const r of rows) await writePrice(r.detail, r.listKey, r.price);
+      setConfirmChange(null);
+      setPreviewOpen(false);
+      toast({
+        title: rows.length > 1 ? "Priser applicerade" : "Pris applicerat",
+        description:
+          rows.length > 1
+            ? `${rows.length} produkter fick nytt pris i butiken.`
+            : `${rows[0].detail.name}: ${fmt(rows[0].price, 2)} kr`,
+      });
+    } catch (e: any) {
+      toast({ title: "Fel", description: e.message, variant: "destructive" });
+    }
+  };
+
+  const applyAll = () =>
+    requestApply(
+      massRows.map((r) => ({ detail: r.detail, listKey: r.listKey, price: r.suggested, previous: r.previous })),
+    );
+
+  const applyPriceToProduct = (d: DetailRow, listKey: string, value: number) =>
+    requestApply([{ detail: d, listKey, price: value, previous: lastApplicationFor(d, listKey) }]);
 
   const warnings = useMemo(() => {
     const out: string[] = [];
@@ -685,17 +739,30 @@ export function ProductionOrderForm() {
           `${l.label}: partiets marginal ${fmt(l.res.batchMarginPct, 1)} % ligger under målet ${fmt(l.target, 0)} %`,
         );
     }
-    for (const b of base) {
-      for (const l of byList) {
-        const entered = parseFloat(b.detail.prices?.[l.key] ?? "") || 0;
-        const stored = storedPrice(b.detail.form, l.key) ?? 0;
-        if (entered > 0 && stored > 0 && Math.abs(entered - stored) / stored > 0.25)
-          out.push(`${b.detail.name} (${l.label}): priset avviker mer än 25 % från senast satta ${fmt(stored, 2)} kr`);
-      }
+    for (const s of scaleByList) {
+      if (s.res.missingReferenceKeys.length > 0)
+        out.push(
+          `${s.label}: ${s.res.missingReferenceKeys.length} detalj(er) saknar referenspris — inget prisförslag kan räknas. Fyll i under Priser · Referenspriser.`,
+        );
+      if (s.band === "low")
+        out.push(
+          `${s.label}: skalfaktorn ${fmt(s.res.scaleFactor, 3)} ligger under bandet ${fmt(s.warnLow, 2)}–${fmt(
+            s.warnHigh,
+            2,
+          )} — inköpspriset ligger långt under referensnivån. Överväg att flytta referenspriset.`,
+        );
+      if (s.band === "high")
+        out.push(
+          `${s.label}: skalfaktorn ${fmt(s.res.scaleFactor, 3)} ligger över bandet ${fmt(s.warnLow, 2)}–${fmt(
+            s.warnHigh,
+            2,
+          )} — inköpspriset ligger långt över referensnivån. Överväg att inte köpa eller att flytta referenspriset.`,
+        );
     }
     return [...new Set(out)];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [byList, base, detailPrices]);
+  }, [byList, scaleByList, base, detailPrices]);
+
 
   return (
     <div className="space-y-4">
