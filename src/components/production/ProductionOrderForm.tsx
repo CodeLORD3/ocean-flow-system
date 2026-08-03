@@ -51,7 +51,7 @@ import {
 import { SPECIES_GROUP_SUGGESTIONS } from "@/lib/speciesGroups";
 import { speciesKey } from "@/lib/asciiFold";
 import { addStock, withdrawStock, GROSSIST_FLYTANDE_ID } from "@/lib/productionStock";
-import { pickRawLots, createOutputLot, recordLotTransformation } from "@/lib/lotTransformation";
+import { pickRawLots, createOutputLot, recordLotTransformation, type RawPick } from "@/lib/lotTransformation";
 
 import { evaluateAutoApproval } from "@/lib/autoApproval";
 
