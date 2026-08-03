@@ -9,13 +9,9 @@ import { join } from "path";
  * Filerna nedan är kvarvarande direktskrivningar från tiden före
  * rörelseloggen. Listan får bara krympa — lägg aldrig till en ny fil.
  */
-const LEGACY_DIRECT_WRITERS = [
-  "src/hooks/useStorageLocations.ts",
-  "src/pages/Receiving.tsx",
-  "src/pages/ProductionReporting.tsx",
-  "src/pages/PurchaseReporting.tsx",
-  "src/pages/Inventory.tsx",
-];
+const LEGACY_DIRECT_WRITERS: string[] = [];
+
+
 
 const WRITE_CALLS = /\.(insert|update|upsert|delete)\s*\(/;
 
@@ -32,8 +28,11 @@ function walk(dir: string, acc: string[] = []): string[] {
 function findDirectWriters(): string[] {
   const offenders: string[] = [];
   for (const file of walk("src")) {
+    // Ledgern är den enda tillåtna skrivvägen.
+    if (file.replace(/\\/g, "/") === "src/lib/stockLedger.ts") continue;
     const text = readFileSync(file, "utf8");
     if (!text.includes("product_stock_locations")) continue;
+
     const lines = text.split("\n");
     let hit = false;
     lines.forEach((line, i) => {

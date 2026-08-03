@@ -54,13 +54,9 @@ export function useCreateDeliveryNote() {
       const { error: lineErr } = await supabase.from("delivery_note_lines").insert(lines);
       if (lineErr) throw lineErr;
 
-      // Decrease stock for each product
-      for (const line of params.lines) {
-        const { data: prod } = await supabase.from("products").select("stock").eq("id", line.product_id).single();
-        if (prod) {
-          await supabase.from("products").update({ stock: Number(prod.stock) - line.quantity }).eq("id", line.product_id);
-        }
-      }
+      // Utflödet bokförs av rörelsen vid packning/transport, inte här.
+      // Följesedeln är ett dokument — den ska inte röra saldot en andra gång.
+
 
       await logActivity({
         action_type: "create",
