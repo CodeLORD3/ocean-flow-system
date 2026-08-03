@@ -379,11 +379,32 @@ export function ProductionOrderForm() {
   };
 
   /* ── Registrera tillverkningsorder ───────────────────────── */
+  /**
+   * Ett detaljparti per råvaruparti. Korsar plocket en partigräns föreslås en
+   * uppdelning i två ordrar innan registrering, eftersom blandade partier ger
+   * fel fångstuppgift på skylten och missad framåtspårning.
+   */
   const register = async () => {
     if (!rawName || rawQtyNum <= 0 || included.length === 0) {
       toast({ title: "Ofullständigt", description: "Ange råvara, kvantitet och minst en detalj.", variant: "destructive" });
       return;
     }
+    try {
+      const picks = rawProductId
+        ? await pickRawLots(rawProductId, GROSSIST_FLYTANDE_ID, rawQtyNum)
+        : [];
+      const distinctLots = new Set(picks.map((p) => p.lotId ?? "utan-parti")).size;
+      if (distinctLots > 1) {
+        setSplitWarning({ picks, detailCount: included.length });
+        return;
+      }
+      await runRegister(picks);
+    } catch (e: any) {
+      toast({ title: "Fel", description: e.message, variant: "destructive" });
+    }
+  };
+
+  const runRegister = async (picks: RawPick[]) => {
     try {
       const lines = base.map((b, i) => ({
         product_id: b.detail.productId,
@@ -416,58 +437,56 @@ export function ProductionOrderForm() {
         lines,
       });
 
-      // Partibindning: råvaran plockas FIFO ur sina partier och varje detalj får
-      // ett eget parti som ärver fångstuppgifterna. Kopplingen loggas.
-      const picks = rawProductId
-        ? await pickRawLots(rawProductId, GROSSIST_FLYTANDE_ID, rawQtyNum)
-        : [];
-      const totalIn = picks.reduce((s, p) => s + p.quantityKg, 0) || rawQtyNum;
+      const effectivePicks: RawPick[] = picks.length
+        ? picks
+        : [{ lotId: null, quantityKg: rawQtyNum }];
+      const totalIn = effectivePicks.reduce((s, p) => s + p.quantityKg, 0) || rawQtyNum;
 
       if (rawProductId) {
-        if (picks.length) {
-          for (const p of picks) {
-            await withdrawStock(rawProductId, p.quantityKg, GROSSIST_FLYTANDE_ID, {
-              lotId: p.lotId,
-              referenceType: "production_order",
-              referenceId: order.id,
-              note: p.lotId ? null : "Råvara utan parti — okänd härkomst",
-            });
-          }
-        } else {
-          await withdrawStock(rawProductId, rawQtyNum, GROSSIST_FLYTANDE_ID, {
+        for (const p of effectivePicks) {
+          await withdrawStock(rawProductId, p.quantityKg, GROSSIST_FLYTANDE_ID, {
+            lotId: p.lotId,
             referenceType: "production_order",
             referenceId: order.id,
+            note: p.lotId ? null : "Råvara utan parti — okänd härkomst",
           });
         }
       }
 
-      const sourceLotId = picks.find((p) => p.lotId)?.lotId ?? null;
-      for (const l of lines) {
-        if (!l.product_id || !l.planned_qty) continue;
-        const outLotId = await createOutputLot(
-          sourceLotId,
-          {
-            productId: l.product_id,
-            quantityKg: l.planned_qty,
-            unitCost: l.cost_price,
-            detailName: l.detail_name,
-          },
-          order.id,
-        );
-        await addStock(l.product_id, l.planned_qty, l.cost_price, GROSSIST_FLYTANDE_ID, {
-          lotId: outLotId,
-          referenceType: "production_order",
-          referenceId: order.id,
-          note: l.detail_name,
-        });
-        // Andelen av varje råvaruparti som gick in i just den här detaljen.
-        for (const p of picks) {
-          const share = totalIn > 0 ? p.quantityKg / totalIn : 0;
+      // Ett detaljparti per råvaruparti och detalj: kvantiteten fördelas på
+      // råvarupartiets andel av plocket, så inget parti bär två härkomster.
+      let lotCount = 0;
+      for (let pi = 0; pi < effectivePicks.length; pi++) {
+        const p = effectivePicks[pi];
+        const share = totalIn > 0 ? p.quantityKg / totalIn : 0;
+        for (const l of lines) {
+          if (!l.product_id || !l.planned_qty) continue;
+          const qty = Math.round(l.planned_qty * share * 1000) / 1000;
+          if (qty <= 0) continue;
+          const outLotId = await createOutputLot(
+            p.lotId,
+            {
+              productId: l.product_id,
+              quantityKg: qty,
+              unitCost: l.cost_price,
+              detailName: l.detail_name,
+              detailForm: l.detail_form,
+            },
+            order.id,
+            pi + 1,
+          );
+          lotCount++;
+          await addStock(l.product_id, qty, l.cost_price, GROSSIST_FLYTANDE_ID, {
+            lotId: outLotId,
+            referenceType: "production_order",
+            referenceId: order.id,
+            note: l.detail_name,
+          });
           await recordLotTransformation({
             fromLotId: p.lotId,
             toLotId: outLotId,
-            quantityInKg: l.planned_qty > 0 ? (l.planned_qty / (totalIn || 1)) * p.quantityKg : 0,
-            quantityOutKg: l.planned_qty * share,
+            quantityInKg: p.quantityKg * (l.planned_qty / (rawQtyNum || 1)),
+            quantityOutKg: qty,
             productionOrderId: order.id,
           });
         }
@@ -476,12 +495,11 @@ export function ProductionOrderForm() {
       qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
       qc.invalidateQueries({ queryKey: ["lots"] });
 
-
       toast({
         title: "Tillverkningsorder registrerad",
-        description: `${rawName}: ${included.length} detaljer, ${fmt(Math.max(0, wastePct), 1)} % svinn.`,
+        description: `${rawName}: ${included.length} detaljer, ${lotCount} detaljpartier, ${fmt(Math.max(0, wastePct), 1)} % svinn.`,
       });
-      void order;
+      setSplitWarning(null);
       setDetails([]);
       setRawName("");
       setRawQty("");
@@ -493,6 +511,7 @@ export function ProductionOrderForm() {
       toast({ title: "Fel", description: e.message, variant: "destructive" });
     }
   };
+
 
   /* ── Fastställ pris ──────────────────────────────────────── */
   const applyPrice = async (d: DetailRow, priceIncVat: number, label: string) => {
