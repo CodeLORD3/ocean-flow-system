@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { asciiFold } from "@/lib/asciiFold";
 import { lotBalancesAtLocation } from "@/lib/stockLedger";
 
 /**
