@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { markOrderLinesBehandlas } from "@/lib/orderStatusSync";
 import { recordMovement } from "@/lib/stockLedger";
 
@@ -677,6 +677,18 @@ function ReportSection({
   );
 }
 
+import PostIncomingDialog from "@/components/purchase/PostIncomingDialog";
+import { buildSupplierIndex, lookupSupplier, matchProduct } from "@/lib/foljesedelMatch";
+import { unpostPurchaseReport } from "@/lib/purchaseReportPosting";
+
+/** SHA-256 av filen — grunden för dubblettspärren vid uppladdning. */
+async function sha256Hex(file: File): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 export default function PurchaseReporting() {
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
@@ -691,6 +703,7 @@ export default function PurchaseReporting() {
   const [focusLineId, setFocusLineId] = useState<string | null>(null);
   const [filterSupplier, setFilterSupplier] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [postOpen, setPostOpen] = useState(false);
 
   // New product dialog
   const [newProductOpen, setNewProductOpen] = useState(false);
@@ -866,21 +879,9 @@ export default function PurchaseReporting() {
         .eq("id", reportId);
       if (error) throw error;
 
-      // Transfer confirmed lines to Grossist Flytande storage
+      // Lagret bokförs av "Bokför inleverans" (partier + rörelse), inte här —
+      // annars skulle samma inleverans hamna på lagret två gånger.
       const productLines = lines.filter((l) => l.product_id);
-      for (const line of productLines) {
-        // Inleveransen bokförs som rörelse; vägt kostpris räknas ut av triggern.
-        await recordMovement({
-          productId: line.product_id!,
-          locationId: GROSSIST_FLYTANDE_ID,
-          quantityKg: Number(line.quantity),
-          movementType: "inleverans",
-          unitCost: Number(line.unit_price || 0) || null,
-          referenceType: "purchase_report",
-          referenceId: reportId,
-          note: "Bekräftad inköpsrapport",
-        });
-      }
 
 
       // Auto-update order line statuses (no-op, kept for compatibility)
@@ -893,27 +894,15 @@ export default function PurchaseReporting() {
       queryClient.invalidateQueries({ queryKey: ["all_stock_locations"] });
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
       setSelectedReportId(null);
-      toast({ title: "Inköp bekräftat", description: "Dokumentet har låsts och varor har lagts till i Grossist Flytande." });
+      toast({ title: "Inköp bekräftat", description: "Dokumentet är låst. Bokför inleveransen för att lägga varorna på lagret." });
     },
   });
 
   const unlockReport = useMutation({
     mutationFn: async (reportId: string) => {
-      const lines = allLines.filter((l) => l.report_id === reportId);
-      const productLines = lines.filter((l) => l.product_id);
-
-      // Upplåsningen motbokas som egen rörelse — inleveransen suddas aldrig ut.
-      for (const line of productLines) {
-        await recordMovement({
-          productId: line.product_id!,
-          locationId: GROSSIST_FLYTANDE_ID,
-          quantityKg: -Number(line.quantity),
-          movementType: "justering",
-          referenceType: "purchase_report",
-          referenceId: reportId,
-          note: "Inköpsrapport upplåst — inleverans återförd",
-        });
-      }
+      // Är rapporten bokförd motbokas partierna först; saldot suddas aldrig ut.
+      const report = reports.find((r) => r.id === reportId) as any;
+      if (report?.posted_at) await unpostPurchaseReport(reportId);
 
 
       const { error } = await supabase
