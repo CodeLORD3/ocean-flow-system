@@ -27,6 +27,7 @@ import {
   useYieldActuals,
 } from "@/hooks/useProductionYields";
 import { calcDetailPrice, allocateRawCost, batchMargin, fmt, FORMS, isProcessedForm } from "@/lib/filletMath";
+import { SPECIES_GROUP_SUGGESTIONS } from "@/lib/speciesGroups";
 import { addStock, withdrawStock } from "@/lib/productionStock";
 
 export interface FilletPrefill {
