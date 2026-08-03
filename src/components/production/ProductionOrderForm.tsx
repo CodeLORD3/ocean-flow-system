@@ -868,6 +868,21 @@ export function ProductionOrderForm() {
             <Button size="sm" variant="outline" className="h-10 gap-1.5 text-xs" onClick={suggest} disabled={!species}>
               <Plus className="h-3.5 w-3.5" /> Föreslå styckdetaljer
             </Button>
+            {details.length > 0 &&
+              scaleByList.map((s) => (
+                <Button
+                  key={s.key}
+                  size="sm"
+                  variant="outline"
+                  className="h-10 text-xs"
+                  onClick={() => fillAllSuggestions(s.key)}
+                  disabled={!(s.res.scaleFactor > 0)}
+                  title="Referenspriser × skalfaktor"
+                >
+                  Fyll förslag · {s.label}
+                </Button>
+              ))}
+
             {pieceWeightWarning && (
               <Badge variant="outline" className="gap-1 border-amber-400 text-[10px] text-amber-600">
                 <AlertTriangle className="h-3 w-3" /> Styckvikten under {fmt(minPieceWeight ?? 0, 1)} kg — fyrdelning
