@@ -20,8 +20,9 @@ Utökar den befintliga AI-inläsningen (`supabase/functions/parse-foljesedel`) �
 
 **1. Databas (en migration)**
 - `purchase_reports`: `supplier_id`, `document_type`, `document_number`, `document_date`, `delivery_date`, `total_ex_vat`, `file_hash`, `posted_at`, `posted_by`. Unikt index på `(supplier_id, document_number)` där båda finns; index på `file_hash`.
-- `purchase_report_lines`: `supplier_article_no`, `latin_name`, `species_fao_code`, `lot_numbers text[]`, `catch_area`, `fishing_gear`, `fishing_gear_code`, `catch_date_from`, `catch_date_to`, `best_before`, `presentation`, `grade`, `condition`, `vessel_name`, `vessel_reg`, `vessel_nation`, `certificate`, `ordered_quantity`, `amount_mismatch boolean`, `lot_id`, `movement_id`, `match_method`.
+- `purchase_report_lines`: `supplier_article_no`, `latin_name`, `species_fao_code`, `lot_numbers text[]`, `catch_area`, `fishing_gear`, `fishing_gear_code`, `catch_date_from`, `catch_date_to`, `best_before`, `presentation`, `grade`, `condition`, `vessel_name`, `vessel_reg`, `vessel_nation`, `certificate`, `ordered_quantity`, `qty_variance_flag`, `amount_mismatch boolean`, `zero_price_confirmed boolean`, `parent_line_id` (klubbslag under en sammanslagen partirad), `lot_id`, `movement_id`, `match_method`.
 - Ny tabell `supplier_article_map (supplier_id, supplier_article_no, product_id)`, unikt på de två första, med GRANT + RLS enligt projektets mönster.
+- Ny tabell `species_latin_aliases (alias, latin_name)` för kända leverantörsstavfel, unikt på normaliserad alias.
 - Ny tabell `purchase_report_rejected_lines` för otolkade rader (samma mönster som produktimportens loggning).
 - `lots`: `price_status` finns redan (preliminar/bekraftad) — återanvänds.
 
