@@ -246,7 +246,8 @@ describe("dynamiska utpriser via skalfaktor", () => {
 
   it("referenskostnaden ger skalfaktor 1 och orörda priser", () => {
     const r = torsk(120);
-    expect(r.scaleFactor).toBeCloseTo(1.0837, 3);
+    // 12 000 kr råvara / 0,55 = 21 818 kr krävd intäkt mot 14 683 kr referensintäkt
+    expect(r.scaleFactor).toBeCloseTo(1.4859, 3);
     expect(r.lines[0].referencePrice).toBe(329);
   });
 
@@ -255,8 +256,10 @@ describe("dynamiska utpriser via skalfaktor", () => {
     const high = torsk(150);
     expect(low.scaleFactor).toBeLessThan(high.scaleFactor);
     // Förhållandet mellan detaljerna ligger still.
-    const ratio = (r: ReturnType<typeof torsk>) => r.lines[0].suggestedPrice / r.lines[1].suggestedPrice;
-    expect(ratio(low)).toBeCloseTo(ratio(high), 1);
+    const ratio = (r: ReturnType<typeof torsk>) =>
+      (r.lines[0].referencePrice * r.scaleFactor) / (r.lines[1].referencePrice * r.scaleFactor);
+    expect(ratio(low)).toBeCloseTo(ratio(high), 6);
+    expect(ratio(low)).toBeCloseTo(329 / 219, 6);
   });
 
   it("krävd intäkt följer målmarginalen", () => {
