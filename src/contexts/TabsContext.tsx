@@ -38,6 +38,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/chat": "Chatt",
   "/checklist": "Checklista",
   "/vehicles": "Bilar & Maskiner",
+  "/production": "Filé/Tillverkning",
 };
 
 export function getTitleForPath(path: string): string {

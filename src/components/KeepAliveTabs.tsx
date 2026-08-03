@@ -43,6 +43,7 @@ import LandingSettings from "@/pages/LandingSettings";
 import Vehicles from "@/pages/Vehicles";
 import Chat from "@/pages/Chat";
 import Checklist from "@/pages/Checklist";
+import Production from "@/pages/Production";
 
 interface RouteEntry {
   component: React.ReactNode;
