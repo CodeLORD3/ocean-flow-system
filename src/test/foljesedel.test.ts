@@ -102,7 +102,7 @@ describe("bokföringsplan", () => {
   });
 
   it("larmar vid över 10 % viktavvikelse men bokför levererad vikt", () => {
-    const plan = buildPostingPlan([line({ quantity: 8, ordered_quantity: 10 })]);
+    const plan = buildPostingPlan([line({ quantity: 8, ordered_quantity: 10, line_total: 800 })]);
     expect(plan.warnings).toHaveLength(1);
     expect(plan.lots[0].quantityKg).toBe(8);
   });
