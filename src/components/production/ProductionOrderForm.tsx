@@ -540,12 +540,30 @@ export function ProductionOrderForm() {
                         </TableCell>
                         {regionTargets.map((r) => {
                           const b = p?.byRegion.find((x) => x.region === r.region);
+                          const workColor = !b
+                            ? ""
+                            : b.marginInclWorkPct < r.target - 5
+                            ? "text-destructive"
+                            : b.marginInclWorkPct < r.target
+                            ? "text-amber-600"
+                            : "text-emerald-600";
                           return (
                             <TableCell key={r.region} className="py-0.5 text-right text-[11px]">
                               {b ? (
                                 <div className="flex items-center justify-end gap-1">
                                   <span className="font-mono tabular-nums font-medium">{fmt(b.priceIncVat, 0)} kr</span>
-                                  <span className="text-[10px] text-muted-foreground">{fmt(b.actualMarginPct, 0)} %</span>
+                                  <span
+                                    className="font-mono text-[10px] tabular-nums text-muted-foreground"
+                                    title="Marginal på råvara"
+                                  >
+                                    {fmt(b.marginOnRawPct, 0)} %
+                                  </span>
+                                  <span
+                                    className={`font-mono text-[10px] tabular-nums font-semibold ${workColor}`}
+                                    title="Marginal inklusive arbete (jämförs med målet)"
+                                  >
+                                    {fmt(b.marginInclWorkPct, 0)} %
+                                  </span>
                                   {d.productId && (
                                     <Button
                                       size="sm"
