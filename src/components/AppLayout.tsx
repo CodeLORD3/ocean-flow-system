@@ -219,10 +219,28 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="flex items-center gap-1 sm:gap-2">
+              {/* Portalväljare i headern — synlig i stående mobilvy där statusraden är dold */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="sm:hidden h-9 max-w-[130px] gap-1 px-2 text-[11px]"
+                  >
+                    <ArrowLeftRight className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{currentPortalLabel}</span>
+                    <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                {portalMenuContent}
+              </DropdownMenu>
+
               <div className="relative hidden lg:block">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input placeholder="Sök i hela systemet... (Ctrl+K)" className="h-8 w-64 pl-8 text-xs bg-muted/50" />
               </div>
+
+
 
               <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-8 sm:w-8">
                 <Bell className="h-4 w-4" />
