@@ -44,8 +44,10 @@ import {
   CutModel,
   MODEL_MIN_PIECE_WEIGHT,
   detailFormLabel,
+  effectiveCutModel,
   modelForSpecies,
   normalizeDetailForm,
+  pickYieldRow,
 } from "@/lib/cutModels";
 import { SPECIES_GROUP_SUGGESTIONS } from "@/lib/speciesGroups";
 import { speciesKey } from "@/lib/asciiFold";
