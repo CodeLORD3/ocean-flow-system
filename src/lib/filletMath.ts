@@ -103,7 +103,8 @@ export function calcDetailPrice(input: DetailPriceInput & { rawCostOverride?: nu
   const priceIncVatRaw = priceExVatRaw * vatFactor;
   const priceIncVat = roundUpToAllowedPrice(priceIncVatRaw);
   const priceExVat = vatFactor > 0 ? priceIncVat / vatFactor : 0;
-  const actualMarginPct = priceExVat > 0 ? ((priceExVat - rawCostPerKg) / priceExVat) * 100 : 0;
+  const marginOnRawPct = priceExVat > 0 ? ((priceExVat - rawCostPerKg) / priceExVat) * 100 : 0;
+  const marginInclWorkPct = priceExVat > 0 ? ((priceExVat - rawCostPerKg - surcharge) / priceExVat) * 100 : 0;
 
   return {
     rawCostPerKg,
@@ -112,9 +113,12 @@ export function calcDetailPrice(input: DetailPriceInput & { rawCostOverride?: nu
     priceIncVatRaw,
     priceIncVat,
     priceExVat,
-    actualMarginPct,
+    marginOnRawPct,
+    marginInclWorkPct,
+    actualMarginPct: marginOnRawPct,
     effectiveTargetPct: effTarget * 100,
   };
+}
 }
 
 /**
