@@ -974,6 +974,10 @@ export function ProductionOrderForm() {
                           const value = d.prices?.[pl.key] ?? "";
                           const hasPrice = parseFloat(value) > 0;
                           const lowest = pl.res.lowestMarginKey === d.key;
+                          const scaled = scaleFor(pl.key)?.res.lines.find((x) => x.key === d.key);
+                          const suggested = scaled?.suggestedPrice ?? 0;
+                          const reference = scaled?.referencePrice ?? 0;
+                          const delta = hasPrice && suggested > 0 ? parseFloat(value) - suggested : 0;
                           return (
                             <TableCell key={pl.key} className="py-0.5 text-right text-[11px]">
                               <div className="flex items-center justify-end gap-1.5">
@@ -983,9 +987,23 @@ export function ProductionOrderForm() {
                                   placeholder={pl.inclVat ? "kr ink moms" : "kr ex moms"}
                                   value={value}
                                   onChange={(e) => setDetailPriceField(d.key, pl.key, e.target.value)}
-                                  onBlur={() => savePrice({ ...d, prices: { ...d.prices } }, pl.key)}
                                   className="h-9 w-24 px-1 text-[11px] text-right font-mono tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 />
+                                <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+                                  {reference > 0 ? `ref ${fmt(reference, 2)}` : "ref —"}
+                                  {suggested > 0 ? ` · förslag ${fmt(suggested, 2)}` : ""}
+                                </span>
+                                {hasPrice && suggested > 0 && Math.abs(delta) > 0.009 && (
+                                  <span
+                                    className={`font-mono text-[10px] tabular-nums ${
+                                      delta > 0 ? "text-emerald-600" : "text-amber-600"
+                                    }`}
+                                    title="Avvikelse mot förslaget"
+                                  >
+                                    {delta > 0 ? "+" : ""}
+                                    {fmt(delta, 2)}
+                                  </span>
+                                )}
                                 {hasPrice && r ? (
                                   <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
                                     {fmt(r.revenueShare * 100, 1)} % · {fmt(r.totalCostPerKg, 2)} kr
@@ -1006,33 +1024,40 @@ export function ProductionOrderForm() {
                                 {lowest && hasPrice && (
                                   <Badge variant="outline" className="h-5 px-1 text-[9px]">{t("lowest_margin")}</Badge>
                                 )}
-                                {!hasPrice ? (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 px-1 text-[10px]"
+                                  onClick={() => fillSuggestion(d, pl.key)}
+                                >
+                                  {t("use_suggested")}
+                                </Button>
+                                {hasPrice && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 px-1 text-[10px] text-muted-foreground"
+                                    onClick={() => saveAsReference({ ...d, prices: { ...d.prices } }, pl.key)}
+                                    title="Flyttar den relativa värderingen i prislistan"
+                                  >
+                                    Sätt som referens
+                                  </Button>
+                                )}
+                                {hasPrice && d.productId && (
                                   <Button
                                     size="sm"
                                     variant="ghost"
                                     className="h-8 px-1 text-[10px]"
-                                    onClick={() => fillSuggestion(d, pl.key)}
+                                    onClick={() => applyPriceToProduct(d, pl.key, parseFloat(value))}
                                   >
-                                    {t("use_suggested")}
+                                    Fastställ
                                   </Button>
-                                ) : (
-                                  d.productId && (
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-8 px-1 text-[10px]"
-                                      onClick={() =>
-                                        applyPriceToProduct(d, parseFloat(value), `${d.name} · ${pl.label}`)
-                                      }
-                                    >
-                                      Fastställ
-                                    </Button>
-                                  )
                                 )}
                               </div>
                             </TableCell>
                           );
                         })}
+
                         <TableCell>
                           <Button
                             variant="ghost"
