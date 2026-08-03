@@ -1132,8 +1132,13 @@ export type Database = {
           best_before: string | null
           delivery_id: string
           faktiskt_fangstomrade: string | null
+          final_price_per_kg: number | null
           id: string
+          location_id: string | null
+          lot_id: string | null
           notes: string | null
+          price_status: string
+          price_variance: number | null
           product_id: string
           quantity: number
           redskapskategori: string | null
@@ -1146,8 +1151,13 @@ export type Database = {
           best_before?: string | null
           delivery_id: string
           faktiskt_fangstomrade?: string | null
+          final_price_per_kg?: number | null
           id?: string
+          location_id?: string | null
+          lot_id?: string | null
           notes?: string | null
+          price_status?: string
+          price_variance?: number | null
           product_id: string
           quantity: number
           redskapskategori?: string | null
@@ -1160,8 +1170,13 @@ export type Database = {
           best_before?: string | null
           delivery_id?: string
           faktiskt_fangstomrade?: string | null
+          final_price_per_kg?: number | null
           id?: string
+          location_id?: string | null
+          lot_id?: string | null
           notes?: string | null
+          price_status?: string
+          price_variance?: number | null
           product_id?: string
           quantity?: number
           redskapskategori?: string | null
@@ -1178,6 +1193,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "incoming_delivery_lines_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "incoming_delivery_lines_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "incoming_delivery_lines_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
@@ -1190,6 +1219,11 @@ export type Database = {
         Row: {
           category: string | null
           cost_price: number
+          counted_qty_kg: number | null
+          diff_kg: number | null
+          diff_reason: string | null
+          diff_value: number | null
+          expected_qty_kg: number | null
           id: string
           line_value: number
           product_id: string
@@ -1202,6 +1236,11 @@ export type Database = {
         Insert: {
           category?: string | null
           cost_price?: number
+          counted_qty_kg?: number | null
+          diff_kg?: number | null
+          diff_reason?: string | null
+          diff_value?: number | null
+          expected_qty_kg?: number | null
           id?: string
           line_value?: number
           product_id: string
@@ -1214,6 +1253,11 @@ export type Database = {
         Update: {
           category?: string | null
           cost_price?: number
+          counted_qty_kg?: number | null
+          diff_kg?: number | null
+          diff_reason?: string | null
+          diff_value?: number | null
+          expected_qty_kg?: number | null
           id?: string
           line_value?: number
           product_id?: string
@@ -1249,7 +1293,11 @@ export type Database = {
           notes: string | null
           reported_at: string
           reported_by: string | null
+          started_at: string | null
+          status: string
           store_id: string
+          total_diff_kg: number
+          total_diff_value: number
           total_value: number
         }
         Insert: {
@@ -1260,7 +1308,11 @@ export type Database = {
           notes?: string | null
           reported_at?: string
           reported_by?: string | null
+          started_at?: string | null
+          status?: string
           store_id: string
+          total_diff_kg?: number
+          total_diff_value?: number
           total_value?: number
         }
         Update: {
@@ -1271,7 +1323,11 @@ export type Database = {
           notes?: string | null
           reported_at?: string
           reported_by?: string | null
+          started_at?: string | null
+          status?: string
           store_id?: string
+          total_diff_kg?: number
+          total_diff_value?: number
           total_value?: number
         }
         Relationships: [
@@ -1422,6 +1478,198 @@ export type Database = {
           vat_registration?: string | null
         }
         Relationships: []
+      }
+      lot_transformations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          from_lot_id: string
+          id: string
+          production_order_id: string | null
+          quantity_in_kg: number
+          quantity_out_kg: number
+          to_lot_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          from_lot_id: string
+          id?: string
+          production_order_id?: string | null
+          quantity_in_kg: number
+          quantity_out_kg: number
+          to_lot_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          from_lot_id?: string
+          id?: string
+          production_order_id?: string | null
+          quantity_in_kg?: number
+          quantity_out_kg?: number
+          to_lot_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lot_transformations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lot_transformations_from_lot_id_fkey"
+            columns: ["from_lot_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lot_transformations_production_order_id_fkey"
+            columns: ["production_order_id"]
+            isOneToOne: false
+            referencedRelation: "production_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lot_transformations_to_lot_id_fkey"
+            columns: ["to_lot_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lots: {
+        Row: {
+          best_before: string | null
+          catch_area: string | null
+          catch_date_from: string | null
+          catch_date_to: string | null
+          certificate: string | null
+          certified_program: string | null
+          commercial_name: string | null
+          created_at: string
+          created_by: string | null
+          exempt_until: string | null
+          fishing_gear: string | null
+          fishing_gear_code: string | null
+          grade: string | null
+          id: string
+          is_thawed: boolean
+          latin_name: string | null
+          lot_number: string
+          origin_lot_id: string | null
+          presentation: string | null
+          product_id: string | null
+          production_method: string | null
+          quantity_kg: number
+          species_fao_code: string | null
+          status: string
+          supplier_id: string | null
+          supplier_lot_id: string | null
+          terminated_reason: string | null
+          traceability_required: boolean
+          unit_cost: number | null
+          updated_at: string
+          vessel_name: string | null
+          vessel_nation: string | null
+          vessel_reg: string | null
+        }
+        Insert: {
+          best_before?: string | null
+          catch_area?: string | null
+          catch_date_from?: string | null
+          catch_date_to?: string | null
+          certificate?: string | null
+          certified_program?: string | null
+          commercial_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          exempt_until?: string | null
+          fishing_gear?: string | null
+          fishing_gear_code?: string | null
+          grade?: string | null
+          id?: string
+          is_thawed?: boolean
+          latin_name?: string | null
+          lot_number: string
+          origin_lot_id?: string | null
+          presentation?: string | null
+          product_id?: string | null
+          production_method?: string | null
+          quantity_kg?: number
+          species_fao_code?: string | null
+          status?: string
+          supplier_id?: string | null
+          supplier_lot_id?: string | null
+          terminated_reason?: string | null
+          traceability_required?: boolean
+          unit_cost?: number | null
+          updated_at?: string
+          vessel_name?: string | null
+          vessel_nation?: string | null
+          vessel_reg?: string | null
+        }
+        Update: {
+          best_before?: string | null
+          catch_area?: string | null
+          catch_date_from?: string | null
+          catch_date_to?: string | null
+          certificate?: string | null
+          certified_program?: string | null
+          commercial_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          exempt_until?: string | null
+          fishing_gear?: string | null
+          fishing_gear_code?: string | null
+          grade?: string | null
+          id?: string
+          is_thawed?: boolean
+          latin_name?: string | null
+          lot_number?: string
+          origin_lot_id?: string | null
+          presentation?: string | null
+          product_id?: string | null
+          production_method?: string | null
+          quantity_kg?: number
+          species_fao_code?: string | null
+          status?: string
+          supplier_id?: string | null
+          supplier_lot_id?: string | null
+          terminated_reason?: string | null
+          traceability_required?: boolean
+          unit_cost?: number | null
+          updated_at?: string
+          vessel_name?: string | null
+          vessel_nation?: string | null
+          vessel_reg?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lots_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lots_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lots_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       machine_columns: {
         Row: {
@@ -2637,6 +2885,7 @@ export type Database = {
       product_stock_locations: {
         Row: {
           arrival_date: string | null
+          avg_cost: number
           expiry_date: string | null
           id: string
           location_id: string
@@ -2644,11 +2893,13 @@ export type Database = {
           product_id: string
           quantity: number
           shop_order_id: string | null
+          stock_value: number
           unit_cost: number | null
           updated_at: string | null
         }
         Insert: {
           arrival_date?: string | null
+          avg_cost?: number
           expiry_date?: string | null
           id?: string
           location_id: string
@@ -2656,11 +2907,13 @@ export type Database = {
           product_id: string
           quantity?: number
           shop_order_id?: string | null
+          stock_value?: number
           unit_cost?: number | null
           updated_at?: string | null
         }
         Update: {
           arrival_date?: string | null
+          avg_cost?: number
           expiry_date?: string | null
           id?: string
           location_id?: string
@@ -2668,6 +2921,7 @@ export type Database = {
           product_id?: string
           quantity?: number
           shop_order_id?: string | null
+          stock_value?: number
           unit_cost?: number | null
           updated_at?: string | null
         }
@@ -3010,14 +3264,17 @@ export type Database = {
         Row: {
           active: boolean | null
           barcode: string | null
+          catch_weight: boolean
           category: string
           cost_price: number
           created_at: string | null
+          fao_code: string | null
           hs_code: string | null
           id: string
           image_url: string | null
           latin_name: string | null
           name: string
+          nominal_weight_kg: number | null
           origin: string | null
           parent_product_id: string | null
           producer: string | null
@@ -3028,6 +3285,7 @@ export type Database = {
           species_group: string | null
           stock: number
           supplier_id: string | null
+          traceability_exempt: boolean
           unit: string
           updated_at: string | null
           weight_per_piece: number | null
@@ -3036,14 +3294,17 @@ export type Database = {
         Insert: {
           active?: boolean | null
           barcode?: string | null
+          catch_weight?: boolean
           category: string
           cost_price?: number
           created_at?: string | null
+          fao_code?: string | null
           hs_code?: string | null
           id?: string
           image_url?: string | null
           latin_name?: string | null
           name: string
+          nominal_weight_kg?: number | null
           origin?: string | null
           parent_product_id?: string | null
           producer?: string | null
@@ -3054,6 +3315,7 @@ export type Database = {
           species_group?: string | null
           stock?: number
           supplier_id?: string | null
+          traceability_exempt?: boolean
           unit?: string
           updated_at?: string | null
           weight_per_piece?: number | null
@@ -3062,14 +3324,17 @@ export type Database = {
         Update: {
           active?: boolean | null
           barcode?: string | null
+          catch_weight?: boolean
           category?: string
           cost_price?: number
           created_at?: string | null
+          fao_code?: string | null
           hs_code?: string | null
           id?: string
           image_url?: string | null
           latin_name?: string | null
           name?: string
+          nominal_weight_kg?: number | null
           origin?: string | null
           parent_product_id?: string | null
           producer?: string | null
@@ -3080,6 +3345,7 @@ export type Database = {
           species_group?: string | null
           stock?: number
           supplier_id?: string | null
+          traceability_exempt?: boolean
           unit?: string
           updated_at?: string | null
           weight_per_piece?: number | null
@@ -3746,6 +4012,83 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_movements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          location_id: string
+          lot_id: string | null
+          movement_type: string
+          note: string | null
+          product_id: string
+          quantity_kg: number
+          quantity_pieces: number | null
+          reference_id: string | null
+          reference_type: string | null
+          unit_cost: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          location_id: string
+          lot_id?: string | null
+          movement_type: string
+          note?: string | null
+          product_id: string
+          quantity_kg: number
+          quantity_pieces?: number | null
+          reference_id?: string | null
+          reference_type?: string | null
+          unit_cost?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          location_id?: string
+          lot_id?: string | null
+          movement_type?: string
+          note?: string | null
+          product_id?: string
+          quantity_kg?: number
+          quantity_pieces?: number | null
+          reference_id?: string | null
+          reference_type?: string | null
+          unit_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
@@ -4698,6 +5041,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      product_traceability_required: {
+        Args: { _exempt: boolean; _hs_code: string }
         Returns: boolean
       }
     }

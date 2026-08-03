@@ -14,7 +14,9 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { logActivity } from "@/hooks/useActivityLog";
+import { recordMovements, type StockMovementInput } from "@/lib/stockLedger";
 import { Plus, Trash2, ClipboardCheck } from "lucide-react";
+
 
 export interface StockCountScope {
   locationId: string;
@@ -26,6 +28,14 @@ export interface StockCountScope {
   /** Befintliga rader i product_stock_locations för scopet */
   items: any[];
 }
+
+export type DiffReason = "forsaljning" | "svinn" | "ovrigt";
+
+export const REASON_LABELS: Record<string, string> = {
+  forsaljning: "Försäljning",
+  svinn: "Svinn",
+  ovrigt: "Övrigt",
+};
 
 interface Row {
   key: string;
@@ -42,6 +52,8 @@ interface Row {
   /** KÄLLA VID STÄNGNING (placeras tillbaka på) */
   source: string;
   unitCost: string;
+  /** Orsak till differensen mellan förväntat och räknat saldo */
+  reason: DiffReason;
 }
 
 const EMPTY_ROWS = 6;
@@ -51,6 +63,8 @@ const num = (v: string) => {
   const n = Number(String(v).replace(",", ".").trim());
   return Number.isFinite(n) ? n : 0;
 };
+
+const round3 = (n: number) => Math.round(n * 1000) / 1000;
 
 const dec = (n: number, d = 1) =>
   n.toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -67,7 +81,9 @@ const blankRow = (i: number): Row => ({
   end: "",
   source: "",
   unitCost: "",
+  reason: "forsaljning",
 });
+
 
 export default function StockCountDialog({
   open,
@@ -120,7 +136,9 @@ export default function StockCountDialog({
           ".",
           ",",
         ),
+        reason: "forsaljning" as DiffReason,
       }));
+
     const blanksNeeded = Math.max(EMPTY_ROWS, MIN_ROWS - existing.length);
     setRows([...existing, ...Array.from({ length: blanksNeeded }, (_, i) => blankRow(i))]);
   }, [open, scope]);
@@ -150,6 +168,7 @@ export default function StockCountDialog({
   };
 
   const sold = (r: Row) => num(r.start) + num(r.refill) - num(r.end);
+  const diffOf = (r: Row) => round3(num(r.end) - (num(r.start) + num(r.refill)));
 
   const active = rows.filter((r) => r.productId && (r.name.trim() !== ""));
   const totals = {
@@ -157,8 +176,11 @@ export default function StockCountDialog({
     refill: active.reduce((s, r) => s + num(r.refill), 0),
     end: active.reduce((s, r) => s + num(r.end), 0),
     sold: active.reduce((s, r) => s + sold(r), 0),
+    diff: active.reduce((s, r) => s + diffOf(r), 0),
     value: active.reduce((s, r) => s + num(r.end) * num(r.unitCost), 0),
   };
+
+
 
   const fmtMoney = (n: number) =>
     `${n.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} ${currency}`;
@@ -167,38 +189,69 @@ export default function StockCountDialog({
     if (!scope) return;
     setSaving(true);
     try {
-      // Slutvärdet (SLUT vid stängning) blir det nya lagersaldot
-      const keep = active.filter((r) => num(r.end) > 0);
-      if (keep.length > 0) {
-        const { error } = await supabase.from("product_stock_locations").upsert(
-          keep.map((r) => ({
-            product_id: r.productId,
-            location_id: scope.locationId,
-            quantity: num(r.end),
-            unit_cost: num(r.unitCost) || null,
-            updated_at: new Date().toISOString(),
-          })) as any,
-          { onConflict: "product_id,location_id" },
-        );
-        if (error) throw error;
+      const movements: StockMovementInput[] = [];
+      const lines: any[] = [];
+
+      for (const r of active) {
+        const expected = num(r.start) + num(r.refill);
+        const counted = num(r.end);
+        const diff = round3(counted - expected);
+        const cost = num(r.unitCost) || null;
+
+        // Påfyllning under dagen bokförs som överföring in
+        if (num(r.refill) > 0) {
+          movements.push({
+            productId: r.productId,
+            locationId: scope.locationId,
+            quantityKg: num(r.refill),
+            movementType: "overforing_in",
+            unitCost: cost,
+            referenceType: "inventering",
+            note: `Påfyllt under dagen ${sheetDate}`,
+          });
+        }
+
+        // Differensen bokförs med orsak — utflödet ur butikslagret
+        if (diff !== 0) {
+          const type: StockMovementInput["movementType"] =
+            diff > 0
+              ? "inventering"
+              : r.reason === "svinn"
+                ? "svinn"
+                : r.reason === "forsaljning"
+                  ? "forsaljning"
+                  : "inventering";
+          movements.push({
+            productId: r.productId,
+            locationId: scope.locationId,
+            quantityKg: Math.abs(diff),
+            movementType: type,
+            unitCost: cost,
+            referenceType: "inventering",
+            note: `${REASON_LABELS[r.reason] || "Inventering"} · räknat ${dec(counted)} kg mot förväntat ${dec(expected)} kg${notes ? ` · ${notes}` : ""}`,
+          });
+        }
+
+        lines.push({
+          product_id: r.productId,
+          name: r.name,
+          start: num(r.start),
+          start_date: r.startDate || null,
+          refill: num(r.refill),
+          expected_qty_kg: expected,
+          counted_qty_kg: counted,
+          diff_kg: diff,
+          diff_value: cost ? Math.round(diff * cost * 100) / 100 : null,
+          diff_reason: r.reason,
+          source_at_close: r.source || null,
+        });
       }
 
-      const keptIds = new Set(keep.map((r) => r.productId));
-      const removeIds = (scope.items || [])
-        .map((s: any) => s.product_id)
-        .filter((id: string) => !keptIds.has(id));
-      if (removeIds.length > 0) {
-        const { error } = await supabase
-          .from("product_stock_locations")
-          .delete()
-          .eq("location_id", scope.locationId)
-          .in("product_id", removeIds);
-        if (error) throw error;
-      }
+      await recordMovements(movements);
 
       await logActivity({
         action_type: "update",
-        description: `Lagerinrapportering: ${scope.category ? `${scope.category} — ` : ""}${scope.locationName} · ${keep.length} produkter · sålt ${dec(totals.sold)} kg · ${fmtMoney(totals.value)}`,
+        description: `Lagerinrapportering: ${scope.category ? `${scope.category} — ` : ""}${scope.locationName} · ${active.length} produkter · differens ${dec(totals.diff)} kg · ${fmtMoney(totals.value)}`,
         entity_type: "storage_location",
         entity_id: scope.locationId,
         store_id: scope.storeId || null,
@@ -208,24 +261,16 @@ export default function StockCountDialog({
           responsible: responsible || null,
           notes: notes || null,
           totals,
-          lines: active.map((r) => ({
-            product_id: r.productId,
-            name: r.name,
-            start: num(r.start),
-            start_date: r.startDate || null,
-            refill: num(r.refill),
-            end: num(r.end),
-            sold: sold(r),
-            source_at_close: r.source || null,
-          })),
+          lines,
         },
       });
 
       qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
       qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
+      qc.invalidateQueries({ queryKey: ["stock_movements"] });
       toast({
         title: "Inrapporterat",
-        description: `${keep.length} produkter · nytt lagervärde ${fmtMoney(totals.value)}`,
+        description: `${active.length} produkter · differens ${dec(totals.diff)} kg · nytt lagervärde ${fmtMoney(totals.value)}`,
       });
       onOpenChange(false);
     } catch (e: any) {
@@ -234,6 +279,7 @@ export default function StockCountDialog({
       setSaving(false);
     }
   };
+
 
   const sourceChain = [
     "Makrilltrade",
@@ -319,11 +365,17 @@ export default function StockCountDialog({
                   <br />
                   (Start + Påfyllt – Slut)
                 </th>
+                <th className="w-28">
+                  Orsak
+                  <br />
+                  (differens)
+                </th>
                 <th className="w-40">
                   Källa vid stängning
                   <br />
                   (placeras tillbaka på)
                 </th>
+
                 <th className="w-8" />
               </tr>
             </thead>
@@ -380,6 +432,17 @@ export default function StockCountDialog({
                     <td className="px-2 text-right font-mono tabular-nums text-[11px]">
                       {r.productId ? dec(s) : "–"}
                     </td>
+                    <td className="px-1 py-0.5">
+                      <select
+                        value={r.reason}
+                        onChange={(e) => setRow(r.key, { reason: e.target.value as DiffReason })}
+                        className="h-7 w-full rounded-md border border-input bg-background px-1 text-xs"
+                      >
+                        <option value="forsaljning">Försäljning</option>
+                        <option value="svinn">Svinn</option>
+                        <option value="ovrigt">Övrigt</option>
+                      </select>
+                    </td>
                     <td className="px-1 py-0.5 bg-primary/5">
                       <Input
                         value={r.source}
@@ -388,6 +451,7 @@ export default function StockCountDialog({
                         className="h-7 text-xs"
                       />
                     </td>
+
                     <td className="px-1">
                       <Button
                         variant="ghost"
@@ -411,8 +475,12 @@ export default function StockCountDialog({
                 <td className="px-2 text-right font-mono tabular-nums">{dec(totals.refill)}</td>
                 <td className="px-2 text-right font-mono tabular-nums">{dec(totals.end)}</td>
                 <td className="px-2 text-right font-mono tabular-nums">{dec(totals.sold)}</td>
+                <td className="px-2 text-right font-mono tabular-nums text-[11px]">
+                  {dec(totals.diff)}
+                </td>
                 <td className="bg-primary/5" />
                 <td />
+
               </tr>
             </tfoot>
           </table>
