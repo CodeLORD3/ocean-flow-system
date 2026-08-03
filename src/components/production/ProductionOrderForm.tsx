@@ -1133,6 +1133,40 @@ export function ProductionOrderForm() {
                   );
                 })}
               </div>
+              {details.length > 0 && (
+                <div className="grid gap-1.5 text-[11px] sm:grid-cols-2">
+                  {scaleByList.map((s) => (
+                    <div
+                      key={s.key}
+                      className={`rounded-md border px-2 py-1 leading-tight ${
+                        s.band ? "border-amber-400" : ""
+                      }`}
+                    >
+                      <div className="text-muted-foreground">Skalfaktor · {s.label}</div>
+                      <div className="font-mono tabular-nums font-semibold">
+                        {s.res.scaleFactor > 0 ? fmt(s.res.scaleFactor, 3) : "—"}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">
+                        krävd intäkt {fmt(s.res.requiredRevenue, 0)} kr / referensintäkt{" "}
+                        {fmt(s.res.referenceRevenueExVat, 0)} kr
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">
+                        band {fmt(s.warnLow, 2)}–{fmt(s.warnHigh, 2)}
+                        {s.referenceCost ? ` · referenskostnad ${fmt(s.referenceCost, 2)} kr/kg` : ""}
+                      </div>
+                      {s.band && (
+                        <div className="mt-0.5 flex items-center gap-1 text-[10px] font-medium text-amber-600">
+                          <AlertTriangle className="h-3 w-3" />
+                          {s.band === "high"
+                            ? "Inköpspriset ligger långt över referensnivån"
+                            : "Inköpspriset ligger långt under referensnivån"}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="flex items-center gap-2">
                 <Select value={applyList} onValueChange={setApplyList}>
                   <SelectTrigger className="h-10 w-44 text-xs"><SelectValue placeholder={t("price_list")} /></SelectTrigger>
