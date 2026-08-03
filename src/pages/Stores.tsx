@@ -9,8 +9,12 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useStores, useUpdateStore, Store } from "@/hooks/useStores";
+import { useStorageLocations } from "@/hooks/useStorageLocations";
 import { useStoreCoverImages } from "@/hooks/useStoreCoverImages";
 import { focalStyle } from "@/lib/imageFocal";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,10 +29,15 @@ export default function Stores() {
   const [hoveredStore, setHoveredStore] = useState<string | null>(null);
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
+  // Lagerplatser för butiken som redigeras — underlag för inventeringsplatsen.
+  const { data: editLocations = [] } = useStorageLocations(editStore?.id);
+
   // Edit form state
   const [form, setForm] = useState({
     name: "", address: "", city: "", phone: "", manager: "", hours: "", sqm: 0,
+    inventory_location_id: "",
   });
+
 
   const openEdit = (store: Store) => {
     setEditStore(store);
@@ -40,7 +49,9 @@ export default function Stores() {
       manager: store.manager || "",
       hours: store.hours || "",
       sqm: store.sqm || 0,
+      inventory_location_id: (store as any).inventory_location_id || "",
     });
+
   };
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>, storeId: string, storeName: string) => {
@@ -89,7 +100,9 @@ export default function Stores() {
         manager: form.manager || null,
         hours: form.hours || null,
         sqm: form.sqm || null,
-      },
+        inventory_location_id: form.inventory_location_id || null,
+      } as any,
+
       {
         onSuccess: () => {
           toast({ title: "Butik uppdaterad", description: form.name });
@@ -245,7 +258,28 @@ export default function Stores() {
               <Label className="text-xs">Öppettider</Label>
               <Input className="h-8 text-xs" placeholder="t.ex. Mån-Fre 08-17" value={form.hours} onChange={e => setForm(f => ({ ...f, hours: e.target.value }))} />
             </div>
+            <div>
+              <Label className="text-xs">Inventeringsplats (veckorapport)</Label>
+              <Select
+                value={form.inventory_location_id || "none"}
+                onValueChange={(v) => setForm(f => ({ ...f, inventory_location_id: v === "none" ? "" : v }))}
+              >
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue placeholder="Välj lagerplats" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none" className="text-xs">Ingen — inventering blockeras</SelectItem>
+                  {editLocations.map((l) => (
+                    <SelectItem key={l.id} value={l.id} className="text-xs">{l.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                Veckorapportens inventering bokförs mot den här platsen. Utpekad plats, ingen namnmatchning.
+              </p>
+            </div>
           </div>
+
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setEditStore(null)} className="text-xs">Avbryt</Button>
             <Button size="sm" onClick={handleSave} disabled={updateStore.isPending} className="text-xs gap-1.5">

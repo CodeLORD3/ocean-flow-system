@@ -16,6 +16,8 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useProducts } from "@/hooks/useProducts";
 import { recordMovement } from "@/lib/stockLedger";
+import { GROSSIST_FLYTANDE_ID } from "@/lib/productionStock";
+
 
 import { format } from "date-fns";
 
@@ -477,14 +479,9 @@ export default function ProductionReporting() {
       const lines = allLines.filter((l) => l.report_id === reportId);
       const total = lines.reduce((s, l) => s + l.quantity, 0);
 
-      // Find Grossist Flytande location
-      const { data: flytandeLoc } = await supabase
-        .from("storage_locations")
-        .select("id")
-        .eq("name", "Grossist Flytande")
-        .maybeSingle();
-
-      if (!flytandeLoc) throw new Error("Kunde inte hitta lagerstället 'Grossist Flytande'");
+      // Lagerplatsen är utpekad, inte namnmatchad: sex lagerplatser heter
+      // "Grossist Flytande" och en namnuppslagning träffade fel eller kraschade.
+      const flytandeLocId = GROSSIST_FLYTANDE_ID;
 
       // Transfer each produced line to Grossist Flytande
       for (const line of lines) {
@@ -494,7 +491,8 @@ export default function ProductionReporting() {
         // Producerade varor bokförs som tillverkning in via rörelseloggen.
         await recordMovement({
           productId: line.product_id,
-          locationId: flytandeLoc.id,
+          locationId: flytandeLocId,
+
           quantityKg: line.quantity,
           movementType: "tillverkning_in",
           unitCost: unitCost || null,

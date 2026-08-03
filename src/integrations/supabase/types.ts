@@ -4213,6 +4213,7 @@ export type Database = {
           currency: string
           hours: string | null
           id: string
+          inventory_location_id: string | null
           is_wholesale: boolean | null
           legal_entity_id: string
           locale: string
@@ -4233,6 +4234,7 @@ export type Database = {
           currency: string
           hours?: string | null
           id?: string
+          inventory_location_id?: string | null
           is_wholesale?: boolean | null
           legal_entity_id: string
           locale: string
@@ -4253,6 +4255,7 @@ export type Database = {
           currency?: string
           hours?: string | null
           id?: string
+          inventory_location_id?: string | null
           is_wholesale?: boolean | null
           legal_entity_id?: string
           locale?: string
@@ -4265,6 +4268,13 @@ export type Database = {
           sqm?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "stores_inventory_location_id_fkey"
+            columns: ["inventory_location_id"]
+            isOneToOne: false
+            referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stores_legal_entity_id_fkey"
             columns: ["legal_entity_id"]
@@ -5047,6 +5057,7 @@ export type Database = {
         Args: { _exempt: boolean; _hs_code: string }
         Returns: boolean
       }
+      species_key: { Args: { v: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "client"

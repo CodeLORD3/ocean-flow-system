@@ -285,21 +285,40 @@ export function useUpdateWeeklyReportFull() {
 }
 
 async function syncInventoryToStock(reportId: string, lines: InventoryLine[], storeId: string) {
-  // Inventeringen i veckorapporten är en räkning på butikens lagerplats.
-  // Den bokförs via rörelseloggen — products.stock härleds av triggern.
-  const { data: locations } = await supabase
-    .from("storage_locations")
-    .select("id, name")
-    .eq("store_id", storeId);
+  // Inventeringen i veckorapporten är en räkning på butikens utpekade
+  // inventeringsplats (stores.inventory_location_id). Ingen namnmatchning —
+  // byter någon namn på ett lager, eller lägger till ett andra säljlager,
+  // ska räkningen inte kunna glida över till fel plats.
+  const { data: store, error: storeErr } = await supabase
+    .from("stores")
+    .select("name, inventory_location_id")
+    .eq("id", storeId)
+    .maybeSingle();
+  if (storeErr) throw storeErr;
 
-  const pick =
-    (locations || []).find((l: any) => /f(ö|o)rs(ä|a)ljningslager/i.test(l.name || "")) ||
-    (locations || []).find((l: any) => /^raw-/i.test(l.name || "")) ||
-    (locations || [])[0];
-
-  if (!pick) {
-    throw new Error("Butiken saknar lagerplats — inventeringen kan inte bokföras.");
+  const locationId = (store as any)?.inventory_location_id as string | null | undefined;
+  if (!locationId) {
+    throw new Error(
+      `${(store as any)?.name || "Butiken"} har ingen utpekad inventeringsplats. ` +
+        "Ange den under Inställningar → Lagerplatser innan veckorapporten inventeras.",
+    );
   }
+
+  // Platsen måste fortfarande tillhöra butiken — annars bokförs räkningen i fel lager.
+  const { data: loc, error: locErr } = await supabase
+    .from("storage_locations")
+    .select("id, name, store_id")
+    .eq("id", locationId)
+    .maybeSingle();
+  if (locErr) throw locErr;
+  if (!loc || (loc as any).store_id !== storeId) {
+    throw new Error(
+      "Butikens utpekade inventeringsplats finns inte längre, eller tillhör en annan butik. " +
+        "Rätta den under Inställningar → Lagerplatser.",
+    );
+  }
+  const pick = loc as { id: string; name: string };
+
 
   for (const line of lines) {
     await setBalance({

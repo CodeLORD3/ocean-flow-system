@@ -50,7 +50,9 @@ import {
 } from "@/lib/cutModels";
 import { SPECIES_GROUP_SUGGESTIONS } from "@/lib/speciesGroups";
 import { speciesKey } from "@/lib/asciiFold";
-import { addStock, withdrawStock } from "@/lib/productionStock";
+import { addStock, withdrawStock, GROSSIST_FLYTANDE_ID } from "@/lib/productionStock";
+import { pickRawLots, createOutputLot, recordLotTransformation } from "@/lib/lotTransformation";
+
 import { evaluateAutoApproval } from "@/lib/autoApproval";
 
 export interface FilletPrefill {
@@ -414,12 +416,66 @@ export function ProductionOrderForm() {
         lines,
       });
 
-      if (rawProductId) await withdrawStock(rawProductId, rawQtyNum);
+      // Partibindning: råvaran plockas FIFO ur sina partier och varje detalj får
+      // ett eget parti som ärver fångstuppgifterna. Kopplingen loggas.
+      const picks = rawProductId
+        ? await pickRawLots(rawProductId, GROSSIST_FLYTANDE_ID, rawQtyNum)
+        : [];
+      const totalIn = picks.reduce((s, p) => s + p.quantityKg, 0) || rawQtyNum;
+
+      if (rawProductId) {
+        if (picks.length) {
+          for (const p of picks) {
+            await withdrawStock(rawProductId, p.quantityKg, GROSSIST_FLYTANDE_ID, {
+              lotId: p.lotId,
+              referenceType: "production_order",
+              referenceId: order.id,
+              note: p.lotId ? null : "Råvara utan parti — okänd härkomst",
+            });
+          }
+        } else {
+          await withdrawStock(rawProductId, rawQtyNum, GROSSIST_FLYTANDE_ID, {
+            referenceType: "production_order",
+            referenceId: order.id,
+          });
+        }
+      }
+
+      const sourceLotId = picks.find((p) => p.lotId)?.lotId ?? null;
       for (const l of lines) {
-        if (l.product_id) await addStock(l.product_id, l.planned_qty, l.cost_price);
+        if (!l.product_id || !l.planned_qty) continue;
+        const outLotId = await createOutputLot(
+          sourceLotId,
+          {
+            productId: l.product_id,
+            quantityKg: l.planned_qty,
+            unitCost: l.cost_price,
+            detailName: l.detail_name,
+          },
+          order.id,
+        );
+        await addStock(l.product_id, l.planned_qty, l.cost_price, GROSSIST_FLYTANDE_ID, {
+          lotId: outLotId,
+          referenceType: "production_order",
+          referenceId: order.id,
+          note: l.detail_name,
+        });
+        // Andelen av varje råvaruparti som gick in i just den här detaljen.
+        for (const p of picks) {
+          const share = totalIn > 0 ? p.quantityKg / totalIn : 0;
+          await recordLotTransformation({
+            fromLotId: p.lotId,
+            toLotId: outLotId,
+            quantityInKg: l.planned_qty > 0 ? (l.planned_qty / (totalIn || 1)) * p.quantityKg : 0,
+            quantityOutKg: l.planned_qty * share,
+            productionOrderId: order.id,
+          });
+        }
       }
       qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
       qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
+      qc.invalidateQueries({ queryKey: ["lots"] });
+
 
       toast({
         title: "Tillverkningsorder registrerad",
