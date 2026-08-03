@@ -49,6 +49,7 @@ import {
   normalizeDetailForm,
 } from "@/lib/cutModels";
 import { SPECIES_GROUP_SUGGESTIONS } from "@/lib/speciesGroups";
+import { speciesKey } from "@/lib/asciiFold";
 import { addStock, withdrawStock } from "@/lib/productionStock";
 import { evaluateAutoApproval } from "@/lib/autoApproval";
 
@@ -130,7 +131,7 @@ export function ProductionOrderForm() {
   }, [margins, applyRegion]);
 
   /* ── Artens styckningsmodell ─────────────────────────────── */
-  const modelRow = cutModels.find((c) => c.species_group.toLowerCase() === species.toLowerCase());
+  const modelRow = cutModels.find((c) => speciesKey(c.species_group) === speciesKey(species));
   const cutModel = (modelRow?.cut_model as CutModel) ?? modelForSpecies(species);
   const minPieceWeight =
     modelRow?.min_piece_weight_kg != null
@@ -197,7 +198,7 @@ export function ProductionOrderForm() {
   const lastSetFor = (form: string) => {
     const f = normalizeDetailForm(form);
     const row = detailPrices.find(
-      (d) => d.species_group.toLowerCase() === species.toLowerCase() && normalizeDetailForm(d.detail_form) === f,
+      (d) => speciesKey(d.species_group) === speciesKey(species) && normalizeDetailForm(d.detail_form) === f,
     );
     return Number(row?.last_set_price) || 0;
   };
@@ -205,7 +206,7 @@ export function ProductionOrderForm() {
   const byproductPriceFor = (form: string) => {
     const f = normalizeDetailForm(form);
     const row = byproductPrices.find(
-      (d) => d.species_group.toLowerCase() === species.toLowerCase() && normalizeDetailForm(d.detail_form) === f,
+      (d) => speciesKey(d.species_group) === speciesKey(species) && normalizeDetailForm(d.detail_form) === f,
     );
     return Number(row?.price_incl_vat) || 0;
   };
@@ -213,7 +214,7 @@ export function ProductionOrderForm() {
   /* ── Föreslå detaljer utifrån modell och utbyte ───────────── */
   const suggest = () => {
     if (!species) return;
-    const rows = yields.filter((y) => y.species_group === species && y.from_form === rawForm);
+    const rows = yields.filter((y) => speciesKey(y.species_group) === speciesKey(species) && y.from_form === rawForm);
     const isFilletRow = (toForm: string) =>
       toForm.includes("filé") || toForm.includes("sida") || toForm === "loin" || toForm.includes("stjärt");
     const filletRow = rows
@@ -343,7 +344,7 @@ export function ProductionOrderForm() {
     setDetails((prev) => prev.map((d) => (d.key === key ? { ...d, ...patch } : d)));
 
   const yieldWarning = useMemo(() => {
-    const rows = yields.filter((y) => y.species_group === species && y.from_form === rawForm);
+    const rows = yields.filter((y) => speciesKey(y.species_group) === speciesKey(species) && y.from_form === rawForm);
     return rows.filter((y) => {
       const avg = rollingAverage(actuals, y.species_group, y.from_form, y.to_form);
       return y.is_estimate && (avg?.count ?? 0) < 3;
