@@ -1,3 +1,5 @@
+import { speciesKey } from "@/lib/asciiFold";
+
 /**
  * Förslagslista för artgrupper (species_group).
  *
@@ -94,8 +96,16 @@ export const SPECIES_GROUP_SUGGESTIONS = [
   "abalone",
 ] as const;
 
-/** Normaliserar en artgrupp till lagringsformat (gemener, trimmat). */
+/**
+ * Normaliserar en artgrupp till lagringsformat: ASCII, gemener, trimmat.
+ * Samma funktion (speciesKey) används vid all uppslagning av artgrupper.
+ */
 export function normalizeSpeciesGroup(value: unknown): string | null {
-  const v = String(value ?? "").trim().toLowerCase();
+  const v = speciesKey(value);
   return v === "" ? null : v;
 }
+
+/** Förslagslistan som normaliserade nycklar. */
+export const SPECIES_GROUP_KEYS: string[] = [
+  ...new Set(SPECIES_GROUP_SUGGESTIONS.map((s) => speciesKey(s))),
+];
