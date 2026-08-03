@@ -1259,6 +1259,45 @@ export default function PurchaseReporting() {
     [allLines, selectedReportId],
   );
 
+  // Ett spärrat läge ska alltid säga vad man gör åt det: här räknas exakt vad
+  // som hindrar "Bokför inleverans" och vilka rader det gäller.
+  const postBlock = useMemo(() => {
+    if (!selectedReport) {
+      const only = reports.length === 1 ? reports[0] : null;
+      return {
+        text: only
+          ? `Ingen rapport är vald — välj ${only.display_name || only.file_name}`
+          : "Ingen rapport är vald — klicka på en följesedel i dokumentlistan till höger",
+        action: only ? { label: "Välj rapporten", id: only.id } : null,
+        lineIds: [] as string[],
+      };
+    }
+    if (selectedLines.length === 0) {
+      return { text: "Rapporten saknar rader", action: null, lineIds: [] as string[] };
+    }
+    const missingProduct = selectedLines.filter((l) => !l.product_id);
+    if (missingProduct.length > 0) {
+      return {
+        text: `${missingProduct.length} ${missingProduct.length === 1 ? "rad" : "rader"} saknar produktkoppling`,
+        action: null,
+        lineIds: missingProduct.map((l) => l.id),
+      };
+    }
+    return null;
+  }, [selectedReport, selectedLines, reports]);
+
+  // Icke-blockerande varningar, visade när knappen är klickbar.
+  const postWarnings = useMemo(() => {
+    if (postBlock || !selectedReport) return [] as string[];
+    const w: string[] = [];
+    const noLot = selectedLines.filter((l) => plausibleLots(l as any).length === 0);
+    if (noLot.length > 0) w.push(`Partinummer saknas på ${noLot.length} ${noLot.length === 1 ? "rad" : "rader"}`);
+    const zero = selectedLines.filter((l) => !l.unit_price);
+    if (zero.length > 0) w.push(`${zero.length} ${zero.length === 1 ? "rad" : "rader"} har nollpris och måste bekräftas i dialogen`);
+    return w;
+  }, [postBlock, selectedReport, selectedLines]);
+
+
   const grandTotal = allLines.reduce((s, l) => s + (l.line_total ?? 0), 0);
 
   const searchedProducts = products.filter((p) =>
