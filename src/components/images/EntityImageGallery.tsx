@@ -19,7 +19,19 @@ import {
 import { cn } from "@/lib/utils";
 import { focalStyle, focalPercent, focalLabel } from "@/lib/imageFocal";
 
+/** Datum + tid då bilden laddades upp, t.ex. "03-08 10:24". */
+function uploadedLabel(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return (
+    d.toLocaleDateString("sv-SE", { day: "2-digit", month: "2-digit" }) +
+    " " +
+    d.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })
+  );
+}
+
 type Props = {
+
   entityType: string;
   entityId: string;
   title?: string;
@@ -120,7 +132,7 @@ export function EntityImageGallery({
               <button
                 type="button"
                 onClick={() => setLightbox(img.url)}
-                className="block w-full aspect-video bg-muted overflow-hidden"
+                className="relative block w-full aspect-video bg-muted overflow-hidden"
               >
                 <img
                   src={img.url}
@@ -129,13 +141,19 @@ export function EntityImageGallery({
                   className="h-full w-full object-cover transition-transform group-hover:scale-[1.03]"
                   style={focalStyle(img.focal_point)}
                 />
+                {/* Uppladdningstidpunkt i nedre vänstra hörnet av bilden */}
+                <span className="absolute bottom-1 left-1 rounded bg-background/80 px-1 py-0.5 font-mono tabular-nums text-[9px] text-foreground backdrop-blur pointer-events-none">
+                  {uploadedLabel(img.created_at)}
+                </span>
               </button>
+
               {img.is_cover && (
                 <Badge className="absolute top-1 left-1 h-4 gap-1 px-1.5 text-[9px] pointer-events-none">
                   <Star className="h-2.5 w-2.5 fill-current" />
                   Omslag
                 </Badge>
               )}
+
               {editable && (
                 <Tooltip>
                   <TooltipTrigger asChild>

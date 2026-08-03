@@ -115,11 +115,60 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     .filter((s) => !s.is_wholesale)
     .filter((s) => allowedSet.size === 0 || allowedSet.has(s.id));
 
+  const currentPortalLabel =
+    site === "shop" ? activeStoreName || "Butik" : site === "production" ? "Grossist" : "Admin";
+
+  /* Portalväljarens innehåll – återanvänds i statusraden (desktop) och headern (mobil) */
+  const portalMenuContent = (
+    <DropdownMenuContent align="end" className="w-52">
+      <DropdownMenuLabel className="text-[10px]">Välj portal</DropdownMenuLabel>
+      <DropdownMenuSeparator />
+      {access.includes("wholesale") && (
+        <DropdownMenuItem
+          className={`text-xs gap-2 ${site === "wholesale" ? "bg-muted font-medium" : ""}`}
+          onClick={() => { setSite("wholesale"); setActiveStore(null, null); switchTab("/organisation"); }}
+        >
+          <Shield className="h-3 w-3" /> Admin
+        </DropdownMenuItem>
+      )}
+      {access.includes("production") && (
+        <DropdownMenuItem
+          className={`text-xs gap-2 ${site === "production" ? "bg-muted font-medium" : ""}`}
+          onClick={() => { setSite("production"); setActiveStore(null, null); switchTab("/organisation"); }}
+        >
+          <Factory className="h-3 w-3" /> Grossist
+        </DropdownMenuItem>
+      )}
+      {access.includes("shop") && (
+        <>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel className="text-[10px]">Butiker</DropdownMenuLabel>
+          {retailStores.length === 0 ? (
+            <DropdownMenuItem disabled className="text-[10px] text-muted-foreground">
+              Inga butiker tillgängliga
+            </DropdownMenuItem>
+          ) : (
+            retailStores.map((store) => (
+              <DropdownMenuItem
+                key={store.id}
+                className={`text-xs gap-2 ${site === "shop" && activeStoreName === store.name ? "bg-muted font-medium" : ""}`}
+                onClick={() => { setSite("shop"); setActiveStore(store.id, store.name); switchTab("/organisation"); }}
+              >
+                <Store className="h-3 w-3" /> {store.name}
+              </DropdownMenuItem>
+            ))
+          )}
+        </>
+      )}
+    </DropdownMenuContent>
+  );
+
   return (
     <SidebarProvider>
       <div className="h-[100dvh] max-h-[100dvh] overflow-hidden flex w-full">
         {site === "shop" ? <ShopSidebar /> : site === "production" ? <ProductionSidebar /> : <AppSidebar />}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+
 
           {/* Top status bar — hidden on mobile to save vertical space */}
           <div className="hidden sm:flex h-8 items-center justify-between bg-sidebar-background px-4 text-xs text-foreground shrink-0">
@@ -137,52 +186,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     className="h-6 text-[10px] gap-1 text-foreground hover:text-foreground hover:bg-sidebar-accent"
                   >
                     <ArrowLeftRight className="h-3 w-3" />
-                    {site === "shop" ? activeStoreName || "Butik" : site === "production" ? "Grossist" : "Admin"}
+                    {currentPortalLabel}
                     <ChevronDown className="h-2.5 w-2.5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuLabel className="text-[10px]">Välj portal</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {access.includes("wholesale") && (
-                    <DropdownMenuItem
-                      className={`text-xs gap-2 ${site === "wholesale" ? "bg-muted font-medium" : ""}`}
-                      onClick={() => { setSite("wholesale"); setActiveStore(null, null); switchTab("/organisation"); }}
-                    >
-                      <Shield className="h-3 w-3" /> Admin
-                    </DropdownMenuItem>
-                  )}
-                  {access.includes("production") && (
-                    <DropdownMenuItem
-                      className={`text-xs gap-2 ${site === "production" ? "bg-muted font-medium" : ""}`}
-                      onClick={() => { setSite("production"); setActiveStore(null, null); switchTab("/organisation"); }}
-                    >
-                      <Factory className="h-3 w-3" /> Grossist
-                    </DropdownMenuItem>
-                  )}
-                  {access.includes("shop") && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuLabel className="text-[10px]">Butiker</DropdownMenuLabel>
-                      {retailStores.length === 0 ? (
-                        <DropdownMenuItem disabled className="text-[10px] text-muted-foreground">
-                          Inga butiker tillgängliga
-                        </DropdownMenuItem>
-                      ) : (
-                        retailStores.map((store) => (
-                          <DropdownMenuItem
-                            key={store.id}
-                            className={`text-xs gap-2 ${site === "shop" && activeStoreName === store.name ? "bg-muted font-medium" : ""}`}
-                            onClick={() => { setSite("shop"); setActiveStore(store.id, store.name); switchTab("/organisation"); }}
-                          >
-                            <Store className="h-3 w-3" /> {store.name}
-                          </DropdownMenuItem>
-                        ))
-                      )}
-                    </>
-                  )}
-                </DropdownMenuContent>
+                {portalMenuContent}
               </DropdownMenu>
+
               <span>•</span>
               <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
               <span>Online</span>
@@ -209,10 +219,28 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="flex items-center gap-1 sm:gap-2">
+              {/* Portalväljare i headern — synlig i stående mobilvy där statusraden är dold */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="sm:hidden h-9 max-w-[130px] gap-1 px-2 text-[11px]"
+                  >
+                    <ArrowLeftRight className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{currentPortalLabel}</span>
+                    <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                {portalMenuContent}
+              </DropdownMenu>
+
               <div className="relative hidden lg:block">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input placeholder="Sök i hela systemet... (Ctrl+K)" className="h-8 w-64 pl-8 text-xs bg-muted/50" />
               </div>
+
+
 
               <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-8 sm:w-8">
                 <Bell className="h-4 w-4" />
