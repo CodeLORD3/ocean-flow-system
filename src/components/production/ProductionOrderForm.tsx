@@ -106,6 +106,8 @@ export function ProductionOrderForm() {
   const { data: modelSplits = [] } = useCutModelSplits();
   const { data: detailPrices = [] } = useDetailPrices();
   const upsertDetailPrice = useUpsertDetailPrice();
+  const { data: lastApplications } = useLatestPriceApplications();
+  const applyPrice = useApplyDetailPrice();
   const { staff } = useStaffAuth();
   const createOrder = useCreateProductionOrder();
   const qc = useQueryClient();
@@ -129,6 +131,10 @@ export function ProductionOrderForm() {
   const [applyList, setApplyList] = useState<string>("");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [splitWarning, setSplitWarning] = useState<{ picks: RawPick[]; detailCount: number } | null>(null);
+  /** Väntande prisändring som redan sattes inom samma dygn. */
+  const [confirmChange, setConfirmChange] = useState<{
+    rows: { detail: DetailRow; listKey: string; price: number; previous: DetailPriceApplication | null }[];
+  } | null>(null);
 
   /** Prislistor per kanal: butiken räknar inkl moms, grossisten exkl moms. */
   const priceLists = useMemo(
@@ -138,9 +144,12 @@ export function ProductionOrderForm() {
         label: m.label || m.region,
         target: Number(m.target_pct),
         inclVat: ((m as any).applies_to ?? "butik") === "butik",
+        warnLow: Number((m as any).scale_warn_low) || 0.75,
+        warnHigh: Number((m as any).scale_warn_high) || 1.25,
       })),
     [margins],
   );
+
 
   const speciesOptions = useMemo(
     () =>
