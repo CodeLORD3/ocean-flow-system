@@ -58,6 +58,25 @@ export function useCreateStorageLocation() {
       const { data, error } = await supabase.from("storage_locations").insert(params as any).select().single();
 
       if (error) throw error;
+
+      // Vid uppsättning: ett nytt Försäljningslager blir butikens inventeringsplats
+      // om ingen är utpekad ännu. Förval, inte namnmatchning vid körning —
+      // valet ligger kvar i stores.inventory_location_id och kan ändras i butiksformuläret.
+      const isSalesStock = /^f(ö|o)rs(ä|a)ljningslager$/i.test((params.name || "").trim());
+      if (isSalesStock && !params.parent_location_id) {
+        const { data: store } = await supabase
+          .from("stores")
+          .select("inventory_location_id")
+          .eq("id", params.store_id)
+          .maybeSingle();
+        if (store && !(store as any).inventory_location_id) {
+          await supabase
+            .from("stores")
+            .update({ inventory_location_id: data.id } as any)
+            .eq("id", params.store_id);
+        }
+      }
+
       await logActivity({
         action_type: "create",
         description: `Lagerplats skapad: ${params.name}`,
@@ -66,8 +85,13 @@ export function useCreateStorageLocation() {
         store_id: params.store_id,
       });
       return data;
+
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["storage_locations"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["storage_locations"] });
+      qc.invalidateQueries({ queryKey: ["stores"] });
+    },
+
   });
 }
 
