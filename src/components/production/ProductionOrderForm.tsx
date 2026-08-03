@@ -356,6 +356,53 @@ export function ProductionOrderForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [base, priceLists, priceNum, rawQtyNum, details]);
 
+  /**
+   * Skalfaktor per prislista: referenspriserna skalas till partiets verkliga
+   * snittkostnad. Förhållandet mellan detaljerna ligger still, bara nivån rör
+   * sig — referenspriserna i prislistan ändras aldrig härifrån.
+   */
+  const scaleByList = useMemo(() => {
+    return priceLists.map((pl) => {
+      const res = priceByScaleFactor({
+        avgCostPerKg: priceNum,
+        rawQuantity: rawQtyNum,
+        targetMarginPct: pl.target,
+        inclVat: pl.inclVat,
+        lines: base.map((b) => ({
+          key: b.detail.key,
+          qtyKg: b.qty,
+          referencePrice: storedPrice(b.detail.form, pl.key),
+          vatPct: b.vat,
+          surchargePerKg: b.surcharge,
+        })),
+      });
+      const band = scaleFactorOutsideBand(res.scaleFactor, pl.warnLow, pl.warnHigh);
+      const referenceCost = referenceCostFor(
+        detailPrices,
+        pl.key,
+        species,
+        normalizeDetailForm(base[0]?.detail.form ?? ""),
+      );
+      return { ...pl, res, band, referenceCost };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [base, priceLists, priceNum, rawQtyNum, details, detailPrices, species]);
+
+  const scaleFor = (listKey: string) => scaleByList.find((s) => s.key === listKey);
+
+  /** Föreslaget pris för en detalj i en prislista (referenspris × skalfaktor). */
+  const suggestedPriceFor = (d: DetailRow, listKey: string): number => {
+    const line = scaleFor(listKey)?.res.lines.find((l) => l.key === d.key);
+    return line?.suggestedPrice ?? 0;
+  };
+
+  /** Senast applicerade priset på produkten i prislistan. */
+  const lastApplicationFor = (d: DetailRow, listKey: string): DetailPriceApplication | null => {
+    if (!d.productId || !lastApplications) return null;
+    return lastApplications.get(applicationKey(listKey, d.productId)) ?? null;
+  };
+
+
   const filteredProducts = useMemo(() => {
     const q = productSearch.trim().toLowerCase();
     if (!q) return [];
