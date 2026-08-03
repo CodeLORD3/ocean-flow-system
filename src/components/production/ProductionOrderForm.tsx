@@ -104,6 +104,8 @@ export function ProductionOrderForm() {
   const [rawSku, setRawSku] = useState("");
   const [species, setSpecies] = useState("");
   const [rawForm, setRawForm] = useState("hel");
+  /** Sortering på råvaran ("" = okänd). Styr både utbyte och styckningsmodell. */
+  const [grade, setGrade] = useState("");
   const [rawQty, setRawQty] = useState("");
   const [pieceWeight, setPieceWeight] = useState("");
   const [price, setPrice] = useState("");
