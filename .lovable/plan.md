@@ -19,25 +19,25 @@ Utökar den befintliga AI-inläsningen (`supabase/functions/parse-foljesedel`) �
 ## Steg
 
 **1. Databas (en migration)**
-- `purchase_reports`: `supplier_id`, `document_type`, `document_number`, `document_date`, `delivery_date`, `total_ex_vat`, `file_hash`, `posted_at`, `posted_by`. Unikt index på `(supplier_id, document_number)` där båda finns; index på `file_hash`.
-- `purchase_report_lines`: `supplier_article_no`, `latin_name`, `species_fao_code`, `lot_numbers text[]`, `catch_area`, `fishing_gear`, `fishing_gear_code`, `catch_date_from`, `catch_date_to`, `best_before`, `presentation`, `grade`, `condition`, `vessel_name`, `vessel_reg`, `vessel_nation`, `certificate`, `ordered_quantity`, `qty_variance_flag`, `amount_mismatch boolean`, `zero_price_confirmed boolean`, `parent_line_id` (klubbslag under en sammanslagen partirad), `lot_id`, `movement_id`, `match_method`.
+- `purchase_reports`: `supplier_id`, `document_type`, `document_number`, `document_date`, `delivery_date`, `total_ex_vat`, `file_hash`, `posted_at`, `posted_by`. Unikt index på `(supplier_id, document_number)` där båda finns, plus unikt index på `(supplier_id, document_date)`; index på `file_hash`.
+- `purchase_report_lines`: `supplier_article_no`, `latin_name`, `species_fao_code`, `lot_numbers text[]`, `catch_area`, `fishing_gear`, `fishing_gear_code`, `catch_date_from`, `catch_date_to`, `best_before`, `presentation`, `grade`, `condition`, `vessel_name`, `vessel_reg`, `vessel_nation`, `certificate`, `ordered_quantity`, `qty_variance_flag`, `amount_mismatch boolean`, `zero_price_confirmed boolean`, `parent_line_id` (klubbslag under en sammanslagen partirad), `batch_quantities jsonb` (justerad fördelning per batchnummer), `lot_id`, `movement_id`, `match_method`.
 - Ny tabell `supplier_article_map (supplier_id, supplier_article_no, product_id)`, unikt på de två första, med GRANT + RLS enligt projektets mönster.
-- Ny tabell `species_latin_aliases (alias, latin_name)` för kända leverantörsstavfel, unikt på normaliserad alias.
+- Ny tabell `species_latin_aliases (alias, latin_name)` som BARA innehåller felstavningar mappade mot korrekt namn — en CHECK förbjuder rader där normaliserad alias är lika med normaliserat `latin_name`, så korrekta namn aldrig kan mappas mot sig själva. Unikt på normaliserad alias. Seed: `Homarus gamarus → Homarus gammarus`, `Lophius piscatorus → Lophius piscatorius`, `Clupea herengus → Clupea harengus`, `Mytilus Edulis → Mytilus edulis` (versalfelet fångas redan av normaliseringen men läggs in ändå).
 - Ny tabell `purchase_report_rejected_lines` för otolkade rader (samma mönster som produktimportens loggning).
 - `lots`: `price_status` finns redan (preliminar/bekraftad) — återanvänds.
 
 **2. Edge function `parse-foljesedel`**
-Behåller Gemini via Lovable AI Gateway och `extract_products`-verktyget, men schemat byts till `{ document: {...}, lines: [...] }` med dokumenthuvudet (leverantör, dokumenttyp, dokumentnummer, dokumentdatum, leveransdatum, totalsumma ex moms) och de nya radfälten. Alla nya fält nullable, systemprompten skärps: aldrig gissningar, `null` när fältet saknas; `lot_numbers` är alltid en array så en rad kan bära flera partinummer. Filens SHA-256 beräknas i funktionen och returneras.
+Behåller Gemini via Lovable AI Gateway och `extract_products`-verktyget, men schemat byts till `{ document: {...}, lines: [...] }` med dokumenthuvudet (leverantör, dokumenttyp, dokumentnummer, dokumentdatum, leveransdatum, totalsumma ex moms) och de nya radfälten. Alla nya fält nullable, systemprompten skärps: aldrig gissningar, `null` när fältet saknas; `lot_numbers` är alltid en array så en rad kan bära flera partinummer. För auktionsdokument (GFA) läses "Auktion: <datum>" som `document_date`. Filens SHA-256 beräknas i funktionen och returneras.
 
 **3. Leverantörs- och produktmatchning (ny `src/lib/foljesedelMatch.ts`)**
 Återanvänder `supplierAliasKeys`/`buildSupplierIndex`/`lookupSupplier` från `productImport.ts` och `skuKey`/`compareKey`/`speciesKey` från `asciiFold.ts`. Matchningsordning per rad: sparad `supplier_article_map` → FAO-kod → latinskt namn → `species_group` → namnnyckel. `match_method` sparas per rad. Saknad leverantör frågas en gång i UI:t och kopplingen sparas; manuellt vald produkt skrivs till `supplier_article_map`.
 
 **4. Dubblettspärr**
-Vid uppladdning kontrolleras `file_hash` och `(supplier_id, document_number)`. Träff → dialog som kräver bekräftelse innan en ny rapport skapas, aldrig tyst dubblett.
+Vid uppladdning kontrolleras `file_hash`, `(supplier_id, document_number)` och `(supplier_id, document_date)`. Saknar dokumentet nummer — som GFA:s auktionssedlar, där bara "Auktion: 2026-07-28" och "Vår referens" finns — sätts `document_number` till auktions-/dokumentdatumet. Det finns en auktion per dag och leverantör, så datumnyckeln fångar dubbletten även när `file_hash` skiljer sig (PIA skriver genereringstidpunkt i sidfoten och hashen ändras vid ny nedladdning). Träff → dialog som kräver bekräftelse innan en ny rapport skapas, aldrig tyst dubblett.
 
 **5. Brygga till lagerledgern**
 Knappen "Bokför inleverans" på klar rapport i `PurchaseReporting.tsx`, driven av en ny `src/lib/purchaseReportPosting.ts` som anropar exakt samma partiskapande + `recordMovements` som `Receiving.tsx`. Partibildningen går i båda riktningarna:
-- **En rad → flera lots (JHB):** rad med flera batchnummer delas jämnt, t.ex. 100 kg / 4 batch = 4 lots à 25,000 kg.
+- **En rad → flera lots (JHB):** rad med flera batchnummer ger ett lot per batch. En dialog visar förslag på jämn fördelning (100 kg / 4 = 25,000 kg) med redigerbara kvantiteter per batch, eftersom lådorna kan väga olika och mottagaren ser det. Summan låses till radens levererade kvantitet och avvikelse blockerar bokföringen. Jämn fördelning är förval, så den som inte bryr sig bara godkänner. Den valda fördelningen sparas i `batch_quantities`.
 - **Flera rader → ett lot (GFA):** rader med samma partinummer inom samma dokument slås ihop till ETT lot med viktat snittpris (20 kg à 222 + 20 kg à 222 + 20 kg à 110 → 60 kg à 184,67 kr/kg). De enskilda klubbslagen behålls som underrader på `purchase_report_lines` (`parent_line_id`) så prisspridningen är spårbar, och alla underrader pekar på samma `lot_id`.
 
 Alla spårbarhetsfält sätts, `price_status = 'preliminar'`, inleveransrörelse mot Grossist Flytande via `GROSSIST_FLYTANDE_ID` i `src/lib/locations.ts`, `lot_id`/`movement_id` tillbaka på raderna. Idempotent via `posted_at`.
@@ -50,13 +50,15 @@ Regler i bokföringen:
 **6. Övrigt**
 Enhetsnormalisering kg/st/låda/förp mot produktens `unit`; kontroll att `quantity × unit_price ≈ line_total` med markering vid avvikelse; `report_date` sätts från dokumentdatum i stället för uppladdningsdagen; otolkade rader loggas.
 
-**Stavfelstolerans i latinska namn:** matchningen på latinskt namn sker mot en normaliserad nyckel (`speciesKey`) plus en aliaslista för kända leverantörsstavfel (t.ex. *Homarus gamarus* → *Homarus gammarus*, *Lophius piscatorius* → *Lophius piscatorius*/*Lophius* enligt korrekt art), och därefter ett toleransfall med redigeringsavstånd ≤ 2 mot artregistrets latinska namn. Träff via tolerans markeras som `match_method = 'latin_fuzzy'` och visas för bekräftelse i stället för att sättas tyst. Aliaslistan ligger i en egen tabell så nya stavfel kan läggas till utan kodändring.
+**Stavfelstolerans i latinska namn:** matchningen sker mot normaliserad nyckel (`speciesKey`), sedan mot `species_latin_aliases` (bara felstavning → korrekt namn, t.ex. *Homarus gamarus* → *Homarus gammarus*, *Lophius piscatorus* → *Lophius piscatorius*, *Clupea herengus* → *Clupea harengus*), och sist ett toleransfall med redigeringsavstånd ≤ 2 mot artregistrets latinska namn. Träff via tolerans markeras `match_method = 'latin_fuzzy'` och visas för bekräftelse i stället för att sättas tyst. Aliaslistan är en tabell, så nya stavfel läggs till utan kodändring.
 
 **7. Test (`src/test/foljesedel.test.ts`)**
 - GFA 2026-07-28: 32 kollin, 532 kg, 15 partirader — parti 10012.6125240, Torsk 1 rensad, S158 SARON Danmark, 29 kg à 146 kr, trål, 27.3.a.n Skagerak, 2026-07-27 → ett lot med `grade = 1`, `presentation = rensad`, `price_status = preliminar`.
 - GFA 2026-05-05, parti 10012.6019198: tre rader (20/222, 20/222, 20/110) → ett lot 60 kg med `unit_cost = 184,67` och tre bevarade underrader.
-- JHB 2709177: artikel 71106 Hummer levande Sverige 100 kg med fyra batchnummer → fyra lots à 25,000 kg.
+- GFA utan dokumentnummer: `document_number` sätts till auktionsdatum och andra uppladdningen av samma auktion fångas som dubblett trots ny `file_hash`.
+- JHB 2709177: artikel 71106 Hummer levande Sverige 100 kg med fyra batchnummer → fyra lots à 25,000 kg som förval; justerad fördelning som inte summerar till levererad kvantitet blockeras.
 - JHB 2712187: nollprisrader blockerar bokföring tills bekräftelse.
+- `species_latin_aliases`: rad med korrekt namn mappat mot sig självt avvisas av CHECK-villkoret.
 - Levererad vs beställd vikt (32,220 vs 30 kg), bäst-före-prioritet, latinska stavfel, enhetsnormalisering, radsummeavvikelse och dubblettspärr som enhetstester.
 
 
