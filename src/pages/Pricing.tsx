@@ -16,6 +16,8 @@ import { toast } from "@/hooks/use-toast";
 import { Check, ChevronDown, ChevronRight, DollarSign, History, Layers, Search, Store, X } from "lucide-react";
 import { format } from "date-fns";
 import SavedPriceLists from "@/components/SavedPriceLists";
+import { ReferencePricesPanel } from "@/components/pricing/ReferencePricesPanel";
+
 
 interface InlineEdit {
   cost_price: number;
@@ -363,6 +365,9 @@ export default function Pricing() {
       </div>
 
       {isShop && <SavedPriceLists />}
+
+      <ReferencePricesPanel />
+
 
       <Card>
         <CardHeader className="pb-3">

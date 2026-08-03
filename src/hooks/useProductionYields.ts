@@ -68,42 +68,75 @@ export function useUpsertDetailPrice() {
       species_group: string;
       detail_form: string;
       price_list: string;
-      price_incl_vat: number;
+      /** Referenspris, alltså priset som gäller vid referenskostnaden. */
+      price_incl_vat?: number | null;
+      /** Råvarukostnad kr/kg som referenspriset avser. */
+      reference_cost_per_kg?: number | null;
       role?: string;
     }) => {
+      const payload: Record<string, any> = {
+        species_group: row.species_group,
+        detail_form: row.detail_form,
+        price_list: row.price_list,
+        cut_form: row.detail_form,
+        valid_from: new Date().toISOString().slice(0, 10),
+      };
+      if (row.role) payload.role = row.role;
+      if (row.price_incl_vat != null) {
+        payload.price_incl_vat = row.price_incl_vat;
+        payload.last_set_price = row.price_incl_vat;
+      }
+      if (row.reference_cost_per_kg !== undefined) {
+        payload.reference_cost_per_kg = row.reference_cost_per_kg;
+      }
       const { error } = await supabase
         .from("detail_prices")
-        .upsert(
-          {
-            ...row,
-            cut_form: row.detail_form,
-            last_set_price: row.price_incl_vat,
-            valid_from: new Date().toISOString().slice(0, 10),
-          } as any,
-          { onConflict: "price_list,species_group,detail_form" },
-        );
+        .upsert(payload as any, { onConflict: "price_list,species_group,detail_form" });
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["detail_prices"] }),
   });
 }
 
-/** Pris för en detalj i en given prislista (null = pris saknas). */
+/** Rad för en detalj i en given prislista. */
+export function detailPriceRow(
+  list: DetailPrice[],
+  priceList: string,
+  species: string,
+  detailForm: string,
+): DetailPrice | undefined {
+  return list.find(
+    (p) =>
+      p.price_list === priceList &&
+      (p.species_group ?? "").toLowerCase() === (species ?? "").toLowerCase() &&
+      (p.detail_form ?? "").toLowerCase() === (detailForm ?? "").toLowerCase(),
+  );
+}
+
+/** Referenspris för en detalj i en given prislista (null = pris saknas). */
 export function priceFor(
   list: DetailPrice[],
   priceList: string,
   species: string,
   detailForm: string,
 ): number | null {
-  const row = list.find(
-    (p) =>
-      p.price_list === priceList &&
-      (p.species_group ?? "").toLowerCase() === (species ?? "").toLowerCase() &&
-      (p.detail_form ?? "").toLowerCase() === (detailForm ?? "").toLowerCase(),
-  );
+  const row = detailPriceRow(list, priceList, species, detailForm);
   const v = Number(row?.price_incl_vat ?? row?.last_set_price ?? 0);
   return v > 0 ? v : null;
 }
+
+/** Referenskostnad kr/kg som referenspriset avser (null = saknas). */
+export function referenceCostFor(
+  list: DetailPrice[],
+  priceList: string,
+  species: string,
+  detailForm: string,
+): number | null {
+  const row = detailPriceRow(list, priceList, species, detailForm);
+  const v = Number((row as any)?.reference_cost_per_kg ?? 0);
+  return v > 0 ? v : null;
+}
+
 
 
 /* ── Auktionskalkyler ────────────────────────────────────────── */

@@ -25,19 +25,30 @@ import {
   useDetailPrices,
   useUpsertDetailPrice,
   priceFor,
+  referenceCostFor,
   surchargeFor,
   vatFor,
   rollingAverage,
   useYieldActuals,
 } from "@/hooks/useProductionYields";
 import {
+  useApplyDetailPrice,
+  useLatestPriceApplications,
+  applicationKey,
+  isSameDayApplication,
+  type DetailPriceApplication,
+} from "@/hooks/useReferencePricing";
+import {
   priceByNrv,
+  priceByScaleFactor,
+  scaleFactorOutsideBand,
   nrvStartSuggestionExVat,
   roundUpToAllowedPrice,
   fmt,
   FORMS,
   isProcessedForm,
 } from "@/lib/filletMath";
+
 import {
   CUT_MODEL_LABELS,
   CUT_MODEL_TEMPLATES,
@@ -95,6 +106,8 @@ export function ProductionOrderForm() {
   const { data: modelSplits = [] } = useCutModelSplits();
   const { data: detailPrices = [] } = useDetailPrices();
   const upsertDetailPrice = useUpsertDetailPrice();
+  const { data: lastApplications } = useLatestPriceApplications();
+  const applyPrice = useApplyDetailPrice();
   const { staff } = useStaffAuth();
   const createOrder = useCreateProductionOrder();
   const qc = useQueryClient();
@@ -118,6 +131,10 @@ export function ProductionOrderForm() {
   const [applyList, setApplyList] = useState<string>("");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [splitWarning, setSplitWarning] = useState<{ picks: RawPick[]; detailCount: number } | null>(null);
+  /** Väntande prisändring som redan sattes inom samma dygn. */
+  const [confirmChange, setConfirmChange] = useState<{
+    rows: { detail: DetailRow; listKey: string; price: number; previous: DetailPriceApplication | null }[];
+  } | null>(null);
 
   /** Prislistor per kanal: butiken räknar inkl moms, grossisten exkl moms. */
   const priceLists = useMemo(
@@ -127,9 +144,12 @@ export function ProductionOrderForm() {
         label: m.label || m.region,
         target: Number(m.target_pct),
         inclVat: ((m as any).applies_to ?? "butik") === "butik",
+        warnLow: Number((m as any).scale_warn_low) || 0.75,
+        warnHigh: Number((m as any).scale_warn_high) || 1.25,
       })),
     [margins],
   );
+
 
   const speciesOptions = useMemo(
     () =>
@@ -336,6 +356,53 @@ export function ProductionOrderForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [base, priceLists, priceNum, rawQtyNum, details]);
 
+  /**
+   * Skalfaktor per prislista: referenspriserna skalas till partiets verkliga
+   * snittkostnad. Förhållandet mellan detaljerna ligger still, bara nivån rör
+   * sig — referenspriserna i prislistan ändras aldrig härifrån.
+   */
+  const scaleByList = useMemo(() => {
+    return priceLists.map((pl) => {
+      const res = priceByScaleFactor({
+        avgCostPerKg: priceNum,
+        rawQuantity: rawQtyNum,
+        targetMarginPct: pl.target,
+        inclVat: pl.inclVat,
+        lines: base.map((b) => ({
+          key: b.detail.key,
+          qtyKg: b.qty,
+          referencePrice: storedPrice(b.detail.form, pl.key),
+          vatPct: b.vat,
+          surchargePerKg: b.surcharge,
+        })),
+      });
+      const band = scaleFactorOutsideBand(res.scaleFactor, pl.warnLow, pl.warnHigh);
+      const referenceCost = referenceCostFor(
+        detailPrices,
+        pl.key,
+        species,
+        normalizeDetailForm(base[0]?.detail.form ?? ""),
+      );
+      return { ...pl, res, band, referenceCost };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [base, priceLists, priceNum, rawQtyNum, details, detailPrices, species]);
+
+  const scaleFor = (listKey: string) => scaleByList.find((s) => s.key === listKey);
+
+  /** Föreslaget pris för en detalj i en prislista (referenspris × skalfaktor). */
+  const suggestedPriceFor = (d: DetailRow, listKey: string): number => {
+    const line = scaleFor(listKey)?.res.lines.find((l) => l.key === d.key);
+    return line?.suggestedPrice ?? 0;
+  };
+
+  /** Senast applicerade priset på produkten i prislistan. */
+  const lastApplicationFor = (d: DetailRow, listKey: string): DetailPriceApplication | null => {
+    if (!d.productId || !lastApplications) return null;
+    return lastApplications.get(applicationKey(listKey, d.productId)) ?? null;
+  };
+
+
   const filteredProducts = useMemo(() => {
     const q = productSearch.trim().toLowerCase();
     if (!q) return [];
@@ -373,8 +440,11 @@ export function ProductionOrderForm() {
       targetMarginPct: list.target,
     });
 
-  /** Sparar ett manuellt satt pris i prislistan. Skriver aldrig över automatiskt. */
-  const savePrice = (d: DetailRow, listKey: string) => {
+  /**
+   * Flyttar REFERENSPRISET, alltså den relativa värderingen. Görs bara medvetet
+   * här; ett skalat eller manuellt satt orderpris ändrar aldrig referensen.
+   */
+  const saveAsReference = (d: DetailRow, listKey: string) => {
     const value = parseFloat(d.prices?.[listKey] ?? "") || 0;
     if (!species || value <= 0) return;
     upsertDetailPrice.mutate(
@@ -383,14 +453,27 @@ export function ProductionOrderForm() {
         detail_form: normalizeDetailForm(d.form),
         price_list: listKey,
         price_incl_vat: value,
+        reference_cost_per_kg: priceNum > 0 ? priceNum : undefined,
         role: d.role,
       },
-      { onSuccess: () => toast({ title: t("saved"), description: `${d.name}: ${fmt(value, 2)} kr` }) },
+      {
+        onSuccess: () =>
+          toast({
+            title: "Referenspris flyttat",
+            description: `${d.name}: ${fmt(value, 2)} kr vid ${fmt(priceNum, 2)} kr/kg råvara`,
+          }),
+      },
     );
   };
 
-  /** Startförslag när priset saknas — fylls i fältet, sparas inte automatiskt. */
+  /** Fyller fältet med referenspris × skalfaktor. Sparas inte automatiskt. */
   const fillSuggestion = (d: DetailRow, listKey: string) => {
+    const suggested = suggestedPriceFor(d, listKey);
+    if (suggested > 0) {
+      setDetailPriceField(d.key, listKey, String(suggested));
+      return;
+    }
+    // Referenspris saknas — fall tillbaka på ett kostnadsbaserat startförslag.
     const b = base.find((x) => x.detail.key === d.key);
     const pl = priceLists.find((p) => p.key === listKey);
     if (!b || !pl) return;
@@ -406,6 +489,20 @@ export function ProductionOrderForm() {
       : Math.round(ex * 100) / 100;
     setDetailPriceField(d.key, listKey, String(value));
   };
+
+  /** Fyller alla detaljer i en prislista med de skalade förslagen. */
+  const fillAllSuggestions = (listKey: string) => {
+    const s = scaleFor(listKey);
+    if (!s) return;
+    setDetails((prev) =>
+      prev.map((d) => {
+        const line = s.res.lines.find((l) => l.key === d.key);
+        if (!line || !(line.suggestedPrice > 0)) return d;
+        return { ...d, prices: { ...d.prices, [listKey]: String(line.suggestedPrice) } };
+      }),
+    );
+  };
+
 
   /* ── Registrera tillverkningsorder ───────────────────────── */
   /**
@@ -545,38 +642,92 @@ export function ProductionOrderForm() {
     }
   };
 
-  /* ── Fastställ pris på produkten ─────────────────────────── */
+  /* ── Applicera pris på produkten ─────────────────────────── */
   const activeList = byList.find((l) => l.key === applyList) ?? byList[0];
 
   const massRows = base
     .filter((b) => b.detail.productId)
-    .map((b) => ({
-      productId: b.detail.productId!,
-      name: b.detail.name,
-      current: Number(b.product?.retail_suggested ?? 0),
-      suggested: parseFloat(b.detail.prices?.[activeList?.key ?? ""] ?? "") || 0,
-    }))
+    .map((b) => {
+      const listKey = activeList?.key ?? "";
+      const previous = lastApplicationFor(b.detail, listKey);
+      return {
+        detail: b.detail,
+        listKey,
+        productId: b.detail.productId!,
+        name: b.detail.name,
+        current: Number(
+          activeList?.inclVat ? b.product?.retail_suggested ?? 0 : (b.product as any)?.wholesale_price ?? 0,
+        ),
+        suggested: parseFloat(b.detail.prices?.[listKey] ?? "") || 0,
+        previous,
+      };
+    })
     .filter((r) => r.suggested > 0);
 
-  const applyAll = async () => {
-    for (const r of massRows) {
-      await supabase.from("products").update({ retail_suggested: r.suggested }).eq("id", r.productId);
-    }
-    qc.invalidateQueries({ queryKey: ["products"] });
-    setPreviewOpen(false);
-    toast({ title: "Priser uppdaterade", description: `${massRows.length} produkter fick nytt pris.` });
+  /** Skriver ett pris till produkten, prishistoriken och appliceringsloggen. */
+  const writePrice = async (d: DetailRow, listKey: string, value: number) => {
+    const pl = priceLists.find((p) => p.key === listKey);
+    const s = scaleFor(listKey);
+    const line = s?.res.lines.find((l) => l.key === d.key) ?? null;
+    if (!d.productId || !pl) return;
+    await applyPrice.mutateAsync({
+      priceList: listKey,
+      inclVat: pl.inclVat,
+      speciesGroup: species || "okänd",
+      detailForm: normalizeDetailForm(d.form),
+      productId: d.productId,
+      price: value,
+      referencePrice: line?.referencePrice ?? null,
+      scaleFactor: s?.res.scaleFactor ?? null,
+      avgCostPerKg: priceNum || null,
+      yieldPct: Number(d.pct) || null,
+      manualOverride: line ? Math.abs((line.suggestedPrice || 0) - value) > 0.009 : true,
+      appliedBy: staff ? `${staff.first_name} ${staff.last_name}` : null,
+      orderLabel: batch || null,
+    });
   };
 
-  const applyPriceToProduct = async (d: DetailRow, value: number, label: string) => {
-    if (!d.productId) return;
-    const { error } = await supabase.from("products").update({ retail_suggested: value }).eq("id", d.productId);
-    if (error) {
-      toast({ title: "Fel", description: error.message, variant: "destructive" });
+  /**
+   * Samma dygn-kontroll: har produkten redan fått ett pris i prislistan inom
+   * 24 timmar krävs bekräftelse, annars skulle diskpriset ändras mitt på dagen.
+   */
+  const requestApply = async (
+    rows: { detail: DetailRow; listKey: string; price: number; previous: DetailPriceApplication | null }[],
+  ) => {
+    const needsConfirm = rows.filter((r) => isSameDayApplication(r.previous));
+    if (needsConfirm.length > 0) {
+      setConfirmChange({ rows });
       return;
     }
-    qc.invalidateQueries({ queryKey: ["products"] });
-    toast({ title: "Pris fastställt", description: `${label}: ${fmt(value, 2)} kr` });
+    await commitApply(rows);
   };
+
+  const commitApply = async (
+    rows: { detail: DetailRow; listKey: string; price: number; previous: DetailPriceApplication | null }[],
+  ) => {
+    try {
+      for (const r of rows) await writePrice(r.detail, r.listKey, r.price);
+      setConfirmChange(null);
+      setPreviewOpen(false);
+      toast({
+        title: rows.length > 1 ? "Priser applicerade" : "Pris applicerat",
+        description:
+          rows.length > 1
+            ? `${rows.length} produkter fick nytt pris i butiken.`
+            : `${rows[0].detail.name}: ${fmt(rows[0].price, 2)} kr`,
+      });
+    } catch (e: any) {
+      toast({ title: "Fel", description: e.message, variant: "destructive" });
+    }
+  };
+
+  const applyAll = () =>
+    requestApply(
+      massRows.map((r) => ({ detail: r.detail, listKey: r.listKey, price: r.suggested, previous: r.previous })),
+    );
+
+  const applyPriceToProduct = (d: DetailRow, listKey: string, value: number) =>
+    requestApply([{ detail: d, listKey, price: value, previous: lastApplicationFor(d, listKey) }]);
 
   const warnings = useMemo(() => {
     const out: string[] = [];
@@ -588,17 +739,30 @@ export function ProductionOrderForm() {
           `${l.label}: partiets marginal ${fmt(l.res.batchMarginPct, 1)} % ligger under målet ${fmt(l.target, 0)} %`,
         );
     }
-    for (const b of base) {
-      for (const l of byList) {
-        const entered = parseFloat(b.detail.prices?.[l.key] ?? "") || 0;
-        const stored = storedPrice(b.detail.form, l.key) ?? 0;
-        if (entered > 0 && stored > 0 && Math.abs(entered - stored) / stored > 0.25)
-          out.push(`${b.detail.name} (${l.label}): priset avviker mer än 25 % från senast satta ${fmt(stored, 2)} kr`);
-      }
+    for (const s of scaleByList) {
+      if (s.res.missingReferenceKeys.length > 0)
+        out.push(
+          `${s.label}: ${s.res.missingReferenceKeys.length} detalj(er) saknar referenspris — inget prisförslag kan räknas. Fyll i under Priser · Referenspriser.`,
+        );
+      if (s.band === "low")
+        out.push(
+          `${s.label}: skalfaktorn ${fmt(s.res.scaleFactor, 3)} ligger under bandet ${fmt(s.warnLow, 2)}–${fmt(
+            s.warnHigh,
+            2,
+          )} — inköpspriset ligger långt under referensnivån. Överväg att flytta referenspriset.`,
+        );
+      if (s.band === "high")
+        out.push(
+          `${s.label}: skalfaktorn ${fmt(s.res.scaleFactor, 3)} ligger över bandet ${fmt(s.warnLow, 2)}–${fmt(
+            s.warnHigh,
+            2,
+          )} — inköpspriset ligger långt över referensnivån. Överväg att inte köpa eller att flytta referenspriset.`,
+        );
     }
     return [...new Set(out)];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [byList, base, detailPrices]);
+  }, [byList, scaleByList, base, detailPrices]);
+
 
   return (
     <div className="space-y-4">
@@ -704,6 +868,21 @@ export function ProductionOrderForm() {
             <Button size="sm" variant="outline" className="h-10 gap-1.5 text-xs" onClick={suggest} disabled={!species}>
               <Plus className="h-3.5 w-3.5" /> Föreslå styckdetaljer
             </Button>
+            {details.length > 0 &&
+              scaleByList.map((s) => (
+                <Button
+                  key={s.key}
+                  size="sm"
+                  variant="outline"
+                  className="h-10 text-xs"
+                  onClick={() => fillAllSuggestions(s.key)}
+                  disabled={!(s.res.scaleFactor > 0)}
+                  title="Referenspriser × skalfaktor"
+                >
+                  Fyll förslag · {s.label}
+                </Button>
+              ))}
+
             {pieceWeightWarning && (
               <Badge variant="outline" className="gap-1 border-amber-400 text-[10px] text-amber-600">
                 <AlertTriangle className="h-3 w-3" /> Styckvikten under {fmt(minPieceWeight ?? 0, 1)} kg — fyrdelning
@@ -810,6 +989,10 @@ export function ProductionOrderForm() {
                           const value = d.prices?.[pl.key] ?? "";
                           const hasPrice = parseFloat(value) > 0;
                           const lowest = pl.res.lowestMarginKey === d.key;
+                          const scaled = scaleFor(pl.key)?.res.lines.find((x) => x.key === d.key);
+                          const suggested = scaled?.suggestedPrice ?? 0;
+                          const reference = scaled?.referencePrice ?? 0;
+                          const delta = hasPrice && suggested > 0 ? parseFloat(value) - suggested : 0;
                           return (
                             <TableCell key={pl.key} className="py-0.5 text-right text-[11px]">
                               <div className="flex items-center justify-end gap-1.5">
@@ -819,9 +1002,23 @@ export function ProductionOrderForm() {
                                   placeholder={pl.inclVat ? "kr ink moms" : "kr ex moms"}
                                   value={value}
                                   onChange={(e) => setDetailPriceField(d.key, pl.key, e.target.value)}
-                                  onBlur={() => savePrice({ ...d, prices: { ...d.prices } }, pl.key)}
                                   className="h-9 w-24 px-1 text-[11px] text-right font-mono tabular-nums [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 />
+                                <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+                                  {reference > 0 ? `ref ${fmt(reference, 2)}` : "ref —"}
+                                  {suggested > 0 ? ` · förslag ${fmt(suggested, 2)}` : ""}
+                                </span>
+                                {hasPrice && suggested > 0 && Math.abs(delta) > 0.009 && (
+                                  <span
+                                    className={`font-mono text-[10px] tabular-nums ${
+                                      delta > 0 ? "text-emerald-600" : "text-amber-600"
+                                    }`}
+                                    title="Avvikelse mot förslaget"
+                                  >
+                                    {delta > 0 ? "+" : ""}
+                                    {fmt(delta, 2)}
+                                  </span>
+                                )}
                                 {hasPrice && r ? (
                                   <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
                                     {fmt(r.revenueShare * 100, 1)} % · {fmt(r.totalCostPerKg, 2)} kr
@@ -842,33 +1039,40 @@ export function ProductionOrderForm() {
                                 {lowest && hasPrice && (
                                   <Badge variant="outline" className="h-5 px-1 text-[9px]">{t("lowest_margin")}</Badge>
                                 )}
-                                {!hasPrice ? (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 px-1 text-[10px]"
+                                  onClick={() => fillSuggestion(d, pl.key)}
+                                >
+                                  {t("use_suggested")}
+                                </Button>
+                                {hasPrice && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 px-1 text-[10px] text-muted-foreground"
+                                    onClick={() => saveAsReference({ ...d, prices: { ...d.prices } }, pl.key)}
+                                    title="Flyttar den relativa värderingen i prislistan"
+                                  >
+                                    Sätt som referens
+                                  </Button>
+                                )}
+                                {hasPrice && d.productId && (
                                   <Button
                                     size="sm"
                                     variant="ghost"
                                     className="h-8 px-1 text-[10px]"
-                                    onClick={() => fillSuggestion(d, pl.key)}
+                                    onClick={() => applyPriceToProduct(d, pl.key, parseFloat(value))}
                                   >
-                                    {t("use_suggested")}
+                                    Fastställ
                                   </Button>
-                                ) : (
-                                  d.productId && (
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-8 px-1 text-[10px]"
-                                      onClick={() =>
-                                        applyPriceToProduct(d, parseFloat(value), `${d.name} · ${pl.label}`)
-                                      }
-                                    >
-                                      Fastställ
-                                    </Button>
-                                  )
                                 )}
                               </div>
                             </TableCell>
                           );
                         })}
+
                         <TableCell>
                           <Button
                             variant="ghost"
@@ -929,6 +1133,41 @@ export function ProductionOrderForm() {
                   );
                 })}
               </div>
+              {details.length > 0 && (
+                <div className="grid gap-1.5 text-[11px] sm:grid-cols-2">
+                  {scaleByList.map((s) => (
+                    <div
+                      key={s.key}
+                      className={`rounded-md border px-2 py-1 leading-tight ${
+                        s.band ? "border-amber-400" : ""
+                      }`}
+                    >
+                      <div className="text-muted-foreground">Skalfaktor · {s.label}</div>
+                      <div className="font-mono tabular-nums font-semibold">
+                        {s.res.scaleFactor > 0 ? fmt(s.res.scaleFactor, 3) : "—"}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">
+                        krävd intäkt {fmt(s.res.requiredRevenueExVat, 0)} kr / referensintäkt{" "}
+                        {fmt(s.res.referenceRevenueExVat, 0)} kr
+                      </div>
+
+                      <div className="text-[10px] text-muted-foreground">
+                        band {fmt(s.warnLow, 2)}–{fmt(s.warnHigh, 2)}
+                        {s.referenceCost ? ` · referenskostnad ${fmt(s.referenceCost, 2)} kr/kg` : ""}
+                      </div>
+                      {s.band && (
+                        <div className="mt-0.5 flex items-center gap-1 text-[10px] font-medium text-amber-600">
+                          <AlertTriangle className="h-3 w-3" />
+                          {s.band === "high"
+                            ? "Inköpspriset ligger långt över referensnivån"
+                            : "Inköpspriset ligger långt under referensnivån"}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="flex items-center gap-2">
                 <Select value={applyList} onValueChange={setApplyList}>
                   <SelectTrigger className="h-10 w-44 text-xs"><SelectValue placeholder={t("price_list")} /></SelectTrigger>
@@ -1019,6 +1258,41 @@ export function ProductionOrderForm() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Priset är redan satt idag — bekräfta innan diskpriset ändras igen. */}
+      <Dialog open={!!confirmChange} onOpenChange={(o) => !o && setConfirmChange(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-sm">Priset har redan ändrats idag</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 text-xs">
+            <p className="text-muted-foreground">
+              Följande produkter fick ett nytt pris inom det senaste dygnet. Vill du ändra priset igen?
+            </p>
+            <div className="space-y-1">
+              {(confirmChange?.rows ?? [])
+                .filter((r) => isSameDayApplication(r.previous))
+                .map((r) => (
+                  <div key={`${r.detail.key}-${r.listKey}`} className="flex justify-between rounded-md border px-2 py-1">
+                    <span>{r.detail.name}</span>
+                    <span className="font-mono tabular-nums">
+                      {fmt(Number(r.previous?.applied_price ?? 0), 2)} → {fmt(r.price, 2)} kr
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setConfirmChange(null)}>
+              Avbryt
+            </Button>
+            <Button size="sm" onClick={() => confirmChange && void commitApply(confirmChange.rows)}>
+              Ändra priset igen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }

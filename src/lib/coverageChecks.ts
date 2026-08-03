@@ -55,6 +55,8 @@ export interface DetailPriceRow {
   price_list: string;
   price_incl_vat?: number | string | null;
   last_set_price?: number | string | null;
+  reference_cost_per_kg?: number | string | null;
+
 }
 export interface MarginTargetRow {
   price_list: string;
@@ -265,6 +267,16 @@ export function checkDetailPrices(input: CoverageInput): CoverageFinding[] {
             message: `Referenspriset är 0 i prislistan ${list}.`,
           });
         }
+        if (price > 0 && num(row.reference_cost_per_kg) <= 0) {
+          out.push({
+            check: "detail_prices",
+            severity: "warning",
+            group: m.species_group,
+            subject: `${s.detail_name || s.detail_form} (${label})`,
+            message: `Referenskostnad kr/kg saknas — skalfaktorn kan inte bedömas i prislistan ${list}.`,
+          });
+        }
+
       }
     }
   }
