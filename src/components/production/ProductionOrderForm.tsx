@@ -1147,9 +1147,10 @@ export function ProductionOrderForm() {
                         {s.res.scaleFactor > 0 ? fmt(s.res.scaleFactor, 3) : "—"}
                       </div>
                       <div className="text-[10px] text-muted-foreground">
-                        krävd intäkt {fmt(s.res.requiredRevenue, 0)} kr / referensintäkt{" "}
+                        krävd intäkt {fmt(s.res.requiredRevenueExVat, 0)} kr / referensintäkt{" "}
                         {fmt(s.res.referenceRevenueExVat, 0)} kr
                       </div>
+
                       <div className="text-[10px] text-muted-foreground">
                         band {fmt(s.warnLow, 2)}–{fmt(s.warnHigh, 2)}
                         {s.referenceCost ? ` · referenskostnad ${fmt(s.referenceCost, 2)} kr/kg` : ""}
