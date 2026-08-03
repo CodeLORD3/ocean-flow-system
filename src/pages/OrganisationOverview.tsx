@@ -65,19 +65,19 @@ function KpiCard({
 }) {
   return (
     <Card className="shadow-card">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-medium">{title}</p>
-            <p className="text-2xl font-heading font-bold text-foreground">{value}</p>
-            {subtitle && <p className="text-[10px] text-muted-foreground">{subtitle}</p>}
+      <CardContent className="p-3 sm:p-4">
+        <div className="flex items-start justify-between gap-2">
+          <div className="space-y-0.5 sm:space-y-1 min-w-0">
+            <p className="text-[9px] sm:text-[10px] uppercase tracking-wide text-muted-foreground font-medium">{title}</p>
+            <p className="text-lg sm:text-2xl font-heading font-bold text-foreground">{value}</p>
+            {subtitle && <p className="text-[9px] sm:text-[10px] text-muted-foreground">{subtitle}</p>}
           </div>
-          <div className="flex flex-col items-end gap-1">
-            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Icon className="h-4.5 w-4.5 text-primary" />
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <div className="h-7 w-7 sm:h-9 sm:w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
             </div>
             {trend && (
-              <div className={`flex items-center gap-0.5 text-[10px] font-medium ${trend.positive ? "text-emerald-600" : "text-red-500"}`}>
+              <div className={`flex items-center gap-0.5 text-[9px] sm:text-[10px] font-medium ${trend.positive ? "text-emerald-600" : "text-red-500"}`}>
                 {trend.positive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                 {trend.value}
               </div>
@@ -88,6 +88,7 @@ function KpiCard({
     </Card>
   );
 }
+
 
 export default function OrganisationOverview() {
   const { site, activeStoreId, activeStoreName } = useSite();
@@ -261,14 +262,14 @@ export default function OrganisationOverview() {
   const openDeliveryNotes = deliveryNotes.filter((dn: any) => dn.status !== "Levererad").length;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3 sm:space-y-6 max-w-full overflow-x-hidden">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-heading font-bold text-foreground flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-primary" />
-          {isShop ? `${activeStoreName} — Översikt` : "Organisationsöversikt"}
+        <h1 className="text-base sm:text-xl font-heading font-bold text-foreground flex items-center gap-2">
+          <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
+          <span className="truncate">{isShop ? `${activeStoreName} — Översikt` : "Organisationsöversikt"}</span>
         </h1>
-        <p className="text-xs text-muted-foreground mt-0.5">
+        <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
           {isShop
             ? "Butikens lager, ordrar, bilder och chatt med övriga portaler."
             : "Samlad vy över alla butiker — försäljning, lager, inköp och beställningar."}
@@ -277,22 +278,23 @@ export default function OrganisationOverview() {
 
       {/* KPI Row */}
       {isShop ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3">
           <KpiCard
-            title="Lagervärde (kostnad)"
+            title="Lagervärde"
             value={`${Math.round(totalInventoryValue).toLocaleString("sv-SE")} kr`}
-            subtitle={`${Math.round(totalStock).toLocaleString("sv-SE")} kg · grossistvärde ${Math.round(totalInventoryWholesale).toLocaleString("sv-SE")} kr`}
+            subtitle={`${Math.round(totalStock).toLocaleString("sv-SE")} kg · grossist ${Math.round(totalInventoryWholesale).toLocaleString("sv-SE")} kr`}
             icon={Package}
           />
           <KpiCard
             title="Ordrar"
             value={`${shopOrders.length} st`}
-            subtitle={`${openOrders} aktuella ordrar · ${openDeliveryNotes} aktuella inleveranser`}
+            subtitle={`${openOrders} aktuella ordrar · ${openDeliveryNotes} inleveranser`}
             icon={ShoppingCart}
           />
         </div>
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+
           <KpiCard
             title="Total försäljning (levererat)"
             value={`${Math.round(totalSales).toLocaleString("sv-SE")} kr`}
@@ -323,7 +325,7 @@ export default function OrganisationOverview() {
 
       {/* Shop: photos + chat */}
       {isShop && (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4">
           <EntityImageGallery
             entityType="store"
             entityId={activeStoreId!}

@@ -117,9 +117,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="h-[100dvh] max-h-[100dvh] overflow-hidden flex w-full">
         {site === "shop" ? <ShopSidebar /> : site === "production" ? <ProductionSidebar /> : <AppSidebar />}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+
           {/* Top status bar — hidden on mobile to save vertical space */}
           <div className="hidden sm:flex h-8 items-center justify-between bg-sidebar-background px-4 text-xs text-foreground shrink-0">
             <div className="flex items-center gap-4">
@@ -189,9 +190,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Main header — taller tap targets on mobile */}
-          <header className="h-14 sm:h-12 flex items-center justify-between border-b border-border bg-card px-3 sm:px-4 shrink-0">
+          <header className="h-12 flex items-center justify-between border-b border-border bg-card px-2 sm:px-4 shrink-0">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <SidebarTrigger className="h-10 w-10 sm:h-7 sm:w-7" />
+              <SidebarTrigger className="h-9 w-9 sm:h-7 sm:w-7 shrink-0" />
+
               <nav className="hidden md:flex items-center gap-1 text-xs text-muted-foreground">
                 {page.breadcrumb.map((crumb, i) => (
                   <span key={i} className="flex items-center gap-1">
@@ -212,16 +214,17 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 <Input placeholder="Sök i hela systemet... (Ctrl+K)" className="h-8 w-64 pl-8 text-xs bg-muted/50" />
               </div>
 
-              <Button variant="ghost" size="icon" className="h-10 w-10 sm:h-8 sm:w-8">
-                <Bell className="h-5 w-5 sm:h-4 sm:w-4" />
+              <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-8 sm:w-8">
+                <Bell className="h-4 w-4" />
               </Button>
 
               <AccountMenu />
             </div>
           </header>
 
-          {/* Tab bar */}
-          <div className="h-9 flex items-end bg-card border-b border-border px-2 shrink-0 overflow-x-auto scrollbar-none">
+          {/* Tab bar — dold på mobil för app-känsla (sidebar används istället) */}
+          <div className="hidden sm:flex h-9 items-end bg-card border-b border-border px-2 shrink-0 overflow-x-auto scrollbar-none">
+
             {tabs.map((tab) => {
               const isActive = tab.path === activeTab;
               return (
@@ -255,7 +258,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             })}
           </div>
 
-          <main className="flex-1 overflow-auto p-3 sm:p-4 lg:p-6">
+          <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-2 sm:p-4 lg:p-6">
             <StoreHero />
             {children}
           </main>

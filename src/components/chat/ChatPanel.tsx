@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MessageSquare, Plus, Send, ImagePlus, Loader2, Store, Factory, Shield } from "lucide-react";
+import { MessageSquare, Plus, Send, ImagePlus, Loader2, Store, Factory, Shield, ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import type { PortalProfile } from "@/lib/portalProfiles";
 import {
@@ -26,6 +27,15 @@ import {
 
 function portalIcon(kind: PortalProfile["kind"]) {
   return kind === "admin" ? Shield : kind === "grossist" ? Factory : Store;
+}
+
+function initialsOf(name: string) {
+  return name
+    .split(/[\s,]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
 }
 
 function timeLabel(iso: string) {
@@ -48,10 +58,12 @@ type Props = {
 
 export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const portal = useCurrentPortal();
   const profiles = usePortalProfiles();
   const { data: conversations = [], isLoading } = useChatConversations(portal?.key);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [mobileThread, setMobileThread] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [text, setText] = useState("");
@@ -64,7 +76,7 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
   const markRead = useMarkConversationRead();
 
   const activeConv: ChatConversation | undefined =
-    conversations.find((c) => c.id === activeId) ?? conversations[0];
+    conversations.find((c) => c.id === activeId) ?? (isMobile ? undefined : conversations[0]);
   const { data: messages = [] } = useChatMessages(activeConv?.id);
 
   useEffect(() => {
@@ -93,6 +105,7 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
     try {
       const id = await createConv.mutateAsync({ participants: [portal, ...chosen] });
       setActiveId(id);
+      setMobileThread(true);
       setSelectedKeys([]);
       setNewOpen(false);
     } catch (e: any) {
@@ -121,162 +134,223 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
     );
   }
 
-  const listHeight = compact ? "max-h-24" : "h-[520px]";
-  const msgHeight = compact ? "h-56" : "h-[440px]";
+  // På mobil visas antingen listan eller tråden (WhatsApp-mönster) — aldrig sidledes scroll.
+  const showList = !isMobile || !mobileThread;
+  const showThread = !isMobile || mobileThread;
+
+  const listHeight = compact
+    ? "max-h-40 md:max-h-24"
+    : isMobile
+      ? "h-[calc(100dvh-19rem)] min-h-[16rem]"
+      : "h-[520px]";
+  const msgHeight = compact
+    ? "h-56"
+    : isMobile
+      ? "h-[calc(100dvh-22rem)] min-h-[14rem]"
+      : "h-[440px]";
 
   return (
     <Card className={cn("shadow-card", className)}>
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 px-3 sm:px-6">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-sm font-heading flex items-center gap-1.5">
-            <MessageSquare className="h-4 w-4 text-primary" />
-            {activeConv ? `Chatt – ${conversationTitle(activeConv, portal.key)}` : "Chatt"}
+          <CardTitle className="text-sm font-heading flex items-center gap-1.5 min-w-0">
+            {isMobile && mobileThread ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 -ml-1 shrink-0"
+                aria-label="Tillbaka till chattlistan"
+                onClick={() => {
+                  setMobileThread(false);
+                  setActiveId(null);
+                }}
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            ) : (
+              <MessageSquare className="h-4 w-4 text-primary shrink-0" />
+            )}
+            <span className="truncate">
+              {activeConv && showThread ? conversationTitle(activeConv, portal.key) : "Chatt"}
+            </span>
           </CardTitle>
-          <div className="flex items-center gap-1">
-            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={() => setNewOpen(true)}>
-              <Plus className="h-3 w-3" /> Ny chatt
-            </Button>
+          <div className="flex items-center gap-1 shrink-0">
+            {showList && (
+              <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={() => setNewOpen(true)}>
+                <Plus className="h-3 w-3" /> Ny
+              </Button>
+            )}
             {compact && onOpenFull && (
               <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={onOpenFull}>
-                Visa alla meddelanden
+                Visa alla
               </Button>
             )}
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className={cn("grid gap-3", compact ? "grid-cols-1" : "md:grid-cols-[240px_1fr]")}>
+      <CardContent
+        className={cn(
+          "grid gap-3 px-2 sm:px-6",
+          compact ? "grid-cols-1" : "md:grid-cols-[240px_1fr]"
+        )}
+      >
         {/* Conversation list */}
-        <div className={cn("space-y-1 overflow-y-auto pr-1", listHeight)}>
-          {isLoading ? (
-            <div className="flex justify-center py-4">
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            </div>
-          ) : conversations.length === 0 ? (
-            <p className="text-[11px] text-muted-foreground py-3">
-              Inga chattar ännu. Skapa en chatt med en annan portal.
-            </p>
-          ) : (
-            conversations.map((c) => {
-              const isActive = c.id === activeConv?.id;
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => setActiveId(c.id)}
-                  className={cn(
-                    "w-full text-left rounded-md px-2 py-1.5 transition-colors",
-                    isActive ? "bg-primary/10 border border-primary/20" : "hover:bg-muted/60 border border-transparent"
-                  )}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-medium text-foreground truncate">
-                      {conversationTitle(c, portal.key)}
-                    </span>
-                    <span className="flex items-center gap-1 shrink-0">
-                      {(unread.byConv[c.id] || 0) > 0 && !isActive && (
-                        <Badge variant="destructive" className="h-4 min-w-4 px-1 text-[9px] rounded-full">
-                          {unread.byConv[c.id]}
-                        </Badge>
-                      )}
-                      <span className="text-[9px] text-muted-foreground">{timeLabel(c.last_message_at)}</span>
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground truncate">
-                    {c.lastMessage?.body || (c.lastMessage?.image_url ? "Bild" : "Inga meddelanden")}
-                  </p>
-                </button>
-              );
-            })
-          )}
-        </div>
-
-        {/* Messages */}
-        <div className="flex flex-col min-w-0">
-          <div ref={scrollRef} className={cn("overflow-y-auto space-y-2 pr-1", msgHeight)}>
-            {!activeConv ? (
-              <p className="text-[11px] text-muted-foreground text-center py-8">Ingen chatt vald.</p>
-            ) : messages.length === 0 ? (
-              <p className="text-[11px] text-muted-foreground text-center py-8">Inga meddelanden ännu.</p>
+        {showList && (
+          <div className={cn("space-y-1 overflow-y-auto overflow-x-hidden pr-1", listHeight)}>
+            {isLoading ? (
+              <div className="flex justify-center py-4">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              </div>
+            ) : conversations.length === 0 ? (
+              <p className="text-[11px] text-muted-foreground py-3">
+                Inga chattar ännu. Skapa en chatt med en annan portal.
+              </p>
             ) : (
-              messages.map((m) => {
-                const mine = m.sender_portal_key === portal.key;
+              conversations.map((c) => {
+                const isActive = c.id === activeConv?.id;
+                const title = conversationTitle(c, portal.key);
                 return (
-                  <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
-                    <div
-                      className={cn(
-                        "max-w-[80%] rounded-lg px-2.5 py-1.5 text-xs",
-                        mine ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
-                      )}
-                    >
-                      <p className={cn("text-[9px] mb-0.5", mine ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                        {m.sender_name ? `${m.sender_name} (${m.sender_portal_name})` : m.sender_portal_name}
-                      </p>
-                      {m.body && <p className="whitespace-pre-wrap break-words">{m.body}</p>}
-                      {m.image_url && (
-                        <a href={m.image_url} target="_blank" rel="noreferrer">
-                          <img
-                            src={m.image_url}
-                            alt="Bifogad bild i chatt"
-                            loading="lazy"
-                            className="mt-1 max-h-40 rounded-md object-cover"
-                          />
-                        </a>
-                      )}
-                      <p className={cn("text-[9px] mt-0.5 text-right", mine ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                        {timeLabel(m.created_at)}
-                      </p>
-                    </div>
-                  </div>
+                  <button
+                    key={c.id}
+                    onClick={() => {
+                      setActiveId(c.id);
+                      setMobileThread(true);
+                    }}
+                    className={cn(
+                      "w-full text-left rounded-md px-2 py-2 transition-colors flex items-center gap-2",
+                      isActive && !isMobile
+                        ? "bg-primary/10 border border-primary/20"
+                        : "hover:bg-muted/60 border border-transparent"
+                    )}
+                  >
+                    <span className="h-8 w-8 shrink-0 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-semibold">
+                      {initialsOf(title)}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-medium text-foreground truncate">{title}</span>
+                        <span className="flex items-center gap-1 shrink-0">
+                          {(unread.byConv[c.id] || 0) > 0 && !isActive && (
+                            <Badge variant="destructive" className="h-4 min-w-4 px-1 text-[9px] rounded-full">
+                              {unread.byConv[c.id]}
+                            </Badge>
+                          )}
+                          <span className="text-[9px] text-muted-foreground">{timeLabel(c.last_message_at)}</span>
+                        </span>
+                      </span>
+                      <span className="block text-[10px] text-muted-foreground truncate">
+                        {c.lastMessage?.body || (c.lastMessage?.image_url ? "Bild" : "Inga meddelanden")}
+                      </span>
+                    </span>
+                  </button>
                 );
               })
             )}
           </div>
+        )}
 
-          {/* Composer */}
-          <div className="flex items-center gap-1.5 pt-2 border-t border-border/50 mt-2">
-            <Input
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-              placeholder={activeConv ? "Skriv meddelande..." : "Skapa eller välj en chatt först"}
-              disabled={!activeConv || send.isPending}
-              className="h-8 text-xs"
-            />
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) handleSend(f);
-                if (fileRef.current) fileRef.current.value = "";
-              }}
-            />
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8"
-              disabled={!activeConv || send.isPending}
-              onClick={() => fileRef.current?.click()}
+        {/* Messages */}
+        {showThread && (
+          <div className="flex flex-col min-w-0">
+            <div
+              ref={scrollRef}
+              className={cn("overflow-y-auto overflow-x-hidden space-y-1.5 pr-1", msgHeight)}
             >
-              <ImagePlus className="h-4 w-4" />
-            </Button>
-            <Button
-              size="icon"
-              className="h-8 w-8"
-              disabled={!activeConv || send.isPending}
-              onClick={() => handleSend()}
-            >
-              {send.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            </Button>
+              {!activeConv ? (
+                <p className="text-[11px] text-muted-foreground text-center py-8">Ingen chatt vald.</p>
+              ) : messages.length === 0 ? (
+                <p className="text-[11px] text-muted-foreground text-center py-8">Inga meddelanden ännu.</p>
+              ) : (
+                messages.map((m) => {
+                  const mine = m.sender_portal_key === portal.key;
+                  return (
+                    <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
+                      <div
+                        className={cn(
+                          "max-w-[85%] sm:max-w-[80%] px-2.5 py-1.5 text-xs shadow-sm",
+                          mine
+                            ? "bg-primary text-primary-foreground rounded-2xl rounded-br-sm"
+                            : "bg-muted text-foreground rounded-2xl rounded-bl-sm"
+                        )}
+                      >
+                        {!mine && (
+                          <p className="text-[9px] mb-0.5 font-semibold text-primary">
+                            {m.sender_name ? `${m.sender_name} (${m.sender_portal_name})` : m.sender_portal_name}
+                          </p>
+                        )}
+                        {m.body && <p className="whitespace-pre-wrap break-words">{m.body}</p>}
+                        {m.image_url && (
+                          <a href={m.image_url} target="_blank" rel="noreferrer">
+                            <img
+                              src={m.image_url}
+                              alt="Bifogad bild i chatt"
+                              loading="lazy"
+                              className="mt-1 max-h-40 w-full rounded-lg object-cover"
+                            />
+                          </a>
+                        )}
+                        <p
+                          className={cn(
+                            "text-[9px] mt-0.5 text-right",
+                            mine ? "text-primary-foreground/70" : "text-muted-foreground"
+                          )}
+                        >
+                          {timeLabel(m.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Composer */}
+            <div className="flex items-center gap-1.5 pt-2 border-t border-border/50 mt-2">
+              <Input
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                placeholder={activeConv ? "Skriv meddelande..." : "Välj en chatt först"}
+                disabled={!activeConv || send.isPending}
+                className="h-9 text-xs rounded-full"
+              />
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleSend(f);
+                  if (fileRef.current) fileRef.current.value = "";
+                }}
+              />
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-9 w-9 shrink-0 rounded-full"
+                disabled={!activeConv || send.isPending}
+                onClick={() => fileRef.current?.click()}
+              >
+                <ImagePlus className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                className="h-9 w-9 shrink-0 rounded-full"
+                disabled={!activeConv || send.isPending}
+                onClick={() => handleSend()}
+              >
+                {send.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </CardContent>
 
       {/* New conversation dialog */}
@@ -295,7 +369,7 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
               return (
                 <label
                   key={p.key}
-                  className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted/60 cursor-pointer"
+                  className="flex items-center gap-2 rounded-md px-2 py-2 hover:bg-muted/60 cursor-pointer"
                 >
                   <Checkbox
                     checked={checked}
