@@ -1,39 +1,30 @@
-# Åtgärdsplan efter systemfelsökning (reviderad)
+# Åtgärdsplan efter systemfelsökning (reviderad 2)
 
-## Blockerare innan steg 1
+## Kontroller redan gjorda mot filen och koden
 
-`produkter_import_KLAR.xlsx` finns inte i sandlådan — jag har sökt i både uppladdningarna och dokumentmappen. Ladda upp filen, annars kan steg 1 inte köras. Jag härleder inga värden.
+`produkter_import_KLAR.xlsx`: 762 rader, 20 kolumner. `species_group` ifyllt på **511** rader, `latin_name` på **511**, `image_url` på **378**.
 
-## Ny diagnos av kraschen — orsaken är inte en räknare
+**Filen har ingen `fao_code`-kolumn** (den har `hs_code`). `products.fao_code` blir därför tom även efter importen — det är en separat fråga, inte något importen kan lösa.
 
-Jag läste `postPurchaseReport` i `src/lib/purchaseReportPosting.ts` (rad 240-317). Det finns **ingen** nummerräknare i koden. `lot_number` sätts rakt av till `lot.lotNumber`, som kommer från allokeringsnycklarna i `buildPostingPlan` (rad 172-188) — alltså direkt ur radens `lot_numbers`.
+Importläsaren `src/lib/productImport.ts` **läser redan** `species_group` (rad 125, 245), `latin_name` (rad 244) och `image_url` (rad 243), med aliasstöd för svenska rubriker. Alla 20 kolumner i filen har en mottagare utom `fao_code`, som inte finns i filen. Att värdena tappades förra gången berodde på att databaskolumnen inte fanns då — läsaren är rätt idag.
 
-Eftersom `lot_numbers` idag innehåller **kollital** (`"1"`, `"2"`, `"3"`, `"4"`) och `lots.lot_number` har ett globalt UNIQUE-index, kolliderar partierna med varandra så snart två rader har samma kollital. Kraschen är alltså en direkt följd av fel 2 i planen, inte ett separat räknarfel.
+`lots.supplier_lot_id` finns redan i tabellen.
 
-### Databasen är smutsig — men inte som väntat
+## Kraschen — bekräftad orsak
 
-Två partier skapades 17:54 innan kraschen, och **båda har en kopplad rörelse**:
+`postPurchaseReport` sätter `lot_number` rakt av till `lot.lotNumber`, som kommer ur radens `lot_numbers`. Eftersom `lot_numbers` idag innehåller kollital (`"1"`, `"2"`, `"3"`, `"4"`) och `lots.lot_number` har globalt UNIQUE-index, kolliderar partierna. Ingen räknare är inblandad.
 
-| lot_number | kg | rörelser |
-|---|---|---|
-| `3` | 30,000 | 1 |
-| `2` | 30,000 | 1 |
-
-`stock_movements` har nu 2 rader av typ `inleverans` (60 kg) utöver de 9 justeringarna. `purchase_reports.posted_at` är fortfarande NULL — kraschen inträffade före den sista uppdateringen.
-
-"Ta bort partier utan rörelser" träffar därför noll rader. I stället backas de två partierna ut via den befintliga `unpostPurchaseReport`-vägen, så saldot motbokas i stället för att raderas.
+Två partier hann skapas 17:54, båda **med** kopplad rörelse (`lot_number` `2` och `3`, 30 kg vardera, 60 kg `inleverans`). `posted_at` är fortfarande NULL. De backas ut via `unpostPurchaseReport` så saldot motbokas.
 
 ## Ordning
 
 ### 1. Importera om produktfilen
 
-`species_group` är NULL på 762/762 produkter eftersom kolumnen lades till på `products` efter importen och värdet ignorerades tyst.
+Kör igenom importens torrkörning först och **varna** för varje filkolumn som saknar mottagare i stället för att hoppa över den tyst. Importera sedan med `sku` som nyckel.
 
-Importera om `produkter_import_KLAR.xlsx` med `sku` som nyckel (uppdaterar befintliga rader, skapar inga dubbletter). Kontrollera först att importläsaren faktiskt plockar upp `species_group`, `latin_name`, `fao_code` och `image_url` — annars tappas de igen.
+Inget härledningsskript: 189 aktiva produkter ska ha tomt `species_group` (sillar, såser, konserver, varmkök, råvaror, frukt och grönt, emballage).
 
-**Inget härledningsskript.** 189 aktiva produkter ska ha tomt `species_group` (sillar, såser, konserver, varmkök, råvaror, frukt och grönt, emballage). Tomt är rätt svar för dem.
-
-Rapport efter importen: antal med `species_group`, antal med `latin_name`, och antal aktiva produkter i Färsk Fisk eller Skaldjur som saknar `species_group`.
+Rapport efter importen: antal med `species_group`, antal med `latin_name`, samt antal aktiva produkter i Färsk Fisk eller Skaldjur som saknar `species_group`.
 
 ### 2. Rätta partinummerläsningen
 
@@ -41,27 +32,41 @@ GFA:s partinummer (`10012.NNNNNNN`) hamnar i `supplier_article_no` medan `lot_nu
 
 ### 3. Rätta lot_number och gör bokföringen atomisk
 
-- **Nummer i databasen, inte i klienten.** En `security definer`-funktion tilldelar `lot_number` från en sekvens när leverantörens partinummer saknas, och namnrymdar leverantörens nummer per leverantör och dokument så två leverantörer aldrig kan kollidera. Säker vid samtidiga anrop.
-- **En transaktion.** Hela bokföringen — alla partier, alla rörelser, radkopplingarna och `posted_at` — flyttas till en databasfunktion som körs i ett anrop. Kraschar något rullas allt tillbaka, så databasen aldrig lämnas halvfärdig.
-- **Svenska fel.** Databasens råtext (`duplicate key value violates unique constraint …`) översätts till vad man gör åt saken, t.ex. "Partinummer 3 finns redan på ett annat parti — kontrollera partinumren på följesedeln".
-- **Dubbelbokföring stoppas** av `posted_at`-kontrollen med "Rapporten är redan bokförd" i stället för en krasch.
-- **Städning först:** de två partierna från 17:54 backas ut innan nästa försök.
-- **Test:** bokför samma rapport två gånger i följd — andra gången ska ge det svenska meddelandet, inte ett undantag.
+- **Två fält, två syften.** Leverantörens partinummer sparas oförändrat i `lots.supplier_lot_id` (`10012.6125240`), och `lot_number` blir vårt eget namnrymdade nummer, tilldelat i databasen från en sekvens — säkert vid samtidiga anrop. Sökningen i spårbarhetsvyn träffar **båda** fälten.
+- **En transaktion.** Hela bokföringen — partier, rörelser, radkopplingar och `posted_at` — flyttas till en databasfunktion som körs i ett anrop. Kraschar något rullas allt tillbaka.
+- **Svenska fel.** Databasens råtext översätts till vad man gör åt saken.
+- **Dubbelbokföring** stoppas av `posted_at`-kontrollen med "Rapporten är redan bokförd".
+- **Städning först:** de två partierna från 17:54 backas ut.
+- **Test:** bokför samma rapport två gånger — andra gången ska ge det svenska meddelandet, inte ett undantag.
 
 Sammanslagningen av rader med samma partinummer fungerar redan ("2 rader, 109 kg à 150 kr") och rörs inte.
 
 ### 4. Bind rapporter till leverantör
 
-`supplier_id` är NULL på 55 av 55 rapporter, vilket gör båda dubblettindexen verkningslösa och `supplier_article_map` omöjlig att fylla. `total_ex_vat` extraheras aldrig. Matcha `supplier_name_raw` mot `suppliers` vid inläsning, spara `supplier_id`, läs ut nettosumman, och kräv manuellt val när matchningen är osäker.
+`supplier_id` är NULL på 55 av 55 rapporter, vilket gör båda dubblettindexen verkningslösa och `supplier_article_map` omöjlig att fylla. `total_ex_vat` extraheras aldrig. Matcha `supplier_name_raw` mot `suppliers` vid inläsning, spara `supplier_id`, läs ut nettosumman, kräv manuellt val när matchningen är osäker.
 
 ### 5. Bokför FS_2026-07-28 skarpt
 
-Verifiera att `lots` får riktiga partinummer, att `stock_movements` får typ `inleverans`, att raderna får `lot_id`/`movement_id` och att `avg_cost` i `product_stock_locations` blir skilt från noll. Först då är partispårbarheten och NRV-motorn bevisade i drift.
+Verifiera att `lots` får både eget och leverantörens partinummer, att rörelserna får typ `inleverans`, att raderna får `lot_id`/`movement_id` och att `avg_cost` blir skilt från noll.
 
-### 6. Lagervärde från avg_cost
+### 6. Kör hela kedjan på torsken
 
-Fem sidor räknar lagervärde på `products.cost_price` i stället för lagerplatsernas `avg_cost`: Dashboard, OrganisationOverview, Wholesale, Products, Barcodes. Byt källa till `product_stock_locations.stock_value`/`avg_cost`. Kvantiteterna är redan rätt via triggern och rörs inte.
+Skapa en tillverkningsorder i Filé/Tillverkning på torsken (29 kg à 146 kr) och stäm av NRV-utfallet mot de tidigare framräknade talen:
 
-### 7. Ta bort useUpdateStock
+| kontroll | förväntat |
+|---|---|
+| rygg, kvantitet | 8,773 kg |
+| rygg, kostnad | 379,49 kr/kg |
+| rygg, marginal | 44,9 % |
+| partiets marginal | 42,9 % |
+| V per kg filé | 526,60 kr |
 
-`src/hooks/useProducts.ts:97-115` skriver `products.stock` direkt, vilket databasspärren kastar undantag på. Den har inga anropare.
+Avviker något redovisas siffran som den blev, inte som den borde bli.
+
+### 7. Lagervärde från avg_cost
+
+Fem sidor räknar lagervärde på `products.cost_price` i stället för lagerplatsernas `avg_cost`: Dashboard, OrganisationOverview, Wholesale, Products, Barcodes. Byt källa till `product_stock_locations.stock_value`/`avg_cost`. Kvantiteterna är redan rätt via triggern.
+
+### 8. Ta bort useUpdateStock
+
+`src/hooks/useProducts.ts:97-115` skriver `products.stock` direkt, vilket databasspärren kastar undantag på. Inga anropare.
