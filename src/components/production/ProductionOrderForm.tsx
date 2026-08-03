@@ -653,6 +653,23 @@ export function ProductionOrderForm() {
               )}
             </div>
             <div className="space-y-1">
+              <Label className="text-[11px]">Sortering</Label>
+              <Select value={grade || "okand"} onValueChange={(v) => setGrade(v === "okand" ? "" : v)}>
+                <SelectTrigger className="h-10 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="okand" className="text-xs">Okänd</SelectItem>
+                  {["1", "2", "3", "4", "5"].map((g) => (
+                    <SelectItem key={g} value={g} className="text-xs">{g}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {gradeForcedSingle && (
+                <p className="text-[10px] text-muted-foreground">
+                  Sortering {grade} styckas som hel filé
+                </p>
+              )}
+            </div>
+            <div className="space-y-1">
               <Label className="text-[11px]">Form in</Label>
               <Select value={rawForm} onValueChange={setRawForm}>
                 <SelectTrigger className="h-10 text-xs"><SelectValue /></SelectTrigger>
