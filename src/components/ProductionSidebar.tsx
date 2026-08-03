@@ -15,6 +15,7 @@ import {
   TrendingUp,
   ScanLine,
   MessageSquare,
+  Scissors,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
