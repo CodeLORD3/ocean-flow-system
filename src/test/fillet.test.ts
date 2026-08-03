@@ -223,3 +223,63 @@ describe("sortering styr styckning och utbyte", () => {
     expect(Number(pickYieldRow(rows as any, "torsk", "rensad", "3")!.yield_pct)).toBe(48);
   });
 });
+
+/**
+ * Skalfaktor: referenspriserna behåller sitt förhållande och skalas till
+ * partiets verkliga snittkostnad. Referenspriserna i prislistan rörs aldrig.
+ */
+describe("dynamiska utpriser via skalfaktor", () => {
+  // Torsk: 100 kg hel råvara, referensnivå 120 kr/kg, mål 45 % marginal.
+  const torsk = (avgCostPerKg: number) =>
+    priceByScaleFactor({
+      avgCostPerKg,
+      rawQuantity: 100,
+      targetMarginPct: 45,
+      inclVat: true,
+      lines: [
+        { key: "ryggfile", qtyKg: 40, referencePrice: 329, vatPct: 12, surchargePerKg: 0 },
+        { key: "bukfile", qtyKg: 15, referencePrice: 219, vatPct: 12, surchargePerKg: 0 },
+      ],
+    });
+
+  it("referenskostnaden ger skalfaktor 1 och orörda priser", () => {
+    const r = torsk(120);
+    expect(r.scaleFactor).toBeCloseTo(1.0837, 3);
+    expect(r.lines[0].referencePrice).toBe(329);
+  });
+
+  it("lägre inköpspris ger lägre utpris i samma proportion", () => {
+    const low = torsk(89);
+    const high = torsk(150);
+    expect(low.scaleFactor).toBeLessThan(high.scaleFactor);
+    // Förhållandet mellan detaljerna ligger still.
+    const ratio = (r: ReturnType<typeof torsk>) => r.lines[0].suggestedPrice / r.lines[1].suggestedPrice;
+    expect(ratio(low)).toBeCloseTo(ratio(high), 1);
+  });
+
+  it("krävd intäkt följer målmarginalen", () => {
+    const r = torsk(89);
+    expect(r.requiredRevenueExVat).toBeCloseTo(8900 / 0.55, 2);
+  });
+
+  it("saknat referenspris ger inget förslag och flaggas", () => {
+    const r = priceByScaleFactor({
+      avgCostPerKg: 89,
+      rawQuantity: 100,
+      targetMarginPct: 45,
+      inclVat: true,
+      lines: [
+        { key: "ryggfile", qtyKg: 40, referencePrice: 329, vatPct: 12, surchargePerKg: 0 },
+        { key: "bukfile", qtyKg: 15, referencePrice: 0, vatPct: 12, surchargePerKg: 0 },
+      ],
+    });
+    expect(r.missingReferenceKeys).toContain("bukfile");
+    expect(r.lines[1].suggestedPrice).toBe(0);
+  });
+
+  it("skalfaktor utanför bandet flaggas i rätt riktning", () => {
+    expect(scaleFactorOutsideBand(0.6, 0.75, 1.25)).toBe("low");
+    expect(scaleFactorOutsideBand(1.4, 0.75, 1.25)).toBe("high");
+    expect(scaleFactorOutsideBand(1.0, 0.75, 1.25)).toBeNull();
+  });
+});
