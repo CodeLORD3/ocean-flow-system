@@ -24,6 +24,7 @@ import {
   LogIn,
   Truck as TruckIcon,
   MessageSquare,
+  Scissors,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -72,6 +73,7 @@ const purchaseNav = [
 ];
 
 const productionNav = [
+  { title: "Filé/Tillverkning", url: "/production", icon: Scissors },
   { title: "Produktionsschema", url: "/production-schedule", icon: CalendarDays },
   { title: "Produktionsrapportering", url: "/production-reporting", icon: FileText },
 ];
