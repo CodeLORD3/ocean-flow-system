@@ -46,19 +46,49 @@ kostnad        = råvarukg × inköpspris + påslag × färdiga kg
 biprodukt      = Σ (kg × pris ex moms), manuellt satta priser
 krävd intäkt   = kostnad / (1 − marginalmål)
 huvudintäkt    = krävd intäkt − biproduktintäkt
-huvudpris ex   = huvudintäkt / huvudproduktens kg
-pris inkl moms = ex × momssats, avrundat uppåt till 29/49/79/98
+golvpris ex    = huvudintäkt / huvudproduktens kg
+golvpris inkl  = ex × momssats, avrundat uppåt till 29/49/79/98
 ```
 
 Flera primary-detaljer: huvudintäkten fördelas med `margin_weight` normaliserad så
 att det kilo-viktade snittet blir exakt 1,0.
 
-Biproduktpriser anges manuellt inkl moms, aldrig härledda från kostnad. Ny tabell
-`byproduct_prices` (artgrupp + detaljform + pris inkl moms) sparar senast använt
-värde och förifylls i nästa order. Startvärden för torsk: rygg 698,
-kontrarygg 398, benfri filé 249, slag 129.
+### Golv, inte förslag
+
+Residualen är ett **golvpris**, inte ett pris som ersätter befintligt. Per
+huvudprodukt visas tre tal:
+
+- **Golvpris** — residualen som gör att partiet når marginalmålet
+- **Senast fastställt pris** — `last_set_price` för detaljen
+- **Föreslaget pris** — det högsta av de två
+
+Vid billigt inköp ligger senaste priset ofta över golvet och priset sänks då inte.
+Vid dyrt inköp går golvet över senaste priset och systemet larmar tydligt.
+
+### Priskällor
+
+- `last_set_price` sparas per art och detaljform för **alla** roller som
+  referensvärde. Startvärden torsk: rygg 698, kontrarygg 398, benfri filé 249,
+  slag 129.
+- `byproduct_prices` innehåller **bara** biprodukterna (kontrarygg 398,
+  benfri filé 249, slag 129). Ryggen är primary och får aldrig ett pris här —
+  dess pris räknas fram som residual.
+
+Biproduktpriser anges manuellt inkl moms och härleds aldrig från kostnad; de
+förifylls i nästa order.
+
+### Skyddsspärrar
+
+- Golvpris mer än 25 % över senast fastställt pris → varning: "råvaran är dyr
+  eller biprodukterna säljs för billigt, kontrollera innan du fastställer priset".
+- Golvpris under det högsta biproduktpriset → varning om att rollerna troligen är
+  fel klassade.
+- Biprodukt utan pris → räknas som 0 kr intäkt, men dess kilo räknas ändå in i
+  förädlingspåslaget, och raden markeras så att det syns att den drar upp
+  huvudproduktens golvpris.
 
 `weightedTarget` slutar styra priset och används bara för viktfördelningen.
+
 
 ## 3. Marginal, moms, avrundning
 
