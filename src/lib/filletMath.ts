@@ -75,9 +75,14 @@ export interface DetailPriceResult {
   effectiveTargetPct: number;
 }
 
-export function calcDetailPrice(input: DetailPriceInput): DetailPriceResult {
+export function calcDetailPrice(input: DetailPriceInput & { rawCostOverride?: number }): DetailPriceResult {
   const yieldFrac = pctToFrac(input.totalYieldPct);
-  const rawCostPerKg = yieldFrac > 0 ? input.purchasePricePerKg / yieldFrac : 0;
+  const rawCostPerKg =
+    input.rawCostOverride != null && input.rawCostOverride > 0
+      ? input.rawCostOverride
+      : yieldFrac > 0
+      ? input.purchasePricePerKg / yieldFrac
+      : 0;
   const surcharge = Number(input.surchargePerKg) || 0;
   const costWithSurcharge = rawCostPerKg + surcharge;
 
