@@ -44,6 +44,7 @@ import Vehicles from "@/pages/Vehicles";
 import Chat from "@/pages/Chat";
 import Checklist from "@/pages/Checklist";
 import Production from "@/pages/Production";
+import DataCoverage from "@/pages/DataCoverage";
 
 interface RouteEntry {
   component: React.ReactNode;
@@ -92,6 +93,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/chat": { component: <Chat /> },
   "/checklist": { component: <Checklist /> },
   "/production": { component: <Production /> },
+  "/coverage": { component: <DataCoverage /> },
 };
 
 /**

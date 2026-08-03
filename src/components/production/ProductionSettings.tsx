@@ -9,7 +9,6 @@ import {
   useVatRates,
   useUpdateSetting,
 } from "@/hooks/useProductionYields";
-import { YieldCoverageCheck } from "./YieldCoverageCheck";
 
 export function ProductionSettings() {
   const { data: surcharges = [] } = useProcessingSurcharges();
@@ -164,7 +163,10 @@ export function ProductionSettings() {
           </Table>
         </CardContent>
       </Card>
-      <YieldCoverageCheck />
+      <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+        Täckningskontrollen ligger numera i Admin-portalen under <span className="font-medium">Rapporter → Datakvalitet</span>.
+        Där kontrolleras utbyten, styckningsmodeller, referenspriser per kanal samt marginalmål och moms i en och samma körning.
+      </div>
 
     </div>
   );
