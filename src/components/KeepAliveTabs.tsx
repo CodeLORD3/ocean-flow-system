@@ -91,6 +91,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/vehicles": { component: <Vehicles /> },
   "/chat": { component: <Chat /> },
   "/checklist": { component: <Checklist /> },
+  "/production": { component: <Production /> },
 };
 
 /**
