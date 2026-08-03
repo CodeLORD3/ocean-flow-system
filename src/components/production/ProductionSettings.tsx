@@ -9,6 +9,7 @@ import {
   useVatRates,
   useUpdateSetting,
 } from "@/hooks/useProductionYields";
+import { YieldCoverageCheck } from "./YieldCoverageCheck";
 
 export function ProductionSettings() {
   const { data: surcharges = [] } = useProcessingSurcharges();
@@ -163,6 +164,7 @@ export function ProductionSettings() {
           </Table>
         </CardContent>
       </Card>
+          <YieldCoverageCheck />
     </div>
   );
 }
