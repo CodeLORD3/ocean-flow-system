@@ -26,7 +26,7 @@ import {
   rollingAverage,
   useYieldActuals,
 } from "@/hooks/useProductionYields";
-import { calcDetailPrice, batchMargin, fmt, FORMS, isProcessedForm } from "@/lib/filletMath";
+import { calcDetailPrice, allocateRawCost, batchMargin, fmt, FORMS, isProcessedForm } from "@/lib/filletMath";
 import { addStock, withdrawStock } from "@/lib/productionStock";
 
 export interface FilletPrefill {
