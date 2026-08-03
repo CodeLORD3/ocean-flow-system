@@ -168,7 +168,9 @@ export function useUpsertYield() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (row: Partial<Yield> & { species_group: string; from_form: string; to_form: string; yield_pct: number }) => {
-      const { error } = await supabase.from("yields").upsert(row as any, { onConflict: "species_group,from_form,to_form" });
+      const { error } = await supabase
+        .from("yields")
+        .upsert({ grade: "", ...row } as any, { onConflict: "species_group,from_form,to_form,grade" });
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["yields"] }),
