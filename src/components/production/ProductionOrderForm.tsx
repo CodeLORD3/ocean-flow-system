@@ -206,18 +206,27 @@ export function ProductionOrderForm() {
   const regionTargets = margins.map((m) => ({ region: m.region, label: m.label || m.region, target: Number(m.target_pct) }));
 
   const priced = useMemo(() => {
-    return included.map((d) => {
+    const qtys = included.map((d) => (rawQtyNum * (Number(d.pct) || 0)) / 100);
+    // Råvarukostnaden fördelas över detaljerna (kg × marginalvikt) så att partiet
+    // totalt bär exakt inköpskostnaden. Vid en enda detalj = inköpspris / utbyte.
+    const rawCosts = allocateRawCost(
+      included.map((d, i) => ({ qtyKg: qtys[i], marginWeight: Number(d.marginWeight) || 1 })),
+      priceNum,
+      rawQtyNum,
+    );
+    return included.map((d, i) => {
       const product = products.find((p) => p.id === d.productId);
       const category = product?.category ?? d.category;
       const surcharge = d.isProcessed ? surchargeFor(surcharges, category ?? "Färsk Fisk") : 0;
       const vat = vatFor(vats, category);
-      const qty = (rawQtyNum * (Number(d.pct) || 0)) / 100;
+      const qty = qtys[i];
       const byRegion = regionTargets.map((r) => ({
         region: r.region,
         label: r.label,
         ...calcDetailPrice({
           purchasePricePerKg: priceNum,
           totalYieldPct: Number(d.pct) || 0,
+          rawCostOverride: rawCosts[i],
           surchargePerKg: surcharge,
           targetMarginPct: r.target,
           marginWeight: Number(d.marginWeight) || 1,
