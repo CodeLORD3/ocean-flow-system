@@ -15,6 +15,7 @@ import {
   TrendingUp,
   ScanLine,
   MessageSquare,
+  Scissors,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -51,6 +52,7 @@ const purchaseNav = [
 
 const produktionSectionNav = [
   { title: "Ordrar", url: "/orders", icon: ShoppingCart },
+  { title: "Filé/Tillverkning", url: "/production", icon: Scissors },
   { title: "Produktionsschema", url: "/production-schedule", icon: CalendarDays },
   { title: "Produktionsrapportering", url: "/production-reporting", icon: ClipboardList },
 ];

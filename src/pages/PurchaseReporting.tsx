@@ -9,8 +9,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Upload, Loader2, Trash2, Plus, ZoomIn, ZoomOut, RotateCcw, FileText, Search, PackagePlus, Lock, ChevronDown, ChevronUp, CheckCircle2, Pencil, Archive } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Upload, Loader2, Trash2, Plus, ZoomIn, ZoomOut, RotateCcw, FileText, Search, PackagePlus, Lock, ChevronDown, ChevronUp, CheckCircle2, Pencil, Archive, Scissors } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { PREFILL_KEY, type FilletPrefill } from "@/components/production/ProductionOrderForm";
 import { format as fmtDate } from "date-fns";
 import { sv as svLocale } from "date-fns/locale";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
@@ -123,6 +124,7 @@ function EditableRow({
   onQtyFocused?: () => void;
   locked?: boolean;
 }) {
+  const navigate = useNavigate();
   const [productSearch, setProductSearch] = useState("");
   const [productOpen, setProductOpen] = useState(false);
   const [productIdx, setProductIdx] = useState(0);
@@ -220,6 +222,28 @@ function EditableRow({
     }
   };
 
+  const openFillet = () => {
+    const payload: FilletPrefill = {
+      product_id: line.product_id ?? null,
+      sku: products.find((p: any) => p.id === line.product_id)?.sku ?? null,
+      name: line.product_name,
+      quantity: Number(line.quantity) || 0,
+      unit_price: Number(line.unit_price) || 0,
+      supplier_name: line.supplier_name ?? null,
+      batch_number: null,
+      line_id: line.id,
+    };
+    sessionStorage.setItem(PREFILL_KEY, JSON.stringify(payload));
+    navigate("/production");
+    setTimeout(() => window.dispatchEvent(new Event("fillet-prefill")), 50);
+  };
+
+  const filletButton = (
+    <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={openFillet} title="Filéa/tillverka">
+      <Scissors className="h-3 w-3 text-primary" />
+    </Button>
+  );
+
   if (locked) {
     return (
       <TableRow className="h-8 opacity-75">
@@ -230,11 +254,12 @@ function EditableRow({
         <TableCell className="py-0.5 px-1 text-[11px] w-[88px] truncate">{line.supplier_name || "—"}</TableCell>
         <TableCell className="py-0.5 px-1 text-[11px] w-[62px]">{line.status}</TableCell>
         <TableCell className="py-0.5 px-1 text-[11px] w-[86px]">{line.purchase_date || "—"}</TableCell>
-        <TableCell className="py-0.5 px-1 text-[11px] w-[90px]">—</TableCell>
+        <TableCell className="py-0.5 px-1 text-[11px] w-[90px]">{filletButton}</TableCell>
         <TableCell className="py-0.5 px-0 w-6"></TableCell>
       </TableRow>
     );
   }
+
 
   return (
     <TableRow className="h-8 group/row">
@@ -399,6 +424,7 @@ function EditableRow({
               <FileText className="h-3 w-3 text-muted-foreground" />
             </Button>
           )}
+          {filletButton}
         </div>
       </TableCell>
       <TableCell className="py-0.5 px-0 w-6">

@@ -43,6 +43,7 @@ import LandingSettings from "@/pages/LandingSettings";
 import Vehicles from "@/pages/Vehicles";
 import Chat from "@/pages/Chat";
 import Checklist from "@/pages/Checklist";
+import Production from "@/pages/Production";
 
 interface RouteEntry {
   component: React.ReactNode;
@@ -90,6 +91,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/vehicles": { component: <Vehicles /> },
   "/chat": { component: <Chat /> },
   "/checklist": { component: <Checklist /> },
+  "/production": { component: <Production /> },
 };
 
 /**
