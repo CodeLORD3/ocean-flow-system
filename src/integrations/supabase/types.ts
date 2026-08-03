@@ -1547,6 +1547,7 @@ export type Database = {
           lot_number: string
           origin_lot_id: string | null
           presentation: string | null
+          price_status: string
           product_id: string | null
           production_method: string | null
           quantity_kg: number
@@ -1582,6 +1583,7 @@ export type Database = {
           lot_number: string
           origin_lot_id?: string | null
           presentation?: string | null
+          price_status?: string
           product_id?: string | null
           production_method?: string | null
           quantity_kg?: number
@@ -1617,6 +1619,7 @@ export type Database = {
           lot_number?: string
           origin_lot_id?: string | null
           presentation?: string | null
+          price_status?: string
           product_id?: string | null
           production_method?: string | null
           quantity_kg?: number
@@ -3361,48 +3364,147 @@ export type Database = {
       }
       purchase_report_lines: {
         Row: {
+          amount_mismatch: boolean
+          batch_quantities: Json | null
+          best_before: string | null
+          catch_area: string | null
+          catch_date_from: string | null
+          catch_date_to: string | null
+          certificate: string | null
+          condition: string | null
           created_at: string | null
+          fishing_gear: string | null
+          fishing_gear_code: string | null
+          grade: string | null
           id: string
+          latin_name: string | null
           line_total: number | null
+          lot_id: string | null
+          lot_numbers: string[]
+          match_method: string | null
+          movement_id: string | null
+          ordered_quantity: number | null
+          parent_line_id: string | null
+          presentation: string | null
           product_id: string | null
           product_name: string
           purchase_date: string | null
+          qty_variance_flag: boolean
           quantity: number
           report_id: string
+          species_fao_code: string | null
           status: string
+          supplier_article_no: string | null
           supplier_name: string | null
           unit: string | null
           unit_price: number | null
+          vessel_name: string | null
+          vessel_nation: string | null
+          vessel_reg: string | null
+          zero_price_confirmed: boolean
         }
         Insert: {
+          amount_mismatch?: boolean
+          batch_quantities?: Json | null
+          best_before?: string | null
+          catch_area?: string | null
+          catch_date_from?: string | null
+          catch_date_to?: string | null
+          certificate?: string | null
+          condition?: string | null
           created_at?: string | null
+          fishing_gear?: string | null
+          fishing_gear_code?: string | null
+          grade?: string | null
           id?: string
+          latin_name?: string | null
           line_total?: number | null
+          lot_id?: string | null
+          lot_numbers?: string[]
+          match_method?: string | null
+          movement_id?: string | null
+          ordered_quantity?: number | null
+          parent_line_id?: string | null
+          presentation?: string | null
           product_id?: string | null
           product_name: string
           purchase_date?: string | null
+          qty_variance_flag?: boolean
           quantity?: number
           report_id: string
+          species_fao_code?: string | null
           status?: string
+          supplier_article_no?: string | null
           supplier_name?: string | null
           unit?: string | null
           unit_price?: number | null
+          vessel_name?: string | null
+          vessel_nation?: string | null
+          vessel_reg?: string | null
+          zero_price_confirmed?: boolean
         }
         Update: {
+          amount_mismatch?: boolean
+          batch_quantities?: Json | null
+          best_before?: string | null
+          catch_area?: string | null
+          catch_date_from?: string | null
+          catch_date_to?: string | null
+          certificate?: string | null
+          condition?: string | null
           created_at?: string | null
+          fishing_gear?: string | null
+          fishing_gear_code?: string | null
+          grade?: string | null
           id?: string
+          latin_name?: string | null
           line_total?: number | null
+          lot_id?: string | null
+          lot_numbers?: string[]
+          match_method?: string | null
+          movement_id?: string | null
+          ordered_quantity?: number | null
+          parent_line_id?: string | null
+          presentation?: string | null
           product_id?: string | null
           product_name?: string
           purchase_date?: string | null
+          qty_variance_flag?: boolean
           quantity?: number
           report_id?: string
+          species_fao_code?: string | null
           status?: string
+          supplier_article_no?: string | null
           supplier_name?: string | null
           unit?: string | null
           unit_price?: number | null
+          vessel_name?: string | null
+          vessel_nation?: string | null
+          vessel_reg?: string | null
+          zero_price_confirmed?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "purchase_report_lines_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_report_lines_movement_id_fkey"
+            columns: ["movement_id"]
+            isOneToOne: false
+            referencedRelation: "stock_movements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_report_lines_parent_line_id_fkey"
+            columns: ["parent_line_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_report_lines"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "purchase_report_lines_product_id_fkey"
             columns: ["product_id"]
@@ -3419,44 +3521,124 @@ export type Database = {
           },
         ]
       }
+      purchase_report_rejected_lines: {
+        Row: {
+          created_at: string
+          id: string
+          raw_data: Json | null
+          reason: string
+          report_id: string
+          row_index: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          raw_data?: Json | null
+          reason: string
+          report_id: string
+          row_index?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          raw_data?: Json | null
+          reason?: string
+          report_id?: string
+          row_index?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_report_rejected_lines_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       purchase_reports: {
         Row: {
           archived_at: string | null
           created_at: string | null
+          delivery_date: string | null
           display_name: string | null
+          document_date: string | null
+          document_number: string | null
+          document_type: string | null
+          file_hash: string | null
           file_name: string
           file_url: string
           id: string
           notes: string | null
+          posted_at: string | null
+          posted_by: string | null
           report_date: string
           status: string
+          supplier_id: string | null
+          supplier_name_raw: string | null
           total_amount: number | null
+          total_ex_vat: number | null
         }
         Insert: {
           archived_at?: string | null
           created_at?: string | null
+          delivery_date?: string | null
           display_name?: string | null
+          document_date?: string | null
+          document_number?: string | null
+          document_type?: string | null
+          file_hash?: string | null
           file_name: string
           file_url: string
           id?: string
           notes?: string | null
+          posted_at?: string | null
+          posted_by?: string | null
           report_date?: string
           status?: string
+          supplier_id?: string | null
+          supplier_name_raw?: string | null
           total_amount?: number | null
+          total_ex_vat?: number | null
         }
         Update: {
           archived_at?: string | null
           created_at?: string | null
+          delivery_date?: string | null
           display_name?: string | null
+          document_date?: string | null
+          document_number?: string | null
+          document_type?: string | null
+          file_hash?: string | null
           file_name?: string
           file_url?: string
           id?: string
           notes?: string | null
+          posted_at?: string | null
+          posted_by?: string | null
           report_date?: string
           status?: string
+          supplier_id?: string | null
+          supplier_name_raw?: string | null
           total_amount?: number | null
+          total_ex_vat?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "purchase_reports_posted_by_fkey"
+            columns: ["posted_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_reports_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       schedule_events: {
         Row: {
@@ -3938,6 +4120,30 @@ export type Database = {
         }
         Relationships: []
       }
+      species_latin_aliases: {
+        Row: {
+          alias: string
+          created_at: string
+          id: string
+          latin_name: string
+          note: string | null
+        }
+        Insert: {
+          alias: string
+          created_at?: string
+          id?: string
+          latin_name: string
+          note?: string | null
+        }
+        Update: {
+          alias?: string
+          created_at?: string
+          id?: string
+          latin_name?: string
+          note?: string | null
+        }
+        Relationships: []
+      }
       staff: {
         Row: {
           age: number | null
@@ -4304,6 +4510,48 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      supplier_article_map: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          supplier_article_no: string
+          supplier_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          supplier_article_no: string
+          supplier_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          supplier_article_no?: string
+          supplier_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_article_map_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_article_map_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       suppliers: {
         Row: {
@@ -5044,6 +5292,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      latin_norm: { Args: { v: string }; Returns: string }
       product_traceability_required: {
         Args: { _exempt: boolean; _hs_code: string }
         Returns: boolean
