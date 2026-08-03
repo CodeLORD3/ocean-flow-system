@@ -483,8 +483,11 @@ export function ProductionOrderForm() {
                     <TableHead className="text-[11px] w-[90px] text-right">Kostpris</TableHead>
                     <TableHead className="text-[11px] w-[70px] text-right">Påslag</TableHead>
                     {regionTargets.map((r) => (
-                      <TableHead key={r.region} className="text-[11px] text-right w-[130px]">
+                      <TableHead key={r.region} className="text-[11px] text-right w-[190px] leading-tight">
                         {r.label.split(" (")[0]} ({fmt(r.target, 0)} %)
+                        <span className="block text-[9px] font-normal text-muted-foreground">
+                          pris · marg. råvara · ink. arbete
+                        </span>
                       </TableHead>
                     ))}
                     <TableHead className="w-[36px]" />
