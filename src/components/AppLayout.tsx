@@ -115,11 +115,60 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     .filter((s) => !s.is_wholesale)
     .filter((s) => allowedSet.size === 0 || allowedSet.has(s.id));
 
+  const currentPortalLabel =
+    site === "shop" ? activeStoreName || "Butik" : site === "production" ? "Grossist" : "Admin";
+
+  /* Portalväljarens innehåll – återanvänds i statusraden (desktop) och headern (mobil) */
+  const portalMenuContent = (
+    <DropdownMenuContent align="end" className="w-52">
+      <DropdownMenuLabel className="text-[10px]">Välj portal</DropdownMenuLabel>
+      <DropdownMenuSeparator />
+      {access.includes("wholesale") && (
+        <DropdownMenuItem
+          className={`text-xs gap-2 ${site === "wholesale" ? "bg-muted font-medium" : ""}`}
+          onClick={() => { setSite("wholesale"); setActiveStore(null, null); switchTab("/organisation"); }}
+        >
+          <Shield className="h-3 w-3" /> Admin
+        </DropdownMenuItem>
+      )}
+      {access.includes("production") && (
+        <DropdownMenuItem
+          className={`text-xs gap-2 ${site === "production" ? "bg-muted font-medium" : ""}`}
+          onClick={() => { setSite("production"); setActiveStore(null, null); switchTab("/organisation"); }}
+        >
+          <Factory className="h-3 w-3" /> Grossist
+        </DropdownMenuItem>
+      )}
+      {access.includes("shop") && (
+        <>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel className="text-[10px]">Butiker</DropdownMenuLabel>
+          {retailStores.length === 0 ? (
+            <DropdownMenuItem disabled className="text-[10px] text-muted-foreground">
+              Inga butiker tillgängliga
+            </DropdownMenuItem>
+          ) : (
+            retailStores.map((store) => (
+              <DropdownMenuItem
+                key={store.id}
+                className={`text-xs gap-2 ${site === "shop" && activeStoreName === store.name ? "bg-muted font-medium" : ""}`}
+                onClick={() => { setSite("shop"); setActiveStore(store.id, store.name); switchTab("/organisation"); }}
+              >
+                <Store className="h-3 w-3" /> {store.name}
+              </DropdownMenuItem>
+            ))
+          )}
+        </>
+      )}
+    </DropdownMenuContent>
+  );
+
   return (
     <SidebarProvider>
       <div className="h-[100dvh] max-h-[100dvh] overflow-hidden flex w-full">
         {site === "shop" ? <ShopSidebar /> : site === "production" ? <ProductionSidebar /> : <AppSidebar />}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+
 
           {/* Top status bar — hidden on mobile to save vertical space */}
           <div className="hidden sm:flex h-8 items-center justify-between bg-sidebar-background px-4 text-xs text-foreground shrink-0">
