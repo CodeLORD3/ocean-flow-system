@@ -91,8 +91,12 @@ export function ProductionOrderForm() {
   const [applyRegion, setApplyRegion] = useState<string>("");
   const [previewOpen, setPreviewOpen] = useState(false);
 
+  // Artgrupper med utbyte först, därefter förslagslistan som hjälp i formuläret.
   const speciesOptions = useMemo(
-    () => [...new Set(yields.map((y) => y.species_group))].sort((a, b) => a.localeCompare(b, "sv")),
+    () =>
+      [...new Set([...yields.map((y) => y.species_group), ...SPECIES_GROUP_SUGGESTIONS])].sort((a, b) =>
+        a.localeCompare(b, "sv"),
+      ),
     [yields]
   );
 
