@@ -19,7 +19,19 @@ import {
 import { cn } from "@/lib/utils";
 import { focalStyle, focalPercent, focalLabel } from "@/lib/imageFocal";
 
+/** Datum + tid då bilden laddades upp, t.ex. "03-08 10:24". */
+function uploadedLabel(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return (
+    d.toLocaleDateString("sv-SE", { day: "2-digit", month: "2-digit" }) +
+    " " +
+    d.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })
+  );
+}
+
 type Props = {
+
   entityType: string;
   entityId: string;
   title?: string;
