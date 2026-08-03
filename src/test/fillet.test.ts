@@ -34,147 +34,77 @@ describe("rounding", () => {
   });
 });
 
-describe("allocateRawCost", () => {
-  it("fördelar jämnt per kilo, oberoende av marginalvikt", () => {
-    const details = [
-      { qtyKg: 20, marginWeight: 1.4 },
-      { qtyKg: 15, marginWeight: 1 },
-      { qtyKg: 12, marginWeight: 0.6 },
-    ];
-    const costs = allocateRawCost(details, 60, 100); // 6000 kr / 47 kg
-    expect(costs[0]).toBeCloseTo(127.66, 1);
-    expect(costs[1]).toBeCloseTo(127.66, 1);
-    expect(costs[2]).toBeCloseTo(127.66, 1);
-    const total = details.reduce((s, d, i) => s + d.qtyKg * costs[i], 0);
-    expect(total).toBeCloseTo(6000, 2);
-  });
-
-  it("en enda detalj = inköpspris / utbyte", () => {
-    const [c] = allocateRawCost([{ qtyKg: 40, marginWeight: 1.4 }], 100, 100);
-    expect(c).toBeCloseTo(250, 6);
-  });
-});
-
-/* ── Riktning C: auktionskalkylen (verifieringsexemplet i specen) ─── */
-describe("riktning C — auktionskalkyl", () => {
+/* ── NRV-metoden: verifieringsexemplet 29 kg torsk à 146 kr/kg ────── */
+describe("NRV-prissättning", () => {
+  const RAW = 29;
+  const PRICE = 146;
+  const FILLET_KG = RAW * 0.55; // 15,95 kg
+  const Q = {
+    rygg: FILLET_KG * 0.55,
+    kontra: FILLET_KG * 0.1,
+    benfri: FILLET_KG * 0.2,
+    slag: FILLET_KG * 0.15,
+  };
   const lines = [
-    { qtyKg: QTY.rygg, priceExVat: exVat(698), surchargePerKg: SURCHARGE },
-    { qtyKg: QTY.benfri, priceExVat: exVat(249), surchargePerKg: SURCHARGE },
-    { qtyKg: QTY.slag, priceExVat: exVat(129), surchargePerKg: SURCHARGE },
-    { qtyKg: QTY.kontra, priceExVat: exVat(398), surchargePerKg: SURCHARGE },
+    { key: "rygg", qtyKg: Q.rygg, priceExVat: exVat(798), surchargePerKg: SURCHARGE },
+    { key: "kontra", qtyKg: Q.kontra, priceExVat: exVat(398), surchargePerKg: SURCHARGE },
+    { key: "benfri", qtyKg: Q.benfri, priceExVat: exVat(249), surchargePerKg: SURCHARGE },
+    { key: "slag", qtyKg: Q.slag, priceExVat: exVat(198), surchargePerKg: SURCHARGE },
   ];
+  const res = priceByNrv({ purchasePricePerKg: PRICE, rawQuantity: RAW, targetMarginPct: 45, lines });
+  const line = (k: string) => res.lines.find((l) => l.key === k)!;
 
-  it("intäkt, kostnad och marginal enligt specen", () => {
-    const b = batchMargin({ purchasePricePerKg: RAW_PRICE, rawQuantity: RAW_QTY, lines: lines.map((l) => ({ qty: l.qtyKg, priceExVat: l.priceExVat, surchargePerKg: l.surchargePerKg })) });
-    expect(Math.round(b.revenueExVat)).toBe(21853);
-    expect(Math.round(b.rawCost + b.surchargeCost)).toBe(7645);
-    expect(b.marginInclWorkPct).toBeCloseTo(65.0, 1);
+  it("intäkt, kostnad och partiets marginal", () => {
+    expect(res.revenueExVat).toBeCloseTo(8399.33, 1);
+    expect(res.totalCost).toBeCloseTo(4792.25, 2);
+    expect(res.batchMarginPct).toBeCloseTo(42.9, 1);
+    expect(res.revenuePerOutputKg).toBeCloseTo(526.6, 1);
   });
 
-  it("maxpris per kg råvara: 104 kr vid 45 % och 82 kr vid 55 %", () => {
-    const gbg = auctionMaxRawPrice({ rawQuantity: RAW_QTY, targetMarginPct: 45, lines });
-    const sthlm = auctionMaxRawPrice({ rawQuantity: RAW_QTY, targetMarginPct: 55, lines });
-    expect(Math.round(gbg.maxPricePerKg)).toBe(104);
-    expect(Math.round(sthlm.maxPricePerKg)).toBe(82);
+  it("intäktsandelar per detalj", () => {
+    expect(line("rygg").revenueShare * 100).toBeCloseTo(78.6, 1);
+    expect(line("kontra").revenueShare * 100).toBeCloseTo(7.1, 1);
+    expect(line("benfri").revenueShare * 100).toBeCloseTo(8.9, 1);
+    expect(line("slag").revenueShare * 100).toBeCloseTo(5.3, 1);
+  });
+
+  it("fördelad råvarukostnad per kg", () => {
+    expect(line("rygg").rawCostPerKg).toBeCloseTo(379.49, 1);
+    expect(line("kontra").rawCostPerKg).toBeCloseTo(189.27, 1);
+    expect(line("benfri").rawCostPerKg).toBeCloseTo(118.41, 1);
+    expect(line("slag").rawCostPerKg).toBeCloseTo(94.16, 1);
+  });
+
+  it("marginal per detalj — billigaste detaljen har lägst marginal", () => {
+    expect(line("rygg").marginPct).toBeCloseTo(44.9, 1);
+    expect(line("kontra").marginPct).toBeCloseTo(40.3, 1);
+    expect(line("benfri").marginPct).toBeCloseTo(34.7, 1);
+    expect(line("slag").marginPct).toBeCloseTo(30.9, 1);
+    expect(res.lowestMarginKey).toBe("slag");
+  });
+
+  it("detalj utan pris blockerar kalkylen i stället för att gissa", () => {
+    const r = priceByNrv({
+      purchasePricePerKg: PRICE,
+      rawQuantity: RAW,
+      targetMarginPct: 45,
+      lines: [...lines.slice(0, 3), { key: "slag", qtyKg: Q.slag, priceExVat: null, surchargePerKg: SURCHARGE }],
+    });
+    expect(r.missingPriceKeys).toContain("slag");
+    expect(r.lines.find((l) => l.key === "slag")!.priceExVat).toBe(0);
+  });
+
+  it("auktionskalkyl: partiet håller 140,05 kr och alla detaljer 105,03 kr", () => {
+    const a = auctionMaxRawPrice({
+      rawQuantity: RAW,
+      targetMarginPct: 45,
+      lines: lines.map((l) => ({ qtyKg: l.qtyKg, priceExVat: l.priceExVat, surchargePerKg: l.surchargePerKg })),
+    });
+    expect(a.maxPricePerKg).toBeCloseTo(140.05, 1);
+    expect(a.maxPricePerKgAllDetails).toBeCloseTo(105.03, 1);
   });
 });
 
-/* ── Riktning B: biproduktsmetoden ────────────────────────────────── */
-describe("riktning B — biproduktsmetoden", () => {
-  const run = (targetMarginPct: number, byproductPrices = { benfri: 249, slag: 129, kontra: 398 }) =>
-    priceByByproductMethod({
-      purchasePricePerKg: RAW_PRICE,
-      rawQuantity: RAW_QTY,
-      targetMarginPct,
-      vatPct: VAT,
-      primaries: [{ key: "rygg", qtyKg: QTY.rygg, marginWeight: 1, surchargePerKg: SURCHARGE, lastSetPrice: 698 }],
-      byproducts: [
-        { key: "benfri", qtyKg: QTY.benfri, priceInclVat: byproductPrices.benfri, surchargePerKg: SURCHARGE },
-        { key: "slag", qtyKg: QTY.slag, priceInclVat: byproductPrices.slag, surchargePerKg: SURCHARGE },
-        { key: "kontra", qtyKg: QTY.kontra, priceInclVat: byproductPrices.kontra, surchargePerKg: SURCHARGE },
-      ],
-    });
-
-  it("golvpris för ryggen blir 379 kr vid Göteborg 45 %", () => {
-    const r = run(45);
-    expect(r.primaries[0].floorInclVat).toBe(379);
-  });
-
-  it("partiets marginal blir målet plus avrundningseffekt", () => {
-    const r = run(45);
-    expect(r.batchAtFloor.marginInclWorkPct).toBeGreaterThanOrEqual(45);
-    expect(r.batchAtFloor.marginInclWorkPct).toBeLessThanOrEqual(45 + 3);
-  });
-
-  it("föreslaget pris är det högsta av golv och senast fastställt", () => {
-    const cheap = run(45);
-    // Senast fastställt 698 ligger högt över golvet → priset sänks inte.
-    expect(cheap.primaries[0].suggestedInclVat).toBe(698);
-    expect(cheap.primaries[0].lastSetPrice).toBe(698);
-  });
-
-  it("varnar när golvet ligger mer än 25 % över senast fastställt pris", () => {
-    const r = priceByByproductMethod({
-      purchasePricePerKg: 260,
-      rawQuantity: RAW_QTY,
-      targetMarginPct: 55,
-      vatPct: VAT,
-      primaries: [{ key: "rygg", qtyKg: QTY.rygg, marginWeight: 1, surchargePerKg: SURCHARGE, lastSetPrice: 698 }],
-      byproducts: [{ key: "slag", qtyKg: QTY.slag, priceInclVat: 129, surchargePerKg: SURCHARGE }],
-    });
-    expect(r.primaries[0].floorInclVat).toBeGreaterThan(698 * 1.25);
-    expect(r.primaries[0].floorAboveLastPct).toBeGreaterThan(25);
-    expect(r.warnings.some((w) => w.includes("råvaran är dyr"))).toBe(true);
-  });
-
-  it("varnar när golvet hamnar under högsta biproduktpriset", () => {
-    const r = priceByByproductMethod({
-      purchasePricePerKg: 5,
-      rawQuantity: RAW_QTY,
-      targetMarginPct: 45,
-      vatPct: VAT,
-      primaries: [{ key: "rygg", qtyKg: QTY.rygg, marginWeight: 1, surchargePerKg: 0, lastSetPrice: 698 }],
-      byproducts: [{ key: "kontra", qtyKg: QTY.kontra, priceInclVat: 998, surchargePerKg: 0 }],
-    });
-    expect(r.primaries[0].floorInclVat).toBeLessThan(998);
-    expect(r.warnings.some((w) => w.includes("fel klassade"))).toBe(true);
-  });
-
-  it("biprodukt utan pris ger 0 kr intäkt men kilona bär arbete och höjer golvet", () => {
-    const withPrice = run(45);
-    const withoutPrice = priceByByproductMethod({
-      purchasePricePerKg: RAW_PRICE,
-      rawQuantity: RAW_QTY,
-      targetMarginPct: 45,
-      vatPct: VAT,
-      primaries: [{ key: "rygg", qtyKg: QTY.rygg, marginWeight: 1, surchargePerKg: SURCHARGE, lastSetPrice: 698 }],
-      byproducts: [
-        { key: "benfri", qtyKg: QTY.benfri, priceInclVat: null, surchargePerKg: SURCHARGE },
-        { key: "slag", qtyKg: QTY.slag, priceInclVat: 129, surchargePerKg: SURCHARGE },
-        { key: "kontra", qtyKg: QTY.kontra, priceInclVat: 398, surchargePerKg: SURCHARGE },
-      ],
-    });
-    expect(withoutPrice.missingPriceKeys).toContain("benfri");
-    expect(withoutPrice.surchargeCost).toBeCloseTo(withPrice.surchargeCost, 6);
-    expect(withoutPrice.primaries[0].floorExVat).toBeGreaterThan(withPrice.primaries[0].floorExVat);
-  });
-
-  it("flera huvudprodukter: viktat snitt av marginalvikten är 1", () => {
-    const r = priceByByproductMethod({
-      purchasePricePerKg: RAW_PRICE,
-      rawQuantity: RAW_QTY,
-      targetMarginPct: 45,
-      vatPct: VAT,
-      primaries: [
-        { key: "a", qtyKg: 20, marginWeight: 1.4, surchargePerKg: SURCHARGE },
-        { key: "b", qtyKg: 10, marginWeight: 0.6, surchargePerKg: SURCHARGE },
-      ],
-      byproducts: [{ key: "slag", qtyKg: 7, priceInclVat: 129, surchargePerKg: SURCHARGE }],
-    });
-    const revenue = r.primaries.reduce((s, p) => s + p.qtyKg * p.floorExVat, 0);
-    expect(revenue).toBeCloseTo(r.primaryRevenueExVat, 4);
-  });
-});
 
 describe("styckningsmodeller", () => {
   it("kopplar art till rätt modell", () => {
