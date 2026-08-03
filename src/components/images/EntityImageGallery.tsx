@@ -130,12 +130,17 @@ export function EntityImageGallery({
                   style={focalStyle(img.focal_point)}
                 />
               </button>
+              {/* Uppladdningstidpunkt i nedre vänstra hörnet av bilden */}
+              <span className="absolute bottom-[38px] left-1 rounded bg-background/80 px-1 py-0.5 font-mono tabular-nums text-[9px] text-foreground backdrop-blur pointer-events-none">
+                {uploadedLabel(img.created_at)}
+              </span>
               {img.is_cover && (
                 <Badge className="absolute top-1 left-1 h-4 gap-1 px-1.5 text-[9px] pointer-events-none">
                   <Star className="h-2.5 w-2.5 fill-current" />
                   Omslag
                 </Badge>
               )}
+
               {editable && (
                 <Tooltip>
                   <TooltipTrigger asChild>
