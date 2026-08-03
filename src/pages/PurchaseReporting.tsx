@@ -438,7 +438,19 @@ function EditableRow({
   );
 }
 
+/**
+ * Ett partinummer på en följesedel är flera tecken långt (GFA: 10012.NNNNNNN).
+ * Enstaka siffror är nästan alltid kollital som hamnat i fel fält vid inläsningen,
+ * så de räknas inte som partinummer.
+ */
+export function plausibleLots(line: { lot_numbers?: string[] | null }): string[] {
+  return ((line.lot_numbers ?? []) as string[])
+    .map((n) => String(n).trim())
+    .filter((n) => n.length >= 4);
+}
+
 // Collapsible report section
+
 function ReportSection({
   report,
   lines,
