@@ -132,8 +132,10 @@ describe("referenspriser per kanal", () => {
         { species_group: "Torsk", detail_form: "ryggfile", price_list: PRICE_LIST_GROSSIST, price_incl_vat: 210, last_set_price: 0 },
       ]),
     );
-    expect(f).toHaveLength(1);
-    expect(f[0].message).toContain("0");
+    // Nollpriset flaggas, och grossistraden saknar dessutom referenskostnad.
+    expect(f).toHaveLength(2);
+    expect(f.some((x) => x.message.includes("0"))).toBe(true);
+    expect(f.some((x) => x.message.toLowerCase().includes("referenskostnad"))).toBe(true);
   });
 });
 
