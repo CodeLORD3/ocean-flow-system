@@ -10,7 +10,7 @@ import {
 } from "@/lib/filletMath";
 
 import { CUT_MODEL_TEMPLATES, SPECIES_CUT_MODEL, hasCutModel, modelForSpecies, normalizeDetailForm } from "@/lib/cutModels";
-
+import { CUT_MODEL_TEMPLATES, SPECIES_CUT_MODEL, effectiveCutModel, hasCutModel, modelForSpecies, normalizeDetailForm, pickYieldRow } from "@/lib/cutModels";
 /* Torskpartiet i specen: 100 kg à 60 kr/kg, utbyte 47 %, loin_four 55/20/15/10 */
 const RAW_QTY = 100;
 const RAW_PRICE = 60;
