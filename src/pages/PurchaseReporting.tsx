@@ -1209,6 +1209,11 @@ export default function PurchaseReporting() {
   const goPrev = () => { if (currentIdx > 0) setSelectedReportId(reports[currentIdx - 1].id); };
   const goNext = () => { if (currentIdx < reports.length - 1) setSelectedReportId(reports[currentIdx + 1].id); };
 
+  const selectedLines = useMemo(
+    () => allLines.filter((l) => l.report_id === selectedReportId),
+    [allLines, selectedReportId],
+  );
+
   const grandTotal = allLines.reduce((s, l) => s + (l.line_total ?? 0), 0);
 
   const searchedProducts = products.filter((p) =>
@@ -1230,6 +1235,17 @@ export default function PurchaseReporting() {
                   {" · "}{lockedReports.length} bekräftade
                 </p>
               </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={selectedReport && !(selectedReport as any).posted_at ? "default" : "outline"}
+                  size="sm"
+                  className="gap-1.5 h-8 text-xs"
+                  disabled={!selectedReport || selectedLines.length === 0}
+                  onClick={() => setPostOpen(true)}
+                >
+                  <PackageCheck className="h-3.5 w-3.5" />
+                  {selectedReport && (selectedReport as any).posted_at ? "Bokförd" : "Bokför inleverans"}
+                </Button>
               <Link to="/reports">
                 <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
                   <Archive className="h-3.5 w-3.5" />
@@ -1241,7 +1257,16 @@ export default function PurchaseReporting() {
                   )}
                 </Button>
               </Link>
+              </div>
             </div>
+
+            <PostIncomingDialog
+              open={postOpen}
+              onOpenChange={setPostOpen}
+              report={selectedReport as any}
+              lines={selectedLines as any}
+              products={products as any}
+            />
 
             {/* Search bar to add existing products + new product button */}
             <div className="flex items-center gap-2 px-4 py-2 border-b bg-muted/30">
