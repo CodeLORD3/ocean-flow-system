@@ -265,6 +265,16 @@ export function checkDetailPrices(input: CoverageInput): CoverageFinding[] {
             message: `Referenspriset är 0 i prislistan ${list}.`,
           });
         }
+        if (price > 0 && num(row.reference_cost_per_kg) <= 0) {
+          out.push({
+            check: "detail_prices",
+            severity: "warning",
+            group: m.species_group,
+            subject: `${s.detail_name || s.detail_form} (${label})`,
+            message: `Referenskostnad kr/kg saknas — skalfaktorn kan inte bedömas i prislistan ${list}.`,
+          });
+        }
+
       }
     }
   }
