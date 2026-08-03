@@ -55,15 +55,19 @@ Artgrupp på produkt:
   till gemener.
 - Filé/Tillverkning kan då föreslå artgrupp direkt från valt råvaruprodukt.
 
-## Tester
+## Tester och täckningskontroll
 
-- Partitest: för en torsk-batch (100 kg, 60 kr/kg) får partiets samlade marginal
-  ink. arbete aldrig avvika mer än 5 procentenheter från regionens mål – körs för
-  både 55 % och 45 %.
-- Täckningstest: varje `species_group` som förekommer på en aktiv produkt måste
-  ha minst en rad i `yields`. Testet körs mot artgruppslistan i seeden så det
-  fungerar utan databaskoppling, och listan hålls i `src/lib/speciesGroups.ts`
-  som både formulär, import och test läser.
+- Partitest (`src/test/fillet.test.ts`): för en torsk-batch (100 kg, 60 kr/kg)
+  får partiets samlade marginal ink. arbete aldrig avvika mer än 5
+  procentenheter från regionens mål – körs för både 55 % och 45 %.
+- Utbytestäckning körs mot **verklig produktdata**, inte mot seeden: en knapp
+  ”Kontrollera utbytestäckning” i Inställningar frågar databasen efter alla
+  aktiva produkter vars `species_group` saknar rad i `yields` och listar dem
+  (produktnamn, SKU, artgrupp) med möjlighet att gå till Utbytesregistret. Även
+  produkter helt utan artgrupp listas separat.
+- `src/lib/speciesGroups.ts` behålls enbart som förslagslista i formulär och
+  import – den används inte som sanning i kontrollen.
+
 
 ## Teknisk sammanfattning
 
