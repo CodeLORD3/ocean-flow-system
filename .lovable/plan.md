@@ -19,10 +19,10 @@ Utökar den befintliga AI-inläsningen (`supabase/functions/parse-foljesedel`) �
 ## Steg
 
 **1. Databas (en migration)**
-- `purchase_reports`: `supplier_id`, `document_type`, `document_number`, `document_date`, `delivery_date`, `total_ex_vat`, `file_hash`, `posted_at`, `posted_by`. Unikt index på `(supplier_id, document_number)` där båda finns; index på `file_hash`.
-- `purchase_report_lines`: `supplier_article_no`, `latin_name`, `species_fao_code`, `lot_numbers text[]`, `catch_area`, `fishing_gear`, `fishing_gear_code`, `catch_date_from`, `catch_date_to`, `best_before`, `presentation`, `grade`, `condition`, `vessel_name`, `vessel_reg`, `vessel_nation`, `certificate`, `ordered_quantity`, `qty_variance_flag`, `amount_mismatch boolean`, `zero_price_confirmed boolean`, `parent_line_id` (klubbslag under en sammanslagen partirad), `lot_id`, `movement_id`, `match_method`.
+- `purchase_reports`: `supplier_id`, `document_type`, `document_number`, `document_date`, `delivery_date`, `total_ex_vat`, `file_hash`, `posted_at`, `posted_by`. Unikt index på `(supplier_id, document_number)` där båda finns, plus unikt index på `(supplier_id, document_date)`; index på `file_hash`.
+- `purchase_report_lines`: `supplier_article_no`, `latin_name`, `species_fao_code`, `lot_numbers text[]`, `catch_area`, `fishing_gear`, `fishing_gear_code`, `catch_date_from`, `catch_date_to`, `best_before`, `presentation`, `grade`, `condition`, `vessel_name`, `vessel_reg`, `vessel_nation`, `certificate`, `ordered_quantity`, `qty_variance_flag`, `amount_mismatch boolean`, `zero_price_confirmed boolean`, `parent_line_id` (klubbslag under en sammanslagen partirad), `batch_quantities jsonb` (justerad fördelning per batchnummer), `lot_id`, `movement_id`, `match_method`.
 - Ny tabell `supplier_article_map (supplier_id, supplier_article_no, product_id)`, unikt på de två första, med GRANT + RLS enligt projektets mönster.
-- Ny tabell `species_latin_aliases (alias, latin_name)` för kända leverantörsstavfel, unikt på normaliserad alias.
+- Ny tabell `species_latin_aliases (alias, latin_name)` som BARA innehåller felstavningar mappade mot korrekt namn — en CHECK förbjuder rader där normaliserad alias är lika med normaliserat `latin_name`, så korrekta namn aldrig kan mappas mot sig själva. Unikt på normaliserad alias. Seed: `Homarus gamarus → Homarus gammarus`, `Lophius piscatorus → Lophius piscatorius`, `Clupea herengus → Clupea harengus`, `Mytilus Edulis → Mytilus edulis` (versalfelet fångas redan av normaliseringen men läggs in ändå).
 - Ny tabell `purchase_report_rejected_lines` för otolkade rader (samma mönster som produktimportens loggning).
 - `lots`: `price_status` finns redan (preliminar/bekraftad) — återanvänds.
 
