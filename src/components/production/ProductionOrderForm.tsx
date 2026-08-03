@@ -248,16 +248,13 @@ export function ProductionOrderForm() {
   /* ── Föreslå detaljer utifrån modell och utbyte ───────────── */
   const suggest = () => {
     if (!species) return;
-    const rows = yields.filter((y) => speciesKey(y.species_group) === speciesKey(species) && y.from_form === rawForm);
     const isFilletRow = (toForm: string) =>
       toForm.includes("filé") || toForm.includes("sida") || toForm === "loin" || toForm.includes("stjärt");
-    const filletRow = rows
-      .filter((y) => isFilletRow(y.to_form))
-      .sort((a, b) => Number(b.yield_pct) - Number(a.yield_pct))[0];
+    const filletRow = pickYieldRow(yields as any, species, rawForm, grade, isFilletRow);
     if (!filletRow) {
       toast({
         title: "Ingen utbytesrad",
-        description: `Saknar utbyte för ${species} från "${rawForm}".`,
+        description: `Saknar utbyte för ${species} från "${rawForm}"${grade ? ` (sortering ${grade})` : ""}.`,
         variant: "destructive",
       });
       return;
