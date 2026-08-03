@@ -27,17 +27,17 @@ Utökar den befintliga AI-inläsningen (`supabase/functions/parse-foljesedel`) �
 - `lots`: `price_status` finns redan (preliminar/bekraftad) — återanvänds.
 
 **2. Edge function `parse-foljesedel`**
-Behåller Gemini via Lovable AI Gateway och `extract_products`-verktyget, men schemat byts till `{ document: {...}, lines: [...] }` med dokumenthuvudet (leverantör, dokumenttyp, dokumentnummer, dokumentdatum, leveransdatum, totalsumma ex moms) och de nya radfälten. Alla nya fält nullable, systemprompten skärps: aldrig gissningar, `null` när fältet saknas; `lot_numbers` är alltid en array så en rad kan bära flera partinummer. Filens SHA-256 beräknas i funktionen och returneras.
+Behåller Gemini via Lovable AI Gateway och `extract_products`-verktyget, men schemat byts till `{ document: {...}, lines: [...] }` med dokumenthuvudet (leverantör, dokumenttyp, dokumentnummer, dokumentdatum, leveransdatum, totalsumma ex moms) och de nya radfälten. Alla nya fält nullable, systemprompten skärps: aldrig gissningar, `null` när fältet saknas; `lot_numbers` är alltid en array så en rad kan bära flera partinummer. För auktionsdokument (GFA) läses "Auktion: <datum>" som `document_date`. Filens SHA-256 beräknas i funktionen och returneras.
 
 **3. Leverantörs- och produktmatchning (ny `src/lib/foljesedelMatch.ts`)**
 Återanvänder `supplierAliasKeys`/`buildSupplierIndex`/`lookupSupplier` från `productImport.ts` och `skuKey`/`compareKey`/`speciesKey` från `asciiFold.ts`. Matchningsordning per rad: sparad `supplier_article_map` → FAO-kod → latinskt namn → `species_group` → namnnyckel. `match_method` sparas per rad. Saknad leverantör frågas en gång i UI:t och kopplingen sparas; manuellt vald produkt skrivs till `supplier_article_map`.
 
 **4. Dubblettspärr**
-Vid uppladdning kontrolleras `file_hash` och `(supplier_id, document_number)`. Träff → dialog som kräver bekräftelse innan en ny rapport skapas, aldrig tyst dubblett.
+Vid uppladdning kontrolleras `file_hash`, `(supplier_id, document_number)` och `(supplier_id, document_date)`. Saknar dokumentet nummer — som GFA:s auktionssedlar, där bara "Auktion: 2026-07-28" och "Vår referens" finns — sätts `document_number` till auktions-/dokumentdatumet. Det finns en auktion per dag och leverantör, så datumnyckeln fångar dubbletten även när `file_hash` skiljer sig (PIA skriver genereringstidpunkt i sidfoten och hashen ändras vid ny nedladdning). Träff → dialog som kräver bekräftelse innan en ny rapport skapas, aldrig tyst dubblett.
 
 **5. Brygga till lagerledgern**
 Knappen "Bokför inleverans" på klar rapport i `PurchaseReporting.tsx`, driven av en ny `src/lib/purchaseReportPosting.ts` som anropar exakt samma partiskapande + `recordMovements` som `Receiving.tsx`. Partibildningen går i båda riktningarna:
-- **En rad → flera lots (JHB):** rad med flera batchnummer delas jämnt, t.ex. 100 kg / 4 batch = 4 lots à 25,000 kg.
+- **En rad → flera lots (JHB):** rad med flera batchnummer ger ett lot per batch. En dialog visar förslag på jämn fördelning (100 kg / 4 = 25,000 kg) med redigerbara kvantiteter per batch, eftersom lådorna kan väga olika och mottagaren ser det. Summan låses till radens levererade kvantitet och avvikelse blockerar bokföringen. Jämn fördelning är förval, så den som inte bryr sig bara godkänner. Den valda fördelningen sparas i `batch_quantities`.
 - **Flera rader → ett lot (GFA):** rader med samma partinummer inom samma dokument slås ihop till ETT lot med viktat snittpris (20 kg à 222 + 20 kg à 222 + 20 kg à 110 → 60 kg à 184,67 kr/kg). De enskilda klubbslagen behålls som underrader på `purchase_report_lines` (`parent_line_id`) så prisspridningen är spårbar, och alla underrader pekar på samma `lot_id`.
 
 Alla spårbarhetsfält sätts, `price_status = 'preliminar'`, inleveransrörelse mot Grossist Flytande via `GROSSIST_FLYTANDE_ID` i `src/lib/locations.ts`, `lot_id`/`movement_id` tillbaka på raderna. Idempotent via `posted_at`.
