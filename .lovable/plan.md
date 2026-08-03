@@ -46,19 +46,49 @@ kostnad        = råvarukg × inköpspris + påslag × färdiga kg
 biprodukt      = Σ (kg × pris ex moms), manuellt satta priser
 krävd intäkt   = kostnad / (1 − marginalmål)
 huvudintäkt    = krävd intäkt − biproduktintäkt
-huvudpris ex   = huvudintäkt / huvudproduktens kg
-pris inkl moms = ex × momssats, avrundat uppåt till 29/49/79/98
+golvpris ex    = huvudintäkt / huvudproduktens kg
+golvpris inkl  = ex × momssats, avrundat uppåt till 29/49/79/98
 ```
 
 Flera primary-detaljer: huvudintäkten fördelas med `margin_weight` normaliserad så
 att det kilo-viktade snittet blir exakt 1,0.
 
-Biproduktpriser anges manuellt inkl moms, aldrig härledda från kostnad. Ny tabell
-`byproduct_prices` (artgrupp + detaljform + pris inkl moms) sparar senast använt
-värde och förifylls i nästa order. Startvärden för torsk: rygg 698,
-kontrarygg 398, benfri filé 249, slag 129.
+### Golv, inte förslag
+
+Residualen är ett **golvpris**, inte ett pris som ersätter befintligt. Per
+huvudprodukt visas tre tal:
+
+- **Golvpris** — residualen som gör att partiet når marginalmålet
+- **Senast fastställt pris** — `last_set_price` för detaljen
+- **Föreslaget pris** — det högsta av de två
+
+Vid billigt inköp ligger senaste priset ofta över golvet och priset sänks då inte.
+Vid dyrt inköp går golvet över senaste priset och systemet larmar tydligt.
+
+### Priskällor
+
+- `last_set_price` sparas per art och detaljform för **alla** roller som
+  referensvärde. Startvärden torsk: rygg 698, kontrarygg 398, benfri filé 249,
+  slag 129.
+- `byproduct_prices` innehåller **bara** biprodukterna (kontrarygg 398,
+  benfri filé 249, slag 129). Ryggen är primary och får aldrig ett pris här —
+  dess pris räknas fram som residual.
+
+Biproduktpriser anges manuellt inkl moms och härleds aldrig från kostnad; de
+förifylls i nästa order.
+
+### Skyddsspärrar
+
+- Golvpris mer än 25 % över senast fastställt pris → varning: "råvaran är dyr
+  eller biprodukterna säljs för billigt, kontrollera innan du fastställer priset".
+- Golvpris under det högsta biproduktpriset → varning om att rollerna troligen är
+  fel klassade.
+- Biprodukt utan pris → räknas som 0 kr intäkt, men dess kilo räknas ändå in i
+  förädlingspåslaget, och raden markeras så att det syns att den drar upp
+  huvudproduktens golvpris.
 
 `weightedTarget` slutar styra priset och används bara för viktfördelningen.
+
 
 ## 3. Marginal, moms, avrundning
 
@@ -87,11 +117,19 @@ utbytet inte är `is_estimate = true`. Övriga hamnar i manuell granskning.
 
 ## 6. Verifieringstest
 
-`src/test/fillet.test.ts` utökas med torskexemplet: 100 kg à 60 kr, utbyte 47 %,
-loin_four 55/20/15/10, påslag 35, moms 6 %, priser 698/249/129/398 →
+Riktning C — auktionskalkylen (befintligt exempel behålls): torsk 100 kg à 60 kr,
+utbyte 47 %, loin_four 55/20/15/10, påslag 35, moms 6 %, priser 698/249/129/398 →
 intäkt 21 853 kr, kostnad 7 645 kr, marginal ink. arbete 65,0 %, maxpris 104 kr/kg
-(45 %) och 82 kr/kg (55 %). Plus test att modellen aldrig föreslår detaljer utanför
-`cut_model`.
+(45 %) och 82 kr/kg (55 %).
+
+Riktning B — biproduktsmetoden (nytt test): samma parti, Göteborg 45 %,
+biprodukter satta till 249/129/398 → golvpris 379 kr för ryggen, och partiets
+marginal ink. arbete blir 45 % plus avrundningseffekt.
+
+Plus test att modellen aldrig föreslår detaljer utanför `cut_model`, samt att de
+tre skyddsspärrarna (25 %-avvikelse, golv under högsta biproduktpris, biprodukt
+utan pris) utlöses korrekt.
+
 
 ## 7. Kvarstående från tidigare
 
@@ -100,14 +138,18 @@ utfallen och täckningskontrollen mot verkliga produkter i databasen behålls so
 
 ## Teknisk sammanfattning
 
-- Migration: `species_cut_models` (ny), `cut_splits.role`, `byproduct_prices` (ny),
-  `auction_calcs` (ny), `products.requires_processing`, seed av modeller, splits,
-  utbyten och torskpriser. Alla nya tabeller får GRANT + RLS.
-- `src/lib/filletMath.ts`: biproduktsmetod, normaliserad viktfördelning,
-  omvänd auktionsberäkning; gamla per-detalj-prissättningen tas bort.
+- Migration: `species_cut_models` (ny), `cut_splits.role`, `byproduct_prices` (ny,
+  endast biprodukter), `detail_prices` med `last_set_price` per art/detalj (alla
+  roller), `auction_calcs` (ny), `products.requires_processing`, seed av modeller,
+  splits, utbyten och torskpriser. Alla nya tabeller får GRANT + RLS.
+- `src/lib/filletMath.ts`: biproduktsmetod med golvpris, normaliserad
+  viktfördelning, skyddsspärrar, omvänd auktionsberäkning; gamla
+  per-detalj-prissättningen tas bort.
 - `src/lib/cutModels.ts` (ny): modelldefinitioner, artmappning, alias för benfri filé.
 - `src/components/production/ProductionOrderForm.tsx`: modellstyrda detaljrader,
-  manuella biproduktpriser, viktvarning under 3 kg, två marginaltal.
+  manuella biproduktpriser, tre priskolumner (golv / senast / föreslaget),
+  varningsrader, viktvarning under 3 kg, två marginaltal.
+
 - `src/components/production/AuctionCalculator.tsx` (ny) + flik i `src/pages/Production.tsx`.
 - `src/hooks/useProductionYields.ts`: hooks för modeller, biproduktpriser, kalkyler.
 - `src/test/fillet.test.ts`: verifieringsexemplet ovan.
