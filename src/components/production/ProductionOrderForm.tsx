@@ -25,19 +25,30 @@ import {
   useDetailPrices,
   useUpsertDetailPrice,
   priceFor,
+  referenceCostFor,
   surchargeFor,
   vatFor,
   rollingAverage,
   useYieldActuals,
 } from "@/hooks/useProductionYields";
 import {
+  useApplyDetailPrice,
+  useLatestPriceApplications,
+  applicationKey,
+  isSameDayApplication,
+  type DetailPriceApplication,
+} from "@/hooks/useReferencePricing";
+import {
   priceByNrv,
+  priceByScaleFactor,
+  scaleFactorOutsideBand,
   nrvStartSuggestionExVat,
   roundUpToAllowedPrice,
   fmt,
   FORMS,
   isProcessedForm,
 } from "@/lib/filletMath";
+
 import {
   CUT_MODEL_LABELS,
   CUT_MODEL_TEMPLATES,
