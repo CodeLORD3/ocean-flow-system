@@ -50,13 +50,15 @@ Regler i bokföringen:
 **6. Övrigt**
 Enhetsnormalisering kg/st/låda/förp mot produktens `unit`; kontroll att `quantity × unit_price ≈ line_total` med markering vid avvikelse; `report_date` sätts från dokumentdatum i stället för uppladdningsdagen; otolkade rader loggas.
 
-**Stavfelstolerans i latinska namn:** matchningen på latinskt namn sker mot en normaliserad nyckel (`speciesKey`) plus en aliaslista för kända leverantörsstavfel (t.ex. *Homarus gamarus* → *Homarus gammarus*, *Lophius piscatorius* → *Lophius piscatorius*/*Lophius* enligt korrekt art), och därefter ett toleransfall med redigeringsavstånd ≤ 2 mot artregistrets latinska namn. Träff via tolerans markeras som `match_method = 'latin_fuzzy'` och visas för bekräftelse i stället för att sättas tyst. Aliaslistan ligger i en egen tabell så nya stavfel kan läggas till utan kodändring.
+**Stavfelstolerans i latinska namn:** matchningen sker mot normaliserad nyckel (`speciesKey`), sedan mot `species_latin_aliases` (bara felstavning → korrekt namn, t.ex. *Homarus gamarus* → *Homarus gammarus*, *Lophius piscatorus* → *Lophius piscatorius*, *Clupea herengus* → *Clupea harengus*), och sist ett toleransfall med redigeringsavstånd ≤ 2 mot artregistrets latinska namn. Träff via tolerans markeras `match_method = 'latin_fuzzy'` och visas för bekräftelse i stället för att sättas tyst. Aliaslistan är en tabell, så nya stavfel läggs till utan kodändring.
 
 **7. Test (`src/test/foljesedel.test.ts`)**
 - GFA 2026-07-28: 32 kollin, 532 kg, 15 partirader — parti 10012.6125240, Torsk 1 rensad, S158 SARON Danmark, 29 kg à 146 kr, trål, 27.3.a.n Skagerak, 2026-07-27 → ett lot med `grade = 1`, `presentation = rensad`, `price_status = preliminar`.
 - GFA 2026-05-05, parti 10012.6019198: tre rader (20/222, 20/222, 20/110) → ett lot 60 kg med `unit_cost = 184,67` och tre bevarade underrader.
-- JHB 2709177: artikel 71106 Hummer levande Sverige 100 kg med fyra batchnummer → fyra lots à 25,000 kg.
+- GFA utan dokumentnummer: `document_number` sätts till auktionsdatum och andra uppladdningen av samma auktion fångas som dubblett trots ny `file_hash`.
+- JHB 2709177: artikel 71106 Hummer levande Sverige 100 kg med fyra batchnummer → fyra lots à 25,000 kg som förval; justerad fördelning som inte summerar till levererad kvantitet blockeras.
 - JHB 2712187: nollprisrader blockerar bokföring tills bekräftelse.
+- `species_latin_aliases`: rad med korrekt namn mappat mot sig självt avvisas av CHECK-villkoret.
 - Levererad vs beställd vikt (32,220 vs 30 kg), bäst-före-prioritet, latinska stavfel, enhetsnormalisering, radsummeavvikelse och dubblettspärr som enhetstester.
 
 
