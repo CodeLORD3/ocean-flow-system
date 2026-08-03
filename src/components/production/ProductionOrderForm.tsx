@@ -349,6 +349,19 @@ export function ProductionOrderForm() {
     });
   }, [yields, actuals, species, rawForm]);
 
+  // Auto-godkännande: blockeras av requires_processing, osäkert utbyte eller marginal under mål.
+  const rawRequiresProcessing = Boolean(
+    (products.find((p) => p.id === rawProductId) as any)?.requires_processing,
+  );
+  const yieldConfirmed = yieldWarning.length === 0;
+  const approvalByRegion = (region: { target: number; marginInclWorkPct: number }) =>
+    evaluateAutoApproval({
+      requiresProcessing: rawRequiresProcessing,
+      yieldConfirmed,
+      marginInclWorkPct: region.marginInclWorkPct,
+      targetMarginPct: region.target,
+    });
+
   const saveByproductPrice = (d: DetailRow) => {
     const value = parseFloat(d.byproductPrice) || 0;
     if (!species || d.role !== "byproduct" || value <= 0) return;
@@ -792,6 +805,16 @@ export function ProductionOrderForm() {
                       <div className="text-[10px] text-muted-foreground">
                         biprodukter {fmt(r.res.byproductRevenueExVat, 0)} kr · krävd intäkt {fmt(r.res.requiredRevenueExVat, 0)} kr
                       </div>
+                      {(() => {
+                        const a = approvalByRegion({ target: r.target, marginInclWorkPct: m.marginInclWorkPct });
+                        return a.approved ? (
+                          <div className="mt-0.5 text-[10px] font-medium text-emerald-600">Auto-godkänns</div>
+                        ) : (
+                          <div className="mt-0.5 text-[10px] font-medium text-amber-600">
+                            Manuell granskning: {a.reasons[0]}
+                          </div>
+                        );
+                      })()}
                     </div>
                   );
                 })}
