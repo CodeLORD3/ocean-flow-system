@@ -186,52 +186,13 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                     className="h-6 text-[10px] gap-1 text-foreground hover:text-foreground hover:bg-sidebar-accent"
                   >
                     <ArrowLeftRight className="h-3 w-3" />
-                    {site === "shop" ? activeStoreName || "Butik" : site === "production" ? "Grossist" : "Admin"}
+                    {currentPortalLabel}
                     <ChevronDown className="h-2.5 w-2.5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuLabel className="text-[10px]">Välj portal</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {access.includes("wholesale") && (
-                    <DropdownMenuItem
-                      className={`text-xs gap-2 ${site === "wholesale" ? "bg-muted font-medium" : ""}`}
-                      onClick={() => { setSite("wholesale"); setActiveStore(null, null); switchTab("/organisation"); }}
-                    >
-                      <Shield className="h-3 w-3" /> Admin
-                    </DropdownMenuItem>
-                  )}
-                  {access.includes("production") && (
-                    <DropdownMenuItem
-                      className={`text-xs gap-2 ${site === "production" ? "bg-muted font-medium" : ""}`}
-                      onClick={() => { setSite("production"); setActiveStore(null, null); switchTab("/organisation"); }}
-                    >
-                      <Factory className="h-3 w-3" /> Grossist
-                    </DropdownMenuItem>
-                  )}
-                  {access.includes("shop") && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuLabel className="text-[10px]">Butiker</DropdownMenuLabel>
-                      {retailStores.length === 0 ? (
-                        <DropdownMenuItem disabled className="text-[10px] text-muted-foreground">
-                          Inga butiker tillgängliga
-                        </DropdownMenuItem>
-                      ) : (
-                        retailStores.map((store) => (
-                          <DropdownMenuItem
-                            key={store.id}
-                            className={`text-xs gap-2 ${site === "shop" && activeStoreName === store.name ? "bg-muted font-medium" : ""}`}
-                            onClick={() => { setSite("shop"); setActiveStore(store.id, store.name); switchTab("/organisation"); }}
-                          >
-                            <Store className="h-3 w-3" /> {store.name}
-                          </DropdownMenuItem>
-                        ))
-                      )}
-                    </>
-                  )}
-                </DropdownMenuContent>
+                {portalMenuContent}
               </DropdownMenu>
+
               <span>•</span>
               <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
               <span>Online</span>
