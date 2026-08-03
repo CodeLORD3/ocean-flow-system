@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { logActivity } from "@/hooks/useActivityLog";
 import { recordMovements, currentStaffId, type StockMovementInput } from "@/lib/stockLedger";
+import { GROSSIST_FLYTANDE_ID } from "@/lib/locations";
 
 
 export function useIncomingDeliveries() {
