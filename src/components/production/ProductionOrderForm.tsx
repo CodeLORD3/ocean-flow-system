@@ -944,6 +944,50 @@ export function ProductionOrderForm() {
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={!!splitWarning} onOpenChange={(o) => !o && setSplitWarning(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-sm">Plocket korsar en partigräns</DialogTitle>
+          </DialogHeader>
+          {splitWarning && (
+            <div className="space-y-3 text-xs">
+              <p className="text-muted-foreground">
+                Det här plocket tar från {new Set(splitWarning.picks.map((p) => p.lotId ?? "utan-parti")).size} partier
+                och skapar {splitWarning.picks.length * splitWarning.detailCount} detaljpartier. Varje detaljparti behåller
+                sitt eget fångstområde, fartyg och fångstdatum — inga uppgifter blandas.
+              </p>
+              <div className="rounded border border-border">
+                {splitWarning.picks.map((p, i) => (
+                  <div key={i} className="flex justify-between border-b border-border/50 px-2 py-1 last:border-0">
+                    <span className="font-mono">{p.lotId ? `Parti ${i + 1}` : "Utan parti"}</span>
+                    <span className="font-mono tabular-nums">{fmt(p.quantityKg, 3)} kg</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-muted-foreground">
+                Ofta räcker det att skära det ena partiet först och registrera en order per parti.
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setSplitWarning(null)}>
+              Dela upp i två ordrar
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => {
+                const picks = splitWarning?.picks ?? [];
+                setSplitWarning(null);
+                void runRegister(picks);
+              }}
+            >
+              Registrera ändå
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
