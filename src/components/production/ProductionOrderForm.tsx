@@ -149,11 +149,15 @@ export function ProductionOrderForm() {
 
   /* ── Artens styckningsmodell ─────────────────────────────── */
   const modelRow = cutModels.find((c) => speciesKey(c.species_group) === speciesKey(species));
-  const cutModel = (modelRow?.cut_model as CutModel) ?? modelForSpecies(species);
+  const baseCutModel = (modelRow?.cut_model as CutModel) ?? modelForSpecies(species);
+  const gradeLimit = (modelRow as any)?.grade_limit ?? null;
+  const cutModel = effectiveCutModel(baseCutModel, grade, gradeLimit);
+  const gradeForcedSingle = cutModel !== baseCutModel;
   const minPieceWeight =
     modelRow?.min_piece_weight_kg != null
       ? Number(modelRow.min_piece_weight_kg)
       : MODEL_MIN_PIECE_WEIGHT[cutModel] ?? null;
+
 
   const modelDetails = useMemo(() => {
     const rows = modelSplits.filter((s) => s.cut_model === cutModel);
