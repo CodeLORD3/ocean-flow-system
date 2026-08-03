@@ -35,15 +35,29 @@ Behåller Gemini via Lovable AI Gateway och `extract_products`-verktyget, men sc
 Vid uppladdning kontrolleras `file_hash` och `(supplier_id, document_number)`. Träff → dialog som kräver bekräftelse innan en ny rapport skapas, aldrig tyst dubblett.
 
 **5. Brygga till lagerledgern**
-Knappen "Bokför inleverans" på klar rapport i `PurchaseReporting.tsx`, driven av en ny `src/lib/purchaseReportPosting.ts` som anropar exakt samma partiskapande + `recordMovements` som `Receiving.tsx`: ett `lot` per partinummer (kvantiteten delas jämnt när en rad har flera batchnummer), alla spårbarhetsfält satta, `price_status = 'preliminar'`, inleveransrörelse mot Grossist Flytande via `GROSSIST_FLYTANDE_ID` i `src/lib/locations.ts`, och `lot_id`/`movement_id` tillbaka på raden. Idempotent via `posted_at`.
+Knappen "Bokför inleverans" på klar rapport i `PurchaseReporting.tsx`, driven av en ny `src/lib/purchaseReportPosting.ts` som anropar exakt samma partiskapande + `recordMovements` som `Receiving.tsx`. Partibildningen går i båda riktningarna:
+- **En rad → flera lots (JHB):** rad med flera batchnummer delas jämnt, t.ex. 100 kg / 4 batch = 4 lots à 25,000 kg.
+- **Flera rader → ett lot (GFA):** rader med samma partinummer inom samma dokument slås ihop till ETT lot med viktat snittpris (20 kg à 222 + 20 kg à 222 + 20 kg à 110 → 60 kg à 184,67 kr/kg). De enskilda klubbslagen behålls som underrader på `purchase_report_lines` (`parent_line_id`) så prisspridningen är spårbar, och alla underrader pekar på samma `lot_id`.
+
+Alla spårbarhetsfält sätts, `price_status = 'preliminar'`, inleveransrörelse mot Grossist Flytande via `GROSSIST_FLYTANDE_ID` i `src/lib/locations.ts`, `lot_id`/`movement_id` tillbaka på raderna. Idempotent via `posted_at`.
+
+Regler i bokföringen:
+- **Bäst före:** leverantörens `best_before` används rakt av när den finns; beräkning ur `products.shelf_life_days` sker bara när dokumentet saknar värde.
+- **Vikt:** lot och rörelse bokförs alltid på levererad kvantitet. `ordered_quantity` sparas som referens och avvikelse över 10 % larmar (JHB: 30 kg beställt, 32,220 kg levererat).
+- **Nollpris blockerar:** rad med `unit_price = 0` eller `line_total = 0` markeras och spärrar "Bokför inleverans" tills den bekräftats manuellt (`zero_price_confirmed`). Förekommer skarpt, t.ex. JHB 2712187 med 0,00 på båda raderna.
 
 **6. Övrigt**
 Enhetsnormalisering kg/st/låda/förp mot produktens `unit`; kontroll att `quantity × unit_price ≈ line_total` med markering vid avvikelse; `report_date` sätts från dokumentdatum i stället för uppladdningsdagen; otolkade rader loggas.
 
+**Stavfelstolerans i latinska namn:** matchningen på latinskt namn sker mot en normaliserad nyckel (`speciesKey`) plus en aliaslista för kända leverantörsstavfel (t.ex. *Homarus gamarus* → *Homarus gammarus*, *Lophius piscatorius* → *Lophius piscatorius*/*Lophius* enligt korrekt art), och därefter ett toleransfall med redigeringsavstånd ≤ 2 mot artregistrets latinska namn. Träff via tolerans markeras som `match_method = 'latin_fuzzy'` och visas för bekräftelse i stället för att sättas tyst. Aliaslistan ligger i en egen tabell så nya stavfel kan läggas till utan kodändring.
+
 **7. Test (`src/test/foljesedel.test.ts`)**
 - GFA 2026-07-28: 32 kollin, 532 kg, 15 partirader — parti 10012.6125240, Torsk 1 rensad, S158 SARON Danmark, 29 kg à 146 kr, trål, 27.3.a.n Skagerak, 2026-07-27 → ett lot med `grade = 1`, `presentation = rensad`, `price_status = preliminar`.
+- GFA 2026-05-05, parti 10012.6019198: tre rader (20/222, 20/222, 20/110) → ett lot 60 kg med `unit_cost = 184,67` och tre bevarade underrader.
 - JHB 2709177: artikel 71106 Hummer levande Sverige 100 kg med fyra batchnummer → fyra lots à 25,000 kg.
-- Enhetsnormalisering, radsummeavvikelse och dubblettspärr som enhetstester.
+- JHB 2712187: nollprisrader blockerar bokföring tills bekräftelse.
+- Levererad vs beställd vikt (32,220 vs 30 kg), bäst-före-prioritet, latinska stavfel, enhetsnormalisering, radsummeavvikelse och dubblettspärr som enhetstester.
+
 
 ## Tekniska noter
 - Migrationen körs först och godkänns separat innan koden som beror på schemat skrivs.
