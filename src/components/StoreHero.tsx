@@ -75,9 +75,9 @@ export function StoreHero() {
   const handleFile = async (file: File | undefined) => {
     if (!file) return;
     try {
-      const newId = await upload.mutateAsync({ entityType: "store", entityId: activeStoreId, file });
+      const newId = await upload.mutateAsync({ entityType, entityId, file });
       if (newId) {
-        await setCover.mutateAsync({ entityType: "store", entityId: activeStoreId, imageId: newId });
+        await setCover.mutateAsync({ entityType, entityId, imageId: newId });
       }
       toast.success("Omslagsbild uppdaterad");
     } catch (e: any) {
@@ -87,7 +87,7 @@ export function StoreHero() {
 
   const handleSelect = async (imageId: string) => {
     try {
-      await setCover.mutateAsync({ entityType: "store", entityId: activeStoreId, imageId });
+      await setCover.mutateAsync({ entityType, entityId, imageId });
       setPickerOpen(false);
       setFocalDraft(null);
       toast.success("Omslagsbild uppdaterad");
@@ -132,7 +132,7 @@ export function StoreHero() {
       {url ? (
         <img
           src={url}
-          alt={cover?.caption || `Omslagsbild för ${activeStoreName ?? "butiken"}`}
+          alt={cover?.caption || `Omslagsbild för ${heroTitle}`}
           className="h-full w-full object-cover"
           style={focalStyle(focalDraft != null ? String(focalDraft) : cover?.focal_point)}
         />
@@ -146,7 +146,7 @@ export function StoreHero() {
       <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between gap-3 p-3 sm:p-4">
         <div className="min-w-0">
           <h2 className="truncate text-base sm:text-xl font-semibold text-foreground text-outline-white-thin sm:text-outline-white">
-            {activeStoreName ?? store?.name ?? "Butik"}
+            {heroTitle}
           </h2>
           {editingCaption ? (
             <div className="mt-1 flex items-center gap-1">
@@ -207,7 +207,7 @@ export function StoreHero() {
                 </Button>
               </PopoverTrigger>
               <PopoverContent align="end" className="w-64 p-2">
-                <p className="mb-2 text-[11px] font-medium text-muted-foreground">Butikens bilder</p>
+                <p className="mb-2 text-[11px] font-medium text-muted-foreground">isShop ? "Butikens bilder" : "Portalens bilder"</p>
                 <div className="grid grid-cols-3 gap-2">
                   {images.map((img) => (
                     <button
@@ -217,7 +217,7 @@ export function StoreHero() {
                         img.id === cover?.id ? "border-primary" : "border-border hover:border-primary/60"
                       }`}
                     >
-                      <img src={img.url} alt={img.caption || "Butiksbild"} className="h-full w-full object-cover" />
+                      <img src={img.url} alt={img.caption || "Portalbild"} className="h-full w-full object-cover" />
                     </button>
                   ))}
                 </div>
