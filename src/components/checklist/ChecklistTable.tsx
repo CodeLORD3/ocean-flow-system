@@ -547,9 +547,14 @@ export function ChecklistTable({
                       />
                     )}
                   </td>
-                  <td className="px-3 py-2 text-center text-xs font-semibold text-foreground border-r border-border">
-                    {row.item.signature || "–"}
+                  <td className="px-1.5 py-1.5 text-center text-xs font-semibold text-foreground border-r border-border">
+                    {readOnly ? (
+                      row.item.signature || "–"
+                    ) : (
+                      <SignatureEditor item={row.item} storeId={day.store_id} allItems={items} />
+                    )}
                   </td>
+
                   <td className="px-1 py-1.5 text-center">
                     {!locked && (
                       <Button
