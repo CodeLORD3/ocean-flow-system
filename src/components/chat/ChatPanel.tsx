@@ -347,12 +347,13 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                         )}
                         <span
                           className={cn(
-                            "ml-1.5 align-baseline text-[9px] tabular-nums",
+                            "block text-right text-[9px] tabular-nums leading-none pt-0.5",
                             mine ? "text-primary-foreground/70" : "text-muted-foreground"
                           )}
                         >
                           {clockLabel(m.created_at)}
                         </span>
+
                       </div>
                     </div>
                     </Fragment>
