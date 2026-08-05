@@ -51,13 +51,88 @@ export function staffInitials(firstName?: string | null, lastName?: string | nul
   return `${a}${b}` || "–";
 }
 
-/** Dagens checklista för en butik — skapas automatiskt från mallen om den inte finns. */
-export function useDailyChecklist(storeId?: string | null, date?: string) {
+export const DEFAULT_CHECKLIST_TEMPLATE_ID = "00000000-0000-4000-8000-0000000000c1";
+
+export type ChecklistTemplate = {
+  id: string;
+  store_id: string | null;
+  name: string;
+  description: string | null;
+  active: boolean;
+  sort_order: number;
+};
+
+/** Menyn med butikens checklistor (globala mallar + butikens egna). */
+export function useChecklistTemplates(storeId?: string | null) {
+  return useQuery({
+    queryKey: ["checklist-templates", storeId ?? "all"],
+    queryFn: async () => {
+      let q = supabase.from("checklist_templates").select("*").eq("active", true);
+      if (storeId) q = q.or(`store_id.is.null,store_id.eq.${storeId}`);
+      const { data, error } = await q.order("sort_order").order("name");
+      if (error) throw error;
+      return (data || []) as ChecklistTemplate[];
+    },
+  });
+}
+
+export function useCreateChecklistTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { name: string; description?: string; storeId?: string | null }) => {
+      const name = input.name.trim();
+      if (!name) throw new Error("Ge checklistan ett namn.");
+      const { data, error } = await supabase
+        .from("checklist_templates")
+        .insert({
+          name,
+          description: input.description?.trim() || null,
+          store_id: input.storeId ?? null,
+          sort_order: 100,
+        })
+        .select("*")
+        .single();
+      if (error) throw error;
+      return data as ChecklistTemplate;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["checklist-templates"] }),
+  });
+}
+
+export function useRenameChecklistTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const clean = name.trim();
+      if (!clean) throw new Error("Namnet kan inte vara tomt.");
+      const { error } = await supabase.from("checklist_templates").update({ name: clean }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["checklist-templates"] }),
+  });
+}
+
+/** Arkiverar en checklista (behåller historiken/rapporterna). */
+export function useArchiveChecklistTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (id === DEFAULT_CHECKLIST_TEMPLATE_ID) throw new Error("Standardlistan kan inte tas bort.");
+      const { error } = await supabase.from("checklist_templates").update({ active: false }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["checklist-templates"] }),
+  });
+}
+
+/** Dagens checklista för en butik och vald lista — skapas automatiskt från mallen om den inte finns. */
+export function useDailyChecklist(storeId?: string | null, date?: string, templateId?: string | null) {
   const iso = date || todayIso();
+  const tplId = templateId || DEFAULT_CHECKLIST_TEMPLATE_ID;
   const { staff } = useStaffAuth();
 
   return useQuery({
-    queryKey: ["checklist-day", storeId, iso],
+    queryKey: ["checklist-day", storeId, iso, tplId],
     queryFn: async () => {
       // Hämta eller skapa dagens checklista
       let { data: day, error } = await supabase
@@ -65,6 +140,7 @@ export function useDailyChecklist(storeId?: string | null, date?: string) {
         .select("*")
         .eq("store_id", storeId!)
         .eq("checklist_date", iso)
+        .eq("template_id", tplId)
         .maybeSingle();
       if (error) throw error;
 
@@ -74,6 +150,7 @@ export function useDailyChecklist(storeId?: string | null, date?: string) {
           .insert({
             store_id: storeId!,
             checklist_date: iso,
+            template_id: tplId,
             shift: "Öppning",
             responsible_name: staff ? `${staff.first_name} ${staff.last_name.charAt(0)}.` : null,
             responsible_staff_id: staff?.id ?? null,
@@ -87,6 +164,7 @@ export function useDailyChecklist(storeId?: string | null, date?: string) {
             .select("*")
             .eq("store_id", storeId!)
             .eq("checklist_date", iso)
+            .eq("template_id", tplId)
             .maybeSingle();
           if (!again) throw cErr;
           day = again;
@@ -107,6 +185,7 @@ export function useDailyChecklist(storeId?: string | null, date?: string) {
           .from("checklist_template_items")
           .select("*")
           .eq("active", true)
+          .eq("template_id", tplId)
           .or(`store_id.is.null,store_id.eq.${storeId}`)
           .order("sort_order");
         if (tErr) throw tErr;
@@ -128,6 +207,7 @@ export function useDailyChecklist(storeId?: string | null, date?: string) {
           items = (inserted || []).sort((a: any, b: any) => a.sort_order - b.sort_order);
         }
       }
+
 
       return { day: day as ChecklistDay, items: (items || []) as ChecklistItem[] };
     },
