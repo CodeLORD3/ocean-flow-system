@@ -452,6 +452,80 @@ export type Database = {
           },
         ]
       }
+      checklist_signature_requests: {
+        Row: {
+          created_at: string
+          day_id: string | null
+          id: string
+          item_id: string
+          previous_signature: string | null
+          requested_by_name: string | null
+          requested_by_staff_id: string | null
+          requested_signature: string
+          responded_at: string | null
+          status: string
+          store_id: string | null
+          target_staff_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          day_id?: string | null
+          id?: string
+          item_id: string
+          previous_signature?: string | null
+          requested_by_name?: string | null
+          requested_by_staff_id?: string | null
+          requested_signature: string
+          responded_at?: string | null
+          status?: string
+          store_id?: string | null
+          target_staff_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          day_id?: string | null
+          id?: string
+          item_id?: string
+          previous_signature?: string | null
+          requested_by_name?: string | null
+          requested_by_staff_id?: string | null
+          requested_signature?: string
+          responded_at?: string | null
+          status?: string
+          store_id?: string | null
+          target_staff_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_signature_requests_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_days"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_signature_requests_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_signature_requests_requested_by_staff_id_fkey"
+            columns: ["requested_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_signature_requests_target_staff_id_fkey"
+            columns: ["target_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checklist_template_items: {
         Row: {
           active: boolean
