@@ -1170,6 +1170,70 @@ export type Database = {
         }
         Relationships: []
       }
+      entity_image_comments: {
+        Row: {
+          author_name: string
+          body: string
+          created_at: string
+          id: string
+          image_id: string
+          user_id: string | null
+        }
+        Insert: {
+          author_name?: string
+          body: string
+          created_at?: string
+          id?: string
+          image_id: string
+          user_id?: string | null
+        }
+        Update: {
+          author_name?: string
+          body?: string
+          created_at?: string
+          id?: string
+          image_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_image_comments_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "entity_images"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entity_image_favorites: {
+        Row: {
+          created_at: string
+          id: string
+          image_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entity_image_favorites_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "entity_images"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entity_images: {
         Row: {
           caption: string | null
@@ -1181,6 +1245,8 @@ export type Database = {
           is_cover: boolean
           is_featured: boolean
           sort_order: number
+          uploaded_by: string | null
+          uploaded_by_name: string | null
           url: string
         }
         Insert: {
@@ -1193,6 +1259,8 @@ export type Database = {
           is_cover?: boolean
           is_featured?: boolean
           sort_order?: number
+          uploaded_by?: string | null
+          uploaded_by_name?: string | null
           url: string
         }
         Update: {
@@ -1205,6 +1273,8 @@ export type Database = {
           is_cover?: boolean
           is_featured?: boolean
           sort_order?: number
+          uploaded_by?: string | null
+          uploaded_by_name?: string | null
           url?: string
         }
         Relationships: []
