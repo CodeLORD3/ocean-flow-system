@@ -68,6 +68,7 @@ export function ChecklistTable({
   const complete = useCompleteChecklist();
   const setPageComment = useSetChecklistPageComment();
 
+  const [highlightMissing, setHighlightMissing] = useState(false);
   const doneCount = items.filter((i) => i.done).length;
   const pct = items.length ? Math.round((doneCount / items.length) * 100) : 0;
   const pages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
@@ -147,11 +148,23 @@ export function ChecklistTable({
   };
 
   const handleComplete = () => {
+    const missing = items.filter((i) => !i.done);
+    if (missing.length > 0) {
+      setHighlightMissing(true);
+      const firstIdx = items.findIndex((i) => !i.done);
+      if (firstIdx >= 0) setPage(Math.floor(firstIdx / PAGE_SIZE));
+      toast.error(
+        `${missing.length} ${missing.length === 1 ? "rad är" : "rader är"} inte ifyllda — de markerade röda raderna måste checkas av först.`
+      );
+      return;
+    }
+    setHighlightMissing(false);
     complete.mutate(day.id, {
       onSuccess: () => toast.success("Checklistan är slutförd och sparad som rapport för Admin."),
       onError: (e: any) => toast.error(e.message || "Kunde inte slutföra checklistan."),
     });
   };
+
 
   const handlePrint = (blank: boolean) => {
     if (items.length === 0) {
@@ -327,7 +340,8 @@ export function ChecklistTable({
               key={`m-${row.item.id}`}
               className={cn(
                 "rounded-lg border border-border bg-card shadow-card p-2.5",
-                row.item.done && "border-emerald-600/40 bg-emerald-500/10"
+                row.item.done && "border-emerald-600/40 bg-emerald-500/10",
+                !row.item.done && highlightMissing && "border-destructive/50 bg-destructive/15"
               )}
             >
               <div className="flex items-start gap-2.5">
@@ -518,7 +532,11 @@ export function ChecklistTable({
                   key={row.item.id}
                   className={cn(
                     "border-t border-border transition-colors",
-                    row.item.done ? "bg-emerald-500/10" : "hover:bg-muted/30"
+                    row.item.done
+                      ? "bg-emerald-500/10"
+                      : highlightMissing
+                        ? "bg-destructive/15 hover:bg-destructive/20"
+                        : "hover:bg-muted/30"
                   )}
                 >
                   <td className="px-2 py-1.5 text-center border-r border-border font-mono tabular-nums text-[11px] text-muted-foreground">
