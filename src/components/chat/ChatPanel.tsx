@@ -276,18 +276,20 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                     <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
                       <div
                         className={cn(
-                          "max-w-[85%] sm:max-w-[80%] px-2.5 py-1.5 text-xs shadow-sm",
+                          "max-w-[85%] sm:max-w-[80%] px-2.5 py-1 text-xs leading-snug shadow-sm",
                           mine
                             ? "bg-primary text-primary-foreground rounded-2xl rounded-br-sm"
                             : "bg-muted text-foreground rounded-2xl rounded-bl-sm"
                         )}
                       >
                         {!mine && (
-                          <p className="text-[9px] mb-0.5 font-semibold text-primary">
+                          <span className="mr-1.5 text-[9px] font-semibold text-primary">
                             {m.sender_name ? `${m.sender_name} (${m.sender_portal_name})` : m.sender_portal_name}
-                          </p>
+                          </span>
                         )}
-                        {m.body && <p className="whitespace-pre-wrap break-words">{m.body}</p>}
+                        {m.body && (
+                          <span className="whitespace-pre-wrap break-words">{m.body}</span>
+                        )}
                         {m.image_url && (
                           <a href={m.image_url} target="_blank" rel="noreferrer">
                             <img
@@ -298,15 +300,16 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                             />
                           </a>
                         )}
-                        <p
+                        <span
                           className={cn(
-                            "text-[9px] mt-0.5 text-right",
+                            "ml-1.5 align-baseline text-[9px] tabular-nums",
                             mine ? "text-primary-foreground/70" : "text-muted-foreground"
                           )}
                         >
                           {timeLabel(m.created_at)}
-                        </p>
+                        </span>
                       </div>
+
                     </div>
                   );
                 })
