@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSite } from "@/contexts/SiteContext";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 interface NotificationRow {
   id: string;
@@ -18,22 +18,23 @@ interface NotificationRow {
 export function useNotifications() {
   const { site, activeStoreId } = useSite();
   const queryClient = useQueryClient();
-  const [userId, setUserId] = useState<string | null>(null);
 
   const portal = site === "shop" ? "shop" : site === "production" ? "production" : "wholesale";
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUserId(session?.user?.id ?? null);
-    });
-    return () => sub.subscription.unsubscribe();
-  }, []);
+  const { data: userId = null } = useQuery<string | null>({
+    queryKey: ["auth-user-id"],
+    queryFn: async () => {
+      const { data } = await supabase.auth.getUser();
+      return data.user?.id ?? null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const { data: unread = [] } = useQuery<NotificationRow[]>({
     queryKey: ["notification-counts", portal, activeStoreId, userId],
     enabled: !!userId,
     queryFn: async () => {
+
       let query = supabase
         .from("notifications")
         .select("id, target_page, message, created_at")
