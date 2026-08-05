@@ -136,6 +136,7 @@ export function ImageLightbox({
     const v = draft.trim();
     if (!v || !current) return;
     setDraft("");
+    draftRef.current?.focus();
     await addComment.mutateAsync({ imageId: current.id, body: v });
   };
 
