@@ -347,7 +347,14 @@ export function ChecklistTable({
                       />
                     )}
                     {row.item.category && <span>{row.item.category}</span>}
-                    {row.item.signature && <span className="font-semibold text-foreground">✓ {row.item.signature}</span>}
+                    {readOnly
+                      ? row.item.signature && (
+                          <span className="font-semibold text-foreground">✓ {row.item.signature}</span>
+                        )
+                      : (row.item.signature || row.item.done) && (
+                          <SignatureEditor item={row.item} storeId={day.store_id} allItems={items} />
+                        )}
+
                   </div>
                 </div>
                 {!locked && (
