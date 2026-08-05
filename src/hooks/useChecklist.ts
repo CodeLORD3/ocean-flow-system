@@ -153,7 +153,30 @@ export function useToggleChecklistItem() {
   });
 }
 
+/** Ändrar signatur i efterhand — t.ex. när någon annan gjort uppgiften i den inloggades konto. */
+export function useSetChecklistSignature() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ids, signature }: { ids: string[]; signature: string }) => {
+      const sig = signature.trim().toUpperCase().slice(0, 8);
+      if (!sig) throw new Error("Skriv en signatur, t.ex. initialer.");
+      if (ids.length === 0) throw new Error("Inga uppgifter valda.");
+      const { error } = await supabase
+        .from("checklist_items")
+        .update({ signature: sig })
+        .in("id", ids);
+      if (error) throw error;
+      return sig;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["checklist-day"] });
+      qc.invalidateQueries({ queryKey: ["checklist-day-items"] });
+    },
+  });
+}
+
 export function useSetChecklistNote() {
+
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, note }: { id: string; note: string }) => {
