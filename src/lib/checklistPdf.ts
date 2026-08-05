@@ -161,6 +161,9 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
     },
     margin: { left: margin, right: margin, bottom: margin + 12 },
     didParseCell: (data) => {
+      if (data.section === "head" && [1, 2, 4].includes(data.column.index)) {
+        data.cell.styles.halign = "left";
+      }
       const isSection = data.row.raw && (data.row.raw as any[]).length === 1;
       if (data.section === "body" && isSection) {
         // sektionsrad hanteras av egna styles ovan
