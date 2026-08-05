@@ -346,7 +346,7 @@ export function EntityImageGallery({
             )}
 
 
-            <div className="flex items-center gap-1 p-2 sm:p-1.5">
+            <div className="flex items-center gap-0.5 p-2 sm:p-1.5">
               {/* Uppladdare */}
               <span className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-1">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[9px] font-semibold text-primary sm:h-4 sm:w-4 sm:text-[8px]">
@@ -360,7 +360,7 @@ export function EntityImageGallery({
                 type="button"
                 onClick={() => setLightboxId(img.id)}
                 aria-label="Öppna kommentarer"
-                className="flex h-8 w-8 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground sm:h-5 sm:w-5"
+                className="flex h-7 w-7 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground sm:h-5 sm:w-5"
               >
                 <MessageSquare className="h-4 w-4 sm:h-3 sm:w-3" />
               </button>
@@ -370,7 +370,7 @@ export function EntityImageGallery({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 shrink-0 text-muted-foreground sm:h-5 sm:w-5"
+                      className="h-7 w-7 shrink-0 text-muted-foreground sm:h-5 sm:w-5"
                       aria-label="Justera beskärning"
                       title={`Beskärning: ${focalLabel(img.focal_point)}`}
                     >
@@ -399,7 +399,7 @@ export function EntityImageGallery({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive sm:h-5 sm:w-5"
+                  className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive sm:h-5 sm:w-5"
                   aria-label="Ta bort bild"
                   onClick={() => removeImage.mutate(img.id)}
                 >
