@@ -11,6 +11,8 @@ import {
   Heart,
   CalendarDays,
   MessageSquare,
+  ListFilter,
+
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,6 +87,8 @@ export function EntityImageGallery({
   const [selectOpen, setSelectOpen] = useState(false);
   const [selection, setSelection] = useState<string[]>([]);
   const [dateLimit, setDateLimit] = useState(DATE_PAGE);
+  const [catalogOpen, setCatalogOpen] = useState(false);
+
   const [view, setView] = useState<View>(() =>
     catalog ? { mode: "day", key: dayKey(new Date().toISOString()) } : { mode: "featured" }
   );
@@ -343,6 +347,27 @@ export function EntityImageGallery({
           {description && <p className="text-xs text-muted-foreground">{description}</p>}
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
+          {catalog && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={catalogOpen ? "default" : "outline"}
+                  size="sm"
+                  className="h-7 gap-1 text-xs"
+                  aria-pressed={catalogOpen}
+                  aria-label={catalogOpen ? "Göm katalog" : "Visa katalog"}
+                  onClick={() => setCatalogOpen((v) => !v)}
+                >
+                  <ListFilter className="h-3 w-3" />
+                  Filter
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                {catalogOpen ? "Göm katalog" : "Visa katalog (datum & favoriter)"}
+              </TooltipContent>
+            </Tooltip>
+          )}
+
           {images.length > 0 && (
             <Badge variant="secondary" className="h-6 font-mono tabular-nums text-[10px]">
               {images.length} {images.length === 1 ? "bild" : "bilder"}
