@@ -275,11 +275,6 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                 <Megaphone className="h-3 w-3" /> Viktigt
               </Button>
             )}
-            {showList && (
-              <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={() => setNewOpen(true)}>
-                <Plus className="h-3 w-3" /> Ny
-              </Button>
-            )}
             {compact && onOpenFull && (
               <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={onOpenFull}>
                 Visa alla
