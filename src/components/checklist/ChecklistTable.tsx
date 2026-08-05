@@ -462,6 +462,7 @@ export function ChecklistTable({
                 }
                 return (
                   <tr key={`a-${row.label}`} className="border-t border-border bg-primary/5">
+                    <td className="px-2 py-1.5 border-r border-border" />
                     <td className="px-2 py-1.5 border-r border-border">
                       <Input
                         value={addDraft.time}
