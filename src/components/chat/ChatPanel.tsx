@@ -270,10 +270,20 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
               ) : messages.length === 0 ? (
                 <p className="text-[11px] text-muted-foreground text-center py-8">Inga meddelanden ännu.</p>
               ) : (
-                messages.map((m) => {
+                messages.map((m, i) => {
                   const mine = m.sender_portal_key === portal.key;
+                  const prev = i > 0 ? messages[i - 1] : null;
+                  // WhatsApp-stil: rubrik bara på första meddelandet i en följd från samma avsändare
+                  const showHeader =
+                    !mine &&
+                    (!prev ||
+                      prev.sender_portal_key !== m.sender_portal_key ||
+                      (prev.sender_name || "") !== (m.sender_name || ""));
                   return (
-                    <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
+                    <div
+                      key={m.id}
+                      className={cn("flex", mine ? "justify-end" : "justify-start", showHeader && i > 0 && "mt-2")}
+                    >
                       <div
                         className={cn(
                           "max-w-[85%] sm:max-w-[80%] px-2.5 py-1 text-xs leading-snug shadow-sm",
@@ -282,11 +292,12 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                             : "bg-muted text-foreground rounded-2xl rounded-bl-sm"
                         )}
                       >
-                        {!mine && (
+                        {showHeader && (
                           <span className="mr-1.5 text-[9px] font-semibold text-primary">
                             {m.sender_name ? `${m.sender_name} (${m.sender_portal_name})` : m.sender_portal_name}
                           </span>
                         )}
+
                         {m.body && (
                           <span className="whitespace-pre-wrap break-words">{m.body}</span>
                         )}
