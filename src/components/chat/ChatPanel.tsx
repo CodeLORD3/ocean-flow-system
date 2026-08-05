@@ -142,12 +142,13 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
     ? "max-h-40 md:max-h-24"
     : isMobile
       ? "h-[calc(100dvh-19rem)] min-h-[16rem]"
-      : "h-[520px]";
+      : "h-[calc(100dvh-13rem)] min-h-[520px]";
   const msgHeight = compact
     ? "h-56"
     : isMobile
       ? "h-[calc(100dvh-22rem)] min-h-[14rem]"
-      : "h-[440px]";
+      : "h-[calc(100dvh-16rem)] min-h-[440px]";
+
 
   return (
     <Card className={cn("shadow-card", className)}>
