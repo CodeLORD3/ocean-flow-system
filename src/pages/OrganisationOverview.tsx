@@ -341,6 +341,12 @@ export default function OrganisationOverview() {
         </div>
       )}
 
+      {/* Grossist/Admin: chatt direkt på översikten */}
+      {!isShop && (
+        <ChatPanel compact onOpenFull={() => switchTab("/chat")} />
+      )}
+
+
       {/* Shop: daily checklist */}
       {isShop && (
         <ChecklistCard storeId={activeStoreId!} onOpenFull={() => switchTab("/checklist")} />
