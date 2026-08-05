@@ -68,6 +68,26 @@ function dayDividerLabel(iso: string) {
   return `${cap} ${d.toLocaleDateString("sv-SE", { day: "numeric", month: "long", year: "numeric" })}`;
 }
 
+/** Markör som lagras i meddelandetexten vid vidarebefordran */
+const FORWARD_MARK = "[[VIDAREBEFORDRAT från ";
+const FORWARD_END = "]]";
+
+function buildForwardBody(from: string, body: string | null) {
+  return `${FORWARD_MARK}${from}${FORWARD_END}\n${body ?? ""}`.trimEnd();
+}
+
+/** Läser ut vem meddelandet kommer ifrån och själva texten */
+function parseForward(body: string | null): { from: string; text: string } | null {
+  if (!body?.startsWith(FORWARD_MARK)) return null;
+  const end = body.indexOf(FORWARD_END);
+  if (end < 0) return null;
+  return {
+    from: body.slice(FORWARD_MARK.length, end),
+    text: body.slice(end + FORWARD_END.length).replace(/^\n/, ""),
+  };
+}
+
+
 type Props = {
   /** Kompakt variant för översiktssidan */
   compact?: boolean;
