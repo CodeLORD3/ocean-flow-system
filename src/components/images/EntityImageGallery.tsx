@@ -208,7 +208,9 @@ export function EntityImageGallery({
       ? "Inga favoriter ännu — tryck på hjärtat på en bild."
       : catalog && view.mode === "day"
         ? "Inga bilder detta datum."
-        : "Inga bilder ännu";
+        : catalog && view.mode === "featured"
+          ? `Inga utvalda bilder för ${dayLabel(activeDay)}.`
+          : "Inga bilder ännu";
 
   const grid = (
     <div className={cn("grid gap-2", columnsClassName)}>
