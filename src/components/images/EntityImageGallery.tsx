@@ -117,6 +117,8 @@ export function EntityImageGallery({
       map.set(k, (map.get(k) || 0) + 1);
     });
     return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  }, [images]);
+
   const previewImages: EntityImage[] = previewCount
     ? featured.slice(0, previewCount)
     : images;
@@ -129,8 +131,8 @@ export function EntityImageGallery({
     if (view.mode === "favorites") return favorites;
     if (view.mode === "featured") return previewImages;
     return images.filter((i) => dayKey(i.created_at) === view.key);
+  }, [catalog, view, images, favorites, previewImages]);
 
-  }, [catalog, view, images, favorites, previewImages, featuredForDay]);
 
 
   const lightboxIndex = lightboxId ? shown.findIndex((i) => i.id === lightboxId) : -1;
