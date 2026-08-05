@@ -509,7 +509,7 @@ export function ImageLightbox({
               </div>
 
               {/* Bild + bildtext är det viktiga; kommentarer bakom ikon */}
-              <div className="shrink-0 border-t p-3 space-y-2">
+              <div className="shrink-0 border-t p-3 space-y-2 max-h-[38dvh] overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
                 <div className="flex items-center justify-between gap-2">
                   {uploaderMeta}
                   <div className="flex items-center gap-1">
@@ -544,32 +544,44 @@ export function ImageLightbox({
                 {captionMeta}
               </div>
 
-              {/* Kommentarer som panel under bilden – bilden syns kvar (Instagram-känsla) */}
+              {/* Kommentarer som Instagram-sheet över bilden */}
               {commentsOpen && (
-                <div className="shrink-0 border-t bg-background flex flex-col max-h-[45dvh] min-h-0">
-                  <div className="flex items-center justify-between px-3 py-1.5">
-                    <span className="text-xs font-medium text-muted-foreground">
-                      {comments.length === 0 ? (
-                        "Kommentera"
-                      ) : (
-                        <>
-                          Kommentarer{" "}
-                          <span className="font-mono tabular-nums">({comments.length})</span>
-                        </>
-                      )}
-                    </span>
-                    <button
-                      type="button"
-                      aria-label="Stäng kommentarer"
-                      onClick={() => setCommentsOpen(false)}
-                      className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
+                <>
+                  <button
+                    type="button"
+                    aria-label="Stäng kommentarer"
+                    onClick={() => setCommentsOpen(false)}
+                    className="absolute inset-0 z-30 bg-black/40"
+                  />
+                  <div className="absolute inset-x-0 bottom-0 z-40 flex max-h-[72dvh] min-h-[40dvh] flex-col rounded-t-2xl border-t bg-background shadow-2xl">
+                    <div className="flex items-center justify-between px-3 pt-2 pb-1.5">
+                      <span className="mx-auto h-1 w-10 rounded-full bg-muted-foreground/30" />
+                    </div>
+                    <div className="flex items-center justify-between border-b px-3 pb-2">
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {comments.length === 0 ? (
+                          "Kommentarer"
+                        ) : (
+                          <>
+                            Kommentarer{" "}
+                            <span className="font-mono tabular-nums">({comments.length})</span>
+                          </>
+                        )}
+                      </span>
+                      <button
+                        type="button"
+                        aria-label="Stäng kommentarer"
+                        onClick={() => setCommentsOpen(false)}
+                        className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                    {commentList}
                   </div>
-                  {commentList}
-                </div>
+                </>
               )}
+
 
             </div>
           )}
