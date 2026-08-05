@@ -354,9 +354,10 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                           {clockLabel(m.created_at)}
                         </span>
                       </div>
-
                     </div>
+                    </Fragment>
                   );
+
                 })
               )}
             </div>
