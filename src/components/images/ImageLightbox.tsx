@@ -64,6 +64,7 @@ export function ImageLightbox({
 
   useEffect(() => {
     setCaption(current?.caption || "");
+    setCaptionEditing(false);
     setDraft("");
   }, [current?.id, current?.caption]);
 
