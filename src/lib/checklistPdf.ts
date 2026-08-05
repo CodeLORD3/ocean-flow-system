@@ -82,16 +82,16 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
   });
 
   // ── Tabell ────────────────────────────────────────────────────────────────
-  type Row = { section?: string; item?: ChecklistPdfItem };
+  type Row = { section?: string; item?: ChecklistPdfItem; nr?: number };
   const rows: Row[] = [];
   let lastSection: string | null = null;
-  opts.items.forEach((item) => {
+  opts.items.forEach((item, idx) => {
     const sec = s2(item.section) || "Övrigt";
     if (sec !== lastSection) {
       rows.push({ section: sec });
       lastSection = sec;
     }
-    rows.push({ item });
+    rows.push({ item, nr: idx + 1 });
   });
 
   const ROW_H = 9.5;
@@ -102,7 +102,7 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
       return [
         {
           content: r.section.toUpperCase(),
-          colSpan: 6,
+          colSpan: 7,
           styles: {
             fillColor: [38, 50, 62] as [number, number, number],
             textColor: [255, 255, 255] as [number, number, number],
@@ -117,6 +117,7 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
     }
     const it = r.item!;
     return [
+      String(r.nr ?? ""),
       s2(it.time_label),
       s2(it.category),
       s2(it.task),
@@ -126,11 +127,12 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
     ];
   });
 
+
   autoTable(doc, {
     startY: boxY + boxH + 6,
     rowPageBreak: "avoid",
     body,
-    head: [["TID", "KATEGORI", "UPPGIFT", "KLAR", "KOMMENTAR / AVVIKELSE", "SIGN"]],
+    head: [["NR", "TID", "KATEGORI", "UPPGIFT", "KLAR", "KOMMENTAR / AVVIKELSE", "SIGN"]],
     theme: "grid",
     styles: {
       font: "helvetica",
@@ -157,16 +159,17 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
     },
     alternateRowStyles: { fillColor: [248, 249, 250] },
     columnStyles: {
-      0: { cellWidth: 14, halign: "center", textColor: [90, 96, 102] },
-      1: { cellWidth: 26, textColor: [90, 96, 102] },
-      2: { cellWidth: "auto", fontStyle: "bold" },
-      3: { cellWidth: 12, halign: "center", fontStyle: "bold" },
-      4: { cellWidth: 44 },
-      5: { cellWidth: 16, halign: "center" },
+      0: { cellWidth: 9, halign: "center", textColor: [120, 126, 132] },
+      1: { cellWidth: 14, halign: "center", textColor: [90, 96, 102] },
+      2: { cellWidth: 26, textColor: [90, 96, 102] },
+      3: { cellWidth: "auto", fontStyle: "bold" },
+      4: { cellWidth: 12, halign: "center", fontStyle: "bold" },
+      5: { cellWidth: 42 },
+      6: { cellWidth: 16, halign: "center" },
     },
     margin: { left: margin, right: margin, bottom: margin + 30 },
     didParseCell: (data) => {
-      if (data.section === "head" && [1, 2, 4].includes(data.column.index)) {
+      if (data.section === "head" && [2, 3, 5].includes(data.column.index)) {
         data.cell.styles.halign = "left";
       }
       const isSection = data.row.raw && (data.row.raw as any[]).length === 1;
@@ -178,13 +181,13 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
       if (data.section === "body") {
         // exakt samma radhöjd över hela listan
         data.cell.styles.minCellHeight = ROW_H;
-        if (data.column.index === 3) data.cell.text = [];
+        if (data.column.index === 4) data.cell.text = [];
       }
     },
     didDrawCell: (data) => {
       // rita kryssruta i KLAR-kolumnen
       const isSection = data.row.raw && (data.row.raw as any[]).length === 1;
-      if (data.section !== "body" || isSection || data.column.index !== 3) return;
+      if (data.section !== "body" || isSection || data.column.index !== 4) return;
       const size = 3.6;
       const x = data.cell.x + data.cell.width / 2 - size / 2;
       const y = data.cell.y + data.cell.height / 2 - size / 2;

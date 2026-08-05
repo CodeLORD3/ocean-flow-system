@@ -81,21 +81,22 @@ export function ChecklistTable({
   const rows = useMemo(() => {
     type Row =
       | { kind: "section"; label: string }
-      | { kind: "item"; item: ChecklistItem }
+      | { kind: "item"; item: ChecklistItem; nr: number }
       | { kind: "add"; label: string };
     const out: Row[] = [];
     let last: string | null = null;
-    pageItems.forEach((item) => {
+    pageItems.forEach((item, idx) => {
       if (item.section !== last) {
         if (last) out.push({ kind: "add", label: last });
         out.push({ kind: "section", label: item.section });
         last = item.section;
       }
-      out.push({ kind: "item", item });
+      out.push({ kind: "item", item, nr: current * PAGE_SIZE + idx + 1 });
     });
     if (last) out.push({ kind: "add", label: last });
     return out;
-  }, [pageItems]);
+  }, [pageItems, current]);
+
 
   const sections = useMemo(
     () => Array.from(new Set(items.map((i) => i.section))),
@@ -340,7 +341,12 @@ export function ChecklistTable({
                   />
                 </label>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[13px] leading-snug text-foreground break-words">{row.item.task}</p>
+                  <p className="text-[13px] leading-snug text-foreground break-words">
+                    <span className="mr-1.5 font-mono tabular-nums text-[11px] text-muted-foreground">
+                      {row.nr}.
+                    </span>
+                    {row.item.task}
+                  </p>
                   <div className="text-[10px] text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                     {locked ? (
                       row.item.time_label && <span className="font-mono tabular-nums">{row.item.time_label}</span>
@@ -407,6 +413,7 @@ export function ChecklistTable({
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-muted/50 text-[11px] uppercase tracking-wide text-muted-foreground">
+              <th className="text-center font-semibold px-2 py-2.5 w-10 border-r border-border">Nr</th>
               <th className="text-center font-semibold px-3 py-2.5 w-20 border-r border-border">Tid</th>
               <th className="text-left font-semibold px-3 py-2.5 w-40 border-r border-border">Kategori</th>
               <th className="text-left font-semibold px-3 py-2.5 border-r border-border">Uppgift</th>
@@ -416,12 +423,13 @@ export function ChecklistTable({
               <th className="w-10 px-1 py-2.5" />
             </tr>
           </thead>
+
           <tbody>
             {rows.map((row) => {
               if (row.kind === "section") {
                 return (
                   <tr key={`s-${row.label}`} className="bg-muted/70">
-                    <td colSpan={7} className="px-3 py-1.5">
+                    <td colSpan={8} className="px-3 py-1.5">
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-[11px] font-bold uppercase tracking-wide text-foreground">{row.label}</span>
                         {!locked && (
@@ -445,7 +453,7 @@ export function ChecklistTable({
                 if (addSection !== row.label) {
                   return (
                     <tr key={`a-${row.label}`} className="border-t border-border">
-                      <td colSpan={7} className="px-3 py-1">
+                      <td colSpan={8} className="px-3 py-1">
                         <button
                           type="button"
                           className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground"
@@ -459,6 +467,7 @@ export function ChecklistTable({
                 }
                 return (
                   <tr key={`a-${row.label}`} className="border-t border-border bg-primary/5">
+                    <td className="px-2 py-1.5 border-r border-border" />
                     <td className="px-2 py-1.5 border-r border-border">
                       <Input
                         value={addDraft.time}
@@ -512,6 +521,9 @@ export function ChecklistTable({
                     row.item.done ? "bg-emerald-500/10" : "hover:bg-muted/30"
                   )}
                 >
+                  <td className="px-2 py-1.5 text-center border-r border-border font-mono tabular-nums text-[11px] text-muted-foreground">
+                    {row.nr}
+                  </td>
                   <td className="px-1.5 py-1.5 text-center border-r border-border">
                     {locked ? (
                       <span className="font-mono tabular-nums text-xs text-muted-foreground">
