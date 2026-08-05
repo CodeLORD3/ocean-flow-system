@@ -241,6 +241,7 @@ export type Database = {
           created_at: string
           id: string
           image_url: string | null
+          is_important: boolean
           sender_name: string | null
           sender_portal_key: string
           sender_portal_name: string | null
@@ -252,6 +253,7 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          is_important?: boolean
           sender_name?: string | null
           sender_portal_key: string
           sender_portal_name?: string | null
@@ -263,6 +265,7 @@ export type Database = {
           created_at?: string
           id?: string
           image_url?: string | null
+          is_important?: boolean
           sender_name?: string | null
           sender_portal_key?: string
           sender_portal_name?: string | null
