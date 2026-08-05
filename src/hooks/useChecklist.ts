@@ -61,7 +61,20 @@ export type ChecklistTemplate = {
   description: string | null;
   active: boolean;
   sort_order: number;
+  /** 0=Söndag … 6=Lördag. Tom lista = gäller alla dagar. */
+  weekdays: number[];
 };
+
+/** Gäller checklistan given veckodag? Tom weekdays = alla dagar. */
+export function templateAppliesOn(tpl: ChecklistTemplate, iso: string) {
+  const wd = tpl.weekdays ?? [];
+  if (wd.length === 0) return true;
+  const [y, m, d] = iso.split("-").map(Number);
+  return wd.includes(new Date(y, m - 1, d).getDay());
+}
+
+export const WEEKDAY_SHORT = ["Sön", "Mån", "Tis", "Ons", "Tor", "Fre", "Lör"];
+
 
 /** Menyn med butikens checklistor (globala mallar + butikens egna). */
 export function useChecklistTemplates(storeId?: string | null) {
@@ -125,6 +138,106 @@ export function useArchiveChecklistTemplate() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["checklist-templates"] }),
   });
 }
+
+/** Sätter vilka veckodagar en checklista gäller (tom = alla dagar). */
+export function useSetTemplateWeekdays() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, weekdays }: { id: string; weekdays: number[] }) => {
+      const clean = Array.from(new Set(weekdays)).filter((d) => d >= 0 && d <= 6).sort();
+      const { error } = await supabase.from("checklist_templates").update({ weekdays: clean }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["checklist-templates"] }),
+  });
+}
+
+/** Historik för en butiks checklistor (senaste 120 dagarna). */
+export function useStoreChecklistHistory(storeId?: string | null) {
+  return useQuery({
+    queryKey: ["checklist-history", storeId],
+    queryFn: async () => {
+      const { data: days, error } = await supabase
+        .from("checklist_days")
+        .select("*, checklist_templates(name)")
+        .eq("store_id", storeId!)
+        .order("checklist_date", { ascending: false })
+        .limit(120);
+      if (error) throw error;
+
+      const ids = (days || []).map((d: any) => d.id);
+      if (ids.length === 0) return [] as any[];
+
+      const { data: items, error: iErr } = await supabase
+        .from("checklist_items")
+        .select("day_id, done")
+        .in("day_id", ids);
+      if (iErr) throw iErr;
+
+      const counts = new Map<string, { total: number; done: number }>();
+      (items || []).forEach((i: any) => {
+        const c = counts.get(i.day_id) || { total: 0, done: 0 };
+        c.total += 1;
+        if (i.done) c.done += 1;
+        counts.set(i.day_id, c);
+      });
+
+      return (days || []).map((d: any) => ({
+        ...d,
+        listName: d.checklist_templates?.name ?? "Daglig checklista",
+        total: counts.get(d.id)?.total ?? 0,
+        doneCount: counts.get(d.id)?.done ?? 0,
+      }));
+    },
+    enabled: !!storeId,
+  });
+}
+
+/** Status idag per checklista för en butik (utan att skapa nya dagar). */
+export function useTodayChecklistStatus(storeId?: string | null, date?: string) {
+  const iso = date || todayIso();
+  return useQuery({
+    queryKey: ["checklist-today-status", storeId, iso],
+    queryFn: async () => {
+      const { data: days, error } = await supabase
+        .from("checklist_days")
+        .select("id, template_id, status, responsible_name, completed_by_name")
+        .eq("store_id", storeId!)
+        .eq("checklist_date", iso);
+      if (error) throw error;
+
+      const ids = (days || []).map((d: any) => d.id);
+      let counts = new Map<string, { total: number; done: number }>();
+      if (ids.length > 0) {
+        const { data: items, error: iErr } = await supabase
+          .from("checklist_items")
+          .select("day_id, done")
+          .in("day_id", ids);
+        if (iErr) throw iErr;
+        (items || []).forEach((i: any) => {
+          const c = counts.get(i.day_id) || { total: 0, done: 0 };
+          c.total += 1;
+          if (i.done) c.done += 1;
+          counts.set(i.day_id, c);
+        });
+      }
+
+      const map: Record<string, { status: string; total: number; done: number; responsible: string | null }> = {};
+      (days || []).forEach((d: any) => {
+        map[d.template_id ?? DEFAULT_CHECKLIST_TEMPLATE_ID] = {
+          status: d.status,
+          total: counts.get(d.id)?.total ?? 0,
+          done: counts.get(d.id)?.done ?? 0,
+          responsible: d.completed_by_name || d.responsible_name || null,
+        };
+      });
+      return map;
+    },
+    enabled: !!storeId,
+  });
+}
+
+
 
 /** Dagens checklista för en butik och vald lista — skapas automatiskt från mallen om den inte finns. */
 export function useDailyChecklist(storeId?: string | null, date?: string, templateId?: string | null) {
