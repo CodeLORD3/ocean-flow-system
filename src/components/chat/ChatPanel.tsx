@@ -134,16 +134,18 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
 
   const handleSend = async (file?: File | null) => {
     if (!activeConv) return;
-    if (!text.trim() && !file) return;
+    const body = text;
+    if (!body.trim() && !file) return;
+    // Töm fältet direkt så det känns snabbt och tangentbordet stannar kvar
+    setText("");
+    if (textRef.current) {
+      textRef.current.style.height = "auto";
+      textRef.current.focus();
+    }
     try {
-      await send.mutateAsync({ conversationId: activeConv.id, body: text, file });
-      setText("");
-      if (textRef.current) {
-        textRef.current.style.height = "auto";
-        textRef.current.focus();
-      }
-
+      await send.mutateAsync({ conversationId: activeConv.id, body, file });
     } catch (e: any) {
+      setText(body);
       toast({ title: "Kunde inte skicka", description: e.message, variant: "destructive" });
     }
   };
