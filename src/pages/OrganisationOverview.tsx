@@ -344,7 +344,18 @@ export default function OrganisationOverview() {
       {/* Grossist/Admin: chatt och butiker sida vid sida */}
       {!isShop && (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 items-start">
+          <EntityImageGallery
+            entityType={PORTAL_IMAGE_ENTITY_TYPE}
+            entityId={WHOLESALE_IMAGE_ENTITY_ID}
+            title="Bilder från grossisten"
+            description="Ladda upp foton från grossistverksamheten — dra och släpp eller klicka för att ladda upp"
+            columnsClassName="grid-cols-1 min-[380px]:grid-cols-2"
+            previewCount={4}
+            catalog
+          />
+
           <ChatPanel compact onOpenFull={() => switchTab("/chat")} />
+
 
           {stores.length > 0 && (
             <Card className="shadow-card">
