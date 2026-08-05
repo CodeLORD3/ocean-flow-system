@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { MessageSquare, Send, ImagePlus, Loader2, Store, Factory, Shield, ArrowLeft, Megaphone, AlertTriangle } from "lucide-react";
+import { MessageSquare, Send, ImagePlus, Loader2, Store, Factory, Shield, ArrowLeft, Megaphone, AlertTriangle, Forward } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,8 @@ import { cn } from "@/lib/utils";
 import { GROSSIST_PROFILE, type PortalProfile } from "@/lib/portalProfiles";
 import {
   ChatConversation,
+  type ChatMessage,
+
   conversationTitle,
   useChatConversations,
   useChatMessages,
@@ -68,6 +70,26 @@ function dayDividerLabel(iso: string) {
   return `${cap} ${d.toLocaleDateString("sv-SE", { day: "numeric", month: "long", year: "numeric" })}`;
 }
 
+/** Markör som lagras i meddelandetexten vid vidarebefordran */
+const FORWARD_MARK = "[[VIDAREBEFORDRAT från ";
+const FORWARD_END = "]]";
+
+function buildForwardBody(from: string, body: string | null) {
+  return `${FORWARD_MARK}${from}${FORWARD_END}\n${body ?? ""}`.trimEnd();
+}
+
+/** Läser ut vem meddelandet kommer ifrån och själva texten */
+function parseForward(body: string | null): { from: string; text: string } | null {
+  if (!body?.startsWith(FORWARD_MARK)) return null;
+  const end = body.indexOf(FORWARD_END);
+  if (end < 0) return null;
+  return {
+    from: body.slice(FORWARD_MARK.length, end),
+    text: body.slice(end + FORWARD_END.length).replace(/^\n/, ""),
+  };
+}
+
+
 type Props = {
   /** Kompakt variant för översiktssidan */
   compact?: boolean;
@@ -87,6 +109,9 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
   const [broadcastText, setBroadcastText] = useState("");
   const [broadcastKeys, setBroadcastKeys] = useState<string[]>([]);
   const [text, setText] = useState("");
+  const [forwardMsg, setForwardMsg] = useState<ChatMessage | null>(null);
+  const [forwardConvIds, setForwardConvIds] = useState<string[]>([]);
+
   const fileRef = useRef<HTMLInputElement>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -153,6 +178,39 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
 
   const storeTargets = useMemo(() => otherProfiles.filter((p) => p.kind === "store"), [otherProfiles]);
   const isAdmin = portal?.kind === "admin";
+  // Grossist (och Admin) kan vidarebefordra meddelanden mellan sina chattar
+  const canForward = !isStore && conversations.length > 1;
+
+  const openForward = (m: ChatMessage) => {
+    setForwardMsg(m);
+    setForwardConvIds([]);
+  };
+
+  const forwardSourceName = activeConv ? conversationTitle(activeConv, portal?.key ?? "") : "";
+
+  const handleForward = async () => {
+    if (!forwardMsg || forwardConvIds.length === 0) return;
+    const original = parseForward(forwardMsg.body);
+    const from = original?.from || forwardMsg.sender_portal_name || forwardSourceName;
+    const body = buildForwardBody(from, original ? original.text : forwardMsg.body);
+    try {
+      for (const id of forwardConvIds) {
+        await send.mutateAsync({
+          conversationId: id,
+          body,
+          existingImageUrl: forwardMsg.image_url,
+        });
+      }
+      toast({
+        title: "Vidarebefordrat",
+        description: `Skickat till ${forwardConvIds.length} chatt(ar).`,
+      });
+      setForwardMsg(null);
+      setForwardConvIds([]);
+    } catch (e: any) {
+      toast({ title: "Kunde inte vidarebefordra", description: e.message, variant: "destructive" });
+    }
+  };
 
   const handleBroadcast = async () => {
     if (!broadcastText.trim()) {
@@ -169,6 +227,7 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
       toast({ title: "Kunde inte skicka", description: e.message, variant: "destructive" });
     }
   };
+
 
 
 
@@ -327,7 +386,12 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                       {!compact && (
                         <span className="flex items-center gap-2">
                           <span className="block text-[10px] text-muted-foreground truncate flex-1 min-w-0">
-                            {c.lastMessage?.body || (c.lastMessage?.image_url ? "Bild" : "Inga meddelanden")}
+                            {(() => {
+                              const f = parseForward(c.lastMessage?.body ?? null);
+                              if (f) return `↪ ${f.text || "Bild"}`;
+                              return c.lastMessage?.body || (c.lastMessage?.image_url ? "Bild" : "Inga meddelanden");
+                            })()}
+
                           </span>
                           <span className="text-[9px] text-muted-foreground shrink-0 font-mono tabular-nums">
                             {timeLabel(c.last_message_at)}
@@ -372,6 +436,9 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                     showDay ||
                     prev.sender_portal_key !== m.sender_portal_key ||
                     (prev.sender_name || "") !== (m.sender_name || "");
+                  const fwd = parseForward(m.body);
+                  const bodyText = fwd ? fwd.text : m.body;
+
                   return (
                     <Fragment key={m.id}>
                       {showDay && (
@@ -382,8 +449,19 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                         </div>
                       )}
                     <div
-                      className={cn("flex", mine ? "justify-end" : "justify-start", showHeader && i > 0 && !showDay && "mt-2")}
+                      className={cn("group flex items-center gap-1", mine ? "justify-end" : "justify-start", showHeader && i > 0 && !showDay && "mt-2")}
                     >
+                      {canForward && mine && (
+                        <button
+                          type="button"
+                          aria-label="Vidarebefordra meddelande"
+                          title="Vidarebefordra till annan butik"
+                          onClick={() => openForward(m)}
+                          className="shrink-0 rounded-full p-1 text-muted-foreground opacity-60 hover:opacity-100 hover:text-foreground md:opacity-0 md:group-hover:opacity-100"
+                        >
+                          <Forward className="h-3.5 w-3.5" />
+                        </button>
+                      )}
 
                       <div
                         className={cn(
@@ -412,8 +490,21 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                             <AlertTriangle className="h-3 w-3" /> Specialmeddelande
                           </span>
                         )}
-                        {m.body && (
-                          <span className="whitespace-pre-wrap break-words">{m.body}</span>
+                        {fwd && (
+                          <span
+                            className={cn(
+                              "mb-0.5 flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[9px] font-semibold",
+                              mine
+                                ? "bg-primary-foreground/15 text-primary-foreground/90"
+                                : "bg-background/70 text-primary"
+                            )}
+                          >
+                            <Forward className="h-3 w-3 shrink-0" />
+                            Vidarebefordrat · från {fwd.from}
+                          </span>
+                        )}
+                        {bodyText && (
+                          <span className="whitespace-pre-wrap break-words">{bodyText}</span>
                         )}
                         {m.image_url && (
                           <a href={m.image_url} target="_blank" rel="noreferrer">
@@ -435,7 +526,20 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                         </span>
 
                       </div>
+
+                      {canForward && !mine && (
+                        <button
+                          type="button"
+                          aria-label="Vidarebefordra meddelande"
+                          title="Vidarebefordra till annan butik"
+                          onClick={() => openForward(m)}
+                          className="shrink-0 rounded-full p-1 text-muted-foreground opacity-60 hover:opacity-100 hover:text-foreground md:opacity-0 md:group-hover:opacity-100"
+                        >
+                          <Forward className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </div>
+
                     </Fragment>
                   );
 
@@ -505,7 +609,70 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
         )}
       </CardContent>
 
+
+      {/* Vidarebefordra ett meddelande till andra butiker/portaler */}
+      <Dialog open={!!forwardMsg} onOpenChange={(o) => !o && setForwardMsg(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base flex items-center gap-1.5">
+              <Forward className="h-4 w-4 text-primary" /> Vidarebefordra
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Mottagaren ser att meddelandet är vidarebefordrat och vilken butik det kommer ifrån.
+            </DialogDescription>
+          </DialogHeader>
+
+          {forwardMsg && (
+            <div className="rounded-md border border-border bg-muted/50 p-2 space-y-1">
+              <p className="text-[10px] font-semibold text-primary">
+                Från {parseForward(forwardMsg.body)?.from || forwardMsg.sender_portal_name || forwardSourceName}
+              </p>
+              <p className="text-xs text-foreground whitespace-pre-wrap break-words line-clamp-6">
+                {parseForward(forwardMsg.body)?.text || forwardMsg.body || (forwardMsg.image_url ? "Bild" : "")}
+              </p>
+            </div>
+          )}
+
+          <div className="space-y-1 max-h-56 overflow-y-auto">
+            {conversations
+              .filter((c) => c.id !== activeConv?.id)
+              .map((c) => {
+                const title = conversationTitle(c, portal.key);
+                const checked = forwardConvIds.includes(c.id);
+                return (
+                  <label
+                    key={c.id}
+                    className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted/60 cursor-pointer"
+                  >
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={(v) =>
+                        setForwardConvIds((prev) => (v ? [...prev, c.id] : prev.filter((k) => k !== c.id)))
+                      }
+                    />
+                    <Store className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-xs text-foreground truncate">{title}</span>
+                  </label>
+                );
+              })}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setForwardMsg(null)}>Avbryt</Button>
+            <Button
+              size="sm"
+              onClick={handleForward}
+              disabled={forwardConvIds.length === 0 || send.isPending}
+            >
+              {send.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+              Vidarebefordra
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Specialmeddelande till alla butiker (Admin) */}
+
 
       <Dialog open={broadcastOpen} onOpenChange={setBroadcastOpen}>
         <DialogContent className="max-w-md">
