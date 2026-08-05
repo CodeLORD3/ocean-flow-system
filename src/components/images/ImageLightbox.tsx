@@ -50,6 +50,7 @@ export function ImageLightbox({
   const [editDraft, setEditDraft] = useState("");
   const [commentsOpen, setCommentsOpen] = useState(false);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const draftRef = useRef<HTMLInputElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const scrollTimer = useRef<number | null>(null);
   const { staff } = useStaffAuth();
