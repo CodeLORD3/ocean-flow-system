@@ -148,7 +148,13 @@ export function useUpdateEntityImage() {
       focal_point?: string;
     }) => {
       const patch: Record<string, unknown> = {};
-      if (caption !== undefined) patch.caption = caption;
+      if (caption !== undefined) {
+        patch.caption = caption;
+        const { uid, name } = await currentActorName();
+        patch.caption_edited_by = uid;
+        patch.caption_edited_by_name = name;
+        patch.caption_edited_at = new Date().toISOString();
+      }
       if (sort_order !== undefined) patch.sort_order = sort_order;
       if (focal_point !== undefined) patch.focal_point = focal_point;
       const { error } = await supabase.from("entity_images").update(patch).eq("id", id);
