@@ -302,13 +302,17 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                       setMobileThread(true);
                     }}
                     className={cn(
-                      "w-full text-left rounded-md px-2 py-2 transition-colors flex items-center gap-2",
+                      "w-full text-left rounded-md px-2 transition-colors flex items-center gap-2",
+                      compact ? "py-1.5" : "py-2",
                       isActive && !isMobile
                         ? "bg-primary/10 border border-primary/20"
                         : "hover:bg-muted/60 border border-transparent"
                     )}
                   >
-                    <span className="h-8 w-8 shrink-0 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-semibold">
+                    <span className={cn(
+                      "shrink-0 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-semibold",
+                      compact ? "h-6 w-6" : "h-8 w-8"
+                    )}>
                       {initialsOf(title)}
                     </span>
                     <span className="min-w-0 flex-1">
@@ -320,15 +324,18 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                           </Badge>
                         )}
                       </span>
-                      <span className="flex items-center gap-2">
-                        <span className="block text-[10px] text-muted-foreground truncate flex-1 min-w-0">
-                          {c.lastMessage?.body || (c.lastMessage?.image_url ? "Bild" : "Inga meddelanden")}
+                      {!compact && (
+                        <span className="flex items-center gap-2">
+                          <span className="block text-[10px] text-muted-foreground truncate flex-1 min-w-0">
+                            {c.lastMessage?.body || (c.lastMessage?.image_url ? "Bild" : "Inga meddelanden")}
+                          </span>
+                          <span className="text-[9px] text-muted-foreground shrink-0 font-mono tabular-nums">
+                            {timeLabel(c.last_message_at)}
+                          </span>
                         </span>
-                        <span className="text-[9px] text-muted-foreground shrink-0 font-mono tabular-nums">
-                          {timeLabel(c.last_message_at)}
-                        </span>
-                      </span>
+                      )}
                     </span>
+
 
                   </button>
                 );
