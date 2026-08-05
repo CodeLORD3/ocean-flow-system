@@ -1175,6 +1175,9 @@ export type Database = {
           author_name: string
           body: string
           created_at: string
+          edited_at: string | null
+          edited_by: string | null
+          edited_by_name: string | null
           id: string
           image_id: string
           user_id: string | null
@@ -1183,6 +1186,9 @@ export type Database = {
           author_name?: string
           body: string
           created_at?: string
+          edited_at?: string | null
+          edited_by?: string | null
+          edited_by_name?: string | null
           id?: string
           image_id: string
           user_id?: string | null
@@ -1191,6 +1197,9 @@ export type Database = {
           author_name?: string
           body?: string
           created_at?: string
+          edited_at?: string | null
+          edited_by?: string | null
+          edited_by_name?: string | null
           id?: string
           image_id?: string
           user_id?: string | null
@@ -1237,6 +1246,9 @@ export type Database = {
       entity_images: {
         Row: {
           caption: string | null
+          caption_edited_at: string | null
+          caption_edited_by: string | null
+          caption_edited_by_name: string | null
           created_at: string
           entity_id: string
           entity_type: string
@@ -1251,6 +1263,9 @@ export type Database = {
         }
         Insert: {
           caption?: string | null
+          caption_edited_at?: string | null
+          caption_edited_by?: string | null
+          caption_edited_by_name?: string | null
           created_at?: string
           entity_id: string
           entity_type: string
@@ -1265,6 +1280,9 @@ export type Database = {
         }
         Update: {
           caption?: string | null
+          caption_edited_at?: string | null
+          caption_edited_by?: string | null
+          caption_edited_by_name?: string | null
           created_at?: string
           entity_id?: string
           entity_type?: string
