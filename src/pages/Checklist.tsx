@@ -27,6 +27,7 @@ function ShopChecklist({ storeId, storeName }: { storeId: string; storeName: str
     <ChecklistTable
       day={data.day}
       items={data.items}
+      storeName={storeName}
       title={`Checklista – ${weekdayName(data.day.checklist_date)} ${data.day.checklist_date}`}
     />
   );
@@ -51,6 +52,7 @@ function ChecklistReportDetail({ dayId, onBack }: { dayId: string; onBack: () =>
       items={items}
       readOnly
       onBack={onBack}
+      storeName={day.storeName}
       title={`${day.storeName} – ${weekdayName(day.checklist_date)} ${day.checklist_date}`}
     />
   );

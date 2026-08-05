@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Printer, CheckCheck, ChevronLeft, ChevronRight, ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Printer, FileText, CheckCheck, ChevronLeft, ChevronRight, ArrowRight, CheckCircle2 } from "lucide-react";
+import { generateChecklistPdf } from "@/lib/checklistPdf";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -34,12 +35,14 @@ export function ChecklistTable({
   title,
   onBack,
   readOnly = false,
+  storeName,
 }: {
   day: ChecklistDay;
   items: ChecklistItem[];
   title: string;
   onBack?: () => void;
   readOnly?: boolean;
+  storeName?: string | null;
 }) {
   const [page, setPage] = useState(0);
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
@@ -77,6 +80,38 @@ export function ChecklistTable({
     });
   };
 
+  const handlePrint = (blank: boolean) => {
+    if (items.length === 0) {
+      toast.error("Checklistan innehåller inga uppgifter att skriva ut.");
+      return;
+    }
+    try {
+      generateChecklistPdf({
+        storeName: storeName || (day as any).storeName || null,
+        date: day.checklist_date,
+        weekday: weekdayName(day.checklist_date),
+        shift: day.shift,
+        responsible: day.responsible_name,
+        status: day.status,
+        blank,
+        items: items.map((i) => ({
+          section: i.section,
+          time_label: i.time_label,
+          category: i.category,
+          task: i.task,
+          done: i.done,
+          signature: i.signature,
+          note: noteDrafts[i.id] ?? i.note,
+        })),
+      });
+      toast.success(blank ? "Tom checklista skapad." : "Checklista-PDF skapad.");
+    } catch (e: any) {
+      toast.error(e?.message || "Kunde inte skapa PDF.");
+    }
+  };
+
+
+
   return (
     <div className="space-y-3 sm:space-y-4">
       {/* Header */}
@@ -95,8 +130,11 @@ export function ChecklistTable({
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => window.print()}>
+          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => handlePrint(false)}>
             <Printer className="h-3.5 w-3.5 sm:mr-1.5" /> <span className="hidden sm:inline">Skriv ut</span>
+          </Button>
+          <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => handlePrint(true)}>
+            <FileText className="h-3.5 w-3.5 sm:mr-1.5" /> <span className="hidden sm:inline">Tom lista</span>
           </Button>
           {!locked && (
             <Button
