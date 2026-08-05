@@ -127,7 +127,7 @@ export function StoreHero() {
   };
 
   return (
-    <div className="group relative mb-4 h-28 sm:h-36 lg:h-44 w-full overflow-hidden rounded-lg border border-border bg-muted">
+    <div className="group relative mb-4 h-40 sm:h-36 lg:h-44 w-full overflow-hidden rounded-lg border border-border bg-muted">
       {url ? (
         <img
           src={url}
