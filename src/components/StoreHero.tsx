@@ -14,18 +14,25 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { focalStyle, focalPercent, focalLabel, FOCAL_OPTIONS } from "@/lib/imageFocal";
+import { PORTAL_IMAGE_ENTITY_TYPE, WHOLESALE_IMAGE_ENTITY_ID } from "@/lib/portalImages";
+
 import { Slider } from "@/components/ui/slider";
 import { MapPin, Store as StoreIcon, Upload, Images, Pencil, Trash2, Check, X, Loader2, Crop } from "lucide-react";
 
 /**
- * Hero/cover image shown at the top of every page inside a shop portal.
- * Staff with shop/admin access can change, caption or remove the image inline.
+ * Hero/cover image shown at the top of every page inside a shop portal
+ * and inside grossist-/adminportalen (egen bildpool).
  */
 export function StoreHero() {
   const { site, activeStoreId, activeStoreName } = useSite();
   const { staff } = useStaffAuth();
   const { data: stores = [] } = useStores();
-  const { data: images = [] } = useEntityImages("store", site === "shop" ? activeStoreId : null);
+
+  const isShop = site === "shop" && !!activeStoreId;
+  const entityType = isShop ? "store" : PORTAL_IMAGE_ENTITY_TYPE;
+  const entityId = isShop ? activeStoreId! : WHOLESALE_IMAGE_ENTITY_ID;
+
+  const { data: images = [] } = useEntityImages(entityType, entityId);
 
   const upload = useUploadEntityImage();
   const setCover = useSetCoverImage();
@@ -39,9 +46,10 @@ export function StoreHero() {
   const [cropOpen, setCropOpen] = useState(false);
   const [focalDraft, setFocalDraft] = useState<number | null>(null);
 
-  if (site !== "shop" || !activeStoreId) return null;
+  if (site === "shop" && !activeStoreId) return null;
+  if (site === "production") return null;
 
-  const store = stores.find((s) => s.id === activeStoreId);
+  const store = isShop ? stores.find((s) => s.id === activeStoreId) : undefined;
   const cover = images.find((img) => img.is_cover) ?? images[0] ?? null;
   const url = cover?.url || store?.logo_url || null;
 
@@ -51,17 +59,25 @@ export function StoreHero() {
     ...(staff?.allowed_store_ids ?? []),
     ...(staff?.allowed_store_id ? [staff.allowed_store_id] : []),
   ]);
-  const canEdit =
-    isAdmin || (access.includes("shop") && (allowedIds.size === 0 || allowedIds.has(activeStoreId)));
+  const canEdit = isShop
+    ? isAdmin || (access.includes("shop") && (allowedIds.size === 0 || allowedIds.has(activeStoreId!)))
+    : isAdmin || access.includes("wholesale");
+
+  const heroTitle = isShop
+    ? activeStoreName ?? store?.name ?? "Butik"
+    : isAdmin && !access.includes("wholesale")
+      ? "Admin"
+      : "Grossist";
 
   const busy = upload.isPending || setCover.isPending || updateImage.isPending || deleteImage.isPending;
+
 
   const handleFile = async (file: File | undefined) => {
     if (!file) return;
     try {
-      const newId = await upload.mutateAsync({ entityType: "store", entityId: activeStoreId, file });
+      const newId = await upload.mutateAsync({ entityType, entityId, file });
       if (newId) {
-        await setCover.mutateAsync({ entityType: "store", entityId: activeStoreId, imageId: newId });
+        await setCover.mutateAsync({ entityType, entityId, imageId: newId });
       }
       toast.success("Omslagsbild uppdaterad");
     } catch (e: any) {
@@ -71,7 +87,7 @@ export function StoreHero() {
 
   const handleSelect = async (imageId: string) => {
     try {
-      await setCover.mutateAsync({ entityType: "store", entityId: activeStoreId, imageId });
+      await setCover.mutateAsync({ entityType, entityId, imageId });
       setPickerOpen(false);
       setFocalDraft(null);
       toast.success("Omslagsbild uppdaterad");
@@ -116,7 +132,7 @@ export function StoreHero() {
       {url ? (
         <img
           src={url}
-          alt={cover?.caption || `Omslagsbild för ${activeStoreName ?? "butiken"}`}
+          alt={cover?.caption || `Omslagsbild för ${heroTitle}`}
           className="h-full w-full object-cover"
           style={focalStyle(focalDraft != null ? String(focalDraft) : cover?.focal_point)}
         />
@@ -130,7 +146,7 @@ export function StoreHero() {
       <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between gap-3 p-3 sm:p-4">
         <div className="min-w-0">
           <h2 className="truncate text-base sm:text-xl font-semibold text-foreground text-outline-white-thin sm:text-outline-white">
-            {activeStoreName ?? store?.name ?? "Butik"}
+            {heroTitle}
           </h2>
           {editingCaption ? (
             <div className="mt-1 flex items-center gap-1">
@@ -191,7 +207,7 @@ export function StoreHero() {
                 </Button>
               </PopoverTrigger>
               <PopoverContent align="end" className="w-64 p-2">
-                <p className="mb-2 text-[11px] font-medium text-muted-foreground">Butikens bilder</p>
+                <p className="mb-2 text-[11px] font-medium text-muted-foreground">{isShop ? "Butikens bilder" : "Portalens bilder"}</p>
                 <div className="grid grid-cols-3 gap-2">
                   {images.map((img) => (
                     <button
@@ -201,7 +217,7 @@ export function StoreHero() {
                         img.id === cover?.id ? "border-primary" : "border-border hover:border-primary/60"
                       }`}
                     >
-                      <img src={img.url} alt={img.caption || "Butiksbild"} className="h-full w-full object-cover" />
+                      <img src={img.url} alt={img.caption || "Portalbild"} className="h-full w-full object-cover" />
                     </button>
                   ))}
                 </div>
