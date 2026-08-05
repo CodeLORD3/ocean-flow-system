@@ -271,9 +271,14 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
       <CardContent
         className={cn(
           "grid gap-3 px-2 sm:px-6",
-          compact || isStore ? "grid-cols-1" : "md:grid-cols-[240px_1fr] lg:grid-cols-[264px_1fr]"
+          isStore
+            ? "grid-cols-1"
+            : compact
+              ? "grid-cols-1 md:grid-cols-[190px_1fr]"
+              : "md:grid-cols-[240px_1fr] lg:grid-cols-[264px_1fr]"
         )}
       >
+
         {/* Conversation list */}
         {showList && (
           <div className={cn("space-y-1 overflow-y-auto overflow-x-hidden pr-1", listHeight)}>
