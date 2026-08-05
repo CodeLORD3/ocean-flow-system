@@ -333,7 +333,9 @@ export default function OrganisationOverview() {
             description="Ladda upp foton från butiken — dra och släpp eller klicka för att ladda upp"
             columnsClassName="grid-cols-1 min-[380px]:grid-cols-2"
             previewCount={4}
+            catalog
           />
+
 
           <ChatPanel compact onOpenFull={() => switchTab("/chat")} />
         </div>

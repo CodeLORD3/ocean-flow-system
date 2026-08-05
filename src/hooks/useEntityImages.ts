@@ -14,6 +14,18 @@ export type EntityImage = {
   /** Vilken del av bilden som visas vid beskärning: top | center | bottom */
   focal_point: string | null;
   created_at: string;
+  /** Konto som laddade upp bilden */
+  uploaded_by: string | null;
+  uploaded_by_name: string | null;
+};
+
+export type EntityImageComment = {
+  id: string;
+  image_id: string;
+  user_id: string | null;
+  author_name: string;
+  body: string;
+  created_at: string;
 };
 
 /** Bilder kopplade till ett objekt, t.ex. en butik ("store") eller en lagerplats ("storage_location"). */
@@ -54,6 +66,17 @@ export function useUploadEntityImage() {
       caption?: string;
       sortOrder?: number;
     }) => {
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth?.user?.id ?? null;
+      let uploaderName: string | null = auth?.user?.email ?? null;
+      if (uid) {
+        const { data: st } = await supabase
+          .from("staff")
+          .select("first_name, last_name")
+          .eq("user_id", uid)
+          .maybeSingle();
+        if (st) uploaderName = `${st.first_name ?? ""} ${st.last_name ?? ""}`.trim() || uploaderName;
+      }
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
       const path = `entity-images/${entityType}/${entityId}/${Date.now()}-${Math.random()
         .toString(36)
@@ -69,6 +92,8 @@ export function useUploadEntityImage() {
           url: urlData.publicUrl,
           caption: caption || null,
           sort_order: sortOrder ?? 0,
+          uploaded_by: uid,
+          uploaded_by_name: uploaderName,
         })
         .select("id")
         .single();
@@ -191,6 +216,106 @@ export function useSetFeaturedImages() {
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["entity-images", vars.entityType, vars.entityId] });
+    },
+  });
+}
+
+
+/** Bild-ID:n som den inloggade användaren har hjärtat. */
+export function useMyImageFavorites() {
+  return useQuery({
+    queryKey: ["entity-image-favorites"],
+    queryFn: async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth?.user?.id;
+      if (!uid) return [] as string[];
+      const { data, error } = await supabase
+        .from("entity_image_favorites")
+        .select("image_id")
+        .eq("user_id", uid);
+      if (error) throw error;
+      return (data || []).map((r: any) => r.image_id as string);
+    },
+  });
+}
+
+export function useToggleImageFavorite() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ imageId, favorite }: { imageId: string; favorite: boolean }) => {
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth?.user?.id;
+      if (!uid) throw new Error("Du måste vara inloggad för att favoritmarkera.");
+      if (favorite) {
+        const { error } = await supabase
+          .from("entity_image_favorites")
+          .insert({ image_id: imageId, user_id: uid });
+        if (error && error.code !== "23505") throw error;
+      } else {
+        const { error } = await supabase
+          .from("entity_image_favorites")
+          .delete()
+          .eq("image_id", imageId)
+          .eq("user_id", uid);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["entity-image-favorites"] }),
+  });
+}
+
+/** Kommentarer (chatt) för en bild. */
+export function useImageComments(imageId?: string | null) {
+  return useQuery({
+    queryKey: ["entity-image-comments", imageId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entity_image_comments")
+        .select("*")
+        .eq("image_id", imageId!)
+        .order("created_at");
+      if (error) throw error;
+      return (data || []) as EntityImageComment[];
+    },
+    enabled: !!imageId,
+  });
+}
+
+export function useAddImageComment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ imageId, body }: { imageId: string; body: string }) => {
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth?.user?.id ?? null;
+      let name = auth?.user?.email ?? "Okänd";
+      if (uid) {
+        const { data: st } = await supabase
+          .from("staff")
+          .select("first_name, last_name")
+          .eq("user_id", uid)
+          .maybeSingle();
+        if (st) name = `${st.first_name ?? ""} ${st.last_name ?? ""}`.trim() || name;
+      }
+      const { error } = await supabase
+        .from("entity_image_comments")
+        .insert({ image_id: imageId, user_id: uid, author_name: name, body });
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["entity-image-comments", vars.imageId] });
+    },
+  });
+}
+
+export function useDeleteImageComment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id }: { id: string; imageId: string }) => {
+      const { error } = await supabase.from("entity_image_comments").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["entity-image-comments", vars.imageId] });
     },
   });
 }
