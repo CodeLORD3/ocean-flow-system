@@ -206,10 +206,11 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
   const showThread = isStore || !isMobile || mobileThread;
 
   const listHeight = compact
-    ? "max-h-40 md:max-h-24"
+    ? "h-80"
     : isMobile
       ? "h-[calc(100dvh-15rem)] min-h-[18rem]"
       : "h-[calc(100dvh-10rem)] min-h-[600px]";
+
   const msgHeight = compact
     ? "h-80"
     : isMobile
