@@ -201,10 +201,11 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
 
   // ── Signaturfält ──────────────────────────────────────────────────────────
   let y = ((doc as any).lastAutoTable?.finalY || boxY + boxH + 5) + 10;
-  if (y > pageHeight - margin - 26) {
+  if (y > pageHeight - margin - 46) {
     doc.addPage();
     y = margin + 14;
   }
+
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
