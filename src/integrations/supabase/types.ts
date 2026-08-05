@@ -2302,6 +2302,35 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_reads: {
+        Row: {
+          id: string
+          notification_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          notification_id: string
+          read_at?: string
+          user_id?: string
+        }
+        Update: {
+          id?: string
+          notification_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_reads_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
@@ -5539,6 +5568,17 @@ export type Database = {
       }
       latin_norm: { Args: { v: string }; Returns: string }
       next_internal_lot_number: { Args: never; Returns: string }
+      notify_event: {
+        Args: {
+          _eid: string
+          _etype: string
+          _msg: string
+          _page: string
+          _portals: string[]
+          _store: string
+        }
+        Returns: undefined
+      }
       post_purchase_report: {
         Args: { p_location_id: string; p_lots: Json; p_report_id: string }
         Returns: string[]

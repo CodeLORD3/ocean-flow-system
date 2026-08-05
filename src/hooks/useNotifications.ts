@@ -1,27 +1,46 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSite } from "@/contexts/SiteContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
-interface NotificationCount {
+interface NotificationRow {
+  id: string;
   target_page: string;
-  count: number;
+  message: string;
+  created_at: string;
 }
 
+/**
+ * Notiser är personliga: varje inloggat konto har sina egna läsmarkeringar i
+ * notification_reads. Att en kollega i samma portal läst en notis påverkar
+ * alltså inte dina olästa notiser.
+ */
 export function useNotifications() {
   const { site, activeStoreId } = useSite();
   const queryClient = useQueryClient();
+  const [userId, setUserId] = useState<string | null>(null);
 
   const portal = site === "shop" ? "shop" : site === "production" ? "production" : "wholesale";
 
-  const { data: counts = [] } = useQuery<NotificationCount[]>({
-    queryKey: ["notification-counts", portal, activeStoreId],
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setUserId(session?.user?.id ?? null);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  const { data: unread = [] } = useQuery<NotificationRow[]>({
+    queryKey: ["notification-counts", portal, activeStoreId, userId],
+    enabled: !!userId,
     queryFn: async () => {
       let query = supabase
         .from("notifications")
-        .select("target_page")
+        .select("id, target_page, message, created_at")
         .eq("portal", portal)
-        .eq("is_read", false);
+        .eq("is_read", false)
+        .order("created_at", { ascending: false })
+        .limit(500);
 
       if (portal === "shop" && activeStoreId) {
         query = query.eq("store_id", activeStoreId);
@@ -29,31 +48,36 @@ export function useNotifications() {
 
       const { data, error } = await query;
       if (error) throw error;
+      const rows = (data || []) as NotificationRow[];
+      if (!rows.length) return [];
 
-      // Group by target_page and count
-      const map: Record<string, number> = {};
-      (data || []).forEach((n: { target_page: string }) => {
-        map[n.target_page] = (map[n.target_page] || 0) + 1;
-      });
-
-      return Object.entries(map).map(([target_page, count]) => ({
-        target_page,
-        count,
-      }));
+      // Filtrera bort de notiser som just det här kontot redan läst.
+      const { data: reads, error: readErr } = await supabase
+        .from("notification_reads")
+        .select("notification_id")
+        .in(
+          "notification_id",
+          rows.map((r) => r.id)
+        );
+      if (readErr) throw readErr;
+      const seen = new Set((reads || []).map((r) => r.notification_id));
+      return rows.filter((r) => !seen.has(r.id));
     },
-    refetchInterval: 15000, // Poll every 15s
+    refetchInterval: 15000,
   });
 
-  // Realtime subscription for instant updates
+  // Realtime: både nya notiser och egna läsmarkeringar
   useEffect(() => {
+    const invalidate = () =>
+      queryClient.invalidateQueries({ queryKey: ["notification-counts"] });
+
     const channel = supabase
       .channel("notifications-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, invalidate)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "notifications" },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["notification-counts"] });
-        }
+        { event: "*", schema: "public", table: "notification_reads" },
+        invalidate
       )
       .subscribe();
 
@@ -62,24 +86,27 @@ export function useNotifications() {
     };
   }, [queryClient]);
 
-  const getCount = (page: string): number => {
-    return counts.find((c) => c.target_page === page)?.count || 0;
-  };
+  const counts = Object.entries(
+    unread.reduce<Record<string, number>>((acc, n) => {
+      acc[n.target_page] = (acc[n.target_page] || 0) + 1;
+      return acc;
+    }, {})
+  ).map(([target_page, count]) => ({ target_page, count }));
+
+  const getCount = (page: string): number =>
+    counts.find((c) => c.target_page === page)?.count || 0;
 
   const markAsRead = useMutation({
     mutationFn: async (targetPage: string) => {
-      let query = supabase
-        .from("notifications")
-        .update({ is_read: true })
-        .eq("portal", portal)
-        .eq("target_page", targetPage)
-        .eq("is_read", false);
-
-      if (portal === "shop" && activeStoreId) {
-        query = query.eq("store_id", activeStoreId);
-      }
-
-      const { error } = await query;
+      if (!userId) return;
+      const ids = unread.filter((n) => n.target_page === targetPage).map((n) => n.id);
+      if (!ids.length) return;
+      const { error } = await supabase
+        .from("notification_reads")
+        .upsert(
+          ids.map((notification_id) => ({ notification_id, user_id: userId })),
+          { onConflict: "notification_id,user_id", ignoreDuplicates: true }
+        );
       if (error) throw error;
     },
     onSuccess: () => {
@@ -87,5 +114,21 @@ export function useNotifications() {
     },
   });
 
-  return { counts, getCount, markAsRead };
+  const markAllAsRead = useMutation({
+    mutationFn: async () => {
+      if (!userId || !unread.length) return;
+      const { error } = await supabase
+        .from("notification_reads")
+        .upsert(
+          unread.map((n) => ({ notification_id: n.id, user_id: userId })),
+          { onConflict: "notification_id,user_id", ignoreDuplicates: true }
+        );
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notification-counts"] });
+    },
+  });
+
+  return { counts, unread, total: unread.length, getCount, markAsRead, markAllAsRead };
 }
