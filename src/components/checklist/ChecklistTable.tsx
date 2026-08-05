@@ -201,6 +201,16 @@ export function ChecklistTable({
           </Button>
           {!locked && (
             <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs"
+              onClick={() => openAdd(sections[0] || "Övrigt")}
+            >
+              <Plus className="h-3.5 w-3.5 sm:mr-1.5" /> <span className="hidden sm:inline">Ny rad</span>
+            </Button>
+          )}
+          {!locked && (
+            <Button
               size="sm"
               className="h-8 text-xs"
               onClick={() =>
@@ -245,15 +255,61 @@ export function ChecklistTable({
 
       {/* Mobil: kortlista med stora kryssrutor — ingen sidledes scroll */}
       <div className="md:hidden space-y-2">
-        {rows.map((row) =>
-          row.kind === "section" ? (
-            <p
-              key={`ms-${row.label}`}
-              className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground pt-1"
-            >
-              {row.label}
-            </p>
-          ) : (
+        {rows.map((row) => {
+          if (row.kind === "section") {
+            return (
+              <div key={`ms-${row.label}`} className="flex items-center justify-between pt-1">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{row.label}</p>
+                {!locked && (
+                  <Button variant="ghost" size="sm" className="h-7 px-2 text-[11px]" onClick={() => openAdd(row.label)}>
+                    <Plus className="h-3 w-3 mr-1" /> Ny rad
+                  </Button>
+                )}
+              </div>
+            );
+          }
+
+          if (row.kind === "add") {
+            if (locked || addSection !== row.label) return null;
+            return (
+              <div key={`ma-${row.label}`} className="rounded-lg border border-primary/40 bg-primary/5 p-2.5 space-y-2">
+                <Input
+                  autoFocus
+                  value={addDraft.task}
+                  placeholder="Vad ska göras?"
+                  className="h-9 text-sm"
+                  onChange={(e) => setAddDraft((d) => ({ ...d, task: e.target.value }))}
+                  onKeyDown={(e) => e.key === "Enter" && submitAdd(row.label)}
+                />
+                <div className="flex gap-2">
+                  <Input
+                    value={addDraft.time}
+                    placeholder="07:30"
+                    className="h-9 w-24 text-sm text-center font-mono tabular-nums"
+                    onChange={(e) => setAddDraft((d) => ({ ...d, time: e.target.value }))}
+                    onKeyDown={(e) => e.key === "Enter" && submitAdd(row.label)}
+                  />
+                  <Input
+                    value={addDraft.category}
+                    placeholder="Kategori"
+                    className="h-9 flex-1 text-sm"
+                    onChange={(e) => setAddDraft((d) => ({ ...d, category: e.target.value }))}
+                    onKeyDown={(e) => e.key === "Enter" && submitAdd(row.label)}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" className="flex-1 h-9" disabled={addItem.isPending} onClick={() => submitAdd(row.label)}>
+                    Lägg till
+                  </Button>
+                  <Button variant="outline" size="sm" className="h-9" onClick={() => setAddSection(null)}>
+                    Avbryt
+                  </Button>
+                </div>
+              </div>
+            );
+          }
+
+          return (
             <div
               key={`m-${row.item.id}`}
               className={cn(
@@ -273,14 +329,36 @@ export function ChecklistTable({
                 </label>
                 <div className="min-w-0 flex-1">
                   <p className="text-[13px] leading-snug text-foreground break-words">{row.item.task}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2">
-                    {row.item.time_label && (
-                      <span className="font-mono tabular-nums">{row.item.time_label}</span>
+                  <div className="text-[10px] text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                    {locked ? (
+                      row.item.time_label && <span className="font-mono tabular-nums">{row.item.time_label}</span>
+                    ) : (
+                      <Input
+                        value={timeDrafts[row.item.id] ?? row.item.time_label ?? ""}
+                        placeholder="––:––"
+                        inputMode="numeric"
+                        className="h-8 w-[4.5rem] text-xs text-center font-mono tabular-nums"
+                        onChange={(e) => setTimeDrafts((d) => ({ ...d, [row.item.id]: e.target.value }))}
+                        onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+                        onBlur={() => commitTime(row.item)}
+                        aria-label={`Tid för ${row.item.task}`}
+                      />
                     )}
                     {row.item.category && <span>{row.item.category}</span>}
                     {row.item.signature && <span className="font-semibold text-foreground">✓ {row.item.signature}</span>}
-                  </p>
+                  </div>
                 </div>
+                {!locked && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => removeItem.mutate({ id: row.item.id })}
+                    aria-label={`Ta bort ${row.item.task}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
               <div className="mt-1.5 pl-[3.25rem]">
                 {locked ? (
@@ -301,8 +379,8 @@ export function ChecklistTable({
                 )}
               </div>
             </div>
-          )
-        )}
+          );
+        })}
       </div>
 
       {/* Desktop: tabell */}
