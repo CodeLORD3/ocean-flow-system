@@ -49,6 +49,24 @@ function timeLabel(iso: string) {
         d.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
 }
 
+/** Klockslag i meddelandebubblan (datum visas i stället som avgränsare) */
+function clockLabel(iso: string) {
+  return new Date(iso).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+}
+
+/** WhatsApp-liknande datumavgränsare med veckodag */
+function dayDividerLabel(iso: string) {
+  const d = new Date(iso);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  const weekday = d.toLocaleDateString("sv-SE", { weekday: "long" });
+  const cap = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+  if (d.toDateString() === today.toDateString()) return `Idag · ${cap}`;
+  if (d.toDateString() === yesterday.toDateString()) return `Igår · ${cap}`;
+  return `${cap} ${d.toLocaleDateString("sv-SE", { day: "numeric", month: "long", year: "numeric" })}`;
+}
+
 type Props = {
   /** Kompakt variant för översiktssidan */
   compact?: boolean;
@@ -322,7 +340,7 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                             mine ? "text-primary-foreground/70" : "text-muted-foreground"
                           )}
                         >
-                          {timeLabel(m.created_at)}
+                          {clockLabel(m.created_at)}
                         </span>
                       </div>
 
