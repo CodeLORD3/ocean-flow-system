@@ -311,25 +311,89 @@ export function ImageLightbox({
                                 mine ? "bg-primary/10 text-foreground" : "bg-muted text-foreground"
                               )}
                             >
-                              {c.body}
-                              <span className="block mt-0.5 text-[9px] text-muted-foreground font-mono tabular-nums">
-                                {new Date(c.created_at).toLocaleTimeString("sv-SE", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </span>
-                              {mine && (
-                                <button
-                                  type="button"
-                                  aria-label="Ta bort kommentar"
-                                  onClick={() => delComment.mutate({ id: c.id, imageId: current.id })}
-                                  className="absolute -left-5 top-1 hidden group-hover:block text-muted-foreground hover:text-destructive"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </button>
+                              {editId === c.id ? (
+                                <div className="flex items-center gap-1">
+                                  <Input
+                                    value={editDraft}
+                                    autoFocus
+                                    onChange={(e) => setEditDraft(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        void saveEdit(c.id);
+                                      } else if (e.key === "Escape") {
+                                        setEditId(null);
+                                      }
+                                    }}
+                                    className="h-7 text-xs"
+                                  />
+                                  <button
+                                    type="button"
+                                    aria-label="Spara ändring"
+                                    onClick={() => void saveEdit(c.id)}
+                                    className="text-primary"
+                                  >
+                                    <Check className="h-3.5 w-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    aria-label="Avbryt"
+                                    onClick={() => setEditId(null)}
+                                    className="text-muted-foreground"
+                                  >
+                                    <X className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <>
+                                  {c.body}
+                                  <span className="block mt-0.5 text-[9px] text-muted-foreground font-mono tabular-nums">
+                                    {new Date(c.created_at).toLocaleTimeString("sv-SE", {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}
+                                  </span>
+                                  {c.edited_at && (
+                                    <span className="block text-[9px] italic text-muted-foreground">
+                                      Redigerad av {c.edited_by_name || "okänd"}{" "}
+                                      <span className="font-mono tabular-nums not-italic">
+                                        {new Date(c.edited_at).toLocaleString("sv-SE", {
+                                          day: "2-digit",
+                                          month: "2-digit",
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                        })}
+                                      </span>
+                                    </span>
+                                  )}
+                                </>
+                              )}
+                              {mine && editId !== c.id && (
+                                <div className="absolute -left-5 top-1 hidden group-hover:flex flex-col gap-1">
+                                  <button
+                                    type="button"
+                                    aria-label="Redigera kommentar"
+                                    onClick={() => {
+                                      setEditId(c.id);
+                                      setEditDraft(c.body);
+                                    }}
+                                    className="text-muted-foreground hover:text-foreground"
+                                  >
+                                    <Pencil className="h-3 w-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    aria-label="Ta bort kommentar"
+                                    onClick={() => delComment.mutate({ id: c.id, imageId: current.id })}
+                                    className="text-muted-foreground hover:text-destructive"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </div>
                               )}
                             </div>
                           ))}
+
                         </div>
                       </div>
                     );
