@@ -105,21 +105,41 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
     conversations.find((c) => c.id === activeId) ??
     (isStore || !isMobile ? conversations[0] : undefined);
 
-  // Se till att butikens grossistchatt finns och är öppen direkt
+  // Se till att det finns en färdig 1:1-chatt med varje tillåten motpart
   const ensuring = useRef(false);
+  const ensuredKeys = useRef<Set<string>>(new Set());
   useEffect(() => {
-    if (!isStore || !portal || isLoading || ensuring.current) return;
-    if (conversations.length > 0) return;
+    if (!portal || isLoading || ensuring.current) return;
+    const targets = isStore ? [GROSSIST_PROFILE] : otherProfiles;
+    if (targets.length === 0) return;
+
+    const existing = new Set(
+      conversations
+        .filter((c) => c.participants.length === 2)
+        .flatMap((c) => c.participants.map((p) => p.portal_key))
+    );
+    const missing = targets.filter(
+      (t) => !existing.has(t.key) && !ensuredKeys.current.has(t.key)
+    );
+    if (missing.length === 0) return;
+
     ensuring.current = true;
-    createConv
-      .mutateAsync({ participants: [portal, GROSSIST_PROFILE] })
-      .then((id) => setActiveId(id))
-      .catch(() => {})
-      .finally(() => {
-        ensuring.current = false;
-      });
+    (async () => {
+      for (const target of missing) {
+        ensuredKeys.current.add(target.key);
+        try {
+          const id = await createConv.mutateAsync({ participants: [portal, target] });
+          if (isStore) setActiveId(id);
+        } catch {
+          ensuredKeys.current.delete(target.key);
+        }
+      }
+    })().finally(() => {
+      ensuring.current = false;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isStore, portal?.key, isLoading, conversations.length]);
+  }, [isStore, portal?.key, isLoading, conversations.length, otherProfiles.length]);
+
   const { data: messages = [] } = useChatMessages(activeConv?.id);
 
   useEffect(() => {
