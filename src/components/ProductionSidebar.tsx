@@ -16,6 +16,7 @@ import {
   ScanLine,
   MessageSquare,
   Scissors,
+  Star,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -50,8 +51,12 @@ const purchaseNav = [
   { title: "Leverantörer", url: "/suppliers", icon: Truck },
 ];
 
-const produktionSectionNav = [
+const salesNav = [
   { title: "Ordrar", url: "/orders", icon: ShoppingCart },
+  { title: "Önskemål", url: "/store-wishes", icon: Star },
+];
+
+const produktionSectionNav = [
   { title: "Filé/Tillverkning", url: "/production", icon: Scissors },
   { title: "Produktionsschema", url: "/production-schedule", icon: CalendarDays },
   { title: "Produktionsrapportering", url: "/production-reporting", icon: ClipboardList },
@@ -81,6 +86,7 @@ type NavSection = { label: string; items: typeof overviewNav };
 const sections: NavSection[] = [
   { label: "Översikt", items: overviewNav },
   { label: "Inköp", items: purchaseNav },
+  { label: "Försäljning", items: salesNav },
   { label: "Produktion", items: produktionSectionNav },
   { label: "Lagerstyrning", items: inventoryNav },
   { label: "Ekonomi & Rapporter", items: financeNav },

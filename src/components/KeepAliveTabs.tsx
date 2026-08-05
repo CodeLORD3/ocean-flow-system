@@ -37,6 +37,7 @@ import Payouts from "@/pages/Payouts";
 import AdminPayments from "@/pages/AdminPayments";
 import MapSettings from "@/pages/MapSettings";
 import ShopWishes from "@/pages/ShopWishes";
+import WholesaleWishes from "@/pages/WholesaleWishes";
 import MeetingProtocols from "@/pages/MeetingProtocols";
 import Tasks from "@/pages/Tasks";
 import LandingSettings from "@/pages/LandingSettings";
@@ -86,6 +87,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/admin-payments": { component: <AdminPayments /> },
   "/map-settings": { component: <MapSettings /> },
   "/wishes": { component: <ShopWishes /> },
+  "/store-wishes": { component: <WholesaleWishes /> },
   "/meetings": { component: <MeetingProtocols /> },
   "/tasks": { component: <Tasks /> },
   "/landing-settings": { component: <LandingSettings /> },
