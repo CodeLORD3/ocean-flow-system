@@ -147,11 +147,23 @@ export function ChecklistTable({
   };
 
   const handleComplete = () => {
+    const missing = items.filter((i) => !i.done);
+    if (missing.length > 0) {
+      setHighlightMissing(true);
+      const firstIdx = items.findIndex((i) => !i.done);
+      if (firstIdx >= 0) setPage(Math.floor(firstIdx / PAGE_SIZE));
+      toast.error(
+        `${missing.length} ${missing.length === 1 ? "rad är" : "rader är"} inte ifyllda — de markerade röda raderna måste checkas av först.`
+      );
+      return;
+    }
+    setHighlightMissing(false);
     complete.mutate(day.id, {
       onSuccess: () => toast.success("Checklistan är slutförd och sparad som rapport för Admin."),
       onError: (e: any) => toast.error(e.message || "Kunde inte slutföra checklistan."),
     });
   };
+
 
   const handlePrint = (blank: boolean) => {
     if (items.length === 0) {
