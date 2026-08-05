@@ -34,12 +34,14 @@ export function ChecklistTable({
   title,
   onBack,
   readOnly = false,
+  storeName,
 }: {
   day: ChecklistDay;
   items: ChecklistItem[];
   title: string;
   onBack?: () => void;
   readOnly?: boolean;
+  storeName?: string | null;
 }) {
   const [page, setPage] = useState(0);
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
