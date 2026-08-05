@@ -46,6 +46,7 @@ export function ImageLightbox({
   const current = open ? images[index as number] : null;
   const isMobile = useIsMobile();
   const [caption, setCaption] = useState("");
+  const [captionEditing, setCaptionEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [editId, setEditId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
