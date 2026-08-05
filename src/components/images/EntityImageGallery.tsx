@@ -519,11 +519,12 @@ export function EntityImageGallery({
                     view.mode === "featured",
                     "featured",
                     "Utvalda",
-                    previewImages.length,
+                    pool.length,
 
                     <Star className="h-3 w-3" />,
                     () => setView({ mode: "featured" })
                   )
+
                 : null}
               <div className="my-1 border-t" />
               {dates.slice(0, dateLimit).map(([key, count]) =>
