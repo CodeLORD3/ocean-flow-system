@@ -14,6 +14,8 @@ import { cn } from "@/lib/utils";
 import { GROSSIST_PROFILE, type PortalProfile } from "@/lib/portalProfiles";
 import {
   ChatConversation,
+  type ChatMessage,
+
   conversationTitle,
   useChatConversations,
   useChatMessages,
