@@ -600,57 +600,95 @@ export function EntityImageGallery({
 
       {previewCount && (
         <Dialog open={selectOpen} onOpenChange={setSelectOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-3xl">
             <DialogHeader>
-              <DialogTitle className="text-sm">Välj bilder till förhandsvyn</DialogTitle>
+              <DialogTitle className="text-sm">Redigera vilka bilder som visas</DialogTitle>
               <DialogDescription className="text-xs">
-                Markera upp till {previewCount} bilder som ska visas på översiktssidan. Utan val visas de
-                senaste automatiskt.
+                Klicka på en bild för att lägga den i poolen med utvalda bilder (valfritt antal). Tryck
+                sedan på stjärnan för att välja vilka {previewCount} som syns först på översiktssidan.
               </DialogDescription>
             </DialogHeader>
             <div className="grid grid-cols-3 gap-2 max-h-[60vh] overflow-y-auto sm:grid-cols-4">
               {images.map((img) => {
                 const active = selection.includes(img.id);
+                const front = frontSelection.includes(img.id);
                 return (
-                  <button
+                  <div
                     key={img.id}
-                    type="button"
-                    onClick={() => toggleSelection(img.id)}
                     className={cn(
                       "relative aspect-video overflow-hidden rounded-md border-2 bg-muted",
                       active ? "border-primary" : "border-transparent opacity-70 hover:opacity-100"
                     )}
                   >
-                    <img
-                      src={img.url}
-                      alt={img.caption || "Bild"}
-                      loading="lazy"
-                      className="h-full w-full object-cover"
-                      style={focalStyle(img.focal_point)}
-                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleSelection(img.id)}
+                      className="block h-full w-full"
+                      aria-label={active ? "Ta bort ur utvalda" : "Lägg till i utvalda"}
+                    >
+                      <img
+                        src={img.url}
+                        alt={img.caption || "Bild"}
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                        style={focalStyle(img.focal_point)}
+                      />
+                    </button>
                     {active && (
                       <span className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
                         <Check className="h-3 w-3" />
                       </span>
                     )}
-                  </button>
+                    {active && (
+                      <button
+                        type="button"
+                        onClick={() => toggleFront(img.id)}
+                        aria-label={front ? "Ta bort från framsidan" : "Visa på framsidan"}
+                        title={front ? "Visas på framsidan" : "Visa på framsidan"}
+                        className={cn(
+                          "absolute top-1 left-1 flex h-5 w-5 items-center justify-center rounded-full border bg-background/85 backdrop-blur",
+                          front ? "text-amber-500 border-amber-400" : "text-muted-foreground border-border"
+                        )}
+                      >
+                        <Star className={cn("h-3 w-3", front && "fill-current")} />
+                      </button>
+                    )}
+                  </div>
                 );
               })}
             </div>
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs text-muted-foreground font-mono tabular-nums">
-                {selection.length} / {previewCount} valda
+                {selection.length} utvalda · {frontSelection.length} / {previewCount} på framsidan
               </span>
               <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setSelection([])}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSelection([]);
+                    setFrontSelection([]);
+                  }}
+                >
                   Rensa val
                 </Button>
                 <Button
                   size="sm"
-                  disabled={setFeatured.isPending}
+                  disabled={setFeatured.isPending || updateImage.isPending}
                   onClick={async () => {
                     try {
                       await setFeatured.mutateAsync({ entityType, entityId, imageIds: selection });
+                      // Framsidans bilder får lägst sorteringsordning så de hamnar först i poolen.
+                      const order = frontSelection.filter((id) => selection.includes(id));
+                      await Promise.all(
+                        selection.map((id) => {
+                          const idx = order.indexOf(id);
+                          return updateImage.mutateAsync({
+                            id,
+                            sort_order: idx >= 0 ? idx : 100 + selection.indexOf(id),
+                          });
+                        }),
+                      );
                       setSelectOpen(false);
                       toast({ title: "Förhandsvyn uppdaterad" });
                     } catch (e: any) {
@@ -662,6 +700,7 @@ export function EntityImageGallery({
                 </Button>
               </div>
             </div>
+
           </DialogContent>
         </Dialog>
       )}
