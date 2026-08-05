@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Printer, FileText, CheckCheck, ChevronLeft, ChevronRight, ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Printer, FileText, CheckCheck, ChevronLeft, ChevronRight, ArrowRight, CheckCircle2, Plus, Trash2, X } from "lucide-react";
 import { generateChecklistPdf } from "@/lib/checklistPdf";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,6 +14,9 @@ import {
   useMarkAllChecklistItems,
   useSetChecklistNote,
   useToggleChecklistItem,
+  useSetChecklistItemTime,
+  useAddChecklistItem,
+  useDeleteChecklistItem,
   weekdayName,
 } from "@/hooks/useChecklist";
 
@@ -46,8 +49,14 @@ export function ChecklistTable({
 }) {
   const [page, setPage] = useState(0);
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
+  const [timeDrafts, setTimeDrafts] = useState<Record<string, string>>({});
+  const [addSection, setAddSection] = useState<string | null>(null);
+  const [addDraft, setAddDraft] = useState({ task: "", time: "", category: "" });
   const toggle = useToggleChecklistItem();
   const setNote = useSetChecklistNote();
+  const setTime = useSetChecklistItemTime();
+  const addItem = useAddChecklistItem();
+  const removeItem = useDeleteChecklistItem();
   const markAll = useMarkAllChecklistItems();
   const complete = useCompleteChecklist();
 
@@ -61,17 +70,71 @@ export function ChecklistTable({
 
   // Sektionsrubriker inom aktuell sida
   const rows = useMemo(() => {
-    const out: ({ kind: "section"; label: string } | { kind: "item"; item: ChecklistItem })[] = [];
+    type Row =
+      | { kind: "section"; label: string }
+      | { kind: "item"; item: ChecklistItem }
+      | { kind: "add"; label: string };
+    const out: Row[] = [];
     let last: string | null = null;
     pageItems.forEach((item) => {
       if (item.section !== last) {
+        if (last) out.push({ kind: "add", label: last });
         out.push({ kind: "section", label: item.section });
         last = item.section;
       }
       out.push({ kind: "item", item });
     });
+    if (last) out.push({ kind: "add", label: last });
     return out;
   }, [pageItems]);
+
+  const sections = useMemo(
+    () => Array.from(new Set(items.map((i) => i.section))),
+    [items]
+  );
+
+  const commitTime = (item: ChecklistItem) => {
+    const draft = timeDrafts[item.id];
+    if (draft === undefined) return;
+    if (draft.trim() === (item.time_label ?? "")) {
+      setTimeDrafts((d) => {
+        const { [item.id]: _drop, ...rest } = d;
+        return rest;
+      });
+      return;
+    }
+    setTime.mutate(
+      { id: item.id, dayId: day.id, time: draft },
+      {
+        onSuccess: () => {
+          setTimeDrafts((d) => {
+            const { [item.id]: _drop, ...rest } = d;
+            return rest;
+          });
+          toast.success("Tiden uppdaterad — raden flyttades till rätt plats.");
+        },
+        onError: (e: any) => toast.error(e.message || "Kunde inte uppdatera tiden."),
+      }
+    );
+  };
+
+  const submitAdd = (section: string) => {
+    addItem.mutate(
+      { dayId: day.id, section, task: addDraft.task, time: addDraft.time, category: addDraft.category },
+      {
+        onSuccess: () => {
+          setAddDraft({ task: "", time: "", category: "" });
+          toast.success("Uppgiften tillagd.");
+        },
+        onError: (e: any) => toast.error(e.message || "Kunde inte lägga till uppgiften."),
+      }
+    );
+  };
+
+  const openAdd = (section: string) => {
+    setAddSection(section);
+    setAddDraft({ task: "", time: "", category: "" });
+  };
 
   const handleComplete = () => {
     complete.mutate(day.id, {
