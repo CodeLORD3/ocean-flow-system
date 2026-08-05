@@ -437,10 +437,11 @@ export function ImageLightbox({
         open={open}
         onOpenChange={(o) => {
           if (!o) {
-            saveCaption();
+            setCaptionEditing(false);
             onClose();
           }
         }}
+
       >
         <DialogContent className="max-w-full h-[100dvh] w-screen rounded-none border-0 p-0 gap-0 overflow-hidden bg-background">
           <DialogHeader className="sr-only">
