@@ -66,7 +66,8 @@ const sections: NavSection[] = [
 ];
 
 export function ShopSidebar() {
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
+  const closeMobileSidebar = () => { if (isMobile) setOpenMobile(false); };
   const collapsed = state === "collapsed";
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
@@ -124,7 +125,7 @@ export function ShopSidebar() {
                   {section.items.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                        <NavLink to={item.url} end>
+                        <NavLink to={item.url} end onClick={closeMobileSidebar}>
                           <item.icon className="h-4 w-4" />
                           {!collapsed && <span>{item.title}</span>}
                           {!collapsed && <NotificationBadge count={getCount(item.url) + (item.url === "/chat" ? chatUnread.total : 0)} />}
@@ -148,7 +149,7 @@ export function ShopSidebar() {
             {section.items.map((item) => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                  <NavLink to={item.url} end>
+                  <NavLink to={item.url} end onClick={closeMobileSidebar}>
                     <item.icon className="h-4 w-4" />
                     {!collapsed && <span>{item.title}</span>}
                     {!collapsed && <NotificationBadge count={getCount(item.url) + (item.url === "/chat" ? chatUnread.total : 0)} />}
@@ -192,7 +193,7 @@ export function ShopSidebar() {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={isActive("/settings")}>
-              <NavLink to="/settings" end>
+              <NavLink to="/settings" end onClick={closeMobileSidebar}>
                 <Settings className="h-4 w-4" />
                 {!collapsed && <span>Inställningar</span>}
               </NavLink>
