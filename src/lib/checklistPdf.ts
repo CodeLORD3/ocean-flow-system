@@ -24,7 +24,7 @@ export interface ChecklistPdfOptions {
 }
 
 /** Byter ut tecken som helvetica i jsPDF inte klarar. */
-const s = (v?: string | null) => (v ?? "").replace(/\u2013|\u2014/g, "-").trim();
+const s2 = (v?: string | null) => (v ?? "").replace(/\u2013|\u2014/g, "-").trim();
 
 export function buildChecklistDoc(opts: ChecklistPdfOptions) {
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
@@ -43,7 +43,7 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
     doc.setTextColor(70);
-    doc.text(s(opts.storeName), pageWidth / 2, margin + 13.5, { align: "center" });
+    doc.text(s2(opts.storeName), pageWidth / 2, margin + 13.5, { align: "center" });
   }
   doc.setTextColor(0);
 
@@ -57,10 +57,10 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
   const baseY = boxY + 8.5;
   const col = innerWidth / 4;
   const meta: [string, string][] = [
-    ["DATUM:", opts.blank ? "____ / ____ / 20____" : s(opts.date)],
-    ["VECKODAG:", opts.blank ? "" : s(opts.weekday)],
-    ["PASS:", s(opts.shift) || (opts.blank ? "" : "-")],
-    ["ANSVARIG:", opts.blank ? "" : s(opts.responsible) || "-"],
+    ["DATUM:", opts.blank ? "____ / ____ / 20____" : s2(opts.date)],
+    ["VECKODAG:", opts.blank ? "" : s2(opts.weekday)],
+    ["PASS:", s2(opts.shift) || (opts.blank ? "" : "-")],
+    ["ANSVARIG:", opts.blank ? "" : s2(opts.responsible) || "-"],
   ];
   meta.forEach(([label, value], i) => {
     const x = margin + 4 + col * i;
@@ -82,7 +82,7 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
   const rows: Row[] = [];
   let lastSection: string | null = null;
   opts.items.forEach((item) => {
-    const sec = s(item.section) || "Övrigt";
+    const sec = s2(item.section) || "Övrigt";
     if (sec !== lastSection) {
       rows.push({ section: sec });
       lastSection = sec;
@@ -90,20 +90,29 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
     rows.push({ item });
   });
 
-  const sectionRowIndexes = new Set<number>();
-  const body: string[][] = rows.map((r, idx) => {
+  const body: any[][] = rows.map((r) => {
     if (r.section) {
-      sectionRowIndexes.add(idx);
-      return [r.section.toUpperCase(), "", "", "", "", ""];
+      return [
+        {
+          content: r.section.toUpperCase(),
+          colSpan: 6,
+          styles: {
+            fillColor: [222, 227, 231] as [number, number, number],
+            fontStyle: "bold" as const,
+            fontSize: 8.5,
+            halign: "left" as const,
+          },
+        },
+      ];
     }
     const it = r.item!;
     return [
-      s(it.time_label),
-      s(it.category),
-      s(it.task),
+      s2(it.time_label),
+      s2(it.category),
+      s2(it.task),
       opts.blank ? "" : it.done ? "X" : "",
-      opts.blank ? "" : s(it.note),
-      opts.blank ? "" : s(it.signature),
+      opts.blank ? "" : s2(it.note),
+      opts.blank ? "" : s2(it.signature),
     ];
   });
 
@@ -141,22 +150,6 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
       5: { cellWidth: 16, halign: "center" },
     },
     margin: { left: margin, right: margin, bottom: margin + 12 },
-    didParseCell: (data) => {
-      if (data.section !== "body") return;
-      if (sectionRowIndexes.has(data.row.index)) {
-        data.cell.styles.fillColor = [222, 227, 231];
-        data.cell.styles.fontStyle = "bold";
-        data.cell.styles.fontSize = 8;
-        data.cell.styles.halign = "left";
-        if (data.column.index > 0) data.cell.text = [];
-      }
-    },
-    willDrawCell: (data) => {
-      // Slå ihop sektionsraden till en enda bred cell
-      if (data.section === "body" && sectionRowIndexes.has(data.row.index) && data.column.index > 0) {
-        data.cell.styles.lineWidth = { top: 0.2, bottom: 0.2, left: 0, right: data.column.index === 5 ? 0.2 : 0 } as any;
-      }
-    },
   });
 
   // ── Signaturfält ──────────────────────────────────────────────────────────
@@ -194,7 +187,7 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.5);
     doc.setTextColor(90);
-    const left = [s(opts.storeName), s(opts.date), s(opts.weekday), opts.status === "completed" ? "Slutford" : "Pagaende"]
+    const left = [s2(opts.storeName), s2(opts.date), s2(opts.weekday), opts.status === "completed" ? "Slutford" : "Pagaende"]
       .filter(Boolean)
       .join("  -  ");
     doc.text(left, margin, footY, { maxWidth: innerWidth * 0.65 });
