@@ -609,6 +609,7 @@ export type Database = {
           sort_order: number
           store_id: string | null
           updated_at: string
+          weekdays: number[]
         }
         Insert: {
           active?: boolean
@@ -619,6 +620,7 @@ export type Database = {
           sort_order?: number
           store_id?: string | null
           updated_at?: string
+          weekdays?: number[]
         }
         Update: {
           active?: boolean
@@ -629,6 +631,7 @@ export type Database = {
           sort_order?: number
           store_id?: string | null
           updated_at?: string
+          weekdays?: number[]
         }
         Relationships: [
           {
