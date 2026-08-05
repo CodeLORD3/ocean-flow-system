@@ -163,6 +163,8 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
     const rowH = chunk.length
       ? Math.max(6, Math.min(ROW_H_MAX, avail / chunk.length))
       : ROW_H_MAX;
+    // Cellpadding maste krympa med radhojden, annars blir raden hogre an minCellHeight
+    const padV = Math.max(0.5, Math.min(2.4, (rowH - 3.4) / 2));
     autoTable(doc, {
       startY,
       pageBreak: ci === 0 ? "auto" : "always",
@@ -173,7 +175,7 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
       styles: {
         font: "helvetica",
         fontSize: 8.5,
-        cellPadding: { top: 2.4, bottom: 2.4, left: 2.4, right: 2.4 },
+        cellPadding: { top: padV, bottom: padV, left: 2.4, right: 2.4 },
         lineColor: [205, 210, 214],
         lineWidth: 0.15,
         textColor: [25, 30, 35],
