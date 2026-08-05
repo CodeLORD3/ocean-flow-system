@@ -374,6 +374,14 @@ export default function Staff() {
         onOpenChange={(open) => !open && setDetailStaff(null)}
         staff={detailStaff}
       />
+
+      {/* Portal permissions dialog */}
+      <StaffAccessDialog
+        open={!!accessStaff}
+        onOpenChange={(open) => !open && setAccessStaff(null)}
+        staff={accessStaff}
+      />
     </motion.div>
+
   );
 }
