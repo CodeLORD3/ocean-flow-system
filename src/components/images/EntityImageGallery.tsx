@@ -91,6 +91,7 @@ export function EntityImageGallery({
   const [frontSelection, setFrontSelection] = useState<string[]>([]);
   const [dateLimit, setDateLimit] = useState(DATE_PAGE);
   const [catalogOpen, setCatalogOpen] = useState(false);
+  const [catalogCollapsed, setCatalogCollapsed] = useState(false);
 
   const [lastDay, setLastDay] = useState(() => dayKey(new Date().toISOString()));
   const selectDay = (key: string) => {
