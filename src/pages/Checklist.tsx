@@ -1,6 +1,17 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ClipboardCheck, Loader2, CheckCircle2, Clock, Plus, Trash2 } from "lucide-react";
+import {
+  ClipboardCheck,
+  Loader2,
+  CheckCircle2,
+  Clock,
+  Plus,
+  Trash2,
+  ArrowLeft,
+  ArrowUpRight,
+  CalendarDays,
+  History,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +24,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { useSite } from "@/contexts/SiteContext";
 import { ChecklistTable } from "@/components/checklist/ChecklistTable";
 import {
@@ -22,20 +34,41 @@ import {
   useChecklistTemplates,
   useCreateChecklistTemplate,
   useDailyChecklist,
+  useSetTemplateWeekdays,
+  useStoreChecklistHistory,
+  useTodayChecklistStatus,
+  templateAppliesOn,
+  todayIso,
   weekdayName,
+  WEEKDAY_SHORT,
   DEFAULT_CHECKLIST_TEMPLATE_ID,
+  type ChecklistTemplate,
 } from "@/hooks/useChecklist";
+
+function formatToday(iso: string) {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("sv-SE", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+/* ── Öppen checklista (dagens) ─────────────────────────────────────────────── */
 
 function ShopChecklistBody({
   storeId,
   storeName,
   templateId,
   listName,
+  onBack,
 }: {
   storeId: string;
   storeName: string;
   templateId: string;
   listName: string;
+  onBack: () => void;
 }) {
   const { data, isLoading } = useDailyChecklist(storeId, undefined, templateId);
 
@@ -52,32 +85,69 @@ function ShopChecklistBody({
       day={data.day}
       items={data.items}
       storeName={storeName}
+      onBack={onBack}
       title={`${listName} – ${weekdayName(data.day.checklist_date)} ${data.day.checklist_date}`}
     />
   );
 }
 
-function ShopChecklist({ storeId, storeName }: { storeId: string; storeName: string }) {
+/* ── Historikdetalj för butiken ───────────────────────────────────────────── */
+
+function StoreHistoryDetail({
+  day,
+  storeName,
+  onBack,
+}: {
+  day: any;
+  storeName: string;
+  onBack: () => void;
+}) {
+  const { data: items = [], isLoading } = useChecklistDayItems(day.id);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground p-6">
+        <Loader2 className="h-4 w-4 animate-spin" /> Laddar checklista…
+      </div>
+    );
+  }
+
+  return (
+    <ChecklistTable
+      day={day}
+      items={items}
+      readOnly
+      onBack={onBack}
+      storeName={storeName}
+      title={`${day.listName} – ${weekdayName(day.checklist_date)} ${day.checklist_date}`}
+    />
+  );
+}
+
+/* ── Landningssida för butiken ────────────────────────────────────────────── */
+
+function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeName: string }) {
+  const iso = todayIso();
   const { data: templates = [], isLoading } = useChecklistTemplates(storeId);
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const { data: status = {} } = useTodayChecklistStatus(storeId);
+  const { data: history = [], isLoading: histLoading } = useStoreChecklistHistory(storeId);
+
+  const [openTemplate, setOpenTemplate] = useState<ChecklistTemplate | null>(null);
+  const [openHistoryDay, setOpenHistoryDay] = useState<any | null>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [newName, setNewName] = useState("");
+  const [showAllHistory, setShowAllHistory] = useState(false);
+
   const create = useCreateChecklistTemplate();
   const archive = useArchiveChecklistTemplate();
+  const setWeekdays = useSetTemplateWeekdays();
 
-  useEffect(() => {
-    if (!activeId && templates.length > 0) setActiveId(templates[0].id);
-    if (activeId && templates.length > 0 && !templates.some((t) => t.id === activeId)) {
-      setActiveId(templates[0].id);
-    }
-  }, [templates, activeId]);
-
-  const active = templates.find((t) => t.id === activeId) ?? null;
+  const todays = useMemo(() => templates.filter((t) => templateAppliesOn(t, iso)), [templates, iso]);
+  const others = useMemo(() => templates.filter((t) => !templateAppliesOn(t, iso)), [templates, iso]);
 
   const handleCreate = async () => {
     try {
       const tpl = await create.mutateAsync({ name: newName, storeId });
-      setActiveId(tpl.id);
       setNewName("");
       setNewOpen(false);
       toast.success(`Checklistan "${tpl.name}" skapad`);
@@ -95,34 +165,97 @@ function ShopChecklist({ storeId, storeName }: { storeId: string; storeName: str
     }
   };
 
-  return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex flex-1 flex-wrap items-center gap-1.5">
-          {isLoading && <span className="text-xs text-muted-foreground">Laddar checklistor…</span>}
-          {templates.map((t) => (
-            <div key={t.id} className="group relative">
-              <Button
-                size="sm"
-                variant={t.id === activeId ? "default" : "outline"}
-                className="h-8 text-xs"
-                onClick={() => setActiveId(t.id)}
-              >
-                {t.name}
-              </Button>
-              {t.id !== DEFAULT_CHECKLIST_TEMPLATE_ID && t.store_id === storeId && (
-                <button
-                  aria-label={`Ta bort ${t.name}`}
-                  className="absolute -right-1.5 -top-1.5 hidden rounded-full bg-background p-0.5 text-destructive shadow group-hover:block"
-                  onClick={() => handleArchive(t.id, t.name)}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
+  const toggleWeekday = async (tpl: ChecklistTemplate, day: number) => {
+    const current = tpl.weekdays ?? [];
+    const next = current.includes(day) ? current.filter((d) => d !== day) : [...current, day];
+    try {
+      await setWeekdays.mutateAsync({ id: tpl.id, weekdays: next });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Kunde inte spara veckoschemat");
+    }
+  };
 
+  if (openTemplate) {
+    return (
+      <ShopChecklistBody
+        key={openTemplate.id}
+        storeId={storeId}
+        storeName={storeName}
+        templateId={openTemplate.id}
+        listName={openTemplate.name}
+        onBack={() => setOpenTemplate(null)}
+      />
+    );
+  }
+
+  if (openHistoryDay) {
+    return (
+      <StoreHistoryDetail day={openHistoryDay} storeName={storeName} onBack={() => setOpenHistoryDay(null)} />
+    );
+  }
+
+  const listRow = (t: ChecklistTemplate, dimmed = false) => {
+    const s = status[t.id];
+    const done = s?.status === "completed";
+    return (
+      <button
+        key={t.id}
+        onClick={() => setOpenTemplate(t)}
+        className={cn(
+          "group flex w-full items-center gap-3 rounded-lg border border-border px-3 py-2.5 text-left transition-colors hover:border-primary/50 hover:bg-muted/40",
+          done && "border-emerald-600/40 bg-emerald-500/5",
+          dimmed && "opacity-70",
+        )}
+      >
+        <ClipboardCheck className={cn("h-4 w-4 shrink-0", done ? "text-emerald-500" : "text-primary")} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-foreground">{t.name}</p>
+          <p className="text-[11px] text-muted-foreground">
+            {(t.weekdays ?? []).length === 0
+              ? "Alla dagar"
+              : t.weekdays.map((d) => WEEKDAY_SHORT[d]).join(", ")}
+            {s?.responsible ? ` · ${s.responsible}` : ""}
+          </p>
+        </div>
+        <span className="shrink-0 font-mono tabular-nums text-xs text-muted-foreground">
+          {s ? `${s.done}/${s.total}` : "–"}
+        </span>
+        {done ? (
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+        ) : s ? (
+          <Clock className="h-4 w-4 shrink-0 text-amber-500" />
+        ) : null}
+        {t.id !== DEFAULT_CHECKLIST_TEMPLATE_ID && t.store_id === storeId && (
+          <span
+            role="button"
+            aria-label={`Ta bort ${t.name}`}
+            className="hidden shrink-0 text-destructive group-hover:inline-flex"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleArchive(t.id, t.name);
+            }}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </span>
+        )}
+        <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+      </button>
+    );
+  };
+
+  const visibleHistory = showAllHistory ? history : history.slice(0, 10);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="flex items-center gap-2 font-heading text-xl font-bold text-foreground">
+            <ClipboardCheck className="h-5 w-5 text-primary" /> Checklistor
+          </h1>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {storeName} · <span className="capitalize">{formatToday(iso)}</span>
+          </p>
+        </div>
         <Dialog open={newOpen} onOpenChange={setNewOpen}>
           <DialogTrigger asChild>
             <Button size="sm" variant="secondary" className="h-8 gap-1 text-xs">
@@ -157,25 +290,177 @@ function ShopChecklist({ storeId, storeName }: { storeId: string; storeName: str
         </Dialog>
       </div>
 
-      {active ? (
-        <ShopChecklistBody
-          key={active.id}
-          storeId={storeId}
-          storeName={storeName}
-          templateId={active.id}
-          listName={active.name}
-        />
-      ) : (
-        !isLoading && (
-          <p className="p-6 text-sm text-muted-foreground">
-            Inga checklistor ännu — skapa din första med "Ny checklista".
-          </p>
-        )
+      <Card className="shadow-card">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-heading">
+            Dagens checklistor · {weekdayName(iso)}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {isLoading ? (
+            <p className="text-xs text-muted-foreground">Laddar checklistor…</p>
+          ) : todays.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              Ingen checklista är schemalagd för {weekdayName(iso).toLowerCase()}. Se veckoschemat nedan.
+            </p>
+          ) : (
+            todays.map((t) => listRow(t))
+          )}
+        </CardContent>
+      </Card>
+
+      {others.length > 0 && (
+        <Card className="shadow-card">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-heading">Övriga checklistor</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">{others.map((t) => listRow(t, true))}</CardContent>
+        </Card>
       )}
+
+      <Card className="shadow-card">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm font-heading">
+            <CalendarDays className="h-4 w-4 text-primary" /> Veckoschema
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="overflow-x-auto">
+          <p className="mb-2 text-[11px] text-muted-foreground">
+            Klicka i vilka veckodagar varje checklista gäller. Inga dagar valda = gäller alla dagar.
+          </p>
+          <table className="w-full min-w-[520px] text-sm">
+            <thead>
+              <tr className="border-b border-border text-[10px] uppercase tracking-wide text-muted-foreground">
+                <th className="py-2 text-left font-semibold">Checklista</th>
+                {[1, 2, 3, 4, 5, 6, 0].map((d) => (
+                  <th
+                    key={d}
+                    className={cn(
+                      "w-12 py-2 text-center font-semibold",
+                      d === new Date().getDay() && "text-primary",
+                    )}
+                  >
+                    {WEEKDAY_SHORT[d]}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {templates.map((t) => (
+                <tr key={t.id} className="border-b border-border/60">
+                  <td className="py-2 pr-2 text-xs sm:text-sm">{t.name}</td>
+                  {[1, 2, 3, 4, 5, 6, 0].map((d) => {
+                    const on = (t.weekdays ?? []).includes(d);
+                    const all = (t.weekdays ?? []).length === 0;
+                    return (
+                      <td key={d} className="py-1.5 text-center">
+                        <button
+                          aria-label={`${t.name} ${WEEKDAY_SHORT[d]}`}
+                          onClick={() => toggleWeekday(t, d)}
+                          className={cn(
+                            "mx-auto flex h-6 w-6 items-center justify-center rounded border text-[10px] transition-colors",
+                            on
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : all
+                                ? "border-dashed border-primary/40 text-primary/60"
+                                : "border-border text-muted-foreground hover:border-primary/50",
+                          )}
+                        >
+                          {on ? "✓" : all ? "•" : ""}
+                        </button>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-card">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm font-heading">
+            <History className="h-4 w-4 text-primary" /> Historik
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {histLoading ? (
+            <p className="text-xs text-muted-foreground">Laddar…</p>
+          ) : history.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Inga tidigare checklistor ännu.</p>
+          ) : (
+            <>
+              <table className="w-full table-fixed text-sm">
+                <thead>
+                  <tr className="border-b border-border text-[10px] uppercase tracking-wide text-muted-foreground sm:text-[11px]">
+                    <th className="py-2 text-left font-semibold">Datum</th>
+                    <th className="hidden py-2 text-left font-semibold md:table-cell">Veckodag</th>
+                    <th className="py-2 text-left font-semibold">Checklista</th>
+                    <th className="hidden py-2 text-left font-semibold md:table-cell">Ansvarig</th>
+                    <th className="w-14 py-2 text-center font-semibold">Klara</th>
+                    <th className="hidden py-2 text-left font-semibold sm:table-cell">Status</th>
+                    <th className="w-16" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {visibleHistory.map((r: any) => (
+                    <tr key={r.id} className="border-b border-border/60 hover:bg-muted/30">
+                      <td className="py-2 font-mono tabular-nums text-[11px] sm:text-xs">{r.checklist_date}</td>
+                      <td className="hidden py-2 text-xs text-muted-foreground md:table-cell">
+                        {weekdayName(r.checklist_date)}
+                      </td>
+                      <td className="truncate py-2 pr-2 text-xs sm:text-sm">{r.listName}</td>
+                      <td className="hidden py-2 text-xs text-muted-foreground md:table-cell">
+                        {r.completed_by_name || r.responsible_name || "–"}
+                      </td>
+                      <td className="py-2 text-center font-mono tabular-nums text-[11px] sm:text-xs">
+                        {r.doneCount}/{r.total}
+                      </td>
+                      <td className="hidden py-2 sm:table-cell">
+                        {r.status === "completed" ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
+                            <CheckCircle2 className="h-3 w-3" /> Slutförd
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600">
+                            <Clock className="h-3 w-3" /> Pågående
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2 text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-2 text-xs"
+                          onClick={() => setOpenHistoryDay(r)}
+                        >
+                          Visa
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {history.length > 10 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-2 h-8 text-xs"
+                  onClick={() => setShowAllHistory((v) => !v)}
+                >
+                  {showAllHistory ? "Visa färre" : `Visa alla (${history.length})`}
+                </Button>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
+/* ── Admin/grossist: rapportvy ────────────────────────────────────────────── */
 
 function ChecklistReportDetail({ dayId, onBack }: { dayId: string; onBack: () => void }) {
   const { data: reports = [] } = useChecklistReports();
@@ -211,11 +496,11 @@ function ChecklistReports() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-heading font-bold text-foreground flex items-center gap-2">
+        <h1 className="flex items-center gap-2 font-heading text-xl font-bold text-foreground">
           <ClipboardCheck className="h-5 w-5 text-primary" /> Checklistor
         </h1>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          Dagliga checklistor från butikerna — slutförda listor sparas som rapporter.
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          <span className="capitalize">{formatToday(todayIso())}</span> · dagliga checklistor från butikerna
         </p>
       </div>
 
@@ -229,16 +514,16 @@ function ChecklistReports() {
           ) : reports.length === 0 ? (
             <p className="text-xs text-muted-foreground">Inga checklistor har rapporterats in ännu.</p>
           ) : (
-            <table className="w-full text-sm table-fixed">
+            <table className="w-full table-fixed text-sm">
               <thead>
-                <tr className="text-[10px] sm:text-[11px] uppercase tracking-wide text-muted-foreground border-b border-border">
-                  <th className="text-left font-semibold py-2">Datum</th>
-                  <th className="text-left font-semibold py-2 hidden md:table-cell">Veckodag</th>
-                  <th className="text-left font-semibold py-2">Butik</th>
-                  <th className="text-left font-semibold py-2 hidden sm:table-cell">Checklista</th>
-                  <th className="text-left font-semibold py-2 hidden md:table-cell">Ansvarig</th>
-                  <th className="text-center font-semibold py-2 w-14">Klara</th>
-                  <th className="text-left font-semibold py-2 hidden sm:table-cell">Status</th>
+                <tr className="border-b border-border text-[10px] uppercase tracking-wide text-muted-foreground sm:text-[11px]">
+                  <th className="py-2 text-left font-semibold">Datum</th>
+                  <th className="hidden py-2 text-left font-semibold md:table-cell">Veckodag</th>
+                  <th className="py-2 text-left font-semibold">Butik</th>
+                  <th className="hidden py-2 text-left font-semibold sm:table-cell">Checklista</th>
+                  <th className="hidden py-2 text-left font-semibold md:table-cell">Ansvarig</th>
+                  <th className="w-14 py-2 text-center font-semibold">Klara</th>
+                  <th className="hidden py-2 text-left font-semibold sm:table-cell">Status</th>
                   <th className="w-16" />
                 </tr>
               </thead>
@@ -246,14 +531,20 @@ function ChecklistReports() {
                 {reports.map((r: any) => (
                   <tr key={r.id} className="border-b border-border/60 hover:bg-muted/30">
                     <td className="py-2 font-mono tabular-nums text-[11px] sm:text-xs">{r.checklist_date}</td>
-                    <td className="py-2 text-xs text-muted-foreground hidden md:table-cell">{weekdayName(r.checklist_date)}</td>
-                    <td className="py-2 text-xs sm:text-sm truncate pr-2">{r.storeName}</td>
-                    <td className="py-2 text-xs text-muted-foreground truncate pr-2 hidden sm:table-cell">{r.listName}</td>
-                    <td className="py-2 text-xs text-muted-foreground hidden md:table-cell">{r.responsible_name || "–"}</td>
+                    <td className="hidden py-2 text-xs text-muted-foreground md:table-cell">
+                      {weekdayName(r.checklist_date)}
+                    </td>
+                    <td className="truncate py-2 pr-2 text-xs sm:text-sm">{r.storeName}</td>
+                    <td className="hidden truncate py-2 pr-2 text-xs text-muted-foreground sm:table-cell">
+                      {r.listName}
+                    </td>
+                    <td className="hidden py-2 text-xs text-muted-foreground md:table-cell">
+                      {r.responsible_name || "–"}
+                    </td>
                     <td className="py-2 text-center font-mono tabular-nums text-[11px] sm:text-xs">
                       {r.doneCount}/{r.total}
                     </td>
-                    <td className="py-2 hidden sm:table-cell">
+                    <td className="hidden py-2 sm:table-cell">
                       {r.status === "completed" ? (
                         <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
                           <CheckCircle2 className="h-3 w-3" /> Slutförd
@@ -265,7 +556,7 @@ function ChecklistReports() {
                       )}
                     </td>
                     <td className="py-2 text-right">
-                      <Button variant="outline" size="sm" className="h-8 text-xs px-2" onClick={() => setOpenId(r.id)}>
+                      <Button variant="outline" size="sm" className="h-8 px-2 text-xs" onClick={() => setOpenId(r.id)}>
                         Visa
                       </Button>
                     </td>
@@ -273,7 +564,6 @@ function ChecklistReports() {
                 ))}
               </tbody>
             </table>
-
           )}
         </CardContent>
       </Card>
@@ -288,7 +578,7 @@ export default function Checklist() {
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
       {isShop ? (
-        <ShopChecklist storeId={activeStoreId!} storeName={activeStoreName || "Butik"} />
+        <ShopChecklistLanding storeId={activeStoreId!} storeName={activeStoreName || "Butik"} />
       ) : (
         <ChecklistReports />
       )}
