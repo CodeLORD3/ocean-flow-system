@@ -208,7 +208,7 @@ export function EntityImageGallery({
       type="button"
       onClick={onClick}
       className={cn(
-        "w-full flex items-center justify-between gap-1.5 rounded-md px-2 py-1.5 text-left text-[11px] transition-colors",
+        "w-full flex items-center justify-between gap-1.5 rounded-md px-2 py-2.5 text-left text-xs transition-colors sm:py-1.5 sm:text-[11px]",
         active
           ? "bg-primary/10 text-primary font-semibold"
           : "text-muted-foreground hover:bg-muted hover:text-foreground"
