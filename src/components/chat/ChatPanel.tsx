@@ -509,46 +509,8 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
         )}
       </CardContent>
 
-      {/* New conversation dialog */}
-      <Dialog open={newOpen} onOpenChange={setNewOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-base">Ny chatt</DialogTitle>
-            <DialogDescription className="text-xs">
-              Välj vilka portaler chatten ska omfatta. Du deltar som <Badge variant="outline" className="text-[10px]">{portal.name}</Badge>
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-1 max-h-72 overflow-y-auto">
-            {otherProfiles.map((p) => {
-              const Icon = portalIcon(p.kind);
-              const checked = selectedKeys.includes(p.key);
-              return (
-                <label
-                  key={p.key}
-                  className="flex items-center gap-2 rounded-md px-2 py-2 hover:bg-muted/60 cursor-pointer"
-                >
-                  <Checkbox
-                    checked={checked}
-                    onCheckedChange={(v) =>
-                      setSelectedKeys((prev) => (v ? [...prev, p.key] : prev.filter((k) => k !== p.key)))
-                    }
-                  />
-                  <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs text-foreground">{p.name}</span>
-                </label>
-              );
-            })}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setNewOpen(false)}>Avbryt</Button>
-            <Button size="sm" onClick={handleCreate} disabled={createConv.isPending}>
-              {createConv.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
-              Skapa chatt
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
       {/* Specialmeddelande till alla butiker (Admin) */}
+
       <Dialog open={broadcastOpen} onOpenChange={setBroadcastOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
