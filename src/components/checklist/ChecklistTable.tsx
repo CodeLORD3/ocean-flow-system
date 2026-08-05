@@ -408,6 +408,7 @@ export function ChecklistTable({
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-muted/50 text-[11px] uppercase tracking-wide text-muted-foreground">
+              <th className="text-center font-semibold px-2 py-2.5 w-10 border-r border-border">Nr</th>
               <th className="text-center font-semibold px-3 py-2.5 w-20 border-r border-border">Tid</th>
               <th className="text-left font-semibold px-3 py-2.5 w-40 border-r border-border">Kategori</th>
               <th className="text-left font-semibold px-3 py-2.5 border-r border-border">Uppgift</th>
@@ -417,6 +418,7 @@ export function ChecklistTable({
               <th className="w-10 px-1 py-2.5" />
             </tr>
           </thead>
+
           <tbody>
             {rows.map((row) => {
               if (row.kind === "section") {
