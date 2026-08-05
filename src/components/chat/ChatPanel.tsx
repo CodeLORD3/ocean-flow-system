@@ -107,6 +107,9 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
   const [broadcastText, setBroadcastText] = useState("");
   const [broadcastKeys, setBroadcastKeys] = useState<string[]>([]);
   const [text, setText] = useState("");
+  const [forwardMsg, setForwardMsg] = useState<ChatMessage | null>(null);
+  const [forwardConvIds, setForwardConvIds] = useState<string[]>([]);
+
   const fileRef = useRef<HTMLInputElement>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
