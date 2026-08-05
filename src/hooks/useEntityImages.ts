@@ -9,6 +9,8 @@ export type EntityImage = {
   caption: string | null;
   sort_order: number;
   is_cover: boolean;
+  /** Visas i förhandsvyn (rutnätet) på översiktssidan */
+  is_featured: boolean;
   /** Vilken del av bilden som visas vid beskärning: top | center | bottom */
   focal_point: string | null;
   created_at: string;
@@ -155,6 +157,40 @@ export function useSetCoverImage() {
       qc.invalidateQueries({ queryKey: ["entity-images", vars.entityType, vars.entityId] });
       qc.invalidateQueries({ queryKey: ["store-cover-images"] });
       qc.invalidateQueries({ queryKey: ["our-stores-photos"] });
+    },
+  });
+}
+
+/** Väljer vilka bilder som ska visas i förhandsvyn för ett objekt. */
+export function useSetFeaturedImages() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      entityType,
+      entityId,
+      imageIds,
+    }: {
+      entityType: string;
+      entityId: string;
+      imageIds: string[];
+    }) => {
+      const { error: clearErr } = await supabase
+        .from("entity_images")
+        .update({ is_featured: false })
+        .eq("entity_type", entityType)
+        .eq("entity_id", entityId)
+        .eq("is_featured", true);
+      if (clearErr) throw clearErr;
+      if (imageIds.length) {
+        const { error } = await supabase
+          .from("entity_images")
+          .update({ is_featured: true })
+          .in("id", imageIds);
+        if (error) throw error;
+      }
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["entity-images", vars.entityType, vars.entityId] });
     },
   });
 }

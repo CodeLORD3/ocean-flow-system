@@ -1102,6 +1102,7 @@ export type Database = {
           focal_point: string
           id: string
           is_cover: boolean
+          is_featured: boolean
           sort_order: number
           url: string
         }
@@ -1113,6 +1114,7 @@ export type Database = {
           focal_point?: string
           id?: string
           is_cover?: boolean
+          is_featured?: boolean
           sort_order?: number
           url: string
         }
@@ -1124,6 +1126,7 @@ export type Database = {
           focal_point?: string
           id?: string
           is_cover?: boolean
+          is_featured?: boolean
           sort_order?: number
           url?: string
         }

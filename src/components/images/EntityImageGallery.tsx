@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { ImagePlus, Trash2, Loader2, ImageIcon, X, Star, Crop } from "lucide-react";
+import { ImagePlus, Trash2, Loader2, ImageIcon, X, Star, Crop, SlidersHorizontal, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -15,7 +15,10 @@ import {
   useUpdateEntityImage,
   useDeleteEntityImage,
   useSetCoverImage,
+  useSetFeaturedImages,
+  type EntityImage,
 } from "@/hooks/useEntityImages";
+import { ImageLightbox } from "@/components/images/ImageLightbox";
 import { cn } from "@/lib/utils";
 import { focalStyle, focalPercent, focalLabel } from "@/lib/imageFocal";
 
@@ -41,6 +44,8 @@ type Props = {
   className?: string;
   /** Antal kolumner i rutnätet */
   columnsClassName?: string;
+  /** Visa bara ett begränsat antal bilder i förhandsvyn (t.ex. 4) */
+  previewCount?: number;
 };
 
 export function EntityImageGallery({
@@ -51,15 +56,37 @@ export function EntityImageGallery({
   editable = true,
   className,
   columnsClassName = "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
+  previewCount,
 }: Props) {
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [lightbox, setLightbox] = useState<string | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [selectOpen, setSelectOpen] = useState(false);
+  const [selection, setSelection] = useState<string[]>([]);
   const { data: images = [], isLoading } = useEntityImages(entityType, entityId);
   const upload = useUploadEntityImage();
   const updateImage = useUpdateEntityImage();
   const removeImage = useDeleteEntityImage();
   const setCover = useSetCoverImage();
+  const setFeatured = useSetFeaturedImages();
+
+  const featured = images.filter((i) => i.is_featured);
+  const shown: EntityImage[] = previewCount
+    ? (featured.length ? featured : images).slice(0, previewCount)
+    : images;
+
+  const openSelect = () => {
+    setSelection(featured.length ? featured.map((i) => i.id) : shown.map((i) => i.id));
+    setSelectOpen(true);
+  };
+
+  const toggleSelection = (id: string) => {
+    setSelection((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (previewCount && prev.length >= previewCount) return [...prev.slice(1), id];
+      return [...prev, id];
+    });
+  };
 
   const handleFiles = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -90,6 +117,18 @@ export function EntityImageGallery({
           </h3>
           {description && <p className="text-xs text-muted-foreground">{description}</p>}
         </div>
+        <div className="flex items-center gap-1.5">
+          {images.length > 0 && (
+            <Badge variant="secondary" className="h-6 font-mono tabular-nums text-[10px]">
+              {images.length} {images.length === 1 ? "bild" : "bilder"}
+            </Badge>
+          )}
+          {editable && previewCount && images.length > 0 && (
+            <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={openSelect}>
+              <SlidersHorizontal className="h-3 w-3" />
+              Redigera vilka bilder som visas
+            </Button>
+          )}
         {editable && (
           <>
             <input
@@ -116,6 +155,7 @@ export function EntityImageGallery({
             </Button>
           </>
         )}
+        </div>
       </div>
 
       {isLoading ? (
@@ -127,11 +167,11 @@ export function EntityImageGallery({
         </Card>
       ) : (
         <div className={cn("grid gap-2", columnsClassName)}>
-          {images.map((img) => (
+          {shown.map((img) => (
             <Card key={img.id} className="overflow-hidden group relative">
               <button
                 type="button"
-                onClick={() => setLightbox(img.url)}
+                onClick={() => setLightboxIndex(images.findIndex((i) => i.id === img.id))}
                 className="relative block w-full aspect-video bg-muted overflow-hidden"
               >
                 <img
@@ -246,17 +286,84 @@ export function EntityImageGallery({
         </div>
       )}
 
-      <Dialog open={!!lightbox} onOpenChange={(o) => !o && setLightbox(null)}>
-        <DialogContent className="max-w-4xl p-2">
-          <DialogHeader className="sr-only">
-            <DialogTitle>{title}</DialogTitle>
-            <DialogDescription>Förstorad bild</DialogDescription>
-          </DialogHeader>
-          {lightbox && (
-            <img src={lightbox} alt={title} className="w-full h-auto rounded-md object-contain max-h-[80vh]" />
-          )}
-        </DialogContent>
-      </Dialog>
+      <ImageLightbox
+        images={images}
+        index={lightboxIndex}
+        onIndexChange={setLightboxIndex}
+        onClose={() => setLightboxIndex(null)}
+        title={title}
+        editable={editable}
+        onSaveCaption={(id, caption) => updateImage.mutate({ id, caption })}
+      />
+
+      {previewCount && (
+        <Dialog open={selectOpen} onOpenChange={setSelectOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-sm">Välj bilder till förhandsvyn</DialogTitle>
+              <DialogDescription className="text-xs">
+                Markera upp till {previewCount} bilder som ska visas på översiktssidan. Utan val visas de
+                senaste automatiskt.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid grid-cols-3 gap-2 max-h-[60vh] overflow-y-auto sm:grid-cols-4">
+              {images.map((img) => {
+                const active = selection.includes(img.id);
+                return (
+                  <button
+                    key={img.id}
+                    type="button"
+                    onClick={() => toggleSelection(img.id)}
+                    className={cn(
+                      "relative aspect-video overflow-hidden rounded-md border-2 bg-muted",
+                      active ? "border-primary" : "border-transparent opacity-70 hover:opacity-100"
+                    )}
+                  >
+                    <img
+                      src={img.url}
+                      alt={img.caption || "Bild"}
+                      loading="lazy"
+                      className="h-full w-full object-cover"
+                      style={focalStyle(img.focal_point)}
+                    />
+                    {active && (
+                      <span className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <Check className="h-3 w-3" />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-muted-foreground font-mono tabular-nums">
+                {selection.length} / {previewCount} valda
+              </span>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setSelection([])}>
+                  Rensa val
+                </Button>
+                <Button
+                  size="sm"
+                  disabled={setFeatured.isPending}
+                  onClick={async () => {
+                    try {
+                      await setFeatured.mutateAsync({ entityType, entityId, imageIds: selection });
+                      setSelectOpen(false);
+                      toast({ title: "Förhandsvyn uppdaterad" });
+                    } catch (e: any) {
+                      toast({ title: "Kunde inte spara", description: e.message, variant: "destructive" });
+                    }
+                  }}
+                >
+                  Spara
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
     </div>
   );
 }
