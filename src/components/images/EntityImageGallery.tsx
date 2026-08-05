@@ -259,13 +259,13 @@ export function EntityImageGallery({
                 style={focalStyle(img.focal_point)}
               />
               {/* Uppladdningstidpunkt i nedre vänstra hörnet av bilden */}
-              <span className="absolute bottom-1 left-1 rounded bg-background/80 px-1 py-0.5 font-mono tabular-nums text-[9px] text-foreground backdrop-blur pointer-events-none">
+              <span className="absolute bottom-1 left-1 rounded bg-background/85 px-1.5 py-0.5 font-mono tabular-nums text-[10px] text-foreground backdrop-blur pointer-events-none sm:text-[9px]">
                 {uploadedLabel(img.created_at)}
               </span>
             </button>
 
             {img.is_cover && (
-              <Badge className="absolute top-1 left-1 h-4 gap-1 px-1.5 text-[9px] pointer-events-none">
+              <Badge className="absolute top-1 left-1 h-5 gap-1 px-1.5 text-[9px] pointer-events-none sm:h-4">
                 <ImageIcon className="h-2.5 w-2.5" />
                 Omslag
               </Badge>
@@ -277,13 +277,13 @@ export function EntityImageGallery({
               aria-label={isFav ? "Ta bort favorit" : "Favoritmarkera bild"}
               onClick={() => toggleFavorite.mutate({ imageId: img.id, favorite: !isFav })}
               className={cn(
-                "absolute bottom-1 right-1 h-6 w-6 rounded-full bg-background/85 backdrop-blur flex items-center justify-center border transition-opacity",
+                "absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full border bg-background/85 backdrop-blur transition-opacity sm:h-6 sm:w-6",
                 isFav
                   ? "text-rose-500 border-rose-400"
-                  : "text-muted-foreground border-border opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                  : "text-muted-foreground border-border sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
               )}
             >
-              <Heart className={cn("h-3 w-3", isFav && "fill-current")} />
+              <Heart className={cn("h-4 w-4 sm:h-3 sm:w-3", isFav && "fill-current")} />
             </button>
 
             {editable && (
@@ -296,8 +296,9 @@ export function EntityImageGallery({
                         aria-label={img.is_featured ? "Ta bort från utvalda" : "Markera som utvald"}
                         onClick={() => toggleFeatured(img)}
                         className={cn(
-                          "absolute top-1 right-8 h-6 w-6 rounded-full bg-background/80 backdrop-blur flex items-center justify-center border transition-opacity",
+                          "absolute top-1 right-1 flex h-8 w-8 items-center justify-center rounded-full border bg-background/90 backdrop-blur transition-opacity sm:h-6 sm:w-6",
                           img.is_featured
+
                             ? "text-amber-500 border-amber-400"
                             : "text-muted-foreground border-border opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
                         )}
