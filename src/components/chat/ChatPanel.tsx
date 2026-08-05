@@ -604,7 +604,70 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
         )}
       </CardContent>
 
+
+      {/* Vidarebefordra ett meddelande till andra butiker/portaler */}
+      <Dialog open={!!forwardMsg} onOpenChange={(o) => !o && setForwardMsg(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base flex items-center gap-1.5">
+              <Forward className="h-4 w-4 text-primary" /> Vidarebefordra
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Mottagaren ser att meddelandet är vidarebefordrat och vilken butik det kommer ifrån.
+            </DialogDescription>
+          </DialogHeader>
+
+          {forwardMsg && (
+            <div className="rounded-md border border-border bg-muted/50 p-2 space-y-1">
+              <p className="text-[10px] font-semibold text-primary">
+                Från {parseForward(forwardMsg.body)?.from || forwardMsg.sender_portal_name || forwardSourceName}
+              </p>
+              <p className="text-xs text-foreground whitespace-pre-wrap break-words line-clamp-6">
+                {parseForward(forwardMsg.body)?.text || forwardMsg.body || (forwardMsg.image_url ? "Bild" : "")}
+              </p>
+            </div>
+          )}
+
+          <div className="space-y-1 max-h-56 overflow-y-auto">
+            {conversations
+              .filter((c) => c.id !== activeConv?.id)
+              .map((c) => {
+                const title = conversationTitle(c, portal.key);
+                const checked = forwardConvIds.includes(c.id);
+                return (
+                  <label
+                    key={c.id}
+                    className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted/60 cursor-pointer"
+                  >
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={(v) =>
+                        setForwardConvIds((prev) => (v ? [...prev, c.id] : prev.filter((k) => k !== c.id)))
+                      }
+                    />
+                    <Store className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-xs text-foreground truncate">{title}</span>
+                  </label>
+                );
+              })}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setForwardMsg(null)}>Avbryt</Button>
+            <Button
+              size="sm"
+              onClick={handleForward}
+              disabled={forwardConvIds.length === 0 || send.isPending}
+            >
+              {send.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+              Vidarebefordra
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Specialmeddelande till alla butiker (Admin) */}
+
 
       <Dialog open={broadcastOpen} onOpenChange={setBroadcastOpen}>
         <DialogContent className="max-w-md">
