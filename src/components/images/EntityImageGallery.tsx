@@ -1,6 +1,8 @@
 import { useMemo, useRef, useState } from "react";
 import {
   ImagePlus,
+  Camera,
+  ChevronDown,
   Trash2,
   Loader2,
   ImageIcon,
@@ -89,6 +91,7 @@ export function EntityImageGallery({
   const [frontSelection, setFrontSelection] = useState<string[]>([]);
   const [dateLimit, setDateLimit] = useState(DATE_PAGE);
   const [catalogOpen, setCatalogOpen] = useState(false);
+  const [catalogCollapsed, setCatalogCollapsed] = useState(false);
 
   const [lastDay, setLastDay] = useState(() => dayKey(new Date().toISOString()));
   const selectDay = (key: string) => {
@@ -205,7 +208,7 @@ export function EntityImageGallery({
       type="button"
       onClick={onClick}
       className={cn(
-        "w-full flex items-center justify-between gap-1.5 rounded-md px-2 py-1.5 text-left text-[11px] transition-colors",
+        "w-full flex items-center justify-between gap-1.5 rounded-md px-2 py-2.5 text-left text-xs transition-colors sm:py-1.5 sm:text-[11px]",
         active
           ? "bg-primary/10 text-primary font-semibold"
           : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -256,13 +259,13 @@ export function EntityImageGallery({
                 style={focalStyle(img.focal_point)}
               />
               {/* Uppladdningstidpunkt i nedre vänstra hörnet av bilden */}
-              <span className="absolute bottom-1 left-1 rounded bg-background/80 px-1 py-0.5 font-mono tabular-nums text-[9px] text-foreground backdrop-blur pointer-events-none">
+              <span className="absolute bottom-1 left-1 rounded bg-background/85 px-1.5 py-0.5 font-mono tabular-nums text-[10px] text-foreground backdrop-blur pointer-events-none sm:text-[9px]">
                 {uploadedLabel(img.created_at)}
               </span>
             </button>
 
             {img.is_cover && (
-              <Badge className="absolute top-1 left-1 h-4 gap-1 px-1.5 text-[9px] pointer-events-none">
+              <Badge className="absolute top-1 left-1 h-5 gap-1 px-1.5 text-[9px] pointer-events-none sm:h-4">
                 <ImageIcon className="h-2.5 w-2.5" />
                 Omslag
               </Badge>
@@ -274,13 +277,13 @@ export function EntityImageGallery({
               aria-label={isFav ? "Ta bort favorit" : "Favoritmarkera bild"}
               onClick={() => toggleFavorite.mutate({ imageId: img.id, favorite: !isFav })}
               className={cn(
-                "absolute bottom-1 right-1 h-6 w-6 rounded-full bg-background/85 backdrop-blur flex items-center justify-center border transition-opacity",
+                "absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full border bg-background/85 backdrop-blur transition-opacity sm:h-6 sm:w-6",
                 isFav
                   ? "text-rose-500 border-rose-400"
-                  : "text-muted-foreground border-border opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                  : "text-muted-foreground border-border sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
               )}
             >
-              <Heart className={cn("h-3 w-3", isFav && "fill-current")} />
+              <Heart className={cn("h-4 w-4 sm:h-3 sm:w-3", isFav && "fill-current")} />
             </button>
 
             {editable && (
@@ -293,13 +296,13 @@ export function EntityImageGallery({
                         aria-label={img.is_featured ? "Ta bort från utvalda" : "Markera som utvald"}
                         onClick={() => toggleFeatured(img)}
                         className={cn(
-                          "absolute top-1 right-8 h-6 w-6 rounded-full bg-background/80 backdrop-blur flex items-center justify-center border transition-opacity",
+                          "absolute top-1 right-1 flex h-8 w-8 items-center justify-center rounded-full border bg-background/90 backdrop-blur transition-opacity sm:h-6 sm:w-6",
                           img.is_featured
-                            ? "text-amber-500 border-amber-400"
-                            : "text-muted-foreground border-border opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                            ? "text-amber-500 border-amber-400 ring-2 ring-amber-400/40"
+                            : "text-muted-foreground border-border sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
                         )}
                       >
-                        <Star className={cn("h-3 w-3", img.is_featured && "fill-current")} />
+                        <Star className={cn("h-4 w-4 sm:h-3 sm:w-3", img.is_featured && "fill-current")} />
                       </button>
                     </TooltipTrigger>
                     <TooltipContent side="left" className="text-xs">
@@ -324,14 +327,16 @@ export function EntityImageGallery({
                         })
                       }
                       className={cn(
-                        "absolute top-1 right-1 h-6 w-6 rounded-full bg-background/80 backdrop-blur flex items-center justify-center border transition-opacity",
+                        "absolute top-1 flex h-8 w-8 items-center justify-center rounded-full border bg-background/85 backdrop-blur transition-opacity sm:h-6 sm:w-6",
+                        previewCount ? "right-10 sm:right-8" : "right-1",
                         img.is_cover
                           ? "text-primary border-primary"
-                          : "text-muted-foreground border-border opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                          : "text-muted-foreground border-border sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
                       )}
                     >
-                      <ImageIcon className="h-3 w-3" />
+                      <ImageIcon className="h-4 w-4 sm:h-3 sm:w-3" />
                     </button>
+
                   </TooltipTrigger>
                   <TooltipContent side="left" className="text-xs">
                     {img.is_cover ? "Omslagsbild – klicka för att ta bort" : "Sätt som omslagsbild"}
@@ -341,13 +346,13 @@ export function EntityImageGallery({
             )}
 
 
-            <div className="p-1.5 flex items-center gap-1">
+            <div className="flex items-center gap-0.5 p-2 sm:p-1.5">
               {/* Uppladdare */}
-              <span className="flex min-w-0 flex-1 items-center gap-1">
-                <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[8px] font-semibold text-primary">
+              <span className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-1">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[9px] font-semibold text-primary sm:h-4 sm:w-4 sm:text-[8px]">
                   {initialsOf(img.uploaded_by_name)}
                 </span>
-                <span className="truncate text-[10px] text-muted-foreground">
+                <span className="truncate text-[11px] text-muted-foreground sm:text-[10px]">
                   {img.uploaded_by_name || "Okänd"}
                 </span>
               </span>
@@ -355,9 +360,9 @@ export function EntityImageGallery({
                 type="button"
                 onClick={() => setLightboxId(img.id)}
                 aria-label="Öppna kommentarer"
-                className="h-5 w-5 shrink-0 flex items-center justify-center text-muted-foreground hover:text-foreground"
+                className="flex h-7 w-7 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground sm:h-5 sm:w-5"
               >
-                <MessageSquare className="h-3 w-3" />
+                <MessageSquare className="h-4 w-4 sm:h-3 sm:w-3" />
               </button>
               {editable && (
                 <Popover>
@@ -365,11 +370,11 @@ export function EntityImageGallery({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-5 w-5 text-muted-foreground shrink-0"
+                      className="h-7 w-7 shrink-0 text-muted-foreground sm:h-5 sm:w-5"
                       aria-label="Justera beskärning"
                       title={`Beskärning: ${focalLabel(img.focal_point)}`}
                     >
-                      <Crop className="h-3 w-3" />
+                      <Crop className="h-4 w-4 sm:h-3 sm:w-3" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent align="end" className="w-56 p-3">
@@ -394,14 +399,15 @@ export function EntityImageGallery({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-5 w-5 text-muted-foreground hover:text-destructive shrink-0"
+                  className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive sm:h-5 sm:w-5"
                   aria-label="Ta bort bild"
                   onClick={() => removeImage.mutate(img.id)}
                 >
-                  <Trash2 className="h-3 w-3" />
+                  <Trash2 className="h-4 w-4 sm:h-3 sm:w-3" />
                 </Button>
               )}
             </div>
+
           </Card>
         );
       })}
@@ -410,84 +416,91 @@ export function EntityImageGallery({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <div className="flex items-end justify-between gap-2 flex-wrap">
-        <div>
-          <h3 className="text-sm font-heading font-bold text-foreground flex items-center gap-1.5">
+      {/* Rubrik + primär uppladdningsknapp */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-base sm:text-sm font-heading font-bold text-foreground flex items-center gap-1.5">
             <ImageIcon className="h-3.5 w-3.5 text-muted-foreground" />
             {title}
           </h3>
-          {description && <p className="text-xs text-muted-foreground">{description}</p>}
+          {description && (
+            <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+          )}
         </div>
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {catalog && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={catalogOpen ? "default" : "outline"}
-                  size="sm"
-                  className="h-7 gap-1 text-xs"
-                  aria-pressed={catalogOpen}
-                  aria-label={catalogOpen ? "Göm katalog" : "Visa katalog"}
-                  onClick={() => setCatalogOpen((v) => !v)}
-                >
-                  <ListFilter className="h-3 w-3" />
-                  Filter
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">
-                {catalogOpen ? "Göm katalog" : "Visa katalog (datum & favoriter)"}
-              </TooltipContent>
-            </Tooltip>
-          )}
-
-          {images.length > 0 && (
-            <Badge variant="secondary" className="h-6 font-mono tabular-nums text-[10px]">
-              {images.length} {images.length === 1 ? "bild" : "bilder"}
-            </Badge>
-          )}
-          {favorites.length > 0 && (
-            <Badge
-              variant="outline"
-              className="h-6 gap-1 font-mono tabular-nums text-[10px] text-rose-500 border-rose-300"
+        {editable && (
+          <>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => handleFiles(e.target.files)}
+            />
+            <Button
+              size="sm"
+              className="h-10 shrink-0 gap-1.5 px-3 text-xs sm:h-7"
+              onClick={() => fileRef.current?.click()}
+              disabled={upload.isPending}
             >
-              <Heart className="h-2.5 w-2.5 fill-current" />
-              {favorites.length}
-            </Badge>
-          )}
-          {editable && previewCount && images.length > 0 && (
-            <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={openSelect}>
-              <SlidersHorizontal className="h-3 w-3" />
-              Redigera vilka bilder som visas
+              {upload.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin sm:h-3 sm:w-3" />
+              ) : (
+                <Camera className="h-4 w-4 sm:h-3 sm:w-3" />
+              )}
+              Lägg till bild
             </Button>
-          )}
-          {editable && (
-            <>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={(e) => handleFiles(e.target.files)}
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 gap-1 text-xs"
-                onClick={() => fileRef.current?.click()}
-                disabled={upload.isPending}
-              >
-                {upload.isPending ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <ImagePlus className="h-3 w-3" />
-                )}
-                Lägg till bild
-              </Button>
-            </>
-          )}
-        </div>
+          </>
+        )}
       </div>
+
+      {/* Verktygsrad — skrollbar på mobil */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {catalog && (
+          <Button
+            variant={catalogOpen ? "default" : "outline"}
+            size="sm"
+            className="h-9 shrink-0 gap-1.5 px-3 text-xs sm:h-7"
+            aria-pressed={catalogOpen}
+            aria-label={catalogOpen ? "Göm katalog" : "Visa katalog"}
+            onClick={() => setCatalogOpen((v) => !v)}
+          >
+            <ListFilter className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
+            Filter
+          </Button>
+        )}
+
+        {images.length > 0 && (
+          <Badge
+            variant="secondary"
+            className="h-9 shrink-0 rounded-md px-3 font-mono tabular-nums text-[11px] sm:h-6 sm:px-2 sm:text-[10px]"
+          >
+            {images.length} {images.length === 1 ? "bild" : "bilder"}
+          </Badge>
+        )}
+        {favorites.length > 0 && (
+          <Badge
+            variant="outline"
+            className="h-9 shrink-0 gap-1 rounded-md px-3 font-mono tabular-nums text-[11px] text-rose-500 border-rose-300 sm:h-6 sm:px-2 sm:text-[10px]"
+          >
+            <Heart className="h-3 w-3 fill-current sm:h-2.5 sm:w-2.5" />
+            {favorites.length}
+          </Badge>
+        )}
+        {editable && previewCount && images.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 shrink-0 gap-1.5 px-3 text-xs sm:h-7"
+            onClick={openSelect}
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
+            <span className="sm:hidden">Redigera visning</span>
+            <span className="hidden sm:inline">Redigera vilka bilder som visas</span>
+          </Button>
+        )}
+      </div>
+
 
       {isLoading ? (
         <div className="text-xs text-muted-foreground">Laddar bilder…</div>
@@ -501,11 +514,24 @@ export function EntityImageGallery({
 
           {/* Katalog */}
           <Card className="p-2 h-fit">
-            <p className="mb-1.5 flex items-center gap-1 px-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              <CalendarDays className="h-3 w-3" />
-              Katalog
-            </p>
-            <div className="space-y-0.5">
+            <button
+              type="button"
+              onClick={() => setCatalogCollapsed((v) => !v)}
+              className="mb-1.5 flex w-full items-center justify-between gap-1 px-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:pointer-events-none sm:text-[10px]"
+            >
+              <span className="flex items-center gap-1.5">
+                <CalendarDays className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
+                Katalog
+              </span>
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 transition-transform sm:hidden",
+                  catalogCollapsed && "-rotate-90"
+                )}
+              />
+            </button>
+            <div className={cn("space-y-0.5", catalogCollapsed && "hidden sm:block")}>
+
               {catalogButton(
                 view.mode === "favorites",
                 "fav",
