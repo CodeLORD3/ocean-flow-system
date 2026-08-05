@@ -422,9 +422,7 @@ export default function OrganisationOverview() {
             </Card>
           )}
 
-              </CardContent>
-            </Card>
-          )}
+
         </div>
       )}
 
