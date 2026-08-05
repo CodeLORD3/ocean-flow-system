@@ -224,37 +224,9 @@ export function useCreateConversation() {
   const qc = useQueryClient();
   const { staff } = useStaffAuth();
   return useMutation({
-    mutationFn: async ({ participants, title }: { participants: PortalProfile[]; title?: string }) => {
-      const keys = [...new Set(participants.map((p) => p.key))].sort();
-      if (keys.length < 2) throw new Error("En chatt behöver minst två portaler.");
+    mutationFn: async ({ participants, title }: { participants: PortalProfile[]; title?: string }) =>
+      findOrCreateConversation(participants, staff?.id ?? null, title),
 
-      // Återanvänd befintlig chatt med exakt samma deltagare
-      const { data: existingParts, error: exErr } = await supabase
-        .from("chat_participants")
-        .select("conversation_id, portal_key");
-      if (exErr) throw exErr;
-      const byConv = new Map<string, string[]>();
-      (existingParts || []).forEach((p: any) => {
-        byConv.set(p.conversation_id, [...(byConv.get(p.conversation_id) || []), p.portal_key]);
-      });
-      for (const [convId, convKeys] of byConv) {
-        const sorted = [...new Set(convKeys)].sort();
-        if (sorted.length === keys.length && sorted.every((k, i) => k === keys[i])) return convId;
-      }
-
-      const { data: conv, error } = await supabase
-        .from("chat_conversations")
-        .insert({ title: title || null, created_by_staff_id: staff?.id ?? null })
-        .select("id")
-        .single();
-      if (error) throw error;
-
-      const { error: pErr } = await supabase.from("chat_participants").insert(
-        participants.map((p) => ({ conversation_id: conv.id, portal_key: p.key, portal_name: p.name }))
-      );
-      if (pErr) throw pErr;
-      return conv.id as string;
-    },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["chat-conversations"] }),
   });
 }
