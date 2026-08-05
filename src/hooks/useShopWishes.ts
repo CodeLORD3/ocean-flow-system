@@ -10,6 +10,8 @@ export interface ShopWish {
   category: string;
   status: string;
   archived: boolean;
+  published_to_wholesale: boolean;
+  published_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -56,5 +58,59 @@ export function useShopWishes(storeId: string | null) {
     onSuccess: () => qc.invalidateQueries({ queryKey: key }),
   });
 
-  return { wishes: query.data ?? [], isLoading: query.isLoading, addWish, updateStatus, archiveWish };
+  const setPublished = useMutation({
+    mutationFn: async ({ id, published }: { id: string; published: boolean }) => {
+      const { error } = await supabase
+        .from("shop_wishes" as any)
+        .update({
+          published_to_wholesale: published,
+          published_at: published ? new Date().toISOString() : null,
+          updated_at: new Date().toISOString(),
+        } as any)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: key });
+      qc.invalidateQueries({ queryKey: ["shop_wishes_published"] });
+    },
+  });
+
+  return { wishes: query.data ?? [], isLoading: query.isLoading, addWish, updateStatus, archiveWish, setPublished };
+}
+
+export interface PublishedWish extends ShopWish {
+  storeName: string;
+}
+
+/** Alla butikers publicerade önskemål — för grossistportalen. */
+export function usePublishedWishes() {
+  const query = useQuery({
+    queryKey: ["shop_wishes_published"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("shop_wishes" as any)
+        .select("*, stores(name)")
+        .eq("published_to_wholesale", true)
+        .eq("archived", false)
+        .order("published_at", { ascending: false });
+      if (error) throw error;
+      return ((data as any[]) ?? []).map((w) => ({
+        ...w,
+        storeName: w.stores?.name ?? "Butik",
+      })) as PublishedWish[];
+    },
+  });
+
+  const updateStatus = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase
+        .from("shop_wishes" as any)
+        .update({ status, updated_at: new Date().toISOString() } as any)
+        .eq("id", id);
+      if (error) throw error;
+    },
+  });
+
+  return { wishes: query.data ?? [], isLoading: query.isLoading, updateStatus };
 }

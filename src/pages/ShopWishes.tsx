@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableHeader, TableHead, TableRow, TableBody, TableCell } from "@/components/ui/table";
-import { Plus, CalendarIcon, ArrowUpDown, Trash2 } from "lucide-react";
+import { Plus, CalendarIcon, ArrowUpDown, Trash2, Send, EyeOff } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { format, parseISO } from "date-fns";
 import { sv } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -27,7 +28,7 @@ const STATUS_OPTIONS = [
 
 export default function ShopWishes() {
   const { activeStoreId } = useSite();
-  const { wishes, isLoading, addWish, updateStatus, archiveWish } = useShopWishes(activeStoreId);
+  const { wishes, isLoading, addWish, updateStatus, archiveWish, setPublished } = useShopWishes(activeStoreId);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -103,12 +104,13 @@ export default function ShopWishes() {
               Datum <ArrowUpDown className="h-3 w-3" />
             </button>
           </TableHead>
+          <TableHead className="w-36">Till grossist</TableHead>
           {showArchiveBtn && <TableHead className="w-20" />}
         </TableRow>
       </TableHeader>
       <TableBody>
         {items.length === 0 && (
-          <TableRow><TableCell colSpan={showArchiveBtn ? 5 : 4} className="text-center text-muted-foreground py-8">Inga önskemål</TableCell></TableRow>
+          <TableRow><TableCell colSpan={showArchiveBtn ? 6 : 5} className="text-center text-muted-foreground py-8">Inga önskemål</TableCell></TableRow>
         )}
         {items.map((w) => (
           <TableRow key={w.id}>
@@ -122,6 +124,26 @@ export default function ShopWishes() {
             </TableCell>
             <TableCell className="text-xs text-muted-foreground font-mono">
               {w.due_date ? format(parseISO(w.due_date), "d MMM yyyy", { locale: sv }) : "—"}
+            </TableCell>
+            <TableCell>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={w.published_to_wholesale}
+                  disabled={!showArchiveBtn || setPublished.isPending}
+                  onCheckedChange={(v) => {
+                    setPublished.mutate(
+                      { id: w.id, published: v },
+                      { onSuccess: () => toast({ title: v ? "Publicerat till grossist" : "Avpublicerat — endast synligt för butiken" }) }
+                    );
+                  }}
+                  aria-label="Publicera till grossist"
+                />
+                {w.published_to_wholesale ? (
+                  <span className="flex items-center gap-1 text-[11px] text-emerald-600"><Send className="h-3 w-3" /> Publicerat</span>
+                ) : (
+                  <span className="flex items-center gap-1 text-[11px] text-muted-foreground"><EyeOff className="h-3 w-3" /> Internt</span>
+                )}
+              </div>
             </TableCell>
             {showArchiveBtn && (
               <TableCell>
