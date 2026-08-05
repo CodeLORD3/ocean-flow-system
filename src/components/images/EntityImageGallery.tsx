@@ -89,6 +89,12 @@ export function EntityImageGallery({
   const [dateLimit, setDateLimit] = useState(DATE_PAGE);
   const [catalogOpen, setCatalogOpen] = useState(false);
 
+  const [lastDay, setLastDay] = useState(() => dayKey(new Date().toISOString()));
+  const selectDay = (key: string) => {
+    setLastDay(key);
+    setView({ mode: "day", key });
+  };
+
   const [view, setView] = useState<View>(() =>
     catalog ? { mode: "day", key: dayKey(new Date().toISOString()) } : { mode: "featured" }
   );
