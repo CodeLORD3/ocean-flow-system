@@ -68,6 +68,7 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [text, setText] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const textRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const createConv = useCreateConversation();
