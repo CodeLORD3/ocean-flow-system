@@ -4,6 +4,7 @@ import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogDe
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { initialsOf } from "@/lib/imageMeta";
 import { useIsMobile } from "@/hooks/use-mobile";
