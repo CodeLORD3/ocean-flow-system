@@ -379,7 +379,7 @@ export default function OrganisationOverview() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 gap-1">
                   {stores.map((store) => {
                     const act = activity.get(store.id);
                     return (
