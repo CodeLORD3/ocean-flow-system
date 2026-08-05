@@ -331,8 +331,10 @@ export default function OrganisationOverview() {
             entityId={activeStoreId!}
             title="Bilder från butiken"
             description="Ladda upp foton från butiken — dra och släpp eller klicka för att ladda upp"
-            columnsClassName="grid-cols-1 sm:grid-cols-2"
+            columnsClassName="grid-cols-1 min-[380px]:grid-cols-2"
+            previewCount={4}
           />
+
           <ChatPanel compact onOpenFull={() => switchTab("/chat")} />
         </div>
       )}
