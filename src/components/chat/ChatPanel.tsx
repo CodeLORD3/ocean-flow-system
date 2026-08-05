@@ -385,7 +385,7 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                 enterKeyHint="send"
                 autoCapitalize="sentences"
                 placeholder={activeConv ? "Skriv meddelande..." : "Välj en chatt först"}
-                disabled={!activeConv || send.isPending}
+                disabled={!activeConv}
                 /* 16px på mobil hindrar iOS från att zooma in vid fokus */
                 className="flex-1 min-h-9 max-h-[120px] resize-none overflow-y-auto rounded-2xl border border-input bg-background px-3 py-2 text-base sm:text-xs leading-snug placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50"
               />
