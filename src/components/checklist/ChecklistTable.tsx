@@ -68,6 +68,7 @@ export function ChecklistTable({
   const complete = useCompleteChecklist();
   const setPageComment = useSetChecklistPageComment();
 
+  const [highlightMissing, setHighlightMissing] = useState(false);
   const doneCount = items.filter((i) => i.done).length;
   const pct = items.length ? Math.round((doneCount / items.length) * 100) : 0;
   const pages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
