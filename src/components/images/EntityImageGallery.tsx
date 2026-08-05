@@ -1,6 +1,8 @@
 import { useMemo, useRef, useState } from "react";
 import {
   ImagePlus,
+  Camera,
+  ChevronDown,
   Trash2,
   Loader2,
   ImageIcon,
