@@ -132,7 +132,7 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
     startY: boxY + boxH + 6,
     rowPageBreak: "avoid",
     body,
-    head: [["TID", "KATEGORI", "UPPGIFT", "KLAR", "KOMMENTAR / AVVIKELSE", "SIGN"]],
+    head: [["NR", "TID", "KATEGORI", "UPPGIFT", "KLAR", "KOMMENTAR / AVVIKELSE", "SIGN"]],
     theme: "grid",
     styles: {
       font: "helvetica",
