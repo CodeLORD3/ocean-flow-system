@@ -586,9 +586,10 @@ export function EntityImageGallery({
 
 
       <ImageLightbox
-        images={shown}
+        images={lightboxImages}
         index={lightboxIndex >= 0 ? lightboxIndex : null}
-        onIndexChange={(i) => setLightboxId(shown[i]?.id ?? null)}
+        onIndexChange={(i) => setLightboxId(lightboxImages[i]?.id ?? null)}
+
         onClose={() => setLightboxId(null)}
         title={title}
         editable={editable}
