@@ -10,6 +10,8 @@ import {
   BarChart3,
   ArrowUpRight,
   ArrowDownRight,
+  MessageSquare,
+  Lightbulb,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useProducts } from "@/hooks/useProducts";
@@ -25,6 +27,9 @@ import { EntityImageGallery } from "@/components/images/EntityImageGallery";
 import { PORTAL_IMAGE_ENTITY_TYPE, WHOLESALE_IMAGE_ENTITY_ID } from "@/lib/portalImages";
 
 import { ChatPanel } from "@/components/chat/ChatPanel";
+import { ActivityIcon } from "@/components/dashboard/ActivityIcon";
+import { useStoreActivity } from "@/hooks/useStoreActivity";
+import { useState } from "react";
 import { ChecklistCard } from "@/components/checklist/ChecklistCard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -102,6 +107,8 @@ export default function OrganisationOverview() {
   const { data: allCustomers = [] } = useCustomers();
   const { data: suppliers = [] } = useSuppliers();
   const covers = useStoreCoverImages();
+  const activity = useStoreActivity();
+  const [chatFocus, setChatFocus] = useState<{ key: string; nonce: number } | null>(null);
 
   // Storage locations for the active store (shop scope)
   const { data: shopLocations = [] } = useQuery({
