@@ -20,8 +20,10 @@ export type ChatMessage = {
   sender_name: string | null;
   body: string | null;
   image_url: string | null;
+  is_important?: boolean;
   created_at: string;
 };
+
 
 export type ChatParticipant = {
   id: string;
