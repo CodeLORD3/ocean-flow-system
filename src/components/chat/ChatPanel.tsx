@@ -206,10 +206,11 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
   const showThread = isStore || !isMobile || mobileThread;
 
   const listHeight = compact
-    ? "max-h-40 md:max-h-24"
+    ? "h-80"
     : isMobile
       ? "h-[calc(100dvh-15rem)] min-h-[18rem]"
       : "h-[calc(100dvh-10rem)] min-h-[600px]";
+
   const msgHeight = compact
     ? "h-80"
     : isMobile
@@ -270,9 +271,14 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
       <CardContent
         className={cn(
           "grid gap-3 px-2 sm:px-6",
-          compact || isStore ? "grid-cols-1" : "md:grid-cols-[240px_1fr] lg:grid-cols-[264px_1fr]"
+          isStore
+            ? "grid-cols-1"
+            : compact
+              ? "grid-cols-1 md:grid-cols-[190px_1fr]"
+              : "md:grid-cols-[240px_1fr] lg:grid-cols-[264px_1fr]"
         )}
       >
+
         {/* Conversation list */}
         {showList && (
           <div className={cn("space-y-1 overflow-y-auto overflow-x-hidden pr-1", listHeight)}>
@@ -296,13 +302,17 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                       setMobileThread(true);
                     }}
                     className={cn(
-                      "w-full text-left rounded-md px-2 py-2 transition-colors flex items-center gap-2",
+                      "w-full text-left rounded-md px-2 transition-colors flex items-center gap-2",
+                      compact ? "py-1.5" : "py-2",
                       isActive && !isMobile
                         ? "bg-primary/10 border border-primary/20"
                         : "hover:bg-muted/60 border border-transparent"
                     )}
                   >
-                    <span className="h-8 w-8 shrink-0 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-semibold">
+                    <span className={cn(
+                      "shrink-0 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-semibold",
+                      compact ? "h-6 w-6" : "h-8 w-8"
+                    )}>
                       {initialsOf(title)}
                     </span>
                     <span className="min-w-0 flex-1">
@@ -314,15 +324,18 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                           </Badge>
                         )}
                       </span>
-                      <span className="flex items-center gap-2">
-                        <span className="block text-[10px] text-muted-foreground truncate flex-1 min-w-0">
-                          {c.lastMessage?.body || (c.lastMessage?.image_url ? "Bild" : "Inga meddelanden")}
+                      {!compact && (
+                        <span className="flex items-center gap-2">
+                          <span className="block text-[10px] text-muted-foreground truncate flex-1 min-w-0">
+                            {c.lastMessage?.body || (c.lastMessage?.image_url ? "Bild" : "Inga meddelanden")}
+                          </span>
+                          <span className="text-[9px] text-muted-foreground shrink-0 font-mono tabular-nums">
+                            {timeLabel(c.last_message_at)}
+                          </span>
                         </span>
-                        <span className="text-[9px] text-muted-foreground shrink-0 font-mono tabular-nums">
-                          {timeLabel(c.last_message_at)}
-                        </span>
-                      </span>
+                      )}
                     </span>
+
 
                   </button>
                 );
