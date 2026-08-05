@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { MessageSquare, Plus, Send, ImagePlus, Loader2, Store, Factory, Shield, ArrowLeft, Megaphone, AlertTriangle } from "lucide-react";
+import { MessageSquare, Send, ImagePlus, Loader2, Store, Factory, Shield, ArrowLeft, Megaphone, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,8 +83,6 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
   const { data: conversations = [], isLoading } = useChatConversations(portal?.key);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mobileThread, setMobileThread] = useState(false);
-  const [newOpen, setNewOpen] = useState(false);
-  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [broadcastOpen, setBroadcastOpen] = useState(false);
   const [broadcastText, setBroadcastText] = useState("");
   const [broadcastKeys, setBroadcastKeys] = useState<string[]>([]);
@@ -105,21 +103,41 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
     conversations.find((c) => c.id === activeId) ??
     (isStore || !isMobile ? conversations[0] : undefined);
 
-  // Se till att butikens grossistchatt finns och är öppen direkt
+  // Se till att det finns en färdig 1:1-chatt med varje tillåten motpart
   const ensuring = useRef(false);
+  const ensuredKeys = useRef<Set<string>>(new Set());
   useEffect(() => {
-    if (!isStore || !portal || isLoading || ensuring.current) return;
-    if (conversations.length > 0) return;
+    if (!portal || isLoading || ensuring.current) return;
+    const targets = isStore ? [GROSSIST_PROFILE] : otherProfiles;
+    if (targets.length === 0) return;
+
+    const existing = new Set(
+      conversations
+        .filter((c) => c.participants.length === 2)
+        .flatMap((c) => c.participants.map((p) => p.portal_key))
+    );
+    const missing = targets.filter(
+      (t) => !existing.has(t.key) && !ensuredKeys.current.has(t.key)
+    );
+    if (missing.length === 0) return;
+
     ensuring.current = true;
-    createConv
-      .mutateAsync({ participants: [portal, GROSSIST_PROFILE] })
-      .then((id) => setActiveId(id))
-      .catch(() => {})
-      .finally(() => {
-        ensuring.current = false;
-      });
+    (async () => {
+      for (const target of missing) {
+        ensuredKeys.current.add(target.key);
+        try {
+          const id = await createConv.mutateAsync({ participants: [portal, target] });
+          if (isStore) setActiveId(id);
+        } catch {
+          ensuredKeys.current.delete(target.key);
+        }
+      }
+    })().finally(() => {
+      ensuring.current = false;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isStore, portal?.key, isLoading, conversations.length]);
+  }, [isStore, portal?.key, isLoading, conversations.length, otherProfiles.length]);
+
   const { data: messages = [] } = useChatMessages(activeConv?.id);
 
   useEffect(() => {
@@ -152,23 +170,8 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
     }
   };
 
-  const handleCreate = async () => {
-    if (!portal) return;
-    const chosen = otherProfiles.filter((p) => selectedKeys.includes(p.key));
-    if (chosen.length === 0) {
-      toast({ title: "Välj minst en portal", variant: "destructive" });
-      return;
-    }
-    try {
-      const id = await createConv.mutateAsync({ participants: [portal, ...chosen] });
-      setActiveId(id);
-      setMobileThread(true);
-      setSelectedKeys([]);
-      setNewOpen(false);
-    } catch (e: any) {
-      toast({ title: "Kunde inte skapa chatt", description: e.message, variant: "destructive" });
-    }
-  };
+
+
 
   const handleSend = async (file?: File | null) => {
     if (!activeConv) return;
@@ -255,11 +258,6 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                 <Megaphone className="h-3 w-3" /> Viktigt
               </Button>
             )}
-            {showList && (
-              <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={() => setNewOpen(true)}>
-                <Plus className="h-3 w-3" /> Ny
-              </Button>
-            )}
             {compact && onOpenFull && (
               <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={onOpenFull}>
                 Visa alla
@@ -284,7 +282,7 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
               </div>
             ) : conversations.length === 0 ? (
               <p className="text-[11px] text-muted-foreground py-3">
-                {portal.kind === "store" ? "Inga chattar ännu. Du kan starta en chatt med Grossist." : "Inga chattar ännu. Skapa en chatt med en annan portal."}
+                Förbereder chattar…
               </p>
             ) : (
               conversations.map((c) => {
@@ -494,46 +492,8 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
         )}
       </CardContent>
 
-      {/* New conversation dialog */}
-      <Dialog open={newOpen} onOpenChange={setNewOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-base">Ny chatt</DialogTitle>
-            <DialogDescription className="text-xs">
-              Välj vilka portaler chatten ska omfatta. Du deltar som <Badge variant="outline" className="text-[10px]">{portal.name}</Badge>
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-1 max-h-72 overflow-y-auto">
-            {otherProfiles.map((p) => {
-              const Icon = portalIcon(p.kind);
-              const checked = selectedKeys.includes(p.key);
-              return (
-                <label
-                  key={p.key}
-                  className="flex items-center gap-2 rounded-md px-2 py-2 hover:bg-muted/60 cursor-pointer"
-                >
-                  <Checkbox
-                    checked={checked}
-                    onCheckedChange={(v) =>
-                      setSelectedKeys((prev) => (v ? [...prev, p.key] : prev.filter((k) => k !== p.key)))
-                    }
-                  />
-                  <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs text-foreground">{p.name}</span>
-                </label>
-              );
-            })}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setNewOpen(false)}>Avbryt</Button>
-            <Button size="sm" onClick={handleCreate} disabled={createConv.isPending}>
-              {createConv.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
-              Skapa chatt
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
       {/* Specialmeddelande till alla butiker (Admin) */}
+
       <Dialog open={broadcastOpen} onOpenChange={setBroadcastOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
