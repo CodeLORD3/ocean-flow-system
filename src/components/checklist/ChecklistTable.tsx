@@ -340,7 +340,8 @@ export function ChecklistTable({
               key={`m-${row.item.id}`}
               className={cn(
                 "rounded-lg border border-border bg-card shadow-card p-2.5",
-                row.item.done && "border-emerald-600/40 bg-emerald-500/10"
+                row.item.done && "border-emerald-600/40 bg-emerald-500/10",
+                !row.item.done && highlightMissing && "border-destructive/50 bg-destructive/15"
               )}
             >
               <div className="flex items-start gap-2.5">
