@@ -341,7 +341,12 @@ export function ChecklistTable({
                   />
                 </label>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[13px] leading-snug text-foreground break-words">{row.item.task}</p>
+                  <p className="text-[13px] leading-snug text-foreground break-words">
+                    <span className="mr-1.5 font-mono tabular-nums text-[11px] text-muted-foreground">
+                      {row.nr}.
+                    </span>
+                    {row.item.task}
+                  </p>
                   <div className="text-[10px] text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                     {locked ? (
                       row.item.time_label && <span className="font-mono tabular-nums">{row.item.time_label}</span>
