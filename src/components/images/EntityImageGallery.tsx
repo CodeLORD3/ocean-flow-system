@@ -86,6 +86,7 @@ export function EntityImageGallery({
   const [lightboxId, setLightboxId] = useState<string | null>(null);
   const [selectOpen, setSelectOpen] = useState(false);
   const [selection, setSelection] = useState<string[]>([]);
+  const [frontSelection, setFrontSelection] = useState<string[]>([]);
   const [dateLimit, setDateLimit] = useState(DATE_PAGE);
   const [catalogOpen, setCatalogOpen] = useState(false);
 
@@ -109,6 +110,15 @@ export function EntityImageGallery({
   const featured = images.filter((i) => i.is_featured);
   const favorites = images.filter((i) => favoriteIds.includes(i.id));
 
+  /** Poolen med utvalda bilder (valfritt antal), sorterad så framsidans bilder ligger först. */
+  const pool = useMemo(
+    () =>
+      featured
+        .slice()
+        .sort((a, b) => a.sort_order - b.sort_order || a.created_at.localeCompare(b.created_at)),
+    [featured],
+  );
+
   /** Datum (nycklar) som har bilder, senaste först. */
   const dates = useMemo(() => {
     const map = new Map<string, number>();
@@ -119,9 +129,7 @@ export function EntityImageGallery({
     return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
   }, [images]);
 
-  const previewImages: EntityImage[] = previewCount
-    ? featured.slice(0, previewCount)
-    : images;
+  const previewImages: EntityImage[] = previewCount ? pool.slice(0, previewCount) : images;
 
   /** Aktivt datum i katalogen — styr dagsvyn. */
   const activeDay = view.mode === "day" ? view.key : lastDay;
@@ -133,22 +141,36 @@ export function EntityImageGallery({
     return images.filter((i) => dayKey(i.created_at) === view.key);
   }, [catalog, view, images, favorites, previewImages]);
 
+  /** I helskärmsläge bläddrar man genom hela den utvalda poolen, inte bara de synliga. */
+  const lightboxImages: EntityImage[] =
+    previewCount && (!catalog || view.mode === "featured") && pool.length ? pool : shown;
 
-
-  const lightboxIndex = lightboxId ? shown.findIndex((i) => i.id === lightboxId) : -1;
+  const lightboxIndex = lightboxId ? lightboxImages.findIndex((i) => i.id === lightboxId) : -1;
 
   const openSelect = () => {
-    setSelection(featured.length ? featured.map((i) => i.id) : previewImages.map((i) => i.id));
+    setSelection(featured.map((i) => i.id));
+    setFrontSelection(previewImages.map((i) => i.id));
     setSelectOpen(true);
   };
 
   const toggleSelection = (id: string) => {
     setSelection((prev) => {
-      if (prev.includes(id)) return prev.filter((x) => x !== id);
-      if (previewCount && prev.length >= previewCount) return [...prev.slice(1), id];
+      if (prev.includes(id)) {
+        setFrontSelection((f) => f.filter((x) => x !== id));
+        return prev.filter((x) => x !== id);
+      }
       return [...prev, id];
     });
   };
+
+  const toggleFront = (id: string) => {
+    setFrontSelection((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      const next = [...prev, id];
+      return previewCount && next.length > previewCount ? next.slice(-previewCount) : next;
+    });
+  };
+
 
   const handleFiles = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -206,14 +228,13 @@ export function EntityImageGallery({
           ? "Inga utvalda bilder ännu — välj vilka bilder som ska visas."
           : "Inga bilder ännu";
 
-  /** Snabbmarkering direkt på bilden: lägg till/ta bort ur utvalda (max previewCount). */
+  /** Snabbmarkering direkt på bilden: lägg till/ta bort ur den utvalda poolen (valfritt antal). */
   const toggleFeatured = (img: EntityImage) => {
     const current = featured.map((i) => i.id);
-    const next = img.is_featured
-      ? current.filter((id) => id !== img.id)
-      : [...current, img.id].slice(previewCount ? -previewCount : undefined);
+    const next = img.is_featured ? current.filter((id) => id !== img.id) : [...current, img.id];
     setFeatured.mutate({ entityType, entityId, imageIds: next });
   };
+
 
   const grid = (
 
@@ -284,8 +305,9 @@ export function EntityImageGallery({
                     <TooltipContent side="left" className="text-xs">
                       {img.is_featured
                         ? "Utvald bild – klicka för att ta bort"
-                        : `Visa på översiktssidan (max ${previewCount})`}
+                        : "Lägg till i utvalda bilder"}
                     </TooltipContent>
+
                   </Tooltip>
                 ) : null}
 
@@ -497,11 +519,12 @@ export function EntityImageGallery({
                     view.mode === "featured",
                     "featured",
                     "Utvalda",
-                    previewImages.length,
+                    pool.length,
 
                     <Star className="h-3 w-3" />,
                     () => setView({ mode: "featured" })
                   )
+
                 : null}
               <div className="my-1 border-t" />
               {dates.slice(0, dateLimit).map(([key, count]) =>
@@ -563,9 +586,10 @@ export function EntityImageGallery({
 
 
       <ImageLightbox
-        images={shown}
+        images={lightboxImages}
         index={lightboxIndex >= 0 ? lightboxIndex : null}
-        onIndexChange={(i) => setLightboxId(shown[i]?.id ?? null)}
+        onIndexChange={(i) => setLightboxId(lightboxImages[i]?.id ?? null)}
+
         onClose={() => setLightboxId(null)}
         title={title}
         editable={editable}
@@ -576,57 +600,95 @@ export function EntityImageGallery({
 
       {previewCount && (
         <Dialog open={selectOpen} onOpenChange={setSelectOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-3xl">
             <DialogHeader>
-              <DialogTitle className="text-sm">Välj bilder till förhandsvyn</DialogTitle>
+              <DialogTitle className="text-sm">Redigera vilka bilder som visas</DialogTitle>
               <DialogDescription className="text-xs">
-                Markera upp till {previewCount} bilder som ska visas på översiktssidan. Utan val visas de
-                senaste automatiskt.
+                Klicka på en bild för att lägga den i poolen med utvalda bilder (valfritt antal). Tryck
+                sedan på stjärnan för att välja vilka {previewCount} som syns först på översiktssidan.
               </DialogDescription>
             </DialogHeader>
             <div className="grid grid-cols-3 gap-2 max-h-[60vh] overflow-y-auto sm:grid-cols-4">
               {images.map((img) => {
                 const active = selection.includes(img.id);
+                const front = frontSelection.includes(img.id);
                 return (
-                  <button
+                  <div
                     key={img.id}
-                    type="button"
-                    onClick={() => toggleSelection(img.id)}
                     className={cn(
                       "relative aspect-video overflow-hidden rounded-md border-2 bg-muted",
                       active ? "border-primary" : "border-transparent opacity-70 hover:opacity-100"
                     )}
                   >
-                    <img
-                      src={img.url}
-                      alt={img.caption || "Bild"}
-                      loading="lazy"
-                      className="h-full w-full object-cover"
-                      style={focalStyle(img.focal_point)}
-                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleSelection(img.id)}
+                      className="block h-full w-full"
+                      aria-label={active ? "Ta bort ur utvalda" : "Lägg till i utvalda"}
+                    >
+                      <img
+                        src={img.url}
+                        alt={img.caption || "Bild"}
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                        style={focalStyle(img.focal_point)}
+                      />
+                    </button>
                     {active && (
                       <span className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
                         <Check className="h-3 w-3" />
                       </span>
                     )}
-                  </button>
+                    {active && (
+                      <button
+                        type="button"
+                        onClick={() => toggleFront(img.id)}
+                        aria-label={front ? "Ta bort från framsidan" : "Visa på framsidan"}
+                        title={front ? "Visas på framsidan" : "Visa på framsidan"}
+                        className={cn(
+                          "absolute top-1 left-1 flex h-5 w-5 items-center justify-center rounded-full border bg-background/85 backdrop-blur",
+                          front ? "text-amber-500 border-amber-400" : "text-muted-foreground border-border"
+                        )}
+                      >
+                        <Star className={cn("h-3 w-3", front && "fill-current")} />
+                      </button>
+                    )}
+                  </div>
                 );
               })}
             </div>
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs text-muted-foreground font-mono tabular-nums">
-                {selection.length} / {previewCount} valda
+                {selection.length} utvalda · {frontSelection.length} / {previewCount} på framsidan
               </span>
               <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setSelection([])}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSelection([]);
+                    setFrontSelection([]);
+                  }}
+                >
                   Rensa val
                 </Button>
                 <Button
                   size="sm"
-                  disabled={setFeatured.isPending}
+                  disabled={setFeatured.isPending || updateImage.isPending}
                   onClick={async () => {
                     try {
                       await setFeatured.mutateAsync({ entityType, entityId, imageIds: selection });
+                      // Framsidans bilder får lägst sorteringsordning så de hamnar först i poolen.
+                      const order = frontSelection.filter((id) => selection.includes(id));
+                      await Promise.all(
+                        selection.map((id) => {
+                          const idx = order.indexOf(id);
+                          return updateImage.mutateAsync({
+                            id,
+                            sort_order: idx >= 0 ? idx : 100 + selection.indexOf(id),
+                          });
+                        }),
+                      );
                       setSelectOpen(false);
                       toast({ title: "Förhandsvyn uppdaterad" });
                     } catch (e: any) {
@@ -638,6 +700,7 @@ export function EntityImageGallery({
                 </Button>
               </div>
             </div>
+
           </DialogContent>
         </Dialog>
       )}
