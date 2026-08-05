@@ -452,7 +452,7 @@ export function ImageLightbox({
           {current && (
             <div className="flex h-full flex-col">
               {/* Karusell – bilderna hänger ihop och snappar */}
-              <div className="relative flex-1 min-h-0 bg-black">
+              <div className="relative flex-1 min-h-[45dvh] bg-black">
                 <div
                   ref={trackRef}
                   onScroll={onTrackScroll}
@@ -534,21 +534,32 @@ export function ImageLightbox({
                 </div>
                 {captionMeta}
               </div>
+
+              {/* Kommentarer som panel under bilden – bilden syns kvar (Instagram-känsla) */}
+              {commentsOpen && (
+                <div className="shrink-0 border-t bg-background flex flex-col max-h-[50dvh] min-h-0">
+                  <div className="flex items-center justify-between px-3 py-2 border-b">
+                    <span className="text-sm font-medium">
+                      Kommentarer{" "}
+                      <span className="font-mono tabular-nums text-xs text-muted-foreground">
+                        ({comments.length})
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="Stäng kommentarer"
+                      onClick={() => setCommentsOpen(false)}
+                      className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                  {commentList}
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
-
-        <Sheet open={commentsOpen && open} onOpenChange={setCommentsOpen}>
-          <SheetContent side="bottom" className="h-[75dvh] p-0 flex flex-col gap-0">
-            <SheetHeader className="px-3 py-2 border-b text-left">
-              <SheetTitle className="text-sm">
-                Kommentarer{" "}
-                <span className="font-mono tabular-nums text-xs text-muted-foreground">({comments.length})</span>
-              </SheetTitle>
-            </SheetHeader>
-            {commentList}
-          </SheetContent>
-        </Sheet>
       </Dialog>
     );
   }
