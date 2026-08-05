@@ -516,6 +516,9 @@ export function ChecklistTable({
                     row.item.done ? "bg-emerald-500/10" : "hover:bg-muted/30"
                   )}
                 >
+                  <td className="px-2 py-1.5 text-center border-r border-border font-mono tabular-nums text-[11px] text-muted-foreground">
+                    {row.nr}
+                  </td>
                   <td className="px-1.5 py-1.5 text-center border-r border-border">
                     {locked ? (
                       <span className="font-mono tabular-nums text-xs text-muted-foreground">
