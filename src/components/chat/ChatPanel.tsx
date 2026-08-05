@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { MessageSquare, Plus, Send, ImagePlus, Loader2, Store, Factory, Shield, ArrowLeft } from "lucide-react";
+import { MessageSquare, Plus, Send, ImagePlus, Loader2, Store, Factory, Shield, ArrowLeft, Megaphone, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,8 +19,9 @@ import {
   useChatMessages,
   useCreateConversation,
   useCurrentPortal,
-  usePortalProfiles,
+  useAllowedChatTargets,
   useSendChatMessage,
+  useBroadcastImportant,
   useChatUnread,
   useMarkConversationRead,
 } from "@/hooks/useChat";
@@ -78,18 +79,22 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const portal = useCurrentPortal();
-  const profiles = usePortalProfiles();
+  const otherProfiles = useAllowedChatTargets();
   const { data: conversations = [], isLoading } = useChatConversations(portal?.key);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mobileThread, setMobileThread] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+  const [broadcastOpen, setBroadcastOpen] = useState(false);
+  const [broadcastText, setBroadcastText] = useState("");
+  const [broadcastKeys, setBroadcastKeys] = useState<string[]>([]);
   const [text, setText] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const createConv = useCreateConversation();
+  const broadcast = useBroadcastImportant();
   const send = useSendChatMessage();
   const unread = useChatUnread();
   const markRead = useMarkConversationRead();
@@ -109,10 +114,24 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [convId, messages.length]);
 
-  const otherProfiles = useMemo(
-    () => profiles.filter((p) => p.key !== portal?.key),
-    [profiles, portal?.key]
-  );
+  const storeTargets = useMemo(() => otherProfiles.filter((p) => p.kind === "store"), [otherProfiles]);
+  const isAdmin = portal?.kind === "admin";
+
+  const handleBroadcast = async () => {
+    if (!broadcastText.trim()) {
+      toast({ title: "Skriv ett meddelande", variant: "destructive" });
+      return;
+    }
+    try {
+      const count = await broadcast.mutateAsync({ body: broadcastText, storeKeys: broadcastKeys });
+      toast({ title: "Specialmeddelande skickat", description: `Skickat till ${count} butik(er).` });
+      setBroadcastText("");
+      setBroadcastKeys([]);
+      setBroadcastOpen(false);
+    } catch (e: any) {
+      toast({ title: "Kunde inte skicka", description: e.message, variant: "destructive" });
+    }
+  };
 
   const handleCreate = async () => {
     if (!portal) return;
@@ -203,6 +222,16 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
             </span>
           </CardTitle>
           <div className="flex items-center gap-1 shrink-0">
+            {showList && isAdmin && storeTargets.length > 0 && (
+              <Button
+                size="sm"
+                variant="destructive"
+                className="h-7 text-[11px] gap-1"
+                onClick={() => setBroadcastOpen(true)}
+              >
+                <Megaphone className="h-3 w-3" /> Viktigt
+              </Button>
+            )}
             {showList && (
               <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={() => setNewOpen(true)}>
                 <Plus className="h-3 w-3" /> Ny
@@ -232,7 +261,7 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
               </div>
             ) : conversations.length === 0 ? (
               <p className="text-[11px] text-muted-foreground py-3">
-                Inga chattar ännu. Skapa en chatt med en annan portal.
+                {portal.kind === "store" ? "Inga chattar ännu. Du kan starta en chatt med Grossist." : "Inga chattar ännu. Skapa en chatt med en annan portal."}
               </p>
             ) : (
               conversations.map((c) => {
@@ -320,7 +349,9 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                           "max-w-[85%] sm:max-w-[80%] px-2.5 py-1 text-xs leading-snug shadow-sm",
                           mine
                             ? "bg-primary text-primary-foreground rounded-2xl rounded-br-sm"
-                            : "bg-muted text-foreground rounded-2xl rounded-bl-sm"
+                            : "bg-muted text-foreground rounded-2xl rounded-bl-sm",
+                          m.is_important &&
+                            "border-2 border-destructive bg-destructive/10 text-foreground ring-1 ring-destructive/30"
                         )}
                       >
                         {showHeader && (
@@ -335,6 +366,11 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                         )}
 
 
+                        {m.is_important && (
+                          <span className="mb-0.5 flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide text-destructive">
+                            <AlertTriangle className="h-3 w-3" /> Specialmeddelande
+                          </span>
+                        )}
                         {m.body && (
                           <span className="whitespace-pre-wrap break-words">{m.body}</span>
                         )}
@@ -463,6 +499,50 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
             <Button size="sm" onClick={handleCreate} disabled={createConv.isPending}>
               {createConv.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
               Skapa chatt
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Specialmeddelande till alla butiker (Admin) */}
+      <Dialog open={broadcastOpen} onOpenChange={setBroadcastOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base flex items-center gap-1.5">
+              <Megaphone className="h-4 w-4 text-destructive" /> Specialmeddelande
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Meddelandet markeras som viktigt hos mottagarna. Lämna butiker omarkerade för att skicka till alla.
+            </DialogDescription>
+          </DialogHeader>
+          <textarea
+            value={broadcastText}
+            onChange={(e) => setBroadcastText(e.target.value)}
+            rows={4}
+            placeholder="Skriv det viktiga meddelandet..."
+            className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-base sm:text-xs leading-snug focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          />
+          <div className="space-y-1 max-h-56 overflow-y-auto">
+            {storeTargets.map((p) => {
+              const checked = broadcastKeys.includes(p.key);
+              return (
+                <label key={p.key} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-muted/60 cursor-pointer">
+                  <Checkbox
+                    checked={checked}
+                    onCheckedChange={(v) =>
+                      setBroadcastKeys((prev) => (v ? [...prev, p.key] : prev.filter((k) => k !== p.key)))
+                    }
+                  />
+                  <Store className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs text-foreground">{p.name}</span>
+                </label>
+              );
+            })}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setBroadcastOpen(false)}>Avbryt</Button>
+            <Button size="sm" variant="destructive" onClick={handleBroadcast} disabled={broadcast.isPending}>
+              {broadcast.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />}
+              Skicka till {broadcastKeys.length || storeTargets.length} butik(er)
             </Button>
           </DialogFooter>
         </DialogContent>

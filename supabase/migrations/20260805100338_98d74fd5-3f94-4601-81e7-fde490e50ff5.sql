@@ -1,0 +1,1 @@
+ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS is_important boolean NOT NULL DEFAULT false;
