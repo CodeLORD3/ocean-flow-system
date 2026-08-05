@@ -95,9 +95,8 @@ export function EntityImageGallery({
     setView({ mode: "day", key });
   };
 
-  const [view, setView] = useState<View>(() =>
-    catalog ? { mode: "day", key: dayKey(new Date().toISOString()) } : { mode: "featured" }
-  );
+  const [view, setView] = useState<View>({ mode: "featured" });
+
   const { data: images = [], isLoading } = useEntityImages(entityType, entityId);
   const { data: favoriteIds = [] } = useMyImageFavorites();
   const upload = useUploadEntityImage();
@@ -121,24 +120,19 @@ export function EntityImageGallery({
   }, [images]);
 
   const previewImages: EntityImage[] = previewCount
-    ? (featured.length ? featured : images).slice(0, previewCount)
+    ? featured.slice(0, previewCount)
     : images;
 
-  /** Aktivt datum i katalogen — styr både dagsvyn och "Utvalda". */
+  /** Aktivt datum i katalogen — styr dagsvyn. */
   const activeDay = view.mode === "day" ? view.key : lastDay;
-
-  /** Utvalda bilder för det aktiva datumet. */
-  const featuredForDay = useMemo(
-    () => images.filter((i) => i.is_featured && dayKey(i.created_at) === activeDay),
-    [images, activeDay]
-  );
 
   const shown: EntityImage[] = useMemo(() => {
     if (!catalog) return previewImages;
     if (view.mode === "favorites") return favorites;
-    if (view.mode === "featured") return featuredForDay;
+    if (view.mode === "featured") return previewImages;
     return images.filter((i) => dayKey(i.created_at) === view.key);
-  }, [catalog, view, images, favorites, previewImages, featuredForDay]);
+  }, [catalog, view, images, favorites, previewImages]);
+
 
 
   const lightboxIndex = lightboxId ? shown.findIndex((i) => i.id === lightboxId) : -1;
@@ -209,7 +203,7 @@ export function EntityImageGallery({
       : catalog && view.mode === "day"
         ? "Inga bilder detta datum."
         : catalog && view.mode === "featured"
-          ? `Inga utvalda bilder för ${dayLabel(activeDay)}.`
+          ? "Inga utvalda bilder ännu — välj vilka bilder som ska visas."
           : "Inga bilder ännu";
 
   const grid = (
@@ -464,8 +458,9 @@ export function EntityImageGallery({
                 ? catalogButton(
                     view.mode === "featured",
                     "featured",
-                    `Utvalda · ${dayLabel(activeDay)}`,
-                    featuredForDay.length,
+                    "Utvalda",
+                    previewImages.length,
+
                     <Star className="h-3 w-3" />,
                     () => setView({ mode: "featured" })
                   )
