@@ -22,6 +22,8 @@ import { useSuppliers } from "@/hooks/useSuppliers";
 import { useSite } from "@/contexts/SiteContext";
 import { useTabs } from "@/contexts/TabsContext";
 import { EntityImageGallery } from "@/components/images/EntityImageGallery";
+import { PORTAL_IMAGE_ENTITY_TYPE, WHOLESALE_IMAGE_ENTITY_ID } from "@/lib/portalImages";
+
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { ChecklistCard } from "@/components/checklist/ChecklistCard";
 import { useQuery } from "@tanstack/react-query";
