@@ -298,71 +298,112 @@ export function ImageLightbox({
     </>
   );
 
+  const captionEditedMeta = current?.caption_edited_at ? (
+    <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
+      <Pencil className="h-2.5 w-2.5 shrink-0" />
+      Redigerad av {current.caption_edited_by_name || "okänd"} ·{" "}
+      <span className="font-mono tabular-nums">
+        {new Date(current.caption_edited_at).toLocaleString("sv-SE", {
+          day: "2-digit",
+          month: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        })}
+      </span>
+    </p>
+  ) : null;
+
   const captionMeta = current && (
-    <>
-      {editable ? (
-        <div className="space-y-1">
-          <div className="flex items-center gap-1.5">
-            <Input
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              onBlur={saveCaption}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  saveCaption();
-                }
-              }}
-              placeholder="Bildtext…"
-              className={cn(isMobile ? "h-9 text-base" : "h-8 text-xs")}
-            />
+    <div className="space-y-1">
+      {editable && captionEditing ? (
+        <div className="space-y-1.5">
+          <Textarea
+            autoFocus
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                saveCaption();
+                setCaptionEditing(false);
+              } else if (e.key === "Escape") {
+                setCaption(current.caption || "");
+                setCaptionEditing(false);
+              }
+            }}
+            placeholder="Skriv en bildtext…"
+            rows={2}
+            className={cn(
+              "min-h-[56px] resize-none rounded-xl leading-snug",
+              isMobile ? "text-base" : "text-xs"
+            )}
+          />
+          <div className="flex items-center justify-end gap-1.5">
             <Button
               size="sm"
-              variant="outline"
-              className={cn("shrink-0 text-xs", isMobile ? "h-9" : "h-8")}
-              disabled={caption.trim() === (current.caption || "")}
-              onClick={saveCaption}
+              variant="ghost"
+              className={cn("text-xs", isMobile ? "h-9" : "h-7")}
+              onClick={() => {
+                setCaption(current.caption || "");
+                setCaptionEditing(false);
+              }}
             >
+              Avbryt
+            </Button>
+            <Button
+              size="sm"
+              className={cn("text-xs", isMobile ? "h-9" : "h-7")}
+              disabled={caption.trim() === (current.caption || "")}
+              onClick={() => {
+                saveCaption();
+                setCaptionEditing(false);
+              }}
+            >
+              <Check className="mr-1 h-3.5 w-3.5" />
               Spara
             </Button>
           </div>
-          {current.caption_edited_at && (
-            <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
-              <Pencil className="h-2.5 w-2.5" />
-              Redigerad av {current.caption_edited_by_name || "okänd"} ·{" "}
-              <span className="font-mono tabular-nums">
-                {new Date(current.caption_edited_at).toLocaleString("sv-SE", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </p>
-          )}
         </div>
       ) : (
-        <div className="space-y-1">
-          <p className={cn("text-muted-foreground", isMobile ? "text-sm text-foreground" : "text-xs")}>
-            {current.caption || "—"}
+        <div className="group flex items-start gap-1.5">
+          <p
+            className={cn(
+              "min-w-0 flex-1 whitespace-pre-wrap break-words leading-snug",
+              current.caption
+                ? isMobile
+                  ? "text-sm text-foreground"
+                  : "text-xs text-foreground"
+                : "text-xs italic text-muted-foreground"
+            )}
+          >
+            {current.uploaded_by_name && current.caption && (
+              <span className="mr-1.5 font-semibold">{current.uploaded_by_name}</span>
+            )}
+            {current.caption || (editable ? "Lägg till en bildtext…" : "—")}
           </p>
-          {current.caption_edited_at && (
-            <p className="text-[10px] text-muted-foreground">
-              Redigerad av {current.caption_edited_by_name || "okänd"} ·{" "}
-              <span className="font-mono tabular-nums">
-                {new Date(current.caption_edited_at).toLocaleString("sv-SE", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </p>
+          {editable && (
+            <Button
+              size="icon"
+              variant="ghost"
+              aria-label="Redigera bildtext"
+              onClick={() => {
+                setCaption(current.caption || "");
+                setCaptionEditing(true);
+              }}
+              className={cn(
+                "shrink-0 rounded-full text-muted-foreground transition-opacity hover:text-foreground",
+                isMobile ? "h-8 w-8" : "h-6 w-6 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+              )}
+            >
+              <Pencil className={isMobile ? "h-4 w-4" : "h-3 w-3"} />
+            </Button>
           )}
         </div>
       )}
-    </>
+      {captionEditedMeta}
+    </div>
   );
+
 
   const uploaderMeta = current && (
     <div className="flex items-center gap-2">
