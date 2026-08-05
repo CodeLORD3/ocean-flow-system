@@ -272,7 +272,7 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
       <CardContent
         className={cn(
           "grid gap-3 px-2 sm:px-6",
-          compact || isStore ? "grid-cols-1" : "md:grid-cols-[240px_1fr]"
+          compact || isStore ? "grid-cols-1" : "md:grid-cols-[240px_1fr] lg:grid-cols-[264px_1fr]"
         )}
       >
         {/* Conversation list */}
@@ -308,21 +308,24 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                       {initialsOf(title)}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-medium text-foreground truncate">{title}</span>
-                        <span className="flex items-center gap-1 shrink-0">
-                          {(unread.byConv[c.id] || 0) > 0 && !isActive && (
-                            <Badge variant="destructive" className="h-4 min-w-4 px-1 text-[9px] rounded-full">
-                              {unread.byConv[c.id]}
-                            </Badge>
-                          )}
-                          <span className="text-[9px] text-muted-foreground">{timeLabel(c.last_message_at)}</span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-xs font-medium text-foreground truncate flex-1 min-w-0">{title}</span>
+                        {(unread.byConv[c.id] || 0) > 0 && !isActive && (
+                          <Badge variant="destructive" className="h-4 min-w-4 px-1 text-[9px] rounded-full shrink-0">
+                            {unread.byConv[c.id]}
+                          </Badge>
+                        )}
+                      </span>
+                      <span className="flex items-center gap-2">
+                        <span className="block text-[10px] text-muted-foreground truncate flex-1 min-w-0">
+                          {c.lastMessage?.body || (c.lastMessage?.image_url ? "Bild" : "Inga meddelanden")}
+                        </span>
+                        <span className="text-[9px] text-muted-foreground shrink-0 font-mono tabular-nums">
+                          {timeLabel(c.last_message_at)}
                         </span>
                       </span>
-                      <span className="block text-[10px] text-muted-foreground truncate">
-                        {c.lastMessage?.body || (c.lastMessage?.image_url ? "Bild" : "Inga meddelanden")}
-                      </span>
                     </span>
+
                   </button>
                 );
               })
