@@ -47,7 +47,6 @@ export function StoreHero() {
   const [focalDraft, setFocalDraft] = useState<number | null>(null);
 
   if (site === "shop" && !activeStoreId) return null;
-  if (site === "production") return null;
 
   const store = isShop ? stores.find((s) => s.id === activeStoreId) : undefined;
   const cover = images.find((img) => img.is_cover) ?? images[0] ?? null;
@@ -65,9 +64,9 @@ export function StoreHero() {
 
   const heroTitle = isShop
     ? activeStoreName ?? store?.name ?? "Butik"
-    : isAdmin && !access.includes("wholesale")
-      ? "Admin"
-      : "Grossist";
+    : site === "production"
+      ? "Grossist"
+      : "Admin";
 
   const busy = upload.isPending || setCover.isPending || updateImage.isPending || deleteImage.isPending;
 
