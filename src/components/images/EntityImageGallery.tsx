@@ -298,12 +298,11 @@ export function EntityImageGallery({
                         className={cn(
                           "absolute top-1 right-1 flex h-8 w-8 items-center justify-center rounded-full border bg-background/90 backdrop-blur transition-opacity sm:h-6 sm:w-6",
                           img.is_featured
-
-                            ? "text-amber-500 border-amber-400"
-                            : "text-muted-foreground border-border opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                            ? "text-amber-500 border-amber-400 ring-2 ring-amber-400/40"
+                            : "text-muted-foreground border-border sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
                         )}
                       >
-                        <Star className={cn("h-3 w-3", img.is_featured && "fill-current")} />
+                        <Star className={cn("h-4 w-4 sm:h-3 sm:w-3", img.is_featured && "fill-current")} />
                       </button>
                     </TooltipTrigger>
                     <TooltipContent side="left" className="text-xs">
@@ -328,14 +327,16 @@ export function EntityImageGallery({
                         })
                       }
                       className={cn(
-                        "absolute top-1 right-1 h-6 w-6 rounded-full bg-background/80 backdrop-blur flex items-center justify-center border transition-opacity",
+                        "absolute top-1 flex h-8 w-8 items-center justify-center rounded-full border bg-background/85 backdrop-blur transition-opacity sm:h-6 sm:w-6",
+                        previewCount ? "right-10 sm:right-8" : "right-1",
                         img.is_cover
                           ? "text-primary border-primary"
-                          : "text-muted-foreground border-border opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                          : "text-muted-foreground border-border sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
                       )}
                     >
-                      <ImageIcon className="h-3 w-3" />
+                      <ImageIcon className="h-4 w-4 sm:h-3 sm:w-3" />
                     </button>
+
                   </TooltipTrigger>
                   <TooltipContent side="left" className="text-xs">
                     {img.is_cover ? "Omslagsbild – klicka för att ta bort" : "Sätt som omslagsbild"}
