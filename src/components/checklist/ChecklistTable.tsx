@@ -97,8 +97,11 @@ export function ChecklistTable({
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => window.print()}>
+          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => handlePrint(false)}>
             <Printer className="h-3.5 w-3.5 sm:mr-1.5" /> <span className="hidden sm:inline">Skriv ut</span>
+          </Button>
+          <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => handlePrint(true)}>
+            <FileText className="h-3.5 w-3.5 sm:mr-1.5" /> <span className="hidden sm:inline">Tom lista</span>
           </Button>
           {!locked && (
             <Button
