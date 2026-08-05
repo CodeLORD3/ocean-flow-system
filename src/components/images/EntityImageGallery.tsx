@@ -462,8 +462,8 @@ export function EntityImageGallery({
                 ? catalogButton(
                     view.mode === "featured",
                     "featured",
-                    "Utvalda",
-                    previewImages.length,
+                    `Utvalda · ${dayLabel(activeDay)}`,
+                    featuredForDay.length,
                     <Star className="h-3 w-3" />,
                     () => setView({ mode: "featured" })
                   )
@@ -476,7 +476,7 @@ export function EntityImageGallery({
                   dayLabel(key),
                   count,
                   undefined,
-                  () => setView({ mode: "day", key })
+                  () => selectDay(key)
                 )
               )}
               {dates.length === 0 && (
@@ -491,7 +491,7 @@ export function EntityImageGallery({
                   "Idag",
                   0,
                   undefined,
-                  () => setView({ mode: "day", key: dayKey(new Date().toISOString()) })
+                  () => selectDay(dayKey(new Date().toISOString()))
                 )}
               {dates.length > dateLimit && (
                 <Button
