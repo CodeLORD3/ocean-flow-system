@@ -206,7 +206,17 @@ export function EntityImageGallery({
           ? "Inga utvalda bilder ännu — välj vilka bilder som ska visas."
           : "Inga bilder ännu";
 
+  /** Snabbmarkering direkt på bilden: lägg till/ta bort ur utvalda (max previewCount). */
+  const toggleFeatured = (img: EntityImage) => {
+    const current = featured.map((i) => i.id);
+    const next = img.is_featured
+      ? current.filter((id) => id !== img.id)
+      : [...current, img.id].slice(previewCount ? -previewCount : undefined);
+    setFeatured.mutate({ entityType, entityId, imageIds: next });
+  };
+
   const grid = (
+
     <div className={cn("grid gap-2", columnsClassName)}>
       {shown.map((img) => {
         const isFav = favoriteIds.includes(img.id);
