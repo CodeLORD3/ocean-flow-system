@@ -11,6 +11,8 @@ import {
   Heart,
   CalendarDays,
   MessageSquare,
+  ListFilter,
+
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,6 +87,8 @@ export function EntityImageGallery({
   const [selectOpen, setSelectOpen] = useState(false);
   const [selection, setSelection] = useState<string[]>([]);
   const [dateLimit, setDateLimit] = useState(DATE_PAGE);
+  const [catalogOpen, setCatalogOpen] = useState(false);
+
   const [view, setView] = useState<View>(() =>
     catalog ? { mode: "day", key: dayKey(new Date().toISOString()) } : { mode: "featured" }
   );
@@ -343,6 +347,27 @@ export function EntityImageGallery({
           {description && <p className="text-xs text-muted-foreground">{description}</p>}
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
+          {catalog && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={catalogOpen ? "default" : "outline"}
+                  size="sm"
+                  className="h-7 gap-1 text-xs"
+                  aria-pressed={catalogOpen}
+                  aria-label={catalogOpen ? "Göm katalog" : "Visa katalog"}
+                  onClick={() => setCatalogOpen((v) => !v)}
+                >
+                  <ListFilter className="h-3 w-3" />
+                  Filter
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                {catalogOpen ? "Göm katalog" : "Visa katalog (datum & favoriter)"}
+              </TooltipContent>
+            </Tooltip>
+          )}
+
           {images.length > 0 && (
             <Badge variant="secondary" className="h-6 font-mono tabular-nums text-[10px]">
               {images.length} {images.length === 1 ? "bild" : "bilder"}
@@ -399,8 +424,9 @@ export function EntityImageGallery({
           <ImageIcon className="h-5 w-5 mx-auto text-muted-foreground/60" />
           <p className="mt-1 text-xs text-muted-foreground">Inga bilder ännu</p>
         </Card>
-      ) : catalog ? (
+      ) : catalog && catalogOpen ? (
         <div className="grid gap-2 sm:grid-cols-[150px_minmax(0,1fr)]">
+
           {/* Katalog */}
           <Card className="p-2 h-fit">
             <p className="mb-1.5 flex items-center gap-1 px-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -475,9 +501,15 @@ export function EntityImageGallery({
             )}
           </div>
         </div>
+      ) : shown.length === 0 ? (
+        <Card className="p-4 text-center border-dashed">
+          <ImageIcon className="h-5 w-5 mx-auto text-muted-foreground/60" />
+          <p className="mt-1 text-xs text-muted-foreground">{emptyText}</p>
+        </Card>
       ) : (
         grid
       )}
+
 
       <ImageLightbox
         images={shown}
