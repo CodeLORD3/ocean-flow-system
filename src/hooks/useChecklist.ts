@@ -24,6 +24,7 @@ export type ChecklistDay = {
   responsible_name: string | null;
   responsible_staff_id: string | null;
   status: string;
+  template_id?: string | null;
   completed_at: string | null;
   completed_by_name: string | null;
   page_comments?: Record<string, string> | null;
@@ -331,7 +332,7 @@ export function useChecklistReports() {
     queryFn: async () => {
       const { data: days, error } = await supabase
         .from("checklist_days")
-        .select("*, stores(name)")
+        .select("*, stores(name), checklist_templates(name)")
         .order("checklist_date", { ascending: false })
         .limit(200);
       if (error) throw error;
@@ -356,6 +357,7 @@ export function useChecklistReports() {
       return (days || []).map((d: any) => ({
         ...d,
         storeName: d.stores?.name ?? "Butik",
+        listName: d.checklist_templates?.name ?? "Daglig checklista",
         total: counts.get(d.id)?.total ?? 0,
         doneCount: counts.get(d.id)?.done ?? 0,
       }));
