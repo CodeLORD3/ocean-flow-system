@@ -141,13 +141,14 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
   const listHeight = compact
     ? "max-h-40 md:max-h-24"
     : isMobile
-      ? "h-[calc(100dvh-19rem)] min-h-[16rem]"
-      : "h-[calc(100dvh-13rem)] min-h-[520px]";
+      ? "h-[calc(100dvh-15rem)] min-h-[18rem]"
+      : "h-[calc(100dvh-10rem)] min-h-[600px]";
   const msgHeight = compact
-    ? "h-56"
+    ? "h-80"
     : isMobile
-      ? "h-[calc(100dvh-22rem)] min-h-[14rem]"
-      : "h-[calc(100dvh-16rem)] min-h-[440px]";
+      ? "h-[calc(100dvh-18rem)] min-h-[18rem]"
+      : "h-[calc(100dvh-13rem)] min-h-[560px]";
+
 
 
   return (
