@@ -80,6 +80,38 @@ export function ChecklistTable({
     });
   };
 
+  const handlePrint = (blank: boolean) => {
+    if (items.length === 0) {
+      toast.error("Checklistan innehåller inga uppgifter att skriva ut.");
+      return;
+    }
+    try {
+      generateChecklistPdf({
+        storeName: storeName || (day as any).storeName || null,
+        date: day.checklist_date,
+        weekday: weekdayName(day.checklist_date),
+        shift: day.shift,
+        responsible: day.responsible_name,
+        status: day.status,
+        blank,
+        items: items.map((i) => ({
+          section: i.section,
+          time_label: i.time_label,
+          category: i.category,
+          task: i.task,
+          done: i.done,
+          signature: i.signature,
+          note: noteDrafts[i.id] ?? i.note,
+        })),
+      });
+      toast.success(blank ? "Tom checklista skapad." : "Checklista-PDF skapad.");
+    } catch (e: any) {
+      toast.error(e?.message || "Kunde inte skapa PDF.");
+    }
+  };
+
+
+
   return (
     <div className="space-y-3 sm:space-y-4">
       {/* Header */}
