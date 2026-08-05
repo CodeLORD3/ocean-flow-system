@@ -168,7 +168,7 @@ export function EntityImageGallery({
         });
       }
       toast({ title: "Bild uppladdad", description: `${files.length} bild(er) sparade.` });
-      if (catalog) setView({ mode: "day", key: dayKey(new Date().toISOString()) });
+      if (catalog) selectDay(dayKey(new Date().toISOString()));
     } catch (e: any) {
       toast({ title: "Kunde inte ladda upp", description: e.message, variant: "destructive" });
     } finally {
