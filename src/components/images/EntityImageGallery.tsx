@@ -95,9 +95,8 @@ export function EntityImageGallery({
     setView({ mode: "day", key });
   };
 
-  const [view, setView] = useState<View>(() =>
-    catalog ? { mode: "day", key: dayKey(new Date().toISOString()) } : { mode: "featured" }
-  );
+  const [view, setView] = useState<View>({ mode: "featured" });
+
   const { data: images = [], isLoading } = useEntityImages(entityType, entityId);
   const { data: favoriteIds = [] } = useMyImageFavorites();
   const upload = useUploadEntityImage();
