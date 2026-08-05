@@ -275,10 +275,9 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                   const prev = i > 0 ? messages[i - 1] : null;
                   // WhatsApp-stil: rubrik bara på första meddelandet i en följd från samma avsändare
                   const showHeader =
-                    !mine &&
-                    (!prev ||
-                      prev.sender_portal_key !== m.sender_portal_key ||
-                      (prev.sender_name || "") !== (m.sender_name || ""));
+                    !prev ||
+                    prev.sender_portal_key !== m.sender_portal_key ||
+                    (prev.sender_name || "") !== (m.sender_name || "");
                   return (
                     <div
                       key={m.id}
@@ -293,10 +292,16 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                         )}
                       >
                         {showHeader && (
-                          <span className="mr-1.5 text-[9px] font-semibold text-primary">
+                          <span
+                            className={cn(
+                              "block text-[9px] font-semibold",
+                              mine ? "text-primary-foreground/80" : "text-primary"
+                            )}
+                          >
                             {m.sender_name ? `${m.sender_name} (${m.sender_portal_name})` : m.sender_portal_name}
                           </span>
                         )}
+
 
                         {m.body && (
                           <span className="whitespace-pre-wrap break-words">{m.body}</span>
