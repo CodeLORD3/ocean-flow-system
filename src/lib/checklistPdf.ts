@@ -82,30 +82,22 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
   });
 
   // ── Tabell ────────────────────────────────────────────────────────────────
-  // Samma sidindelning som i plattformen: PAGE_ITEMS uppgifter per sida.
-  const PAGE_ITEMS = opts.pageSize || 20;
   type Row = { section?: string; item?: ChecklistPdfItem };
-  const chunks: Row[][] = [];
-  for (let i = 0; i < opts.items.length; i += PAGE_ITEMS) {
-    const slice = opts.items.slice(i, i + PAGE_ITEMS);
-    const rows: Row[] = [];
-    let lastSection: string | null = null;
-    slice.forEach((item) => {
-      const sec = s2(item.section) || "Övrigt";
-      if (sec !== lastSection) {
-        rows.push({ section: sec });
-        lastSection = sec;
-      }
-      rows.push({ item });
-    });
-    chunks.push(rows);
-  }
-  if (chunks.length === 0) chunks.push([]);
+  const rows: Row[] = [];
+  let lastSection: string | null = null;
+  opts.items.forEach((item) => {
+    const sec = s2(item.section) || "Övrigt";
+    if (sec !== lastSection) {
+      rows.push({ section: sec });
+      lastSection = sec;
+    }
+    rows.push({ item });
+  });
 
   const ROW_H = 9.5;
   const SECTION_H = 8;
 
-  const toBody = (rows: Row[]): any[][] => rows.map((r) => {
+  const body: any[][] = rows.map((r) => {
     if (r.section) {
       return [
         {
@@ -134,11 +126,9 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
     ];
   });
 
-  chunks.forEach((rows, ci) => {
   autoTable(doc, {
-    startY: ci === 0 ? boxY + boxH + 6 : margin + 6,
-    pageBreak: ci === 0 ? "auto" : "always",
-    body: toBody(rows),
+    startY: boxY + boxH + 6,
+    body,
     head: [["TID", "KATEGORI", "UPPGIFT", "KLAR", "KOMMENTAR / AVVIKELSE", "SIGN"]],
     theme: "grid",
     styles: {
@@ -209,7 +199,6 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
         doc.line(x + size / 2 - 0.15, y + size - 0.8, x + size - 0.6, y + 0.7);
       }
     },
-  });
   });
 
   // ── Signaturfält ──────────────────────────────────────────────────────────
