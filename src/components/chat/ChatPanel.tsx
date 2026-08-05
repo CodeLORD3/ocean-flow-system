@@ -134,16 +134,18 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
 
   const handleSend = async (file?: File | null) => {
     if (!activeConv) return;
-    if (!text.trim() && !file) return;
+    const body = text;
+    if (!body.trim() && !file) return;
+    // Töm fältet direkt så det känns snabbt och tangentbordet stannar kvar
+    setText("");
+    if (textRef.current) {
+      textRef.current.style.height = "auto";
+      textRef.current.focus();
+    }
     try {
-      await send.mutateAsync({ conversationId: activeConv.id, body: text, file });
-      setText("");
-      if (textRef.current) {
-        textRef.current.style.height = "auto";
-        textRef.current.focus();
-      }
-
+      await send.mutateAsync({ conversationId: activeConv.id, body, file });
     } catch (e: any) {
+      setText(body);
       toast({ title: "Kunde inte skicka", description: e.message, variant: "destructive" });
     }
   };
@@ -385,7 +387,7 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                 enterKeyHint="send"
                 autoCapitalize="sentences"
                 placeholder={activeConv ? "Skriv meddelande..." : "Välj en chatt först"}
-                disabled={!activeConv || send.isPending}
+                disabled={!activeConv}
                 /* 16px på mobil hindrar iOS från att zooma in vid fokus */
                 className="flex-1 min-h-9 max-h-[120px] resize-none overflow-y-auto rounded-2xl border border-input bg-background px-3 py-2 text-base sm:text-xs leading-snug placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50"
               />

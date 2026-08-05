@@ -50,6 +50,7 @@ export function ImageLightbox({
   const [editDraft, setEditDraft] = useState("");
   const [commentsOpen, setCommentsOpen] = useState(false);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const draftRef = useRef<HTMLInputElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const scrollTimer = useRef<number | null>(null);
   const { staff } = useStaffAuth();
@@ -135,6 +136,7 @@ export function ImageLightbox({
     const v = draft.trim();
     if (!v || !current) return;
     setDraft("");
+    draftRef.current?.focus();
     await addComment.mutateAsync({ imageId: current.id, body: v });
   };
 
@@ -267,6 +269,7 @@ export function ImageLightbox({
       </div>
       <div className="border-t p-2 flex items-center gap-1.5">
         <Input
+          ref={draftRef}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
@@ -275,6 +278,8 @@ export function ImageLightbox({
               void send();
             }
           }}
+          enterKeyHint="send"
+          autoComplete="off"
           placeholder="Skriv en kommentar…"
           className={cn("h-9", isMobile ? "text-base" : "h-8 text-xs")}
         />
@@ -283,11 +288,13 @@ export function ImageLightbox({
           className={cn("shrink-0", isMobile ? "h-9 w-9" : "h-8 w-8")}
           aria-label="Skicka kommentar"
           disabled={!draft.trim() || addComment.isPending}
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => void send()}
         >
           <Send className="h-3.5 w-3.5" />
         </Button>
       </div>
+
     </>
   );
 
