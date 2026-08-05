@@ -49,3 +49,17 @@ export function canChatWith(mine: PortalProfile, other: PortalProfile) {
   if (mine.kind === "admin") return other.kind === "grossist" || other.kind === "store";
   return false;
 }
+
+/** Härleder portaltyp ur en portalnyckel. */
+export function portalKindFromKey(key: string): PortalKind {
+  if (key === "admin") return "admin";
+  if (key === "grossist") return "grossist";
+  return "store";
+}
+
+/** Får den egna portalen se en chatt med dessa deltagare? */
+export function isAllowedConversation(mine: PortalProfile, participantKeys: string[]) {
+  return participantKeys
+    .filter((k) => k !== mine.key)
+    .every((k) => canChatWith(mine, { key: k, name: k, kind: portalKindFromKey(k) }));
+}

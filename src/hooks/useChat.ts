@@ -10,6 +10,7 @@ import {
   currentPortalProfile,
   storePortalKey,
   canChatWith,
+  isAllowedConversation,
 } from "@/lib/portalProfiles";
 
 export type ChatMessage = {
@@ -74,6 +75,7 @@ export function useCurrentPortal(): PortalProfile | null {
 }
 
 export function useChatConversations(portalKey?: string | null) {
+  const portal = useCurrentPortal();
   return useQuery({
     queryKey: ["chat-conversations", portalKey],
     queryFn: async () => {
@@ -108,11 +110,17 @@ export function useChatConversations(portalKey?: string | null) {
         if (!lastByConv.has(m.conversation_id)) lastByConv.set(m.conversation_id, m as ChatMessage);
       });
 
-      return (convs || []).map((c: any) => ({
+      const mapped = (convs || []).map((c: any) => ({
         ...c,
         participants: (parts || []).filter((p: any) => p.conversation_id === c.id) as ChatParticipant[],
         lastMessage: lastByConv.get(c.id) ?? null,
       })) as ChatConversation[];
+
+      // Visa bara chattar som den egna portalen faktiskt får kommunicera i
+      if (!portal) return mapped;
+      return mapped.filter((c) =>
+        isAllowedConversation(portal, c.participants.map((p) => p.portal_key))
+      );
     },
     enabled: !!portalKey,
     refetchInterval: 8000,
@@ -279,6 +287,18 @@ export function useChatUnread() {
       const ids = (mine || []).map((r: any) => r.conversation_id);
       if (ids.length === 0) return { total: 0, byConv: {} as Record<string, number> };
 
+      const { data: allParts } = await supabase
+        .from("chat_participants")
+        .select("conversation_id, portal_key")
+        .in("conversation_id", ids);
+      const keysByConv = new Map<string, string[]>();
+      (allParts || []).forEach((p: any) => {
+        keysByConv.set(p.conversation_id, [...(keysByConv.get(p.conversation_id) || []), p.portal_key]);
+      });
+      const allowedIds = new Set(
+        ids.filter((id: string) => isAllowedConversation(portal!, keysByConv.get(id) || []))
+      );
+
       const [{ data: reads, error: rErr }, { data: msgs, error: mErr }] = await Promise.all([
         supabase.from("chat_reads").select("conversation_id, last_read_at").eq("portal_key", portal!.key),
         supabase
@@ -294,6 +314,7 @@ export function useChatUnread() {
 
       const byConv: Record<string, number> = {};
       (msgs || []).forEach((m: any) => {
+        if (!allowedIds.has(m.conversation_id)) return;
         if (m.sender_portal_key === portal!.key) return;
         const last = readAt.get(m.conversation_id);
         if (last && new Date(m.created_at) <= new Date(last)) return;
