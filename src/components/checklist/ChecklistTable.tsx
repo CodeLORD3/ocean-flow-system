@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Printer, CheckCheck, ChevronLeft, ChevronRight, ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Printer, FileText, CheckCheck, ChevronLeft, ChevronRight, ArrowRight, CheckCircle2 } from "lucide-react";
+import { generateChecklistPdf } from "@/lib/checklistPdf";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
