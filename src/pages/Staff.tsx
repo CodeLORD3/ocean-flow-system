@@ -25,7 +25,9 @@ import { useSite } from "@/contexts/SiteContext";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { StaffDetailDialog } from "@/components/staff/StaffDetailDialog";
-import { Activity } from "lucide-react";
+import { StaffAccessDialog, PORTAL_OPTIONS } from "@/components/staff/StaffAccessDialog";
+import { Badge } from "@/components/ui/badge";
+import { Activity, ShieldCheck } from "lucide-react";
 
 const ACTIVITY_VIEWER_EMAILS = [
   "joakim@fiskskaldjur.ch",
@@ -56,7 +58,11 @@ export default function Staff() {
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [detailStaff, setDetailStaff] = useState<any | null>(null);
+  const [accessStaff, setAccessStaff] = useState<any | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+
+  const canManageAccess = (currentStaff?.portal_access ?? []).includes("admin");
+
 
   const emptyForm = {
     first_name: "", last_name: "", age: "", phone: "", email: "", workplace: "", store_id: "", profile_image_url: "",
@@ -211,6 +217,17 @@ export default function Staff() {
                         <Activity className="h-3.5 w-3.5 text-primary" />
                       </Button>
                     )}
+                    {canManageAccess && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        title="Behörigheter"
+                        onClick={(e) => { e.stopPropagation(); setAccessStaff(s); }}
+                      >
+                        <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                      </Button>
+                    )}
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openEdit(s); }}>
                       <Edit className="h-3.5 w-3.5 text-muted-foreground" />
                     </Button>
@@ -224,7 +241,30 @@ export default function Staff() {
                   {s.stores?.name && <div className="flex items-center gap-1.5 text-muted-foreground"><span className="text-[10px]">🏪 {s.stores.name}</span></div>}
                   {s.phone && <div className="flex items-center gap-1.5 text-muted-foreground"><Phone className="h-3 w-3 shrink-0 text-primary/60" /><span className="text-[10px]">{s.phone}</span></div>}
                   {s.email && <div className="flex items-center gap-1.5 text-muted-foreground"><Mail className="h-3 w-3 shrink-0 text-primary/60" /><span className="text-[10px]">{s.email}</span></div>}
+                  {canManageAccess && (
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {(s.portal_access ?? []).includes("admin") ? (
+                        <Badge variant="secondary" className="text-[9px] px-1.5 py-0">Full admin</Badge>
+                      ) : (s.portal_access ?? []).length === 0 ? (
+                        <Badge variant="outline" className="text-[9px] px-1.5 py-0">Ingen portalåtkomst</Badge>
+                      ) : (
+                        (s.portal_access as string[]).map((p) => (
+                          <Badge key={p} variant="secondary" className="text-[9px] px-1.5 py-0">
+                            {PORTAL_OPTIONS.find((o) => o.key === p)?.label ?? p}
+                          </Badge>
+                        ))
+                      )}
+                      {(s.portal_access ?? []).includes("shop") && !(s.portal_access ?? []).includes("admin") && (
+                        <Badge variant="outline" className="text-[9px] px-1.5 py-0">
+                          {((s.allowed_store_ids ?? []).length === 0 && !s.allowed_store_id)
+                            ? "Alla butiker"
+                            : `${new Set([...(s.allowed_store_ids ?? []), ...(s.allowed_store_id ? [s.allowed_store_id] : [])]).size} butiker`}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
                 </div>
+
               </CardContent>
             </Card>
           ))}
@@ -334,6 +374,14 @@ export default function Staff() {
         onOpenChange={(open) => !open && setDetailStaff(null)}
         staff={detailStaff}
       />
+
+      {/* Portal permissions dialog */}
+      <StaffAccessDialog
+        open={!!accessStaff}
+        onOpenChange={(open) => !open && setAccessStaff(null)}
+        staff={accessStaff}
+      />
     </motion.div>
+
   );
 }
