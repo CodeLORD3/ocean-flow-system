@@ -61,7 +61,10 @@ export default function Staff() {
   const [accessStaff, setAccessStaff] = useState<any | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
-  const canManageAccess = (currentStaff?.portal_access ?? []).includes("admin");
+  // Administrationsportalen = "wholesale"; "admin" = full super-admin
+  const canManageAccess = ((currentStaff?.portal_access ?? []) as string[]).some(
+    (p) => p === "admin" || p === "wholesale"
+  );
 
 
   const emptyForm = {
