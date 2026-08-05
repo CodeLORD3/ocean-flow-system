@@ -197,7 +197,7 @@ function ChecklistReportDetail({ dayId, onBack }: { dayId: string; onBack: () =>
       readOnly
       onBack={onBack}
       storeName={day.storeName}
-      title={`${day.storeName} – ${weekdayName(day.checklist_date)} ${day.checklist_date}`}
+      title={`${day.storeName} · ${day.listName ?? "Checklista"} – ${weekdayName(day.checklist_date)} ${day.checklist_date}`}
     />
   );
 }
@@ -235,6 +235,7 @@ function ChecklistReports() {
                   <th className="text-left font-semibold py-2">Datum</th>
                   <th className="text-left font-semibold py-2 hidden md:table-cell">Veckodag</th>
                   <th className="text-left font-semibold py-2">Butik</th>
+                  <th className="text-left font-semibold py-2 hidden sm:table-cell">Checklista</th>
                   <th className="text-left font-semibold py-2 hidden md:table-cell">Ansvarig</th>
                   <th className="text-center font-semibold py-2 w-14">Klara</th>
                   <th className="text-left font-semibold py-2 hidden sm:table-cell">Status</th>
@@ -247,6 +248,7 @@ function ChecklistReports() {
                     <td className="py-2 font-mono tabular-nums text-[11px] sm:text-xs">{r.checklist_date}</td>
                     <td className="py-2 text-xs text-muted-foreground hidden md:table-cell">{weekdayName(r.checklist_date)}</td>
                     <td className="py-2 text-xs sm:text-sm truncate pr-2">{r.storeName}</td>
+                    <td className="py-2 text-xs text-muted-foreground truncate pr-2 hidden sm:table-cell">{r.listName}</td>
                     <td className="py-2 text-xs text-muted-foreground hidden md:table-cell">{r.responsible_name || "–"}</td>
                     <td className="py-2 text-center font-mono tabular-nums text-[11px] sm:text-xs">
                       {r.doneCount}/{r.total}
