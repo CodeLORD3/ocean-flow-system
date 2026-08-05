@@ -9,6 +9,7 @@ import {
   PortalProfile,
   currentPortalProfile,
   storePortalKey,
+  canChatWith,
 } from "@/lib/portalProfiles";
 
 export type ChatMessage = {
@@ -56,6 +57,14 @@ export function usePortalProfiles(): PortalProfile[] {
       storeId: s.id,
     })),
   ];
+}
+
+/** Portaler som den aktiva portalen får chatta med enligt behörighetsreglerna. */
+export function useAllowedChatTargets(): PortalProfile[] {
+  const profiles = usePortalProfiles();
+  const portal = useCurrentPortal();
+  if (!portal) return [];
+  return profiles.filter((p) => canChatWith(portal, p));
 }
 
 /** Aktuell portal som chattidentitet. */
@@ -127,6 +136,36 @@ export function useChatMessages(conversationId?: string | null) {
   });
 }
 
+async function findOrCreateConversation(participants: PortalProfile[], staffId: string | null, title?: string) {
+  const keys = [...new Set(participants.map((p) => p.key))].sort();
+  if (keys.length < 2) throw new Error("En chatt behöver minst två portaler.");
+
+  const { data: existingParts, error: exErr } = await supabase
+    .from("chat_participants")
+    .select("conversation_id, portal_key");
+  if (exErr) throw exErr;
+  const byConv = new Map<string, string[]>();
+  (existingParts || []).forEach((p: any) => {
+    byConv.set(p.conversation_id, [...(byConv.get(p.conversation_id) || []), p.portal_key]);
+  });
+  for (const [convId, convKeys] of byConv) {
+    const sorted = [...new Set(convKeys)].sort();
+    if (sorted.length === keys.length && sorted.every((k, i) => k === keys[i])) return convId;
+  }
+
+  const { data: conv, error } = await supabase
+    .from("chat_conversations")
+    .insert({ title: title || null, created_by_staff_id: staffId })
+    .select("id")
+    .single();
+  if (error) throw error;
+  const { error: pErr } = await supabase.from("chat_participants").insert(
+    participants.map((p) => ({ conversation_id: conv.id, portal_key: p.key, portal_name: p.name }))
+  );
+  if (pErr) throw pErr;
+  return conv.id as string;
+}
+
 /** Skapar (eller återanvänder) en chatt mellan de valda portalerna. */
 export function useCreateConversation() {
   const qc = useQueryClient();
@@ -176,10 +215,12 @@ export function useSendChatMessage() {
       conversationId,
       body,
       file,
+      important,
     }: {
       conversationId: string;
       body?: string;
       file?: File | null;
+      important?: boolean;
     }) => {
       if (!portal) throw new Error("Ingen aktiv portal.");
       let imageUrl: string | null = null;
@@ -200,6 +241,7 @@ export function useSendChatMessage() {
         sender_name: staff ? `${staff.first_name} ${staff.last_name}` : null,
         body: body?.trim() || null,
         image_url: imageUrl,
+        is_important: !!important,
       });
       if (error) throw error;
 
@@ -282,5 +324,47 @@ export function useMarkConversationRead() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["chat-unread"] }),
+  });
+}
+
+/** Admin: skickar ett specialmeddelande (viktigt) till alla butiker. */
+export function useBroadcastImportant() {
+  const qc = useQueryClient();
+  const { staff } = useStaffAuth();
+  const portal = useCurrentPortal();
+  const profiles = usePortalProfiles();
+  return useMutation({
+    mutationFn: async ({ body, storeKeys }: { body: string; storeKeys?: string[] }) => {
+      if (!portal) throw new Error("Ingen aktiv portal.");
+      if (!body.trim()) throw new Error("Meddelandet är tomt.");
+      const targets = profiles.filter(
+        (p) => p.kind === "store" && (!storeKeys?.length || storeKeys.includes(p.key))
+      );
+      if (targets.length === 0) throw new Error("Inga butiker att skicka till.");
+
+      for (const target of targets) {
+        const convId = await findOrCreateConversation([portal, target], staff?.id ?? null);
+        const { error } = await supabase.from("chat_messages").insert({
+          conversation_id: convId,
+          sender_portal_key: portal.key,
+          sender_portal_name: portal.name,
+          sender_staff_id: staff?.id ?? null,
+          sender_name: staff ? `${staff.first_name} ${staff.last_name}` : null,
+          body: body.trim(),
+          is_important: true,
+        });
+        if (error) throw error;
+        await supabase
+          .from("chat_conversations")
+          .update({ last_message_at: new Date().toISOString() })
+          .eq("id", convId);
+      }
+      return targets.length;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["chat-conversations"] });
+      qc.invalidateQueries({ queryKey: ["chat-messages"] });
+      qc.invalidateQueries({ queryKey: ["chat-unread"] });
+    },
   });
 }
