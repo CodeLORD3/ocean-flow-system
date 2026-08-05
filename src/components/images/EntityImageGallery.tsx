@@ -89,6 +89,12 @@ export function EntityImageGallery({
   const [dateLimit, setDateLimit] = useState(DATE_PAGE);
   const [catalogOpen, setCatalogOpen] = useState(false);
 
+  const [lastDay, setLastDay] = useState(() => dayKey(new Date().toISOString()));
+  const selectDay = (key: string) => {
+    setLastDay(key);
+    setView({ mode: "day", key });
+  };
+
   const [view, setView] = useState<View>(() =>
     catalog ? { mode: "day", key: dayKey(new Date().toISOString()) } : { mode: "featured" }
   );
@@ -118,12 +124,22 @@ export function EntityImageGallery({
     ? (featured.length ? featured : images).slice(0, previewCount)
     : images;
 
+  /** Aktivt datum i katalogen — styr både dagsvyn och "Utvalda". */
+  const activeDay = view.mode === "day" ? view.key : lastDay;
+
+  /** Utvalda bilder för det aktiva datumet. */
+  const featuredForDay = useMemo(
+    () => images.filter((i) => i.is_featured && dayKey(i.created_at) === activeDay),
+    [images, activeDay]
+  );
+
   const shown: EntityImage[] = useMemo(() => {
     if (!catalog) return previewImages;
     if (view.mode === "favorites") return favorites;
-    if (view.mode === "featured") return previewImages;
+    if (view.mode === "featured") return featuredForDay;
     return images.filter((i) => dayKey(i.created_at) === view.key);
-  }, [catalog, view, images, favorites, previewImages]);
+  }, [catalog, view, images, favorites, previewImages, featuredForDay]);
+
 
   const lightboxIndex = lightboxId ? shown.findIndex((i) => i.id === lightboxId) : -1;
 
@@ -152,7 +168,7 @@ export function EntityImageGallery({
         });
       }
       toast({ title: "Bild uppladdad", description: `${files.length} bild(er) sparade.` });
-      if (catalog) setView({ mode: "day", key: dayKey(new Date().toISOString()) });
+      if (catalog) selectDay(dayKey(new Date().toISOString()));
     } catch (e: any) {
       toast({ title: "Kunde inte ladda upp", description: e.message, variant: "destructive" });
     } finally {
@@ -192,7 +208,9 @@ export function EntityImageGallery({
       ? "Inga favoriter ännu — tryck på hjärtat på en bild."
       : catalog && view.mode === "day"
         ? "Inga bilder detta datum."
-        : "Inga bilder ännu";
+        : catalog && view.mode === "featured"
+          ? `Inga utvalda bilder för ${dayLabel(activeDay)}.`
+          : "Inga bilder ännu";
 
   const grid = (
     <div className={cn("grid gap-2", columnsClassName)}>
@@ -446,8 +464,8 @@ export function EntityImageGallery({
                 ? catalogButton(
                     view.mode === "featured",
                     "featured",
-                    "Utvalda",
-                    previewImages.length,
+                    `Utvalda · ${dayLabel(activeDay)}`,
+                    featuredForDay.length,
                     <Star className="h-3 w-3" />,
                     () => setView({ mode: "featured" })
                   )
@@ -460,7 +478,7 @@ export function EntityImageGallery({
                   dayLabel(key),
                   count,
                   undefined,
-                  () => setView({ mode: "day", key })
+                  () => selectDay(key)
                 )
               )}
               {dates.length === 0 && (
@@ -475,7 +493,7 @@ export function EntityImageGallery({
                   "Idag",
                   0,
                   undefined,
-                  () => setView({ mode: "day", key: dayKey(new Date().toISOString()) })
+                  () => selectDay(dayKey(new Date().toISOString()))
                 )}
               {dates.length > dateLimit && (
                 <Button
