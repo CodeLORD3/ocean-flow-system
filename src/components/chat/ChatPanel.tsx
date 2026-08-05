@@ -95,9 +95,13 @@ type Props = {
   compact?: boolean;
   className?: string;
   onOpenFull?: () => void;
+  /** Öppna chatten med denna portal (t.ex. "store:<id>") */
+  focusPortalKey?: string | null;
+  /** Ändra värdet för att tvinga fram fokus igen på samma portal */
+  focusNonce?: number;
 };
 
-export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
+export function ChatPanel({ compact = false, className, onOpenFull, focusPortalKey, focusNonce }: Props) {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const portal = useCurrentPortal();
@@ -127,6 +131,20 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
   const activeConv: ChatConversation | undefined =
     conversations.find((c) => c.id === activeId) ??
     (isStore || !isMobile ? conversations[0] : undefined);
+
+  // Fokusera chatten med en viss portal (t.ex. när grossisten klickar på en butik)
+  useEffect(() => {
+    if (!focusPortalKey) return;
+    const match = conversations.find(
+      (c) => c.participants.length === 2 && c.participants.some((p) => p.portal_key === focusPortalKey)
+    );
+    if (match) {
+      setActiveId(match.id);
+      setMobileThread(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusPortalKey, focusNonce, conversations.length]);
+
 
   // Se till att det finns en färdig 1:1-chatt med varje tillåten motpart
   const ensuring = useRef(false);

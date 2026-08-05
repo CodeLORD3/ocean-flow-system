@@ -10,6 +10,8 @@ import {
   BarChart3,
   ArrowUpRight,
   ArrowDownRight,
+  MessageSquare,
+  Lightbulb,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useProducts } from "@/hooks/useProducts";
@@ -25,6 +27,9 @@ import { EntityImageGallery } from "@/components/images/EntityImageGallery";
 import { PORTAL_IMAGE_ENTITY_TYPE, WHOLESALE_IMAGE_ENTITY_ID } from "@/lib/portalImages";
 
 import { ChatPanel } from "@/components/chat/ChatPanel";
+import { ActivityIcon } from "@/components/dashboard/ActivityIcon";
+import { useStoreActivity } from "@/hooks/useStoreActivity";
+import { useState } from "react";
 import { ChecklistCard } from "@/components/checklist/ChecklistCard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -102,6 +107,8 @@ export default function OrganisationOverview() {
   const { data: allCustomers = [] } = useCustomers();
   const { data: suppliers = [] } = useSuppliers();
   const covers = useStoreCoverImages();
+  const activity = useStoreActivity();
+  const [chatFocus, setChatFocus] = useState<{ key: string; nonce: number } | null>(null);
 
   // Storage locations for the active store (shop scope)
   const { data: shopLocations = [] } = useQuery({
@@ -356,7 +363,12 @@ export default function OrganisationOverview() {
             catalog
           />
 
-          <ChatPanel compact onOpenFull={() => switchTab("/chat")} />
+          <ChatPanel
+            compact
+            onOpenFull={() => switchTab("/chat")}
+            focusPortalKey={chatFocus?.key ?? null}
+            focusNonce={chatFocus?.nonce}
+          />
 
 
           {stores.length > 0 && (
@@ -367,30 +379,57 @@ export default function OrganisationOverview() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {stores.map((store) => (
-                    <div key={store.id} className="flex items-center gap-3 py-1.5 border-b border-border/30 last:border-0">
-                      <div className="h-11 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
-                        <img
-                          src={covers[store.id]?.url || store.logo_url || storeHero}
-                          alt={`Butiksbild för ${store.name}`}
-                          loading="lazy"
-                          width={320}
-                          height={220}
-                          className="h-full w-full object-cover"
-                          style={focalStyle(covers[store.id]?.focal_point)}
-                        />
+                <div className="grid grid-cols-1 gap-1">
+                  {stores.map((store) => {
+                    const act = activity.get(store.id);
+                    return (
+                      <div key={store.id} className="flex items-center gap-3 py-1.5 border-b border-border/30 last:border-0">
+                        <div className="h-11 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
+                          <img
+                            src={covers[store.id]?.url || store.logo_url || storeHero}
+                            alt={`Butiksbild för ${store.name}`}
+                            loading="lazy"
+                            width={320}
+                            height={220}
+                            className="h-full w-full object-cover"
+                            style={focalStyle(covers[store.id]?.focal_point)}
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-medium text-foreground truncate">{store.name}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{store.city}</p>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-0.5">
+                          <ActivityIcon
+                            icon={MessageSquare}
+                            count={act.messages}
+                            label={`Nya meddelanden från ${store.name}`}
+                            onClick={() =>
+                              setChatFocus({ key: `store:${store.id}`, nonce: Date.now() })
+                            }
+                          />
+                          <ActivityIcon
+                            icon={ShoppingCart}
+                            count={act.orders}
+                            label={`Nya ordrar från ${store.name}`}
+                            onClick={() => switchTab("/orders")}
+                          />
+                          <ActivityIcon
+                            icon={Lightbulb}
+                            count={act.wishes}
+                            label={`Öppna önskemål från ${store.name}`}
+                            onClick={() => switchTab("/wishes")}
+                          />
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-foreground truncate">{store.name}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{store.city}</p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
           )}
+
+
         </div>
       )}
 
