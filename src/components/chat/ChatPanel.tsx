@@ -382,8 +382,19 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                         </div>
                       )}
                     <div
-                      className={cn("flex", mine ? "justify-end" : "justify-start", showHeader && i > 0 && !showDay && "mt-2")}
+                      className={cn("group flex items-center gap-1", mine ? "justify-end" : "justify-start", showHeader && i > 0 && !showDay && "mt-2")}
                     >
+                      {canForward && mine && (
+                        <button
+                          type="button"
+                          aria-label="Vidarebefordra meddelande"
+                          title="Vidarebefordra till annan butik"
+                          onClick={() => openForward(m)}
+                          className="shrink-0 rounded-full p-1 text-muted-foreground opacity-60 hover:opacity-100 hover:text-foreground md:opacity-0 md:group-hover:opacity-100"
+                        >
+                          <Forward className="h-3.5 w-3.5" />
+                        </button>
+                      )}
 
                       <div
                         className={cn(
@@ -412,8 +423,21 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                             <AlertTriangle className="h-3 w-3" /> Specialmeddelande
                           </span>
                         )}
-                        {m.body && (
-                          <span className="whitespace-pre-wrap break-words">{m.body}</span>
+                        {fwd && (
+                          <span
+                            className={cn(
+                              "mb-0.5 flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[9px] font-semibold",
+                              mine
+                                ? "bg-primary-foreground/15 text-primary-foreground/90"
+                                : "bg-background/70 text-primary"
+                            )}
+                          >
+                            <Forward className="h-3 w-3 shrink-0" />
+                            Vidarebefordrat · från {fwd.from}
+                          </span>
+                        )}
+                        {bodyText && (
+                          <span className="whitespace-pre-wrap break-words">{bodyText}</span>
                         )}
                         {m.image_url && (
                           <a href={m.image_url} target="_blank" rel="noreferrer">
@@ -435,7 +459,20 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                         </span>
 
                       </div>
+
+                      {canForward && !mine && (
+                        <button
+                          type="button"
+                          aria-label="Vidarebefordra meddelande"
+                          title="Vidarebefordra till annan butik"
+                          onClick={() => openForward(m)}
+                          className="shrink-0 rounded-full p-1 text-muted-foreground opacity-60 hover:opacity-100 hover:text-foreground md:opacity-0 md:group-hover:opacity-100"
+                        >
+                          <Forward className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </div>
+
                     </Fragment>
                   );
 
