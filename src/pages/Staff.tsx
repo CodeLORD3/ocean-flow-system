@@ -58,7 +58,11 @@ export default function Staff() {
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [detailStaff, setDetailStaff] = useState<any | null>(null);
+  const [accessStaff, setAccessStaff] = useState<any | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+
+  const canManageAccess = (currentStaff?.portal_access ?? []).includes("admin");
+
 
   const emptyForm = {
     first_name: "", last_name: "", age: "", phone: "", email: "", workplace: "", store_id: "", profile_image_url: "",
