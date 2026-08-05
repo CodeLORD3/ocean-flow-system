@@ -17,6 +17,7 @@ import {
   useMarkAllChecklistItems,
   useSetChecklistNote,
   useSignatureRequests,
+  useSetChecklistPageComment,
   useToggleChecklistItem,
   useSetChecklistItemTime,
   useAddChecklistItem,
@@ -55,6 +56,7 @@ export function ChecklistTable({
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
   const [timeDrafts, setTimeDrafts] = useState<Record<string, string>>({});
   const [addSection, setAddSection] = useState<string | null>(null);
+  const [pageCommentDraft, setPageCommentDraft] = useState<string | null>(null);
   const [addDraft, setAddDraft] = useState({ task: "", time: "", category: "" });
   const { data: pendingRequests = [] } = useSignatureRequests(readOnly ? null : day.id);
   const toggle = useToggleChecklistItem();
@@ -64,12 +66,14 @@ export function ChecklistTable({
   const removeItem = useDeleteChecklistItem();
   const markAll = useMarkAllChecklistItems();
   const complete = useCompleteChecklist();
+  const setPageComment = useSetChecklistPageComment();
 
   const doneCount = items.filter((i) => i.done).length;
   const pct = items.length ? Math.round((doneCount / items.length) * 100) : 0;
   const pages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
   const current = Math.min(page, pages - 1);
   const pageItems = items.slice(current * PAGE_SIZE, current * PAGE_SIZE + PAGE_SIZE);
+  const pageComments = (day.page_comments as Record<string, string> | null) || {};
   const isCompleted = day.status === "completed";
   const locked = readOnly || isCompleted;
 
@@ -162,6 +166,8 @@ export function ChecklistTable({
         responsible: day.responsible_name,
         status: day.status,
         blank,
+        pageSize: PAGE_SIZE,
+        pageComments: (day.page_comments as Record<string, string> | null) || null,
         items: items.map((i) => ({
           section: i.section,
           time_label: i.time_label,
@@ -246,13 +252,13 @@ export function ChecklistTable({
             </p>
           </div>
           <div className="col-span-2 px-3 py-2 sm:px-4 sm:py-2.5 flex items-center justify-center gap-2">
-            <Button variant="outline" size="icon" className="h-8 w-8" disabled={current === 0} onClick={() => setPage(current - 1)}>
+            <Button variant="outline" size="icon" className="h-8 w-8" disabled={current === 0} onClick={() => { setPageCommentDraft(null); setPage(current - 1); }}>
               <ChevronLeft className="h-3.5 w-3.5" />
             </Button>
             <p className="text-[11px] text-muted-foreground">
               Sida {current + 1} av {pages}
             </p>
-            <Button variant="outline" size="icon" className="h-8 w-8" disabled={current >= pages - 1} onClick={() => setPage(current + 1)}>
+            <Button variant="outline" size="icon" className="h-8 w-8" disabled={current >= pages - 1} onClick={() => { setPageCommentDraft(null); setPage(current + 1); }}>
               <ChevronRight className="h-3.5 w-3.5" />
             </Button>
           </div>
@@ -613,6 +619,35 @@ export function ChecklistTable({
         </div>
       )}
 
+      {/* Kommentar för aktuell sida */}
+      <div className="rounded-lg border border-border bg-card shadow-card px-3 py-2.5 sm:px-4 sm:py-3">
+        <p className="text-[10px] sm:text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">
+          Kommentar sida {current + 1} av {pages}
+        </p>
+        {locked ? (
+          <p className="text-xs sm:text-sm text-foreground mt-1 whitespace-pre-wrap">
+            {pageComments[String(current + 1)] || "Ingen kommentar för denna sida."}
+          </p>
+        ) : (
+          <textarea
+            className="mt-1.5 w-full min-h-[64px] rounded-md border border-input bg-background px-2.5 py-2 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-y"
+            placeholder="Kommentar eller avvikelse för den här sidan…"
+            value={pageCommentDraft ?? pageComments[String(current + 1)] ?? ""}
+            onChange={(e) => setPageCommentDraft(e.target.value)}
+            onBlur={() => {
+              const v = pageCommentDraft;
+              if (v === null) return;
+              setPageCommentDraft(null);
+              if (v === (pageComments[String(current + 1)] ?? "")) return;
+              setPageComment.mutate(
+                { dayId: day.id, page: current + 1, comment: v, current: pageComments },
+                { onError: (e: any) => toast.error(e.message || "Kunde inte spara kommentaren.") }
+              );
+            }}
+          />
+        )}
+      </div>
+
       {/* Footer */}
       <div className="rounded-lg border border-border bg-card shadow-card px-3 py-2.5 sm:px-4 sm:py-3 space-y-2 sm:space-y-0 sm:flex sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
         <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
@@ -635,12 +670,12 @@ export function ChecklistTable({
               size="sm"
               variant={i === current ? "default" : "outline"}
               className="h-9 w-9 p-0"
-              onClick={() => setPage(i)}
+              onClick={() => { setPageCommentDraft(null); setPage(i); }}
             >
               {i + 1}
             </Button>
           ))}
-          <Button variant="outline" size="icon" className="h-9 w-9" disabled={current >= pages - 1} onClick={() => setPage(current + 1)}>
+          <Button variant="outline" size="icon" className="h-9 w-9" disabled={current >= pages - 1} onClick={() => { setPageCommentDraft(null); setPage(current + 1); }}>
             <ChevronRight className="h-4 w-4" />
           </Button>
           {!readOnly && (

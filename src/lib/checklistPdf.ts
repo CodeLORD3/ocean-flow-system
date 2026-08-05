@@ -21,6 +21,10 @@ export interface ChecklistPdfOptions {
   items: ChecklistPdfItem[];
   /** true = tom lista att fylla i för hand (inga kryss/signaturer/kommentarer) */
   blank?: boolean;
+  /** Antal uppgifter per sida — matchar plattformens sidindelning (default 20). */
+  pageSize?: number;
+  /** Kommentar per sida — nyckel = sidnummer (1-baserat). Skrivs längst ner på respektive sida. */
+  pageComments?: Record<string, string> | null;
 }
 
 /** Byter ut tecken som helvetica i jsPDF inte klarar. */
@@ -124,8 +128,9 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
 
   autoTable(doc, {
     startY: boxY + boxH + 6,
-    head: [["TID", "KATEGORI", "UPPGIFT", "KLAR", "KOMMENTAR / AVVIKELSE", "SIGN"]],
+    rowPageBreak: "avoid",
     body,
+    head: [["TID", "KATEGORI", "UPPGIFT", "KLAR", "KOMMENTAR / AVVIKELSE", "SIGN"]],
     theme: "grid",
     styles: {
       font: "helvetica",
@@ -159,7 +164,7 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
       4: { cellWidth: 44 },
       5: { cellWidth: 16, halign: "center" },
     },
-    margin: { left: margin, right: margin, bottom: margin + 12 },
+    margin: { left: margin, right: margin, bottom: margin + 30 },
     didParseCell: (data) => {
       if (data.section === "head" && [1, 2, 4].includes(data.column.index)) {
         data.cell.styles.halign = "left";
@@ -199,10 +204,11 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
 
   // ── Signaturfält ──────────────────────────────────────────────────────────
   let y = ((doc as any).lastAutoTable?.finalY || boxY + boxH + 5) + 10;
-  if (y > pageHeight - margin - 26) {
+  if (y > pageHeight - margin - 46) {
     doc.addPage();
     y = margin + 14;
   }
+
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
@@ -226,6 +232,29 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
   for (let p = 1; p <= total; p++) {
     doc.setPage(p);
     const footY = pageHeight - margin + 4;
+
+    // Sidkommentar längst ner på sidan
+    const comment = opts.blank ? "" : s2(opts.pageComments?.[String(p)]);
+    const cTop = footY - 22;
+    doc.setDrawColor(160);
+    doc.setLineWidth(0.2);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(60);
+    doc.text(`KOMMENTAR SIDA ${p}:`, margin, cTop);
+    if (comment) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(25, 30, 35);
+      const lines = doc.splitTextToSize(comment, innerWidth - 2).slice(0, 3);
+      lines.forEach((ln: string, li: number) => doc.text(ln, margin, cTop + 5 + li * 4.4));
+    } else {
+      doc.setDrawColor(180);
+      doc.line(margin, cTop + 5.5, pageWidth - margin, cTop + 5.5);
+      doc.line(margin, cTop + 11.5, pageWidth - margin, cTop + 11.5);
+    }
+    doc.setTextColor(0);
+
     doc.setDrawColor(190);
     doc.setLineWidth(0.2);
     doc.line(margin, footY - 5, pageWidth - margin, footY - 5);

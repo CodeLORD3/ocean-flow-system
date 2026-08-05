@@ -26,6 +26,7 @@ export type ChecklistDay = {
   status: string;
   completed_at: string | null;
   completed_by_name: string | null;
+  page_comments?: Record<string, string> | null;
 };
 
 export function todayIso() {
@@ -570,6 +571,39 @@ export function useCancelSignatureRequest() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["checklist-signature-requests"] });
       qc.invalidateQueries({ queryKey: ["my-signature-requests"] });
+    },
+  });
+}
+
+/** Kommentar per sida i checklistan (nyckel = sidnummer, 1-baserat). */
+export function useSetChecklistPageComment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      dayId,
+      page,
+      comment,
+      current,
+    }: {
+      dayId: string;
+      page: number;
+      comment: string;
+      current?: Record<string, string> | null;
+    }) => {
+      const next = { ...(current || {}) };
+      const text = comment.trim();
+      if (text) next[String(page)] = text;
+      else delete next[String(page)];
+      const { error } = await supabase
+        .from("checklist_days")
+        .update({ page_comments: next })
+        .eq("id", dayId);
+      if (error) throw error;
+      return next;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["checklist-day"] });
+      qc.invalidateQueries({ queryKey: ["checklist-reports"] });
     },
   });
 }
