@@ -151,10 +151,15 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
     }) as any[][];
   };
 
+  const SIGN_BLOCK_H = 46;
+
   chunks.forEach((chunk, ci) => {
     const startY = ci === 0 ? boxY + boxH + 6 : margin + 8;
+    const isLast = ci === chunks.length - 1;
+    // Sista sidan maste aven rymma noteringar/signaturblocket - annars far vi en extra sida
+    const bottom = BOTTOM_RESERVE + (isLast ? SIGN_BLOCK_H : 0);
     // Skala radhojden sa att exakt lika manga uppgifter som pa plattformen ryms pa sidan
-    const avail = pageHeight - BOTTOM_RESERVE - startY - HEAD_H - sectionCount(chunk) * SECTION_H;
+    const avail = pageHeight - bottom - startY - HEAD_H - sectionCount(chunk) * SECTION_H;
     const rowH = chunk.length
       ? Math.max(6, Math.min(ROW_H_MAX, avail / chunk.length))
       : ROW_H_MAX;
@@ -198,7 +203,7 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
         5: { cellWidth: 42 },
         6: { cellWidth: 16, halign: "center" },
       },
-      margin: { left: margin, right: margin, bottom: BOTTOM_RESERVE },
+      margin: { left: margin, right: margin, bottom: bottom },
       didParseCell: (data) => {
         if (data.section === "head" && [2, 3, 5].includes(data.column.index)) {
           data.cell.styles.halign = "left";
@@ -237,11 +242,10 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
 
 
   // ── Signaturfält ──────────────────────────────────────────────────────────
-  let y = ((doc as any).lastAutoTable?.finalY || boxY + boxH + 5) + 10;
-  if (y > pageHeight - margin - 46) {
-    doc.addPage();
-    y = margin + 14;
-  }
+  let y = ((doc as any).lastAutoTable?.finalY || boxY + boxH + 5) + 8;
+  // Klam fast blocket sa att det alltid ryms pa sista tabellsidan (ingen extra sida)
+  const maxY = pageHeight - BOTTOM_RESERVE - SIGN_BLOCK_H + 12;
+  if (y > maxY) y = maxY;
 
 
   doc.setFont("helvetica", "bold");
