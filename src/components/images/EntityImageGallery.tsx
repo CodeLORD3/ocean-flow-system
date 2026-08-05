@@ -117,26 +117,19 @@ export function EntityImageGallery({
       map.set(k, (map.get(k) || 0) + 1);
     });
     return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
-  }, [images]);
-
   const previewImages: EntityImage[] = previewCount
-    ? (featured.length ? featured : images).slice(0, previewCount)
+    ? featured.slice(0, previewCount)
     : images;
 
-  /** Aktivt datum i katalogen — styr både dagsvyn och "Utvalda". */
+  /** Aktivt datum i katalogen — styr dagsvyn. */
   const activeDay = view.mode === "day" ? view.key : lastDay;
-
-  /** Utvalda bilder för det aktiva datumet. */
-  const featuredForDay = useMemo(
-    () => images.filter((i) => i.is_featured && dayKey(i.created_at) === activeDay),
-    [images, activeDay]
-  );
 
   const shown: EntityImage[] = useMemo(() => {
     if (!catalog) return previewImages;
     if (view.mode === "favorites") return favorites;
-    if (view.mode === "featured") return featuredForDay;
+    if (view.mode === "featured") return previewImages;
     return images.filter((i) => dayKey(i.created_at) === view.key);
+
   }, [catalog, view, images, favorites, previewImages, featuredForDay]);
 
 
