@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Printer, FileText, CheckCheck, ChevronLeft, ChevronRight, ArrowRight, CheckCircle2, Plus, Trash2, X } from "lucide-react";
 import { generateChecklistPdf } from "@/lib/checklistPdf";
 import { SignatureEditor } from "@/components/checklist/SignatureEditor";
+import { SignatureRequestInbox } from "@/components/checklist/SignatureRequestInbox";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -15,6 +16,7 @@ import {
   useCompleteChecklist,
   useMarkAllChecklistItems,
   useSetChecklistNote,
+  useSignatureRequests,
   useToggleChecklistItem,
   useSetChecklistItemTime,
   useAddChecklistItem,
@@ -54,6 +56,7 @@ export function ChecklistTable({
   const [timeDrafts, setTimeDrafts] = useState<Record<string, string>>({});
   const [addSection, setAddSection] = useState<string | null>(null);
   const [addDraft, setAddDraft] = useState({ task: "", time: "", category: "" });
+  const { data: pendingRequests = [] } = useSignatureRequests(readOnly ? null : day.id);
   const toggle = useToggleChecklistItem();
   const setNote = useSetChecklistNote();
   const setTime = useSetChecklistItemTime();
@@ -179,6 +182,7 @@ export function ChecklistTable({
 
   return (
     <div className="space-y-3 sm:space-y-4">
+      {!readOnly && <SignatureRequestInbox />}
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
@@ -352,7 +356,7 @@ export function ChecklistTable({
                           <span className="font-semibold text-foreground">✓ {row.item.signature}</span>
                         )
                       : (row.item.signature || row.item.done) && (
-                          <SignatureEditor item={row.item} storeId={day.store_id} allItems={items} />
+                          <SignatureEditor item={row.item} storeId={day.store_id} allItems={items} pendingRequests={pendingRequests} />
                         )}
 
                   </div>
@@ -560,7 +564,7 @@ export function ChecklistTable({
                     {readOnly ? (
                       row.item.signature || "–"
                     ) : (
-                      <SignatureEditor item={row.item} storeId={day.store_id} allItems={items} />
+                      <SignatureEditor item={row.item} storeId={day.store_id} allItems={items} pendingRequests={pendingRequests} />
                     )}
                   </td>
 
