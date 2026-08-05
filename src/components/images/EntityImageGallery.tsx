@@ -86,6 +86,7 @@ export function EntityImageGallery({
   const [lightboxId, setLightboxId] = useState<string | null>(null);
   const [selectOpen, setSelectOpen] = useState(false);
   const [selection, setSelection] = useState<string[]>([]);
+  const [frontSelection, setFrontSelection] = useState<string[]>([]);
   const [dateLimit, setDateLimit] = useState(DATE_PAGE);
   const [catalogOpen, setCatalogOpen] = useState(false);
 
@@ -109,6 +110,15 @@ export function EntityImageGallery({
   const featured = images.filter((i) => i.is_featured);
   const favorites = images.filter((i) => favoriteIds.includes(i.id));
 
+  /** Poolen med utvalda bilder (valfritt antal), sorterad så framsidans bilder ligger först. */
+  const pool = useMemo(
+    () =>
+      featured
+        .slice()
+        .sort((a, b) => a.sort_order - b.sort_order || a.created_at.localeCompare(b.created_at)),
+    [featured],
+  );
+
   /** Datum (nycklar) som har bilder, senaste först. */
   const dates = useMemo(() => {
     const map = new Map<string, number>();
@@ -119,9 +129,7 @@ export function EntityImageGallery({
     return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
   }, [images]);
 
-  const previewImages: EntityImage[] = previewCount
-    ? featured.slice(0, previewCount)
-    : images;
+  const previewImages: EntityImage[] = previewCount ? pool.slice(0, previewCount) : images;
 
   /** Aktivt datum i katalogen — styr dagsvyn. */
   const activeDay = view.mode === "day" ? view.key : lastDay;
@@ -133,22 +141,36 @@ export function EntityImageGallery({
     return images.filter((i) => dayKey(i.created_at) === view.key);
   }, [catalog, view, images, favorites, previewImages]);
 
+  /** I helskärmsläge bläddrar man genom hela den utvalda poolen, inte bara de synliga. */
+  const lightboxImages: EntityImage[] =
+    previewCount && (!catalog || view.mode === "featured") && pool.length ? pool : shown;
 
-
-  const lightboxIndex = lightboxId ? shown.findIndex((i) => i.id === lightboxId) : -1;
+  const lightboxIndex = lightboxId ? lightboxImages.findIndex((i) => i.id === lightboxId) : -1;
 
   const openSelect = () => {
-    setSelection(featured.length ? featured.map((i) => i.id) : previewImages.map((i) => i.id));
+    setSelection(featured.map((i) => i.id));
+    setFrontSelection(previewImages.map((i) => i.id));
     setSelectOpen(true);
   };
 
   const toggleSelection = (id: string) => {
     setSelection((prev) => {
-      if (prev.includes(id)) return prev.filter((x) => x !== id);
-      if (previewCount && prev.length >= previewCount) return [...prev.slice(1), id];
+      if (prev.includes(id)) {
+        setFrontSelection((f) => f.filter((x) => x !== id));
+        return prev.filter((x) => x !== id);
+      }
       return [...prev, id];
     });
   };
+
+  const toggleFront = (id: string) => {
+    setFrontSelection((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      const next = [...prev, id];
+      return previewCount && next.length > previewCount ? next.slice(-previewCount) : next;
+    });
+  };
+
 
   const handleFiles = async (files: FileList | null) => {
     if (!files?.length) return;
