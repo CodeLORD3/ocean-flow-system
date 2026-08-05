@@ -109,6 +109,13 @@ export function ImageLightbox({
     await addComment.mutateAsync({ imageId: current.id, body: v });
   };
 
+  const saveEdit = async (id: string) => {
+    const v = editDraft.trim();
+    if (!v || !current) return;
+    setEditId(null);
+    await editComment.mutateAsync({ id, imageId: current.id, body: v });
+  };
+
   const isFav = !!current && favoriteIds.includes(current.id);
 
   return (
