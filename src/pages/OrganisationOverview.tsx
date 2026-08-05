@@ -383,8 +383,8 @@ export default function OrganisationOverview() {
                   {stores.map((store) => {
                     const act = activity.get(store.id);
                     return (
-                      <div key={store.id} className="flex items-center gap-3 py-1.5 border-b border-border/30 last:border-0">
-                        <div className="h-11 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
+                      <div key={store.id} className="flex items-center gap-2 sm:gap-3 py-1.5 border-b border-border/30 last:border-0">
+                        <div className="h-9 w-12 sm:h-11 sm:w-16 shrink-0 overflow-hidden rounded-md bg-muted">
                           <img
                             src={covers[store.id]?.url || store.logo_url || storeHero}
                             alt={`Butiksbild för ${store.name}`}
@@ -399,7 +399,7 @@ export default function OrganisationOverview() {
                           <p className="text-xs font-medium text-foreground truncate">{store.name}</p>
                           <p className="text-[10px] text-muted-foreground truncate">{store.city}</p>
                         </div>
-                        <div className="flex shrink-0 items-center gap-0.5">
+                        <div className="flex shrink-0 items-center gap-1 sm:gap-0.5 pr-0.5">
                           <ActivityIcon
                             icon={MessageSquare}
                             count={act.messages}
