@@ -82,16 +82,16 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
   });
 
   // ── Tabell ────────────────────────────────────────────────────────────────
-  type Row = { section?: string; item?: ChecklistPdfItem };
+  type Row = { section?: string; item?: ChecklistPdfItem; nr?: number };
   const rows: Row[] = [];
   let lastSection: string | null = null;
-  opts.items.forEach((item) => {
+  opts.items.forEach((item, idx) => {
     const sec = s2(item.section) || "Övrigt";
     if (sec !== lastSection) {
       rows.push({ section: sec });
       lastSection = sec;
     }
-    rows.push({ item });
+    rows.push({ item, nr: idx + 1 });
   });
 
   const ROW_H = 9.5;
@@ -102,7 +102,7 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
       return [
         {
           content: r.section.toUpperCase(),
-          colSpan: 6,
+          colSpan: 7,
           styles: {
             fillColor: [38, 50, 62] as [number, number, number],
             textColor: [255, 255, 255] as [number, number, number],
@@ -117,6 +117,7 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
     }
     const it = r.item!;
     return [
+      String(r.nr ?? ""),
       s2(it.time_label),
       s2(it.category),
       s2(it.task),
@@ -125,6 +126,7 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
       opts.blank ? "" : s2(it.signature),
     ];
   });
+
 
   autoTable(doc, {
     startY: boxY + boxH + 6,
