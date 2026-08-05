@@ -21,6 +21,8 @@ export interface ChecklistPdfOptions {
   items: ChecklistPdfItem[];
   /** true = tom lista att fylla i för hand (inga kryss/signaturer/kommentarer) */
   blank?: boolean;
+  /** Antal uppgifter per sida — matchar plattformens sidindelning (default 20). */
+  pageSize?: number;
   /** Kommentar per sida — nyckel = sidnummer (1-baserat). Skrivs längst ner på respektive sida. */
   pageComments?: Record<string, string> | null;
 }
@@ -80,22 +82,30 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
   });
 
   // ── Tabell ────────────────────────────────────────────────────────────────
+  // Samma sidindelning som i plattformen: PAGE_ITEMS uppgifter per sida.
+  const PAGE_ITEMS = opts.pageSize || 20;
   type Row = { section?: string; item?: ChecklistPdfItem };
-  const rows: Row[] = [];
-  let lastSection: string | null = null;
-  opts.items.forEach((item) => {
-    const sec = s2(item.section) || "Övrigt";
-    if (sec !== lastSection) {
-      rows.push({ section: sec });
-      lastSection = sec;
-    }
-    rows.push({ item });
-  });
+  const chunks: Row[][] = [];
+  for (let i = 0; i < opts.items.length; i += PAGE_ITEMS) {
+    const slice = opts.items.slice(i, i + PAGE_ITEMS);
+    const rows: Row[] = [];
+    let lastSection: string | null = null;
+    slice.forEach((item) => {
+      const sec = s2(item.section) || "Övrigt";
+      if (sec !== lastSection) {
+        rows.push({ section: sec });
+        lastSection = sec;
+      }
+      rows.push({ item });
+    });
+    chunks.push(rows);
+  }
+  if (chunks.length === 0) chunks.push([]);
 
   const ROW_H = 9.5;
   const SECTION_H = 8;
 
-  const body: any[][] = rows.map((r) => {
+  const toBody = (rows: Row[]): any[][] => rows.map((r) => {
     if (r.section) {
       return [
         {
@@ -127,7 +137,6 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
   autoTable(doc, {
     startY: boxY + boxH + 6,
     head: [["TID", "KATEGORI", "UPPGIFT", "KLAR", "KOMMENTAR / AVVIKELSE", "SIGN"]],
-    body,
     theme: "grid",
     styles: {
       font: "helvetica",
@@ -197,6 +206,7 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
         doc.line(x + size / 2 - 0.15, y + size - 0.8, x + size - 0.6, y + 0.7);
       }
     },
+  });
   });
 
   // ── Signaturfält ──────────────────────────────────────────────────────────
