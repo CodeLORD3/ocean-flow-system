@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.notify_event(text[], text, uuid, text, text, text) FROM PUBLIC, anon, authenticated;
