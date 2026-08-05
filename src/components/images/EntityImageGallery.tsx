@@ -346,13 +346,13 @@ export function EntityImageGallery({
             )}
 
 
-            <div className="p-1.5 flex items-center gap-1">
+            <div className="flex items-center gap-1 p-2 sm:p-1.5">
               {/* Uppladdare */}
-              <span className="flex min-w-0 flex-1 items-center gap-1">
-                <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[8px] font-semibold text-primary">
+              <span className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-1">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[9px] font-semibold text-primary sm:h-4 sm:w-4 sm:text-[8px]">
                   {initialsOf(img.uploaded_by_name)}
                 </span>
-                <span className="truncate text-[10px] text-muted-foreground">
+                <span className="truncate text-[11px] text-muted-foreground sm:text-[10px]">
                   {img.uploaded_by_name || "Okänd"}
                 </span>
               </span>
@@ -360,9 +360,9 @@ export function EntityImageGallery({
                 type="button"
                 onClick={() => setLightboxId(img.id)}
                 aria-label="Öppna kommentarer"
-                className="h-5 w-5 shrink-0 flex items-center justify-center text-muted-foreground hover:text-foreground"
+                className="flex h-8 w-8 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground sm:h-5 sm:w-5"
               >
-                <MessageSquare className="h-3 w-3" />
+                <MessageSquare className="h-4 w-4 sm:h-3 sm:w-3" />
               </button>
               {editable && (
                 <Popover>
@@ -370,11 +370,11 @@ export function EntityImageGallery({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-5 w-5 text-muted-foreground shrink-0"
+                      className="h-8 w-8 shrink-0 text-muted-foreground sm:h-5 sm:w-5"
                       aria-label="Justera beskärning"
                       title={`Beskärning: ${focalLabel(img.focal_point)}`}
                     >
-                      <Crop className="h-3 w-3" />
+                      <Crop className="h-4 w-4 sm:h-3 sm:w-3" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent align="end" className="w-56 p-3">
@@ -399,13 +399,15 @@ export function EntityImageGallery({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-5 w-5 text-muted-foreground hover:text-destructive shrink-0"
+                  className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive sm:h-5 sm:w-5"
                   aria-label="Ta bort bild"
                   onClick={() => removeImage.mutate(img.id)}
                 >
-                  <Trash2 className="h-3 w-3" />
+                  <Trash2 className="h-4 w-4 sm:h-3 sm:w-3" />
                 </Button>
               )}
+            </div>
+
             </div>
           </Card>
         );
