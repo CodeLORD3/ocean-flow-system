@@ -135,9 +135,9 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
   });
 
   chunks.forEach((rows, ci) => {
-  if (ci > 0) doc.addPage();
   autoTable(doc, {
     startY: ci === 0 ? boxY + boxH + 6 : margin + 6,
+    pageBreak: ci === 0 ? "auto" : "always",
     body: toBody(rows),
     head: [["TID", "KATEGORI", "UPPGIFT", "KLAR", "KOMMENTAR / AVVIKELSE", "SIGN"]],
     theme: "grid",
