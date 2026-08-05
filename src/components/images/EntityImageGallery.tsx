@@ -1,5 +1,17 @@
-import { useRef, useState } from "react";
-import { ImagePlus, Trash2, Loader2, ImageIcon, X, Star, Crop, SlidersHorizontal, Check } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import {
+  ImagePlus,
+  Trash2,
+  Loader2,
+  ImageIcon,
+  Star,
+  Crop,
+  SlidersHorizontal,
+  Check,
+  Heart,
+  CalendarDays,
+  MessageSquare,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -16,11 +28,14 @@ import {
   useDeleteEntityImage,
   useSetCoverImage,
   useSetFeaturedImages,
+  useMyImageFavorites,
+  useToggleImageFavorite,
   type EntityImage,
 } from "@/hooks/useEntityImages";
 import { ImageLightbox } from "@/components/images/ImageLightbox";
 import { cn } from "@/lib/utils";
 import { focalStyle, focalPercent, focalLabel } from "@/lib/imageFocal";
+import { dayKey, dayLabel, initialsOf } from "@/lib/imageMeta";
 
 /** Datum + tid då bilden laddades upp, t.ex. "03-08 10:24". */
 function uploadedLabel(iso: string) {
@@ -33,8 +48,9 @@ function uploadedLabel(iso: string) {
   );
 }
 
-type Props = {
+type View = { mode: "featured" } | { mode: "favorites" } | { mode: "day"; key: string };
 
+type Props = {
   entityType: string;
   entityId: string;
   title?: string;
@@ -46,7 +62,11 @@ type Props = {
   columnsClassName?: string;
   /** Visa bara ett begränsat antal bilder i förhandsvyn (t.ex. 4) */
   previewCount?: number;
+  /** Visa katalogpanel (arkiv per dag + favoriter) till vänster */
+  catalog?: boolean;
 };
+
+const DATE_PAGE = 8;
 
 export function EntityImageGallery({
   entityType,
@@ -57,26 +77,54 @@ export function EntityImageGallery({
   className,
   columnsClassName = "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
   previewCount,
+  catalog = false,
 }: Props) {
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [lightboxId, setLightboxId] = useState<string | null>(null);
   const [selectOpen, setSelectOpen] = useState(false);
   const [selection, setSelection] = useState<string[]>([]);
+  const [dateLimit, setDateLimit] = useState(DATE_PAGE);
+  const [view, setView] = useState<View>(() =>
+    catalog ? { mode: "day", key: dayKey(new Date().toISOString()) } : { mode: "featured" }
+  );
   const { data: images = [], isLoading } = useEntityImages(entityType, entityId);
+  const { data: favoriteIds = [] } = useMyImageFavorites();
   const upload = useUploadEntityImage();
   const updateImage = useUpdateEntityImage();
   const removeImage = useDeleteEntityImage();
   const setCover = useSetCoverImage();
   const setFeatured = useSetFeaturedImages();
+  const toggleFavorite = useToggleImageFavorite();
 
   const featured = images.filter((i) => i.is_featured);
-  const shown: EntityImage[] = previewCount
+  const favorites = images.filter((i) => favoriteIds.includes(i.id));
+
+  /** Datum (nycklar) som har bilder, senaste först. */
+  const dates = useMemo(() => {
+    const map = new Map<string, number>();
+    images.forEach((i) => {
+      const k = dayKey(i.created_at);
+      map.set(k, (map.get(k) || 0) + 1);
+    });
+    return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  }, [images]);
+
+  const previewImages: EntityImage[] = previewCount
     ? (featured.length ? featured : images).slice(0, previewCount)
     : images;
 
+  const shown: EntityImage[] = useMemo(() => {
+    if (!catalog) return previewImages;
+    if (view.mode === "favorites") return favorites;
+    if (view.mode === "featured") return previewImages;
+    return images.filter((i) => dayKey(i.created_at) === view.key);
+  }, [catalog, view, images, favorites, previewImages]);
+
+  const lightboxIndex = lightboxId ? shown.findIndex((i) => i.id === lightboxId) : -1;
+
   const openSelect = () => {
-    setSelection(featured.length ? featured.map((i) => i.id) : shown.map((i) => i.id));
+    setSelection(featured.length ? featured.map((i) => i.id) : previewImages.map((i) => i.id));
     setSelectOpen(true);
   };
 
@@ -100,6 +148,7 @@ export function EntityImageGallery({
         });
       }
       toast({ title: "Bild uppladdad", description: `${files.length} bild(er) sparade.` });
+      if (catalog) setView({ mode: "day", key: dayKey(new Date().toISOString()) });
     } catch (e: any) {
       toast({ title: "Kunde inte ladda upp", description: e.message, variant: "destructive" });
     } finally {
@@ -107,9 +156,185 @@ export function EntityImageGallery({
     }
   };
 
+  const catalogButton = (
+    active: boolean,
+    key: string,
+    label: string,
+    count: number,
+    icon?: React.ReactNode,
+    onClick?: () => void
+  ) => (
+    <button
+      key={key}
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "w-full flex items-center justify-between gap-1.5 rounded-md px-2 py-1.5 text-left text-[11px] transition-colors",
+        active
+          ? "bg-primary/10 text-primary font-semibold"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+      )}
+    >
+      <span className="flex min-w-0 items-center gap-1.5">
+        {icon}
+        <span className="truncate">{label}</span>
+      </span>
+      <span className="font-mono tabular-nums text-[10px] opacity-70">{count}</span>
+    </button>
+  );
+
+  const emptyText =
+    catalog && view.mode === "favorites"
+      ? "Inga favoriter ännu — tryck på hjärtat på en bild."
+      : catalog && view.mode === "day"
+        ? "Inga bilder detta datum."
+        : "Inga bilder ännu";
+
+  const grid = (
+    <div className={cn("grid gap-2", columnsClassName)}>
+      {shown.map((img) => {
+        const isFav = favoriteIds.includes(img.id);
+        return (
+          <Card key={img.id} className="overflow-hidden group relative">
+            <button
+              type="button"
+              onClick={() => setLightboxId(img.id)}
+              className="relative block w-full aspect-video bg-muted overflow-hidden"
+            >
+              <img
+                src={img.url}
+                alt={img.caption || `${title} bild`}
+                loading="lazy"
+                className="h-full w-full object-cover transition-transform group-hover:scale-[1.03]"
+                style={focalStyle(img.focal_point)}
+              />
+              {/* Uppladdningstidpunkt i nedre vänstra hörnet av bilden */}
+              <span className="absolute bottom-1 left-1 rounded bg-background/80 px-1 py-0.5 font-mono tabular-nums text-[9px] text-foreground backdrop-blur pointer-events-none">
+                {uploadedLabel(img.created_at)}
+              </span>
+            </button>
+
+            {img.is_cover && (
+              <Badge className="absolute top-1 left-1 h-4 gap-1 px-1.5 text-[9px] pointer-events-none">
+                <Star className="h-2.5 w-2.5 fill-current" />
+                Omslag
+              </Badge>
+            )}
+
+            {/* Favorit */}
+            <button
+              type="button"
+              aria-label={isFav ? "Ta bort favorit" : "Favoritmarkera bild"}
+              onClick={() => toggleFavorite.mutate({ imageId: img.id, favorite: !isFav })}
+              className={cn(
+                "absolute bottom-1 right-1 h-6 w-6 rounded-full bg-background/85 backdrop-blur flex items-center justify-center border transition-opacity",
+                isFav
+                  ? "text-rose-500 border-rose-400"
+                  : "text-muted-foreground border-border opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+              )}
+            >
+              <Heart className={cn("h-3 w-3", isFav && "fill-current")} />
+            </button>
+
+            {editable && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label={img.is_cover ? "Ta bort som omslagsbild" : "Använd som omslagsbild"}
+                    onClick={() =>
+                      setCover.mutate({
+                        entityType,
+                        entityId,
+                        imageId: img.is_cover ? null : img.id,
+                      })
+                    }
+                    className={cn(
+                      "absolute top-1 right-1 h-6 w-6 rounded-full bg-background/80 backdrop-blur flex items-center justify-center border transition-opacity",
+                      img.is_cover
+                        ? "text-primary border-primary"
+                        : "text-muted-foreground border-border opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                    )}
+                  >
+                    <Star className={cn("h-3 w-3", img.is_cover && "fill-current")} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="left" className="text-xs">
+                  {img.is_cover ? "Omslagsbild – klicka för att ta bort" : "Sätt som omslagsbild"}
+                </TooltipContent>
+              </Tooltip>
+            )}
+
+            <div className="p-1.5 flex items-center gap-1">
+              {/* Uppladdare */}
+              <span className="flex min-w-0 flex-1 items-center gap-1">
+                <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[8px] font-semibold text-primary">
+                  {initialsOf(img.uploaded_by_name)}
+                </span>
+                <span className="truncate text-[10px] text-muted-foreground">
+                  {img.uploaded_by_name || "Okänd"}
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setLightboxId(img.id)}
+                aria-label="Öppna kommentarer"
+                className="h-5 w-5 shrink-0 flex items-center justify-center text-muted-foreground hover:text-foreground"
+              >
+                <MessageSquare className="h-3 w-3" />
+              </button>
+              {editable && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5 text-muted-foreground shrink-0"
+                      aria-label="Justera beskärning"
+                      title={`Beskärning: ${focalLabel(img.focal_point)}`}
+                    >
+                      <Crop className="h-3 w-3" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-56 p-3">
+                    <p className="mb-2 text-[11px] font-medium text-muted-foreground">
+                      Bildposition: {focalLabel(img.focal_point)}
+                    </p>
+                    <Slider
+                      value={[focalPercent(img.focal_point)]}
+                      min={0}
+                      max={100}
+                      step={1}
+                      onValueChange={(v) => updateImage.mutate({ id: img.id, focal_point: String(v[0]) })}
+                    />
+                    <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+                      <span>Överkant</span>
+                      <span>Nederkant</span>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
+              {editable && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-5 w-5 text-muted-foreground hover:text-destructive shrink-0"
+                  aria-label="Ta bort bild"
+                  onClick={() => removeImage.mutate(img.id)}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+          </Card>
+        );
+      })}
+    </div>
+  );
+
   return (
     <div className={cn("space-y-2", className)}>
-      <div className="flex items-end justify-between gap-2">
+      <div className="flex items-end justify-between gap-2 flex-wrap">
         <div>
           <h3 className="text-sm font-heading font-bold text-foreground flex items-center gap-1.5">
             <ImageIcon className="h-3.5 w-3.5 text-muted-foreground" />
@@ -117,10 +342,19 @@ export function EntityImageGallery({
           </h3>
           {description && <p className="text-xs text-muted-foreground">{description}</p>}
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {images.length > 0 && (
             <Badge variant="secondary" className="h-6 font-mono tabular-nums text-[10px]">
               {images.length} {images.length === 1 ? "bild" : "bilder"}
+            </Badge>
+          )}
+          {favorites.length > 0 && (
+            <Badge
+              variant="outline"
+              className="h-6 gap-1 font-mono tabular-nums text-[10px] text-rose-500 border-rose-300"
+            >
+              <Heart className="h-2.5 w-2.5 fill-current" />
+              {favorites.length}
             </Badge>
           )}
           {editable && previewCount && images.length > 0 && (
@@ -129,171 +363,132 @@ export function EntityImageGallery({
               Redigera vilka bilder som visas
             </Button>
           )}
-        {editable && (
-          <>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              onChange={(e) => handleFiles(e.target.files)}
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 gap-1 text-xs"
-              onClick={() => fileRef.current?.click()}
-              disabled={upload.isPending}
-            >
-              {upload.isPending ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                <ImagePlus className="h-3 w-3" />
-              )}
-              Lägg till bild
-            </Button>
-          </>
-        )}
+          {editable && (
+            <>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => handleFiles(e.target.files)}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1 text-xs"
+                onClick={() => fileRef.current?.click()}
+                disabled={upload.isPending}
+              >
+                {upload.isPending ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <ImagePlus className="h-3 w-3" />
+                )}
+                Lägg till bild
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
       {isLoading ? (
         <div className="text-xs text-muted-foreground">Laddar bilder…</div>
-      ) : images.length === 0 ? (
+      ) : !catalog && images.length === 0 ? (
         <Card className="p-4 text-center border-dashed">
           <ImageIcon className="h-5 w-5 mx-auto text-muted-foreground/60" />
           <p className="mt-1 text-xs text-muted-foreground">Inga bilder ännu</p>
         </Card>
-      ) : (
-        <div className={cn("grid gap-2", columnsClassName)}>
-          {shown.map((img) => (
-            <Card key={img.id} className="overflow-hidden group relative">
-              <button
-                type="button"
-                onClick={() => setLightboxIndex(images.findIndex((i) => i.id === img.id))}
-                className="relative block w-full aspect-video bg-muted overflow-hidden"
-              >
-                <img
-                  src={img.url}
-                  alt={img.caption || `${title} bild`}
-                  loading="lazy"
-                  className="h-full w-full object-cover transition-transform group-hover:scale-[1.03]"
-                  style={focalStyle(img.focal_point)}
-                />
-                {/* Uppladdningstidpunkt i nedre vänstra hörnet av bilden */}
-                <span className="absolute bottom-1 left-1 rounded bg-background/80 px-1 py-0.5 font-mono tabular-nums text-[9px] text-foreground backdrop-blur pointer-events-none">
-                  {uploadedLabel(img.created_at)}
-                </span>
-              </button>
-
-              {img.is_cover && (
-                <Badge className="absolute top-1 left-1 h-4 gap-1 px-1.5 text-[9px] pointer-events-none">
-                  <Star className="h-2.5 w-2.5 fill-current" />
-                  Omslag
-                </Badge>
+      ) : catalog ? (
+        <div className="grid gap-2 sm:grid-cols-[150px_minmax(0,1fr)]">
+          {/* Katalog */}
+          <Card className="p-2 h-fit">
+            <p className="mb-1.5 flex items-center gap-1 px-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <CalendarDays className="h-3 w-3" />
+              Katalog
+            </p>
+            <div className="space-y-0.5">
+              {catalogButton(
+                view.mode === "favorites",
+                "fav",
+                "Favoriter",
+                favorites.length,
+                <Heart className={cn("h-3 w-3", view.mode === "favorites" && "fill-current")} />,
+                () => setView({ mode: "favorites" })
               )}
-
-              {editable && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      aria-label={img.is_cover ? "Ta bort som omslagsbild" : "Använd som omslagsbild"}
-                      onClick={() =>
-                        setCover.mutate({
-                          entityType,
-                          entityId,
-                          imageId: img.is_cover ? null : img.id,
-                        })
-                      }
-                      className={cn(
-                        "absolute top-1 right-1 h-6 w-6 rounded-full bg-background/80 backdrop-blur flex items-center justify-center border transition-opacity",
-                        img.is_cover
-                          ? "text-primary border-primary"
-                          : "text-muted-foreground border-border opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
-                      )}
-                    >
-                      <Star className={cn("h-3 w-3", img.is_cover && "fill-current")} />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="left" className="text-xs">
-                    {img.is_cover ? "Omslagsbild – klicka för att ta bort" : "Sätt som omslagsbild"}
-                  </TooltipContent>
-                </Tooltip>
+              {previewCount
+                ? catalogButton(
+                    view.mode === "featured",
+                    "featured",
+                    "Utvalda",
+                    previewImages.length,
+                    <Star className="h-3 w-3" />,
+                    () => setView({ mode: "featured" })
+                  )
+                : null}
+              <div className="my-1 border-t" />
+              {dates.slice(0, dateLimit).map(([key, count]) =>
+                catalogButton(
+                  view.mode === "day" && view.key === key,
+                  key,
+                  dayLabel(key),
+                  count,
+                  undefined,
+                  () => setView({ mode: "day", key })
+                )
               )}
-              <div className="p-1.5 flex items-center gap-1">
-                {editable ? (
-                  <Input
-                    defaultValue={img.caption || ""}
-                    placeholder="Bildtext…"
-                    className="h-6 text-[11px] border-transparent hover:border-input focus-visible:border-input px-1.5"
-                    onBlur={(e) => {
-                      const v = e.target.value.trim();
-                      if (v !== (img.caption || "")) updateImage.mutate({ id: img.id, caption: v || null });
-                    }}
-                  />
-                ) : (
-                  <span className="text-[11px] text-muted-foreground truncate flex-1 px-1">
-                    {img.caption || "—"}
-                  </span>
+              {dates.length === 0 && (
+                <p className="px-2 py-1 text-[10px] text-muted-foreground">Inga datum ännu</p>
+              )}
+              {/* Dagens datum finns alltid som val även utan bilder */}
+              {dates.length > 0 &&
+                !dates.some(([k]) => k === dayKey(new Date().toISOString())) &&
+                catalogButton(
+                  view.mode === "day" && view.key === dayKey(new Date().toISOString()),
+                  "today",
+                  "Idag",
+                  0,
+                  undefined,
+                  () => setView({ mode: "day", key: dayKey(new Date().toISOString()) })
                 )}
-                {editable && (
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-muted-foreground shrink-0"
-                        aria-label="Justera beskärning"
-                        title={`Beskärning: ${focalLabel(img.focal_point)}`}
-                      >
-                        <Crop className="h-3 w-3" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent align="end" className="w-56 p-3">
-                      <p className="mb-2 text-[11px] font-medium text-muted-foreground">
-                        Bildposition: {focalLabel(img.focal_point)}
-                      </p>
-                      <Slider
-                        value={[focalPercent(img.focal_point)]}
-                        min={0}
-                        max={100}
-                        step={1}
-                        onValueChange={(v) => updateImage.mutate({ id: img.id, focal_point: String(v[0]) })}
-                      />
-                      <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
-                        <span>Överkant</span>
-                        <span>Nederkant</span>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                )}
-                {editable && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-muted-foreground hover:text-destructive shrink-0"
-                    aria-label="Ta bort bild"
-                    onClick={() => removeImage.mutate(img.id)}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                )}
-              </div>
-            </Card>
-          ))}
+              {dates.length > dateLimit && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-full text-[10px]"
+                  onClick={() => setDateLimit((n) => n + DATE_PAGE)}
+                >
+                  Ladda fler datum
+                </Button>
+              )}
+            </div>
+          </Card>
+
+          <div>
+            {shown.length === 0 ? (
+              <Card className="p-4 text-center border-dashed">
+                <ImageIcon className="h-5 w-5 mx-auto text-muted-foreground/60" />
+                <p className="mt-1 text-xs text-muted-foreground">{emptyText}</p>
+              </Card>
+            ) : (
+              grid
+            )}
+          </div>
         </div>
+      ) : (
+        grid
       )}
 
       <ImageLightbox
-        images={images}
-        index={lightboxIndex}
-        onIndexChange={setLightboxIndex}
-        onClose={() => setLightboxIndex(null)}
+        images={shown}
+        index={lightboxIndex >= 0 ? lightboxIndex : null}
+        onIndexChange={(i) => setLightboxId(shown[i]?.id ?? null)}
+        onClose={() => setLightboxId(null)}
         title={title}
         editable={editable}
         onSaveCaption={(id, caption) => updateImage.mutate({ id, caption })}
+        favoriteIds={favoriteIds}
+        onToggleFavorite={(id, favorite) => toggleFavorite.mutate({ imageId: id, favorite })}
       />
 
       {previewCount && (
@@ -363,7 +558,6 @@ export function EntityImageGallery({
           </DialogContent>
         </Dialog>
       )}
-
     </div>
   );
 }
