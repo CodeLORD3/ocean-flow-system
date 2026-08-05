@@ -18,14 +18,19 @@ import { Slider } from "@/components/ui/slider";
 import { MapPin, Store as StoreIcon, Upload, Images, Pencil, Trash2, Check, X, Loader2, Crop } from "lucide-react";
 
 /**
- * Hero/cover image shown at the top of every page inside a shop portal.
- * Staff with shop/admin access can change, caption or remove the image inline.
+ * Hero/cover image shown at the top of every page inside a shop portal
+ * and inside grossist-/adminportalen (egen bildpool).
  */
 export function StoreHero() {
   const { site, activeStoreId, activeStoreName } = useSite();
   const { staff } = useStaffAuth();
   const { data: stores = [] } = useStores();
-  const { data: images = [] } = useEntityImages("store", site === "shop" ? activeStoreId : null);
+
+  const isShop = site === "shop" && !!activeStoreId;
+  const entityType = isShop ? "store" : PORTAL_IMAGE_ENTITY_TYPE;
+  const entityId = isShop ? activeStoreId! : WHOLESALE_IMAGE_ENTITY_ID;
+
+  const { data: images = [] } = useEntityImages(entityType, entityId);
 
   const upload = useUploadEntityImage();
   const setCover = useSetCoverImage();
@@ -39,9 +44,10 @@ export function StoreHero() {
   const [cropOpen, setCropOpen] = useState(false);
   const [focalDraft, setFocalDraft] = useState<number | null>(null);
 
-  if (site !== "shop" || !activeStoreId) return null;
+  if (site === "shop" && !activeStoreId) return null;
+  if (site === "production") return null;
 
-  const store = stores.find((s) => s.id === activeStoreId);
+  const store = isShop ? stores.find((s) => s.id === activeStoreId) : undefined;
   const cover = images.find((img) => img.is_cover) ?? images[0] ?? null;
   const url = cover?.url || store?.logo_url || null;
 
@@ -51,10 +57,18 @@ export function StoreHero() {
     ...(staff?.allowed_store_ids ?? []),
     ...(staff?.allowed_store_id ? [staff.allowed_store_id] : []),
   ]);
-  const canEdit =
-    isAdmin || (access.includes("shop") && (allowedIds.size === 0 || allowedIds.has(activeStoreId)));
+  const canEdit = isShop
+    ? isAdmin || (access.includes("shop") && (allowedIds.size === 0 || allowedIds.has(activeStoreId!)))
+    : isAdmin || access.includes("wholesale");
+
+  const heroTitle = isShop
+    ? activeStoreName ?? store?.name ?? "Butik"
+    : isAdmin && !access.includes("wholesale")
+      ? "Admin"
+      : "Grossist";
 
   const busy = upload.isPending || setCover.isPending || updateImage.isPending || deleteImage.isPending;
+
 
   const handleFile = async (file: File | undefined) => {
     if (!file) return;
