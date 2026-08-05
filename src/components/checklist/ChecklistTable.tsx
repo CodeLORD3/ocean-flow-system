@@ -424,7 +424,7 @@ export function ChecklistTable({
               if (row.kind === "section") {
                 return (
                   <tr key={`s-${row.label}`} className="bg-muted/70">
-                    <td colSpan={7} className="px-3 py-1.5">
+                    <td colSpan={8} className="px-3 py-1.5">
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-[11px] font-bold uppercase tracking-wide text-foreground">{row.label}</span>
                         {!locked && (
@@ -448,7 +448,7 @@ export function ChecklistTable({
                 if (addSection !== row.label) {
                   return (
                     <tr key={`a-${row.label}`} className="border-t border-border">
-                      <td colSpan={7} className="px-3 py-1">
+                      <td colSpan={8} className="px-3 py-1">
                         <button
                           type="button"
                           className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground"
