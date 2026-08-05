@@ -170,8 +170,7 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
       if (data.section === "body") {
         // exakt samma radhöjd över hela listan
         data.cell.styles.minCellHeight = ROW_H;
-        if (isSection) return;
-        if (data.row.index % 2 === 1) data.cell.styles.fillColor = [248, 249, 250];
+        if (data.column.index === 3) data.cell.text = [];
       }
     },
     didDrawCell: (data) => {
