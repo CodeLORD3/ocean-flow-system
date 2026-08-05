@@ -119,6 +119,11 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
     try {
       await send.mutateAsync({ conversationId: activeConv.id, body: text, file });
       setText("");
+      if (textRef.current) {
+        textRef.current.style.height = "auto";
+        textRef.current.focus();
+      }
+
     } catch (e: any) {
       toast({ title: "Kunde inte skicka", description: e.message, variant: "destructive" });
     }
