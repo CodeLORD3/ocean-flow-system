@@ -355,6 +355,7 @@ export type Database = {
           shift: string
           status: string
           store_id: string
+          template_id: string
           updated_at: string
         }
         Insert: {
@@ -369,6 +370,7 @@ export type Database = {
           shift?: string
           status?: string
           store_id: string
+          template_id?: string
           updated_at?: string
         }
         Update: {
@@ -383,6 +385,7 @@ export type Database = {
           shift?: string
           status?: string
           store_id?: string
+          template_id?: string
           updated_at?: string
         }
         Relationships: [
@@ -398,6 +401,13 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_days_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -542,6 +552,7 @@ export type Database = {
           sort_order: number
           store_id: string | null
           task: string
+          template_id: string
           time_label: string | null
           updated_at: string
         }
@@ -554,6 +565,7 @@ export type Database = {
           sort_order?: number
           store_id?: string | null
           task: string
+          template_id?: string
           time_label?: string | null
           updated_at?: string
         }
@@ -566,12 +578,61 @@ export type Database = {
           sort_order?: number
           store_id?: string | null
           task?: string
+          template_id?: string
           time_label?: string | null
           updated_at?: string
         }
         Relationships: [
           {
             foreignKeyName: "checklist_template_items_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_template_items_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_templates: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          sort_order: number
+          store_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          sort_order?: number
+          store_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          sort_order?: number
+          store_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_templates_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
