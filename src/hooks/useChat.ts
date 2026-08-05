@@ -241,14 +241,17 @@ export function useSendChatMessage() {
       body,
       file,
       important,
+      existingImageUrl,
     }: {
       conversationId: string;
       body?: string;
       file?: File | null;
       important?: boolean;
+      /** Redan uppladdad bild (används vid vidarebefordran) */
+      existingImageUrl?: string | null;
     }) => {
       if (!portal) throw new Error("Ingen aktiv portal.");
-      let imageUrl: string | null = null;
+      let imageUrl: string | null = existingImageUrl ?? null;
       if (file) {
         const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
         const path = `chat/${conversationId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
@@ -257,6 +260,7 @@ export function useSendChatMessage() {
         imageUrl = supabase.storage.from(CHAT_BUCKET).getPublicUrl(path).data.publicUrl;
       }
       if (!body?.trim() && !imageUrl) return;
+
 
       const { error } = await supabase.from("chat_messages").insert({
         conversation_id: conversationId,
