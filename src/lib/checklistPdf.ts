@@ -128,6 +128,7 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
 
   autoTable(doc, {
     startY: boxY + boxH + 6,
+    rowPageBreak: "avoid",
     body,
     head: [["TID", "KATEGORI", "UPPGIFT", "KLAR", "KOMMENTAR / AVVIKELSE", "SIGN"]],
     theme: "grid",
