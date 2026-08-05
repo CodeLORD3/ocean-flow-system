@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { MessageSquare, Plus, Send, ImagePlus, Loader2, Store, Factory, Shield, ArrowLeft, Megaphone, AlertTriangle } from "lucide-react";
+import { MessageSquare, Send, ImagePlus, Loader2, Store, Factory, Shield, ArrowLeft, Megaphone, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -282,7 +282,7 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
               </div>
             ) : conversations.length === 0 ? (
               <p className="text-[11px] text-muted-foreground py-3">
-                {portal.kind === "store" ? "Inga chattar ännu. Du kan starta en chatt med Grossist." : "Inga chattar ännu. Skapa en chatt med en annan portal."}
+                Förbereder chattar…
               </p>
             ) : (
               conversations.map((c) => {
