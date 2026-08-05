@@ -315,18 +315,99 @@ export function ChecklistTable({
               <th className="text-left font-semibold px-3 py-2.5 border-r border-border">Uppgift</th>
               <th className="text-center font-semibold px-3 py-2.5 w-20 border-r border-border">Klar</th>
               <th className="text-center font-semibold px-3 py-2.5 w-64 border-r border-border">Kommentar / Avvikelse</th>
-              <th className="text-center font-semibold px-3 py-2.5 w-28">Signatur</th>
+              <th className="text-center font-semibold px-3 py-2.5 w-24 border-r border-border">Signatur</th>
+              <th className="w-10 px-1 py-2.5" />
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) =>
-              row.kind === "section" ? (
-                <tr key={`s-${row.label}`} className="bg-muted/70">
-                  <td colSpan={6} className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-foreground">
-                    {row.label}
-                  </td>
-                </tr>
-              ) : (
+            {rows.map((row) => {
+              if (row.kind === "section") {
+                return (
+                  <tr key={`s-${row.label}`} className="bg-muted/70">
+                    <td colSpan={7} className="px-3 py-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[11px] font-bold uppercase tracking-wide text-foreground">{row.label}</span>
+                        {!locked && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-[11px]"
+                            onClick={() => openAdd(row.label)}
+                          >
+                            <Plus className="h-3 w-3 mr-1" /> Lägg till rad
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              }
+
+              if (row.kind === "add") {
+                if (locked) return null;
+                if (addSection !== row.label) {
+                  return (
+                    <tr key={`a-${row.label}`} className="border-t border-border">
+                      <td colSpan={7} className="px-3 py-1">
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground"
+                          onClick={() => openAdd(row.label)}
+                        >
+                          <Plus className="h-3 w-3" /> Ny rad i {row.label.toLowerCase()}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                }
+                return (
+                  <tr key={`a-${row.label}`} className="border-t border-border bg-primary/5">
+                    <td className="px-2 py-1.5 border-r border-border">
+                      <Input
+                        value={addDraft.time}
+                        placeholder="07:30"
+                        className="h-7 text-xs text-center font-mono tabular-nums"
+                        onChange={(e) => setAddDraft((d) => ({ ...d, time: e.target.value }))}
+                        onKeyDown={(e) => e.key === "Enter" && submitAdd(row.label)}
+                      />
+                    </td>
+                    <td className="px-2 py-1.5 border-r border-border">
+                      <Input
+                        value={addDraft.category}
+                        placeholder="Kategori"
+                        className="h-7 text-xs"
+                        onChange={(e) => setAddDraft((d) => ({ ...d, category: e.target.value }))}
+                        onKeyDown={(e) => e.key === "Enter" && submitAdd(row.label)}
+                      />
+                    </td>
+                    <td className="px-2 py-1.5 border-r border-border">
+                      <Input
+                        autoFocus
+                        value={addDraft.task}
+                        placeholder="Vad ska göras?"
+                        className="h-7 text-xs"
+                        onChange={(e) => setAddDraft((d) => ({ ...d, task: e.target.value }))}
+                        onKeyDown={(e) => e.key === "Enter" && submitAdd(row.label)}
+                      />
+                    </td>
+                    <td colSpan={3} className="px-2 py-1.5 border-r border-border">
+                      <div className="flex items-center gap-1.5">
+                        <Button size="sm" className="h-7 text-xs" disabled={addItem.isPending} onClick={() => submitAdd(row.label)}>
+                          Lägg till
+                        </Button>
+                        <span className="text-[10px] text-muted-foreground">Enter sparar</span>
+                      </div>
+                    </td>
+                    <td className="px-1 py-1.5 text-center">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAddSection(null)} aria-label="Avbryt">
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              }
+
+              return (
                 <tr
                   key={row.item.id}
                   className={cn(
@@ -334,8 +415,32 @@ export function ChecklistTable({
                     row.item.done ? "bg-emerald-500/10" : "hover:bg-muted/30"
                   )}
                 >
-                  <td className="px-3 py-2 text-center font-mono tabular-nums text-xs text-muted-foreground border-r border-border">
-                    {row.item.time_label || "–"}
+                  <td className="px-1.5 py-1.5 text-center border-r border-border">
+                    {locked ? (
+                      <span className="font-mono tabular-nums text-xs text-muted-foreground">
+                        {row.item.time_label || "–"}
+                      </span>
+                    ) : (
+                      <Input
+                        value={timeDrafts[row.item.id] ?? row.item.time_label ?? ""}
+                        placeholder="––:––"
+                        className="h-7 text-xs text-center font-mono tabular-nums border-transparent hover:border-input focus:border-input bg-transparent px-1"
+                        onChange={(e) => setTimeDrafts((d) => ({ ...d, [row.item.id]: e.target.value }))}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.currentTarget.blur();
+                          } else if (e.key === "Escape") {
+                            setTimeDrafts((d) => {
+                              const { [row.item.id]: _drop, ...rest } = d;
+                              return rest;
+                            });
+                            e.currentTarget.blur();
+                          }
+                        }}
+                        onBlur={() => commitTime(row.item)}
+                        aria-label={`Tid för ${row.item.task}`}
+                      />
+                    )}
                   </td>
                   <td className="px-3 py-2 text-xs text-muted-foreground border-r border-border">{row.item.category || "–"}</td>
                   <td className="px-3 py-2 text-foreground border-r border-border">{row.item.task}</td>
@@ -364,12 +469,25 @@ export function ChecklistTable({
                       />
                     )}
                   </td>
-                  <td className="px-3 py-2 text-center text-xs font-semibold text-foreground">
+                  <td className="px-3 py-2 text-center text-xs font-semibold text-foreground border-r border-border">
                     {row.item.signature || "–"}
                   </td>
+                  <td className="px-1 py-1.5 text-center">
+                    {!locked && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        onClick={() => removeItem.mutate({ id: row.item.id })}
+                        aria-label={`Ta bort ${row.item.task}`}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </td>
                 </tr>
-              )
-            )}
+              );
+            })}
           </tbody>
         </table>
       </div>
