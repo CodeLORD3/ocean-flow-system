@@ -458,8 +458,9 @@ export function EntityImageGallery({
                 ? catalogButton(
                     view.mode === "featured",
                     "featured",
-                    `Utvalda · ${dayLabel(activeDay)}`,
-                    featuredForDay.length,
+                    "Utvalda",
+                    previewImages.length,
+
                     <Star className="h-3 w-3" />,
                     () => setView({ mode: "featured" })
                   )
