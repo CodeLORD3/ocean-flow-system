@@ -458,9 +458,10 @@ export function ImageLightbox({
           </DialogHeader>
 
           {current && (
-            <div className="flex h-full flex-col">
+            <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
               {/* Karusell – bilderna hänger ihop och snappar */}
-              <div className="relative flex-1 min-h-[45dvh] bg-black">
+              <div className="relative flex-1 min-h-[35dvh] bg-black">
+
                 <div
                   ref={trackRef}
                   onScroll={onTrackScroll}
