@@ -392,6 +392,9 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                     showDay ||
                     prev.sender_portal_key !== m.sender_portal_key ||
                     (prev.sender_name || "") !== (m.sender_name || "");
+                  const fwd = parseForward(m.body);
+                  const bodyText = fwd ? fwd.text : m.body;
+
                   return (
                     <Fragment key={m.id}>
                       {showDay && (
