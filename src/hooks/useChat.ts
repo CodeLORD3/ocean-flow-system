@@ -144,35 +144,80 @@ export function useChatMessages(conversationId?: string | null) {
   });
 }
 
-async function findOrCreateConversation(participants: PortalProfile[], staffId: string | null, title?: string) {
-  const keys = [...new Set(participants.map((p) => p.key))].sort();
-  if (keys.length < 2) throw new Error("En chatt behöver minst två portaler.");
+/** Pågående skapanden per deltagarnyckel – hindrar dubbletter vid samtidiga anrop. */
+const inflightConversations = new Map<string, Promise<string>>();
 
-  const { data: existingParts, error: exErr } = await supabase
+async function existingConversationFor(keys: string[]) {
+  const { data: existingParts, error } = await supabase
     .from("chat_participants")
     .select("conversation_id, portal_key");
-  if (exErr) throw exErr;
+  if (error) throw error;
   const byConv = new Map<string, string[]>();
   (existingParts || []).forEach((p: any) => {
     byConv.set(p.conversation_id, [...(byConv.get(p.conversation_id) || []), p.portal_key]);
   });
+  const matches: string[] = [];
   for (const [convId, convKeys] of byConv) {
     const sorted = [...new Set(convKeys)].sort();
-    if (sorted.length === keys.length && sorted.every((k, i) => k === keys[i])) return convId;
+    if (sorted.length === keys.length && sorted.every((k, i) => k === keys[i])) matches.push(convId);
   }
-
-  const { data: conv, error } = await supabase
+  if (matches.length === 0) return null;
+  if (matches.length === 1) return matches[0];
+  // Flera chattar med samma deltagare: behåll den äldsta, städa bort tomma dubbletter
+  const { data: convs } = await supabase
     .from("chat_conversations")
-    .insert({ title: title || null, created_by_staff_id: staffId })
-    .select("id")
-    .single();
-  if (error) throw error;
-  const { error: pErr } = await supabase.from("chat_participants").insert(
-    participants.map((p) => ({ conversation_id: conv.id, portal_key: p.key, portal_name: p.name }))
-  );
-  if (pErr) throw pErr;
-  return conv.id as string;
+    .select("id, created_at")
+    .in("id", matches)
+    .order("created_at", { ascending: true });
+  const keep = (convs?.[0]?.id as string) || matches[0];
+  const drop = matches.filter((id) => id !== keep);
+  if (drop.length) {
+    const { count } = await supabase
+      .from("chat_messages")
+      .select("id", { count: "exact", head: true })
+      .in("conversation_id", drop);
+    if (!count) {
+      await supabase.from("chat_participants").delete().in("conversation_id", drop);
+      await supabase.from("chat_conversations").delete().in("id", drop);
+    }
+  }
+  return keep;
 }
+
+async function findOrCreateConversation(participants: PortalProfile[], staffId: string | null, title?: string) {
+  const keys = [...new Set(participants.map((p) => p.key))].sort();
+  if (keys.length < 2) throw new Error("En chatt behöver minst två portaler.");
+
+  const cacheKey = keys.join("::");
+  const pending = inflightConversations.get(cacheKey);
+  if (pending) return pending;
+
+  const run = (async () => {
+    const existing = await existingConversationFor(keys);
+    if (existing) return existing;
+
+    const { data: conv, error } = await supabase
+      .from("chat_conversations")
+      .insert({ title: title || null, created_by_staff_id: staffId })
+      .select("id")
+      .single();
+    if (error) throw error;
+    const { error: pErr } = await supabase.from("chat_participants").insert(
+      participants.map((p) => ({ conversation_id: conv.id, portal_key: p.key, portal_name: p.name }))
+    );
+    if (pErr) throw pErr;
+    // Slutkontroll: om ett parallellt anrop hann skapa en chatt, behåll den äldsta
+    return (await existingConversationFor(keys)) || (conv.id as string);
+  })();
+
+  inflightConversations.set(cacheKey, run);
+  try {
+    return await run;
+  } finally {
+    inflightConversations.delete(cacheKey);
+  }
+}
+
 
 /** Skapar (eller återanvänder) en chatt mellan de valda portalerna. */
 export function useCreateConversation() {
