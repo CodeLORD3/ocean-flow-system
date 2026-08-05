@@ -18,7 +18,7 @@ export function useStockMovements(filter: StockMovementFilter = {}) {
       let q = supabase
         .from("stock_movements")
         .select(
-          "*, products(name, sku, unit, image_url), storage_locations(name, store_id, stores(name)), lots(lot_number, catch_area, best_before), staff(first_name, last_name)",
+          "*, products(name, sku, unit, image_url), storage_locations(name, store_id, stores!storage_locations_store_id_fkey(name)), lots(lot_number, catch_area, best_before), staff(first_name, last_name)",
         )
         .order("created_at", { ascending: false })
         .limit(limit);
