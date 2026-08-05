@@ -408,7 +408,6 @@ export function EntityImageGallery({
               )}
             </div>
 
-            </div>
           </Card>
         );
       })}
