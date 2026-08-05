@@ -211,26 +211,68 @@ export function ImageLightbox({
                   </div>
                 </div>
                 {editable ? (
-                  <Input
-                    value={caption}
-                    onChange={(e) => setCaption(e.target.value)}
-                    onBlur={saveCaption}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        saveCaption();
-                        (e.target as HTMLInputElement).blur();
-                      }
-                    }}
-                    placeholder="Bildtext…"
-                    className="h-8 text-xs"
-                  />
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5">
+                      <Input
+                        value={caption}
+                        onChange={(e) => setCaption(e.target.value)}
+                        onBlur={saveCaption}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            saveCaption();
+                          }
+                        }}
+                        placeholder="Bildtext…"
+                        className="h-8 text-xs"
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 shrink-0 text-xs"
+                        disabled={caption.trim() === (current.caption || "")}
+                        onClick={saveCaption}
+                      >
+                        Spara
+                      </Button>
+                    </div>
+                    {current.caption_edited_at && (
+                      <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                        <Pencil className="h-2.5 w-2.5" />
+                        Redigerad av {current.caption_edited_by_name || "okänd"} ·{" "}
+                        <span className="font-mono tabular-nums">
+                          {new Date(current.caption_edited_at).toLocaleString("sv-SE", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </p>
+                    )}
+                  </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground">{current.caption || "—"}</p>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">{current.caption || "—"}</p>
+                    {current.caption_edited_at && (
+                      <p className="text-[10px] text-muted-foreground">
+                        Redigerad av {current.caption_edited_by_name || "okänd"} ·{" "}
+                        <span className="font-mono tabular-nums">
+                          {new Date(current.caption_edited_at).toLocaleString("sv-SE", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </p>
+                    )}
+                  </div>
                 )}
                 <p className="text-[10px] text-muted-foreground">
                   Bläddra med piltangenterna eller swipa på mobil.
                 </p>
+
               </div>
             </div>
 
