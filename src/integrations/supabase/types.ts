@@ -346,6 +346,7 @@ export type Database = {
           completed_by_name: string | null
           created_at: string
           id: string
+          page_comments: Json
           responsible_name: string | null
           responsible_staff_id: string | null
           shift: string
@@ -359,6 +360,7 @@ export type Database = {
           completed_by_name?: string | null
           created_at?: string
           id?: string
+          page_comments?: Json
           responsible_name?: string | null
           responsible_staff_id?: string | null
           shift?: string
@@ -372,6 +374,7 @@ export type Database = {
           completed_by_name?: string | null
           created_at?: string
           id?: string
+          page_comments?: Json
           responsible_name?: string | null
           responsible_staff_id?: string | null
           shift?: string
