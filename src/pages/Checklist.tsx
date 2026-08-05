@@ -7,7 +7,6 @@ import {
   Clock,
   Plus,
   Trash2,
-  ArrowLeft,
   ArrowUpRight,
   CalendarDays,
   History,
