@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { MessageSquare, Plus, Send, ImagePlus, Loader2, Store, Factory, Shield, ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,24 @@ function timeLabel(iso: string) {
     : d.toLocaleDateString("sv-SE", { day: "2-digit", month: "2-digit" }) +
         " " +
         d.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+}
+
+/** Klockslag i meddelandebubblan (datum visas i stället som avgränsare) */
+function clockLabel(iso: string) {
+  return new Date(iso).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+}
+
+/** WhatsApp-liknande datumavgränsare med veckodag */
+function dayDividerLabel(iso: string) {
+  const d = new Date(iso);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  const weekday = d.toLocaleDateString("sv-SE", { weekday: "long" });
+  const cap = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+  if (d.toDateString() === today.toDateString()) return `Idag · ${cap}`;
+  if (d.toDateString() === yesterday.toDateString()) return `Igår · ${cap}`;
+  return `${cap} ${d.toLocaleDateString("sv-SE", { day: "numeric", month: "long", year: "numeric" })}`;
 }
 
 type Props = {
@@ -278,11 +296,22 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                     !prev ||
                     prev.sender_portal_key !== m.sender_portal_key ||
                     (prev.sender_name || "") !== (m.sender_name || "");
+                  const showDay =
+                    !prev ||
+                    new Date(prev.created_at).toDateString() !== new Date(m.created_at).toDateString();
                   return (
+                    <Fragment key={m.id}>
+                      {showDay && (
+                        <div className="flex items-center justify-center py-2">
+                          <span className="rounded-full bg-muted px-2.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                            {dayDividerLabel(m.created_at)}
+                          </span>
+                        </div>
+                      )}
                     <div
-                      key={m.id}
-                      className={cn("flex", mine ? "justify-end" : "justify-start", showHeader && i > 0 && "mt-2")}
+                      className={cn("flex", mine ? "justify-end" : "justify-start", showHeader && i > 0 && !showDay && "mt-2")}
                     >
+
                       <div
                         className={cn(
                           "max-w-[85%] sm:max-w-[80%] px-2.5 py-1 text-xs leading-snug shadow-sm",
@@ -322,12 +351,13 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                             mine ? "text-primary-foreground/70" : "text-muted-foreground"
                           )}
                         >
-                          {timeLabel(m.created_at)}
+                          {clockLabel(m.created_at)}
                         </span>
                       </div>
-
                     </div>
+                    </Fragment>
                   );
+
                 })
               )}
             </div>
