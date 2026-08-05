@@ -316,6 +316,8 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
             {/* Composer – WhatsApp-liknande: alltid synlig skickaknapp, ingen inzoomning på mobil */}
             <div className="sticky bottom-0 z-10 flex items-end gap-1.5 pt-2 border-t border-border/50 mt-2 bg-card pb-[env(safe-area-inset-bottom)]">
               <textarea
+                ref={textRef}
+
                 value={text}
                 rows={1}
                 onChange={(e) => {
