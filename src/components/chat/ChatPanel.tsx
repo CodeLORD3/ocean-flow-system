@@ -172,23 +172,8 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
     }
   };
 
-  const handleCreate = async () => {
-    if (!portal) return;
-    const chosen = otherProfiles.filter((p) => selectedKeys.includes(p.key));
-    if (chosen.length === 0) {
-      toast({ title: "Välj minst en portal", variant: "destructive" });
-      return;
-    }
-    try {
-      const id = await createConv.mutateAsync({ participants: [portal, ...chosen] });
-      setActiveId(id);
-      setMobileThread(true);
-      setSelectedKeys([]);
-      setNewOpen(false);
-    } catch (e: any) {
-      toast({ title: "Kunde inte skapa chatt", description: e.message, variant: "destructive" });
-    }
-  };
+
+
 
   const handleSend = async (file?: File | null) => {
     if (!activeConv) return;
