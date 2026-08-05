@@ -159,7 +159,7 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
     // Sista sidan maste aven rymma noteringar/signaturblocket - annars far vi en extra sida
     const bottom = BOTTOM_RESERVE + (isLast ? SIGN_BLOCK_H : 0);
     // Skala radhojden sa att exakt lika manga uppgifter som pa plattformen ryms pa sidan
-    const avail = pageHeight - bottom - startY - HEAD_H - sectionCount(chunk) * SECTION_H;
+    const avail = pageHeight - bottom - startY - HEAD_H - sectionCount(chunk) * SECTION_H - 6;
     const rowH = chunk.length
       ? Math.max(6, Math.min(ROW_H_MAX, avail / chunk.length))
       : ROW_H_MAX;
