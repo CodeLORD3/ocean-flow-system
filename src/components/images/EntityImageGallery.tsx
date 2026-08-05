@@ -424,8 +424,9 @@ export function EntityImageGallery({
           <ImageIcon className="h-5 w-5 mx-auto text-muted-foreground/60" />
           <p className="mt-1 text-xs text-muted-foreground">Inga bilder ännu</p>
         </Card>
-      ) : catalog ? (
+      ) : catalog && catalogOpen ? (
         <div className="grid gap-2 sm:grid-cols-[150px_minmax(0,1fr)]">
+
           {/* Katalog */}
           <Card className="p-2 h-fit">
             <p className="mb-1.5 flex items-center gap-1 px-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -500,9 +501,15 @@ export function EntityImageGallery({
             )}
           </div>
         </div>
+      ) : shown.length === 0 ? (
+        <Card className="p-4 text-center border-dashed">
+          <ImageIcon className="h-5 w-5 mx-auto text-muted-foreground/60" />
+          <p className="mt-1 text-xs text-muted-foreground">{emptyText}</p>
+        </Card>
       ) : (
         grid
       )}
+
 
       <ImageLightbox
         images={shown}
