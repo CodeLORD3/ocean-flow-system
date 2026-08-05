@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Printer, FileText, CheckCheck, ChevronLeft, ChevronRight, ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Printer, FileText, CheckCheck, ChevronLeft, ChevronRight, ArrowRight, CheckCircle2, Plus, Trash2, X } from "lucide-react";
 import { generateChecklistPdf } from "@/lib/checklistPdf";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,6 +14,9 @@ import {
   useMarkAllChecklistItems,
   useSetChecklistNote,
   useToggleChecklistItem,
+  useSetChecklistItemTime,
+  useAddChecklistItem,
+  useDeleteChecklistItem,
   weekdayName,
 } from "@/hooks/useChecklist";
 
@@ -46,8 +49,14 @@ export function ChecklistTable({
 }) {
   const [page, setPage] = useState(0);
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
+  const [timeDrafts, setTimeDrafts] = useState<Record<string, string>>({});
+  const [addSection, setAddSection] = useState<string | null>(null);
+  const [addDraft, setAddDraft] = useState({ task: "", time: "", category: "" });
   const toggle = useToggleChecklistItem();
   const setNote = useSetChecklistNote();
+  const setTime = useSetChecklistItemTime();
+  const addItem = useAddChecklistItem();
+  const removeItem = useDeleteChecklistItem();
   const markAll = useMarkAllChecklistItems();
   const complete = useCompleteChecklist();
 
@@ -61,17 +70,71 @@ export function ChecklistTable({
 
   // Sektionsrubriker inom aktuell sida
   const rows = useMemo(() => {
-    const out: ({ kind: "section"; label: string } | { kind: "item"; item: ChecklistItem })[] = [];
+    type Row =
+      | { kind: "section"; label: string }
+      | { kind: "item"; item: ChecklistItem }
+      | { kind: "add"; label: string };
+    const out: Row[] = [];
     let last: string | null = null;
     pageItems.forEach((item) => {
       if (item.section !== last) {
+        if (last) out.push({ kind: "add", label: last });
         out.push({ kind: "section", label: item.section });
         last = item.section;
       }
       out.push({ kind: "item", item });
     });
+    if (last) out.push({ kind: "add", label: last });
     return out;
   }, [pageItems]);
+
+  const sections = useMemo(
+    () => Array.from(new Set(items.map((i) => i.section))),
+    [items]
+  );
+
+  const commitTime = (item: ChecklistItem) => {
+    const draft = timeDrafts[item.id];
+    if (draft === undefined) return;
+    if (draft.trim() === (item.time_label ?? "")) {
+      setTimeDrafts((d) => {
+        const { [item.id]: _drop, ...rest } = d;
+        return rest;
+      });
+      return;
+    }
+    setTime.mutate(
+      { id: item.id, dayId: day.id, time: draft },
+      {
+        onSuccess: () => {
+          setTimeDrafts((d) => {
+            const { [item.id]: _drop, ...rest } = d;
+            return rest;
+          });
+          toast.success("Tiden uppdaterad — raden flyttades till rätt plats.");
+        },
+        onError: (e: any) => toast.error(e.message || "Kunde inte uppdatera tiden."),
+      }
+    );
+  };
+
+  const submitAdd = (section: string) => {
+    addItem.mutate(
+      { dayId: day.id, section, task: addDraft.task, time: addDraft.time, category: addDraft.category },
+      {
+        onSuccess: () => {
+          setAddDraft({ task: "", time: "", category: "" });
+          toast.success("Uppgiften tillagd.");
+        },
+        onError: (e: any) => toast.error(e.message || "Kunde inte lägga till uppgiften."),
+      }
+    );
+  };
+
+  const openAdd = (section: string) => {
+    setAddSection(section);
+    setAddDraft({ task: "", time: "", category: "" });
+  };
 
   const handleComplete = () => {
     complete.mutate(day.id, {
@@ -138,6 +201,16 @@ export function ChecklistTable({
           </Button>
           {!locked && (
             <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs"
+              onClick={() => openAdd(sections[0] || "Övrigt")}
+            >
+              <Plus className="h-3.5 w-3.5 sm:mr-1.5" /> <span className="hidden sm:inline">Ny rad</span>
+            </Button>
+          )}
+          {!locked && (
+            <Button
               size="sm"
               className="h-8 text-xs"
               onClick={() =>
@@ -182,15 +255,61 @@ export function ChecklistTable({
 
       {/* Mobil: kortlista med stora kryssrutor — ingen sidledes scroll */}
       <div className="md:hidden space-y-2">
-        {rows.map((row) =>
-          row.kind === "section" ? (
-            <p
-              key={`ms-${row.label}`}
-              className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground pt-1"
-            >
-              {row.label}
-            </p>
-          ) : (
+        {rows.map((row) => {
+          if (row.kind === "section") {
+            return (
+              <div key={`ms-${row.label}`} className="flex items-center justify-between pt-1">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{row.label}</p>
+                {!locked && (
+                  <Button variant="ghost" size="sm" className="h-7 px-2 text-[11px]" onClick={() => openAdd(row.label)}>
+                    <Plus className="h-3 w-3 mr-1" /> Ny rad
+                  </Button>
+                )}
+              </div>
+            );
+          }
+
+          if (row.kind === "add") {
+            if (locked || addSection !== row.label) return null;
+            return (
+              <div key={`ma-${row.label}`} className="rounded-lg border border-primary/40 bg-primary/5 p-2.5 space-y-2">
+                <Input
+                  autoFocus
+                  value={addDraft.task}
+                  placeholder="Vad ska göras?"
+                  className="h-9 text-sm"
+                  onChange={(e) => setAddDraft((d) => ({ ...d, task: e.target.value }))}
+                  onKeyDown={(e) => e.key === "Enter" && submitAdd(row.label)}
+                />
+                <div className="flex gap-2">
+                  <Input
+                    value={addDraft.time}
+                    placeholder="07:30"
+                    className="h-9 w-24 text-sm text-center font-mono tabular-nums"
+                    onChange={(e) => setAddDraft((d) => ({ ...d, time: e.target.value }))}
+                    onKeyDown={(e) => e.key === "Enter" && submitAdd(row.label)}
+                  />
+                  <Input
+                    value={addDraft.category}
+                    placeholder="Kategori"
+                    className="h-9 flex-1 text-sm"
+                    onChange={(e) => setAddDraft((d) => ({ ...d, category: e.target.value }))}
+                    onKeyDown={(e) => e.key === "Enter" && submitAdd(row.label)}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" className="flex-1 h-9" disabled={addItem.isPending} onClick={() => submitAdd(row.label)}>
+                    Lägg till
+                  </Button>
+                  <Button variant="outline" size="sm" className="h-9" onClick={() => setAddSection(null)}>
+                    Avbryt
+                  </Button>
+                </div>
+              </div>
+            );
+          }
+
+          return (
             <div
               key={`m-${row.item.id}`}
               className={cn(
@@ -210,14 +329,36 @@ export function ChecklistTable({
                 </label>
                 <div className="min-w-0 flex-1">
                   <p className="text-[13px] leading-snug text-foreground break-words">{row.item.task}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-2">
-                    {row.item.time_label && (
-                      <span className="font-mono tabular-nums">{row.item.time_label}</span>
+                  <div className="text-[10px] text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                    {locked ? (
+                      row.item.time_label && <span className="font-mono tabular-nums">{row.item.time_label}</span>
+                    ) : (
+                      <Input
+                        value={timeDrafts[row.item.id] ?? row.item.time_label ?? ""}
+                        placeholder="––:––"
+                        inputMode="numeric"
+                        className="h-8 w-[4.5rem] text-xs text-center font-mono tabular-nums"
+                        onChange={(e) => setTimeDrafts((d) => ({ ...d, [row.item.id]: e.target.value }))}
+                        onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+                        onBlur={() => commitTime(row.item)}
+                        aria-label={`Tid för ${row.item.task}`}
+                      />
                     )}
                     {row.item.category && <span>{row.item.category}</span>}
                     {row.item.signature && <span className="font-semibold text-foreground">✓ {row.item.signature}</span>}
-                  </p>
+                  </div>
                 </div>
+                {!locked && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => removeItem.mutate({ id: row.item.id })}
+                    aria-label={`Ta bort ${row.item.task}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
               <div className="mt-1.5 pl-[3.25rem]">
                 {locked ? (
@@ -238,8 +379,8 @@ export function ChecklistTable({
                 )}
               </div>
             </div>
-          )
-        )}
+          );
+        })}
       </div>
 
       {/* Desktop: tabell */}
@@ -252,18 +393,99 @@ export function ChecklistTable({
               <th className="text-left font-semibold px-3 py-2.5 border-r border-border">Uppgift</th>
               <th className="text-center font-semibold px-3 py-2.5 w-20 border-r border-border">Klar</th>
               <th className="text-center font-semibold px-3 py-2.5 w-64 border-r border-border">Kommentar / Avvikelse</th>
-              <th className="text-center font-semibold px-3 py-2.5 w-28">Signatur</th>
+              <th className="text-center font-semibold px-3 py-2.5 w-24 border-r border-border">Signatur</th>
+              <th className="w-10 px-1 py-2.5" />
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) =>
-              row.kind === "section" ? (
-                <tr key={`s-${row.label}`} className="bg-muted/70">
-                  <td colSpan={6} className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-foreground">
-                    {row.label}
-                  </td>
-                </tr>
-              ) : (
+            {rows.map((row) => {
+              if (row.kind === "section") {
+                return (
+                  <tr key={`s-${row.label}`} className="bg-muted/70">
+                    <td colSpan={7} className="px-3 py-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[11px] font-bold uppercase tracking-wide text-foreground">{row.label}</span>
+                        {!locked && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-[11px]"
+                            onClick={() => openAdd(row.label)}
+                          >
+                            <Plus className="h-3 w-3 mr-1" /> Lägg till rad
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              }
+
+              if (row.kind === "add") {
+                if (locked) return null;
+                if (addSection !== row.label) {
+                  return (
+                    <tr key={`a-${row.label}`} className="border-t border-border">
+                      <td colSpan={7} className="px-3 py-1">
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground"
+                          onClick={() => openAdd(row.label)}
+                        >
+                          <Plus className="h-3 w-3" /> Ny rad i {row.label.toLowerCase()}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                }
+                return (
+                  <tr key={`a-${row.label}`} className="border-t border-border bg-primary/5">
+                    <td className="px-2 py-1.5 border-r border-border">
+                      <Input
+                        value={addDraft.time}
+                        placeholder="07:30"
+                        className="h-7 text-xs text-center font-mono tabular-nums"
+                        onChange={(e) => setAddDraft((d) => ({ ...d, time: e.target.value }))}
+                        onKeyDown={(e) => e.key === "Enter" && submitAdd(row.label)}
+                      />
+                    </td>
+                    <td className="px-2 py-1.5 border-r border-border">
+                      <Input
+                        value={addDraft.category}
+                        placeholder="Kategori"
+                        className="h-7 text-xs"
+                        onChange={(e) => setAddDraft((d) => ({ ...d, category: e.target.value }))}
+                        onKeyDown={(e) => e.key === "Enter" && submitAdd(row.label)}
+                      />
+                    </td>
+                    <td className="px-2 py-1.5 border-r border-border">
+                      <Input
+                        autoFocus
+                        value={addDraft.task}
+                        placeholder="Vad ska göras?"
+                        className="h-7 text-xs"
+                        onChange={(e) => setAddDraft((d) => ({ ...d, task: e.target.value }))}
+                        onKeyDown={(e) => e.key === "Enter" && submitAdd(row.label)}
+                      />
+                    </td>
+                    <td colSpan={3} className="px-2 py-1.5 border-r border-border">
+                      <div className="flex items-center gap-1.5">
+                        <Button size="sm" className="h-7 text-xs" disabled={addItem.isPending} onClick={() => submitAdd(row.label)}>
+                          Lägg till
+                        </Button>
+                        <span className="text-[10px] text-muted-foreground">Enter sparar</span>
+                      </div>
+                    </td>
+                    <td className="px-1 py-1.5 text-center">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setAddSection(null)} aria-label="Avbryt">
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              }
+
+              return (
                 <tr
                   key={row.item.id}
                   className={cn(
@@ -271,8 +493,32 @@ export function ChecklistTable({
                     row.item.done ? "bg-emerald-500/10" : "hover:bg-muted/30"
                   )}
                 >
-                  <td className="px-3 py-2 text-center font-mono tabular-nums text-xs text-muted-foreground border-r border-border">
-                    {row.item.time_label || "–"}
+                  <td className="px-1.5 py-1.5 text-center border-r border-border">
+                    {locked ? (
+                      <span className="font-mono tabular-nums text-xs text-muted-foreground">
+                        {row.item.time_label || "–"}
+                      </span>
+                    ) : (
+                      <Input
+                        value={timeDrafts[row.item.id] ?? row.item.time_label ?? ""}
+                        placeholder="––:––"
+                        className="h-7 text-xs text-center font-mono tabular-nums border-transparent hover:border-input focus:border-input bg-transparent px-1"
+                        onChange={(e) => setTimeDrafts((d) => ({ ...d, [row.item.id]: e.target.value }))}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.currentTarget.blur();
+                          } else if (e.key === "Escape") {
+                            setTimeDrafts((d) => {
+                              const { [row.item.id]: _drop, ...rest } = d;
+                              return rest;
+                            });
+                            e.currentTarget.blur();
+                          }
+                        }}
+                        onBlur={() => commitTime(row.item)}
+                        aria-label={`Tid för ${row.item.task}`}
+                      />
+                    )}
                   </td>
                   <td className="px-3 py-2 text-xs text-muted-foreground border-r border-border">{row.item.category || "–"}</td>
                   <td className="px-3 py-2 text-foreground border-r border-border">{row.item.task}</td>
@@ -301,15 +547,53 @@ export function ChecklistTable({
                       />
                     )}
                   </td>
-                  <td className="px-3 py-2 text-center text-xs font-semibold text-foreground">
+                  <td className="px-3 py-2 text-center text-xs font-semibold text-foreground border-r border-border">
                     {row.item.signature || "–"}
                   </td>
+                  <td className="px-1 py-1.5 text-center">
+                    {!locked && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        onClick={() => removeItem.mutate({ id: row.item.id })}
+                        aria-label={`Ta bort ${row.item.task}`}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </td>
                 </tr>
-              )
-            )}
+              );
+            })}
           </tbody>
         </table>
       </div>
+
+      {!locked && items.length === 0 && (
+        <div className="rounded-lg border border-border bg-card shadow-card p-3 space-y-2">
+          <p className="text-xs text-muted-foreground">Checklistan är tom — lägg till den första uppgiften.</p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Input
+              value={addDraft.time}
+              placeholder="07:30"
+              className="h-9 sm:w-24 text-sm text-center font-mono tabular-nums"
+              onChange={(e) => setAddDraft((d) => ({ ...d, time: e.target.value }))}
+              onKeyDown={(e) => e.key === "Enter" && submitAdd("Övrigt")}
+            />
+            <Input
+              value={addDraft.task}
+              placeholder="Vad ska göras?"
+              className="h-9 flex-1 text-sm"
+              onChange={(e) => setAddDraft((d) => ({ ...d, task: e.target.value }))}
+              onKeyDown={(e) => e.key === "Enter" && submitAdd("Övrigt")}
+            />
+            <Button size="sm" className="h-9" disabled={addItem.isPending} onClick={() => submitAdd("Övrigt")}>
+              <Plus className="h-4 w-4 mr-1" /> Lägg till
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <div className="rounded-lg border border-border bg-card shadow-card px-3 py-2.5 sm:px-4 sm:py-3 space-y-2 sm:space-y-0 sm:flex sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
