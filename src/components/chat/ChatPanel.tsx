@@ -173,6 +173,39 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
 
   const storeTargets = useMemo(() => otherProfiles.filter((p) => p.kind === "store"), [otherProfiles]);
   const isAdmin = portal?.kind === "admin";
+  // Grossist (och Admin) kan vidarebefordra meddelanden mellan sina chattar
+  const canForward = !isStore && conversations.length > 1;
+
+  const openForward = (m: ChatMessage) => {
+    setForwardMsg(m);
+    setForwardConvIds([]);
+  };
+
+  const forwardSourceName = activeConv ? conversationTitle(activeConv, portal?.key ?? "") : "";
+
+  const handleForward = async () => {
+    if (!forwardMsg || forwardConvIds.length === 0) return;
+    const original = parseForward(forwardMsg.body);
+    const from = original?.from || forwardMsg.sender_portal_name || forwardSourceName;
+    const body = buildForwardBody(from, original ? original.text : forwardMsg.body);
+    try {
+      for (const id of forwardConvIds) {
+        await send.mutateAsync({
+          conversationId: id,
+          body,
+          existingImageUrl: forwardMsg.image_url,
+        });
+      }
+      toast({
+        title: "Vidarebefordrat",
+        description: `Skickat till ${forwardConvIds.length} chatt(ar).`,
+      });
+      setForwardMsg(null);
+      setForwardConvIds([]);
+    } catch (e: any) {
+      toast({ title: "Kunde inte vidarebefordra", description: e.message, variant: "destructive" });
+    }
+  };
 
   const handleBroadcast = async () => {
     if (!broadcastText.trim()) {
@@ -189,6 +222,7 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
       toast({ title: "Kunde inte skicka", description: e.message, variant: "destructive" });
     }
   };
+
 
 
 
