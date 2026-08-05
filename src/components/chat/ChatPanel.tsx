@@ -293,14 +293,15 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                 messages.map((m, i) => {
                   const mine = m.sender_portal_key === portal.key;
                   const prev = i > 0 ? messages[i - 1] : null;
-                  // WhatsApp-stil: rubrik bara på första meddelandet i en följd från samma avsändare
-                  const showHeader =
-                    !prev ||
-                    prev.sender_portal_key !== m.sender_portal_key ||
-                    (prev.sender_name || "") !== (m.sender_name || "");
                   const showDay =
                     !prev ||
                     new Date(prev.created_at).toDateString() !== new Date(m.created_at).toDateString();
+                  // WhatsApp-stil: rubrik på första meddelandet i en följd – och alltid först på en ny dag
+                  const showHeader =
+                    !prev ||
+                    showDay ||
+                    prev.sender_portal_key !== m.sender_portal_key ||
+                    (prev.sender_name || "") !== (m.sender_name || "");
                   return (
                     <Fragment key={m.id}>
                       {showDay && (
