@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ArrowLeft, Printer, FileText, CheckCheck, ChevronLeft, ChevronRight, ArrowRight, CheckCircle2, Plus, Trash2, X } from "lucide-react";
 import { generateChecklistPdf } from "@/lib/checklistPdf";
+import { SignatureEditor } from "@/components/checklist/SignatureEditor";
+
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -345,7 +347,14 @@ export function ChecklistTable({
                       />
                     )}
                     {row.item.category && <span>{row.item.category}</span>}
-                    {row.item.signature && <span className="font-semibold text-foreground">✓ {row.item.signature}</span>}
+                    {readOnly
+                      ? row.item.signature && (
+                          <span className="font-semibold text-foreground">✓ {row.item.signature}</span>
+                        )
+                      : (row.item.signature || row.item.done) && (
+                          <SignatureEditor item={row.item} storeId={day.store_id} allItems={items} />
+                        )}
+
                   </div>
                 </div>
                 {!locked && (
@@ -547,9 +556,14 @@ export function ChecklistTable({
                       />
                     )}
                   </td>
-                  <td className="px-3 py-2 text-center text-xs font-semibold text-foreground border-r border-border">
-                    {row.item.signature || "–"}
+                  <td className="px-1.5 py-1.5 text-center text-xs font-semibold text-foreground border-r border-border">
+                    {readOnly ? (
+                      row.item.signature || "–"
+                    ) : (
+                      <SignatureEditor item={row.item} storeId={day.store_id} allItems={items} />
+                    )}
                   </td>
+
                   <td className="px-1 py-1.5 text-center">
                     {!locked && (
                       <Button
