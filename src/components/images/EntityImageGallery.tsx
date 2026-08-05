@@ -510,11 +510,24 @@ export function EntityImageGallery({
 
           {/* Katalog */}
           <Card className="p-2 h-fit">
-            <p className="mb-1.5 flex items-center gap-1 px-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              <CalendarDays className="h-3 w-3" />
-              Katalog
-            </p>
-            <div className="space-y-0.5">
+            <button
+              type="button"
+              onClick={() => setCatalogCollapsed((v) => !v)}
+              className="mb-1.5 flex w-full items-center justify-between gap-1 px-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:pointer-events-none sm:text-[10px]"
+            >
+              <span className="flex items-center gap-1.5">
+                <CalendarDays className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
+                Katalog
+              </span>
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 transition-transform sm:hidden",
+                  catalogCollapsed && "-rotate-90"
+                )}
+              />
+            </button>
+            <div className={cn("space-y-0.5", catalogCollapsed && "hidden sm:block")}>
+
               {catalogButton(
                 view.mode === "favorites",
                 "fav",
