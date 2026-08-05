@@ -307,20 +307,29 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
               )}
             </div>
 
-            {/* Composer */}
-            <div className="flex items-center gap-1.5 pt-2 border-t border-border/50 mt-2">
-              <Input
+            {/* Composer – WhatsApp-liknande: alltid synlig skickaknapp, ingen inzoomning på mobil */}
+            <div className="sticky bottom-0 z-10 flex items-end gap-1.5 pt-2 border-t border-border/50 mt-2 bg-card pb-[env(safe-area-inset-bottom)]">
+              <textarea
                 value={text}
-                onChange={(e) => setText(e.target.value)}
+                rows={1}
+                onChange={(e) => {
+                  setText(e.target.value);
+                  const el = e.currentTarget;
+                  el.style.height = "auto";
+                  el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     handleSend();
                   }
                 }}
+                enterKeyHint="send"
+                autoCapitalize="sentences"
                 placeholder={activeConv ? "Skriv meddelande..." : "Välj en chatt först"}
                 disabled={!activeConv || send.isPending}
-                className="h-9 text-xs rounded-full"
+                /* 16px på mobil hindrar iOS från att zooma in vid fokus */
+                className="flex-1 min-h-9 max-h-[120px] resize-none overflow-y-auto rounded-2xl border border-input bg-background px-3 py-2 text-base sm:text-xs leading-snug placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50"
               />
               <input
                 ref={fileRef}
@@ -346,11 +355,14 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                 size="icon"
                 className="h-9 w-9 shrink-0 rounded-full"
                 disabled={!activeConv || send.isPending}
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => handleSend()}
+                aria-label="Skicka"
               >
                 {send.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
+
           </div>
         )}
       </CardContent>
