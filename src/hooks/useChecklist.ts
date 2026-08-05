@@ -422,3 +422,154 @@ export function useDeleteChecklistItem() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["checklist-day"] }),
   });
 }
+
+/* ---------------- Signaturförfrågningar ---------------- */
+
+export type SignatureRequest = {
+  id: string;
+  item_id: string;
+  day_id: string | null;
+  store_id: string | null;
+  requested_signature: string;
+  target_staff_id: string | null;
+  requested_by_staff_id: string | null;
+  requested_by_name: string | null;
+  previous_signature: string | null;
+  status: string;
+  created_at: string;
+  responded_at: string | null;
+};
+
+/** Väntande signaturförfrågningar för en checklistdag. */
+export function useSignatureRequests(dayId?: string | null) {
+  return useQuery({
+    queryKey: ["checklist-signature-requests", dayId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("checklist_signature_requests")
+        .select("*")
+        .eq("day_id", dayId!)
+        .eq("status", "pending");
+      if (error) throw error;
+      return (data || []) as SignatureRequest[];
+    },
+    enabled: !!dayId,
+  });
+}
+
+/** Alla väntande förfrågningar som gäller den inloggade personen. */
+export function useMySignatureRequests() {
+  const { staff } = useStaffAuth();
+  return useQuery({
+    queryKey: ["my-signature-requests", staff?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("checklist_signature_requests")
+        .select("*, checklist_items(task, section, time_label)")
+        .eq("target_staff_id", staff!.id)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data || []) as (SignatureRequest & {
+        checklist_items: { task: string; section: string; time_label: string | null } | null;
+      })[];
+    },
+    enabled: !!staff?.id,
+  });
+}
+
+/** Skapar förfrågan om signaturbyte — signaturen ändras först när mottagaren accepterar. */
+export function useRequestSignatureChange() {
+  const qc = useQueryClient();
+  const { staff } = useStaffAuth();
+  return useMutation({
+    mutationFn: async ({
+      items,
+      signature,
+      targetStaffId,
+      dayId,
+      storeId,
+    }: {
+      items: ChecklistItem[];
+      signature: string;
+      targetStaffId: string;
+      dayId: string;
+      storeId?: string | null;
+    }) => {
+      const sig = signature.trim().toUpperCase().slice(0, 8);
+      if (!sig) throw new Error("Välj vilken person signaturen ska ändras till.");
+      if (!targetStaffId) throw new Error("Välj en person med konto — förfrågan måste kunna accepteras.");
+      if (items.length === 0) throw new Error("Inga uppgifter valda.");
+
+      // Ta bort tidigare väntande förfrågningar på samma uppgifter
+      const ids = items.map((i) => i.id);
+      await supabase
+        .from("checklist_signature_requests")
+        .delete()
+        .in("item_id", ids)
+        .eq("status", "pending");
+
+      const { error } = await supabase.from("checklist_signature_requests").insert(
+        items.map((i) => ({
+          item_id: i.id,
+          day_id: dayId,
+          store_id: storeId ?? null,
+          requested_signature: sig,
+          target_staff_id: targetStaffId,
+          requested_by_staff_id: staff?.id ?? null,
+          requested_by_name: staff ? `${staff.first_name} ${staff.last_name}` : null,
+          previous_signature: i.signature,
+        }))
+      );
+      if (error) throw error;
+      return { sig, count: items.length };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["checklist-signature-requests"] });
+      qc.invalidateQueries({ queryKey: ["my-signature-requests"] });
+    },
+  });
+}
+
+/** Mottagaren accepterar eller avvisar förfrågan. Signaturen ändras bara vid accept. */
+export function useRespondSignatureRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ request, accept }: { request: SignatureRequest; accept: boolean }) => {
+      if (accept) {
+        const { error } = await supabase
+          .from("checklist_items")
+          .update({ signature: request.requested_signature })
+          .eq("id", request.item_id);
+        if (error) throw error;
+      }
+      const { error: rErr } = await supabase
+        .from("checklist_signature_requests")
+        .update({ status: accept ? "accepted" : "rejected", responded_at: new Date().toISOString() })
+        .eq("id", request.id);
+      if (rErr) throw rErr;
+      return accept;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["checklist-day"] });
+      qc.invalidateQueries({ queryKey: ["checklist-day-items"] });
+      qc.invalidateQueries({ queryKey: ["checklist-signature-requests"] });
+      qc.invalidateQueries({ queryKey: ["my-signature-requests"] });
+    },
+  });
+}
+
+/** Avbryter en väntande förfrågan. */
+export function useCancelSignatureRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("checklist_signature_requests").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["checklist-signature-requests"] });
+      qc.invalidateQueries({ queryKey: ["my-signature-requests"] });
+    },
+  });
+}
