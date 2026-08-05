@@ -81,21 +81,22 @@ export function ChecklistTable({
   const rows = useMemo(() => {
     type Row =
       | { kind: "section"; label: string }
-      | { kind: "item"; item: ChecklistItem }
+      | { kind: "item"; item: ChecklistItem; nr: number }
       | { kind: "add"; label: string };
     const out: Row[] = [];
     let last: string | null = null;
-    pageItems.forEach((item) => {
+    pageItems.forEach((item, idx) => {
       if (item.section !== last) {
         if (last) out.push({ kind: "add", label: last });
         out.push({ kind: "section", label: item.section });
         last = item.section;
       }
-      out.push({ kind: "item", item });
+      out.push({ kind: "item", item, nr: current * PAGE_SIZE + idx + 1 });
     });
     if (last) out.push({ kind: "add", label: last });
     return out;
-  }, [pageItems]);
+  }, [pageItems, current]);
+
 
   const sections = useMemo(
     () => Array.from(new Set(items.map((i) => i.section))),
