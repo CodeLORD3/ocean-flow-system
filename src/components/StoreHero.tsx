@@ -195,14 +195,14 @@ export function StoreHero() {
             onClick={() => fileRef.current?.click()}
             disabled={busy}
           >
-            {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />} Byt bild
+            {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}<span className="hidden sm:inline">Byt bild</span>
           </Button>
 
           {images.length > 0 && (
             <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
               <PopoverTrigger asChild>
                 <Button size="sm" variant="secondary" className="h-7 gap-1 text-[11px]" disabled={busy}>
-                  <Images className="h-3 w-3" /> Välj
+                  <Images className="h-3 w-3" /><span className="hidden sm:inline">Välj</span>
                 </Button>
               </PopoverTrigger>
               <PopoverContent align="end" className="w-64 p-2">
@@ -235,7 +235,7 @@ export function StoreHero() {
               >
                 <PopoverTrigger asChild>
                   <Button size="sm" variant="secondary" className="h-7 gap-1 text-[11px]" disabled={busy} title="Beskär bilden">
-                    <Crop className="h-3 w-3" /> Beskär
+                    <Crop className="h-3 w-3" /><span className="hidden sm:inline">Beskär</span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent align="end" className="w-64 p-3">
