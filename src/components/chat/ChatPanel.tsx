@@ -296,11 +296,22 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                     !prev ||
                     prev.sender_portal_key !== m.sender_portal_key ||
                     (prev.sender_name || "") !== (m.sender_name || "");
+                  const showDay =
+                    !prev ||
+                    new Date(prev.created_at).toDateString() !== new Date(m.created_at).toDateString();
                   return (
+                    <Fragment key={m.id}>
+                      {showDay && (
+                        <div className="flex items-center justify-center py-2">
+                          <span className="rounded-full bg-muted px-2.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                            {dayDividerLabel(m.created_at)}
+                          </span>
+                        </div>
+                      )}
                     <div
-                      key={m.id}
-                      className={cn("flex", mine ? "justify-end" : "justify-start", showHeader && i > 0 && "mt-2")}
+                      className={cn("flex", mine ? "justify-end" : "justify-start", showHeader && i > 0 && !showDay && "mt-2")}
                     >
+
                       <div
                         className={cn(
                           "max-w-[85%] sm:max-w-[80%] px-2.5 py-1 text-xs leading-snug shadow-sm",
