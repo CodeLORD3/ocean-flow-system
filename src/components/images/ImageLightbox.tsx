@@ -43,10 +43,13 @@ export function ImageLightbox({
   const current = open ? images[index as number] : null;
   const [caption, setCaption] = useState("");
   const [draft, setDraft] = useState("");
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const { staff } = useStaffAuth();
   const { data: comments = [], isLoading: loadingComments } = useImageComments(current?.id);
   const addComment = useAddImageComment();
+  const editComment = useUpdateImageComment();
   const delComment = useDeleteImageComment();
   const listRef = useRef<HTMLDivElement>(null);
 
