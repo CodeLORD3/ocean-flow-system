@@ -232,7 +232,7 @@ export function EntityImageGallery({
 
             {img.is_cover && (
               <Badge className="absolute top-1 left-1 h-4 gap-1 px-1.5 text-[9px] pointer-events-none">
-                <Star className="h-2.5 w-2.5 fill-current" />
+                <ImageIcon className="h-2.5 w-2.5" />
                 Omslag
               </Badge>
             )}
@@ -253,33 +253,61 @@ export function EntityImageGallery({
             </button>
 
             {editable && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    aria-label={img.is_cover ? "Ta bort som omslagsbild" : "Använd som omslagsbild"}
-                    onClick={() =>
-                      setCover.mutate({
-                        entityType,
-                        entityId,
-                        imageId: img.is_cover ? null : img.id,
-                      })
-                    }
-                    className={cn(
-                      "absolute top-1 right-1 h-6 w-6 rounded-full bg-background/80 backdrop-blur flex items-center justify-center border transition-opacity",
-                      img.is_cover
-                        ? "text-primary border-primary"
-                        : "text-muted-foreground border-border opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
-                    )}
-                  >
-                    <Star className={cn("h-3 w-3", img.is_cover && "fill-current")} />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="left" className="text-xs">
-                  {img.is_cover ? "Omslagsbild – klicka för att ta bort" : "Sätt som omslagsbild"}
-                </TooltipContent>
-              </Tooltip>
+              <>
+                {previewCount ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={img.is_featured ? "Ta bort från utvalda" : "Markera som utvald"}
+                        onClick={() => toggleFeatured(img)}
+                        className={cn(
+                          "absolute top-1 right-8 h-6 w-6 rounded-full bg-background/80 backdrop-blur flex items-center justify-center border transition-opacity",
+                          img.is_featured
+                            ? "text-amber-500 border-amber-400"
+                            : "text-muted-foreground border-border opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                        )}
+                      >
+                        <Star className={cn("h-3 w-3", img.is_featured && "fill-current")} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left" className="text-xs">
+                      {img.is_featured
+                        ? "Utvald bild – klicka för att ta bort"
+                        : `Visa på översiktssidan (max ${previewCount})`}
+                    </TooltipContent>
+                  </Tooltip>
+                ) : null}
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label={img.is_cover ? "Ta bort som omslagsbild" : "Använd som omslagsbild"}
+                      onClick={() =>
+                        setCover.mutate({
+                          entityType,
+                          entityId,
+                          imageId: img.is_cover ? null : img.id,
+                        })
+                      }
+                      className={cn(
+                        "absolute top-1 right-1 h-6 w-6 rounded-full bg-background/80 backdrop-blur flex items-center justify-center border transition-opacity",
+                        img.is_cover
+                          ? "text-primary border-primary"
+                          : "text-muted-foreground border-border opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                      )}
+                    >
+                      <ImageIcon className="h-3 w-3" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left" className="text-xs">
+                    {img.is_cover ? "Omslagsbild – klicka för att ta bort" : "Sätt som omslagsbild"}
+                  </TooltipContent>
+                </Tooltip>
+              </>
             )}
+
 
             <div className="p-1.5 flex items-center gap-1">
               {/* Uppladdare */}
