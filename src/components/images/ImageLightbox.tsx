@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Heart, Send, Trash2 } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Heart, Pencil, Send, Trash2, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import {
   useAddImageComment,
   useDeleteImageComment,
   useImageComments,
+  useUpdateImageComment,
   type EntityImage,
 } from "@/hooks/useEntityImages";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
