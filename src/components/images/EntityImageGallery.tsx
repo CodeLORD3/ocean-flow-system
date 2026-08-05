@@ -203,7 +203,7 @@ export function EntityImageGallery({
       : catalog && view.mode === "day"
         ? "Inga bilder detta datum."
         : catalog && view.mode === "featured"
-          ? `Inga utvalda bilder för ${dayLabel(activeDay)}.`
+          ? "Inga utvalda bilder ännu — välj vilka bilder som ska visas."
           : "Inga bilder ännu";
 
   const grid = (
