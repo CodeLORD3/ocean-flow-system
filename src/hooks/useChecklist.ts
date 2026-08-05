@@ -274,3 +274,128 @@ export function useChecklistDayItems(dayId?: string | null) {
     enabled: !!dayId,
   });
 }
+
+/* ── Redigering: tid, nya rader, borttagning ──────────────────────────────── */
+
+/** Normaliserar användarinmatning till "HH:MM". Returnerar null om tomt/ogiltigt. */
+export function normalizeTimeLabel(raw: string): string | null {
+  const v = (raw || "").trim();
+  if (!v) return null;
+  const m = v.match(/^(\d{1,2})[:.\s-]?(\d{2})?$/);
+  if (!m) return null;
+  let h = Number(m[1]);
+  const min = m[2] ? Number(m[2]) : 0;
+  if (h > 23 || min > 59) return null;
+  return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+}
+
+function timeValue(label: string | null | undefined) {
+  const n = normalizeTimeLabel(label || "");
+  if (!n) return Number.MAX_SAFE_INTEGER; // rader utan tid hamnar sist i sektionen
+  const [h, m] = n.split(":").map(Number);
+  return h * 60 + m;
+}
+
+/** Sorterar om alla rader: sektionerna behåller sin ordning, raderna sorteras på tid. */
+async function resequenceDay(dayId: string) {
+  const { data: items, error } = await supabase
+    .from("checklist_items")
+    .select("id, section, time_label, sort_order")
+    .eq("day_id", dayId)
+    .order("sort_order");
+  if (error) throw error;
+  const list = items || [];
+
+  const sectionOrder: string[] = [];
+  list.forEach((i: any) => {
+    if (!sectionOrder.includes(i.section)) sectionOrder.push(i.section);
+  });
+
+  const sorted = [...list].sort((a: any, b: any) => {
+    const sa = sectionOrder.indexOf(a.section);
+    const sb = sectionOrder.indexOf(b.section);
+    if (sa !== sb) return sa - sb;
+    const ta = timeValue(a.time_label);
+    const tb = timeValue(b.time_label);
+    if (ta !== tb) return ta - tb;
+    return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+  });
+
+  const updates = sorted
+    .map((row: any, idx: number) => ({ row, next: (idx + 1) * 10 }))
+    .filter(({ row, next }) => row.sort_order !== next);
+
+  for (const { row, next } of updates) {
+    const { error: uErr } = await supabase
+      .from("checklist_items")
+      .update({ sort_order: next })
+      .eq("id", row.id);
+    if (uErr) throw uErr;
+  }
+}
+
+/** Uppdaterar tiden för en rad och flyttar raden till rätt plats i sektionen. */
+export function useSetChecklistItemTime() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, dayId, time }: { id: string; dayId: string; time: string }) => {
+      const normalized = normalizeTimeLabel(time);
+      if (time.trim() && !normalized) throw new Error("Ogiltig tid — skriv t.ex. 07:30.");
+      const { error } = await supabase.from("checklist_items").update({ time_label: normalized }).eq("id", id);
+      if (error) throw error;
+      await resequenceDay(dayId);
+      return normalized;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["checklist-day"] }),
+  });
+}
+
+/** Lägger till en ny rad i en sektion — placeras direkt på rätt plats efter tid. */
+export function useAddChecklistItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      dayId: string;
+      section: string;
+      task: string;
+      time?: string;
+      category?: string;
+    }) => {
+      const task = input.task.trim();
+      if (!task) throw new Error("Skriv vad uppgiften är.");
+      const normalized = normalizeTimeLabel(input.time || "");
+      if ((input.time || "").trim() && !normalized) throw new Error("Ogiltig tid — skriv t.ex. 07:30.");
+
+      const { data: last } = await supabase
+        .from("checklist_items")
+        .select("sort_order")
+        .eq("day_id", input.dayId)
+        .order("sort_order", { ascending: false })
+        .limit(1);
+      const nextOrder = ((last?.[0]?.sort_order as number) ?? 0) + 10;
+
+      const { error } = await supabase.from("checklist_items").insert({
+        day_id: input.dayId,
+        section: input.section,
+        task,
+        time_label: normalized,
+        category: input.category?.trim() || null,
+        sort_order: nextOrder,
+      });
+      if (error) throw error;
+      await resequenceDay(input.dayId);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["checklist-day"] }),
+  });
+}
+
+export function useDeleteChecklistItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id }: { id: string; dayId?: string }) => {
+      const { error } = await supabase.from("checklist_items").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["checklist-day"] }),
+  });
+}
