@@ -158,12 +158,13 @@ export function ImageLightbox({
         className={cn(
           "overflow-y-auto p-3 space-y-3",
           isMobile
-            ? groups.length === 0
+            ? !loadingComments && groups.length === 0
               ? "hidden"
-              : "flex-1 min-h-0"
+              : "flex-1 min-h-[72px] max-h-[32dvh]"
             : "flex-1 min-h-[180px]"
         )}
       >
+
         {loadingComments ? (
           <p className="text-xs text-muted-foreground">Laddar…</p>
         ) : groups.length === 0 ? (
