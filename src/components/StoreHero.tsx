@@ -207,7 +207,7 @@ export function StoreHero() {
                 </Button>
               </PopoverTrigger>
               <PopoverContent align="end" className="w-64 p-2">
-                <p className="mb-2 text-[11px] font-medium text-muted-foreground">isShop ? "Butikens bilder" : "Portalens bilder"</p>
+                <p className="mb-2 text-[11px] font-medium text-muted-foreground">{isShop ? "Butikens bilder" : "Portalens bilder"}</p>
                 <div className="grid grid-cols-3 gap-2">
                   {images.map((img) => (
                     <button
