@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, Heart, MessageCircle, Pencil, Send, Trash2, X } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -432,6 +432,16 @@ export function ImageLightbox({
                   </div>
                 )}
 
+                <DialogClose asChild>
+                  <button
+                    type="button"
+                    aria-label="Stäng bildfönstret"
+                    className="absolute top-2 right-2 z-20 h-10 w-10 rounded-full bg-background/85 text-foreground backdrop-blur border border-border flex items-center justify-center"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </DialogClose>
+
                 <span className="absolute top-2 left-2 rounded bg-background/80 px-2 py-0.5 font-mono tabular-nums text-[11px] text-foreground backdrop-blur">
                   {(index as number) + 1} / {images.length}
                 </span>
@@ -562,13 +572,23 @@ export function ImageLightbox({
                     aria-label={isFav ? "Ta bort favorit" : "Favoritmarkera bild"}
                     onClick={() => onToggleFavorite(current.id, !isFav)}
                     className={cn(
-                      "absolute top-2 right-2 h-8 w-8 rounded-full bg-background/85 backdrop-blur border flex items-center justify-center",
+                      "absolute top-2 right-14 h-8 w-8 rounded-full bg-background/85 backdrop-blur border flex items-center justify-center",
                       isFav ? "text-rose-500 border-rose-400" : "text-muted-foreground border-border"
                     )}
                   >
                     <Heart className={cn("h-4 w-4", isFav && "fill-current")} />
                   </button>
                 )}
+
+                <DialogClose asChild>
+                  <button
+                    type="button"
+                    aria-label="Stäng bildfönstret"
+                    className="absolute top-2 right-2 z-20 h-9 w-9 rounded-full bg-background/85 text-foreground backdrop-blur border border-border flex items-center justify-center hover:bg-background"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </DialogClose>
 
                 <span className="absolute bottom-2 right-2 rounded bg-background/80 px-2 py-0.5 font-mono tabular-nums text-[11px] text-foreground backdrop-blur">
                   {(index as number) + 1} / {images.length}
