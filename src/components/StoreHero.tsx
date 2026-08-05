@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { focalStyle, focalPercent, focalLabel, FOCAL_OPTIONS } from "@/lib/imageFocal";
+import { PORTAL_IMAGE_ENTITY_TYPE, WHOLESALE_IMAGE_ENTITY_ID } from "@/lib/portalImages";
+
 import { Slider } from "@/components/ui/slider";
 import { MapPin, Store as StoreIcon, Upload, Images, Pencil, Trash2, Check, X, Loader2, Crop } from "lucide-react";
 
