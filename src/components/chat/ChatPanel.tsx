@@ -83,8 +83,6 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
   const { data: conversations = [], isLoading } = useChatConversations(portal?.key);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [mobileThread, setMobileThread] = useState(false);
-  const [newOpen, setNewOpen] = useState(false);
-  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [broadcastOpen, setBroadcastOpen] = useState(false);
   const [broadcastText, setBroadcastText] = useState("");
   const [broadcastKeys, setBroadcastKeys] = useState<string[]>([]);
