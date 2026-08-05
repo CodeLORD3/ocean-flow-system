@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Heart, Send, Trash2 } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Heart, Pencil, Send, Trash2, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import {
   useAddImageComment,
   useDeleteImageComment,
   useImageComments,
+  useUpdateImageComment,
   type EntityImage,
 } from "@/hooks/useEntityImages";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
@@ -42,10 +43,13 @@ export function ImageLightbox({
   const current = open ? images[index as number] : null;
   const [caption, setCaption] = useState("");
   const [draft, setDraft] = useState("");
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const { staff } = useStaffAuth();
   const { data: comments = [], isLoading: loadingComments } = useImageComments(current?.id);
   const addComment = useAddImageComment();
+  const editComment = useUpdateImageComment();
   const delComment = useDeleteImageComment();
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -103,6 +107,13 @@ export function ImageLightbox({
     if (!v || !current) return;
     setDraft("");
     await addComment.mutateAsync({ imageId: current.id, body: v });
+  };
+
+  const saveEdit = async (id: string) => {
+    const v = editDraft.trim();
+    if (!v || !current) return;
+    setEditId(null);
+    await editComment.mutateAsync({ id, imageId: current.id, body: v });
   };
 
   const isFav = !!current && favoriteIds.includes(current.id);
@@ -211,26 +222,68 @@ export function ImageLightbox({
                   </div>
                 </div>
                 {editable ? (
-                  <Input
-                    value={caption}
-                    onChange={(e) => setCaption(e.target.value)}
-                    onBlur={saveCaption}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        saveCaption();
-                        (e.target as HTMLInputElement).blur();
-                      }
-                    }}
-                    placeholder="Bildtext…"
-                    className="h-8 text-xs"
-                  />
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5">
+                      <Input
+                        value={caption}
+                        onChange={(e) => setCaption(e.target.value)}
+                        onBlur={saveCaption}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            saveCaption();
+                          }
+                        }}
+                        placeholder="Bildtext…"
+                        className="h-8 text-xs"
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 shrink-0 text-xs"
+                        disabled={caption.trim() === (current.caption || "")}
+                        onClick={saveCaption}
+                      >
+                        Spara
+                      </Button>
+                    </div>
+                    {current.caption_edited_at && (
+                      <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                        <Pencil className="h-2.5 w-2.5" />
+                        Redigerad av {current.caption_edited_by_name || "okänd"} ·{" "}
+                        <span className="font-mono tabular-nums">
+                          {new Date(current.caption_edited_at).toLocaleString("sv-SE", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </p>
+                    )}
+                  </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground">{current.caption || "—"}</p>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">{current.caption || "—"}</p>
+                    {current.caption_edited_at && (
+                      <p className="text-[10px] text-muted-foreground">
+                        Redigerad av {current.caption_edited_by_name || "okänd"} ·{" "}
+                        <span className="font-mono tabular-nums">
+                          {new Date(current.caption_edited_at).toLocaleString("sv-SE", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </p>
+                    )}
+                  </div>
                 )}
                 <p className="text-[10px] text-muted-foreground">
                   Bläddra med piltangenterna eller swipa på mobil.
                 </p>
+
               </div>
             </div>
 
@@ -265,25 +318,89 @@ export function ImageLightbox({
                                 mine ? "bg-primary/10 text-foreground" : "bg-muted text-foreground"
                               )}
                             >
-                              {c.body}
-                              <span className="block mt-0.5 text-[9px] text-muted-foreground font-mono tabular-nums">
-                                {new Date(c.created_at).toLocaleTimeString("sv-SE", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </span>
-                              {mine && (
-                                <button
-                                  type="button"
-                                  aria-label="Ta bort kommentar"
-                                  onClick={() => delComment.mutate({ id: c.id, imageId: current.id })}
-                                  className="absolute -left-5 top-1 hidden group-hover:block text-muted-foreground hover:text-destructive"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </button>
+                              {editId === c.id ? (
+                                <div className="flex items-center gap-1">
+                                  <Input
+                                    value={editDraft}
+                                    autoFocus
+                                    onChange={(e) => setEditDraft(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        void saveEdit(c.id);
+                                      } else if (e.key === "Escape") {
+                                        setEditId(null);
+                                      }
+                                    }}
+                                    className="h-7 text-xs"
+                                  />
+                                  <button
+                                    type="button"
+                                    aria-label="Spara ändring"
+                                    onClick={() => void saveEdit(c.id)}
+                                    className="text-primary"
+                                  >
+                                    <Check className="h-3.5 w-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    aria-label="Avbryt"
+                                    onClick={() => setEditId(null)}
+                                    className="text-muted-foreground"
+                                  >
+                                    <X className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <>
+                                  {c.body}
+                                  <span className="block mt-0.5 text-[9px] text-muted-foreground font-mono tabular-nums">
+                                    {new Date(c.created_at).toLocaleTimeString("sv-SE", {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}
+                                  </span>
+                                  {c.edited_at && (
+                                    <span className="block text-[9px] italic text-muted-foreground">
+                                      Redigerad av {c.edited_by_name || "okänd"}{" "}
+                                      <span className="font-mono tabular-nums not-italic">
+                                        {new Date(c.edited_at).toLocaleString("sv-SE", {
+                                          day: "2-digit",
+                                          month: "2-digit",
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                        })}
+                                      </span>
+                                    </span>
+                                  )}
+                                </>
+                              )}
+                              {mine && editId !== c.id && (
+                                <div className="absolute -left-5 top-1 hidden group-hover:flex flex-col gap-1">
+                                  <button
+                                    type="button"
+                                    aria-label="Redigera kommentar"
+                                    onClick={() => {
+                                      setEditId(c.id);
+                                      setEditDraft(c.body);
+                                    }}
+                                    className="text-muted-foreground hover:text-foreground"
+                                  >
+                                    <Pencil className="h-3 w-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    aria-label="Ta bort kommentar"
+                                    onClick={() => delComment.mutate({ id: c.id, imageId: current.id })}
+                                    className="text-muted-foreground hover:text-destructive"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </div>
                               )}
                             </div>
                           ))}
+
                         </div>
                       </div>
                     );

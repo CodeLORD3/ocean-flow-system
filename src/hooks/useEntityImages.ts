@@ -17,6 +17,10 @@ export type EntityImage = {
   /** Konto som laddade upp bilden */
   uploaded_by: string | null;
   uploaded_by_name: string | null;
+  /** Vem som senast redigerade bildtexten och när */
+  caption_edited_by: string | null;
+  caption_edited_by_name: string | null;
+  caption_edited_at: string | null;
 };
 
 export type EntityImageComment = {
@@ -26,7 +30,27 @@ export type EntityImageComment = {
   author_name: string;
   body: string;
   created_at: string;
+  edited_by: string | null;
+  edited_by_name: string | null;
+  edited_at: string | null;
 };
+
+/** Namnet på det inloggade kontot (personal om möjligt), för redigeringsspår. */
+async function currentActorName() {
+  const { data: auth } = await supabase.auth.getUser();
+  const uid = auth?.user?.id ?? null;
+  let name: string | null = auth?.user?.email ?? null;
+  if (uid) {
+    const { data: st } = await supabase
+      .from("staff")
+      .select("first_name, last_name")
+      .eq("user_id", uid)
+      .maybeSingle();
+    if (st) name = `${st.first_name ?? ""} ${st.last_name ?? ""}`.trim() || name;
+  }
+  return { uid, name };
+}
+
 
 /** Bilder kopplade till ett objekt, t.ex. en butik ("store") eller en lagerplats ("storage_location"). */
 export function useEntityImages(entityType: string, entityId?: string | null) {
@@ -124,7 +148,13 @@ export function useUpdateEntityImage() {
       focal_point?: string;
     }) => {
       const patch: Record<string, unknown> = {};
-      if (caption !== undefined) patch.caption = caption;
+      if (caption !== undefined) {
+        patch.caption = caption;
+        const { uid, name } = await currentActorName();
+        patch.caption_edited_by = uid;
+        patch.caption_edited_by_name = name;
+        patch.caption_edited_at = new Date().toISOString();
+      }
       if (sort_order !== undefined) patch.sort_order = sort_order;
       if (focal_point !== undefined) patch.focal_point = focal_point;
       const { error } = await supabase.from("entity_images").update(patch).eq("id", id);
@@ -299,6 +329,29 @@ export function useAddImageComment() {
       const { error } = await supabase
         .from("entity_image_comments")
         .insert({ image_id: imageId, user_id: uid, author_name: name, body });
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["entity-image-comments", vars.imageId] });
+    },
+  });
+}
+
+/** Redigerar en befintlig kommentar och sparar vem som ändrade samt när. */
+export function useUpdateImageComment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, body }: { id: string; imageId: string; body: string }) => {
+      const { uid, name } = await currentActorName();
+      const { error } = await supabase
+        .from("entity_image_comments")
+        .update({
+          body,
+          edited_by: uid,
+          edited_by_name: name,
+          edited_at: new Date().toISOString(),
+        })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_d, vars) => {
