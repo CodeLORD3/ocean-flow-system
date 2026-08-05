@@ -531,7 +531,11 @@ export function ChecklistTable({
                   key={row.item.id}
                   className={cn(
                     "border-t border-border transition-colors",
-                    row.item.done ? "bg-emerald-500/10" : "hover:bg-muted/30"
+                    row.item.done
+                      ? "bg-emerald-500/10"
+                      : highlightMissing
+                        ? "bg-destructive/15 hover:bg-destructive/20"
+                        : "hover:bg-muted/30"
                   )}
                 >
                   <td className="px-2 py-1.5 text-center border-r border-border font-mono tabular-nums text-[11px] text-muted-foreground">
