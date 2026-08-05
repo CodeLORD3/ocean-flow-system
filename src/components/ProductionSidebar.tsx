@@ -49,6 +49,8 @@ const purchaseNav = [
   { title: "Inköpsschema", url: "/purchase-schedule", icon: CalendarDays },
   { title: "Inköpsrapportering", url: "/purchase-reporting", icon: FileText },
   { title: "Leverantörer", url: "/suppliers", icon: Truck },
+  { title: "Lager", url: "/inventory", icon: Package },
+  { title: "Inleveranser", url: "/receiving", icon: Truck },
 ];
 
 const salesNav = [
@@ -60,14 +62,6 @@ const produktionSectionNav = [
   { title: "Filé/Tillverkning", url: "/production", icon: Scissors },
   { title: "Produktionsschema", url: "/production-schedule", icon: CalendarDays },
   { title: "Produktionsrapportering", url: "/production-reporting", icon: ClipboardList },
-];
-
-const inventoryNav = [
-  { title: "Produkter", url: "/products", icon: Fish },
-  { title: "Lager", url: "/inventory", icon: Package },
-  { title: "Streckkoder", url: "/barcodes", icon: ScanLine },
-  { title: "Inleveranser", url: "/receiving", icon: Truck },
-  { title: "Leverantörer", url: "/suppliers", icon: Truck },
 ];
 
 const financeNav = [
@@ -88,7 +82,6 @@ const sections: NavSection[] = [
   { label: "Inköp", items: purchaseNav },
   { label: "Försäljning", items: salesNav },
   { label: "Produktion", items: produktionSectionNav },
-  { label: "Lagerstyrning", items: inventoryNav },
   { label: "Ekonomi & Rapporter", items: financeNav },
 ];
 
