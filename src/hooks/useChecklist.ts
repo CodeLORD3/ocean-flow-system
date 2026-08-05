@@ -61,7 +61,20 @@ export type ChecklistTemplate = {
   description: string | null;
   active: boolean;
   sort_order: number;
+  /** 0=Söndag … 6=Lördag. Tom lista = gäller alla dagar. */
+  weekdays: number[];
 };
+
+/** Gäller checklistan given veckodag? Tom weekdays = alla dagar. */
+export function templateAppliesOn(tpl: ChecklistTemplate, iso: string) {
+  const wd = tpl.weekdays ?? [];
+  if (wd.length === 0) return true;
+  const [y, m, d] = iso.split("-").map(Number);
+  return wd.includes(new Date(y, m - 1, d).getDay());
+}
+
+export const WEEKDAY_SHORT = ["Sön", "Mån", "Tis", "Ons", "Tor", "Fre", "Lör"];
+
 
 /** Menyn med butikens checklistor (globala mallar + butikens egna). */
 export function useChecklistTemplates(storeId?: string | null) {
