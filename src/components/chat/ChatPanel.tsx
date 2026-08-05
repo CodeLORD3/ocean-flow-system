@@ -386,7 +386,12 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
                       {!compact && (
                         <span className="flex items-center gap-2">
                           <span className="block text-[10px] text-muted-foreground truncate flex-1 min-w-0">
-                            {c.lastMessage?.body || (c.lastMessage?.image_url ? "Bild" : "Inga meddelanden")}
+                            {(() => {
+                              const f = parseForward(c.lastMessage?.body ?? null);
+                              if (f) return `↪ ${f.text || "Bild"}`;
+                              return c.lastMessage?.body || (c.lastMessage?.image_url ? "Bild" : "Inga meddelanden");
+                            })()}
+
                           </span>
                           <span className="text-[9px] text-muted-foreground shrink-0 font-mono tabular-nums">
                             {timeLabel(c.last_message_at)}
