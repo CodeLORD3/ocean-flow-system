@@ -570,6 +570,31 @@ export function ChecklistTable({
         </table>
       </div>
 
+      {!locked && items.length === 0 && (
+        <div className="rounded-lg border border-border bg-card shadow-card p-3 space-y-2">
+          <p className="text-xs text-muted-foreground">Checklistan är tom — lägg till den första uppgiften.</p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Input
+              value={addDraft.time}
+              placeholder="07:30"
+              className="h-9 sm:w-24 text-sm text-center font-mono tabular-nums"
+              onChange={(e) => setAddDraft((d) => ({ ...d, time: e.target.value }))}
+              onKeyDown={(e) => e.key === "Enter" && submitAdd("Övrigt")}
+            />
+            <Input
+              value={addDraft.task}
+              placeholder="Vad ska göras?"
+              className="h-9 flex-1 text-sm"
+              onChange={(e) => setAddDraft((d) => ({ ...d, task: e.target.value }))}
+              onKeyDown={(e) => e.key === "Enter" && submitAdd("Övrigt")}
+            />
+            <Button size="sm" className="h-9" disabled={addItem.isPending} onClick={() => submitAdd("Övrigt")}>
+              <Plus className="h-4 w-4 mr-1" /> Lägg till
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Footer */}
       <div className="rounded-lg border border-border bg-card shadow-card px-3 py-2.5 sm:px-4 sm:py-3 space-y-2 sm:space-y-0 sm:flex sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
         <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
