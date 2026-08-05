@@ -11,7 +11,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import type { PortalProfile } from "@/lib/portalProfiles";
+import { GROSSIST_PROFILE, type PortalProfile } from "@/lib/portalProfiles";
 import {
   ChatConversation,
   conversationTitle,
@@ -99,8 +99,27 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
   const unread = useChatUnread();
   const markRead = useMarkConversationRead();
 
+  // Butiker chattar bara med Grossist – ingen lista, chatten är alltid öppen
+  const isStore = portal?.kind === "store";
   const activeConv: ChatConversation | undefined =
-    conversations.find((c) => c.id === activeId) ?? (isMobile ? undefined : conversations[0]);
+    conversations.find((c) => c.id === activeId) ??
+    (isStore || !isMobile ? conversations[0] : undefined);
+
+  // Se till att butikens grossistchatt finns och är öppen direkt
+  const ensuring = useRef(false);
+  useEffect(() => {
+    if (!isStore || !portal || isLoading || ensuring.current) return;
+    if (conversations.length > 0) return;
+    ensuring.current = true;
+    createConv
+      .mutateAsync({ participants: [portal, GROSSIST_PROFILE] })
+      .then((id) => setActiveId(id))
+      .catch(() => {})
+      .finally(() => {
+        ensuring.current = false;
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isStore, portal?.key, isLoading, conversations.length]);
   const { data: messages = [] } = useChatMessages(activeConv?.id);
 
   useEffect(() => {
@@ -180,8 +199,8 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
   }
 
   // På mobil visas antingen listan eller tråden (WhatsApp-mönster) — aldrig sidledes scroll.
-  const showList = !isMobile || !mobileThread;
-  const showThread = !isMobile || mobileThread;
+  const showList = !isStore && (!isMobile || !mobileThread);
+  const showThread = isStore || !isMobile || mobileThread;
 
   const listHeight = compact
     ? "max-h-40 md:max-h-24"
@@ -201,7 +220,7 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
       <CardHeader className="pb-2 px-3 sm:px-6">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-sm font-heading flex items-center gap-1.5 min-w-0">
-            {isMobile && mobileThread ? (
+            {isMobile && mobileThread && !isStore ? (
               <Button
                 variant="ghost"
                 size="icon"
@@ -218,7 +237,11 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
               <MessageSquare className="h-4 w-4 text-primary shrink-0" />
             )}
             <span className="truncate">
-              {activeConv && showThread ? conversationTitle(activeConv, portal.key) : "Chatt"}
+              {isStore
+                ? "Chatt med Grossist"
+                : activeConv && showThread
+                  ? conversationTitle(activeConv, portal.key)
+                  : "Chatt"}
             </span>
           </CardTitle>
           <div className="flex items-center gap-1 shrink-0">
@@ -249,7 +272,7 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
       <CardContent
         className={cn(
           "grid gap-3 px-2 sm:px-6",
-          compact ? "grid-cols-1" : "md:grid-cols-[240px_1fr]"
+          compact || isStore ? "grid-cols-1" : "md:grid-cols-[240px_1fr]"
         )}
       >
         {/* Conversation list */}
@@ -315,9 +338,13 @@ export function ChatPanel({ compact = false, className, onOpenFull }: Props) {
               className={cn("overflow-y-auto overflow-x-hidden space-y-1.5 pr-1", msgHeight)}
             >
               {!activeConv ? (
-                <p className="text-[11px] text-muted-foreground text-center py-8">Ingen chatt vald.</p>
+                <p className="text-[11px] text-muted-foreground text-center py-8">
+                  {isStore ? "Öppnar chatten med Grossist…" : "Ingen chatt vald."}
+                </p>
               ) : messages.length === 0 ? (
-                <p className="text-[11px] text-muted-foreground text-center py-8">Inga meddelanden ännu.</p>
+                <p className="text-[11px] text-muted-foreground text-center py-8">
+                  {isStore ? "Skriv ett meddelande till Grossist för att börja." : "Inga meddelanden ännu."}
+                </p>
               ) : (
                 messages.map((m, i) => {
                   const mine = m.sender_portal_key === portal.key;
