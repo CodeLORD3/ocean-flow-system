@@ -82,128 +82,141 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
   });
 
   // ── Tabell ────────────────────────────────────────────────────────────────
-  type Row = { section?: string; item?: ChecklistPdfItem; nr?: number };
-  const rows: Row[] = [];
-  let lastSection: string | null = null;
-  opts.items.forEach((item, idx) => {
-    const sec = s2(item.section) || "Övrigt";
-    if (sec !== lastSection) {
-      rows.push({ section: sec });
-      lastSection = sec;
-    }
-    rows.push({ item, nr: idx + 1 });
-  });
-
   const ROW_H = 9.5;
   const SECTION_H = 8;
+  const pageSize = Math.max(1, opts.pageSize ?? 20);
 
-  const body: any[][] = rows.map((r) => {
-    if (r.section) {
-      return [
-        {
-          content: r.section.toUpperCase(),
-          colSpan: 7,
-          styles: {
-            fillColor: [38, 50, 62] as [number, number, number],
-            textColor: [255, 255, 255] as [number, number, number],
-            fontStyle: "bold" as const,
-            fontSize: 8,
-            halign: "left" as const,
-            valign: "middle" as const,
-            minCellHeight: SECTION_H,
+  // Dela upp uppgifterna exakt som plattformen: N uppgifter per sida.
+  const chunks: { item: ChecklistPdfItem; nr: number }[][] = [];
+  opts.items.forEach((item, idx) => {
+    const ci = Math.floor(idx / pageSize);
+    if (!chunks[ci]) chunks[ci] = [];
+    chunks[ci].push({ item, nr: idx + 1 });
+  });
+  if (chunks.length === 0) chunks.push([]);
+
+  const buildBody = (chunk: { item: ChecklistPdfItem; nr: number }[]) => {
+    type Row = { section?: string; item?: ChecklistPdfItem; nr?: number };
+    const rows: Row[] = [];
+    let lastSection: string | null = null;
+    chunk.forEach(({ item, nr }) => {
+      const sec = s2(item.section) || "Övrigt";
+      if (sec !== lastSection) {
+        rows.push({ section: sec });
+        lastSection = sec;
+      }
+      rows.push({ item, nr });
+    });
+
+    return rows.map((r) => {
+      if (r.section) {
+        return [
+          {
+            content: r.section.toUpperCase(),
+            colSpan: 7,
+            styles: {
+              fillColor: [38, 50, 62] as [number, number, number],
+              textColor: [255, 255, 255] as [number, number, number],
+              fontStyle: "bold" as const,
+              fontSize: 8,
+              halign: "left" as const,
+              valign: "middle" as const,
+              minCellHeight: SECTION_H,
+            },
           },
-        },
+        ];
+      }
+      const it = r.item!;
+      return [
+        String(r.nr ?? ""),
+        s2(it.time_label),
+        s2(it.category),
+        s2(it.task),
+        opts.blank ? "" : it.done ? "X" : "",
+        opts.blank ? "" : s2(it.note),
+        opts.blank ? "" : s2(it.signature),
       ];
-    }
-    const it = r.item!;
-    return [
-      String(r.nr ?? ""),
-      s2(it.time_label),
-      s2(it.category),
-      s2(it.task),
-      opts.blank ? "" : it.done ? "X" : "",
-      opts.blank ? "" : s2(it.note),
-      opts.blank ? "" : s2(it.signature),
-    ];
+    }) as any[][];
+  };
+
+  chunks.forEach((chunk, ci) => {
+    autoTable(doc, {
+      startY: ci === 0 ? boxY + boxH + 6 : margin + 8,
+      pageBreak: ci === 0 ? "auto" : "always",
+      rowPageBreak: "avoid",
+      body: buildBody(chunk),
+      head: [["NR", "TID", "KATEGORI", "UPPGIFT", "KLAR", "KOMMENTAR / AVVIKELSE", "SIGN"]],
+      theme: "grid",
+      styles: {
+        font: "helvetica",
+        fontSize: 8.5,
+        cellPadding: { top: 2.4, bottom: 2.4, left: 2.4, right: 2.4 },
+        lineColor: [205, 210, 214],
+        lineWidth: 0.15,
+        textColor: [25, 30, 35],
+        minCellHeight: ROW_H,
+        valign: "middle",
+        overflow: "ellipsize",
+      },
+      headStyles: {
+        fillColor: [38, 50, 62],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+        fontSize: 7.8,
+        halign: "center",
+        valign: "middle",
+        minCellHeight: 9,
+        cellPadding: { top: 2.2, bottom: 2.2, left: 2, right: 2 },
+        lineColor: [38, 50, 62],
+        lineWidth: 0.15,
+      },
+      alternateRowStyles: { fillColor: [248, 249, 250] },
+      columnStyles: {
+        0: { cellWidth: 9, halign: "center", textColor: [120, 126, 132] },
+        1: { cellWidth: 14, halign: "center", textColor: [90, 96, 102] },
+        2: { cellWidth: 26, textColor: [90, 96, 102] },
+        3: { cellWidth: "auto", fontStyle: "bold" },
+        4: { cellWidth: 12, halign: "center", fontStyle: "bold" },
+        5: { cellWidth: 42 },
+        6: { cellWidth: 16, halign: "center" },
+      },
+      margin: { left: margin, right: margin, bottom: margin + 30 },
+      didParseCell: (data) => {
+        if (data.section === "head" && [2, 3, 5].includes(data.column.index)) {
+          data.cell.styles.halign = "left";
+        }
+        const isSection = data.row.raw && (data.row.raw as any[]).length === 1;
+        if (data.section === "body" && isSection) {
+          if (data.column.index === 0) data.cell.styles.cellPadding = { top: 1.8, bottom: 1.8, left: 2.4, right: 2.4 };
+          return;
+        }
+        if (data.section === "body") {
+          data.cell.styles.minCellHeight = ROW_H;
+          if (data.column.index === 4) data.cell.text = [];
+        }
+      },
+      didDrawCell: (data) => {
+        // rita kryssruta i KLAR-kolumnen
+        const isSection = data.row.raw && (data.row.raw as any[]).length === 1;
+        if (data.section !== "body" || isSection || data.column.index !== 4) return;
+        const size = 3.6;
+        const x = data.cell.x + data.cell.width / 2 - size / 2;
+        const y = data.cell.y + data.cell.height / 2 - size / 2;
+        const checked = !opts.blank && String(data.cell.raw ?? "") === "X";
+        doc.setDrawColor(120, 128, 134);
+        doc.setLineWidth(0.25);
+        doc.setFillColor(255, 255, 255);
+        doc.roundedRect(x, y, size, size, 0.5, 0.5, "FD");
+        if (checked) {
+          doc.setDrawColor(20, 120, 70);
+          doc.setLineWidth(0.6);
+          doc.line(x + 0.7, y + size / 2, x + size / 2 - 0.15, y + size - 0.8);
+          doc.line(x + size / 2 - 0.15, y + size - 0.8, x + size - 0.6, y + 0.7);
+        }
+      },
+    });
   });
 
-
-  autoTable(doc, {
-    startY: boxY + boxH + 6,
-    rowPageBreak: "avoid",
-    body,
-    head: [["NR", "TID", "KATEGORI", "UPPGIFT", "KLAR", "KOMMENTAR / AVVIKELSE", "SIGN"]],
-    theme: "grid",
-    styles: {
-      font: "helvetica",
-      fontSize: 8.5,
-      cellPadding: { top: 2.4, bottom: 2.4, left: 2.4, right: 2.4 },
-      lineColor: [205, 210, 214],
-      lineWidth: 0.15,
-      textColor: [25, 30, 35],
-      minCellHeight: ROW_H,
-      valign: "middle",
-      overflow: "ellipsize",
-    },
-    headStyles: {
-      fillColor: [38, 50, 62],
-      textColor: [255, 255, 255],
-      fontStyle: "bold",
-      fontSize: 7.8,
-      halign: "center",
-      valign: "middle",
-      minCellHeight: 9,
-      cellPadding: { top: 2.2, bottom: 2.2, left: 2, right: 2 },
-      lineColor: [38, 50, 62],
-      lineWidth: 0.15,
-    },
-    alternateRowStyles: { fillColor: [248, 249, 250] },
-    columnStyles: {
-      0: { cellWidth: 9, halign: "center", textColor: [120, 126, 132] },
-      1: { cellWidth: 14, halign: "center", textColor: [90, 96, 102] },
-      2: { cellWidth: 26, textColor: [90, 96, 102] },
-      3: { cellWidth: "auto", fontStyle: "bold" },
-      4: { cellWidth: 12, halign: "center", fontStyle: "bold" },
-      5: { cellWidth: 42 },
-      6: { cellWidth: 16, halign: "center" },
-    },
-    margin: { left: margin, right: margin, bottom: margin + 30 },
-    didParseCell: (data) => {
-      if (data.section === "head" && [2, 3, 5].includes(data.column.index)) {
-        data.cell.styles.halign = "left";
-      }
-      const isSection = data.row.raw && (data.row.raw as any[]).length === 1;
-      if (data.section === "body" && isSection) {
-        // sektionsrad hanteras av egna styles ovan
-        if (data.column.index === 0) data.cell.styles.cellPadding = { top: 1.8, bottom: 1.8, left: 2.4, right: 2.4 };
-        return;
-      }
-      if (data.section === "body") {
-        // exakt samma radhöjd över hela listan
-        data.cell.styles.minCellHeight = ROW_H;
-        if (data.column.index === 4) data.cell.text = [];
-      }
-    },
-    didDrawCell: (data) => {
-      // rita kryssruta i KLAR-kolumnen
-      const isSection = data.row.raw && (data.row.raw as any[]).length === 1;
-      if (data.section !== "body" || isSection || data.column.index !== 4) return;
-      const size = 3.6;
-      const x = data.cell.x + data.cell.width / 2 - size / 2;
-      const y = data.cell.y + data.cell.height / 2 - size / 2;
-      const checked = !opts.blank && String(data.cell.raw ?? "") === "X";
-      doc.setDrawColor(120, 128, 134);
-      doc.setLineWidth(0.25);
-      doc.setFillColor(255, 255, 255);
-      doc.roundedRect(x, y, size, size, 0.5, 0.5, "FD");
-      if (checked) {
-        doc.setDrawColor(20, 120, 70);
-        doc.setLineWidth(0.6);
-        doc.line(x + 0.7, y + size / 2, x + size / 2 - 0.15, y + size - 0.8);
-        doc.line(x + size / 2 - 0.15, y + size - 0.8, x + size - 0.6, y + 0.7);
-      }
-    },
-  });
 
   // ── Signaturfält ──────────────────────────────────────────────────────────
   let y = ((doc as any).lastAutoTable?.finalY || boxY + boxH + 5) + 10;
