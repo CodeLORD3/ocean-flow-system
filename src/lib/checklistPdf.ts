@@ -82,8 +82,10 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
   });
 
   // ── Tabell ────────────────────────────────────────────────────────────────
-  const ROW_H = 9.5;
+  const ROW_H_MAX = 9.5;
   const SECTION_H = 8;
+  const HEAD_H = 9;
+  const BOTTOM_RESERVE = margin + 28;
   const pageSize = Math.max(1, opts.pageSize ?? 20);
 
   // Dela upp uppgifterna exakt som plattformen: N uppgifter per sida.
@@ -94,6 +96,16 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
     chunks[ci].push({ item, nr: idx + 1 });
   });
   if (chunks.length === 0) chunks.push([]);
+
+  const sectionCount = (chunk: { item: ChecklistPdfItem; nr: number }[]) => {
+    let last: string | null = null;
+    let n = 0;
+    chunk.forEach(({ item }) => {
+      const sec = s2(item.section) || "Övrigt";
+      if (sec !== last) { n++; last = sec; }
+    });
+    return n;
+  };
 
   const buildBody = (chunk: { item: ChecklistPdfItem; nr: number }[]) => {
     type Row = { section?: string; item?: ChecklistPdfItem; nr?: number };
@@ -140,8 +152,14 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
   };
 
   chunks.forEach((chunk, ci) => {
+    const startY = ci === 0 ? boxY + boxH + 6 : margin + 8;
+    // Skala radhojden sa att exakt lika manga uppgifter som pa plattformen ryms pa sidan
+    const avail = pageHeight - BOTTOM_RESERVE - startY - HEAD_H - sectionCount(chunk) * SECTION_H;
+    const rowH = chunk.length
+      ? Math.max(6, Math.min(ROW_H_MAX, avail / chunk.length))
+      : ROW_H_MAX;
     autoTable(doc, {
-      startY: ci === 0 ? boxY + boxH + 6 : margin + 8,
+      startY,
       pageBreak: ci === 0 ? "auto" : "always",
       rowPageBreak: "avoid",
       body: buildBody(chunk),
@@ -154,7 +172,7 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
         lineColor: [205, 210, 214],
         lineWidth: 0.15,
         textColor: [25, 30, 35],
-        minCellHeight: ROW_H,
+        minCellHeight: rowH,
         valign: "middle",
         overflow: "ellipsize",
       },
@@ -180,7 +198,7 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
         5: { cellWidth: 42 },
         6: { cellWidth: 16, halign: "center" },
       },
-      margin: { left: margin, right: margin, bottom: margin + 30 },
+      margin: { left: margin, right: margin, bottom: BOTTOM_RESERVE },
       didParseCell: (data) => {
         if (data.section === "head" && [2, 3, 5].includes(data.column.index)) {
           data.cell.styles.halign = "left";
@@ -191,7 +209,7 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
           return;
         }
         if (data.section === "body") {
-          data.cell.styles.minCellHeight = ROW_H;
+          data.cell.styles.minCellHeight = rowH;
           if (data.column.index === 4) data.cell.text = [];
         }
       },
