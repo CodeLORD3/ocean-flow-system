@@ -341,51 +341,51 @@ export default function OrganisationOverview() {
         </div>
       )}
 
-      {/* Grossist/Admin: chatt direkt på översikten */}
+      {/* Grossist/Admin: chatt och butiker sida vid sida */}
       {!isShop && (
-        <ChatPanel compact onOpenFull={() => switchTab("/chat")} />
-      )}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 items-start">
+          <ChatPanel compact onOpenFull={() => switchTab("/chat")} />
 
+          {stores.length > 0 && (
+            <Card className="shadow-card">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-heading flex items-center gap-1.5">
+                  <Store className="h-4 w-4 text-primary" /> Butiker
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {stores.map((store) => (
+                    <div key={store.id} className="flex items-center gap-3 py-1.5 border-b border-border/30 last:border-0">
+                      <div className="h-11 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
+                        <img
+                          src={covers[store.id]?.url || store.logo_url || storeHero}
+                          alt={`Butiksbild för ${store.name}`}
+                          loading="lazy"
+                          width={320}
+                          height={220}
+                          className="h-full w-full object-cover"
+                          style={focalStyle(covers[store.id]?.focal_point)}
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-foreground truncate">{store.name}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{store.city}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
 
       {/* Shop: daily checklist */}
       {isShop && (
         <ChecklistCard storeId={activeStoreId!} onOpenFull={() => switchTab("/checklist")} />
       )}
 
-
-      {/* Stores with cover images (ej i butiksportalen) */}
-      {!isShop && stores.length > 0 && (
-        <Card className="shadow-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-heading flex items-center gap-1.5">
-              <Store className="h-4 w-4 text-primary" /> Butiker
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
-              {stores.map((store) => (
-                <div key={store.id} className="flex items-center gap-3 py-1.5 border-b border-border/30 last:border-0">
-                  <div className="h-11 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
-                    <img
-                      src={covers[store.id]?.url || store.logo_url || storeHero}
-                      alt={`Butiksbild för ${store.name}`}
-                      loading="lazy"
-                      width={320}
-                      height={220}
-                      className="h-full w-full object-cover"
-                      style={focalStyle(covers[store.id]?.focal_point)}
-                    />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-foreground truncate">{store.name}</p>
-                    <p className="text-[10px] text-muted-foreground truncate">{store.city}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
 
 
