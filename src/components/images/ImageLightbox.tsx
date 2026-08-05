@@ -153,12 +153,23 @@ export function ImageLightbox({
 
   const commentList = (
     <>
-      <div ref={listRef} className="flex-1 overflow-y-auto p-3 space-y-3 min-h-[180px]">
+      <div
+        ref={listRef}
+        className={cn(
+          "overflow-y-auto p-3 space-y-3",
+          isMobile
+            ? groups.length === 0
+              ? "hidden"
+              : "flex-1 min-h-0"
+            : "flex-1 min-h-[180px]"
+        )}
+      >
         {loadingComments ? (
           <p className="text-xs text-muted-foreground">Laddar…</p>
         ) : groups.length === 0 ? (
           <p className="text-xs text-muted-foreground">Inga kommentarer ännu — skriv den första.</p>
         ) : (
+
           groups.map((g, gi) => {
             const mine = !!staff && g.userId === staff.user_id;
             return (
@@ -536,19 +547,23 @@ export function ImageLightbox({
 
               {/* Kommentarer som panel under bilden – bilden syns kvar (Instagram-känsla) */}
               {commentsOpen && (
-                <div className="shrink-0 border-t bg-background flex flex-col max-h-[50dvh] min-h-0">
-                  <div className="flex items-center justify-between px-3 py-2 border-b">
-                    <span className="text-sm font-medium">
-                      Kommentarer{" "}
-                      <span className="font-mono tabular-nums text-xs text-muted-foreground">
-                        ({comments.length})
-                      </span>
+                <div className="shrink-0 border-t bg-background flex flex-col max-h-[45dvh] min-h-0">
+                  <div className="flex items-center justify-between px-3 py-1.5">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {comments.length === 0 ? (
+                        "Kommentera"
+                      ) : (
+                        <>
+                          Kommentarer{" "}
+                          <span className="font-mono tabular-nums">({comments.length})</span>
+                        </>
+                      )}
                     </span>
                     <button
                       type="button"
                       aria-label="Stäng kommentarer"
                       onClick={() => setCommentsOpen(false)}
-                      className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground"
+                      className="h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -556,6 +571,7 @@ export function ImageLightbox({
                   {commentList}
                 </div>
               )}
+
             </div>
           )}
         </DialogContent>
