@@ -337,6 +337,29 @@ export function useAddImageComment() {
   });
 }
 
+/** Redigerar en befintlig kommentar och sparar vem som ändrade samt när. */
+export function useUpdateImageComment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, body }: { id: string; imageId: string; body: string }) => {
+      const { uid, name } = await currentActorName();
+      const { error } = await supabase
+        .from("entity_image_comments")
+        .update({
+          body,
+          edited_by: uid,
+          edited_by_name: name,
+          edited_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["entity-image-comments", vars.imageId] });
+    },
+  });
+}
+
 export function useDeleteImageComment() {
   const qc = useQueryClient();
   return useMutation({
