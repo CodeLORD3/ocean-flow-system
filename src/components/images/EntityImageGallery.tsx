@@ -305,8 +305,9 @@ export function EntityImageGallery({
                     <TooltipContent side="left" className="text-xs">
                       {img.is_featured
                         ? "Utvald bild – klicka för att ta bort"
-                        : `Visa på översiktssidan (max ${previewCount})`}
+                        : "Lägg till i utvalda bilder"}
                     </TooltipContent>
+
                   </Tooltip>
                 ) : null}
 
