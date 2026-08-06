@@ -27,7 +27,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { StaffDetailDialog } from "@/components/staff/StaffDetailDialog";
 import { StaffAccessDialog, PORTAL_OPTIONS } from "@/components/staff/StaffAccessDialog";
 import { Badge } from "@/components/ui/badge";
-import { Activity, ShieldCheck } from "lucide-react";
+import { Activity, ShieldCheck, LogIn, LogOut } from "lucide-react";
+import { useOpenShifts, useClockIn, useClockOut, shiftClock, shiftDuration } from "@/hooks/useStaffShifts";
 
 const ACTIVITY_VIEWER_EMAILS = [
   "joakim@fiskskaldjur.ch",
