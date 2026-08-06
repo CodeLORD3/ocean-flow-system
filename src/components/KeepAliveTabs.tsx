@@ -11,6 +11,7 @@ import Suppliers from "@/pages/Suppliers";
 import Customers from "@/pages/Customers";
 import Stores from "@/pages/Stores";
 import Staff from "@/pages/Staff";
+import StaffProfile from "@/pages/StaffProfile";
 import Barcodes from "@/pages/Barcodes";
 import Products from "@/pages/Products";
 import OrganisationOverview from "@/pages/OrganisationOverview";
@@ -60,6 +61,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/stores": { component: <Stores /> },
   "/organisation": { component: <OrganisationOverview /> },
   "/staff": { component: <Staff /> },
+  "/profile": { component: <StaffProfile /> },
   "/reports": { component: <ReportsRouter /> },
   "/finance": { component: <PlaceholderPage title="Ekonomi" /> },
   "/forecasts": { component: <PlaceholderPage title="Prognoser" /> },

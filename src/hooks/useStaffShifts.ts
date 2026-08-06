@@ -98,7 +98,11 @@ export function useClockIn() {
       if (error) throw error;
       return data.id as string;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["staff-shifts-open"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["staff-shifts-open"] });
+      qc.invalidateQueries({ queryKey: ["staff-shift-open-one"] });
+      qc.invalidateQueries({ queryKey: ["staff-shift-history"] });
+    },
   });
 }
 
@@ -113,7 +117,11 @@ export function useClockOut() {
         .is("clocked_out_at", null);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["staff-shifts-open"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["staff-shifts-open"] });
+      qc.invalidateQueries({ queryKey: ["staff-shift-open-one"] });
+      qc.invalidateQueries({ queryKey: ["staff-shift-history"] });
+    },
   });
 }
 

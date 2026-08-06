@@ -46,6 +46,7 @@ const inventoryNav = [
 
 const orgNav = [
   { title: "Personal", url: "/staff", icon: UserCheck },
+  { title: "Min profil", url: "/profile", icon: UserCheck },
   { title: "Aktivitetslogg", url: "/audit", icon: ClipboardList },
 ];
 
