@@ -15,6 +15,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/stores": "Butiker",
   "/wholesale": "Grossist",
   "/organisation": "Organisation",
+  "/profile": "Min profil",
   "/staff": "Personal",
   "/reports": "Rapporter",
   "/finance": "Ekonomi",

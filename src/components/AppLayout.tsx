@@ -6,7 +6,7 @@ import { StoreHero } from "@/components/StoreHero";
 
 
 import { useLocation, useNavigate } from "react-router-dom";
-import { Bell, ChevronRight, Search, User, ArrowLeftRight, Factory, Store, ChevronDown, X, Check, LogOut, Shield } from "lucide-react";
+import { Bell, ChevronRight, Search, User, UserRound, ArrowLeftRight, Factory, Store, ChevronDown, X, Check, LogOut, Shield } from "lucide-react";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -78,6 +78,9 @@ function AccountMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem className="text-xs gap-2 cursor-pointer" onClick={() => navigate("/profile")}>
+          <UserRound className="h-3.5 w-3.5" /> Min profil
+        </DropdownMenuItem>
         {portalCount > 1 && (
           <DropdownMenuItem className="text-xs gap-2 cursor-pointer" onClick={() => navigate("/choose-portal")}>
             <ArrowLeftRight className="h-3.5 w-3.5" /> Byt portal
