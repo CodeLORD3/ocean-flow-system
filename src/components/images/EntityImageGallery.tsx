@@ -139,15 +139,17 @@ export function EntityImageGallery({
     [featured],
   );
 
-  /** Datum (nycklar) som har bilder, senaste först. */
+  /** Datum (nycklar) som har bilder, senaste först. Idag finns alltid med. */
   const dates = useMemo(() => {
     const map = new Map<string, number>();
+    map.set(todayKey, 0);
     images.forEach((i) => {
       const k = dayKey(i.created_at);
       map.set(k, (map.get(k) || 0) + 1);
     });
     return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
-  }, [images]);
+  }, [images, todayKey]);
+
 
   const previewImages: EntityImage[] = previewCount ? pool.slice(0, previewCount) : images;
 
