@@ -32,6 +32,7 @@ import {
   AlertCircle,
   Printer,
   ListFilter,
+  ScrollText,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
