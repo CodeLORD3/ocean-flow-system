@@ -31,7 +31,7 @@ export function OnDutyStaff({ storeId }: { storeId?: string | null }) {
           {onDuty.length > 0 ? `Arbetar nu · ${onDuty.length}` : "Ingen instämplad"}
         </p>
         {onDuty.length === 0 ? (
-          <p className="text-[11px] text-muted-foreground">Stämpla in på sidan Personal</p>
+          <p className="text-[11px] text-muted-foreground">Stämpla in på sidan Min profil</p>
         ) : (
           <div className="mt-1 flex flex-wrap gap-1.5">
             {onDuty.map(({ shift, person }) => (
