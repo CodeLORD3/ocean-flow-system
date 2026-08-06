@@ -24,7 +24,7 @@ import { useSuppliers } from "@/hooks/useSuppliers";
 import { useSite } from "@/contexts/SiteContext";
 import { useTabs } from "@/contexts/TabsContext";
 import { EntityImageGallery } from "@/components/images/EntityImageGallery";
-import { PORTAL_IMAGE_ENTITY_TYPE, WHOLESALE_IMAGE_ENTITY_ID } from "@/lib/portalImages";
+import { PORTAL_IMAGE_ENTITY_TYPE, portalImageEntityId } from "@/lib/portalImages";
 
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { ActivityIcon } from "@/components/dashboard/ActivityIcon";
@@ -355,9 +355,11 @@ export default function OrganisationOverview() {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-4 items-start">
           <EntityImageGallery
             entityType={PORTAL_IMAGE_ENTITY_TYPE}
-            entityId={WHOLESALE_IMAGE_ENTITY_ID}
-            title="Bilder från grossisten"
-            description="Ladda upp foton från grossistverksamheten — dra och släpp eller klicka för att ladda upp"
+            entityId={portalImageEntityId(site)}
+            title={site === "production" ? "Bilder från grossisten" : "Bilder från admin"}
+            description={site === "production"
+              ? "Ladda upp foton från grossistverksamheten — dra och släpp eller klicka för att ladda upp"
+              : "Ladda upp foton för adminportalen — dra och släpp eller klicka för att ladda upp"}
             columnsClassName="grid-cols-1 min-[380px]:grid-cols-2"
             previewCount={4}
             catalog
