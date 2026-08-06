@@ -6,7 +6,8 @@ import { useOpenShifts, shiftClock } from "@/hooks/useStaffShifts";
  * Visas i Översikt — till höger om rubriken på dator, under rubriken på mobil.
  */
 export function OnDutyStaff({ storeId }: { storeId?: string | null }) {
-  const { data: staffList = [] } = useStaff(storeId ?? undefined);
+  // Hämta all personal — en person kan vara instämplad på en annan butik än sin hemmabutik
+  const { data: staffList = [] } = useStaff();
   const { data: openShifts = [] } = useOpenShifts(storeId ?? undefined);
 
   const byId = new Map(staffList.map((s: any) => [s.id, s]));
