@@ -227,8 +227,20 @@ export default function Staff() {
                       )}
                     </div>
                     <div>
-                      <h3 className="font-heading font-semibold text-foreground text-sm">{s.first_name} {s.last_name}</h3>
-                      {s.age && <p className="text-[10px] text-muted-foreground">{s.age} år</p>}
+                      <h3 className="font-heading font-semibold text-foreground text-sm flex items-center gap-1.5">
+                        <span
+                          className={`h-2 w-2 rounded-full shrink-0 ${shiftByStaff.has(s.id) ? "bg-emerald-500" : "bg-red-500"}`}
+                          title={shiftByStaff.has(s.id) ? "Instämplad" : "Utstämplad"}
+                        />
+                        {s.first_name} {s.last_name}
+                      </h3>
+                      {shiftByStaff.has(s.id) ? (
+                        <p className="text-[10px] text-emerald-600 font-medium">
+                          Instämplad {shiftClock(shiftByStaff.get(s.id)!.clocked_in_at)} · {shiftDuration(shiftByStaff.get(s.id)!.clocked_in_at)}
+                        </p>
+                      ) : (
+                        <p className="text-[10px] text-muted-foreground">Ej instämplad{s.age ? ` · ${s.age} år` : ""}</p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
