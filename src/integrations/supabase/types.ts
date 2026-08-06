@@ -4734,6 +4734,51 @@ export type Database = {
           },
         ]
       }
+      staff_shifts: {
+        Row: {
+          clocked_in_at: string
+          clocked_out_at: string | null
+          created_at: string
+          id: string
+          staff_id: string
+          store_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          clocked_in_at?: string
+          clocked_out_at?: string | null
+          created_at?: string
+          id?: string
+          staff_id: string
+          store_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          clocked_in_at?: string
+          clocked_out_at?: string | null
+          created_at?: string
+          id?: string
+          staff_id?: string
+          store_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_shifts_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_shifts_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_movements: {
         Row: {
           created_at: string

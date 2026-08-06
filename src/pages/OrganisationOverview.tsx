@@ -31,6 +31,7 @@ import { ActivityIcon } from "@/components/dashboard/ActivityIcon";
 import { useStoreActivity } from "@/hooks/useStoreActivity";
 import { useState } from "react";
 import { ChecklistCard } from "@/components/checklist/ChecklistCard";
+import { OnDutyStaff } from "@/components/staff/OnDutyStaff";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -273,16 +274,21 @@ export default function OrganisationOverview() {
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3 sm:space-y-6 max-w-full overflow-x-hidden">
       {/* Header */}
-      <div>
-        <h1 className="text-base sm:text-xl font-heading font-bold text-foreground flex items-center gap-2">
-          <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
-          <span className="truncate">{isShop ? `${activeStoreName} — Översikt` : "Organisationsöversikt"}</span>
-        </h1>
-        <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
-          {isShop
-            ? "Butikens lager, ordrar, bilder och chatt med övriga portaler."
-            : "Samlad vy över alla butiker — försäljning, lager, inköp och beställningar."}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+        <div className="min-w-0">
+          <h1 className="text-base sm:text-xl font-heading font-bold text-foreground flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
+            <span className="truncate">{isShop ? `${activeStoreName} — Översikt` : "Organisationsöversikt"}</span>
+          </h1>
+          <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
+            {isShop
+              ? "Butikens lager, ordrar, bilder och chatt med övriga portaler."
+              : "Samlad vy över alla butiker — försäljning, lager, inköp och beställningar."}
+          </p>
+        </div>
+        <div className="sm:max-w-sm sm:shrink-0">
+          <OnDutyStaff storeId={isShop ? activeStoreId : null} />
+        </div>
       </div>
 
       {/* KPI Row */}

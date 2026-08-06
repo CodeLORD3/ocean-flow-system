@@ -27,7 +27,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { StaffDetailDialog } from "@/components/staff/StaffDetailDialog";
 import { StaffAccessDialog, PORTAL_OPTIONS } from "@/components/staff/StaffAccessDialog";
 import { Badge } from "@/components/ui/badge";
-import { Activity, ShieldCheck } from "lucide-react";
+import { Activity, ShieldCheck, LogIn, LogOut } from "lucide-react";
+import { useOpenShifts, useClockIn, useClockOut, shiftClock, shiftDuration } from "@/hooks/useStaffShifts";
 
 const ACTIVITY_VIEWER_EMAILS = [
   "joakim@fiskskaldjur.ch",
@@ -45,6 +46,27 @@ export default function Staff() {
   const createStaff = useCreateStaff();
   const updateStaff = useUpdateStaff();
   const deleteStaff = useDeleteStaff();
+
+  const { data: openShifts = [] } = useOpenShifts(storeFilter);
+  const clockIn = useClockIn();
+  const clockOut = useClockOut();
+  const shiftByStaff = new Map(openShifts.map((s) => [s.staff_id, s]));
+
+  const handleClock = (s: any) => {
+    const open = shiftByStaff.get(s.id);
+    if (open) {
+      clockOut.mutate({ staffId: s.id }, {
+        onSuccess: () => toast({ title: "Utstämplad", description: `${s.first_name} ${s.last_name} — ${shiftDuration(open.clocked_in_at)}` }),
+        onError: (err: any) => toast({ title: "Fel", description: err.message, variant: "destructive" }),
+      });
+    } else {
+      clockIn.mutate({ staffId: s.id, storeId: s.store_id ?? storeFilter ?? null }, {
+        onSuccess: () => toast({ title: "Instämplad", description: `${s.first_name} ${s.last_name}` }),
+        onError: (err: any) => toast({ title: "Fel", description: err.message, variant: "destructive" }),
+      });
+    }
+  };
+
 
   const canViewActivity =
     site === "wholesale" &&
@@ -168,8 +190,9 @@ export default function Staff() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card className="shadow-card"><CardContent className="p-3"><p className="text-[10px] text-muted-foreground">Totalt personal</p><p className="text-xl font-heading font-bold text-foreground">{staffList.length}</p></CardContent></Card>
+        <Card className="shadow-card"><CardContent className="p-3"><p className="text-[10px] text-muted-foreground flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Instämplade nu</p><p className="text-xl font-heading font-bold text-foreground">{openShifts.length}</p></CardContent></Card>
         <Card className="shadow-card"><CardContent className="p-3"><p className="text-[10px] text-muted-foreground">Arbetsplatser</p><p className="text-xl font-heading font-bold text-foreground">{new Set(staffList.map(s => s.workplace).filter(Boolean)).size}</p></CardContent></Card>
         <Card className="shadow-card"><CardContent className="p-3"><p className="text-[10px] text-muted-foreground">Med e-post</p><p className="text-xl font-heading font-bold text-foreground">{staffList.filter(s => s.email).length}</p></CardContent></Card>
       </div>
@@ -204,8 +227,20 @@ export default function Staff() {
                       )}
                     </div>
                     <div>
-                      <h3 className="font-heading font-semibold text-foreground text-sm">{s.first_name} {s.last_name}</h3>
-                      {s.age && <p className="text-[10px] text-muted-foreground">{s.age} år</p>}
+                      <h3 className="font-heading font-semibold text-foreground text-sm flex items-center gap-1.5">
+                        <span
+                          className={`h-2 w-2 rounded-full shrink-0 ${shiftByStaff.has(s.id) ? "bg-emerald-500" : "bg-red-500"}`}
+                          title={shiftByStaff.has(s.id) ? "Instämplad" : "Utstämplad"}
+                        />
+                        {s.first_name} {s.last_name}
+                      </h3>
+                      {shiftByStaff.has(s.id) ? (
+                        <p className="text-[10px] text-emerald-600 font-medium">
+                          Instämplad {shiftClock(shiftByStaff.get(s.id)!.clocked_in_at)} · {shiftDuration(shiftByStaff.get(s.id)!.clocked_in_at)}
+                        </p>
+                      ) : (
+                        <p className="text-[10px] text-muted-foreground">Ej instämplad{s.age ? ` · ${s.age} år` : ""}</p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
@@ -267,6 +302,23 @@ export default function Staff() {
                     </div>
                   )}
                 </div>
+
+                <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    size="sm"
+                    variant={shiftByStaff.has(s.id) ? "outline" : "default"}
+                    className="w-full gap-1.5 text-xs h-8"
+                    disabled={clockIn.isPending || clockOut.isPending}
+                    onClick={(e) => { e.stopPropagation(); handleClock(s); }}
+                  >
+                    {shiftByStaff.has(s.id) ? (
+                      <><LogOut className="h-3.5 w-3.5" /> Stämpla ut</>
+                    ) : (
+                      <><LogIn className="h-3.5 w-3.5" /> Stämpla in</>
+                    )}
+                  </Button>
+                </div>
+
 
               </CardContent>
             </Card>
