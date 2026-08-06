@@ -78,6 +78,9 @@ function AccountMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem className="text-xs gap-2 cursor-pointer" onClick={() => navigate("/profile")}>
+          <UserRound className="h-3.5 w-3.5" /> Min profil
+        </DropdownMenuItem>
         {portalCount > 1 && (
           <DropdownMenuItem className="text-xs gap-2 cursor-pointer" onClick={() => navigate("/choose-portal")}>
             <ArrowLeftRight className="h-3.5 w-3.5" /> Byt portal
