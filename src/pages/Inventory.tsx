@@ -17,6 +17,7 @@ import {
   ScanLine,
   Camera,
   ClipboardList,
+  FileText,
   X,
   CheckCircle2,
   ChevronDown,
