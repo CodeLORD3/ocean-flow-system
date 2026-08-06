@@ -190,8 +190,9 @@ export default function Staff() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card className="shadow-card"><CardContent className="p-3"><p className="text-[10px] text-muted-foreground">Totalt personal</p><p className="text-xl font-heading font-bold text-foreground">{staffList.length}</p></CardContent></Card>
+        <Card className="shadow-card"><CardContent className="p-3"><p className="text-[10px] text-muted-foreground flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Instämplade nu</p><p className="text-xl font-heading font-bold text-foreground">{openShifts.length}</p></CardContent></Card>
         <Card className="shadow-card"><CardContent className="p-3"><p className="text-[10px] text-muted-foreground">Arbetsplatser</p><p className="text-xl font-heading font-bold text-foreground">{new Set(staffList.map(s => s.workplace).filter(Boolean)).size}</p></CardContent></Card>
         <Card className="shadow-card"><CardContent className="p-3"><p className="text-[10px] text-muted-foreground">Med e-post</p><p className="text-xl font-heading font-bold text-foreground">{staffList.filter(s => s.email).length}</p></CardContent></Card>
       </div>
