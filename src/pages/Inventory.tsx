@@ -69,6 +69,7 @@ import { EntityImagesButton } from "@/components/images/EntityImageGallery";
 
 import { generateStockSheetPdf } from "@/lib/stockSheetPdf";
 import InventoryReportsDialog from "@/components/inventory/InventoryReportsDialog";
+import DailySheetDialog from "@/components/inventory/DailySheetDialog";
 import StockCountDialog, { type StockCountScope } from "@/components/inventory/StockCountDialog";
 import StockOverview from "@/components/inventory/StockOverview";
 import StockMovementsView from "@/components/inventory/StockMovementsView";
@@ -290,6 +291,9 @@ export default function Inventory() {
 
   // Inrapportering (excel-liknande lagerlista)
   const [countScope, setCountScope] = useState<StockCountScope | null>(null);
+
+  // Dagsavstämning
+  const [dailySheetOpen, setDailySheetOpen] = useState(false);
 
   // Expiry alerts panel
   const [showExpiryAlerts, setShowExpiryAlerts] = useState(false);
@@ -1275,6 +1279,17 @@ export default function Inventory() {
             <Plus className="h-3 w-3" /> Nytt lager
           </Button>
 
+          {activeStoreId && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none border-primary/40 text-primary hover:bg-primary/10"
+              onClick={() => setDailySheetOpen(true)}
+            >
+              <ScrollText className="h-3 w-3" /> Dagsavstämning
+            </Button>
+          )}
+
           <Button
             size="sm"
             variant="outline"
@@ -2022,6 +2037,17 @@ export default function Inventory() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {activeStoreId && (
+        <DailySheetDialog
+          open={dailySheetOpen}
+          onOpenChange={setDailySheetOpen}
+          storeId={activeStoreId}
+          storeName={activeStoreName}
+          locations={locations}
+          currency={localCurrency}
+        />
+      )}
 
       <InventoryReportsDialog
         open={reportsArchiveOpen}

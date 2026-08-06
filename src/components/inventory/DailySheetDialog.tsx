@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -413,8 +413,8 @@ export default function DailySheetDialog({
                 </tr>
               )}
               {grouped.map(([cat, catLines]) => (
-                <>
-                  <tr key={`cat-${cat}`} className="bg-primary/5">
+                <Fragment key={`cat-${cat}`}>
+                  <tr className="bg-primary/5">
                     <td colSpan={13} className="px-2 py-1 text-[10px] font-bold uppercase tracking-wide">
                       {cat}
                     </td>
@@ -497,7 +497,7 @@ export default function DailySheetDialog({
                       </tr>
                     );
                   })}
-                </>
+                </Fragment>
               ))}
             </tbody>
             <tfoot className="sticky bottom-0 bg-muted/80 backdrop-blur">
