@@ -139,16 +139,30 @@ export function EntityImageGallery({
     [featured],
   );
 
-  /** Datum (nycklar) som har bilder, senaste först. Idag finns alltid med. */
+  /**
+   * Datum i katalogen som en sammanhängande kalender: varje dag från idag och
+   * bakåt till den äldsta bilden finns med, även dagar utan bilder.
+   */
   const dates = useMemo(() => {
-    const map = new Map<string, number>();
-    map.set(todayKey, 0);
+    const counts = new Map<string, number>();
     images.forEach((i) => {
       const k = dayKey(i.created_at);
-      map.set(k, (map.get(k) || 0) + 1);
+      counts.set(k, (counts.get(k) || 0) + 1);
     });
-    return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
+    const keys = Array.from(counts.keys()).sort();
+    const oldest = keys[0] || todayKey;
+    const out: [string, number][] = [];
+    const cursor = new Date(`${todayKey}T12:00:00`);
+    const stop = new Date(`${oldest}T12:00:00`);
+    // Skydd mot orimligt långa listor (max ~2 år).
+    for (let guard = 0; guard < 800 && cursor.getTime() >= stop.getTime(); guard++) {
+      const k = dayKey(cursor.toISOString());
+      out.push([k, counts.get(k) || 0]);
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    return out;
   }, [images, todayKey]);
+
 
 
   const previewImages: EntityImage[] = previewCount ? pool.slice(0, previewCount) : images;
