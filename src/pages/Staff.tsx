@@ -47,6 +47,27 @@ export default function Staff() {
   const updateStaff = useUpdateStaff();
   const deleteStaff = useDeleteStaff();
 
+  const { data: openShifts = [] } = useOpenShifts(storeFilter);
+  const clockIn = useClockIn();
+  const clockOut = useClockOut();
+  const shiftByStaff = new Map(openShifts.map((s) => [s.staff_id, s]));
+
+  const handleClock = (s: any) => {
+    const open = shiftByStaff.get(s.id);
+    if (open) {
+      clockOut.mutate({ staffId: s.id }, {
+        onSuccess: () => toast({ title: "Utstämplad", description: `${s.first_name} ${s.last_name} — ${shiftDuration(open.clocked_in_at)}` }),
+        onError: (err: any) => toast({ title: "Fel", description: err.message, variant: "destructive" }),
+      });
+    } else {
+      clockIn.mutate({ staffId: s.id, storeId: s.store_id ?? storeFilter ?? null }, {
+        onSuccess: () => toast({ title: "Instämplad", description: `${s.first_name} ${s.last_name}` }),
+        onError: (err: any) => toast({ title: "Fel", description: err.message, variant: "destructive" }),
+      });
+    }
+  };
+
+
   const canViewActivity =
     site === "wholesale" &&
     !!currentStaff?.email &&
