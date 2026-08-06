@@ -41,7 +41,8 @@ export default function Staff() {
   const { site, activeStoreId } = useSite();
   const { staff: currentStaff } = useStaffAuth();
   const storeFilter = site === "shop" ? activeStoreId : undefined;
-  const { data: staffList = [], isLoading } = useStaff(storeFilter);
+  const { data: storeStaff = [], isLoading } = useStaff(storeFilter);
+  const { data: allStaff = [] } = useStaff();
   const { data: stores = [] } = useStores(true);
   const createStaff = useCreateStaff();
   const updateStaff = useUpdateStaff();
@@ -78,6 +79,13 @@ export default function Staff() {
   };
   const [form, setForm] = useState(emptyForm);
   const setField = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }));
+
+  // Instämplade på arbetsplatsen kan komma från andra hemmabutiker
+  const staffList = (() => {
+    const ids = new Set(storeStaff.map((s: any) => s.id));
+    const extra = allStaff.filter((s: any) => !ids.has(s.id) && shiftByStaff.has(s.id));
+    return [...storeStaff, ...extra];
+  })();
 
   const visibleList = showAll ? staffList : staffList.filter((s: any) => shiftByStaff.has(s.id));
 
