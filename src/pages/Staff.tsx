@@ -303,6 +303,23 @@ export default function Staff() {
                   )}
                 </div>
 
+                <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    size="sm"
+                    variant={shiftByStaff.has(s.id) ? "outline" : "default"}
+                    className="w-full gap-1.5 text-xs h-8"
+                    disabled={clockIn.isPending || clockOut.isPending}
+                    onClick={(e) => { e.stopPropagation(); handleClock(s); }}
+                  >
+                    {shiftByStaff.has(s.id) ? (
+                      <><LogOut className="h-3.5 w-3.5" /> Stämpla ut</>
+                    ) : (
+                      <><LogIn className="h-3.5 w-3.5" /> Stämpla in</>
+                    )}
+                  </Button>
+                </div>
+
+
               </CardContent>
             </Card>
           ))}
