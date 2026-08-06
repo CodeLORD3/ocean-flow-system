@@ -604,17 +604,8 @@ export function EntityImageGallery({
                   () => selectDay(key)
                 )
               )}
-              {/* Dagens datum finns alltid som val även utan bilder */}
-              {!dates.some(([k]) => k === todayKey) &&
-                catalogButton(
-                  view.mode === "day" && view.key === todayKey,
-                  "today",
-                  "Idag",
-                  0,
-                  undefined,
-                  () => selectDay(todayKey)
-                )}
               {dates.length > dateLimit && (
+
                 <Button
                   variant="ghost"
                   size="sm"
