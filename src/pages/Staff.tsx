@@ -68,10 +68,8 @@ export default function Staff() {
   const [accessStaff, setAccessStaff] = useState<any | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
-  // Administrationsportalen = "wholesale"; "admin" = full super-admin
-  const canManageAccess = ((currentStaff?.portal_access ?? []) as string[]).some(
-    (p) => p === "admin" || p === "wholesale"
-  );
+  // Endast konton med full admin får se och ändra andras behörigheter
+  const canManageAccess = ((currentStaff?.portal_access ?? []) as string[]).includes("admin");
 
 
   const emptyForm = {
