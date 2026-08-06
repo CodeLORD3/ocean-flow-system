@@ -41,7 +41,8 @@ export default function Staff() {
   const { site, activeStoreId } = useSite();
   const { staff: currentStaff } = useStaffAuth();
   const storeFilter = site === "shop" ? activeStoreId : undefined;
-  const { data: staffList = [], isLoading } = useStaff(storeFilter);
+  const { data: storeStaff = [], isLoading } = useStaff(storeFilter);
+  const { data: allStaff = [] } = useStaff();
   const { data: stores = [] } = useStores(true);
   const createStaff = useCreateStaff();
   const updateStaff = useUpdateStaff();
