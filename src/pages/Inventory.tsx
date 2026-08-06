@@ -67,6 +67,7 @@ import BarcodeScanner from "@/components/barcode/BarcodeScanner";
 import { EntityImagesButton } from "@/components/images/EntityImageGallery";
 
 import { generateStockSheetPdf } from "@/lib/stockSheetPdf";
+import InventoryReportsDialog from "@/components/inventory/InventoryReportsDialog";
 import StockCountDialog, { type StockCountScope } from "@/components/inventory/StockCountDialog";
 import StockOverview from "@/components/inventory/StockOverview";
 import StockMovementsView from "@/components/inventory/StockMovementsView";
@@ -207,6 +208,7 @@ export default function Inventory() {
 
 
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [reportsArchiveOpen, setReportsArchiveOpen] = useState(false);
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
   const [stockDialogOpen, setStockDialogOpen] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
@@ -1272,6 +1274,15 @@ export default function Inventory() {
             <Plus className="h-3 w-3" /> Nytt lager
           </Button>
 
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none"
+            onClick={() => setReportsArchiveOpen(true)}
+          >
+            <FileText className="h-3 w-3" /> Lagerrapporter
+          </Button>
+
           <Button size="sm" className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none" onClick={() => setReportDialogOpen(true)}>
             <ClipboardList className="h-3 w-3" /> Skapa lagerrapport
           </Button>
@@ -2010,6 +2021,13 @@ export default function Inventory() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <InventoryReportsDialog
+        open={reportsArchiveOpen}
+        onOpenChange={setReportsArchiveOpen}
+        storeId={activeStoreId}
+        storeName={activeStoreName}
+      />
 
       {/* ── Lagerrapport Dialog — now with expiry + arrival date ──────────── */}
       <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
