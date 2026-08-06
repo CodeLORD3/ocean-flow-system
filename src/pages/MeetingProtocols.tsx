@@ -60,7 +60,7 @@ export default function MeetingProtocols() {
     );
   }
 
-  const portalLabel = isShop ? activeStoreName : site === "wholesale" ? "Grossist" : site === "production" ? "Produktion" : "";
+  const portalLabel = isShop ? activeStoreName : site === "wholesale" ? "Admin" : site === "production" ? "Grossist" : "";
 
   const handleCreate = async () => {
     if (!newTitle.trim()) return;
