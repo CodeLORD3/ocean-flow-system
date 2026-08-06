@@ -932,6 +932,183 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_stock_sheet_lines: {
+        Row: {
+          category: string | null
+          checked: boolean
+          cost_price: number
+          counted_qty_kg: number | null
+          created_at: string
+          diff_kg: number | null
+          diff_reason: string | null
+          diff_value: number | null
+          id: string
+          note: string | null
+          opening_qty_kg: number
+          other_qty_kg: number
+          product_id: string | null
+          product_name: string
+          received_qty_kg: number
+          sheet_id: string
+          sku: string | null
+          sold_qty_kg: number | null
+          sort_order: number
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          checked?: boolean
+          cost_price?: number
+          counted_qty_kg?: number | null
+          created_at?: string
+          diff_kg?: number | null
+          diff_reason?: string | null
+          diff_value?: number | null
+          id?: string
+          note?: string | null
+          opening_qty_kg?: number
+          other_qty_kg?: number
+          product_id?: string | null
+          product_name: string
+          received_qty_kg?: number
+          sheet_id: string
+          sku?: string | null
+          sold_qty_kg?: number | null
+          sort_order?: number
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          checked?: boolean
+          cost_price?: number
+          counted_qty_kg?: number | null
+          created_at?: string
+          diff_kg?: number | null
+          diff_reason?: string | null
+          diff_value?: number | null
+          id?: string
+          note?: string | null
+          opening_qty_kg?: number
+          other_qty_kg?: number
+          product_id?: string | null
+          product_name?: string
+          received_qty_kg?: number
+          sheet_id?: string
+          sku?: string | null
+          sold_qty_kg?: number | null
+          sort_order?: number
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_stock_sheet_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_stock_sheet_lines_sheet_id_fkey"
+            columns: ["sheet_id"]
+            isOneToOne: false
+            referencedRelation: "daily_stock_sheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_stock_sheets: {
+        Row: {
+          closed_at: string | null
+          closed_by: string | null
+          closing_value: number
+          counted_total_kg: number
+          created_at: string
+          diff_total_kg: number
+          diff_total_value: number
+          id: string
+          line_count: number
+          location_id: string | null
+          location_name: string | null
+          mode: string
+          notes: string | null
+          opened_by: string | null
+          opening_total_kg: number
+          other_total_kg: number
+          received_total_kg: number
+          sheet_date: string
+          sold_total_kg: number
+          status: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          closing_value?: number
+          counted_total_kg?: number
+          created_at?: string
+          diff_total_kg?: number
+          diff_total_value?: number
+          id?: string
+          line_count?: number
+          location_id?: string | null
+          location_name?: string | null
+          mode?: string
+          notes?: string | null
+          opened_by?: string | null
+          opening_total_kg?: number
+          other_total_kg?: number
+          received_total_kg?: number
+          sheet_date?: string
+          sold_total_kg?: number
+          status?: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          closing_value?: number
+          counted_total_kg?: number
+          created_at?: string
+          diff_total_kg?: number
+          diff_total_value?: number
+          id?: string
+          line_count?: number
+          location_id?: string | null
+          location_name?: string | null
+          mode?: string
+          notes?: string | null
+          opened_by?: string | null
+          opening_total_kg?: number
+          other_total_kg?: number
+          received_total_kg?: number
+          sheet_date?: string
+          sold_total_kg?: number
+          status?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_stock_sheets_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_stock_sheets_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deleted_stock_log: {
         Row: {
           deleted_at: string
