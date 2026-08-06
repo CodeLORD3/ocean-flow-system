@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ImagePlus,
   Camera,
@@ -110,7 +110,24 @@ export function EntityImageGallery({
   const setFeatured = useSetFeaturedImages();
   const toggleFavorite = useToggleImageFavorite();
 
-  const featured = images.filter((i) => i.is_featured);
+  /** Dagens datumnyckel — uppdateras automatiskt när dygnet slår över. */
+  const [todayKey, setTodayKey] = useState(() => dayKey(new Date().toISOString()));
+  useEffect(() => {
+    const tick = () => setTodayKey(dayKey(new Date().toISOString()));
+    const id = window.setInterval(tick, 60_000);
+    window.addEventListener("focus", tick);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener("focus", tick);
+    };
+  }, []);
+
+  /**
+   * Utvalda bilder gäller bara för dagens datum. När dygnet slår över hamnar
+   * gårdagens bilder i sitt datumfilter och "Utvalda" nollställs — favoriter
+   * är det enda filter som alltid följer med.
+   */
+  const featured = images.filter((i) => i.is_featured && dayKey(i.created_at) === todayKey);
   const favorites = images.filter((i) => favoriteIds.includes(i.id));
 
   /** Poolen med utvalda bilder (valfritt antal), sorterad så framsidans bilder ligger först. */
@@ -147,6 +164,12 @@ export function EntityImageGallery({
   /** I helskärmsläge bläddrar man genom hela den utvalda poolen, inte bara de synliga. */
   const lightboxImages: EntityImage[] =
     previewCount && (!catalog || view.mode === "featured") && pool.length ? pool : shown;
+
+  /** Antal tomma platser på framsidan när dagens utvalda bilder saknas. */
+  const missingSlots =
+    previewCount && (!catalog || view.mode === "featured")
+      ? Math.max(0, previewCount - shown.length)
+      : 0;
 
   const lightboxIndex = lightboxId ? lightboxImages.findIndex((i) => i.id === lightboxId) : -1;
 
@@ -223,6 +246,9 @@ export function EntityImageGallery({
   );
 
   const emptyText =
+    catalog && view.mode === "featured" && previewCount
+      ? "Inga utvalda bilder för idag — ladda upp dagens bilder och markera dem med stjärnan."
+      :
     catalog && view.mode === "favorites"
       ? "Inga favoriter ännu — tryck på hjärtat på en bild."
       : catalog && view.mode === "day"
@@ -411,6 +437,19 @@ export function EntityImageGallery({
           </Card>
         );
       })}
+
+      {/* Tomma platser för dagens saknade bilder */}
+      {Array.from({ length: missingSlots }).map((_, i) => (
+        <Card
+          key={`missing-${i}`}
+          className="flex aspect-video flex-col items-center justify-center gap-1 border-2 border-dashed border-destructive/60 bg-destructive/5 p-2 text-center shadow-none"
+        >
+          <ImageIcon className="h-4 w-4 text-destructive/70" />
+          <p className="text-[10px] font-medium leading-tight text-destructive">
+            Bild saknas idag
+          </p>
+        </Card>
+      ))}
     </div>
   );
 
@@ -563,19 +602,15 @@ export function EntityImageGallery({
                   () => selectDay(key)
                 )
               )}
-              {dates.length === 0 && (
-                <p className="px-2 py-1 text-[10px] text-muted-foreground">Inga datum ännu</p>
-              )}
               {/* Dagens datum finns alltid som val även utan bilder */}
-              {dates.length > 0 &&
-                !dates.some(([k]) => k === dayKey(new Date().toISOString())) &&
+              {!dates.some(([k]) => k === todayKey) &&
                 catalogButton(
-                  view.mode === "day" && view.key === dayKey(new Date().toISOString()),
+                  view.mode === "day" && view.key === todayKey,
                   "today",
                   "Idag",
                   0,
                   undefined,
-                  () => selectDay(dayKey(new Date().toISOString()))
+                  () => selectDay(todayKey)
                 )}
               {dates.length > dateLimit && (
                 <Button
@@ -591,7 +626,7 @@ export function EntityImageGallery({
           </Card>
 
           <div>
-            {shown.length === 0 ? (
+            {shown.length === 0 && missingSlots === 0 ? (
               <Card className="p-4 text-center border-dashed">
                 <ImageIcon className="h-5 w-5 mx-auto text-muted-foreground/60" />
                 <p className="mt-1 text-xs text-muted-foreground">{emptyText}</p>
@@ -601,7 +636,7 @@ export function EntityImageGallery({
             )}
           </div>
         </div>
-      ) : shown.length === 0 ? (
+      ) : shown.length === 0 && missingSlots === 0 ? (
         <Card className="p-4 text-center border-dashed">
           <ImageIcon className="h-5 w-5 mx-auto text-muted-foreground/60" />
           <p className="mt-1 text-xs text-muted-foreground">{emptyText}</p>
