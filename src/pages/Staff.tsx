@@ -27,8 +27,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { StaffDetailDialog } from "@/components/staff/StaffDetailDialog";
 import { StaffAccessDialog, PORTAL_OPTIONS } from "@/components/staff/StaffAccessDialog";
 import { Badge } from "@/components/ui/badge";
-import { Activity, ShieldCheck, LogIn, LogOut } from "lucide-react";
-import { useOpenShifts, useClockIn, useClockOut, shiftClock, shiftDuration } from "@/hooks/useStaffShifts";
+import { Activity, ShieldCheck } from "lucide-react";
+import { useOpenShifts, shiftClock, shiftDuration } from "@/hooks/useStaffShifts";
 
 const ACTIVITY_VIEWER_EMAILS = [
   "joakim@fiskskaldjur.ch",
@@ -48,24 +48,7 @@ export default function Staff() {
   const deleteStaff = useDeleteStaff();
 
   const { data: openShifts = [] } = useOpenShifts(storeFilter);
-  const clockIn = useClockIn();
-  const clockOut = useClockOut();
   const shiftByStaff = new Map(openShifts.map((s) => [s.staff_id, s]));
-
-  const handleClock = (s: any) => {
-    const open = shiftByStaff.get(s.id);
-    if (open) {
-      clockOut.mutate({ staffId: s.id }, {
-        onSuccess: () => toast({ title: "Utstämplad", description: `${s.first_name} ${s.last_name} — ${shiftDuration(open.clocked_in_at)}` }),
-        onError: (err: any) => toast({ title: "Fel", description: err.message, variant: "destructive" }),
-      });
-    } else {
-      clockIn.mutate({ staffId: s.id, storeId: s.store_id ?? storeFilter ?? null }, {
-        onSuccess: () => toast({ title: "Instämplad", description: `${s.first_name} ${s.last_name}` }),
-        onError: (err: any) => toast({ title: "Fel", description: err.message, variant: "destructive" }),
-      });
-    }
-  };
 
 
   const canViewActivity =
@@ -74,6 +57,7 @@ export default function Staff() {
     ACTIVITY_VIEWER_EMAILS.includes(currentStaff.email.toLowerCase());
 
   const [search, setSearch] = useState("");
+  const [showAll, setShowAll] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
@@ -95,7 +79,9 @@ export default function Staff() {
   const [form, setForm] = useState(emptyForm);
   const setField = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }));
 
-  const filtered = staffList.filter(s => {
+  const visibleList = showAll ? staffList : staffList.filter((s: any) => shiftByStaff.has(s.id));
+
+  const filtered = visibleList.filter(s => {
     const q = search.toLowerCase();
     return `${s.first_name} ${s.last_name}`.toLowerCase().includes(q) ||
       (s.email || "").toLowerCase().includes(q) ||
@@ -182,7 +168,7 @@ export default function Staff() {
           <h2 className="text-xl font-heading font-bold text-foreground flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" /> Personal
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Hantera personalregister</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Instämplad personal på arbetsplatsen — stämpling sker på Min profil</p>
         </div>
         <Button size="sm" className="gap-1.5 text-xs" onClick={openAdd}>
           <Plus className="h-3.5 w-3.5" /> Lägg till personal
@@ -198,15 +184,24 @@ export default function Staff() {
       </div>
 
       {/* Search */}
-      <div className="relative max-w-xs">
+      <div className="flex flex-wrap items-center gap-2">
+      <div className="relative max-w-xs flex-1 min-w-[180px]">
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
         <Input placeholder="Sök personal..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
+      </div>
+      <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowAll(v => !v)}>
+        {showAll ? "Visa endast instämplade" : "Visa all personal"}
+      </Button>
       </div>
 
       {/* Staff grid */}
       {filtered.length === 0 ? (
         <Card className="shadow-card"><CardContent className="p-8 text-center text-sm text-muted-foreground">
-          {staffList.length === 0 ? 'Ingen personal tillagd ännu. Klicka "Lägg till personal" för att börja.' : "Inga resultat matchar sökningen."}
+          {staffList.length === 0
+            ? 'Ingen personal tillagd ännu. Klicka "Lägg till personal" för att börja.'
+            : !showAll && visibleList.length === 0
+              ? "Ingen personal är instämplad på den här arbetsplatsen just nu. Stämpling sker på sidan Min profil."
+              : "Inga resultat matchar sökningen."}
         </CardContent></Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -302,23 +297,6 @@ export default function Staff() {
                     </div>
                   )}
                 </div>
-
-                <div className="mt-3" onClick={(e) => e.stopPropagation()}>
-                  <Button
-                    size="sm"
-                    variant={shiftByStaff.has(s.id) ? "outline" : "default"}
-                    className="w-full gap-1.5 text-xs h-8"
-                    disabled={clockIn.isPending || clockOut.isPending}
-                    onClick={(e) => { e.stopPropagation(); handleClock(s); }}
-                  >
-                    {shiftByStaff.has(s.id) ? (
-                      <><LogOut className="h-3.5 w-3.5" /> Stämpla ut</>
-                    ) : (
-                      <><LogIn className="h-3.5 w-3.5" /> Stämpla in</>
-                    )}
-                  </Button>
-                </div>
-
 
               </CardContent>
             </Card>

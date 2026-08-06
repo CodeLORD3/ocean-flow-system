@@ -38,6 +38,45 @@ export function useOpenShiftMap(storeId?: string | null) {
   return { ...query, map };
 }
 
+/** Den inloggade personens (eller angiven persons) öppna stämpling. */
+export function useMyOpenShift(staffId?: string | null) {
+  return useQuery({
+    queryKey: ["staff-shift-open-one", staffId],
+    enabled: !!staffId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("staff_shifts")
+        .select("id, staff_id, store_id, clocked_in_at, clocked_out_at")
+        .eq("staff_id", staffId!)
+        .is("clocked_out_at", null)
+        .order("clocked_in_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as StaffShift | null;
+    },
+    refetchInterval: 60_000,
+  });
+}
+
+/** Senaste stämplingarna för en person. */
+export function useShiftHistory(staffId?: string | null, limit = 20) {
+  return useQuery({
+    queryKey: ["staff-shift-history", staffId, limit],
+    enabled: !!staffId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("staff_shifts")
+        .select("id, staff_id, store_id, clocked_in_at, clocked_out_at")
+        .eq("staff_id", staffId!)
+        .order("clocked_in_at", { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return (data ?? []) as StaffShift[];
+    },
+  });
+}
+
 export function useClockIn() {
   const qc = useQueryClient();
   return useMutation({
@@ -59,7 +98,11 @@ export function useClockIn() {
       if (error) throw error;
       return data.id as string;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["staff-shifts-open"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["staff-shifts-open"] });
+      qc.invalidateQueries({ queryKey: ["staff-shift-open-one"] });
+      qc.invalidateQueries({ queryKey: ["staff-shift-history"] });
+    },
   });
 }
 
@@ -74,7 +117,11 @@ export function useClockOut() {
         .is("clocked_out_at", null);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["staff-shifts-open"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["staff-shifts-open"] });
+      qc.invalidateQueries({ queryKey: ["staff-shift-open-one"] });
+      qc.invalidateQueries({ queryKey: ["staff-shift-history"] });
+    },
   });
 }
 
