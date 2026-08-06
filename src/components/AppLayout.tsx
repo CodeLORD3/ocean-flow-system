@@ -6,7 +6,7 @@ import { StoreHero } from "@/components/StoreHero";
 
 
 import { useLocation, useNavigate } from "react-router-dom";
-import { Bell, ChevronRight, Search, User, ArrowLeftRight, Factory, Store, ChevronDown, X, Check, LogOut, Shield } from "lucide-react";
+import { Bell, ChevronRight, Search, User, UserRound, ArrowLeftRight, Factory, Store, ChevronDown, X, Check, LogOut, Shield } from "lucide-react";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
