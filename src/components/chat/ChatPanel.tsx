@@ -212,6 +212,8 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
 
   const revealOlder = () => {
     if (showOlder || olderCount === 0) return;
+    skipAutoScroll.current = true;
+
     const el = scrollRef.current;
     const prevHeight = el?.scrollHeight ?? 0;
     setShowOlder(true);
