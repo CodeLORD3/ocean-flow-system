@@ -580,7 +580,11 @@ export function useSetChecklistItemTime() {
   });
 }
 
-/** Lägger till en ny rad i en sektion — placeras direkt på rätt plats efter tid. */
+/**
+ * Lägger till en ny rad i en sektion — placeras direkt på rätt plats efter tid.
+ * Skickas templateId + storeId med sparas uppgiften även i mallen, så den
+ * finns kvar kommande dagar.
+ */
 export function useAddChecklistItem() {
   const qc = useQueryClient();
   return useMutation({
@@ -590,6 +594,10 @@ export function useAddChecklistItem() {
       task: string;
       time?: string;
       category?: string;
+      templateId?: string | null;
+      storeId?: string | null;
+      /** false = bara idag */
+      persist?: boolean;
     }) => {
       const task = input.task.trim();
       if (!task) throw new Error("Skriv vad uppgiften är.");
@@ -614,21 +622,101 @@ export function useAddChecklistItem() {
       });
       if (error) throw error;
       await resequenceDay(input.dayId);
+
+      if (input.persist !== false && input.templateId && input.storeId) {
+        const { data: existing } = await supabase
+          .from("checklist_template_items")
+          .select("id, active")
+          .eq("template_id", input.templateId)
+          .eq("store_id", input.storeId)
+          .eq("section", input.section)
+          .eq("task", task)
+          .maybeSingle();
+
+        if (existing) {
+          await supabase
+            .from("checklist_template_items")
+            .update({ active: true, time_label: normalized, category: input.category?.trim() || null })
+            .eq("id", existing.id);
+        } else {
+          await supabase.from("checklist_template_items").insert({
+            template_id: input.templateId,
+            store_id: input.storeId,
+            section: input.section,
+            task,
+            time_label: normalized,
+            category: input.category?.trim() || null,
+            sort_order: nextOrder,
+            active: true,
+          });
+        }
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["checklist-day"] }),
   });
 }
 
+/**
+ * Tar bort en rad. Med `persist` tas uppgiften även bort ur mallen för butiken,
+ * så den inte kommer tillbaka nästa dag. Globala mallrader döljs per butik.
+ */
 export function useDeleteChecklistItem() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id }: { id: string; dayId?: string }) => {
+    mutationFn: async ({
+      id,
+      persist,
+      templateId,
+      storeId,
+      section,
+      task,
+    }: {
+      id: string;
+      dayId?: string;
+      persist?: boolean;
+      templateId?: string | null;
+      storeId?: string | null;
+      section?: string;
+      task?: string;
+    }) => {
       const { error } = await supabase.from("checklist_items").delete().eq("id", id);
       if (error) throw error;
+
+      if (persist && templateId && storeId && section && task) {
+        const { data: rows } = await supabase
+          .from("checklist_template_items")
+          .select("id, store_id, active")
+          .eq("template_id", templateId)
+          .eq("section", section)
+          .eq("task", task)
+          .or(`store_id.is.null,store_id.eq.${storeId}`);
+
+        const own = (rows || []).filter((r: any) => r.store_id === storeId);
+        const global = (rows || []).filter((r: any) => r.store_id === null);
+
+        if (own.length > 0) {
+          await supabase
+            .from("checklist_template_items")
+            .update({ active: false })
+            .in("id", own.map((r: any) => r.id));
+        }
+        if (global.length > 0 && own.length === 0) {
+          // Butiksspecifik "dold"-markering för den globala mallraden
+          await supabase.from("checklist_template_items").insert({
+            template_id: templateId,
+            store_id: storeId,
+            section,
+            task,
+            sort_order: 9999,
+            active: false,
+          });
+        }
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["checklist-day"] }),
   });
 }
+
 
 /* ---------------- Signaturförfrågningar ---------------- */
 
