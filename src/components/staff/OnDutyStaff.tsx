@@ -60,9 +60,10 @@ export function OnDutyStaff({ storeId }: { storeId?: string | null }) {
   };
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-border bg-card px-2.5 py-2 shadow-card sm:flex-row sm:items-start sm:gap-3">
-      <div className="flex items-start gap-2">
-        <span className="relative mt-1 flex h-2.5 w-2.5 shrink-0">
+    <div className="flex items-stretch gap-2 sm:justify-end">
+      {/* "Arbetar nu"-kortet — kompakt, samma höjd som stämpelklockan */}
+      <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 shadow-card sm:flex-none">
+        <span className="relative flex h-2.5 w-2.5 shrink-0">
           {onDuty.length > 0 && (
             <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-70 animate-ping" />
           )}
@@ -73,23 +74,23 @@ export function OnDutyStaff({ storeId }: { storeId?: string | null }) {
           />
         </span>
         <div className="min-w-0">
-          <p className="text-[11px] font-medium text-foreground">
+          <p className="text-[11px] font-medium leading-tight text-foreground">
             {onDuty.length > 0 ? `Arbetar nu · ${onDuty.length}` : "Ingen instämplad"}
           </p>
           {onDuty.length === 0 ? (
-            <p className="text-[11px] text-muted-foreground">Stämpla in med knappen här</p>
+            <p className="text-[11px] leading-tight text-muted-foreground">Stämpla in med knappen här</p>
           ) : (
-            <div className="mt-1 flex flex-wrap gap-1.5">
+            <div className="mt-0.5 flex flex-wrap gap-1">
               {onDuty.map(({ shift, person }) => (
                 <span
                   key={shift.id}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] text-foreground"
+                  className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] leading-none text-foreground"
                 >
                   {person.profile_image_url ? (
                     <img
                       src={person.profile_image_url}
                       alt={`${person.first_name} ${person.last_name}`}
-                      className="h-4 w-4 rounded-full object-cover"
+                      className="h-3.5 w-3.5 rounded-full object-cover"
                     />
                   ) : (
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -107,37 +108,39 @@ export function OnDutyStaff({ storeId }: { storeId?: string | null }) {
         </div>
       </div>
 
+      {/* Stämpelklockan — till höger om kortet */}
       {staff && (
-        <div className="flex flex-col items-stretch gap-1 sm:ml-auto sm:items-end">
+        <div className="flex shrink-0 flex-col items-stretch justify-center gap-0.5">
           {myShift ? (
             <Button
               size="sm"
               variant="outline"
-              className="h-9 gap-1.5 border-destructive/40 text-xs font-semibold"
+              className="h-8 gap-1.5 border-destructive/40 text-xs font-semibold"
               onClick={() => setConfirm("out")}
               disabled={clockOut.isPending}
             >
-              <LogOut className="h-4 w-4" /> Stämpla ut
+              <LogOut className="h-3.5 w-3.5" /> Stämpla ut
             </Button>
           ) : (
             <Button
               size="sm"
-              className="h-9 gap-1.5 text-xs font-semibold"
+              className="h-8 gap-1.5 text-xs font-semibold"
               onClick={() => setConfirm("in")}
               disabled={clockIn.isPending || !storeId}
             >
-              <LogIn className="h-4 w-4" /> Stämpla in
+              <LogIn className="h-3.5 w-3.5" /> Stämpla in
             </Button>
           )}
-          <p className="text-[10px] text-muted-foreground tabular-nums text-center sm:text-right">
+          <p className="text-[10px] leading-tight text-muted-foreground tabular-nums text-center sm:text-right">
             {myShift
               ? `Instämplad ${shiftClock(myShift.clocked_in_at)}${myStoreName ? ` · ${myStoreName}` : ""}`
               : storeId
                 ? "Ej instämplad"
-                : "Välj butik för att stämpla in"}
+                : "Välj butik"}
           </p>
         </div>
       )}
+
 
       <AlertDialog open={confirm !== null} onOpenChange={(o) => !o && setConfirm(null)}>
         <AlertDialogContent>
