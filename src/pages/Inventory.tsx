@@ -1308,25 +1308,27 @@ export default function Inventory() {
 
       {/* Vyväxling: samlad lagerbild (ny look) vs. per lagerplats (detaljvy) vs. rörelser */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1 w-fit">
+        <div className="-mx-1 flex max-w-full items-center gap-1 overflow-x-auto rounded-lg border border-border bg-card p-1 sm:mx-0 sm:w-fit [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {[
-            { v: "overview" as const, l: "Samlad lagerbild" },
-            { v: "locations" as const, l: "Per lagerplats" },
-            { v: "movements" as const, l: "Lagerrörelser" },
-            { v: "lots" as const, l: "Spårbarhet" },
+            { v: "overview" as const, l: "Samlad lagerbild", s: "Samlad" },
+            { v: "locations" as const, l: "Per lagerplats", s: "Lagerplats" },
+            { v: "movements" as const, l: "Lagerrörelser", s: "Rörelser" },
+            { v: "lots" as const, l: "Spårbarhet", s: "Spårbarhet" },
           ].map((o) => (
 
             <button
               key={o.v}
               onClick={() => setViewMode(o.v)}
-              className={`px-3 py-1.5 text-sm font-semibold rounded-md transition-colors ${
+              className={`shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors sm:px-3 sm:text-sm ${
                 viewMode === o.v ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted"
               }`}
             >
-              {o.l}
+              <span className="sm:hidden">{o.s}</span>
+              <span className="hidden sm:inline">{o.l}</span>
             </button>
           ))}
         </div>
+
         <Button
           variant="outline"
           size="sm"

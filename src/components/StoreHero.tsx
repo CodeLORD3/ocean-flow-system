@@ -1,4 +1,6 @@
 import { useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { useSite } from "@/contexts/SiteContext";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useStores } from "@/hooks/useStores";
@@ -25,6 +27,9 @@ import { MapPin, Store as StoreIcon, Upload, Images, Pencil, Trash2, Check, X, L
  */
 export function StoreHero() {
   const { site, activeStoreId, activeStoreName } = useSite();
+  const location = useLocation();
+  // Kompakt hero på mobil överallt utom översiktssidan – ger plats till innehållet
+  const compact = location.pathname !== "/organisation" && location.pathname !== "/";
   const { staff } = useStaffAuth();
   const { data: stores = [] } = useStores();
 
@@ -127,7 +132,12 @@ export function StoreHero() {
   };
 
   return (
-    <div className="group relative mb-4 h-40 sm:h-36 lg:h-44 w-full overflow-hidden rounded-lg border border-border bg-muted">
+    <div
+      className={cn(
+        "group relative mb-3 sm:mb-4 w-full overflow-hidden rounded-lg border border-border bg-muted",
+        compact ? "h-20 sm:h-36 lg:h-44" : "h-32 sm:h-36 lg:h-44"
+      )}
+    >
       {url ? (
         <img
           src={url}
@@ -177,7 +187,12 @@ export function StoreHero() {
       </div>
 
       {canEdit && (
-        <div className="absolute right-2 top-2 flex items-center gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 max-sm:opacity-100">
+        <div
+          className={cn(
+            "absolute right-2 top-2 flex items-center gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100",
+            compact ? "max-sm:hidden" : "max-sm:opacity-100"
+          )}
+        >
           <input
             ref={fileRef}
             type="file"

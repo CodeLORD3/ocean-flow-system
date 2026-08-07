@@ -42,7 +42,17 @@ const pageTitles: Record<string, { title: string; breadcrumb: string[] }> = {
   "/barcodes": { title: "Streckkoder", breadcrumb: ["Hem", "Lagerstyrning", "Streckkoder"] },
   "/chat": { title: "Chatt", breadcrumb: ["Hem", "Chatt"] },
   "/coverage": { title: "Datakvalitet & täckning", breadcrumb: ["Hem", "Rapporter", "Datakvalitet"] },
+  "/organisation": { title: "Översikt", breadcrumb: ["Hem", "Översikt"] },
+  "/checklist": { title: "Checklistor", breadcrumb: ["Hem", "Checklistor"] },
+  "/dagsrapport": { title: "Dagsrapport", breadcrumb: ["Hem", "Rapporter", "Dagsrapport"] },
+  "/profile": { title: "Min profil", breadcrumb: ["Hem", "Min profil"] },
+  "/shop-orders": { title: "Ordrar", breadcrumb: ["Hem", "Ordrar"] },
+  "/shop-wishes": { title: "Önskelista", breadcrumb: ["Hem", "Önskelista"] },
+  "/meeting-protocols": { title: "Mötesprotokoll", breadcrumb: ["Hem", "Möten"] },
+  "/vehicles": { title: "Bilar & Maskiner", breadcrumb: ["Hem", "Bilar & Maskiner"] },
+  "/calendar": { title: "Kalender", breadcrumb: ["Hem", "Kalender"] },
 };
+
 
 function AccountMenu() {
   const { staff, signOut } = useStaffAuth();
@@ -96,10 +106,18 @@ function AccountMenu() {
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const page = pageTitles[location.pathname] || { title: "Sida", breadcrumb: ["Hem"] };
   const { site, setSite, activeStoreName, setActiveStore } = useSite();
   const { tabs, activeTab, closeTab, switchTab } = useTabs();
+  const fallbackTitle =
+    tabs.find((t) => t.path === location.pathname)?.title ??
+    (location.pathname
+      .replace(/^\//, "")
+      .split("/")[0]
+      .replace(/-/g, " ")
+      .replace(/^./, (c) => c.toUpperCase()) || "Översikt");
+  const page = pageTitles[location.pathname] || { title: fallbackTitle, breadcrumb: ["Hem", fallbackTitle] };
   const { data: allStores = [] } = useStores();
+
   const { staff } = useStaffAuth();
   useSessionTracking();
 

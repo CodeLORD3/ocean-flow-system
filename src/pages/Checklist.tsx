@@ -695,57 +695,96 @@ function ChecklistReports() {
           ) : reports.length === 0 ? (
             <p className="text-xs text-muted-foreground">Inga checklistor har rapporterats in ännu.</p>
           ) : (
-            <table className="w-full table-fixed text-sm">
-              <thead>
-                <tr className="border-b border-border text-[10px] uppercase tracking-wide text-muted-foreground sm:text-[11px]">
-                  <th className="py-2 text-left font-semibold">Datum</th>
-                  <th className="hidden py-2 text-left font-semibold md:table-cell">Veckodag</th>
-                  <th className="py-2 text-left font-semibold">Butik</th>
-                  <th className="hidden py-2 text-left font-semibold sm:table-cell">Checklista</th>
-                  <th className="hidden py-2 text-left font-semibold md:table-cell">Ansvarig</th>
-                  <th className="w-14 py-2 text-center font-semibold">Klara</th>
-                  <th className="hidden py-2 text-left font-semibold sm:table-cell">Status</th>
-                  <th className="w-16" />
-                </tr>
-              </thead>
-              <tbody>
+            <>
+              {/* Mobil: kortlista istället för trång tabell */}
+              <div className="space-y-2 sm:hidden">
                 {reports.map((r: any) => (
-                  <tr key={r.id} className="border-b border-border/60 hover:bg-muted/30">
-                    <td className="py-2 font-mono tabular-nums text-[11px] sm:text-xs">{r.checklist_date}</td>
-                    <td className="hidden py-2 text-xs text-muted-foreground md:table-cell">
-                      {weekdayName(r.checklist_date)}
-                    </td>
-                    <td className="truncate py-2 pr-2 text-xs sm:text-sm">{r.storeName}</td>
-                    <td className="hidden truncate py-2 pr-2 text-xs text-muted-foreground sm:table-cell">
-                      {r.listName}
-                    </td>
-                    <td className="hidden py-2 text-xs text-muted-foreground md:table-cell">
-                      {r.responsible_name || "–"}
-                    </td>
-                    <td className="py-2 text-center font-mono tabular-nums text-[11px] sm:text-xs">
-                      {r.doneCount}/{r.total}
-                    </td>
-                    <td className="hidden py-2 sm:table-cell">
+                  <button
+                    key={r.id}
+                    onClick={() => setOpenId(r.id)}
+                    className="w-full rounded-lg border border-border bg-card p-3 text-left active:bg-muted/50"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-foreground">{r.storeName}</p>
+                        <p className="truncate text-[11px] text-muted-foreground">{r.listName}</p>
+                      </div>
                       {r.status === "completed" ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
+                        <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-emerald-600">
                           <CheckCircle2 className="h-3 w-3" /> Slutförd
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600">
+                        <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-amber-600">
                           <Clock className="h-3 w-3" /> Pågående
                         </span>
                       )}
-                    </td>
-                    <td className="py-2 text-right">
-                      <Button variant="outline" size="sm" className="h-8 px-2 text-xs" onClick={() => setOpenId(r.id)}>
-                        Visa
-                      </Button>
-                    </td>
-                  </tr>
+                    </div>
+                    <div className="mt-1.5 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                      <span className="font-mono tabular-nums">
+                        {r.checklist_date} · {weekdayName(r.checklist_date)}
+                      </span>
+                      <span className="font-mono tabular-nums text-foreground">
+                        {r.doneCount}/{r.total} klara
+                      </span>
+                    </div>
+                    {r.responsible_name && (
+                      <p className="mt-1 truncate text-[11px] text-muted-foreground">Ansvarig: {r.responsible_name}</p>
+                    )}
+                  </button>
                 ))}
-              </tbody>
-            </table>
+              </div>
+
+              <table className="hidden w-full table-fixed text-sm sm:table">
+                <thead>
+                  <tr className="border-b border-border text-[10px] uppercase tracking-wide text-muted-foreground sm:text-[11px]">
+                    <th className="py-2 text-left font-semibold">Datum</th>
+                    <th className="hidden py-2 text-left font-semibold md:table-cell">Veckodag</th>
+                    <th className="py-2 text-left font-semibold">Butik</th>
+                    <th className="py-2 text-left font-semibold">Checklista</th>
+                    <th className="hidden py-2 text-left font-semibold md:table-cell">Ansvarig</th>
+                    <th className="w-14 py-2 text-center font-semibold">Klara</th>
+                    <th className="py-2 text-left font-semibold">Status</th>
+                    <th className="w-16" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {reports.map((r: any) => (
+                    <tr key={r.id} className="border-b border-border/60 hover:bg-muted/30">
+                      <td className="py-2 font-mono tabular-nums text-[11px] sm:text-xs">{r.checklist_date}</td>
+                      <td className="hidden py-2 text-xs text-muted-foreground md:table-cell">
+                        {weekdayName(r.checklist_date)}
+                      </td>
+                      <td className="truncate py-2 pr-2 text-xs sm:text-sm">{r.storeName}</td>
+                      <td className="truncate py-2 pr-2 text-xs text-muted-foreground">{r.listName}</td>
+                      <td className="hidden py-2 text-xs text-muted-foreground md:table-cell">
+                        {r.responsible_name || "–"}
+                      </td>
+                      <td className="py-2 text-center font-mono tabular-nums text-[11px] sm:text-xs">
+                        {r.doneCount}/{r.total}
+                      </td>
+                      <td className="py-2">
+                        {r.status === "completed" ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
+                            <CheckCircle2 className="h-3 w-3" /> Slutförd
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600">
+                            <Clock className="h-3 w-3" /> Pågående
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2 text-right">
+                        <Button variant="outline" size="sm" className="h-8 px-2 text-xs" onClick={() => setOpenId(r.id)}>
+                          Visa
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
           )}
+
         </CardContent>
       </Card>
     </div>
