@@ -99,6 +99,7 @@ export function DailyReportsArchive() {
           {rows.map((r) => {
             const open = openId === r.id;
             const waste = (r.waste_items ?? []).reduce((a, w) => a + (w.value_sek ?? 0), 0);
+            const wasteKg = (r.waste_items ?? []).reduce((a, w) => a + (w.weight_kg ?? 0), 0);
             return (
               <div key={r.id}>
                 <button
