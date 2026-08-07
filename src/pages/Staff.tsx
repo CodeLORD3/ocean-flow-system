@@ -180,8 +180,14 @@ export default function Staff() {
         <div>
           <h2 className="text-xl font-heading font-bold text-foreground flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" /> Personal
+            {platformView && <Badge variant="secondary" className="text-[9px]">Admin · hela plattformen</Badge>}
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Instämplad personal på arbetsplatsen — stämpling sker på Min profil</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {platformView
+              ? "All personal i alla butiker och portaler — redigera uppgifter och behörigheter"
+              : "Instämplad personal på arbetsplatsen — stämpling sker på Min profil"}
+          </p>
+
         </div>
         <Button size="sm" className="gap-1.5 text-xs" onClick={openAdd}>
           <Plus className="h-3.5 w-3.5" /> Lägg till personal
