@@ -27,6 +27,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useSite } from "@/contexts/SiteContext";
 import { ChecklistTable } from "@/components/checklist/ChecklistTable";
+import { ChecklistRestoreDialog } from "@/components/checklist/ChecklistRestoreDialog";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import {
   useArchiveChecklistTemplate,
   useDeleteChecklistTemplate,
@@ -148,6 +150,8 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
   const [renameTarget, setRenameTarget] = useState<ChecklistTemplate | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const setWeekdays = useSetTemplateWeekdays();
+  const { staff } = useStaffAuth();
+  const isAdmin = ((staff?.portal_access ?? []) as string[]).includes("admin");
 
   const todays = useMemo(() => templates.filter((t) => templateAppliesOn(t, iso)), [templates, iso]);
   const others = useMemo(() => templates.filter((t) => !templateAppliesOn(t, iso)), [templates, iso]);
@@ -298,6 +302,8 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
             {storeName} · <span className="capitalize">{formatToday(iso)}</span>
           </p>
         </div>
+        <div className="flex items-center gap-2">
+        {isAdmin && <ChecklistRestoreDialog storeId={storeId} />}
         <Dialog open={newOpen} onOpenChange={setNewOpen}>
           <DialogTrigger asChild>
             <Button size="sm" variant="secondary" className="h-8 gap-1 text-xs">
@@ -330,6 +336,7 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <Card className="shadow-card">
@@ -529,8 +536,10 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
             <DialogTitle>Ta bort "{deleteTarget?.name}"</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Arkivera döljer listan i menyn men behåller historiken. Radera permanent tar bort listan,
-            alla dess uppgifter och all historik — det går inte att ångra.
+            Arkivera döljer listan i menyn men behåller historiken — en admin kan återställa den igen.
+            {isAdmin
+              ? " Radera permanent tar bort listan, alla dess uppgifter och all historik — det går inte att ångra."
+              : " Permanent radering kan bara göras av en admin."}
           </p>
           <DialogFooter className="gap-2">
             <Button variant="ghost" onClick={() => setDeleteTarget(null)}>
@@ -547,13 +556,15 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
             >
               Arkivera
             </Button>
-            <Button
-              variant="destructive"
-              disabled={hardDelete.isPending}
-              onClick={() => deleteTarget && handleHardDelete(deleteTarget)}
-            >
-              Radera permanent
-            </Button>
+            {isAdmin && (
+              <Button
+                variant="destructive"
+                disabled={hardDelete.isPending}
+                onClick={() => deleteTarget && handleHardDelete(deleteTarget)}
+              >
+                Radera permanent
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
