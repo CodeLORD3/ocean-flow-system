@@ -183,9 +183,41 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
 
   const { data: messages = [] } = useChatMessages(activeConv?.id);
 
+  // Chatten börjar tom varje ny dag: bara dagens meddelanden visas.
+  // Scrollar man upp (eller klickar) laddas tidigare konversationer in.
+  const [showOlder, setShowOlder] = useState(false);
+  useEffect(() => {
+    setShowOlder(false);
+  }, [activeConv?.id]);
+
+  const todayStr = new Date().toDateString();
+  const olderCount = useMemo(
+    () => messages.filter((m) => new Date(m.created_at).toDateString() !== todayStr).length,
+    [messages, todayStr]
+  );
+  const visibleMessages = useMemo(
+    () => (showOlder ? messages : messages.filter((m) => new Date(m.created_at).toDateString() === todayStr)),
+    [messages, showOlder, todayStr]
+  );
+
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [messages.length, activeConv?.id]);
+  }, [visibleMessages.length, activeConv?.id]);
+
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    if (el.scrollTop <= 8 && !showOlder && olderCount > 0) {
+      const prevHeight = el.scrollHeight;
+      setShowOlder(true);
+      requestAnimationFrame(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight - prevHeight;
+        }
+      });
+    }
+  };
+
 
   // Markera den öppna chatten som läst när nya meddelanden visas
   const convId = activeConv?.id;
@@ -431,20 +463,34 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
           <div className="flex flex-col min-w-0">
             <div
               ref={scrollRef}
+              onScroll={handleScroll}
               className={cn("overflow-y-auto overflow-x-hidden space-y-1.5 pr-1", msgHeight)}
             >
               {!activeConv ? (
                 <p className="text-[11px] text-muted-foreground text-center py-8">
                   {isStore ? "Öppnar chatten med Grossist…" : "Ingen chatt vald."}
                 </p>
-              ) : messages.length === 0 ? (
-                <p className="text-[11px] text-muted-foreground text-center py-8">
-                  {isStore ? "Skriv ett meddelande till Grossist för att börja." : "Inga meddelanden ännu."}
-                </p>
               ) : (
-                messages.map((m, i) => {
+                <>
+                  {!showOlder && olderCount > 0 && (
+                    <div className="flex justify-center py-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setShowOlder(true)}
+                        className="rounded-full bg-muted px-2.5 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground"
+                      >
+                        Visa tidigare meddelanden ({olderCount})
+                      </button>
+                    </div>
+                  )}
+                  {visibleMessages.length === 0 ? (
+                    <p className="text-[11px] text-muted-foreground text-center py-8">
+                      Inga meddelanden idag.
+                    </p>
+                  ) : (
+                visibleMessages.map((m, i) => {
                   const mine = m.sender_portal_key === portal.key;
-                  const prev = i > 0 ? messages[i - 1] : null;
+                  const prev = i > 0 ? visibleMessages[i - 1] : null;
                   const showDay =
                     !prev ||
                     new Date(prev.created_at).toDateString() !== new Date(m.created_at).toDateString();
@@ -562,6 +608,8 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
                   );
 
                 })
+                  )}
+                </>
               )}
             </div>
 
