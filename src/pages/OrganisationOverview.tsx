@@ -274,7 +274,7 @@ export default function OrganisationOverview() {
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3 sm:space-y-6 max-w-full overflow-x-hidden">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <div className="min-w-0">
           <h1 className="text-base sm:text-xl font-heading font-bold text-foreground flex items-center gap-2">
             <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
@@ -286,9 +286,10 @@ export default function OrganisationOverview() {
               : "Samlad vy över alla butiker — försäljning, lager, inköp och beställningar."}
           </p>
         </div>
-        <div className="sm:max-w-sm sm:shrink-0">
+        <div className="sm:shrink-0">
           <OnDutyStaff storeId={isShop ? activeStoreId : null} />
         </div>
+
       </div>
 
       {/* KPI Row */}
