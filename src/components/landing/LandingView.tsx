@@ -62,7 +62,7 @@ export function LandingView({ settings, scale = 1, children, footer, className }
         style={{ height: logoSize, width: logoSize, marginBottom: 20 * scale }}
       />
       <h1
-        className={cn("text-center max-w-3xl leading-tight", fontClass(settings?.headline_font), colorClass(settings?.headline_color))}
+        className={cn("text-center max-w-3xl leading-tight whitespace-pre-line", fontClass(settings?.headline_font), colorClass(settings?.headline_color))}
         style={{
           fontSize: headlineSize,
           fontWeight: settings?.headline_weight ?? 700,
@@ -73,7 +73,7 @@ export function LandingView({ settings, scale = 1, children, footer, className }
       </h1>
       {subheadline && (
         <p
-          className="text-center text-muted-foreground max-w-xl"
+          className="text-center text-muted-foreground max-w-xl whitespace-pre-line"
           style={{ fontSize: Math.max(11, headlineSize * 0.36), marginBottom: 32 * scale }}
         >
           {subheadline}
