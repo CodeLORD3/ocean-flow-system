@@ -4,6 +4,8 @@ import { ArrowLeft, Printer, FileText, CheckCheck, ChevronLeft, ChevronRight, Ar
 import { generateChecklistPdf } from "@/lib/checklistPdf";
 import { SignatureEditor } from "@/components/checklist/SignatureEditor";
 import { SignatureRequestInbox } from "@/components/checklist/SignatureRequestInbox";
+import { ChecklistRestoreDialog } from "@/components/checklist/ChecklistRestoreDialog";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -69,6 +71,8 @@ export function ChecklistTable({
   const [addDraft, setAddDraft] = useState({ task: "", time: "", category: "" });
   const [pendingDelete, setPendingDelete] = useState<ChecklistItem | null>(null);
   const { data: pendingRequests = [] } = useSignatureRequests(readOnly ? null : day.id);
+  const { staff } = useStaffAuth();
+  const isAdmin = ((staff?.portal_access ?? []) as string[]).includes("admin");
 
   const toggle = useToggleChecklistItem();
   const setNote = useSetChecklistNote();
@@ -276,6 +280,15 @@ export function ChecklistTable({
             >
               <Plus className="h-3.5 w-3.5 sm:mr-1.5" /> <span className="hidden sm:inline">Ny rad</span>
             </Button>
+          )}
+          {!locked && isAdmin && day.store_id && (
+            <ChecklistRestoreDialog
+              storeId={day.store_id}
+              templateId={day.template_id ?? null}
+              dayId={day.id}
+              onlyTasks
+              triggerLabel="Återställ rad"
+            />
           )}
           {!locked && (
             <Button
