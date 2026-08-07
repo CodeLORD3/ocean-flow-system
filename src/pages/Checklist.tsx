@@ -284,33 +284,33 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
             />
           </span>
         )}
-        {(isAdmin || (t.id !== DEFAULT_CHECKLIST_TEMPLATE_ID && t.store_id === storeId)) && (
-          <>
-            <span
-              role="button"
-              aria-label={`Byt namn på ${t.name}`}
-              className="shrink-0 text-muted-foreground hover:text-primary"
-              onClick={(e) => {
-                e.stopPropagation();
-                setRenameTarget(t);
-                setRenameValue(t.name);
-              }}
-            >
-              <Pencil className="h-3.5 w-3.5" />
-            </span>
-            <span
-              role="button"
-              aria-label={`Ta bort ${t.name}`}
-              className="shrink-0 text-destructive"
-              onClick={(e) => {
-                e.stopPropagation();
-                setDeleteTarget(t);
-              }}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </span>
-          </>
-        )}
+        <>
+          <span
+            role="button"
+            aria-label={`Byt namn på ${t.name}`}
+            className="shrink-0 text-muted-foreground hover:text-primary"
+            onClick={(e) => {
+              e.stopPropagation();
+              setRenameTarget(t);
+              setRenameValue(t.name);
+            }}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </span>
+          <span
+            role="button"
+            aria-label={`Radera ${t.name}`}
+            title="Radera checklista"
+            className="shrink-0 text-destructive hover:text-destructive/80"
+            onClick={(e) => {
+              e.stopPropagation();
+              setDeleteTarget(t);
+            }}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </span>
+        </>
+
 
         <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground" />
       </button>
