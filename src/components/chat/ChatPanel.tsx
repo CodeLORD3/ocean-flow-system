@@ -622,7 +622,22 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
                     handleSend();
                   }
                 }}
+                onFocus={() => {
+                  // Ladda in historiken när man börjar skriva — ingen knapp behövs
+                  if (!showOlder && olderCount > 0) {
+                    const el = scrollRef.current;
+                    const prevHeight = el?.scrollHeight ?? 0;
+                    setShowOlder(true);
+                    requestAnimationFrame(() => {
+                      if (scrollRef.current) {
+                        scrollRef.current.scrollTop =
+                          scrollRef.current.scrollHeight - prevHeight;
+                      }
+                    });
+                  }
+                }}
                 enterKeyHint="send"
+
                 autoCapitalize="sentences"
                 placeholder={activeConv ? "Skriv meddelande..." : "Välj en chatt först"}
                 disabled={!activeConv}
