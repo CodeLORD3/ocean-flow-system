@@ -890,6 +890,52 @@ export function ChecklistTable({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={!!pendingEdit} onOpenChange={(o) => !o && setPendingEdit(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Redigera uppgift</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ändra text, tid eller kategori. Välj om ändringen bara gäller idag eller sparas i checklistan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <Input
+              value={editDraft.task}
+              placeholder="Vad ska göras?"
+              className="h-9 text-sm"
+              onChange={(e) => setEditDraft((d) => ({ ...d, task: e.target.value }))}
+              onKeyDown={(e) => e.key === "Enter" && saveEdit(true)}
+            />
+            <div className="flex gap-2">
+              <Input
+                value={editDraft.time}
+                placeholder="07:30"
+                inputMode="numeric"
+                className="h-9 w-24 text-sm text-center font-mono tabular-nums"
+                onChange={(e) => setEditDraft((d) => ({ ...d, time: e.target.value }))}
+                onKeyDown={(e) => e.key === "Enter" && saveEdit(true)}
+              />
+              <Input
+                value={editDraft.category}
+                placeholder="Kategori"
+                className="h-9 flex-1 text-sm"
+                onChange={(e) => setEditDraft((d) => ({ ...d, category: e.target.value }))}
+                onKeyDown={(e) => e.key === "Enter" && saveEdit(true)}
+              />
+            </div>
+          </div>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <Button variant="outline" disabled={editItem.isPending} onClick={() => saveEdit(false)}>
+              Spara bara idag
+            </Button>
+            <Button disabled={editItem.isPending} onClick={() => saveEdit(true)}>
+              Spara i checklistan
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
 
   );
