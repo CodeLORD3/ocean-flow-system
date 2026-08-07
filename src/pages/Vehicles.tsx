@@ -16,6 +16,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format, parseISO, isValid } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useNotificationFlash } from "@/lib/notificationFlash";
 
 type Asset = {
   id: string;
@@ -89,6 +90,7 @@ function StatusPill({ status }: { status: string | null }) {
 }
 
 export default function Vehicles() {
+  const { flashClass } = useNotificationFlash("vehicle");
   return (
     <div className="p-6 space-y-8">
       <AssetSection
@@ -386,7 +388,7 @@ function AssetSection({
               const isOpen = !!expanded[v.id];
               return (
                 <React.Fragment key={v.id}>
-                  <tr className="border-b hover:bg-muted/20 group">
+                  <tr className={`border-b hover:bg-muted/20 group ${flashClass(v.id)}`}>
                     <td className="px-1 align-middle">
                       <button
                         type="button"

@@ -33,6 +33,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSite } from "@/contexts/SiteContext";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
 import { useCreateChangeRequest, useOrderChangeRequests, useResolveChangeRequest } from "@/hooks/useOrderChangeRequests";
+import { useNotificationFlash } from "@/lib/notificationFlash";
 
 type OrderLine = {
   product_id: string;
@@ -152,7 +153,7 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                   return (
                     <React.Fragment key={o.id}>
                       <tr
-                        className={`border-b border-border/40 h-7 transition-colors cursor-pointer hover:bg-muted/30 ${isExpanded ? "bg-primary/10 border-l-2 border-l-primary border-b-0" : ""}`}
+                        className={`border-b border-border/40 h-7 transition-colors cursor-pointer hover:bg-muted/30 ${isExpanded ? "bg-primary/10 border-l-2 border-l-primary border-b-0" : ""} ${flashClass(o.id)}`}
                         style={{ background: isExpanded ? undefined : buildProgressGradient(lines) }}
                         onClick={() => toggleExpand(o.id)}
                       >
@@ -217,6 +218,7 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
 }
 
 export default function ShopOrders() {
+  const { flashClass } = useNotificationFlash("shop_order");
   const { toast } = useToast();
   const qc = useQueryClient();
   const { activeStoreId } = useSite();
