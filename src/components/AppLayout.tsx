@@ -106,10 +106,18 @@ function AccountMenu() {
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const page = pageTitles[location.pathname] || { title: "Sida", breadcrumb: ["Hem"] };
   const { site, setSite, activeStoreName, setActiveStore } = useSite();
   const { tabs, activeTab, closeTab, switchTab } = useTabs();
+  const fallbackTitle =
+    tabs.find((t) => t.path === location.pathname)?.title ??
+    (location.pathname
+      .replace(/^\//, "")
+      .split("/")[0]
+      .replace(/-/g, " ")
+      .replace(/^./, (c) => c.toUpperCase()) || "Översikt");
+  const page = pageTitles[location.pathname] || { title: fallbackTitle, breadcrumb: ["Hem", fallbackTitle] };
   const { data: allStores = [] } = useStores();
+
   const { staff } = useStaffAuth();
   useSessionTracking();
 
