@@ -85,6 +85,25 @@ export default function DailyReport() {
   const [showErrors, setShowErrors] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
+  // Nollställ formuläret när butik eller datum byts — inget följer med mellan butiker.
+  const scopeKey = `${activeStoreId ?? ""}|${date}`;
+  const scopeRef = useRef(scopeKey);
+  useEffect(() => {
+    if (scopeRef.current === scopeKey) return;
+    scopeRef.current = scopeKey;
+    setGross("");
+    setNet("");
+    setReceipts("");
+    setLargest("");
+    setStaffRows({});
+    setExtraIds([]);
+    setWaste([]);
+    setComment("");
+    setShowErrors(false);
+    setHydrated(false);
+  }, [scopeKey]);
+
+
   /** Enter hoppar till nästa fält istället för att skicka formuläret. */
   const handleFormKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (e.key !== "Enter") return;
