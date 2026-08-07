@@ -126,6 +126,127 @@ export function useRenameChecklistTemplate() {
   });
 }
 
+/** Borttagna (arkiverade) checklistor — endast admin behöver dessa. */
+export function useArchivedChecklistTemplates(storeId?: string | null, enabled = true) {
+  return useQuery({
+    queryKey: ["checklist-templates-archived", storeId ?? "all"],
+    queryFn: async () => {
+      let q = supabase.from("checklist_templates").select("*").eq("active", false);
+      if (storeId) q = q.or(`store_id.is.null,store_id.eq.${storeId}`);
+      const { data, error } = await q.order("name");
+      if (error) throw error;
+      return (data || []) as ChecklistTemplate[];
+    },
+    enabled: enabled && !!storeId,
+  });
+}
+
+/** Återställer en borttagen checklista (admin). */
+export function useRestoreChecklistTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("checklist_templates").update({ active: true }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["checklist-templates"] });
+      qc.invalidateQueries({ queryKey: ["checklist-templates-archived"] });
+    },
+  });
+}
+
+export type HiddenChecklistTask = {
+  id: string;
+  template_id: string;
+  store_id: string | null;
+  section: string;
+  task: string;
+  time_label: string | null;
+  category: string | null;
+  sort_order: number;
+};
+
+/** Uppgifter som tagits bort permanent ur mallen för butiken (kan återställas av admin). */
+export function useHiddenChecklistTasks(
+  storeId?: string | null,
+  templateId?: string | null,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: ["checklist-hidden-tasks", storeId ?? "all", templateId ?? "all"],
+    queryFn: async () => {
+      let q = supabase
+        .from("checklist_template_items")
+        .select("id, template_id, store_id, section, task, time_label, category, sort_order")
+        .eq("active", false)
+        .eq("store_id", storeId!);
+      if (templateId) q = q.eq("template_id", templateId);
+      const { data, error } = await q.order("sort_order");
+      if (error) throw error;
+      return (data || []) as HiddenChecklistTask[];
+    },
+    enabled: enabled && !!storeId,
+  });
+}
+
+/**
+ * Återställer en borttagen uppgift: mallraden aktiveras igen (eller döljningen
+ * av en global mallrad tas bort) och raden läggs tillbaka i dagens checklista.
+ */
+export function useRestoreChecklistTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ row, dayId }: { row: HiddenChecklistTask; dayId?: string | null }) => {
+      // Finns en global mallrad med samma uppgift? Då är butiksraden bara en döljning.
+      const { data: globals } = await supabase
+        .from("checklist_template_items")
+        .select("id, active")
+        .eq("template_id", row.template_id)
+        .is("store_id", null)
+        .eq("section", row.section)
+        .eq("task", row.task);
+
+      if ((globals || []).some((g: any) => g.active)) {
+        const { error } = await supabase.from("checklist_template_items").delete().eq("id", row.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("checklist_template_items")
+          .update({ active: true })
+          .eq("id", row.id);
+        if (error) throw error;
+      }
+
+      if (dayId) {
+        const { data: existing } = await supabase
+          .from("checklist_items")
+          .select("id")
+          .eq("day_id", dayId)
+          .eq("section", row.section)
+          .eq("task", row.task)
+          .maybeSingle();
+        if (!existing) {
+          await supabase.from("checklist_items").insert({
+            day_id: dayId,
+            section: row.section,
+            task: row.task,
+            time_label: row.time_label,
+            category: row.category,
+            sort_order: row.sort_order ?? 999,
+          });
+          await resequenceDay(dayId);
+        }
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["checklist-hidden-tasks"] });
+      qc.invalidateQueries({ queryKey: ["checklist-day"] });
+      qc.invalidateQueries({ queryKey: ["checklist-today-status"] });
+    },
+  });
+}
+
 /** Arkiverar en checklista (behåller historiken/rapporterna). */
 export function useArchiveChecklistTemplate() {
   const qc = useQueryClient();
