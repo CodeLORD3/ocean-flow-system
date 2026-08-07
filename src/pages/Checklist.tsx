@@ -257,6 +257,24 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
         ) : s ? (
           <Clock className="h-4 w-4 shrink-0 text-amber-500" />
         ) : null}
+        {isAdmin && (
+          <span onClick={(e) => e.stopPropagation()} className="shrink-0">
+            <ChecklistCopyDialog
+              template={t}
+              sourceStoreId={storeId}
+              trigger={
+                <span
+                  role="button"
+                  aria-label={`Kopiera ${t.name} till andra butiker`}
+                  title="Kopiera till andra butiker"
+                  className="text-muted-foreground hover:text-primary"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </span>
+              }
+            />
+          </span>
+        )}
         {t.id !== DEFAULT_CHECKLIST_TEMPLATE_ID && t.store_id === storeId && (
           <>
             <span
@@ -284,6 +302,7 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
             </span>
           </>
         )}
+
         <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground" />
       </button>
     );
