@@ -69,20 +69,20 @@ export default function PortalChooser() {
         ...(staff?.allowed_store_ids ?? []),
         ...(staff?.allowed_store_id ? [staff.allowed_store_id] : []),
       ];
-      if (allowedIds.length === 1) {
-        const store = stores.find((s) => s.id === allowedIds[0]);
-        setActiveStore(allowedIds[0], store?.name ?? null);
+      // Always land in an actual store (first allowed), never the generic view
+      const firstId = allowedIds.find((id) => stores.some((s) => s.id === id)) ?? allowedIds[0];
+      if (firstId) {
+        const store = stores.find((s) => s.id === firstId);
+        setActiveStore(firstId, store?.name ?? null);
       } else {
-        // Multiple or none → let user pick from sidebar dropdown
         setActiveStore(null, null);
       }
     } else {
       setSite(key);
       setActiveStore(null, null);
     }
-    const saved = sessionStorage.getItem("erp_last_route");
-    const target = saved && saved !== "/" && saved !== "/choose-portal" ? saved : "/inventory";
-    navigate(target, { replace: true });
+    // Landing page is always the overview page
+    navigate("/organisation", { replace: true });
   };
 
   return (
