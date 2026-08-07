@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Printer, FileText, CheckCheck, ChevronLeft, ChevronRight, ArrowRight, CheckCircle2, Plus, Trash2, X, Copy } from "lucide-react";
+import { ArrowLeft, Printer, FileText, CheckCheck, ChevronLeft, ChevronRight, ArrowRight, CheckCircle2, Plus, Trash2, X, Copy, Pencil } from "lucide-react";
 import { generateChecklistPdf } from "@/lib/checklistPdf";
 import { SignatureEditor } from "@/components/checklist/SignatureEditor";
 import { SignatureRequestInbox } from "@/components/checklist/SignatureRequestInbox";
