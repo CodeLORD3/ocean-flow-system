@@ -7,6 +7,7 @@ import {
   Clock,
   Plus,
   Trash2,
+  Pencil,
   ArrowUpRight,
   CalendarDays,
   History,
@@ -28,6 +29,8 @@ import { useSite } from "@/contexts/SiteContext";
 import { ChecklistTable } from "@/components/checklist/ChecklistTable";
 import {
   useArchiveChecklistTemplate,
+  useDeleteChecklistTemplate,
+  useRenameChecklistTemplate,
   useChecklistDayItems,
   useChecklistReports,
   useChecklistTemplates,
@@ -139,6 +142,11 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
 
   const create = useCreateChecklistTemplate();
   const archive = useArchiveChecklistTemplate();
+  const hardDelete = useDeleteChecklistTemplate();
+  const rename = useRenameChecklistTemplate();
+  const [deleteTarget, setDeleteTarget] = useState<ChecklistTemplate | null>(null);
+  const [renameTarget, setRenameTarget] = useState<ChecklistTemplate | null>(null);
+  const [renameValue, setRenameValue] = useState("");
   const setWeekdays = useSetTemplateWeekdays();
 
   const todays = useMemo(() => templates.filter((t) => templateAppliesOn(t, iso)), [templates, iso]);
@@ -161,6 +169,27 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
       toast.success(`"${name}" togs bort från menyn`);
     } catch (e: any) {
       toast.error(e?.message ?? "Kunde inte ta bort checklistan");
+    }
+  };
+
+  const handleHardDelete = async (tpl: ChecklistTemplate) => {
+    try {
+      await hardDelete.mutateAsync(tpl.id);
+      setDeleteTarget(null);
+      toast.success(`"${tpl.name}" raderades permanent`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Kunde inte radera checklistan");
+    }
+  };
+
+  const handleRename = async () => {
+    if (!renameTarget) return;
+    try {
+      await rename.mutateAsync({ id: renameTarget.id, name: renameValue });
+      setRenameTarget(null);
+      toast.success("Namnet uppdaterat");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Kunde inte byta namn");
     }
   };
 
@@ -225,17 +254,31 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
           <Clock className="h-4 w-4 shrink-0 text-amber-500" />
         ) : null}
         {t.id !== DEFAULT_CHECKLIST_TEMPLATE_ID && t.store_id === storeId && (
-          <span
-            role="button"
-            aria-label={`Ta bort ${t.name}`}
-            className="hidden shrink-0 text-destructive group-hover:inline-flex"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleArchive(t.id, t.name);
-            }}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </span>
+          <>
+            <span
+              role="button"
+              aria-label={`Byt namn på ${t.name}`}
+              className="shrink-0 text-muted-foreground hover:text-primary"
+              onClick={(e) => {
+                e.stopPropagation();
+                setRenameTarget(t);
+                setRenameValue(t.name);
+              }}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </span>
+            <span
+              role="button"
+              aria-label={`Ta bort ${t.name}`}
+              className="shrink-0 text-destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteTarget(t);
+              }}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </span>
+          </>
         )}
         <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground" />
       </button>
