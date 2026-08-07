@@ -9,6 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import {
   ChecklistDay,
@@ -58,7 +67,9 @@ export function ChecklistTable({
   const [addSection, setAddSection] = useState<string | null>(null);
   const [pageCommentDraft, setPageCommentDraft] = useState<string | null>(null);
   const [addDraft, setAddDraft] = useState({ task: "", time: "", category: "" });
+  const [pendingDelete, setPendingDelete] = useState<ChecklistItem | null>(null);
   const { data: pendingRequests = [] } = useSignatureRequests(readOnly ? null : day.id);
+
   const toggle = useToggleChecklistItem();
   const setNote = useSetChecklistNote();
   const setTime = useSetChecklistItemTime();
@@ -131,16 +142,47 @@ export function ChecklistTable({
 
   const submitAdd = (section: string) => {
     addItem.mutate(
-      { dayId: day.id, section, task: addDraft.task, time: addDraft.time, category: addDraft.category },
+      {
+        dayId: day.id,
+        section,
+        task: addDraft.task,
+        time: addDraft.time,
+        category: addDraft.category,
+        templateId: day.template_id ?? null,
+        storeId: day.store_id,
+        persist: true,
+      },
       {
         onSuccess: () => {
           setAddDraft({ task: "", time: "", category: "" });
-          toast.success("Uppgiften tillagd.");
+          toast.success("Uppgiften tillagd — den finns kvar kommande dagar.");
         },
         onError: (e: any) => toast.error(e.message || "Kunde inte lägga till uppgiften."),
       }
     );
   };
+
+  const removeTask = (item: ChecklistItem, persist: boolean) => {
+    removeItem.mutate(
+      {
+        id: item.id,
+        dayId: day.id,
+        persist,
+        templateId: day.template_id ?? null,
+        storeId: day.store_id,
+        section: item.section,
+        task: item.task,
+      },
+      {
+        onSuccess: () => {
+          setPendingDelete(null);
+          toast.success(persist ? "Uppgiften togs bort permanent." : "Uppgiften togs bort för idag.");
+        },
+        onError: (e: any) => toast.error(e.message || "Kunde inte ta bort uppgiften."),
+      }
+    );
+  };
+
 
   const openAdd = (section: string) => {
     setAddSection(section);
@@ -392,7 +434,7 @@ export function ChecklistTable({
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                    onClick={() => removeItem.mutate({ id: row.item.id })}
+                    onClick={() => setPendingDelete(row.item)}
                     aria-label={`Ta bort ${row.item.task}`}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -610,7 +652,7 @@ export function ChecklistTable({
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                        onClick={() => removeItem.mutate({ id: row.item.id })}
+                        onClick={() => setPendingDelete(row.item)}
                         aria-label={`Ta bort ${row.item.task}`}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -720,7 +762,36 @@ export function ChecklistTable({
           )}
         </div>
       </div>
+
+      <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ta bort uppgift</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{pendingDelete?.task}" — vill du ta bort den bara idag eller permanent från checklistan?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <Button
+              variant="outline"
+              disabled={removeItem.isPending}
+              onClick={() => pendingDelete && removeTask(pendingDelete, false)}
+            >
+              Bara idag
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={removeItem.isPending}
+              onClick={() => pendingDelete && removeTask(pendingDelete, true)}
+            >
+              Ta bort permanent
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+
   );
 }
 
