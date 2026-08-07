@@ -18,32 +18,34 @@ export default function InventoryRouter() {
     <div className="h-full w-full flex flex-col">
       <div className="border-b bg-background px-4 pt-3">
         <Tabs value={tab} onValueChange={(v) => setTab(v as SubTab)} className="w-full">
-          <TabsList className="w-full h-12 grid grid-cols-4 gap-1 p-1">
+          <TabsList className="w-full h-10 sm:h-12 grid grid-cols-4 gap-1 p-1">
             <TabsTrigger
               value="lager"
-              className="h-full text-base font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
+              className="h-full text-xs sm:text-base font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
             >
               Lager
             </TabsTrigger>
             <TabsTrigger
               value="produkter"
-              className="h-full text-base font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
+              className="h-full text-xs sm:text-base font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
             >
               Produkter
             </TabsTrigger>
             <TabsTrigger
               value="streckkoder"
-              className="h-full text-base font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
+              className="h-full text-xs sm:text-base font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
             >
-              Streckkoder
+              <span className="sm:hidden">Koder</span>
+              <span className="hidden sm:inline">Streckkoder</span>
             </TabsTrigger>
             <TabsTrigger
               value="priser"
-              className="h-full text-base font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
+              className="h-full text-xs sm:text-base font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
             >
               Priser
             </TabsTrigger>
           </TabsList>
+
         </Tabs>
       </div>
 
