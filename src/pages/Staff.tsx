@@ -40,7 +40,15 @@ export default function Staff() {
   const { toast } = useToast();
   const { site, activeStoreId } = useSite();
   const { staff: currentStaff } = useStaffAuth();
-  const storeFilter = site === "shop" ? activeStoreId : undefined;
+  // Endast konton med full admin får se och ändra andras behörigheter
+  const isAdmin = ((currentStaff?.portal_access ?? []) as string[]).includes("admin");
+  const canManageAccess = isAdmin;
+
+  // Admin ser hela plattformen som standard, men kan filtrera till aktuell arbetsplats
+  const [adminAllStaff, setAdminAllStaff] = useState(true);
+  const platformView = isAdmin && adminAllStaff;
+
+  const storeFilter = !platformView && site === "shop" ? activeStoreId : undefined;
   const { data: storeStaff = [], isLoading } = useStaff(storeFilter);
   const { data: allStaff = [] } = useStaff();
   const { data: stores = [] } = useStores(true);
@@ -48,14 +56,15 @@ export default function Staff() {
   const updateStaff = useUpdateStaff();
   const deleteStaff = useDeleteStaff();
 
-  const { data: openShifts = [] } = useOpenShifts(storeFilter);
+  const { data: openShifts = [] } = useOpenShifts(platformView ? undefined : storeFilter);
   const shiftByStaff = new Map(openShifts.map((s) => [s.staff_id, s]));
 
 
   const canViewActivity =
-    site === "wholesale" &&
-    !!currentStaff?.email &&
-    ACTIVITY_VIEWER_EMAILS.includes(currentStaff.email.toLowerCase());
+    isAdmin ||
+    (site === "wholesale" &&
+      !!currentStaff?.email &&
+      ACTIVITY_VIEWER_EMAILS.includes(currentStaff.email.toLowerCase()));
 
   const [search, setSearch] = useState("");
   const [showAll, setShowAll] = useState(false);
@@ -67,9 +76,6 @@ export default function Staff() {
   const [detailStaff, setDetailStaff] = useState<any | null>(null);
   const [accessStaff, setAccessStaff] = useState<any | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
-
-  // Endast konton med full admin får se och ändra andras behörigheter
-  const canManageAccess = ((currentStaff?.portal_access ?? []) as string[]).includes("admin");
 
 
   const emptyForm = {
@@ -85,7 +91,8 @@ export default function Staff() {
     return [...storeStaff, ...extra];
   })();
 
-  const visibleList = showAll ? staffList : staffList.filter((s: any) => shiftByStaff.has(s.id));
+  const visibleList = platformView || showAll ? staffList : staffList.filter((s: any) => shiftByStaff.has(s.id));
+
 
   const filtered = visibleList.filter(s => {
     const q = search.toLowerCase();
