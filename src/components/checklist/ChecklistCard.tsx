@@ -49,8 +49,7 @@ export function ChecklistCard({ storeId, onOpenFull }: { storeId: string; onOpen
             {isCompleted ? "Slutförd" : "uppgifter klara"}
           </p>
         </div>
-      </Card>
-    </div>
-
+    </Card>
   );
+
 }
