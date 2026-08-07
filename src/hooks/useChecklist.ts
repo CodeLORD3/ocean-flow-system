@@ -735,6 +735,83 @@ export function useSetChecklistItemTime() {
 }
 
 /**
+ * Redigerar en uppgift (text, tid, kategori). Med `persist` uppdateras även
+ * mallraden för butiken så ändringen gäller kommande dagar.
+ */
+export function useEditChecklistItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      id: string;
+      dayId: string;
+      task: string;
+      time?: string;
+      category?: string;
+      persist?: boolean;
+      templateId?: string | null;
+      storeId?: string | null;
+      /** ursprunglig text/sektion — behövs för att hitta mallraden */
+      prevTask?: string;
+      section?: string;
+    }) => {
+      const task = input.task.trim();
+      if (!task) throw new Error("Skriv vad uppgiften är.");
+      const normalized = normalizeTimeLabel(input.time || "");
+      if ((input.time || "").trim() && !normalized) throw new Error("Ogiltig tid — skriv t.ex. 07:30.");
+      const category = input.category?.trim() || null;
+
+      const { error } = await supabase
+        .from("checklist_items")
+        .update({ task, time_label: normalized, category })
+        .eq("id", input.id);
+      if (error) throw error;
+      await resequenceDay(input.dayId);
+
+      if (input.persist && input.templateId && input.storeId && input.section) {
+        const { data: rows } = await supabase
+          .from("checklist_template_items")
+          .select("id, store_id")
+          .eq("template_id", input.templateId)
+          .eq("section", input.section)
+          .eq("task", input.prevTask ?? task)
+          .or(`store_id.is.null,store_id.eq.${input.storeId}`);
+
+        const own = (rows || []).filter((r: any) => r.store_id === input.storeId);
+        if (own.length > 0) {
+          await supabase
+            .from("checklist_template_items")
+            .update({ task, time_label: normalized, category })
+            .in("id", own.map((r: any) => r.id));
+        } else {
+          const globalRow = (rows || []).find((r: any) => r.store_id === null);
+          if (globalRow) {
+            // Dölj den globala raden för butiken och lägg in en egen, redigerad version
+            await supabase.from("checklist_template_items").insert({
+              template_id: input.templateId,
+              store_id: input.storeId,
+              section: input.section,
+              task: input.prevTask ?? task,
+              active: false,
+            });
+          }
+          await supabase.from("checklist_template_items").insert({
+            template_id: input.templateId,
+            store_id: input.storeId,
+            section: input.section,
+            task,
+            time_label: normalized,
+            category,
+            active: true,
+          });
+        }
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["checklist-day"] }),
+  });
+}
+
+
+/**
  * Lägger till en ny rad i en sektion — placeras direkt på rätt plats efter tid.
  * Skickas templateId + storeId med sparas uppgiften även i mallen, så den
  * finns kvar kommande dagar.

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Printer, FileText, CheckCheck, ChevronLeft, ChevronRight, ArrowRight, CheckCircle2, Plus, Trash2, X, Copy } from "lucide-react";
+import { ArrowLeft, Printer, FileText, CheckCheck, ChevronLeft, ChevronRight, ArrowRight, CheckCircle2, Plus, Trash2, X, Copy, Pencil } from "lucide-react";
 import { generateChecklistPdf } from "@/lib/checklistPdf";
 import { SignatureEditor } from "@/components/checklist/SignatureEditor";
 import { SignatureRequestInbox } from "@/components/checklist/SignatureRequestInbox";
@@ -33,6 +33,7 @@ import {
   useSetChecklistItemTime,
   useAddChecklistItem,
   useDeleteChecklistItem,
+  useEditChecklistItem,
   useChecklistTemplates,
   weekdayName,
 } from "@/hooks/useChecklist";
@@ -73,6 +74,8 @@ export function ChecklistTable({
   const [pageCommentDraft, setPageCommentDraft] = useState<string | null>(null);
   const [addDraft, setAddDraft] = useState({ task: "", time: "", category: "" });
   const [pendingDelete, setPendingDelete] = useState<ChecklistItem | null>(null);
+  const [pendingEdit, setPendingEdit] = useState<ChecklistItem | null>(null);
+  const [editDraft, setEditDraft] = useState({ task: "", time: "", category: "" });
   const { data: pendingRequests = [] } = useSignatureRequests(readOnly ? null : day.id);
   const { staff } = useStaffAuth();
   const isAdmin = ((staff?.portal_access ?? []) as string[]).includes("admin");
@@ -104,12 +107,57 @@ export function ChecklistTable({
       />
     ) : null;
 
+  const openEdit = (item: ChecklistItem) => {
+    setPendingEdit(item);
+    setEditDraft({ task: item.task, time: item.time_label ?? "", category: item.category ?? "" });
+  };
+
+  const editButton = (item: ChecklistItem, size: "sm" | "md") => (
+    <Button
+      variant="ghost"
+      size="icon"
+      className={`${size === "sm" ? "h-7 w-7" : "h-8 w-8"} shrink-0 text-muted-foreground hover:text-primary`}
+      onClick={() => openEdit(item)}
+      aria-label={`Redigera ${item.task}`}
+      title="Redigera uppgift"
+    >
+      <Pencil className={size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4"} />
+    </Button>
+  );
+
+
 
   const toggle = useToggleChecklistItem();
   const setNote = useSetChecklistNote();
   const setTime = useSetChecklistItemTime();
   const addItem = useAddChecklistItem();
   const removeItem = useDeleteChecklistItem();
+  const editItem = useEditChecklistItem();
+
+  const saveEdit = (persist: boolean) => {
+    if (!pendingEdit) return;
+    editItem.mutate(
+      {
+        id: pendingEdit.id,
+        dayId: day.id,
+        task: editDraft.task,
+        time: editDraft.time,
+        category: editDraft.category,
+        persist,
+        templateId: day.template_id ?? null,
+        storeId: day.store_id,
+        section: pendingEdit.section,
+        prevTask: pendingEdit.task,
+      },
+      {
+        onSuccess: () => {
+          setPendingEdit(null);
+          toast.success(persist ? "Uppgiften uppdaterad — gäller även kommande dagar." : "Uppgiften uppdaterad för idag.");
+        },
+        onError: (e: any) => toast.error(e.message || "Kunde inte spara uppgiften."),
+      }
+    );
+  };
   const markAll = useMarkAllChecklistItems();
   const complete = useCompleteChecklist();
   const setPageComment = useSetChecklistPageComment();
@@ -473,6 +521,7 @@ export function ChecklistTable({
 
                   </div>
                 </div>
+                {!locked && editButton(row.item, "md")}
                 {!readOnly && copyTask(row.item, "md")}
                 {!locked && (
                   <Button
@@ -694,6 +743,7 @@ export function ChecklistTable({
 
                   <td className="px-1 py-1.5 text-center">
                     <div className="flex items-center justify-center">
+                      {!locked && editButton(row.item, "sm")}
                       {!readOnly && copyTask(row.item, "sm")}
                       {!locked && (
                         <Button
@@ -836,6 +886,52 @@ export function ChecklistTable({
               onClick={() => pendingDelete && removeTask(pendingDelete, true)}
             >
               Ta bort permanent
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!pendingEdit} onOpenChange={(o) => !o && setPendingEdit(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Redigera uppgift</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ändra text, tid eller kategori. Välj om ändringen bara gäller idag eller sparas i checklistan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <Input
+              value={editDraft.task}
+              placeholder="Vad ska göras?"
+              className="h-9 text-sm"
+              onChange={(e) => setEditDraft((d) => ({ ...d, task: e.target.value }))}
+              onKeyDown={(e) => e.key === "Enter" && saveEdit(true)}
+            />
+            <div className="flex gap-2">
+              <Input
+                value={editDraft.time}
+                placeholder="07:30"
+                inputMode="numeric"
+                className="h-9 w-24 text-sm text-center font-mono tabular-nums"
+                onChange={(e) => setEditDraft((d) => ({ ...d, time: e.target.value }))}
+                onKeyDown={(e) => e.key === "Enter" && saveEdit(true)}
+              />
+              <Input
+                value={editDraft.category}
+                placeholder="Kategori"
+                className="h-9 flex-1 text-sm"
+                onChange={(e) => setEditDraft((d) => ({ ...d, category: e.target.value }))}
+                onKeyDown={(e) => e.key === "Enter" && saveEdit(true)}
+              />
+            </div>
+          </div>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <Button variant="outline" disabled={editItem.isPending} onClick={() => saveEdit(false)}>
+              Spara bara idag
+            </Button>
+            <Button disabled={editItem.isPending} onClick={() => saveEdit(true)}>
+              Spara i checklistan
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
