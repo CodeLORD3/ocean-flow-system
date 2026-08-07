@@ -76,27 +76,26 @@ function KpiCard({
     <Card className="shadow-card">
       <CardContent className="p-3 sm:p-4">
         <div className="flex items-start justify-between gap-2">
-          <div className="space-y-0.5 sm:space-y-1 min-w-0">
-            <p className="text-[9px] sm:text-[10px] uppercase tracking-wide text-muted-foreground font-medium">{title}</p>
-            <p className="text-lg sm:text-2xl font-heading font-bold text-foreground">{value}</p>
-            {subtitle && <p className="text-[9px] sm:text-[10px] text-muted-foreground">{subtitle}</p>}
+          <p className="text-[9px] sm:text-[10px] uppercase tracking-wide text-muted-foreground font-medium leading-tight">{title}</p>
+          <div className="h-7 w-7 sm:h-9 sm:w-9 shrink-0 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
           </div>
-          <div className="flex flex-col items-end gap-1 shrink-0">
-            <div className="h-7 w-7 sm:h-9 sm:w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
-            </div>
-            {trend && (
-              <div className={`flex items-center gap-0.5 text-[9px] sm:text-[10px] font-medium ${trend.positive ? "text-emerald-600" : "text-red-500"}`}>
-                {trend.positive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                {trend.value}
-              </div>
-            )}
-          </div>
+        </div>
+        <p className="mt-1 text-lg sm:text-2xl font-heading font-bold text-foreground tabular-nums">{value}</p>
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+          {subtitle && <p className="text-[9px] sm:text-[10px] text-muted-foreground">{subtitle}</p>}
+          {trend && (
+            <span className={`flex items-center gap-0.5 text-[9px] sm:text-[10px] font-medium ${trend.positive ? "text-emerald-600" : "text-red-500"}`}>
+              {trend.positive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+              {trend.value}
+            </span>
+          )}
         </div>
       </CardContent>
     </Card>
   );
 }
+
 
 
 export default function OrganisationOverview() {
