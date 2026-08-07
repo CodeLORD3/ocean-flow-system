@@ -208,9 +208,18 @@ export default function Staff() {
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
         <Input placeholder="Sök personal..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
       </div>
-      <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowAll(v => !v)}>
-        {showAll ? "Visa endast instämplade" : "Visa all personal"}
-      </Button>
+      {isAdmin && (
+        <Button variant={adminAllStaff ? "default" : "outline"} size="sm" className="text-xs gap-1.5" onClick={() => setAdminAllStaff(v => !v)}>
+          <ShieldCheck className="h-3.5 w-3.5" />
+          {adminAllStaff ? "Visar all personal (plattform)" : "Visa all personal (plattform)"}
+        </Button>
+      )}
+      {!platformView && (
+        <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowAll(v => !v)}>
+          {showAll ? "Visa endast instämplade" : "Visa all personal"}
+        </Button>
+      )}
+
       </div>
 
       {/* Staff grid */}
