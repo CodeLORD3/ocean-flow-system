@@ -27,8 +27,22 @@ export interface ChecklistPdfOptions {
   pageComments?: Record<string, string> | null;
 }
 
-/** Byter ut tecken som helvetica i jsPDF inte klarar. */
-const s2 = (v?: string | null) => (v ?? "").replace(/\u2013|\u2014/g, "-").trim();
+/** Byter ut tecken som helvetica i jsPDF inte klarar (ger annars fel/konstigt typsnitt). */
+const s2 = (v?: string | null) =>
+  (v ?? "")
+    .replace(/[\u2013\u2014\u2212]/g, "-")
+    .replace(/[\u2018\u2019\u201B\u2032]/g, "'")
+    .replace(/[\u201C\u201D\u201E\u2033]/g, '"')
+    .replace(/\u2026/g, "...")
+    .replace(/[\u00A0\u2007\u202F]/g, " ")
+    .replace(/[\u2022\u00B7]/g, "-")
+    .replace(/[\u2264]/g, "<=")
+    .replace(/[\u2265]/g, ">=")
+    // Ta bort tecken utanfor Latin-1 (emoji m.m.) som annars renderas med fallback-typsnitt
+    .replace(/[^\u0000-\u024F]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
 
 export function buildChecklistDoc(opts: ChecklistPdfOptions) {
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
@@ -174,6 +188,7 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
       theme: "grid",
       styles: {
         font: "helvetica",
+        fontStyle: "normal",
         fontSize: 8.5,
         cellPadding: { top: padV, bottom: padV, left: 2.4, right: 2.4 },
         lineColor: [205, 210, 214],
@@ -181,9 +196,10 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
         textColor: [25, 30, 35],
         minCellHeight: rowH,
         valign: "middle",
-        overflow: "ellipsize",
+        overflow: "linebreak",
       },
       headStyles: {
+        font: "helvetica",
         fillColor: [38, 50, 62],
         textColor: [255, 255, 255],
         fontStyle: "bold",
@@ -198,11 +214,11 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
       alternateRowStyles: { fillColor: [248, 249, 250] },
       columnStyles: {
         0: { cellWidth: 9, halign: "center", textColor: [120, 126, 132] },
-        1: { cellWidth: 14, halign: "center", textColor: [90, 96, 102] },
-        2: { cellWidth: 26, textColor: [90, 96, 102] },
+        1: { cellWidth: 13, halign: "center", textColor: [90, 96, 102] },
+        2: { cellWidth: 24, textColor: [90, 96, 102] },
         3: { cellWidth: "auto", fontStyle: "bold" },
-        4: { cellWidth: 12, halign: "center", fontStyle: "bold" },
-        5: { cellWidth: 42 },
+        4: { cellWidth: 11, halign: "center" },
+        5: { cellWidth: 40 },
         6: { cellWidth: 16, halign: "center" },
       },
       margin: { left: margin, right: margin, bottom: bottom },
@@ -217,9 +233,16 @@ export function buildChecklistDoc(opts: ChecklistPdfOptions) {
         }
         if (data.section === "body") {
           data.cell.styles.minCellHeight = rowH;
+          const txt = String(data.cell.raw ?? "");
+          // Krymp texten en aning i smala kolumner sa att inget klipps bort
+          if (data.column.index === 2 && txt.length > 18) data.cell.styles.fontSize = 7.4;
+          if (data.column.index === 5 && txt.length > 60) data.cell.styles.fontSize = 7.4;
+          if (data.column.index === 6 && txt.length > 10) data.cell.styles.fontSize = 7.2;
+          if (data.column.index === 3 && txt.length > 90) data.cell.styles.fontSize = 7.6;
           if (data.column.index === 4) data.cell.text = [];
         }
       },
+
       didDrawCell: (data) => {
         // rita kryssruta i KLAR-kolumnen
         const isSection = data.row.raw && (data.row.raw as any[]).length === 1;
