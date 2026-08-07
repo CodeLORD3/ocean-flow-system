@@ -204,19 +204,24 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [visibleMessages.length, activeConv?.id]);
 
+  const revealOlder = () => {
+    if (showOlder || olderCount === 0) return;
+    const el = scrollRef.current;
+    const prevHeight = el?.scrollHeight ?? 0;
+    setShowOlder(true);
+    requestAnimationFrame(() => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight - prevHeight;
+      }
+    });
+  };
+
   const handleScroll = () => {
     const el = scrollRef.current;
     if (!el) return;
-    if (el.scrollTop <= 8 && !showOlder && olderCount > 0) {
-      const prevHeight = el.scrollHeight;
-      setShowOlder(true);
-      requestAnimationFrame(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop = scrollRef.current.scrollHeight - prevHeight;
-        }
-      });
-    }
+    if (el.scrollTop <= 8) revealOlder();
   };
+
 
 
   // Markera den öppna chatten som läst när nya meddelanden visas
