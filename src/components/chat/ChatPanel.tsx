@@ -464,6 +464,9 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
             <div
               ref={scrollRef}
               onScroll={handleScroll}
+              onWheel={(e) => {
+                if (e.deltaY < 0) revealOlder();
+              }}
               className={cn("overflow-y-auto overflow-x-hidden space-y-1.5 pr-1", msgHeight)}
             >
               {!activeConv ? (
@@ -472,6 +475,9 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
                 </p>
               ) : (
                 <>
+                  {/* Gör listan scrollbar uppåt även när dagen är tom — scroll upp laddar historiken */}
+                  {!showOlder && olderCount > 0 && <div aria-hidden className="h-16 shrink-0" />}
+
 
                   {visibleMessages.length === 0 ? (
                     <p className="text-[11px] text-muted-foreground text-center py-8">
