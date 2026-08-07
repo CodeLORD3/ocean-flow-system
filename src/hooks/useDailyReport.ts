@@ -1,7 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export type StaffEntry = { staff_id: string; start: string; end: string };
+export type StaffEntry = {
+  staff_id: string;
+  start: string;
+  end: string;
+  deviation?: string;
+  deviation_note?: string;
+};
 export type WasteItem = { item: string; weight_kg: number | null; value_sek: number | null; reason: string };
 
 export type DailyReport = {

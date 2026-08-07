@@ -135,3 +135,33 @@ export function shiftDuration(from: string): string {
 export function shiftClock(from: string): string {
   return new Date(from).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
 }
+
+/** Alla stämplingar (öppna och stängda) för en butik ett givet datum. */
+export function useShiftsForDate(storeId?: string | null, date?: string) {
+  return useQuery({
+    queryKey: ["staff-shifts-date", storeId ?? "all", date],
+    enabled: !!date,
+    queryFn: async () => {
+      const from = `${date}T00:00:00`;
+      const to = `${date}T23:59:59`;
+      let q = supabase
+        .from("staff_shifts")
+        .select("id, staff_id, store_id, clocked_in_at, clocked_out_at")
+        .gte("clocked_in_at", from)
+        .lte("clocked_in_at", to)
+        .order("clocked_in_at", { ascending: true });
+      if (storeId) q = q.eq("store_id", storeId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as StaffShift[];
+    },
+    refetchInterval: 60_000,
+  });
+}
+
+/** HH:MM från en ISO-tidsstämpel (lokal tid). */
+export function shiftTimeValue(iso?: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}

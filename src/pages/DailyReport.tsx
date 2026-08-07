@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, Loader2, Receipt } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Plus, Trash2, Loader2, Receipt, UserPlus, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ import { useSite } from "@/contexts/SiteContext";
 import { useTabs } from "@/contexts/TabsContext";
 import { useStaff } from "@/hooks/useStaff";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
+import { useShiftsForDate, shiftTimeValue } from "@/hooks/useStaffShifts";
 import {
   useDailyReport,
   useSaveDailyReport,
@@ -28,9 +29,22 @@ import {
 } from "@/hooks/useDailyReport";
 
 const REASONS = ["Utgångsdatum", "Kvalitet", "Skadad", "Annat"];
-const DEVIATIONS = ["Sjukdom", "Extra personal", "Utbildning"];
+const DEVIATIONS = [
+  { value: "none", label: "Ingen avvikelse" },
+  { value: "Sjukdom", label: "Sjukdom" },
+  { value: "Extra personal", label: "Extra personal" },
+  { value: "Utbildning", label: "Utbildning" },
+];
 
-type StaffRow = { active: boolean; start: string; end: string };
+type StaffRow = {
+  active: boolean;
+  start: string;
+  end: string;
+  deviation: string;
+  note: string;
+};
+
+const emptyRow: StaffRow = { active: false, start: "", end: "", deviation: "none", note: "" };
 
 function num(v: string): number | null {
   if (v.trim() === "") return null;
@@ -53,7 +67,9 @@ export default function DailyReport() {
   const { activeStoreId, activeStoreName } = useSite();
   const { switchTab } = useTabs();
   const { staff: me } = useStaffAuth();
-  const { data: staffList = [] } = useStaff(activeStoreId || undefined);
+  const { data: storeStaff = [] } = useStaff(activeStoreId || undefined);
+  const { data: allStaff = [] } = useStaff();
+  const { data: shifts = [] } = useShiftsForDate(activeStoreId, date);
   const { data: existing, isLoading } = useDailyReport(activeStoreId, date);
   const save = useSaveDailyReport();
 
@@ -62,11 +78,63 @@ export default function DailyReport() {
   const [receipts, setReceipts] = useState("");
   const [largest, setLargest] = useState("");
   const [staffRows, setStaffRows] = useState<Record<string, StaffRow>>({});
-  const [deviations, setDeviations] = useState<string[]>([]);
+  const [extraIds, setExtraIds] = useState<string[]>([]);
   const [waste, setWaste] = useState<WasteItem[]>([]);
   const [comment, setComment] = useState("");
   const [hydrated, setHydrated] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  /** Enter hoppar till nästa fält istället för att skicka formuläret. */
+  const handleFormKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key !== "Enter") return;
+    const target = e.target as HTMLElement;
+    if (target.tagName === "TEXTAREA") return;
+    if (!(target instanceof HTMLInputElement)) return;
+    e.preventDefault();
+    const form = formRef.current;
+    if (!form) return;
+    const fields = Array.from(
+      form.querySelectorAll<HTMLInputElement>("input"),
+    ).filter((el) => !el.disabled && !el.readOnly && el.type !== "hidden" && el.offsetParent !== null);
+    const i = fields.indexOf(target);
+    const next = fields[i + 1];
+    if (next) {
+      next.focus();
+      next.select?.();
+    } else {
+      target.blur();
+    }
+  };
+
+  // Personer som visas: butikens personal + instämplade + tillagda + de i sparad rapport
+  const shiftByStaff = useMemo(() => {
+    const m = new Map<string, { start: string; end: string }>();
+    shifts.forEach((s) => {
+      m.set(s.staff_id, {
+        start: shiftTimeValue(s.clocked_in_at),
+        end: shiftTimeValue(s.clocked_out_at),
+      });
+    });
+    return m;
+  }, [shifts]);
+
+  const listedStaff = useMemo(() => {
+    const ids = new Set<string>([
+      ...storeStaff.map((s) => s.id),
+      ...shifts.map((s) => s.staff_id),
+      ...extraIds,
+      ...Object.keys(staffRows),
+    ]);
+    return allStaff
+      .filter((s) => ids.has(s.id))
+      .sort((a, b) => a.first_name.localeCompare(b.first_name, "sv"));
+  }, [storeStaff, shifts, extraIds, staffRows, allStaff]);
+
+  const addableStaff = useMemo(
+    () => allStaff.filter((s) => !listedStaff.some((l) => l.id === s.id)),
+    [allStaff, listedStaff],
+  );
 
   useEffect(() => {
     if (isLoading || hydrated) return;
@@ -77,20 +145,40 @@ export default function DailyReport() {
       setLargest(existing.largest_sale != null ? String(existing.largest_sale) : "");
       const rows: Record<string, StaffRow> = {};
       (existing.staff_entries || []).forEach((e) => {
-        rows[e.staff_id] = { active: true, start: e.start || "", end: e.end || "" };
+        rows[e.staff_id] = {
+          active: true,
+          start: e.start || "",
+          end: e.end || "",
+          deviation: e.deviation || "none",
+          note: e.deviation_note || "",
+        };
       });
       setStaffRows(rows);
-      setDeviations(
-        (existing.staff_notes || "")
-          .split(",")
-          .map((s) => s.trim())
-          .filter((s) => DEVIATIONS.includes(s)),
-      );
       setWaste(existing.waste_items || []);
       setComment(existing.comment || "");
     }
     setHydrated(true);
   }, [existing, isLoading, hydrated]);
+
+  // Förifyll instämplingstider som grund där inget är ifyllt
+  useEffect(() => {
+    if (!hydrated || shiftByStaff.size === 0) return;
+    setStaffRows((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      shiftByStaff.forEach((t, staffId) => {
+        const cur = next[staffId];
+        if (!cur) {
+          next[staffId] = { ...emptyRow, active: true, start: t.start, end: t.end };
+          changed = true;
+        } else if (!cur.start && t.start) {
+          next[staffId] = { ...cur, active: true, start: t.start, end: cur.end || t.end };
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [hydrated, shiftByStaff]);
 
   const avgBasket = useMemo(() => {
     const g = num(gross);
@@ -119,7 +207,7 @@ export default function DailyReport() {
   const setRow = (id: string, patch: Partial<StaffRow>) =>
     setStaffRows((prev) => ({
       ...prev,
-      [id]: { active: false, start: "", end: "", ...prev[id], ...patch },
+      [id]: { ...emptyRow, ...prev[id], ...patch },
     }));
 
   const missing = useMemo(() => {
@@ -136,6 +224,11 @@ export default function DailyReport() {
   const errCls = (bad: boolean) =>
     showErrors && bad ? "border-destructive ring-1 ring-destructive/40" : "";
 
+  const staffName = (id: string) => {
+    const s = allStaff.find((x) => x.id === id);
+    return s ? `${s.first_name} ${s.last_name}` : "";
+  };
+
   const handleSave = async () => {
     if (!activeStoreId) {
       toast.error("Ingen butik vald");
@@ -147,6 +240,9 @@ export default function DailyReport() {
       return;
     }
     try {
+      const entries = Object.entries(staffRows).filter(
+        ([, r]) => r.active || r.deviation !== "none",
+      );
       await save.mutateAsync({
         ...(existing?.id ? { id: existing.id } : {}),
         store_id: activeStoreId,
@@ -155,10 +251,21 @@ export default function DailyReport() {
         net_sales: num(net),
         receipt_count: num(receipts) != null ? Math.round(num(receipts)!) : null,
         largest_sale: num(largest),
-        staff_entries: Object.entries(staffRows)
-          .filter(([, r]) => r.active)
-          .map(([staff_id, r]) => ({ staff_id, start: r.start, end: r.end })),
-        staff_notes: deviations.join(", "),
+        staff_entries: entries.map(([staff_id, r]) => ({
+          staff_id,
+          start: r.active ? r.start : "",
+          end: r.active ? r.end : "",
+          ...(r.deviation !== "none" ? { deviation: r.deviation } : {}),
+          ...(r.note.trim() ? { deviation_note: r.note.trim() } : {}),
+        })),
+        staff_notes:
+          entries
+            .filter(([, r]) => r.deviation !== "none")
+            .map(
+              ([id, r]) =>
+                `${staffName(id)}: ${r.deviation}${r.note.trim() ? ` (${r.note.trim()})` : ""}`,
+            )
+            .join(", ") || null,
         waste_items: waste.filter((w) => w.item.trim() !== ""),
         comment: comment.trim() || null,
         created_by: me ? `${me.first_name} ${me.last_name}` : null,
@@ -173,15 +280,13 @@ export default function DailyReport() {
   return (
     <div className="pb-24">
       <div className="space-y-1 mb-4">
-        <p className="text-xs text-muted-foreground">
-          Hem › Rapporter › Dagsrapport
-        </p>
+        <p className="text-xs text-muted-foreground">Hem › Rapporter › Dagsrapport</p>
         <h1 className="font-heading text-xl md:text-2xl text-foreground flex items-center gap-2">
           <Receipt className="h-5 w-5 text-primary" />
           {existing ? "Dagsrapport" : "Ny dagsrapport"} — {formatWeekdayDate(date)}
         </h1>
         <p className="text-sm text-muted-foreground">
-          Fyll i dagens försäljning, personal och svinn.
+          Fyll i dagens försäljning, personal och svinn. Tryck Enter för att hoppa till nästa fält.
           {activeStoreName ? ` (${activeStoreName})` : ""}
         </p>
       </div>
@@ -191,7 +296,12 @@ export default function DailyReport() {
           <Loader2 className="h-4 w-4 animate-spin" /> Laddar…
         </div>
       ) : (
-        <div className="space-y-4">
+        <form
+          ref={formRef}
+          onSubmit={(e) => e.preventDefault()}
+          onKeyDown={handleFormKeyDown}
+          className="space-y-4"
+        >
           {/* Försäljning */}
           <Card className="shadow-card">
             <CardHeader className="pb-2">
@@ -201,8 +311,10 @@ export default function DailyReport() {
               <div className="space-y-1">
                 <Label className="text-xs">Bruttoförsäljning (kr) *</Label>
                 <Input
-                  className={cn("font-mono tabular-nums", errCls(missing.gross))}
+                  className={cn("h-11 text-base font-mono tabular-nums", errCls(missing.gross))}
                   inputMode="decimal"
+                  enterKeyHint="next"
+                  autoComplete="off"
                   value={gross}
                   onChange={(e) => setGross(e.target.value)}
                 />
@@ -210,8 +322,10 @@ export default function DailyReport() {
               <div className="space-y-1">
                 <Label className="text-xs">Nettoförsäljning (kr) *</Label>
                 <Input
-                  className={cn("font-mono tabular-nums", errCls(missing.net))}
+                  className={cn("h-11 text-base font-mono tabular-nums", errCls(missing.net))}
                   inputMode="decimal"
+                  enterKeyHint="next"
+                  autoComplete="off"
                   value={net}
                   onChange={(e) => setNet(e.target.value)}
                 />
@@ -219,8 +333,10 @@ export default function DailyReport() {
               <div className="space-y-1">
                 <Label className="text-xs">Antal kvitton *</Label>
                 <Input
-                  className={cn("font-mono tabular-nums", errCls(missing.receipts))}
+                  className={cn("h-11 text-base font-mono tabular-nums", errCls(missing.receipts))}
                   inputMode="numeric"
+                  enterKeyHint="next"
+                  autoComplete="off"
                   value={receipts}
                   onChange={(e) => setReceipts(e.target.value)}
                 />
@@ -229,15 +345,18 @@ export default function DailyReport() {
                 <Label className="text-xs">Snittköp (kr)</Label>
                 <Input
                   readOnly
-                  className="font-mono tabular-nums bg-muted/50"
+                  tabIndex={-1}
+                  className="h-11 text-base font-mono tabular-nums bg-muted/50"
                   value={avgBasket != null ? avgBasket.toFixed(2) : ""}
                 />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Största försäljning (kr) *</Label>
                 <Input
-                  className={cn("font-mono tabular-nums", errCls(missing.largest))}
+                  className={cn("h-11 text-base font-mono tabular-nums", errCls(missing.largest))}
                   inputMode="decimal"
+                  enterKeyHint="next"
+                  autoComplete="off"
                   value={largest}
                   onChange={(e) => setLargest(e.target.value)}
                 />
@@ -254,69 +373,113 @@ export default function DailyReport() {
               <CardTitle className="text-sm font-heading">Personal som arbetade</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {staffList.length === 0 && (
-                <p className="text-sm text-muted-foreground">Ingen personal registrerad för butiken.</p>
+              {listedStaff.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Ingen personal registrerad för butiken.
+                </p>
               )}
               <div className="divide-y divide-border">
-                {staffList.map((s) => {
-                  const row = staffRows[s.id] || { active: false, start: "", end: "" };
+                {listedStaff.map((s) => {
+                  const row = staffRows[s.id] || emptyRow;
+                  const stamped = shiftByStaff.get(s.id);
                   return (
-                    <div key={s.id} className="flex flex-wrap items-center gap-3 py-2">
-                      <Switch
-                        checked={row.active}
-                        onCheckedChange={(v) => setRow(s.id, { active: v })}
-                      />
-                      <span className="text-sm text-foreground min-w-[9rem]">
-                        {s.first_name} {s.last_name}
-                      </span>
-                      {row.active && (
-                        <div className="flex items-center gap-2">
+                    <div key={s.id} className="py-2.5 space-y-2">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Switch
+                          checked={row.active}
+                          onCheckedChange={(v) => setRow(s.id, { active: v })}
+                        />
+                        <span className="text-sm text-foreground min-w-[9rem]">
+                          {s.first_name} {s.last_name}
+                        </span>
+                        {stamped && (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            Stämplad {stamped.start || "–"}
+                            {stamped.end ? `–${stamped.end}` : " (pågår)"}
+                          </span>
+                        )}
+                        {row.active && (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="time"
+                              enterKeyHint="next"
+                              className={cn("w-28 h-11 text-base font-mono", errCls(!row.start))}
+                              value={row.start}
+                              onChange={(e) => setRow(s.id, { start: e.target.value })}
+                            />
+                            <span className="text-muted-foreground text-xs">–</span>
+                            <Input
+                              type="time"
+                              enterKeyHint="next"
+                              className={cn("w-28 h-11 text-base font-mono", errCls(!row.end))}
+                              value={row.end}
+                              onChange={(e) => setRow(s.id, { end: e.target.value })}
+                            />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 pl-11">
+                        <Select
+                          value={row.deviation}
+                          onValueChange={(v) => setRow(s.id, { deviation: v })}
+                        >
+                          <SelectTrigger className="w-44 h-9">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {DEVIATIONS.map((d) => (
+                              <SelectItem key={d.value} value={d.value}>
+                                {d.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {row.deviation !== "none" && (
                           <Input
-                            type="time"
-                            className={cn("w-28 font-mono", errCls(!row.start))}
-                            value={row.start}
-                            onChange={(e) => setRow(s.id, { start: e.target.value })}
+                            className="h-9 text-base flex-1 min-w-[10rem]"
+                            enterKeyHint="next"
+                            placeholder={`Anledning / kommentar (${row.deviation.toLowerCase()})`}
+                            value={row.note}
+                            onChange={(e) => setRow(s.id, { note: e.target.value })}
                           />
-                          <span className="text-muted-foreground text-xs">–</span>
-                          <Input
-                            type="time"
-                            className={cn("w-28 font-mono", errCls(!row.end))}
-                            value={row.end}
-                            onChange={(e) => setRow(s.id, { end: e.target.value })}
-                          />
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   );
                 })}
               </div>
 
-              <div className="flex flex-wrap gap-2 pt-1">
-                {DEVIATIONS.map((d) => {
-                  const on = deviations.includes(d);
-                  return (
-                    <button
-                      key={d}
-                      type="button"
-                      onClick={() =>
-                        setDeviations((prev) => (on ? prev.filter((x) => x !== d) : [...prev, d]))
-                      }
-                      className={cn(
-                        "rounded-full border px-3 py-1 text-xs transition-colors",
-                        on
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border text-muted-foreground hover:bg-muted",
-                      )}
-                    >
-                      {d}
-                    </button>
-                  );
-                })}
-              </div>
+              {addableStaff.length > 0 && (
+                <div className="flex items-center gap-2 pt-1">
+                  <UserPlus className="h-4 w-4 text-muted-foreground" />
+                  <Select
+                    value=""
+                    onValueChange={(id) => {
+                      setExtraIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+                      setRow(id, { active: true, deviation: "Extra personal" });
+                    }}
+                  >
+                    <SelectTrigger className="w-64 h-9">
+                      <SelectValue placeholder="Lägg till person från systemet" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {addableStaff.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.first_name} {s.last_name}
+                          {s.stores?.name ? ` — ${s.stores.name}` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="rounded-md border border-border bg-muted/30 px-3 py-2 inline-block">
                 <p className="text-[11px] text-muted-foreground">Totalt arbetade timmar</p>
-                <p className="font-mono tabular-nums text-lg text-foreground">{totalHours.toFixed(2)}</p>
+                <p className="font-mono tabular-nums text-lg text-foreground">
+                  {totalHours.toFixed(2)}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -343,32 +506,42 @@ export default function DailyReport() {
                       <tr key={i} className="border-t border-border">
                         <td className="py-1.5 pr-2">
                           <Input
+                            className="h-11 text-base"
+                            enterKeyHint="next"
                             value={w.item}
                             onChange={(e) =>
-                              setWaste((prev) => prev.map((x, j) => (j === i ? { ...x, item: e.target.value } : x)))
-                            }
-                          />
-                        </td>
-                        <td className="py-1.5 pr-2">
-                          <Input
-                            className="w-24 font-mono tabular-nums"
-                            inputMode="decimal"
-                            value={w.weight_kg ?? ""}
-                            onChange={(e) =>
                               setWaste((prev) =>
-                                prev.map((x, j) => (j === i ? { ...x, weight_kg: num(e.target.value) } : x)),
+                                prev.map((x, j) => (j === i ? { ...x, item: e.target.value } : x)),
                               )
                             }
                           />
                         </td>
                         <td className="py-1.5 pr-2">
                           <Input
-                            className="w-24 font-mono tabular-nums"
+                            className="w-24 h-11 text-base font-mono tabular-nums"
                             inputMode="decimal"
+                            enterKeyHint="next"
+                            value={w.weight_kg ?? ""}
+                            onChange={(e) =>
+                              setWaste((prev) =>
+                                prev.map((x, j) =>
+                                  j === i ? { ...x, weight_kg: num(e.target.value) } : x,
+                                ),
+                              )
+                            }
+                          />
+                        </td>
+                        <td className="py-1.5 pr-2">
+                          <Input
+                            className="w-24 h-11 text-base font-mono tabular-nums"
+                            inputMode="decimal"
+                            enterKeyHint="next"
                             value={w.value_sek ?? ""}
                             onChange={(e) =>
                               setWaste((prev) =>
-                                prev.map((x, j) => (j === i ? { ...x, value_sek: num(e.target.value) } : x)),
+                                prev.map((x, j) =>
+                                  j === i ? { ...x, value_sek: num(e.target.value) } : x,
+                                ),
                               )
                             }
                           />
@@ -394,6 +567,7 @@ export default function DailyReport() {
                         </td>
                         <td className="py-1.5">
                           <Button
+                            type="button"
                             variant="ghost"
                             size="sm"
                             onClick={() => setWaste((prev) => prev.filter((_, j) => j !== i))}
@@ -408,6 +582,7 @@ export default function DailyReport() {
               </div>
 
               <Button
+                type="button"
                 variant="outline"
                 size="sm"
                 onClick={() =>
@@ -420,7 +595,9 @@ export default function DailyReport() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                 <div className="rounded-md border border-border bg-muted/30 px-3 py-2">
                   <p className="text-[11px] text-muted-foreground">Total vikt (kg)</p>
-                  <p className="font-mono tabular-nums text-lg text-foreground">{wasteWeight.toFixed(2)}</p>
+                  <p className="font-mono tabular-nums text-lg text-foreground">
+                    {wasteWeight.toFixed(2)}
+                  </p>
                 </div>
                 <div className="rounded-md border border-border bg-muted/30 px-3 py-2">
                   <p className="text-[11px] text-muted-foreground">Totalt värde (kr)</p>
@@ -446,13 +623,14 @@ export default function DailyReport() {
             <CardContent>
               <Textarea
                 rows={4}
+                className="text-base"
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="Fritext om dagen…"
               />
             </CardContent>
           </Card>
-        </div>
+        </form>
       )}
 
       {/* Sticky footer */}
