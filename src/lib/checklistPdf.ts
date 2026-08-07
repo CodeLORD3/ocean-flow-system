@@ -27,8 +27,22 @@ export interface ChecklistPdfOptions {
   pageComments?: Record<string, string> | null;
 }
 
-/** Byter ut tecken som helvetica i jsPDF inte klarar. */
-const s2 = (v?: string | null) => (v ?? "").replace(/\u2013|\u2014/g, "-").trim();
+/** Byter ut tecken som helvetica i jsPDF inte klarar (ger annars fel/konstigt typsnitt). */
+const s2 = (v?: string | null) =>
+  (v ?? "")
+    .replace(/[\u2013\u2014\u2212]/g, "-")
+    .replace(/[\u2018\u2019\u201B\u2032]/g, "'")
+    .replace(/[\u201C\u201D\u201E\u2033]/g, '"')
+    .replace(/\u2026/g, "...")
+    .replace(/[\u00A0\u2007\u202F]/g, " ")
+    .replace(/[\u2022\u00B7]/g, "-")
+    .replace(/[\u2264]/g, "<=")
+    .replace(/[\u2265]/g, ">=")
+    // Ta bort tecken utanfor Latin-1 (emoji m.m.) som annars renderas med fallback-typsnitt
+    .replace(/[^\u0000-\u024F]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
 
 export function buildChecklistDoc(opts: ChecklistPdfOptions) {
   const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
