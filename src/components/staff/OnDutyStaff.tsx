@@ -61,8 +61,33 @@ export function OnDutyStaff({ storeId }: { storeId?: string | null }) {
 
   return (
     <div className="flex items-stretch gap-2 sm:justify-end">
-      {/* "Arbetar nu"-kortet — kompakt, samma höjd som stämpelklockan */}
+      {/* Stämpelklockan — till vänster om kortet */}
+      {staff && (
+        <div className="flex shrink-0 items-stretch">
+          {myShift ? (
+            <Button
+              variant="outline"
+              className="h-auto gap-1.5 border-destructive/40 px-3 py-1.5 text-xs font-semibold"
+              onClick={() => setConfirm("out")}
+              disabled={clockOut.isPending}
+            >
+              <LogOut className="h-3.5 w-3.5" /> Stämpla ut
+            </Button>
+          ) : (
+            <Button
+              className="h-auto gap-1.5 px-3 py-1.5 text-xs font-semibold"
+              onClick={() => setConfirm("in")}
+              disabled={clockIn.isPending || !storeId}
+            >
+              <LogIn className="h-3.5 w-3.5" /> Stämpla in
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* "Arbetar nu"-kortet */}
       <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 shadow-card sm:flex-none">
+
         <span className="relative flex h-2.5 w-2.5 shrink-0">
           {onDuty.length > 0 && (
             <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-70 animate-ping" />
