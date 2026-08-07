@@ -29,7 +29,9 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useSite } from "@/contexts/SiteContext";
 import { ChecklistTable } from "@/components/checklist/ChecklistTable";
+import { ChecklistCopyDialog } from "@/components/checklist/ChecklistCopyDialog";
 import { ChecklistRestoreDialog } from "@/components/checklist/ChecklistRestoreDialog";
+
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import {
   useArchiveChecklistTemplate,
