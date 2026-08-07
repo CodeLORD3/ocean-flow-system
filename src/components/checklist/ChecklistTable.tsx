@@ -107,6 +107,25 @@ export function ChecklistTable({
       />
     ) : null;
 
+  const openEdit = (item: ChecklistItem) => {
+    setPendingEdit(item);
+    setEditDraft({ task: item.task, time: item.time_label ?? "", category: item.category ?? "" });
+  };
+
+  const editButton = (item: ChecklistItem, size: "sm" | "md") => (
+    <Button
+      variant="ghost"
+      size="icon"
+      className={`${size === "sm" ? "h-7 w-7" : "h-8 w-8"} shrink-0 text-muted-foreground hover:text-primary`}
+      onClick={() => openEdit(item)}
+      aria-label={`Redigera ${item.task}`}
+      title="Redigera uppgift"
+    >
+      <Pencil className={size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4"} />
+    </Button>
+  );
+
+
 
   const toggle = useToggleChecklistItem();
   const setNote = useSetChecklistNote();
