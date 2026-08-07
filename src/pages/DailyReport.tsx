@@ -66,6 +66,7 @@ export default function DailyReport() {
   const [waste, setWaste] = useState<WasteItem[]>([]);
   const [comment, setComment] = useState("");
   const [hydrated, setHydrated] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
 
   useEffect(() => {
     if (isLoading || hydrated) return;
@@ -121,13 +122,28 @@ export default function DailyReport() {
       [id]: { active: false, start: "", end: "", ...prev[id], ...patch },
     }));
 
+  const missing = useMemo(() => {
+    const m = {
+      gross: num(gross) == null,
+      net: num(net) == null,
+      receipts: num(receipts) == null,
+      largest: num(largest) == null,
+      staffTimes: Object.values(staffRows).some((r) => r.active && (!r.start || !r.end)),
+    };
+    return { ...m, any: Object.values(m).some(Boolean) };
+  }, [gross, net, receipts, largest, staffRows]);
+
+  const errCls = (bad: boolean) =>
+    showErrors && bad ? "border-destructive ring-1 ring-destructive/40" : "";
+
   const handleSave = async () => {
     if (!activeStoreId) {
       toast.error("Ingen butik vald");
       return;
     }
-    if (num(gross) == null || num(net) == null) {
-      toast.error("Bruttoförsäljning och nettoförsäljning är obligatoriska");
+    if (missing.any) {
+      setShowErrors(true);
+      toast.error("Fyll i alla obligatoriska fält innan du avslutar dagsrapporten");
       return;
     }
     try {
@@ -181,18 +197,33 @@ export default function DailyReport() {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-heading">Försäljning</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <CardContent className="flex flex-col gap-3 max-w-md">
               <div className="space-y-1">
-                <Label className="text-xs">Bruttoförsäljning (kr)</Label>
-                <Input className="font-mono tabular-nums" inputMode="decimal" value={gross} onChange={(e) => setGross(e.target.value)} />
+                <Label className="text-xs">Bruttoförsäljning (kr) *</Label>
+                <Input
+                  className={cn("font-mono tabular-nums", errCls(missing.gross))}
+                  inputMode="decimal"
+                  value={gross}
+                  onChange={(e) => setGross(e.target.value)}
+                />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Nettoförsäljning (kr)</Label>
-                <Input className="font-mono tabular-nums" inputMode="decimal" value={net} onChange={(e) => setNet(e.target.value)} />
+                <Label className="text-xs">Nettoförsäljning (kr) *</Label>
+                <Input
+                  className={cn("font-mono tabular-nums", errCls(missing.net))}
+                  inputMode="decimal"
+                  value={net}
+                  onChange={(e) => setNet(e.target.value)}
+                />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Antal kvitton</Label>
-                <Input className="font-mono tabular-nums" inputMode="numeric" value={receipts} onChange={(e) => setReceipts(e.target.value)} />
+                <Label className="text-xs">Antal kvitton *</Label>
+                <Input
+                  className={cn("font-mono tabular-nums", errCls(missing.receipts))}
+                  inputMode="numeric"
+                  value={receipts}
+                  onChange={(e) => setReceipts(e.target.value)}
+                />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Snittköp (kr)</Label>
@@ -203,9 +234,17 @@ export default function DailyReport() {
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Största försäljning (kr)</Label>
-                <Input className="font-mono tabular-nums" inputMode="decimal" value={largest} onChange={(e) => setLargest(e.target.value)} />
+                <Label className="text-xs">Största försäljning (kr) *</Label>
+                <Input
+                  className={cn("font-mono tabular-nums", errCls(missing.largest))}
+                  inputMode="decimal"
+                  value={largest}
+                  onChange={(e) => setLargest(e.target.value)}
+                />
               </div>
+              {showErrors && (missing.gross || missing.net || missing.receipts || missing.largest) && (
+                <p className="text-xs text-destructive">Fälten märkta * måste fyllas i.</p>
+              )}
             </CardContent>
           </Card>
 
@@ -234,14 +273,14 @@ export default function DailyReport() {
                         <div className="flex items-center gap-2">
                           <Input
                             type="time"
-                            className="w-28 font-mono"
+                            className={cn("w-28 font-mono", errCls(!row.start))}
                             value={row.start}
                             onChange={(e) => setRow(s.id, { start: e.target.value })}
                           />
                           <span className="text-muted-foreground text-xs">–</span>
                           <Input
                             type="time"
-                            className="w-28 font-mono"
+                            className={cn("w-28 font-mono", errCls(!row.end))}
                             value={row.end}
                             onChange={(e) => setRow(s.id, { end: e.target.value })}
                           />
@@ -421,7 +460,11 @@ export default function DailyReport() {
         <Button variant="outline" onClick={() => switchTab("/organisation")}>
           Avbryt
         </Button>
-        <Button onClick={handleSave} disabled={save.isPending}>
+        <Button
+          onClick={handleSave}
+          disabled={save.isPending}
+          variant={showErrors && missing.any ? "destructive" : "default"}
+        >
           {save.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
           Spara dagsrapport
         </Button>
