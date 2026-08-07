@@ -473,6 +473,7 @@ export function ChecklistTable({
 
                   </div>
                 </div>
+                {!locked && editButton(row.item, "md")}
                 {!readOnly && copyTask(row.item, "md")}
                 {!locked && (
                   <Button
