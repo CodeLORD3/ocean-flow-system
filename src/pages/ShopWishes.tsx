@@ -17,6 +17,7 @@ import { format, parseISO } from "date-fns";
 import { sv } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { useNotificationFlash } from "@/lib/notificationFlash";
 
 type SortKey = "date" | "category";
 
@@ -27,6 +28,7 @@ const STATUS_OPTIONS = [
 ] as const;
 
 export default function ShopWishes() {
+  const { flashClass } = useNotificationFlash("shop_wish");
   const { activeStoreId } = useSite();
   const { wishes, isLoading, addWish, updateStatus, archiveWish, setPublished } = useShopWishes(activeStoreId);
 
@@ -113,7 +115,7 @@ export default function ShopWishes() {
           <TableRow><TableCell colSpan={showArchiveBtn ? 6 : 5} className="text-center text-muted-foreground py-8">Inga önskemål</TableCell></TableRow>
         )}
         {items.map((w) => (
-          <TableRow key={w.id}>
+          <TableRow key={w.id} className={flashClass(w.id)}>
             <TableCell><StatusSquare status={w.status} wishId={w.id} /></TableCell>
             <TableCell>
               <div className="font-medium text-sm">{w.title}</div>

@@ -19,10 +19,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier } from "@/hooks/useSuppliers";
+import { useNotificationFlash } from "@/lib/notificationFlash";
 
 const SUPPLIER_TYPES = ["Färsk fisk", "Skaldjur", "Rökt fisk", "Emballage", "Kryddor & Tillbehör", "Transport", "Övrigt"];
 
 export default function Suppliers() {
+  const { flashClass } = useNotificationFlash("supplier");
   const { toast } = useToast();
   const { data: suppliers = [], isLoading } = useSuppliers();
   const createSupplier = useCreateSupplier();
@@ -176,7 +178,7 @@ export default function Suppliers() {
                   </td></tr>
                 )}
                 {filtered.map(s => (
-                  <tr key={s.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
+                  <tr key={s.id} className={`border-b border-border/40 hover:bg-muted/20 transition-colors ${flashClass(s.id)}`}>
                     <td className="p-3 font-medium text-foreground">{s.name}</td>
                     <td className="p-3">
                       <Badge variant="outline" className={`text-[10px] ${typeColor[s.supplier_type || ""] || ""}`}>

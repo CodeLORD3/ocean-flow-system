@@ -29,8 +29,10 @@ import { sv } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNotificationFlash } from "@/lib/notificationFlash";
 
 export default function MeetingProtocols() {
+  const { flashClass } = useNotificationFlash("meeting_protocol");
   const { site, activeStoreId, activeStoreName } = useSite();
   const isShop = site === "shop";
   const { data: protocols, isLoading } = useMeetingProtocols(isShop ? activeStoreId : null, isShop ? undefined : site);
@@ -174,7 +176,7 @@ export default function MeetingProtocols() {
           const completedCount = items.filter((i) => i.completed).length;
           const hasCalendarLinks = items.some(i => i.calendar_event_id);
           return (
-            <Card key={p.id} className="overflow-hidden">
+            <Card key={p.id} className={`overflow-hidden ${flashClass(p.id)}`}>
               <div
                 className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() => setExpandedId(expanded ? null : p.id)}
