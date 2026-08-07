@@ -163,13 +163,18 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
   const handleCreate = async () => {
     try {
       const tpl = await create.mutateAsync({ name: newName, storeId });
+      if (newWeekdays.length > 0 && newWeekdays.length < 7) {
+        await setWeekdays.mutateAsync({ id: tpl.id, weekdays: newWeekdays });
+      }
       setNewName("");
+      setNewWeekdays([]);
       setNewOpen(false);
       toast.success(`Checklistan "${tpl.name}" skapad`);
     } catch (e: any) {
       toast.error(e?.message ?? "Kunde inte skapa checklistan");
     }
   };
+
 
   const handleArchive = async (id: string, name: string) => {
     try {
