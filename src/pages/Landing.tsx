@@ -44,6 +44,11 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4 py-8 sm:p-6">
+      <img
+        src={logoAsset.url}
+        alt="Fiskskaldjur logotyp"
+        className="h-20 w-20 sm:h-28 sm:w-28 object-contain mb-5 sm:mb-8"
+      />
       <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold text-center text-foreground max-w-3xl mb-6 sm:mb-10 leading-tight">
         {headline}
       </h1>
