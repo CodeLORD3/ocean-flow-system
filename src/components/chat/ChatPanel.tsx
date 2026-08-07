@@ -608,6 +608,8 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
                   );
 
                 })
+                  )}
+                </>
               )}
             </div>
 
