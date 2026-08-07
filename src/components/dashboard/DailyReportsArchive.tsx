@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useStores } from "@/hooks/useStores";
+import { useStaff } from "@/hooks/useStaff";
 import { formatWeekdayDate, type DailyReport } from "@/hooks/useDailyReport";
 import { Loader2, ChevronDown, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
