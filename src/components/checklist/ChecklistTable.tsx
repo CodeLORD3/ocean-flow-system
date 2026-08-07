@@ -58,7 +58,9 @@ export function ChecklistTable({
   const [addSection, setAddSection] = useState<string | null>(null);
   const [pageCommentDraft, setPageCommentDraft] = useState<string | null>(null);
   const [addDraft, setAddDraft] = useState({ task: "", time: "", category: "" });
+  const [pendingDelete, setPendingDelete] = useState<ChecklistItem | null>(null);
   const { data: pendingRequests = [] } = useSignatureRequests(readOnly ? null : day.id);
+
   const toggle = useToggleChecklistItem();
   const setNote = useSetChecklistNote();
   const setTime = useSetChecklistItemTime();
