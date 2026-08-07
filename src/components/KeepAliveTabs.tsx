@@ -45,6 +45,7 @@ import LandingSettings from "@/pages/LandingSettings";
 import Vehicles from "@/pages/Vehicles";
 import Chat from "@/pages/Chat";
 import Checklist from "@/pages/Checklist";
+import DailyReport from "@/pages/DailyReport";
 import Production from "@/pages/Production";
 import DataCoverage from "@/pages/DataCoverage";
 
@@ -96,6 +97,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/vehicles": { component: <Vehicles /> },
   "/chat": { component: <Chat /> },
   "/checklist": { component: <Checklist /> },
+  "/dagsrapport": { component: <DailyReport /> },
   "/production": { component: <Production /> },
   "/coverage": { component: <DataCoverage /> },
 };

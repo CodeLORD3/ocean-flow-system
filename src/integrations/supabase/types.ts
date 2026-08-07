@@ -932,6 +932,65 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_reports: {
+        Row: {
+          comment: string | null
+          created_at: string
+          created_by: string | null
+          gross_sales: number | null
+          id: string
+          largest_sale: number | null
+          net_sales: number | null
+          receipt_count: number | null
+          report_date: string
+          staff_entries: Json
+          staff_notes: string | null
+          store_id: string
+          updated_at: string
+          waste_items: Json
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          gross_sales?: number | null
+          id?: string
+          largest_sale?: number | null
+          net_sales?: number | null
+          receipt_count?: number | null
+          report_date: string
+          staff_entries?: Json
+          staff_notes?: string | null
+          store_id: string
+          updated_at?: string
+          waste_items?: Json
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          gross_sales?: number | null
+          id?: string
+          largest_sale?: number | null
+          net_sales?: number | null
+          receipt_count?: number | null
+          report_date?: string
+          staff_entries?: Json
+          staff_notes?: string | null
+          store_id?: string
+          updated_at?: string
+          waste_items?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_reports_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_stock_sheet_lines: {
         Row: {
           category: string | null

@@ -31,6 +31,7 @@ import { ActivityIcon } from "@/components/dashboard/ActivityIcon";
 import { useStoreActivity } from "@/hooks/useStoreActivity";
 import { useState } from "react";
 import { ChecklistCard } from "@/components/checklist/ChecklistCard";
+import { DailyReportCard } from "@/components/dashboard/DailyReportCard";
 import { OnDutyStaff } from "@/components/staff/OnDutyStaff";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -443,7 +444,10 @@ export default function OrganisationOverview() {
 
       {/* Shop: daily checklist */}
       {isShop && (
-        <ChecklistCard storeId={activeStoreId!} onOpenFull={() => switchTab("/checklist")} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <ChecklistCard storeId={activeStoreId!} onOpenFull={() => switchTab("/checklist")} />
+          <DailyReportCard storeId={activeStoreId!} onOpenFull={() => switchTab("/dagsrapport")} />
+        </div>
       )}
 
 

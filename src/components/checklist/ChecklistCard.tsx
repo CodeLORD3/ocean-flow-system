@@ -13,8 +13,8 @@ export function ChecklistCard({ storeId, onOpenFull }: { storeId: string; onOpen
   const isCompleted = day?.status === "completed";
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <Card
+    <Card
+
         role="button"
         tabIndex={0}
         onClick={onOpenFull}
@@ -49,8 +49,7 @@ export function ChecklistCard({ storeId, onOpenFull }: { storeId: string; onOpen
             {isCompleted ? "Slutförd" : "uppgifter klara"}
           </p>
         </div>
-      </Card>
-    </div>
-
+    </Card>
   );
+
 }
