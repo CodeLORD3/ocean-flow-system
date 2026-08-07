@@ -2,12 +2,15 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSite } from "@/contexts/SiteContext";
 import { useEffect } from "react";
+import { recordNotificationFlash } from "@/lib/notificationFlash";
 
 interface NotificationRow {
   id: string;
   target_page: string;
   message: string;
   created_at: string;
+  entity_type: string | null;
+  entity_id: string | null;
 }
 
 /**
@@ -37,7 +40,7 @@ export function useNotifications() {
 
       let query = supabase
         .from("notifications")
-        .select("id, target_page, message, created_at")
+        .select("id, target_page, message, created_at, entity_type, entity_id")
         .eq("portal", portal)
         .eq("is_read", false)
         .order("created_at", { ascending: false })
@@ -100,8 +103,11 @@ export function useNotifications() {
   const markAsRead = useMutation({
     mutationFn: async (targetPage: string) => {
       if (!userId) return;
-      const ids = unread.filter((n) => n.target_page === targetPage).map((n) => n.id);
+      const rows = unread.filter((n) => n.target_page === targetPage);
+      const ids = rows.map((n) => n.id);
       if (!ids.length) return;
+      // Spara vad notiserna gällde så att målsidan kan lysa upp rätt rad/kort.
+      recordNotificationFlash(rows);
       const { error } = await supabase
         .from("notification_reads")
         .upsert(
@@ -118,6 +124,7 @@ export function useNotifications() {
   const markAllAsRead = useMutation({
     mutationFn: async () => {
       if (!userId || !unread.length) return;
+      recordNotificationFlash(unread);
       const { error } = await supabase
         .from("notification_reads")
         .upsert(

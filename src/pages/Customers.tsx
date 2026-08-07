@@ -21,9 +21,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useCustomers, useCreateCustomer, useUpdateCustomer, useDeleteCustomer, Customer } from "@/hooks/useCustomers";
 import { useStores } from "@/hooks/useStores";
 import { useSite } from "@/contexts/SiteContext";
+import { useNotificationFlash } from "@/lib/notificationFlash";
 
 /* ===== Wholesale view: Customers with store linking ===== */
 function WholesaleCustomers() {
+  const { flashClass } = useNotificationFlash("customer");
   const { data: allCustomers = [], isLoading: customersLoading } = useCustomers();
   const { data: stores = [] } = useStores();
   const createCustomer = useCreateCustomer();
@@ -145,7 +147,7 @@ function WholesaleCustomers() {
                 ) : filtered.map(c => {
                   const linkedStore = getLinkedStoreName(c.store_id);
                   return (
-                    <tr key={c.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
+                    <tr key={c.id} className={`border-b border-border/40 hover:bg-muted/20 transition-colors ${flashClass(c.id)}`}>
                       <td className="p-3 font-medium text-foreground">{c.name}</td>
                       <td className="p-3 text-muted-foreground">{c.contact_person || "–"}</td>
                       <td className="p-3 text-muted-foreground">{c.email || "–"}</td>
@@ -245,6 +247,7 @@ function WholesaleCustomers() {
 
 /* ===== Shop view: Original customer table ===== */
 function ShopCustomers() {
+  const { flashClass } = useNotificationFlash("customer");
   const { toast } = useToast();
   const { activeStoreId } = useSite();
   const { data: allCustomers = [], isLoading } = useCustomers();
@@ -327,7 +330,7 @@ function ShopCustomers() {
                   <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">{customers.length === 0 ? 'Inga kunder ännu. Klicka "Lägg till kund" för att börja.' : "Inga kunder matchar sökningen."}</td></tr>
                 )}
                 {filtered.map(c => (
-                  <tr key={c.id} className="border-b border-border/40 hover:bg-muted/20 transition-colors">
+                  <tr key={c.id} className={`border-b border-border/40 hover:bg-muted/20 transition-colors ${flashClass(c.id)}`}>
                     <td className="p-3 font-medium text-foreground">{c.name}</td>
                     <td className="p-3 text-muted-foreground">{c.contact_person || "–"}</td>
                     <td className="p-3 text-muted-foreground">{c.email || "–"}</td>

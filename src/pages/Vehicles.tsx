@@ -16,6 +16,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format, parseISO, isValid } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useNotificationFlash } from "@/lib/notificationFlash";
 
 type Asset = {
   id: string;
@@ -144,6 +145,7 @@ function AssetSection({
   addLabel, regLabel, deleteConfirmLabel,
   toastAdded, toastDeleted, emptyLabel,
 }: AssetSectionProps) {
+  const { flashClass } = useNotificationFlash("vehicle");
   const qc = useQueryClient();
   const itemsKey = [itemTable];
   const colsKey = [columnsTable];
@@ -386,7 +388,7 @@ function AssetSection({
               const isOpen = !!expanded[v.id];
               return (
                 <React.Fragment key={v.id}>
-                  <tr className="border-b hover:bg-muted/20 group">
+                  <tr className={`border-b hover:bg-muted/20 group ${flashClass(v.id)}`}>
                     <td className="px-1 align-middle">
                       <button
                         type="button"

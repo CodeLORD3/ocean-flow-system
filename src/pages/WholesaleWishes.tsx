@@ -8,6 +8,7 @@ import { Star } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { sv } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { useNotificationFlash } from "@/lib/notificationFlash";
 
 const STATUS_COLORS: Record<string, string> = {
   Inget: "bg-muted-foreground/40",
@@ -16,6 +17,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function WholesaleWishes() {
+  const { flashClass } = useNotificationFlash("shop_wish");
   const { wishes, isLoading } = usePublishedWishes();
   const [store, setStore] = useState<string>("all");
 
@@ -87,7 +89,7 @@ export default function WholesaleWishes() {
                 </TableRow>
               )}
               {filtered.map((w) => (
-                <TableRow key={w.id}>
+                <TableRow key={w.id} className={flashClass(w.id)}>
                   <TableCell>
                     <span className="flex items-center gap-2 text-xs text-muted-foreground">
                       <span className={cn("inline-block h-3.5 w-3.5 rounded-sm", STATUS_COLORS[w.status] ?? STATUS_COLORS.Inget)} />
