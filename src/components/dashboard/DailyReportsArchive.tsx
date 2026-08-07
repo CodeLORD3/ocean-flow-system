@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useStores } from "@/hooks/useStores";
+import { useStaff } from "@/hooks/useStaff";
 import { formatWeekdayDate, type DailyReport } from "@/hooks/useDailyReport";
 import { Loader2, ChevronDown, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -32,13 +33,32 @@ function useAllDailyReports() {
 const nf = (v: number | null | undefined) =>
   v == null ? "—" : v.toLocaleString("sv-SE", { maximumFractionDigits: 0 });
 
+function hours(start?: string, end?: string) {
+  if (!start || !end) return 0;
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  if ([sh, sm, eh, em].some((n) => Number.isNaN(n))) return 0;
+  const diff = eh * 60 + em - (sh * 60 + sm);
+  return diff > 0 ? diff / 60 : 0;
+}
+
+function totalHours(r: DailyReport) {
+  return (r.staff_entries ?? []).reduce((a, e) => a + hours(e.start, e.end), 0);
+}
+
 export function DailyReportsArchive() {
   const { data: reports = [], isLoading } = useAllDailyReports();
   const { data: stores = [] } = useStores(true);
+  const { data: staff = [] } = useStaff();
   const [storeFilter, setStoreFilter] = useState<string>("all");
   const [openId, setOpenId] = useState<string | null>(null);
 
   const storeName = (id: string) => stores.find((s) => s.id === id)?.name ?? "Butik";
+  const staffName = (id: string) => {
+    const s = staff.find((p) => p.id === id);
+    return s ? `${s.first_name} ${s.last_name}` : "Personal";
+  };
+
 
   const rows = useMemo(
     () => (storeFilter === "all" ? reports : reports.filter((r) => r.store_id === storeFilter)),
@@ -79,6 +99,7 @@ export function DailyReportsArchive() {
           {rows.map((r) => {
             const open = openId === r.id;
             const waste = (r.waste_items ?? []).reduce((a, w) => a + (w.value_sek ?? 0), 0);
+            const wasteKg = (r.waste_items ?? []).reduce((a, w) => a + (w.weight_kg ?? 0), 0);
             return (
               <div key={r.id}>
                 <button
@@ -105,11 +126,12 @@ export function DailyReportsArchive() {
 
                 {open && (
                   <div className="px-3 pb-3 pt-1 space-y-3 bg-muted/20">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                       {[
                         ["Brutto", `${nf(r.gross_sales)} kr`],
                         ["Netto", `${nf(r.net_sales)} kr`],
                         ["Kvitton", nf(r.receipt_count)],
+                        ["Snittköp", r.receipt_count ? `${((r.gross_sales ?? 0) / r.receipt_count).toFixed(2)} kr` : "—"],
                         ["Största köp", `${nf(r.largest_sale)} kr`],
                       ].map(([label, value]) => (
                         <div key={label as string}>
@@ -119,30 +141,82 @@ export function DailyReportsArchive() {
                       ))}
                     </div>
 
-                    {(r.waste_items ?? []).length > 0 && (
-                      <div>
-                        <p className="text-[11px] text-muted-foreground mb-1">
-                          Svinn — totalt {nf(waste)} kr
-                        </p>
-                        <div className="space-y-0.5">
-                          {r.waste_items.map((w, i) => (
-                            <p key={i} className="text-xs">
-                              {w.item} · {w.weight_kg ?? "—"} kg · {nf(w.value_sek)} kr
-                              {w.reason ? ` · ${w.reason}` : ""}
-                            </p>
+                    <div>
+                      <p className="text-[11px] text-muted-foreground mb-1">
+                        Personal som arbetade — totalt {totalHours(r).toFixed(2)} h
+                      </p>
+                      {(r.staff_entries ?? []).length === 0 ? (
+                        <p className="text-xs text-muted-foreground">Ingen personal rapporterad.</p>
+                      ) : (
+                        <div className="rounded border divide-y bg-background">
+                          {r.staff_entries.map((e, i) => (
+                            <div key={i} className="flex flex-wrap items-center gap-2 px-2 py-1 text-xs">
+                              <span className="font-medium">{staffName(e.staff_id)}</span>
+                              <span className="font-mono tabular-nums text-muted-foreground">
+                                {e.start || "—"}–{e.end || "—"}
+                              </span>
+                              <span className="font-mono tabular-nums text-muted-foreground">
+                                {hours(e.start, e.end).toFixed(2)} h
+                              </span>
+                              {e.deviation && e.deviation !== "none" && (
+                                <Badge variant="outline" className="text-[10px]">
+                                  {e.deviation}
+                                </Badge>
+                              )}
+                              {e.deviation_note && (
+                                <span className="text-muted-foreground">{e.deviation_note}</span>
+                              )}
+                            </div>
                           ))}
                         </div>
-                      </div>
-                    )}
+                      )}
+                      {r.staff_notes && (
+                        <p className="text-xs whitespace-pre-wrap mt-1">{r.staff_notes}</p>
+                      )}
+                    </div>
 
-                    {r.comment && (
-                      <div>
-                        <p className="text-[11px] text-muted-foreground mb-1">Dagens kommentar</p>
-                        <p className={cn("text-xs whitespace-pre-wrap")}>{r.comment}</p>
-                      </div>
-                    )}
+                    <div>
+                      <p className="text-[11px] text-muted-foreground mb-1">
+                        Svinn / kastade varor — {nf(wasteKg)} kg · {nf(waste)} kr
+                        {r.gross_sales ? ` · ${((waste / r.gross_sales) * 100).toFixed(1)}% av brutto` : ""}
+                      </p>
+                      {(r.waste_items ?? []).length === 0 ? (
+                        <p className="text-xs text-muted-foreground">Inget svinn rapporterat.</p>
+                      ) : (
+                        <div className="rounded border divide-y bg-background">
+                          {r.waste_items.map((w, i) => (
+                            <div key={i} className="flex flex-wrap items-center gap-2 px-2 py-1 text-xs">
+                              <span className="font-medium">{w.item || "—"}</span>
+                              <span className="font-mono tabular-nums text-muted-foreground">
+                                {w.weight_kg ?? "—"} kg
+                              </span>
+                              <span className="font-mono tabular-nums text-muted-foreground">
+                                {nf(w.value_sek)} kr
+                              </span>
+                              {w.reason && <span className="text-muted-foreground">{w.reason}</span>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <p className="text-[11px] text-muted-foreground mb-1">Dagens kommentar</p>
+                      <p className={cn("text-xs whitespace-pre-wrap")}>
+                        {r.comment || <span className="text-muted-foreground">Ingen kommentar.</span>}
+                      </p>
+                    </div>
+
+                    <p className="text-[10px] text-muted-foreground">
+                      Sparad{" "}
+                      {new Date(r.updated_at || r.created_at).toLocaleString("sv-SE", {
+                        dateStyle: "short",
+                        timeStyle: "short",
+                      })}
+                    </p>
                   </div>
                 )}
+
               </div>
             );
           })}
