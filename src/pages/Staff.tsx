@@ -227,7 +227,7 @@ export default function Staff() {
         <Card className="shadow-card"><CardContent className="p-8 text-center text-sm text-muted-foreground">
           {staffList.length === 0
             ? 'Ingen personal tillagd ännu. Klicka "Lägg till personal" för att börja.'
-            : !showAll && visibleList.length === 0
+            : !platformView && !showAll && visibleList.length === 0
               ? "Ingen personal är instämplad på den här arbetsplatsen just nu. Stämpling sker på sidan Min profil."
               : "Inga resultat matchar sökningen."}
         </CardContent></Card>
