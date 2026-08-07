@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Printer, FileText, CheckCheck, ChevronLeft, ChevronRight, ArrowRight, CheckCircle2, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeft, Printer, FileText, CheckCheck, ChevronLeft, ChevronRight, ArrowRight, CheckCircle2, Plus, Trash2, X, Copy } from "lucide-react";
 import { generateChecklistPdf } from "@/lib/checklistPdf";
 import { SignatureEditor } from "@/components/checklist/SignatureEditor";
 import { SignatureRequestInbox } from "@/components/checklist/SignatureRequestInbox";
@@ -33,8 +33,11 @@ import {
   useSetChecklistItemTime,
   useAddChecklistItem,
   useDeleteChecklistItem,
+  useChecklistTemplates,
   weekdayName,
 } from "@/hooks/useChecklist";
+import { ChecklistCopyDialog } from "@/components/checklist/ChecklistCopyDialog";
+
 
 const PAGE_SIZE = 20;
 
@@ -73,6 +76,34 @@ export function ChecklistTable({
   const { data: pendingRequests = [] } = useSignatureRequests(readOnly ? null : day.id);
   const { staff } = useStaffAuth();
   const isAdmin = ((staff?.portal_access ?? []) as string[]).includes("admin");
+  const { data: templates = [] } = useChecklistTemplates(isAdmin ? day.store_id : null);
+  const activeTemplate = templates.find((t) => t.id === (day.template_id ?? "")) ?? null;
+  const copyTask = (item: ChecklistItem, size: "sm" | "md") =>
+    isAdmin && activeTemplate ? (
+      <ChecklistCopyDialog
+        template={activeTemplate}
+        sourceStoreId={day.store_id}
+        date={day.checklist_date}
+        item={{
+          section: item.section,
+          task: item.task,
+          time_label: item.time_label,
+          category: item.category,
+        }}
+        trigger={
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`${size === "sm" ? "h-7 w-7" : "h-8 w-8"} shrink-0 text-muted-foreground hover:text-primary`}
+            aria-label={`Kopiera "${item.task}" till andra butiker`}
+            title="Kopiera uppgift till andra butiker"
+          >
+            <Copy className={size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4"} />
+          </Button>
+        }
+      />
+    ) : null;
+
 
   const toggle = useToggleChecklistItem();
   const setNote = useSetChecklistNote();
@@ -442,6 +473,7 @@ export function ChecklistTable({
 
                   </div>
                 </div>
+                {!readOnly && copyTask(row.item, "md")}
                 {!locked && (
                   <Button
                     variant="ghost"
@@ -453,6 +485,7 @@ export function ChecklistTable({
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 )}
+
               </div>
               <div className="mt-1.5 pl-[3.25rem]">
                 {locked ? (
@@ -660,18 +693,22 @@ export function ChecklistTable({
                   </td>
 
                   <td className="px-1 py-1.5 text-center">
-                    {!locked && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                        onClick={() => setPendingDelete(row.item)}
-                        aria-label={`Ta bort ${row.item.task}`}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
+                    <div className="flex items-center justify-center">
+                      {!readOnly && copyTask(row.item, "sm")}
+                      {!locked && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                          onClick={() => setPendingDelete(row.item)}
+                          aria-label={`Ta bort ${row.item.task}`}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
                   </td>
+
                 </tr>
               );
             })}

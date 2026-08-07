@@ -1051,3 +1051,206 @@ export function useSetChecklistPageComment() {
     },
   });
 }
+
+/* ============================================================
+   Admin: kopiera / vidarebefordra checklistor och enskilda rader
+   ============================================================ */
+
+/** Effektiva mallrader för en checklista i en butik (globala + butikens, utan dolda). */
+async function effectiveTemplateItems(templateId: string, storeId: string | null) {
+  let q = supabase.from("checklist_template_items").select("*").eq("template_id", templateId);
+  q = storeId ? q.or(`store_id.is.null,store_id.eq.${storeId}`) : q.is("store_id", null);
+  const { data, error } = await q.order("sort_order");
+  if (error) throw error;
+  const rows = data || [];
+  const suppressed = new Set(
+    rows.filter((t: any) => t.store_id === storeId && !t.active).map((t: any) => `${t.section}|${t.task}`)
+  );
+  return rows.filter((t: any) => t.active && !suppressed.has(`${t.section}|${t.task}`));
+}
+
+/** Hittar (eller skapar) en checklista med samma namn i målbutiken. */
+async function ensureTemplateForStore(name: string, description: string | null, storeId: string) {
+  const { data: existing } = await supabase
+    .from("checklist_templates")
+    .select("*")
+    .eq("store_id", storeId)
+    .eq("name", name)
+    .maybeSingle();
+  if (existing) {
+    if (!(existing as any).active) {
+      await supabase.from("checklist_templates").update({ active: true }).eq("id", (existing as any).id);
+    }
+    return existing as ChecklistTemplate;
+  }
+  const { data, error } = await supabase
+    .from("checklist_templates")
+    .insert({ name, description, store_id: storeId, sort_order: 100 })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as ChecklistTemplate;
+}
+
+/** Kopierar en hel checklista (med alla rader) till en eller flera butiker. */
+export function useCopyChecklistTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      template: ChecklistTemplate;
+      sourceStoreId: string | null;
+      targetStoreIds: string[];
+    }) => {
+      if (input.targetStoreIds.length === 0) throw new Error("Välj minst en butik.");
+      const items = await effectiveTemplateItems(input.template.id, input.sourceStoreId);
+
+      for (const storeId of input.targetStoreIds) {
+        const tpl = await ensureTemplateForStore(
+          input.template.name,
+          input.template.description ?? null,
+          storeId
+        );
+        if (input.template.weekdays?.length) {
+          await supabase
+            .from("checklist_templates")
+            .update({ weekdays: input.template.weekdays })
+            .eq("id", tpl.id);
+        }
+
+        const { data: current } = await supabase
+          .from("checklist_template_items")
+          .select("id, section, task")
+          .eq("template_id", tpl.id)
+          .eq("store_id", storeId);
+        const have = new Set((current || []).map((r: any) => `${r.section}|${r.task}`));
+
+        const rows = items
+          .filter((t: any) => !have.has(`${t.section}|${t.task}`))
+          .map((t: any) => ({
+            template_id: tpl.id,
+            store_id: storeId,
+            section: t.section,
+            task: t.task,
+            time_label: t.time_label,
+            category: t.category,
+            sort_order: t.sort_order,
+            active: true,
+          }));
+        if (rows.length > 0) {
+          const { error } = await supabase.from("checklist_template_items").insert(rows);
+          if (error) throw error;
+        }
+      }
+      return input.targetStoreIds.length;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["checklist-templates"] });
+      qc.invalidateQueries({ queryKey: ["checklist-day"] });
+    },
+  });
+}
+
+/** Kopierar en enskild uppgift till samma checklista i andra butiker (+ dagens lista). */
+export function useCopyChecklistTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      template: ChecklistTemplate;
+      item: { section: string; task: string; time_label?: string | null; category?: string | null };
+      targetStoreIds: string[];
+      /** Lägg även in i dagens pågående lista */
+      alsoToday?: boolean;
+      date?: string;
+    }) => {
+      if (input.targetStoreIds.length === 0) throw new Error("Välj minst en butik.");
+      const iso = input.date || todayIso();
+      const isGlobal = input.template.store_id === null;
+
+      for (const storeId of input.targetStoreIds) {
+        const tpl = isGlobal
+          ? input.template
+          : await ensureTemplateForStore(input.template.name, input.template.description ?? null, storeId);
+
+        const { data: existing } = await supabase
+          .from("checklist_template_items")
+          .select("id")
+          .eq("template_id", tpl.id)
+          .eq("store_id", storeId)
+          .eq("section", input.item.section)
+          .eq("task", input.item.task)
+          .maybeSingle();
+
+        if (existing) {
+          await supabase
+            .from("checklist_template_items")
+            .update({
+              active: true,
+              time_label: input.item.time_label ?? null,
+              category: input.item.category ?? null,
+            })
+            .eq("id", (existing as any).id);
+        } else {
+          const { data: last } = await supabase
+            .from("checklist_template_items")
+            .select("sort_order")
+            .eq("template_id", tpl.id)
+            .order("sort_order", { ascending: false })
+            .limit(1);
+          const nextOrder = ((last?.[0]?.sort_order as number) ?? 0) + 10;
+          const { error } = await supabase.from("checklist_template_items").insert({
+            template_id: tpl.id,
+            store_id: storeId,
+            section: input.item.section,
+            task: input.item.task,
+            time_label: input.item.time_label ?? null,
+            category: input.item.category ?? null,
+            sort_order: nextOrder,
+            active: true,
+          });
+          if (error) throw error;
+        }
+
+        if (input.alsoToday !== false) {
+          const { data: day } = await supabase
+            .from("checklist_days")
+            .select("id, status")
+            .eq("store_id", storeId)
+            .eq("checklist_date", iso)
+            .eq("template_id", tpl.id)
+            .maybeSingle();
+          if (day && (day as any).status !== "completed") {
+            const { data: dup } = await supabase
+              .from("checklist_items")
+              .select("id")
+              .eq("day_id", (day as any).id)
+              .eq("section", input.item.section)
+              .eq("task", input.item.task)
+              .maybeSingle();
+            if (!dup) {
+              const { data: last } = await supabase
+                .from("checklist_items")
+                .select("sort_order")
+                .eq("day_id", (day as any).id)
+                .order("sort_order", { ascending: false })
+                .limit(1);
+              await supabase.from("checklist_items").insert({
+                day_id: (day as any).id,
+                section: input.item.section,
+                task: input.item.task,
+                time_label: input.item.time_label ?? null,
+                category: input.item.category ?? null,
+                sort_order: ((last?.[0]?.sort_order as number) ?? 0) + 10,
+              });
+              await resequenceDay((day as any).id);
+            }
+          }
+        }
+      }
+      return input.targetStoreIds.length;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["checklist-templates"] });
+      qc.invalidateQueries({ queryKey: ["checklist-day"] });
+    },
+  });
+}
