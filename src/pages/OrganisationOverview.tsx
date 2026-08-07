@@ -293,22 +293,7 @@ export default function OrganisationOverview() {
       </div>
 
       {/* KPI Row */}
-      {isShop ? (
-        <div className="grid grid-cols-2 gap-2 sm:gap-3">
-          <KpiCard
-            title="Lagervärde"
-            value={`${Math.round(totalInventoryValue).toLocaleString("sv-SE")} kr`}
-            subtitle={`${Math.round(totalStock).toLocaleString("sv-SE")} kg · grossist ${Math.round(totalInventoryWholesale).toLocaleString("sv-SE")} kr`}
-            icon={Package}
-          />
-          <KpiCard
-            title="Ordrar"
-            value={`${shopOrders.length} st`}
-            subtitle={`${openOrders} aktuella ordrar · ${openDeliveryNotes} inleveranser`}
-            icon={ShoppingCart}
-          />
-        </div>
-      ) : (
+      {isShop ? null : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
 
           <KpiCard
