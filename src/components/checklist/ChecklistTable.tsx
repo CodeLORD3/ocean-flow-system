@@ -691,18 +691,22 @@ export function ChecklistTable({
                   </td>
 
                   <td className="px-1 py-1.5 text-center">
-                    {!locked && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                        onClick={() => setPendingDelete(row.item)}
-                        aria-label={`Ta bort ${row.item.task}`}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
+                    <div className="flex items-center justify-center">
+                      {!readOnly && copyTask(row.item, "sm")}
+                      {!locked && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                          onClick={() => setPendingDelete(row.item)}
+                          aria-label={`Ta bort ${row.item.task}`}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
                   </td>
+
                 </tr>
               );
             })}
