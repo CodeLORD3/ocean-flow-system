@@ -180,14 +180,11 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
     }
   };
 
-  const canHardDelete =
-    !!deleteTarget &&
-    (isAdmin ||
-      (deleteTarget.store_id === storeId && deleteTarget.id !== DEFAULT_CHECKLIST_TEMPLATE_ID));
+  const canHardDelete = !!deleteTarget;
 
   const handleHardDelete = async (tpl: ChecklistTemplate) => {
     try {
-      await hardDelete.mutateAsync({ id: tpl.id, force: isAdmin });
+      await hardDelete.mutateAsync({ id: tpl.id, force: true });
       setDeleteTarget(null);
       toast.success(`"${tpl.name}" raderades permanent`);
     } catch (e: any) {
