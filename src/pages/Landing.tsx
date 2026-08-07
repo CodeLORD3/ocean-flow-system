@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useLandingSettings } from "@/hooks/useLandingSettings";
+import logoAsset from "@/assets/fiskskaldjur-logo.png.asset.json";
 
 export default function Landing() {
   const { session, loading } = useStaffAuth();
