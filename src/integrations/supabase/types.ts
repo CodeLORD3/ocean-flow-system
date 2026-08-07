@@ -1939,18 +1939,45 @@ export type Database = {
       }
       landing_settings: {
         Row: {
+          card_subtitle: string
+          card_title: string
           headline: string
+          headline_color: string
+          headline_font: string
+          headline_size: number
+          headline_weight: number
           id: string
+          logo_size: number
+          logo_url: string | null
+          subheadline: string
           updated_at: string
         }
         Insert: {
+          card_subtitle?: string
+          card_title?: string
           headline?: string
+          headline_color?: string
+          headline_font?: string
+          headline_size?: number
+          headline_weight?: number
           id?: string
+          logo_size?: number
+          logo_url?: string | null
+          subheadline?: string
           updated_at?: string
         }
         Update: {
+          card_subtitle?: string
+          card_title?: string
           headline?: string
+          headline_color?: string
+          headline_font?: string
+          headline_size?: number
+          headline_weight?: number
           id?: string
+          logo_size?: number
+          logo_url?: string | null
+          subheadline?: string
           updated_at?: string
         }
         Relationships: []
