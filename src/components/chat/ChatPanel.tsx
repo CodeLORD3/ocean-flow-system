@@ -472,17 +472,7 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
                 </p>
               ) : (
                 <>
-                  {!showOlder && olderCount > 0 && (
-                    <div className="flex justify-center py-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setShowOlder(true)}
-                        className="rounded-full bg-muted px-2.5 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground"
-                      >
-                        Visa tidigare meddelanden ({olderCount})
-                      </button>
-                    </div>
-                  )}
+
                   {visibleMessages.length === 0 ? (
                     <p className="text-[11px] text-muted-foreground text-center py-8">
                       Inga meddelanden idag.
