@@ -463,20 +463,34 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
           <div className="flex flex-col min-w-0">
             <div
               ref={scrollRef}
+              onScroll={handleScroll}
               className={cn("overflow-y-auto overflow-x-hidden space-y-1.5 pr-1", msgHeight)}
             >
               {!activeConv ? (
                 <p className="text-[11px] text-muted-foreground text-center py-8">
                   {isStore ? "Öppnar chatten med Grossist…" : "Ingen chatt vald."}
                 </p>
-              ) : messages.length === 0 ? (
-                <p className="text-[11px] text-muted-foreground text-center py-8">
-                  {isStore ? "Skriv ett meddelande till Grossist för att börja." : "Inga meddelanden ännu."}
-                </p>
               ) : (
-                messages.map((m, i) => {
+                <>
+                  {!showOlder && olderCount > 0 && (
+                    <div className="flex justify-center py-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setShowOlder(true)}
+                        className="rounded-full bg-muted px-2.5 py-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground"
+                      >
+                        Visa tidigare meddelanden ({olderCount})
+                      </button>
+                    </div>
+                  )}
+                  {visibleMessages.length === 0 ? (
+                    <p className="text-[11px] text-muted-foreground text-center py-8">
+                      Inga meddelanden idag.
+                    </p>
+                  ) : (
+                visibleMessages.map((m, i) => {
                   const mine = m.sender_portal_key === portal.key;
-                  const prev = i > 0 ? messages[i - 1] : null;
+                  const prev = i > 0 ? visibleMessages[i - 1] : null;
                   const showDay =
                     !prev ||
                     new Date(prev.created_at).toDateString() !== new Date(m.created_at).toDateString();
