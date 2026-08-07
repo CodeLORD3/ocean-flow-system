@@ -105,11 +105,12 @@ export function DailyReportsArchive() {
 
                 {open && (
                   <div className="px-3 pb-3 pt-1 space-y-3 bg-muted/20">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                       {[
                         ["Brutto", `${nf(r.gross_sales)} kr`],
                         ["Netto", `${nf(r.net_sales)} kr`],
                         ["Kvitton", nf(r.receipt_count)],
+                        ["Snittköp", r.receipt_count ? `${((r.gross_sales ?? 0) / r.receipt_count).toFixed(2)} kr` : "—"],
                         ["Största köp", `${nf(r.largest_sale)} kr`],
                       ].map(([label, value]) => (
                         <div key={label as string}>
@@ -119,30 +120,82 @@ export function DailyReportsArchive() {
                       ))}
                     </div>
 
-                    {(r.waste_items ?? []).length > 0 && (
-                      <div>
-                        <p className="text-[11px] text-muted-foreground mb-1">
-                          Svinn — totalt {nf(waste)} kr
-                        </p>
-                        <div className="space-y-0.5">
-                          {r.waste_items.map((w, i) => (
-                            <p key={i} className="text-xs">
-                              {w.item} · {w.weight_kg ?? "—"} kg · {nf(w.value_sek)} kr
-                              {w.reason ? ` · ${w.reason}` : ""}
-                            </p>
+                    <div>
+                      <p className="text-[11px] text-muted-foreground mb-1">
+                        Personal som arbetade — totalt {totalHours(r).toFixed(2)} h
+                      </p>
+                      {(r.staff_entries ?? []).length === 0 ? (
+                        <p className="text-xs text-muted-foreground">Ingen personal rapporterad.</p>
+                      ) : (
+                        <div className="rounded border divide-y bg-background">
+                          {r.staff_entries.map((e, i) => (
+                            <div key={i} className="flex flex-wrap items-center gap-2 px-2 py-1 text-xs">
+                              <span className="font-medium">{staffName(e.staff_id)}</span>
+                              <span className="font-mono tabular-nums text-muted-foreground">
+                                {e.start || "—"}–{e.end || "—"}
+                              </span>
+                              <span className="font-mono tabular-nums text-muted-foreground">
+                                {hours(e.start, e.end).toFixed(2)} h
+                              </span>
+                              {e.deviation && e.deviation !== "none" && (
+                                <Badge variant="outline" className="text-[10px]">
+                                  {e.deviation}
+                                </Badge>
+                              )}
+                              {e.deviation_note && (
+                                <span className="text-muted-foreground">{e.deviation_note}</span>
+                              )}
+                            </div>
                           ))}
                         </div>
-                      </div>
-                    )}
+                      )}
+                      {r.staff_notes && (
+                        <p className="text-xs whitespace-pre-wrap mt-1">{r.staff_notes}</p>
+                      )}
+                    </div>
 
-                    {r.comment && (
-                      <div>
-                        <p className="text-[11px] text-muted-foreground mb-1">Dagens kommentar</p>
-                        <p className={cn("text-xs whitespace-pre-wrap")}>{r.comment}</p>
-                      </div>
-                    )}
+                    <div>
+                      <p className="text-[11px] text-muted-foreground mb-1">
+                        Svinn / kastade varor — {nf(wasteKg)} kg · {nf(waste)} kr
+                        {r.gross_sales ? ` · ${((waste / r.gross_sales) * 100).toFixed(1)}% av brutto` : ""}
+                      </p>
+                      {(r.waste_items ?? []).length === 0 ? (
+                        <p className="text-xs text-muted-foreground">Inget svinn rapporterat.</p>
+                      ) : (
+                        <div className="rounded border divide-y bg-background">
+                          {r.waste_items.map((w, i) => (
+                            <div key={i} className="flex flex-wrap items-center gap-2 px-2 py-1 text-xs">
+                              <span className="font-medium">{w.item || "—"}</span>
+                              <span className="font-mono tabular-nums text-muted-foreground">
+                                {w.weight_kg ?? "—"} kg
+                              </span>
+                              <span className="font-mono tabular-nums text-muted-foreground">
+                                {nf(w.value_sek)} kr
+                              </span>
+                              {w.reason && <span className="text-muted-foreground">{w.reason}</span>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <p className="text-[11px] text-muted-foreground mb-1">Dagens kommentar</p>
+                      <p className={cn("text-xs whitespace-pre-wrap")}>
+                        {r.comment || <span className="text-muted-foreground">Ingen kommentar.</span>}
+                      </p>
+                    </div>
+
+                    <p className="text-[10px] text-muted-foreground">
+                      Sparad{" "}
+                      {new Date(r.updated_at || r.created_at).toLocaleString("sv-SE", {
+                        dateStyle: "short",
+                        timeStyle: "short",
+                      })}
+                    </p>
                   </div>
                 )}
+
               </div>
             );
           })}
