@@ -76,6 +76,34 @@ export function ChecklistTable({
   const { data: pendingRequests = [] } = useSignatureRequests(readOnly ? null : day.id);
   const { staff } = useStaffAuth();
   const isAdmin = ((staff?.portal_access ?? []) as string[]).includes("admin");
+  const { data: templates = [] } = useChecklistTemplates(isAdmin ? day.store_id : null);
+  const activeTemplate = templates.find((t) => t.id === (day.template_id ?? "")) ?? null;
+  const copyTask = (item: ChecklistItem, size: "sm" | "md") =>
+    isAdmin && activeTemplate ? (
+      <ChecklistCopyDialog
+        template={activeTemplate}
+        sourceStoreId={day.store_id}
+        date={day.checklist_date}
+        item={{
+          section: item.section,
+          task: item.task,
+          time_label: item.time_label,
+          category: item.category,
+        }}
+        trigger={
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`${size === "sm" ? "h-7 w-7" : "h-8 w-8"} shrink-0 text-muted-foreground hover:text-primary`}
+            aria-label={`Kopiera "${item.task}" till andra butiker`}
+            title="Kopiera uppgift till andra butiker"
+          >
+            <Copy className={size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4"} />
+          </Button>
+        }
+      />
+    ) : null;
+
 
   const toggle = useToggleChecklistItem();
   const setNote = useSetChecklistNote();
