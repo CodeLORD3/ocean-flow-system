@@ -145,6 +145,7 @@ function AssetSection({
   addLabel, regLabel, deleteConfirmLabel,
   toastAdded, toastDeleted, emptyLabel,
 }: AssetSectionProps) {
+  const { flashClass } = useNotificationFlash("vehicle");
   const qc = useQueryClient();
   const itemsKey = [itemTable];
   const colsKey = [columnsTable];
@@ -539,7 +540,6 @@ function CellEditor({
   type?: "text" | "number";
   render?: (val: string) => React.ReactNode;
 }) {
-  const { flashClass } = useNotificationFlash("vehicle");
   const [editing, setEditing] = useState(false);
   const [val, setVal] = useState(String(value ?? ""));
 
