@@ -498,6 +498,65 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={!!renameTarget} onOpenChange={(o) => !o && setRenameTarget(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Byt namn på checklistan</DialogTitle>
+          </DialogHeader>
+          <Input
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleRename();
+            }}
+          />
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setRenameTarget(null)}>
+              Avbryt
+            </Button>
+            <Button onClick={handleRename} disabled={rename.isPending || !renameValue.trim()}>
+              Spara
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ta bort "{deleteTarget?.name}"</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Arkivera döljer listan i menyn men behåller historiken. Radera permanent tar bort listan,
+            alla dess uppgifter och all historik — det går inte att ångra.
+          </p>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setDeleteTarget(null)}>
+              Avbryt
+            </Button>
+            <Button
+              variant="outline"
+              disabled={archive.isPending}
+              onClick={async () => {
+                if (!deleteTarget) return;
+                await handleArchive(deleteTarget.id, deleteTarget.name);
+                setDeleteTarget(null);
+              }}
+            >
+              Arkivera
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={hardDelete.isPending}
+              onClick={() => deleteTarget && handleHardDelete(deleteTarget)}
+            >
+              Radera permanent
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
