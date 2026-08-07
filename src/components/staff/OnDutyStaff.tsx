@@ -133,38 +133,6 @@ export function OnDutyStaff({ storeId }: { storeId?: string | null }) {
         </div>
       </div>
 
-      {/* Stämpelklockan — till höger om kortet */}
-      {staff && (
-        <div className="flex shrink-0 flex-col items-stretch justify-center gap-0.5">
-          {myShift ? (
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 gap-1.5 border-destructive/40 text-xs font-semibold"
-              onClick={() => setConfirm("out")}
-              disabled={clockOut.isPending}
-            >
-              <LogOut className="h-3.5 w-3.5" /> Stämpla ut
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              className="h-8 gap-1.5 text-xs font-semibold"
-              onClick={() => setConfirm("in")}
-              disabled={clockIn.isPending || !storeId}
-            >
-              <LogIn className="h-3.5 w-3.5" /> Stämpla in
-            </Button>
-          )}
-          <p className="text-[10px] leading-tight text-muted-foreground tabular-nums text-center sm:text-right">
-            {myShift
-              ? `Instämplad ${shiftClock(myShift.clocked_in_at)}${myStoreName ? ` · ${myStoreName}` : ""}`
-              : storeId
-                ? "Ej instämplad"
-                : "Välj butik"}
-          </p>
-        </div>
-      )}
 
 
       <AlertDialog open={confirm !== null} onOpenChange={(o) => !o && setConfirm(null)}>
