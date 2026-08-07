@@ -200,23 +200,36 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
     [messages, showOlder, todayStr]
   );
 
+  const skipAutoScroll = useRef(false);
   useEffect(() => {
+    if (skipAutoScroll.current) {
+      skipAutoScroll.current = false;
+      return;
+    }
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [visibleMessages.length, activeConv?.id]);
+
+
+  const revealOlder = () => {
+    if (showOlder || olderCount === 0) return;
+    skipAutoScroll.current = true;
+
+    const el = scrollRef.current;
+    const prevHeight = el?.scrollHeight ?? 0;
+    setShowOlder(true);
+    requestAnimationFrame(() => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight - prevHeight;
+      }
+    });
+  };
 
   const handleScroll = () => {
     const el = scrollRef.current;
     if (!el) return;
-    if (el.scrollTop <= 8 && !showOlder && olderCount > 0) {
-      const prevHeight = el.scrollHeight;
-      setShowOlder(true);
-      requestAnimationFrame(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop = scrollRef.current.scrollHeight - prevHeight;
-        }
-      });
-    }
+    if (el.scrollTop <= 8) revealOlder();
   };
+
 
 
   // Markera den öppna chatten som läst när nya meddelanden visas
@@ -464,6 +477,9 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
             <div
               ref={scrollRef}
               onScroll={handleScroll}
+              onWheel={(e) => {
+                if (e.deltaY < 0) revealOlder();
+              }}
               className={cn("overflow-y-auto overflow-x-hidden space-y-1.5 pr-1", msgHeight)}
             >
               {!activeConv ? (
@@ -472,6 +488,9 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
                 </p>
               ) : (
                 <>
+                  {/* Gör listan scrollbar uppåt även när dagen är tom — scroll upp laddar historiken */}
+                  {!showOlder && olderCount > 0 && <div aria-hidden className="h-16 shrink-0" />}
+
 
                   {visibleMessages.length === 0 ? (
                     <p className="text-[11px] text-muted-foreground text-center py-8">
@@ -622,21 +641,8 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
                     handleSend();
                   }
                 }}
-                onFocus={() => {
-                  // Ladda in historiken när man börjar skriva — ingen knapp behövs
-                  if (!showOlder && olderCount > 0) {
-                    const el = scrollRef.current;
-                    const prevHeight = el?.scrollHeight ?? 0;
-                    setShowOlder(true);
-                    requestAnimationFrame(() => {
-                      if (scrollRef.current) {
-                        scrollRef.current.scrollTop =
-                          scrollRef.current.scrollHeight - prevHeight;
-                      }
-                    });
-                  }
-                }}
                 enterKeyHint="send"
+
 
                 autoCapitalize="sentences"
                 placeholder={activeConv ? "Skriv meddelande..." : "Välj en chatt först"}
