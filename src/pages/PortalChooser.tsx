@@ -28,10 +28,11 @@ export default function PortalChooser() {
   useEffect(() => {
     if (loading || !staff || needsPwd) return;
     if (access.length === 1) {
+      if (access[0] === "shop" && stores.length === 0) return; // wait for stores
       enterPortal(access[0]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, staff?.id, needsPwd]);
+  }, [loading, staff?.id, needsPwd, stores.length]);
 
   if (loading) {
     return (
