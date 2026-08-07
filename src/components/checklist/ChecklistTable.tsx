@@ -33,6 +33,7 @@ import {
   useSetChecklistItemTime,
   useAddChecklistItem,
   useDeleteChecklistItem,
+  useEditChecklistItem,
   useChecklistTemplates,
   weekdayName,
 } from "@/hooks/useChecklist";
