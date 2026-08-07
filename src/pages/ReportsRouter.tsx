@@ -3,12 +3,14 @@ import ShopReportsPage from "./ShopReports";
 import PurchaseReportsArchive from "./PurchaseReportsArchive";
 import ProductionReportsArchive from "./ProductionReportsArchive";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronDown, ChevronRight, FileText, Factory } from "lucide-react";
+import { ChevronDown, ChevronRight, FileText, Factory, Receipt } from "lucide-react";
+import { DailyReportsArchive } from "@/components/dashboard/DailyReportsArchive";
 import { useState } from "react";
 
 function WholesaleReportsPage() {
   const [purchaseOpen, setPurchaseOpen] = useState(false);
   const [productionOpen, setProductionOpen] = useState(false);
+  const [dailyOpen, setDailyOpen] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -46,6 +48,23 @@ function WholesaleReportsPage() {
         {productionOpen && (
           <CardContent className="pt-0 px-4 pb-4">
             <ProductionReportsArchive />
+          </CardContent>
+        )}
+      </Card>
+      <Card>
+        <CardHeader
+          className="cursor-pointer hover:bg-muted/30 transition-colors py-3 px-4"
+          onClick={() => setDailyOpen(!dailyOpen)}
+        >
+          <div className="flex items-center gap-2">
+            {dailyOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+            <Receipt className="h-4 w-4 text-primary" />
+            <CardTitle className="text-sm font-medium">Dagsrapporter (butiker)</CardTitle>
+          </div>
+        </CardHeader>
+        {dailyOpen && (
+          <CardContent className="pt-0 px-4 pb-4">
+            <DailyReportsArchive />
           </CardContent>
         )}
       </Card>
