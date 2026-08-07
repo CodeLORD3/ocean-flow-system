@@ -298,16 +298,26 @@ export function useDailyChecklist(storeId?: string | null, date?: string, templa
         const { data: tpl, error: tErr } = await supabase
           .from("checklist_template_items")
           .select("*")
-          .eq("active", true)
           .eq("template_id", tplId)
           .or(`store_id.is.null,store_id.eq.${storeId}`)
           .order("sort_order");
         if (tErr) throw tErr;
-        if (tpl && tpl.length > 0) {
+
+        // Butiksspecifika inaktiva rader döljer motsvarande globala mallrad.
+        const suppressed = new Set(
+          (tpl || [])
+            .filter((t: any) => t.store_id === storeId && !t.active)
+            .map((t: any) => `${t.section}|${t.task}`)
+        );
+        const usable = (tpl || []).filter(
+          (t: any) => t.active && !suppressed.has(`${t.section}|${t.task}`)
+        );
+
+        if (usable.length > 0) {
           const { data: inserted, error: insErr } = await supabase
             .from("checklist_items")
             .insert(
-              tpl.map((t: any) => ({
+              usable.map((t: any) => ({
                 day_id: day!.id,
                 section: t.section,
                 time_label: t.time_label,
@@ -321,6 +331,7 @@ export function useDailyChecklist(storeId?: string | null, date?: string, templa
           items = (inserted || []).sort((a: any, b: any) => a.sort_order - b.sort_order);
         }
       }
+
 
 
       return { day: day as ChecklistDay, items: (items || []) as ChecklistItem[] };
