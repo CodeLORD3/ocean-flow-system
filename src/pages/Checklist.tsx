@@ -560,9 +560,9 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             Arkivera döljer listan i menyn men behåller historiken — en admin kan återställa den igen.
-            {isAdmin
+            {canHardDelete
               ? " Radera permanent tar bort listan, alla dess uppgifter och all historik — det går inte att ångra."
-              : " Permanent radering kan bara göras av en admin."}
+              : " Permanent radering av gemensamma listor kan bara göras av en admin."}
           </p>
           {isAdmin && deleteTarget && deleteTarget.store_id === null && (
             <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
@@ -585,7 +585,7 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
             >
               Arkivera
             </Button>
-            {isAdmin && (
+            {canHardDelete && (
               <Button
                 variant="destructive"
                 disabled={hardDelete.isPending}
