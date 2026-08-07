@@ -473,6 +473,7 @@ export function ChecklistTable({
 
                   </div>
                 </div>
+                {!readOnly && copyTask(row.item, "md")}
                 {!locked && (
                   <Button
                     variant="ghost"
@@ -484,6 +485,7 @@ export function ChecklistTable({
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 )}
+
               </div>
               <div className="mt-1.5 pl-[3.25rem]">
                 {locked ? (
