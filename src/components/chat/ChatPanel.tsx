@@ -183,9 +183,41 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
 
   const { data: messages = [] } = useChatMessages(activeConv?.id);
 
+  // Chatten börjar tom varje ny dag: bara dagens meddelanden visas.
+  // Scrollar man upp (eller klickar) laddas tidigare konversationer in.
+  const [showOlder, setShowOlder] = useState(false);
+  useEffect(() => {
+    setShowOlder(false);
+  }, [activeConv?.id]);
+
+  const todayStr = new Date().toDateString();
+  const olderCount = useMemo(
+    () => messages.filter((m) => new Date(m.created_at).toDateString() !== todayStr).length,
+    [messages, todayStr]
+  );
+  const visibleMessages = useMemo(
+    () => (showOlder ? messages : messages.filter((m) => new Date(m.created_at).toDateString() === todayStr)),
+    [messages, showOlder, todayStr]
+  );
+
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [messages.length, activeConv?.id]);
+  }, [visibleMessages.length, activeConv?.id]);
+
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    if (el.scrollTop <= 8 && !showOlder && olderCount > 0) {
+      const prevHeight = el.scrollHeight;
+      setShowOlder(true);
+      requestAnimationFrame(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight - prevHeight;
+        }
+      });
+    }
+  };
+
 
   // Markera den öppna chatten som läst när nya meddelanden visas
   const convId = activeConv?.id;
