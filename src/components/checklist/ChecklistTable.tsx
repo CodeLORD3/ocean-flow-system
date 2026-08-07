@@ -753,7 +753,36 @@ export function ChecklistTable({
           )}
         </div>
       </div>
+
+      <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ta bort uppgift</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{pendingDelete?.task}" — vill du ta bort den bara idag eller permanent från checklistan?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <Button
+              variant="outline"
+              disabled={removeItem.isPending}
+              onClick={() => pendingDelete && removeTask(pendingDelete, false)}
+            >
+              Bara idag
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={removeItem.isPending}
+              onClick={() => pendingDelete && removeTask(pendingDelete, true)}
+            >
+              Ta bort permanent
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
+
   );
 }
 
