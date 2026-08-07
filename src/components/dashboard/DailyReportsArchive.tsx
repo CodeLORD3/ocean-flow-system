@@ -32,13 +32,32 @@ function useAllDailyReports() {
 const nf = (v: number | null | undefined) =>
   v == null ? "—" : v.toLocaleString("sv-SE", { maximumFractionDigits: 0 });
 
+function hours(start?: string, end?: string) {
+  if (!start || !end) return 0;
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  if ([sh, sm, eh, em].some((n) => Number.isNaN(n))) return 0;
+  const diff = eh * 60 + em - (sh * 60 + sm);
+  return diff > 0 ? diff / 60 : 0;
+}
+
+function totalHours(r: DailyReport) {
+  return (r.staff_entries ?? []).reduce((a, e) => a + hours(e.start, e.end), 0);
+}
+
 export function DailyReportsArchive() {
   const { data: reports = [], isLoading } = useAllDailyReports();
   const { data: stores = [] } = useStores(true);
+  const { data: staff = [] } = useStaff();
   const [storeFilter, setStoreFilter] = useState<string>("all");
   const [openId, setOpenId] = useState<string | null>(null);
 
   const storeName = (id: string) => stores.find((s) => s.id === id)?.name ?? "Butik";
+  const staffName = (id: string) => {
+    const s = staff.find((p) => p.id === id);
+    return s ? `${s.first_name} ${s.last_name}` : "Personal";
+  };
+
 
   const rows = useMemo(
     () => (storeFilter === "all" ? reports : reports.filter((r) => r.store_id === storeFilter)),
