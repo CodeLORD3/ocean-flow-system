@@ -118,6 +118,7 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
   allowedWeekdays: Set<number> | null;
   isDateDisabled: (date: Date) => boolean;
 }) {
+  const { flashClass } = useNotificationFlash("shop_order");
   const [FolljesedelOrder, setFolljesedelOrder] = useState<any>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -218,7 +219,6 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
 }
 
 export default function ShopOrders() {
-  const { flashClass } = useNotificationFlash("shop_order");
   const { toast } = useToast();
   const qc = useQueryClient();
   const { activeStoreId } = useSite();

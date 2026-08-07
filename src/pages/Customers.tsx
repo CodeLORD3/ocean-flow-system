@@ -25,6 +25,7 @@ import { useNotificationFlash } from "@/lib/notificationFlash";
 
 /* ===== Wholesale view: Customers with store linking ===== */
 function WholesaleCustomers() {
+  const { flashClass } = useNotificationFlash("customer");
   const { data: allCustomers = [], isLoading: customersLoading } = useCustomers();
   const { data: stores = [] } = useStores();
   const createCustomer = useCreateCustomer();
@@ -246,6 +247,7 @@ function WholesaleCustomers() {
 
 /* ===== Shop view: Original customer table ===== */
 function ShopCustomers() {
+  const { flashClass } = useNotificationFlash("customer");
   const { toast } = useToast();
   const { activeStoreId } = useSite();
   const { data: allCustomers = [], isLoading } = useCustomers();
@@ -401,7 +403,6 @@ function ShopCustomers() {
 
 /* ===== Main export: switches by portal ===== */
 export default function Customers() {
-  const { flashClass } = useNotificationFlash("customer");
   const { site } = useSite();
   return site === "wholesale" ? <WholesaleCustomers /> : <ShopCustomers />;
 }

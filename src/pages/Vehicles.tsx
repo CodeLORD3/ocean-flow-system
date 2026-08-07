@@ -90,7 +90,6 @@ function StatusPill({ status }: { status: string | null }) {
 }
 
 export default function Vehicles() {
-  const { flashClass } = useNotificationFlash("vehicle");
   return (
     <div className="p-6 space-y-8">
       <AssetSection
@@ -540,6 +539,7 @@ function CellEditor({
   type?: "text" | "number";
   render?: (val: string) => React.ReactNode;
 }) {
+  const { flashClass } = useNotificationFlash("vehicle");
   const [editing, setEditing] = useState(false);
   const [val, setVal] = useState(String(value ?? ""));
 
