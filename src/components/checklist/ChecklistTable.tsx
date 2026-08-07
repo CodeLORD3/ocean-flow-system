@@ -133,16 +133,47 @@ export function ChecklistTable({
 
   const submitAdd = (section: string) => {
     addItem.mutate(
-      { dayId: day.id, section, task: addDraft.task, time: addDraft.time, category: addDraft.category },
+      {
+        dayId: day.id,
+        section,
+        task: addDraft.task,
+        time: addDraft.time,
+        category: addDraft.category,
+        templateId: day.template_id ?? null,
+        storeId: day.store_id,
+        persist: true,
+      },
       {
         onSuccess: () => {
           setAddDraft({ task: "", time: "", category: "" });
-          toast.success("Uppgiften tillagd.");
+          toast.success("Uppgiften tillagd — den finns kvar kommande dagar.");
         },
         onError: (e: any) => toast.error(e.message || "Kunde inte lägga till uppgiften."),
       }
     );
   };
+
+  const removeTask = (item: ChecklistItem, persist: boolean) => {
+    removeItem.mutate(
+      {
+        id: item.id,
+        dayId: day.id,
+        persist,
+        templateId: day.template_id ?? null,
+        storeId: day.store_id,
+        section: item.section,
+        task: item.task,
+      },
+      {
+        onSuccess: () => {
+          setPendingDelete(null);
+          toast.success(persist ? "Uppgiften togs bort permanent." : "Uppgiften togs bort för idag.");
+        },
+        onError: (e: any) => toast.error(e.message || "Kunde inte ta bort uppgiften."),
+      }
+    );
+  };
+
 
   const openAdd = (section: string) => {
     setAddSection(section);
