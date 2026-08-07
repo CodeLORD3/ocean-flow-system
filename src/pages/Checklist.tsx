@@ -182,7 +182,7 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
 
   const handleHardDelete = async (tpl: ChecklistTemplate) => {
     try {
-      await hardDelete.mutateAsync(tpl.id);
+      await hardDelete.mutateAsync({ id: tpl.id, force: isAdmin });
       setDeleteTarget(null);
       toast.success(`"${tpl.name}" raderades permanent`);
     } catch (e: any) {
@@ -279,7 +279,7 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
             />
           </span>
         )}
-        {t.id !== DEFAULT_CHECKLIST_TEMPLATE_ID && t.store_id === storeId && (
+        {(isAdmin || (t.id !== DEFAULT_CHECKLIST_TEMPLATE_ID && t.store_id === storeId)) && (
           <>
             <span
               role="button"
@@ -564,6 +564,12 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
               ? " Radera permanent tar bort listan, alla dess uppgifter och all historik — det går inte att ångra."
               : " Permanent radering kan bara göras av en admin."}
           </p>
+          {isAdmin && deleteTarget && deleteTarget.store_id === null && (
+            <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              Detta är en gemensam checklista som gäller alla butiker — permanent radering tar bort den
+              för samtliga butiker.
+            </p>
+          )}
           <DialogFooter className="gap-2">
             <Button variant="ghost" onClick={() => setDeleteTarget(null)}>
               Avbryt

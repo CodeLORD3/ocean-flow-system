@@ -264,8 +264,12 @@ export function useArchiveChecklistTemplate() {
 export function useDeleteChecklistTemplate() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      if (id === DEFAULT_CHECKLIST_TEMPLATE_ID) throw new Error("Standardlistan kan inte raderas.");
+    mutationFn: async (input: string | { id: string; force?: boolean }) => {
+      const id = typeof input === "string" ? input : input.id;
+      const force = typeof input === "string" ? false : !!input.force;
+      if (id === DEFAULT_CHECKLIST_TEMPLATE_ID && !force) {
+        throw new Error("Standardlistan kan bara raderas permanent av en admin.");
+      }
       const { data: days } = await supabase
         .from("checklist_days")
         .select("id")
