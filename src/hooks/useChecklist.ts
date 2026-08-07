@@ -139,6 +139,35 @@ export function useArchiveChecklistTemplate() {
   });
 }
 
+/** Raderar en checklista permanent (inkl. dagar, rader och mallrader). */
+export function useDeleteChecklistTemplate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (id === DEFAULT_CHECKLIST_TEMPLATE_ID) throw new Error("Standardlistan kan inte raderas.");
+      const { data: days } = await supabase
+        .from("checklist_days")
+        .select("id")
+        .eq("template_id", id);
+      const dayIds = (days || []).map((d: any) => d.id);
+      if (dayIds.length > 0) {
+        await supabase.from("checklist_items").delete().in("day_id", dayIds);
+        await supabase.from("checklist_days").delete().in("id", dayIds);
+      }
+      await supabase.from("checklist_template_items").delete().eq("template_id", id);
+      const { error } = await supabase.from("checklist_templates").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["checklist-templates"] });
+      qc.invalidateQueries({ queryKey: ["checklist-day"] });
+      qc.invalidateQueries({ queryKey: ["checklist-history"] });
+      qc.invalidateQueries({ queryKey: ["checklist-today-status"] });
+    },
+  });
+}
+
+
 /** Sätter vilka veckodagar en checklista gäller (tom = alla dagar). */
 export function useSetTemplateWeekdays() {
   const qc = useQueryClient();
