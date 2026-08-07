@@ -144,6 +144,8 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
   const [openHistoryDay, setOpenHistoryDay] = useState<any | null>(null);
   const [newOpen, setNewOpen] = useState(false);
   const [newName, setNewName] = useState("");
+  const [newWeekdays, setNewWeekdays] = useState<number[]>([]);
+
   const [showAllHistory, setShowAllHistory] = useState(false);
 
   const create = useCreateChecklistTemplate();
@@ -163,13 +165,18 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
   const handleCreate = async () => {
     try {
       const tpl = await create.mutateAsync({ name: newName, storeId });
+      if (newWeekdays.length > 0 && newWeekdays.length < 7) {
+        await setWeekdays.mutateAsync({ id: tpl.id, weekdays: newWeekdays });
+      }
       setNewName("");
+      setNewWeekdays([]);
       setNewOpen(false);
       toast.success(`Checklistan "${tpl.name}" skapad`);
     } catch (e: any) {
       toast.error(e?.message ?? "Kunde inte skapa checklistan");
     }
   };
+
 
   const handleArchive = async (id: string, name: string) => {
     try {
@@ -348,9 +355,42 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
                 if (e.key === "Enter") handleCreate();
               }}
             />
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-medium text-foreground">Vilka dagar ska den göras?</p>
+              <div className="flex flex-wrap gap-1.5">
+                {[1, 2, 3, 4, 5, 6, 0].map((d) => {
+                  const on = newWeekdays.includes(d);
+                  return (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() =>
+                        setNewWeekdays((prev) =>
+                          prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d],
+                        )
+                      }
+                      className={cn(
+                        "rounded-md border px-2 py-1 text-[11px] font-medium transition-colors",
+                        on
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border text-muted-foreground hover:border-primary/40",
+                      )}
+                    >
+                      {WEEKDAY_SHORT[d]}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                {newWeekdays.length === 0 || newWeekdays.length === 7
+                  ? "Inga dagar valda = listan gäller alla dagar."
+                  : `Schemaläggs: ${[1, 2, 3, 4, 5, 6, 0].filter((d) => newWeekdays.includes(d)).map((d) => WEEKDAY_SHORT[d]).join(", ")}`}
+              </p>
+            </div>
             <p className="text-[11px] text-muted-foreground">
               Listan skapas tom — lägg till uppgifterna direkt i tabellen.
             </p>
+
             <DialogFooter>
               <Button variant="ghost" onClick={() => setNewOpen(false)}>
                 Avbryt
