@@ -180,14 +180,11 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
     }
   };
 
-  const canHardDelete =
-    !!deleteTarget &&
-    (isAdmin ||
-      (deleteTarget.store_id === storeId && deleteTarget.id !== DEFAULT_CHECKLIST_TEMPLATE_ID));
+  const canHardDelete = !!deleteTarget;
 
   const handleHardDelete = async (tpl: ChecklistTemplate) => {
     try {
-      await hardDelete.mutateAsync({ id: tpl.id, force: isAdmin });
+      await hardDelete.mutateAsync({ id: tpl.id, force: true });
       setDeleteTarget(null);
       toast.success(`"${tpl.name}" raderades permanent`);
     } catch (e: any) {
@@ -284,33 +281,33 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
             />
           </span>
         )}
-        {(isAdmin || (t.id !== DEFAULT_CHECKLIST_TEMPLATE_ID && t.store_id === storeId)) && (
-          <>
-            <span
-              role="button"
-              aria-label={`Byt namn på ${t.name}`}
-              className="shrink-0 text-muted-foreground hover:text-primary"
-              onClick={(e) => {
-                e.stopPropagation();
-                setRenameTarget(t);
-                setRenameValue(t.name);
-              }}
-            >
-              <Pencil className="h-3.5 w-3.5" />
-            </span>
-            <span
-              role="button"
-              aria-label={`Ta bort ${t.name}`}
-              className="shrink-0 text-destructive"
-              onClick={(e) => {
-                e.stopPropagation();
-                setDeleteTarget(t);
-              }}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </span>
-          </>
-        )}
+        <>
+          <span
+            role="button"
+            aria-label={`Byt namn på ${t.name}`}
+            className="shrink-0 text-muted-foreground hover:text-primary"
+            onClick={(e) => {
+              e.stopPropagation();
+              setRenameTarget(t);
+              setRenameValue(t.name);
+            }}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </span>
+          <span
+            role="button"
+            aria-label={`Radera ${t.name}`}
+            title="Radera checklista"
+            className="shrink-0 text-destructive hover:text-destructive/80"
+            onClick={(e) => {
+              e.stopPropagation();
+              setDeleteTarget(t);
+            }}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </span>
+        </>
+
 
         <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground" />
       </button>
@@ -564,12 +561,10 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
             <DialogTitle>Ta bort "{deleteTarget?.name}"</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Arkivera döljer listan i menyn men behåller historiken — en admin kan återställa den igen.
-            {canHardDelete
-              ? " Radera permanent tar bort listan, alla dess uppgifter och all historik — det går inte att ångra."
-              : " Permanent radering av gemensamma listor kan bara göras av en admin."}
+            Arkivera döljer listan i menyn men behåller historiken — den kan återställas senare. Radera
+            permanent tar bort listan, alla dess uppgifter och all historik — det går inte att ångra.
           </p>
-          {isAdmin && deleteTarget && deleteTarget.store_id === null && (
+          {deleteTarget && deleteTarget.store_id === null && (
             <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
               Detta är en gemensam checklista som gäller alla butiker — permanent radering tar bort den
               för samtliga butiker.
