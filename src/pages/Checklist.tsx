@@ -561,12 +561,10 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
             <DialogTitle>Ta bort "{deleteTarget?.name}"</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Arkivera döljer listan i menyn men behåller historiken — en admin kan återställa den igen.
-            {canHardDelete
-              ? " Radera permanent tar bort listan, alla dess uppgifter och all historik — det går inte att ångra."
-              : " Permanent radering av gemensamma listor kan bara göras av en admin."}
+            Arkivera döljer listan i menyn men behåller historiken — den kan återställas senare. Radera
+            permanent tar bort listan, alla dess uppgifter och all historik — det går inte att ångra.
           </p>
-          {isAdmin && deleteTarget && deleteTarget.store_id === null && (
+          {deleteTarget && deleteTarget.store_id === null && (
             <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
               Detta är en gemensam checklista som gäller alla butiker — permanent radering tar bort den
               för samtliga butiker.
