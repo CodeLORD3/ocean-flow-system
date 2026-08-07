@@ -695,6 +695,7 @@ export function ChecklistTable({
 
                   <td className="px-1 py-1.5 text-center">
                     <div className="flex items-center justify-center">
+                      {!locked && editButton(row.item, "sm")}
                       {!readOnly && copyTask(row.item, "sm")}
                       {!locked && (
                         <Button
