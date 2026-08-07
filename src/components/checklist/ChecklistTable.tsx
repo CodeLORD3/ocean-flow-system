@@ -74,6 +74,8 @@ export function ChecklistTable({
   const [pageCommentDraft, setPageCommentDraft] = useState<string | null>(null);
   const [addDraft, setAddDraft] = useState({ task: "", time: "", category: "" });
   const [pendingDelete, setPendingDelete] = useState<ChecklistItem | null>(null);
+  const [pendingEdit, setPendingEdit] = useState<ChecklistItem | null>(null);
+  const [editDraft, setEditDraft] = useState({ task: "", time: "", category: "" });
   const { data: pendingRequests = [] } = useSignatureRequests(readOnly ? null : day.id);
   const { staff } = useStaffAuth();
   const isAdmin = ((staff?.portal_access ?? []) as string[]).includes("admin");
