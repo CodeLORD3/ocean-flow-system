@@ -27,6 +27,9 @@ import { MapPin, Store as StoreIcon, Upload, Images, Pencil, Trash2, Check, X, L
  */
 export function StoreHero() {
   const { site, activeStoreId, activeStoreName } = useSite();
+  const location = useLocation();
+  // Kompakt hero på mobil överallt utom översiktssidan – ger plats till innehållet
+  const compact = location.pathname !== "/organisation" && location.pathname !== "/";
   const { staff } = useStaffAuth();
   const { data: stores = [] } = useStores();
 
