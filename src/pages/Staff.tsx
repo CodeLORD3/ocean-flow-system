@@ -40,7 +40,15 @@ export default function Staff() {
   const { toast } = useToast();
   const { site, activeStoreId } = useSite();
   const { staff: currentStaff } = useStaffAuth();
-  const storeFilter = site === "shop" ? activeStoreId : undefined;
+  // Endast konton med full admin får se och ändra andras behörigheter
+  const isAdmin = ((currentStaff?.portal_access ?? []) as string[]).includes("admin");
+  const canManageAccess = isAdmin;
+
+  // Admin ser hela plattformen som standard, men kan filtrera till aktuell arbetsplats
+  const [adminAllStaff, setAdminAllStaff] = useState(true);
+  const platformView = isAdmin && adminAllStaff;
+
+  const storeFilter = !platformView && site === "shop" ? activeStoreId : undefined;
   const { data: storeStaff = [], isLoading } = useStaff(storeFilter);
   const { data: allStaff = [] } = useStaff();
   const { data: stores = [] } = useStores(true);
@@ -48,14 +56,15 @@ export default function Staff() {
   const updateStaff = useUpdateStaff();
   const deleteStaff = useDeleteStaff();
 
-  const { data: openShifts = [] } = useOpenShifts(storeFilter);
+  const { data: openShifts = [] } = useOpenShifts(platformView ? undefined : storeFilter);
   const shiftByStaff = new Map(openShifts.map((s) => [s.staff_id, s]));
 
 
   const canViewActivity =
-    site === "wholesale" &&
-    !!currentStaff?.email &&
-    ACTIVITY_VIEWER_EMAILS.includes(currentStaff.email.toLowerCase());
+    isAdmin ||
+    (site === "wholesale" &&
+      !!currentStaff?.email &&
+      ACTIVITY_VIEWER_EMAILS.includes(currentStaff.email.toLowerCase()));
 
   const [search, setSearch] = useState("");
   const [showAll, setShowAll] = useState(false);
@@ -67,9 +76,6 @@ export default function Staff() {
   const [detailStaff, setDetailStaff] = useState<any | null>(null);
   const [accessStaff, setAccessStaff] = useState<any | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
-
-  // Endast konton med full admin får se och ändra andras behörigheter
-  const canManageAccess = ((currentStaff?.portal_access ?? []) as string[]).includes("admin");
 
 
   const emptyForm = {
@@ -85,7 +91,8 @@ export default function Staff() {
     return [...storeStaff, ...extra];
   })();
 
-  const visibleList = showAll ? staffList : staffList.filter((s: any) => shiftByStaff.has(s.id));
+  const visibleList = platformView || showAll ? staffList : staffList.filter((s: any) => shiftByStaff.has(s.id));
+
 
   const filtered = visibleList.filter(s => {
     const q = search.toLowerCase();
@@ -173,8 +180,14 @@ export default function Staff() {
         <div>
           <h2 className="text-xl font-heading font-bold text-foreground flex items-center gap-2">
             <Users className="h-5 w-5 text-primary" /> Personal
+            {platformView && <Badge variant="secondary" className="text-[9px]">Admin · hela plattformen</Badge>}
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Instämplad personal på arbetsplatsen — stämpling sker på Min profil</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {platformView
+              ? "All personal i alla butiker och portaler — redigera uppgifter och behörigheter"
+              : "Instämplad personal på arbetsplatsen — stämpling sker på Min profil"}
+          </p>
+
         </div>
         <Button size="sm" className="gap-1.5 text-xs" onClick={openAdd}>
           <Plus className="h-3.5 w-3.5" /> Lägg till personal
@@ -195,9 +208,18 @@ export default function Staff() {
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
         <Input placeholder="Sök personal..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
       </div>
-      <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowAll(v => !v)}>
-        {showAll ? "Visa endast instämplade" : "Visa all personal"}
-      </Button>
+      {isAdmin && (
+        <Button variant={adminAllStaff ? "default" : "outline"} size="sm" className="text-xs gap-1.5" onClick={() => setAdminAllStaff(v => !v)}>
+          <ShieldCheck className="h-3.5 w-3.5" />
+          {adminAllStaff ? "Visar all personal (plattform)" : "Visa all personal (plattform)"}
+        </Button>
+      )}
+      {!platformView && (
+        <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowAll(v => !v)}>
+          {showAll ? "Visa endast instämplade" : "Visa all personal"}
+        </Button>
+      )}
+
       </div>
 
       {/* Staff grid */}
@@ -205,7 +227,7 @@ export default function Staff() {
         <Card className="shadow-card"><CardContent className="p-8 text-center text-sm text-muted-foreground">
           {staffList.length === 0
             ? 'Ingen personal tillagd ännu. Klicka "Lägg till personal" för att börja.'
-            : !showAll && visibleList.length === 0
+            : !platformView && !showAll && visibleList.length === 0
               ? "Ingen personal är instämplad på den här arbetsplatsen just nu. Stämpling sker på sidan Min profil."
               : "Inga resultat matchar sökningen."}
         </CardContent></Card>
