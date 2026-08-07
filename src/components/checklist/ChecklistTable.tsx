@@ -132,6 +132,32 @@ export function ChecklistTable({
   const setTime = useSetChecklistItemTime();
   const addItem = useAddChecklistItem();
   const removeItem = useDeleteChecklistItem();
+  const editItem = useEditChecklistItem();
+
+  const saveEdit = (persist: boolean) => {
+    if (!pendingEdit) return;
+    editItem.mutate(
+      {
+        id: pendingEdit.id,
+        dayId: day.id,
+        task: editDraft.task,
+        time: editDraft.time,
+        category: editDraft.category,
+        persist,
+        templateId: day.template_id ?? null,
+        storeId: day.store_id,
+        section: pendingEdit.section,
+        prevTask: pendingEdit.task,
+      },
+      {
+        onSuccess: () => {
+          setPendingEdit(null);
+          toast.success(persist ? "Uppgiften uppdaterad — gäller även kommande dagar." : "Uppgiften uppdaterad för idag.");
+        },
+        onError: (e: any) => toast.error(e.message || "Kunde inte spara uppgiften."),
+      }
+    );
+  };
   const markAll = useMarkAllChecklistItems();
   const complete = useCompleteChecklist();
   const setPageComment = useSetChecklistPageComment();
