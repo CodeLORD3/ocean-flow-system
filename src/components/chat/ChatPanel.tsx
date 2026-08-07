@@ -200,9 +200,15 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
     [messages, showOlder, todayStr]
   );
 
+  const skipAutoScroll = useRef(false);
   useEffect(() => {
+    if (skipAutoScroll.current) {
+      skipAutoScroll.current = false;
+      return;
+    }
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [visibleMessages.length, activeConv?.id]);
+
 
   const revealOlder = () => {
     if (showOlder || olderCount === 0) return;
