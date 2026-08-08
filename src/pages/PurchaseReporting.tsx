@@ -461,6 +461,7 @@ function ReportSection({
   onUpdateLine,
   onDeleteLine,
   onViewDocument,
+  onSelect,
   onConfirm,
   onUnlock,
   onRenameReport,
@@ -476,6 +477,7 @@ function ReportSection({
   onUpdateLine: (id: string, updates: Partial<ReportLine>) => void;
   onDeleteLine: (id: string) => void;
   onViewDocument: (reportId: string) => void;
+  onSelect?: (reportId: string) => void;
   onConfirm: (reportId: string) => void;
   onUnlock: (reportId: string) => void;
   onRenameReport: (reportId: string, newName: string) => void;
@@ -516,7 +518,7 @@ function ReportSection({
         className={`group w-full flex items-center gap-2 px-3 py-2.5 text-left transition-colors cursor-pointer ${
           isLocked ? "bg-muted/40 hover:bg-muted/60" : "bg-muted/20 hover:bg-muted/40"
         }`}
-        onClick={() => !editing && setExpanded(!expanded)}
+        onClick={() => { if (editing) return; onSelect?.(report.id); setExpanded(!expanded); }}
       >
         {expanded ? <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />}
         {isLocked ? (
@@ -823,6 +825,12 @@ export default function PurchaseReporting() {
 
   const selectedReport = reports.find((r) => r.id === selectedReportId) ?? null;
 
+  // Finns bara en rapport ska den vara vald automatiskt — annars ser knappen
+  // "Bokför inleverans" spärrad ut utan att användaren gjort något fel.
+  useEffect(() => {
+    if (!selectedReportId && reports.length === 1) setSelectedReportId(reports[0].id);
+  }, [selectedReportId, reports]);
+
   // Build lookup: product_id -> category
   const productCategoryMap = new Map(products.map((p: any) => [p.id, p.category]));
 
@@ -939,7 +947,7 @@ export default function PurchaseReporting() {
       queryClient.invalidateQueries({ queryKey: ["product_stock_locations"] });
       queryClient.invalidateQueries({ queryKey: ["all_stock_locations"] });
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
-      setSelectedReportId(null);
+      // Behåll markeringen: nästa steg är "Bokför inleverans" på samma rapport.
       toast({ title: "Inköp bekräftat", description: "Dokumentet är låst. Bokför inleveransen för att lägga varorna på lagret." });
     },
   });
@@ -1619,6 +1627,7 @@ export default function PurchaseReporting() {
                       onUpdateLine={(id, updates) => updateLine.mutate({ id, ...updates } as any)}
                       onDeleteLine={(id) => deleteLine.mutate(id)}
                       onViewDocument={(reportId) => { setSelectedReportId(reportId); setDocExpanded(true); setZoom(1); }}
+                      onSelect={(reportId) => setSelectedReportId(reportId)}
                       onConfirm={(reportId) => confirmReport.mutate(reportId)}
                       onUnlock={(reportId) => unlockReport.mutate(reportId)}
                       onRenameReport={(id, name) => renameReport.mutate({ id, name })}
@@ -1645,6 +1654,7 @@ export default function PurchaseReporting() {
                       onUpdateLine={(id, updates) => updateLine.mutate({ id, ...updates } as any)}
                       onDeleteLine={(id) => deleteLine.mutate(id)}
                       onViewDocument={(reportId) => { setSelectedReportId(reportId); setDocExpanded(true); setZoom(1); }}
+                      onSelect={(reportId) => setSelectedReportId(reportId)}
                       onConfirm={(reportId) => confirmReport.mutate(reportId)}
                       onUnlock={(reportId) => unlockReport.mutate(reportId)}
                       onRenameReport={(id, name) => renameReport.mutate({ id, name })}
