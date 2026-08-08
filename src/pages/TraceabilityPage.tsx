@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useSite } from "@/contexts/SiteContext";
 import { useStores } from "@/hooks/useStores";
 import { getStoreCurrency } from "@/lib/currency";
-import { useTabs } from "@/contexts/TabsContext";
+import { useNavigate } from "react-router-dom";
 import { canSeeCosts } from "@/lib/pageAccess";
 import { Printer, ShieldCheck } from "lucide-react";
 
@@ -13,7 +13,7 @@ import { Printer, ShieldCheck } from "lucide-react";
  */
 export default function TraceabilityPage() {
   const { site, activeStoreId } = useSite();
-  const { openTab } = useTabs();
+  const navigate = useNavigate();
   const { data: stores = [] } = useStores();
   const activeStore = (stores as any[]).find((s: any) => s.id === activeStoreId);
   const currency = getStoreCurrency(activeStore as any);
@@ -44,7 +44,7 @@ export default function TraceabilityPage() {
       <LotTraceabilityView
         currency={currency}
         showCosts={canSeeCosts(site)}
-        onEmptyAction={canSeeCosts(site) ? () => openTab("/purchase-reporting") : undefined}
+        onEmptyAction={canSeeCosts(site) ? () => navigate("/purchase-reporting") : undefined}
       />
     </div>
   );

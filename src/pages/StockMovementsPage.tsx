@@ -5,7 +5,7 @@ import { useSite } from "@/contexts/SiteContext";
 import { useStorageLocations } from "@/hooks/useStorageLocations";
 import { useStores } from "@/hooks/useStores";
 import { getStoreCurrency } from "@/lib/currency";
-import { useTabs } from "@/contexts/TabsContext";
+import { useNavigate } from "react-router-dom";
 import { canSeeCosts } from "@/lib/pageAccess";
 import { ArrowRight, History } from "lucide-react";
 
@@ -14,7 +14,7 @@ import { ArrowRight, History } from "lucide-react";
  */
 export default function StockMovementsPage() {
   const { site, activeStoreId, activeStoreName } = useSite();
-  const { openTab } = useTabs();
+  const navigate = useNavigate();
   const { data: stores = [] } = useStores();
   const { data: locations = [] } = useStorageLocations(activeStoreId || "all");
 
@@ -43,7 +43,7 @@ export default function StockMovementsPage() {
             variant="outline"
             size="sm"
             className="h-8 gap-1 text-xs"
-            onClick={() => openTab("/purchase-reporting")}
+            onClick={() => navigate("/purchase-reporting")}
           >
             Till inköpsrapportering <ArrowRight className="h-3 w-3" />
           </Button>
@@ -54,7 +54,7 @@ export default function StockMovementsPage() {
         locationIds={locationIds}
         currency={currency}
         showCosts={canSeeCosts(site)}
-        onEmptyAction={canSeeCosts(site) ? () => openTab("/purchase-reporting") : undefined}
+        onEmptyAction={canSeeCosts(site) ? () => navigate("/purchase-reporting") : undefined}
       />
     </div>
   );
