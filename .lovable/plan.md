@@ -103,9 +103,15 @@ Sessionen i min testmiljö är utloggad. För att kunna verifiera inloggad behö
 
 Bara rapporter från de senaste två veckorna bokförs. Just nu finns **0 obokförda rapporter inom två veckor** — samtliga 54 är äldre. De markeras därför som historiska utan lagerpåverkan (ny status, ingen rörelse i lagret).
 
-# Efter de fyra: lista över artgrupper utan referenspris
+# Efter uppgift 4: l. Slutför AP-9
+
+- Utöka dubblettspärren vid inläsning så att även dokumentnummer per leverantör spärras, inte bara `file_hash`
+- `parse-foljesedel` uppdateras så att produktmatchningen skriver och läser `supplier_article_map` — tabellen sätts i drift med posterna från befintliga inlästa rapporter
+
+# Sist: lista över artgrupper utan referenspris
 
 Ren rapport, ingen kod: artgrupper som saknar referenspris, sorterade efter hur ofta arten förekommer i inköpsrapporterna.
+
 
 ## Tekniska noter
 
