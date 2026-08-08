@@ -6,7 +6,7 @@ import {
   lotBalancesAtLocation,
   lotBalancesForReference,
 } from "@/lib/stockLedger";
-import { GROSSIST_FLYTANDE_ID, TRANSPORTLAGER_ID, uniqueLocationIdByName } from "@/lib/locations";
+import { GROSSIST_FLYTANDE_ID, leveranslagerId, butikslagerId } from "@/lib/locations";
 
 
 /**
@@ -17,13 +17,16 @@ import { GROSSIST_FLYTANDE_ID, TRANSPORTLAGER_ID, uniqueLocationIdByName } from 
  */
 const REF_TYPE = "shop_order";
 
-/** Lagerplatser slås upp på id. Namnen är inte unika. */
-async function getTransportlagerId(): Promise<string | null> {
-  return TRANSPORTLAGER_ID;
+/**
+ * Lagerplatser slås upp på nivå. Transportsteget är butikens leveranslager,
+ * mottagande plats är butikens egen lagerplats.
+ */
+async function getTransportlagerId(storeId: string): Promise<string | null> {
+  return leveranslagerId(storeId);
 }
 
 async function getRawLagerId(storeId: string): Promise<string | null> {
-  return uniqueLocationIdByName("Raw%", storeId);
+  return butikslagerId(storeId);
 }
 
 
@@ -56,12 +59,6 @@ export async function transportBalanceForOrder(
  * Pre-lager (och Grossist Flytande som reserv) till Transportlager.
  */
 export async function moveStockToTransport(orderId: string) {
-  const transportId = await getTransportlagerId();
-  if (!transportId) {
-    console.error("Transportlager not found");
-    return;
-  }
-
   const { data: order } = await supabase
     .from("shop_orders")
     .select("store_id, shop_order_lines(product_id, quantity_delivered, quantity_ordered)")
@@ -70,12 +67,11 @@ export async function moveStockToTransport(orderId: string) {
 
   if (!order?.store_id || !order.shop_order_lines?.length) return;
 
-  const { data: preLocations } = await supabase
-    .from("storage_locations")
-    .select("id")
-    .eq("store_id", order.store_id)
-    .ilike("name", "Pre-%");
-  const preLocationIds = (preLocations || []).map((l) => l.id);
+  const transportId = await getTransportlagerId(order.store_id);
+  if (!transportId) {
+    console.error("Leveranslager not found for store", order.store_id);
+    return;
+  }
 
   const gfLocId = GROSSIST_FLYTANDE_ID;
 
@@ -84,8 +80,8 @@ export async function moveStockToTransport(orderId: string) {
     let remaining = Number(line.quantity_delivered || line.quantity_ordered) || 0;
     if (remaining <= 0) continue;
 
-    // Källor i prioritetsordning: Pre-lager, sedan Grossist Flytande.
-    const sourceIds = [...preLocationIds, ...(gfLocId ? [gfLocId] : [])];
+    // Källa: grossistlagret.
+    const sourceIds = gfLocId ? [gfLocId] : [];
     if (!sourceIds.length) continue;
 
     const { data: stocks } = await supabase
@@ -130,7 +126,7 @@ export async function moveStockToTransport(orderId: string) {
           unitCost: cost,
           referenceType: REF_TYPE,
           referenceId: orderId,
-          note: "Order skickad till transportlager",
+          note: "Order skickad till leveranslager",
         });
         remaining -= pick.qty;
       }
@@ -154,15 +150,15 @@ export async function moveStockToRawLager(
   storeId: string,
   unitCostByProductId?: Record<string, number>,
 ) {
-  const transportId = await getTransportlagerId();
+  const transportId = await getTransportlagerId(storeId);
   if (!transportId) {
-    console.error("Transportlager not found");
+    console.error("Leveranslager not found for store", storeId);
     return;
   }
 
   const rawLagerId = await getRawLagerId(storeId);
   if (!rawLagerId) {
-    console.error("Raw Lager not found for store", storeId);
+    console.error("Butikslager not found for store", storeId);
     return;
   }
 

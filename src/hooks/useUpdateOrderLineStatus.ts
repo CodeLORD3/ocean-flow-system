@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { moveStockToTransport } from "@/lib/stockTransfer";
 import { transferStock } from "@/lib/stockLedger";
 import { logActivity } from "@/hooks/useActivityLog";
-import { GROSSIST_FLYTANDE_ID, uniqueLocationIdByName } from "@/lib/locations";
+import { GROSSIST_FLYTANDE_ID, leveranslagerId } from "@/lib/locations";
 
 const STATUS_FLOW = ["Ny", "Pågående", "Packad", "Skickad"] as const;
 
@@ -31,7 +31,7 @@ async function transferDeltaToPreLocation(lineId: string, orderId: string, delta
 
   const gfLocId = GROSSIST_FLYTANDE_ID;
 
-  const preLocId = await uniqueLocationIdByName("Pre-%", order.store_id);
+  const preLocId = await leveranslagerId(order.store_id);
   if (!preLocId) return;
 
   const absDelta = Math.abs(deltaQty);
@@ -46,7 +46,7 @@ async function transferDeltaToPreLocation(lineId: string, orderId: string, delta
     quantityKg: absDelta,
     referenceType: "shop_order",
     referenceId: orderId,
-    note: deltaQty > 0 ? "Packad till Pre-lager" : "Återförd från Pre-lager",
+    note: deltaQty > 0 ? "Packad till leveranslager" : "Återförd från leveranslager",
   });
 }
 
