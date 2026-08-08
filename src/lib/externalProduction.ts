@@ -223,6 +223,8 @@ async function standardYieldPct(
     .select("species_group, yield_pct, from_form, to_form")
     .eq("species_group", species);
   return matchStandardYield((data ?? []) as any[], species, fromForm, toForm);
+}
+
 
 
 /**
