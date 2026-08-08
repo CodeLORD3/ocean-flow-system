@@ -147,7 +147,7 @@ export default function PortalDocuments() {
                   </div>
                 </div>
                 <Download className="h-4 w-4 text-primary" />
-              </a>
+              </StorageLink>
             ))}
           </div>
         ) : (
