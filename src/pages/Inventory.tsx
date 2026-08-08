@@ -328,6 +328,57 @@ export default function Inventory() {
   const createLocation = useCreateStorageLocation();
   const upsertStock = useUpsertStockLocation();
 
+  // ── Nivåväljare: fem nivåer i flödesordning ──────────────────────────────
+  const [level, setLevel] = useState<LocationLevel | "all">("all");
+  const allowedLevels = useMemo(() => manageableLevels(site), [site]);
+  /** Nivåer som är bundna till en enhet — övriga är gemensamma för grossistledet. */
+  const storeBoundLevels: LocationLevel[] = ["leveranslager", "butik"];
+
+  /**
+   * Saldo och lagervärde per nivå. Räknas fram för ALLA fem nivåer, även de
+   * som portalen inte får hantera — en gömd siffra gör att någon beställer
+   * vara som redan är uppbokad i produktionen.
+   */
+  const levelTotals = useMemo(() => {
+    const out: Partial<Record<LocationLevel | "all", LevelTotals>> = {};
+    const add = (key: LocationLevel | "all", qty: number, value: number) => {
+      const cur = out[key] ?? { quantityKg: 0, value: 0 };
+      out[key] = { quantityKg: cur.quantityKg + qty, value: cur.value + value };
+    };
+    (allStock as any[]).forEach((s: any) => {
+      const lvl = s.storage_locations?.location_type as LocationLevel | undefined;
+      if (!lvl || !LEVEL_ORDER.includes(lvl)) return;
+      if (
+        storeBoundLevels.includes(lvl) &&
+        activeStoreId &&
+        s.storage_locations?.store_id !== activeStoreId
+      )
+        return;
+      const qty = Number(s.quantity) || 0;
+      const value =
+        qty * (Number(s.unit_cost) || Number(s.products?.cost_price) || 0);
+      add(lvl, qty, value);
+      add("all", qty, value);
+    });
+    return out;
+  }, [allStock, activeStoreId]);
+
+  const lockedReason = useMemo(() => {
+    const out: Partial<Record<LocationLevel, string>> = {};
+    LEVEL_ORDER.forEach((l) => {
+      if (!allowedLevels.includes(l)) out[l] = LEVEL_OWNER[l];
+    });
+    return out;
+  }, [allowedLevels]);
+
+  /** Behåller bara rader på den valda nivån. */
+  const matchesLevel = useCallback(
+    (row: any) =>
+      level === "all" || (row?.storage_locations?.location_type ?? null) === level,
+    [level],
+  );
+
+
   const getSelectedForLocation = (locId: string) => selectedItems.get(locId) || new Set<string>();
   const toggleItemSelection = (locId: string, itemId: string) => {
     setSelectedItems((prev) => {
