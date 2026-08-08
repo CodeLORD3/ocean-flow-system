@@ -124,26 +124,34 @@ export default function Arrivals() {
     try {
       const lines = await pendingArrivalLines(report.id);
       const lotIds = lines.map((l) => l.lotId).filter(Boolean) as string[];
-      let lotNumbers: Record<string, string> = {};
+      let lotMeta: Record<string, any> = {};
       if (lotIds.length) {
         const { data } = await supabase
           .from("lots")
-          .select("id, lot_number")
+          .select("id, lot_number, catch_area, vessel_name, best_before, supplier_lot_id")
           .in("id", lotIds);
-        lotNumbers = Object.fromEntries((data ?? []).map((l: any) => [l.id, l.lot_number]));
+        lotMeta = Object.fromEntries((data ?? []).map((l: any) => [l.id, l]));
       }
       setDraft(
-        lines.map((l) => ({
-          lineId: l.lineId,
-          productId: l.productId,
-          productName: l.productName,
-          lotId: l.lotId ?? null,
-          lotNumber: l.lotId ? (lotNumbers[l.lotId] ?? null) : null,
-          expected: Number(l.quantityExpected || 0),
-          received: String(Number(l.quantityExpected || 0)).replace(".", ","),
-          unitCost: l.unitCost ?? null,
-        })),
+        lines.map((l) => {
+          const meta = l.lotId ? lotMeta[l.lotId] : null;
+          return {
+            lineId: l.lineId,
+            productId: l.productId,
+            productName: l.productName,
+            lotId: l.lotId ?? null,
+            lotNumber: meta?.lot_number ?? null,
+            expected: Number(l.quantityExpected || 0),
+            received: String(Number(l.quantityExpected || 0)).replace(".", ","),
+            unitCost: l.unitCost ?? null,
+            catchArea: meta?.catch_area ?? null,
+            vesselName: meta?.vessel_name ?? null,
+            bestBefore: meta?.best_before ?? null,
+            supplierLotNumber: meta?.supplier_lot_id ?? null,
+          };
+        }),
       );
+
     } catch (e: any) {
       toast.error(e.message || "Kunde inte hämta partierna för följesedeln.");
     } finally {
