@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { ChevronDown, ChevronRight, Scale }, Scissors } from "lucide-react";
+import { ChevronDown, ChevronRight, Scale, Scissors } from "lucide-react";
 import { fmt } from "@/lib/filletMath";
 import {
   useProductionOrders,
