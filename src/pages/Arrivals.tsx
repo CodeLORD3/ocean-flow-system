@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Truck, PackageCheck } from "lucide-react";
+import { Truck, PackageCheck, Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,6 +28,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { pendingArrivalLines, registerPurchaseArrival } from "@/lib/purchaseArrival";
 import { createWasteReport, WASTE_REASON_LABEL, type WasteReason } from "@/lib/waste";
 import { grossistStoreId, inkopslagerId } from "@/lib/locations";
+import { openLotLabels } from "@/lib/lotLabelPdf";
 
 const nf = (v: any, dec = 1) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: dec, maximumFractionDigits: dec });
@@ -41,7 +42,12 @@ interface DraftLine {
   expected: number;
   received: string;
   unitCost: number | null;
+  catchArea?: string | null;
+  vesselName?: string | null;
+  bestBefore?: string | null;
+  supplierLotNumber?: string | null;
 }
+
 
 /**
  * Registrera ankomst. Varan som bokförts på INKÖPSLAGRET flyttas fysiskt till
