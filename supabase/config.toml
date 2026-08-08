@@ -18,9 +18,6 @@ verify_jwt = false
 [functions.scomber-pos-checkout]
 verify_jwt = false
 
-[functions.scomber-b2b-order]
-verify_jwt = false
-
 [functions.scomber-batch-allocate]
 verify_jwt = false
 

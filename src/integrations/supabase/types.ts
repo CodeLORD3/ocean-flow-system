@@ -898,6 +898,7 @@ export type Database = {
           created_at: string
           detail_form: string
           id: string
+          is_estimate: boolean
           is_optional: boolean
           margin_weight: number
           pct_of_fillet: number
@@ -910,6 +911,7 @@ export type Database = {
           created_at?: string
           detail_form: string
           id?: string
+          is_estimate?: boolean
           is_optional?: boolean
           margin_weight?: number
           pct_of_fillet: number
@@ -922,6 +924,7 @@ export type Database = {
           created_at?: string
           detail_form?: string
           id?: string
+          is_estimate?: boolean
           is_optional?: boolean
           margin_weight?: number
           pct_of_fillet?: number
