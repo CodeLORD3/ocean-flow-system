@@ -413,8 +413,13 @@ export default function Staff() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">E-postadress</Label>
+              <Label className="text-xs">E-postadress (inloggning)</Label>
               <Input type="email" value={form.email} onChange={e => setField("email", e.target.value)} className="h-8 text-xs" />
+              {editId && isAdmin && (
+                <p className="text-[10px] text-muted-foreground">
+                  Ändras adressen byts även inloggningsadressen för kontot.
+                </p>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
