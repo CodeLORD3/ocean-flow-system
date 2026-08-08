@@ -237,9 +237,15 @@ export function ReferencePricesPanel() {
           <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => setOnlyMissing((v) => !v)}>
             {onlyMissing ? "Visa alla arter" : "Visa bara ofullständiga"}
           </Button>
+          {/* Bara det som finns i lagret behöver prissättas nu — övriga döljs. */}
+          <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => setOnlyInStock((v) => !v)}>
+            {onlyInStock ? "Visa alla produkter" : "Visa bara det som finns i lager"}
+          </Button>
           <span className="text-[11px] text-muted-foreground">
             {visible.length} rader · {activeList?.inclVat ? "priser inkl moms" : "priser exkl moms"}
+            {onlyInStock ? " · endast arter med saldo" : ""}
           </span>
+
         </div>
 
         <div className="overflow-x-auto">
