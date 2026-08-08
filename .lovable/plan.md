@@ -115,3 +115,4 @@ Otillåtna riktningar visas inte som val. Saknas underlag går knappen inte att 
 - Hooks mot befintliga libbar: `src/hooks/useTransferOrders.ts` använder `src/lib/transferOrders.ts`, `src/lib/waste.ts`, `src/lib/transferPdf.ts` — ingen ny skrivväg till saldon.
 - Rutter och behörighet läggs i `src/lib/pageAccess.ts` med samma mönster som `/stock-movements`.
 - Inga nya databasändringar behövs för etapp 4 utöver städningen i del 2.
+- Spärren i del 2 punkt 5 är ren frontend: en funktion i `src/lib/locations.ts` plus `src/test/locationLookupGuard.test.ts`.
