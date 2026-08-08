@@ -23,9 +23,15 @@ const TYPE_FILTERS = ["all", ...Object.keys(MOVEMENT_LABELS)];
 export default function StockMovementsView({
   locationIds,
   currency = "SEK",
+  showCosts = true,
+  onEmptyAction,
 }: {
   locationIds?: string[];
   currency?: string;
+  /** Butiksläget döljer kostpris och svinnvärde. */
+  showCosts?: boolean;
+  /** Åtgärd i det tomma tillståndet, t.ex. gå till inköpsrapportering. */
+  onEmptyAction?: () => void;
 }) {
   const [type, setType] = useState("all");
   const [search, setSearch] = useState("");
@@ -34,6 +40,7 @@ export default function StockMovementsView({
     movementType: type,
     limit: 400,
   });
+
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
