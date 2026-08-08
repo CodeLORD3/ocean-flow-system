@@ -89,6 +89,7 @@ const inventoryNav = [
   { title: "Lagerrörelser", url: "/stock-movements", icon: History },
   { title: "Överföringar", url: "/stock-transfers", icon: ArrowLeftRight },
   { title: "Registrera ankomst", url: "/arrivals", icon: Truck },
+  { title: "Externt uppdrag", url: "/external-production", icon: Factory },
 
   { title: "Svinn", url: "/waste", icon: Trash2 },
   { title: "Spårbarhet — partier", url: "/traceability", icon: ShieldCheck },
