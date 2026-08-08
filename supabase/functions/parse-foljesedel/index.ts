@@ -6,10 +6,40 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Convert a URL to a base64 data URL so the AI gateway can process it
-async function toDataUrl(fileUrl: string): Promise<{ dataUrl: string; mimeType: string; hash: string }> {
+// Files live in private buckets, so download them with the service role instead
+// of relying on a public URL.
+async function fetchFileBytes(fileUrl: string): Promise<{ bytes: Uint8Array; contentType: string }> {
+  const match = fileUrl.match(/\/storage\/v1\/object\/(?:public|sign)\/([^/]+)\/(.+?)(?:\?|$)/);
+  if (match) {
+    const bucket = match[1];
+    const path = decodeURIComponent(match[2]);
+    const res = await fetch(
+      `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/${bucket}/${encodeURI(path)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          apikey: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+        },
+      },
+    );
+    if (!res.ok) throw new Error(`Failed to fetch file: ${res.status}`);
+    return {
+      bytes: new Uint8Array(await res.arrayBuffer()),
+      contentType: res.headers.get("content-type") || "application/octet-stream",
+    };
+  }
   const res = await fetch(fileUrl);
   if (!res.ok) throw new Error(`Failed to fetch file: ${res.status}`);
+  return {
+    bytes: new Uint8Array(await res.arrayBuffer()),
+    contentType: res.headers.get("content-type") || "application/octet-stream",
+  };
+}
+
+// Convert a URL to a base64 data URL so the AI gateway can process it
+async function toDataUrl(fileUrl: string): Promise<{ dataUrl: string; mimeType: string; hash: string }> {
+  const { bytes, contentType } = await fetchFileBytes(fileUrl);
+
 
   const contentType = res.headers.get("content-type") || "application/octet-stream";
   const buffer = await res.arrayBuffer();
