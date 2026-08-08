@@ -77,7 +77,13 @@ Funktionen är oförändrad i databasen; det som ändrats är vilket `p_location
 2. Nollställ `avg_cost` och `unit_cost` på de två nollraderna via rörelseloggen, inte med en direktskrivning.
 3. Ta bort den tomma saldoraden på den inaktiverade platsen.
 4. Peka om de tre namnuppslagen: `Receiving.tsx` och `orderStatusSync.ts` går över till nivåuppslag (butikslager respektive leveranslager), `Inventory.tsx` slutar särbehandla platser på namn.
-5. Skarp test av hela kedjan: bokför en följesedel → partier landar i inköpslagret → ankomstregistrering flyttar till grossistlagret → avvikelse blir svinn hos avsändaren. Efteråt kontrolleras att kilo och värde stämmer och att avstämningen fortfarande ger 0 avvikande rader.
+5. **Spärr så felet inte kan uppstå igen.** Två delar, båda i samma ändring som punkt 4:
+   - Namnuppslag mot lagerplats görs bara via en ny funktion i `locations.ts`. Den kastar fel om namnet är tvetydigt (som idag) **och** om den enda träffen är en inaktiverad plats. Ingen väg returnerar längre `null` eller en inaktiv plats tyst. Uppslag på id går fortsatt genom `assertActiveLocation`.
+   - Nytt test `src/test/locationLookupGuard.test.ts`, i samma anda som `stockLedgerGuard`: det söker igenom `src/` efter uppslag mot `storage_locations` som filtrerar på `name` (`.eq("name"`, `.ilike("name"`, `.in("name"`, `.like`, `.or` med `name.`) och faller om något ligger utanför `locations.ts`. Nivåuppslag (`location_type`) och `GROSSIST_FLYTANDE_ID` undantas. Undantagslistan startar tom och får bara krympa.
+6. Skarp test av hela kedjan: bokför en följesedel → partier landar i inköpslagret → ankomstregistrering flyttar till grossistlagret → avvikelse blir svinn hos avsändaren. Efteråt kontrolleras att kilo och värde stämmer och att avstämningen fortfarande ger 0 avvikande rader.
+
+Skälet till punkt 5: det här är andra gången ett namnuppslag orsakat ett tyst fel — först `maybeSingle` mot "Grossist Flytande" när sex platser hade samma namn, nu tre filer som letade efter inaktiverade platser genom hela omläggningen. Ett test stänger mönstret i stället för att nästa förekomst hittas av misstag.
+
 
 ## Del 3 — Etapp 4: gränssnittet
 
