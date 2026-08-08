@@ -48,6 +48,11 @@ import Checklist from "@/pages/Checklist";
 import DailyReport from "@/pages/DailyReport";
 import Production from "@/pages/Production";
 import DataCoverage from "@/pages/DataCoverage";
+import StockMovementsPage from "@/pages/StockMovementsPage";
+import TraceabilityPage from "@/pages/TraceabilityPage";
+import { NoAccessView } from "@/components/NoAccessView";
+import { useSite } from "@/contexts/SiteContext";
+import { canAccessRoute } from "@/lib/pageAccess";
 
 interface RouteEntry {
   component: React.ReactNode;
@@ -100,6 +105,8 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/dagsrapport": { component: <DailyReport /> },
   "/production": { component: <Production /> },
   "/coverage": { component: <DataCoverage /> },
+  "/stock-movements": { component: <StockMovementsPage /> },
+  "/traceability": { component: <TraceabilityPage /> },
 };
 
 /**
@@ -109,6 +116,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
  */
 export function KeepAliveTabs() {
   const { tabs, activeTab } = useTabs();
+  const { site } = useSite();
 
   return (
     <>
@@ -116,13 +124,14 @@ export function KeepAliveTabs() {
         const route = ROUTE_MAP[tab.path];
         if (!route) return null;
         const isActive = tab.path === activeTab;
+        const allowed = canAccessRoute(site, tab.path);
         return (
           <div
             key={tab.path}
             className="h-full w-full"
             style={{ display: isActive ? "block" : "none" }}
           >
-            {route.component}
+            {allowed ? route.component : <NoAccessView site={site} path={tab.path} />}
           </div>
         );
       })}
