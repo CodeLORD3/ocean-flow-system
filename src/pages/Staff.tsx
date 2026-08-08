@@ -110,6 +110,7 @@ export default function Staff() {
 
   const openEdit = (s: any) => {
     setEditId(s.id);
+    setOriginalEmail((s.email || "").toLowerCase());
     setForm({
       first_name: s.first_name, last_name: s.last_name,
       age: s.age ? String(s.age) : "", phone: s.phone || "",
@@ -119,6 +120,27 @@ export default function Staff() {
     setPreviewUrl(s.profile_image_url || null);
     setDialogOpen(true);
   };
+
+  // E-postfältet är också inloggningsadressen: ändras den måste själva kontot
+  // bytas via en admin-funktion, annars kan personen inte logga in med den nya.
+  const syncLoginEmail = async (staffId: string, email: string) => {
+    const { data, error } = await supabase.functions.invoke("staff-account-email", {
+      body: { staff_id: staffId, email },
+    });
+    if (error || (data as any)?.error) {
+      toast({
+        title: "Inloggningsadressen kunde inte ändras",
+        description: (data as any)?.error || error?.message,
+        variant: "destructive",
+      });
+      return;
+    }
+    toast({
+      title: "Inloggningsadress uppdaterad",
+      description: `${email} används nu vid inloggning.`,
+    });
+  };
+
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
