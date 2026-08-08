@@ -80,7 +80,18 @@ Funktionen är oförändrad i databasen; det som ändrats är vilket `p_location
 5. **Spärr så felet inte kan uppstå igen.** Två delar, båda i samma ändring som punkt 4:
    - Namnuppslag mot lagerplats görs bara via en ny funktion i `locations.ts`. Den kastar fel om namnet är tvetydigt (som idag) **och** om den enda träffen är en inaktiverad plats. Ingen väg returnerar längre `null` eller en inaktiv plats tyst. Uppslag på id går fortsatt genom `assertActiveLocation`.
    - Nytt test `src/test/locationLookupGuard.test.ts`, i samma anda som `stockLedgerGuard`: det söker igenom `src/` efter uppslag mot `storage_locations` som filtrerar på `name` (`.eq("name"`, `.ilike("name"`, `.in("name"`, `.like`, `.or` med `name.`) och faller om något ligger utanför `locations.ts`. Nivåuppslag (`location_type`) och `GROSSIST_FLYTANDE_ID` undantas. Undantagslistan startar tom och får bara krympa.
-6. Skarp test av hela kedjan: bokför en följesedel → partier landar i inköpslagret → ankomstregistrering flyttar till grossistlagret → avvikelse blir svinn hos avsändaren. Efteråt kontrolleras att kilo och värde stämmer och att avstämningen fortfarande ger 0 avvikande rader.
+6. **Skarp test av hela kedjan mot en riktig följesedel, inte testdata.** Följesedeln är GFA 2026-07-28, dokumentnummer 10, `Göteborgs Fiskauktionsförening ek. för.` — den ligger obokförd i systemet med 16 rader och 532,000 kg, alla rader mappade till produkt, och torskraden är 29 kg à 146,00 kr. (De 16 raderna blir 15 partier, eftersom Färska Räkor Basic står på två rader med samma partinummer och samma pris.)
+
+   Kedjan körs skarpt: bokför följesedeln → partierna landar i inköpslagret → ankomstregistrering flyttar dem till grossistlagret → avvikelse blir svinn hos avsändaren.
+
+   Rapporteras efteråt, med talen:
+   - antal partier som skapades och deras `lot_number`
+   - saldot i inköpslagret före och efter bokföringen
+   - saldot i grossistlagret efter ankomstregistreringen
+   - `avg_cost` på torsken, som ska bli 146,00 kr/kg
+   - att avstämningen rörelselogg mot saldotabell fortfarande ger 0 avvikande rader
+
+   Om något tal avviker från det förväntade rapporteras avvikelsen som den är, i stället för att justeras bort.
 
 Skälet till punkt 5: det här är andra gången ett namnuppslag orsakat ett tyst fel — först `maybeSingle` mot "Grossist Flytande" när sex platser hade samma namn, nu tre filer som letade efter inaktiverade platser genom hela omläggningen. Ett test stänger mönstret i stället för att nästa förekomst hittas av misstag.
 
@@ -103,7 +114,7 @@ Otillåtna riktningar visas inte som val. Saknas underlag går knappen inte att 
 
 **Sida för överföringar.** Lista med status, ordernummer, från/till med nivå, underlag och vem som gjort vad. Knappar för plocklista och följesedel som PDF. Mottagningsvyn ligger på samma sida för den som är mottagare.
 
-**Larm för oregistrerad plocklista.** Överföringar där plocklistan skrevs ut för mer än fyra timmar sedan utan att plockningen registrerats visas högst upp i rött, med en räknare i sidomenyn.
+**Larm för oregistrerad plocklista.** Överföringar där plocklistan skrevs ut för länge sedan utan att plockningen registrerats visas högst upp i rött, med en räknare i sidomenyn. Gränsen är **konfigurerbar i inställningarna** i stället för hårdkodad: fyra timmar är standard och passar en morgonleverans, men en plocklista som skrivs ut på eftermiddagen inför nästa dag ska inte larma i onödan. Inställningen sätts per enhet med ett fält i timmar, och texten i larmet visar den gällande gränsen.
 
 **Svinn.** Formulär med obligatorisk orsak och kommentar, kopplat till lagerplats och parti.
 
