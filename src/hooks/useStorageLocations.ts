@@ -28,7 +28,7 @@ export function useProductStockLocations(locationId?: string) {
     queryFn: async () => {
       let q = supabase
         .from("product_stock_locations")
-        .select("*, products(name, sku, category, unit, cost_price, wholesale_price, weight_per_piece), storage_locations(name, zone, store_id, stores!storage_locations_store_id_fkey(name))")
+        .select("*, products(name, sku, category, unit, cost_price, wholesale_price, weight_per_piece), storage_locations(name, zone, store_id, location_type, parent_location_id, stores!storage_locations_store_id_fkey(name))")
         .order("quantity", { ascending: false });
       if (locationId && locationId !== "all") q = q.eq("location_id", locationId);
       const { data, error } = await q;
@@ -44,7 +44,7 @@ export function useAllStockByLocation() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("product_stock_locations")
-        .select("*, products(name, sku, category, unit, cost_price, wholesale_price, weight_per_piece), storage_locations(name, zone, store_id, stores!storage_locations_store_id_fkey(name)), shop_orders(order_week, store_id, stores(name))")
+        .select("*, products(name, sku, category, unit, cost_price, wholesale_price, weight_per_piece), storage_locations(name, zone, store_id, location_type, parent_location_id, stores!storage_locations_store_id_fkey(name)), shop_orders(order_week, store_id, stores(name))")
         .gt("quantity", 0)
         .order("quantity", { ascending: false });
       if (error) throw error;
