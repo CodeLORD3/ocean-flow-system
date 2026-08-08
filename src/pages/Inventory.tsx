@@ -694,8 +694,12 @@ export default function Inventory() {
   }, [locations, site]);
 
   const stockByLocation = useMemo(() => {
-    return portalLocations.map((loc: any) => {
+    const scoped = portalLocations.filter(
+      (loc: any) => level === "all" || loc.location_type === level,
+    );
+    return scoped.map((loc: any) => {
       let items = allStock.filter((s: any) => s.location_id === loc.id);
+
       if (search) {
         items = items.filter(
           (s: any) =>
