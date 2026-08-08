@@ -65,6 +65,16 @@ import {
 } from "@/hooks/useStorageLocations";
 import { useSite } from "@/contexts/SiteContext";
 import { canSeeCosts } from "@/lib/pageAccess";
+import LevelSelector, { type LevelTotals } from "@/components/inventory/LevelSelector";
+import {
+  LEVEL_ORDER,
+  LEVEL_LABEL,
+  LEVEL_EMPTY_HINT,
+  LEVEL_OWNER,
+  manageableLevels,
+  type LocationLevel,
+} from "@/lib/locations";
+
 import { getStoreCurrency } from "@/lib/currency";
 import BarcodeScanner from "@/components/barcode/BarcodeScanner";
 import { EntityImagesButton } from "@/components/images/EntityImageGallery";
@@ -317,6 +327,59 @@ export default function Inventory() {
   const { data: allStock = [], isLoading: loadingStock } = useAllStockByLocation();
   const createLocation = useCreateStorageLocation();
   const upsertStock = useUpsertStockLocation();
+
+  // ── Nivåväljare: fem nivåer i flödesordning ──────────────────────────────
+  const [level, setLevel] = useState<LocationLevel | "all">("all");
+  const allowedLevels = useMemo(() => manageableLevels(site), [site]);
+  /** Nivåer som är bundna till en enhet — övriga är gemensamma för grossistledet. */
+  const storeBoundLevels: LocationLevel[] = ["leveranslager", "butik"];
+
+  /**
+   * Saldo och lagervärde per nivå. Räknas fram för ALLA fem nivåer, även de
+   * som portalen inte får hantera — en gömd siffra gör att någon beställer
+   * vara som redan är uppbokad i produktionen.
+   */
+  const levelTotals = useMemo(() => {
+    const out: Partial<Record<LocationLevel | "all", LevelTotals>> = {};
+    const add = (key: LocationLevel | "all", qty: number, value: number) => {
+      const cur = out[key] ?? { quantityKg: 0, value: 0 };
+      out[key] = { quantityKg: cur.quantityKg + qty, value: cur.value + value };
+    };
+    (allStock as any[]).forEach((s: any) => {
+      const lvl = s.storage_locations?.location_type as LocationLevel | undefined;
+      if (!lvl || !LEVEL_ORDER.includes(lvl)) return;
+      if (
+        storeBoundLevels.includes(lvl) &&
+        activeStoreId &&
+        s.storage_locations?.store_id !== activeStoreId
+      )
+        return;
+      const qty = Number(s.quantity) || 0;
+      const value =
+        qty * (Number(s.unit_cost) || Number(s.products?.cost_price) || 0);
+      add(lvl, qty, value);
+      // "Alla nivåer" speglar det portalen faktiskt hanterar, så summan aldrig
+      // säger 769 kg när tabellen visar noll rader.
+      if (allowedLevels.includes(lvl)) add("all", qty, value);
+    });
+    return out;
+  }, [allStock, activeStoreId, allowedLevels]);
+
+  const lockedReason = useMemo(() => {
+    const out: Partial<Record<LocationLevel, string>> = {};
+    LEVEL_ORDER.forEach((l) => {
+      if (!allowedLevels.includes(l)) out[l] = LEVEL_OWNER[l];
+    });
+    return out;
+  }, [allowedLevels]);
+
+  /** Behåller bara rader på den valda nivån. */
+  const matchesLevel = useCallback(
+    (row: any) =>
+      level === "all" || (row?.storage_locations?.location_type ?? null) === level,
+    [level],
+  );
+
 
   const getSelectedForLocation = (locId: string) => selectedItems.get(locId) || new Set<string>();
   const toggleItemSelection = (locId: string, itemId: string) => {
@@ -633,8 +696,12 @@ export default function Inventory() {
   }, [locations, site]);
 
   const stockByLocation = useMemo(() => {
-    return portalLocations.map((loc: any) => {
+    const scoped = portalLocations.filter(
+      (loc: any) => level === "all" || loc.location_type === level,
+    );
+    return scoped.map((loc: any) => {
       let items = allStock.filter((s: any) => s.location_id === loc.id);
+
       if (search) {
         items = items.filter(
           (s: any) =>
@@ -657,7 +724,7 @@ export default function Inventory() {
       }).length;
       return { ...loc, items, totalQty, totalValue, expiryWarnings };
     });
-  }, [portalLocations, allStock, search]);
+  }, [portalLocations, allStock, search, level]);
 
   const groupedByStore = useMemo(() => {
     if (site !== "production" && site !== "wholesale") return [];
@@ -1227,11 +1294,14 @@ export default function Inventory() {
     return m;
   }, [products]);
 
-  /** Rader som ska visas i den samlade lagervyn (portal-/butiksfiltrerade) */
+  /** Rader som ska visas i den samlade lagervyn (portal-/butiks-/nivåfiltrerade) */
   const overviewRows = useMemo(() => {
     const allowed = new Set(portalLocations.map((l: any) => l.id));
-    return (allStock as any[]).filter((s: any) => allowed.has(s.location_id) && !hiddenLocs[s.location_id]);
-  }, [allStock, portalLocations, hiddenLocs]);
+    return (allStock as any[]).filter(
+      (s: any) => allowed.has(s.location_id) && !hiddenLocs[s.location_id] && matchesLevel(s),
+    );
+  }, [allStock, portalLocations, hiddenLocs, matchesLevel]);
+
 
   const handleOverviewAction = useCallback(
     (action: "move" | "delete" | "split" | "count", row: any) => {
@@ -1322,6 +1392,28 @@ export default function Inventory() {
           </Button>
         </div>
       </div>
+
+      {/* Fem nivåer i flödesordning. Låsta nivåer visar saldo — se men inte röra. */}
+      <div className="space-y-2">
+        <LevelSelector
+          available={allowedLevels}
+          value={level}
+          onChange={setLevel}
+          totals={levelTotals}
+          lockedReason={lockedReason}
+          showValue={showCosts}
+        />
+        {level !== "all" && (levelTotals[level]?.quantityKg ?? 0) === 0 && (
+          <p className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+            <span className="font-semibold text-foreground">
+              {LEVEL_LABEL[level as LocationLevel]} är tomt.
+            </span>{" "}
+            {LEVEL_EMPTY_HINT[level as LocationLevel]}
+          </p>
+        )}
+      </div>
+
+
 
       {/* Vyväxling: samlad lagerbild (ny look) vs. per lagerplats (detaljvy) vs. rörelser */}
       <div className="flex flex-wrap items-center gap-2">

@@ -203,3 +203,38 @@ export async function locationLevel(
     storeId: ((data as any)?.store_id ?? null) as string | null,
   };
 }
+
+/** Kort förklaring av varför en nivå är tom och vad som fyller den. */
+export const LEVEL_EMPTY_HINT: Record<LocationLevel, string> = {
+  inkopslager:
+    "Inget inköpt som väntar. Nivån fylls när en följesedel bokförs i Inköpsrapportering.",
+  grossistlager:
+    "Inget fysiskt på plats. Nivån fylls när en ankomst registreras från inköpslagret.",
+  tillverkningslager:
+    "Inget planerat för produktion. Nivån fylls när råvara flyttas till Filé/Tillverkning.",
+  leveranslager:
+    "Inget bokat till butik. Nivån fylls när en överföring skickas mot butiken.",
+  butik: "Butikens lager är tomt. Nivån fylls när butiken godkänner en inleverans.",
+};
+
+/** Vem som äger en nivå när användaren bara får se den. */
+export const LEVEL_OWNER: Record<LocationLevel, string> = {
+  inkopslager: "Hanteras av grossist",
+  grossistlager: "Hanteras av grossist",
+  tillverkningslager: "Hanteras av produktion",
+  leveranslager: "Hanteras av grossist",
+  butik: "Hanteras av butiken",
+};
+
+/**
+ * Nivåer en portal får hantera. Övriga nivåer visas med saldo men låsta —
+ * se men inte röra, så ingen beställer vara som redan är uppbokad.
+ */
+export function manageableLevels(site: string | null | undefined): LocationLevel[] {
+  // site: "wholesale" = Admin, "production" = Grossist, "shop" = Butik.
+  if (site === "wholesale") return [...LEVEL_ORDER];
+  if (site === "production")
+    return ["inkopslager", "grossistlager", "tillverkningslager", "leveranslager"];
+  // Butiksportal: butiken hanterar sitt eget lager och tar emot leveranser.
+  return ["leveranslager", "butik"];
+}
