@@ -461,6 +461,7 @@ function ReportSection({
   onUpdateLine,
   onDeleteLine,
   onViewDocument,
+  onSelect,
   onConfirm,
   onUnlock,
   onRenameReport,
