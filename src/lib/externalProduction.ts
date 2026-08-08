@@ -180,6 +180,37 @@ export interface ExternalReturnResult {
   yields: ExternalYieldRow[];
 }
 
+/**
+ * Väljer standardutbytet ur en uppsättning yield-rader. Formerna i yields är
+ * fritext ("filé utan skinn"), så matchningen tillåter delsträngar och samma
+ * regel används i gränssnittet — annars visas en annan standard än den som
+ * sparas i yield_actuals.
+ */
+export function matchStandardYield(
+  rows: { species_group?: string | null; from_form?: string | null; to_form?: string | null; yield_pct: number | string }[],
+  species: string | null | undefined,
+  fromForm: string | null | undefined,
+  toForm: string,
+): number | null {
+  if (!species) return null;
+  const want = (toForm || "").trim().toLowerCase();
+  if (!want) return null;
+  const sp = species.toLowerCase();
+  const candidates = rows.filter((r) => {
+    if ((r.species_group ?? "").toLowerCase() !== sp) return false;
+    const to = (r.to_form ?? "").trim().toLowerCase();
+    return to === want || to.includes(want) || want.includes(to);
+  });
+  if (!candidates.length) return null;
+  const from = (fromForm ?? "").trim().toLowerCase();
+  const exact =
+    candidates.find(
+      (r) => (r.to_form ?? "").trim().toLowerCase() === want && (r.from_form ?? "").toLowerCase() === from,
+    ) ?? candidates.find((r) => (r.from_form ?? "").toLowerCase() === from);
+  const row = exact ?? candidates[0];
+  return Number(row.yield_pct);
+}
+
 /** Standardutbytet ur yields för art och form (null om det saknas). */
 async function standardYieldPct(
   species: string | null,
@@ -189,16 +220,10 @@ async function standardYieldPct(
   if (!species) return null;
   const { data } = await supabase
     .from("yields")
-    .select("yield_pct, from_form, to_form")
-    .eq("species_group", species)
-    .ilike("to_form", toForm);
-  const rows = (data ?? []) as any[];
-  const exact = rows.find(
-    (r) => (r.from_form ?? "").toLowerCase() === (fromForm ?? "").toLowerCase(),
-  );
-  const row = exact ?? rows[0];
-  return row ? Number(row.yield_pct) : null;
-}
+    .select("species_group, yield_pct, from_form, to_form")
+    .eq("species_group", species);
+  return matchStandardYield((data ?? []) as any[], species, fromForm, toForm);
+
 
 /**
  * Registrerar retur från externt uppdrag. Råvaran skrivs av från
