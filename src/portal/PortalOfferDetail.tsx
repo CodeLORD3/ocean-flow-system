@@ -840,10 +840,10 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
 
           {/* Document link */}
           {o.document_url && (
-            <a href={o.document_url} target="_blank" rel="noreferrer"
+            <StorageLink url={o.document_url}
               className="border border-border bg-white p-3 flex items-center gap-2 text-xs text-primary hover:bg-muted/20 font-medium transition-colors">
               <FileText className="h-4 w-4" /> View Attached Document (PDF)
-            </a>
+            </StorageLink>
           )}
         </div>
       </div>

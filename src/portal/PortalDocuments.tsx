@@ -4,6 +4,7 @@ import { FileText, Download, ShieldCheck, Receipt, FolderOpen, ArrowRight } from
 import { getCurrency } from "@/lib/currency";
 import { generateConfirmationPdf } from "@/lib/generateConfirmationPdf";
 import { Link } from "react-router-dom";
+import { StorageImage, StorageLink } from "@/components/storage/StorageMedia";
 
 export default function PortalDocuments() {
   const { data: offers = [], isLoading } = useQuery({
@@ -133,11 +134,9 @@ export default function PortalDocuments() {
         {offers.length > 0 ? (
           <div className="divide-y divide-border">
             {offers.map((offer: any) => (
-              <a
+              <StorageLink
                 key={offer.id}
-                href={offer.document_url}
-                target="_blank"
-                rel="noreferrer"
+                url={offer.document_url}
                 className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
               >
                 <div className="flex items-center gap-3">
