@@ -6461,6 +6461,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_investor: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       is_staff_manager: { Args: never; Returns: boolean }
       latin_norm: { Args: { v: string }; Returns: string }
