@@ -114,7 +114,7 @@ Otillåtna riktningar visas inte som val. Saknas underlag går knappen inte att 
 
 **Sida för överföringar.** Lista med status, ordernummer, från/till med nivå, underlag och vem som gjort vad. Knappar för plocklista och följesedel som PDF. Mottagningsvyn ligger på samma sida för den som är mottagare.
 
-**Larm för oregistrerad plocklista.** Överföringar där plocklistan skrevs ut för mer än fyra timmar sedan utan att plockningen registrerats visas högst upp i rött, med en räknare i sidomenyn.
+**Larm för oregistrerad plocklista.** Överföringar där plocklistan skrevs ut för länge sedan utan att plockningen registrerats visas högst upp i rött, med en räknare i sidomenyn. Gränsen är **konfigurerbar i inställningarna** i stället för hårdkodad: fyra timmar är standard och passar en morgonleverans, men en plocklista som skrivs ut på eftermiddagen inför nästa dag ska inte larma i onödan. Inställningen sätts per enhet med ett fält i timmar, och texten i larmet visar den gällande gränsen.
 
 **Svinn.** Formulär med obligatorisk orsak och kommentar, kopplat till lagerplats och parti.
 
