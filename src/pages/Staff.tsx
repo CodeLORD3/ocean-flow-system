@@ -175,8 +175,15 @@ export default function Staff() {
     };
 
     if (editId) {
+      const newEmail = (form.email || "").trim().toLowerCase();
+      const emailChanged = !!newEmail && newEmail !== originalEmail;
       updateStaff.mutate({ id: editId, ...payload }, {
-        onSuccess: () => { toast({ title: "Personal uppdaterad", description: `${form.first_name} ${form.last_name}` }); setDialogOpen(false); },
+        onSuccess: async () => {
+          toast({ title: "Personal uppdaterad", description: `${form.first_name} ${form.last_name}` });
+          setDialogOpen(false);
+          if (emailChanged && isAdmin) await syncLoginEmail(editId, newEmail);
+          setOriginalEmail(newEmail);
+        },
         onError: (err) => toast({ title: "Fel", description: err.message, variant: "destructive" }),
       });
     } else {
