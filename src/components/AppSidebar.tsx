@@ -219,7 +219,13 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {sections.map(section => renderSection(section))}
+        {sections
+          .map(section => ({
+            ...section,
+            items: section.items.filter(item => canAccessRoute("wholesale", item.url)),
+          }))
+          .filter(section => section.items.length > 0)
+          .map(section => renderSection(section))}
       </SidebarContent>
 
       <SidebarFooter>
