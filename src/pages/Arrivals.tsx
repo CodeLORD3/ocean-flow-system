@@ -415,14 +415,46 @@ export default function Arrivals() {
             </div>
           )}
 
-          <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setOpenReport(null)}>
-              Avbryt
+          <DialogFooter className="sm:justify-between">
+            {/* Etiketterna skrivs på Brother QL-800, 62 × 29 mm, med QR-kod
+                som innehåller partinummret. */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              disabled={!draft.some((l) => l.lotNumber)}
+              onClick={async () => {
+                try {
+                  await openLotLabels(
+                    draft
+                      .filter((l) => l.lotNumber)
+                      .map((l) => ({
+                        lotNumber: l.lotNumber as string,
+                        productName: l.productName ?? "Produkt",
+                        quantityKg: Number(String(l.received).replace(",", ".")) || l.expected,
+                        catchArea: l.catchArea,
+                        vesselName: l.vesselName,
+                        bestBefore: l.bestBefore,
+                        supplierLotNumber: l.supplierLotNumber,
+                      })),
+                  );
+                } catch (e: any) {
+                  toast.error(e.message || "Etiketterna kunde inte skapas.");
+                }
+              }}
+            >
+              <Printer className="h-3.5 w-3.5" /> Partietiketter (QL-800)
             </Button>
-            <Button size="sm" onClick={submit} disabled={saving || draft.length === 0}>
-              {saving ? "Registrerar…" : "Registrera ankomst"}
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setOpenReport(null)}>
+                Avbryt
+              </Button>
+              <Button size="sm" onClick={submit} disabled={saving || draft.length === 0}>
+                {saving ? "Registrerar…" : "Registrera ankomst"}
+              </Button>
+            </div>
           </DialogFooter>
+
         </DialogContent>
       </Dialog>
     </div>
