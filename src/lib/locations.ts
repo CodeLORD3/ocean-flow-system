@@ -231,10 +231,10 @@ export const LEVEL_OWNER: Record<LocationLevel, string> = {
  * se men inte röra, så ingen beställer vara som redan är uppbokad.
  */
 export function manageableLevels(site: string | null | undefined): LocationLevel[] {
-  if (site === "admin") return [...LEVEL_ORDER];
-  if (site === "wholesale")
-    return ["inkopslager", "grossistlager", "leveranslager", "butik"];
-  if (site === "production") return ["grossistlager", "tillverkningslager", "leveranslager"];
+  // site: "wholesale" = Admin, "production" = Grossist, "shop" = Butik.
+  if (site === "wholesale") return [...LEVEL_ORDER];
+  if (site === "production")
+    return ["inkopslager", "grossistlager", "tillverkningslager", "leveranslager"];
   // Butiksportal: butiken hanterar sitt eget lager och tar emot leveranser.
   return ["leveranslager", "butik"];
 }
