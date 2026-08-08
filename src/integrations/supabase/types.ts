@@ -6464,6 +6464,7 @@ export type Database = {
       is_staff: { Args: never; Returns: boolean }
       is_staff_manager: { Args: never; Returns: boolean }
       latin_norm: { Args: { v: string }; Returns: string }
+      ledger_zero_empty_costs: { Args: never; Returns: number }
       next_internal_lot_number: { Args: never; Returns: string }
       notify_event: {
         Args: {
