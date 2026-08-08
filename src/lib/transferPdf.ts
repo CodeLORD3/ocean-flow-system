@@ -92,14 +92,47 @@ export function buildTransferDoc(data: TransferPdfData) {
     margin: { left: margin, right: margin },
     head,
     body,
-    styles: { fontSize: 9, cellPadding: 2, minCellHeight: 9 },
-    headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: "bold" },
-    columnStyles: {
-      2: { halign: "right", cellWidth: 22 },
-      3: { halign: "right", cellWidth: 22 },
-      4: { cellWidth: 34 },
-    },
+    // Plocklistan fylls i för hand: hög rad, ren svart text på vitt och
+    // tomma rutor att skriva i. Ingen färg som slukar bläck eller döljer text.
+    styles: isPick
+      ? {
+          fontSize: 11,
+          cellPadding: { top: 3, bottom: 3, left: 2, right: 2 },
+          minCellHeight: 12,
+          valign: "middle",
+          textColor: 0,
+          lineColor: 0,
+          lineWidth: 0.2,
+          fillColor: false as any,
+        }
+      : { fontSize: 9, cellPadding: 2, minCellHeight: 9 },
+    headStyles: isPick
+      ? {
+          fillColor: false as any,
+          textColor: 0,
+          fontStyle: "bold",
+          fontSize: 10,
+          lineColor: 0,
+          lineWidth: 0.2,
+        }
+      : { fillColor: [30, 41, 59], textColor: 255, fontStyle: "bold" },
+    bodyStyles: isPick ? { fillColor: false as any } : undefined,
+    alternateRowStyles: isPick ? { fillColor: false as any } : undefined,
+    columnStyles: isPick
+      ? {
+          0: { cellWidth: 62 },
+          1: { cellWidth: 34 },
+          2: { halign: "right", cellWidth: 24 },
+          3: { cellWidth: 26 },
+          4: { cellWidth: 40 },
+        }
+      : {
+          2: { halign: "right", cellWidth: 22 },
+          3: { halign: "right", cellWidth: 22 },
+          4: { cellWidth: 34 },
+        },
   });
+
 
   let y = (doc as any).lastAutoTable.finalY + 12;
   doc.setFontSize(9);
