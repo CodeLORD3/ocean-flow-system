@@ -14,6 +14,7 @@ const sb = createClient(SUPABASE_URL, SERVICE_ROLE, {
 const ZOLLIKON_STORE_ID   = "93adfded-5d68-41e3-9b00-c3b3db4f5ee4";
 const STOCKHOLM_STORE_ID  = "eb3b69e6-cf80-4cef-aaba-c5fe2c5151d7";
 const TORGET_STORE_ID     = "b541f4c6-1ac0-4127-8af3-761ce3ecbbd7";
+const TORSLANDA_STORE_ID  = "857b421c-8319-4a66-97c1-7bff980f4967";
 const AMHULT_STORE_ID     = "1426d0bb-dd09-46be-9d11-bc96d203eede";
 const SARO_STORE_ID       = "9ca4f9de-5a14-4bdf-90e7-b22246d41f55";
 
@@ -26,6 +27,8 @@ type SeedUser = {
   portals: string[];
   store: string | null;
   stores?: string[];
+  /** Testkonton ska inte tvingas byta lösenord vid inloggning */
+  keepPassword?: boolean;
 };
 
 const USERS: SeedUser[] = [
@@ -38,7 +41,10 @@ const USERS: SeedUser[] = [
   { email: "vilma.gunnarsson@gmail.com",  password: "Vilma123",   first: "Vilma",   last: "Andersson", portals: ["shop"],         store: null, stores: [STOCKHOLM_STORE_ID] },
   { email: "fredric.lindqvist@calixter.com", password: "Fredric123", first: "Fredric", last: "Lindqvist", portals: ["shop", "wholesale", "production"], store: null, stores: [STOCKHOLM_STORE_ID, TORGET_STORE_ID, AMHULT_STORE_ID, SARO_STORE_ID] },
   { email: "erik.olof.franzen@gmail.com", password: "Erik123", first: "Erik", last: "Franzén", portals: ["shop"], store: SARO_STORE_ID, stores: [SARO_STORE_ID] },
-  { email: "ewaahlander@gmail.com", password: "Ewa123", first: "Ewa", last: "Ahlander", portals: ["shop"], store: AMHULT_STORE_ID, stores: [AMHULT_STORE_ID] },
+  { email: "ewa.ahlander@hotmail.com", oldEmail: "ewaahlander@gmail.com", password: "Ewa123", first: "Ewa", last: "Ahlander", portals: ["shop"], store: AMHULT_STORE_ID, stores: [AMHULT_STORE_ID] },
+  // --- Testkonton för manuell testning (Makrill Trade) ---
+  { email: "testgrossist@makrilltrade.com", password: "TestGrossist2026!", first: "Testperson", last: "A", portals: ["wholesale", "production"], store: null, stores: [], keepPassword: true },
+  { email: "testbutik@makrilltrade.com", password: "TestButik2026!", first: "Testperson", last: "B", portals: ["shop"], store: TORSLANDA_STORE_ID, stores: [TORSLANDA_STORE_ID], keepPassword: true },
   { email: "blankaofta@gmail.com", password: "Benny123", first: "Benny", last: "Andersson", portals: ["shop"], store: "857b421c-8319-4a66-97c1-7bff980f4967", stores: ["857b421c-8319-4a66-97c1-7bff980f4967"] },
 ];
 
@@ -50,6 +56,19 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   const results: any[] = [];
+
+  // Städa bort utgångna dubblettkonton innan seeding
+  const STALE_EMAILS = ["ewaahlander@gmail.com"];
+  {
+    const { data: pre } = await sb.auth.admin.listUsers({ page: 1, perPage: 200 });
+    for (const stale of STALE_EMAILS) {
+      const dup = pre?.users.find((x) => x.email?.toLowerCase() === stale);
+      if (dup) {
+        const { error } = await sb.auth.admin.deleteUser(dup.id);
+        results.push({ email: stale, status: error ? `delete-failed: ${error.message}` : "stale-deleted" });
+      }
+    }
+  }
 
   // Fetch all users once
   const { data: list } = await sb.auth.admin.listUsers({ page: 1, perPage: 200 });
@@ -110,7 +129,7 @@ Deno.serve(async (req) => {
         allowed_store_id: u.store,
         allowed_store_ids: u.stores ?? (u.store ? [u.store] : []),
         email: u.email,
-        must_change_password: true,
+        must_change_password: u.keepPassword ? false : true,
       })
       .eq("id", staffId);
     results.push({ email: u.email, link: e2 ? `error: ${e2.message}` : "linked" });
