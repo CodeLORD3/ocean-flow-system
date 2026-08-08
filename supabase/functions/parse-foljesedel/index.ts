@@ -41,9 +41,6 @@ async function toDataUrl(fileUrl: string): Promise<{ dataUrl: string; mimeType: 
   const { bytes, contentType } = await fetchFileBytes(fileUrl);
 
 
-  const contentType = res.headers.get("content-type") || "application/octet-stream";
-  const buffer = await res.arrayBuffer();
-  const bytes = new Uint8Array(buffer);
 
   // Manual base64 encoding for Deno
   let binary = "";
