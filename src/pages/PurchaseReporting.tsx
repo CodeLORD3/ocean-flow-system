@@ -516,7 +516,7 @@ function ReportSection({
         className={`group w-full flex items-center gap-2 px-3 py-2.5 text-left transition-colors cursor-pointer ${
           isLocked ? "bg-muted/40 hover:bg-muted/60" : "bg-muted/20 hover:bg-muted/40"
         }`}
-        onClick={() => !editing && setExpanded(!expanded)}
+        onClick={() => { if (editing) return; onSelect?.(report.id); setExpanded(!expanded); }}
       >
         {expanded ? <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />}
         {isLocked ? (
