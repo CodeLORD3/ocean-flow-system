@@ -103,6 +103,52 @@ export async function locationIdForLevel(
   return rows[0].id as string;
 }
 
+/** Alla aktiva huvudplatser på en nivå, med enhet. */
+export async function activeLocationsForLevel(
+  level: LocationLevel,
+): Promise<{ id: string; name: string; storeId: string | null }[]> {
+  const { data, error } = await supabase
+    .from("storage_locations")
+    .select("id, name, store_id")
+    .eq("location_type", level as any)
+    .eq("active", true)
+    .is("parent_location_id", null);
+  if (error) throw error;
+  return ((data ?? []) as any[]).map((r) => ({
+    id: r.id as string,
+    name: (r.name ?? "") as string,
+    storeId: (r.store_id ?? null) as string | null,
+  }));
+}
+
+/**
+ * Enda tillåtna vägen att slå upp en lagerplats på namn.
+ *
+ * Kastar fel om namnet är tvetydigt och om den enda träffen är en inaktiverad
+ * plats. Ingen väg returnerar en inaktiv plats eller null tyst — det är så de
+ * gamla namnuppslagen kunde peka på inaktiverade platser obemärkt.
+ */
+export async function locationIdByName(
+  name: string,
+  storeId?: string | null,
+): Promise<string> {
+  let q = supabase.from("storage_locations").select("id, name, active").eq("name", name);
+  if (storeId) q = q.eq("store_id", storeId);
+  const { data, error } = await q;
+  if (error) throw error;
+  const rows = (data ?? []) as any[];
+  if (rows.length === 0) throw new Error(`Ingen lagerplats med namnet "${name}" hittades.`);
+  if (rows.length > 1)
+    throw new Error(
+      `Namnet "${name}" matchar ${rows.length} lagerplatser — uppslaget avbröts för att inte hamna på fel lager.`,
+    );
+  if (rows[0].active === false)
+    throw new Error(
+      `Lagerplatsen "${name}" är inaktiverad i den nya lagerstrukturen — uppslaget avbröts.`,
+    );
+  return rows[0].id as string;
+}
+
 /** Grossistlagret (gemensamt). */
 export async function grossistlagerId(): Promise<string> {
   return locationIdForLevel("grossistlager");

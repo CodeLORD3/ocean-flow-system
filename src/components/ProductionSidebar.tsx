@@ -18,6 +18,8 @@ import {
   Scissors,
   Star,
   History,
+  ArrowLeftRight,
+  Trash2,
   ShieldCheck,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
@@ -54,6 +56,8 @@ const purchaseNav = [
   { title: "Leverantörer", url: "/suppliers", icon: Truck },
   { title: "Lager", url: "/inventory", icon: Package },
   { title: "Lagerrörelser", url: "/stock-movements", icon: History },
+  { title: "Överföringar", url: "/stock-transfers", icon: ArrowLeftRight },
+  { title: "Svinn", url: "/waste", icon: Trash2 },
   { title: "Spårbarhet — partier", url: "/traceability", icon: ShieldCheck },
   { title: "Inleveranser", url: "/receiving", icon: Truck },
 ];

@@ -11,6 +11,8 @@ export function useStorageLocations(storeId?: string) {
       let q = supabase
         .from("storage_locations")
         .select("*, stores!storage_locations_store_id_fkey(name)")
+        // Inaktiverade platser från den gamla strukturen visas inte.
+        .eq("active", true)
         .order("name");
       if (storeId && storeId !== "all") q = q.eq("store_id", storeId);
       const { data, error } = await q;

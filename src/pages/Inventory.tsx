@@ -610,14 +610,23 @@ export default function Inventory() {
   }, [storeStock]);
 
   const portalLocations = useMemo(() => {
-    const isPre = (loc: any) => (loc.name || "").toLowerCase().startsWith("pre-");
-    const isShared = (loc: any) => loc.name === "Grossist Flytande" || loc.name === "Transportlager";
+    // Nivå (location_type) i stället för namn — de gamla namnen är inaktiverade.
+    const isPre = (loc: any) => loc.location_type === "leveranslager";
+    const isShared = (loc: any) => loc.location_type === "grossistlager";
     if (site === "production") {
-      return locations.filter((loc: any) => loc.zone === "Produktion" || isPre(loc) || isShared(loc));
+      return locations.filter(
+        (loc: any) =>
+          loc.location_type === "tillverkningslager" || loc.zone === "Produktion" || isPre(loc) || isShared(loc),
+      );
     }
     if (site === "wholesale") {
       return locations.filter(
-        (loc: any) => loc.zone === "Inköp" || isPre(loc) || isShared(loc) || loc.name?.startsWith("Raw"),
+        (loc: any) =>
+          loc.location_type === "inkopslager" ||
+          loc.location_type === "butik" ||
+          loc.zone === "Inköp" ||
+          isPre(loc) ||
+          isShared(loc),
       );
     }
     return locations;
@@ -634,7 +643,7 @@ export default function Inventory() {
         );
       }
       const totalQty = items.reduce((sum: number, s: any) => sum + qtyToKg(Number(s.quantity), s.products), 0);
-      const isRawLager = (loc.name || "").toLowerCase().startsWith("raw-");
+      const isRawLager = loc.location_type === "butik";
       const totalValue = items.reduce((sum: number, s: any) => {
         const qty = Number(s.quantity);
         if (isRawLager) return sum + qty * (Number(s.products?.wholesale_price) || 0);
@@ -652,7 +661,7 @@ export default function Inventory() {
 
   const groupedByStore = useMemo(() => {
     if (site !== "production" && site !== "wholesale") return [];
-    const generalNames = ["Grossist Flytande", "Transportlager"];
+    const isGeneral = (loc: any) => loc.location_type === "grossistlager";
     const storeGroups = new Map<
       string,
       { storeName: string; locations: typeof stockByLocation; totalQty: number; totalValue: number }
@@ -660,7 +669,7 @@ export default function Inventory() {
     const generalLocations: typeof stockByLocation = [];
     stockByLocation.forEach((loc: any) => {
       if (loc.parent_location_id) return; // sublager visas i dropdown under sitt huvudlager
-      if (generalNames.includes(loc.name)) {
+      if (isGeneral(loc)) {
         generalLocations.push(loc);
         return;
       }
@@ -993,7 +1002,7 @@ export default function Inventory() {
           {/* Mobile: card list */}
           <div className="sm:hidden divide-y divide-border/30">
             {loc.items.map((s: any) => {
-              const isRawLager = (loc.name || "").toLowerCase().startsWith("raw-");
+              const isRawLager = loc.location_type === "butik";
               const unitPrice = isRawLager
                 ? Number(s.products?.wholesale_price) || 0
                 : Number(s.unit_cost) || Number(s.products?.cost_price) || 0;
@@ -1082,7 +1091,7 @@ export default function Inventory() {
               </thead>
               <tbody>
                 {loc.items.map((s: any, idx: number) => {
-                  const isRawLager = (loc.name || "").toLowerCase().startsWith("raw-");
+                  const isRawLager = loc.location_type === "butik";
                   const unitPrice = isRawLager
                     ? Number(s.products?.wholesale_price) || 0
                     : Number(s.unit_cost) || Number(s.products?.cost_price) || 0;
