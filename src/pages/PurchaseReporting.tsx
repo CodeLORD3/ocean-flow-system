@@ -939,7 +939,7 @@ export default function PurchaseReporting() {
       queryClient.invalidateQueries({ queryKey: ["product_stock_locations"] });
       queryClient.invalidateQueries({ queryKey: ["all_stock_locations"] });
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
-      setSelectedReportId(null);
+      // Behåll markeringen: nästa steg är "Bokför inleverans" på samma rapport.
       toast({ title: "Inköp bekräftat", description: "Dokumentet är låst. Bokför inleveransen för att lägga varorna på lagret." });
     },
   });
