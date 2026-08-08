@@ -823,6 +823,12 @@ export default function PurchaseReporting() {
 
   const selectedReport = reports.find((r) => r.id === selectedReportId) ?? null;
 
+  // Finns bara en rapport ska den vara vald automatiskt — annars ser knappen
+  // "Bokför inleverans" spärrad ut utan att användaren gjort något fel.
+  useEffect(() => {
+    if (!selectedReportId && reports.length === 1) setSelectedReportId(reports[0].id);
+  }, [selectedReportId, reports]);
+
   // Build lookup: product_id -> category
   const productCategoryMap = new Map(products.map((p: any) => [p.id, p.category]));
 
