@@ -25,6 +25,8 @@ import {
   Truck as TruckIcon,
   MessageSquare,
   Scissors,
+  History,
+  ShieldCheck,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -48,6 +50,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { canAccessRoute } from "@/lib/pageAccess";
 
 const overviewNav = [
   { title: "Översikt", url: "/organisation", icon: BarChart3 },
@@ -81,6 +84,8 @@ const productionNav = [
 const inventoryNav = [
   { title: "Produkter", url: "/products", icon: Fish },
   { title: "Lager", url: "/inventory", icon: Package },
+  { title: "Lagerrörelser", url: "/stock-movements", icon: History },
+  { title: "Spårbarhet — partier", url: "/traceability", icon: ShieldCheck },
   { title: "Streckkoder", url: "/barcodes", icon: ScanLine },
   { title: "Inleveranser", url: "/receiving", icon: Truck },
 ];
@@ -214,7 +219,13 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {sections.map(section => renderSection(section))}
+        {sections
+          .map(section => ({
+            ...section,
+            items: section.items.filter(item => canAccessRoute("wholesale", item.url)),
+          }))
+          .filter(section => section.items.length > 0)
+          .map(section => renderSection(section))}
       </SidebarContent>
 
       <SidebarFooter>

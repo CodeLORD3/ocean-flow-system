@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { EmptyState } from "@/components/EmptyState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -6,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { ChevronDown, ChevronRight, Scale } from "lucide-react";
+import { ChevronDown, ChevronRight, Scale, Scissors } from "lucide-react";
 import { fmt } from "@/lib/filletMath";
 import {
   useProductionOrders,
@@ -99,7 +100,12 @@ export function ProductionHistory() {
         <CardContent className="p-0">
           {isLoading && <p className="p-4 text-xs text-muted-foreground">Laddar…</p>}
           {!isLoading && filtered.length === 0 && (
-            <p className="p-6 text-center text-xs text-muted-foreground">Inga tillverkningsordrar registrerade ännu.</p>
+            <EmptyState
+              bare
+              icon={<Scissors className="h-4 w-4" />}
+              title="Inga tillverkningsordrar ännu"
+              description="Historiken fylls när du kör en tillverkningsorder i fliken Ny tillverkning: råvarupartiet plockas i FIFO-ordning och detaljpartier skapas automatiskt."
+            />
           )}
           <div className="divide-y">
             {filtered.map((o) => {
@@ -208,7 +214,12 @@ export function ProductionHistory() {
         </CardHeader>
         <CardContent className="p-0">
           {comparison.length === 0 ? (
-            <p className="p-6 text-center text-xs text-muted-foreground">Inga verkliga utfall att jämföra ännu.</p>
+            <EmptyState
+              bare
+              icon={<Scissors className="h-4 w-4" />}
+              title="Inga verkliga utfall ännu"
+              description="Jämförelsen mot utbytesregistret visas när du registrerat faktiskt utbyte på en genomförd tillverkningsorder."
+            />
           ) : (
             <Table>
               <TableHeader>

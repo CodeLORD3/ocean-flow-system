@@ -5,16 +5,21 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Fish, Search, Ship, Anchor } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 
 interface Props {
   currency?: string;
+  /** Butiksläget döljer inköpspris per kilo. */
+  showCosts?: boolean;
+  /** Åtgärd i det tomma tillståndet. */
+  onEmptyAction?: () => void;
 }
 
 const nf = (n: number, d = 1) =>
   n.toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/\u00a0/g, " ");
 
 /** Spårbarhetsvy: partier med kvarvarande kvantitet, ursprung och rörelser. */
-export default function LotTraceabilityView({ currency = "SEK" }: Props) {
+export default function LotTraceabilityView({ currency = "SEK", showCosts = true, onEmptyAction }: Props) {
   const [q, setQ] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -85,11 +90,17 @@ export default function LotTraceabilityView({ currency = "SEK" }: Props) {
       {isLoading && <p className="text-sm text-muted-foreground">Hämtar partier…</p>}
 
       {!isLoading && filtered.length === 0 && (
-        <Card className="shadow-card">
-          <CardContent className="p-6 text-center text-sm text-muted-foreground">
-            Inga partier registrerade ännu. Partier skapas automatiskt vid inleverans.
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={<Fish className="h-4 w-4" />}
+          title={q.trim() ? "Inga partier matchar sökningen" : "Inga partier registrerade ännu"}
+          description={
+            q.trim()
+              ? "Sök på partinummer, leverantörsparti, art, fångstområde eller fartyg."
+              : "Partier skapas automatiskt när en inköpsrapport bokförs. Bokför en inleverans för att bygga spårbarhetskedjan."
+          }
+          actionLabel={q.trim() ? "Rensa sökning" : onEmptyAction ? "Till inköpsrapportering" : undefined}
+          onAction={q.trim() ? () => setQ("") : onEmptyAction}
+        />
       )}
 
       <div className="space-y-2">
@@ -131,7 +142,7 @@ export default function LotTraceabilityView({ currency = "SEK" }: Props) {
                   </div>
                   <div className="text-right font-mono tabular-nums">
                     <p className="text-sm font-semibold text-foreground">{nf(Number(lot.quantity_kg || 0), 3)} kg</p>
-                    {lot.unit_cost != null && (
+                    {showCosts && lot.unit_cost != null && (
                       <p className="text-[11px] text-muted-foreground">
                         {nf(Number(lot.unit_cost), 2)} {currency}/kg
                       </p>

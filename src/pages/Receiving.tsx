@@ -15,6 +15,7 @@ import {
   Calendar,
   CalendarCheck,
 } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -460,9 +461,11 @@ export default function Receiving() {
         </CardHeader>
         <CardContent>
           {filteredUnreported.length === 0 ? (
-            <p className="text-xs text-muted-foreground text-center py-8">
-              Inga skickade leveranser att ta emot just nu.
-            </p>
+            <EmptyState
+              bare
+              title="Inga leveranser att ta emot"
+              description="Här hamnar ordrar som grossisten har markerat som skickade. Saknas något du väntar på? Kontrollera orderstatus under Ordrar."
+            />
           ) : (
             <div className="space-y-2">
               {filteredUnreported.map((order: any) => {

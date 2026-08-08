@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useStockMovements, MOVEMENT_LABELS } from "@/hooks/useStockMovements";
 import { ArrowDownRight, ArrowUpRight, Search } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 
 const dec = (n: number, d = 1) =>
   Number(n).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -23,9 +24,15 @@ const TYPE_FILTERS = ["all", ...Object.keys(MOVEMENT_LABELS)];
 export default function StockMovementsView({
   locationIds,
   currency = "SEK",
+  showCosts = true,
+  onEmptyAction,
 }: {
   locationIds?: string[];
   currency?: string;
+  /** Butiksläget döljer kostpris och svinnvärde. */
+  showCosts?: boolean;
+  /** Åtgärd i det tomma tillståndet, t.ex. gå till inköpsrapportering. */
+  onEmptyAction?: () => void;
 }) {
   const [type, setType] = useState("all");
   const [search, setSearch] = useState("");
@@ -34,6 +41,7 @@ export default function StockMovementsView({
     movementType: type,
     limit: 400,
   });
+
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -44,6 +52,8 @@ export default function StockMovementsView({
         .some((v: string) => String(v).toLowerCase().includes(q)),
     );
   }, [movements, search]);
+
+  const hasFilter = search.trim().length > 0 || type !== "all";
 
   const totals = useMemo(() => {
     const inKg = rows
@@ -71,10 +81,14 @@ export default function StockMovementsView({
           { l: "Inflöde", v: `${dec(totals.inKg)} kg` },
           { l: "Utflöde", v: `${dec(totals.outKg)} kg` },
           { l: "Svinn", v: `${dec(totals.wasteKg)} kg` },
-          {
-            l: "Svinnvärde",
-            v: `${totals.wasteValue.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} ${currency}`,
-          },
+          ...(showCosts
+            ? [
+                {
+                  l: "Svinnvärde",
+                  v: `${totals.wasteValue.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} ${currency}`,
+                },
+              ]
+            : []),
         ].map((k) => (
           <Card key={k.l}>
             <CardContent className="p-3">
@@ -122,7 +136,7 @@ export default function StockMovementsView({
                   <th>Produkt</th>
                   <th>Typ</th>
                   <th className="text-right">Kg</th>
-                  <th className="text-right">Kostpris</th>
+                  {showCosts && <th className="text-right">Kostpris</th>}
                   <th>Lagerplats</th>
                   <th>Parti</th>
                   <th>Anteckning</th>
@@ -132,15 +146,35 @@ export default function StockMovementsView({
               <tbody>
                 {isLoading && (
                   <tr>
-                    <td colSpan={9} className="px-3 py-6 text-center text-muted-foreground">
+                    <td colSpan={showCosts ? 9 : 8} className="px-3 py-6 text-center text-muted-foreground">
                       Hämtar rörelser…
                     </td>
                   </tr>
                 )}
                 {!isLoading && rows.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
-                      Inga lagerrörelser matchar urvalet.
+                    <td colSpan={showCosts ? 9 : 8} className="p-0">
+                      <EmptyState
+                        bare
+                        icon={<ArrowUpRight className="h-4 w-4" />}
+                        title={
+                          hasFilter ? "Inga rörelser matchar urvalet" : "Inga lagerrörelser bokförda ännu"
+                        }
+                        description={
+                          hasFilter
+                            ? "Rensa sökningen eller välj Alla för att se hela historiken."
+                            : "Rörelser skapas automatiskt när en inköpsrapport bokförs, vid tillverkning, överföring, inventering och svinn."
+                        }
+                        actionLabel={hasFilter ? "Rensa urval" : onEmptyAction ? "Till inköpsrapportering" : undefined}
+                        onAction={
+                          hasFilter
+                            ? () => {
+                                setSearch("");
+                                setType("all");
+                              }
+                            : onEmptyAction
+                        }
+                      />
                     </td>
                   </tr>
                 )}
@@ -177,9 +211,11 @@ export default function StockMovementsView({
                           {dec(Math.abs(qty), 3)}
                         </span>
                       </td>
-                      <td className="px-2 py-1 text-right font-mono tabular-nums">
-                        {m.unit_cost ? dec(Number(m.unit_cost), 2) : "—"}
-                      </td>
+                      {showCosts && (
+                        <td className="px-2 py-1 text-right font-mono tabular-nums">
+                          {m.unit_cost ? dec(Number(m.unit_cost), 2) : "—"}
+                        </td>
+                      )}
                       <td className="px-2 py-1 text-muted-foreground">
                         {m.storage_locations?.name || "—"}
                       </td>

@@ -38,6 +38,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProductThumb } from "@/components/products/ProductThumb";
 import { cn } from "@/lib/utils";
+import { EmptyState } from "@/components/EmptyState";
 
 /** En lagerrad från product_stock_locations (joinad med products + storage_locations). */
 export interface StockRow {
@@ -65,6 +66,11 @@ interface Props {
   onLineAction?: (action: StockLineAction, row: StockRow) => void;
   /** Rubrik-yta ovanför tabellen (t.ex. växla vy-knappar) */
   headerRight?: React.ReactNode;
+  /** Butiksläget döljer kostnadsbaserat lagervärde. */
+  showCosts?: boolean;
+  /** Åtgärd i tomt tillstånd, t.ex. gå till inleveranser. */
+  onEmptyAction?: () => void;
+  emptyActionLabel?: string;
 }
 
 const CATEGORY_ICONS: Record<string, any> = {
@@ -137,6 +143,9 @@ export default function StockOverview({
   currency,
   onLineAction,
   headerRight,
+  showCosts = true,
+  onEmptyAction,
+  emptyActionLabel = "Registrera inleverans",
 }: Props) {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("__all__");
@@ -272,16 +281,18 @@ export default function StockOverview({
   return (
     <div className="space-y-3">
       {/* KPI-kort */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <Card className="shadow-card">
-          <CardContent className="p-3 space-y-1">
-            <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
-              <Coins className="h-3.5 w-3.5 text-primary" /> Totalt lagervärde
-            </p>
-            <p className="text-2xl font-heading font-bold tabular-nums">{fmt(kpis.value)}</p>
-            <p className="text-[10px] text-muted-foreground">Kostnadsbaserat ({currency})</p>
-          </CardContent>
-        </Card>
+      <div className={cn("grid grid-cols-2 gap-3", showCosts ? "lg:grid-cols-5" : "lg:grid-cols-4")}>
+        {showCosts && (
+          <Card className="shadow-card">
+            <CardContent className="p-3 space-y-1">
+              <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                <Coins className="h-3.5 w-3.5 text-primary" /> Totalt lagervärde
+              </p>
+              <p className="text-2xl font-heading font-bold tabular-nums">{fmt(kpis.value)}</p>
+              <p className="text-[10px] text-muted-foreground">Kostnadsbaserat ({currency})</p>
+            </CardContent>
+          </Card>
+        )}
         <Card className="shadow-card">
           <CardContent className="p-3 space-y-1">
             <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
@@ -462,7 +473,7 @@ export default function StockOverview({
                 <th className="px-2 py-2 text-left font-medium">Kategori</th>
                 <th className="px-2 py-2 text-left font-medium">Lager (kg)</th>
                 <th className="px-2 py-2 text-right font-medium">Totalt</th>
-                <th className="px-2 py-2 text-right font-medium">Lagervärde</th>
+                {showCosts && <th className="px-2 py-2 text-right font-medium">Lagervärde</th>}
                 <th className="px-2 py-2 text-center font-medium">Bäst före</th>
                 <th className="px-2 py-2 text-center font-medium">Dagar kvar</th>
                 <th className="px-2 py-2 text-center font-medium">Status</th>
@@ -472,8 +483,15 @@ export default function StockOverview({
             <tbody>
               {pageRows.length === 0 && (
                 <tr>
-                  <td colSpan={10} className="px-4 py-12 text-center text-sm text-muted-foreground">
-                    Inget lager att visa
+                  <td colSpan={showCosts ? 10 : 9} className="p-0">
+                    <EmptyState
+                      bare
+                      icon={<Package2 className="h-4 w-4" />}
+                      title="Inget lager att visa"
+                      description="Saldo uppstår när en inleverans bokförs, en överföring tas emot eller ett lager inventeras. Rensa filtren om du väntar dig rader här."
+                      actionLabel={onEmptyAction ? emptyActionLabel : undefined}
+                      onAction={onEmptyAction}
+                    />
                   </td>
                 </tr>
               )}
@@ -481,7 +499,7 @@ export default function StockOverview({
                 const Icon = CATEGORY_ICONS[cat] || Package2;
                 return [
                   <tr key={`cat-${cat}`} className="bg-muted/30 border-b">
-                    <td colSpan={10} className="px-2 py-1.5">
+                    <td colSpan={showCosts ? 10 : 9} className="px-2 py-1.5">
                       <span className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                         <Icon className="h-3.5 w-3.5 text-primary" />
                         {cat}
@@ -558,7 +576,9 @@ export default function StockOverview({
                         <td className="px-2 text-right font-semibold tabular-nums whitespace-nowrap">
                           {g.totalKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
                         </td>
-                        <td className="px-2 text-right tabular-nums whitespace-nowrap">{fmt(g.value)}</td>
+                        {showCosts && (
+                          <td className="px-2 text-right tabular-nums whitespace-nowrap">{fmt(g.value)}</td>
+                        )}
                         <td className="px-2 text-center text-xs text-muted-foreground whitespace-nowrap">
                           {g.earliestExpiry
                             ? format(parseISO(g.earliestExpiry), "d MMM", { locale: sv })

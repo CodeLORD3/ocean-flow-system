@@ -64,6 +64,7 @@ import {
   useUpsertStockLocation,
 } from "@/hooks/useStorageLocations";
 import { useSite } from "@/contexts/SiteContext";
+import { canSeeCosts } from "@/lib/pageAccess";
 import { getStoreCurrency } from "@/lib/currency";
 import BarcodeScanner from "@/components/barcode/BarcodeScanner";
 import { EntityImagesButton } from "@/components/images/EntityImageGallery";
@@ -205,6 +206,7 @@ const fmt = fmtFor("SEK");
 export default function Inventory() {
   const { toast } = useToast();
   const { activeStoreId, activeStoreName, site } = useSite();
+  const showCosts = canSeeCosts(site);
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"overview" | "locations" | "movements" | "lots">("overview");
   const [wasteOpen, setWasteOpen] = useState(false);
@@ -1031,7 +1033,9 @@ export default function Inventory() {
                         <div className="text-sm font-semibold text-foreground whitespace-nowrap">
                           {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
                         </div>
-                        <div className="text-[10px] text-muted-foreground whitespace-nowrap">{fmt(value)}</div>
+                        {showCosts && (
+                          <div className="text-[10px] text-muted-foreground whitespace-nowrap">{fmt(value)}</div>
+                        )}
                       </div>
                     </div>
                     <div className="mt-1 flex items-center gap-2 flex-wrap text-[10px] text-muted-foreground">
@@ -1068,7 +1072,9 @@ export default function Inventory() {
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">SKU</th>
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Kat.</th>
                   <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Antal</th>
-                  <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Värde</th>
+                  {showCosts && (
+                    <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Värde</th>
+                  )}
                   <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Ank.</th>
                   <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">B.före</th>
                   <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Färskh.</th>
@@ -1109,7 +1115,9 @@ export default function Inventory() {
                       <td className="px-2 py-0.5 text-right font-medium text-foreground">
                         {Number(s.quantity).toLocaleString("sv-SE")} {s.products?.unit}
                       </td>
-                      <td className="px-2 py-0.5 text-right text-muted-foreground">{fmt(value)}</td>
+                      {showCosts && (
+                        <td className="px-2 py-0.5 text-right text-muted-foreground">{fmt(value)}</td>
+                      )}
                       <td className="px-2 py-0.5 text-center text-[10px] text-muted-foreground">
                         {s.arrival_date ? format(parseISO(s.arrival_date), "d MMM", { locale: sv }) : "–"}
                       </td>
@@ -1346,6 +1354,7 @@ export default function Inventory() {
           fmt={fmtLocal}
           currency={localCurrency}
           onLineAction={handleOverviewAction}
+          showCosts={showCosts}
         />
       )}
 
@@ -1353,10 +1362,11 @@ export default function Inventory() {
         <StockMovementsView
           locationIds={(stockByLocation as any[]).map((l: any) => l.id).filter(Boolean)}
           currency={localCurrency}
+          showCosts={showCosts}
         />
       )}
 
-      {viewMode === "lots" && <LotTraceabilityView currency={localCurrency} />}
+      {viewMode === "lots" && <LotTraceabilityView currency={localCurrency} showCosts={showCosts} />}
 
 
 
@@ -1378,12 +1388,14 @@ export default function Inventory() {
             <p className="text-xl font-heading font-bold text-foreground">{totalQty.toLocaleString("sv-SE")}</p>
           </CardContent>
         </Card>
-        <Card className="shadow-card">
-          <CardContent className="p-3">
-            <p className="text-[10px] text-muted-foreground">Lagervärde ({localCurrency})</p>
-            <p className="text-xl font-heading font-bold text-foreground">{fmtLocal(totalValue)}</p>
-          </CardContent>
-        </Card>
+        {showCosts && (
+          <Card className="shadow-card">
+            <CardContent className="p-3">
+              <p className="text-[10px] text-muted-foreground">Lagervärde ({localCurrency})</p>
+              <p className="text-xl font-heading font-bold text-foreground">{fmtLocal(totalValue)}</p>
+            </CardContent>
+          </Card>
+        )}
         <Card className="shadow-card">
           <CardContent className="p-3">
             <p className="text-[10px] text-muted-foreground flex items-center gap-1">

@@ -4,6 +4,8 @@ import Inventory from "@/pages/Inventory";
 import Products from "@/pages/Products";
 import Pricing from "@/pages/Pricing";
 import Barcodes from "@/pages/Barcodes";
+import { useSite } from "@/contexts/SiteContext";
+import { canAccessRoute } from "@/lib/pageAccess";
 
 type SubTab = "lager" | "produkter" | "streckkoder" | "priser";
 
@@ -12,13 +14,15 @@ type SubTab = "lager" | "produkter" | "streckkoder" | "priser";
  * All three stay mounted so state is preserved when switching.
  */
 export default function InventoryRouter() {
+  const { site } = useSite();
+  const showPricing = canAccessRoute(site, "/pricing");
   const [tab, setTab] = useState<SubTab>("lager");
 
   return (
     <div className="h-full w-full flex flex-col">
       <div className="border-b bg-background px-4 pt-3">
         <Tabs value={tab} onValueChange={(v) => setTab(v as SubTab)} className="w-full">
-          <TabsList className="w-full h-10 sm:h-12 grid grid-cols-4 gap-1 p-1">
+          <TabsList className="w-full h-10 sm:h-12 grid gap-1 p-1" style={{ gridTemplateColumns: `repeat(${showPricing ? 4 : 3}, minmax(0, 1fr))` }}>
             <TabsTrigger
               value="lager"
               className="h-full text-xs sm:text-base font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
@@ -38,12 +42,14 @@ export default function InventoryRouter() {
               <span className="sm:hidden">Koder</span>
               <span className="hidden sm:inline">Streckkoder</span>
             </TabsTrigger>
-            <TabsTrigger
-              value="priser"
-              className="h-full text-xs sm:text-base font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
-            >
-              Priser
-            </TabsTrigger>
+            {showPricing && (
+              <TabsTrigger
+                value="priser"
+                className="h-full text-xs sm:text-base font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
+              >
+                Priser
+              </TabsTrigger>
+            )}
           </TabsList>
 
         </Tabs>
@@ -60,9 +66,11 @@ export default function InventoryRouter() {
         <div style={{ display: tab === "streckkoder" ? "block" : "none" }}>
           <Barcodes />
         </div>
-        <div style={{ display: tab === "priser" ? "block" : "none" }}>
-          <Pricing />
-        </div>
+        {showPricing && (
+          <div style={{ display: tab === "priser" ? "block" : "none" }}>
+            <Pricing />
+          </div>
+        )}
       </div>
     </div>
   );

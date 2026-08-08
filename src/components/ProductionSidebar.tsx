@@ -17,9 +17,12 @@ import {
   MessageSquare,
   Scissors,
   Star,
+  History,
+  ShieldCheck,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
+import { canAccessRoute } from "@/lib/pageAccess";
 import { NotificationBadge } from "@/components/NotificationBadge";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useChatUnread } from "@/hooks/useChat";
@@ -50,6 +53,8 @@ const purchaseNav = [
   { title: "Inköpsrapportering", url: "/purchase-reporting", icon: FileText },
   { title: "Leverantörer", url: "/suppliers", icon: Truck },
   { title: "Lager", url: "/inventory", icon: Package },
+  { title: "Lagerrörelser", url: "/stock-movements", icon: History },
+  { title: "Spårbarhet — partier", url: "/traceability", icon: ShieldCheck },
   { title: "Inleveranser", url: "/receiving", icon: Truck },
 ];
 
@@ -116,7 +121,13 @@ export function ProductionSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {sections.map((section) => (
+        {sections
+          .map((section) => ({
+            ...section,
+            items: section.items.filter((item) => canAccessRoute("production", item.url)),
+          }))
+          .filter((section) => section.items.length > 0)
+          .map((section) => (
           <SidebarGroup key={section.label}>
             <SidebarGroupLabel>{section.label}</SidebarGroupLabel>
             <SidebarGroupContent>
