@@ -71,7 +71,20 @@ export default function StaffProfile() {
     clockIn.mutate(
       { staffId: staff.id, storeId: effectiveStore },
       {
-        onSuccess: () => toast({ title: "Instämplad", description: `${fullName} · ${stores.find((s) => s.id === effectiveStore)?.name ?? ""}` }),
+        onSuccess: (res) => {
+          const target = stores.find((s) => s.id === effectiveStore)?.name ?? "";
+          if (res.outcome === "already") {
+            toast({ title: "Redan instämplad", description: `Du är redan instämplad i ${target}.` });
+          } else if (res.outcome === "moved") {
+            const from = stores.find((s) => s.id === res.previousStoreId)?.name;
+            toast({
+              title: "Stämpling flyttad",
+              description: `Du stämplades ut från ${from ?? "tidigare arbetsplats"} och in i ${target}.`,
+            });
+          } else {
+            toast({ title: "Instämplad", description: `${fullName} · ${target}` });
+          }
+        },
         onError: (err: any) => toast({ title: "Fel", description: err.message, variant: "destructive" }),
       },
     );
