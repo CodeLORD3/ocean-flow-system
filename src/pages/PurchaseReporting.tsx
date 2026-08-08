@@ -942,13 +942,19 @@ export default function PurchaseReporting() {
       const confirmedProductIds = productLines.map((l) => l.product_id!).filter(Boolean);
       await markOrderLinesBehandlas(confirmedProductIds);
     },
-    onSuccess: () => {
+    onSuccess: (_data, reportId) => {
       queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
       queryClient.invalidateQueries({ queryKey: ["product_stock_locations"] });
       queryClient.invalidateQueries({ queryKey: ["all_stock_locations"] });
       queryClient.invalidateQueries({ queryKey: ["shop_orders"] });
-      // Behåll markeringen: nästa steg är "Bokför inleverans" på samma rapport.
-      toast({ title: "Inköp bekräftat", description: "Dokumentet är låst. Bokför inleveransen för att lägga varorna på lagret." });
+      // Godkännande och bokföring är ett enda steg: bokföringsrutan öppnas
+      // direkt på samma rapport så att partierna hamnar i inköpslagret nu.
+      setSelectedReportId(reportId);
+      setPostOpen(true);
+      toast({
+        title: "Inköp bekräftat",
+        description: "Bokför partierna till inköpslagret i rutan som öppnats.",
+      });
     },
   });
 
@@ -1329,7 +1335,18 @@ export default function PurchaseReporting() {
                 </p>
               </div>
               <div className="flex items-start gap-2">
-                <div className="flex flex-col items-end gap-1">
+                {/* Bokföring sker vid godkännandet. Knappen syns bara för äldre
+                    bekräftade följesedlar som ännu inte är bokförda. */}
+                <div
+                  className={
+                    selectedReport &&
+                    (selectedReport as any).status === "Godkänd" &&
+                    !(selectedReport as any).posted_at
+                      ? "flex flex-col items-end gap-1"
+                      : "hidden"
+                  }
+                >
+
                   <Button
                     variant={selectedReport && !(selectedReport as any).posted_at ? "default" : "outline"}
                     size="sm"
@@ -1736,10 +1753,35 @@ export default function PurchaseReporting() {
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 shrink-0"
-                            onClick={(e) => { e.stopPropagation(); deleteReport.mutate(r.id); }}
+                            title={
+                              (r as any).posted_at
+                                ? "Bokförd följesedel kan inte raderas — lås upp den först"
+                                : "Radera följesedeln"
+                            }
+                            disabled={Boolean((r as any).posted_at)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if ((r as any).posted_at) {
+                                toast({
+                                  title: "Bokförd följesedel",
+                                  description:
+                                    "Lås upp rapporten först — då motbokas partierna innan den kan raderas.",
+                                  variant: "destructive",
+                                });
+                                return;
+                              }
+                              if (
+                                window.confirm(
+                                  `Radera ${r.display_name || r.file_name}? Raderna försvinner. Åtgärden kan inte ångras.`,
+                                )
+                              ) {
+                                deleteReport.mutate(r.id);
+                              }
+                            }}
                           >
                             <Trash2 className="h-3 w-3 text-destructive" />
                           </Button>
+
                         </div>
 
                         {/* Expanded document viewer */}

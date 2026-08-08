@@ -6,6 +6,7 @@ import { NavLink } from "@/components/NavLink";
 import { NotificationBadge } from "@/components/NotificationBadge";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useChatUnread } from "@/hooks/useChat";
+import { useIncomingTransferCount } from "@/hooks/useTransferOrders";
 import { useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useSite } from "@/contexts/SiteContext";
@@ -78,10 +79,11 @@ export function ShopSidebar() {
   const isActive = (path: string) => location.pathname === path;
   const { getCount, markAsRead } = useNotifications();
   const chatUnread = useChatUnread();
-  
+
   const { activeStoreId, activeStoreName } = useSite();
   const { data: stores } = useStores();
   const activeStore = stores?.find(s => s.id === activeStoreId);
+  const incomingTransfers = useIncomingTransferCount(activeStoreId || null);
 
   const { hiddenUrls } = useStoreSidebarPrefs();
   const [customizeOpen, setCustomizeOpen] = useState(false);
@@ -135,7 +137,7 @@ export function ShopSidebar() {
                         <NavLink to={item.url} end onClick={closeMobileSidebar}>
                           <item.icon className="h-4 w-4" />
                           {!collapsed && <span>{item.title}</span>}
-                          {!collapsed && <NotificationBadge count={getCount(item.url) + (item.url === "/chat" ? chatUnread.total : 0)} />}
+                          {!collapsed && <NotificationBadge count={getCount(item.url) + (item.url === "/chat" ? chatUnread.total : 0) + (item.url === "/stock-transfers" ? incomingTransfers : 0)} />}
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -159,7 +161,7 @@ export function ShopSidebar() {
                   <NavLink to={item.url} end onClick={closeMobileSidebar}>
                     <item.icon className="h-4 w-4" />
                     {!collapsed && <span>{item.title}</span>}
-                    {!collapsed && <NotificationBadge count={getCount(item.url) + (item.url === "/chat" ? chatUnread.total : 0)} />}
+                    {!collapsed && <NotificationBadge count={getCount(item.url) + (item.url === "/chat" ? chatUnread.total : 0) + (item.url === "/stock-transfers" ? incomingTransfers : 0)} />}
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>

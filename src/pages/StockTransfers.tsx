@@ -7,10 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle, ArrowLeftRight, Plus, Settings2 } from "lucide-react";
+import { AlertTriangle, ArrowLeftRight, Plus, Settings2, Truck } from "lucide-react";
 import { useSite } from "@/contexts/SiteContext";
 import { useStorageLocations } from "@/hooks/useStorageLocations";
-import { useTransferOrders, type TransferOrderRow } from "@/hooks/useTransferOrders";
+import {
+  useTransferOrders,
+  useIncomingTransfers,
+  type TransferOrderRow,
+} from "@/hooks/useTransferOrders";
 import { usePicklistAlarmHours, useSetPicklistAlarmHours } from "@/hooks/useSystemSettings";
 import TransferFlowDialog, { STATUS_LABEL } from "@/components/inventory/TransferFlowDialog";
 import NewTransferDialog from "@/components/inventory/NewTransferDialog";
@@ -30,6 +34,7 @@ export default function StockTransfers() {
     [locations, activeStoreId],
   );
   const { data: orders = [], isLoading } = useTransferOrders(locationIds);
+  const { data: incoming = [] } = useIncomingTransfers(activeStoreId || null);
   const { hours } = usePicklistAlarmHours();
   const setHours = useSetPicklistAlarmHours();
   const [hoursDraft, setHoursDraft] = useState<string>("");
@@ -121,6 +126,47 @@ export default function StockTransfers() {
           </Button>
         </div>
       </div>
+
+      {incoming.length > 0 && (
+        <Card className="border-primary/50">
+          <CardContent className="space-y-2 p-3">
+            <div className="flex items-center gap-2">
+              <Truck className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-semibold text-foreground">
+                Att ta emot ({incoming.length})
+              </h2>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Avsändaren har godkänt utleveransen. Saldot flyttas hit först när du registrerat
+              mottagen kvantitet och godkänt inleveransen.
+            </p>
+            <div className="divide-y">
+              {(incoming as TransferOrderRow[]).map((o) => (
+                <div
+                  key={o.id}
+                  className="flex flex-wrap items-center justify-between gap-2 py-2 text-xs"
+                >
+                  <div>
+                    <span className="font-mono text-[11px]">{o.order_number}</span>
+                    <span className="ml-2">
+                      från {o.from_location?.name} → {o.to_location?.name}
+                    </span>
+                    <span className="block text-[11px] text-muted-foreground">
+                      {o.transfer_order_lines?.length ?? 0} rader —{" "}
+                      {STATUS_LABEL[o.status] ?? o.status}
+                    </span>
+                  </div>
+                  <Button size="sm" className="h-7 text-xs" onClick={() => setOpenOrder(o)}>
+                    Ta emot
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+
 
       {overdue.length > 0 && (
         <Alert variant="destructive">

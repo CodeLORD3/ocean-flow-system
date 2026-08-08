@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Truck, PackageCheck } from "lucide-react";
+import { Truck, PackageCheck, Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,6 +28,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { pendingArrivalLines, registerPurchaseArrival } from "@/lib/purchaseArrival";
 import { createWasteReport, WASTE_REASON_LABEL, type WasteReason } from "@/lib/waste";
 import { grossistStoreId, inkopslagerId } from "@/lib/locations";
+import { openLotLabels } from "@/lib/lotLabelPdf";
 
 const nf = (v: any, dec = 1) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: dec, maximumFractionDigits: dec });
@@ -41,7 +42,12 @@ interface DraftLine {
   expected: number;
   received: string;
   unitCost: number | null;
+  catchArea?: string | null;
+  vesselName?: string | null;
+  bestBefore?: string | null;
+  supplierLotNumber?: string | null;
 }
+
 
 /**
  * Registrera ankomst. Varan som bokförts på INKÖPSLAGRET flyttas fysiskt till
@@ -57,6 +63,8 @@ export default function Arrivals() {
   const [comment, setComment] = useState("");
   const [saving, setSaving] = useState(false);
   const [loadingLines, setLoadingLines] = useState(false);
+  const [done, setDone] = useState<string | null>(null);
+  const [handled, setHandled] = useState<string[]>([]);
 
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ["pending_arrivals"],
@@ -79,6 +87,13 @@ export default function Arrivals() {
     queryKey: ["inkopslager_id"],
     queryFn: async () => inkopslagerId(await grossistStoreId()),
   });
+
+  /** Redan godkända följesedlar försvinner ur listan direkt. */
+  const visibleReports = useMemo(
+    () => (reports as any[]).filter((r) => !handled.includes(r.id)),
+    [reports, handled],
+  );
+
 
   const deviations = useMemo(
     () =>
@@ -109,26 +124,34 @@ export default function Arrivals() {
     try {
       const lines = await pendingArrivalLines(report.id);
       const lotIds = lines.map((l) => l.lotId).filter(Boolean) as string[];
-      let lotNumbers: Record<string, string> = {};
+      let lotMeta: Record<string, any> = {};
       if (lotIds.length) {
         const { data } = await supabase
           .from("lots")
-          .select("id, lot_number")
+          .select("id, lot_number, catch_area, vessel_name, best_before, supplier_lot_id")
           .in("id", lotIds);
-        lotNumbers = Object.fromEntries((data ?? []).map((l: any) => [l.id, l.lot_number]));
+        lotMeta = Object.fromEntries((data ?? []).map((l: any) => [l.id, l]));
       }
       setDraft(
-        lines.map((l) => ({
-          lineId: l.lineId,
-          productId: l.productId,
-          productName: l.productName,
-          lotId: l.lotId ?? null,
-          lotNumber: l.lotId ? (lotNumbers[l.lotId] ?? null) : null,
-          expected: Number(l.quantityExpected || 0),
-          received: String(Number(l.quantityExpected || 0)).replace(".", ","),
-          unitCost: l.unitCost ?? null,
-        })),
+        lines.map((l) => {
+          const meta = l.lotId ? lotMeta[l.lotId] : null;
+          return {
+            lineId: l.lineId,
+            productId: l.productId,
+            productName: l.productName,
+            lotId: l.lotId ?? null,
+            lotNumber: meta?.lot_number ?? null,
+            expected: Number(l.quantityExpected || 0),
+            received: String(Number(l.quantityExpected || 0)).replace(".", ","),
+            unitCost: l.unitCost ?? null,
+            catchArea: meta?.catch_area ?? null,
+            vesselName: meta?.vessel_name ?? null,
+            bestBefore: meta?.best_before ?? null,
+            supplierLotNumber: meta?.supplier_lot_id ?? null,
+          };
+        }),
       );
+
     } catch (e: any) {
       toast.error(e.message || "Kunde inte hämta partierna för följesedeln.");
     } finally {
@@ -137,15 +160,19 @@ export default function Arrivals() {
   };
 
   const submit = async () => {
-    if (!openReport) return;
+    if (!openReport || saving) return;
     if (!draft.length) return toast.error("Följesedeln har inget kvar i inköpslagret.");
     if (deviations.length && !comment.trim())
       return toast.error("Avvikelse mot förväntad kvantitet kräver en kommentar.");
 
+    const reportId = openReport.id as string;
+    // Raden försvinner ur listan direkt så att ett andra klick inte kan
+    // skapa ännu en uppsättning rörelser.
+    setHandled((prev) => [...prev, reportId]);
     setSaving(true);
     try {
       await registerPurchaseArrival({
-        reportId: openReport.id,
+        reportId,
         lines: draft.map((l) => ({
           productId: l.productId,
           lotId: l.lotId,
@@ -172,20 +199,24 @@ export default function Arrivals() {
         });
       }
 
-      toast.success(
-        deviations.length
-          ? "Ankomsten är registrerad och differensen bokförd som svinn."
-          : "Ankomsten är registrerad — varan ligger nu i grossistlagret.",
+      const movedKg = totals.received;
+      setDone(
+        `Klart. ${nf(movedKg)} kilo flyttades till grossistlagret.` +
+          (deviations.length ? " Differensen är bokförd som svinn på inköpslagret." : ""),
       );
-      qc.invalidateQueries({ queryKey: ["pending_arrivals"] });
+      toast.success(`Klart. ${nf(movedKg)} kilo flyttades till grossistlagret.`);
+
+      // Vyn stängs när rörelserna är bokförda, inte innan.
+      setOpenReport(null);
+      setDraft([]);
+      await qc.invalidateQueries({ queryKey: ["pending_arrivals"] });
       qc.invalidateQueries({ queryKey: ["transfer_orders"] });
       qc.invalidateQueries({ queryKey: ["waste_reports"] });
       qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
       qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
       qc.invalidateQueries({ queryKey: ["stock_movements"] });
-      setOpenReport(null);
-      setDraft([]);
     } catch (e: any) {
+      setHandled((prev) => prev.filter((id) => id !== reportId));
       toast.error(e.message || "Ankomsten kunde inte registreras.");
     } finally {
       setSaving(false);
@@ -204,11 +235,24 @@ export default function Arrivals() {
         </p>
       </div>
 
+      {done && (
+        <div className="flex items-start justify-between gap-3 rounded-md border border-success/40 bg-success/10 p-3">
+          <p className="flex items-center gap-2 text-xs text-foreground">
+            <PackageCheck className="h-4 w-4 text-success" /> {done}
+          </p>
+          <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setDone(null)}>
+            Stäng
+          </Button>
+        </div>
+      )}
+
+
+
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
             <p className="p-4 text-xs text-muted-foreground">Hämtar bokförda följesedlar…</p>
-          ) : (reports as any[]).length === 0 ? (
+          ) : visibleReports.length === 0 ? (
             <EmptyState
               bare
               title="Inget väntar på ankomst"
@@ -227,7 +271,7 @@ export default function Arrivals() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {(reports as any[]).map((r) => (
+                  {visibleReports.map((r: any) => (
                     <tr key={r.id} className="hover:bg-muted/40">
                       <td className="p-2 font-medium">
                         {r.document_number ?? r.display_name ?? r.file_name}
@@ -371,14 +415,46 @@ export default function Arrivals() {
             </div>
           )}
 
-          <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setOpenReport(null)}>
-              Avbryt
+          <DialogFooter className="sm:justify-between">
+            {/* Etiketterna skrivs på Brother QL-800, 62 × 29 mm, med QR-kod
+                som innehåller partinummret. */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              disabled={!draft.some((l) => l.lotNumber)}
+              onClick={async () => {
+                try {
+                  await openLotLabels(
+                    draft
+                      .filter((l) => l.lotNumber)
+                      .map((l) => ({
+                        lotNumber: l.lotNumber as string,
+                        productName: l.productName ?? "Produkt",
+                        quantityKg: Number(String(l.received).replace(",", ".")) || l.expected,
+                        catchArea: l.catchArea,
+                        vesselName: l.vesselName,
+                        bestBefore: l.bestBefore,
+                        supplierLotNumber: l.supplierLotNumber,
+                      })),
+                  );
+                } catch (e: any) {
+                  toast.error(e.message || "Etiketterna kunde inte skapas.");
+                }
+              }}
+            >
+              <Printer className="h-3.5 w-3.5" /> Partietiketter (QL-800)
             </Button>
-            <Button size="sm" onClick={submit} disabled={saving || draft.length === 0}>
-              {saving ? "Registrerar…" : "Registrera ankomst"}
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setOpenReport(null)}>
+                Avbryt
+              </Button>
+              <Button size="sm" onClick={submit} disabled={saving || draft.length === 0}>
+                {saving ? "Registrerar…" : "Registrera ankomst"}
+              </Button>
+            </div>
           </DialogFooter>
+
         </DialogContent>
       </Dialog>
     </div>

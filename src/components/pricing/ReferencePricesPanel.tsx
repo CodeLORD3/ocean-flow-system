@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -120,19 +122,43 @@ export function ReferencePricesPanel() {
   }, [stats, cutModels, modelSplits, detailPrices]);
 
   const [onlyMissing, setOnlyMissing] = useState(true);
+  const [onlyInStock, setOnlyInStock] = useState(true);
+
+  /** Arter som faktiskt har saldo i lagret — det är dessa som ska prissättas nu. */
+  const { data: speciesInStock } = useQuery({
+    queryKey: ["species_with_stock"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("product_stock_locations")
+        .select("quantity, products(species_group)")
+        .gt("quantity", 0);
+      if (error) throw error;
+      const set = new Set<string>();
+      for (const row of (data ?? []) as any[]) {
+        const s = row.products?.species_group;
+        if (s) set.add(speciesKey(s) as string);
+      }
+      return set;
+    },
+  });
 
   const storedFor = (species: string, form: string) => detailPriceRow(detailPrices, listKey, species, form);
 
   const visible = useMemo(() => {
-    if (!onlyMissing) return rows;
-    return rows.filter((r) => {
+    let list = rows;
+    if (onlyInStock && speciesInStock && speciesInStock.size > 0) {
+      list = list.filter((r) => speciesInStock.has(speciesKey(r.species) as string));
+    }
+    if (!onlyMissing) return list;
+    return list.filter((r) => {
       const row = storedFor(r.species, r.form);
       const price = Number((row as any)?.price_incl_vat ?? row?.last_set_price ?? 0);
       const cost = Number((row as any)?.reference_cost_per_kg ?? 0);
       return !(price > 0 && cost > 0);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows, onlyMissing, detailPrices, listKey]);
+  }, [rows, onlyMissing, onlyInStock, speciesInStock, detailPrices, listKey]);
+
 
   const save = async (r: RowKeyed) => {
     const k = cellKey(r.species, r.form);
@@ -211,9 +237,15 @@ export function ReferencePricesPanel() {
           <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => setOnlyMissing((v) => !v)}>
             {onlyMissing ? "Visa alla arter" : "Visa bara ofullständiga"}
           </Button>
+          {/* Bara det som finns i lagret behöver prissättas nu — övriga döljs. */}
+          <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => setOnlyInStock((v) => !v)}>
+            {onlyInStock ? "Visa alla produkter" : "Visa bara det som finns i lager"}
+          </Button>
           <span className="text-[11px] text-muted-foreground">
             {visible.length} rader · {activeList?.inclVat ? "priser inkl moms" : "priser exkl moms"}
+            {onlyInStock ? " · endast arter med saldo" : ""}
           </span>
+
         </div>
 
         <div className="overflow-x-auto">
