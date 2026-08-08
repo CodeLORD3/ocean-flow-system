@@ -41,7 +41,7 @@ const USERS: SeedUser[] = [
   { email: "vilma.gunnarsson@gmail.com",  password: "Vilma123",   first: "Vilma",   last: "Andersson", portals: ["shop"],         store: null, stores: [STOCKHOLM_STORE_ID] },
   { email: "fredric.lindqvist@calixter.com", password: "Fredric123", first: "Fredric", last: "Lindqvist", portals: ["shop", "wholesale", "production"], store: null, stores: [STOCKHOLM_STORE_ID, TORGET_STORE_ID, AMHULT_STORE_ID, SARO_STORE_ID] },
   { email: "erik.olof.franzen@gmail.com", password: "Erik123", first: "Erik", last: "Franzén", portals: ["shop"], store: SARO_STORE_ID, stores: [SARO_STORE_ID] },
-  { email: "ewaahlander@gmail.com", password: "Ewa123", first: "Ewa", last: "Ahlander", portals: ["shop"], store: AMHULT_STORE_ID, stores: [AMHULT_STORE_ID] },
+  { email: "ewa.ahlander@hotmail.com", oldEmail: "ewaahlander@gmail.com", password: "Ewa123", first: "Ewa", last: "Ahlander", portals: ["shop"], store: AMHULT_STORE_ID, stores: [AMHULT_STORE_ID] },
   // --- Testkonton för manuell testning (Makrill Trade) ---
   { email: "testgrossist@makrilltrade.com", password: "TestGrossist2026!", first: "Testperson", last: "A", portals: ["wholesale", "production"], store: null, stores: [], keepPassword: true },
   { email: "testbutik@makrilltrade.com", password: "TestButik2026!", first: "Testperson", last: "B", portals: ["shop"], store: TORSLANDA_STORE_ID, stores: [TORSLANDA_STORE_ID], keepPassword: true },
@@ -56,6 +56,19 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   const results: any[] = [];
+
+  // Städa bort utgångna dubblettkonton innan seeding
+  const STALE_EMAILS = ["ewaahlander@gmail.com"];
+  {
+    const { data: pre } = await sb.auth.admin.listUsers({ page: 1, perPage: 200 });
+    for (const stale of STALE_EMAILS) {
+      const dup = pre?.users.find((x) => x.email?.toLowerCase() === stale);
+      if (dup) {
+        const { error } = await sb.auth.admin.deleteUser(dup.id);
+        results.push({ email: stale, status: error ? `delete-failed: ${error.message}` : "stale-deleted" });
+      }
+    }
+  }
 
   // Fetch all users once
   const { data: list } = await sb.auth.admin.listUsers({ page: 1, perPage: 200 });
