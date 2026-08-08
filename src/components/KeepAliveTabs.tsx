@@ -50,6 +50,8 @@ import Production from "@/pages/Production";
 import DataCoverage from "@/pages/DataCoverage";
 import StockMovementsPage from "@/pages/StockMovementsPage";
 import StockTransfers from "@/pages/StockTransfers";
+import Arrivals from "@/pages/Arrivals";
+
 import WasteReports from "@/pages/WasteReports";
 import TraceabilityPage from "@/pages/TraceabilityPage";
 import { NoAccessView } from "@/components/NoAccessView";
@@ -110,6 +112,8 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/stock-movements": { component: <StockMovementsPage /> },
   "/stock-transfers": { component: <StockTransfers /> },
   "/waste": { component: <WasteReports /> },
+  "/arrivals": { component: <Arrivals /> },
+
   "/traceability": { component: <TraceabilityPage /> },
 };
 

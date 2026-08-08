@@ -109,19 +109,44 @@ export const BENFRI_FILE_ALIASES = ["benfri filé", "benfri file", "stjärtbit"]
 
 export const BENFRI_FILE_LABEL = "Benfri filé";
 
+/**
+ * Alias per styckdetalj: engelska och branschtermer pekar på samma detaljform.
+ * Nycklarna är den kanoniska formen, värdena skrivsätt som förekommer på
+ * följesedlar och i offerter.
+ */
+export const DETAIL_FORM_ALIASES: Record<string, string[]> = {
+  "benfri filé": BENFRI_FILE_ALIASES,
+  "stjärt": ["stjärt", "stjart", "tail"],
+  kontrarygg: ["kontrarygg", "counter loin", "counterloin"],
+  slag: ["slag", "buklapp"],
+  rygg: ["rygg", "backloin", "back loin"],
+  buk: ["buk", "bellyloin", "belly loin"],
+};
+
+const DETAIL_LABELS: Record<string, string> = {
+  "benfri filé": BENFRI_FILE_LABEL,
+  "stjärt": "Stjärt",
+  kontrarygg: "Kontrarygg",
+  slag: "Slag",
+  rygg: "Rygg",
+  buk: "Buk",
+};
+
 /** Normaliserar en detaljform så att aliasen pekar på samma detalj. */
 export function normalizeDetailForm(form: string): string {
   const f = (form || "").trim().toLowerCase();
-  if (BENFRI_FILE_ALIASES.includes(f)) return "benfri filé";
+  for (const [canonical, aliases] of Object.entries(DETAIL_FORM_ALIASES)) {
+    if (canonical === f || aliases.includes(f)) return canonical;
+  }
   return f;
 }
 
 /** Visningsnamn för en detaljform. */
 export function detailFormLabel(form: string): string {
   const f = normalizeDetailForm(form);
-  if (f === "benfri filé") return BENFRI_FILE_LABEL;
-  return form;
+  return DETAIL_LABELS[f] ?? form;
 }
+
 
 export function modelForSpecies(species: string): CutModel {
   return SPECIES_CUT_MODEL[speciesKey(species)] ?? "single";
