@@ -358,10 +358,12 @@ export default function Inventory() {
       const value =
         qty * (Number(s.unit_cost) || Number(s.products?.cost_price) || 0);
       add(lvl, qty, value);
-      add("all", qty, value);
+      // "Alla nivåer" speglar det portalen faktiskt hanterar, så summan aldrig
+      // säger 769 kg när tabellen visar noll rader.
+      if (allowedLevels.includes(lvl)) add("all", qty, value);
     });
     return out;
-  }, [allStock, activeStoreId]);
+  }, [allStock, activeStoreId, allowedLevels]);
 
   const lockedReason = useMemo(() => {
     const out: Partial<Record<LocationLevel, string>> = {};
