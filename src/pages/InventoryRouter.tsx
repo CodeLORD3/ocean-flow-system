@@ -22,7 +22,7 @@ export default function InventoryRouter() {
     <div className="h-full w-full flex flex-col">
       <div className="border-b bg-background px-4 pt-3">
         <Tabs value={tab} onValueChange={(v) => setTab(v as SubTab)} className="w-full">
-          <TabsList className="w-full h-10 sm:h-12 grid gap-1 p-1" style={{ gridTemplateColumns: `repeat(${showPricing ? 4 : 3}, minmax(0, 1fr))` }}">
+          <TabsList className="w-full h-10 sm:h-12 grid gap-1 p-1" style={{ gridTemplateColumns: `repeat(${showPricing ? 4 : 3}, minmax(0, 1fr))` }}>
             <TabsTrigger
               value="lager"
               className="h-full text-xs sm:text-base font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
