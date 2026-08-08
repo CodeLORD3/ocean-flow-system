@@ -3675,9 +3675,14 @@ export type Database = {
           batch_number: string | null
           created_at: string
           created_by: string | null
+          expected_return_date: string | null
+          external_price_per_kg: number | null
+          external_supplier_id: string | null
+          external_supplier_name: string | null
           id: string
           notes: string | null
           order_number: string | null
+          order_type: string
           production_date: string
           purchase_price_per_kg: number
           purchase_report_line_id: string | null
@@ -3699,9 +3704,14 @@ export type Database = {
           batch_number?: string | null
           created_at?: string
           created_by?: string | null
+          expected_return_date?: string | null
+          external_price_per_kg?: number | null
+          external_supplier_id?: string | null
+          external_supplier_name?: string | null
           id?: string
           notes?: string | null
           order_number?: string | null
+          order_type?: string
           production_date?: string
           purchase_price_per_kg?: number
           purchase_report_line_id?: string | null
@@ -3723,9 +3733,14 @@ export type Database = {
           batch_number?: string | null
           created_at?: string
           created_by?: string | null
+          expected_return_date?: string | null
+          external_price_per_kg?: number | null
+          external_supplier_id?: string | null
+          external_supplier_name?: string | null
           id?: string
           notes?: string | null
           order_number?: string | null
+          order_type?: string
           production_date?: string
           purchase_price_per_kg?: number
           purchase_report_line_id?: string | null
@@ -3743,6 +3758,13 @@ export type Database = {
           waste_pct?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "production_orders_external_supplier_id_fkey"
+            columns: ["external_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "production_orders_raw_product_id_fkey"
             columns: ["raw_product_id"]
@@ -3974,6 +3996,7 @@ export type Database = {
           certificate: string | null
           condition: string | null
           created_at: string | null
+          expected_arrival_date: string | null
           fishing_gear: string | null
           fishing_gear_code: string | null
           grade: string | null
@@ -4014,6 +4037,7 @@ export type Database = {
           certificate?: string | null
           condition?: string | null
           created_at?: string | null
+          expected_arrival_date?: string | null
           fishing_gear?: string | null
           fishing_gear_code?: string | null
           grade?: string | null
@@ -4054,6 +4078,7 @@ export type Database = {
           certificate?: string | null
           condition?: string | null
           created_at?: string | null
+          expected_arrival_date?: string | null
           fishing_gear?: string | null
           fishing_gear_code?: string | null
           grade?: string | null
@@ -4868,6 +4893,45 @@ export type Database = {
           },
         ]
       }
+      stock_flow_rules: {
+        Row: {
+          allowed: boolean
+          created_at: string
+          from_type: Database["public"]["Enums"]["location_type"]
+          id: string
+          note: string | null
+          required_document_type: string | null
+          requires_admin: boolean
+          requires_reason: boolean
+          to_type: Database["public"]["Enums"]["location_type"]
+          updated_at: string
+        }
+        Insert: {
+          allowed?: boolean
+          created_at?: string
+          from_type: Database["public"]["Enums"]["location_type"]
+          id?: string
+          note?: string | null
+          required_document_type?: string | null
+          requires_admin?: boolean
+          requires_reason?: boolean
+          to_type: Database["public"]["Enums"]["location_type"]
+          updated_at?: string
+        }
+        Update: {
+          allowed?: boolean
+          created_at?: string
+          from_type?: Database["public"]["Enums"]["location_type"]
+          id?: string
+          note?: string | null
+          required_document_type?: string | null
+          requires_admin?: boolean
+          requires_reason?: boolean
+          to_type?: Database["public"]["Enums"]["location_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       stock_movements: {
         Row: {
           created_at: string
@@ -4947,30 +5011,36 @@ export type Database = {
       }
       storage_locations: {
         Row: {
+          active: boolean
           category: string | null
           created_at: string | null
           description: string | null
           id: string
+          location_type: Database["public"]["Enums"]["location_type"] | null
           name: string
           parent_location_id: string | null
           store_id: string | null
           zone: string | null
         }
         Insert: {
+          active?: boolean
           category?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
+          location_type?: Database["public"]["Enums"]["location_type"] | null
           name: string
           parent_location_id?: string | null
           store_id?: string | null
           zone?: string | null
         }
         Update: {
+          active?: boolean
           category?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
+          location_type?: Database["public"]["Enums"]["location_type"] | null
           name?: string
           parent_location_id?: string | null
           store_id?: string | null
@@ -5387,6 +5457,191 @@ export type Database = {
           },
         ]
       }
+      transfer_order_lines: {
+        Row: {
+          created_at: string
+          id: string
+          lot_id: string | null
+          pick_deviation_reason: string | null
+          product_id: string
+          quantity_ordered: number
+          quantity_picked: number | null
+          quantity_received: number | null
+          quantity_shipped: number | null
+          receive_deviation_reason: string | null
+          ship_deviation_reason: string | null
+          sort_order: number
+          transfer_order_id: string
+          unit_cost: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lot_id?: string | null
+          pick_deviation_reason?: string | null
+          product_id: string
+          quantity_ordered?: number
+          quantity_picked?: number | null
+          quantity_received?: number | null
+          quantity_shipped?: number | null
+          receive_deviation_reason?: string | null
+          ship_deviation_reason?: string | null
+          sort_order?: number
+          transfer_order_id: string
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lot_id?: string | null
+          pick_deviation_reason?: string | null
+          product_id?: string
+          quantity_ordered?: number
+          quantity_picked?: number | null
+          quantity_received?: number | null
+          quantity_shipped?: number | null
+          receive_deviation_reason?: string | null
+          ship_deviation_reason?: string | null
+          sort_order?: number
+          transfer_order_id?: string
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transfer_order_lines_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfer_order_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfer_order_lines_transfer_order_id_fkey"
+            columns: ["transfer_order_id"]
+            isOneToOne: false
+            referencedRelation: "transfer_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transfer_orders: {
+        Row: {
+          approved_in_at: string | null
+          approved_in_by: string | null
+          approved_out_at: string | null
+          approved_out_by: string | null
+          created_at: string
+          created_by: string | null
+          deviation_note: string | null
+          from_location_id: string
+          id: string
+          order_number: string | null
+          picked_at: string | null
+          picked_by: string | null
+          picklist_printed_at: string | null
+          reason: string | null
+          source_document_id: string | null
+          source_document_type: string | null
+          status: Database["public"]["Enums"]["transfer_status"]
+          to_location_id: string
+          updated_at: string
+        }
+        Insert: {
+          approved_in_at?: string | null
+          approved_in_by?: string | null
+          approved_out_at?: string | null
+          approved_out_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          deviation_note?: string | null
+          from_location_id: string
+          id?: string
+          order_number?: string | null
+          picked_at?: string | null
+          picked_by?: string | null
+          picklist_printed_at?: string | null
+          reason?: string | null
+          source_document_id?: string | null
+          source_document_type?: string | null
+          status?: Database["public"]["Enums"]["transfer_status"]
+          to_location_id: string
+          updated_at?: string
+        }
+        Update: {
+          approved_in_at?: string | null
+          approved_in_by?: string | null
+          approved_out_at?: string | null
+          approved_out_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          deviation_note?: string | null
+          from_location_id?: string
+          id?: string
+          order_number?: string | null
+          picked_at?: string | null
+          picked_by?: string | null
+          picklist_printed_at?: string | null
+          reason?: string | null
+          source_document_id?: string | null
+          source_document_type?: string | null
+          status?: Database["public"]["Enums"]["transfer_status"]
+          to_location_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transfer_orders_approved_in_by_fkey"
+            columns: ["approved_in_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfer_orders_approved_out_by_fkey"
+            columns: ["approved_out_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfer_orders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfer_orders_from_location_id_fkey"
+            columns: ["from_location_id"]
+            isOneToOne: false
+            referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfer_orders_picked_by_fkey"
+            columns: ["picked_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfer_orders_to_location_id_fkey"
+            columns: ["to_location_id"]
+            isOneToOne: false
+            referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transport_schedules: {
         Row: {
           badge_color: string
@@ -5601,6 +5856,116 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      waste_report_lines: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          lot_id: string | null
+          product_id: string
+          quantity_kg: number
+          unit_cost: number | null
+          waste_report_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          lot_id?: string | null
+          product_id: string
+          quantity_kg: number
+          unit_cost?: number | null
+          waste_report_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          lot_id?: string | null
+          product_id?: string
+          quantity_kg?: number
+          unit_cost?: number | null
+          waste_report_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waste_report_lines_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waste_report_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waste_report_lines_waste_report_id_fkey"
+            columns: ["waste_report_id"]
+            isOneToOne: false
+            referencedRelation: "waste_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      waste_reports: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          location_id: string
+          reason: string
+          reported_by: string | null
+          transfer_order_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          location_id: string
+          reason: string
+          reported_by?: string | null
+          transfer_order_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          location_id?: string
+          reason?: string
+          reported_by?: string | null
+          transfer_order_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waste_reports_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waste_reports_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waste_reports_transfer_order_id_fkey"
+            columns: ["transfer_order_id"]
+            isOneToOne: false
+            referencedRelation: "transfer_orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       weekly_report_cost_lines: {
         Row: {
@@ -5978,6 +6343,20 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "client"
+      location_type:
+        | "inkopslager"
+        | "grossistlager"
+        | "tillverkningslager"
+        | "leveranslager"
+        | "butik"
+      transfer_status:
+        | "skapad"
+        | "plocklista_utskriven"
+        | "godkand_utleverans"
+        | "under_transport"
+        | "delvis_levererad"
+        | "godkand_inleverans"
+        | "avvisad"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -6106,6 +6485,22 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "client"],
+      location_type: [
+        "inkopslager",
+        "grossistlager",
+        "tillverkningslager",
+        "leveranslager",
+        "butik",
+      ],
+      transfer_status: [
+        "skapad",
+        "plocklista_utskriven",
+        "godkand_utleverans",
+        "under_transport",
+        "delvis_levererad",
+        "godkand_inleverans",
+        "avvisad",
+      ],
     },
   },
 } as const
