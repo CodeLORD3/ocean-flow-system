@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Plus, Building2, ArrowLeft, Upload, Pencil, Eye } from "lucide-react";
 import CountryFlag from "@/components/CountryFlag";
 import { toast } from "sonner";
+import { StorageImage, StorageLink } from "@/components/storage/StorageMedia";
 
 const COUNTRY_OPTIONS = [
   { code: "SE", name: "Sweden", flag: "🇸🇪" },
@@ -201,7 +202,7 @@ export default function Companies() {
           <CardContent className="p-4 space-y-3">
             <div className="flex items-center gap-4">
               {company.logo_url && (
-                <img src={company.logo_url} alt={company.name} className="h-14 w-14 object-contain border border-border rounded" />
+                <StorageImage url={company.logo_url} alt={company.name} className="h-14 w-14 object-contain border border-border rounded" />
               )}
               <div>
                 <div className="text-sm font-bold">{company.name}</div>
@@ -371,7 +372,7 @@ export default function Companies() {
                   <TableCell className="py-1.5">
                     <div className="flex items-center gap-2">
                       {c.logo_url ? (
-                        <img src={c.logo_url} alt="" className="h-6 w-6 object-contain rounded" />
+                        <StorageImage url={c.logo_url} alt="" className="h-6 w-6 object-contain rounded" />
                       ) : (
                         <div className="h-6 w-6 bg-muted flex items-center justify-center rounded text-[8px] font-bold text-muted-foreground">
                           {c.name.charAt(0)}

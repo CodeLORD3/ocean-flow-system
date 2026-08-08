@@ -9,6 +9,7 @@ import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
 import { getCurrency } from "@/lib/currency";
 import { generateConfirmationPdf } from "@/lib/generateConfirmationPdf";
+import { StorageImage, StorageLink } from "@/components/storage/StorageMedia";
 
 export default function PortalOfferDetail({ overrideId }: { overrideId?: string } = {}) {
   const { id: paramId } = useParams<{ id: string }>();
@@ -671,7 +672,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
           <div className="border border-border bg-white p-4">
             <div className="flex items-start gap-4">
               {o.product_image_url && (
-                <img src={o.product_image_url} alt={offer.title} className="h-16 w-24 object-cover border border-border shrink-0" />
+                <StorageImage url={o.product_image_url} alt={offer.title} className="h-16 w-24 object-cover border border-border shrink-0" />
               )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
@@ -712,7 +713,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
                 {company && (
                   <div className="flex items-center gap-2 mt-2">
                     {(company as any).logo_url && (
-                      <img src={(company as any).logo_url} alt="" className="h-5 w-5 object-contain" />
+                      <StorageImage url={(company as any).logo_url} alt="" className="h-5 w-5 object-contain" />
                     )}
                     <button
                       className="text-xs text-muted-foreground flex items-center gap-1 hover:text-primary hover:underline transition-colors"
@@ -856,7 +857,7 @@ export default function PortalOfferDetail({ overrideId }: { overrideId?: string 
           </div>
           <div className="flex items-start gap-4">
             {(company as any).logo_url && (
-              <img src={(company as any).logo_url} alt="" className="h-12 w-12 object-contain border border-border shrink-0" />
+              <StorageImage url={(company as any).logo_url} alt="" className="h-12 w-12 object-contain border border-border shrink-0" />
             )}
             <div className="flex-1 min-w-0">
               <div className="text-sm font-semibold text-foreground flex items-center gap-1.5">
