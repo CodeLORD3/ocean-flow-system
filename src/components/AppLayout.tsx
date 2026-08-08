@@ -3,6 +3,8 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { ShopSidebar } from "@/components/ShopSidebar";
 import { ProductionSidebar } from "@/components/ProductionSidebar";
 import { StoreHero } from "@/components/StoreHero";
+import { BugReportButton } from "@/components/BugReportButton";
+
 
 
 import { useLocation, useNavigate } from "react-router-dom";
