@@ -17,6 +17,7 @@ import {
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { StorageImage, StorageLink } from "@/components/storage/StorageMedia";
 
 const EMPTY_FORM = {
   title: "", description: "", quantity: "", target_amount: "",
@@ -409,7 +410,7 @@ export default function TradeOffers() {
                   {form.company_id && companyMap[form.company_id] && (
                     <div className="flex items-center gap-2 mt-1 p-2 bg-muted/50 border border-border text-xs">
                       {companyMap[form.company_id].logo_url && (
-                        <img src={companyMap[form.company_id].logo_url} alt="" className="h-6 w-6 object-contain rounded" />
+                        <StorageImage url={companyMap[form.company_id].logo_url} alt="" className="h-6 w-6 object-contain rounded" />
                       )}
                       <span className="font-medium flex items-center gap-1.5"><CountryFlag country={companyMap[form.company_id].country} size={14} /> {companyMap[form.company_id].name}</span>
                     </div>

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Building2, Search, ArrowRight } from "lucide-react";
 import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
+import { StorageImage, StorageLink } from "@/components/storage/StorageMedia";
 
 export default function PortalCompanies() {
   const { switchTab } = usePortalTabs();
@@ -73,7 +74,7 @@ export default function PortalCompanies() {
             >
               <div className="flex items-center gap-3 mb-3">
                 {c.logo_url ? (
-                  <img src={c.logo_url} alt={c.name} className="h-10 w-10 object-contain border border-border shrink-0" />
+                  <StorageImage url={c.logo_url} alt={c.name} className="h-10 w-10 object-contain border border-border shrink-0" />
                 ) : (
                   <div className="h-10 w-10 bg-muted flex items-center justify-center text-sm font-bold text-muted-foreground shrink-0">
                     {c.name.charAt(0)}

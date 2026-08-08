@@ -10,6 +10,7 @@ import {
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { StorageImage, StorageLink } from "@/components/storage/StorageMedia";
 
 interface TradeOfferDetailProps {
   offer: any;
@@ -231,10 +232,10 @@ export default function TradeOfferDetail({ offer, pledges, onBack, onStatusChang
           </div>
 
           {offer.document_url && (
-            <a href={offer.document_url} target="_blank" rel="noreferrer"
+            <StorageLink url={offer.document_url}
               className="flex items-center gap-2 text-[10px] text-primary hover:underline">
               <FileText className="h-3 w-3" /> Visa bifogat dokument (PDF)
-            </a>
+            </StorageLink>
           )}
         </>
       )}

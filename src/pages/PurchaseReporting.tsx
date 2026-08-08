@@ -25,6 +25,7 @@ import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useProducts } from "@/hooks/useProducts";
 import { useSuppliers } from "@/hooks/useSuppliers";
+import { useSignedUrl } from "@/hooks/useSignedUrl";
 
 // Magnifying glass overlay for document viewer
 function DocumentMagnifier({ children }: { children: React.ReactNode }) {
@@ -1749,18 +1750,12 @@ export default function PurchaseReporting() {
                             </div>
                             <div className="p-4">
                               <DocumentMagnifier>
-                                {r.file_url && r.file_name.toLowerCase().endsWith(".pdf") ? (
-                                  <PdfViewer url={r.file_url} zoom={zoom} />
-                                ) : r.file_url ? (
-                                  <div className="flex justify-center">
-                                    <img
-                                      src={r.file_url}
-                                      alt={r.file_name}
-                                      className="rounded-md shadow-sm max-w-full"
-                                      style={{ transform: `scale(${zoom})`, transformOrigin: "top center" }}
-                                      draggable={false}
-                                    />
-                                  </div>
+                                {r.file_url ? (
+                                  <PurchaseDocPreview
+                                    url={r.file_url}
+                                    fileName={r.file_name}
+                                    zoom={zoom}
+                                  />
                                 ) : (
                                   <p className="text-sm text-muted-foreground text-center py-8">Inget dokument kopplat</p>
                                 )}
@@ -1777,6 +1772,27 @@ export default function PurchaseReporting() {
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
+    </div>
+  );
+}
+
+function PurchaseDocPreview({ url, fileName, zoom }: { url: string; fileName: string; zoom: number }) {
+  const signed = useSignedUrl(url);
+  if (!signed) {
+    return <p className="text-sm text-muted-foreground text-center py-8">Laddar dokument…</p>;
+  }
+  if (fileName.toLowerCase().endsWith(".pdf")) {
+    return <PdfViewer url={signed} zoom={zoom} />;
+  }
+  return (
+    <div className="flex justify-center">
+      <img
+        src={signed}
+        alt={fileName}
+        className="rounded-md shadow-sm max-w-full"
+        style={{ transform: `scale(${zoom})`, transformOrigin: "top center" }}
+        draggable={false}
+      />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
 import { getCurrency } from "@/lib/currency";
 import { differenceInDays, parseISO, format } from "date-fns";
+import { StorageImage, StorageLink } from "@/components/storage/StorageMedia";
 
 export default function PortalCompanyProfile({ companyId }: { companyId: string }) {
   const { openOfferTab } = usePortalTabs();
@@ -80,7 +81,7 @@ export default function PortalCompanyProfile({ companyId }: { companyId: string 
       <div className="border border-border bg-white p-5">
         <div className="flex items-start gap-4">
           {company.logo_url ? (
-            <img src={company.logo_url} alt={company.name} className="h-16 w-16 object-contain border border-border shrink-0" />
+            <StorageImage url={company.logo_url} alt={company.name} className="h-16 w-16 object-contain border border-border shrink-0" />
           ) : (
             <div className="h-16 w-16 bg-muted flex items-center justify-center text-xl font-bold text-muted-foreground shrink-0">
               {company.name.charAt(0)}

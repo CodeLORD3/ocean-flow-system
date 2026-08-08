@@ -5950,6 +5950,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_staff: { Args: never; Returns: boolean }
+      is_staff_manager: { Args: never; Returns: boolean }
       latin_norm: { Args: { v: string }; Returns: string }
       next_internal_lot_number: { Args: never; Returns: string }
       notify_event: {
@@ -5972,6 +5974,7 @@ export type Database = {
         Returns: boolean
       }
       species_key: { Args: { v: string }; Returns: string }
+      staff_has_store: { Args: { _store: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "client"

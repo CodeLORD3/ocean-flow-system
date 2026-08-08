@@ -10,6 +10,7 @@ import { usePortalTabs } from "./PortalTabsContext";
 import CountryFlag from "@/components/CountryFlag";
 import InvestmentMap from "@/components/portal/InvestmentMap";
 import { getCurrency } from "@/lib/currency";
+import { StorageImage, StorageLink } from "@/components/storage/StorageMedia";
 
 export default function PortalOpportunities() {
   const { openOfferTab, switchTab } = usePortalTabs();
@@ -527,7 +528,7 @@ export default function PortalOpportunities() {
                     <td className="px-2 py-1.5">
                       <div className="flex items-center gap-2">
                         {offer.product_image_url && (
-                          <img src={offer.product_image_url} alt="" className="h-5 w-5 object-cover border border-border shrink-0" />
+                          <StorageImage url={offer.product_image_url} alt="" className="h-5 w-5 object-cover border border-border shrink-0" />
                         )}
                         <span className="font-semibold text-foreground group-hover:text-mackerel transition-colors line-clamp-1 max-w-[240px]">
                           {offer.title}
@@ -640,7 +641,7 @@ export default function PortalOpportunities() {
                 <div className="relative">
                   {offer.product_image_url && (
                     <div className="h-20 overflow-hidden border-b border-border">
-                      <img src={offer.product_image_url} alt={offer.title} className="w-full h-full object-cover" />
+                      <StorageImage url={offer.product_image_url} alt={offer.title} className="w-full h-full object-cover" />
                     </div>
                   )}
                   {company && (
