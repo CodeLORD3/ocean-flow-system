@@ -4220,6 +4220,8 @@ export type Database = {
       purchase_reports: {
         Row: {
           archived_at: string | null
+          arrived_at: string | null
+          arrived_by: string | null
           created_at: string | null
           delivery_date: string | null
           display_name: string | null
@@ -4242,6 +4244,8 @@ export type Database = {
         }
         Insert: {
           archived_at?: string | null
+          arrived_at?: string | null
+          arrived_by?: string | null
           created_at?: string | null
           delivery_date?: string | null
           display_name?: string | null
@@ -4264,6 +4268,8 @@ export type Database = {
         }
         Update: {
           archived_at?: string | null
+          arrived_at?: string | null
+          arrived_by?: string | null
           created_at?: string | null
           delivery_date?: string | null
           display_name?: string | null
@@ -4285,6 +4291,13 @@ export type Database = {
           total_ex_vat?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "purchase_reports_arrived_by_fkey"
+            columns: ["arrived_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "purchase_reports_posted_by_fkey"
             columns: ["posted_by"]
