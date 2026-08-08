@@ -1335,57 +1335,64 @@ export default function PurchaseReporting() {
                 </p>
               </div>
               <div className="flex items-start gap-2">
-                {/* Bokföring sker vid godkännandet. Knappen syns bara för äldre
-                    bekräftade följesedlar som ännu inte är bokförda. */}
-                <div
-                  className={
-                    selectedReport &&
-                    (selectedReport as any).status === "Godkänd" &&
-                    !(selectedReport as any).posted_at
-                      ? "flex flex-col items-end gap-1"
-                      : "hidden"
-                  }
-                >
+                {/* Bokföringen sker vid godkännandet. Knappen visas i två
+                    tydligt märkta undantagslägen: äldre sedlar från tiden före
+                    sammanslagningen, och nya sedlar där rutan stängdes innan
+                    partierna bokfördes. */}
+                {postingMode !== "hidden" && (
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                      {postingMode === "legacy"
+                        ? "Äldre följesedel — bokfördes inte vid godkännandet"
+                        : "Bokföringen är inte klar — öppna den igen"}
+                    </span>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="gap-1.5 h-8 text-xs"
+                      disabled={!!postBlock}
+                      onClick={() => setPostOpen(true)}
+                    >
+                      <PackageCheck className="h-3.5 w-3.5" />
+                      {postingMode === "legacy" ? "Bokför inleverans" : "Fortsätt bokföringen"}
+                    </Button>
+                    {postingMode === "legacy" && !postBlock && (
+                      <p className="text-[11px] text-muted-foreground max-w-[280px] text-right leading-tight">
+                        Den här sedeln godkändes innan godkännande och bokföring slogs ihop. Bokför
+                        partierna här en gång, sedan sköts det automatiskt.
+                      </p>
+                    )}
+                    {postBlock ? (
+                      <p className="text-[11px] text-amber-600 max-w-[280px] text-right leading-tight">
+                        {postBlock.text}
+                        {postBlock.action && (
+                          <button
+                            className="ml-1 underline hover:no-underline"
+                            onClick={() => { setSelectedReportId(postBlock.action!.id); setDocExpanded(true); }}
+                          >
+                            {postBlock.action.label}
+                          </button>
+                        )}
+                        {postBlock.lineIds.length > 0 && (
+                          <button
+                            className="ml-1 underline hover:no-underline"
+                            onClick={() => {
+                              setFocusLineId(postBlock.lineIds[0]);
+                              document.querySelector(`[data-line-id="${postBlock.lineIds[0]}"]`)?.scrollIntoView({ block: "center" });
+                            }}
+                          >
+                            Visa raderna
+                          </button>
+                        )}
+                      </p>
+                    ) : postWarnings.length > 0 ? (
+                      <p className="text-[11px] text-muted-foreground max-w-[280px] text-right leading-tight">
+                        {postWarnings.join(" · ")}
+                      </p>
+                    ) : null}
+                  </div>
+                )}
 
-                  <Button
-                    variant={selectedReport && !(selectedReport as any).posted_at ? "default" : "outline"}
-                    size="sm"
-                    className="gap-1.5 h-8 text-xs"
-                    disabled={!!postBlock}
-                    onClick={() => setPostOpen(true)}
-                  >
-                    <PackageCheck className="h-3.5 w-3.5" />
-                    {selectedReport && (selectedReport as any).posted_at ? "Bokförd" : "Bokför inleverans"}
-                  </Button>
-                  {postBlock ? (
-                    <p className="text-[11px] text-amber-600 max-w-[280px] text-right leading-tight">
-                      {postBlock.text}
-                      {postBlock.action && (
-                        <button
-                          className="ml-1 underline hover:no-underline"
-                          onClick={() => { setSelectedReportId(postBlock.action!.id); setDocExpanded(true); }}
-                        >
-                          {postBlock.action.label}
-                        </button>
-                      )}
-                      {postBlock.lineIds.length > 0 && (
-                        <button
-                          className="ml-1 underline hover:no-underline"
-                          onClick={() => {
-                            setFocusLineId(postBlock.lineIds[0]);
-                            document.querySelector(`[data-line-id="${postBlock.lineIds[0]}"]`)?.scrollIntoView({ block: "center" });
-                          }}
-                        >
-                          Visa raderna
-                        </button>
-                      )}
-                    </p>
-                  ) : postWarnings.length > 0 ? (
-                    <p className="text-[11px] text-muted-foreground max-w-[280px] text-right leading-tight">
-                      {postWarnings.join(" · ")}
-                    </p>
-                  ) : null}
-                </div>
               <Link to="/reports">
                 <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
                   <Archive className="h-3.5 w-3.5" />
