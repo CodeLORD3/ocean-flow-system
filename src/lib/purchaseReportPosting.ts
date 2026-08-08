@@ -7,7 +7,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import { recordMovement } from "@/lib/stockLedger";
-import { GROSSIST_FLYTANDE_ID } from "@/lib/locations";
+import { grossistStoreId, inkopslagerId } from "@/lib/locations";
 
 export interface PostingProduct {
   id: string;
@@ -271,7 +271,8 @@ export async function postPurchaseReport(params: {
 
   const { data, error } = await (supabase as any).rpc("post_purchase_report", {
     p_report_id: reportId,
-    p_location_id: GROSSIST_FLYTANDE_ID,
+    // Inköp landar i INKÖPSLAGRET — varan är vår, men ännu inte hos oss.
+    p_location_id: await inkopslagerId(await grossistStoreId()),
     p_lots: payload,
   });
   if (error) {
@@ -312,7 +313,7 @@ export async function unpostPurchaseReport(reportId: string): Promise<void> {
     if (qty > 0) {
       await recordMovement({
         productId,
-        locationId: GROSSIST_FLYTANDE_ID,
+        locationId: await inkopslagerId(await grossistStoreId()),
         quantityKg: -qty,
         movementType: "justering",
         lotId,

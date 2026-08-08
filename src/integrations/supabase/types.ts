@@ -1159,6 +1159,13 @@ export type Database = {
             foreignKeyName: "daily_stock_sheets_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
+            referencedRelation: "location_stock_rollup"
+            referencedColumns: ["location_id"]
+          },
+          {
+            foreignKeyName: "daily_stock_sheets_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
             referencedRelation: "storage_locations"
             referencedColumns: ["id"]
           },
@@ -1200,6 +1207,13 @@ export type Database = {
           reason?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "deleted_stock_log_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock_rollup"
+            referencedColumns: ["location_id"]
+          },
           {
             foreignKeyName: "deleted_stock_log_location_id_fkey"
             columns: ["location_id"]
@@ -1720,6 +1734,13 @@ export type Database = {
             foreignKeyName: "incoming_delivery_lines_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
+            referencedRelation: "location_stock_rollup"
+            referencedColumns: ["location_id"]
+          },
+          {
+            foreignKeyName: "incoming_delivery_lines_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
             referencedRelation: "storage_locations"
             referencedColumns: ["id"]
           },
@@ -1855,6 +1876,13 @@ export type Database = {
           total_value?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "inventory_reports_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock_rollup"
+            referencedColumns: ["location_id"]
+          },
           {
             foreignKeyName: "inventory_reports_location_id_fkey"
             columns: ["location_id"]
@@ -3525,6 +3553,13 @@ export type Database = {
             foreignKeyName: "product_stock_locations_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
+            referencedRelation: "location_stock_rollup"
+            referencedColumns: ["location_id"]
+          },
+          {
+            foreignKeyName: "product_stock_locations_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
             referencedRelation: "storage_locations"
             referencedColumns: ["id"]
           },
@@ -4185,6 +4220,8 @@ export type Database = {
       purchase_reports: {
         Row: {
           archived_at: string | null
+          arrived_at: string | null
+          arrived_by: string | null
           created_at: string | null
           delivery_date: string | null
           display_name: string | null
@@ -4207,6 +4244,8 @@ export type Database = {
         }
         Insert: {
           archived_at?: string | null
+          arrived_at?: string | null
+          arrived_by?: string | null
           created_at?: string | null
           delivery_date?: string | null
           display_name?: string | null
@@ -4229,6 +4268,8 @@ export type Database = {
         }
         Update: {
           archived_at?: string | null
+          arrived_at?: string | null
+          arrived_by?: string | null
           created_at?: string | null
           delivery_date?: string | null
           display_name?: string | null
@@ -4250,6 +4291,13 @@ export type Database = {
           total_ex_vat?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "purchase_reports_arrived_by_fkey"
+            columns: ["arrived_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "purchase_reports_posted_by_fkey"
             columns: ["posted_by"]
@@ -4990,6 +5038,13 @@ export type Database = {
             foreignKeyName: "stock_movements_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
+            referencedRelation: "location_stock_rollup"
+            referencedColumns: ["location_id"]
+          },
+          {
+            foreignKeyName: "stock_movements_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
             referencedRelation: "storage_locations"
             referencedColumns: ["id"]
           },
@@ -5047,6 +5102,13 @@ export type Database = {
           zone?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "storage_locations_parent_location_id_fkey"
+            columns: ["parent_location_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock_rollup"
+            referencedColumns: ["location_id"]
+          },
           {
             foreignKeyName: "storage_locations_parent_location_id_fkey"
             columns: ["parent_location_id"]
@@ -5190,6 +5252,13 @@ export type Database = {
           sqm?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "stores_inventory_location_id_fkey"
+            columns: ["inventory_location_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock_rollup"
+            referencedColumns: ["location_id"]
+          },
           {
             foreignKeyName: "stores_inventory_location_id_fkey"
             columns: ["inventory_location_id"]
@@ -5623,6 +5692,13 @@ export type Database = {
             foreignKeyName: "transfer_orders_from_location_id_fkey"
             columns: ["from_location_id"]
             isOneToOne: false
+            referencedRelation: "location_stock_rollup"
+            referencedColumns: ["location_id"]
+          },
+          {
+            foreignKeyName: "transfer_orders_from_location_id_fkey"
+            columns: ["from_location_id"]
+            isOneToOne: false
             referencedRelation: "storage_locations"
             referencedColumns: ["id"]
           },
@@ -5632,6 +5708,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "staff"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfer_orders_to_location_id_fkey"
+            columns: ["to_location_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock_rollup"
+            referencedColumns: ["location_id"]
           },
           {
             foreignKeyName: "transfer_orders_to_location_id_fkey"
@@ -5944,6 +6027,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "waste_reports_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock_rollup"
+            referencedColumns: ["location_id"]
+          },
           {
             foreignKeyName: "waste_reports_location_id_fkey"
             columns: ["location_id"]
@@ -6279,7 +6369,42 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      location_stock_rollup: {
+        Row: {
+          active: boolean | null
+          location_id: string | null
+          location_type: Database["public"]["Enums"]["location_type"] | null
+          name: string | null
+          parent_location_id: string | null
+          product_count: number | null
+          quantity: number | null
+          stock_value: number | null
+          store_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storage_locations_parent_location_id_fkey"
+            columns: ["parent_location_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock_rollup"
+            referencedColumns: ["location_id"]
+          },
+          {
+            foreignKeyName: "storage_locations_parent_location_id_fkey"
+            columns: ["parent_location_id"]
+            isOneToOne: false
+            referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "storage_locations_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       current_staff: {
