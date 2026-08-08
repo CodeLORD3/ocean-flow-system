@@ -27,6 +27,7 @@ export const WASTE_REASON_LABEL: Record<WasteReason, string> = {
 export interface WasteLineInput {
   productId: string;
   lotId?: string | null;
+  /** Svinnmängd som positivt tal. Rörelsen bokförs alltid som minus. */
   quantityKg: number;
   unitCost?: number | null;
   comment?: string | null;
@@ -42,7 +43,11 @@ export async function createWasteReport(params: {
 }) {
   await assertActiveLocation(params.locationId);
 
-  const lines = params.lines.filter((l) => l.productId && Number(l.quantityKg) > 0);
+  // Anropare skickar svinnet som positiv mängd; tecknet sätts här så att en
+  // svinnrapport aldrig kan råka öka saldot.
+  const lines = params.lines
+    .map((l) => ({ ...l, quantityKg: Math.abs(Number(l.quantityKg) || 0) }))
+    .filter((l) => l.productId && l.quantityKg > 0);
   if (!lines.length) throw new Error("Svinnrapporten saknar rader med kvantitet.");
   if (!params.reason) throw new Error("Svinn kräver orsak.");
 
@@ -67,7 +72,7 @@ export async function createWasteReport(params: {
       waste_report_id: reportId,
       product_id: l.productId,
       lot_id: l.lotId ?? null,
-      quantity_kg: l.quantityKg,
+      quantity_kg: -l.quantityKg,
       unit_cost: l.unitCost ?? null,
       comment: l.comment ?? null,
     })) as any,
@@ -78,7 +83,7 @@ export async function createWasteReport(params: {
     lines.map((l) => ({
       productId: l.productId,
       locationId: params.locationId,
-      quantityKg: l.quantityKg,
+      quantityKg: -l.quantityKg,
       movementType: "svinn" as const,
       lotId: l.lotId ?? null,
       unitCost: l.unitCost ?? null,

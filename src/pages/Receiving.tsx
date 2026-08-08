@@ -38,6 +38,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSubmitReceivingReport } from "@/hooks/useDeliveryReceivingReports";
 import { moveStockToRawLager } from "@/lib/stockTransfer";
 import { lotBalancesAtLocation } from "@/lib/stockLedger";
+import { butikslagerId } from "@/lib/locations";
 
 import { format, differenceInDays, parseISO } from "date-fns";
 import { sv } from "date-fns/locale";
@@ -261,12 +262,9 @@ export default function Receiving() {
 
       // Bäst före och ankomstdatum hör till partiet, inte till lagerplatsraden.
       // Partiet följer med från grossistens inleverans hela vägen till hyllan.
-      const { data: rawLocation } = await supabase
-        .from("storage_locations")
-        .select("id")
-        .eq("store_id", activeStoreId)
-        .ilike("name", "Raw-%")
-        .maybeSingle();
+      // Butikens lagerplats slås upp på nivå — de gamla "Raw-%"-namnen är inaktiverade.
+      const rawLocationId = await butikslagerId(activeStoreId);
+      const rawLocation = { id: rawLocationId };
 
       if (rawLocation) {
         for (const [lineId, report] of Object.entries(lineReports)) {

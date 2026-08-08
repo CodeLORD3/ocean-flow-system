@@ -36,11 +36,18 @@ export async function pendingArrivalLines(reportId: string) {
 
   const rows = (data ?? []) as any[];
   const result: (ArrivalLineInput & { lineId: string; productName: string | null })[] = [];
+  // Flera rader kan peka på samma parti (GFA-klubbslag). Partiet ligger som EN
+  // rad i inköpslagret och får bara ankomstregistreras en gång — annars räknas
+  // saldot dubbelt och överföringen får en rad utan plockad kvantitet.
+  const seen = new Set<string>();
 
   for (const row of rows) {
+    const key = `${row.product_id}|${row.lot_id}`;
+    if (seen.has(key)) continue;
     const lots = await lotBalancesAtLocation(row.product_id, purchaseLocationId);
     const available = lots.find((l) => l.lotId === row.lot_id)?.quantityKg ?? 0;
     if (available <= 0) continue;
+    seen.add(key);
     result.push({
       lineId: row.id,
       productName: row.product_name ?? null,

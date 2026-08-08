@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { activeLocationsForLevel } from "@/lib/locations";
 
 const GROSSIST_FLYTANDE_ID = "5da57ad6-f72c-4a84-9873-87174d194e10";
 
@@ -23,15 +24,12 @@ export async function syncBehandlasFromStock() {
  * If stock is insufficient (quantity < ordered), reverts them to "Ny".
  */
 export async function revertOrderLinesIfStockGone() {
-  // 1) Get all Pre-location stock
-  const { data: preLocations } = await supabase
-    .from("storage_locations")
-    .select("id, store_id, name")
-    .like("name", "Pre-%");
+  // 1) Alla leveranslager (nivåuppslag — namnen "Pre-%" är inaktiverade)
+  const preLocations = await activeLocationsForLevel("leveranslager");
 
   const preLocationMap = new Map<string, string>();
-  for (const loc of preLocations || []) {
-    if (loc.store_id) preLocationMap.set(loc.id, loc.store_id);
+  for (const loc of preLocations) {
+    if (loc.storeId) preLocationMap.set(loc.id, loc.storeId);
   }
 
   const preLocationIds = [...preLocationMap.keys()];
@@ -128,12 +126,13 @@ export async function markOrderLinesPackad(productIds: string[], targetLocationI
 
   const { data: location } = await supabase
     .from("storage_locations")
-    .select("store_id, name")
+    .select("store_id, location_type, active")
     .eq("id", targetLocationId)
     .single();
 
   if (!location?.store_id) return;
-  if (!location.name.toLowerCase().startsWith("pre-")) return;
+  if (location.active === false) return;
+  if (location.location_type !== "leveranslager") return;
 
   // Get stock in this Pre-location for these products
   const { data: preStock } = await supabase
