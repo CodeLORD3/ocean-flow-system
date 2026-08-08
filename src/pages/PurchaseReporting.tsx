@@ -1312,6 +1312,20 @@ export default function PurchaseReporting() {
     return w;
   }, [postBlock, selectedReport, selectedLines]);
 
+  /**
+   * Godkännande och bokföring är ett steg sedan MERGED_POSTING_SINCE. Sedlar
+   * som skapades före den tidpunkten och aldrig bokfördes är eftersläpning
+   * ("legacy"). Nyare sedlar som saknar bokföring har fått rutan stängd i
+   * förtid ("resume"). Bokförda sedlar visar ingen knapp alls.
+   */
+  const MERGED_POSTING_SINCE = "2026-08-08T13:30:00Z";
+  const postingMode: "hidden" | "legacy" | "resume" = useMemo(() => {
+    if (!selectedReport) return "hidden";
+    const r = selectedReport as any;
+    if (r.posted_at || r.status !== "Godkänd") return "hidden";
+    return new Date(r.created_at) < new Date(MERGED_POSTING_SINCE) ? "legacy" : "resume";
+  }, [selectedReport]);
+
 
   const grandTotal = allLines.reduce((s, l) => s + (l.line_total ?? 0), 0);
 
