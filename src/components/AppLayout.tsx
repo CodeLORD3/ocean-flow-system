@@ -326,6 +326,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </div>
+      <BugReportButton />
     </SidebarProvider>
+
   );
 }
