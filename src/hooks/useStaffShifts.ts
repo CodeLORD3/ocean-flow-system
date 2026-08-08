@@ -86,18 +86,61 @@ export function useShiftHistory(staffId?: string | null, limit = 20) {
   });
 }
 
+export type ClockInOutcome = "created" | "moved" | "already";
+
+export interface ClockInResult {
+  shiftId: string;
+  outcome: ClockInOutcome;
+  /** Butiken personen var instämplad i innan, när outcome = "moved". */
+  previousStoreId?: string | null;
+}
+
+/**
+ * Stämplar in.
+ *
+ * Gamla öppna stämplingar från tidigare dagar stängs automatiskt (vid slutet av
+ * sitt eget dygn) så att en missad nattstängning inte kan låsa någon. Är personen
+ * redan instämplad idag i en annan butik flyttas stämplingen dit; i samma butik
+ * returneras "already" så gränssnittet kan säga det i stället för att stå tyst.
+ */
 export function useClockIn() {
   const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ staffId, storeId }: { staffId: string; storeId?: string | null }) => {
-      // Säkerställ att ingen dubbelstämpling sker
-      const { data: open } = await supabase
+  return useMutation<ClockInResult, Error, { staffId: string; storeId?: string | null }>({
+    mutationFn: async ({ staffId, storeId }) => {
+      const { data: openRows, error: openErr } = await supabase
         .from("staff_shifts")
-        .select("id")
+        .select("id, store_id, clocked_in_at")
         .eq("staff_id", staffId)
         .is("clocked_out_at", null)
-        .limit(1);
-      if (open && open.length > 0) return open[0].id;
+        .order("clocked_in_at", { ascending: false });
+      if (openErr) throw openErr;
+
+      const todayStart = startOfTodayIso();
+      const stale = (openRows ?? []).filter((r) => r.clocked_in_at < todayStart);
+      const todays = (openRows ?? []).filter((r) => r.clocked_in_at >= todayStart);
+
+      // Stäng gamla pass vid slutet av sitt eget dygn.
+      for (const row of stale) {
+        const end = new Date(row.clocked_in_at);
+        end.setHours(23, 59, 59, 0);
+        const { error } = await supabase
+          .from("staff_shifts")
+          .update({ clocked_out_at: end.toISOString() })
+          .eq("id", row.id);
+        if (error) throw error;
+      }
+
+      const sameStore = todays.find((r) => (r.store_id ?? null) === (storeId ?? null));
+      if (sameStore) return { shiftId: sameStore.id, outcome: "already" };
+
+      const otherStore = todays[0] ?? null;
+      if (otherStore) {
+        const { error } = await supabase
+          .from("staff_shifts")
+          .update({ clocked_out_at: new Date().toISOString() })
+          .eq("id", otherStore.id);
+        if (error) throw error;
+      }
 
       const { data, error } = await supabase
         .from("staff_shifts")
@@ -105,12 +148,18 @@ export function useClockIn() {
         .select("id")
         .single();
       if (error) throw error;
-      return data.id as string;
+
+      return {
+        shiftId: data.id as string,
+        outcome: otherStore ? "moved" : "created",
+        previousStoreId: otherStore?.store_id ?? null,
+      };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["staff-shifts-open"] });
       qc.invalidateQueries({ queryKey: ["staff-shift-open-one"] });
       qc.invalidateQueries({ queryKey: ["staff-shift-history"] });
+      qc.invalidateQueries({ queryKey: ["staff-shifts-date"] });
     },
   });
 }
