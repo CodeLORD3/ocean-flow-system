@@ -57,6 +57,8 @@ export default function Arrivals() {
   const [comment, setComment] = useState("");
   const [saving, setSaving] = useState(false);
   const [loadingLines, setLoadingLines] = useState(false);
+  const [done, setDone] = useState<string | null>(null);
+  const [handled, setHandled] = useState<string[]>([]);
 
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ["pending_arrivals"],
@@ -79,6 +81,13 @@ export default function Arrivals() {
     queryKey: ["inkopslager_id"],
     queryFn: async () => inkopslagerId(await grossistStoreId()),
   });
+
+  /** Redan godkända följesedlar försvinner ur listan direkt. */
+  const visibleReports = useMemo(
+    () => (reports as any[]).filter((r) => !handled.includes(r.id)),
+    [reports, handled],
+  );
+
 
   const deviations = useMemo(
     () =>
@@ -137,15 +146,19 @@ export default function Arrivals() {
   };
 
   const submit = async () => {
-    if (!openReport) return;
+    if (!openReport || saving) return;
     if (!draft.length) return toast.error("Följesedeln har inget kvar i inköpslagret.");
     if (deviations.length && !comment.trim())
       return toast.error("Avvikelse mot förväntad kvantitet kräver en kommentar.");
 
+    const reportId = openReport.id as string;
+    // Raden försvinner ur listan direkt så att ett andra klick inte kan
+    // skapa ännu en uppsättning rörelser.
+    setHandled((prev) => [...prev, reportId]);
     setSaving(true);
     try {
       await registerPurchaseArrival({
-        reportId: openReport.id,
+        reportId,
         lines: draft.map((l) => ({
           productId: l.productId,
           lotId: l.lotId,
@@ -172,20 +185,24 @@ export default function Arrivals() {
         });
       }
 
-      toast.success(
-        deviations.length
-          ? "Ankomsten är registrerad och differensen bokförd som svinn."
-          : "Ankomsten är registrerad — varan ligger nu i grossistlagret.",
+      const movedKg = totals.received;
+      setDone(
+        `Klart. ${nf(movedKg)} kilo flyttades till grossistlagret.` +
+          (deviations.length ? " Differensen är bokförd som svinn på inköpslagret." : ""),
       );
-      qc.invalidateQueries({ queryKey: ["pending_arrivals"] });
+      toast.success(`Klart. ${nf(movedKg)} kilo flyttades till grossistlagret.`);
+
+      // Vyn stängs när rörelserna är bokförda, inte innan.
+      setOpenReport(null);
+      setDraft([]);
+      await qc.invalidateQueries({ queryKey: ["pending_arrivals"] });
       qc.invalidateQueries({ queryKey: ["transfer_orders"] });
       qc.invalidateQueries({ queryKey: ["waste_reports"] });
       qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
       qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
       qc.invalidateQueries({ queryKey: ["stock_movements"] });
-      setOpenReport(null);
-      setDraft([]);
     } catch (e: any) {
+      setHandled((prev) => prev.filter((id) => id !== reportId));
       toast.error(e.message || "Ankomsten kunde inte registreras.");
     } finally {
       setSaving(false);
@@ -204,11 +221,24 @@ export default function Arrivals() {
         </p>
       </div>
 
+      {done && (
+        <div className="flex items-start justify-between gap-3 rounded-md border border-success/40 bg-success/10 p-3">
+          <p className="flex items-center gap-2 text-xs text-foreground">
+            <PackageCheck className="h-4 w-4 text-success" /> {done}
+          </p>
+          <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setDone(null)}>
+            Stäng
+          </Button>
+        </div>
+      )}
+
+
+
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
             <p className="p-4 text-xs text-muted-foreground">Hämtar bokförda följesedlar…</p>
-          ) : (reports as any[]).length === 0 ? (
+          ) : visibleReports.length === 0 ? (
             <EmptyState
               bare
               title="Inget väntar på ankomst"
@@ -227,7 +257,7 @@ export default function Arrivals() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {(reports as any[]).map((r) => (
+                  {visibleReports.map((r: any) => (
                     <tr key={r.id} className="hover:bg-muted/40">
                       <td className="p-2 font-medium">
                         {r.document_number ?? r.display_name ?? r.file_name}

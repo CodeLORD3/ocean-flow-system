@@ -60,6 +60,42 @@ export function useTransferOrders(locationIds?: string[]) {
   });
 }
 
+/** Statusar där varan är avsänd men ännu inte mottagen. */
+export const INCOMING_STATUSES = ["under_transport", "delvis_levererad"];
+
+/**
+ * Inkommande överföringar till en butik/enhet — det mottagaren måste ta emot.
+ * Utan storeId räknas alla inkommande (Admin och Grossist).
+ */
+export function useIncomingTransfers(storeId?: string | null) {
+  return useQuery({
+    queryKey: ["incoming_transfers", storeId ?? "all"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("transfer_orders" as any)
+        .select(
+          `*,
+           from_location:storage_locations!transfer_orders_from_location_id_fkey(name, location_type),
+           to_location:storage_locations!transfer_orders_to_location_id_fkey(name, location_type, store_id),
+           transfer_order_lines(*, products(name, sku, unit), lots(lot_number))`,
+        )
+        .in("status", INCOMING_STATUSES)
+        .order("approved_out_at", { ascending: false });
+      if (error) throw error;
+      const rows = (data ?? []) as any as TransferOrderRow[];
+      if (!storeId) return rows;
+      return rows.filter((r) => (r as any).to_location?.store_id === storeId);
+    },
+    refetchInterval: 30_000,
+  });
+}
+
+/** Antal inkommande leveranser — används för siffran i menyn. */
+export function useIncomingTransferCount(storeId?: string | null) {
+  const { data = [] } = useIncomingTransfers(storeId);
+  return data.length;
+}
+
 function useTransferMutation<T>(fn: (input: T) => Promise<any>) {
   const qc = useQueryClient();
   return useMutation({
