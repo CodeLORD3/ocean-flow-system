@@ -146,7 +146,8 @@ export function ReferencePricesPanel() {
     const cost =
       costText != null && costText !== ""
         ? parseFloat(costText.replace(",", "."))
-        : Number((stored as any)?.reference_cost_per_kg ?? 0) || null;
+        : Number((stored as any)?.reference_cost_per_kg ?? 0) ||
+          (r.rollingAvgCost != null ? Math.round(r.rollingAvgCost * 100) / 100 : null);
 
     if (!(Number(price) > 0)) {
       toast({ title: "Referenspris saknas", description: "Ange ett referenspris över 0.", variant: "destructive" });
@@ -235,11 +236,31 @@ export function ReferencePricesPanel() {
                 const storedPrice = Number((stored as any)?.price_incl_vat ?? stored?.last_set_price ?? 0);
                 const storedCost = Number((stored as any)?.reference_cost_per_kg ?? 0);
                 const priceValue = edits[k]?.price ?? (storedPrice > 0 ? String(storedPrice) : "");
+                // Referenskostnaden förifylls från artens rullande snitt av de tre
+                // senaste inköpen när inget eget värde är sparat.
+                const prefillCost =
+                  r.rollingAvgCost != null ? String(Math.round(r.rollingAvgCost * 100) / 100) : "";
                 const costValue =
-                  edits[k]?.cost ?? (storedCost > 0 ? String(storedCost) : "");
+                  edits[k]?.cost ?? (storedCost > 0 ? String(storedCost) : prefillCost);
+                const costIsPrefill = edits[k]?.cost == null && !(storedCost > 0) && prefillCost !== "";
+                const complete = storedPrice > 0 && storedCost > 0;
                 return (
                   <TableRow key={`${k}-${listKey}`} className="h-10">
-                    <TableCell className="text-xs font-medium">{r.species}</TableCell>
+                    <TableCell className="text-xs font-medium">
+                      <span className="flex items-center gap-1.5">
+                        {r.species}
+                        <Badge
+                          variant="outline"
+                          className={`h-4 px-1 text-[9px] font-normal ${
+                            complete
+                              ? "border-emerald-500/40 text-emerald-600"
+                              : "border-amber-500/40 text-amber-600"
+                          }`}
+                        >
+                          {complete ? "klar" : "saknas"}
+                        </Badge>
+                      </span>
+                    </TableCell>
                     <TableCell className="text-xs">
                       {detailFormLabel(r.form)}
                       {r.role === "primary" && (
@@ -260,8 +281,11 @@ export function ReferencePricesPanel() {
                       <Input
                         value={costValue}
                         onChange={(e) => setEdits((p) => ({ ...p, [k]: { ...p[k], cost: e.target.value } }))}
-                        placeholder={r.rollingAvgCost ? fmt(r.rollingAvgCost, 2) : "—"}
-                        className="h-8 w-24 text-right font-mono text-xs tabular-nums"
+                        placeholder="—"
+                        className={`h-8 w-24 text-right font-mono text-xs tabular-nums ${
+                          costIsPrefill ? "text-muted-foreground" : ""
+                        }`}
+                        title={costIsPrefill ? "Förifyllt från snittet av de tre senaste inköpen" : undefined}
                       />
                     </TableCell>
                     <TableCell className="text-right font-mono text-xs tabular-nums">
