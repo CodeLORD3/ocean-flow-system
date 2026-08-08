@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, ShoppingCart, Users, Fish, Package, Truck, Store, UserCheck, BarChart3, Settings, Anchor, CreditCard, ClipboardList, CalendarDays, Star, BookOpen, ListTodo, ChevronDown, FileText, SlidersHorizontal, MessageSquare, ClipboardCheck,
+  LayoutDashboard, ShoppingCart, Users, Fish, Package, Truck, Store, UserCheck, BarChart3, Settings, Anchor, CreditCard, ClipboardList, CalendarDays, Star, BookOpen, ListTodo, ChevronDown, FileText, SlidersHorizontal, MessageSquare, ClipboardCheck, History, ShieldCheck,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { canAccessRoute } from "@/lib/pageAccess";
 
 
 const overviewNav = [
@@ -40,6 +41,8 @@ const salesNav = [
 
 const inventoryNav = [
   { title: "Lager", url: "/inventory", icon: Package },
+  { title: "Lagerrörelser", url: "/stock-movements", icon: History },
+  { title: "Spårbarhet — partier", url: "/traceability", icon: ShieldCheck },
   { title: "Inleveranser", url: "/receiving", icon: Truck },
   { title: "Leverantörer", url: "/suppliers", icon: Truck },
 ];
@@ -86,7 +89,9 @@ export function ShopSidebar() {
     .map(section => ({
       ...section,
       items: section.items.filter(
-        item => LOCKED_URLS.includes(item.url) || !hiddenUrls.includes(item.url)
+        item =>
+          canAccessRoute("shop", item.url) &&
+          (LOCKED_URLS.includes(item.url) || !hiddenUrls.includes(item.url))
       ),
     }))
     .filter(section => section.items.length > 0);

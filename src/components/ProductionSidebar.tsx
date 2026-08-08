@@ -17,6 +17,8 @@ import {
   MessageSquare,
   Scissors,
   Star,
+  History,
+  ShieldCheck,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -50,6 +52,8 @@ const purchaseNav = [
   { title: "Inköpsrapportering", url: "/purchase-reporting", icon: FileText },
   { title: "Leverantörer", url: "/suppliers", icon: Truck },
   { title: "Lager", url: "/inventory", icon: Package },
+  { title: "Lagerrörelser", url: "/stock-movements", icon: History },
+  { title: "Spårbarhet — partier", url: "/traceability", icon: ShieldCheck },
   { title: "Inleveranser", url: "/receiving", icon: Truck },
 ];
 
