@@ -477,6 +477,7 @@ function ReportSection({
   onUpdateLine: (id: string, updates: Partial<ReportLine>) => void;
   onDeleteLine: (id: string) => void;
   onViewDocument: (reportId: string) => void;
+  onSelect?: (reportId: string) => void;
   onConfirm: (reportId: string) => void;
   onUnlock: (reportId: string) => void;
   onRenameReport: (reportId: string, newName: string) => void;
