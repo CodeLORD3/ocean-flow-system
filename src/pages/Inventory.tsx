@@ -65,6 +65,16 @@ import {
 } from "@/hooks/useStorageLocations";
 import { useSite } from "@/contexts/SiteContext";
 import { canSeeCosts } from "@/lib/pageAccess";
+import LevelSelector, { type LevelTotals } from "@/components/inventory/LevelSelector";
+import {
+  LEVEL_ORDER,
+  LEVEL_LABEL,
+  LEVEL_EMPTY_HINT,
+  LEVEL_OWNER,
+  manageableLevels,
+  type LocationLevel,
+} from "@/lib/locations";
+
 import { getStoreCurrency } from "@/lib/currency";
 import BarcodeScanner from "@/components/barcode/BarcodeScanner";
 import { EntityImagesButton } from "@/components/images/EntityImageGallery";
