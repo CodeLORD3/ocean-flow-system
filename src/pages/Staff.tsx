@@ -82,6 +82,7 @@ export default function Staff() {
     first_name: "", last_name: "", age: "", phone: "", email: "", workplace: "", store_id: "", profile_image_url: "",
   };
   const [form, setForm] = useState(emptyForm);
+  const [originalEmail, setOriginalEmail] = useState("");
   const setField = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }));
 
   // Instämplade på arbetsplatsen kan komma från andra hemmabutiker
@@ -110,6 +111,7 @@ export default function Staff() {
 
   const openEdit = (s: any) => {
     setEditId(s.id);
+    setOriginalEmail((s.email || "").toLowerCase());
     setForm({
       first_name: s.first_name, last_name: s.last_name,
       age: s.age ? String(s.age) : "", phone: s.phone || "",
@@ -119,6 +121,27 @@ export default function Staff() {
     setPreviewUrl(s.profile_image_url || null);
     setDialogOpen(true);
   };
+
+  // E-postfältet är också inloggningsadressen: ändras den måste själva kontot
+  // bytas via en admin-funktion, annars kan personen inte logga in med den nya.
+  const syncLoginEmail = async (staffId: string, email: string) => {
+    const { data, error } = await supabase.functions.invoke("staff-account-email", {
+      body: { staff_id: staffId, email },
+    });
+    if (error || (data as any)?.error) {
+      toast({
+        title: "Inloggningsadressen kunde inte ändras",
+        description: (data as any)?.error || error?.message,
+        variant: "destructive",
+      });
+      return;
+    }
+    toast({
+      title: "Inloggningsadress uppdaterad",
+      description: `${email} används nu vid inloggning.`,
+    });
+  };
+
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -152,8 +175,15 @@ export default function Staff() {
     };
 
     if (editId) {
+      const newEmail = (form.email || "").trim().toLowerCase();
+      const emailChanged = !!newEmail && newEmail !== originalEmail;
       updateStaff.mutate({ id: editId, ...payload }, {
-        onSuccess: () => { toast({ title: "Personal uppdaterad", description: `${form.first_name} ${form.last_name}` }); setDialogOpen(false); },
+        onSuccess: async () => {
+          toast({ title: "Personal uppdaterad", description: `${form.first_name} ${form.last_name}` });
+          setDialogOpen(false);
+          if (emailChanged && isAdmin) await syncLoginEmail(editId, newEmail);
+          setOriginalEmail(newEmail);
+        },
         onError: (err) => toast({ title: "Fel", description: err.message, variant: "destructive" }),
       });
     } else {
@@ -383,8 +413,13 @@ export default function Staff() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">E-postadress</Label>
+              <Label className="text-xs">E-postadress (inloggning)</Label>
               <Input type="email" value={form.email} onChange={e => setField("email", e.target.value)} className="h-8 text-xs" />
+              {editId && isAdmin && (
+                <p className="text-[10px] text-muted-foreground">
+                  Ändras adressen byts även inloggningsadressen för kontot.
+                </p>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
