@@ -1627,6 +1627,7 @@ export default function PurchaseReporting() {
                       onUpdateLine={(id, updates) => updateLine.mutate({ id, ...updates } as any)}
                       onDeleteLine={(id) => deleteLine.mutate(id)}
                       onViewDocument={(reportId) => { setSelectedReportId(reportId); setDocExpanded(true); setZoom(1); }}
+                      onSelect={(reportId) => setSelectedReportId(reportId)}
                       onConfirm={(reportId) => confirmReport.mutate(reportId)}
                       onUnlock={(reportId) => unlockReport.mutate(reportId)}
                       onRenameReport={(id, name) => renameReport.mutate({ id, name })}
@@ -1653,6 +1654,7 @@ export default function PurchaseReporting() {
                       onUpdateLine={(id, updates) => updateLine.mutate({ id, ...updates } as any)}
                       onDeleteLine={(id) => deleteLine.mutate(id)}
                       onViewDocument={(reportId) => { setSelectedReportId(reportId); setDocExpanded(true); setZoom(1); }}
+                      onSelect={(reportId) => setSelectedReportId(reportId)}
                       onConfirm={(reportId) => confirmReport.mutate(reportId)}
                       onUnlock={(reportId) => unlockReport.mutate(reportId)}
                       onRenameReport={(id, name) => renameReport.mutate({ id, name })}
