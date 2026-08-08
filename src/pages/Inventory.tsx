@@ -1288,11 +1288,14 @@ export default function Inventory() {
     return m;
   }, [products]);
 
-  /** Rader som ska visas i den samlade lagervyn (portal-/butiksfiltrerade) */
+  /** Rader som ska visas i den samlade lagervyn (portal-/butiks-/nivåfiltrerade) */
   const overviewRows = useMemo(() => {
     const allowed = new Set(portalLocations.map((l: any) => l.id));
-    return (allStock as any[]).filter((s: any) => allowed.has(s.location_id) && !hiddenLocs[s.location_id]);
-  }, [allStock, portalLocations, hiddenLocs]);
+    return (allStock as any[]).filter(
+      (s: any) => allowed.has(s.location_id) && !hiddenLocs[s.location_id] && matchesLevel(s),
+    );
+  }, [allStock, portalLocations, hiddenLocs, matchesLevel]);
+
 
   const handleOverviewAction = useCallback(
     (action: "move" | "delete" | "split" | "count", row: any) => {
