@@ -722,7 +722,7 @@ export default function Inventory() {
       }).length;
       return { ...loc, items, totalQty, totalValue, expiryWarnings };
     });
-  }, [portalLocations, allStock, search]);
+  }, [portalLocations, allStock, search, level]);
 
   const groupedByStore = useMemo(() => {
     if (site !== "production" && site !== "wholesale") return [];
@@ -1390,6 +1390,28 @@ export default function Inventory() {
           </Button>
         </div>
       </div>
+
+      {/* Fem nivåer i flödesordning. Låsta nivåer visar saldo — se men inte röra. */}
+      <div className="space-y-2">
+        <LevelSelector
+          available={allowedLevels}
+          value={level}
+          onChange={setLevel}
+          totals={levelTotals}
+          lockedReason={lockedReason}
+          showValue={showCosts}
+        />
+        {level !== "all" && (levelTotals[level]?.quantityKg ?? 0) === 0 && (
+          <p className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+            <span className="font-semibold text-foreground">
+              {LEVEL_LABEL[level as LocationLevel]} är tomt.
+            </span>{" "}
+            {LEVEL_EMPTY_HINT[level as LocationLevel]}
+          </p>
+        )}
+      </div>
+
+
 
       {/* Vyväxling: samlad lagerbild (ny look) vs. per lagerplats (detaljvy) vs. rörelser */}
       <div className="flex flex-wrap items-center gap-2">
