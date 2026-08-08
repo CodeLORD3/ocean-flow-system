@@ -28,12 +28,12 @@ import { useProducts } from "@/hooks/useProducts";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import { useYields } from "@/hooks/useProductionYields";
 import { useStaff } from "@/hooks/useStaff";
-import { normalizeDetailForm } from "@/lib/cutModels";
 import { GROSSIST_FLYTANDE_ID } from "@/lib/locations";
 import {
   openExternalAssignments,
   registerExternalReturn,
   sendExternalAssignment,
+  matchStandardYield,
   type ExternalReturnResult,
 } from "@/lib/externalProduction";
 
@@ -186,7 +186,7 @@ export default function ExternalProduction() {
               lineId: null,
               productId: "",
               detailName: "",
-              detailForm: "file",
+              detailForm: "filé utan skinn",
               quantity: "",
               costWeight: "1",
             },
@@ -205,16 +205,13 @@ export default function ExternalProduction() {
   const totalCost = rawCost + labourCost + num(extraCost);
   const weightSum = rows.reduce((s, r) => s + num(r.quantity) * (num(r.costWeight) || 1), 0);
 
-  const standardFor = (detailForm: string) => {
-    if (!openOrder?.species_group) return null;
-    const form = normalizeDetailForm(detailForm || "");
-    const hit = yieldRows.find(
-      (y) =>
-        (y.species_group ?? "").toLowerCase() === (openOrder.species_group ?? "").toLowerCase() &&
-        normalizeDetailForm(y.to_form ?? "") === form,
+  const standardFor = (detailForm: string) =>
+    matchStandardYield(
+      yieldRows as any[],
+      openOrder?.species_group,
+      openOrder?.raw_form,
+      detailForm,
     );
-    return hit ? Number(hit.yield_pct) : null;
-  };
 
   const submitReturn = async () => {
     if (!openOrder) return;
@@ -229,7 +226,7 @@ export default function ExternalProduction() {
             lineId: r.lineId,
             productId: r.productId,
             detailName: r.detailName || products.find((p) => p.id === r.productId)?.name || "Detalj",
-            detailForm: normalizeDetailForm(r.detailForm || "file"),
+            detailForm: (r.detailForm || "filé utan skinn").trim(),
             quantityKg: num(r.quantity),
             costWeight: num(r.costWeight) || 1,
           })),
@@ -515,7 +512,7 @@ export default function ExternalProduction() {
                         <Input
                           value={r.detailForm}
                           onChange={(e) => setRow(r.key, { detailForm: e.target.value })}
-                          placeholder="form, t.ex. filé"
+                          placeholder="form, t.ex. filé utan skinn"
                           className="h-8 text-xs"
                         />
                         <Input
@@ -574,7 +571,7 @@ export default function ExternalProduction() {
                         lineId: null,
                         productId: "",
                         detailName: "",
-                        detailForm: "avskar",
+                        detailForm: "avskär",
                         quantity: "",
                         costWeight: "1",
                       },
