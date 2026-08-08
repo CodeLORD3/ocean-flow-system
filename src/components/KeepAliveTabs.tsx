@@ -51,6 +51,7 @@ import DataCoverage from "@/pages/DataCoverage";
 import StockMovementsPage from "@/pages/StockMovementsPage";
 import StockTransfers from "@/pages/StockTransfers";
 import Arrivals from "@/pages/Arrivals";
+import ExternalProduction from "@/pages/ExternalProduction";
 
 import WasteReports from "@/pages/WasteReports";
 import TraceabilityPage from "@/pages/TraceabilityPage";
@@ -113,6 +114,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/stock-transfers": { component: <StockTransfers /> },
   "/waste": { component: <WasteReports /> },
   "/arrivals": { component: <Arrivals /> },
+  "/external-production": { component: <ExternalProduction /> },
 
   "/traceability": { component: <TraceabilityPage /> },
 };
