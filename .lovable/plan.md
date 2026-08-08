@@ -42,7 +42,30 @@
 
 ---
 
+# Körordning
+
+b → a → h → uppgift 1 → 2 → 3 → 4 → l → prisrapporten. Rapport efter varje steg.
+
+# Före uppgift 1
+
+## b. Nollställ de 15 nollraderna
+
+- Bokför en korrigerande rörelse per rad så att `avg_cost` och `unit_cost` blir 0 där `quantity = 0` (bl.a. Kolja 78,00 och Långa 60,00). Ingen direktskrivning mot `product_stock_locations`.
+- Ny regel i `apply_stock_movement`: när saldot efter rörelsen är 0 sätts `avg_cost` och `unit_cost` till 0, så att en tom plats aldrig kan smitta nästa inleverans genom det viktade snittet och NRV-kedjan.
+
+## a. Skarpt bevis för spärrarna
+
+- Tillfällig edge function med service role som medvetet försöker två saker och returnerar felmeddelandet i klartext:
+  1. direktskrivning av saldot i `product_stock_locations`
+  2. bokföring av en rörelse mot en inaktiverad lagerplats
+- Funktionen körs, båda felmeddelandena redovisas ordagrant, sedan tas funktionen bort.
+
+## h. Tre alias
+
+Lägg till engelska "tail" på Stjärt, "counter loin" på Kontrarygg och "buklapp" på Slag i styckdetaljernas aliaslista.
+
 # Uppgift 1: Vy för Registrera ankomst
+
 
 Ny sida `/arrivals`, menypost under Inköp (grossist + admin).
 
@@ -80,9 +103,15 @@ Sessionen i min testmiljö är utloggad. För att kunna verifiera inloggad behö
 
 Bara rapporter från de senaste två veckorna bokförs. Just nu finns **0 obokförda rapporter inom två veckor** — samtliga 54 är äldre. De markeras därför som historiska utan lagerpåverkan (ny status, ingen rörelse i lagret).
 
-# Efter de fyra: lista över artgrupper utan referenspris
+# Efter uppgift 4: l. Slutför AP-9
+
+- Utöka dubblettspärren vid inläsning så att även dokumentnummer per leverantör spärras, inte bara `file_hash`
+- `parse-foljesedel` uppdateras så att produktmatchningen skriver och läser `supplier_article_map` — tabellen sätts i drift med posterna från befintliga inlästa rapporter
+
+# Sist: lista över artgrupper utan referenspris
 
 Ren rapport, ingen kod: artgrupper som saknar referenspris, sorterade efter hur ofta arten förekommer i inköpsrapporterna.
+
 
 ## Tekniska noter
 
