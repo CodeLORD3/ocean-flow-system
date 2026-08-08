@@ -82,6 +82,7 @@ export default function Staff() {
     first_name: "", last_name: "", age: "", phone: "", email: "", workplace: "", store_id: "", profile_image_url: "",
   };
   const [form, setForm] = useState(emptyForm);
+  const [originalEmail, setOriginalEmail] = useState("");
   const setField = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }));
 
   // Instämplade på arbetsplatsen kan komma från andra hemmabutiker
