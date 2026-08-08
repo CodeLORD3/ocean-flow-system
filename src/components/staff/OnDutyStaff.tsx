@@ -43,7 +43,22 @@ export function OnDutyStaff({ storeId }: { storeId?: string | null }) {
       clockIn.mutate(
         { staffId: staff.id, storeId: storeId ?? null },
         {
-          onSuccess: () => toast({ title: "Instämplad", description: `${fullName}${storeName ? ` · ${storeName}` : ""}` }),
+          onSuccess: (res) => {
+            if (res.outcome === "already") {
+              toast({
+                title: "Redan instämplad",
+                description: `${fullName} är redan instämplad${storeName ? ` i ${storeName}` : ""}.`,
+              });
+            } else if (res.outcome === "moved") {
+              const from = stores.find((s) => s.id === res.previousStoreId)?.name;
+              toast({
+                title: "Stämpling flyttad",
+                description: `${fullName} stämplades ut från ${from ?? "tidigare arbetsplats"} och in${storeName ? ` i ${storeName}` : ""}.`,
+              });
+            } else {
+              toast({ title: "Instämplad", description: `${fullName}${storeName ? ` · ${storeName}` : ""}` });
+            }
+          },
           onError: (err: any) => toast({ title: "Fel", description: err.message, variant: "destructive" }),
         },
       );
