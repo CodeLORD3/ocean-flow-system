@@ -57,6 +57,7 @@ export function useMyOpenShift(staffId?: string | null) {
         .select("id, staff_id, store_id, clocked_in_at, clocked_out_at")
         .eq("staff_id", staffId!)
         .is("clocked_out_at", null)
+        .gte("clocked_in_at", startOfTodayIso())
         .order("clocked_in_at", { ascending: false })
         .limit(1)
         .maybeSingle();
