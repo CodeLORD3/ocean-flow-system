@@ -9,7 +9,14 @@ export interface StaffShift {
   clocked_out_at: string | null;
 }
 
-/** Öppna (aktiva) stämplingar — hela systemet eller en butik. */
+/** Början av dagens dygn (lokal tid) som ISO-sträng. */
+function startOfTodayIso(): string {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
+/** Öppna (aktiva) stämplingar — hela systemet eller en butik. Endast dagens. */
 export function useOpenShifts(storeId?: string | null) {
   return useQuery({
     queryKey: ["staff-shifts-open", storeId ?? "all"],
@@ -18,6 +25,7 @@ export function useOpenShifts(storeId?: string | null) {
         .from("staff_shifts")
         .select("id, staff_id, store_id, clocked_in_at, clocked_out_at")
         .is("clocked_out_at", null)
+        .gte("clocked_in_at", startOfTodayIso())
         .order("clocked_in_at", { ascending: true });
       if (storeId) q = q.eq("store_id", storeId);
       const { data, error } = await q;
