@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ChevronDown, Truck, Factory, Warehouse, Store, ShoppingBasket, Loader2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -59,7 +59,10 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [moving, setMoving] = useState<null | "grossistlager" | "tillverkningslager">(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
+  /** Rader som följer med det pågående draget (alla ibockade rader). */
+  const dragRowsRef = useRef<any[] | null>(null);
   const qc = useQueryClient();
+
   const { data: transfers = [] } = useTransferOrders();
 
 
@@ -107,11 +110,20 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
   );
 
   /**
-   * Flyttar markerade rader (eller hela inköpslagret) till grossist- eller
-   * tillverkningslagret. Partierna följer med FIFO så spårbarheten hålls intakt.
+   * Flyttar valda rader till grossist- eller tillverkningslagret.
+   * `rows` anges vid drag-och-släpp (alla ibockade rader följer med).
+   * Partierna följer med FIFO så spårbarheten hålls intakt.
    */
-  const moveTo = async (level: "grossistlager" | "tillverkningslager", all = false) => {
-    const rows = all ? purchaseRows.filter((r: any) => qtyOf(r) > 0) : selectedRows;
+  const moveTo = async (
+    level: "grossistlager" | "tillverkningslager",
+    rowsArg?: any[] | "all",
+  ) => {
+    const rows =
+      rowsArg === "all"
+        ? purchaseRows.filter((r: any) => qtyOf(r) > 0)
+        : rowsArg && rowsArg.length
+          ? rowsArg
+          : selectedRows;
     if (!rows.length) {
       toast.error("Markera minst en rad med saldo först.");
       return;
@@ -146,7 +158,9 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
       qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
       qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
       qc.invalidateQueries({ queryKey: ["stock_movements"] });
-      toast.success(`${kg(moved)} flyttat till ${LEVEL_LABEL[level]}.`);
+      toast.success(
+        `${kg(moved)} från ${rows.length} rad(er) flyttat till ${LEVEL_LABEL[level]}.`,
+      );
     } catch (e: any) {
       toast.error(e?.message ?? "Flytten kunde inte bokföras.");
     } finally {
@@ -159,16 +173,21 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
       ? {
           onDragOver: (e: React.DragEvent) => {
             e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
             setDropTarget(level);
           },
           onDragLeave: () => setDropTarget((cur) => (cur === level ? null : cur)),
           onDrop: (e: React.DragEvent) => {
             e.preventDefault();
             setDropTarget(null);
-            void moveTo(level);
+            // Alla ibockade rader vid dragstart följer med släppet.
+            const rows = dragRowsRef.current?.length ? dragRowsRef.current : selectedRows;
+            dragRowsRef.current = null;
+            void moveTo(level, rows);
           },
         }
       : {};
+
 
 
   const Card = ({
@@ -300,9 +319,19 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
                             canSelect && qtyOf(r) > 0 && "cursor-grab",
                           )}
                           draggable={canSelect && qtyOf(r) > 0}
-                          onDragStart={() => {
-                            if (!selected[r.id]) setSelected((cur) => ({ ...cur, [r.id]: true }));
+                          onDragStart={(e) => {
+                            // Dra en ibockad rad = dra alla ibockade rader.
+                            const isChecked = !!selected[r.id];
+                            if (!isChecked) setSelected((cur) => ({ ...cur, [r.id]: true }));
+                            const rows = isChecked && selectedRows.length ? selectedRows : [r];
+                            dragRowsRef.current = rows;
+                            e.dataTransfer.effectAllowed = "move";
+                            e.dataTransfer.setData("text/plain", `${rows.length} rader`);
                           }}
+                          onDragEnd={() => {
+                            dragRowsRef.current = null;
+                          }}
+
                         >
                           {canSelect && (
                             <td className="px-1 py-1">
