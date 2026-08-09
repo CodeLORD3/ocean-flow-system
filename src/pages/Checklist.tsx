@@ -31,6 +31,9 @@ import { useSite } from "@/contexts/SiteContext";
 import { ChecklistTable } from "@/components/checklist/ChecklistTable";
 import { ChecklistCopyDialog } from "@/components/checklist/ChecklistCopyDialog";
 import { ChecklistRestoreDialog } from "@/components/checklist/ChecklistRestoreDialog";
+import { DailyReportCard } from "@/components/dashboard/DailyReportCard";
+import { useTabs } from "@/contexts/TabsContext";
+
 
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import {
