@@ -121,7 +121,7 @@ export default function Establishments() {
             <p className="text-xs text-muted-foreground">Hämtar anläggningar…</p>
           ) : establishments.length === 0 ? (
             <EmptyState
-              icon={Building2}
+              icon={<Building2 className="h-4 w-4" />}
               title="Inga anläggningar upplagda"
               description="Lägg upp den godkända anläggningen med dess godkännandenummer, så kan märket skrivas ut på etiketter och följesedlar."
             />
