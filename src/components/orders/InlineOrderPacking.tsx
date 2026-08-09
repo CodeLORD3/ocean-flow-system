@@ -211,21 +211,21 @@ export function InlineOrderPacking({ order }: { order: CustomerOrder }) {
 
 
               {expanded && (
-                <div className="grid gap-2 border-t border-border px-2.5 pb-2.5 pt-2 sm:grid-cols-[1fr_1fr_auto]">
-                  <div>
-                    <Label className="text-xs">Vägd vikt ({l.unit})</Label>
+                <div className="grid gap-1.5 border-t border-border px-2 pb-2 pt-1.5 sm:grid-cols-[1fr_1fr_auto]">
+                  <div className="space-y-0.5">
+                    <Label className="text-[11px] text-muted-foreground">Vägd vikt ({l.unit})</Label>
                     <Input
                       inputMode="decimal"
-                      className="h-12 font-mono text-lg tabular-nums"
+                      className="h-8 font-mono text-sm tabular-nums"
                       value={weights[l.id] ?? ""}
                       onChange={(e) => setWeights({ ...weights, [l.id]: e.target.value })}
                     />
                   </div>
-                  <div>
-                    <Label className="text-xs">Dagens pris / {l.unit}</Label>
+                  <div className="space-y-0.5">
+                    <Label className="text-[11px] text-muted-foreground">Dagens pris / {l.unit}</Label>
                     <Input
                       inputMode="decimal"
-                      className="h-12 font-mono tabular-nums"
+                      className="h-8 font-mono text-sm tabular-nums"
                       value={prices[l.id] ?? ""}
                       onChange={(e) =>
                         setPrices({
@@ -236,20 +236,21 @@ export function InlineOrderPacking({ order }: { order: CustomerOrder }) {
                     />
                   </div>
                   <div className="flex items-end">
-                    <Button className="h-12 w-full sm:w-auto" onClick={() => doPack(l)}>
-                      <CheckCircle2 className="mr-2 h-5 w-5" /> Packad
+                    <Button size="sm" className="h-8 w-full text-xs sm:w-auto" onClick={() => doPack(l)}>
+                      <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> Packad
                     </Button>
                   </div>
                   <Input
-                    className="h-11 sm:col-span-3"
+                    className="h-8 text-xs sm:col-span-3"
                     placeholder="Anteckning, t.ex. rensad eller skuren i bitar"
                     value={notes[l.id] ?? l.note ?? ""}
                     onChange={(e) => setNotes({ ...notes, [l.id]: e.target.value })}
                   />
-                  <div className="flex gap-2 sm:col-span-3">
+                  <div className="flex gap-1.5 sm:col-span-3">
                     <Button
                       variant="outline"
-                      className="h-11 flex-1"
+                      size="sm"
+                      className="h-7 flex-1 text-xs"
                       onClick={() =>
                         updateLine.mutate({
                           id: l.id,
@@ -263,7 +264,8 @@ export function InlineOrderPacking({ order }: { order: CustomerOrder }) {
                     </Button>
                     <Button
                       variant="outline"
-                      className="h-11 flex-1"
+                      size="sm"
+                      className="h-7 flex-1 text-xs"
                       onClick={() =>
                         updateLine.mutate({
                           id: l.id,
@@ -278,6 +280,7 @@ export function InlineOrderPacking({ order }: { order: CustomerOrder }) {
                   </div>
                 </div>
               )}
+
 
               {done && (
                 <div className="px-2.5 pb-2 font-mono text-xs tabular-nums text-muted-foreground">
