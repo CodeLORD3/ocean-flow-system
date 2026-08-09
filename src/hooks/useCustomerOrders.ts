@@ -17,7 +17,7 @@ import {
 const db = supabase as any;
 
 const ORDER_SELECT =
-  "*, stores(id, name), customers_retail(*), customer_order_lines(*, products(id, name, sku, unit, image_url, shelf_life_days, category, allergens), lots(id, lot_number, best_before))";
+  "*, stores(id, name), customers_retail(*), customer_order_lines(*, products!customer_order_lines_product_id_fkey(id, name, sku, unit, image_url, shelf_life_days, category, allergens), lots(id, lot_number, best_before))";
 
 /* -------------------------------------------------------------- kundregister */
 
@@ -503,7 +503,7 @@ export function usePurchaseNeeds(fromDate?: string) {
       const { data, error } = await db
         .from("customer_order_lines")
         .select(
-          "id, product_id, quantity_ordered, unit, reservation_status, pack_status, products(name), customer_orders!inner(id, wanted_date, store_id, status, stores(name))",
+          "id, product_id, quantity_ordered, unit, reservation_status, pack_status, products!customer_order_lines_product_id_fkey(name), customer_orders!inner(id, wanted_date, store_id, status, stores(name))",
         )
         .in("reservation_status", ["inkopsbehov"])
         .neq("pack_status", "struken")
