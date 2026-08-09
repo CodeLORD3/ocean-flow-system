@@ -156,6 +156,12 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
   const broadcast = useBroadcastImportant();
   const send = useSendChatMessage();
   const unread = useChatUnread();
+  const avatars = usePortalAvatars();
+  /** Motpartens profilbild i en chatt (butikens hero-bild / portalbild). */
+  const convAvatar = (c: ChatConversation) => {
+    const other = c.participants.find((p) => p.portal_key !== portal?.key);
+    return other ? avatars[other.portal_key] : undefined;
+  };
   const markRead = useMarkConversationRead();
 
   // Butiker chattar bara med Grossist – ingen lista, chatten är alltid öppen
