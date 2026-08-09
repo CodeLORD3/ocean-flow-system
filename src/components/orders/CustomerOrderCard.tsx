@@ -5,6 +5,7 @@ import {
   CircleDashed,
   CheckCircle2,
   Printer,
+  MessageSquare,
   Lock,
   AlertTriangle,
   Ban,
@@ -559,10 +560,6 @@ export function CustomerOrderCard({
                 <Printer className="mr-2 h-4 w-4" /> Skriv preliminär offert
               </Button>
             </div>
-            <Button variant="outline" className="hidden" onClick={makeQuote}>
-
-              <Printer className="mr-2 h-4 w-4" /> Skriv preliminär offert
-            </Button>
             {!readOnly && order.category === "catering" && (
               <div className="sm:max-w-[220px]">
                 <Label>Antal gäster</Label>
