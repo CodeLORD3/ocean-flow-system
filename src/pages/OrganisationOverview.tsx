@@ -294,36 +294,6 @@ export default function OrganisationOverview() {
       </div>
 
       {/* KPI Row */}
-      {isShop ? null : (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-
-          <KpiCard
-            title="Total försäljning (levererat)"
-            value={`${Math.round(totalSales).toLocaleString("sv-SE")} kr`}
-            subtitle={`${Math.round(totalOrderedValue).toLocaleString("sv-SE")} kr beställt totalt`}
-            icon={DollarSign}
-            trend={{ value: `${grossMargin}% bruttomarginal`, positive: Number(grossMargin) > 0 }}
-          />
-          <KpiCard
-            title="Lagervärde (kostnad)"
-            value={`${Math.round(totalInventoryValue).toLocaleString("sv-SE")} kr`}
-            subtitle={`${Math.round(totalStock).toLocaleString("sv-SE")} kg · grossistvärde ${Math.round(totalInventoryWholesale).toLocaleString("sv-SE")} kr`}
-            icon={Package}
-          />
-          <KpiCard
-            title="Beställningar"
-            value={`${shopOrders.length} st`}
-            subtitle={`${incomingDeliveries.length} inkommande leveranser`}
-            icon={Truck}
-          />
-          <KpiCard
-            title="Butiker / Produkter"
-            value={`${stores.length} / ${activeProducts}`}
-            subtitle={`${suppliers.length} leverantörer`}
-            icon={Store}
-          />
-        </div>
-      )}
 
       {/* Grossist/Admin: veckoschema för inköp */}
       {!isShop && <PurchaseWeekCard />}
