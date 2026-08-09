@@ -391,7 +391,7 @@ export function CustomerOrderRow({
           ) : editing ? (
             <InlineOrderEdit order={order} onClose={() => setEditing(false)} />
           ) : (
-            <InlineOrderPacking order={order} />
+            <InlineOrderPacking order={order} onOrderPacked={() => onToggle?.(order.id)} />
           )}
 
 

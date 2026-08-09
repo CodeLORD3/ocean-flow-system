@@ -55,7 +55,14 @@ function PackStep({ status, index }: { status: string; index: number }) {
  * Packning direkt i orderns rullgardin — ingen dialog behövs.
  * Vägd vikt och dagens pris matas in per rad, precis som i fiskdisken.
  */
-export function InlineOrderPacking({ order }: { order: CustomerOrder }) {
+export function InlineOrderPacking({
+  order,
+  onOrderPacked,
+}: {
+  order: CustomerOrder;
+  /** Anropas när sista raden packats (ordern blir grön) så rullgardinen kan stängas. */
+  onOrderPacked?: () => void;
+}) {
   const { activeUser } = useActiveUser();
   const packLine = usePackOrderLine();
   const unpackLine = useUnpackOrderLine();
@@ -129,6 +136,10 @@ export function InlineOrderPacking({ order }: { order: CustomerOrder }) {
       toast.success("Raden är packad.");
       const next = active.find((l) => l.id !== line.id && l.pack_status !== "packad");
       setOpenLine(next?.id ?? null);
+      if (!next) {
+        // Ordern är komplett packad — stäng rullgardinen.
+        onOrderPacked?.();
+      }
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "Raden kunde inte packas.");
     }
@@ -149,6 +160,7 @@ export function InlineOrderPacking({ order }: { order: CustomerOrder }) {
       },
     });
     toast.success(delivery ? "Ordern är levererad." : "Ordern är avhämtad.");
+    onOrderPacked?.();
   };
 
   return (
