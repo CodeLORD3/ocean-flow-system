@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, Search, Trash2, Pencil } from "lucide-react";
+import { Plus, Search, Trash2, Pencil, History } from "lucide-react";
+import { CustomerHistoryDialog } from "@/components/orders/CustomerHistoryDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,6 +53,8 @@ export function RetailCustomerRegistry({
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<RetailCustomer | null>(null);
   const [form, setForm] = useState(empty);
+  const [historyCustomer, setHistoryCustomer] = useState<RetailCustomer | null>(null);
+
 
   const openNew = () => {
     setEditing(null);
