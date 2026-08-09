@@ -75,23 +75,29 @@ export default function InventoryRouter() {
         <div style={{ display: tab === "lager" ? "block" : "none" }}>
           <Inventory />
         </div>
-        <div style={{ display: tab === "overforingar" ? "block" : "none" }}>
-          <StockTransfers />
-        </div>
+        {!isShopPortal && (
+          <div style={{ display: tab === "overforingar" ? "block" : "none" }}>
+            <StockTransfers />
+          </div>
+        )}
         <div style={{ display: tab === "produkter" ? "block" : "none" }}>
           <Products />
         </div>
-        <div style={{ display: tab === "streckkoder" ? "block" : "none" }}>
-          <Barcodes />
-        </div>
+        {!isShopPortal && (
+          <div style={{ display: tab === "streckkoder" ? "block" : "none" }}>
+            <Barcodes />
+          </div>
+        )}
         {showPricing && (
           <div style={{ display: tab === "priser" ? "block" : "none" }}>
             <Pricing />
           </div>
         )}
-        <div style={{ display: tab === "svinn" ? "block" : "none" }}>
-          <WasteReports />
-        </div>
+        {!isShopPortal && (
+          <div style={{ display: tab === "svinn" ? "block" : "none" }}>
+            <WasteReports />
+          </div>
+        )}
         <div style={{ display: tab === "sparbarhet" ? "block" : "none" }}>
           <TraceabilityPage />
         </div>
