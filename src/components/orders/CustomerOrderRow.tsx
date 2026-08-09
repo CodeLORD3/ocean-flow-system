@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   Sparkles,
   ExternalLink,
+  Pencil,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -64,12 +65,14 @@ const packTone: Record<string, string> = {
 export function CustomerOrderRow({
   order,
   onOpen,
+  onEdit,
   readOnly,
   open,
   onToggle,
 }: {
   order: CustomerOrder;
   onOpen: (o: CustomerOrder) => void;
+  onEdit?: (o: CustomerOrder) => void;
   readOnly?: boolean;
   open?: boolean;
   onToggle?: (id: string) => void;
