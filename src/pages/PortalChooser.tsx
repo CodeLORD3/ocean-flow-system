@@ -20,9 +20,19 @@ export default function PortalChooser() {
   const { setSite, setActiveStore } = useSite();
   const { data: stores = [] } = useStores();
   const navigate = useNavigate();
+  const [pickStore, setPickStore] = useState(false);
 
   const access = staff?.portal_access ?? [];
   const needsPwd = !!staff?.must_change_password;
+
+  const allowedStores = useMemo(() => {
+    const ids = new Set([
+      ...(staff?.allowed_store_ids ?? []),
+      ...(staff?.allowed_store_id ? [staff.allowed_store_id] : []),
+    ]);
+    // No explicit restriction = access to all stores
+    return ids.size === 0 ? stores : stores.filter((s) => ids.has(s.id));
+  }, [staff?.allowed_store_ids, staff?.allowed_store_id, stores]);
 
   // If only one portal, jump straight in
   useEffect(() => {
@@ -33,6 +43,7 @@ export default function PortalChooser() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, staff?.id, needsPwd, stores.length]);
+
 
   if (loading) {
     return (
