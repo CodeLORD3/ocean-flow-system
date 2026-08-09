@@ -39,6 +39,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ProductThumb } from "@/components/products/ProductThumb";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
+import ProductTraceabilityInline from "@/components/inventory/ProductTraceabilityInline";
 
 /** En lagerrad från product_stock_locations (joinad med products + storage_locations). */
 export interface StockRow {
@@ -64,8 +65,6 @@ interface Props {
   fmt: (v: number) => string;
   currency: string;
   onLineAction?: (action: StockLineAction, row: StockRow) => void;
-  /** Öppnar produktkortet (produktinfo + spårbarhet + svinn) när en produktrad klickas. */
-  onOpenProduct?: (group: any) => void;
   /** Rubrik-yta ovanför tabellen (t.ex. växla vy-knappar) */
   headerRight?: React.ReactNode;
   /** Butiksläget döljer kostnadsbaserat lagervärde. */
@@ -146,7 +145,6 @@ export default function StockOverview({
   fmt,
   currency,
   onLineAction,
-  onOpenProduct,
   headerRight,
   showCosts = true,
   compactKpis = false,
@@ -548,9 +546,7 @@ export default function StockOverview({
                           "border-b border-border/50 hover:bg-primary/5 transition-colors cursor-pointer",
                           rowH,
                         )}
-                        onClick={() =>
-                          onOpenProduct ? onOpenProduct(g) : toggleExpand(g.product_id)
-                        }
+                        onClick={() => toggleExpand(g.product_id)}
                       >
                         <td className="px-2 text-[11px] text-muted-foreground tabular-nums">{idx}</td>
                         <td className="px-2">
@@ -765,6 +761,13 @@ export default function StockOverview({
                                   </div>
                                 );
                               })}
+
+                              {/* Spårbarhet som rullgardin inne i produkten */}
+                              <ProductTraceabilityInline
+                                productId={g.product_id}
+                                showCosts={showCosts}
+                                fmt={fmt}
+                              />
                             </div>
                           </td>
                         </tr>,
