@@ -215,46 +215,9 @@ export default function CustomerOrders() {
         kassan vid hämtning.
       </p>
 
+      <div className="space-y-3">
+        <div className="space-y-3">
 
-
-      <Tabs defaultValue="orders">
-        <div className="-mx-3 overflow-x-auto px-3 pb-1 sm:mx-0 sm:px-0">
-          <TabsList className="w-max sm:w-auto sm:flex-wrap">
-            <TabsTrigger value="orders" className="h-10 gap-1">
-              <ShoppingBag className="h-4 w-4" /> Order
-            </TabsTrigger>
-            <TabsTrigger value="tomorrow" className="h-10 gap-1">
-              <CalendarDays className="h-4 w-4" /> Imorgon
-              {tomorrowOrders.length > 0 && (
-                <Badge variant="secondary" className="ml-1">
-                  {tomorrowOrders.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="kitchen" className="h-10 gap-1">
-              <ChefHat className="h-4 w-4" /> Att förbereda
-            </TabsTrigger>
-            <TabsTrigger value="delivery" className="h-10 gap-1">
-              <Truck className="h-4 w-4" /> Leverans
-            </TabsTrigger>
-            <TabsTrigger value="customers" className="h-10 gap-1">
-              <Users className="h-4 w-4" /> Kundregister
-            </TabsTrigger>
-            <TabsTrigger value="stats" className="h-10 gap-1">
-              <BarChart3 className="h-4 w-4" /> Statistik
-            </TabsTrigger>
-            {!isShop && (
-              <TabsTrigger value="needs" className="h-10">
-                Sålt men inte köpt
-              </TabsTrigger>
-            )}
-          </TabsList>
-        </div>
-
-
-
-
-        <TabsContent value="orders" className="space-y-3">
           <div className="flex flex-wrap gap-2">
             <div className="relative min-w-[200px] flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
