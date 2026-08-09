@@ -202,9 +202,10 @@ export function CustomerOrderRow({
 
 
 
+
           <div className="grid gap-2 text-sm sm:grid-cols-2">
             <div className="space-y-1">
-              <div className="font-semibold">{name}</div>
+
               {phone && (
                 <a
                   href={`tel:${phone}`}
