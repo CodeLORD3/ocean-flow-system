@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Search, Users, BarChart3, Filter, X } from "lucide-react";
+import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -334,6 +334,19 @@ export default function CustomerOrders() {
             </Button>
           </div>
         </div>
+
+        {panel !== "orders" && (
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="h-9" onClick={() => setPanel("orders")}>
+              <ArrowLeft className="mr-1.5 h-4 w-4" /> Tillbaka till beställningar
+            </Button>
+            <span className="text-sm font-medium text-foreground">
+              {panel === "customers" ? "Kundregister" : "Statistik"}
+            </span>
+          </div>
+        )}
+
+
 
 
         <div className={panel === "orders" ? "space-y-3" : "hidden"}>
