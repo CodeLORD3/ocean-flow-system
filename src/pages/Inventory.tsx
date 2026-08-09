@@ -318,6 +318,8 @@ export default function Inventory() {
   const queryClient = useQueryClient();
   const storeFilter = activeStoreId || "all";
   const isGrossist = site === "wholesale" || site === "production";
+  const isShopPortal = !isGrossist;
+
 
   // Derive currency from active store (Zollikon → CHF, others → SEK)
   const activeStore = (stores as any[]).find((s: any) => s.id === activeStoreId);
