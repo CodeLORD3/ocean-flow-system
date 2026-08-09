@@ -336,6 +336,7 @@ export default function FoodSafety() {
         </TabsContent>
 
         <TabsContent value="due" className="mt-3 space-y-2">
+          <BivalveDueList />
           <div className="flex justify-end">
             <Button
               size="sm"
