@@ -73,6 +73,7 @@ export const ROUTE_ACCESS: Record<string, SiteMode[]> = {
   "/stores": ADMIN,
   "/vehicles": ADMIN,
   "/establishments": ADMIN,
+  "/legal-entities": ADMIN,
   "/coverage": ADMIN,
   "/settings": ADMIN,
   "/landing-settings": ADMIN,

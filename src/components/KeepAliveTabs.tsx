@@ -45,6 +45,7 @@ import Tasks from "@/pages/Tasks";
 import LandingSettings from "@/pages/LandingSettings";
 import Vehicles from "@/pages/Vehicles";
 import Establishments from "@/pages/Establishments";
+import LegalEntitiesPage from "@/pages/LegalEntitiesPage";
 import FoodSafety from "@/pages/FoodSafety";
 import Chat from "@/pages/Chat";
 import Checklist from "@/pages/Checklist";
@@ -111,6 +112,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/landing-settings": { component: <LandingSettings /> },
   "/vehicles": { component: <Vehicles /> },
   "/establishments": { component: <Establishments /> },
+  "/legal-entities": { component: <LegalEntitiesPage /> },
   "/food-safety": { component: <FoodSafety /> },
   "/chat": { component: <Chat /> },
   "/checklist": { component: <Checklist /> },

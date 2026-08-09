@@ -41,6 +41,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/dagsrapport": "Dagsrapport",
   "/vehicles": "Bilar & Maskiner",
   "/establishments": "Anläggningar",
+  "/legal-entities": "Bolag",
   "/food-safety": "Egenkontroll",
   "/production": "Produktion",
   "/stock-movements": "Lagerrörelser",
