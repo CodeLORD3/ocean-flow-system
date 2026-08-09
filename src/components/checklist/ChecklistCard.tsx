@@ -4,8 +4,18 @@ import { cn } from "@/lib/utils";
 import { useDailyChecklist, weekdayName } from "@/hooks/useChecklist";
 
 /** Kompakt klickbar checklisteruta för Översikt-vyn i butiksportalen. */
-export function ChecklistCard({ storeId, onOpenFull }: { storeId: string; onOpenFull?: () => void }) {
-  const { data, isLoading } = useDailyChecklist(storeId);
+export function ChecklistCard({
+  storeId,
+  onOpenFull,
+  templateId,
+  title = "Checklista",
+}: {
+  storeId: string;
+  onOpenFull?: () => void;
+  templateId?: string | null;
+  title?: string;
+}) {
+  const { data, isLoading } = useDailyChecklist(storeId, undefined, templateId);
 
   const items = data?.items ?? [];
   const day = data?.day;
@@ -35,7 +45,7 @@ export function ChecklistCard({ storeId, onOpenFull }: { storeId: string; onOpen
         </div>
 
         <div>
-          <h3 className="font-heading text-base md:text-lg text-foreground">Checklista</h3>
+          <h3 className="font-heading text-base md:text-lg text-foreground">{title}</h3>
           <p className="text-[11px] md:text-xs text-muted-foreground mt-0.5">
             {day ? weekdayName(day.checklist_date) : isLoading ? "Laddar…" : "Dagens checklista"}
           </p>

@@ -31,6 +31,7 @@ import { ActivityIcon } from "@/components/dashboard/ActivityIcon";
 import { useStoreActivity } from "@/hooks/useStoreActivity";
 import { useState } from "react";
 import { ChecklistCard } from "@/components/checklist/ChecklistCard";
+import { useChecklistTemplates, templateAppliesOn, todayIso } from "@/hooks/useChecklist";
 import { DailyReportCard } from "@/components/dashboard/DailyReportCard";
 import { PurchaseWeekCard } from "@/components/dashboard/PurchaseWeekCard";
 import { OnDutyStaff } from "@/components/staff/OnDutyStaff";
@@ -103,6 +104,8 @@ export default function OrganisationOverview() {
   const { site, activeStoreId, activeStoreName } = useSite();
   const isShop = site === "shop" && !!activeStoreId;
   const { switchTab } = useTabs();
+  const { data: checklistTemplates = [] } = useChecklistTemplates(isShop ? activeStoreId : null);
+  const todaysChecklistTemplates = checklistTemplates.filter((t) => templateAppliesOn(t, todayIso()));
 
   const { data: products = [] } = useProducts();
   const { data: stores = [] } = useStores(true);
@@ -412,7 +415,19 @@ export default function OrganisationOverview() {
       {/* Shop: daily checklist */}
       {isShop && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <ChecklistCard storeId={activeStoreId!} onOpenFull={() => switchTab("/checklist")} />
+          {todaysChecklistTemplates.length > 0 ? (
+            todaysChecklistTemplates.map((t) => (
+              <ChecklistCard
+                key={t.id}
+                storeId={activeStoreId!}
+                templateId={t.id}
+                title={t.name}
+                onOpenFull={() => switchTab("/checklist")}
+              />
+            ))
+          ) : (
+            <ChecklistCard storeId={activeStoreId!} onOpenFull={() => switchTab("/checklist")} />
+          )}
           <DailyReportCard storeId={activeStoreId!} onOpenFull={() => switchTab("/dagsrapport")} />
         </div>
       )}
