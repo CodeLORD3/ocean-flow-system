@@ -119,6 +119,8 @@ export default function CustomerOrders() {
   const [selected, setSelected] = useState<CustomerOrder | null>(null);
   const [openRow, setOpenRow] = useState<string | null>(null);
   const [editing, setEditing] = useState<CustomerOrder | null>(null);
+  const [panel, setPanel] = useState<"orders" | "customers" | "stats">("orders");
+
   const [view, setView] = useState("aktiva");
   const [marked, setMarked] = useState<string[]>([]);
 
