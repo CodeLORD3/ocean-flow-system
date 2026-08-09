@@ -266,6 +266,8 @@ export function CustomerOrderWizard({
 
   const submit = async () => {
     if (!customer) return toast.error("Välj kund först.");
+    if (capacity.blocking) return toast.error(capacity.blocking);
+
     if (lines.length === 0) return toast.error("Ordern behöver minst en rad.");
     try {
       await createOrder.mutateAsync({
@@ -895,6 +897,8 @@ export function CustomerOrderWizard({
               className="h-12"
               onClick={() => {
                 if (step === 1 && !customer) return toast.error("Välj eller skapa kund.");
+                if (step === 2 && capacity.blocking) return toast.error(capacity.blocking);
+
                 if (step === 3 && lines.length === 0) return toast.error("Lägg till minst en vara.");
                 setStep(step + 1);
               }}
