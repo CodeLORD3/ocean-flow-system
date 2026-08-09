@@ -233,15 +233,18 @@ export function CustomerOrderRow({
                 }`}
               />
             </div>
-            <div className="mt-0.5 flex items-center gap-2">
-              <span className="min-w-0 flex-1 truncate text-base font-semibold leading-tight">
-                {name}
-              </span>
-              {hasAllergy && (
-                <AlertTriangle className="h-4 w-4 shrink-0 text-destructive" aria-label="Allergi" />
-              )}
-              {readOnly && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
-            </div>
+            {(hasAllergy || readOnly) && (
+              <div className="mt-0.5 flex items-center gap-2">
+                {hasAllergy && (
+                  <AlertTriangle
+                    className="h-4 w-4 shrink-0 text-destructive"
+                    aria-label="Allergi"
+                  />
+                )}
+                {readOnly && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
+              </div>
+            )}
+
             <div className="mt-1 flex items-center gap-2 font-mono text-xs tabular-nums text-muted-foreground">
               {statusChip}
               <span>
