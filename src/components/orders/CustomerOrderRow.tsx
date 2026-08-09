@@ -161,9 +161,6 @@ export function CustomerOrderRow({
               {hasAllergy && (
                 <AlertTriangle className="h-4 w-4 shrink-0 text-destructive" aria-label="Allergi" />
               )}
-              {needs.length > 0 && (
-                <Sparkles className="h-4 w-4 shrink-0 text-row-warn-edge" aria-label="Köps färskt" />
-              )}
               {readOnly && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
             </div>
             <div className="mt-0.5 font-mono text-xs tabular-nums text-muted-foreground">
