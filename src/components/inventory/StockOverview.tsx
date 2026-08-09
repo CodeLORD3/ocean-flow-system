@@ -68,6 +68,8 @@ interface Props {
   headerRight?: React.ReactNode;
   /** Butiksläget döljer kostnadsbaserat lagervärde. */
   showCosts?: boolean;
+  /** Butiksportalen visar bara kvantitet + antal produkter, i mindre format. */
+  compactKpis?: boolean;
   /** Åtgärd i tomt tillstånd, t.ex. gå till inleveranser. */
   onEmptyAction?: () => void;
   emptyActionLabel?: string;
