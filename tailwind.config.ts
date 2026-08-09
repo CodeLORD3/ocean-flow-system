@@ -43,6 +43,18 @@ export default {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
         },
+        row: {
+          ok: "hsl(var(--row-ok))",
+          "ok-edge": "hsl(var(--row-ok-edge))",
+          warn: "hsl(var(--row-warn))",
+          "warn-edge": "hsl(var(--row-warn-edge))",
+          late: "hsl(var(--row-late))",
+          "late-edge": "hsl(var(--row-late-edge))",
+          done: "hsl(var(--row-done))",
+          "done-edge": "hsl(var(--row-done-edge))",
+          off: "hsl(var(--row-off))",
+          "off-edge": "hsl(var(--row-off-edge))",
+        },
         mackerel: {
           DEFAULT: "hsl(var(--mackerel))",
           foreground: "hsl(var(--mackerel-foreground))",

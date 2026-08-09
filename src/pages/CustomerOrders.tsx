@@ -36,7 +36,7 @@ import {
 } from "@/lib/customerOrders";
 import { CustomerOrderWizard } from "@/components/orders/CustomerOrderWizard";
 import { CustomerOrderCard } from "@/components/orders/CustomerOrderCard";
-import { CustomerOrderRow } from "@/components/orders/CustomerOrderRow";
+import { CustomerOrderRow, CustomerOrderRowHeader } from "@/components/orders/CustomerOrderRow";
 
 import { RetailCustomerRegistry } from "@/components/orders/RetailCustomerRegistry";
 import { PurchaseNeedsView } from "@/components/orders/PurchaseNeedsView";
@@ -108,6 +108,8 @@ export default function CustomerOrders() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selected, setSelected] = useState<CustomerOrder | null>(null);
+  const [openRow, setOpenRow] = useState<string | null>(null);
+  const toggleRow = (id: string) => setOpenRow((cur) => (cur === id ? null : id));
 
 
   const { data: orders = [], isLoading } = useCustomerOrders({
@@ -297,8 +299,9 @@ export default function CustomerOrders() {
             />
           ) : (
             <div className="space-y-4">
+              <CustomerOrderRowHeader />
               {groupByDay(orders).map(([day, list]) => (
-                <div key={day} className="space-y-2">
+                <div key={day} className="space-y-1">
                   <div className="sticky top-0 z-10 -mx-1 bg-background/95 px-1 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur">
                     {dayLabel(day)} · {list.length} order
                   </div>
@@ -308,6 +311,8 @@ export default function CustomerOrders() {
                       order={o}
                       onOpen={setSelected}
                       readOnly={rowReadOnly(o)}
+                      open={openRow === o.id}
+                      onToggle={toggleRow}
                     />
                   ))}
                 </div>
@@ -353,13 +358,16 @@ export default function CustomerOrders() {
               description="När en beställning läggs med imorgondagens datum hamnar den här."
             />
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1">
+              <CustomerOrderRowHeader />
               {tomorrowOrders.map((o) => (
                 <CustomerOrderRow
                   key={o.id}
                   order={o}
                   onOpen={setSelected}
                   readOnly={rowReadOnly(o)}
+                  open={openRow === o.id}
+                  onToggle={toggleRow}
                 />
               ))}
             </div>
