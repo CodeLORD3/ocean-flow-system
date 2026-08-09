@@ -162,9 +162,21 @@ export default function CustomerOrders() {
   );
   const allMarked = viewOrders.length > 0 && markedOrders.length === viewOrders.length;
   const markAll = (next: boolean) => setMarked(next ? viewOrders.map((o) => o.id) : []);
-
+  /** Antal aktiva filter, visas som badge på filterknappen. */
+  const activeFilters =
+    (status !== "all" ? 1 : 0) +
+    (packStatus !== "all" ? 1 : 0) +
+    (orderType !== "all" ? 1 : 0) +
+    (!isShop && storeFilter !== "all" ? 1 : 0);
+  const clearFilters = () => {
+    setStatus("all");
+    setPackStatus("all");
+    setOrderType("all");
+    setStoreFilter("all");
+  };
 
   const canCreate = canEdit && (isShop ? !!activeStoreId : !!effectiveStore);
+
 
   return (
     <div className="space-y-3 p-3 sm:p-6">
