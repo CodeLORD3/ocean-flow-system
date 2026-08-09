@@ -175,10 +175,19 @@ export function RetailCustomerRegistry({
                     {top.join(", ")}
                   </p>
                 )}
-                <div className="flex gap-3 text-xs text-muted-foreground">
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   <span>{history.length} order</span>
                   {uncollected > 0 && <span>{uncollected} väntar på hämtning</span>}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="ml-auto h-9"
+                    onClick={() => setHistoryCustomer(c)}
+                  >
+                    <History className="mr-1 h-4 w-4" /> Historik
+                  </Button>
                 </div>
+
               </CardContent>
             </Card>
           );
