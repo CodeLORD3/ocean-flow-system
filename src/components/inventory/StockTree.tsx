@@ -184,9 +184,15 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
       const sid = t.to_location?.store_id;
       if (sid) ids.add(sid);
     });
-    stores.forEach((s) => ids.add(s.id));
-    return [...ids];
+    // Visa bara transportlager som innehåller produkter eller har pågående transport
+    return [...ids].filter((sid) => {
+      const rows = rowsForStore("leveranslager", sid);
+      const hasQty = rows.some((r: any) => Number(qtyOf(r)) > 0);
+      const hasTransfer = activeTransfers.some((t: any) => t.to_location?.store_id === sid);
+      return hasQty || hasTransfer;
+    });
   }, [byLevel, activeTransfers, stores]);
+
 
   return (
     <div className="rounded-xl border border-border bg-card/40 p-3">
@@ -223,6 +229,11 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
           <Truck className="h-3.5 w-3.5 text-primary" aria-hidden />
           {LEVEL_LABEL.leveranslager} — aktiva transporter per butik
         </p>
+        {transportStores.length === 0 ? (
+          <p className="px-1 py-2 text-[11px] text-muted-foreground">
+            Inga transportlager med innehåll eller pågående transport just nu.
+          </p>
+        ) : (
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {transportStores.map((sid) => {
             const rows = rowsForStore("leveranslager", sid);
@@ -243,6 +254,8 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
             );
           })}
         </div>
+        )}
+
       </div>
 
       <Connector />
