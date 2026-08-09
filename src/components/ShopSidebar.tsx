@@ -26,6 +26,7 @@ const overviewNav = [
   { title: "Översikt", url: "/organisation", icon: LayoutDashboard },
   { title: "Chatt", url: "/chat", icon: MessageSquare },
   { title: "Checklista", url: "/checklist", icon: ClipboardCheck },
+  { title: "Kundbeställningar", url: "/customer-orders", icon: ClipboardList },
 ];
 
 const calendarNav = [
@@ -36,10 +37,10 @@ const calendarNav = [
 
 const salesNav = [
   { title: "Ordrar", url: "/orders", icon: ShoppingCart },
-  { title: "Kundbeställningar", url: "/customer-orders", icon: ClipboardList },
   { title: "Kunder", url: "/customers", icon: Users },
   { title: "Önskemål", url: "/wishes", icon: Star },
 ];
+
 
 const inventoryNav = [
   { title: "Lager", url: "/inventory", icon: Package },
