@@ -13,7 +13,6 @@ import {
   Flag,
   Eye,
   Calendar,
-  CalendarCheck,
 } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -62,24 +61,6 @@ interface LineReport {
 }
 
 // Helper: color-code expiry dates entered during receiving
-function getExpiryColor(expiryDate: string): string {
-  if (!expiryDate) return "";
-  const days = differenceInDays(parseISO(expiryDate), new Date());
-  if (days < 0) return "border-destructive/50 bg-destructive/5";
-  if (days <= 2) return "border-destructive/30 bg-destructive/5";
-  if (days <= 5) return "border-amber-500/30 bg-amber-500/5";
-  return "border-emerald-500/30 bg-emerald-500/5";
-}
-
-function getExpiryLabel(expiryDate: string): { text: string; class: string } | null {
-  if (!expiryDate) return null;
-  const days = differenceInDays(parseISO(expiryDate), new Date());
-  if (days < 0) return { text: `Utgången`, class: "text-destructive" };
-  if (days <= 2) return { text: `${days}d kvar – kritisk!`, class: "text-destructive" };
-  if (days <= 5) return { text: `${days}d kvar – kort hållbarhet`, class: "text-amber-600" };
-  return { text: `${days}d kvar`, class: "text-emerald-600" };
-}
-
 export default function Receiving() {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -363,15 +344,6 @@ export default function Receiving() {
   };
 
   // Set same expiry date for all lines at once
-  const setAllExpiryDates = (date: string) => {
-    setLineReports((prev) => {
-      const next = { ...prev };
-      Object.keys(next).forEach((id) => {
-        next[id] = { ...next[id], expiry_date: date };
-      });
-      return next;
-    });
-  };
 
   const [viewReportOrder, setViewReportOrder] = useState<any>(null);
   const viewReportLines = useMemo(() => {
@@ -380,7 +352,6 @@ export default function Receiving() {
   }, [viewReportOrder, existingReports]);
 
   const hasIssuesInReport = Object.values(lineReports).some((r) => r.status === "Rapporterad");
-  const missingExpiryCount = Object.values(lineReports).filter((r) => !r.expiry_date).length;
 
   const filteredUnreported = unreportedOrders.filter(
     (o: any) => !search || displayOrderWeek(o).toLowerCase().includes(search.toLowerCase()),
@@ -581,7 +552,7 @@ export default function Receiving() {
                   Ta emot leverans — vecka {displayOrderWeek(selectedOrder)}
                 </DialogTitle>
                 <DialogDescription className="text-xs">
-                  Godkänn varje produkt, ange mottagen kvantitet och fyll i bäst-före-datum för spårbarhet.
+                  Godkänn varje produkt och ange mottagen kvantitet.
                 </DialogDescription>
               </DialogHeader>
 
@@ -597,34 +568,14 @@ export default function Receiving() {
                 <Button size="sm" variant="outline" className="text-xs gap-1 h-7" onClick={approveAll}>
                   <ThumbsUp className="h-3 w-3" /> Godkänn alla
                 </Button>
-                {/* Set same expiry for all */}
-                <div className="flex items-center gap-1.5">
-                  <CalendarCheck className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-[10px] text-muted-foreground">Samma bäst-före för alla:</span>
-                  <Input
-                    type="date"
-                    className="h-7 text-[10px] w-36"
-                    onChange={(e) => setAllExpiryDates(e.target.value)}
-                  />
-                </div>
               </div>
-
-              {/* Warning if expiry dates are missing */}
-              {missingExpiryCount > 0 && (
-                <div className="flex items-center gap-2 p-2 rounded-md bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700">
-                  <Calendar className="h-3.5 w-3.5 shrink-0" />
-                  <span>
-                    {missingExpiryCount} produkt(er) saknar bäst-före-datum — rekommenderas för fiskspårbarhet.
-                  </span>
-                </div>
-              )}
 
               <div className="space-y-2">
                 {(selectedOrder.shop_order_lines || []).map((line: any) => {
                   const report = lineReports[line.id] || { status: "Godkänd" };
                   const isReported = report.status === "Rapporterad";
                   const isConfirmed = report.confirmed && !isReported;
-                  const expiryLabel = report.expiry_date ? getExpiryLabel(report.expiry_date) : null;
+
 
                   return (
                     <div
@@ -690,10 +641,8 @@ export default function Receiving() {
                         </div>
                       </div>
 
-                      {/* ── NEW: Freshness fields (always visible) ── */}
-                      <div
-                        className={`grid grid-cols-3 gap-2 p-2 rounded-md border mt-1 ${report.expiry_date ? getExpiryColor(report.expiry_date) : "border-border/30 bg-muted/10"}`}
-                      >
+                      {/* ── Freshness fields (always visible) ── */}
+                      <div className="grid grid-cols-2 gap-2 p-2 rounded-md border mt-1 border-border/30 bg-muted/10">
                         <div className="space-y-0.5">
                           <Label className="text-[9px] text-muted-foreground uppercase tracking-wide">
                             Mottagen mängd
@@ -729,24 +678,9 @@ export default function Receiving() {
                             className="h-6 text-[10px] bg-background"
                           />
                         </div>
-                        <div className="space-y-0.5">
-                          <Label className="text-[9px] text-muted-foreground uppercase tracking-wide flex items-center gap-0.5">
-                            <CalendarCheck className="h-2.5 w-2.5" /> Bäst före *
-                          </Label>
-                          <Input
-                            type="date"
-                            value={report.expiry_date || ""}
-                            onChange={(e) => updateLineReport(line.id, "expiry_date", e.target.value)}
-                            className="h-6 text-[10px] bg-background"
-                          />
-                        </div>
-                        {expiryLabel && (
-                          <div className="col-span-3">
-                            <p className={`text-[9px] font-medium ${expiryLabel.class}`}>{expiryLabel.text}</p>
-                          </div>
-                        )}
                         {isChfStore && (
-                          <div className="col-span-3 space-y-0.5 pt-1 border-t border-border/40">
+                          <div className="col-span-2 space-y-0.5 pt-1 border-t border-border/40">
+
                             <Label className="text-[9px] text-muted-foreground uppercase tracking-wide">
                               Värde per {line.products?.unit || "kg"} ({localCurrency}) — auto-förslag, redigerbart
                             </Label>
