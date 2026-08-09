@@ -32,22 +32,23 @@ const nf = (v: unknown, d = 2) =>
 function PackStep({ status, index }: { status: string; index: number }) {
   if (status === "packad")
     return (
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-row-ok-edge text-primary-foreground">
-        <CheckCircle2 className="h-5 w-5" />
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-row-ok-edge text-primary-foreground">
+        <CheckCircle2 className="h-4 w-4" />
       </span>
     );
   if (status === "struken")
     return (
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted font-mono text-sm text-muted-foreground">
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-muted font-mono text-xs text-muted-foreground">
         –
       </span>
     );
   return (
-    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border-2 border-border bg-background font-mono text-sm font-semibold tabular-nums">
+    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded border border-border bg-background font-mono text-xs font-semibold tabular-nums">
       {index}
     </span>
   );
 }
+
 
 
 /**

@@ -7,6 +7,8 @@ import {
   AlertTriangle,
   ExternalLink,
   Pencil,
+  Printer,
+  Download,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +23,9 @@ import {
   isUncollected,
 } from "@/lib/customerOrders";
 import { allergenLabel } from "@/lib/catering";
+import { printConfirmation, downloadConfirmation } from "@/lib/customerOrderConfirmation";
 import { InlineOrderPacking } from "./InlineOrderPacking";
+
 
 
 const nf = (v: unknown, d = 1) =>
