@@ -26,6 +26,13 @@ import { allergenLabel } from "@/lib/catering";
 const nf = (v: unknown, d = 1) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
 
+/** Veckodag på svenska, t.ex. "Lör". */
+const weekday = (iso: string) => {
+  const s = new Date(iso + "T00:00:00").toLocaleDateString("sv-SE", { weekday: "short" });
+  return s.charAt(0).toUpperCase() + s.slice(1).replace(".", "");
+};
+
+
 /** Färgad kant till vänster, som i orderlistor i affärssystem. */
 const stripe = (order: CustomerOrder) => {
   if (order.status === "avbruten") return "bg-muted-foreground/40";
