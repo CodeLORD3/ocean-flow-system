@@ -114,6 +114,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "abp_consignments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "abp_consignments_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
@@ -516,6 +523,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "checklist_days_responsible_staff_id_fkey"
+            columns: ["responsible_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "checklist_days_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
@@ -653,10 +667,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "checklist_signature_requests_requested_by_staff_id_fkey"
+            columns: ["requested_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "checklist_signature_requests_target_staff_id_fkey"
             columns: ["target_staff_id"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_signature_requests_target_staff_id_fkey"
+            columns: ["target_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
             referencedColumns: ["id"]
           },
         ]
@@ -834,6 +862,13 @@ export type Database = {
             columns: ["recorded_by"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chilling_records_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
             referencedColumns: ["id"]
           },
         ]
@@ -1016,6 +1051,13 @@ export type Database = {
             columns: ["responsible_staff_id"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_requirements_responsible_staff_id_fkey"
+            columns: ["responsible_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
             referencedColumns: ["id"]
           },
           {
@@ -1241,6 +1283,13 @@ export type Database = {
             referencedRelation: "staff"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "control_records_measured_by_fkey"
+            columns: ["measured_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
         ]
       }
       currency_settings: {
@@ -1429,6 +1478,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "customer_order_lines_packed_by_fkey"
+            columns: ["packed_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "customer_order_lines_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
@@ -1550,6 +1606,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "customer_orders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "customer_orders_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -1561,6 +1624,13 @@ export type Database = {
             columns: ["received_by"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_orders_received_by_fkey"
+            columns: ["received_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
             referencedColumns: ["id"]
           },
           {
@@ -1680,6 +1750,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customers_retail_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
             referencedColumns: ["id"]
           },
           {
@@ -2414,10 +2491,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "deviations_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "deviations_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deviations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
             referencedColumns: ["id"]
           },
           {
@@ -2432,6 +2523,13 @@ export type Database = {
             columns: ["responsible_staff_id"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deviations_responsible_staff_id_fkey"
+            columns: ["responsible_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
             referencedColumns: ["id"]
           },
           {
@@ -3176,6 +3274,7 @@ export type Database = {
           legal_name: string
           locale: string
           org_nr: string
+          series_code: string | null
           updated_at: string
           vat_regime: string | null
           vat_registration: string | null
@@ -3194,6 +3293,7 @@ export type Database = {
           legal_name: string
           locale?: string
           org_nr: string
+          series_code?: string | null
           updated_at?: string
           vat_regime?: string | null
           vat_registration?: string | null
@@ -3212,6 +3312,7 @@ export type Database = {
           legal_name?: string
           locale?: string
           org_nr?: string
+          series_code?: string | null
           updated_at?: string
           vat_regime?: string | null
           vat_registration?: string | null
@@ -3282,6 +3383,13 @@ export type Database = {
             referencedRelation: "staff"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "lot_documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
         ]
       }
       lot_transformations: {
@@ -3321,6 +3429,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lot_transformations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
             referencedColumns: ["id"]
           },
           {
@@ -3439,7 +3554,7 @@ export type Database = {
           is_thawed?: boolean
           latin_name?: string | null
           legal_entity_id?: string | null
-          lot_number: string
+          lot_number?: string
           origin_lot_id?: string | null
           parasite_treatment_required?: boolean
           presentation?: string | null
@@ -3533,10 +3648,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "lots_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "lots_freeze_by_fkey"
             columns: ["freeze_by"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lots_freeze_by_fkey"
+            columns: ["freeze_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
             referencedColumns: ["id"]
           },
           {
@@ -3950,6 +4079,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "meeting_protocol_items_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "meeting_protocol_items_protocol_id_fkey"
             columns: ["protocol_id"]
             isOneToOne: false
@@ -4108,6 +4244,39 @@ export type Database = {
           },
         ]
       }
+      number_series: {
+        Row: {
+          created_at: string
+          entity_key: string
+          last_value: number
+          padding: number
+          prefix: string
+          series_key: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          entity_key?: string
+          last_value?: number
+          padding?: number
+          prefix: string
+          series_key: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          entity_key?: string
+          last_value?: number
+          padding?: number
+          prefix?: string
+          series_key?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       offer_documents: {
         Row: {
           file_name: string
@@ -4193,6 +4362,13 @@ export type Database = {
             columns: ["staff_id"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "page_visits_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
             referencedColumns: ["id"]
           },
         ]
@@ -4369,6 +4545,13 @@ export type Database = {
             columns: ["staff_id"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_cashiers_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
             referencedColumns: ["id"]
           },
           {
@@ -5689,6 +5872,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "purchase_reports_arrived_by_fkey"
+            columns: ["arrived_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "purchase_reports_legal_entity_id_fkey"
             columns: ["legal_entity_id"]
             isOneToOne: false
@@ -5700,6 +5890,13 @@ export type Database = {
             columns: ["posted_by"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_reports_posted_by_fkey"
+            columns: ["posted_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
             referencedColumns: ["id"]
           },
           {
@@ -5781,6 +5978,13 @@ export type Database = {
             columns: ["assigned_to"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_events_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
             referencedColumns: ["id"]
           },
           {
@@ -6247,8 +6451,6 @@ export type Database = {
       staff: {
         Row: {
           age: number | null
-          allowed_store_id: string | null
-          allowed_store_ids: string[]
           created_at: string | null
           email: string | null
           first_name: string
@@ -6257,7 +6459,6 @@ export type Database = {
           legal_entity_id: string | null
           must_change_password: boolean
           phone: string | null
-          portal_access: string[]
           profile_image_url: string | null
           store_id: string | null
           user_id: string | null
@@ -6265,8 +6466,6 @@ export type Database = {
         }
         Insert: {
           age?: number | null
-          allowed_store_id?: string | null
-          allowed_store_ids?: string[]
           created_at?: string | null
           email?: string | null
           first_name: string
@@ -6275,7 +6474,6 @@ export type Database = {
           legal_entity_id?: string | null
           must_change_password?: boolean
           phone?: string | null
-          portal_access?: string[]
           profile_image_url?: string | null
           store_id?: string | null
           user_id?: string | null
@@ -6283,8 +6481,6 @@ export type Database = {
         }
         Update: {
           age?: number | null
-          allowed_store_id?: string | null
-          allowed_store_ids?: string[]
           created_at?: string | null
           email?: string | null
           first_name?: string
@@ -6293,20 +6489,12 @@ export type Database = {
           legal_entity_id?: string | null
           must_change_password?: boolean
           phone?: string | null
-          portal_access?: string[]
           profile_image_url?: string | null
           store_id?: string | null
           user_id?: string | null
           workplace?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "staff_allowed_store_id_fkey"
-            columns: ["allowed_store_id"]
-            isOneToOne: false
-            referencedRelation: "stores"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "staff_legal_entity_id_fkey"
             columns: ["legal_entity_id"]
@@ -6357,6 +6545,13 @@ export type Database = {
             columns: ["staff_id"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_shifts_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
             referencedColumns: ["id"]
           },
           {
@@ -6462,6 +6657,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
             referencedColumns: ["id"]
           },
           {
@@ -7313,8 +7515,29 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "transfer_orders_approved_in_by_fkey"
+            columns: ["approved_in_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "transfer_orders_approved_out_by_fkey"
             columns: ["approved_out_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfer_orders_approved_out_by_fkey"
+            columns: ["approved_out_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfer_orders_created_by_fkey"
+            columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "staff"
             referencedColumns: ["id"]
@@ -7323,7 +7546,7 @@ export type Database = {
             foreignKeyName: "transfer_orders_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
-            referencedRelation: "staff"
+            referencedRelation: "staff_access"
             referencedColumns: ["id"]
           },
           {
@@ -7352,6 +7575,13 @@ export type Database = {
             columns: ["picked_by"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfer_orders_picked_by_fkey"
+            columns: ["picked_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
             referencedColumns: ["id"]
           },
           {
@@ -7428,6 +7658,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_scopes: {
+        Row: {
+          created_at: string
+          id: string
+          scope_type: string
+          scope_value: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          scope_type: string
+          scope_value: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          scope_type?: string
+          scope_value?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_sessions: {
         Row: {
           duration_seconds: number | null
@@ -7468,6 +7722,13 @@ export type Database = {
             columns: ["staff_id"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_sessions_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
             referencedColumns: ["id"]
           },
         ]
@@ -7709,6 +7970,13 @@ export type Database = {
             columns: ["reported_by"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waste_reports_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
             referencedColumns: ["id"]
           },
           {
@@ -8068,6 +8336,42 @@ export type Database = {
           },
         ]
       }
+      staff_access: {
+        Row: {
+          age: number | null
+          allowed_store_ids: string[] | null
+          created_at: string | null
+          email: string | null
+          first_name: string | null
+          id: string | null
+          last_name: string | null
+          legal_entity_id: string | null
+          must_change_password: boolean | null
+          phone: string | null
+          portal_access: string[] | null
+          profile_image_url: string | null
+          store_id: string | null
+          store_name: string | null
+          user_id: string | null
+          workplace: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "staff_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       company_of_location: {
@@ -8082,8 +8386,6 @@ export type Database = {
         Args: never
         Returns: {
           age: number | null
-          allowed_store_id: string | null
-          allowed_store_ids: string[]
           created_at: string | null
           email: string | null
           first_name: string
@@ -8092,7 +8394,6 @@ export type Database = {
           legal_entity_id: string | null
           must_change_password: boolean
           phone: string | null
-          portal_access: string[]
           profile_image_url: string | null
           store_id: string | null
           user_id: string | null
@@ -8105,11 +8406,19 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      entity_series_code: {
+        Args: { _legal_entity_id: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      has_scope: {
+        Args: { _type: string; _user_id: string; _value: string }
         Returns: boolean
       }
       is_investor: { Args: never; Returns: boolean }
@@ -8122,7 +8431,23 @@ export type Database = {
         Args: { _date: string; _store_id: string }
         Returns: string
       }
-      next_internal_lot_number: { Args: never; Returns: string }
+      next_delivery_number: {
+        Args: { _legal_entity_id?: string }
+        Returns: string
+      }
+      next_internal_lot_number: {
+        Args: { _legal_entity_id?: string }
+        Returns: string
+      }
+      next_series_number: {
+        Args: {
+          _entity?: string
+          _prefix?: string
+          _series_key: string
+          _year?: number
+        }
+        Returns: string
+      }
       notify_event: {
         Args: {
           _eid: string
@@ -8146,8 +8471,14 @@ export type Database = {
         Args: { _exempt: boolean; _hs_code: string }
         Returns: boolean
       }
+      set_user_scopes: {
+        Args: { _portals: string[]; _staff_id: string; _store_ids: string[] }
+        Returns: undefined
+      }
       species_key: { Args: { v: string }; Returns: string }
       staff_has_store: { Args: { _store: string }; Returns: boolean }
+      user_portals: { Args: { _user_id: string }; Returns: string[] }
+      user_store_ids: { Args: { _user_id: string }; Returns: string[] }
     }
     Enums: {
       app_role: "admin" | "client"
