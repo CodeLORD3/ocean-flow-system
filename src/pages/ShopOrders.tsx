@@ -1361,11 +1361,13 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
                 className="w-auto p-0"
                 align="start"
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    if (editDeliveryDate) setEditDateOpen(false);
-                  }
+                  if (e.key !== "Enter") return;
+                  const el = e.target as HTMLElement;
+                  if (el.closest("button[name='day'], .rdp-day, [role='gridcell'] button")) return;
+                  e.preventDefault();
+                  if (editDeliveryDate) setEditDateOpen(false);
                 }}
+
               >
                 <Calendar
                   mode="single"
