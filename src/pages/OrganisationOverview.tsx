@@ -399,6 +399,10 @@ export default function OrganisationOverview() {
         </div>
       )}
 
+      {/* Grossist/Admin: veckoschema för inköp */}
+      {!isShop && <PurchaseWeekCard />}
+
+
       {/* Shop: daily checklist */}
       {isShop && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
