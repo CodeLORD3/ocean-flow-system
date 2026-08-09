@@ -54,60 +54,34 @@ const tomorrow = () => {
   return d.toISOString().slice(0, 10);
 };
 
-const packColor: Record<string, string> = {
-  opackad: "bg-muted text-muted-foreground",
-  pagaende: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  packad: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+const dayLabel = (iso: string) => {
+  const t = today();
+  const tm = tomorrow();
+  const pretty = new Date(iso + "T00:00:00").toLocaleDateString("sv-SE", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+  if (iso === t) return `Idag — ${pretty}`;
+  if (iso === tm) return `Imorgon — ${pretty}`;
+  return pretty.charAt(0).toUpperCase() + pretty.slice(1);
 };
 
-function OrderRow({
-  order,
-  onOpen,
-  readOnly,
-}: {
-  order: CustomerOrder;
-  onOpen: (o: CustomerOrder) => void;
-  readOnly?: boolean;
-}) {
-  const name = order.customers_retail?.name || order.customer_name_snapshot || "Kund";
-  const needs = (order.customer_order_lines || []).filter(
-    (l) => l.reservation_status === "inkopsbehov" && l.pack_status !== "struken",
-  );
-  return (
-    <button
-      onClick={() => onOpen(order)}
-      className="w-full rounded-md border border-border p-3 text-left transition-colors hover:bg-accent"
-    >
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="font-mono text-xs tabular-nums text-muted-foreground">
-          {order.order_number}
-        </span>
-        <span className="font-semibold">{name}</span>
-        {readOnly && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
-        <span className="ml-auto font-mono text-sm tabular-nums">
-          {order.wanted_date}
-          {order.wanted_time ? ` kl ${order.wanted_time.slice(0, 5)}` : ""}
-        </span>
-      </div>
-      <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
-        <Badge variant="outline">{ORDER_TYPE_LABELS[order.order_type] ?? order.order_type}</Badge>
-        {order.category === "catering" && <Badge>Catering</Badge>}
-        <Badge variant="outline">{ORDER_STATUS_LABELS[order.status] ?? order.status}</Badge>
-        <span className={`rounded px-2 py-0.5 ${packColor[order.pack_status] ?? ""}`}>
-          {PACK_STATUS_LABELS[order.pack_status] ?? order.pack_status}
-        </span>
-        <span className="text-muted-foreground">
-          {(order.customer_order_lines || []).length} rader
-        </span>
-        {needs.length > 0 && (
-          <span className="rounded bg-amber-500/20 px-2 py-0.5 text-amber-800 dark:text-amber-300">
-            {needs.length} vara köps färskt
-          </span>
-        )}
-      </div>
-    </button>
-  );
+/** Grupperar order per önskat datum, tidigast först. */
+function groupByDay(list: CustomerOrder[]) {
+  const map = new Map<string, CustomerOrder[]>();
+  for (const o of [...list].sort(
+    (a, b) =>
+      a.wanted_date.localeCompare(b.wanted_date) ||
+      (a.wanted_time || "").localeCompare(b.wanted_time || ""),
+  )) {
+    const arr = map.get(o.wanted_date) ?? [];
+    arr.push(o);
+    map.set(o.wanted_date, arr);
+  }
+  return [...map.entries()];
 }
+
 
 /**
  * Kundbeställningar från privatpersoner.
