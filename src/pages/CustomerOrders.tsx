@@ -106,7 +106,7 @@ export default function CustomerOrders() {
   const [editing, setEditing] = useState<CustomerOrder | null>(null);
   const [panel, setPanel] = useState<"orders" | "customers" | "stats">("orders");
 
-  const [view, setView] = useState("aktiva");
+  const [view, setView] = useState("alla");
   const [marked, setMarked] = useState<string[]>([]);
 
   const toggleRow = (id: string) => setOpenRow((cur) => (cur === id ? null : id));
@@ -121,7 +121,7 @@ export default function CustomerOrders() {
     packStatus,
     orderType,
     search,
-    fromDate: today(),
+    fromDate: view === "alla" ? undefined : today(),
   });
 
   const { data: tomorrowOrders = [] } = useCustomerOrders({
