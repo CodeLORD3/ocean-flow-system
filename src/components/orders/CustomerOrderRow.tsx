@@ -4,7 +4,6 @@ import {
   Lock,
   Phone,
   MapPin,
-  Package,
   AlertTriangle,
   Pencil,
   Printer,
