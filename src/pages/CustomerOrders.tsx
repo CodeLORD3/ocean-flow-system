@@ -1,7 +1,12 @@
 import { useMemo, useState } from "react";
-import { Plus, Search, Users, BarChart3 } from "lucide-react";
+import { Plus, Search, Users, BarChart3, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 import {
   Select,
@@ -157,9 +162,21 @@ export default function CustomerOrders() {
   );
   const allMarked = viewOrders.length > 0 && markedOrders.length === viewOrders.length;
   const markAll = (next: boolean) => setMarked(next ? viewOrders.map((o) => o.id) : []);
-
+  /** Antal aktiva filter, visas som badge på filterknappen. */
+  const activeFilters =
+    (status !== "all" ? 1 : 0) +
+    (packStatus !== "all" ? 1 : 0) +
+    (orderType !== "all" ? 1 : 0) +
+    (!isShop && storeFilter !== "all" ? 1 : 0);
+  const clearFilters = () => {
+    setStatus("all");
+    setPackStatus("all");
+    setOrderType("all");
+    setStoreFilter("all");
+  };
 
   const canCreate = canEdit && (isShop ? !!activeStoreId : !!effectiveStore);
+
 
   return (
     <div className="space-y-3 p-3 sm:p-6">
@@ -188,12 +205,11 @@ export default function CustomerOrders() {
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <div
-            className={`flex min-w-[220px] flex-1 flex-wrap gap-2 ${
+            className={`flex min-w-[200px] flex-1 items-center gap-2 ${
               panel === "orders" ? "" : "hidden"
             }`}
           >
-            <div className="relative min-w-[200px] flex-1">
-
+            <div className="relative min-w-[160px] flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 className="h-11 pl-9"
@@ -202,76 +218,125 @@ export default function CustomerOrders() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            {!isShop && (
-              <Select value={storeFilter} onValueChange={setStoreFilter}>
-                <SelectTrigger className="h-11 w-full sm:w-[190px]">
-                  <SelectValue placeholder="Butik" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Alla butiker</SelectItem>
-                  {stores.map((s: any) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="h-11 w-[48%] sm:w-[160px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alla statusar</SelectItem>
-                {Object.entries(ORDER_STATUS_LABELS).map(([k, v]) => (
-                  <SelectItem key={k} value={k}>
-                    {v}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={packStatus} onValueChange={setPackStatus}>
-              <SelectTrigger className="h-11 w-[48%] sm:w-[150px]">
-                <SelectValue placeholder="Packning" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All packning</SelectItem>
-                {Object.entries(PACK_STATUS_LABELS).map(([k, v]) => (
-                  <SelectItem key={k} value={k}>
-                    {v}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={orderType} onValueChange={setOrderType}>
-              <SelectTrigger className="h-11 w-[48%] sm:w-[150px]">
-                <SelectValue placeholder="Ordertyp" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alla typer</SelectItem>
-                <SelectItem value="upphamtning">Upphämtning</SelectItem>
-                <SelectItem value="leverans">Leverans</SelectItem>
-              </SelectContent>
-            </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={activeFilters > 0 ? "default" : "outline"}
+                  size="icon"
+                  className="relative h-11 w-11 shrink-0"
+                  title="Filter"
+                  aria-label="Filter"
+                >
+                  <Filter className="h-4 w-4" />
+                  {activeFilters > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 font-mono text-[10px] tabular-nums text-primary-foreground ring-2 ring-background">
+                      {activeFilters}
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-72 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Filter
+                  </span>
+                  {activeFilters > 0 && (
+                    <Button variant="ghost" size="sm" className="h-7 px-2" onClick={clearFilters}>
+                      <X className="mr-1 h-3 w-3" /> Rensa
+                    </Button>
+                  )}
+                </div>
+                {!isShop && (
+                  <div className="space-y-1">
+                    <span className="text-xs text-muted-foreground">Butik</span>
+                    <Select value={storeFilter} onValueChange={setStoreFilter}>
+                      <SelectTrigger className="h-10">
+                        <SelectValue placeholder="Butik" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Alla butiker</SelectItem>
+                        {stores.map((s: any) => (
+                          <SelectItem key={s.id} value={s.id}>
+                            {s.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <span className="text-xs text-muted-foreground">Status</span>
+                  <Select value={status} onValueChange={setStatus}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Alla statusar</SelectItem>
+                      {Object.entries(ORDER_STATUS_LABELS).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>
+                          {v}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-xs text-muted-foreground">Packning</span>
+                  <Select value={packStatus} onValueChange={setPackStatus}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Packning" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All packning</SelectItem>
+                      {Object.entries(PACK_STATUS_LABELS).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>
+                          {v}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-xs text-muted-foreground">Ordertyp</span>
+                  <Select value={orderType} onValueChange={setOrderType}>
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Ordertyp" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Alla typer</SelectItem>
+                      <SelectItem value="upphamtning">Upphämtning</SelectItem>
+                      <SelectItem value="leverans">Leverans</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="ml-auto flex shrink-0 gap-2">
             <Button
               variant={panel === "customers" ? "default" : "outline"}
-              className="h-11"
+              size="icon"
+              className="h-11 w-11"
+              title="Kundregister"
+              aria-label="Kundregister"
               onClick={() => setPanel(panel === "customers" ? "orders" : "customers")}
             >
-              <Users className="mr-2 h-4 w-4" /> Kundregister
+              <Users className="h-4 w-4" />
             </Button>
             <Button
               variant={panel === "stats" ? "default" : "outline"}
-              className="h-11"
+              size="icon"
+              className="h-11 w-11"
+              title="Statistik"
+              aria-label="Statistik"
               onClick={() => setPanel(panel === "stats" ? "orders" : "stats")}
             >
-              <BarChart3 className="mr-2 h-4 w-4" /> Statistik
+              <BarChart3 className="h-4 w-4" />
             </Button>
           </div>
         </div>
+
 
         <div className={panel === "orders" ? "space-y-3" : "hidden"}>
           {!isLoading && viewOrders.length === 0 ? (
