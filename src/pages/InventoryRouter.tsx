@@ -72,7 +72,7 @@ export default function InventoryRouter() {
         </Tabs>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-auto">
+      <div className="pt-4">
         <div style={{ display: tab === "lager" ? "block" : "none" }}>
           <Inventory />
         </div>
