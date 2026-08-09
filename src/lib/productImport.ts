@@ -105,7 +105,11 @@ export interface ExistingProduct {
   latin_name: string | null;
   species_group?: string | null;
   fao_code?: string | null;
+  allergens?: string[] | null;
+  allergens_checked?: boolean | null;
+  may_contain?: string[] | null;
 }
+
 
 const HEADER_ALIASES: Record<string, ImportColumn> = {
   artikelnummer: "sku",
