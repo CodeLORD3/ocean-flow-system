@@ -519,7 +519,48 @@ export function CustomerOrderCard({
                 </div>
               </CardContent>
             </Card>
-            <Button variant="outline" className="h-12" onClick={makeQuote}>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Button
+                variant="outline"
+                className="h-12"
+                onClick={() => printConfirmation(order, (order as any).stores?.name)}
+              >
+                <Printer className="mr-2 h-4 w-4" /> Skriv orderbekräftelse
+              </Button>
+              <Button
+                variant="outline"
+                className="h-12"
+                onClick={async () => {
+                  const text = confirmationText(order, (order as any).stores?.name);
+                  try {
+                    await navigator.clipboard.writeText(text);
+                    toast.success("Bekräftelsen är kopierad — klistra in i SMS eller e-post.");
+                  } catch {
+                    window.prompt("Kopiera texten till kunden:", text);
+                  }
+                }}
+              >
+                <MessageSquare className="mr-2 h-4 w-4" /> Kopiera text till kund
+              </Button>
+              <Button
+                variant="outline"
+                className="h-12"
+                onClick={() =>
+                  printPackList({
+                    orders: [order],
+                    storeName: (order as any).stores?.name,
+                    dateLabel: `Packlista ${order.wanted_date}`,
+                  })
+                }
+              >
+                <Printer className="mr-2 h-4 w-4" /> Papperslista att packa efter
+              </Button>
+              <Button variant="outline" className="h-12" onClick={makeQuote}>
+                <Printer className="mr-2 h-4 w-4" /> Skriv preliminär offert
+              </Button>
+            </div>
+            <Button variant="outline" className="hidden" onClick={makeQuote}>
+
               <Printer className="mr-2 h-4 w-4" /> Skriv preliminär offert
             </Button>
             {!readOnly && order.category === "catering" && (
