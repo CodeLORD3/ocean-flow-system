@@ -643,12 +643,22 @@ export default function StockOverview({
                           </span>
                         </td>
                         <td className="px-2 text-right" onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-7 w-7">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 gap-1 px-2 text-[11px] text-destructive border-destructive/30 hover:bg-destructive/10"
+                              title="Rapportera svinn för denna produkt"
+                              onClick={() => onLineAction?.("waste", g.lines[0])}
+                            >
+                              <Trash2 className="h-3 w-3" /> Svinn
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-44">
                               <DropdownMenuItem onClick={() => toggleExpand(g.product_id)}>
                                 {isOpen ? "Stäng lagerplatser" : "Visa lagerplatser"}
