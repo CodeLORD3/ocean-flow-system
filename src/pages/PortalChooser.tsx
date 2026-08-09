@@ -111,21 +111,37 @@ export default function PortalChooser() {
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {allowedStores.map((s) => (
-              <Card
-                key={s.id}
-                onClick={() => enterStore(s.id, s.name)}
-                className="p-6 cursor-pointer hover:border-primary hover:shadow-md transition-all group"
-              >
-                <div className="flex flex-col items-center text-center">
-                  <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                    <Store className="h-7 w-7 text-primary" />
+            {allowedStores.map((s) => {
+              const cover = storeCovers[s.id];
+              return (
+                <Card
+                  key={s.id}
+                  onClick={() => enterStore(s.id, s.name)}
+                  className="overflow-hidden cursor-pointer hover:border-primary hover:shadow-md transition-all group"
+                >
+                  <div className="relative aspect-[16/9] bg-muted">
+                    {cover?.url ? (
+                      <img
+                        src={cover.url}
+                        alt={`${s.name} – butiksbild`}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                        style={focalStyle(cover.focal_point)}
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <Store className="h-8 w-8 text-muted-foreground/50" />
+                      </div>
+                    )}
                   </div>
-                  <h3 className="text-base font-semibold text-foreground">{s.name}</h3>
-                </div>
-              </Card>
-            ))}
+                  <div className="p-4 text-center">
+                    <h3 className="text-base font-semibold text-foreground">{s.name}</h3>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
+
           <div className="text-center mt-8 flex items-center justify-center gap-3">
             {access.length > 1 && (
               <Button variant="ghost" size="sm" className="text-xs" onClick={() => setPickStore(false)}>
