@@ -133,7 +133,7 @@ export function ShopSidebar() {
                         <NavLink to={item.url} end onClick={closeMobileSidebar}>
                           <item.icon className="h-4 w-4" />
                           {!collapsed && <span>{item.title}</span>}
-                          {!collapsed && <NotificationBadge count={getCount(item.url) + (item.url === "/chat" ? chatUnread.total : 0) + (item.url === "/stock-transfers" ? incomingTransfers : 0)} />}
+                          {!collapsed && <NotificationBadge count={getCount(item.url) + (item.url === "/chat" ? chatUnread.total : 0) + (item.url === "/stock-transfers" || item.url === "/inventory" ? incomingTransfers : 0)} />}
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -157,7 +157,7 @@ export function ShopSidebar() {
                   <NavLink to={item.url} end onClick={closeMobileSidebar}>
                     <item.icon className="h-4 w-4" />
                     {!collapsed && <span>{item.title}</span>}
-                    {!collapsed && <NotificationBadge count={getCount(item.url) + (item.url === "/chat" ? chatUnread.total : 0) + (item.url === "/stock-transfers" ? incomingTransfers : 0)} />}
+                    {!collapsed && <NotificationBadge count={getCount(item.url) + (item.url === "/chat" ? chatUnread.total : 0) + (item.url === "/stock-transfers" || item.url === "/inventory" ? incomingTransfers : 0)} />}
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
