@@ -411,92 +411,14 @@ export default function CustomerOrders() {
               />
             </div>
           )}
+        </div>
 
-
-        </TabsContent>
-
-        <TabsContent value="tomorrow" className="space-y-3">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">
-                {tomorrowOrders.length} order imorgon
-                {tomorrowNeeds.length > 0 ? `, ${tomorrowNeeds.length} varor behöver köpas in` : ""}
-              </CardTitle>
-            </CardHeader>
-            {tomorrowNeeds.length > 0 && (
-              <CardContent className="space-y-1">
-                {tomorrowNeeds.map(({ order, line }) => (
-                  <div
-                    key={line.id}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-amber-500/15 px-3 py-2 text-sm"
-                  >
-                    <span className="font-medium">
-                      {(line.products?.name || line.free_text_name) as string}
-                    </span>
-                    <span className="font-mono tabular-nums">
-                      {nf(line.quantity_ordered)} {line.unit}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {order.order_number} · Ska köpas färskt inför imorgon
-                    </span>
-                  </div>
-                ))}
-              </CardContent>
-            )}
-          </Card>
-
-          {tomorrowOrders.length === 0 ? (
-            <EmptyState
-              title="Inga order imorgon"
-              description="När en beställning läggs med imorgondagens datum hamnar den här."
-            />
-          ) : (
-            <div className="space-y-1">
-              <CustomerOrderRowHeader />
-              {tomorrowOrders.map((o) => (
-                <CustomerOrderRow
-                  key={o.id}
-                  order={o}
-                  onOpen={setSelected}
-                  readOnly={rowReadOnly(o)}
-                  open={openRow === o.id}
-                  onToggle={toggleRow}
-                />
-              ))}
-            </div>
-
-          )}
-        </TabsContent>
-
-        <TabsContent value="kitchen">
-          <CateringKitchenList storeId={effectiveStore} />
-        </TabsContent>
-
-        <TabsContent value="delivery">
-          <DeliveryRouteView
-            storeId={effectiveStore}
-            storeName={
-              isShop ? activeStoreName : stores.find((s: any) => s.id === effectiveStore)?.name
-            }
-            readOnly={!canEdit}
-          />
-        </TabsContent>
-
-        <TabsContent value="customers">
+        {panel === "customers" && (
           <RetailCustomerRegistry storeId={effectiveStore} readOnly={!canEdit} />
-        </TabsContent>
-
-        <TabsContent value="stats">
-          <CustomerOrderStats storeId={effectiveStore} />
-        </TabsContent>
-
-
-        {!isShop && (
-          <TabsContent value="needs">
-            <PurchaseNeedsView />
-          </TabsContent>
         )}
-      </Tabs>
+        {panel === "stats" && <CustomerOrderStats storeId={effectiveStore} />}
+      </div>
+
 
       {(isShop ? activeStoreId : effectiveStore) && (
         <>
