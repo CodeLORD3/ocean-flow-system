@@ -34,6 +34,7 @@ import { CustomerOrderStats } from "@/components/orders/CustomerOrderStats";
 
 /** Sparade vyer, som listsidorna i Dynamics 365. */
 const VIEWS: SavedView[] = [
+  { id: "alla", label: "Alla beställningar", description: "Hela historiken" },
   { id: "aktiva", label: "Aktiva beställningar", description: "Idag och framåt" },
   { id: "idag", label: "Dagens packning", description: "Endast dagens datum" },
   { id: "ejpackade", label: "Ej packade", description: "Opackade och pågående" },
