@@ -17,7 +17,7 @@ import {
 const db = supabase as any;
 
 const ORDER_SELECT =
-  "*, stores(id, name), customers_retail(*), customer_order_lines(*, products(id, name, sku, unit, image_url, shelf_life_days, category, allergens), lots(id, lot_number, best_before))";
+  "*, stores(id, name), customers_retail(*), customer_order_lines(*, products!customer_order_lines_product_id_fkey(id, name, sku, unit, image_url, shelf_life_days, category, allergens), lots(id, lot_number, best_before))";
 
 /* -------------------------------------------------------------- kundregister */
 
