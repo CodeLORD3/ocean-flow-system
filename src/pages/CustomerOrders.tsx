@@ -144,7 +144,7 @@ export default function CustomerOrders() {
     isShop ? o.store_id !== activeStoreId : site === "production";
 
   return (
-    <div className="space-y-4 p-4 sm:p-6">
+    <div className="space-y-4 p-3 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-xl font-semibold sm:text-2xl">Kundbeställningar</h1>
@@ -153,10 +153,15 @@ export default function CustomerOrders() {
             Betalning sker i kassan vid hämtning.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+          {canEdit && (isShop ? !!activeStoreId : effectiveStore) && (
+            <Button className="h-12 flex-1 sm:flex-none" onClick={() => setWizardOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" /> Ny beställning
+            </Button>
+          )}
           <Button
             variant="outline"
-            className="h-12"
+            className="h-12 flex-1 sm:flex-none"
             disabled={orders.length === 0}
             onClick={() =>
               printPackList({
@@ -171,45 +176,53 @@ export default function CustomerOrders() {
             <Printer className="mr-2 h-4 w-4" /> Papperslista
           </Button>
           {(isShop ? !!activeStoreId : !!effectiveStore) && (
-            <Button variant="outline" className="h-12" onClick={() => setSettingsOpen(true)}>
-              <Settings className="mr-2 h-4 w-4" /> Öppettider och kapacitet
-            </Button>
-          )}
-          {canEdit && (isShop ? !!activeStoreId : effectiveStore) && (
-            <Button className="h-12" onClick={() => setWizardOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Ny beställning
+            <Button
+              variant="outline"
+              className="h-12 flex-1 sm:flex-none"
+              onClick={() => setSettingsOpen(true)}
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              <span className="sm:hidden">Öppettider</span>
+              <span className="hidden sm:inline">Öppettider och kapacitet</span>
             </Button>
           )}
         </div>
       </div>
 
       <Tabs defaultValue="orders">
-        <TabsList className="flex-wrap">
-          <TabsTrigger value="orders" className="gap-1">
-            <ShoppingBag className="h-4 w-4" /> Order
-          </TabsTrigger>
-          <TabsTrigger value="tomorrow" className="gap-1">
-            <CalendarDays className="h-4 w-4" /> Imorgon
-            {tomorrowOrders.length > 0 && (
-              <Badge variant="secondary" className="ml-1">
-                {tomorrowOrders.length}
-              </Badge>
+        <div className="-mx-3 overflow-x-auto px-3 pb-1 sm:mx-0 sm:px-0">
+          <TabsList className="w-max sm:w-auto sm:flex-wrap">
+            <TabsTrigger value="orders" className="h-10 gap-1">
+              <ShoppingBag className="h-4 w-4" /> Order
+            </TabsTrigger>
+            <TabsTrigger value="tomorrow" className="h-10 gap-1">
+              <CalendarDays className="h-4 w-4" /> Imorgon
+              {tomorrowOrders.length > 0 && (
+                <Badge variant="secondary" className="ml-1">
+                  {tomorrowOrders.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="kitchen" className="h-10 gap-1">
+              <ChefHat className="h-4 w-4" /> Att förbereda
+            </TabsTrigger>
+            <TabsTrigger value="delivery" className="h-10 gap-1">
+              <Truck className="h-4 w-4" /> Leverans
+            </TabsTrigger>
+            <TabsTrigger value="customers" className="h-10 gap-1">
+              <Users className="h-4 w-4" /> Kundregister
+            </TabsTrigger>
+            <TabsTrigger value="stats" className="h-10 gap-1">
+              <BarChart3 className="h-4 w-4" /> Statistik
+            </TabsTrigger>
+            {!isShop && (
+              <TabsTrigger value="needs" className="h-10">
+                Sålt men inte köpt
+              </TabsTrigger>
             )}
-          </TabsTrigger>
-          <TabsTrigger value="kitchen" className="gap-1">
-            <ChefHat className="h-4 w-4" /> Att förbereda
-          </TabsTrigger>
-          <TabsTrigger value="delivery" className="gap-1">
-            <Truck className="h-4 w-4" /> Leverans
-          </TabsTrigger>
-          <TabsTrigger value="customers" className="gap-1">
-            <Users className="h-4 w-4" /> Kundregister
-          </TabsTrigger>
-          <TabsTrigger value="stats" className="gap-1">
-            <BarChart3 className="h-4 w-4" /> Statistik
-          </TabsTrigger>
-          {!isShop && <TabsTrigger value="needs">Sålt men inte köpt</TabsTrigger>}
-        </TabsList>
+          </TabsList>
+        </div>
+
 
 
 
