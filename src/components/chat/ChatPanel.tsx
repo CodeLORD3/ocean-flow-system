@@ -429,6 +429,11 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
                   ? conversationTitle(activeConv, portal.key)
                   : "Chatt"}
             </span>
+            {unread.total > 0 && (
+              <span className="ml-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground">
+                {unread.total > 99 ? "99+" : unread.total}
+              </span>
+            )}
           </CardTitle>
           <div className="flex items-center gap-1 shrink-0">
             {showList && isAdmin && storeTargets.length > 0 && (
