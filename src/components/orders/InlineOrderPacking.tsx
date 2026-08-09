@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { ProductThumb } from "@/components/products/ProductThumb";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
 import {
   usePackOrderLine,
+  useUnpackOrderLine,
   useUpdateCustomerOrder,
   useUpdateOrderLine,
   fetchTodaysPrice,
@@ -57,6 +58,7 @@ function PackStep({ status, index }: { status: string; index: number }) {
 export function InlineOrderPacking({ order }: { order: CustomerOrder }) {
   const { activeUser } = useActiveUser();
   const packLine = usePackOrderLine();
+  const unpackLine = useUnpackOrderLine();
   const updateLine = useUpdateOrderLine();
   const updateOrder = useUpdateCustomerOrder();
 
@@ -203,6 +205,43 @@ export function InlineOrderPacking({ order }: { order: CustomerOrder }) {
                   </Badge>
                 )}
               </button>
+              {(done || struck || l.pack_status === "restnoterad") && (
+                <div className="flex justify-end px-2 pb-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-6 bg-background/60 px-2 text-[11px]"
+                    disabled={unpackLine.isPending || updateLine.isPending}
+                    onClick={async () => {
+                      try {
+                        if (done) {
+                          await unpackLine.mutateAsync({
+                            order,
+                            line: l,
+                            performedBy: activeUser
+                              ? `${activeUser.first_name} ${activeUser.last_name}`
+                              : null,
+                          });
+                        } else {
+                          await updateLine.mutateAsync({
+                            id: l.id,
+                            orderId: order.id,
+                            patch: { pack_status: "opackad" },
+                            event: { type: "rad_opackad", description: `${name} återställd` },
+                          });
+                        }
+                        toast.success("Raden är opackad igen.");
+                        setOpenLine(l.id);
+                      } catch (e: unknown) {
+                        toast.error(e instanceof Error ? e.message : "Kunde inte ångra.");
+                      }
+                    }}
+                  >
+                    <RotateCcw className="mr-1 h-3 w-3" /> Ångra packning
+                  </Button>
+                </div>
+              )}
+
               {l.note && !expanded && (
                 <div className="px-2 pb-1 pl-[4.25rem] text-xs text-muted-foreground">{l.note}</div>
               )}

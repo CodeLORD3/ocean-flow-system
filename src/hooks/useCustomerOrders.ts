@@ -10,6 +10,7 @@ import {
   logOrderEvent,
   nextOrderNumber,
   packLine as packLineLedger,
+  unpackLine as unpackLineLedger,
   reverseLine,
   todaysPrice,
 } from "@/lib/customerOrders";
@@ -482,6 +483,49 @@ export function usePackOrderLine() {
     },
   });
 }
+
+/** Ångrar packningen av en rad och återför varan till lagret. */
+export function useUnpackOrderLine() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      order: CustomerOrder;
+      line: CustomerOrderLine;
+      performedBy?: string | null;
+    }) => {
+      await unpackLineLedger(params);
+
+      const { data } = await db
+        .from("customer_order_lines")
+        .select("*")
+        .eq("customer_order_id", params.order.id);
+      const lines = (data || []) as CustomerOrderLine[];
+      const packStatus = derivePackStatus(lines);
+      const total = lines.reduce((s, l) => s + Number(l.line_total || 0), 0);
+
+      const patch: Record<string, unknown> = {
+        pack_status: packStatus,
+        total_incl_vat: Math.round(total * 100) / 100,
+      };
+      if (packStatus !== "packad") {
+        patch.packed_at = null;
+        patch.handed_over_at = null;
+        patch.status = packStatus === "pagaende" ? "bekraftad" : "bekraftad";
+      }
+
+      await db.from("customer_orders").update(patch).eq("id", params.order.id);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["customer_orders"] });
+      qc.invalidateQueries({ queryKey: ["stock_movements"] });
+      qc.invalidateQueries({ queryKey: ["stock_locations"] });
+      qc.invalidateQueries({ queryKey: ["customer_reservations"] });
+      qc.invalidateQueries({ queryKey: ["customer_order_events"] });
+    },
+  });
+}
+
+
 
 /** Avbryter en order. Packade rader motbokas, med eller utan svinn. */
 export function useCancelCustomerOrder() {
