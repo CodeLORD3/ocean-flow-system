@@ -42,10 +42,6 @@ const salesNav = [
 
 const inventoryNav = [
   { title: "Lager", url: "/inventory", icon: Package },
-  { title: "Lagerrörelser", url: "/stock-movements", icon: History },
-  { title: "Överföringar", url: "/stock-transfers", icon: ArrowLeftRight },
-  { title: "Svinn", url: "/waste", icon: Trash2 },
-  { title: "Spårbarhet — partier", url: "/traceability", icon: ShieldCheck },
   { title: "Inleveranser", url: "/receiving", icon: Truck },
   { title: "Leverantörer", url: "/suppliers", icon: Truck },
 ];
