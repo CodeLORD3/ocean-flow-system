@@ -1287,18 +1287,18 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
     },
   });
 
-  // Build stock lookup: product_id -> qty in Grossist Flytande only (reflects packing in real-time)
+  // Tillgängligt vid packning läses ur det aktiva grossistlagret (nivå), aldrig
+  // ur den gamla namngivna platsen "Grossist Flytande" som är inaktiverad.
   const stockByProduct = useMemo(() => {
     const map = new Map<string, number>();
     for (const s of allStock) {
-      const locName = (s.storage_locations?.name || "").toLowerCase();
-      if (locName === "grossist flytande") {
-        const pid = s.product_id;
-        map.set(pid, (map.get(pid) || 0) + Number(s.quantity));
-      }
+      if (s.storage_locations?.location_type !== "grossistlager") continue;
+      const pid = s.product_id;
+      map.set(pid, (map.get(pid) || 0) + Number(s.quantity));
     }
     return map;
   }, [allStock]);
+
 
   const [altDialogLine, setAltDialogLine] = useState<any>(null);
   const [altProductId, setAltProductId] = useState<string>("");
