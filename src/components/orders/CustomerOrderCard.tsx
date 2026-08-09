@@ -39,6 +39,9 @@ import {
   isUncollected,
 } from "@/lib/customerOrders";
 import { printPackLabels } from "@/lib/customerOrderLabelPdf";
+import { printQuote } from "@/lib/customerQuotePdf";
+import { allergenLabel, scaleQuantity } from "@/lib/catering";
+
 
 const nf = (v: any, d = 2) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
