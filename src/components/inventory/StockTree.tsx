@@ -107,11 +107,20 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
   );
 
   /**
-   * Flyttar markerade rader (eller hela inköpslagret) till grossist- eller
-   * tillverkningslagret. Partierna följer med FIFO så spårbarheten hålls intakt.
+   * Flyttar valda rader till grossist- eller tillverkningslagret.
+   * `rows` anges vid drag-och-släpp (alla ibockade rader följer med).
+   * Partierna följer med FIFO så spårbarheten hålls intakt.
    */
-  const moveTo = async (level: "grossistlager" | "tillverkningslager", all = false) => {
-    const rows = all ? purchaseRows.filter((r: any) => qtyOf(r) > 0) : selectedRows;
+  const moveTo = async (
+    level: "grossistlager" | "tillverkningslager",
+    rowsArg?: any[] | "all",
+  ) => {
+    const rows =
+      rowsArg === "all"
+        ? purchaseRows.filter((r: any) => qtyOf(r) > 0)
+        : rowsArg && rowsArg.length
+          ? rowsArg
+          : selectedRows;
     if (!rows.length) {
       toast.error("Markera minst en rad med saldo först.");
       return;
@@ -146,7 +155,9 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
       qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
       qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
       qc.invalidateQueries({ queryKey: ["stock_movements"] });
-      toast.success(`${kg(moved)} flyttat till ${LEVEL_LABEL[level]}.`);
+      toast.success(
+        `${kg(moved)} från ${rows.length} rad(er) flyttat till ${LEVEL_LABEL[level]}.`,
+      );
     } catch (e: any) {
       toast.error(e?.message ?? "Flytten kunde inte bokföras.");
     } finally {
@@ -159,16 +170,21 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
       ? {
           onDragOver: (e: React.DragEvent) => {
             e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
             setDropTarget(level);
           },
           onDragLeave: () => setDropTarget((cur) => (cur === level ? null : cur)),
           onDrop: (e: React.DragEvent) => {
             e.preventDefault();
             setDropTarget(null);
-            void moveTo(level);
+            // Alla ibockade rader vid dragstart följer med släppet.
+            const rows = dragRowsRef.current?.length ? dragRowsRef.current : selectedRows;
+            dragRowsRef.current = null;
+            void moveTo(level, rows);
           },
         }
       : {};
+
 
 
   const Card = ({
