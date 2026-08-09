@@ -445,6 +445,10 @@ export function buildDiff({ rows, existing, categories, suppliers }: BuildDiffAr
     if (row.category && !knownCategories.has(normalizeCategoryKey(row.category)))
       warnings.push(`ny kategori: ${row.category}`);
     if (row.unit && !VALID_UNITS.includes(row.unit.toLowerCase())) warnings.push(`ovanlig enhet: ${row.unit}`);
+    const unknownAllergens = (row as ParsedRow & { _allergenUnknown?: string[] })._allergenUnknown;
+    if (unknownAllergens?.length)
+      warnings.push(`okänd allergen lämnas utanför: ${unknownAllergens.join(", ")}`);
+
 
     if (errors.length > 0) {
       return { row, status: "error" as DiffStatus, errors, warnings, changes: [] };
