@@ -212,7 +212,11 @@ export function CustomerOrderEditDialog({
           delivery_city: orderType === "leverans" ? address.city || null : null,
           estimated_total: Math.round(total * 100) / 100,
         },
-        event: { type: "andrad", description: "Order redigerad", by: activeUser?.name ?? null },
+        event: {
+          type: "andrad",
+          description: "Order redigerad",
+          by: activeUser ? `${activeUser.first_name} ${activeUser.last_name}`.trim() : null,
+        },
       });
 
       for (const draft of removed) {
