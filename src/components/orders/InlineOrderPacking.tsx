@@ -87,7 +87,7 @@ export function InlineOrderPacking({ order }: { order: CustomerOrder }) {
       if (cancelled) return;
       setWeights(w);
       setPrices(p);
-      setOpenLine((cur) => cur ?? lines.find((l) => l.pack_status === "opackad")?.id ?? null);
+      // Ingen rad öppnas automatiskt — packaren väljer själv vilken rad som ska in.
     })();
     return () => {
       cancelled = true;
