@@ -197,67 +197,11 @@ export default function CustomerOrders() {
     viewOrders.find((o) => o.id === openRow) ||
     (markedOrders.length === 1 ? markedOrders[0] : null);
 
-  const commands: CommandAction[] = [
-    ...(canEdit && (isShop ? !!activeStoreId : !!effectiveStore)
-      ? [
-          {
-            key: "new",
-            label: "Ny",
-            icon: Plus,
-            primary: true,
-            onClick: () => setWizardOpen(true),
-          } as CommandAction,
-        ]
-      : []),
-    {
-      key: "edit",
-      label: "Redigera",
-      icon: Pencil,
-      disabled: !canEdit || markedOrders.length !== 1 || rowReadOnly(markedOrders[0]),
-      onClick: () => markedOrders[0] && setEditing(markedOrders[0]),
-    },
-    {
-      key: "refresh",
-      label: "Uppdatera",
-      icon: RefreshCw,
-      separatorBefore: true,
-      onClick: () => queryClient.invalidateQueries({ queryKey: ["customer-orders"] }),
-    },
-    {
-      key: "print",
-      label: "Papperslista",
-      icon: Printer,
-      disabled: viewOrders.length === 0,
-      onClick: () =>
-        printPackList({
-          orders: markedOrders.length > 0 ? markedOrders : viewOrders,
-          storeName: isShop
-            ? activeStoreName
-            : stores.find((s: any) => s.id === effectiveStore)?.name,
-          dateLabel: VIEWS.find((v) => v.id === view)?.label ?? "Aktuell lista",
-        }),
-    },
-    ...((isShop ? !!activeStoreId : !!effectiveStore)
-      ? [
-          {
-            key: "settings",
-            label: "Öppettider",
-            icon: Settings,
-            separatorBefore: true,
-            hideLabelOnMobile: true,
-            onClick: () => setSettingsOpen(true),
-          } as CommandAction,
-        ]
-      : []),
-  ];
-
-
+  const canCreate = canEdit && (isShop ? !!activeStoreId : !!effectiveStore);
 
   return (
     <div className="space-y-3 p-3 sm:p-6">
-      <CommandBar actions={commands} />
-
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <ViewSelector
           title="Kundbeställningar"
           views={VIEWS}
@@ -268,11 +212,17 @@ export default function CustomerOrders() {
           }}
           count={viewOrders.length}
         />
-        <p className="text-xs text-muted-foreground">
-          Privatkunder{isShop && activeStoreName ? ` — ${activeStoreName}` : ""}. Betalning sker i
-          kassan vid hämtning.
-        </p>
+        {canCreate && (
+          <Button size="lg" className="h-12 px-5 text-base" onClick={() => setWizardOpen(true)}>
+            <Plus className="mr-2 h-5 w-5" /> Ny beställning
+          </Button>
+        )}
       </div>
+      <p className="text-xs text-muted-foreground">
+        Privatkunder{isShop && activeStoreName ? ` — ${activeStoreName}` : ""}. Betalning sker i
+        kassan vid hämtning.
+      </p>
+
 
 
       <Tabs defaultValue="orders">
@@ -600,13 +550,6 @@ export default function CustomerOrders() {
             onOpenChange={setWizardOpen}
             storeId={(isShop ? activeStoreId : effectiveStore) as string}
             storeName={isShop ? activeStoreName : stores.find((s: any) => s.id === effectiveStore)?.name}
-          />
-          <StoreOrderSettingsDialog
-            open={settingsOpen}
-            onOpenChange={setSettingsOpen}
-            storeId={(isShop ? activeStoreId : effectiveStore) as string}
-            storeName={isShop ? activeStoreName : stores.find((s: any) => s.id === effectiveStore)?.name}
-            canEdit={canEdit}
           />
         </>
       )}
