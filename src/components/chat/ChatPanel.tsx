@@ -485,7 +485,7 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
                     }}
                     className={cn(
                       "w-full text-left rounded-md px-2 transition-colors flex items-center gap-2",
-                      compact ? "py-2" : "py-2",
+                      compact ? "py-3 min-h-14" : "py-3.5 min-h-16",
                       isActive && !isMobile
                         ? "bg-primary/10 border border-primary/20"
                         : "hover:bg-muted/60 border border-transparent"
