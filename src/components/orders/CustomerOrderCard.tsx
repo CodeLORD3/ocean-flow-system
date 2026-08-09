@@ -41,6 +41,8 @@ import {
 } from "@/lib/customerOrders";
 import { printPackLabels } from "@/lib/customerOrderLabelPdf";
 import { printQuote } from "@/lib/customerQuotePdf";
+import { printConfirmation, confirmationText } from "@/lib/customerOrderConfirmation";
+import { printPackList } from "@/lib/customerOrderPackListPdf";
 import { allergenLabel, scaleQuantity } from "@/lib/catering";
 
 
