@@ -191,7 +191,7 @@ export default function ProductStockDialog({
               <div className="text-xs text-muted-foreground py-6 text-center">Laddar partier…</div>
             ) : lots.length === 0 ? (
               <EmptyState
-                icon={Fish}
+                icon={<Fish className="h-4 w-4" />}
                 title="Ingen spårbarhet ännu"
                 description="Partier med ursprung skapas vid inleverans. När produkten tagits emot visas fångstområde, redskap, fartyg och rörelser här."
               />
