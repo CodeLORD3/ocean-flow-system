@@ -3,7 +3,7 @@ import { displayOrderWeek } from "@/lib/orderWeek";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Plus, Search, Clock, CheckCircle2, Truck, XCircle, X, Package,
-  Archive, ListChecks, History, CalendarIcon, Pencil, Send, FileText, Copy, Eye,
+  Archive, CalendarIcon, Pencil, Send, FileText, Copy, Eye,
 } from "lucide-react";
 import { ProductThumb } from "@/components/products/ProductThumb";
 import DeliveryNote from "@/components/DeliveryNote";
@@ -15,7 +15,6 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -469,7 +468,6 @@ export default function ShopOrders() {
     setDesiredDeliveryDate(undefined);
   };
 
-  const pending = liveOrders.filter((o: any) => o.status === "Ny" || o.status === "Pågående").length;
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
