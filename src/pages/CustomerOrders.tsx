@@ -34,6 +34,7 @@ import { CustomerOrderStats } from "@/components/orders/CustomerOrderStats";
 
 /** Sparade vyer, som listsidorna i Dynamics 365. */
 const VIEWS: SavedView[] = [
+  { id: "alla", label: "Alla beställningar", description: "Hela historiken" },
   { id: "aktiva", label: "Aktiva beställningar", description: "Idag och framåt" },
   { id: "idag", label: "Dagens packning", description: "Endast dagens datum" },
   { id: "ejpackade", label: "Ej packade", description: "Opackade och pågående" },
@@ -105,7 +106,7 @@ export default function CustomerOrders() {
   const [editing, setEditing] = useState<CustomerOrder | null>(null);
   const [panel, setPanel] = useState<"orders" | "customers" | "stats">("orders");
 
-  const [view, setView] = useState("aktiva");
+  const [view, setView] = useState("alla");
   const [marked, setMarked] = useState<string[]>([]);
 
   const toggleRow = (id: string) => setOpenRow((cur) => (cur === id ? null : id));
@@ -120,7 +121,7 @@ export default function CustomerOrders() {
     packStatus,
     orderType,
     search,
-    fromDate: today(),
+    fromDate: view === "alla" ? undefined : today(),
   });
 
   const { data: tomorrowOrders = [] } = useCustomerOrders({
