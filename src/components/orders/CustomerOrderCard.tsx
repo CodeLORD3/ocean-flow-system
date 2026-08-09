@@ -519,6 +519,23 @@ export function CustomerOrderCard({
                 </div>
               </CardContent>
             </Card>
+            <Button variant="outline" className="h-12" onClick={makeQuote}>
+              <Printer className="mr-2 h-4 w-4" /> Skriv preliminär offert
+            </Button>
+            {!readOnly && order.category === "catering" && (
+              <div className="sm:max-w-[220px]">
+                <Label>Antal gäster</Label>
+                <Input
+                  inputMode="numeric"
+                  className="h-12"
+                  defaultValue={order.guest_count ?? ""}
+                  onBlur={(e) => changeGuestCount(e.target.value)}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Rader med portion per gäst räknas om automatiskt.
+                </p>
+              </div>
+            )}
             {!readOnly && (
               <div>
                 <Label>Anteckning</Label>
@@ -534,6 +551,7 @@ export function CustomerOrderCard({
                 />
               </div>
             )}
+
           </TabsContent>
 
           <TabsContent value="timeline" className="space-y-2 text-sm">
