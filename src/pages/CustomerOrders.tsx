@@ -37,6 +37,7 @@ import {
 import { CustomerOrderWizard } from "@/components/orders/CustomerOrderWizard";
 import { CustomerOrderCard } from "@/components/orders/CustomerOrderCard";
 import { CustomerOrderRow, CustomerOrderRowHeader } from "@/components/orders/CustomerOrderRow";
+import { CustomerOrderEditDialog } from "@/components/orders/CustomerOrderEditDialog";
 
 import { RetailCustomerRegistry } from "@/components/orders/RetailCustomerRegistry";
 import { PurchaseNeedsView } from "@/components/orders/PurchaseNeedsView";
@@ -109,6 +110,7 @@ export default function CustomerOrders() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selected, setSelected] = useState<CustomerOrder | null>(null);
   const [openRow, setOpenRow] = useState<string | null>(null);
+  const [editing, setEditing] = useState<CustomerOrder | null>(null);
   const toggleRow = (id: string) => setOpenRow((cur) => (cur === id ? null : id));
 
 
@@ -310,6 +312,7 @@ export default function CustomerOrders() {
                       key={o.id}
                       order={o}
                       onOpen={setSelected}
+                      onEdit={canEdit ? setEditing : undefined}
                       readOnly={rowReadOnly(o)}
                       open={openRow === o.id}
                       onToggle={toggleRow}
