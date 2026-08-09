@@ -378,37 +378,74 @@ export default function Arrivals() {
                 {draft.map((l, i) => {
                   const received = Number(String(l.received).replace(",", ".")) || 0;
                   const missing = l.expected - received;
+                  const temp = parseTemp(l.tempC);
+                  const breach = tempOutOfRange(temp, l.tempMode);
+                  const patch = (v: Partial<typeof l>) =>
+                    setDraft((d) => d.map((x, xi) => (xi === i ? { ...x, ...v } : x)));
                   return (
-                    <div key={l.lineId} className="flex flex-wrap items-center gap-2 p-2 text-xs">
-                      <span className="min-w-[10rem] flex-1 truncate font-medium">
-                        {l.productName ?? "Produkt"}
-                        {l.lotNumber && (
-                          <span className="ml-1 font-mono text-[11px] text-muted-foreground">
-                            {l.lotNumber}
-                          </span>
+                    <div key={l.lineId} className="space-y-1 p-2 text-xs">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="min-w-[10rem] flex-1 truncate font-medium">
+                          {l.productName ?? "Produkt"}
+                          {l.lotNumber && (
+                            <span className="ml-1 font-mono text-[11px] text-muted-foreground">
+                              {l.lotNumber}
+                            </span>
+                          )}
+                        </span>
+                        <span className="font-mono tabular-nums text-muted-foreground">
+                          {nf(l.expected)} kg förväntat
+                        </span>
+                        <Input
+                          value={l.received}
+                          onChange={(e) => patch({ received: e.target.value })}
+                          inputMode="decimal"
+                          className="h-8 w-24 font-mono text-xs tabular-nums"
+                        />
+                        {Math.abs(missing) > 0.0001 && (
+                          <Badge variant="destructive" className="text-[11px]">
+                            {missing > 0 ? `−${nf(missing)} kg` : `+${nf(-missing)} kg`}
+                          </Badge>
                         )}
-                      </span>
-                      <span className="font-mono tabular-nums text-muted-foreground">
-                        {nf(l.expected)} kg förväntat
-                      </span>
-                      <Input
-                        value={l.received}
-                        onChange={(e) =>
-                          setDraft((d) =>
-                            d.map((x, xi) => (xi === i ? { ...x, received: e.target.value } : x)),
-                          )
-                        }
-                        inputMode="decimal"
-                        className="h-8 w-24 font-mono text-xs tabular-nums"
-                      />
-                      {Math.abs(missing) > 0.0001 && (
-                        <Badge variant="destructive" className="text-[11px]">
-                          {missing > 0 ? `−${nf(missing)} kg` : `+${nf(-missing)} kg`}
-                        </Badge>
-                      )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <select
+                          value={l.tempMode}
+                          onChange={(e) => patch({ tempMode: e.target.value as TempMode })}
+                          className="h-8 rounded-md border border-input bg-background px-2 text-[11px]"
+                        >
+                          <option value="fersk">Färsk</option>
+                          <option value="fryst">Fryst</option>
+                          <option value="levande">Levande</option>
+                        </select>
+                        <Input
+                          value={l.tempC}
+                          onChange={(e) => patch({ tempC: e.target.value })}
+                          inputMode="decimal"
+                          placeholder="Temp"
+                          className="h-8 w-20 font-mono text-xs tabular-nums"
+                        />
+                        <span className="text-[11px] text-muted-foreground">
+                          {tempLimitText(l.tempMode)}
+                        </span>
+                        {breach && (
+                          <>
+                            <Badge variant="destructive" className="text-[10px]">
+                              Utanför gräns
+                            </Badge>
+                            <Input
+                              value={l.tempReason}
+                              onChange={(e) => patch({ tempReason: e.target.value })}
+                              placeholder="Orsak och åtgärd"
+                              className="h-8 min-w-[12rem] flex-1 text-xs"
+                            />
+                          </>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
+
               </div>
             )}
           </div>
