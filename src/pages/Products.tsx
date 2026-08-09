@@ -690,6 +690,8 @@ export default function Products() {
                 {p.subproducts.length} del
               </Badge>
             )}
+            <AllergenBadge product={p as any} />
+
           </div>
         </td>
         <td className="px-2 py-0 align-middle font-mono text-muted-foreground text-[10px] whitespace-nowrap">{p.sku}</td>
