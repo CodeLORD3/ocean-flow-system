@@ -44,8 +44,9 @@ export default function InventoryRouter() {
   ];
 
   return (
-    <div className="h-full w-full flex flex-col">
-      <div className="border-b bg-background px-4 pt-3">
+    <div className="w-full flex flex-col">
+      <div className="sticky top-0 z-30 -mx-2 -mt-2 sm:-mx-4 sm:-mt-4 lg:-mx-6 lg:-mt-6 border-b bg-background px-4 pt-3 pb-1">
+
         <Tabs value={tab} onValueChange={(v) => setTab(v as SubTab)} className="w-full">
           <TabsList
             className="w-full h-10 sm:h-12 grid gap-1 p-1"
@@ -71,7 +72,7 @@ export default function InventoryRouter() {
         </Tabs>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-auto">
+      <div className="pt-4">
         <div style={{ display: tab === "lager" ? "block" : "none" }}>
           <Inventory />
         </div>
