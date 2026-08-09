@@ -146,6 +146,7 @@ export default function StockOverview({
   onLineAction,
   headerRight,
   showCosts = true,
+  compactKpis = false,
   onEmptyAction,
   emptyActionLabel = "Registrera inleverans",
 }: Props) {
