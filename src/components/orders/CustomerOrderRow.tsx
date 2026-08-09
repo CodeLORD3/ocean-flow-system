@@ -5,7 +5,6 @@ import {
   MapPin,
   Package,
   AlertTriangle,
-  ExternalLink,
   Pencil,
   Printer,
   Download,
