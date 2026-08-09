@@ -1,5 +1,5 @@
 // One-off seeder that creates auth users for the 6 staff members and links
-// them to their staff records with portal_access + allowed_store_id.
+// them to their staff records and writes behörigheten till user_scopes.
 // Safe to re-run: existing users get their password reset and links updated.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -125,13 +125,19 @@ Deno.serve(async (req) => {
       .from("staff")
       .update({
         user_id: user!.id,
-        portal_access: u.portals,
-        allowed_store_id: u.store,
-        allowed_store_ids: u.stores ?? (u.store ? [u.store] : []),
         email: u.email,
         must_change_password: u.keepPassword ? false : true,
       })
       .eq("id", staffId);
+
+    // Behörighet: user_scopes är enda källan.
+    const storeIds: string[] = u.stores ?? (u.store ? [u.store] : []);
+    await sb.from("user_scopes").delete().eq("user_id", user!.id).in("scope_type", ["portal", "store"]);
+    const rows = [
+      ...(u.portals ?? []).map((p: string) => ({ user_id: user!.id, scope_type: "portal", scope_value: p })),
+      ...storeIds.map((sid) => ({ user_id: user!.id, scope_type: "store", scope_value: sid })),
+    ];
+    if (rows.length) await sb.from("user_scopes").upsert(rows, { onConflict: "user_id,scope_type,scope_value" });
     results.push({ email: u.email, link: e2 ? `error: ${e2.message}` : "linked" });
   }
 

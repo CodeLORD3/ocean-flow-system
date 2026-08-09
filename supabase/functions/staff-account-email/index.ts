@@ -28,11 +28,12 @@ Deno.serve(async (req) => {
     // 2. Bara admin får byta någon annans inloggningsadress.
     const { data: roleRows } = await admin
       .from("user_roles").select("role").eq("user_id", callerId).eq("role", "admin");
-    const { data: callerStaff } = await admin
-      .from("staff").select("portal_access").eq("user_id", callerId).maybeSingle();
-    const isAdmin =
-      (roleRows?.length ?? 0) > 0 ||
-      ((callerStaff?.portal_access ?? []) as string[]).includes("admin");
+    // Behörighet läses ur user_scopes — enda begreppet.
+    const { data: scopeRows } = await admin
+      .from("user_scopes").select("scope_value")
+      .eq("user_id", callerId).eq("scope_type", "portal")
+      .in("scope_value", ["admin", "wholesale"]);
+    const isAdmin = (roleRows?.length ?? 0) > 0 || (scopeRows?.length ?? 0) > 0;
     if (!isAdmin) return json({ error: "Endast admin kan ändra inloggningsadress" }, 403);
 
     // 3. Indata
