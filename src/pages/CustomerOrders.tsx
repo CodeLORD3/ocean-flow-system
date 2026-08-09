@@ -30,10 +30,8 @@ import { FactBox, FactGroup, FactRow } from "@/components/shell/FactBox";
 import { StatusBar } from "@/components/shell/StatusBar";
 
 import { RetailCustomerRegistry } from "@/components/orders/RetailCustomerRegistry";
-import { PurchaseNeedsView } from "@/components/orders/PurchaseNeedsView";
-import { CateringKitchenList } from "@/components/orders/CateringKitchenList";
-import { DeliveryRouteView } from "@/components/orders/DeliveryRouteView";
 import { CustomerOrderStats } from "@/components/orders/CustomerOrderStats";
+
 
 
 /** Sparade vyer, som listsidorna i Dynamics 365. */
