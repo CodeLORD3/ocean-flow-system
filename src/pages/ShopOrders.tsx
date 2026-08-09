@@ -3,9 +3,11 @@ import { displayOrderWeek } from "@/lib/orderWeek";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Plus, Search, Clock, CheckCircle2, Truck, XCircle, X, Package,
-  Archive, ListChecks, History, CalendarIcon, Pencil, Send, FileText, Copy,
+  Archive, ListChecks, History, CalendarIcon, Pencil, Send, FileText, Copy, Eye,
 } from "lucide-react";
+import { ProductThumb } from "@/components/products/ProductThumb";
 import DeliveryNote from "@/components/DeliveryNote";
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -230,6 +232,11 @@ export default function ShopOrders() {
   const [search, setSearch] = useState("");
   
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [focusProductId, setFocusProductId] = useState<string | null>(null);
+  const [previewProduct, setPreviewProduct] = useState<any | null>(null);
+  const qtyRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+
 
   // Fetch active store details to determine zone
   const { data: activeStore } = useQuery({
@@ -354,7 +361,20 @@ export default function ShopOrders() {
     }, ...prev]);
     setProductSearch("");
     setHighlightedIndex(-1);
+    setFocusProductId(p.id);
   };
+
+  // Efter att en produkt lagts till: hoppa direkt till antal-fältet
+  useEffect(() => {
+    if (!focusProductId) return;
+    const el = qtyRefs.current[focusProductId];
+    if (el) {
+      el.focus();
+      el.select?.();
+      setFocusProductId(null);
+    }
+  }, [focusProductId, groupedOrderLines]);
+
 
 
   const updateLine = (idx: number, qty: string) => {
@@ -533,8 +553,10 @@ export default function ShopOrders() {
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                   <Input
+                    ref={searchInputRef}
                     placeholder="Sök produkt (namn eller SKU)..."
                     value={productSearch}
+                    enterKeyHint="done"
                     onChange={e => { setProductSearch(e.target.value); setHighlightedIndex(-1); }}
                     onKeyDown={e => {
                       if (filteredProducts.length === 0) return;
@@ -544,9 +566,10 @@ export default function ShopOrders() {
                       } else if (e.key === "ArrowUp") {
                         e.preventDefault();
                         setHighlightedIndex(prev => (prev <= 0 ? filteredProducts.length - 1 : prev - 1));
-                      } else if (e.key === "Enter" && highlightedIndex >= 0 && highlightedIndex < filteredProducts.length) {
+                      } else if (e.key === "Enter") {
                         e.preventDefault();
-                        addProduct(filteredProducts[highlightedIndex]);
+                        const pick = highlightedIndex >= 0 ? filteredProducts[highlightedIndex] : filteredProducts[0];
+                        if (pick) addProduct(pick);
                       }
                     }}
                     className="pl-8 h-8 text-xs"
@@ -562,21 +585,34 @@ export default function ShopOrders() {
                         {prods.map((p: any) => {
                           const idx = filteredProducts.indexOf(p);
                           return (
-                            <button
+                            <div
                               key={p.id}
-                              className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between ${idx === highlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
+                              role="button"
+                              tabIndex={-1}
+                              className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 cursor-pointer ${idx === highlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
                               onClick={() => addProduct(p)}
                               onMouseEnter={() => setHighlightedIndex(idx)}
                             >
-                              <span className="font-medium text-foreground">{p.name}</span>
+                              <ProductThumb src={(p as any).image_url} alt={p.name} static className="w-10 h-8" />
+                              <span className="font-medium text-foreground flex-1 truncate">{p.name}</span>
                               <span className="text-muted-foreground font-mono text-[10px]">{p.sku} · {p.unit}</span>
-                            </button>
+                              <button
+                                type="button"
+                                title="Visa produkt"
+                                aria-label={`Visa ${p.name}`}
+                                className="p-1 rounded hover:bg-background text-muted-foreground hover:text-foreground"
+                                onClick={(e) => { e.stopPropagation(); setPreviewProduct(p); }}
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
                           );
                         })}
                       </div>
                     ))}
                   </div>
                 )}
+
 
               </div>
               <Select
@@ -644,19 +680,43 @@ export default function ShopOrders() {
                               <td className="py-2 text-muted-foreground">{line.unit}</td>
                               <td className="py-2 text-right">
                                 <Input
+                                  ref={el => { qtyRefs.current[line.product_id] = el; }}
                                   type="number"
+                                  inputMode="decimal"
+                                  enterKeyHint="next"
                                   step="0.1"
                                   value={line.quantity}
                                   onChange={e => updateLine(idx, e.target.value)}
-                                  className="h-7 text-xs w-24 ml-auto text-right"
+                                  onFocus={e => e.currentTarget.select()}
+                                  onKeyDown={e => {
+                                    if (e.key === "Enter") {
+                                      e.preventDefault();
+                                      searchInputRef.current?.focus();
+                                    }
+                                  }}
+                                  className="h-9 text-sm w-24 ml-auto text-right"
                                   placeholder="0"
                                 />
+
                               </td>
                               <td className="py-2">
-                                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeLine(idx)}>
-                                  <X className="h-3 w-3" />
-                                </Button>
+                                <div className="flex items-center justify-end gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-primary sm:hidden"
+                                    title="Nästa produkt"
+                                    aria-label="Nästa produkt"
+                                    onClick={() => searchInputRef.current?.focus()}
+                                  >
+                                    <CheckCircle2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeLine(idx)}>
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
                               </td>
+
                             </tr>
                           ))}
                         </React.Fragment>
@@ -741,9 +801,68 @@ export default function ShopOrders() {
         </Card>
       )}
 
+      {/* Produktkort */}
+      <Dialog open={!!previewProduct} onOpenChange={(o) => !o && setPreviewProduct(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-base">{previewProduct?.name}</DialogTitle>
+            <DialogDescription className="text-xs font-mono">
+              {previewProduct?.sku} · {previewProduct?.unit}
+            </DialogDescription>
+          </DialogHeader>
+          {previewProduct?.image_url ? (
+            <img
+              src={previewProduct.image_url}
+              alt={previewProduct.name}
+              className="w-full h-48 object-cover rounded-md border border-border"
+            />
+          ) : (
+            <div className="w-full h-48 rounded-md border border-border bg-muted flex items-center justify-center text-xs text-muted-foreground">
+              Ingen bild uppladdad
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <div className="text-muted-foreground">Kategori</div>
+              <div className="font-medium text-foreground">{previewProduct?.category || "–"}</div>
+            </div>
+            <div>
+              <div className="text-muted-foreground">Enhet</div>
+              <div className="font-medium text-foreground">{previewProduct?.unit || "–"}</div>
+            </div>
+            {previewProduct?.species && (
+              <div>
+                <div className="text-muted-foreground">Art</div>
+                <div className="font-medium text-foreground">{previewProduct.species}</div>
+              </div>
+            )}
+            {previewProduct?.origin && (
+              <div>
+                <div className="text-muted-foreground">Ursprung</div>
+                <div className="font-medium text-foreground">{previewProduct.origin}</div>
+              </div>
+            )}
+          </div>
+          {previewProduct?.description && (
+            <p className="text-xs text-muted-foreground">{previewProduct.description}</p>
+          )}
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setPreviewProduct(null)}>Stäng</Button>
+            <Button
+              size="sm"
+              className="gap-1.5"
+              onClick={() => { const p = previewProduct; setPreviewProduct(null); if (p) addProduct(p); }}
+            >
+              <Plus className="h-3.5 w-3.5" /> Lägg till
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </motion.div>
   );
 }
+
 
 /* ---- Inline edit component for order detail ---- */
 function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays, isDateDisabled, inline }: {
