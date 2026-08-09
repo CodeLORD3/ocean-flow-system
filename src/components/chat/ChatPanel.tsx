@@ -485,7 +485,7 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
                     }}
                     className={cn(
                       "w-full text-left rounded-md px-2 transition-colors flex items-center gap-2",
-                      compact ? "py-1.5" : "py-2",
+                      compact ? "py-2" : "py-2",
                       isActive && !isMobile
                         ? "bg-primary/10 border border-primary/20"
                         : "hover:bg-muted/60 border border-transparent"
@@ -494,11 +494,11 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
                     <PortalAvatar
                       name={title}
                       url={convAvatar(c)}
-                      size={compact ? "sm" : "md"}
+                      size="md"
                     />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-1.5">
-                        <span className="text-xs font-medium text-foreground truncate flex-1 min-w-0">{title}</span>
+                        <span className="text-sm font-medium text-foreground truncate flex-1 min-w-0">{title}</span>
                         {(unread.byConv[c.id] || 0) > 0 && !(isActive && opened) && (
                           <Badge variant="destructive" className="h-4 min-w-4 px-1 text-[9px] rounded-full shrink-0">
                             {unread.byConv[c.id]}
