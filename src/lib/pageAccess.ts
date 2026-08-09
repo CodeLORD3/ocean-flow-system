@@ -41,6 +41,7 @@ export const ROUTE_ACCESS: Record<string, SiteMode[]> = {
   "/external-production": all(GROSSIST, ADMIN),
 
   "/traceability": all(BUTIK, GROSSIST, ADMIN),
+  "/food-safety": all(BUTIK, GROSSIST, ADMIN),
   "/receiving": all(BUTIK, GROSSIST, ADMIN),
   "/products": all(BUTIK, GROSSIST, ADMIN),
   "/barcodes": all(BUTIK, GROSSIST, ADMIN),
