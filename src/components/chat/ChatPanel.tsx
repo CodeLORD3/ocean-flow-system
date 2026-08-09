@@ -616,17 +616,24 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
                         </button>
                       )}
 
-                      {!mine &&
-                        (showHeader ? (
-                          <PortalAvatar
-                            name={m.sender_portal_name || m.sender_portal_key}
-                            url={avatars[m.sender_portal_key]}
-                            size="sm"
+                      {showHeader ? (
+                        m.sender_staff_id && staffAvatars[m.sender_staff_id] ? (
+                          <StaffAvatar
+                            name={m.sender_name || m.sender_portal_name || m.sender_portal_key}
+                            url={staffAvatars[m.sender_staff_id]}
                             className="self-end mb-0.5"
                           />
                         ) : (
-                          <span aria-hidden className="h-6 w-6 shrink-0" />
-                        ))}
+                          <PortalAvatar
+                            name={m.sender_name || m.sender_portal_name || m.sender_portal_key}
+                            url={m.sender_staff_id ? null : avatars[m.sender_portal_key]}
+                            size="sm"
+                            className="self-end mb-0.5"
+                          />
+                        )
+                      ) : (
+                        <span aria-hidden className="h-6 w-6 shrink-0" />
+                      )}
 
                       <div
                         className={cn(
