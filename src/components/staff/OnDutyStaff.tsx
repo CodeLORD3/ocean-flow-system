@@ -46,7 +46,7 @@ export function OnDutyStaff({ storeId }: { storeId?: string | null }) {
     if (!staff) return;
     if (confirm === "in") {
       clockIn.mutate(
-        { staffId: staff.id, storeId: storeId ?? null },
+        { staffId: staff.id, storeId: effectiveStoreId },
         {
           onSuccess: (res) => {
             if (res.outcome === "already") {
@@ -97,7 +97,7 @@ export function OnDutyStaff({ storeId }: { storeId?: string | null }) {
             <Button
               className="h-auto gap-1.5 px-3 py-1.5 text-xs font-semibold"
               onClick={() => setConfirm("in")}
-              disabled={clockIn.isPending || !storeId}
+              disabled={clockIn.isPending}
             >
               <LogIn className="h-3.5 w-3.5" /> Stämpla in
             </Button>
