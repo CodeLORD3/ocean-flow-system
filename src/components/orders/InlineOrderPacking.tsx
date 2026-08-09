@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, Printer } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,6 @@ import {
   totalDeviates,
   weightDeviates,
 } from "@/lib/customerOrders";
-import { printPackLabels } from "@/lib/customerOrderLabelPdf";
 
 const nf = (v: unknown, d = 2) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -131,24 +130,6 @@ export function InlineOrderPacking({ order }: { order: CustomerOrder }) {
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : "Raden kunde inte packas.");
     }
-  };
-
-  const printLabels = () => {
-    const packed = lines.filter((l) => l.pack_status === "packad");
-    if (packed.length === 0) return toast.error("Inga packade rader att skriva etiketter för.");
-    printPackLabels(
-      packed.map((l) => ({
-        productName: (l.products?.name || l.free_text_name || "Vara") as string,
-        weightKg: Number(l.quantity_packed || 0),
-        unit: l.unit,
-        pricePerUnit: l.price_per_unit != null ? Number(l.price_per_unit) : null,
-        total: l.line_total != null ? Number(l.line_total) : null,
-        packedDate: new Date().toISOString().slice(0, 10),
-        bestBefore: l.lots?.best_before ?? null,
-        lotNumber: l.lots?.lot_number ?? null,
-        barcode: l.products?.sku ?? null,
-      })),
-    );
   };
 
   const handOver = async () => {
@@ -310,9 +291,6 @@ export function InlineOrderPacking({ order }: { order: CustomerOrder }) {
       </ul>
 
       <div className="flex flex-wrap gap-2">
-        <Button variant="outline" className="h-11" onClick={printLabels}>
-          <Printer className="mr-2 h-4 w-4" /> Skriv etiketter
-        </Button>
         {allPacked && !["levererad", "avhamtad"].includes(order.status) && (
           <Button className="h-11" onClick={handOver}>
             <CheckCircle2 className="mr-2 h-4 w-4" />
