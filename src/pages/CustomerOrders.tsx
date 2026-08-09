@@ -281,12 +281,25 @@ export default function CustomerOrders() {
               description="Här samlas dagens och kommande beställningar från privatkunder. Skapa den första med Ny beställning."
             />
           ) : (
-            <div className="space-y-2">
-              {orders.map((o) => (
-                <OrderRow key={o.id} order={o} onOpen={setSelected} readOnly={rowReadOnly(o)} />
+            <div className="space-y-4">
+              {groupByDay(orders).map(([day, list]) => (
+                <div key={day} className="space-y-2">
+                  <div className="sticky top-0 z-10 -mx-1 bg-background/95 px-1 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur">
+                    {dayLabel(day)} · {list.length} order
+                  </div>
+                  {list.map((o) => (
+                    <CustomerOrderRow
+                      key={o.id}
+                      order={o}
+                      onOpen={setSelected}
+                      readOnly={rowReadOnly(o)}
+                    />
+                  ))}
+                </div>
               ))}
             </div>
           )}
+
         </TabsContent>
 
         <TabsContent value="tomorrow" className="space-y-3">
