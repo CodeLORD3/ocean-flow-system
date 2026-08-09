@@ -1478,17 +1478,6 @@ export default function Inventory() {
         </div>
         )}
 
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 gap-1 text-xs"
-          onClick={() => {
-            setWasteRowId(null);
-            setWasteOpen(true);
-          }}
-        >
-          <Trash2 className="h-3 w-3" /> Bokför svinn
-        </Button>
       </div>
 
       {viewMode === "overview" && (
