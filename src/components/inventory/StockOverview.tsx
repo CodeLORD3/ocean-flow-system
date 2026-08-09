@@ -54,7 +54,7 @@ export interface StockRow {
   storage_locations?: any;
 }
 
-export type StockLineAction = "move" | "delete" | "split" | "count";
+export type StockLineAction = "move" | "delete" | "split" | "count" | "waste";
 
 interface Props {
   rows: StockRow[];
