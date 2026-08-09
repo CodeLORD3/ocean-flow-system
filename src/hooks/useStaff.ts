@@ -19,14 +19,18 @@ export function useStaff(storeId?: string) {
   return useQuery({
     queryKey: ["staff", storeId],
     queryFn: async () => {
+      // staff_access = personal + behörigheter (user_scopes) i en vy.
       let q = supabase
-        .from("staff")
-        .select("*, stores!staff_store_id_fkey(name)")
+        .from("staff_access")
+        .select("*")
         .order("first_name", { ascending: true });
       if (storeId) q = q.eq("store_id", storeId);
       const { data, error } = await q;
       if (error) throw error;
-      return data as (StaffMember & { stores: { name: string } | null })[];
+      return ((data ?? []) as any[]).map((r) => ({
+        ...r,
+        stores: r.store_name ? { name: r.store_name } : null,
+      })) as (StaffMember & { stores: { name: string } | null })[];
     },
   });
 }

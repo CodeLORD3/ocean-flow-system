@@ -38,9 +38,11 @@ export function useCreateIncomingDelivery() {
         faktiskt_fangstomrade?: string | null;
       }[];
     }) => {
-      const { count } = await supabase.from("incoming_deliveries").select("*", { count: "exact", head: true });
-      const num = (count || 0) + 1;
-      const deliveryNumber = `IL-2026-${String(num).padStart(4, "0")}`;
+      // Löpnumret delas ut av databasen (number_series) — aldrig räknat i klienten,
+      // där två samtidiga inleveranser kunde få samma nummer.
+      const { data: numData, error: numErr } = await supabase.rpc("next_delivery_number", {});
+      if (numErr) throw numErr;
+      const deliveryNumber = String(numData);
       const totalWeight = params.lines.reduce((s, l) => s + l.quantity, 0);
       const totalCost = params.lines.reduce((s, l) => s + l.quantity * l.unit_cost, 0);
 

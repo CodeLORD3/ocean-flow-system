@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useUpdateStaff } from "@/hooks/useStaff";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { useStores } from "@/hooks/useStores";
 import type { PortalKey } from "@/contexts/StaffAuthContext";
 
@@ -27,7 +28,7 @@ interface Props {
 
 export function StaffAccessDialog({ open, onOpenChange, staff }: Props) {
   const { toast } = useToast();
-  const updateStaff = useUpdateStaff();
+  const qc = useQueryClient();
   const { data: stores = [] } = useStores(true);
   const retailStores = stores.filter((s: any) => !s.is_wholesale);
 
@@ -56,34 +57,34 @@ export function StaffAccessDialog({ open, onOpenChange, staff }: Props) {
   const toggleStore = (id: string) =>
     setStoreIds((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
 
-  const handleSave = () => {
+  const [saving, setSaving] = useState(false);
+
+  // Behörigheten skrivs till user_scopes via databasfunktionen — enda vägen in.
+  const handleSave = async () => {
     if (!staff) return;
     const access: PortalKey[] = isSuperAdmin
       ? (["admin", "wholesale", "production", "shop"] as PortalKey[])
       : portals;
     const finalStoreIds = isSuperAdmin || allStores || !access.includes("shop") ? [] : storeIds;
 
-    updateStaff.mutate(
-      {
-        id: staff.id,
-        first_name: staff.first_name,
-        last_name: staff.last_name,
-        portal_access: access,
-        allowed_store_ids: finalStoreIds,
-        allowed_store_id: null,
-      } as any,
-      {
-        onSuccess: () => {
-          toast({
-            title: "Behörigheter uppdaterade",
-            description: `${staff.first_name} ${staff.last_name}`,
-          });
-          onOpenChange(false);
-        },
-        onError: (err: any) =>
-          toast({ title: "Fel", description: err.message, variant: "destructive" }),
-      }
-    );
+    setSaving(true);
+    const { error } = await supabase.rpc("set_user_scopes", {
+      _staff_id: staff.id,
+      _portals: access,
+      _store_ids: finalStoreIds,
+    });
+    setSaving(false);
+
+    if (error) {
+      toast({ title: "Fel", description: error.message, variant: "destructive" });
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["staff"] });
+    toast({
+      title: "Behörigheter uppdaterade",
+      description: `${staff.first_name} ${staff.last_name}`,
+    });
+    onOpenChange(false);
   };
 
   const shopEnabled = isSuperAdmin || portals.includes("shop");
@@ -196,7 +197,7 @@ export function StaffAccessDialog({ open, onOpenChange, staff }: Props) {
 
         <DialogFooter>
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>Avbryt</Button>
-          <Button size="sm" onClick={handleSave} disabled={updateStaff.isPending}>
+          <Button size="sm" onClick={handleSave} disabled={saving}>
             <Save className="h-3 w-3 mr-1.5" /> Spara behörigheter
           </Button>
         </DialogFooter>
