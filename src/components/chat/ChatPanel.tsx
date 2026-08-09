@@ -589,6 +589,18 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
                         </button>
                       )}
 
+                      {!mine &&
+                        (showHeader ? (
+                          <PortalAvatar
+                            name={m.sender_portal_name || m.sender_portal_key}
+                            url={avatars[m.sender_portal_key]}
+                            size="sm"
+                            className="self-end mb-0.5"
+                          />
+                        ) : (
+                          <span aria-hidden className="h-6 w-6 shrink-0" />
+                        ))}
+
                       <div
                         className={cn(
                           "max-w-[85%] sm:max-w-[80%] px-2.5 py-1 text-xs leading-snug shadow-sm",
