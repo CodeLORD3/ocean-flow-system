@@ -55,6 +55,15 @@ const CATEGORY_FILTERS = [
   { value: "event", label: "Händelser", color: "bg-blue-500" },
 ] as const;
 
+/**
+ * Kort etikett i månadsrutan. Ordernummer tar all plats i en liten cell,
+ * så kundnamnet visas där och hela titeln ligger kvar i verktygstipset.
+ */
+function compactEventTitle(title: string): string {
+  const m = title?.match(/^[A-ZÅÄÖ]{2,}-\d{8}-\d+\s*[—–-]\s*(.+)$/);
+  return (m ? m[1] : title || "").trim();
+}
+
 function getEventTypeInfo(type: string) {
   return EVENT_TYPES.find(t => t.value === type) || EVENT_TYPES[0];
 }
@@ -534,7 +543,7 @@ export default function ScheduleCalendar() {
                         <div
                           key={cell.day}
                           className={cn(
-                            "min-h-[80px] border-b border-r border-border p-1 cursor-pointer hover:bg-muted/30 transition-colors relative",
+                            "min-h-[80px] overflow-hidden border-b border-r border-border p-1 cursor-pointer hover:bg-muted/30 transition-colors relative",
                             dayPast && "bg-muted/20",
                             today && "ring-1 ring-inset ring-primary",
                             isSelected && "ring-2 ring-inset ring-primary bg-primary/5",
@@ -562,10 +571,11 @@ export default function ScheduleCalendar() {
                             <div
                               key={evt.id}
                               draggable
+                              title={evt.title}
                               onDragStart={(e) => { e.stopPropagation(); e.dataTransfer.setData("text/plain", evt.id); e.dataTransfer.effectAllowed = "move"; setDraggedEventId(evt.id); }}
                               onDragEnd={() => { setDraggedEventId(null); setDropTarget(null); }}
                               className={cn(
-                                "text-[8px] truncate mt-0.5 px-1 rounded-sm text-white cursor-grab active:cursor-grabbing flex items-center gap-0.5",
+                                "text-[8px] mt-0.5 px-1 rounded-sm text-white cursor-grab active:cursor-grabbing flex w-full min-w-0 items-center gap-0.5",
                                 getEventDisplayColor(evt),
                                 draggedEventId === evt.id && "opacity-50",
                                 evt.event_type === "task" && evt.is_done && "line-through",
@@ -573,8 +583,8 @@ export default function ScheduleCalendar() {
                               )}
                             >
                               {evt.event_type === "task" && evt.is_done && <Check className="h-2 w-2 shrink-0" />}
-                              {evt.title}
-                              <div className={cn("h-1.5 w-1.5 rounded-full shrink-0 ml-auto", getSeverityDotColor(evt.severity))} />
+                              <span className="min-w-0 flex-1 truncate">{compactEventTitle(evt.title)}</span>
+                              <div className={cn("h-1.5 w-1.5 rounded-full shrink-0", getSeverityDotColor(evt.severity))} />
                             </div>
                           ))}
                           {dayEvents.length > 3 && (
