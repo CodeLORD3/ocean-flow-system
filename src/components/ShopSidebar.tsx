@@ -42,10 +42,6 @@ const salesNav = [
 
 const inventoryNav = [
   { title: "Lager", url: "/inventory", icon: Package },
-  { title: "Lagerrörelser", url: "/stock-movements", icon: History },
-  { title: "Överföringar", url: "/stock-transfers", icon: ArrowLeftRight },
-  { title: "Svinn", url: "/waste", icon: Trash2 },
-  { title: "Spårbarhet — partier", url: "/traceability", icon: ShieldCheck },
   { title: "Inleveranser", url: "/receiving", icon: Truck },
   { title: "Leverantörer", url: "/suppliers", icon: Truck },
 ];
@@ -137,7 +133,7 @@ export function ShopSidebar() {
                         <NavLink to={item.url} end onClick={closeMobileSidebar}>
                           <item.icon className="h-4 w-4" />
                           {!collapsed && <span>{item.title}</span>}
-                          {!collapsed && <NotificationBadge count={getCount(item.url) + (item.url === "/chat" ? chatUnread.total : 0) + (item.url === "/stock-transfers" ? incomingTransfers : 0)} />}
+                          {!collapsed && <NotificationBadge count={getCount(item.url) + (item.url === "/chat" ? chatUnread.total : 0) + (item.url === "/stock-transfers" || item.url === "/inventory" ? incomingTransfers : 0)} />}
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -161,7 +157,7 @@ export function ShopSidebar() {
                   <NavLink to={item.url} end onClick={closeMobileSidebar}>
                     <item.icon className="h-4 w-4" />
                     {!collapsed && <span>{item.title}</span>}
-                    {!collapsed && <NotificationBadge count={getCount(item.url) + (item.url === "/chat" ? chatUnread.total : 0) + (item.url === "/stock-transfers" ? incomingTransfers : 0)} />}
+                    {!collapsed && <NotificationBadge count={getCount(item.url) + (item.url === "/chat" ? chatUnread.total : 0) + (item.url === "/stock-transfers" || item.url === "/inventory" ? incomingTransfers : 0)} />}
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>

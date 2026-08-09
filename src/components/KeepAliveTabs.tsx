@@ -24,7 +24,7 @@ import PurchaseSchedule from "@/pages/PurchaseSchedule";
 import ProductionSchedule from "@/pages/ProductionSchedule";
 import ProductionReporting from "@/pages/ProductionReporting";
 import ReportsRouter from "@/pages/ReportsRouter";
-import AuditLog from "@/pages/AuditLog";
+import AuditRouter from "@/pages/AuditRouter";
 import TradeOffers from "@/pages/TradeOffers";
 import TradeHistory from "@/pages/TradeHistory";
 import InvestorPortal from "@/pages/InvestorPortal";
@@ -85,7 +85,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/purchase-schedule": { component: <PurchaseSchedule /> },
   "/production-schedule": { component: <ProductionSchedule /> },
   "/production-reporting": { component: <ProductionReporting /> },
-  "/audit": { component: <AuditLog /> },
+  "/audit": { component: <AuditRouter /> },
   "/settings": { component: <PlaceholderPage title="Systeminställningar" /> },
   "/trade-offers": { component: <TradeOffers /> },
   "/trade-history": { component: <TradeHistory /> },
