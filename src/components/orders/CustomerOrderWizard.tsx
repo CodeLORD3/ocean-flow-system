@@ -46,6 +46,7 @@ import {
   checkCapacity,
   dayWindow,
   scaleQuantity,
+  weekdayName,
 } from "@/lib/catering";
 
 const nf = (v: number, d = 2) =>
@@ -556,9 +557,9 @@ export function CustomerOrderWizard({
             <div className="space-y-2 sm:col-span-2">
               <div className="rounded-md bg-muted p-3 text-xs">
                 {window_.closed
-                  ? `Stängt ${weekdayLabel(wantedDate)} — ${window_.sourceLabel}`
+                  ? `Stängt ${weekdayName(wantedDate)} — ${window_.sourceLabel}`
                   : window_.open && window_.close
-                    ? `Öppet ${weekdayLabel(wantedDate)} ${window_.open}–${window_.close} (${window_.sourceLabel})`
+                    ? `Öppet ${weekdayName(wantedDate)} ${window_.open}–${window_.close} (${window_.sourceLabel})`
                     : "Öppettider är inte upplagda för butiken."}
               </div>
               {capacity.blocking && (
