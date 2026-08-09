@@ -295,8 +295,6 @@ export default function OrganisationOverview() {
 
       {/* KPI Row */}
 
-      {/* Grossist/Admin: veckoschema för inköp */}
-      {!isShop && <PurchaseWeekCard />}
 
       {/* Shop: photos + chat */}
       {isShop && (
