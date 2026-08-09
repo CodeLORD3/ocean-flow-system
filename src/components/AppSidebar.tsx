@@ -75,11 +75,8 @@ const salesNav = [
 const purchaseNav = [
   { title: "Lager", url: "/inventory", icon: Package },
   { title: "Inköpsrapportering", url: "/purchase-reporting", icon: FileText },
-  { title: "Leverantörer", url: "/suppliers", icon: Truck },
-];
-
-const productionNav = [
   { title: "Produktion", url: "/production", icon: Scissors },
+  { title: "Leverantörer", url: "/suppliers", icon: Truck },
 ];
 
 const inventoryNav = [
@@ -114,8 +111,7 @@ const sections: NavSection[] = [
   { label: "Översikt", items: overviewNav },
   { label: "Kalender", items: calendarNav },
   { label: "Försäljning", items: salesNav },
-  { label: "Inköp", items: purchaseNav },
-  { label: "Produktion", items: productionNav },
+  { label: "Inköp & Produktion", items: purchaseNav },
   { label: "Lagerstyrning", items: inventoryNav },
   { label: "Organisation", items: orgNav },
   { label: "Ekonomi & Rapporter", items: financeNav },
