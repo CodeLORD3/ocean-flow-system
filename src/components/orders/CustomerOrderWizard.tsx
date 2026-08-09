@@ -33,6 +33,20 @@ import {
   NewOrderLineInput,
 } from "@/hooks/useCustomerOrders";
 import { RetailCustomer, shelfLifeWarning } from "@/lib/customerOrders";
+import {
+  useMajorHolidays,
+  useSameDayOrders,
+  useSpecialDays,
+  useStoreOrderSettings,
+} from "@/hooks/useStoreOrderSettings";
+import {
+  ALLERGENS,
+  allergenLabel,
+  checkAllergens,
+  checkCapacity,
+  dayWindow,
+  scaleQuantity,
+} from "@/lib/catering";
 
 const nf = (v: number, d = 2) =>
   Number(v || 0).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -42,6 +56,7 @@ interface DraftLine extends NewOrderLineInput {
   productName: string;
   imageUrl?: string | null;
   warning?: string | null;
+  locked_from_scaling?: boolean;
 }
 
 /**
@@ -87,15 +102,42 @@ export function CustomerOrderWizard({
   const [source, setSource] = useState("telefon");
   const [guestCount, setGuestCount] = useState("");
   const [allergyNote, setAllergyNote] = useState("");
+  const [excludedAllergens, setExcludedAllergens] = useState<string[]>([]);
   const [note, setNote] = useState("");
   const [address, setAddress] = useState({ street: "", postal_code: "", city: "" });
 
   const [lines, setLines] = useState<DraftLine[]>([]);
   const [productSearch, setProductSearch] = useState("");
-  const [pending, setPending] = useState<{ product: any; qty: string } | null>(null);
+  const [pending, setPending] = useState<{ product: any; qty: string; portion: string } | null>(null);
   const [freeText, setFreeText] = useState({ name: "", qty: "", price: "" });
   const productInput = useRef<HTMLInputElement>(null);
   const qtyInput = useRef<HTMLInputElement>(null);
+
+  /* Öppettider, kapacitetstak och storhelger för butiken */
+  const { data: settings } = useStoreOrderSettings(storeId);
+  const { data: specialDays = [] } = useSpecialDays(storeId);
+  const { data: holidays = [] } = useMajorHolidays(storeId);
+  const { data: sameDayOrders = [] } = useSameDayOrders(storeId, wantedDate);
+
+  const capacity = useMemo(
+    () =>
+      checkCapacity({
+        date: wantedDate,
+        time: wantedTime || null,
+        orderType,
+        category,
+        settings,
+        specialDays,
+        holidays,
+        sameDayOrders,
+      }),
+    [wantedDate, wantedTime, orderType, category, settings, specialDays, holidays, sameDayOrders],
+  );
+
+  const window_ = useMemo(
+    () => dayWindow({ date: wantedDate, settings, specialDays, holidays }),
+    [wantedDate, settings, specialDays, holidays],
+  );
 
   useEffect(() => {
     if (!open) {
@@ -108,6 +150,7 @@ export function CustomerOrderWizard({
       setWantedTime("");
       setGuestCount("");
       setAllergyNote("");
+      setExcludedAllergens([]);
       setNote("");
       setStatus("ny");
       setCategory("vanlig");
@@ -122,8 +165,29 @@ export function CustomerOrderWizard({
         postal_code: customer.postal_code || "",
         city: customer.city || "",
       });
+      setExcludedAllergens(customer.excluded_allergens || []);
     }
   }, [customer]);
+
+  /* Cateringrader räknas om när gästantalet ändras. Låsta rader står kvar. */
+  useEffect(() => {
+    const guests = Number(guestCount || 0);
+    if (category !== "catering" || !guests) return;
+    setLines((prev) =>
+      prev.map((l) =>
+        l.portion_per_guest && !l.locked_from_scaling
+          ? {
+              ...l,
+              quantity_ordered: scaleQuantity({
+                portionPerGuest: l.portion_per_guest,
+                guestCount: guests,
+                currentQuantity: l.quantity_ordered,
+              }),
+            }
+          : l,
+      ),
+    );
+  }, [guestCount, category]);
 
   useEffect(() => {
     if (step === 3) setTimeout(() => productInput.current?.focus(), 50);
@@ -146,7 +210,18 @@ export function CustomerOrderWizard({
     0,
   );
 
-  const addProduct = async (product: any, quantity: number) => {
+  const addProduct = async (product: any, quantity: number, portionPerGuest?: number | null) => {
+    // Allergivarning vid artikelval — varnar, spärrar inte.
+    const conflict = checkAllergens({
+      productName: product.name,
+      productAllergens: product.allergens,
+      excluded: excludedAllergens,
+    });
+    if (conflict.message) {
+      const ok = window.confirm(`${conflict.message}\n\nLägga till varan ändå?`);
+      if (!ok) return;
+    }
+
     const price = await fetchTodaysPrice(product.id, storeId);
     const warning = shelfLifeWarning({
       productName: product.name,
@@ -163,7 +238,8 @@ export function CustomerOrderWizard({
         quantity_ordered: quantity,
         unit: product.unit || "kg",
         estimated_price_per_unit: price,
-        warning,
+        portion_per_guest: portionPerGuest ?? null,
+        warning: conflict.message ?? warning,
       },
     ]);
     if (warning) toast.info(warning);
@@ -206,7 +282,7 @@ export function CustomerOrderWizard({
         delivery_city: orderType === "leverans" ? address.city : null,
         guest_count: category === "catering" && guestCount ? Number(guestCount) : null,
         allergy_note: allergyNote || null,
-        excluded_allergens: customer.excluded_allergens || [],
+        excluded_allergens: excludedAllergens,
         source,
         received_by_name: activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : null,
         note: note || null,

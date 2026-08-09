@@ -2714,6 +2714,56 @@ export type Database = {
         }
         Relationships: []
       }
+      major_holidays: {
+        Row: {
+          capacity_cap: number | null
+          close_time: string | null
+          created_at: string
+          holiday_date: string
+          id: string
+          last_order_date: string
+          name: string
+          note: string | null
+          open_time: string | null
+          store_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          capacity_cap?: number | null
+          close_time?: string | null
+          created_at?: string
+          holiday_date: string
+          id?: string
+          last_order_date: string
+          name: string
+          note?: string | null
+          open_time?: string | null
+          store_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          capacity_cap?: number | null
+          close_time?: string | null
+          created_at?: string
+          holiday_date?: string
+          id?: string
+          last_order_date?: string
+          name?: string
+          note?: string | null
+          open_time?: string | null
+          store_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "major_holidays_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       makrilltrade_articles_cache: {
         Row: {
           active: boolean
@@ -4289,6 +4339,7 @@ export type Database = {
       products: {
         Row: {
           active: boolean | null
+          allergens: string[]
           barcode: string | null
           catch_weight: boolean
           category: string
@@ -4319,6 +4370,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean | null
+          allergens?: string[]
           barcode?: string | null
           catch_weight?: boolean
           category: string
@@ -4349,6 +4401,7 @@ export type Database = {
         }
         Update: {
           active?: boolean | null
+          allergens?: string[]
           barcode?: string | null
           catch_weight?: boolean
           category?: string
@@ -4694,6 +4747,7 @@ export type Database = {
           assigned_to: string | null
           created_at: string
           created_by: string | null
+          customer_order_id: string | null
           description: string | null
           end_time: string | null
           event_date: string
@@ -4714,6 +4768,7 @@ export type Database = {
           assigned_to?: string | null
           created_at?: string
           created_by?: string | null
+          customer_order_id?: string | null
           description?: string | null
           end_time?: string | null
           event_date: string
@@ -4734,6 +4789,7 @@ export type Database = {
           assigned_to?: string | null
           created_at?: string
           created_by?: string | null
+          customer_order_id?: string | null
           description?: string | null
           end_time?: string | null
           event_date?: string
@@ -4755,6 +4811,13 @@ export type Database = {
             columns: ["assigned_to"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_events_customer_order_id_fkey"
+            columns: ["customer_order_id"]
+            isOneToOne: false
+            referencedRelation: "customer_orders"
             referencedColumns: ["id"]
           },
           {
@@ -5526,6 +5589,44 @@ export type Database = {
         }
         Relationships: []
       }
+      store_order_settings: {
+        Row: {
+          created_at: string
+          id: string
+          max_catering_per_day: number
+          max_deliveries_per_slot: number
+          opening_hours: Json
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_catering_per_day?: number
+          max_deliveries_per_slot?: number
+          opening_hours?: Json
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_catering_per_day?: number
+          max_deliveries_per_slot?: number
+          opening_hours?: Json
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_order_settings_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: true
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_sidebar_prefs: {
         Row: {
           created_at: string
@@ -5554,6 +5655,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "store_sidebar_prefs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_special_days: {
+        Row: {
+          close_time: string | null
+          closed: boolean
+          created_at: string
+          day: string
+          id: string
+          note: string | null
+          open_time: string | null
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          close_time?: string | null
+          closed?: boolean
+          created_at?: string
+          day: string
+          id?: string
+          note?: string | null
+          open_time?: string | null
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          close_time?: string | null
+          closed?: boolean
+          created_at?: string
+          day?: string
+          id?: string
+          note?: string | null
+          open_time?: string | null
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_special_days_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
