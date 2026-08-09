@@ -1307,7 +1307,40 @@ export default function Products() {
               <p className="mt-1 text-[10px] text-muted-foreground">
                 Systemet varnar i kundbeställningar när kunden angett att något av dessa ska undvikas.
               </p>
+
+              <Label className="mt-3 block text-xs">Kan innehålla spår av</Label>
+              <div className="mt-1 flex flex-wrap gap-1">
+                {ALLERGENS.map((a) => {
+                  const on = (form.may_contain || []).includes(a.key);
+                  return (
+                    <button
+                      key={a.key}
+                      type="button"
+                      onClick={() =>
+                        setField(
+                          "may_contain" as any,
+                          (on
+                            ? (form.may_contain || []).filter((x: string) => x !== a.key)
+                            : [...(form.may_contain || []), a.key]) as any,
+                        )
+                      }
+                      className={`rounded-full border px-2 py-1 text-[11px] ${
+                        on
+                          ? "border-amber-500 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                          : "border-border text-muted-foreground hover:border-amber-500/50"
+                      }`}
+                    >
+                      {a.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                Spårmärkning visas separat från deklarerade allergener. Sparar du produkten räknas allergenerna som
+                kontrollerade.
+              </p>
             </div>
+
 
             {/* Kräver hantering — blockerar auto-godkännande av pris */}
             <label className="flex cursor-pointer items-start gap-2 rounded-md border p-2">
