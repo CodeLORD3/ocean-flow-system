@@ -10,17 +10,21 @@ export const FRESH_TEMP_MAX = 2;
 export const FRESH_TEMP_MIN = -1;
 export const FROZEN_TEMP_MAX = -18;
 
-export type TempMode = "fersk" | "fryst";
+/** Levande skaldjur ska hållas vid liv, inte iskylt — därför ingen gräns. */
+export const LIVE_TEMP_MAX = 8;
+export type TempMode = "fersk" | "fryst" | "levande";
 
 export function tempOutOfRange(value: number | null, mode: TempMode): boolean {
   if (value === null || Number.isNaN(value)) return false;
-  return mode === "fryst" ? value > FROZEN_TEMP_MAX : value > FRESH_TEMP_MAX || value < FRESH_TEMP_MIN;
+  if (mode === "fryst") return value > FROZEN_TEMP_MAX;
+  if (mode === "levande") return value > LIVE_TEMP_MAX || value < 0;
+  return value > FRESH_TEMP_MAX || value < FRESH_TEMP_MIN;
 }
 
 export function tempLimitText(mode: TempMode): string {
-  return mode === "fryst"
-    ? `högst ${FROZEN_TEMP_MAX} grader`
-    : `${FRESH_TEMP_MIN} till ${FRESH_TEMP_MAX} grader`;
+  if (mode === "fryst") return `högst ${FROZEN_TEMP_MAX} grader`;
+  if (mode === "levande") return `0 till ${LIVE_TEMP_MAX} grader, hålls levande`;
+  return `${FRESH_TEMP_MIN} till ${FRESH_TEMP_MAX} grader`;
 }
 
 export function parseTemp(raw: string): number | null {
