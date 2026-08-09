@@ -32,7 +32,7 @@ export interface TransferOrderRow {
   approved_in_at: string | null;
   created_at: string;
   from_location?: { name: string; location_type: string } | null;
-  to_location?: { name: string; location_type: string } | null;
+  to_location?: { name: string; location_type: string; store_id?: string | null } | null;
   transfer_order_lines?: any[];
 }
 
@@ -45,7 +45,7 @@ export function useTransferOrders(locationIds?: string[]) {
         .select(
           `*,
            from_location:storage_locations!transfer_orders_from_location_id_fkey(name, location_type),
-           to_location:storage_locations!transfer_orders_to_location_id_fkey(name, location_type),
+           to_location:storage_locations!transfer_orders_to_location_id_fkey(name, location_type, store_id),
            transfer_order_lines(*, products(name, sku, unit), lots(lot_number))`,
         )
         .order("created_at", { ascending: false })
