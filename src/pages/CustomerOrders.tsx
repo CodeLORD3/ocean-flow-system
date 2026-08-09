@@ -1,19 +1,8 @@
 import { useMemo, useState } from "react";
-import {
-  Plus,
-  Search,
-  CalendarDays,
-  ShoppingBag,
-  Users,
-  ChefHat,
-  Truck,
-  BarChart3,
-} from "lucide-react";
+import { Plus, Search, Users, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+
 import {
   Select,
   SelectContent,
@@ -41,10 +30,8 @@ import { FactBox, FactGroup, FactRow } from "@/components/shell/FactBox";
 import { StatusBar } from "@/components/shell/StatusBar";
 
 import { RetailCustomerRegistry } from "@/components/orders/RetailCustomerRegistry";
-import { PurchaseNeedsView } from "@/components/orders/PurchaseNeedsView";
-import { CateringKitchenList } from "@/components/orders/CateringKitchenList";
-import { DeliveryRouteView } from "@/components/orders/DeliveryRouteView";
 import { CustomerOrderStats } from "@/components/orders/CustomerOrderStats";
+
 
 
 /** Sparade vyer, som listsidorna i Dynamics 365. */
@@ -119,6 +106,8 @@ export default function CustomerOrders() {
   const [selected, setSelected] = useState<CustomerOrder | null>(null);
   const [openRow, setOpenRow] = useState<string | null>(null);
   const [editing, setEditing] = useState<CustomerOrder | null>(null);
+  const [panel, setPanel] = useState<"orders" | "customers" | "stats">("orders");
+
   const [view, setView] = useState("aktiva");
   const [marked, setMarked] = useState<string[]>([]);
 
@@ -152,11 +141,6 @@ export default function CustomerOrders() {
     );
   }, [orders, tomorrowOrders, selected]);
 
-  const tomorrowNeeds = tomorrowOrders.flatMap((o) =>
-    (o.customer_order_lines || [])
-      .filter((l) => l.reservation_status === "inkopsbehov" && l.pack_status !== "struken")
-      .map((l) => ({ order: o, line: l })),
-  );
 
   const rowReadOnly = (o: CustomerOrder) =>
     isShop ? o.store_id !== activeStoreId : site === "production";
@@ -215,48 +199,15 @@ export default function CustomerOrders() {
         kassan vid hämtning.
       </p>
 
-
-
-      <Tabs defaultValue="orders">
-        <div className="-mx-3 overflow-x-auto px-3 pb-1 sm:mx-0 sm:px-0">
-          <TabsList className="w-max sm:w-auto sm:flex-wrap">
-            <TabsTrigger value="orders" className="h-10 gap-1">
-              <ShoppingBag className="h-4 w-4" /> Order
-            </TabsTrigger>
-            <TabsTrigger value="tomorrow" className="h-10 gap-1">
-              <CalendarDays className="h-4 w-4" /> Imorgon
-              {tomorrowOrders.length > 0 && (
-                <Badge variant="secondary" className="ml-1">
-                  {tomorrowOrders.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="kitchen" className="h-10 gap-1">
-              <ChefHat className="h-4 w-4" /> Att förbereda
-            </TabsTrigger>
-            <TabsTrigger value="delivery" className="h-10 gap-1">
-              <Truck className="h-4 w-4" /> Leverans
-            </TabsTrigger>
-            <TabsTrigger value="customers" className="h-10 gap-1">
-              <Users className="h-4 w-4" /> Kundregister
-            </TabsTrigger>
-            <TabsTrigger value="stats" className="h-10 gap-1">
-              <BarChart3 className="h-4 w-4" /> Statistik
-            </TabsTrigger>
-            {!isShop && (
-              <TabsTrigger value="needs" className="h-10">
-                Sålt men inte köpt
-              </TabsTrigger>
-            )}
-          </TabsList>
-        </div>
-
-
-
-
-        <TabsContent value="orders" className="space-y-3">
-          <div className="flex flex-wrap gap-2">
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <div
+            className={`flex min-w-[220px] flex-1 flex-wrap gap-2 ${
+              panel === "orders" ? "" : "hidden"
+            }`}
+          >
             <div className="relative min-w-[200px] flex-1">
+
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 className="h-11 pl-9"
@@ -318,7 +269,27 @@ export default function CustomerOrders() {
             </Select>
           </div>
 
+          <div className="ml-auto flex shrink-0 gap-2">
+            <Button
+              variant={panel === "customers" ? "default" : "outline"}
+              className="h-11"
+              onClick={() => setPanel(panel === "customers" ? "orders" : "customers")}
+            >
+              <Users className="mr-2 h-4 w-4" /> Kundregister
+            </Button>
+            <Button
+              variant={panel === "stats" ? "default" : "outline"}
+              className="h-11"
+              onClick={() => setPanel(panel === "stats" ? "orders" : "stats")}
+            >
+              <BarChart3 className="mr-2 h-4 w-4" /> Statistik
+            </Button>
+          </div>
+        </div>
+
+        <div className={panel === "orders" ? "space-y-3" : "hidden"}>
           {!isLoading && viewOrders.length === 0 ? (
+
             <EmptyState
               title={orders.length === 0 ? "Inga kundbeställningar" : "Inga rader i den här vyn"}
               description={
@@ -448,92 +419,14 @@ export default function CustomerOrders() {
               />
             </div>
           )}
+        </div>
 
-
-        </TabsContent>
-
-        <TabsContent value="tomorrow" className="space-y-3">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">
-                {tomorrowOrders.length} order imorgon
-                {tomorrowNeeds.length > 0 ? `, ${tomorrowNeeds.length} varor behöver köpas in` : ""}
-              </CardTitle>
-            </CardHeader>
-            {tomorrowNeeds.length > 0 && (
-              <CardContent className="space-y-1">
-                {tomorrowNeeds.map(({ order, line }) => (
-                  <div
-                    key={line.id}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-amber-500/15 px-3 py-2 text-sm"
-                  >
-                    <span className="font-medium">
-                      {(line.products?.name || line.free_text_name) as string}
-                    </span>
-                    <span className="font-mono tabular-nums">
-                      {nf(line.quantity_ordered)} {line.unit}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {order.order_number} · Ska köpas färskt inför imorgon
-                    </span>
-                  </div>
-                ))}
-              </CardContent>
-            )}
-          </Card>
-
-          {tomorrowOrders.length === 0 ? (
-            <EmptyState
-              title="Inga order imorgon"
-              description="När en beställning läggs med imorgondagens datum hamnar den här."
-            />
-          ) : (
-            <div className="space-y-1">
-              <CustomerOrderRowHeader />
-              {tomorrowOrders.map((o) => (
-                <CustomerOrderRow
-                  key={o.id}
-                  order={o}
-                  onOpen={setSelected}
-                  readOnly={rowReadOnly(o)}
-                  open={openRow === o.id}
-                  onToggle={toggleRow}
-                />
-              ))}
-            </div>
-
-          )}
-        </TabsContent>
-
-        <TabsContent value="kitchen">
-          <CateringKitchenList storeId={effectiveStore} />
-        </TabsContent>
-
-        <TabsContent value="delivery">
-          <DeliveryRouteView
-            storeId={effectiveStore}
-            storeName={
-              isShop ? activeStoreName : stores.find((s: any) => s.id === effectiveStore)?.name
-            }
-            readOnly={!canEdit}
-          />
-        </TabsContent>
-
-        <TabsContent value="customers">
+        {panel === "customers" && (
           <RetailCustomerRegistry storeId={effectiveStore} readOnly={!canEdit} />
-        </TabsContent>
-
-        <TabsContent value="stats">
-          <CustomerOrderStats storeId={effectiveStore} />
-        </TabsContent>
-
-
-        {!isShop && (
-          <TabsContent value="needs">
-            <PurchaseNeedsView />
-          </TabsContent>
         )}
-      </Tabs>
+        {panel === "stats" && <CustomerOrderStats storeId={effectiveStore} />}
+      </div>
+
 
       {(isShop ? activeStoreId : effectiveStore) && (
         <>
