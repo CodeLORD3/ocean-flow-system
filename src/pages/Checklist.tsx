@@ -31,6 +31,9 @@ import { useSite } from "@/contexts/SiteContext";
 import { ChecklistTable } from "@/components/checklist/ChecklistTable";
 import { ChecklistCopyDialog } from "@/components/checklist/ChecklistCopyDialog";
 import { ChecklistRestoreDialog } from "@/components/checklist/ChecklistRestoreDialog";
+import { DailyReportCard } from "@/components/dashboard/DailyReportCard";
+import { useTabs } from "@/contexts/TabsContext";
+
 
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import {
@@ -159,6 +162,8 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
   const [renameValue, setRenameValue] = useState("");
   const setWeekdays = useSetTemplateWeekdays();
   const { staff } = useStaffAuth();
+  const { switchTab } = useTabs();
+
   const isAdmin = ((staff?.portal_access ?? []) as string[]).includes("admin");
 
   const todays = useMemo(() => templates.filter((t) => templateAppliesOn(t, iso)), [templates, iso]);
@@ -459,17 +464,20 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
         <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Dagens checklistor · {weekdayName(iso)}
         </h2>
-        {isLoading ? (
-          <p className="text-xs text-muted-foreground">Laddar checklistor…</p>
-        ) : todays.length === 0 ? (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {isLoading ? (
+            <p className="text-xs text-muted-foreground">Laddar checklistor…</p>
+          ) : (
+            todays.map((t) => listRow(t))
+          )}
+          <DailyReportCard storeId={storeId} onOpenFull={() => switchTab("/dagsrapport")} />
+        </div>
+        {!isLoading && todays.length === 0 && (
           <p className="text-xs text-muted-foreground">
             Ingen checklista är schemalagd för {weekdayName(iso).toLowerCase()}. Öppna kalenderikonen högst upp för att ändra veckoschemat.
           </p>
-        ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {todays.map((t) => listRow(t))}
-          </div>
         )}
+
       </section>
 
       {others.length > 0 && (
