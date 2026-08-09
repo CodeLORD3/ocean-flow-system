@@ -40,6 +40,9 @@ import { RetailCustomerRegistry } from "@/components/orders/RetailCustomerRegist
 import { PurchaseNeedsView } from "@/components/orders/PurchaseNeedsView";
 import { CateringKitchenList } from "@/components/orders/CateringKitchenList";
 import { StoreOrderSettingsDialog } from "@/components/orders/StoreOrderSettingsDialog";
+import { DeliveryRouteView } from "@/components/orders/DeliveryRouteView";
+import { CustomerOrderStats } from "@/components/orders/CustomerOrderStats";
+import { printPackList } from "@/lib/customerOrderPackListPdf";
 
 const nf = (v: any, d = 1) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
