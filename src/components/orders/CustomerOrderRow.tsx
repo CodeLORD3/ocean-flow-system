@@ -93,8 +93,9 @@ export function CustomerOrderRow({
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                 <span className="font-mono tabular-nums text-foreground">
-                  {order.wanted_date}
+                  {weekday(order.wanted_date)} {order.wanted_date}
                   {order.wanted_time ? ` kl ${order.wanted_time.slice(0, 5)}` : ""}
+
                 </span>
                 <span className="inline-flex items-center gap-1">
                   {order.order_type === "leverans" ? (
