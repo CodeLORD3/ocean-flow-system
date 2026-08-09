@@ -752,10 +752,19 @@ export default function StockOverview({
                                         variant="outline"
                                         size="sm"
                                         className="h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+                                        onClick={() => onLineAction?.("waste", l)}
+                                      >
+                                        <Trash2 className="h-3 w-3" /> Svinn
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
                                         onClick={() => onLineAction?.("delete", l)}
                                       >
                                         <Trash2 className="h-3 w-3" /> Radera
                                       </Button>
+
                                     </div>
                                   </div>
                                 );
