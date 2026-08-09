@@ -2,6 +2,21 @@
 
 Ett designkoncept som lägger Dynamics 365 (Finance & Operations / Business Central) interaktionsmönster över systemet vi redan har. Ingen affärslogik ändras — det är skalet, listorna och detaljvyerna som får D365-strukturen. Tonade statusrader behålls, de är vår signatur och ersätts inte av neutrala rader.
 
+## Vald riktning: "Tätt rutnät" (alternativ 2), med tydligare färger
+
+Vi bygger på alternativ 2: command bar högst upp, klickbar vyväljare vid rubriken, kvarvarande flikrad, tätt rutnät med kolumnlinjer och kryssrutor, FactBox till höger, statusrad i botten med "4 av 128 rader markerade".
+
+Skillnaden mot prototypen är färgstyrkan — tonerna där var för bleka. Vi kör en steg starkare skala:
+
+- Radton höjs från ~97% till 88–91% ljushet, dvs samma mättnad som dagens rader (`--row-ok`, `--row-warn`, `--row-late`, `--row-done`) i stället för prototypens pasteller.
+- Vänsterkanten blir 4 px i full mättnad, inte 2 px.
+- Statuspunkten byts mot en färgad statusetikett med mörk text på ljus botten, så statusen läses även i gråskala.
+- Markerad rad får tydlig teal ram plus en snäpp mörkare ton av sin egen statusfärg — inte en neutral blå markering.
+- Hover mörkar raden ett steg i stället för `brightness-95`, så tonen inte blir grumlig.
+- Kolumnlinjer och tabellramar hålls kvar men i en ljusare grå så färgen på raden dominerar.
+
+Allt detta sätts som tokens i `src/index.css`, inte som klasser i komponenterna.
+
 ## Vad som kännetecknar D365 — och hur vi tar in det
 
 **1. Command bar i stället för utspridda knappar**
