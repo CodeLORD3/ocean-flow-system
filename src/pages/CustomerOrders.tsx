@@ -285,7 +285,27 @@ export default function CustomerOrders() {
             </Select>
           </div>
 
+          <div className="ml-auto flex shrink-0 gap-2">
+            <Button
+              variant={panel === "customers" ? "default" : "outline"}
+              className="h-11"
+              onClick={() => setPanel(panel === "customers" ? "orders" : "customers")}
+            >
+              <Users className="mr-2 h-4 w-4" /> Kundregister
+            </Button>
+            <Button
+              variant={panel === "stats" ? "default" : "outline"}
+              className="h-11"
+              onClick={() => setPanel(panel === "stats" ? "orders" : "stats")}
+            >
+              <BarChart3 className="mr-2 h-4 w-4" /> Statistik
+            </Button>
+          </div>
+        </div>
+
+        <div className={panel === "orders" ? "space-y-3" : "hidden"}>
           {!isLoading && viewOrders.length === 0 ? (
+
             <EmptyState
               title={orders.length === 0 ? "Inga kundbeställningar" : "Inga rader i den här vyn"}
               description={
