@@ -66,6 +66,7 @@ import {
 import { useSite } from "@/contexts/SiteContext";
 import { canSeeCosts } from "@/lib/pageAccess";
 import LevelSelector, { type LevelTotals } from "@/components/inventory/LevelSelector";
+import StockTree from "@/components/inventory/StockTree";
 import {
   LEVEL_ORDER,
   LEVEL_LABEL,
