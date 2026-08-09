@@ -690,10 +690,8 @@ export default function Receiving() {
                         </div>
                       </div>
 
-                      {/* ── NEW: Freshness fields (always visible) ── */}
-                      <div
-                        className={`grid grid-cols-3 gap-2 p-2 rounded-md border mt-1 ${report.expiry_date ? getExpiryColor(report.expiry_date) : "border-border/30 bg-muted/10"}`}
-                      >
+                      {/* ── Freshness fields (always visible) ── */}
+                      <div className="grid grid-cols-2 gap-2 p-2 rounded-md border mt-1 border-border/30 bg-muted/10">
                         <div className="space-y-0.5">
                           <Label className="text-[9px] text-muted-foreground uppercase tracking-wide">
                             Mottagen mängd
@@ -729,10 +727,9 @@ export default function Receiving() {
                             className="h-6 text-[10px] bg-background"
                           />
                         </div>
-                      </div>
-
                         {isChfStore && (
-                          <div className="col-span-3 space-y-0.5 pt-1 border-t border-border/40">
+                          <div className="col-span-2 space-y-0.5 pt-1 border-t border-border/40">
+
                             <Label className="text-[9px] text-muted-foreground uppercase tracking-wide">
                               Värde per {line.products?.unit || "kg"} ({localCurrency}) — auto-förslag, redigerbart
                             </Label>
