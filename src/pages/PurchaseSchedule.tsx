@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, DragEvent } from "react";
+import { useMemo, useState, useCallback, useRef, DragEvent } from "react";
 import { GROSSIST_FLYTANDE_ID } from "@/lib/locations";
 import { useShopOrders } from "@/hooks/useShopOrders";
 import { useStores } from "@/hooks/useStores";
