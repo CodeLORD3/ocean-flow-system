@@ -31,6 +31,11 @@ export interface TransferOrderRow {
   approved_out_at: string | null;
   approved_in_at: string | null;
   created_at: string;
+  catch_certificate_ref?: string | null;
+  catch_cert_validated?: string | null;
+  reexport_cert?: string | null;
+  export_country?: string | null;
+  seal_number?: string | null;
   from_location?: { name: string; location_type: string } | null;
   to_location?: { name: string; location_type: string; store_id?: string | null } | null;
   transfer_order_lines?: any[];
