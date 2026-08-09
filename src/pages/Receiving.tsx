@@ -597,34 +597,14 @@ export default function Receiving() {
                 <Button size="sm" variant="outline" className="text-xs gap-1 h-7" onClick={approveAll}>
                   <ThumbsUp className="h-3 w-3" /> Godkänn alla
                 </Button>
-                {/* Set same expiry for all */}
-                <div className="flex items-center gap-1.5">
-                  <CalendarCheck className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-[10px] text-muted-foreground">Samma bäst-före för alla:</span>
-                  <Input
-                    type="date"
-                    className="h-7 text-[10px] w-36"
-                    onChange={(e) => setAllExpiryDates(e.target.value)}
-                  />
-                </div>
               </div>
-
-              {/* Warning if expiry dates are missing */}
-              {missingExpiryCount > 0 && (
-                <div className="flex items-center gap-2 p-2 rounded-md bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700">
-                  <Calendar className="h-3.5 w-3.5 shrink-0" />
-                  <span>
-                    {missingExpiryCount} produkt(er) saknar bäst-före-datum — rekommenderas för fiskspårbarhet.
-                  </span>
-                </div>
-              )}
 
               <div className="space-y-2">
                 {(selectedOrder.shop_order_lines || []).map((line: any) => {
                   const report = lineReports[line.id] || { status: "Godkänd" };
                   const isReported = report.status === "Rapporterad";
                   const isConfirmed = report.confirmed && !isReported;
-                  const expiryLabel = report.expiry_date ? getExpiryLabel(report.expiry_date) : null;
+
 
                   return (
                     <div
