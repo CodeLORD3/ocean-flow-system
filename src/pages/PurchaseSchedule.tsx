@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, DragEvent } from "react";
+import { useMemo, useState, useCallback, useRef, DragEvent } from "react";
 import { GROSSIST_FLYTANDE_ID } from "@/lib/locations";
 import { useShopOrders } from "@/hooks/useShopOrders";
 import { useStores } from "@/hooks/useStores";
@@ -308,6 +308,15 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
   const [manualQuantity, setManualQuantity] = useState("");
   const [manualDate, setManualDate] = useState<Date | undefined>(undefined);
   const [manualTime, setManualTime] = useState("06:00");
+  // Datumfönstret stängs vid val (klick eller Enter) och fokus går till tiden.
+  const [manualDateOpen, setManualDateOpen] = useState(false);
+  const manualTimeRef = useRef<HTMLInputElement | null>(null);
+  const pickManualDate = (d?: Date) => {
+    setManualDate(d);
+    if (!d) return;
+    setManualDateOpen(false);
+    setTimeout(() => manualTimeRef.current?.focus(), 60);
+  };
   const [manualNotes, setManualNotes] = useState("");
 
   const filteredManualProducts = useMemo(() => {
@@ -1569,18 +1578,36 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
             </div>
             <div>
               <Label className="text-xs">Avgångsdag</Label>
-              <Popover>
+              <Popover open={manualDateOpen} onOpenChange={setManualDateOpen}>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("w-full justify-start text-left text-xs h-8", !manualDate && "text-muted-foreground")}>
+                  <Button
+                    variant="outline"
+                    className={cn("w-full justify-start text-left text-xs h-8", !manualDate && "text-muted-foreground")}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !manualDateOpen) {
+                        e.preventDefault();
+                        setManualDateOpen(true);
+                      }
+                    }}
+                  >
                     <CalendarDays className="h-3.5 w-3.5 mr-1" />
                     {manualDate ? format(manualDate, "EEE d MMM yyyy", { locale: sv }) : "Välj datum"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent
+                  className="w-auto p-0"
+                  align="start"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      pickManualDate(manualDate);
+                    }
+                  }}
+                >
                   <Calendar
                     mode="single"
                     selected={manualDate}
-                    onSelect={setManualDate}
+                    onSelect={pickManualDate}
                     initialFocus
                     className={cn("p-3 pointer-events-auto")}
                   />
@@ -1590,6 +1617,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
             <div>
               <Label className="text-xs">Avgångstid</Label>
               <Input
+                ref={manualTimeRef}
                 type="time"
                 value={manualTime}
                 onChange={(e) => setManualTime(e.target.value)}

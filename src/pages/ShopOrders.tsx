@@ -275,6 +275,16 @@ export default function ShopOrders() {
 
   // Order form
   const [orderNote, setOrderNote] = useState("");
+  // Datumfönstret stängs så snart ett datum valts (klick eller Enter) och
+  // fokus flyttas vidare till nästa fråga — anteckningsfältet.
+  const [dateOpen, setDateOpen] = useState(false);
+  const noteRef = useRef<HTMLTextAreaElement | null>(null);
+  const pickDate = (d?: Date) => {
+    setDesiredDeliveryDate(d);
+    if (!d) return;
+    setDateOpen(false);
+    setTimeout(() => noteRef.current?.focus(), 60);
+  };
   const [orderLines, setOrderLines] = useState<OrderLine[]>([]);
   const [productSearch, setProductSearch] = useState("");
   const [desiredDeliveryDate, setDesiredDeliveryDate] = useState<Date | undefined>(undefined);
@@ -730,7 +740,7 @@ export default function ShopOrders() {
 
             <div className="space-y-1.5">
               <Label className="text-xs">Önskat avgångsdatum <span className="text-destructive">*</span></Label>
-              <Popover>
+              <Popover open={dateOpen} onOpenChange={setDateOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
@@ -738,16 +748,31 @@ export default function ShopOrders() {
                       "w-full justify-start text-left text-xs h-8 font-normal",
                       !desiredDeliveryDate && "text-muted-foreground"
                     )}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !dateOpen) {
+                        e.preventDefault();
+                        setDateOpen(true);
+                      }
+                    }}
                   >
                     <CalendarIcon className="mr-2 h-3.5 w-3.5" />
                     {desiredDeliveryDate ? format(desiredDeliveryDate, "yyyy-MM-dd") : "Välj datum..."}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent
+                  className="w-auto p-0"
+                  align="start"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      pickDate(desiredDeliveryDate);
+                    }
+                  }}
+                >
                   <Calendar
                     mode="single"
                     selected={desiredDeliveryDate}
-                    onSelect={setDesiredDeliveryDate}
+                    onSelect={pickDate}
                     disabled={isDateDisabled}
                     initialFocus
                     className={cn("p-3 pointer-events-auto")}
@@ -761,6 +786,7 @@ export default function ShopOrders() {
             <div className="space-y-1.5">
               <Label className="text-xs">Anteckning (valfritt)</Label>
               <Textarea
+                ref={noteRef}
                 value={orderNote}
                 onChange={e => setOrderNote(e.target.value)}
                 placeholder="T.ex. brådskande leverans, specialförpackning..."
@@ -902,6 +928,7 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
     order.desired_delivery_date ? new Date(order.desired_delivery_date + "T00:00:00") : undefined
   );
   const [origDeliveryDate] = useState(order.desired_delivery_date || null);
+  const [editDateOpen, setEditDateOpen] = useState(false);
 
   const startEdit = () => {
     setEditMode(true);
@@ -1304,21 +1331,39 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
           {/* Delivery date change */}
           <div className="space-y-1.5">
             <Label className="text-xs">Önskat leveransdatum</Label>
-            <Popover>
+            <Popover open={editDateOpen} onOpenChange={setEditDateOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn("w-full justify-start text-left text-xs h-8 font-normal", !editDeliveryDate && "text-muted-foreground")}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !editDateOpen) {
+                      e.preventDefault();
+                      setEditDateOpen(true);
+                    }
+                  }}
                 >
                   <CalendarIcon className="mr-2 h-3.5 w-3.5" />
                   {editDeliveryDate ? format(editDeliveryDate, "yyyy-MM-dd") : "Välj datum..."}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent
+                className="w-auto p-0"
+                align="start"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (editDeliveryDate) setEditDateOpen(false);
+                  }
+                }}
+              >
                 <Calendar
                   mode="single"
                   selected={editDeliveryDate}
-                  onSelect={setEditDeliveryDate}
+                  onSelect={(d) => {
+                    setEditDeliveryDate(d);
+                    if (d) setEditDateOpen(false);
+                  }}
                   disabled={isDateDisabled}
                   initialFocus
                   className="p-3 pointer-events-auto"
