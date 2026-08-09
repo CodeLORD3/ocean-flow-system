@@ -493,7 +493,7 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-1.5">
                         <span className="text-xs font-medium text-foreground truncate flex-1 min-w-0">{title}</span>
-                        {(unread.byConv[c.id] || 0) > 0 && !isActive && (
+                        {(unread.byConv[c.id] || 0) > 0 && !(isActive && opened) && (
                           <Badge variant="destructive" className="h-4 min-w-4 px-1 text-[9px] rounded-full shrink-0">
                             {unread.byConv[c.id]}
                           </Badge>
