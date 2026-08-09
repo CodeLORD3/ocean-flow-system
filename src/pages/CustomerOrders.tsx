@@ -358,13 +358,16 @@ export default function CustomerOrders() {
               description="När en beställning läggs med imorgondagens datum hamnar den här."
             />
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1">
+              <CustomerOrderRowHeader />
               {tomorrowOrders.map((o) => (
                 <CustomerOrderRow
                   key={o.id}
                   order={o}
                   onOpen={setSelected}
                   readOnly={rowReadOnly(o)}
+                  open={openRow === o.id}
+                  onToggle={toggleRow}
                 />
               ))}
             </div>
