@@ -382,13 +382,13 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
   const showThread = isStore || !isMobile || mobileThread;
 
   const listHeight = compact
-    ? "h-80"
+    ? "h-[26rem]"
     : isMobile
       ? "h-[calc(100dvh-15rem)] min-h-[18rem]"
       : "h-[calc(100dvh-10rem)] min-h-[600px]";
 
   const msgHeight = compact
-    ? "h-80"
+    ? "h-[26rem]"
     : isMobile
       ? "h-[calc(100dvh-18rem)] min-h-[18rem]"
       : "h-[calc(100dvh-13rem)] min-h-[560px]";
