@@ -280,14 +280,6 @@ export function InlineOrderPacking({ order }: { order: CustomerOrder }) {
                   </div>
                 </div>
               )}
-
-
-              {done && (
-                <div className="px-2.5 pb-2 font-mono text-xs tabular-nums text-muted-foreground">
-                  Packat {nf(l.quantity_packed, 3)} {l.unit} × {nf(l.price_per_unit)} kr ={" "}
-                  {nf(l.line_total)} kr
-                </div>
-              )}
             </li>
           );
         })}
