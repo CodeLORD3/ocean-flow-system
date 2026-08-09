@@ -146,7 +146,9 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
   const [newName, setNewName] = useState("");
   const [newWeekdays, setNewWeekdays] = useState<number[]>([]);
 
-  const [showAllHistory, setShowAllHistory] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+
 
   const create = useCreateChecklistTemplate();
   const archive = useArchiveChecklistTemplate();
@@ -321,8 +323,6 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
     );
   };
 
-  const visibleHistory = showAllHistory ? history : history.slice(0, 10);
-
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -335,7 +335,28 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
           </p>
         </div>
         <div className="flex items-center gap-2">
+        <Button
+          size="icon"
+          variant="outline"
+          className="h-8 w-8"
+          title="Historik – alla tidigare checklistor"
+          aria-label="Visa historik"
+          onClick={() => setHistoryOpen(true)}
+        >
+          <History className="h-4 w-4" />
+        </Button>
+        <Button
+          size="icon"
+          variant="outline"
+          className="h-8 w-8"
+          title="Veckoschema – välj vilka dagar checklistorna gäller"
+          aria-label="Veckoschema"
+          onClick={() => setScheduleOpen(true)}
+        >
+          <CalendarDays className="h-4 w-4" />
+        </Button>
         {isAdmin && <ChecklistRestoreDialog storeId={storeId} />}
+
         <Dialog open={newOpen} onOpenChange={setNewOpen}>
           <DialogTrigger asChild>
             <Button size="sm" variant="secondary" className="h-8 gap-1 text-xs">
@@ -415,7 +436,7 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
             <p className="text-xs text-muted-foreground">Laddar checklistor…</p>
           ) : todays.length === 0 ? (
             <p className="text-xs text-muted-foreground">
-              Ingen checklista är schemalagd för {weekdayName(iso).toLowerCase()}. Se veckoschemat nedan.
+              Ingen checklista är schemalagd för {weekdayName(iso).toLowerCase()}. Öppna kalenderikonen högst upp för att ändra veckoschemat.
             </p>
           ) : (
             todays.map((t) => listRow(t))
@@ -432,144 +453,138 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
         </Card>
       )}
 
-      <Card className="shadow-card">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-sm font-heading">
-            <CalendarDays className="h-4 w-4 text-primary" /> Veckoschema
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <p className="mb-2 text-[11px] text-muted-foreground">
+      <Dialog open={scheduleOpen} onOpenChange={setScheduleOpen}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-sm font-heading">
+              <CalendarDays className="h-4 w-4 text-primary" /> Veckoschema
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-[11px] text-muted-foreground">
             Klicka i vilka veckodagar varje checklista gäller. Inga dagar valda = gäller alla dagar.
           </p>
-          <table className="w-full min-w-[520px] text-sm">
-            <thead>
-              <tr className="border-b border-border text-[10px] uppercase tracking-wide text-muted-foreground">
-                <th className="py-2 text-left font-semibold">Checklista</th>
-                {[1, 2, 3, 4, 5, 6, 0].map((d) => (
-                  <th
-                    key={d}
-                    className={cn(
-                      "w-12 py-2 text-center font-semibold",
-                      d === new Date().getDay() && "text-primary",
-                    )}
-                  >
-                    {WEEKDAY_SHORT[d]}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {templates.map((t) => (
-                <tr key={t.id} className="border-b border-border/60">
-                  <td className="py-2 pr-2 text-xs sm:text-sm">{t.name}</td>
-                  {[1, 2, 3, 4, 5, 6, 0].map((d) => {
-                    const on = (t.weekdays ?? []).includes(d);
-                    const all = (t.weekdays ?? []).length === 0;
-                    return (
-                      <td key={d} className="py-1.5 text-center">
-                        <button
-                          aria-label={`${t.name} ${WEEKDAY_SHORT[d]}`}
-                          onClick={() => toggleWeekday(t, d)}
-                          className={cn(
-                            "mx-auto flex h-6 w-6 items-center justify-center rounded border text-[10px] transition-colors",
-                            on
-                              ? "border-primary bg-primary text-primary-foreground"
-                              : all
-                                ? "border-dashed border-primary/40 text-primary/60"
-                                : "border-border text-muted-foreground hover:border-primary/50",
-                          )}
-                        >
-                          {on ? "✓" : all ? "•" : ""}
-                        </button>
-                      </td>
-                    );
-                  })}
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[480px] text-sm">
+              <thead>
+                <tr className="border-b border-border text-[10px] uppercase tracking-wide text-muted-foreground">
+                  <th className="py-2 text-left font-semibold">Checklista</th>
+                  {[1, 2, 3, 4, 5, 6, 0].map((d) => (
+                    <th
+                      key={d}
+                      className={cn(
+                        "w-12 py-2 text-center font-semibold",
+                        d === new Date().getDay() && "text-primary",
+                      )}
+                    >
+                      {WEEKDAY_SHORT[d]}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+              </thead>
+              <tbody>
+                {templates.map((t) => (
+                  <tr key={t.id} className="border-b border-border/60">
+                    <td className="py-2 pr-2 text-xs sm:text-sm">{t.name}</td>
+                    {[1, 2, 3, 4, 5, 6, 0].map((d) => {
+                      const on = (t.weekdays ?? []).includes(d);
+                      const all = (t.weekdays ?? []).length === 0;
+                      return (
+                        <td key={d} className="py-1.5 text-center">
+                          <button
+                            aria-label={`${t.name} ${WEEKDAY_SHORT[d]}`}
+                            onClick={() => toggleWeekday(t, d)}
+                            className={cn(
+                              "mx-auto flex h-6 w-6 items-center justify-center rounded border text-[10px] transition-colors",
+                              on
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : all
+                                  ? "border-dashed border-primary/40 text-primary/60"
+                                  : "border-border text-muted-foreground hover:border-primary/50",
+                            )}
+                          >
+                            {on ? "✓" : all ? "•" : ""}
+                          </button>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-      <Card className="shadow-card">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-sm font-heading">
-            <History className="h-4 w-4 text-primary" /> Historik
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-sm font-heading">
+              <History className="h-4 w-4 text-primary" /> Historik
+            </DialogTitle>
+          </DialogHeader>
           {histLoading ? (
             <p className="text-xs text-muted-foreground">Laddar…</p>
           ) : history.length === 0 ? (
             <p className="text-xs text-muted-foreground">Inga tidigare checklistor ännu.</p>
           ) : (
-            <>
-              <table className="w-full table-fixed text-sm">
-                <thead>
-                  <tr className="border-b border-border text-[10px] uppercase tracking-wide text-muted-foreground sm:text-[11px]">
-                    <th className="py-2 text-left font-semibold">Datum</th>
-                    <th className="hidden py-2 text-left font-semibold md:table-cell">Veckodag</th>
-                    <th className="py-2 text-left font-semibold">Checklista</th>
-                    <th className="hidden py-2 text-left font-semibold md:table-cell">Ansvarig</th>
-                    <th className="w-14 py-2 text-center font-semibold">Klara</th>
-                    <th className="hidden py-2 text-left font-semibold sm:table-cell">Status</th>
-                    <th className="w-16" />
+            <table className="w-full table-fixed text-sm">
+              <thead>
+                <tr className="border-b border-border text-[10px] uppercase tracking-wide text-muted-foreground sm:text-[11px]">
+                  <th className="py-2 text-left font-semibold">Datum</th>
+                  <th className="hidden py-2 text-left font-semibold md:table-cell">Veckodag</th>
+                  <th className="py-2 text-left font-semibold">Checklista</th>
+                  <th className="hidden py-2 text-left font-semibold md:table-cell">Ansvarig</th>
+                  <th className="w-14 py-2 text-center font-semibold">Klara</th>
+                  <th className="hidden py-2 text-left font-semibold sm:table-cell">Status</th>
+                  <th className="w-16" />
+                </tr>
+              </thead>
+              <tbody>
+                {history.map((r: any) => (
+                  <tr key={r.id} className="border-b border-border/60 hover:bg-muted/30">
+                    <td className="py-2 font-mono tabular-nums text-[11px] sm:text-xs">{r.checklist_date}</td>
+                    <td className="hidden py-2 text-xs text-muted-foreground md:table-cell">
+                      {weekdayName(r.checklist_date)}
+                    </td>
+                    <td className="truncate py-2 pr-2 text-xs sm:text-sm">{r.listName}</td>
+                    <td className="hidden py-2 text-xs text-muted-foreground md:table-cell">
+                      {r.completed_by_name || r.responsible_name || "–"}
+                    </td>
+                    <td className="py-2 text-center font-mono tabular-nums text-[11px] sm:text-xs">
+                      {r.doneCount}/{r.total}
+                    </td>
+                    <td className="hidden py-2 sm:table-cell">
+                      {r.status === "completed" ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
+                          <CheckCircle2 className="h-3 w-3" /> Slutförd
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600">
+                          <Clock className="h-3 w-3" /> Pågående
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-2 text-right">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 px-2 text-xs"
+                        onClick={() => {
+                          setHistoryOpen(false);
+                          setOpenHistoryDay(r);
+                        }}
+                      >
+                        Visa
+                      </Button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {visibleHistory.map((r: any) => (
-                    <tr key={r.id} className="border-b border-border/60 hover:bg-muted/30">
-                      <td className="py-2 font-mono tabular-nums text-[11px] sm:text-xs">{r.checklist_date}</td>
-                      <td className="hidden py-2 text-xs text-muted-foreground md:table-cell">
-                        {weekdayName(r.checklist_date)}
-                      </td>
-                      <td className="truncate py-2 pr-2 text-xs sm:text-sm">{r.listName}</td>
-                      <td className="hidden py-2 text-xs text-muted-foreground md:table-cell">
-                        {r.completed_by_name || r.responsible_name || "–"}
-                      </td>
-                      <td className="py-2 text-center font-mono tabular-nums text-[11px] sm:text-xs">
-                        {r.doneCount}/{r.total}
-                      </td>
-                      <td className="hidden py-2 sm:table-cell">
-                        {r.status === "completed" ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
-                            <CheckCircle2 className="h-3 w-3" /> Slutförd
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600">
-                            <Clock className="h-3 w-3" /> Pågående
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-2 text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 px-2 text-xs"
-                          onClick={() => setOpenHistoryDay(r)}
-                        >
-                          Visa
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {history.length > 10 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="mt-2 h-8 text-xs"
-                  onClick={() => setShowAllHistory((v) => !v)}
-                >
-                  {showAllHistory ? "Visa färre" : `Visa alla (${history.length})`}
-                </Button>
-              )}
-            </>
+                ))}
+              </tbody>
+            </table>
           )}
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
+
 
       <Dialog open={!!renameTarget} onOpenChange={(o) => !o && setRenameTarget(null)}>
         <DialogContent className="sm:max-w-sm">
