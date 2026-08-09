@@ -656,12 +656,26 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
                         )}
                         <span
                           className={cn(
-                            "block text-right text-[9px] tabular-nums leading-none pt-0.5",
+                            "flex items-center justify-end gap-1 text-[9px] tabular-nums leading-none pt-0.5",
                             mine ? "text-primary-foreground/70" : "text-muted-foreground"
                           )}
                         >
                           {clockLabel(m.created_at)}
+                          {mine && (
+                            <span className="flex items-center gap-0.5 font-medium">
+                              {readByOther(m) ? (
+                                <>
+                                  <CheckCheck className="h-3 w-3" /> Läst
+                                </>
+                              ) : (
+                                <>
+                                  <Check className="h-3 w-3" /> Skickat
+                                </>
+                              )}
+                            </span>
+                          )}
                         </span>
+
 
                       </div>
 
