@@ -13,7 +13,6 @@ import {
   Flag,
   Eye,
   Calendar,
-  CalendarCheck,
 } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -62,24 +61,6 @@ interface LineReport {
 }
 
 // Helper: color-code expiry dates entered during receiving
-function getExpiryColor(expiryDate: string): string {
-  if (!expiryDate) return "";
-  const days = differenceInDays(parseISO(expiryDate), new Date());
-  if (days < 0) return "border-destructive/50 bg-destructive/5";
-  if (days <= 2) return "border-destructive/30 bg-destructive/5";
-  if (days <= 5) return "border-amber-500/30 bg-amber-500/5";
-  return "border-emerald-500/30 bg-emerald-500/5";
-}
-
-function getExpiryLabel(expiryDate: string): { text: string; class: string } | null {
-  if (!expiryDate) return null;
-  const days = differenceInDays(parseISO(expiryDate), new Date());
-  if (days < 0) return { text: `Utgången`, class: "text-destructive" };
-  if (days <= 2) return { text: `${days}d kvar – kritisk!`, class: "text-destructive" };
-  if (days <= 5) return { text: `${days}d kvar – kort hållbarhet`, class: "text-amber-600" };
-  return { text: `${days}d kvar`, class: "text-emerald-600" };
-}
-
 export default function Receiving() {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -363,15 +344,6 @@ export default function Receiving() {
   };
 
   // Set same expiry date for all lines at once
-  const setAllExpiryDates = (date: string) => {
-    setLineReports((prev) => {
-      const next = { ...prev };
-      Object.keys(next).forEach((id) => {
-        next[id] = { ...next[id], expiry_date: date };
-      });
-      return next;
-    });
-  };
 
   const [viewReportOrder, setViewReportOrder] = useState<any>(null);
   const viewReportLines = useMemo(() => {
@@ -380,7 +352,6 @@ export default function Receiving() {
   }, [viewReportOrder, existingReports]);
 
   const hasIssuesInReport = Object.values(lineReports).some((r) => r.status === "Rapporterad");
-  const missingExpiryCount = Object.values(lineReports).filter((r) => !r.expiry_date).length;
 
   const filteredUnreported = unreportedOrders.filter(
     (o: any) => !search || displayOrderWeek(o).toLowerCase().includes(search.toLowerCase()),
