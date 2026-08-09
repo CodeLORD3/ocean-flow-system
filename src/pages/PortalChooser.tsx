@@ -31,12 +31,14 @@ export default function PortalChooser() {
   const needsPwd = !!staff?.must_change_password;
 
   const allowedStores = useMemo(() => {
+    // Grossistlager är ingen butiksportal och ska aldrig visas i butiksvalet
+    const shopsOnly = stores.filter((s) => !s.is_wholesale);
     const ids = new Set([
       ...(staff?.allowed_store_ids ?? []),
       ...(staff?.allowed_store_id ? [staff.allowed_store_id] : []),
     ]);
     // No explicit restriction = access to all stores
-    return ids.size === 0 ? stores : stores.filter((s) => ids.has(s.id));
+    return ids.size === 0 ? shopsOnly : shopsOnly.filter((s) => ids.has(s.id));
   }, [staff?.allowed_store_ids, staff?.allowed_store_id, stores]);
 
   // If only one portal, jump straight in
