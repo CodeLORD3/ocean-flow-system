@@ -370,27 +370,35 @@ export function CustomerOrderRow({
             </span>
           </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row">
-            {!readOnly && onEdit && !cancelled && (
-              <Button variant="outline" className="h-12 flex-1" onClick={() => onEdit(order)}>
-                <Pencil className="mr-2 h-4 w-4" /> Redigera order
+          <div className="flex flex-wrap gap-1.5">
+            {!readOnly && canEdit && !cancelled && (
+              <Button
+                variant={editing ? "default" : "outline"}
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => setEditing((v) => !v)}
+              >
+                <Pencil className="mr-1 h-3.5 w-3.5" /> Redigera order
               </Button>
             )}
             <Button
               variant="outline"
-              className="h-12 flex-1"
+              size="sm"
+              className="h-8 text-xs"
               onClick={() => printConfirmation(order)}
             >
-              <Printer className="mr-2 h-4 w-4" /> Skriv ut order
+              <Printer className="mr-1 h-3.5 w-3.5" /> Skriv ut order
             </Button>
             <Button
               variant="outline"
-              className="h-12 flex-1"
+              size="sm"
+              className="h-8 text-xs"
               onClick={() => downloadConfirmation(order)}
             >
-              <Download className="mr-2 h-4 w-4" /> Ladda ner PDF
+              <Download className="mr-1 h-3.5 w-3.5" /> Ladda ner PDF
             </Button>
           </div>
+
 
         </div>
       )}
