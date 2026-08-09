@@ -13,6 +13,12 @@ import {
   isAllowedConversation,
 } from "@/lib/portalProfiles";
 
+import {
+  PORTAL_IMAGE_ENTITY_TYPE,
+  WHOLESALE_IMAGE_ENTITY_ID,
+  ADMIN_IMAGE_ENTITY_ID,
+} from "@/lib/portalImages";
+
 export type ChatMessage = {
   id: string;
   conversation_id: string;
