@@ -1,7 +1,13 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, Truck, Factory, Warehouse, Store, ShoppingBasket } from "lucide-react";
+import { ChevronDown, Truck, Factory, Warehouse, Store, ShoppingBasket, Loader2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
 import { LEVEL_DESCRIPTION, LEVEL_LABEL, type LocationLevel } from "@/lib/locations";
+import { grossistlagerId, tillverkningslagerId } from "@/lib/locations";
+import { lotBalancesAtLocation, transferStock } from "@/lib/stockLedger";
 import { useTransferOrders, INCOMING_STATUSES } from "@/hooks/useTransferOrders";
 
 interface StockTreeProps {
@@ -12,7 +18,10 @@ interface StockTreeProps {
   showValue?: boolean;
   /** Klick på nod filtrerar även den vanliga tabellen på nivån. */
   onFocusLevel?: (level: LocationLevel) => void;
+  /** Grossistpersonal kan flytta rader från inköpslagret. */
+  canMove?: boolean;
 }
+
 
 type Node = {
   key: string;
@@ -45,9 +54,14 @@ const LEVEL_ICON: Record<LocationLevel, any> = {
  * inköpslager → grossist/produktion → transportlager → butikslager.
  * Varje nod är klickbar och fäller ut sitt lagerinnehåll.
  */
-export default function StockTree({ stock, stores, showValue = true, onFocusLevel }: StockTreeProps) {
+export default function StockTree({ stock, stores, showValue = true, onFocusLevel, canMove = true }: StockTreeProps) {
   const [open, setOpen] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [moving, setMoving] = useState<null | "grossistlager" | "tillverkningslager">(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const qc = useQueryClient();
   const { data: transfers = [] } = useTransferOrders();
+
 
   const storeName = useMemo(() => {
     const m: Record<string, string> = {};
@@ -86,11 +100,93 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
     onFocusLevel?.(n.level);
   };
 
-  const Card = ({ n, className }: { n: Node; className?: string }) => {
+  const purchaseRows = byLevel["inkopslager"] || [];
+  const selectedRows = useMemo(
+    () => purchaseRows.filter((r: any) => selected[r.id] && qtyOf(r) > 0),
+    [purchaseRows, selected],
+  );
+
+  /**
+   * Flyttar markerade rader (eller hela inköpslagret) till grossist- eller
+   * tillverkningslagret. Partierna följer med FIFO så spårbarheten hålls intakt.
+   */
+  const moveTo = async (level: "grossistlager" | "tillverkningslager", all = false) => {
+    const rows = all ? purchaseRows.filter((r: any) => qtyOf(r) > 0) : selectedRows;
+    if (!rows.length) {
+      toast.error("Markera minst en rad med saldo först.");
+      return;
+    }
+    setMoving(level);
+    try {
+      const target = level === "grossistlager" ? await grossistlagerId() : await tillverkningslagerId();
+      let moved = 0;
+      for (const row of rows) {
+        const productId = row.product_id as string;
+        const from = row.location_id as string;
+        if (from === target) continue;
+        const lots = await lotBalancesAtLocation(productId, from);
+        const picks = lots.length
+          ? lots.map((l) => ({ lotId: l.lotId, qty: l.quantityKg }))
+          : [{ lotId: null as string | null, qty: qtyOf(row) }];
+        for (const pick of picks) {
+          if (pick.qty <= 0) continue;
+          await transferStock({
+            productId,
+            fromLocationId: from,
+            toLocationId: target,
+            quantityKg: pick.qty,
+            lotId: pick.lotId,
+            unitCost: Number(row.avg_cost) || Number(row.unit_cost) || null,
+            note: `Flyttat från inköpslager till ${LEVEL_LABEL[level]}`,
+          });
+          moved += pick.qty;
+        }
+      }
+      setSelected({});
+      qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
+      qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
+      qc.invalidateQueries({ queryKey: ["stock_movements"] });
+      toast.success(`${kg(moved)} flyttat till ${LEVEL_LABEL[level]}.`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Flytten kunde inte bokföras.");
+    } finally {
+      setMoving(null);
+    }
+  };
+
+  const dropProps = (level: "grossistlager" | "tillverkningslager") =>
+    canMove
+      ? {
+          onDragOver: (e: React.DragEvent) => {
+            e.preventDefault();
+            setDropTarget(level);
+          },
+          onDragLeave: () => setDropTarget((cur) => (cur === level ? null : cur)),
+          onDrop: (e: React.DragEvent) => {
+            e.preventDefault();
+            setDropTarget(null);
+            void moveTo(level);
+          },
+        }
+      : {};
+
+
+  const Card = ({
+    n,
+    className,
+    selectable = false,
+  }: {
+    n: Node;
+    className?: string;
+    selectable?: boolean;
+  }) => {
     const Icon = LEVEL_ICON[n.level];
     const totalQty = n.rows.reduce((a, r) => a + qtyOf(r), 0);
     const totalVal = n.rows.reduce((a, r) => a + valueOf(r), 0);
     const isOpen = open === n.key;
+    const canSelect = selectable && canMove;
+    const rowsWithQty = n.rows.filter((r: any) => qtyOf(r) > 0);
+    const allChecked = rowsWithQty.length > 0 && rowsWithQty.every((r: any) => selected[r.id]);
     return (
       <div className={cn("min-w-0", className)}>
         <button
@@ -127,10 +223,64 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
                 Inget lager här just nu.
               </p>
             ) : (
-              <div className="max-h-64 overflow-y-auto">
+              <>
+                {canSelect && (
+                  <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-[11px]"
+                      disabled={!!moving || !selectedRows.length}
+                      onClick={() => moveTo("grossistlager")}
+                    >
+                      {moving === "grossistlager" ? (
+                        <Loader2 className="mr-1 h-3 w-3 animate-spin" aria-hidden />
+                      ) : (
+                        <Warehouse className="mr-1 h-3 w-3" aria-hidden />
+                      )}
+                      Flytta till grossistlager
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-[11px]"
+                      disabled={!!moving || !selectedRows.length}
+                      onClick={() => moveTo("tillverkningslager")}
+                    >
+                      {moving === "tillverkningslager" ? (
+                        <Loader2 className="mr-1 h-3 w-3 animate-spin" aria-hidden />
+                      ) : (
+                        <Factory className="mr-1 h-3 w-3" aria-hidden />
+                      )}
+                      Flytta till produktionslager
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-[11px]"
+                      disabled={!!moving || !rowsWithQty.length}
+                      onClick={() =>
+                        setSelected(
+                          allChecked
+                            ? {}
+                            : Object.fromEntries(rowsWithQty.map((r: any) => [r.id, true])),
+                        )
+                      }
+                    >
+                      {allChecked ? "Avmarkera alla" : "Markera hela lagret"}
+                    </Button>
+                    <span className="text-[10px] text-muted-foreground">
+                      {selectedRows.length
+                        ? `${selectedRows.length} rad(er) markerade — dra dem till grossist eller produktion`
+                        : "Bocka i rader och dra dem, eller använd knapparna"}
+                    </span>
+                  </div>
+                )}
+                <div className="max-h-64 overflow-y-auto">
                 <table className="w-full text-[11px]">
                   <thead className="sticky top-0 bg-muted/60 text-muted-foreground">
                     <tr>
+                      {canSelect && <th className="w-6 px-1 py-1" />}
                       <th className="px-1 py-1 text-left font-medium">Artikel</th>
                       <th className="px-1 py-1 text-left font-medium">Plats</th>
                       <th className="px-1 py-1 text-right font-medium">Antal</th>
@@ -142,7 +292,30 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
                       .slice()
                       .sort((a, b) => qtyOf(b) - qtyOf(a))
                       .map((r: any) => (
-                        <tr key={r.id} className="border-t border-border/60">
+                        <tr
+                          key={r.id}
+                          className={cn(
+                            "border-t border-border/60",
+                            canSelect && selected[r.id] && "bg-primary/10",
+                            canSelect && qtyOf(r) > 0 && "cursor-grab",
+                          )}
+                          draggable={canSelect && qtyOf(r) > 0}
+                          onDragStart={() => {
+                            if (!selected[r.id]) setSelected((cur) => ({ ...cur, [r.id]: true }));
+                          }}
+                        >
+                          {canSelect && (
+                            <td className="px-1 py-1">
+                              <Checkbox
+                                checked={!!selected[r.id]}
+                                disabled={qtyOf(r) <= 0}
+                                onCheckedChange={(v) =>
+                                  setSelected((cur) => ({ ...cur, [r.id]: !!v }))
+                                }
+                                aria-label={`Markera ${r.products?.name ?? "rad"}`}
+                              />
+                            </td>
+                          )}
                           <td className="px-1 py-1">
                             <span className="block truncate">{r.products?.name ?? "—"}</span>
                           </td>
@@ -161,8 +334,10 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
                       ))}
                   </tbody>
                 </table>
-              </div>
+                </div>
+              </>
             )}
+
           </div>
         )}
       </div>
@@ -200,26 +375,44 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
 
       {/* 1. Inköpslager */}
       <Card
-        n={node("inkopslager", "lvl:inkopslager", LEVEL_LABEL.inkopslager, byLevel["inkopslager"] || [])}
+        n={node("inkopslager", "lvl:inkopslager", LEVEL_LABEL.inkopslager, purchaseRows)}
         className="mx-auto max-w-md"
+        selectable
       />
 
       <Connector />
 
-      {/* 2. Grossist + Produktion sida vid sida */}
+      {/* 2. Grossist + Produktion sida vid sida — även släppzoner för markerade rader */}
       <div className="grid gap-2 sm:grid-cols-2">
-        <Card
-          n={node("grossistlager", "lvl:grossistlager", LEVEL_LABEL.grossistlager, byLevel["grossistlager"] || [])}
-        />
-        <Card
-          n={node(
-            "tillverkningslager",
-            "lvl:tillverkningslager",
-            LEVEL_LABEL.tillverkningslager,
-            byLevel["tillverkningslager"] || [],
+        <div
+          {...dropProps("grossistlager")}
+          className={cn(
+            "rounded-lg transition-shadow",
+            dropTarget === "grossistlager" && "ring-2 ring-primary ring-offset-2 ring-offset-background",
           )}
-        />
+        >
+          <Card
+            n={node("grossistlager", "lvl:grossistlager", LEVEL_LABEL.grossistlager, byLevel["grossistlager"] || [])}
+          />
+        </div>
+        <div
+          {...dropProps("tillverkningslager")}
+          className={cn(
+            "rounded-lg transition-shadow",
+            dropTarget === "tillverkningslager" && "ring-2 ring-primary ring-offset-2 ring-offset-background",
+          )}
+        >
+          <Card
+            n={node(
+              "tillverkningslager",
+              "lvl:tillverkningslager",
+              LEVEL_LABEL.tillverkningslager,
+              byLevel["tillverkningslager"] || [],
+            )}
+          />
+        </div>
       </div>
+
 
       <Connector />
 
