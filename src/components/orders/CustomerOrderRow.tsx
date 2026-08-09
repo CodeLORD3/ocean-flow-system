@@ -5,7 +5,6 @@ import {
   MapPin,
   Package,
   AlertTriangle,
-  ExternalLink,
   Pencil,
   Printer,
   Download,
@@ -117,7 +116,6 @@ const packTone: Record<string, string> = {
  */
 export function CustomerOrderRow({
   order,
-  onOpen,
   onEdit,
   readOnly,
   open,
@@ -126,8 +124,8 @@ export function CustomerOrderRow({
   onSelect,
 }: {
   order: CustomerOrder;
-  onOpen: (o: CustomerOrder) => void;
   onEdit?: (o: CustomerOrder) => void;
+
   readOnly?: boolean;
   open?: boolean;
   onToggle?: (id: string) => void;
@@ -391,11 +389,6 @@ export function CustomerOrderRow({
               onClick={() => downloadConfirmation(order)}
             >
               <Download className="mr-2 h-4 w-4" /> Ladda ner PDF
-            </Button>
-            <Button variant="ghost" className="h-12 sm:w-32" onClick={() => onOpen(order)}>
-              <Package className="mr-2 h-4 w-4" />
-              {readOnly ? "Öppna" : "Fullvy"}
-              <ExternalLink className="ml-2 h-4 w-4 opacity-70" />
             </Button>
           </div>
 

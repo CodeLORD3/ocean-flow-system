@@ -22,11 +22,9 @@ import {
   isUncollected,
 } from "@/lib/customerOrders";
 import { CustomerOrderWizard } from "@/components/orders/CustomerOrderWizard";
-import { CustomerOrderCard } from "@/components/orders/CustomerOrderCard";
 import { CustomerOrderRow, CustomerOrderRowHeader } from "@/components/orders/CustomerOrderRow";
 import { CustomerOrderEditDialog } from "@/components/orders/CustomerOrderEditDialog";
 import { ViewSelector, SavedView } from "@/components/shell/ViewSelector";
-import { FactBox, FactGroup, FactRow } from "@/components/shell/FactBox";
 import { StatusBar } from "@/components/shell/StatusBar";
 
 import { RetailCustomerRegistry } from "@/components/orders/RetailCustomerRegistry";
@@ -103,7 +101,6 @@ export default function CustomerOrders() {
   const [packStatus, setPackStatus] = useState("all");
   const [orderType, setOrderType] = useState("all");
   const [wizardOpen, setWizardOpen] = useState(false);
-  const [selected, setSelected] = useState<CustomerOrder | null>(null);
   const [openRow, setOpenRow] = useState<string | null>(null);
   const [editing, setEditing] = useState<CustomerOrder | null>(null);
   const [panel, setPanel] = useState<"orders" | "customers" | "stats">("orders");
@@ -132,14 +129,6 @@ export default function CustomerOrders() {
     toDate: tomorrow(),
   });
 
-  const selectedFresh = useMemo(() => {
-    if (!selected) return null;
-    return (
-      orders.find((o) => o.id === selected.id) ||
-      tomorrowOrders.find((o) => o.id === selected.id) ||
-      selected
-    );
-  }, [orders, tomorrowOrders, selected]);
 
 
   const rowReadOnly = (o: CustomerOrder) =>
@@ -168,10 +157,6 @@ export default function CustomerOrders() {
   const allMarked = viewOrders.length > 0 && markedOrders.length === viewOrders.length;
   const markAll = (next: boolean) => setMarked(next ? viewOrders.map((o) => o.id) : []);
 
-  /** FactBox visar öppen rad, annars enda markerade raden. */
-  const factOrder =
-    viewOrders.find((o) => o.id === openRow) ||
-    (markedOrders.length === 1 ? markedOrders[0] : null);
 
   const canCreate = canEdit && (isShop ? !!activeStoreId : !!effectiveStore);
 
@@ -300,116 +285,39 @@ export default function CustomerOrders() {
             />
           ) : (
             <div className="overflow-hidden rounded-sm border border-grid-line bg-card">
-              <div className="flex">
-                <div className="min-w-0 flex-1">
-                  <CustomerOrderRowHeader
-                    selectable
-                    allSelected={allMarked}
-                    onSelectAll={markAll}
-                  />
-                  {groupByDay(viewOrders).map(([day, list]) => (
-                    <div key={day}>
-                      <div className="flex items-center gap-2 border-x border-b border-grid-line bg-muted px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        <span className="truncate">{dayLabel(day)}</span>
-                        <span className="shrink-0 font-mono tabular-nums">
-                          {list.length} order
-                        </span>
-                      </div>
-
-                      {list.map((o) => (
-                        <CustomerOrderRow
-                          key={o.id}
-                          order={o}
-                          onOpen={setSelected}
-                          onEdit={canEdit ? setEditing : undefined}
-                          readOnly={rowReadOnly(o)}
-                          open={openRow === o.id}
-                          onToggle={toggleRow}
-                          selected={marked.includes(o.id)}
-                          onSelect={toggleMark}
-                        />
-                      ))}
+              <div>
+                <CustomerOrderRowHeader
+                  selectable
+                  allSelected={allMarked}
+                  onSelectAll={markAll}
+                />
+                {groupByDay(viewOrders).map(([day, list]) => (
+                  <div key={day}>
+                    <div className="flex items-center gap-2 border-x border-b border-grid-line bg-muted px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      <span className="truncate">{dayLabel(day)}</span>
+                      <span className="shrink-0 font-mono tabular-nums">
+                        {list.length} order
+                      </span>
                     </div>
-                  ))}
-                </div>
 
-                <FactBox title="Orderdetaljer" empty="Markera eller öppna en rad för detaljer.">
-                  {factOrder ? (
-                    <>
-                      <FactGroup title="Kund">
-                        <div className="text-sm font-semibold">
-                          {factOrder.customers_retail?.name ||
-                            factOrder.customer_name_snapshot ||
-                            "Kund"}
-                        </div>
-                        <FactRow
-                          label="Telefon"
-                          numeric
-                          value={
-                            factOrder.customers_retail?.phone ||
-                            factOrder.customer_phone_snapshot ||
-                            "—"
-                          }
-                        />
-                        <FactRow
-                          label="Typ"
-                          value={ORDER_TYPE_LABELS[factOrder.order_type] ?? factOrder.order_type}
-                        />
-                      </FactGroup>
-
-                      <FactGroup title="Sammanfattning">
-                        <FactRow label="Ordernr" numeric value={factOrder.order_number} />
-                        <FactRow
-                          label="Status"
-                          value={ORDER_STATUS_LABELS[factOrder.status] ?? factOrder.status}
-                        />
-                        <FactRow
-                          label="Packning"
-                          value={
-                            PACK_STATUS_LABELS[factOrder.pack_status] ?? factOrder.pack_status
-                          }
-                        />
-                        <FactRow
-                          label="Rader"
-                          numeric
-                          value={
-                            (factOrder.customer_order_lines || []).filter(
-                              (l) => l.pack_status !== "struken",
-                            ).length
-                          }
-                        />
-                        <FactRow
-                          label={factOrder.total_incl_vat ? "Verkligt pris" : "Uppskattat pris"}
-                          numeric
-                          value={`${nf(
-                            factOrder.total_incl_vat || factOrder.estimated_total,
-                            2,
-                          )} kr`}
-                        />
-                      </FactGroup>
-
-                      {(factOrder.allergy_note ||
-                        (factOrder.excluded_allergens || []).length > 0) && (
-                        <div className="rounded-sm border-l-4 border-row-late-edge bg-row-late p-2.5 text-xs text-row-late-text">
-                          <div className="font-bold uppercase tracking-wide">Allergi</div>
-                          <div>
-                            {factOrder.allergy_note ||
-                              (factOrder.excluded_allergens || []).join(", ")}
-                          </div>
-                        </div>
-                      )}
-
-                      <Button
-                        variant="outline"
-                        className="h-9 w-full text-xs"
-                        onClick={() => setSelected(factOrder)}
-                      >
-                        Visa fullständigt kort
-                      </Button>
-                    </>
-                  ) : undefined}
-                </FactBox>
+                    {list.map((o) => (
+                      <CustomerOrderRow
+                        key={o.id}
+                        order={o}
+                        onEdit={canEdit ? setEditing : undefined}
+                        readOnly={rowReadOnly(o)}
+                        open={openRow === o.id}
+                        onToggle={toggleRow}
+                        selected={marked.includes(o.id)}
+                        onSelect={toggleMark}
+                      />
+                    ))}
+                  </div>
+                ))}
               </div>
+
+
+
 
               <StatusBar
                 selectedCount={markedOrders.length}
@@ -440,12 +348,6 @@ export default function CustomerOrders() {
       )}
 
 
-      <CustomerOrderCard
-        order={selectedFresh}
-        open={!!selected}
-        onOpenChange={(v) => !v && setSelected(null)}
-        readOnly={selectedFresh ? rowReadOnly(selectedFresh) : false}
-      />
 
       <CustomerOrderEditDialog
         order={
