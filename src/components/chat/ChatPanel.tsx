@@ -232,12 +232,28 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
 
 
 
-  // Markera den öppna chatten som läst när nya meddelanden visas
+  // Markera som läst först när chatten verkligen är öppnad av användaren:
+  // butiken har bara en chatt (alltid öppen), övriga måste klicka fram tråden.
+  // Notisen ligger alltså kvar tills grossisten faktiskt öppnat meddelandet.
   const convId = activeConv?.id;
+  const opened = isStore || (!!activeId && activeId === convId);
   useEffect(() => {
-    if (convId) markRead.mutate(convId);
+    if (!convId || !opened) return;
+    if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+    markRead.mutate(convId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [convId, messages.length]);
+  }, [convId, opened, messages.length]);
+
+  const reads = useConversationReads(convId);
+  /** Har någon motpart läst meddelandet? (Facebook/Instagram-liknande "Läst") */
+  const readByOther = (m: ChatMessage) => {
+    const others = (activeConv?.participants || []).filter((p) => p.portal_key !== portal?.key);
+    return others.some((p) => {
+      const at = reads[p.portal_key];
+      return !!at && new Date(at) >= new Date(m.created_at);
+    });
+  };
+
 
   const storeTargets = useMemo(() => otherProfiles.filter((p) => p.kind === "store"), [otherProfiles]);
   const isAdmin = portal?.kind === "admin";
