@@ -148,7 +148,14 @@ const HEADER_ALIASES: Record<string, ImportColumn> = {
   fao: "fao_code",
   faocode: "fao_code",
   artkod: "fao_code",
+  allergen: "allergens",
+  allergener: "allergens",
+  kan_innehalla: "may_contain",
+  kaninnehalla: "may_contain",
+  spar_av: "may_contain",
+  maycontain: "may_contain",
 };
+
 
 function normalizeHeader(raw: string): string | null {
   const key = String(raw ?? "")
