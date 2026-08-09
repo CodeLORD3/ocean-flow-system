@@ -27,8 +27,8 @@ export const LEVEL_ORDER: LocationLevel[] = [
 export const LEVEL_LABEL: Record<LocationLevel, string> = {
   inkopslager: "Inköpslager",
   grossistlager: "Grossistlager",
-  tillverkningslager: "Tillverkningslager",
-  leveranslager: "Leveranslager",
+  tillverkningslager: "Produktionslager",
+  leveranslager: "Transportlager",
   butik: "Butik",
 };
 
@@ -36,7 +36,7 @@ export const LEVEL_DESCRIPTION: Record<LocationLevel, string> = {
   inkopslager: "I vår ägo, ännu inte fysiskt hos oss",
   grossistlager: "Fysiskt på plats hos oss i Göteborg",
   tillverkningslager: "Planerat för produktion eller ute på externt uppdrag",
-  leveranslager: "Bokat till butik, ännu inte mottaget",
+  leveranslager: "Skickat till butik, väntar på butikens godkännande",
   butik: "Butikens eget lager",
 };
 
@@ -154,14 +154,18 @@ export async function grossistlagerId(): Promise<string> {
   return locationIdForLevel("grossistlager");
 }
 
-/** Enhetens inköpslager — allt som är köpt men ännu inte hos oss. */
-export async function inkopslagerId(storeId: string): Promise<string> {
-  return locationIdForLevel("inkopslager", storeId);
+/**
+ * Inköpslagret — ett enda för hela grossistledet. Allt som är köpt men ännu
+ * inte flyttat in i grossistlagret. Enhetsparametern finns kvar för
+ * bakåtkompatibilitet men används inte: det finns bara ett inköpslager.
+ */
+export async function inkopslagerId(_storeId?: string): Promise<string> {
+  return locationIdForLevel("inkopslager");
 }
 
-/** Enhetens tillverkningslager. */
-export async function tillverkningslagerId(storeId: string): Promise<string> {
-  return locationIdForLevel("tillverkningslager", storeId);
+/** Produktionslagret — ett enda för hela grossistledet. */
+export async function tillverkningslagerId(_storeId?: string): Promise<string> {
+  return locationIdForLevel("tillverkningslager");
 }
 
 /** Butikens leveranslager — varor lovade till just den butiken. */
@@ -213,7 +217,7 @@ export const LEVEL_EMPTY_HINT: Record<LocationLevel, string> = {
   tillverkningslager:
     "Inget planerat för produktion. Nivån fylls när råvara flyttas till Filé/Tillverkning.",
   leveranslager:
-    "Inget bokat till butik. Nivån fylls när en överföring skickas mot butiken.",
+    "Inget under transport. Nivån fylls när en order ändras från packad till skickad.",
   butik: "Butikens lager är tomt. Nivån fylls när butiken godkänner en inleverans.",
 };
 
@@ -230,6 +234,15 @@ export const LEVEL_OWNER: Record<LocationLevel, string> = {
  * Nivåer en portal får hantera. Övriga nivåer visas med saldo men låsta —
  * se men inte röra, så ingen beställer vara som redan är uppbokad.
  */
+/**
+ * Nivåer en portal överhuvudtaget får se. Butiken ser bara sitt eget
+ * transportlager och sitt butikslager — grossistleden är inte butikens sak.
+ */
+export function visibleLevels(site: string | null | undefined): LocationLevel[] {
+  if (site === "shop") return ["leveranslager", "butik"];
+  return [...LEVEL_ORDER];
+}
+
 export function manageableLevels(site: string | null | undefined): LocationLevel[] {
   // site: "wholesale" = Admin, "production" = Grossist, "shop" = Butik.
   if (site === "wholesale") return [...LEVEL_ORDER];

@@ -10,6 +10,8 @@ export interface LevelTotals {
 interface LevelSelectorProps {
   /** Nivåer användaren får hantera. Övriga visas i grått läge, aldrig gömda. */
   available: LocationLevel[];
+  /** Nivåer som visas alls. Utelämnad = alla fem nivåer. */
+  visible?: LocationLevel[];
   value: LocationLevel | "all";
   onChange: (level: LocationLevel | "all") => void;
   /** Kilo och lagervärde per nivå. Visas även för låsta nivåer. */
@@ -37,6 +39,7 @@ const money = (v?: number) =>
  */
 export default function LevelSelector({
   available,
+  visible,
   value,
   onChange,
   totals,
@@ -44,7 +47,8 @@ export default function LevelSelector({
   showValue = true,
   includeAll = true,
 }: LevelSelectorProps) {
-  const options: (LocationLevel | "all")[] = includeAll ? ["all", ...LEVEL_ORDER] : [...LEVEL_ORDER];
+  const shown = LEVEL_ORDER.filter((l) => !visible || visible.includes(l));
+  const options: (LocationLevel | "all")[] = includeAll ? ["all", ...shown] : [...shown];
 
   return (
     <div className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
