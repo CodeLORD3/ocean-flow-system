@@ -680,13 +680,24 @@ export default function ShopOrders() {
                               <td className="py-2 text-muted-foreground">{line.unit}</td>
                               <td className="py-2 text-right">
                                 <Input
+                                  ref={el => { qtyRefs.current[line.product_id] = el; }}
                                   type="number"
+                                  inputMode="decimal"
+                                  enterKeyHint="next"
                                   step="0.1"
                                   value={line.quantity}
                                   onChange={e => updateLine(idx, e.target.value)}
-                                  className="h-7 text-xs w-24 ml-auto text-right"
+                                  onFocus={e => e.currentTarget.select()}
+                                  onKeyDown={e => {
+                                    if (e.key === "Enter") {
+                                      e.preventDefault();
+                                      searchInputRef.current?.focus();
+                                    }
+                                  }}
+                                  className="h-9 text-sm w-24 ml-auto text-right"
                                   placeholder="0"
                                 />
+
                               </td>
                               <td className="py-2">
                                 <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeLine(idx)}>
