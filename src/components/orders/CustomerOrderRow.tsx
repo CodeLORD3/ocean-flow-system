@@ -26,6 +26,13 @@ import { allergenLabel } from "@/lib/catering";
 const nf = (v: unknown, d = 1) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
 
+/** Veckodag på svenska, t.ex. "Lör". */
+const weekday = (iso: string) => {
+  const s = new Date(iso + "T00:00:00").toLocaleDateString("sv-SE", { weekday: "short" });
+  return s.charAt(0).toUpperCase() + s.slice(1).replace(".", "");
+};
+
+
 /** Färgad kant till vänster, som i orderlistor i affärssystem. */
 const stripe = (order: CustomerOrder) => {
   if (order.status === "avbruten") return "bg-muted-foreground/40";
@@ -93,8 +100,9 @@ export function CustomerOrderRow({
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                 <span className="font-mono tabular-nums text-foreground">
-                  {order.wanted_date}
+                  {weekday(order.wanted_date)} {order.wanted_date}
                   {order.wanted_time ? ` kl ${order.wanted_time.slice(0, 5)}` : ""}
+
                 </span>
                 <span className="inline-flex items-center gap-1">
                   {order.order_type === "leverans" ? (
@@ -217,7 +225,7 @@ export function CustomerOrderRow({
 
           <Button className="h-12 w-full" onClick={() => onOpen(order)}>
             <Package className="mr-2 h-5 w-5" />
-            {readOnly ? "Öppna order" : "Öppna packning"}
+            {readOnly ? "Öppna order" : "Börja packa"}
             <ExternalLink className="ml-2 h-4 w-4 opacity-70" />
           </Button>
         </div>
