@@ -43,6 +43,36 @@ function initialsOf(name: string) {
     .join("");
 }
 
+/** Profilbild för en portal (butikens hero-bild, annars initialer som fallback). */
+function PortalAvatar({
+  name,
+  url,
+  size = "md",
+  className,
+}: {
+  name: string;
+  url?: string | null;
+  size?: "sm" | "md";
+  className?: string;
+}) {
+  const dim = size === "sm" ? "h-6 w-6" : "h-8 w-8";
+  return (
+    <span
+      className={cn(
+        "shrink-0 overflow-hidden rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-semibold",
+        dim,
+        className
+      )}
+    >
+      {url ? (
+        <img src={url} alt={`Profilbild för ${name}`} loading="lazy" className="h-full w-full object-cover" />
+      ) : (
+        initialsOf(name)
+      )}
+    </span>
+  );
+}
+
 function timeLabel(iso: string) {
   const d = new Date(iso);
   const today = new Date();
