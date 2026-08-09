@@ -54,9 +54,14 @@ const LEVEL_ICON: Record<LocationLevel, any> = {
  * inköpslager → grossist/produktion → transportlager → butikslager.
  * Varje nod är klickbar och fäller ut sitt lagerinnehåll.
  */
-export default function StockTree({ stock, stores, showValue = true, onFocusLevel }: StockTreeProps) {
+export default function StockTree({ stock, stores, showValue = true, onFocusLevel, canMove = true }: StockTreeProps) {
   const [open, setOpen] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [moving, setMoving] = useState<null | "grossistlager" | "tillverkningslager">(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const qc = useQueryClient();
   const { data: transfers = [] } = useTransferOrders();
+
 
   const storeName = useMemo(() => {
     const m: Record<string, string> = {};
