@@ -239,7 +239,7 @@ export default function CustomerOrders() {
             </div>
             {!isShop && (
               <Select value={storeFilter} onValueChange={setStoreFilter}>
-                <SelectTrigger className="h-11 w-[190px]">
+                <SelectTrigger className="h-11 w-full sm:w-[190px]">
                   <SelectValue placeholder="Butik" />
                 </SelectTrigger>
                 <SelectContent>
@@ -253,7 +253,7 @@ export default function CustomerOrders() {
               </Select>
             )}
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="h-11 w-[160px]">
+              <SelectTrigger className="h-11 w-[48%] sm:w-[160px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -266,7 +266,7 @@ export default function CustomerOrders() {
               </SelectContent>
             </Select>
             <Select value={packStatus} onValueChange={setPackStatus}>
-              <SelectTrigger className="h-11 w-[150px]">
+              <SelectTrigger className="h-11 w-[48%] sm:w-[150px]">
                 <SelectValue placeholder="Packning" />
               </SelectTrigger>
               <SelectContent>
@@ -279,7 +279,7 @@ export default function CustomerOrders() {
               </SelectContent>
             </Select>
             <Select value={orderType} onValueChange={setOrderType}>
-              <SelectTrigger className="h-11 w-[150px]">
+              <SelectTrigger className="h-11 w-[48%] sm:w-[150px]">
                 <SelectValue placeholder="Ordertyp" />
               </SelectTrigger>
               <SelectContent>
