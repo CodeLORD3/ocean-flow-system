@@ -304,9 +304,11 @@ export default function CustomerOrders() {
               <CustomerOrderRowHeader />
               {groupByDay(orders).map(([day, list]) => (
                 <div key={day} className="space-y-1">
-                  <div className="sticky top-0 z-10 -mx-1 bg-background/95 px-1 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur">
-                    {dayLabel(day)} · {list.length} order
+                  <div className="sticky top-0 z-20 flex items-center gap-2 rounded-md border border-border bg-muted px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground shadow-sm">
+                    <span className="truncate">{dayLabel(day)}</span>
+                    <span className="shrink-0 font-mono tabular-nums">{list.length} order</span>
                   </div>
+
                   {list.map((o) => (
                     <CustomerOrderRow
                       key={o.id}
