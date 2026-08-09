@@ -371,12 +371,27 @@ export function CustomerOrderRow({
                 <Pencil className="mr-2 h-4 w-4" /> Redigera order
               </Button>
             )}
-            <Button variant="ghost" className="h-12 sm:w-44" onClick={() => onOpen(order)}>
+            <Button
+              variant="outline"
+              className="h-12 flex-1"
+              onClick={() => printConfirmation(order)}
+            >
+              <Printer className="mr-2 h-4 w-4" /> Skriv ut order
+            </Button>
+            <Button
+              variant="outline"
+              className="h-12 flex-1"
+              onClick={() => downloadConfirmation(order)}
+            >
+              <Download className="mr-2 h-4 w-4" /> Ladda ner PDF
+            </Button>
+            <Button variant="ghost" className="h-12 sm:w-32" onClick={() => onOpen(order)}>
               <Package className="mr-2 h-4 w-4" />
-              {readOnly ? "Öppna order" : "Fullvy"}
+              {readOnly ? "Öppna" : "Fullvy"}
               <ExternalLink className="ml-2 h-4 w-4 opacity-70" />
             </Button>
           </div>
+
         </div>
       )}
     </div>
