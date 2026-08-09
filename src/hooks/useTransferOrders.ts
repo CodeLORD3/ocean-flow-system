@@ -180,3 +180,31 @@ export function useWasteReports(locationIds?: string[]) {
     },
   });
 }
+
+/** Sparar exportuppgifter på en utleverans. Varning, aldrig spärr. */
+export function useSaveExportDocumentation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      orderId: string;
+      catchCertificateRef?: string | null;
+      catchCertValidated?: string | null;
+      reexportCert?: string | null;
+      exportCountry?: string | null;
+      sealNumber?: string | null;
+    }) => {
+      const { error } = await supabase
+        .from("transfer_orders" as any)
+        .update({
+          catch_certificate_ref: input.catchCertificateRef || null,
+          catch_cert_validated: input.catchCertValidated || null,
+          reexport_cert: input.reexportCert || null,
+          export_country: input.exportCountry || null,
+          seal_number: input.sealNumber || null,
+        })
+        .eq("id", input.orderId);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["transfer_orders"] }),
+  });
+}
