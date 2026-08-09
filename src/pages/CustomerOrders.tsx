@@ -363,12 +363,6 @@ export default function CustomerOrders() {
       )}
 
 
-      <CustomerOrderCard
-        order={selectedFresh}
-        open={!!selected}
-        onOpenChange={(v) => !v && setSelected(null)}
-        readOnly={selectedFresh ? rowReadOnly(selectedFresh) : false}
-      />
 
       <CustomerOrderEditDialog
         order={
