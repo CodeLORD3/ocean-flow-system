@@ -551,8 +551,10 @@ export default function ShopOrders() {
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                   <Input
+                    ref={searchInputRef}
                     placeholder="Sök produkt (namn eller SKU)..."
                     value={productSearch}
+                    enterKeyHint="done"
                     onChange={e => { setProductSearch(e.target.value); setHighlightedIndex(-1); }}
                     onKeyDown={e => {
                       if (filteredProducts.length === 0) return;
@@ -562,9 +564,10 @@ export default function ShopOrders() {
                       } else if (e.key === "ArrowUp") {
                         e.preventDefault();
                         setHighlightedIndex(prev => (prev <= 0 ? filteredProducts.length - 1 : prev - 1));
-                      } else if (e.key === "Enter" && highlightedIndex >= 0 && highlightedIndex < filteredProducts.length) {
+                      } else if (e.key === "Enter") {
                         e.preventDefault();
-                        addProduct(filteredProducts[highlightedIndex]);
+                        const pick = highlightedIndex >= 0 ? filteredProducts[highlightedIndex] : filteredProducts[0];
+                        if (pick) addProduct(pick);
                       }
                     }}
                     className="pl-8 h-8 text-xs"
@@ -580,21 +583,34 @@ export default function ShopOrders() {
                         {prods.map((p: any) => {
                           const idx = filteredProducts.indexOf(p);
                           return (
-                            <button
+                            <div
                               key={p.id}
-                              className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between ${idx === highlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
+                              role="button"
+                              tabIndex={-1}
+                              className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 cursor-pointer ${idx === highlightedIndex ? "bg-muted" : "hover:bg-muted/50"}`}
                               onClick={() => addProduct(p)}
                               onMouseEnter={() => setHighlightedIndex(idx)}
                             >
-                              <span className="font-medium text-foreground">{p.name}</span>
+                              <ProductThumb src={(p as any).image_url} alt={p.name} static className="w-10 h-8" />
+                              <span className="font-medium text-foreground flex-1 truncate">{p.name}</span>
                               <span className="text-muted-foreground font-mono text-[10px]">{p.sku} · {p.unit}</span>
-                            </button>
+                              <button
+                                type="button"
+                                title="Visa produkt"
+                                aria-label={`Visa ${p.name}`}
+                                className="p-1 rounded hover:bg-background text-muted-foreground hover:text-foreground"
+                                onClick={(e) => { e.stopPropagation(); setPreviewProduct(p); }}
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
                           );
                         })}
                       </div>
                     ))}
                   </div>
                 )}
+
 
               </div>
               <Select
