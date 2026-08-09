@@ -76,9 +76,11 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
     setDiff(null);
     setFatal(null);
     setMissingOptional([]);
+    setUnknownColumns([]);
     setExisting([]);
     if (fileRef.current) fileRef.current.value = "";
   };
+
 
   const handleClose = (next: boolean) => {
     if (!next) reset();
