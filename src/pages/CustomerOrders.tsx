@@ -342,9 +342,15 @@ export default function CustomerOrders() {
           ) : (
             <div className="space-y-2">
               {tomorrowOrders.map((o) => (
-                <OrderRow key={o.id} order={o} onOpen={setSelected} readOnly={rowReadOnly(o)} />
+                <CustomerOrderRow
+                  key={o.id}
+                  order={o}
+                  onOpen={setSelected}
+                  readOnly={rowReadOnly(o)}
+                />
               ))}
             </div>
+
           )}
         </TabsContent>
 
