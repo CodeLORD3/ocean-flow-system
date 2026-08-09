@@ -63,14 +63,8 @@ const salesNav = [
   { title: "Önskemål", url: "/store-wishes", icon: Star },
 ];
 
-const financeNav = [
-  { title: "Rapporter", url: "/reports", icon: BarChart3 },
-  { title: "Ekonomi", url: "/finance", icon: CreditCard },
-  { title: "Prognoser", url: "/forecasts", icon: TrendingUp },
-];
-
 const bottomNav = [
-  { title: "Revision & Logg", url: "/audit", icon: ClipboardList },
+  { title: "Rapporter", url: "/reports", icon: BarChart3 },
   { title: "Administration", url: "/settings", icon: Settings },
 ];
 
@@ -80,7 +74,6 @@ const sections: NavSection[] = [
   { label: "Översikt", items: overviewNav },
   { label: "Inköp & Produktion", items: purchaseNav },
   { label: "Försäljning", items: salesNav },
-  { label: "Ekonomi & Rapporter", items: financeNav },
 ];
 
 export function ProductionSidebar() {
