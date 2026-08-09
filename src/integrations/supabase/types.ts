@@ -804,6 +804,314 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_order_events: {
+        Row: {
+          created_at: string
+          customer_order_id: string
+          description: string | null
+          event_type: string
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+          performed_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_order_id: string
+          description?: string | null
+          event_type: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          performed_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_order_id?: string
+          description?: string | null
+          event_type?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          performed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_order_events_customer_order_id_fkey"
+            columns: ["customer_order_id"]
+            isOneToOne: false
+            referencedRelation: "customer_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_order_lines: {
+        Row: {
+          created_at: string
+          customer_order_id: string
+          estimated_price_per_unit: number | null
+          free_text_name: string | null
+          id: string
+          is_free_text: boolean
+          line_total: number | null
+          locked_from_scaling: boolean
+          movement_id: string | null
+          note: string | null
+          original_product_id: string | null
+          pack_status: string
+          packed_at: string | null
+          packed_by: string | null
+          portion_per_guest: number | null
+          price_override_by: string | null
+          price_override_reason: string | null
+          price_per_unit: number | null
+          product_id: string | null
+          quantity_ordered: number
+          quantity_packed: number | null
+          reservation_status: string
+          reserved_lot_id: string | null
+          reserved_quantity: number
+          sort_order: number
+          substitution_approved: boolean
+          substitution_note: string | null
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_order_id: string
+          estimated_price_per_unit?: number | null
+          free_text_name?: string | null
+          id?: string
+          is_free_text?: boolean
+          line_total?: number | null
+          locked_from_scaling?: boolean
+          movement_id?: string | null
+          note?: string | null
+          original_product_id?: string | null
+          pack_status?: string
+          packed_at?: string | null
+          packed_by?: string | null
+          portion_per_guest?: number | null
+          price_override_by?: string | null
+          price_override_reason?: string | null
+          price_per_unit?: number | null
+          product_id?: string | null
+          quantity_ordered: number
+          quantity_packed?: number | null
+          reservation_status?: string
+          reserved_lot_id?: string | null
+          reserved_quantity?: number
+          sort_order?: number
+          substitution_approved?: boolean
+          substitution_note?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_order_id?: string
+          estimated_price_per_unit?: number | null
+          free_text_name?: string | null
+          id?: string
+          is_free_text?: boolean
+          line_total?: number | null
+          locked_from_scaling?: boolean
+          movement_id?: string | null
+          note?: string | null
+          original_product_id?: string | null
+          pack_status?: string
+          packed_at?: string | null
+          packed_by?: string | null
+          portion_per_guest?: number | null
+          price_override_by?: string | null
+          price_override_reason?: string | null
+          price_per_unit?: number | null
+          product_id?: string | null
+          quantity_ordered?: number
+          quantity_packed?: number | null
+          reservation_status?: string
+          reserved_lot_id?: string | null
+          reserved_quantity?: number
+          sort_order?: number
+          substitution_approved?: boolean
+          substitution_note?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_order_lines_customer_order_id_fkey"
+            columns: ["customer_order_id"]
+            isOneToOne: false
+            referencedRelation: "customer_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_order_lines_movement_id_fkey"
+            columns: ["movement_id"]
+            isOneToOne: false
+            referencedRelation: "stock_movements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_order_lines_original_product_id_fkey"
+            columns: ["original_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_order_lines_packed_by_fkey"
+            columns: ["packed_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_order_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_order_lines_reserved_lot_id_fkey"
+            columns: ["reserved_lot_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_orders: {
+        Row: {
+          allergy_note: string | null
+          cancelled_at: string | null
+          category: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_name_snapshot: string | null
+          customer_phone_snapshot: string | null
+          delivery_city: string | null
+          delivery_postal_code: string | null
+          delivery_street: string | null
+          estimated_total: number
+          excluded_allergens: string[]
+          guest_count: number | null
+          handed_over_at: string | null
+          id: string
+          note: string | null
+          order_number: string
+          order_type: string
+          pack_status: string
+          packed_at: string | null
+          received_by: string | null
+          received_by_name: string | null
+          source: string
+          status: string
+          store_id: string
+          total_incl_vat: number
+          updated_at: string
+          wanted_date: string
+          wanted_time: string | null
+        }
+        Insert: {
+          allergy_note?: string | null
+          cancelled_at?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name_snapshot?: string | null
+          customer_phone_snapshot?: string | null
+          delivery_city?: string | null
+          delivery_postal_code?: string | null
+          delivery_street?: string | null
+          estimated_total?: number
+          excluded_allergens?: string[]
+          guest_count?: number | null
+          handed_over_at?: string | null
+          id?: string
+          note?: string | null
+          order_number: string
+          order_type?: string
+          pack_status?: string
+          packed_at?: string | null
+          received_by?: string | null
+          received_by_name?: string | null
+          source?: string
+          status?: string
+          store_id: string
+          total_incl_vat?: number
+          updated_at?: string
+          wanted_date: string
+          wanted_time?: string | null
+        }
+        Update: {
+          allergy_note?: string | null
+          cancelled_at?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name_snapshot?: string | null
+          customer_phone_snapshot?: string | null
+          delivery_city?: string | null
+          delivery_postal_code?: string | null
+          delivery_street?: string | null
+          estimated_total?: number
+          excluded_allergens?: string[]
+          guest_count?: number | null
+          handed_over_at?: string | null
+          id?: string
+          note?: string | null
+          order_number?: string
+          order_type?: string
+          pack_status?: string
+          packed_at?: string | null
+          received_by?: string | null
+          received_by_name?: string | null
+          source?: string
+          status?: string
+          store_id?: string
+          total_incl_vat?: number
+          updated_at?: string
+          wanted_date?: string
+          wanted_time?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_orders_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers_retail"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_orders_received_by_fkey"
+            columns: ["received_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           address: string | null
@@ -844,6 +1152,72 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "customers_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customers_retail: {
+        Row: {
+          anonymized_at: string | null
+          city: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          excluded_allergens: string[]
+          id: string
+          name: string
+          note: string | null
+          phone: string | null
+          postal_code: string | null
+          store_id: string | null
+          street: string | null
+          updated_at: string
+        }
+        Insert: {
+          anonymized_at?: string | null
+          city?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          excluded_allergens?: string[]
+          id?: string
+          name: string
+          note?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          store_id?: string | null
+          street?: string | null
+          updated_at?: string
+        }
+        Update: {
+          anonymized_at?: string | null
+          city?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          excluded_allergens?: string[]
+          id?: string
+          name?: string
+          note?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          store_id?: string | null
+          street?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_retail_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customers_retail_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
@@ -6466,6 +6840,10 @@ export type Database = {
       is_staff_manager: { Args: never; Returns: boolean }
       latin_norm: { Args: { v: string }; Returns: string }
       ledger_zero_empty_costs: { Args: never; Returns: number }
+      next_customer_order_number: {
+        Args: { _date: string; _store_id: string }
+        Returns: string
+      }
       next_internal_lot_number: { Args: never; Returns: string }
       notify_event: {
         Args: {
