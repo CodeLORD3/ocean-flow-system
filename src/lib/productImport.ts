@@ -282,8 +282,20 @@ export async function parseProductFile(file: File): Promise<ParseResult> {
         const v = nullableStr(get("fao_code"));
         return v === null ? null : v.toUpperCase();
       })(),
+      ...(() => {
+        const a = parseAllergenCell(get("allergens"));
+        const m = parseAllergenCell(get("may_contain"));
+        const unknown = [...(a?.unknown ?? []), ...(m?.unknown ?? [])];
+        return {
+          allergens: a ? a.codes : null,
+          allergens_checked: a ? a.checked : null,
+          may_contain: m ? m.codes : null,
+          _allergenUnknown: unknown.length > 0 ? unknown : undefined,
+        };
+      })(),
     };
   });
+
 
   // Keep raw values that failed numeric parsing as errors later: re-check originals
   rows.forEach((row, i) => {
