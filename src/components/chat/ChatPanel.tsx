@@ -26,6 +26,8 @@ import {
   useBroadcastImportant,
   useChatUnread,
   useMarkConversationRead,
+  useConversationReads,
+  usePortalAvatars,
 } from "@/hooks/useChat";
 
 function portalIcon(kind: PortalProfile["kind"]) {
