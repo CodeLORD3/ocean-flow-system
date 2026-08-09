@@ -375,26 +375,44 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
 
       {/* 1. Inköpslager */}
       <Card
-        n={node("inkopslager", "lvl:inkopslager", LEVEL_LABEL.inkopslager, byLevel["inkopslager"] || [])}
+        n={node("inkopslager", "lvl:inkopslager", LEVEL_LABEL.inkopslager, purchaseRows)}
         className="mx-auto max-w-md"
+        selectable
       />
 
       <Connector />
 
-      {/* 2. Grossist + Produktion sida vid sida */}
+      {/* 2. Grossist + Produktion sida vid sida — även släppzoner för markerade rader */}
       <div className="grid gap-2 sm:grid-cols-2">
-        <Card
-          n={node("grossistlager", "lvl:grossistlager", LEVEL_LABEL.grossistlager, byLevel["grossistlager"] || [])}
-        />
-        <Card
-          n={node(
-            "tillverkningslager",
-            "lvl:tillverkningslager",
-            LEVEL_LABEL.tillverkningslager,
-            byLevel["tillverkningslager"] || [],
+        <div
+          {...dropProps("grossistlager")}
+          className={cn(
+            "rounded-lg transition-shadow",
+            dropTarget === "grossistlager" && "ring-2 ring-primary ring-offset-2 ring-offset-background",
           )}
-        />
+        >
+          <Card
+            n={node("grossistlager", "lvl:grossistlager", LEVEL_LABEL.grossistlager, byLevel["grossistlager"] || [])}
+          />
+        </div>
+        <div
+          {...dropProps("tillverkningslager")}
+          className={cn(
+            "rounded-lg transition-shadow",
+            dropTarget === "tillverkningslager" && "ring-2 ring-primary ring-offset-2 ring-offset-background",
+          )}
+        >
+          <Card
+            n={node(
+              "tillverkningslager",
+              "lvl:tillverkningslager",
+              LEVEL_LABEL.tillverkningslager,
+              byLevel["tillverkningslager"] || [],
+            )}
+          />
+        </div>
       </div>
+
 
       <Connector />
 
