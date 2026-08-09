@@ -1453,8 +1453,9 @@ export default function Inventory() {
 
 
 
-      {/* Vyväxling: samlad lagerbild (ny look) vs. per lagerplats (detaljvy) vs. rörelser */}
+      {/* Vyväxling — butikslagret visar alltid den samlade lagerbilden (ingen flikmeny) */}
       <div className="flex flex-wrap items-center gap-2">
+        {!isShopPortal && (
         <div className="-mx-1 flex max-w-full items-center gap-1 overflow-x-auto rounded-lg border border-border bg-card p-1 sm:mx-0 sm:w-fit [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {[
             { v: "overview" as const, l: "Samlad lagerbild", s: "Samlad" },
@@ -1475,6 +1476,7 @@ export default function Inventory() {
             </button>
           ))}
         </div>
+        )}
 
         <Button
           variant="outline"
