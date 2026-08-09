@@ -18,9 +18,13 @@ import {
 export function OnDutyStaff({ storeId }: { storeId?: string | null }) {
   // Hämta all personal — en person kan vara instämplad på en annan butik än sin hemmabutik
   const { data: staffList = [] } = useStaff();
-  const { data: openShifts = [] } = useOpenShifts(storeId ?? undefined);
   const { staff } = useStaffAuth();
-  const { data: stores = [] } = useStores(true);
+  // Alla enheter, inklusive grossist — grossistpersonalen ska också kunna stämpla in
+  const { data: stores = [] } = useStores();
+  const wholesaleStoreId = stores.find((s: any) => s.is_wholesale)?.id ?? null;
+  // På grossistportalen (ingen butik vald) stämplar man in på grossistenheten
+  const effectiveStoreId = storeId ?? wholesaleStoreId;
+  const { data: openShifts = [] } = useOpenShifts(effectiveStoreId ?? undefined);
   const { data: myShift } = useMyOpenShift(staff?.id);
   const clockIn = useClockIn();
   const clockOut = useClockOut();
@@ -32,8 +36,9 @@ export function OnDutyStaff({ storeId }: { storeId?: string | null }) {
     .map((sh) => ({ shift: sh, person: byId.get(sh.staff_id) as any }))
     .filter((x) => !!x.person);
 
-  const storeName = stores.find((s) => s.id === storeId)?.name ?? "";
+  const storeName = stores.find((s) => s.id === effectiveStoreId)?.name ?? "";
   const myStoreName = stores.find((s) => s.id === myShift?.store_id)?.name ?? "";
+
   const now = new Date().toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
   const fullName = staff ? `${staff.first_name} ${staff.last_name}` : "";
 
