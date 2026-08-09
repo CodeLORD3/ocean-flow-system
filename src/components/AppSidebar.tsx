@@ -91,6 +91,7 @@ const orgNav = [
   { title: "Personal", url: "/staff", icon: UserCheck },
   { title: "Bilar & Maskiner", url: "/vehicles", icon: TruckIcon },
   { title: "Anläggningar", url: "/establishments", icon: Building2 },
+  { title: "Egenkontroll", url: "/food-safety", icon: ShieldCheck },
 ];
 
 const financeNav = [

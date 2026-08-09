@@ -783,6 +783,85 @@ export type Database = {
           },
         ]
       }
+      compliance_requirements: {
+        Row: {
+          active: boolean
+          created_at: string
+          document_name: string | null
+          document_path: string | null
+          establishment_id: string | null
+          id: string
+          interval_months: number
+          last_done: string | null
+          next_due: string | null
+          note: string | null
+          regulation: string | null
+          responsible: string | null
+          responsible_staff_id: string | null
+          store_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          document_name?: string | null
+          document_path?: string | null
+          establishment_id?: string | null
+          id?: string
+          interval_months?: number
+          last_done?: string | null
+          next_due?: string | null
+          note?: string | null
+          regulation?: string | null
+          responsible?: string | null
+          responsible_staff_id?: string | null
+          store_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          document_name?: string | null
+          document_path?: string | null
+          establishment_id?: string | null
+          id?: string
+          interval_months?: number
+          last_done?: string | null
+          next_due?: string | null
+          note?: string | null
+          regulation?: string | null
+          responsible?: string | null
+          responsible_staff_id?: string | null
+          store_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_requirements_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_requirements_responsible_staff_id_fkey"
+            columns: ["responsible_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_requirements_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_settings: {
         Row: {
           additional_info: string | null
@@ -812,6 +891,192 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      control_points: {
+        Row: {
+          active: boolean
+          category: string
+          created_at: string
+          establishment_id: string | null
+          frequency: string
+          id: string
+          instrument_id: string | null
+          limit_max: number | null
+          limit_min: number | null
+          location_id: string | null
+          name: string
+          note: string | null
+          responsible_role: string | null
+          store_id: string | null
+          unit: string
+          updated_at: string
+          zone: number | null
+        }
+        Insert: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          establishment_id?: string | null
+          frequency?: string
+          id?: string
+          instrument_id?: string | null
+          limit_max?: number | null
+          limit_min?: number | null
+          location_id?: string | null
+          name: string
+          note?: string | null
+          responsible_role?: string | null
+          store_id?: string | null
+          unit?: string
+          updated_at?: string
+          zone?: number | null
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          establishment_id?: string | null
+          frequency?: string
+          id?: string
+          instrument_id?: string | null
+          limit_max?: number | null
+          limit_min?: number | null
+          location_id?: string | null
+          name?: string
+          note?: string | null
+          responsible_role?: string | null
+          store_id?: string | null
+          unit?: string
+          updated_at?: string
+          zone?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "control_points_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "control_points_instrument_id_fkey"
+            columns: ["instrument_id"]
+            isOneToOne: false
+            referencedRelation: "instruments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "control_points_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock_rollup"
+            referencedColumns: ["location_id"]
+          },
+          {
+            foreignKeyName: "control_points_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "control_points_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      control_records: {
+        Row: {
+          comment: string | null
+          control_point_id: string
+          created_at: string
+          deviation_id: string | null
+          id: string
+          instrument_id: string | null
+          lot_id: string | null
+          measured_at: string
+          measured_by: string | null
+          photo_path: string | null
+          status: string
+          updated_at: string
+          value_bool: boolean | null
+          value_numeric: number | null
+          value_text: string | null
+        }
+        Insert: {
+          comment?: string | null
+          control_point_id: string
+          created_at?: string
+          deviation_id?: string | null
+          id?: string
+          instrument_id?: string | null
+          lot_id?: string | null
+          measured_at?: string
+          measured_by?: string | null
+          photo_path?: string | null
+          status?: string
+          updated_at?: string
+          value_bool?: boolean | null
+          value_numeric?: number | null
+          value_text?: string | null
+        }
+        Update: {
+          comment?: string | null
+          control_point_id?: string
+          created_at?: string
+          deviation_id?: string | null
+          id?: string
+          instrument_id?: string | null
+          lot_id?: string | null
+          measured_at?: string
+          measured_by?: string | null
+          photo_path?: string | null
+          status?: string
+          updated_at?: string
+          value_bool?: boolean | null
+          value_numeric?: number | null
+          value_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "control_records_control_point_id_fkey"
+            columns: ["control_point_id"]
+            isOneToOne: false
+            referencedRelation: "control_points"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "control_records_deviation_id_fkey"
+            columns: ["deviation_id"]
+            isOneToOne: false
+            referencedRelation: "deviations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "control_records_instrument_id_fkey"
+            columns: ["instrument_id"]
+            isOneToOne: false
+            referencedRelation: "instruments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "control_records_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "control_records_measured_by_fkey"
+            columns: ["measured_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       currency_settings: {
         Row: {
@@ -1900,6 +2165,108 @@ export type Database = {
         }
         Relationships: []
       }
+      deviations: {
+        Row: {
+          closed_at: string | null
+          closed_by: string | null
+          corrective_action: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          due_date: string | null
+          establishment_id: string | null
+          id: string
+          immediate_action: string | null
+          responsible: string | null
+          responsible_staff_id: string | null
+          root_cause: string | null
+          source: string
+          source_id: string | null
+          store_id: string | null
+          title: string | null
+          updated_at: string
+          verification: string | null
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          corrective_action?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          due_date?: string | null
+          establishment_id?: string | null
+          id?: string
+          immediate_action?: string | null
+          responsible?: string | null
+          responsible_staff_id?: string | null
+          root_cause?: string | null
+          source?: string
+          source_id?: string | null
+          store_id?: string | null
+          title?: string | null
+          updated_at?: string
+          verification?: string | null
+        }
+        Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          corrective_action?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          due_date?: string | null
+          establishment_id?: string | null
+          id?: string
+          immediate_action?: string | null
+          responsible?: string | null
+          responsible_staff_id?: string | null
+          root_cause?: string | null
+          source?: string
+          source_id?: string | null
+          store_id?: string | null
+          title?: string | null
+          updated_at?: string
+          verification?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deviations_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deviations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deviations_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deviations_responsible_staff_id_fkey"
+            columns: ["responsible_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deviations_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entity_image_comments: {
         Row: {
           author_name: string
@@ -2225,6 +2592,72 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instruments: {
+        Row: {
+          active: boolean
+          calibration_interval_months: number
+          created_at: string
+          establishment_id: string | null
+          id: string
+          instrument_type: string
+          last_calibrated: string | null
+          name: string
+          next_calibration: string | null
+          note: string | null
+          placement: string | null
+          serial_number: string | null
+          store_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          calibration_interval_months?: number
+          created_at?: string
+          establishment_id?: string | null
+          id?: string
+          instrument_type?: string
+          last_calibrated?: string | null
+          name: string
+          next_calibration?: string | null
+          note?: string | null
+          placement?: string | null
+          serial_number?: string | null
+          store_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          calibration_interval_months?: number
+          created_at?: string
+          establishment_id?: string | null
+          id?: string
+          instrument_type?: string
+          last_calibrated?: string | null
+          name?: string
+          next_calibration?: string | null
+          note?: string | null
+          placement?: string | null
+          serial_number?: string | null
+          store_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instruments_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instruments_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
@@ -2658,6 +3091,7 @@ export type Database = {
       lots: {
         Row: {
           best_before: string | null
+          bivalve_registration_doc: string | null
           catch_area: string | null
           catch_date_from: string | null
           catch_date_to: string | null
@@ -2667,9 +3101,15 @@ export type Database = {
           created_at: string
           created_by: string | null
           exempt_until: string | null
+          exemption_reason: string | null
+          exemption_source: string | null
           fishing_gear: string | null
           fishing_gear_code: string | null
           fishing_trip_id: string | null
+          freeze_by: string | null
+          freeze_end: string | null
+          freeze_start: string | null
+          freeze_temp: number | null
           grade: string | null
           id: string
           incoming_catch_cert: string | null
@@ -2677,11 +3117,15 @@ export type Database = {
           latin_name: string | null
           lot_number: string
           origin_lot_id: string | null
+          parasite_treatment_required: boolean
           presentation: string | null
           price_status: string
           product_id: string | null
+          production_area_classification: string | null
           production_method: string | null
           quantity_kg: number
+          receiving_temp_c: number | null
+          receiving_temp_deviation_reason: string | null
           seal_number: string | null
           species_fao_code: string | null
           statistical_doc: string | null
@@ -2698,6 +3142,7 @@ export type Database = {
         }
         Insert: {
           best_before?: string | null
+          bivalve_registration_doc?: string | null
           catch_area?: string | null
           catch_date_from?: string | null
           catch_date_to?: string | null
@@ -2707,9 +3152,15 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           exempt_until?: string | null
+          exemption_reason?: string | null
+          exemption_source?: string | null
           fishing_gear?: string | null
           fishing_gear_code?: string | null
           fishing_trip_id?: string | null
+          freeze_by?: string | null
+          freeze_end?: string | null
+          freeze_start?: string | null
+          freeze_temp?: number | null
           grade?: string | null
           id?: string
           incoming_catch_cert?: string | null
@@ -2717,11 +3168,15 @@ export type Database = {
           latin_name?: string | null
           lot_number: string
           origin_lot_id?: string | null
+          parasite_treatment_required?: boolean
           presentation?: string | null
           price_status?: string
           product_id?: string | null
+          production_area_classification?: string | null
           production_method?: string | null
           quantity_kg?: number
+          receiving_temp_c?: number | null
+          receiving_temp_deviation_reason?: string | null
           seal_number?: string | null
           species_fao_code?: string | null
           statistical_doc?: string | null
@@ -2738,6 +3193,7 @@ export type Database = {
         }
         Update: {
           best_before?: string | null
+          bivalve_registration_doc?: string | null
           catch_area?: string | null
           catch_date_from?: string | null
           catch_date_to?: string | null
@@ -2747,9 +3203,15 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           exempt_until?: string | null
+          exemption_reason?: string | null
+          exemption_source?: string | null
           fishing_gear?: string | null
           fishing_gear_code?: string | null
           fishing_trip_id?: string | null
+          freeze_by?: string | null
+          freeze_end?: string | null
+          freeze_start?: string | null
+          freeze_temp?: number | null
           grade?: string | null
           id?: string
           incoming_catch_cert?: string | null
@@ -2757,11 +3219,15 @@ export type Database = {
           latin_name?: string | null
           lot_number?: string
           origin_lot_id?: string | null
+          parasite_treatment_required?: boolean
           presentation?: string | null
           price_status?: string
           product_id?: string | null
+          production_area_classification?: string | null
           production_method?: string | null
           quantity_kg?: number
+          receiving_temp_c?: number | null
+          receiving_temp_deviation_reason?: string | null
           seal_number?: string | null
           species_fao_code?: string | null
           statistical_doc?: string | null
@@ -2780,6 +3246,13 @@ export type Database = {
           {
             foreignKeyName: "lots_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lots_freeze_by_fkey"
+            columns: ["freeze_by"]
             isOneToOne: false
             referencedRelation: "staff"
             referencedColumns: ["id"]
@@ -4524,11 +4997,13 @@ export type Database = {
           hs_code: string | null
           id: string
           image_url: string | null
+          is_bivalve: boolean
           latin_name: string | null
           may_contain: string[]
           name: string
           nominal_weight_kg: number | null
           origin: string | null
+          parasite_treatment_required: boolean
           parent_product_id: string | null
           producer: string | null
           requires_processing: boolean
@@ -4558,11 +5033,13 @@ export type Database = {
           hs_code?: string | null
           id?: string
           image_url?: string | null
+          is_bivalve?: boolean
           latin_name?: string | null
           may_contain?: string[]
           name: string
           nominal_weight_kg?: number | null
           origin?: string | null
+          parasite_treatment_required?: boolean
           parent_product_id?: string | null
           producer?: string | null
           requires_processing?: boolean
@@ -4592,11 +5069,13 @@ export type Database = {
           hs_code?: string | null
           id?: string
           image_url?: string | null
+          is_bivalve?: boolean
           latin_name?: string | null
           may_contain?: string[]
           name?: string
           nominal_weight_kg?: number | null
           origin?: string | null
+          parasite_treatment_required?: boolean
           parent_product_id?: string | null
           producer?: string | null
           requires_processing?: boolean
