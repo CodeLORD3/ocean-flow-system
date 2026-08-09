@@ -330,6 +330,43 @@ export function CustomerOrderRow({
             </div>
           )}
 
+          {/* Datum och tid ändras direkt i rullgardinen, utan nytt fönster. */}
+          {!readOnly && canEdit && !cancelled && !editing && (
+            <div className="flex flex-wrap items-end gap-2 rounded-sm border border-grid-line bg-muted/30 p-2">
+              <div className="space-y-1">
+                <Label className="text-[11px] text-muted-foreground">Datum</Label>
+                <Input
+                  type="date"
+                  className="h-8 w-[9.5rem] font-mono text-xs tabular-nums"
+                  value={order.wanted_date}
+                  onChange={(e) =>
+                    e.target.value &&
+                    updateOrder.mutate({
+                      id: order.id,
+                      patch: { wanted_date: e.target.value },
+                      event: { type: "andrad", description: `Datum ändrat till ${e.target.value}` },
+                    })
+                  }
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[11px] text-muted-foreground">Tid</Label>
+                <Input
+                  type="time"
+                  className="h-8 w-[7rem] font-mono text-xs tabular-nums"
+                  value={order.wanted_time ? order.wanted_time.slice(0, 5) : ""}
+                  onChange={(e) =>
+                    updateOrder.mutate({
+                      id: order.id,
+                      patch: { wanted_time: e.target.value || null },
+                      event: { type: "andrad", description: "Tid ändrad" },
+                    })
+                  }
+                />
+              </div>
+            </div>
+          )}
+
           {readOnly ? (
             <ul className="divide-y divide-grid-line rounded-sm border border-grid-line">
               {lines.map((l) => {
@@ -360,9 +397,12 @@ export function CustomerOrderRow({
                 );
               })}
             </ul>
+          ) : editing ? (
+            <InlineOrderEdit order={order} onClose={() => setEditing(false)} />
           ) : (
             <InlineOrderPacking order={order} />
           )}
+
 
           {order.note && (
             <div className="rounded-sm bg-muted/50 p-2.5 text-sm text-muted-foreground">
