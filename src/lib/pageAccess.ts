@@ -48,6 +48,7 @@ export const ROUTE_ACCESS: Record<string, SiteMode[]> = {
   // Försäljning
   "/orders": all(BUTIK, GROSSIST, ADMIN),
   "/customers": all(BUTIK, GROSSIST, ADMIN),
+  "/customer-orders": all(BUTIK, GROSSIST, ADMIN),
   "/wishes": all(BUTIK, GROSSIST, ADMIN),
   "/store-wishes": all(GROSSIST, ADMIN),
   "/invoices": all(GROSSIST, ADMIN),

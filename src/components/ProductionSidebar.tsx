@@ -18,6 +18,7 @@ import {
   ArrowLeftRight,
   Trash2,
   ShieldCheck,
+  ClipboardList,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -57,6 +58,7 @@ const purchaseNav = [
 
 const salesNav = [
   { title: "Ordrar", url: "/orders", icon: ShoppingCart },
+  { title: "Kundbeställningar", url: "/customer-orders", icon: ClipboardList },
   { title: "Önskemål", url: "/store-wishes", icon: Star },
 ];
 

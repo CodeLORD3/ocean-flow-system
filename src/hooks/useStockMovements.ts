@@ -40,7 +40,9 @@ export const MOVEMENT_LABELS: Record<string, string> = {
   overforing_in: "Överföring in",
   overforing_ut: "Överföring ut",
   forsaljning: "Försäljning",
+  kundorder: "Kundbeställning",
   svinn: "Svinn",
   justering: "Justering",
   inventering: "Inventering",
 };
+

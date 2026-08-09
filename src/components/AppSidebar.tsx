@@ -68,6 +68,7 @@ const calendarNav = [
 
 const salesNav = [
   { title: "Ordrar", url: "/orders", icon: ShoppingCart },
+  { title: "Kundbeställningar", url: "/customer-orders", icon: ClipboardList },
   { title: "Kunder", url: "/customers", icon: Users },
   { title: "Fakturor", url: "/invoices", icon: FileText },
 ];

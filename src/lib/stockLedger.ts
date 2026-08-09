@@ -12,6 +12,7 @@ export type MovementType =
   | "overforing_in"
   | "overforing_ut"
   | "forsaljning"
+  | "kundorder"
   | "svinn"
   | "justering"
   | "inventering";
@@ -30,8 +31,19 @@ export interface StockMovementInput {
   note?: string | null;
 }
 
-/** Rörelsetyper som alltid är utflöden (kvantitet lagras negativ). */
-const OUTFLOW: MovementType[] = ["tillverkning_ut", "overforing_ut", "forsaljning", "svinn"];
+/**
+ * Rörelsetyper som alltid är utflöden (kvantitet lagras negativ).
+ * "kundorder" är uttag för en kundbeställning och hålls medvetet skilt från
+ * "forsaljning" (disk/kassa) så att rapporter och inventering kan skilja dem.
+ */
+const OUTFLOW: MovementType[] = [
+  "tillverkning_ut",
+  "overforing_ut",
+  "forsaljning",
+  "kundorder",
+  "svinn",
+];
+
 
 let cachedStaffId: string | null | undefined;
 
