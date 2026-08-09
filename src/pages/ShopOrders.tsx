@@ -3,9 +3,11 @@ import { displayOrderWeek } from "@/lib/orderWeek";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Plus, Search, Clock, CheckCircle2, Truck, XCircle, X, Package,
-  Archive, ListChecks, History, CalendarIcon, Pencil, Send, FileText, Copy,
+  Archive, ListChecks, History, CalendarIcon, Pencil, Send, FileText, Copy, Eye,
 } from "lucide-react";
+import { ProductThumb } from "@/components/products/ProductThumb";
 import DeliveryNote from "@/components/DeliveryNote";
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
