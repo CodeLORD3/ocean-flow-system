@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
+import { drawIdentificationMark } from "@/lib/identificationMark";
 
 /**
  * Partietiketter för Brother QL-800. Formatet är 62 × 29 mm (DK-11209/DK-22205
@@ -15,6 +16,8 @@ export interface LotLabel {
   vesselName?: string | null;
   bestBefore?: string | null;
   supplierLotNumber?: string | null;
+  /** Identifieringsmärke, exempelvis "SE 6742 EG". Skrivs som ovalt märke. */
+  identificationMark?: string | null;
 }
 
 const LABEL_W = 62;
@@ -61,10 +64,20 @@ export async function buildLotLabelDoc(labels: LotLabel[], copiesPerLabel = 1) {
         label.supplierLotNumber ? `Lev.parti ${label.supplierLotNumber}` : null,
       ].filter(Boolean) as string[];
 
+      const hasMark = !!label.identificationMark;
+      const markW = 15;
+      const rowWidth = hasMark ? textWidth - markW - 1 : textWidth;
+
       let y = 15.5;
-      for (const row of rows.slice(0, 4)) {
-        doc.text(doc.splitTextToSize(row, textWidth)[0] ?? "", 3, y);
+      for (const row of rows.slice(0, hasMark ? 3 : 4)) {
+        doc.text(doc.splitTextToSize(row, rowWidth)[0] ?? "", 3, y);
         y += 3.1;
+      }
+
+      if (hasMark) {
+        drawIdentificationMark(doc, 3 + rowWidth + 1, 15, markW, 9, {
+          markText: label.identificationMark,
+        });
       }
     }
   }

@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { drawIdentificationMark } from "@/lib/identificationMark";
 
 /**
  * Plocklista och följesedel. Papperet är alltid en kopia av systemet:
@@ -28,6 +29,10 @@ export interface TransferPdfData {
   createdBy?: string | null;
   reason?: string | null;
   lines: TransferPdfLine[];
+  /** Identifieringsmärke från avsändande anläggning, krävs vid B2B-mottagare. */
+  identificationMark?: string | null;
+  /** Sätts när mottagaren kräver märke enligt 853/2004. */
+  requiresIdentificationMark?: boolean;
 }
 
 const nf = (v: number | null | undefined, dec = 1) =>
@@ -52,6 +57,19 @@ export function buildTransferDoc(data: TransferPdfData) {
   doc.setFontSize(11);
   doc.setTextColor(70);
   doc.text(data.orderNumber, pageWidth / 2, margin + 15, { align: "center" });
+
+  if (!isPick && data.identificationMark) {
+    drawIdentificationMark(doc, pageWidth - margin - 30, margin, 30, 17, {
+      markText: data.identificationMark,
+    });
+  } else if (!isPick && data.requiresIdentificationMark) {
+    doc.setFontSize(8);
+    doc.setTextColor(150, 0, 0);
+    doc.text("Identifieringsmärke saknas på anläggningen", pageWidth - margin, margin + 5, {
+      align: "right",
+    });
+    doc.setTextColor(0);
+  }
   doc.setTextColor(0);
 
   const meta: [string, string][] = [
