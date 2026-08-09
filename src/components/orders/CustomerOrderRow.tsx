@@ -116,7 +116,7 @@ const packTone: Record<string, string> = {
  */
 export function CustomerOrderRow({
   order,
-  onEdit,
+  canEdit,
   readOnly,
   open,
   onToggle,
@@ -124,7 +124,7 @@ export function CustomerOrderRow({
   onSelect,
 }: {
   order: CustomerOrder;
-  onEdit?: (o: CustomerOrder) => void;
+  canEdit?: boolean;
 
   readOnly?: boolean;
   open?: boolean;
@@ -132,11 +132,14 @@ export function CustomerOrderRow({
   selected?: boolean;
   onSelect?: (id: string, next: boolean) => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const updateOrder = useUpdateCustomerOrder();
   const isOpen = !!open;
   const name = order.customers_retail?.name || order.customer_name_snapshot || "Kund";
   const phone = order.customers_retail?.phone || order.customer_phone_snapshot;
   const lines = [...(order.customer_order_lines || [])].sort((a, b) => a.sort_order - b.sort_order);
   const active = lines.filter((l) => l.pack_status !== "struken");
+
 
   const packedCount = active.filter((l) => l.pack_status === "packad").length;
   const total = Number(order.total_incl_vat || order.estimated_total || 0);
