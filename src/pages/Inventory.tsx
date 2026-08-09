@@ -1507,7 +1507,21 @@ export default function Inventory() {
 
       {viewMode === "locations" && (
       <>
-      {/* KPIs — now with expiry count */}
+      {/* Nyckeltal — butiksportalen visar bara kvantitet och antal produkter, i kompakt format */}
+      {isShopPortal ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="rounded-md border border-border bg-card px-3 py-1.5">
+            <span className="text-[10px] text-muted-foreground">Produkter i lager</span>{" "}
+            <span className="text-sm font-heading font-bold text-foreground tabular-nums">{totalProducts}</span>
+          </div>
+          <div className="rounded-md border border-border bg-card px-3 py-1.5">
+            <span className="text-[10px] text-muted-foreground">Total kvantitet</span>{" "}
+            <span className="text-sm font-heading font-bold text-foreground tabular-nums">
+              {totalQty.toLocaleString("sv-SE")}
+            </span>
+          </div>
+        </div>
+      ) : (
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Card className="shadow-card">
           <CardContent className="p-3">
@@ -1550,6 +1564,8 @@ export default function Inventory() {
           </CardContent>
         </Card>
       </div>
+      )}
+
 
 
       {/* Rest of location rendering — kept same structure as original, 
