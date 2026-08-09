@@ -1,5 +1,5 @@
 import { Navigate, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Store, Factory, Boxes, LogOut, Loader2, Shield } from "lucide-react";
@@ -20,9 +20,19 @@ export default function PortalChooser() {
   const { setSite, setActiveStore } = useSite();
   const { data: stores = [] } = useStores();
   const navigate = useNavigate();
+  const [pickStore, setPickStore] = useState(false);
 
   const access = staff?.portal_access ?? [];
   const needsPwd = !!staff?.must_change_password;
+
+  const allowedStores = useMemo(() => {
+    const ids = new Set([
+      ...(staff?.allowed_store_ids ?? []),
+      ...(staff?.allowed_store_id ? [staff.allowed_store_id] : []),
+    ]);
+    // No explicit restriction = access to all stores
+    return ids.size === 0 ? stores : stores.filter((s) => ids.has(s.id));
+  }, [staff?.allowed_store_ids, staff?.allowed_store_id, stores]);
 
   // If only one portal, jump straight in
   useEffect(() => {
@@ -33,6 +43,7 @@ export default function PortalChooser() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, staff?.id, needsPwd, stores.length]);
+
 
   if (loading) {
     return (
@@ -59,25 +70,25 @@ export default function PortalChooser() {
     );
   }
 
+  const enterStore = (id: string, name: string) => {
+    setSite("shop");
+    setActiveStore(id, name);
+    navigate("/organisation", { replace: true });
+  };
+
   const enterPortal = (key: PortalKey) => {
     if (key === "admin") {
       // Admins land in wholesale view but can switch to any portal
       setSite("wholesale");
       setActiveStore(null, null);
     } else if (key === "shop") {
-      setSite("shop");
-      const allowedIds = [
-        ...(staff?.allowed_store_ids ?? []),
-        ...(staff?.allowed_store_id ? [staff.allowed_store_id] : []),
-      ];
-      // Always land in an actual store (first allowed), never the generic view
-      const firstId = allowedIds.find((id) => stores.some((s) => s.id === id)) ?? allowedIds[0];
-      if (firstId) {
-        const store = stores.find((s) => s.id === firstId);
-        setActiveStore(firstId, store?.name ?? null);
-      } else {
-        setActiveStore(null, null);
+      if (allowedStores.length > 1) {
+        setPickStore(true);
+        return;
       }
+      setSite("shop");
+      const first = allowedStores[0];
+      setActiveStore(first?.id ?? null, first?.name ?? null);
     } else {
       setSite(key);
       setActiveStore(null, null);
@@ -85,6 +96,47 @@ export default function PortalChooser() {
     // Landing page is always the overview page
     navigate("/organisation", { replace: true });
   };
+
+  if (pickStore) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6">
+        <div className="w-full max-w-3xl">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-semibold text-foreground">Välj butik</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Välj vilken butiksportal du vill öppna.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {allowedStores.map((s) => (
+              <Card
+                key={s.id}
+                onClick={() => enterStore(s.id, s.name)}
+                className="p-6 cursor-pointer hover:border-primary hover:shadow-md transition-all group"
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                    <Store className="h-7 w-7 text-primary" />
+                  </div>
+                  <h3 className="text-base font-semibold text-foreground">{s.name}</h3>
+                </div>
+              </Card>
+            ))}
+          </div>
+          <div className="text-center mt-8 flex items-center justify-center gap-3">
+            {access.length > 1 && (
+              <Button variant="ghost" size="sm" className="text-xs" onClick={() => setPickStore(false)}>
+                Tillbaka
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" onClick={signOut} className="text-xs">
+              <LogOut className="h-3.5 w-3.5 mr-1.5" /> Logga ut
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6">
@@ -99,6 +151,7 @@ export default function PortalChooser() {
         </div>
 
         <div className={`grid gap-4 ${access.length >= 4 ? "md:grid-cols-2 lg:grid-cols-4" : access.length === 3 ? "md:grid-cols-3" : access.length === 2 ? "md:grid-cols-2" : "grid-cols-1"}`}>
+
           {access.map((key) => {
             const meta = PORTAL_META[key];
             const Icon = meta.icon;
