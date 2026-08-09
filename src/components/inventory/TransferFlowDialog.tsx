@@ -74,6 +74,14 @@ export default function TransferFlowDialog({ order, onOpenChange }: TransferFlow
   const [pick, setPick] = useState<Record<string, { qty: string; reason: string }>>({});
   const [recv, setRecv] = useState<Record<string, { qty: string; reason: string }>>({});
   const [rejectReason, setRejectReason] = useState("");
+  const [showDossier, setShowDossier] = useState(false);
+  const [exportForm, setExportForm] = useState({
+    ref: "",
+    validated: "",
+    reexport: "",
+    country: "",
+    seal: "",
+  });
 
   useEffect(() => {
     if (!order) return;
@@ -92,6 +100,13 @@ export default function TransferFlowDialog({ order, onOpenChange }: TransferFlow
     setPick(p);
     setRecv(r);
     setRejectReason("");
+    setExportForm({
+      ref: order.catch_certificate_ref ?? "",
+      validated: order.catch_cert_validated ?? "",
+      reexport: order.reexport_cert ?? "",
+      country: order.export_country ?? "",
+      seal: order.seal_number ?? "",
+    });
   }, [order?.id, lines.length]);
 
   const printed = useMarkPicklistPrinted();
@@ -99,9 +114,29 @@ export default function TransferFlowDialog({ order, onOpenChange }: TransferFlow
   const outbound = useApproveOutbound();
   const inbound = useApproveInbound();
   const reject = useRejectTransfer();
+  const saveExport = useSaveExportDocumentation();
 
   if (!order) return null;
   const status = order.status;
+  const exportRelevant = lines.some((l) => l.products?.export_documentation_required);
+  const missingValidation = exportRelevant && !exportForm.validated;
+
+  const doSaveExport = async () => {
+    try {
+      await saveExport.mutateAsync({
+        orderId: order.id,
+        catchCertificateRef: exportForm.ref,
+        catchCertValidated: exportForm.validated,
+        reexportCert: exportForm.reexport,
+        exportCountry: exportForm.country,
+        sealNumber: exportForm.seal,
+      });
+      toast.success("Exportuppgifterna är sparade.");
+    } catch (e: any) {
+      toast.error(e.message || "Exportuppgifterna kunde inte sparas.");
+    }
+  };
+
 
   const pdfLines = lines.map((l) => ({
     productName: l.products?.name ?? "Produkt",
