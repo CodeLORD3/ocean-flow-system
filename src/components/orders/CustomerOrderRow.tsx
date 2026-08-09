@@ -4,7 +4,6 @@ import {
   Lock,
   Phone,
   MapPin,
-  Package,
   AlertTriangle,
   Pencil,
   Printer,
@@ -261,16 +260,8 @@ export function CustomerOrderRow({
       </div>
 
       {isOpen && (
-        <div className="space-y-3 border-t-2 border-primary bg-card p-3">
-          {/* Tydlig rubrik så det aldrig är tvekan om vilken order som är öppen. */}
-          <div className="flex items-center gap-2 rounded-sm bg-primary px-3 py-2 text-primary-foreground">
-            <Package className="h-5 w-5 shrink-0" />
-            <span className="min-w-0 flex-1 truncate text-base font-semibold">{name}</span>
-            <span className="shrink-0 font-mono text-xs tabular-nums opacity-90">
-              {order.order_number}
-            </span>
-          </div>
-
+        <div className="space-y-3 border-t-2 border-primary bg-muted/60 p-3">
+          {/* Ordernumret räcker som identifikation — namnet står redan i raden ovanför. */}
           <div className="flex flex-wrap items-center gap-1.5 text-xs">
             <Badge variant="outline">{ORDER_STATUS_LABELS[order.status] ?? order.status}</Badge>
             <span className={`rounded-sm px-2 py-0.5 ${packTone[order.pack_status] ?? ""}`}>
@@ -281,7 +272,11 @@ export function CustomerOrderRow({
               {ORDER_TYPE_LABELS[order.order_type] ?? order.order_type}
             </Badge>
             {order.category === "catering" && <Badge variant="secondary">Catering</Badge>}
+            <span className="ml-auto shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
+              {order.order_number}
+            </span>
           </div>
+
 
           <div className="grid gap-2 text-sm sm:grid-cols-2">
             <div className="space-y-1">
