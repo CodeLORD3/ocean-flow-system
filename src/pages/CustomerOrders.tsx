@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   Plus,
   Search,
@@ -7,12 +6,8 @@ import {
   ShoppingBag,
   Users,
   ChefHat,
-  Settings,
-  Printer,
   Truck,
   BarChart3,
-  RefreshCw,
-  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,7 +36,6 @@ import { CustomerOrderWizard } from "@/components/orders/CustomerOrderWizard";
 import { CustomerOrderCard } from "@/components/orders/CustomerOrderCard";
 import { CustomerOrderRow, CustomerOrderRowHeader } from "@/components/orders/CustomerOrderRow";
 import { CustomerOrderEditDialog } from "@/components/orders/CustomerOrderEditDialog";
-import { CommandBar, CommandAction } from "@/components/shell/CommandBar";
 import { ViewSelector, SavedView } from "@/components/shell/ViewSelector";
 import { FactBox, FactGroup, FactRow } from "@/components/shell/FactBox";
 import { StatusBar } from "@/components/shell/StatusBar";
@@ -49,10 +43,9 @@ import { StatusBar } from "@/components/shell/StatusBar";
 import { RetailCustomerRegistry } from "@/components/orders/RetailCustomerRegistry";
 import { PurchaseNeedsView } from "@/components/orders/PurchaseNeedsView";
 import { CateringKitchenList } from "@/components/orders/CateringKitchenList";
-import { StoreOrderSettingsDialog } from "@/components/orders/StoreOrderSettingsDialog";
 import { DeliveryRouteView } from "@/components/orders/DeliveryRouteView";
 import { CustomerOrderStats } from "@/components/orders/CustomerOrderStats";
-import { printPackList } from "@/lib/customerOrderPackListPdf";
+
 
 /** Sparade vyer, som listsidorna i Dynamics 365. */
 const VIEWS: SavedView[] = [
