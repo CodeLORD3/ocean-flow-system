@@ -184,9 +184,15 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
       const sid = t.to_location?.store_id;
       if (sid) ids.add(sid);
     });
-    stores.forEach((s) => ids.add(s.id));
-    return [...ids];
+    // Visa bara transportlager som innehåller produkter eller har pågående transport
+    return [...ids].filter((sid) => {
+      const rows = rowsForStore("leveranslager", sid);
+      const hasQty = rows.some((r: any) => Number(qtyOf(r)) > 0);
+      const hasTransfer = activeTransfers.some((t: any) => t.to_location?.store_id === sid);
+      return hasQty || hasTransfer;
+    });
   }, [byLevel, activeTransfers, stores]);
+
 
   return (
     <div className="rounded-xl border border-border bg-card/40 p-3">
