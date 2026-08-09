@@ -62,11 +62,11 @@ type NavSection = { label: string; items: NavItem[]; collapsible?: boolean };
 
 const sections: NavSection[] = [
   { label: "Översikt", items: overviewNav },
-  { label: "Kalender", items: calendarNav },
   { label: "Inköp", items: salesNav },
   { label: "Lagerstyrning", items: inventoryNav },
   { label: "Organisation", items: orgNav },
   { label: "Rapporter", items: financeNav },
+  { label: "Kalender", items: calendarNav },
 ];
 
 export function ShopSidebar() {
