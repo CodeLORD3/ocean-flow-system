@@ -107,7 +107,6 @@ export default function CustomerOrders() {
   const [orderType, setOrderType] = useState("all");
   const [wizardOpen, setWizardOpen] = useState(false);
   const [openRow, setOpenRow] = useState<string | null>(null);
-  const [editing, setEditing] = useState<CustomerOrder | null>(null);
   const [panel, setPanel] = useState<"orders" | "customers" | "stats">("orders");
 
   const [view, setView] = useState("alla");
