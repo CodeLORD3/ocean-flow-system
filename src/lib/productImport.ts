@@ -209,8 +209,17 @@ export interface ParseResult {
 }
 
 const REQUIRED_COLUMNS: ImportColumn[] = ["sku", "name", "category"];
-/** Saknas någon av dessa i filen varnar torrkörningen — de rör spårbarhet och prissättning. */
-const NOTIFY_IF_MISSING: ImportColumn[] = ["species_group", "fao_code", "latin_name", "image_url", "parent_sku"];
+/** Saknas någon av dessa i filen varnar torrkörningen — de rör spårbarhet, allergener och prissättning. */
+const NOTIFY_IF_MISSING: ImportColumn[] = [
+  "species_group",
+  "fao_code",
+  "latin_name",
+  "image_url",
+  "parent_sku",
+  "allergens",
+  "may_contain",
+];
+
 
 export async function parseProductFile(file: File): Promise<ParseResult> {
   const buffer = await file.arrayBuffer();
