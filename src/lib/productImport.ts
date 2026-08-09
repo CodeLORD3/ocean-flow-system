@@ -477,6 +477,11 @@ export function buildDiff({ rows, existing, categories, suppliers }: BuildDiffAr
     if (row.latin_name !== null) cmp("latin_name", current.latin_name, row.latin_name);
     if (row.species_group !== null) cmp("species_group", (current as any).species_group, row.species_group);
     if (row.fao_code !== null) cmp("fao_code", (current as any).fao_code, row.fao_code);
+    if (row.allergens !== null)
+      cmp("allergens", ((current as any).allergens ?? []).join(", "), row.allergens.join(", "));
+    if (row.may_contain !== null)
+      cmp("may_contain", ((current as any).may_contain ?? []).join(", "), row.may_contain.join(", "));
+
     cmp(
       "parent_sku",
       current.parent_product_id ? byId.get(current.parent_product_id)?.sku ?? "" : "",
