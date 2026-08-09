@@ -384,8 +384,14 @@ export default function OrganisationOverview() {
                             icon={Lightbulb}
                             count={act.wishes}
                             label={`Öppna önskemål från ${store.name}`}
-                            onClick={() => switchTab("/wishes")}
+                            onClick={() => {
+                              window.dispatchEvent(
+                                new CustomEvent("wishes:focus-store", { detail: store.name })
+                              );
+                              switchTab("/store-wishes");
+                            }}
                           />
+
                         </div>
                       </div>
                     );
