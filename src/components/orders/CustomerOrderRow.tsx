@@ -1,14 +1,11 @@
-import { useState } from "react";
 import {
   ChevronDown,
   Lock,
-  Clock,
   Phone,
   MapPin,
-  Truck,
-  ShoppingBag,
   Package,
   AlertTriangle,
+  Sparkles,
   ExternalLink,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -32,21 +29,31 @@ const weekday = (iso: string) => {
   return s.charAt(0).toUpperCase() + s.slice(1).replace(".", "");
 };
 
+/** Kort datum, t.ex. "9 aug". */
+const shortDate = (iso: string) =>
+  new Date(iso + "T00:00:00").toLocaleDateString("sv-SE", { day: "numeric", month: "short" });
 
-/** Färgad kant till vänster, som i orderlistor i affärssystem. */
-const stripe = (order: CustomerOrder) => {
-  if (order.status === "avbruten") return "bg-muted-foreground/40";
-  if (isUncollected(order)) return "bg-destructive";
-  if (["levererad", "avhamtad"].includes(order.status)) return "bg-primary/60";
-  if (order.pack_status === "packad") return "bg-emerald-500";
-  if (order.pack_status === "pagaende") return "bg-amber-500";
-  return "bg-muted-foreground/30";
+type Tone = { row: string; edge: string };
+
+/**
+ * Hela raden tonas efter läge, som i orderlistor i affärssystem.
+ * Färgen är aldrig enda bäraren: den mättade vänsterkanten och
+ * statusordet i rullgardinen finns kvar.
+ */
+const rowTone = (order: CustomerOrder): Tone => {
+  if (order.status === "avbruten") return { row: "bg-row-off", edge: "bg-row-off-edge" };
+  if (isUncollected(order)) return { row: "bg-row-late", edge: "bg-row-late-edge" };
+  if (["levererad", "avhamtad"].includes(order.status))
+    return { row: "bg-row-done", edge: "bg-row-done-edge" };
+  if (order.pack_status === "packad") return { row: "bg-row-ok", edge: "bg-row-ok-edge" };
+  if (order.pack_status === "pagaende") return { row: "bg-row-warn", edge: "bg-row-warn-edge" };
+  return { row: "bg-card", edge: "bg-border" };
 };
 
 const packTone: Record<string, string> = {
   opackad: "bg-muted text-muted-foreground",
-  pagaende: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
-  packad: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+  pagaende: "bg-row-warn text-foreground",
+  packad: "bg-row-ok text-foreground",
 };
 
 /**
@@ -58,95 +65,132 @@ export function CustomerOrderRow({
   order,
   onOpen,
   readOnly,
+  open,
+  onToggle,
 }: {
   order: CustomerOrder;
   onOpen: (o: CustomerOrder) => void;
   readOnly?: boolean;
+  open?: boolean;
+  onToggle?: (id: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const isOpen = !!open;
   const name = order.customers_retail?.name || order.customer_name_snapshot || "Kund";
   const phone = order.customers_retail?.phone || order.customer_phone_snapshot;
   const lines = [...(order.customer_order_lines || [])].sort((a, b) => a.sort_order - b.sort_order);
   const active = lines.filter((l) => l.pack_status !== "struken");
   const needs = active.filter((l) => l.reservation_status === "inkopsbehov");
   const packedCount = active.filter((l) => l.pack_status === "packad").length;
-  const uncollected = isUncollected(order);
   const total = Number(order.total_incl_vat || order.estimated_total || 0);
   const allergens = order.excluded_allergens || [];
+  const hasAllergy = allergens.length > 0 || !!order.allergy_note;
+  const cancelled = order.status === "avbruten";
+  const tone = rowTone(order);
+
+  const time = order.wanted_time ? ` ${order.wanted_time.slice(0, 5)}` : "";
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+    <div className={`overflow-hidden rounded-md border border-border shadow-sm ${tone.row}`}>
       <div className="flex">
-        <div className={`w-1.5 shrink-0 ${stripe(order)}`} aria-hidden />
+        <div className={`w-1.5 shrink-0 ${tone.edge}`} aria-hidden />
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          className="min-w-0 flex-1 px-3 py-3 text-left transition-colors hover:bg-accent/60 active:bg-accent"
+          onClick={() => onToggle?.(order.id)}
+          aria-expanded={isOpen}
+          className="min-w-0 flex-1 px-3 py-2.5 text-left transition-colors hover:bg-foreground/[0.04] active:bg-foreground/[0.07] sm:py-2"
         >
-          <div className="flex items-start gap-2">
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className="font-mono text-xs tabular-nums text-muted-foreground">
-                  {order.order_number}
-                </span>
-                <span className="truncate font-semibold">{name}</span>
-                {readOnly && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
-                {uncollected && (
-                  <Badge variant="destructive" className="gap-1">
-                    <Clock className="h-3 w-3" /> Ohämtad
-                  </Badge>
-                )}
-              </div>
-              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                <span className="font-mono tabular-nums text-foreground">
-                  {weekday(order.wanted_date)} {order.wanted_date}
-                  {order.wanted_time ? ` kl ${order.wanted_time.slice(0, 5)}` : ""}
-
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  {order.order_type === "leverans" ? (
-                    <Truck className="h-3.5 w-3.5" />
-                  ) : (
-                    <ShoppingBag className="h-3.5 w-3.5" />
-                  )}
-                  {ORDER_TYPE_LABELS[order.order_type] ?? order.order_type}
-                </span>
-                <span>{active.length} varor</span>
-                {order.category === "catering" && <Badge variant="secondary">Catering</Badge>}
-              </div>
-              <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
-                <Badge variant="outline">{ORDER_STATUS_LABELS[order.status] ?? order.status}</Badge>
-                <span className={`rounded px-2 py-0.5 ${packTone[order.pack_status] ?? ""}`}>
-                  {PACK_STATUS_LABELS[order.pack_status] ?? order.pack_status}
-                  {packedCount > 0 && active.length > 0
-                    ? ` ${packedCount}/${active.length}`
-                    : ""}
-                </span>
-                {needs.length > 0 && (
-                  <span className="rounded bg-amber-500/20 px-2 py-0.5 text-amber-800 dark:text-amber-300">
-                    {needs.length} köps färskt
-                  </span>
-                )}
-                {allergens.length > 0 || order.allergy_note ? (
-                  <span className="inline-flex items-center gap-1 rounded bg-destructive/15 px-2 py-0.5 text-destructive">
-                    <AlertTriangle className="h-3 w-3" /> Allergi
-                  </span>
-                ) : null}
-              </div>
-            </div>
-            <div className="flex shrink-0 flex-col items-end gap-1">
-              <span className="font-mono text-sm font-semibold tabular-nums">{nf(total, 2)} kr</span>
-              <ChevronDown
-                className={`h-5 w-5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+          {/* Desktop: en kolumnrad. Mobil: två rader, kundnamnet störst. */}
+          <div className="hidden items-center gap-3 sm:flex">
+            <span
+              className={`w-40 shrink-0 truncate font-mono text-xs tabular-nums text-muted-foreground ${
+                cancelled ? "line-through" : ""
+              }`}
+            >
+              {order.order_number}
+            </span>
+            <span className="w-36 shrink-0 font-mono text-sm tabular-nums">
+              {weekday(order.wanted_date)} {shortDate(order.wanted_date)}
+              {time}
+            </span>
+            <span className="w-20 shrink-0 text-sm text-muted-foreground">
+              {active.length} {active.length === 1 ? "vara" : "varor"}
+            </span>
+            <span className="min-w-0 flex-1 truncate text-sm font-semibold">{name}</span>
+            {hasAllergy && (
+              <AlertTriangle className="h-4 w-4 shrink-0 text-destructive" aria-label="Allergi" />
+            )}
+            {needs.length > 0 && (
+              <Sparkles
+                className="h-4 w-4 shrink-0 text-row-warn-edge"
+                aria-label="Köps färskt"
               />
+            )}
+            {readOnly && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
+            <span className="w-28 shrink-0 text-right font-mono text-sm font-semibold tabular-nums">
+              {nf(total, 2)} kr
+            </span>
+            <ChevronDown
+              className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${
+                isOpen ? "rotate-180" : ""
+              }`}
+            />
+          </div>
+
+          <div className="sm:hidden">
+            <div className="flex items-center gap-2">
+              <span
+                className={`min-w-0 flex-1 truncate font-mono text-[11px] tabular-nums text-muted-foreground ${
+                  cancelled ? "line-through" : ""
+                }`}
+              >
+                {order.order_number}
+              </span>
+              <span className="font-mono text-sm font-semibold tabular-nums">
+                {nf(total, 2)} kr
+              </span>
+              <ChevronDown
+                className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${
+                  isOpen ? "rotate-180" : ""
+                }`}
+              />
+            </div>
+            <div className="mt-0.5 flex items-center gap-2">
+              <span className="min-w-0 flex-1 truncate text-base font-semibold leading-tight">
+                {name}
+              </span>
+              {hasAllergy && (
+                <AlertTriangle className="h-4 w-4 shrink-0 text-destructive" aria-label="Allergi" />
+              )}
+              {needs.length > 0 && (
+                <Sparkles className="h-4 w-4 shrink-0 text-row-warn-edge" aria-label="Köps färskt" />
+              )}
+              {readOnly && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
+            </div>
+            <div className="mt-0.5 font-mono text-xs tabular-nums text-muted-foreground">
+              {weekday(order.wanted_date)} {shortDate(order.wanted_date)}
+              {time} · {active.length} {active.length === 1 ? "vara" : "varor"}
             </div>
           </div>
         </button>
       </div>
 
-      {open && (
-        <div className="border-t border-border bg-muted/30 p-3 space-y-3">
+      {isOpen && (
+        <div className="space-y-3 border-t border-border bg-card p-3">
+          <div className="flex flex-wrap items-center gap-1.5 text-xs">
+            <Badge variant="outline">{ORDER_STATUS_LABELS[order.status] ?? order.status}</Badge>
+            <span className={`rounded px-2 py-0.5 ${packTone[order.pack_status] ?? ""}`}>
+              {PACK_STATUS_LABELS[order.pack_status] ?? order.pack_status}
+              {packedCount > 0 && active.length > 0 ? ` ${packedCount}/${active.length}` : ""}
+            </span>
+            <Badge variant="secondary">
+              {ORDER_TYPE_LABELS[order.order_type] ?? order.order_type}
+            </Badge>
+            {order.category === "catering" && <Badge variant="secondary">Catering</Badge>}
+            {needs.length > 0 && (
+              <span className="rounded bg-row-warn px-2 py-0.5">{needs.length} köps färskt</span>
+            )}
+          </div>
+
           <div className="grid gap-2 text-sm sm:grid-cols-2">
             <div className="space-y-1">
               <div className="font-semibold">{name}</div>
@@ -176,7 +220,9 @@ export function CustomerOrderRow({
 
           {(order.allergy_note || allergens.length > 0) && (
             <div className="space-y-1.5 rounded-md border border-destructive/40 bg-destructive/10 p-2.5 text-sm">
-              {order.allergy_note && <div className="font-semibold">Allergi: {order.allergy_note}</div>}
+              {order.allergy_note && (
+                <div className="font-semibold">Allergi: {order.allergy_note}</div>
+              )}
               {allergens.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {allergens.map((a) => (
@@ -189,13 +235,20 @@ export function CustomerOrderRow({
             </div>
           )}
 
-          <ul className="divide-y divide-border rounded-md border border-border bg-card">
+          <ul className="divide-y divide-border rounded-md border border-border">
             {lines.map((l) => {
               const label = (l.products?.name || l.free_text_name || "Vara") as string;
               const struck = l.pack_status === "struken";
               return (
-                <li key={l.id} className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 text-sm">
-                  <span className={`min-w-0 flex-1 truncate ${struck ? "line-through text-muted-foreground" : ""}`}>
+                <li
+                  key={l.id}
+                  className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 text-sm"
+                >
+                  <span
+                    className={`min-w-0 flex-1 truncate ${
+                      struck ? "line-through text-muted-foreground" : ""
+                    }`}
+                  >
                     {label}
                   </span>
                   <Badge variant="outline" className="text-[10px]">
@@ -204,23 +257,25 @@ export function CustomerOrderRow({
                   <span className="font-mono tabular-nums">
                     {nf(l.quantity_packed ?? l.quantity_ordered, 3)} {l.unit}
                   </span>
-                  {l.note && (
-                    <span className="w-full text-xs text-muted-foreground">{l.note}</span>
-                  )}
+                  {l.note && <span className="w-full text-xs text-muted-foreground">{l.note}</span>}
                 </li>
               );
             })}
           </ul>
 
           {order.note && (
-            <div className="rounded-md bg-card p-2.5 text-sm text-muted-foreground">{order.note}</div>
+            <div className="rounded-md bg-muted/50 p-2.5 text-sm text-muted-foreground">
+              {order.note}
+            </div>
           )}
 
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-card p-2.5 text-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-muted/50 p-2.5 text-sm">
             <span className="text-muted-foreground">
               {order.total_incl_vat ? "Verkligt pris" : "Uppskattat pris"}
             </span>
-            <span className="font-mono text-base font-semibold tabular-nums">{nf(total, 2)} kr</span>
+            <span className="font-mono text-base font-semibold tabular-nums">
+              {nf(total, 2)} kr
+            </span>
           </div>
 
           <Button className="h-12 w-full" onClick={() => onOpen(order)}>
@@ -230,6 +285,20 @@ export function CustomerOrderRow({
           </Button>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Kolumnrubrik som matchar radens desktoplayout. */
+export function CustomerOrderRowHeader() {
+  return (
+    <div className="hidden items-center gap-3 px-3 pb-1 pl-4.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:flex">
+      <span className="w-40 shrink-0">Order</span>
+      <span className="w-36 shrink-0">Datum</span>
+      <span className="w-20 shrink-0">Antal</span>
+      <span className="min-w-0 flex-1">Kund</span>
+      <span className="w-28 shrink-0 text-right">Summa</span>
+      <span className="w-4 shrink-0" />
     </div>
   );
 }
