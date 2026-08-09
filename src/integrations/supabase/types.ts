@@ -2292,6 +2292,7 @@ export type Database = {
           detail_form: string
           id: string
           last_set_price: number
+          legal_entity_id: string | null
           price_incl_vat: number | null
           price_list: string
           reference_cost_per_kg: number | null
@@ -2306,6 +2307,7 @@ export type Database = {
           detail_form: string
           id?: string
           last_set_price?: number
+          legal_entity_id?: string | null
           price_incl_vat?: number | null
           price_list?: string
           reference_cost_per_kg?: number | null
@@ -2320,6 +2322,7 @@ export type Database = {
           detail_form?: string
           id?: string
           last_set_price?: number
+          legal_entity_id?: string | null
           price_incl_vat?: number | null
           price_list?: string
           reference_cost_per_kg?: number | null
@@ -2328,7 +2331,15 @@ export type Database = {
           updated_at?: string
           valid_from?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "detail_prices_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
+        ]
       }
       deviations: {
         Row: {
@@ -2827,6 +2838,76 @@ export type Database = {
           },
         ]
       }
+      intercompany_invoices: {
+        Row: {
+          amount_ex_vat: number
+          buyer_legal_entity_id: string
+          created_at: string
+          currency: string
+          document_number: string | null
+          id: string
+          note: string | null
+          seller_legal_entity_id: string
+          status: string
+          transfer_order_id: string
+          updated_at: string
+          vat_amount: number
+          vat_regime: string | null
+        }
+        Insert: {
+          amount_ex_vat?: number
+          buyer_legal_entity_id: string
+          created_at?: string
+          currency?: string
+          document_number?: string | null
+          id?: string
+          note?: string | null
+          seller_legal_entity_id: string
+          status?: string
+          transfer_order_id: string
+          updated_at?: string
+          vat_amount?: number
+          vat_regime?: string | null
+        }
+        Update: {
+          amount_ex_vat?: number
+          buyer_legal_entity_id?: string
+          created_at?: string
+          currency?: string
+          document_number?: string | null
+          id?: string
+          note?: string | null
+          seller_legal_entity_id?: string
+          status?: string
+          transfer_order_id?: string
+          updated_at?: string
+          vat_amount?: number
+          vat_regime?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intercompany_invoices_buyer_legal_entity_id_fkey"
+            columns: ["buyer_legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "intercompany_invoices_seller_legal_entity_id_fkey"
+            columns: ["seller_legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "intercompany_invoices_transfer_order_id_fkey"
+            columns: ["transfer_order_id"]
+            isOneToOne: true
+            referencedRelation: "transfer_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_report_lines: {
         Row: {
           category: string | null
@@ -3084,43 +3165,55 @@ export type Database = {
         Row: {
           accounting_config: Json
           accounting_provider: string | null
+          active: boolean
           country: string
           created_at: string
           currency: string
+          fiscal_year_end: string | null
           fortnox_access_token: string | null
           fortnox_refresh_token: string | null
           legal_entity_id: string
           legal_name: string
           locale: string
           org_nr: string
+          updated_at: string
+          vat_regime: string | null
           vat_registration: string | null
         }
         Insert: {
           accounting_config?: Json
           accounting_provider?: string | null
+          active?: boolean
           country: string
           created_at?: string
           currency: string
+          fiscal_year_end?: string | null
           fortnox_access_token?: string | null
           fortnox_refresh_token?: string | null
           legal_entity_id: string
           legal_name: string
           locale?: string
           org_nr: string
+          updated_at?: string
+          vat_regime?: string | null
           vat_registration?: string | null
         }
         Update: {
           accounting_config?: Json
           accounting_provider?: string | null
+          active?: boolean
           country?: string
           created_at?: string
           currency?: string
+          fiscal_year_end?: string | null
           fortnox_access_token?: string | null
           fortnox_refresh_token?: string | null
           legal_entity_id?: string
           legal_name?: string
           locale?: string
           org_nr?: string
+          updated_at?: string
+          vat_regime?: string | null
           vat_registration?: string | null
         }
         Relationships: []
@@ -3286,6 +3379,7 @@ export type Database = {
           is_bivalve: boolean
           is_thawed: boolean
           latin_name: string | null
+          legal_entity_id: string | null
           lot_number: string
           origin_lot_id: string | null
           parasite_treatment_required: boolean
@@ -3344,6 +3438,7 @@ export type Database = {
           is_bivalve?: boolean
           is_thawed?: boolean
           latin_name?: string | null
+          legal_entity_id?: string | null
           lot_number: string
           origin_lot_id?: string | null
           parasite_treatment_required?: boolean
@@ -3402,6 +3497,7 @@ export type Database = {
           is_bivalve?: boolean
           is_thawed?: boolean
           latin_name?: string | null
+          legal_entity_id?: string | null
           lot_number?: string
           origin_lot_id?: string | null
           parasite_treatment_required?: boolean
@@ -3442,6 +3538,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "staff"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lots_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
           },
           {
             foreignKeyName: "lots_product_id_fkey"
@@ -3750,6 +3853,7 @@ export type Database = {
           created_at: string
           id: string
           label: string | null
+          legal_entity_id: string | null
           price_list: string
           region: string
           scale_warn_high: number
@@ -3763,6 +3867,7 @@ export type Database = {
           created_at?: string
           id?: string
           label?: string | null
+          legal_entity_id?: string | null
           price_list: string
           region: string
           scale_warn_high?: number
@@ -3776,6 +3881,7 @@ export type Database = {
           created_at?: string
           id?: string
           label?: string | null
+          legal_entity_id?: string | null
           price_list?: string
           region?: string
           scale_warn_high?: number
@@ -3785,6 +3891,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "margin_targets_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
           {
             foreignKeyName: "margin_targets_store_id_fkey"
             columns: ["store_id"]
@@ -5506,6 +5619,7 @@ export type Database = {
           file_name: string
           file_url: string
           id: string
+          legal_entity_id: string | null
           notes: string | null
           posted_at: string | null
           posted_by: string | null
@@ -5530,6 +5644,7 @@ export type Database = {
           file_name: string
           file_url: string
           id?: string
+          legal_entity_id?: string | null
           notes?: string | null
           posted_at?: string | null
           posted_by?: string | null
@@ -5554,6 +5669,7 @@ export type Database = {
           file_name?: string
           file_url?: string
           id?: string
+          legal_entity_id?: string | null
           notes?: string | null
           posted_at?: string | null
           posted_by?: string | null
@@ -5571,6 +5687,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "staff"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_reports_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
           },
           {
             foreignKeyName: "purchase_reports_posted_by_fkey"
@@ -5873,6 +5996,7 @@ export type Database = {
           desired_delivery_date: string | null
           id: string
           invoice_status: string | null
+          legal_entity_id: string | null
           notes: string | null
           order_week: string
           packer_name: string | null
@@ -5886,6 +6010,7 @@ export type Database = {
           desired_delivery_date?: string | null
           id?: string
           invoice_status?: string | null
+          legal_entity_id?: string | null
           notes?: string | null
           order_week: string
           packer_name?: string | null
@@ -5899,6 +6024,7 @@ export type Database = {
           desired_delivery_date?: string | null
           id?: string
           invoice_status?: string | null
+          legal_entity_id?: string | null
           notes?: string | null
           order_week?: string
           packer_name?: string | null
@@ -5907,6 +6033,13 @@ export type Database = {
           store_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "shop_orders_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
           {
             foreignKeyName: "shop_orders_store_id_fkey"
             columns: ["store_id"]
@@ -6121,6 +6254,7 @@ export type Database = {
           first_name: string
           id: string
           last_name: string
+          legal_entity_id: string | null
           must_change_password: boolean
           phone: string | null
           portal_access: string[]
@@ -6138,6 +6272,7 @@ export type Database = {
           first_name: string
           id?: string
           last_name: string
+          legal_entity_id?: string | null
           must_change_password?: boolean
           phone?: string | null
           portal_access?: string[]
@@ -6155,6 +6290,7 @@ export type Database = {
           first_name?: string
           id?: string
           last_name?: string
+          legal_entity_id?: string | null
           must_change_password?: boolean
           phone?: string | null
           portal_access?: string[]
@@ -6170,6 +6306,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "stores"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
           },
           {
             foreignKeyName: "staff_store_id_fkey"
@@ -6269,6 +6412,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          legal_entity_id: string | null
           location_id: string
           lot_id: string | null
           movement_type: string
@@ -6284,6 +6428,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          legal_entity_id?: string | null
           location_id: string
           lot_id?: string | null
           movement_type: string
@@ -6299,6 +6444,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          legal_entity_id?: string | null
           location_id?: string
           lot_id?: string | null
           movement_type?: string
@@ -6317,6 +6463,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "staff"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
           },
           {
             foreignKeyName: "stock_movements_location_id_fkey"
@@ -6412,6 +6565,54 @@ export type Database = {
           },
           {
             foreignKeyName: "storage_locations_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_company_periods: {
+        Row: {
+          created_at: string
+          id: string
+          legal_entity_id: string
+          note: string | null
+          store_id: string
+          updated_at: string
+          valid_from: string
+          valid_to: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          legal_entity_id: string
+          note?: string | null
+          store_id: string
+          updated_at?: string
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          legal_entity_id?: string
+          note?: string | null
+          store_id?: string
+          updated_at?: string
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_company_periods_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "store_company_periods_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
@@ -7026,6 +7227,9 @@ export type Database = {
           export_country: string | null
           from_location_id: string
           id: string
+          internal_price_per_kg: number | null
+          is_intercompany: boolean
+          legal_entity_id: string | null
           order_number: string | null
           picked_at: string | null
           picked_by: string | null
@@ -7036,6 +7240,7 @@ export type Database = {
           source_document_id: string | null
           source_document_type: string | null
           status: Database["public"]["Enums"]["transfer_status"]
+          to_legal_entity_id: string | null
           to_location_id: string
           updated_at: string
         }
@@ -7052,6 +7257,9 @@ export type Database = {
           export_country?: string | null
           from_location_id: string
           id?: string
+          internal_price_per_kg?: number | null
+          is_intercompany?: boolean
+          legal_entity_id?: string | null
           order_number?: string | null
           picked_at?: string | null
           picked_by?: string | null
@@ -7062,6 +7270,7 @@ export type Database = {
           source_document_id?: string | null
           source_document_type?: string | null
           status?: Database["public"]["Enums"]["transfer_status"]
+          to_legal_entity_id?: string | null
           to_location_id: string
           updated_at?: string
         }
@@ -7078,6 +7287,9 @@ export type Database = {
           export_country?: string | null
           from_location_id?: string
           id?: string
+          internal_price_per_kg?: number | null
+          is_intercompany?: boolean
+          legal_entity_id?: string | null
           order_number?: string | null
           picked_at?: string | null
           picked_by?: string | null
@@ -7088,6 +7300,7 @@ export type Database = {
           source_document_id?: string | null
           source_document_type?: string | null
           status?: Database["public"]["Enums"]["transfer_status"]
+          to_legal_entity_id?: string | null
           to_location_id?: string
           updated_at?: string
         }
@@ -7128,11 +7341,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "transfer_orders_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
             foreignKeyName: "transfer_orders_picked_by_fkey"
             columns: ["picked_by"]
             isOneToOne: false
             referencedRelation: "staff"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transfer_orders_to_legal_entity_id_fkey"
+            columns: ["to_legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
           },
           {
             foreignKeyName: "transfer_orders_to_location_id_fkey"
@@ -7250,6 +7477,7 @@ export type Database = {
           category: string
           created_at: string
           id: string
+          legal_entity_id: string | null
           note: string | null
           rate: number
           updated_at: string
@@ -7260,6 +7488,7 @@ export type Database = {
           category: string
           created_at?: string
           id?: string
+          legal_entity_id?: string | null
           note?: string | null
           rate: number
           updated_at?: string
@@ -7270,13 +7499,22 @@ export type Database = {
           category?: string
           created_at?: string
           id?: string
+          legal_entity_id?: string | null
           note?: string | null
           rate?: number
           updated_at?: string
           valid_from?: string
           valid_to?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "vat_rates_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
+        ]
       }
       vehicle_columns: {
         Row: {
@@ -7832,6 +8070,14 @@ export type Database = {
       }
     }
     Functions: {
+      company_of_location: {
+        Args: { _location_id: string; _on?: string }
+        Returns: string
+      }
+      company_of_store: {
+        Args: { _on?: string; _store_id: string }
+        Returns: string
+      }
       current_staff: {
         Args: never
         Returns: {
@@ -7843,6 +8089,7 @@ export type Database = {
           first_name: string
           id: string
           last_name: string
+          legal_entity_id: string | null
           must_change_password: boolean
           phone: string | null
           portal_access: string[]
