@@ -455,33 +455,34 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
         </div>
       </div>
 
-      <Card className="shadow-card">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-heading">
-            Dagens checklistor · {weekdayName(iso)}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {isLoading ? (
-            <p className="text-xs text-muted-foreground">Laddar checklistor…</p>
-          ) : todays.length === 0 ? (
-            <p className="text-xs text-muted-foreground">
-              Ingen checklista är schemalagd för {weekdayName(iso).toLowerCase()}. Öppna kalenderikonen högst upp för att ändra veckoschemat.
-            </p>
-          ) : (
-            todays.map((t) => listRow(t))
-          )}
-        </CardContent>
-      </Card>
+      <section className="space-y-2">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Dagens checklistor · {weekdayName(iso)}
+        </h2>
+        {isLoading ? (
+          <p className="text-xs text-muted-foreground">Laddar checklistor…</p>
+        ) : todays.length === 0 ? (
+          <p className="text-xs text-muted-foreground">
+            Ingen checklista är schemalagd för {weekdayName(iso).toLowerCase()}. Öppna kalenderikonen högst upp för att ändra veckoschemat.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {todays.map((t) => listRow(t))}
+          </div>
+        )}
+      </section>
 
       {others.length > 0 && (
-        <Card className="shadow-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-heading">Övriga checklistor</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">{others.map((t) => listRow(t, true))}</CardContent>
-        </Card>
+        <section className="space-y-2">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Övriga checklistor
+          </h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {others.map((t) => listRow(t, true))}
+          </div>
+        </section>
       )}
+
 
       <Dialog open={scheduleOpen} onOpenChange={setScheduleOpen}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
