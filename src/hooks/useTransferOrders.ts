@@ -46,7 +46,7 @@ export function useTransferOrders(locationIds?: string[]) {
           `*,
            from_location:storage_locations!transfer_orders_from_location_id_fkey(name, location_type),
            to_location:storage_locations!transfer_orders_to_location_id_fkey(name, location_type, store_id),
-           transfer_order_lines(*, products(name, sku, unit), lots(lot_number))`,
+           transfer_order_lines(*, products(name, sku, unit, hs_code, export_documentation_required), lots(lot_number, species_fao_code, latin_name, catch_area, fishing_gear, vessel_name, vessel_reg, catch_date_from, catch_date_to, incoming_catch_cert, statistical_doc, seal_number, fishing_trip_id))`,
         )
         .order("created_at", { ascending: false })
         .limit(300);
