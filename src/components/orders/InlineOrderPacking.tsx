@@ -32,22 +32,23 @@ const nf = (v: unknown, d = 2) =>
 function PackStep({ status, index }: { status: string; index: number }) {
   if (status === "packad")
     return (
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-row-ok-edge text-primary-foreground">
-        <CheckCircle2 className="h-5 w-5" />
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-row-ok-edge text-primary-foreground">
+        <CheckCircle2 className="h-4 w-4" />
       </span>
     );
   if (status === "struken")
     return (
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted font-mono text-sm text-muted-foreground">
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-muted font-mono text-xs text-muted-foreground">
         –
       </span>
     );
   return (
-    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border-2 border-border bg-background font-mono text-sm font-semibold tabular-nums">
+    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded border border-border bg-background font-mono text-xs font-semibold tabular-nums">
       {index}
     </span>
   );
 }
+
 
 
 /**
@@ -190,22 +191,41 @@ export function InlineOrderPacking({ order }: { order: CustomerOrder }) {
                 type="button"
                 onClick={() => setOpenLine(expanded ? null : l.id)}
                 disabled={done || struck}
-                className="flex w-full items-center gap-2.5 px-2.5 py-2 text-left disabled:cursor-default"
+                className="flex w-full items-center gap-2 px-2 py-1 text-left text-[13px] disabled:cursor-default"
               >
                 <PackStep status={l.pack_status} index={i + 1} />
-                <ProductThumb src={l.products?.image_url} alt={name} static />
-                <div className="min-w-0 flex-1">
-                  <div className={`truncate font-semibold ${struck ? "line-through" : ""}`}>{name}</div>
-                  <div className="font-mono text-sm tabular-nums text-muted-foreground">
-                    {nf(l.quantity_packed ?? l.quantity_ordered, 3)} {l.unit}
-                  </div>
-                </div>
+                <ProductThumb
+                  src={l.products?.image_url}
+                  alt={name}
+                  static
+                  className="h-8 w-10 rounded"
+                />
+                <span className={`min-w-0 flex-1 truncate font-medium ${struck ? "line-through" : ""}`}>
+                  {name}
+                </span>
+                <span className="w-24 shrink-0 text-right font-mono text-xs tabular-nums">
+                  {nf(l.quantity_packed ?? l.quantity_ordered, 3)} {l.unit}
+                </span>
+                <span className="hidden w-20 shrink-0 text-right font-mono text-xs tabular-nums text-muted-foreground sm:block">
+                  {l.price_per_unit != null || l.estimated_price_per_unit != null
+                    ? `${nf(l.price_per_unit ?? l.estimated_price_per_unit)} kr`
+                    : "—"}
+                </span>
+                <span className="w-20 shrink-0 text-right font-mono text-xs font-semibold tabular-nums">
+                  {l.line_total != null
+                    ? `${nf(l.line_total)} kr`
+                    : `${nf(Number(l.quantity_ordered || 0) * Number(l.estimated_price_per_unit ?? 0))} kr`}
+                </span>
                 {l.pack_status !== "opackad" && (
                   <Badge variant="outline" className="shrink-0 text-[10px]">
                     {LINE_PACK_LABELS[l.pack_status] ?? l.pack_status}
                   </Badge>
                 )}
               </button>
+              {l.note && !expanded && (
+                <div className="px-2 pb-1 pl-[4.25rem] text-xs text-muted-foreground">{l.note}</div>
+              )}
+
 
 
 

@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   Plus,
   Search,
@@ -7,12 +6,8 @@ import {
   ShoppingBag,
   Users,
   ChefHat,
-  Settings,
-  Printer,
   Truck,
   BarChart3,
-  RefreshCw,
-  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,7 +36,6 @@ import { CustomerOrderWizard } from "@/components/orders/CustomerOrderWizard";
 import { CustomerOrderCard } from "@/components/orders/CustomerOrderCard";
 import { CustomerOrderRow, CustomerOrderRowHeader } from "@/components/orders/CustomerOrderRow";
 import { CustomerOrderEditDialog } from "@/components/orders/CustomerOrderEditDialog";
-import { CommandBar, CommandAction } from "@/components/shell/CommandBar";
 import { ViewSelector, SavedView } from "@/components/shell/ViewSelector";
 import { FactBox, FactGroup, FactRow } from "@/components/shell/FactBox";
 import { StatusBar } from "@/components/shell/StatusBar";
@@ -49,10 +43,9 @@ import { StatusBar } from "@/components/shell/StatusBar";
 import { RetailCustomerRegistry } from "@/components/orders/RetailCustomerRegistry";
 import { PurchaseNeedsView } from "@/components/orders/PurchaseNeedsView";
 import { CateringKitchenList } from "@/components/orders/CateringKitchenList";
-import { StoreOrderSettingsDialog } from "@/components/orders/StoreOrderSettingsDialog";
 import { DeliveryRouteView } from "@/components/orders/DeliveryRouteView";
 import { CustomerOrderStats } from "@/components/orders/CustomerOrderStats";
-import { printPackList } from "@/lib/customerOrderPackListPdf";
+
 
 /** Sparade vyer, som listsidorna i Dynamics 365. */
 const VIEWS: SavedView[] = [
@@ -123,13 +116,12 @@ export default function CustomerOrders() {
   const [packStatus, setPackStatus] = useState("all");
   const [orderType, setOrderType] = useState("all");
   const [wizardOpen, setWizardOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [selected, setSelected] = useState<CustomerOrder | null>(null);
   const [openRow, setOpenRow] = useState<string | null>(null);
   const [editing, setEditing] = useState<CustomerOrder | null>(null);
   const [view, setView] = useState("aktiva");
   const [marked, setMarked] = useState<string[]>([]);
-  const queryClient = useQueryClient();
+
   const toggleRow = (id: string) => setOpenRow((cur) => (cur === id ? null : id));
   const toggleMark = (id: string, next: boolean) =>
     setMarked((cur) => (next ? [...new Set([...cur, id])] : cur.filter((x) => x !== id)));
@@ -197,67 +189,11 @@ export default function CustomerOrders() {
     viewOrders.find((o) => o.id === openRow) ||
     (markedOrders.length === 1 ? markedOrders[0] : null);
 
-  const commands: CommandAction[] = [
-    ...(canEdit && (isShop ? !!activeStoreId : !!effectiveStore)
-      ? [
-          {
-            key: "new",
-            label: "Ny",
-            icon: Plus,
-            primary: true,
-            onClick: () => setWizardOpen(true),
-          } as CommandAction,
-        ]
-      : []),
-    {
-      key: "edit",
-      label: "Redigera",
-      icon: Pencil,
-      disabled: !canEdit || markedOrders.length !== 1 || rowReadOnly(markedOrders[0]),
-      onClick: () => markedOrders[0] && setEditing(markedOrders[0]),
-    },
-    {
-      key: "refresh",
-      label: "Uppdatera",
-      icon: RefreshCw,
-      separatorBefore: true,
-      onClick: () => queryClient.invalidateQueries({ queryKey: ["customer-orders"] }),
-    },
-    {
-      key: "print",
-      label: "Papperslista",
-      icon: Printer,
-      disabled: viewOrders.length === 0,
-      onClick: () =>
-        printPackList({
-          orders: markedOrders.length > 0 ? markedOrders : viewOrders,
-          storeName: isShop
-            ? activeStoreName
-            : stores.find((s: any) => s.id === effectiveStore)?.name,
-          dateLabel: VIEWS.find((v) => v.id === view)?.label ?? "Aktuell lista",
-        }),
-    },
-    ...((isShop ? !!activeStoreId : !!effectiveStore)
-      ? [
-          {
-            key: "settings",
-            label: "Öppettider",
-            icon: Settings,
-            separatorBefore: true,
-            hideLabelOnMobile: true,
-            onClick: () => setSettingsOpen(true),
-          } as CommandAction,
-        ]
-      : []),
-  ];
-
-
+  const canCreate = canEdit && (isShop ? !!activeStoreId : !!effectiveStore);
 
   return (
     <div className="space-y-3 p-3 sm:p-6">
-      <CommandBar actions={commands} />
-
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <ViewSelector
           title="Kundbeställningar"
           views={VIEWS}
@@ -268,11 +204,17 @@ export default function CustomerOrders() {
           }}
           count={viewOrders.length}
         />
-        <p className="text-xs text-muted-foreground">
-          Privatkunder{isShop && activeStoreName ? ` — ${activeStoreName}` : ""}. Betalning sker i
-          kassan vid hämtning.
-        </p>
+        {canCreate && (
+          <Button size="lg" className="h-12 px-5 text-base" onClick={() => setWizardOpen(true)}>
+            <Plus className="mr-2 h-5 w-5" /> Ny beställning
+          </Button>
+        )}
       </div>
+      <p className="text-xs text-muted-foreground">
+        Privatkunder{isShop && activeStoreName ? ` — ${activeStoreName}` : ""}. Betalning sker i
+        kassan vid hämtning.
+      </p>
+
 
 
       <Tabs defaultValue="orders">
@@ -600,13 +542,6 @@ export default function CustomerOrders() {
             onOpenChange={setWizardOpen}
             storeId={(isShop ? activeStoreId : effectiveStore) as string}
             storeName={isShop ? activeStoreName : stores.find((s: any) => s.id === effectiveStore)?.name}
-          />
-          <StoreOrderSettingsDialog
-            open={settingsOpen}
-            onOpenChange={setSettingsOpen}
-            storeId={(isShop ? activeStoreId : effectiveStore) as string}
-            storeName={isShop ? activeStoreName : stores.find((s: any) => s.id === effectiveStore)?.name}
-            canEdit={canEdit}
           />
         </>
       )}
