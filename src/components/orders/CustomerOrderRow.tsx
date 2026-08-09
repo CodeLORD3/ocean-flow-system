@@ -238,33 +238,39 @@ export function CustomerOrderRow({
             </div>
           )}
 
-          <ul className="divide-y divide-border rounded-md border border-border">
-            {lines.map((l) => {
-              const label = (l.products?.name || l.free_text_name || "Vara") as string;
-              const struck = l.pack_status === "struken";
-              return (
-                <li
-                  key={l.id}
-                  className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 text-sm"
-                >
-                  <span
-                    className={`min-w-0 flex-1 truncate ${
-                      struck ? "line-through text-muted-foreground" : ""
-                    }`}
+          {readOnly ? (
+            <ul className="divide-y divide-border rounded-md border border-border">
+              {lines.map((l) => {
+                const label = (l.products?.name || l.free_text_name || "Vara") as string;
+                const struck = l.pack_status === "struken";
+                return (
+                  <li
+                    key={l.id}
+                    className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 text-sm"
                   >
-                    {label}
-                  </span>
-                  <Badge variant="outline" className="text-[10px]">
-                    {LINE_PACK_LABELS[l.pack_status] ?? l.pack_status}
-                  </Badge>
-                  <span className="font-mono tabular-nums">
-                    {nf(l.quantity_packed ?? l.quantity_ordered, 3)} {l.unit}
-                  </span>
-                  {l.note && <span className="w-full text-xs text-muted-foreground">{l.note}</span>}
-                </li>
-              );
-            })}
-          </ul>
+                    <span
+                      className={`min-w-0 flex-1 truncate ${
+                        struck ? "line-through text-muted-foreground" : ""
+                      }`}
+                    >
+                      {label}
+                    </span>
+                    <Badge variant="outline" className="text-[10px]">
+                      {LINE_PACK_LABELS[l.pack_status] ?? l.pack_status}
+                    </Badge>
+                    <span className="font-mono tabular-nums">
+                      {nf(l.quantity_packed ?? l.quantity_ordered, 3)} {l.unit}
+                    </span>
+                    {l.note && (
+                      <span className="w-full text-xs text-muted-foreground">{l.note}</span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <InlineOrderPacking order={order} />
+          )}
 
           {order.note && (
             <div className="rounded-md bg-muted/50 p-2.5 text-sm text-muted-foreground">
@@ -282,21 +288,18 @@ export function CustomerOrderRow({
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button className="h-12 flex-1" onClick={() => onOpen(order)}>
-              <Package className="mr-2 h-5 w-5" />
-              {readOnly ? "Öppna order" : "Börja packa"}
-              <ExternalLink className="ml-2 h-4 w-4 opacity-70" />
-            </Button>
             {!readOnly && onEdit && !cancelled && (
-              <Button
-                variant="outline"
-                className="h-12 sm:w-44"
-                onClick={() => onEdit(order)}
-              >
+              <Button variant="outline" className="h-12 flex-1" onClick={() => onEdit(order)}>
                 <Pencil className="mr-2 h-4 w-4" /> Redigera order
               </Button>
             )}
+            <Button variant="ghost" className="h-12 sm:w-44" onClick={() => onOpen(order)}>
+              <Package className="mr-2 h-4 w-4" />
+              {readOnly ? "Öppna order" : "Fullvy"}
+              <ExternalLink className="ml-2 h-4 w-4 opacity-70" />
+            </Button>
           </div>
+
         </div>
       )}
     </div>
