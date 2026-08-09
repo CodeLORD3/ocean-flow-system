@@ -479,12 +479,11 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
                         : "hover:bg-muted/60 border border-transparent"
                     )}
                   >
-                    <span className={cn(
-                      "shrink-0 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-semibold",
-                      compact ? "h-6 w-6" : "h-8 w-8"
-                    )}>
-                      {initialsOf(title)}
-                    </span>
+                    <PortalAvatar
+                      name={title}
+                      url={convAvatar(c)}
+                      size={compact ? "sm" : "md"}
+                    />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-1.5">
                         <span className="text-xs font-medium text-foreground truncate flex-1 min-w-0">{title}</span>
