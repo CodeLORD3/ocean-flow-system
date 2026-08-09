@@ -1153,6 +1153,7 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
+          requires_identification_mark: boolean
           store_id: string | null
         }
         Insert: {
@@ -1165,6 +1166,7 @@ export type Database = {
           name: string
           notes?: string | null
           phone?: string | null
+          requires_identification_mark?: boolean
           store_id?: string | null
         }
         Update: {
@@ -1177,6 +1179,7 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string | null
+          requires_identification_mark?: boolean
           store_id?: string | null
         }
         Relationships: [
@@ -1202,6 +1205,7 @@ export type Database = {
           note: string | null
           phone: string | null
           postal_code: string | null
+          requires_identification_mark: boolean
           store_id: string | null
           street: string | null
           updated_at: string
@@ -1218,6 +1222,7 @@ export type Database = {
           note?: string | null
           phone?: string | null
           postal_code?: string | null
+          requires_identification_mark?: boolean
           store_id?: string | null
           street?: string | null
           updated_at?: string
@@ -1234,6 +1239,7 @@ export type Database = {
           note?: string | null
           phone?: string | null
           postal_code?: string | null
+          requires_identification_mark?: boolean
           store_id?: string | null
           street?: string | null
           updated_at?: string
@@ -2020,6 +2026,65 @@ export type Database = {
           url?: string
         }
         Relationships: []
+      }
+      establishments: {
+        Row: {
+          active: boolean
+          approval_number: string | null
+          approval_type: string | null
+          control_authority: string | null
+          created_at: string
+          id: string
+          identification_mark: string | null
+          legal_entity_id: string | null
+          mark_image: string | null
+          name: string
+          note: string | null
+          registered_at: string | null
+          updated_at: string
+          valid_to: string | null
+        }
+        Insert: {
+          active?: boolean
+          approval_number?: string | null
+          approval_type?: string | null
+          control_authority?: string | null
+          created_at?: string
+          id?: string
+          identification_mark?: string | null
+          legal_entity_id?: string | null
+          mark_image?: string | null
+          name: string
+          note?: string | null
+          registered_at?: string | null
+          updated_at?: string
+          valid_to?: string | null
+        }
+        Update: {
+          active?: boolean
+          approval_number?: string | null
+          approval_type?: string | null
+          control_authority?: string | null
+          created_at?: string
+          id?: string
+          identification_mark?: string | null
+          legal_entity_id?: string | null
+          mark_image?: string | null
+          name?: string
+          note?: string | null
+          registered_at?: string | null
+          updated_at?: string
+          valid_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "establishments_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
+        ]
       }
       incoming_deliveries: {
         Row: {
@@ -5624,6 +5689,7 @@ export type Database = {
           category: string | null
           created_at: string | null
           description: string | null
+          establishment_id: string | null
           id: string
           location_type: Database["public"]["Enums"]["location_type"] | null
           name: string
@@ -5636,6 +5702,7 @@ export type Database = {
           category?: string | null
           created_at?: string | null
           description?: string | null
+          establishment_id?: string | null
           id?: string
           location_type?: Database["public"]["Enums"]["location_type"] | null
           name: string
@@ -5648,6 +5715,7 @@ export type Database = {
           category?: string | null
           created_at?: string | null
           description?: string | null
+          establishment_id?: string | null
           id?: string
           location_type?: Database["public"]["Enums"]["location_type"] | null
           name?: string
@@ -5656,6 +5724,13 @@ export type Database = {
           zone?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "storage_locations_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "storage_locations_parent_location_id_fkey"
             columns: ["parent_location_id"]
@@ -5831,6 +5906,7 @@ export type Database = {
           country: string
           created_at: string | null
           currency: string
+          establishment_id: string | null
           hours: string | null
           id: string
           inventory_location_id: string | null
@@ -5842,6 +5918,7 @@ export type Database = {
           name: string
           phone: string | null
           region: string | null
+          requires_identification_mark: boolean
           slug: string
           sqm: number | null
         }
@@ -5852,6 +5929,7 @@ export type Database = {
           country: string
           created_at?: string | null
           currency: string
+          establishment_id?: string | null
           hours?: string | null
           id?: string
           inventory_location_id?: string | null
@@ -5863,6 +5941,7 @@ export type Database = {
           name: string
           phone?: string | null
           region?: string | null
+          requires_identification_mark?: boolean
           slug: string
           sqm?: number | null
         }
@@ -5873,6 +5952,7 @@ export type Database = {
           country?: string
           created_at?: string | null
           currency?: string
+          establishment_id?: string | null
           hours?: string | null
           id?: string
           inventory_location_id?: string | null
@@ -5884,10 +5964,18 @@ export type Database = {
           name?: string
           phone?: string | null
           region?: string | null
+          requires_identification_mark?: boolean
           slug?: string
           sqm?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "stores_establishment_id_fkey"
+            columns: ["establishment_id"]
+            isOneToOne: false
+            referencedRelation: "establishments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stores_inventory_location_id_fkey"
             columns: ["inventory_location_id"]
