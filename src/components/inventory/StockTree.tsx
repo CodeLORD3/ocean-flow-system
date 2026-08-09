@@ -431,18 +431,25 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
         <div
           {...dropProps("grossistlager")}
           className={cn(
-            "rounded-lg transition-shadow",
+            "relative rounded-lg transition-shadow",
+            dragging && "ring-1 ring-dashed ring-primary/40",
             dropTarget === "grossistlager" && "ring-2 ring-primary ring-offset-2 ring-offset-background",
           )}
         >
           <Card
             n={node("grossistlager", "lvl:grossistlager", LEVEL_LABEL.grossistlager, byLevel["grossistlager"] || [])}
           />
+          {dragging ? (
+            <span className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-center rounded-t-lg bg-primary/90 px-2 py-1 text-[10px] font-semibold text-primary-foreground">
+              Släpp här — {dragging} rad{dragging > 1 ? "er" : ""} flyttas hit
+            </span>
+          ) : null}
         </div>
         <div
           {...dropProps("tillverkningslager")}
           className={cn(
-            "rounded-lg transition-shadow",
+            "relative rounded-lg transition-shadow",
+            dragging && "ring-1 ring-dashed ring-primary/40",
             dropTarget === "tillverkningslager" && "ring-2 ring-primary ring-offset-2 ring-offset-background",
           )}
         >
@@ -454,8 +461,14 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
               byLevel["tillverkningslager"] || [],
             )}
           />
+          {dragging ? (
+            <span className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-center rounded-t-lg bg-primary/90 px-2 py-1 text-[10px] font-semibold text-primary-foreground">
+              Släpp här — {dragging} rad{dragging > 1 ? "er" : ""} flyttas hit
+            </span>
+          ) : null}
         </div>
       </div>
+
 
 
       <Connector />
