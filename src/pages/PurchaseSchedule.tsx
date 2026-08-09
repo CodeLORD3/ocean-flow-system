@@ -1598,11 +1598,13 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
                   className="w-auto p-0"
                   align="start"
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      pickManualDate(manualDate);
-                    }
+                    if (e.key !== "Enter") return;
+                    const el = e.target as HTMLElement;
+                    if (el.closest("button[name='day'], .rdp-day, [role='gridcell'] button")) return;
+                    e.preventDefault();
+                    pickManualDate(manualDate);
                   }}
+
                 >
                   <Calendar
                     mode="single"
