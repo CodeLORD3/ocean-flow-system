@@ -503,7 +503,7 @@ export function usePurchaseNeeds(fromDate?: string) {
       const { data, error } = await db
         .from("customer_order_lines")
         .select(
-          "id, product_id, quantity_ordered, unit, reservation_status, pack_status, products(name), customer_orders!inner(id, wanted_date, store_id, status, stores(name))",
+          "id, product_id, quantity_ordered, unit, reservation_status, pack_status, products!customer_order_lines_product_id_fkey(name), customer_orders!inner(id, wanted_date, store_id, status, stores(name))",
         )
         .in("reservation_status", ["inkopsbehov"])
         .neq("pack_status", "struken")
