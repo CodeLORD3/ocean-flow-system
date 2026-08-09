@@ -225,7 +225,7 @@ export function CustomerOrderRow({
 
           <Button className="h-12 w-full" onClick={() => onOpen(order)}>
             <Package className="mr-2 h-5 w-5" />
-            {readOnly ? "Öppna order" : "Öppna packning"}
+            {readOnly ? "Öppna order" : "Börja packa"}
             <ExternalLink className="ml-2 h-4 w-4 opacity-70" />
           </Button>
         </div>
