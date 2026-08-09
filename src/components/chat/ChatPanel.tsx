@@ -173,6 +173,7 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
   const send = useSendChatMessage();
   const unread = useChatUnread();
   const avatars = usePortalAvatars();
+  const staffAvatars = useStaffAvatars();
   /** Motpartens profilbild i en chatt (butikens hero-bild / portalbild). */
   const convAvatar = (c: ChatConversation) => {
     const other = c.participants.find((p) => p.portal_key !== portal?.key);
