@@ -609,7 +609,7 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
 
                       <div
                         className={cn(
-                          "max-w-[85%] sm:max-w-[80%] px-2.5 py-1 text-xs leading-snug shadow-sm",
+                          "max-w-[85%] sm:max-w-[80%] px-3 py-1.5 text-sm leading-relaxed shadow-sm",
                           mine
                             ? "bg-primary text-primary-foreground rounded-2xl rounded-br-sm"
                             : "bg-muted text-foreground rounded-2xl rounded-bl-sm",
