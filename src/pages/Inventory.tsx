@@ -318,6 +318,8 @@ export default function Inventory() {
   const queryClient = useQueryClient();
   const storeFilter = activeStoreId || "all";
   const isGrossist = site === "wholesale" || site === "production";
+  const isShopPortal = !isGrossist;
+
 
   // Derive currency from active store (Zollikon → CHF, others → SEK)
   const activeStore = (stores as any[]).find((s: any) => s.id === activeStoreId);
@@ -1341,7 +1343,7 @@ export default function Inventory() {
           <p className="text-xs text-muted-foreground">Samlad lagerbild — alla lagerplatser</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {expiryAlerts.length > 0 && (
+          {expiryAlerts.length > 0 && !isShopPortal && (
             <Button
               size="sm"
               variant="outline"
@@ -1362,39 +1364,44 @@ export default function Inventory() {
               <Printer className="h-3 w-3" /> Skriv ut / PDF ({printSelectedIds.length})
             </Button>
           )}
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none"
-            onClick={() => openNewLocation()}
-          >
-            <Plus className="h-3 w-3" /> Nytt lager
-          </Button>
+          {!isShopPortal && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none"
+                onClick={() => openNewLocation()}
+              >
+                <Plus className="h-3 w-3" /> Nytt lager
+              </Button>
 
-          {activeStoreId && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none border-primary/40 text-primary hover:bg-primary/10"
-              onClick={() => setDailySheetOpen(true)}
-            >
-              <ScrollText className="h-3 w-3" /> Dagsavstämning
-            </Button>
+              {activeStoreId && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none border-primary/40 text-primary hover:bg-primary/10"
+                  onClick={() => setDailySheetOpen(true)}
+                >
+                  <ScrollText className="h-3 w-3" /> Dagsavstämning
+                </Button>
+              )}
+
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none"
+                onClick={() => setReportsArchiveOpen(true)}
+              >
+                <FileText className="h-3 w-3" /> Lagerrapporter
+              </Button>
+
+              <Button size="sm" className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none" onClick={() => setReportDialogOpen(true)}>
+                <ClipboardList className="h-3 w-3" /> Skapa lagerrapport
+              </Button>
+            </>
           )}
-
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none"
-            onClick={() => setReportsArchiveOpen(true)}
-          >
-            <FileText className="h-3 w-3" /> Lagerrapporter
-          </Button>
-
-          <Button size="sm" className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none" onClick={() => setReportDialogOpen(true)}>
-            <ClipboardList className="h-3 w-3" /> Skapa lagerrapport
-          </Button>
         </div>
+
       </div>
 
       {/* Grossist/Admin: interaktivt lagerträd. Butik: nivåväljare. */}
@@ -1500,7 +1507,21 @@ export default function Inventory() {
 
       {viewMode === "locations" && (
       <>
-      {/* KPIs — now with expiry count */}
+      {/* Nyckeltal — butiksportalen visar bara kvantitet och antal produkter, i kompakt format */}
+      {isShopPortal ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="rounded-md border border-border bg-card px-3 py-1.5">
+            <span className="text-[10px] text-muted-foreground">Produkter i lager</span>{" "}
+            <span className="text-sm font-heading font-bold text-foreground tabular-nums">{totalProducts}</span>
+          </div>
+          <div className="rounded-md border border-border bg-card px-3 py-1.5">
+            <span className="text-[10px] text-muted-foreground">Total kvantitet</span>{" "}
+            <span className="text-sm font-heading font-bold text-foreground tabular-nums">
+              {totalQty.toLocaleString("sv-SE")}
+            </span>
+          </div>
+        </div>
+      ) : (
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Card className="shadow-card">
           <CardContent className="p-3">
@@ -1543,6 +1564,8 @@ export default function Inventory() {
           </CardContent>
         </Card>
       </div>
+      )}
+
 
 
       {/* Rest of location rendering — kept same structure as original, 
