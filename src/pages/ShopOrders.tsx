@@ -480,7 +480,7 @@ export default function ShopOrders() {
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">Beställ produkter från grossist/produktion och följ leveransstatus.</p>
         </div>
-        <Button size="sm" className="gap-1.5 text-xs" onClick={() => setCreatingOrder(true)}>
+        <Button size="sm" className="gap-1.5 text-xs" onClick={startNewOrder}>
           <Plus className="h-3.5 w-3.5" /> Ny beställning
         </Button>
       </div>
