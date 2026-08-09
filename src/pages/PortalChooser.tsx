@@ -22,6 +22,8 @@ export default function PortalChooser() {
   const { session, staff, loading, signOut } = useStaffAuth();
   const { setSite, setActiveStore } = useSite();
   const { data: stores = [] } = useStores();
+  const storeCovers = useStoreCoverImages();
+
   const navigate = useNavigate();
   const [pickStore, setPickStore] = useState(false);
 
