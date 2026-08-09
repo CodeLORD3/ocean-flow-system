@@ -104,6 +104,8 @@ export default function OrganisationOverview() {
   const { site, activeStoreId, activeStoreName } = useSite();
   const isShop = site === "shop" && !!activeStoreId;
   const { switchTab } = useTabs();
+  const { data: checklistTemplates = [] } = useChecklistTemplates(isShop ? activeStoreId : null);
+  const todaysChecklistTemplates = checklistTemplates.filter((t) => templateAppliesOn(t, todayIso()));
 
   const { data: products = [] } = useProducts();
   const { data: stores = [] } = useStores(true);
