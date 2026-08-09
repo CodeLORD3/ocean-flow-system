@@ -57,7 +57,14 @@ export interface ParsedRow {
   species_group: string | null;
   /** null = kolumnen saknas eller är tom → befintligt värde lämnas orört */
   fao_code: string | null;
+  /** null = kolumnen saknas eller är tom → befintligt värde lämnas orört */
+  allergens: string[] | null;
+  /** true när cellen hade ett värde, även när värdet var "Inga" */
+  allergens_checked: boolean | null;
+  /** null = kolumnen saknas eller är tom → befintligt värde lämnas orört */
+  may_contain: string[] | null;
 }
+
 
 export type DiffStatus = "new" | "changed" | "unchanged" | "error";
 
