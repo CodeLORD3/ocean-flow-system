@@ -300,40 +300,38 @@ export default function CustomerOrders() {
             />
           ) : (
             <div className="overflow-hidden rounded-sm border border-grid-line bg-card">
-              <div className="flex">
-                <div className="min-w-0 flex-1">
-                  <CustomerOrderRowHeader
-                    selectable
-                    allSelected={allMarked}
-                    onSelectAll={markAll}
-                  />
-                  {groupByDay(viewOrders).map(([day, list]) => (
-                    <div key={day}>
-                      <div className="flex items-center gap-2 border-x border-b border-grid-line bg-muted px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        <span className="truncate">{dayLabel(day)}</span>
-                        <span className="shrink-0 font-mono tabular-nums">
-                          {list.length} order
-                        </span>
-                      </div>
-
-                      {list.map((o) => (
-                        <CustomerOrderRow
-                          key={o.id}
-                          order={o}
-                          onOpen={setSelected}
-                          onEdit={canEdit ? setEditing : undefined}
-                          readOnly={rowReadOnly(o)}
-                          open={openRow === o.id}
-                          onToggle={toggleRow}
-                          selected={marked.includes(o.id)}
-                          onSelect={toggleMark}
-                        />
-                      ))}
+              <div>
+                <CustomerOrderRowHeader
+                  selectable
+                  allSelected={allMarked}
+                  onSelectAll={markAll}
+                />
+                {groupByDay(viewOrders).map(([day, list]) => (
+                  <div key={day}>
+                    <div className="flex items-center gap-2 border-x border-b border-grid-line bg-muted px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      <span className="truncate">{dayLabel(day)}</span>
+                      <span className="shrink-0 font-mono tabular-nums">
+                        {list.length} order
+                      </span>
                     </div>
-                  ))}
-                </div>
 
+                    {list.map((o) => (
+                      <CustomerOrderRow
+                        key={o.id}
+                        order={o}
+                        onEdit={canEdit ? setEditing : undefined}
+                        readOnly={rowReadOnly(o)}
+                        open={openRow === o.id}
+                        onToggle={toggleRow}
+                        selected={marked.includes(o.id)}
+                        onSelect={toggleMark}
+                      />
+                    ))}
+                  </div>
+                ))}
               </div>
+
+
 
 
               <StatusBar
