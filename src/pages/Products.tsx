@@ -348,6 +348,8 @@ export default function Products() {
     image_url: "",
     latin_name: "",
     requires_processing: false,
+    allergens: [] as string[],
+
   });
 
   const setField = (key: string, value: string) => {
@@ -420,6 +422,8 @@ export default function Products() {
       image_url: "",
       latin_name: "",
       requires_processing: false,
+      allergens: [],
+
     });
     setDialogOpen(true);
   };
@@ -442,6 +446,8 @@ export default function Products() {
       image_url: (p as any).image_url || "",
       latin_name: (p as any).latin_name || "",
       requires_processing: Boolean((p as any).requires_processing),
+      allergens: ((p as any).allergens || []) as string[],
+
     });
     setDialogOpen(true);
   };
@@ -495,6 +501,8 @@ export default function Products() {
       image_url: form.image_url.trim() || null,
       latin_name: form.latin_name.trim() || null,
       requires_processing: form.requires_processing,
+      allergens: form.allergens || [],
+
     };
 
     if (editId) {
