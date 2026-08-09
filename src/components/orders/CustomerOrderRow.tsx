@@ -183,16 +183,14 @@ export function CustomerOrderRow({
           {/* Desktop: fast kolumnraster. Mobil: två rader, kundnamnet störst. */}
           <div className="hidden items-center gap-0 text-[13px] sm:flex">
             <span
-              className={`w-28 shrink-0 truncate border-r border-grid-line/70 pr-2 font-mono text-xs tabular-nums text-muted-foreground ${
+              className={`w-24 shrink-0 border-r border-grid-line/70 pr-2 font-mono text-xs tabular-nums ${
                 cancelled ? "line-through" : ""
               }`}
             >
-              {order.order_number}
-            </span>
-            <span className="w-24 shrink-0 border-r border-grid-line/70 px-2 font-mono text-xs tabular-nums">
               {weekday(order.wanted_date)} {shortDate(order.wanted_date)}
               {time}
             </span>
+
             <span className="w-16 shrink-0 border-r border-grid-line/70 px-2 font-mono tabular-nums text-muted-foreground">
               {active.length} st
             </span>
@@ -219,12 +217,13 @@ export function CustomerOrderRow({
           <div className="sm:hidden">
             <div className="flex items-center gap-2">
               <span
-                className={`min-w-0 flex-1 truncate font-mono text-[11px] tabular-nums text-muted-foreground ${
+                className={`min-w-0 flex-1 truncate text-base font-semibold leading-tight ${
                   cancelled ? "line-through" : ""
                 }`}
               >
-                {order.order_number}
+                {name}
               </span>
+
               <span className="font-mono text-sm font-semibold tabular-nums">
                 {nf(total, 2)} kr
               </span>
@@ -234,15 +233,18 @@ export function CustomerOrderRow({
                 }`}
               />
             </div>
-            <div className="mt-0.5 flex items-center gap-2">
-              <span className="min-w-0 flex-1 truncate text-base font-semibold leading-tight">
-                {name}
-              </span>
-              {hasAllergy && (
-                <AlertTriangle className="h-4 w-4 shrink-0 text-destructive" aria-label="Allergi" />
-              )}
-              {readOnly && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
-            </div>
+            {(hasAllergy || readOnly) && (
+              <div className="mt-0.5 flex items-center gap-2">
+                {hasAllergy && (
+                  <AlertTriangle
+                    className="h-4 w-4 shrink-0 text-destructive"
+                    aria-label="Allergi"
+                  />
+                )}
+                {readOnly && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
+              </div>
+            )}
+
             <div className="mt-1 flex items-center gap-2 font-mono text-xs tabular-nums text-muted-foreground">
               {statusChip}
               <span>
@@ -425,8 +427,8 @@ export function CustomerOrderRowHeader({
         </span>
       )}
       <span className="flex min-w-0 flex-1 items-center px-3 py-1.5">
-        <span className="w-28 shrink-0 border-r border-grid-line pr-2">Ordernr</span>
-        <span className="w-24 shrink-0 border-r border-grid-line px-2">Datum</span>
+        <span className="w-24 shrink-0 border-r border-grid-line pr-2">Datum</span>
+
         <span className="w-16 shrink-0 border-r border-grid-line px-2">Antal</span>
         <span className="min-w-[6rem] flex-1 border-r border-grid-line px-2">Kund</span>
         <span className="w-24 shrink-0 border-r border-grid-line px-2">Status</span>
