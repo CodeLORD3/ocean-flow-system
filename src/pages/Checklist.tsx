@@ -459,17 +459,20 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
         <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Dagens checklistor · {weekdayName(iso)}
         </h2>
-        {isLoading ? (
-          <p className="text-xs text-muted-foreground">Laddar checklistor…</p>
-        ) : todays.length === 0 ? (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {isLoading ? (
+            <p className="text-xs text-muted-foreground">Laddar checklistor…</p>
+          ) : (
+            todays.map((t) => listRow(t))
+          )}
+          <DailyReportCard storeId={storeId} onOpenFull={() => switchTab("/dagsrapport")} />
+        </div>
+        {!isLoading && todays.length === 0 && (
           <p className="text-xs text-muted-foreground">
             Ingen checklista är schemalagd för {weekdayName(iso).toLowerCase()}. Öppna kalenderikonen högst upp för att ändra veckoschemat.
           </p>
-        ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {todays.map((t) => listRow(t))}
-          </div>
         )}
+
       </section>
 
       {others.length > 0 && (
