@@ -10,6 +10,7 @@ import {
   logOrderEvent,
   nextOrderNumber,
   packLine as packLineLedger,
+  unpackLine as unpackLineLedger,
   reverseLine,
   todaysPrice,
 } from "@/lib/customerOrders";
