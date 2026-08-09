@@ -236,6 +236,13 @@ export default function ShopOrders() {
   const [previewProduct, setPreviewProduct] = useState<any | null>(null);
   const qtyRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const startNewOrder = () => {
+    setCreatingOrder(true);
+    setTimeout(() => {
+      searchInputRef.current?.focus();
+      searchInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 80);
+  };
 
 
   // Fetch active store details to determine zone
