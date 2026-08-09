@@ -319,9 +319,19 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
                             canSelect && qtyOf(r) > 0 && "cursor-grab",
                           )}
                           draggable={canSelect && qtyOf(r) > 0}
-                          onDragStart={() => {
-                            if (!selected[r.id]) setSelected((cur) => ({ ...cur, [r.id]: true }));
+                          onDragStart={(e) => {
+                            // Dra en ibockad rad = dra alla ibockade rader.
+                            const isChecked = !!selected[r.id];
+                            if (!isChecked) setSelected((cur) => ({ ...cur, [r.id]: true }));
+                            const rows = isChecked && selectedRows.length ? selectedRows : [r];
+                            dragRowsRef.current = rows;
+                            e.dataTransfer.effectAllowed = "move";
+                            e.dataTransfer.setData("text/plain", `${rows.length} rader`);
                           }}
+                          onDragEnd={() => {
+                            dragRowsRef.current = null;
+                          }}
+
                         >
                           {canSelect && (
                             <td className="px-1 py-1">
