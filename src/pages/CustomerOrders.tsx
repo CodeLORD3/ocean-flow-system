@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Search, CalendarDays, ShoppingBag, Users, Lock } from "lucide-react";
+import { Plus, Search, CalendarDays, ShoppingBag, Users, Lock, ChefHat, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,8 @@ import { CustomerOrderWizard } from "@/components/orders/CustomerOrderWizard";
 import { CustomerOrderCard } from "@/components/orders/CustomerOrderCard";
 import { RetailCustomerRegistry } from "@/components/orders/RetailCustomerRegistry";
 import { PurchaseNeedsView } from "@/components/orders/PurchaseNeedsView";
+import { CateringKitchenList } from "@/components/orders/CateringKitchenList";
+import { StoreOrderSettingsDialog } from "@/components/orders/StoreOrderSettingsDialog";
 
 const nf = (v: any, d = 1) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
