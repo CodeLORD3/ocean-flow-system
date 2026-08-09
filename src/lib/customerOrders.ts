@@ -394,6 +394,57 @@ export async function packLine(params: {
   return movementId;
 }
 
+/**
+ * Ångrar packning av en rad: varan bokförs tillbaka till butikens lager och
+ * raden nollställs till opackad så den kan packas om.
+ */
+export async function unpackLine(params: {
+  order: CustomerOrder;
+  line: CustomerOrderLine;
+  performedBy?: string | null;
+}) {
+  const { order, line } = params;
+  const qty = Number(line.quantity_packed || 0);
+
+  if (!line.is_free_text && line.product_id && qty > 0) {
+    const locationId = await primaryStoreLocationId(order.store_id);
+    if (locationId) {
+      await recordMovement({
+        productId: line.product_id,
+        locationId,
+        quantityKg: qty,
+        movementType: "justering",
+        lotId: line.reserved_lot_id,
+        referenceType: "customer_order_line",
+        referenceId: line.id,
+        note: `Ångrad packning ${order.order_number}`,
+      });
+    }
+  }
+
+  const { error } = await supabase
+    .from("customer_order_lines")
+    .update({
+      quantity_packed: null,
+      line_total: null,
+      pack_status: "opackad",
+      movement_id: null,
+      packed_at: null,
+      packed_by: null,
+    } as any)
+    .eq("id", line.id);
+  if (error) throw error;
+
+  await logOrderEvent({
+    orderId: order.id,
+    eventType: "rad_opackad",
+    description: `Packning ångrad: ${qty} ${line.unit} åter i lager`,
+    performedBy: params.performedBy ?? null,
+  });
+}
+
+
+
 /** Motrörelse när en packad order avbryts eller varan går åter i lager. */
 export async function reverseLine(params: {
   order: CustomerOrder;
