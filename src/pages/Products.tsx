@@ -1265,6 +1265,40 @@ export default function Products() {
                 ))}
               </div>
             </div>
+            {/* Allergener — används för varning vid kundbeställningar */}
+            <div>
+              <Label className="text-xs">Allergener i varan</Label>
+              <div className="mt-1 flex flex-wrap gap-1">
+                {ALLERGENS.map((a) => {
+                  const on = (form.allergens || []).includes(a.key);
+                  return (
+                    <button
+                      key={a.key}
+                      type="button"
+                      onClick={() =>
+                        setField(
+                          "allergens" as any,
+                          (on
+                            ? (form.allergens || []).filter((x: string) => x !== a.key)
+                            : [...(form.allergens || []), a.key]) as any,
+                        )
+                      }
+                      className={`rounded-full border px-2 py-1 text-[11px] ${
+                        on
+                          ? "border-primary bg-primary/10 font-semibold text-primary"
+                          : "border-border text-muted-foreground hover:border-primary/50"
+                      }`}
+                    >
+                      {a.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                Systemet varnar i kundbeställningar när kunden angett att något av dessa ska undvikas.
+              </p>
+            </div>
+
             {/* Kräver hantering — blockerar auto-godkännande av pris */}
             <label className="flex cursor-pointer items-start gap-2 rounded-md border p-2">
               <input
