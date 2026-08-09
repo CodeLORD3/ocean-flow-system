@@ -2,6 +2,7 @@ import * as XLSX from "xlsx";
 import { PRODUCT_CATEGORIES, normalizeCategoryKey } from "@/lib/productCategories";
 import { skuKey } from "@/lib/asciiFold";
 import { normalizeSpeciesGroup } from "@/lib/speciesGroups";
+import { parseAllergenCell } from "@/lib/allergens";
 
 export const IMPORT_COLUMNS = [
   "sku",
@@ -24,7 +25,10 @@ export const IMPORT_COLUMNS = [
   "latin_name",
   "species_group",
   "fao_code",
+  "allergens",
+  "may_contain",
 ] as const;
+
 
 export type ImportColumn = (typeof IMPORT_COLUMNS)[number];
 
@@ -53,7 +57,14 @@ export interface ParsedRow {
   species_group: string | null;
   /** null = kolumnen saknas eller är tom → befintligt värde lämnas orört */
   fao_code: string | null;
+  /** null = kolumnen saknas eller är tom → befintligt värde lämnas orört */
+  allergens: string[] | null;
+  /** true när cellen hade ett värde, även när värdet var "Inga" */
+  allergens_checked: boolean | null;
+  /** null = kolumnen saknas eller är tom → befintligt värde lämnas orört */
+  may_contain: string[] | null;
 }
+
 
 export type DiffStatus = "new" | "changed" | "unchanged" | "error";
 
@@ -94,7 +105,11 @@ export interface ExistingProduct {
   latin_name: string | null;
   species_group?: string | null;
   fao_code?: string | null;
+  allergens?: string[] | null;
+  allergens_checked?: boolean | null;
+  may_contain?: string[] | null;
 }
+
 
 const HEADER_ALIASES: Record<string, ImportColumn> = {
   artikelnummer: "sku",
@@ -133,7 +148,14 @@ const HEADER_ALIASES: Record<string, ImportColumn> = {
   fao: "fao_code",
   faocode: "fao_code",
   artkod: "fao_code",
+  allergen: "allergens",
+  allergener: "allergens",
+  kan_innehalla: "may_contain",
+  kaninnehalla: "may_contain",
+  spar_av: "may_contain",
+  maycontain: "may_contain",
 };
+
 
 function normalizeHeader(raw: string): string | null {
   const key = String(raw ?? "")
@@ -187,8 +209,17 @@ export interface ParseResult {
 }
 
 const REQUIRED_COLUMNS: ImportColumn[] = ["sku", "name", "category"];
-/** Saknas någon av dessa i filen varnar torrkörningen — de rör spårbarhet och prissättning. */
-const NOTIFY_IF_MISSING: ImportColumn[] = ["species_group", "fao_code", "latin_name", "image_url", "parent_sku"];
+/** Saknas någon av dessa i filen varnar torrkörningen — de rör spårbarhet, allergener och prissättning. */
+const NOTIFY_IF_MISSING: ImportColumn[] = [
+  "species_group",
+  "fao_code",
+  "latin_name",
+  "image_url",
+  "parent_sku",
+  "allergens",
+  "may_contain",
+];
+
 
 export async function parseProductFile(file: File): Promise<ParseResult> {
   const buffer = await file.arrayBuffer();
@@ -260,8 +291,20 @@ export async function parseProductFile(file: File): Promise<ParseResult> {
         const v = nullableStr(get("fao_code"));
         return v === null ? null : v.toUpperCase();
       })(),
+      ...(() => {
+        const a = parseAllergenCell(get("allergens"));
+        const m = parseAllergenCell(get("may_contain"));
+        const unknown = [...(a?.unknown ?? []), ...(m?.unknown ?? [])];
+        return {
+          allergens: a ? a.codes : null,
+          allergens_checked: a ? a.checked : null,
+          may_contain: m ? m.codes : null,
+          _allergenUnknown: unknown.length > 0 ? unknown : undefined,
+        };
+      })(),
     };
   });
+
 
   // Keep raw values that failed numeric parsing as errors later: re-check originals
   rows.forEach((row, i) => {
@@ -402,6 +445,10 @@ export function buildDiff({ rows, existing, categories, suppliers }: BuildDiffAr
     if (row.category && !knownCategories.has(normalizeCategoryKey(row.category)))
       warnings.push(`ny kategori: ${row.category}`);
     if (row.unit && !VALID_UNITS.includes(row.unit.toLowerCase())) warnings.push(`ovanlig enhet: ${row.unit}`);
+    const unknownAllergens = (row as ParsedRow & { _allergenUnknown?: string[] })._allergenUnknown;
+    if (unknownAllergens?.length)
+      warnings.push(`okänd allergen lämnas utanför: ${unknownAllergens.join(", ")}`);
+
 
     if (errors.length > 0) {
       return { row, status: "error" as DiffStatus, errors, warnings, changes: [] };
@@ -434,6 +481,11 @@ export function buildDiff({ rows, existing, categories, suppliers }: BuildDiffAr
     if (row.latin_name !== null) cmp("latin_name", current.latin_name, row.latin_name);
     if (row.species_group !== null) cmp("species_group", (current as any).species_group, row.species_group);
     if (row.fao_code !== null) cmp("fao_code", (current as any).fao_code, row.fao_code);
+    if (row.allergens !== null)
+      cmp("allergens", ((current as any).allergens ?? []).join(", "), row.allergens.join(", "));
+    if (row.may_contain !== null)
+      cmp("may_contain", ((current as any).may_contain ?? []).join(", "), row.may_contain.join(", "));
+
     cmp(
       "parent_sku",
       current.parent_product_id ? byId.get(current.parent_product_id)?.sku ?? "" : "",
@@ -471,9 +523,13 @@ export interface UpsertPayload {
   latin_name?: string | null;
   species_group?: string | null;
   fao_code?: string | null;
+  allergens?: string[];
+  allergens_checked?: boolean;
+  may_contain?: string[];
   supplier_id?: string | null;
   parent_product_id?: string | null;
 }
+
 
 export function toPayload(row: ParsedRow): UpsertPayload {
   return {
@@ -496,9 +552,14 @@ export function toPayload(row: ParsedRow): UpsertPayload {
     ...(row.latin_name !== null ? { latin_name: row.latin_name } : {}),
     ...(row.species_group !== null ? { species_group: row.species_group } : {}),
     ...(row.fao_code !== null ? { fao_code: row.fao_code } : {}),
+    ...(row.allergens !== null
+      ? { allergens: row.allergens, allergens_checked: row.allergens_checked ?? true }
+      : {}),
+    ...(row.may_contain !== null ? { may_contain: row.may_contain } : {}),
   };
 }
 
+
 export function buildTemplateCsv(): string {
-  return `${IMPORT_COLUMNS.join(",")}\nFS-045,Lax filé,Färsk Fisk,kg,120.00,162.00,199.00,Norge,Salmar,,7311234567890,0304,,5,,TRUE,https://exempel.se/bilder/lax-file.jpg,Salmo salar,lax,SAL\n`;
+  return `${IMPORT_COLUMNS.join(",")}\nFS-045,Lax filé,Färsk Fisk,kg,120.00,162.00,199.00,Norge,Salmar,,7311234567890,0304,,5,,TRUE,https://exempel.se/bilder/lax-file.jpg,Salmo salar,lax,SAL,Fisk,Kräftdjur\n`;
 }

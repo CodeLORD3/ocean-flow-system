@@ -57,6 +57,8 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
   const [importing, setImporting] = useState(false);
   const [fatal, setFatal] = useState<string | null>(null);
   const [missingOptional, setMissingOptional] = useState<string[]>([]);
+  const [unknownColumns, setUnknownColumns] = useState<string[]>([]);
+
   const [diff, setDiff] = useState<DiffRow[] | null>(null);
   const [showUnchanged, setShowUnchanged] = useState(false);
   const [existing, setExisting] = useState<ExistingProduct[]>([]);
@@ -74,9 +76,11 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
     setDiff(null);
     setFatal(null);
     setMissingOptional([]);
+    setUnknownColumns([]);
     setExisting([]);
     if (fileRef.current) fileRef.current.value = "";
   };
+
 
   const handleClose = (next: boolean) => {
     if (!next) reset();
@@ -95,11 +99,13 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
         return;
       }
       setMissingOptional(parsed.missingOptionalColumns);
+      setUnknownColumns(parsed.unknownColumns);
       const { data, error } = await supabase
         .from("products")
         .select(
-          "id, sku, name, category, unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier_id, barcode, hs_code, weight_per_piece, shelf_life_days, parent_product_id, active, image_url, latin_name, species_group, fao_code",
+          "id, sku, name, category, unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier_id, barcode, hs_code, weight_per_piece, shelf_life_days, parent_product_id, active, image_url, latin_name, species_group, fao_code, allergens, may_contain, allergens_checked",
         );
+
       if (error) throw error;
       const existingRows = (data ?? []) as unknown as ExistingProduct[];
       setExisting(existingRows);
@@ -396,6 +402,18 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
             </span>
           </div>
         )}
+
+        {unknownColumns.length > 0 && !fatal && (
+          <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/5 p-2 text-xs text-amber-600 dark:text-amber-400">
+            <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+            <span>
+              Filen har kolumner som systemet inte känner igen:{" "}
+              <span className="font-mono">{unknownColumns.join(", ")}</span>. De läses inte in — kontrollera
+              stavningen om uppgifterna ska följa med.
+            </span>
+          </div>
+        )}
+
 
         {!diff && !fatal && <ImportHistory />}
 
