@@ -157,10 +157,6 @@ export default function CustomerOrders() {
   const allMarked = viewOrders.length > 0 && markedOrders.length === viewOrders.length;
   const markAll = (next: boolean) => setMarked(next ? viewOrders.map((o) => o.id) : []);
 
-  /** FactBox visar öppen rad, annars enda markerade raden. */
-  const factOrder =
-    viewOrders.find((o) => o.id === openRow) ||
-    (markedOrders.length === 1 ? markedOrders[0] : null);
 
   const canCreate = canEdit && (isShop ? !!activeStoreId : !!effectiveStore);
 
