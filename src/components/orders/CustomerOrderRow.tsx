@@ -179,6 +179,15 @@ export function CustomerOrderRow({
 
       {isOpen && (
         <div className="space-y-3 border-t-2 border-primary bg-card p-3">
+          {/* Tydlig rubrik så det aldrig är tvekan om vilken order som är öppen. */}
+          <div className="flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-primary-foreground">
+            <Package className="h-5 w-5 shrink-0" />
+            <span className="min-w-0 flex-1 truncate text-base font-semibold">{name}</span>
+            <span className="shrink-0 font-mono text-xs tabular-nums opacity-90">
+              {order.order_number}
+            </span>
+          </div>
+
           <div className="flex flex-wrap items-center gap-1.5 text-xs">
             <Badge variant="outline">{ORDER_STATUS_LABELS[order.status] ?? order.status}</Badge>
             <span className={`rounded px-2 py-0.5 ${packTone[order.pack_status] ?? ""}`}>
@@ -190,6 +199,7 @@ export function CustomerOrderRow({
             </Badge>
             {order.category === "catering" && <Badge variant="secondary">Catering</Badge>}
           </div>
+
 
 
           <div className="grid gap-2 text-sm sm:grid-cols-2">
