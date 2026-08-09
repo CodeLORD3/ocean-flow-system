@@ -146,7 +146,9 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
   const [newName, setNewName] = useState("");
   const [newWeekdays, setNewWeekdays] = useState<number[]>([]);
 
-  const [showAllHistory, setShowAllHistory] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+
 
   const create = useCreateChecklistTemplate();
   const archive = useArchiveChecklistTemplate();
