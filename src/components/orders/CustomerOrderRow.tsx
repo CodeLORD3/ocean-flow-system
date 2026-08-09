@@ -292,7 +292,7 @@ export function CustomerOrderRow({
 /** Kolumnrubrik som matchar radens desktoplayout. */
 export function CustomerOrderRowHeader() {
   return (
-    <div className="hidden items-center gap-3 px-3 pb-1 pl-4.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:flex">
+    <div className="hidden items-center gap-3 px-3 pb-1 pl-[1.125rem] text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:flex">
       <span className="w-40 shrink-0">Order</span>
       <span className="w-36 shrink-0">Datum</span>
       <span className="w-20 shrink-0">Antal</span>
