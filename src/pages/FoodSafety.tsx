@@ -199,6 +199,9 @@ export default function FoodSafety() {
           <TabsTrigger value="chilling" className="text-xs">
             Nedkylning
           </TabsTrigger>
+          <TabsTrigger value="abp" className="text-xs">
+            Biprodukter
+          </TabsTrigger>
           <TabsTrigger value="instruments" className="text-xs">
             Instrument
           </TabsTrigger>
