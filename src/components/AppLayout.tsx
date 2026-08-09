@@ -19,6 +19,7 @@ import { useSite } from "@/contexts/SiteContext";
 import { useTabs } from "@/contexts/TabsContext";
 import { useStores } from "@/hooks/useStores";
 import { useSessionTracking, closeCurrentSession } from "@/hooks/useSessionTracking";
+import { useChatSound } from "@/hooks/useChatSound";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -122,6 +123,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   const { staff } = useStaffAuth();
   useSessionTracking();
+  useChatSound();
 
   const rawAccess = staff?.portal_access ?? [];
   const isAdmin = rawAccess.includes("admin");
