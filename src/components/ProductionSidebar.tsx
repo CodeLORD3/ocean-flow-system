@@ -52,10 +52,9 @@ const overviewNav = [
 ];
 
 const purchaseNav = [
+  { title: "Lager", url: "/inventory", icon: Package },
   { title: "Inköpsrapportering", url: "/purchase-reporting", icon: FileText },
   { title: "Leverantörer", url: "/suppliers", icon: Truck },
-  { title: "Lager", url: "/inventory", icon: Package },
-
 ];
 
 const salesNav = [
