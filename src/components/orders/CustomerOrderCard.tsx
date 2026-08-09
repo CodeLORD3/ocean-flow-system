@@ -39,6 +39,9 @@ import {
   isUncollected,
 } from "@/lib/customerOrders";
 import { printPackLabels } from "@/lib/customerOrderLabelPdf";
+import { printQuote } from "@/lib/customerQuotePdf";
+import { allergenLabel, scaleQuantity } from "@/lib/catering";
+
 
 const nf = (v: any, d = 2) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -168,6 +171,65 @@ export function CustomerOrderCard({
   const customerName = order.customers_retail?.name || order.customer_name_snapshot || "Kund";
   const uncollected = isUncollected(order);
 
+  /** Preliminär offert — priset räknas alltid om mot dagens pris vid packning. */
+  const makeQuote = () =>
+    printQuote({
+      orderNumber: order.order_number,
+      storeName: (order as any).stores?.name || "",
+      customerName,
+      customerPhone: order.customers_retail?.phone || order.customer_phone_snapshot,
+      orderTypeLabel: ORDER_TYPE_LABELS[order.order_type] ?? order.order_type,
+      wantedDate: order.wanted_date,
+      wantedTime: order.wanted_time,
+      guestCount: order.guest_count,
+      allergyNote: order.allergy_note,
+      excludedAllergens: (order.excluded_allergens || []).map(allergenLabel),
+      deliveryAddress:
+        order.order_type === "leverans"
+          ? [order.delivery_street, order.delivery_postal_code, order.delivery_city]
+              .filter(Boolean)
+              .join(", ")
+          : null,
+      note: order.note,
+      lines: lines
+        .filter((l) => l.pack_status !== "struken")
+        .map((l) => ({
+          name: (l.products?.name || l.free_text_name || "Vara") as string,
+          quantity: Number(l.quantity_ordered || 0),
+          unit: l.unit,
+          pricePerUnit:
+            l.estimated_price_per_unit != null ? Number(l.estimated_price_per_unit) : null,
+          note: l.note,
+        })),
+    });
+
+  /** Ändrat gästantal räknar om cateringrader med portion per gäst. */
+  const changeGuestCount = async (value: string) => {
+    const guests = Number(value) || null;
+    await updateOrder.mutateAsync({
+      id: order.id,
+      patch: { guest_count: guests },
+      event: { type: "andrad", description: `Antal gäster ändrat till ${guests ?? "—"}` },
+    });
+    if (!guests) return;
+    for (const l of lines) {
+      if (!l.portion_per_guest || l.locked_from_scaling || l.pack_status === "packad") continue;
+      const qty = scaleQuantity({
+        portionPerGuest: l.portion_per_guest,
+        guestCount: guests,
+        currentQuantity: Number(l.quantity_ordered || 0),
+      });
+      await updateLine.mutateAsync({
+        id: l.id,
+        orderId: order.id,
+        patch: { quantity_ordered: qty },
+        event: { type: "andrad", description: `Mängd omräknad till ${qty} ${l.unit}` },
+      });
+    }
+    toast.success("Raderna är omräknade efter antal gäster.");
+  };
+
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-2xl">
@@ -201,11 +263,21 @@ export function CustomerOrderCard({
           )}
         </div>
 
-        {order.allergy_note && (
-          <div className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm font-semibold">
-            Allergi: {order.allergy_note}
+        {(order.allergy_note || (order.excluded_allergens || []).length > 0) && (
+          <div className="mt-3 space-y-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
+            {order.allergy_note && <div className="font-semibold">Allergi: {order.allergy_note}</div>}
+            {(order.excluded_allergens || []).length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {(order.excluded_allergens || []).map((a) => (
+                  <Badge key={a} variant="destructive">
+                    Undvik {allergenLabel(a).toLowerCase()}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
         )}
+
 
         {priceAlarm && (
           <div className="mt-3 flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
@@ -447,6 +519,23 @@ export function CustomerOrderCard({
                 </div>
               </CardContent>
             </Card>
+            <Button variant="outline" className="h-12" onClick={makeQuote}>
+              <Printer className="mr-2 h-4 w-4" /> Skriv preliminär offert
+            </Button>
+            {!readOnly && order.category === "catering" && (
+              <div className="sm:max-w-[220px]">
+                <Label>Antal gäster</Label>
+                <Input
+                  inputMode="numeric"
+                  className="h-12"
+                  defaultValue={order.guest_count ?? ""}
+                  onBlur={(e) => changeGuestCount(e.target.value)}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Rader med portion per gäst räknas om automatiskt.
+                </p>
+              </div>
+            )}
             {!readOnly && (
               <div>
                 <Label>Anteckning</Label>
@@ -462,6 +551,7 @@ export function CustomerOrderCard({
                 />
               </div>
             )}
+
           </TabsContent>
 
           <TabsContent value="timeline" className="space-y-2 text-sm">

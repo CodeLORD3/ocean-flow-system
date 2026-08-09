@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Search, CalendarDays, ShoppingBag, Users, Lock } from "lucide-react";
+import { Plus, Search, CalendarDays, ShoppingBag, Users, Lock, ChefHat, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,8 @@ import { CustomerOrderWizard } from "@/components/orders/CustomerOrderWizard";
 import { CustomerOrderCard } from "@/components/orders/CustomerOrderCard";
 import { RetailCustomerRegistry } from "@/components/orders/RetailCustomerRegistry";
 import { PurchaseNeedsView } from "@/components/orders/PurchaseNeedsView";
+import { CateringKitchenList } from "@/components/orders/CateringKitchenList";
+import { StoreOrderSettingsDialog } from "@/components/orders/StoreOrderSettingsDialog";
 
 const nf = (v: any, d = 1) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -113,7 +115,9 @@ export default function CustomerOrders() {
   const [packStatus, setPackStatus] = useState("all");
   const [orderType, setOrderType] = useState("all");
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [selected, setSelected] = useState<CustomerOrder | null>(null);
+
 
   const { data: orders = [], isLoading } = useCustomerOrders({
     storeId: effectiveStore,
@@ -158,11 +162,18 @@ export default function CustomerOrders() {
             Betalning sker i kassan vid hämtning.
           </p>
         </div>
-        {canEdit && (isShop ? !!activeStoreId : effectiveStore) && (
-          <Button className="h-12" onClick={() => setWizardOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Ny beställning
-          </Button>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {(isShop ? !!activeStoreId : !!effectiveStore) && (
+            <Button variant="outline" className="h-12" onClick={() => setSettingsOpen(true)}>
+              <Settings className="mr-2 h-4 w-4" /> Öppettider och kapacitet
+            </Button>
+          )}
+          {canEdit && (isShop ? !!activeStoreId : effectiveStore) && (
+            <Button className="h-12" onClick={() => setWizardOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" /> Ny beställning
+            </Button>
+          )}
+        </div>
       </div>
 
       <Tabs defaultValue="orders">
@@ -178,11 +189,15 @@ export default function CustomerOrders() {
               </Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="kitchen" className="gap-1">
+            <ChefHat className="h-4 w-4" /> Att förbereda
+          </TabsTrigger>
           <TabsTrigger value="customers" className="gap-1">
             <Users className="h-4 w-4" /> Kundregister
           </TabsTrigger>
           {!isShop && <TabsTrigger value="needs">Sålt men inte köpt</TabsTrigger>}
         </TabsList>
+
 
         <TabsContent value="orders" className="space-y-3">
           <div className="flex flex-wrap gap-2">
@@ -306,6 +321,10 @@ export default function CustomerOrders() {
           )}
         </TabsContent>
 
+        <TabsContent value="kitchen">
+          <CateringKitchenList storeId={effectiveStore} />
+        </TabsContent>
+
         <TabsContent value="customers">
           <RetailCustomerRegistry storeId={effectiveStore} readOnly={!canEdit} />
         </TabsContent>
@@ -318,13 +337,23 @@ export default function CustomerOrders() {
       </Tabs>
 
       {(isShop ? activeStoreId : effectiveStore) && (
-        <CustomerOrderWizard
-          open={wizardOpen}
-          onOpenChange={setWizardOpen}
-          storeId={(isShop ? activeStoreId : effectiveStore) as string}
-          storeName={isShop ? activeStoreName : stores.find((s: any) => s.id === effectiveStore)?.name}
-        />
+        <>
+          <CustomerOrderWizard
+            open={wizardOpen}
+            onOpenChange={setWizardOpen}
+            storeId={(isShop ? activeStoreId : effectiveStore) as string}
+            storeName={isShop ? activeStoreName : stores.find((s: any) => s.id === effectiveStore)?.name}
+          />
+          <StoreOrderSettingsDialog
+            open={settingsOpen}
+            onOpenChange={setSettingsOpen}
+            storeId={(isShop ? activeStoreId : effectiveStore) as string}
+            storeName={isShop ? activeStoreName : stores.find((s: any) => s.id === effectiveStore)?.name}
+            canEdit={canEdit}
+          />
+        </>
       )}
+
 
       <CustomerOrderCard
         order={selectedFresh}

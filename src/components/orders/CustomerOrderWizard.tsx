@@ -33,6 +33,21 @@ import {
   NewOrderLineInput,
 } from "@/hooks/useCustomerOrders";
 import { RetailCustomer, shelfLifeWarning } from "@/lib/customerOrders";
+import {
+  useMajorHolidays,
+  useSameDayOrders,
+  useSpecialDays,
+  useStoreOrderSettings,
+} from "@/hooks/useStoreOrderSettings";
+import {
+  ALLERGENS,
+  allergenLabel,
+  checkAllergens,
+  checkCapacity,
+  dayWindow,
+  scaleQuantity,
+  weekdayName,
+} from "@/lib/catering";
 
 const nf = (v: number, d = 2) =>
   Number(v || 0).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -42,6 +57,7 @@ interface DraftLine extends NewOrderLineInput {
   productName: string;
   imageUrl?: string | null;
   warning?: string | null;
+  locked_from_scaling?: boolean;
 }
 
 /**
@@ -87,15 +103,42 @@ export function CustomerOrderWizard({
   const [source, setSource] = useState("telefon");
   const [guestCount, setGuestCount] = useState("");
   const [allergyNote, setAllergyNote] = useState("");
+  const [excludedAllergens, setExcludedAllergens] = useState<string[]>([]);
   const [note, setNote] = useState("");
   const [address, setAddress] = useState({ street: "", postal_code: "", city: "" });
 
   const [lines, setLines] = useState<DraftLine[]>([]);
   const [productSearch, setProductSearch] = useState("");
-  const [pending, setPending] = useState<{ product: any; qty: string } | null>(null);
+  const [pending, setPending] = useState<{ product: any; qty: string; portion: string } | null>(null);
   const [freeText, setFreeText] = useState({ name: "", qty: "", price: "" });
   const productInput = useRef<HTMLInputElement>(null);
   const qtyInput = useRef<HTMLInputElement>(null);
+
+  /* Öppettider, kapacitetstak och storhelger för butiken */
+  const { data: settings } = useStoreOrderSettings(storeId);
+  const { data: specialDays = [] } = useSpecialDays(storeId);
+  const { data: holidays = [] } = useMajorHolidays(storeId);
+  const { data: sameDayOrders = [] } = useSameDayOrders(storeId, wantedDate);
+
+  const capacity = useMemo(
+    () =>
+      checkCapacity({
+        date: wantedDate,
+        time: wantedTime || null,
+        orderType,
+        category,
+        settings,
+        specialDays,
+        holidays,
+        sameDayOrders,
+      }),
+    [wantedDate, wantedTime, orderType, category, settings, specialDays, holidays, sameDayOrders],
+  );
+
+  const window_ = useMemo(
+    () => dayWindow({ date: wantedDate, settings, specialDays, holidays }),
+    [wantedDate, settings, specialDays, holidays],
+  );
 
   useEffect(() => {
     if (!open) {
@@ -108,6 +151,7 @@ export function CustomerOrderWizard({
       setWantedTime("");
       setGuestCount("");
       setAllergyNote("");
+      setExcludedAllergens([]);
       setNote("");
       setStatus("ny");
       setCategory("vanlig");
@@ -122,8 +166,29 @@ export function CustomerOrderWizard({
         postal_code: customer.postal_code || "",
         city: customer.city || "",
       });
+      setExcludedAllergens(customer.excluded_allergens || []);
     }
   }, [customer]);
+
+  /* Cateringrader räknas om när gästantalet ändras. Låsta rader står kvar. */
+  useEffect(() => {
+    const guests = Number(guestCount || 0);
+    if (category !== "catering" || !guests) return;
+    setLines((prev) =>
+      prev.map((l) =>
+        l.portion_per_guest && !l.locked_from_scaling
+          ? {
+              ...l,
+              quantity_ordered: scaleQuantity({
+                portionPerGuest: l.portion_per_guest,
+                guestCount: guests,
+                currentQuantity: l.quantity_ordered,
+              }),
+            }
+          : l,
+      ),
+    );
+  }, [guestCount, category]);
 
   useEffect(() => {
     if (step === 3) setTimeout(() => productInput.current?.focus(), 50);
@@ -146,7 +211,18 @@ export function CustomerOrderWizard({
     0,
   );
 
-  const addProduct = async (product: any, quantity: number) => {
+  const addProduct = async (product: any, quantity: number, portionPerGuest?: number | null) => {
+    // Allergivarning vid artikelval — varnar, spärrar inte.
+    const conflict = checkAllergens({
+      productName: product.name,
+      productAllergens: product.allergens,
+      excluded: excludedAllergens,
+    });
+    if (conflict.message) {
+      const ok = window.confirm(`${conflict.message}\n\nLägga till varan ändå?`);
+      if (!ok) return;
+    }
+
     const price = await fetchTodaysPrice(product.id, storeId);
     const warning = shelfLifeWarning({
       productName: product.name,
@@ -163,7 +239,8 @@ export function CustomerOrderWizard({
         quantity_ordered: quantity,
         unit: product.unit || "kg",
         estimated_price_per_unit: price,
-        warning,
+        portion_per_guest: portionPerGuest ?? null,
+        warning: conflict.message ?? warning,
       },
     ]);
     if (warning) toast.info(warning);
@@ -189,6 +266,8 @@ export function CustomerOrderWizard({
 
   const submit = async () => {
     if (!customer) return toast.error("Välj kund först.");
+    if (capacity.blocking) return toast.error(capacity.blocking);
+
     if (lines.length === 0) return toast.error("Ordern behöver minst en rad.");
     try {
       await createOrder.mutateAsync({
@@ -206,7 +285,7 @@ export function CustomerOrderWizard({
         delivery_city: orderType === "leverans" ? address.city : null,
         guest_count: category === "catering" && guestCount ? Number(guestCount) : null,
         allergy_note: allergyNote || null,
-        excluded_allergens: customer.excluded_allergens || [],
+        excluded_allergens: excludedAllergens,
         source,
         received_by_name: activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : null,
         note: note || null,
@@ -448,6 +527,58 @@ export function CustomerOrderWizard({
                 placeholder="t.ex. äggallergi"
               />
             </div>
+            <div className="sm:col-span-2">
+              <Label>Undvik dessa allergener</Label>
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                {ALLERGENS.map((a) => {
+                  const on = excludedAllergens.includes(a.key);
+                  return (
+                    <button
+                      key={a.key}
+                      type="button"
+                      onClick={() =>
+                        setExcludedAllergens((prev) =>
+                          on ? prev.filter((x) => x !== a.key) : [...prev, a.key],
+                        )
+                      }
+                      className={`rounded-full border px-3 py-2 text-xs ${
+                        on
+                          ? "border-destructive bg-destructive/10 font-semibold text-destructive"
+                          : "border-border text-muted-foreground"
+                      }`}
+                    >
+                      {a.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Systemet varnar när en vara innehåller något av dessa. Varning, ingen spärr.
+              </p>
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <div className="rounded-md bg-muted p-3 text-xs">
+                {window_.closed
+                  ? `Stängt ${weekdayName(wantedDate)} — ${window_.sourceLabel}`
+                  : window_.open && window_.close
+                    ? `Öppet ${weekdayName(wantedDate)} ${window_.open}–${window_.close} (${window_.sourceLabel})`
+                    : "Öppettider är inte upplagda för butiken."}
+              </div>
+              {capacity.blocking && (
+                <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm font-semibold">
+                  {capacity.blocking}
+                </div>
+              )}
+              {capacity.warnings.map((w) => (
+                <div
+                  key={w}
+                  className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
+                >
+                  {w}
+                </div>
+              ))}
+            </div>
+
             {orderType === "leverans" && (
               <>
                 <div className="sm:col-span-2">
@@ -498,28 +629,42 @@ export function CustomerOrderWizard({
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && matches[0]) {
                         e.preventDefault();
-                        setPending({ product: matches[0], qty: "" });
+                        setPending({ product: matches[0], qty: "", portion: "" });
                       }
                     }}
                   />
                 </div>
                 <div className="space-y-2">
-                  {matches.map((p) => (
-                    <button
-                      key={p.id}
-                      onClick={() => setPending({ product: p, qty: "" })}
-                      className="flex w-full items-center gap-3 rounded-md border border-border p-2 text-left hover:bg-accent"
-                    >
-                      <ProductThumb src={p.image_url} alt={p.name} static />
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate font-medium">{p.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {p.category} · {p.unit}
-                          {p.retail_suggested ? ` · ${nf(Number(p.retail_suggested))} kr/${p.unit}` : ""}
+                  {matches.map((p) => {
+                    const conflict = checkAllergens({
+                      productName: p.name,
+                      productAllergens: p.allergens,
+                      excluded: excludedAllergens,
+                    });
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => setPending({ product: p, qty: "", portion: "" })}
+                        className={`flex w-full items-center gap-3 rounded-md border p-2 text-left hover:bg-accent ${
+                          conflict.hits.length > 0 ? "border-destructive" : "border-border"
+                        }`}
+                      >
+                        <ProductThumb src={p.image_url} alt={p.name} static />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate font-medium">{p.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {p.category} · {p.unit}
+                            {p.retail_suggested ? ` · ${nf(Number(p.retail_suggested))} kr/${p.unit}` : ""}
+                          </div>
+                          {conflict.hits.length > 0 && (
+                            <div className="text-xs font-semibold text-destructive">
+                              Innehåller {conflict.hits.map(allergenLabel).join(", ").toLowerCase()}
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               </>
             ) : (
@@ -534,6 +679,30 @@ export function CustomerOrderWizard({
                       </div>
                     </div>
                   </div>
+                  {category === "catering" && Number(guestCount || 0) > 0 && (
+                    <div>
+                      <Label>
+                        Portion per gäst ({pending.product.unit || "kg"}) — {guestCount} gäster
+                      </Label>
+                      <Input
+                        inputMode="decimal"
+                        className="h-12"
+                        value={pending.portion}
+                        onChange={(e) => {
+                          const portion = e.target.value;
+                          const p = Number(String(portion).replace(",", "."));
+                          setPending({
+                            ...pending,
+                            portion,
+                            qty: p ? String(Math.round(p * Number(guestCount) * 1000) / 1000) : pending.qty,
+                          });
+                        }}
+                      />
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Mängden räknas om automatiskt om gästantalet ändras.
+                      </p>
+                    </div>
+                  )}
                   <div>
                     <Label>Antal / mängd ({pending.product.unit || "kg"})</Label>
                     <Input
@@ -547,7 +716,11 @@ export function CustomerOrderWizard({
                           e.preventDefault();
                           const q = Number(String(pending.qty).replace(",", "."));
                           if (!q) return toast.error("Ange en mängd.");
-                          addProduct(pending.product, q);
+                          addProduct(
+                            pending.product,
+                            q,
+                            Number(String(pending.portion).replace(",", ".")) || null,
+                          );
                         }
                       }}
                     />
@@ -558,7 +731,11 @@ export function CustomerOrderWizard({
                       onClick={() => {
                         const q = Number(String(pending.qty).replace(",", "."));
                         if (!q) return toast.error("Ange en mängd.");
-                        addProduct(pending.product, q);
+                        addProduct(
+                          pending.product,
+                          q,
+                          Number(String(pending.portion).replace(",", ".")) || null,
+                        );
                       }}
                     >
                       Lägg till
@@ -570,6 +747,7 @@ export function CustomerOrderWizard({
                 </CardContent>
               </Card>
             )}
+
 
             {lines.length > 0 && (
               <div className="space-y-2">
@@ -719,6 +897,8 @@ export function CustomerOrderWizard({
               className="h-12"
               onClick={() => {
                 if (step === 1 && !customer) return toast.error("Välj eller skapa kund.");
+                if (step === 2 && capacity.blocking) return toast.error(capacity.blocking);
+
                 if (step === 3 && lines.length === 0) return toast.error("Lägg till minst en vara.");
                 setStep(step + 1);
               }}
