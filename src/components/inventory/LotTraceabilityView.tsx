@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Fish, Search, Ship, Anchor } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
+import LotDocumentsPanel from "@/components/inventory/LotDocumentsPanel";
 
 interface Props {
   currency?: string;
