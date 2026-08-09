@@ -183,16 +183,14 @@ export function CustomerOrderRow({
           {/* Desktop: fast kolumnraster. Mobil: två rader, kundnamnet störst. */}
           <div className="hidden items-center gap-0 text-[13px] sm:flex">
             <span
-              className={`w-28 shrink-0 truncate border-r border-grid-line/70 pr-2 font-mono text-xs tabular-nums text-muted-foreground ${
+              className={`w-24 shrink-0 border-r border-grid-line/70 pr-2 font-mono text-xs tabular-nums ${
                 cancelled ? "line-through" : ""
               }`}
             >
-              {order.order_number}
-            </span>
-            <span className="w-24 shrink-0 border-r border-grid-line/70 px-2 font-mono text-xs tabular-nums">
               {weekday(order.wanted_date)} {shortDate(order.wanted_date)}
               {time}
             </span>
+
             <span className="w-16 shrink-0 border-r border-grid-line/70 px-2 font-mono tabular-nums text-muted-foreground">
               {active.length} st
             </span>
