@@ -94,6 +94,36 @@ export type Database = {
           },
         ]
       }
+      allergens: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          id: string
+          label: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          id?: string
+          label: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          id?: string
+          label?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       auction_calcs: {
         Row: {
           actual_price: number | null
@@ -4340,6 +4370,7 @@ export type Database = {
         Row: {
           active: boolean | null
           allergens: string[]
+          allergens_checked: boolean
           barcode: string | null
           catch_weight: boolean
           category: string
@@ -4350,6 +4381,7 @@ export type Database = {
           id: string
           image_url: string | null
           latin_name: string | null
+          may_contain: string[]
           name: string
           nominal_weight_kg: number | null
           origin: string | null
@@ -4371,6 +4403,7 @@ export type Database = {
         Insert: {
           active?: boolean | null
           allergens?: string[]
+          allergens_checked?: boolean
           barcode?: string | null
           catch_weight?: boolean
           category: string
@@ -4381,6 +4414,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           latin_name?: string | null
+          may_contain?: string[]
           name: string
           nominal_weight_kg?: number | null
           origin?: string | null
@@ -4402,6 +4436,7 @@ export type Database = {
         Update: {
           active?: boolean | null
           allergens?: string[]
+          allergens_checked?: boolean
           barcode?: string | null
           catch_weight?: boolean
           category?: string
@@ -4412,6 +4447,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           latin_name?: string | null
+          may_contain?: string[]
           name?: string
           nominal_weight_kg?: number | null
           origin?: string | null
