@@ -132,14 +132,6 @@ export default function CustomerOrders() {
     toDate: tomorrow(),
   });
 
-  const selectedFresh = useMemo(() => {
-    if (!selected) return null;
-    return (
-      orders.find((o) => o.id === selected.id) ||
-      tomorrowOrders.find((o) => o.id === selected.id) ||
-      selected
-    );
-  }, [orders, tomorrowOrders, selected]);
 
 
   const rowReadOnly = (o: CustomerOrder) =>
