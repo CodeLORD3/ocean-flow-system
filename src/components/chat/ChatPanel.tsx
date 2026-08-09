@@ -29,6 +29,8 @@ import {
   useConversationReads,
   usePortalAvatars,
 } from "@/hooks/useChat";
+import { useStaffAvatars } from "@/hooks/useStaffAvatars";
+import { useSignedUrl } from "@/hooks/useSignedUrl";
 
 function portalIcon(kind: PortalProfile["kind"]) {
   return kind === "admin" ? Shield : kind === "grossist" ? Factory : Store;
