@@ -15,7 +15,7 @@ export interface StaffProfile {
   workplace: string | null;
   profile_image_url: string | null;
   portal_access: PortalKey[];
-  allowed_store_id: string | null;
+  allowed_store_id?: string | null;
   allowed_store_ids: string[];
   must_change_password: boolean;
 }
