@@ -6,7 +6,10 @@ import { Store, Factory, Boxes, LogOut, Loader2, Shield } from "lucide-react";
 import { useStaffAuth, type PortalKey } from "@/contexts/StaffAuthContext";
 import { useSite } from "@/contexts/SiteContext";
 import { useStores } from "@/hooks/useStores";
+import { useStoreCoverImages } from "@/hooks/useStoreCoverImages";
+import { focalStyle } from "@/lib/imageFocal";
 import FirstLoginPasswordChange from "./FirstLoginPasswordChange";
+
 
 const PORTAL_META: Record<PortalKey, { title: string; description: string; icon: any }> = {
   shop: { title: "Butik", description: "Beställningar, lager och rapporter", icon: Store },
