@@ -229,6 +229,11 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
           <Truck className="h-3.5 w-3.5 text-primary" aria-hidden />
           {LEVEL_LABEL.leveranslager} — aktiva transporter per butik
         </p>
+        {transportStores.length === 0 ? (
+          <p className="px-1 py-2 text-[11px] text-muted-foreground">
+            Inga transportlager med innehåll eller pågående transport just nu.
+          </p>
+        ) : (
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {transportStores.map((sid) => {
             const rows = rowsForStore("leveranslager", sid);
@@ -249,6 +254,8 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
             );
           })}
         </div>
+        )}
+
       </div>
 
       <Connector />
