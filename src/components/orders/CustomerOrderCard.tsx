@@ -263,11 +263,21 @@ export function CustomerOrderCard({
           )}
         </div>
 
-        {order.allergy_note && (
-          <div className="mt-3 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm font-semibold">
-            Allergi: {order.allergy_note}
+        {(order.allergy_note || (order.excluded_allergens || []).length > 0) && (
+          <div className="mt-3 space-y-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
+            {order.allergy_note && <div className="font-semibold">Allergi: {order.allergy_note}</div>}
+            {(order.excluded_allergens || []).length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {(order.excluded_allergens || []).map((a) => (
+                  <Badge key={a} variant="destructive">
+                    Undvik {allergenLabel(a).toLowerCase()}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
         )}
+
 
         {priceAlarm && (
           <div className="mt-3 flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
