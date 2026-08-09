@@ -47,6 +47,95 @@ export type Database = {
         }
         Relationships: []
       }
+      abp_consignments: {
+        Row: {
+          category: number
+          collected_date: string
+          created_at: string
+          created_by: string | null
+          document_number: string | null
+          file_name: string | null
+          file_path: string | null
+          id: string
+          location_id: string | null
+          note: string | null
+          quantity_kg: number | null
+          receiver_approval_number: string | null
+          receiver_name: string
+          store_id: string | null
+          transporter_approval_number: string | null
+          transporter_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: number
+          collected_date?: string
+          created_at?: string
+          created_by?: string | null
+          document_number?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          location_id?: string | null
+          note?: string | null
+          quantity_kg?: number | null
+          receiver_approval_number?: string | null
+          receiver_name: string
+          store_id?: string | null
+          transporter_approval_number?: string | null
+          transporter_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: number
+          collected_date?: string
+          created_at?: string
+          created_by?: string | null
+          document_number?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          location_id?: string | null
+          note?: string | null
+          quantity_kg?: number | null
+          receiver_approval_number?: string | null
+          receiver_name?: string
+          store_id?: string | null
+          transporter_approval_number?: string | null
+          transporter_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "abp_consignments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "abp_consignments_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock_rollup"
+            referencedColumns: ["location_id"]
+          },
+          {
+            foreignKeyName: "abp_consignments_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "abp_consignments_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activity_logs: {
         Row: {
           action_type: string
@@ -3167,6 +3256,10 @@ export type Database = {
       lots: {
         Row: {
           best_before: string | null
+          bivalve_doc_issuer: string | null
+          bivalve_doc_number: string | null
+          bivalve_doc_valid_to: string | null
+          bivalve_heat_treated: boolean
           bivalve_registration_doc: string | null
           catch_area: string | null
           catch_date_from: string | null
@@ -3187,8 +3280,10 @@ export type Database = {
           freeze_start: string | null
           freeze_temp: number | null
           grade: string | null
+          harvest_date: string | null
           id: string
           incoming_catch_cert: string | null
+          is_bivalve: boolean
           is_thawed: boolean
           latin_name: string | null
           lot_number: string
@@ -3199,6 +3294,7 @@ export type Database = {
           product_id: string | null
           production_area_classification: string | null
           production_method: string | null
+          purification_center: string | null
           quantity_kg: number
           receiving_temp_c: number | null
           receiving_temp_deviation_reason: string | null
@@ -3218,6 +3314,10 @@ export type Database = {
         }
         Insert: {
           best_before?: string | null
+          bivalve_doc_issuer?: string | null
+          bivalve_doc_number?: string | null
+          bivalve_doc_valid_to?: string | null
+          bivalve_heat_treated?: boolean
           bivalve_registration_doc?: string | null
           catch_area?: string | null
           catch_date_from?: string | null
@@ -3238,8 +3338,10 @@ export type Database = {
           freeze_start?: string | null
           freeze_temp?: number | null
           grade?: string | null
+          harvest_date?: string | null
           id?: string
           incoming_catch_cert?: string | null
+          is_bivalve?: boolean
           is_thawed?: boolean
           latin_name?: string | null
           lot_number: string
@@ -3250,6 +3352,7 @@ export type Database = {
           product_id?: string | null
           production_area_classification?: string | null
           production_method?: string | null
+          purification_center?: string | null
           quantity_kg?: number
           receiving_temp_c?: number | null
           receiving_temp_deviation_reason?: string | null
@@ -3269,6 +3372,10 @@ export type Database = {
         }
         Update: {
           best_before?: string | null
+          bivalve_doc_issuer?: string | null
+          bivalve_doc_number?: string | null
+          bivalve_doc_valid_to?: string | null
+          bivalve_heat_treated?: boolean
           bivalve_registration_doc?: string | null
           catch_area?: string | null
           catch_date_from?: string | null
@@ -3289,8 +3396,10 @@ export type Database = {
           freeze_start?: string | null
           freeze_temp?: number | null
           grade?: string | null
+          harvest_date?: string | null
           id?: string
           incoming_catch_cert?: string | null
+          is_bivalve?: boolean
           is_thawed?: boolean
           latin_name?: string | null
           lot_number?: string
@@ -3301,6 +3410,7 @@ export type Database = {
           product_id?: string | null
           production_area_classification?: string | null
           production_method?: string | null
+          purification_center?: string | null
           quantity_kg?: number
           receiving_temp_c?: number | null
           receiving_temp_deviation_reason?: string | null
