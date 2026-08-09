@@ -99,7 +99,7 @@ export default function LegalEntitiesPage() {
           {isLoading && <p className="text-sm text-muted-foreground">Hämtar bolag…</p>}
           {!isLoading && entities.length === 0 && (
             <EmptyState
-              icon={Building2}
+              icon={<Building2 className="h-4 w-4" />}
               title="Inga bolag"
               description="Bolagsregistret är tomt. Lägg upp koncernens bolag för att kunna knyta butiker och rörelser till rätt juridisk enhet."
             />
@@ -252,7 +252,7 @@ export default function LegalEntitiesPage() {
         <TabsContent value="internfakturor" className="pt-3">
           {invoices.length === 0 ? (
             <EmptyState
-              icon={ReceiptText}
+              icon={<ReceiptText className="h-4 w-4" />}
               title="Inga internfakturor"
               description="Underlag skapas automatiskt när en överföring går mellan lagerplatser som tillhör olika bolag. Överföringar inom samma bolag ger inget underlag."
             />
