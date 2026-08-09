@@ -8,6 +8,7 @@ import { Fish, Search, Ship, Anchor } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import LotDocumentsPanel from "@/components/inventory/LotDocumentsPanel";
 import ParasiteFreezePanel from "@/components/inventory/ParasiteFreezePanel";
+import BivalvePanel from "@/components/inventory/BivalvePanel";
 
 interface Props {
   currency?: string;
@@ -208,6 +209,9 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                     )}
                     <div className="mt-3 border-t border-border pt-2">
                       <ParasiteFreezePanel lotId={lot.id} />
+                    </div>
+                    <div className="mt-3 border-t border-border pt-2">
+                      <BivalvePanel lotId={lot.id} />
                     </div>
                     <div className="mt-3 border-t border-border pt-2">
                       <LotDocumentsPanel lotId={lot.id} />

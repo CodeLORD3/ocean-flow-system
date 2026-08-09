@@ -39,6 +39,8 @@ import {
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/EmptyState";
 import ChillingPanel from "@/components/foodsafety/ChillingPanel";
+import AbpPanel from "@/components/foodsafety/AbpPanel";
+import BivalveDueList from "@/components/foodsafety/BivalveDueList";
 import {
   CONTROL_CATEGORIES,
   FREQUENCIES,
@@ -198,6 +200,9 @@ export default function FoodSafety() {
           <TabsTrigger value="chilling" className="text-xs">
             Nedkylning
           </TabsTrigger>
+          <TabsTrigger value="abp" className="text-xs">
+            Biprodukter
+          </TabsTrigger>
           <TabsTrigger value="instruments" className="text-xs">
             Instrument
           </TabsTrigger>
@@ -332,6 +337,7 @@ export default function FoodSafety() {
         </TabsContent>
 
         <TabsContent value="due" className="mt-3 space-y-2">
+          <BivalveDueList />
           <div className="flex justify-end">
             <Button
               size="sm"
@@ -389,6 +395,11 @@ export default function FoodSafety() {
         <TabsContent value="chilling" className="mt-3">
           <ChillingPanel />
         </TabsContent>
+
+        <TabsContent value="abp" className="mt-3">
+          <AbpPanel />
+        </TabsContent>
+
 
         <TabsContent value="instruments" className="mt-3 space-y-2">
           <div className="flex justify-end">
