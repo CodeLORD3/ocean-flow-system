@@ -26,6 +26,7 @@ const overviewNav = [
   { title: "Översikt", url: "/organisation", icon: LayoutDashboard },
   { title: "Chatt", url: "/chat", icon: MessageSquare },
   { title: "Checklista", url: "/checklist", icon: ClipboardCheck },
+  { title: "Egenkontroll", url: "/food-safety", icon: ClipboardCheck },
   { title: "Kundbeställningar", url: "/customer-orders", icon: ClipboardList },
 ];
 
