@@ -403,6 +403,18 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
           </div>
         )}
 
+        {unknownColumns.length > 0 && !fatal && (
+          <div className="flex items-start gap-2 rounded-md border border-amber-500/40 bg-amber-500/5 p-2 text-xs text-amber-600 dark:text-amber-400">
+            <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+            <span>
+              Filen har kolumner som systemet inte känner igen:{" "}
+              <span className="font-mono">{unknownColumns.join(", ")}</span>. De läses inte in — kontrollera
+              stavningen om uppgifterna ska följa med.
+            </span>
+          </div>
+        )}
+
+
         {!diff && !fatal && <ImportHistory />}
 
 
