@@ -69,6 +69,7 @@ import LevelSelector, { type LevelTotals } from "@/components/inventory/LevelSel
 import {
   LEVEL_ORDER,
   LEVEL_LABEL,
+  visibleLevels,
   LEVEL_EMPTY_HINT,
   LEVEL_OWNER,
   manageableLevels,
@@ -331,6 +332,8 @@ export default function Inventory() {
   // ── Nivåväljare: fem nivåer i flödesordning ──────────────────────────────
   const [level, setLevel] = useState<LocationLevel | "all">("all");
   const allowedLevels = useMemo(() => manageableLevels(site), [site]);
+  /** Nivåer butiken alls får se — grossistleden hör inte hit. */
+  const shownLevels = useMemo(() => visibleLevels(site), [site]);
   /** Nivåer som är bundna till en enhet — övriga är gemensamma för grossistledet. */
   const storeBoundLevels: LocationLevel[] = ["leveranslager", "butik"];
 
@@ -1397,6 +1400,7 @@ export default function Inventory() {
       <div className="space-y-2">
         <LevelSelector
           available={allowedLevels}
+          visible={shownLevels}
           value={level}
           onChange={setLevel}
           totals={levelTotals}

@@ -1,56 +1,15 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { moveStockToTransport } from "@/lib/stockTransfer";
-import { transferStock } from "@/lib/stockLedger";
 import { logActivity } from "@/hooks/useActivityLog";
-import { GROSSIST_FLYTANDE_ID, leveranslagerId } from "@/lib/locations";
 
 const STATUS_FLOW = ["Ny", "Pågående", "Packad", "Skickad"] as const;
 
 /**
- * När en rad blir "Packad" flyttas endast DELTA-kvantiteten från
- * "Grossist Flytande" till butikens "Pre-"lager. Negativt delta flyttar tillbaka.
- * Allt bokförs via lagerrörelser — saldot skrivs aldrig direkt.
+ * Packning flyttar inget lager. Varan ligger kvar i grossistlagret ända till
+ * ordern sätts till "Skickad" — då, och bara då, flyttas den till butikens
+ * transportlager (se moveStockToTransport).
  */
-async function transferDeltaToPreLocation(lineId: string, orderId: string, deltaQty: number) {
-  if (deltaQty === 0) return;
-
-  const { data: line } = await supabase
-    .from("shop_order_lines")
-    .select("product_id")
-    .eq("id", lineId)
-    .single();
-  if (!line) return;
-
-  const { data: order } = await supabase
-    .from("shop_orders")
-    .select("store_id, stores(name)")
-    .eq("id", orderId)
-    .single();
-  if (!order?.store_id) return;
-
-  const gfLocId = GROSSIST_FLYTANDE_ID;
-
-  const preLocId = await leveranslagerId(order.store_id);
-  if (!preLocId) return;
-
-  const absDelta = Math.abs(deltaQty);
-  const from = deltaQty > 0 ? gfLocId : preLocId;
-  const to = deltaQty > 0 ? preLocId : gfLocId;
-
-
-  await transferStock({
-    productId: line.product_id,
-    fromLocationId: from,
-    toLocationId: to,
-    quantityKg: absDelta,
-    referenceType: "shop_order",
-    referenceId: orderId,
-    note: deltaQty > 0 ? "Packad till leveranslager" : "Återförd från leveranslager",
-  });
-}
-
-
 
 // transferFromPreLocationBack is now handled by transferDeltaToPreLocation with negative delta
 
@@ -74,7 +33,7 @@ export function useUpdateOrderLineStatus() {
         .eq("id", params.lineId);
       if (error) throw error;
 
-      // If moving to Packad, compute delta from previous quantity_delivered
+      // Packad sätter bara kvantiteten som ska skickas — ingen lagerflytt här.
       if (params.newStatus === "Packad") {
         // Re-read the new quantity_delivered (set by caller before this mutation)
         const { data: updatedLine } = await supabase
@@ -93,17 +52,6 @@ export function useUpdateOrderLineStatus() {
             .eq("id", params.lineId);
         }
         
-        // If was already Packad, delta is the difference; if newly Packad, delta is full new amount
-        const previousPacked = oldStatus === "Packad" ? oldQtyDelivered : 0;
-        const delta = newQtyDelivered - previousPacked;
-        if (delta !== 0) {
-          await transferDeltaToPreLocation(params.lineId, params.orderId, delta);
-        }
-      }
-
-      // If moving FROM Packad back to Pågående/Ny, reverse the full previously packed amount
-      if (oldStatus === "Packad" && (params.newStatus === "Pågående" || params.newStatus === "Ny")) {
-        await transferDeltaToPreLocation(params.lineId, params.orderId, -oldQtyDelivered);
       }
 
       // Recalculate parent order status
