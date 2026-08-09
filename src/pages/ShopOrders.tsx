@@ -354,7 +354,20 @@ export default function ShopOrders() {
     }, ...prev]);
     setProductSearch("");
     setHighlightedIndex(-1);
+    setFocusProductId(p.id);
   };
+
+  // Efter att en produkt lagts till: hoppa direkt till antal-fältet
+  useEffect(() => {
+    if (!focusProductId) return;
+    const el = qtyRefs.current[focusProductId];
+    if (el) {
+      el.focus();
+      el.select?.();
+      setFocusProductId(null);
+    }
+  }, [focusProductId, groupedOrderLines]);
+
 
 
   const updateLine = (idx: number, qty: string) => {
