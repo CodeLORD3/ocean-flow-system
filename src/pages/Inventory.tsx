@@ -86,7 +86,6 @@ import InventoryReportsDialog from "@/components/inventory/InventoryReportsDialo
 import DailySheetDialog from "@/components/inventory/DailySheetDialog";
 import StockCountDialog, { type StockCountScope } from "@/components/inventory/StockCountDialog";
 import StockOverview from "@/components/inventory/StockOverview";
-import ProductStockDialog from "@/components/inventory/ProductStockDialog";
 import StockMovementsView from "@/components/inventory/StockMovementsView";
 import LotTraceabilityView from "@/components/inventory/LotTraceabilityView";
 
@@ -1311,8 +1310,6 @@ export default function Inventory() {
   }, [allStock, portalLocations, hiddenLocs, matchesLevel]);
 
 
-  const [productCard, setProductCard] = useState<any | null>(null);
-
   const handleOverviewAction = useCallback(
     (action: "move" | "delete" | "split" | "count" | "waste", row: any) => {
       const locId = row?.location_id;
@@ -1499,7 +1496,6 @@ export default function Inventory() {
           fmt={fmtLocal}
           currency={localCurrency}
           onLineAction={handleOverviewAction}
-          onOpenProduct={(g) => setProductCard(g)}
           showCosts={showCosts}
           compactKpis={isShopPortal}
         />
@@ -2171,20 +2167,6 @@ export default function Inventory() {
         scope={countScope}
         products={products as any[]}
         currency={localCurrency}
-      />
-
-      {/* ── Produktkort (info + spårbarhet + svinn) ───────────────────────── */}
-      <ProductStockDialog
-        group={productCard}
-        open={!!productCard}
-        onOpenChange={(v) => !v && setProductCard(null)}
-        fmt={fmtLocal}
-        showCosts={showCosts}
-        onWaste={(g) => {
-          setWasteRowId(g.lines?.[0]?.id ?? null);
-          setProductCard(null);
-          setWasteOpen(true);
-        }}
       />
 
       {/* ── Kassation / svinn ──────────────────────────────────────────────── */}
