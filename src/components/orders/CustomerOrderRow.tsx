@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   ChevronDown,
   Lock,
@@ -13,6 +14,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useUpdateCustomerOrder } from "@/hooks/useCustomerOrders";
 import {
   CustomerOrder,
   ORDER_STATUS_LABELS,
@@ -24,6 +28,8 @@ import {
 import { allergenLabel } from "@/lib/catering";
 import { printConfirmation, downloadConfirmation } from "@/lib/customerOrderConfirmation";
 import { InlineOrderPacking } from "./InlineOrderPacking";
+import { InlineOrderEdit } from "./InlineOrderEdit";
+
 
 
 
@@ -116,7 +122,7 @@ const packTone: Record<string, string> = {
  */
 export function CustomerOrderRow({
   order,
-  onEdit,
+  canEdit,
   readOnly,
   open,
   onToggle,
@@ -124,7 +130,7 @@ export function CustomerOrderRow({
   onSelect,
 }: {
   order: CustomerOrder;
-  onEdit?: (o: CustomerOrder) => void;
+  canEdit?: boolean;
 
   readOnly?: boolean;
   open?: boolean;
@@ -132,11 +138,14 @@ export function CustomerOrderRow({
   selected?: boolean;
   onSelect?: (id: string, next: boolean) => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const updateOrder = useUpdateCustomerOrder();
   const isOpen = !!open;
   const name = order.customers_retail?.name || order.customer_name_snapshot || "Kund";
   const phone = order.customers_retail?.phone || order.customer_phone_snapshot;
   const lines = [...(order.customer_order_lines || [])].sort((a, b) => a.sort_order - b.sort_order);
   const active = lines.filter((l) => l.pack_status !== "struken");
+
 
   const packedCount = active.filter((l) => l.pack_status === "packad").length;
   const total = Number(order.total_incl_vat || order.estimated_total || 0);
@@ -321,6 +330,43 @@ export function CustomerOrderRow({
             </div>
           )}
 
+          {/* Datum och tid ändras direkt i rullgardinen, utan nytt fönster. */}
+          {!readOnly && canEdit && !cancelled && !editing && (
+            <div className="flex flex-wrap items-end gap-2 rounded-sm border border-grid-line bg-muted/30 p-2">
+              <div className="space-y-1">
+                <Label className="text-[11px] text-muted-foreground">Datum</Label>
+                <Input
+                  type="date"
+                  className="h-8 w-[9.5rem] font-mono text-xs tabular-nums"
+                  value={order.wanted_date}
+                  onChange={(e) =>
+                    e.target.value &&
+                    updateOrder.mutate({
+                      id: order.id,
+                      patch: { wanted_date: e.target.value },
+                      event: { type: "andrad", description: `Datum ändrat till ${e.target.value}` },
+                    })
+                  }
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[11px] text-muted-foreground">Tid</Label>
+                <Input
+                  type="time"
+                  className="h-8 w-[7rem] font-mono text-xs tabular-nums"
+                  value={order.wanted_time ? order.wanted_time.slice(0, 5) : ""}
+                  onChange={(e) =>
+                    updateOrder.mutate({
+                      id: order.id,
+                      patch: { wanted_time: e.target.value || null },
+                      event: { type: "andrad", description: "Tid ändrad" },
+                    })
+                  }
+                />
+              </div>
+            </div>
+          )}
+
           {readOnly ? (
             <ul className="divide-y divide-grid-line rounded-sm border border-grid-line">
               {lines.map((l) => {
@@ -351,9 +397,12 @@ export function CustomerOrderRow({
                 );
               })}
             </ul>
+          ) : editing ? (
+            <InlineOrderEdit order={order} onClose={() => setEditing(false)} />
           ) : (
             <InlineOrderPacking order={order} />
           )}
+
 
           {order.note && (
             <div className="rounded-sm bg-muted/50 p-2.5 text-sm text-muted-foreground">
@@ -370,27 +419,35 @@ export function CustomerOrderRow({
             </span>
           </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row">
-            {!readOnly && onEdit && !cancelled && (
-              <Button variant="outline" className="h-12 flex-1" onClick={() => onEdit(order)}>
-                <Pencil className="mr-2 h-4 w-4" /> Redigera order
+          <div className="flex flex-wrap gap-1.5">
+            {!readOnly && canEdit && !cancelled && (
+              <Button
+                variant={editing ? "default" : "outline"}
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => setEditing((v) => !v)}
+              >
+                <Pencil className="mr-1 h-3.5 w-3.5" /> Redigera order
               </Button>
             )}
             <Button
               variant="outline"
-              className="h-12 flex-1"
+              size="sm"
+              className="h-8 text-xs"
               onClick={() => printConfirmation(order)}
             >
-              <Printer className="mr-2 h-4 w-4" /> Skriv ut order
+              <Printer className="mr-1 h-3.5 w-3.5" /> Skriv ut order
             </Button>
             <Button
               variant="outline"
-              className="h-12 flex-1"
+              size="sm"
+              className="h-8 text-xs"
               onClick={() => downloadConfirmation(order)}
             >
-              <Download className="mr-2 h-4 w-4" /> Ladda ner PDF
+              <Download className="mr-1 h-3.5 w-3.5" /> Ladda ner PDF
             </Button>
           </div>
+
 
         </div>
       )}
