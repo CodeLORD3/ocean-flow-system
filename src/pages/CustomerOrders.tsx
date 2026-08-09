@@ -154,11 +154,6 @@ export default function CustomerOrders() {
     );
   }, [orders, tomorrowOrders, selected]);
 
-  const tomorrowNeeds = tomorrowOrders.flatMap((o) =>
-    (o.customer_order_lines || [])
-      .filter((l) => l.reservation_status === "inkopsbehov" && l.pack_status !== "struken")
-      .map((l) => ({ order: o, line: l })),
-  );
 
   const rowReadOnly = (o: CustomerOrder) =>
     isShop ? o.store_id !== activeStoreId : site === "production";
