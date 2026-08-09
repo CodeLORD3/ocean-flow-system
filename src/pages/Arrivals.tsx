@@ -30,6 +30,13 @@ import { createWasteReport, WASTE_REASON_LABEL, type WasteReason } from "@/lib/w
 import { grossistStoreId, inkopslagerId } from "@/lib/locations";
 import { openLotLabels } from "@/lib/lotLabelPdf";
 import { useSenderMark } from "@/hooks/useEstablishments";
+import {
+  parseTemp,
+  saveReceivingTemperature,
+  tempLimitText,
+  tempOutOfRange,
+  type TempMode,
+} from "@/lib/receivingTemp";
 
 const nf = (v: any, dec = 1) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: dec, maximumFractionDigits: dec });
@@ -47,6 +54,10 @@ interface DraftLine {
   vesselName?: string | null;
   bestBefore?: string | null;
   supplierLotNumber?: string | null;
+  /** Mottagningstemperatur och orsak vid avvikelse, per parti. */
+  tempC: string;
+  tempMode: TempMode;
+  tempReason: string;
 }
 
 
@@ -130,7 +141,7 @@ export default function Arrivals() {
       if (lotIds.length) {
         const { data } = await supabase
           .from("lots")
-          .select("id, lot_number, catch_area, vessel_name, best_before, supplier_lot_id")
+          .select("id, lot_number, catch_area, vessel_name, best_before, supplier_lot_id, receiving_temp_c, receiving_temp_deviation_reason")
           .in("id", lotIds);
         lotMeta = Object.fromEntries((data ?? []).map((l: any) => [l.id, l]));
       }
@@ -150,6 +161,9 @@ export default function Arrivals() {
             vesselName: meta?.vessel_name ?? null,
             bestBefore: meta?.best_before ?? null,
             supplierLotNumber: meta?.supplier_lot_id ?? null,
+            tempC: meta?.receiving_temp_c != null ? String(meta.receiving_temp_c) : "",
+            tempMode: "fersk" as TempMode,
+            tempReason: meta?.receiving_temp_deviation_reason ?? "",
           };
         }),
       );
@@ -161,11 +175,19 @@ export default function Arrivals() {
     }
   };
 
+  /** Partier med temperatur utanför gränsen, som kräver orsak. */
+  const tempBreaches = useMemo(
+    () => draft.filter((l) => tempOutOfRange(parseTemp(l.tempC), l.tempMode)),
+    [draft],
+  );
+
   const submit = async () => {
     if (!openReport || saving) return;
     if (!draft.length) return toast.error("Följesedeln har inget kvar i inköpslagret.");
     if (deviations.length && !comment.trim())
       return toast.error("Avvikelse mot förväntad kvantitet kräver en kommentar.");
+    if (tempBreaches.some((l) => !l.tempReason.trim()))
+      return toast.error("Temperatur utanför gränsen kräver orsak på raden.");
 
     const reportId = openReport.id as string;
     // Raden försvinner ur listan direkt så att ett andra klick inte kan
@@ -201,6 +223,32 @@ export default function Arrivals() {
         });
       }
 
+      // Mottagningstemperaturen sparas på partiet. Ett värde utanför gränsen
+      // skapar en avvikelse med orsaken som omedelbar åtgärd.
+      let tempDeviations = 0;
+      for (const l of draft) {
+        const t = parseTemp(l.tempC);
+        if (t === null || !l.lotId) continue;
+        try {
+          const res = await saveReceivingTemperature({
+            lotId: l.lotId,
+            lotNumber: l.lotNumber,
+            productName: l.productName,
+            tempC: t,
+            mode: l.tempMode,
+            reason: l.tempReason.trim() || null,
+          });
+          if (res.deviation) tempDeviations += 1;
+        } catch (e: any) {
+          toast.error(e.message || "Mottagningstemperaturen kunde inte sparas.");
+        }
+      }
+      if (tempDeviations > 0) {
+        toast.warning(
+          `${tempDeviations} parti(er) mottogs utanför temperaturgränsen — avvikelse skapad.`,
+        );
+      }
+
       const movedKg = totals.received;
       setDone(
         `Klart. ${nf(movedKg)} kilo flyttades till grossistlagret.` +
@@ -217,6 +265,7 @@ export default function Arrivals() {
       qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
       qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
       qc.invalidateQueries({ queryKey: ["stock_movements"] });
+      qc.invalidateQueries({ queryKey: ["deviations"] });
     } catch (e: any) {
       setHandled((prev) => prev.filter((id) => id !== reportId));
       toast.error(e.message || "Ankomsten kunde inte registreras.");
