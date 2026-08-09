@@ -673,6 +673,82 @@ export type Database = {
           },
         ]
       }
+      chilling_records: {
+        Row: {
+          batch_label: string | null
+          comment: string | null
+          cooked_at: string | null
+          created_at: string
+          deviation_id: string | null
+          duration_minutes: number | null
+          end_at: string
+          end_temp_c: number
+          id: string
+          lot_id: string
+          recorded_by: string | null
+          start_at: string
+          start_temp_c: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          batch_label?: string | null
+          comment?: string | null
+          cooked_at?: string | null
+          created_at?: string
+          deviation_id?: string | null
+          duration_minutes?: number | null
+          end_at: string
+          end_temp_c: number
+          id?: string
+          lot_id: string
+          recorded_by?: string | null
+          start_at: string
+          start_temp_c?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          batch_label?: string | null
+          comment?: string | null
+          cooked_at?: string | null
+          created_at?: string
+          deviation_id?: string | null
+          duration_minutes?: number | null
+          end_at?: string
+          end_temp_c?: number
+          id?: string
+          lot_id?: string
+          recorded_by?: string | null
+          start_at?: string
+          start_temp_c?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chilling_records_deviation_id_fkey"
+            columns: ["deviation_id"]
+            isOneToOne: false
+            referencedRelation: "deviations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chilling_records_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chilling_records_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address: string | null
@@ -7684,6 +7760,7 @@ export type Database = {
       is_staff_manager: { Args: never; Returns: boolean }
       latin_norm: { Args: { v: string }; Returns: string }
       ledger_zero_empty_costs: { Args: never; Returns: number }
+      lot_parasite_block_reason: { Args: { _lot_id: string }; Returns: string }
       next_customer_order_number: {
         Args: { _date: string; _store_id: string }
         Returns: string
