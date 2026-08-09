@@ -413,6 +413,12 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
+            ) : activeConv && showThread ? (
+              <PortalAvatar
+                name={conversationTitle(activeConv, portal.key)}
+                url={convAvatar(activeConv)}
+                size="sm"
+              />
             ) : (
               <MessageSquare className="h-4 w-4 text-primary shrink-0" />
             )}
