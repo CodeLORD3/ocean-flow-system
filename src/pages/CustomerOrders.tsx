@@ -28,7 +28,6 @@ import {
 } from "@/lib/customerOrders";
 import { CustomerOrderWizard } from "@/components/orders/CustomerOrderWizard";
 import { CustomerOrderRow, CustomerOrderRowHeader } from "@/components/orders/CustomerOrderRow";
-import { CustomerOrderEditDialog } from "@/components/orders/CustomerOrderEditDialog";
 import { ViewSelector, SavedView } from "@/components/shell/ViewSelector";
 import { StatusBar } from "@/components/shell/StatusBar";
 
@@ -370,7 +369,7 @@ export default function CustomerOrders() {
                       <CustomerOrderRow
                         key={o.id}
                         order={o}
-                        onEdit={canEdit ? setEditing : undefined}
+                        canEdit={canEdit}
                         readOnly={rowReadOnly(o)}
                         open={openRow === o.id}
                         onToggle={toggleRow}
@@ -415,17 +414,6 @@ export default function CustomerOrders() {
 
 
 
-      <CustomerOrderEditDialog
-        order={
-          editing
-            ? orders.find((o) => o.id === editing.id) ||
-              tomorrowOrders.find((o) => o.id === editing.id) ||
-              editing
-            : null
-        }
-        open={!!editing}
-        onOpenChange={(v) => !v && setEditing(null)}
-      />
     </div>
   );
 }
