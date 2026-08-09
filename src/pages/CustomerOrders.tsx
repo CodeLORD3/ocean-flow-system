@@ -162,11 +162,18 @@ export default function CustomerOrders() {
             Betalning sker i kassan vid hämtning.
           </p>
         </div>
-        {canEdit && (isShop ? !!activeStoreId : effectiveStore) && (
-          <Button className="h-12" onClick={() => setWizardOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Ny beställning
-          </Button>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {(isShop ? !!activeStoreId : !!effectiveStore) && (
+            <Button variant="outline" className="h-12" onClick={() => setSettingsOpen(true)}>
+              <Settings className="mr-2 h-4 w-4" /> Öppettider och kapacitet
+            </Button>
+          )}
+          {canEdit && (isShop ? !!activeStoreId : effectiveStore) && (
+            <Button className="h-12" onClick={() => setWizardOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" /> Ny beställning
+            </Button>
+          )}
+        </div>
       </div>
 
       <Tabs defaultValue="orders">
@@ -182,11 +189,15 @@ export default function CustomerOrders() {
               </Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="kitchen" className="gap-1">
+            <ChefHat className="h-4 w-4" /> Att förbereda
+          </TabsTrigger>
           <TabsTrigger value="customers" className="gap-1">
             <Users className="h-4 w-4" /> Kundregister
           </TabsTrigger>
           {!isShop && <TabsTrigger value="needs">Sålt men inte köpt</TabsTrigger>}
         </TabsList>
+
 
         <TabsContent value="orders" className="space-y-3">
           <div className="flex flex-wrap gap-2">
