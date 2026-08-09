@@ -116,13 +116,12 @@ export default function CustomerOrders() {
   const [packStatus, setPackStatus] = useState("all");
   const [orderType, setOrderType] = useState("all");
   const [wizardOpen, setWizardOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [selected, setSelected] = useState<CustomerOrder | null>(null);
   const [openRow, setOpenRow] = useState<string | null>(null);
   const [editing, setEditing] = useState<CustomerOrder | null>(null);
   const [view, setView] = useState("aktiva");
   const [marked, setMarked] = useState<string[]>([]);
-  const queryClient = useQueryClient();
+
   const toggleRow = (id: string) => setOpenRow((cur) => (cur === id ? null : id));
   const toggleMark = (id: string, next: boolean) =>
     setMarked((cur) => (next ? [...new Set([...cur, id])] : cur.filter((x) => x !== id)));
