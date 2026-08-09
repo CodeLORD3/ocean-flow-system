@@ -236,6 +236,13 @@ export default function ShopOrders() {
   const [previewProduct, setPreviewProduct] = useState<any | null>(null);
   const qtyRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const startNewOrder = () => {
+    setCreatingOrder(true);
+    setTimeout(() => {
+      searchInputRef.current?.focus();
+      searchInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 80);
+  };
 
 
   // Fetch active store details to determine zone
@@ -473,7 +480,7 @@ export default function ShopOrders() {
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">Beställ produkter från grossist/produktion och följ leveransstatus.</p>
         </div>
-        <Button size="sm" className="gap-1.5 text-xs" onClick={() => setCreatingOrder(true)}>
+        <Button size="sm" className="gap-1.5 text-xs" onClick={startNewOrder}>
           <Plus className="h-3.5 w-3.5" /> Ny beställning
         </Button>
       </div>
