@@ -1341,7 +1341,7 @@ export default function Inventory() {
           <p className="text-xs text-muted-foreground">Samlad lagerbild — alla lagerplatser</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {expiryAlerts.length > 0 && (
+          {expiryAlerts.length > 0 && !isShopPortal && (
             <Button
               size="sm"
               variant="outline"
@@ -1362,39 +1362,44 @@ export default function Inventory() {
               <Printer className="h-3 w-3" /> Skriv ut / PDF ({printSelectedIds.length})
             </Button>
           )}
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none"
-            onClick={() => openNewLocation()}
-          >
-            <Plus className="h-3 w-3" /> Nytt lager
-          </Button>
+          {!isShopPortal && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none"
+                onClick={() => openNewLocation()}
+              >
+                <Plus className="h-3 w-3" /> Nytt lager
+              </Button>
 
-          {activeStoreId && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none border-primary/40 text-primary hover:bg-primary/10"
-              onClick={() => setDailySheetOpen(true)}
-            >
-              <ScrollText className="h-3 w-3" /> Dagsavstämning
-            </Button>
+              {activeStoreId && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none border-primary/40 text-primary hover:bg-primary/10"
+                  onClick={() => setDailySheetOpen(true)}
+                >
+                  <ScrollText className="h-3 w-3" /> Dagsavstämning
+                </Button>
+              )}
+
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none"
+                onClick={() => setReportsArchiveOpen(true)}
+              >
+                <FileText className="h-3 w-3" /> Lagerrapporter
+              </Button>
+
+              <Button size="sm" className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none" onClick={() => setReportDialogOpen(true)}>
+                <ClipboardList className="h-3 w-3" /> Skapa lagerrapport
+              </Button>
+            </>
           )}
-
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none"
-            onClick={() => setReportsArchiveOpen(true)}
-          >
-            <FileText className="h-3 w-3" /> Lagerrapporter
-          </Button>
-
-          <Button size="sm" className="gap-1.5 text-xs h-9 sm:h-8 flex-1 sm:flex-none" onClick={() => setReportDialogOpen(true)}>
-            <ClipboardList className="h-3 w-3" /> Skapa lagerrapport
-          </Button>
         </div>
+
       </div>
 
       {/* Grossist/Admin: interaktivt lagerträd. Butik: nivåväljare. */}
