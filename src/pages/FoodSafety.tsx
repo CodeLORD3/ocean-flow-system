@@ -39,6 +39,7 @@ import {
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/EmptyState";
 import ChillingPanel from "@/components/foodsafety/ChillingPanel";
+import AbpPanel from "@/components/foodsafety/AbpPanel";
 import {
   CONTROL_CATEGORIES,
   FREQUENCIES,
