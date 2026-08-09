@@ -321,6 +321,10 @@ export default function CustomerOrders() {
           )}
         </TabsContent>
 
+        <TabsContent value="kitchen">
+          <CateringKitchenList storeId={effectiveStore} />
+        </TabsContent>
+
         <TabsContent value="customers">
           <RetailCustomerRegistry storeId={effectiveStore} readOnly={!canEdit} />
         </TabsContent>
@@ -333,13 +337,23 @@ export default function CustomerOrders() {
       </Tabs>
 
       {(isShop ? activeStoreId : effectiveStore) && (
-        <CustomerOrderWizard
-          open={wizardOpen}
-          onOpenChange={setWizardOpen}
-          storeId={(isShop ? activeStoreId : effectiveStore) as string}
-          storeName={isShop ? activeStoreName : stores.find((s: any) => s.id === effectiveStore)?.name}
-        />
+        <>
+          <CustomerOrderWizard
+            open={wizardOpen}
+            onOpenChange={setWizardOpen}
+            storeId={(isShop ? activeStoreId : effectiveStore) as string}
+            storeName={isShop ? activeStoreName : stores.find((s: any) => s.id === effectiveStore)?.name}
+          />
+          <StoreOrderSettingsDialog
+            open={settingsOpen}
+            onOpenChange={setSettingsOpen}
+            storeId={(isShop ? activeStoreId : effectiveStore) as string}
+            storeName={isShop ? activeStoreName : stores.find((s: any) => s.id === effectiveStore)?.name}
+            canEdit={canEdit}
+          />
+        </>
       )}
+
 
       <CustomerOrderCard
         order={selectedFresh}
