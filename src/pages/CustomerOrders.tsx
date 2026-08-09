@@ -108,6 +108,8 @@ export default function CustomerOrders() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selected, setSelected] = useState<CustomerOrder | null>(null);
+  const [openRow, setOpenRow] = useState<string | null>(null);
+  const toggleRow = (id: string) => setOpenRow((cur) => (cur === id ? null : id));
 
 
   const { data: orders = [], isLoading } = useCustomerOrders({
