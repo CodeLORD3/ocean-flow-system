@@ -36,7 +36,7 @@ import {
 } from "@/lib/customerOrders";
 import { CustomerOrderWizard } from "@/components/orders/CustomerOrderWizard";
 import { CustomerOrderCard } from "@/components/orders/CustomerOrderCard";
-import { CustomerOrderRow } from "@/components/orders/CustomerOrderRow";
+import { CustomerOrderRow, CustomerOrderRowHeader } from "@/components/orders/CustomerOrderRow";
 
 import { RetailCustomerRegistry } from "@/components/orders/RetailCustomerRegistry";
 import { PurchaseNeedsView } from "@/components/orders/PurchaseNeedsView";
