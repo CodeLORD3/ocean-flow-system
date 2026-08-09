@@ -433,6 +433,18 @@ export default function CustomerOrders() {
         onOpenChange={(v) => !v && setSelected(null)}
         readOnly={selectedFresh ? rowReadOnly(selectedFresh) : false}
       />
+
+      <CustomerOrderEditDialog
+        order={
+          editing
+            ? orders.find((o) => o.id === editing.id) ||
+              tomorrowOrders.find((o) => o.id === editing.id) ||
+              editing
+            : null
+        }
+        open={!!editing}
+        onOpenChange={(v) => !v && setEditing(null)}
+      />
     </div>
   );
 }
