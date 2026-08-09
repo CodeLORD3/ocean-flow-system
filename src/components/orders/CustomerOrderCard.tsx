@@ -171,6 +171,65 @@ export function CustomerOrderCard({
   const customerName = order.customers_retail?.name || order.customer_name_snapshot || "Kund";
   const uncollected = isUncollected(order);
 
+  /** Preliminär offert — priset räknas alltid om mot dagens pris vid packning. */
+  const makeQuote = () =>
+    printQuote({
+      orderNumber: order.order_number,
+      storeName: (order as any).stores?.name || "",
+      customerName,
+      customerPhone: order.customers_retail?.phone || order.customer_phone_snapshot,
+      orderTypeLabel: ORDER_TYPE_LABELS[order.order_type] ?? order.order_type,
+      wantedDate: order.wanted_date,
+      wantedTime: order.wanted_time,
+      guestCount: order.guest_count,
+      allergyNote: order.allergy_note,
+      excludedAllergens: (order.excluded_allergens || []).map(allergenLabel),
+      deliveryAddress:
+        order.order_type === "leverans"
+          ? [order.delivery_street, order.delivery_postal_code, order.delivery_city]
+              .filter(Boolean)
+              .join(", ")
+          : null,
+      note: order.note,
+      lines: lines
+        .filter((l) => l.pack_status !== "struken")
+        .map((l) => ({
+          name: (l.products?.name || l.free_text_name || "Vara") as string,
+          quantity: Number(l.quantity_ordered || 0),
+          unit: l.unit,
+          pricePerUnit:
+            l.estimated_price_per_unit != null ? Number(l.estimated_price_per_unit) : null,
+          note: l.note,
+        })),
+    });
+
+  /** Ändrat gästantal räknar om cateringrader med portion per gäst. */
+  const changeGuestCount = async (value: string) => {
+    const guests = Number(value) || null;
+    await updateOrder.mutateAsync({
+      id: order.id,
+      patch: { guest_count: guests },
+      event: { type: "andrad", description: `Antal gäster ändrat till ${guests ?? "—"}` },
+    });
+    if (!guests) return;
+    for (const l of lines) {
+      if (!l.portion_per_guest || l.locked_from_scaling || l.pack_status === "packad") continue;
+      const qty = scaleQuantity({
+        portionPerGuest: l.portion_per_guest,
+        guestCount: guests,
+        currentQuantity: Number(l.quantity_ordered || 0),
+      });
+      await updateLine.mutateAsync({
+        id: l.id,
+        orderId: order.id,
+        patch: { quantity_ordered: qty },
+        event: { type: "andrad", description: `Mängd omräknad till ${qty} ${l.unit}` },
+      });
+    }
+    toast.success("Raderna är omräknade efter antal gäster.");
+  };
+
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-2xl">
