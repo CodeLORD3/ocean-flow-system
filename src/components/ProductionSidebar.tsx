@@ -18,6 +18,7 @@ import {
   ArrowLeftRight,
   Trash2,
   ShieldCheck,
+  ClipboardList,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
