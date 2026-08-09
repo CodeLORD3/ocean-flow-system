@@ -519,9 +519,13 @@ export interface UpsertPayload {
   latin_name?: string | null;
   species_group?: string | null;
   fao_code?: string | null;
+  allergens?: string[];
+  allergens_checked?: boolean;
+  may_contain?: string[];
   supplier_id?: string | null;
   parent_product_id?: string | null;
 }
+
 
 export function toPayload(row: ParsedRow): UpsertPayload {
   return {
