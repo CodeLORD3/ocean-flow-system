@@ -8,6 +8,7 @@ import { Fish, Search, Ship, Anchor } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import LotDocumentsPanel from "@/components/inventory/LotDocumentsPanel";
 import ParasiteFreezePanel from "@/components/inventory/ParasiteFreezePanel";
+import BivalvePanel from "@/components/inventory/BivalvePanel";
 
 interface Props {
   currency?: string;
