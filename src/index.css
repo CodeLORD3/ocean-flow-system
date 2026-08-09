@@ -44,17 +44,34 @@
     --mackerel-dark: 207 55% 12%;
     --mackerel-gold: 48 65% 55%;
 
-    /* Radfärger för orderlistor: hel radton + mättad kant */
-    --row-ok: 168 45% 91%;
-    --row-ok-edge: 168 55% 34%;
-    --row-warn: 40 90% 89%;
-    --row-warn-edge: 36 92% 45%;
-    --row-late: 0 72% 94%;
-    --row-late-edge: 0 72% 48%;
-    --row-done: 207 45% 91%;
-    --row-done-edge: 207 55% 30%;
-    --row-off: 210 12% 92%;
-    --row-off-edge: 210 12% 60%;
+    /* Radfärger för orderlistor: hel radton + mättad kant.
+       Ett steg starkare än pastell så statusen läses på avstånd i butiken. */
+    --row-ok: 168 48% 88%;
+    --row-ok-hover: 168 48% 83%;
+    --row-ok-edge: 168 60% 30%;
+    --row-ok-text: 168 62% 22%;
+    --row-warn: 40 92% 86%;
+    --row-warn-hover: 40 92% 80%;
+    --row-warn-edge: 34 94% 44%;
+    --row-warn-text: 30 85% 26%;
+    --row-late: 0 78% 92%;
+    --row-late-hover: 0 78% 87%;
+    --row-late-edge: 0 74% 45%;
+    --row-late-text: 0 70% 32%;
+    --row-done: 207 52% 89%;
+    --row-done-hover: 207 52% 84%;
+    --row-done-edge: 207 60% 28%;
+    --row-done-text: 207 60% 22%;
+    --row-off: 210 12% 90%;
+    --row-off-hover: 210 12% 85%;
+    --row-off-edge: 210 12% 55%;
+    --row-off-text: 210 12% 32%;
+    --row-neutral: 0 0% 100%;
+    --row-neutral-hover: 210 20% 96%;
+
+    /* Rutnät i D365-stil: ljusa kolumnlinjer så radtonen dominerar */
+    --grid-line: 210 16% 91%;
+    --grid-head: 0 0% 100%;
 
 
     --border: 210 15% 85%;
