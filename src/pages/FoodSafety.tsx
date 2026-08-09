@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/EmptyState";
+import ChillingPanel from "@/components/foodsafety/ChillingPanel";
 import {
   CONTROL_CATEGORIES,
   FREQUENCIES,
@@ -54,6 +55,7 @@ import {
   useSaveInstrument,
   useSaveRequirement,
   useSeedBaseline,
+  useSeedLocationTemperaturePoints,
   useTodaysRecords,
   type ControlPoint,
   type Deviation,
@@ -74,6 +76,7 @@ export default function FoodSafety() {
   const saveRequirement = useSaveRequirement();
   const saveInstrument = useSaveInstrument();
   const seed = useSeedBaseline();
+  const seedTemps = useSeedLocationTemperaturePoints();
 
   const [values, setValues] = useState<Record<string, string>>({});
   const [pointForm, setPointForm] = useState<Partial<ControlPoint> | null>(null);
@@ -155,6 +158,26 @@ export default function FoodSafety() {
           >
             Grundförutsättningar
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1 text-xs"
+            onClick={async () => {
+              try {
+                const n = await seedTemps.mutateAsync();
+                toast.success(
+                  n === 0
+                    ? "Alla lagerplatser har redan en temperaturpunkt."
+                    : `Skapade ${n} temperaturpunkter, en per lagerplats.`,
+                );
+              } catch (e: any) {
+                toast.error(e.message || "Temperaturpunkterna kunde inte skapas.");
+              }
+            }}
+            disabled={seedTemps.isPending}
+          >
+            Lagertemperaturer
+          </Button>
           <Button size="sm" className="gap-1 text-xs" onClick={() => setPointForm({ active: true })}>
             <Plus className="h-3.5 w-3.5" /> Kontrollpunkt
           </Button>
@@ -171,6 +194,9 @@ export default function FoodSafety() {
           </TabsTrigger>
           <TabsTrigger value="due" className="text-xs">
             Förfaller snart {soon.length > 0 && `(${soon.length})`}
+          </TabsTrigger>
+          <TabsTrigger value="chilling" className="text-xs">
+            Nedkylning
           </TabsTrigger>
           <TabsTrigger value="instruments" className="text-xs">
             Instrument
@@ -358,6 +384,10 @@ export default function FoodSafety() {
               );
             })
           )}
+        </TabsContent>
+
+        <TabsContent value="chilling" className="mt-3">
+          <ChillingPanel />
         </TabsContent>
 
         <TabsContent value="instruments" className="mt-3 space-y-2">
