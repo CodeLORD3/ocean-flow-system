@@ -21,6 +21,16 @@ export default function WholesaleWishes() {
   const { wishes, isLoading } = usePublishedWishes();
   const [store, setStore] = useState<string>("all");
 
+  useEffect(() => {
+    const onFocus = (e: Event) => {
+      const name = (e as CustomEvent).detail as string;
+      if (name) setStore(name);
+    };
+    window.addEventListener("wishes:focus-store", onFocus);
+    return () => window.removeEventListener("wishes:focus-store", onFocus);
+  }, []);
+
+
   const stores = useMemo(
     () => Array.from(new Set(wishes.map((w) => w.storeName))).sort((a, b) => a.localeCompare(b, "sv")),
     [wishes]
