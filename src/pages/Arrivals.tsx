@@ -29,6 +29,7 @@ import { pendingArrivalLines, registerPurchaseArrival } from "@/lib/purchaseArri
 import { createWasteReport, WASTE_REASON_LABEL, type WasteReason } from "@/lib/waste";
 import { grossistStoreId, inkopslagerId } from "@/lib/locations";
 import { openLotLabels } from "@/lib/lotLabelPdf";
+import { useSenderMark } from "@/hooks/useEstablishments";
 
 const nf = (v: any, dec = 1) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: dec, maximumFractionDigits: dec });
@@ -56,6 +57,7 @@ interface DraftLine {
  * inköpslagret med orsak, så saldot alltid stämmer mot verkligheten.
  */
 export default function Arrivals() {
+  const { data: senderMark } = useSenderMark();
   const qc = useQueryClient();
   const [openReport, setOpenReport] = useState<any | null>(null);
   const [draft, setDraft] = useState<DraftLine[]>([]);
@@ -436,6 +438,7 @@ export default function Arrivals() {
                         vesselName: l.vesselName,
                         bestBefore: l.bestBefore,
                         supplierLotNumber: l.supplierLotNumber,
+                        identificationMark: senderMark ?? null,
                       })),
                   );
                 } catch (e: any) {

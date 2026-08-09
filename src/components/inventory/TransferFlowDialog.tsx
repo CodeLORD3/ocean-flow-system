@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Printer, ArrowRight, Check, X, AlertTriangle, FileSpreadsheet } from "lucide-react";
 import { LEVEL_LABEL, type LocationLevel } from "@/lib/locations";
 import { openTransferPdf } from "@/lib/transferPdf";
+import { useSenderMark } from "@/hooks/useEstablishments";
 import ExportDossierDialog from "@/components/inventory/ExportDossierDialog";
 import {
   useApproveInbound,
@@ -63,6 +64,7 @@ const levelName = (loc: any) =>
  * lagerstrukturen kräver: plocklista → plockning → utleverans → inleverans.
  */
 export default function TransferFlowDialog({ order, onOpenChange }: TransferFlowDialogProps) {
+  const { data: senderMark } = useSenderMark();
   const lines = useMemo(
     () =>
       ((order?.transfer_order_lines ?? []) as any[]).slice().sort(
@@ -159,6 +161,8 @@ export default function TransferFlowDialog({ order, onOpenChange }: TransferFlow
       createdAt: order.created_at,
       reason: order.reason ?? null,
       lines: pdfLines,
+      identificationMark: senderMark ?? null,
+      requiresIdentificationMark: !!order.to_location,
     });
 
   const doPrintPicklist = async () => {

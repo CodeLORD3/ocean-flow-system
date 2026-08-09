@@ -1,4 +1,5 @@
 import {
+  Building2,
   LayoutDashboard,
   Fish,
   ShoppingCart,
@@ -89,6 +90,7 @@ const orgNav = [
   { title: "Butiker", url: "/stores", icon: Store },
   { title: "Personal", url: "/staff", icon: UserCheck },
   { title: "Bilar & Maskiner", url: "/vehicles", icon: TruckIcon },
+  { title: "Anläggningar", url: "/establishments", icon: Building2 },
 ];
 
 const financeNav = [

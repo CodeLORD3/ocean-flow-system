@@ -44,6 +44,7 @@ import MeetingProtocols from "@/pages/MeetingProtocols";
 import Tasks from "@/pages/Tasks";
 import LandingSettings from "@/pages/LandingSettings";
 import Vehicles from "@/pages/Vehicles";
+import Establishments from "@/pages/Establishments";
 import Chat from "@/pages/Chat";
 import Checklist from "@/pages/Checklist";
 import DailyReport from "@/pages/DailyReport";
@@ -108,6 +109,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/tasks": { component: <Tasks /> },
   "/landing-settings": { component: <LandingSettings /> },
   "/vehicles": { component: <Vehicles /> },
+  "/establishments": { component: <Establishments /> },
   "/chat": { component: <Chat /> },
   "/checklist": { component: <Checklist /> },
   "/dagsrapport": { component: <DailyReport /> },
