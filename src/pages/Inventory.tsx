@@ -222,6 +222,7 @@ export default function Inventory() {
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"overview" | "locations" | "movements" | "lots">("overview");
   const [wasteOpen, setWasteOpen] = useState(false);
+  const [wasteRowId, setWasteRowId] = useState<string | null>(null);
 
 
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
@@ -1310,9 +1311,14 @@ export default function Inventory() {
 
 
   const handleOverviewAction = useCallback(
-    (action: "move" | "delete" | "split" | "count", row: any) => {
+    (action: "move" | "delete" | "split" | "count" | "waste", row: any) => {
       const locId = row?.location_id;
       if (!locId) return;
+      if (action === "waste") {
+        setWasteRowId(row.id);
+        setWasteOpen(true);
+        return;
+      }
       if (action === "count") {
         const loc = (locations as any[]).find((l: any) => l.id === locId);
         setCountScope({
@@ -1474,7 +1480,10 @@ export default function Inventory() {
           variant="outline"
           size="sm"
           className="h-8 gap-1 text-xs"
-          onClick={() => setWasteOpen(true)}
+          onClick={() => {
+            setWasteRowId(null);
+            setWasteOpen(true);
+          }}
         >
           <Trash2 className="h-3 w-3" /> Bokför svinn
         </Button>
@@ -2165,6 +2174,7 @@ export default function Inventory() {
         open={wasteOpen}
         onOpenChange={setWasteOpen}
         items={allStock as any[]}
+        initialRowId={wasteRowId}
         locationName={activeStoreName || undefined}
         storeId={activeStoreId ?? null}
         currency={localCurrency}

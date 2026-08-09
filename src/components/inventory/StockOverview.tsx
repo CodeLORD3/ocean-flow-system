@@ -54,7 +54,7 @@ export interface StockRow {
   storage_locations?: any;
 }
 
-export type StockLineAction = "move" | "delete" | "split" | "count";
+export type StockLineAction = "move" | "delete" | "split" | "count" | "waste";
 
 interface Props {
   rows: StockRow[];
@@ -643,12 +643,22 @@ export default function StockOverview({
                           </span>
                         </td>
                         <td className="px-2 text-right" onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-7 w-7">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 gap-1 px-2 text-[11px] text-destructive border-destructive/30 hover:bg-destructive/10"
+                              title="Rapportera svinn för denna produkt"
+                              onClick={() => onLineAction?.("waste", g.lines[0])}
+                            >
+                              <Trash2 className="h-3 w-3" /> Svinn
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-44">
                               <DropdownMenuItem onClick={() => toggleExpand(g.product_id)}>
                                 {isOpen ? "Stäng lagerplatser" : "Visa lagerplatser"}
@@ -669,7 +679,8 @@ export default function StockOverview({
                                 <Trash2 className="h-3.5 w-3.5 mr-2" /> Radera
                               </DropdownMenuItem>
                             </DropdownMenuContent>
-                          </DropdownMenu>
+                            </DropdownMenu>
+                          </div>
                         </td>
                       </tr>,
                     ];
@@ -741,10 +752,19 @@ export default function StockOverview({
                                         variant="outline"
                                         size="sm"
                                         className="h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+                                        onClick={() => onLineAction?.("waste", l)}
+                                      >
+                                        <Trash2 className="h-3 w-3" /> Svinn
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-6 px-2 text-[10px] gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
                                         onClick={() => onLineAction?.("delete", l)}
                                       >
                                         <Trash2 className="h-3 w-3" /> Radera
                                       </Button>
+
                                     </div>
                                   </div>
                                 );

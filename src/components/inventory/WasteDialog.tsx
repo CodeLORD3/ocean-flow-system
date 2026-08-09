@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
@@ -38,6 +38,7 @@ export default function WasteDialog({
   locationName,
   storeId,
   currency = "SEK",
+  initialRowId,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -46,6 +47,8 @@ export default function WasteDialog({
   locationName?: string;
   storeId?: string | null;
   currency?: string;
+  /** Förvald lagerrad (product_stock_locations.id), t.ex. från en produktrad i lagret. */
+  initialRowId?: string | null;
 }) {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -54,6 +57,10 @@ export default function WasteDialog({
   const [reason, setReason] = useState(WASTE_REASONS[0]);
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) setRowId(initialRowId || "");
+  }, [open, initialRowId]);
 
   const options = useMemo(
     () =>
