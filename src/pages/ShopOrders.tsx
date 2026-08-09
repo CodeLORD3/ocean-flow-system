@@ -230,6 +230,11 @@ export default function ShopOrders() {
   const [search, setSearch] = useState("");
   
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [focusProductId, setFocusProductId] = useState<string | null>(null);
+  const [previewProduct, setPreviewProduct] = useState<any | null>(null);
+  const qtyRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+
 
   // Fetch active store details to determine zone
   const { data: activeStore } = useQuery({
