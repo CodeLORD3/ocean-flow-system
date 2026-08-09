@@ -73,6 +73,20 @@ function PortalAvatar({
   );
 }
 
+/** Profilbild för personal (signerad om filen ligger i privat bucket). */
+function StaffAvatar({
+  name,
+  url,
+  className,
+}: {
+  name: string;
+  url?: string | null;
+  className?: string;
+}) {
+  const signed = useSignedUrl(url ?? null);
+  return <PortalAvatar name={name} url={signed} size="sm" className={className} />;
+}
+
 function timeLabel(iso: string) {
   const d = new Date(iso);
   const today = new Date();
