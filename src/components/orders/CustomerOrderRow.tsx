@@ -391,11 +391,6 @@ export function CustomerOrderRow({
             >
               <Download className="mr-2 h-4 w-4" /> Ladda ner PDF
             </Button>
-            <Button variant="ghost" className="h-12 sm:w-32" onClick={() => onOpen(order)}>
-              <Package className="mr-2 h-4 w-4" />
-              {readOnly ? "Öppna" : "Fullvy"}
-              <ExternalLink className="ml-2 h-4 w-4 opacity-70" />
-            </Button>
           </div>
 
         </div>
