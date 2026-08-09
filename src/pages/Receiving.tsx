@@ -729,22 +729,8 @@ export default function Receiving() {
                             className="h-6 text-[10px] bg-background"
                           />
                         </div>
-                        <div className="space-y-0.5">
-                          <Label className="text-[9px] text-muted-foreground uppercase tracking-wide flex items-center gap-0.5">
-                            <CalendarCheck className="h-2.5 w-2.5" /> Bäst före *
-                          </Label>
-                          <Input
-                            type="date"
-                            value={report.expiry_date || ""}
-                            onChange={(e) => updateLineReport(line.id, "expiry_date", e.target.value)}
-                            className="h-6 text-[10px] bg-background"
-                          />
-                        </div>
-                        {expiryLabel && (
-                          <div className="col-span-3">
-                            <p className={`text-[9px] font-medium ${expiryLabel.class}`}>{expiryLabel.text}</p>
-                          </div>
-                        )}
+                      </div>
+
                         {isChfStore && (
                           <div className="col-span-3 space-y-0.5 pt-1 border-t border-border/40">
                             <Label className="text-[9px] text-muted-foreground uppercase tracking-wide">
