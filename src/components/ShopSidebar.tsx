@@ -55,7 +55,9 @@ const orgNav = [
 
 const financeNav = [
   { title: "Rapporter", url: "/reports", icon: BarChart3 },
+  { title: "Dagsrapport", url: "/dagsrapport", icon: FileText },
 ];
+
 
 type NavItem = { title: string; url: string; icon: any };
 type NavSection = { label: string; items: NavItem[]; collapsible?: boolean };

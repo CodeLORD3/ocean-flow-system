@@ -165,8 +165,13 @@ function OrderTable({ orders, emptyMsg, products, toast, allowedWeekdays, isDate
                         <td className="px-1.5 py-0.5 text-muted-foreground">{o.desired_delivery_date || "–"}</td>
                         <td className="px-1.5 py-0.5 text-right text-foreground">{lines.length}</td>
                         <td className="px-1.5 py-0.5 text-muted-foreground text-[10px] max-w-48 truncate">
-                          {lines.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ") || "–"}
+                          {lines.length === 0 ? (
+                            <span className="text-warning" title="Orderraderna finns inte kvar i systemet — ordern är historiskt ofullständig.">Ofullständig — rader saknas</span>
+                          ) : (
+                            lines.map((l: any) => `${l.products?.name} (${l.quantity_ordered} ${l.unit || ""})`).join(", ")
+                          )}
                         </td>
+
                         <td className="px-1.5 py-0.5 text-muted-foreground text-[10px] max-w-32 truncate">{o.notes || "–"}</td>
                         <td className="px-1.5 py-0.5 text-center">
                           {hasFolljesedel ? (
