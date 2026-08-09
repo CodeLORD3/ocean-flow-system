@@ -84,7 +84,7 @@ export function CustomerOrderRow({
   const phone = order.customers_retail?.phone || order.customer_phone_snapshot;
   const lines = [...(order.customer_order_lines || [])].sort((a, b) => a.sort_order - b.sort_order);
   const active = lines.filter((l) => l.pack_status !== "struken");
-  const needs = active.filter((l) => l.reservation_status === "inkopsbehov");
+
   const packedCount = active.filter((l) => l.pack_status === "packad").length;
   const total = Number(order.total_incl_vat || order.estimated_total || 0);
   const allergens = order.excluded_allergens || [];
