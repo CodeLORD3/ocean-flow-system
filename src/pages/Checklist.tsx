@@ -244,84 +244,114 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
   const listRow = (t: ChecklistTemplate, dimmed = false) => {
     const s = status[t.id];
     const done = s?.status === "completed";
+    const started = !!s && !done;
     return (
-      <button
+      <Card
         key={t.id}
+        role="button"
+        tabIndex={0}
         onClick={() => setOpenTemplate(t)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setOpenTemplate(t);
+          }
+        }}
         className={cn(
-          "group flex w-full items-center gap-3 rounded-lg border border-border px-3 py-2.5 text-left transition-colors hover:border-primary/50 hover:bg-muted/40",
-          done && "border-emerald-600/40 bg-emerald-500/5",
+          "shadow-card group flex cursor-pointer flex-col justify-between gap-3 p-3 transition-all hover:border-primary/50 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring md:p-5",
+          done && "border-emerald-600/50 bg-emerald-500/5",
           dimmed && "opacity-70",
         )}
       >
-        <ClipboardCheck className={cn("h-4 w-4 shrink-0", done ? "text-emerald-500" : "text-primary")} />
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-foreground">{t.name}</p>
-          <p className="text-[11px] text-muted-foreground">
+        <div className="flex items-start justify-between gap-2">
+          <ClipboardCheck
+            className={cn("h-5 w-5 md:h-7 md:w-7", done ? "text-emerald-500" : "text-primary")}
+          />
+          <div className="flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+            {isAdmin && (
+              <span onClick={(e) => e.stopPropagation()}>
+                <ChecklistCopyDialog
+                  template={t}
+                  sourceStoreId={storeId}
+                  trigger={
+                    <span
+                      role="button"
+                      aria-label={`Kopiera ${t.name} till andra butiker`}
+                      title="Kopiera till andra butiker"
+                      className="text-muted-foreground hover:text-primary"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </span>
+                  }
+                />
+              </span>
+            )}
+            <span
+              role="button"
+              aria-label={`Byt namn på ${t.name}`}
+              title="Byt namn"
+              className="text-muted-foreground hover:text-primary"
+              onClick={(e) => {
+                e.stopPropagation();
+                setRenameTarget(t);
+                setRenameValue(t.name);
+              }}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </span>
+            <span
+              role="button"
+              aria-label={`Radera ${t.name}`}
+              title="Radera checklista"
+              className="text-destructive hover:text-destructive/80"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteTarget(t);
+              }}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </span>
+          </div>
+          <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+        </div>
+
+        <div>
+          <h3 className="font-heading text-base text-foreground md:text-lg">{t.name}</h3>
+          <p className="mt-0.5 text-[11px] text-muted-foreground md:text-xs">
             {(t.weekdays ?? []).length === 0
               ? "Alla dagar"
               : t.weekdays.map((d) => WEEKDAY_SHORT[d]).join(", ")}
             {s?.responsible ? ` · ${s.responsible}` : ""}
           </p>
         </div>
-        <span className="shrink-0 font-mono tabular-nums text-xs text-muted-foreground">
-          {s ? `${s.done}/${s.total}` : "–"}
-        </span>
-        {done ? (
-          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
-        ) : s ? (
-          <Clock className="h-4 w-4 shrink-0 text-amber-500" />
-        ) : null}
-        {isAdmin && (
-          <span onClick={(e) => e.stopPropagation()} className="shrink-0">
-            <ChecklistCopyDialog
-              template={t}
-              sourceStoreId={storeId}
-              trigger={
-                <span
-                  role="button"
-                  aria-label={`Kopiera ${t.name} till andra butiker`}
-                  title="Kopiera till andra butiker"
-                  className="text-muted-foreground hover:text-primary"
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                </span>
-              }
-            />
-          </span>
-        )}
-        <>
-          <span
-            role="button"
-            aria-label={`Byt namn på ${t.name}`}
-            className="shrink-0 text-muted-foreground hover:text-primary"
-            onClick={(e) => {
-              e.stopPropagation();
-              setRenameTarget(t);
-              setRenameValue(t.name);
-            }}
-          >
-            <Pencil className="h-3.5 w-3.5" />
-          </span>
-          <span
-            role="button"
-            aria-label={`Radera ${t.name}`}
-            title="Radera checklista"
-            className="shrink-0 text-destructive hover:text-destructive/80"
-            onClick={(e) => {
-              e.stopPropagation();
-              setDeleteTarget(t);
-            }}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </span>
-        </>
 
-
-        <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-      </button>
+        <div>
+          <p className="font-mono tabular-nums text-xl text-foreground md:text-2xl">
+            {s ? `${s.done} / ${s.total}` : "– / –"}
+          </p>
+          <p
+            className={cn(
+              "mt-0.5 inline-flex items-center gap-1 text-[11px] md:text-xs",
+              done ? "text-emerald-500" : started ? "text-amber-500" : "text-muted-foreground",
+            )}
+          >
+            {done ? (
+              <>
+                <CheckCircle2 className="h-3.5 w-3.5" /> Slutförd
+              </>
+            ) : started ? (
+              <>
+                <Clock className="h-3.5 w-3.5" /> Pågående
+              </>
+            ) : (
+              "Ej påbörjad"
+            )}
+          </p>
+        </div>
+      </Card>
     );
   };
+
 
   return (
     <div className="space-y-4">
@@ -425,33 +455,34 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
         </div>
       </div>
 
-      <Card className="shadow-card">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-heading">
-            Dagens checklistor · {weekdayName(iso)}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {isLoading ? (
-            <p className="text-xs text-muted-foreground">Laddar checklistor…</p>
-          ) : todays.length === 0 ? (
-            <p className="text-xs text-muted-foreground">
-              Ingen checklista är schemalagd för {weekdayName(iso).toLowerCase()}. Öppna kalenderikonen högst upp för att ändra veckoschemat.
-            </p>
-          ) : (
-            todays.map((t) => listRow(t))
-          )}
-        </CardContent>
-      </Card>
+      <section className="space-y-2">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Dagens checklistor · {weekdayName(iso)}
+        </h2>
+        {isLoading ? (
+          <p className="text-xs text-muted-foreground">Laddar checklistor…</p>
+        ) : todays.length === 0 ? (
+          <p className="text-xs text-muted-foreground">
+            Ingen checklista är schemalagd för {weekdayName(iso).toLowerCase()}. Öppna kalenderikonen högst upp för att ändra veckoschemat.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {todays.map((t) => listRow(t))}
+          </div>
+        )}
+      </section>
 
       {others.length > 0 && (
-        <Card className="shadow-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-heading">Övriga checklistor</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">{others.map((t) => listRow(t, true))}</CardContent>
-        </Card>
+        <section className="space-y-2">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Övriga checklistor
+          </h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {others.map((t) => listRow(t, true))}
+          </div>
+        </section>
       )}
+
 
       <Dialog open={scheduleOpen} onOpenChange={setScheduleOpen}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
