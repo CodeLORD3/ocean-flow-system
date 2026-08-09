@@ -12,15 +12,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Printer, ArrowRight, Check, X } from "lucide-react";
+import { Printer, ArrowRight, Check, X, AlertTriangle, FileSpreadsheet } from "lucide-react";
 import { LEVEL_LABEL, type LocationLevel } from "@/lib/locations";
 import { openTransferPdf } from "@/lib/transferPdf";
+import ExportDossierDialog from "@/components/inventory/ExportDossierDialog";
 import {
   useApproveInbound,
   useApproveOutbound,
   useMarkPicklistPrinted,
   useRegisterPicking,
   useRejectTransfer,
+  useSaveExportDocumentation,
   type TransferOrderRow,
 } from "@/hooks/useTransferOrders";
 
