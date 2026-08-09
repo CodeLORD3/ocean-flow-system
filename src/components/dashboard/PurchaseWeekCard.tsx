@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,8 +68,9 @@ export function PurchaseWeekCard() {
         .select(
           "id, quantity_ordered, unit, delivery_date, order_date, products(name, unit), shop_orders(store_id, stores(name))",
         )
-        .or(`delivery_date.gte.${from},order_date.gte.${from}`)
-        .lte("order_date", to);
+        .or(
+          `and(delivery_date.gte.${from},delivery_date.lte.${to}),and(order_date.gte.${from},order_date.lte.${to})`,
+        );
       if (error) throw error;
       return data as any[];
     },
@@ -170,9 +171,8 @@ export function PurchaseWeekCard() {
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <>
+                  <Fragment key={r.key}>
                     <tr
-                      key={r.key}
                       className="cursor-pointer border-b border-border/30 hover:bg-muted/40"
                       onClick={() => setExpanded(expanded === r.key ? null : r.key)}
                     >
@@ -190,7 +190,7 @@ export function PurchaseWeekCard() {
                       </td>
                     </tr>
                     {expanded === r.key && (
-                      <tr key={`${r.key}-exp`} className="border-b border-border/30 bg-muted/20">
+                      <tr className="border-b border-border/30 bg-muted/20">
                         <td colSpan={9} className="px-2 py-2">
                           <div className="flex flex-wrap gap-1.5">
                             {Object.entries(r.stores)
@@ -207,7 +207,7 @@ export function PurchaseWeekCard() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
               <tfoot>

@@ -52,7 +52,6 @@ const overviewNav = [
 ];
 
 const purchaseNav = [
-  { title: "Inköpsschema", url: "/purchase-schedule", icon: CalendarDays },
   { title: "Inköpsrapportering", url: "/purchase-reporting", icon: FileText },
   { title: "Leverantörer", url: "/suppliers", icon: Truck },
   { title: "Lager", url: "/inventory", icon: Package },
