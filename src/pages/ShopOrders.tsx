@@ -700,10 +700,23 @@ export default function ShopOrders() {
 
                               </td>
                               <td className="py-2">
-                                <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeLine(idx)}>
-                                  <X className="h-3 w-3" />
-                                </Button>
+                                <div className="flex items-center justify-end gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-primary sm:hidden"
+                                    title="Nästa produkt"
+                                    aria-label="Nästa produkt"
+                                    onClick={() => searchInputRef.current?.focus()}
+                                  >
+                                    <CheckCircle2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeLine(idx)}>
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
                               </td>
+
                             </tr>
                           ))}
                         </React.Fragment>
