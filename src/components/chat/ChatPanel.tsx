@@ -620,7 +620,7 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
                         {showHeader && (
                           <span
                             className={cn(
-                              "block text-[9px] font-semibold",
+                              "block text-[10px] font-semibold",
                               mine ? "text-primary-foreground/80" : "text-primary"
                             )}
                           >
