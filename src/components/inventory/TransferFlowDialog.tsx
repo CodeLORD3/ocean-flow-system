@@ -64,6 +64,7 @@ const levelName = (loc: any) =>
  * lagerstrukturen kräver: plocklista → plockning → utleverans → inleverans.
  */
 export default function TransferFlowDialog({ order, onOpenChange }: TransferFlowDialogProps) {
+  const { data: senderMark } = useSenderMark();
   const lines = useMemo(
     () =>
       ((order?.transfer_order_lines ?? []) as any[]).slice().sort(

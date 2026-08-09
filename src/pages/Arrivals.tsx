@@ -57,6 +57,7 @@ interface DraftLine {
  * inköpslagret med orsak, så saldot alltid stämmer mot verkligheten.
  */
 export default function Arrivals() {
+  const { data: senderMark } = useSenderMark();
   const qc = useQueryClient();
   const [openReport, setOpenReport] = useState<any | null>(null);
   const [draft, setDraft] = useState<DraftLine[]>([]);
