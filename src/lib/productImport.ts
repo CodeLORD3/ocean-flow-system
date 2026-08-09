@@ -548,8 +548,13 @@ export function toPayload(row: ParsedRow): UpsertPayload {
     ...(row.latin_name !== null ? { latin_name: row.latin_name } : {}),
     ...(row.species_group !== null ? { species_group: row.species_group } : {}),
     ...(row.fao_code !== null ? { fao_code: row.fao_code } : {}),
+    ...(row.allergens !== null
+      ? { allergens: row.allergens, allergens_checked: row.allergens_checked ?? true }
+      : {}),
+    ...(row.may_contain !== null ? { may_contain: row.may_contain } : {}),
   };
 }
+
 
 export function buildTemplateCsv(): string {
   return `${IMPORT_COLUMNS.join(",")}\nFS-045,Lax filé,Färsk Fisk,kg,120.00,162.00,199.00,Norge,Salmar,,7311234567890,0304,,5,,TRUE,https://exempel.se/bilder/lax-file.jpg,Salmo salar,lax,SAL\n`;
