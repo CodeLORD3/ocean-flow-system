@@ -299,8 +299,9 @@ export default function CustomerOrders() {
             />
           ) : (
             <div className="space-y-4">
+              <CustomerOrderRowHeader />
               {groupByDay(orders).map(([day, list]) => (
-                <div key={day} className="space-y-2">
+                <div key={day} className="space-y-1">
                   <div className="sticky top-0 z-10 -mx-1 bg-background/95 px-1 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur">
                     {dayLabel(day)} · {list.length} order
                   </div>
@@ -310,6 +311,8 @@ export default function CustomerOrders() {
                       order={o}
                       onOpen={setSelected}
                       readOnly={rowReadOnly(o)}
+                      open={openRow === o.id}
+                      onToggle={toggleRow}
                     />
                   ))}
                 </div>
