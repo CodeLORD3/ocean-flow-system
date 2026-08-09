@@ -323,8 +323,6 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
     );
   };
 
-  const visibleHistory = showAllHistory ? history : history.slice(0, 10);
-
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -337,7 +335,28 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
           </p>
         </div>
         <div className="flex items-center gap-2">
+        <Button
+          size="icon"
+          variant="outline"
+          className="h-8 w-8"
+          title="Historik – alla tidigare checklistor"
+          aria-label="Visa historik"
+          onClick={() => setHistoryOpen(true)}
+        >
+          <History className="h-4 w-4" />
+        </Button>
+        <Button
+          size="icon"
+          variant="outline"
+          className="h-8 w-8"
+          title="Veckoschema – välj vilka dagar checklistorna gäller"
+          aria-label="Veckoschema"
+          onClick={() => setScheduleOpen(true)}
+        >
+          <CalendarDays className="h-4 w-4" />
+        </Button>
         {isAdmin && <ChecklistRestoreDialog storeId={storeId} />}
+
         <Dialog open={newOpen} onOpenChange={setNewOpen}>
           <DialogTrigger asChild>
             <Button size="sm" variant="secondary" className="h-8 gap-1 text-xs">
