@@ -1,5 +1,17 @@
 import { useMemo, useState } from "react";
-import { Plus, Search, CalendarDays, ShoppingBag, Users, Lock, ChefHat, Settings } from "lucide-react";
+import {
+  Plus,
+  Search,
+  CalendarDays,
+  ShoppingBag,
+  Users,
+  Lock,
+  ChefHat,
+  Settings,
+  Printer,
+  Truck,
+  BarChart3,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +40,9 @@ import { RetailCustomerRegistry } from "@/components/orders/RetailCustomerRegist
 import { PurchaseNeedsView } from "@/components/orders/PurchaseNeedsView";
 import { CateringKitchenList } from "@/components/orders/CateringKitchenList";
 import { StoreOrderSettingsDialog } from "@/components/orders/StoreOrderSettingsDialog";
+import { DeliveryRouteView } from "@/components/orders/DeliveryRouteView";
+import { CustomerOrderStats } from "@/components/orders/CustomerOrderStats";
+import { printPackList } from "@/lib/customerOrderPackListPdf";
 
 const nf = (v: any, d = 1) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -163,6 +178,22 @@ export default function CustomerOrders() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            className="h-12"
+            disabled={orders.length === 0}
+            onClick={() =>
+              printPackList({
+                orders,
+                storeName: isShop
+                  ? activeStoreName
+                  : stores.find((s: any) => s.id === effectiveStore)?.name,
+                dateLabel: "Aktuell lista",
+              })
+            }
+          >
+            <Printer className="mr-2 h-4 w-4" /> Papperslista
+          </Button>
           {(isShop ? !!activeStoreId : !!effectiveStore) && (
             <Button variant="outline" className="h-12" onClick={() => setSettingsOpen(true)}>
               <Settings className="mr-2 h-4 w-4" /> Öppettider och kapacitet
@@ -192,11 +223,18 @@ export default function CustomerOrders() {
           <TabsTrigger value="kitchen" className="gap-1">
             <ChefHat className="h-4 w-4" /> Att förbereda
           </TabsTrigger>
+          <TabsTrigger value="delivery" className="gap-1">
+            <Truck className="h-4 w-4" /> Leverans
+          </TabsTrigger>
           <TabsTrigger value="customers" className="gap-1">
             <Users className="h-4 w-4" /> Kundregister
           </TabsTrigger>
+          <TabsTrigger value="stats" className="gap-1">
+            <BarChart3 className="h-4 w-4" /> Statistik
+          </TabsTrigger>
           {!isShop && <TabsTrigger value="needs">Sålt men inte köpt</TabsTrigger>}
         </TabsList>
+
 
 
         <TabsContent value="orders" className="space-y-3">
@@ -325,9 +363,24 @@ export default function CustomerOrders() {
           <CateringKitchenList storeId={effectiveStore} />
         </TabsContent>
 
+        <TabsContent value="delivery">
+          <DeliveryRouteView
+            storeId={effectiveStore}
+            storeName={
+              isShop ? activeStoreName : stores.find((s: any) => s.id === effectiveStore)?.name
+            }
+            readOnly={!canEdit}
+          />
+        </TabsContent>
+
         <TabsContent value="customers">
           <RetailCustomerRegistry storeId={effectiveStore} readOnly={!canEdit} />
         </TabsContent>
+
+        <TabsContent value="stats">
+          <CustomerOrderStats storeId={effectiveStore} />
+        </TabsContent>
+
 
         {!isShop && (
           <TabsContent value="needs">

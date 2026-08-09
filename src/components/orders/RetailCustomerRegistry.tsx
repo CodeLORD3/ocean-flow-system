@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, Search, Trash2, Pencil } from "lucide-react";
+import { Plus, Search, Trash2, Pencil, History } from "lucide-react";
+import { CustomerHistoryDialog } from "@/components/orders/CustomerHistoryDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,6 +53,8 @@ export function RetailCustomerRegistry({
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<RetailCustomer | null>(null);
   const [form, setForm] = useState(empty);
+  const [historyCustomer, setHistoryCustomer] = useState<RetailCustomer | null>(null);
+
 
   const openNew = () => {
     setEditing(null);
@@ -172,10 +175,19 @@ export function RetailCustomerRegistry({
                     {top.join(", ")}
                   </p>
                 )}
-                <div className="flex gap-3 text-xs text-muted-foreground">
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   <span>{history.length} order</span>
                   {uncollected > 0 && <span>{uncollected} väntar på hämtning</span>}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="ml-auto h-9"
+                    onClick={() => setHistoryCustomer(c)}
+                  >
+                    <History className="mr-1 h-4 w-4" /> Historik
+                  </Button>
                 </div>
+
               </CardContent>
             </Card>
           );
@@ -237,6 +249,14 @@ export function RetailCustomerRegistry({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CustomerHistoryDialog
+        open={!!historyCustomer}
+        onOpenChange={(v) => !v && setHistoryCustomer(null)}
+        customerName={historyCustomer?.name || ""}
+        orders={historyCustomer ? historyFor(historyCustomer.id) : []}
+      />
     </div>
+
   );
 }
