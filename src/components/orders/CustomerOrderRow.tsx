@@ -217,12 +217,13 @@ export function CustomerOrderRow({
           <div className="sm:hidden">
             <div className="flex items-center gap-2">
               <span
-                className={`min-w-0 flex-1 truncate font-mono text-[11px] tabular-nums text-muted-foreground ${
+                className={`min-w-0 flex-1 truncate text-base font-semibold leading-tight ${
                   cancelled ? "line-through" : ""
                 }`}
               >
-                {order.order_number}
+                {name}
               </span>
+
               <span className="font-mono text-sm font-semibold tabular-nums">
                 {nf(total, 2)} kr
               </span>
