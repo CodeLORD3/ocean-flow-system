@@ -162,3 +162,10 @@ export function printConfirmation(order: CustomerOrder, storeName?: string | nul
   const url = doc.output("bloburl");
   window.open(url as unknown as string, "_blank");
 }
+
+/** Laddar ner ordern som PDF-fil, för mejl eller arkiv. */
+export function downloadConfirmation(order: CustomerOrder, storeName?: string | null) {
+  const doc = buildConfirmationDoc(order, storeName);
+  doc.save(`${order.order_number}.pdf`);
+}
+
