@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { MessageSquare, Send, ImagePlus, Loader2, Store, Factory, Shield, ArrowLeft, Megaphone, AlertTriangle, Forward } from "lucide-react";
+import { MessageSquare, Send, ImagePlus, Loader2, Store, Factory, Shield, ArrowLeft, Megaphone, AlertTriangle, Forward, Check, CheckCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,8 @@ import {
   useBroadcastImportant,
   useChatUnread,
   useMarkConversationRead,
+  useConversationReads,
+  usePortalAvatars,
 } from "@/hooks/useChat";
 
 function portalIcon(kind: PortalProfile["kind"]) {
@@ -39,6 +41,36 @@ function initialsOf(name: string) {
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase() ?? "")
     .join("");
+}
+
+/** Profilbild för en portal (butikens hero-bild, annars initialer som fallback). */
+function PortalAvatar({
+  name,
+  url,
+  size = "md",
+  className,
+}: {
+  name: string;
+  url?: string | null;
+  size?: "sm" | "md";
+  className?: string;
+}) {
+  const dim = size === "sm" ? "h-6 w-6" : "h-8 w-8";
+  return (
+    <span
+      className={cn(
+        "shrink-0 overflow-hidden rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-semibold",
+        dim,
+        className
+      )}
+    >
+      {url ? (
+        <img src={url} alt={`Profilbild för ${name}`} loading="lazy" className="h-full w-full object-cover" />
+      ) : (
+        initialsOf(name)
+      )}
+    </span>
+  );
 }
 
 function timeLabel(iso: string) {
@@ -124,6 +156,12 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
   const broadcast = useBroadcastImportant();
   const send = useSendChatMessage();
   const unread = useChatUnread();
+  const avatars = usePortalAvatars();
+  /** Motpartens profilbild i en chatt (butikens hero-bild / portalbild). */
+  const convAvatar = (c: ChatConversation) => {
+    const other = c.participants.find((p) => p.portal_key !== portal?.key);
+    return other ? avatars[other.portal_key] : undefined;
+  };
   const markRead = useMarkConversationRead();
 
   // Butiker chattar bara med Grossist – ingen lista, chatten är alltid öppen
@@ -232,12 +270,28 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
 
 
 
-  // Markera den öppna chatten som läst när nya meddelanden visas
+  // Markera som läst först när chatten verkligen är öppnad av användaren:
+  // butiken har bara en chatt (alltid öppen), övriga måste klicka fram tråden.
+  // Notisen ligger alltså kvar tills grossisten faktiskt öppnat meddelandet.
   const convId = activeConv?.id;
+  const opened = isStore || (!!activeId && activeId === convId);
   useEffect(() => {
-    if (convId) markRead.mutate(convId);
+    if (!convId || !opened) return;
+    if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+    markRead.mutate(convId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [convId, messages.length]);
+  }, [convId, opened, messages.length]);
+
+  const reads = useConversationReads(convId);
+  /** Har någon motpart läst meddelandet? (Facebook/Instagram-liknande "Läst") */
+  const readByOther = (m: ChatMessage) => {
+    const others = (activeConv?.participants || []).filter((p) => p.portal_key !== portal?.key);
+    return others.some((p) => {
+      const at = reads[p.portal_key];
+      return !!at && new Date(at) >= new Date(m.created_at);
+    });
+  };
+
 
   const storeTargets = useMemo(() => otherProfiles.filter((p) => p.kind === "store"), [otherProfiles]);
   const isAdmin = portal?.kind === "admin";
@@ -359,6 +413,12 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
+            ) : activeConv && showThread ? (
+              <PortalAvatar
+                name={conversationTitle(activeConv, portal.key)}
+                url={convAvatar(activeConv)}
+                size="sm"
+              />
             ) : (
               <MessageSquare className="h-4 w-4 text-primary shrink-0" />
             )}
@@ -431,16 +491,15 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
                         : "hover:bg-muted/60 border border-transparent"
                     )}
                   >
-                    <span className={cn(
-                      "shrink-0 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-semibold",
-                      compact ? "h-6 w-6" : "h-8 w-8"
-                    )}>
-                      {initialsOf(title)}
-                    </span>
+                    <PortalAvatar
+                      name={title}
+                      url={convAvatar(c)}
+                      size={compact ? "sm" : "md"}
+                    />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-1.5">
                         <span className="text-xs font-medium text-foreground truncate flex-1 min-w-0">{title}</span>
-                        {(unread.byConv[c.id] || 0) > 0 && !isActive && (
+                        {(unread.byConv[c.id] || 0) > 0 && !(isActive && opened) && (
                           <Badge variant="destructive" className="h-4 min-w-4 px-1 text-[9px] rounded-full shrink-0">
                             {unread.byConv[c.id]}
                           </Badge>
@@ -536,6 +595,18 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
                         </button>
                       )}
 
+                      {!mine &&
+                        (showHeader ? (
+                          <PortalAvatar
+                            name={m.sender_portal_name || m.sender_portal_key}
+                            url={avatars[m.sender_portal_key]}
+                            size="sm"
+                            className="self-end mb-0.5"
+                          />
+                        ) : (
+                          <span aria-hidden className="h-6 w-6 shrink-0" />
+                        ))}
+
                       <div
                         className={cn(
                           "max-w-[85%] sm:max-w-[80%] px-2.5 py-1 text-xs leading-snug shadow-sm",
@@ -591,12 +662,26 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
                         )}
                         <span
                           className={cn(
-                            "block text-right text-[9px] tabular-nums leading-none pt-0.5",
+                            "flex items-center justify-end gap-1 text-[9px] tabular-nums leading-none pt-0.5",
                             mine ? "text-primary-foreground/70" : "text-muted-foreground"
                           )}
                         >
                           {clockLabel(m.created_at)}
+                          {mine && (
+                            <span className="flex items-center gap-0.5 font-medium">
+                              {readByOther(m) ? (
+                                <>
+                                  <CheckCheck className="h-3 w-3" /> Läst
+                                </>
+                              ) : (
+                                <>
+                                  <Check className="h-3 w-3" /> Skickat
+                                </>
+                              )}
+                            </span>
+                          )}
                         </span>
+
 
                       </div>
 
