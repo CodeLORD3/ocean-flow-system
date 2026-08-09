@@ -55,6 +55,15 @@ const CATEGORY_FILTERS = [
   { value: "event", label: "Händelser", color: "bg-blue-500" },
 ] as const;
 
+/**
+ * Kort etikett i månadsrutan. Ordernummer tar all plats i en liten cell,
+ * så kundnamnet visas där och hela titeln ligger kvar i verktygstipset.
+ */
+function compactEventTitle(title: string): string {
+  const m = title?.match(/^[A-ZÅÄÖ]{2,}-\d{8}-\d+\s*[—–-]\s*(.+)$/);
+  return (m ? m[1] : title || "").trim();
+}
+
 function getEventTypeInfo(type: string) {
   return EVENT_TYPES.find(t => t.value === type) || EVENT_TYPES[0];
 }
