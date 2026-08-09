@@ -99,11 +99,13 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
         return;
       }
       setMissingOptional(parsed.missingOptionalColumns);
+      setUnknownColumns(parsed.unknownColumns);
       const { data, error } = await supabase
         .from("products")
         .select(
-          "id, sku, name, category, unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier_id, barcode, hs_code, weight_per_piece, shelf_life_days, parent_product_id, active, image_url, latin_name, species_group, fao_code",
+          "id, sku, name, category, unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier_id, barcode, hs_code, weight_per_piece, shelf_life_days, parent_product_id, active, image_url, latin_name, species_group, fao_code, allergens, may_contain, allergens_checked",
         );
+
       if (error) throw error;
       const existingRows = (data ?? []) as unknown as ExistingProduct[];
       setExisting(existingRows);
