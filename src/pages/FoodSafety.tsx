@@ -394,6 +394,11 @@ export default function FoodSafety() {
           <ChillingPanel />
         </TabsContent>
 
+        <TabsContent value="abp" className="mt-3">
+          <AbpPanel />
+        </TabsContent>
+
+
         <TabsContent value="instruments" className="mt-3 space-y-2">
           <div className="flex justify-end">
             <Button
