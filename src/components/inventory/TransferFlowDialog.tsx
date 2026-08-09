@@ -503,6 +503,8 @@ export default function TransferFlowDialog({ order, onOpenChange }: TransferFlow
             </Button>
           )}
         </DialogFooter>
+
+        {showDossier && <ExportDossierDialog order={order} onOpenChange={() => setShowDossier(false)} />}
       </DialogContent>
     </Dialog>
   );
