@@ -363,9 +363,24 @@ export default function CustomerOrders() {
           <CateringKitchenList storeId={effectiveStore} />
         </TabsContent>
 
+        <TabsContent value="delivery">
+          <DeliveryRouteView
+            storeId={effectiveStore}
+            storeName={
+              isShop ? activeStoreName : stores.find((s: any) => s.id === effectiveStore)?.name
+            }
+            readOnly={!canEdit}
+          />
+        </TabsContent>
+
         <TabsContent value="customers">
           <RetailCustomerRegistry storeId={effectiveStore} readOnly={!canEdit} />
         </TabsContent>
+
+        <TabsContent value="stats">
+          <CustomerOrderStats storeId={effectiveStore} />
+        </TabsContent>
+
 
         {!isShop && (
           <TabsContent value="needs">
