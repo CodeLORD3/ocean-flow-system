@@ -2462,6 +2462,72 @@ export type Database = {
         }
         Relationships: []
       }
+      lot_documents: {
+        Row: {
+          created_at: string
+          document_number: string | null
+          document_type: string
+          file_name: string | null
+          file_path: string | null
+          id: string
+          issued_date: string | null
+          issuer: string | null
+          lot_id: string
+          note: string | null
+          updated_at: string
+          uploaded_at: string
+          uploaded_by: string | null
+          valid_to: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_number?: string | null
+          document_type: string
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          issued_date?: string | null
+          issuer?: string | null
+          lot_id: string
+          note?: string | null
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+          valid_to?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_number?: string | null
+          document_type?: string
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          issued_date?: string | null
+          issuer?: string | null
+          lot_id?: string
+          note?: string | null
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+          valid_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lot_documents_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lot_documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lot_transformations: {
         Row: {
           created_at: string
@@ -2538,8 +2604,10 @@ export type Database = {
           exempt_until: string | null
           fishing_gear: string | null
           fishing_gear_code: string | null
+          fishing_trip_id: string | null
           grade: string | null
           id: string
+          incoming_catch_cert: string | null
           is_thawed: boolean
           latin_name: string | null
           lot_number: string
@@ -2549,7 +2617,9 @@ export type Database = {
           product_id: string | null
           production_method: string | null
           quantity_kg: number
+          seal_number: string | null
           species_fao_code: string | null
+          statistical_doc: string | null
           status: string
           supplier_id: string | null
           supplier_lot_id: string | null
@@ -2574,8 +2644,10 @@ export type Database = {
           exempt_until?: string | null
           fishing_gear?: string | null
           fishing_gear_code?: string | null
+          fishing_trip_id?: string | null
           grade?: string | null
           id?: string
+          incoming_catch_cert?: string | null
           is_thawed?: boolean
           latin_name?: string | null
           lot_number: string
@@ -2585,7 +2657,9 @@ export type Database = {
           product_id?: string | null
           production_method?: string | null
           quantity_kg?: number
+          seal_number?: string | null
           species_fao_code?: string | null
+          statistical_doc?: string | null
           status?: string
           supplier_id?: string | null
           supplier_lot_id?: string | null
@@ -2610,8 +2684,10 @@ export type Database = {
           exempt_until?: string | null
           fishing_gear?: string | null
           fishing_gear_code?: string | null
+          fishing_trip_id?: string | null
           grade?: string | null
           id?: string
+          incoming_catch_cert?: string | null
           is_thawed?: boolean
           latin_name?: string | null
           lot_number?: string
@@ -2621,7 +2697,9 @@ export type Database = {
           product_id?: string | null
           production_method?: string | null
           quantity_kg?: number
+          seal_number?: string | null
           species_fao_code?: string | null
+          statistical_doc?: string | null
           status?: string
           supplier_id?: string | null
           supplier_lot_id?: string | null
@@ -4376,6 +4454,7 @@ export type Database = {
           category: string
           cost_price: number
           created_at: string | null
+          export_documentation_required: boolean | null
           fao_code: string | null
           hs_code: string | null
           id: string
@@ -4409,6 +4488,7 @@ export type Database = {
           category: string
           cost_price?: number
           created_at?: string | null
+          export_documentation_required?: boolean | null
           fao_code?: string | null
           hs_code?: string | null
           id?: string
@@ -4442,6 +4522,7 @@ export type Database = {
           category?: string
           cost_price?: number
           created_at?: string | null
+          export_documentation_required?: boolean | null
           fao_code?: string | null
           hs_code?: string | null
           id?: string
@@ -6184,9 +6265,12 @@ export type Database = {
           approved_in_by: string | null
           approved_out_at: string | null
           approved_out_by: string | null
+          catch_cert_validated: string | null
+          catch_certificate_ref: string | null
           created_at: string
           created_by: string | null
           deviation_note: string | null
+          export_country: string | null
           from_location_id: string
           id: string
           order_number: string | null
@@ -6194,6 +6278,8 @@ export type Database = {
           picked_by: string | null
           picklist_printed_at: string | null
           reason: string | null
+          reexport_cert: string | null
+          seal_number: string | null
           source_document_id: string | null
           source_document_type: string | null
           status: Database["public"]["Enums"]["transfer_status"]
@@ -6205,9 +6291,12 @@ export type Database = {
           approved_in_by?: string | null
           approved_out_at?: string | null
           approved_out_by?: string | null
+          catch_cert_validated?: string | null
+          catch_certificate_ref?: string | null
           created_at?: string
           created_by?: string | null
           deviation_note?: string | null
+          export_country?: string | null
           from_location_id: string
           id?: string
           order_number?: string | null
@@ -6215,6 +6304,8 @@ export type Database = {
           picked_by?: string | null
           picklist_printed_at?: string | null
           reason?: string | null
+          reexport_cert?: string | null
+          seal_number?: string | null
           source_document_id?: string | null
           source_document_type?: string | null
           status?: Database["public"]["Enums"]["transfer_status"]
@@ -6226,9 +6317,12 @@ export type Database = {
           approved_in_by?: string | null
           approved_out_at?: string | null
           approved_out_by?: string | null
+          catch_cert_validated?: string | null
+          catch_certificate_ref?: string | null
           created_at?: string
           created_by?: string | null
           deviation_note?: string | null
+          export_country?: string | null
           from_location_id?: string
           id?: string
           order_number?: string | null
@@ -6236,6 +6330,8 @@ export type Database = {
           picked_by?: string | null
           picklist_printed_at?: string | null
           reason?: string | null
+          reexport_cert?: string | null
+          seal_number?: string | null
           source_document_id?: string | null
           source_document_type?: string | null
           status?: Database["public"]["Enums"]["transfer_status"]
@@ -7040,6 +7136,10 @@ export type Database = {
       post_purchase_report: {
         Args: { p_location_id: string; p_lots: Json; p_report_id: string }
         Returns: string[]
+      }
+      product_export_documentation_required: {
+        Args: { _hs_code: string }
+        Returns: boolean
       }
       product_traceability_required: {
         Args: { _exempt: boolean; _hs_code: string }
