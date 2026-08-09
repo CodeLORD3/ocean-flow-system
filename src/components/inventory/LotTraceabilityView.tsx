@@ -30,7 +30,7 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
       const { data, error } = await supabase
         .from("lots")
         .select(
-          "id, lot_number, supplier_lot_id, commercial_name, latin_name, species_fao_code, catch_area, fishing_gear, vessel_name, best_before, quantity_kg, unit_cost, status, is_thawed, created_at, suppliers(name), products(name, sku)",
+          "id, lot_number, supplier_lot_id, commercial_name, latin_name, species_fao_code, catch_area, fishing_gear, vessel_name, best_before, quantity_kg, unit_cost, status, is_thawed, created_at, fishing_trip_id, incoming_catch_cert, statistical_doc, seal_number, suppliers(name), products(name, sku, hs_code, export_documentation_required)",
         )
         .order("created_at", { ascending: false })
         .limit(300);
