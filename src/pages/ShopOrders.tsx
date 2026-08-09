@@ -770,11 +770,14 @@ export default function ShopOrders() {
                   className="w-auto p-0"
                   align="start"
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      pickDate(desiredDeliveryDate);
-                    }
+                    if (e.key !== "Enter") return;
+                    const el = e.target as HTMLElement;
+                    // Är en dagknapp fokuserad? Låt kalendern välja den dagen (default Enter -> click)
+                    if (el.closest("button[name='day'], .rdp-day, [role='gridcell'] button")) return;
+                    e.preventDefault();
+                    pickDate(desiredDeliveryDate);
                   }}
+
                 >
                   <Calendar
                     mode="single"
