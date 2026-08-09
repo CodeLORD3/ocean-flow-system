@@ -1,16 +1,18 @@
 import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Plus,
   Search,
   CalendarDays,
   ShoppingBag,
   Users,
-  Lock,
   ChefHat,
   Settings,
   Printer,
   Truck,
   BarChart3,
+  RefreshCw,
+  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,11 +35,16 @@ import {
   ORDER_STATUS_LABELS,
   ORDER_TYPE_LABELS,
   PACK_STATUS_LABELS,
+  isUncollected,
 } from "@/lib/customerOrders";
 import { CustomerOrderWizard } from "@/components/orders/CustomerOrderWizard";
 import { CustomerOrderCard } from "@/components/orders/CustomerOrderCard";
 import { CustomerOrderRow, CustomerOrderRowHeader } from "@/components/orders/CustomerOrderRow";
 import { CustomerOrderEditDialog } from "@/components/orders/CustomerOrderEditDialog";
+import { CommandBar, CommandAction } from "@/components/shell/CommandBar";
+import { ViewSelector, SavedView } from "@/components/shell/ViewSelector";
+import { FactBox, FactGroup, FactRow } from "@/components/shell/FactBox";
+import { StatusBar } from "@/components/shell/StatusBar";
 
 import { RetailCustomerRegistry } from "@/components/orders/RetailCustomerRegistry";
 import { PurchaseNeedsView } from "@/components/orders/PurchaseNeedsView";
@@ -46,6 +53,15 @@ import { StoreOrderSettingsDialog } from "@/components/orders/StoreOrderSettings
 import { DeliveryRouteView } from "@/components/orders/DeliveryRouteView";
 import { CustomerOrderStats } from "@/components/orders/CustomerOrderStats";
 import { printPackList } from "@/lib/customerOrderPackListPdf";
+
+/** Sparade vyer, som listsidorna i Dynamics 365. */
+const VIEWS: SavedView[] = [
+  { id: "aktiva", label: "Aktiva beställningar", description: "Idag och framåt" },
+  { id: "idag", label: "Dagens packning", description: "Endast dagens datum" },
+  { id: "ejpackade", label: "Ej packade", description: "Opackade och pågående" },
+  { id: "avvikelser", label: "Avvikelser", description: "Ohämtat, allergi eller avbrutet" },
+];
+
 
 const nf = (v: any, d = 1) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -111,7 +127,13 @@ export default function CustomerOrders() {
   const [selected, setSelected] = useState<CustomerOrder | null>(null);
   const [openRow, setOpenRow] = useState<string | null>(null);
   const [editing, setEditing] = useState<CustomerOrder | null>(null);
+  const [view, setView] = useState("aktiva");
+  const [marked, setMarked] = useState<string[]>([]);
+  const queryClient = useQueryClient();
   const toggleRow = (id: string) => setOpenRow((cur) => (cur === id ? null : id));
+  const toggleMark = (id: string, next: boolean) =>
+    setMarked((cur) => (next ? [...new Set([...cur, id])] : cur.filter((x) => x !== id)));
+
 
 
   const { data: orders = [], isLoading } = useCustomerOrders({
@@ -147,51 +169,111 @@ export default function CustomerOrders() {
   const rowReadOnly = (o: CustomerOrder) =>
     isShop ? o.store_id !== activeStoreId : site === "production";
 
+  /** Den valda vyn filtrerar listan utan att röra serverfiltren. */
+  const viewOrders = useMemo(() => {
+    if (view === "idag") return orders.filter((o) => o.wanted_date === today());
+    if (view === "ejpackade") return orders.filter((o) => o.pack_status !== "packad");
+    if (view === "avvikelser")
+      return orders.filter(
+        (o) =>
+          isUncollected(o) ||
+          o.status === "avbruten" ||
+          !!o.allergy_note ||
+          (o.excluded_allergens || []).length > 0,
+      );
+    return orders;
+  }, [orders, view]);
+
+  const markedOrders = viewOrders.filter((o) => marked.includes(o.id));
+  const markedSum = markedOrders.reduce(
+    (s, o) => s + Number(o.total_incl_vat || o.estimated_total || 0),
+    0,
+  );
+  const allMarked = viewOrders.length > 0 && markedOrders.length === viewOrders.length;
+  const markAll = (next: boolean) => setMarked(next ? viewOrders.map((o) => o.id) : []);
+
+  /** FactBox visar öppen rad, annars enda markerade raden. */
+  const factOrder =
+    viewOrders.find((o) => o.id === openRow) ||
+    (markedOrders.length === 1 ? markedOrders[0] : null);
+
+  const commands: CommandAction[] = [
+    ...(canEdit && (isShop ? !!activeStoreId : !!effectiveStore)
+      ? [
+          {
+            key: "new",
+            label: "Ny",
+            icon: Plus,
+            primary: true,
+            onClick: () => setWizardOpen(true),
+          } as CommandAction,
+        ]
+      : []),
+    {
+      key: "edit",
+      label: "Redigera",
+      icon: Pencil,
+      disabled: !canEdit || markedOrders.length !== 1 || rowReadOnly(markedOrders[0]),
+      onClick: () => markedOrders[0] && setEditing(markedOrders[0]),
+    },
+    {
+      key: "refresh",
+      label: "Uppdatera",
+      icon: RefreshCw,
+      separatorBefore: true,
+      onClick: () => queryClient.invalidateQueries({ queryKey: ["customer-orders"] }),
+    },
+    {
+      key: "print",
+      label: "Papperslista",
+      icon: Printer,
+      disabled: viewOrders.length === 0,
+      onClick: () =>
+        printPackList({
+          orders: markedOrders.length > 0 ? markedOrders : viewOrders,
+          storeName: isShop
+            ? activeStoreName
+            : stores.find((s: any) => s.id === effectiveStore)?.name,
+          dateLabel: VIEWS.find((v) => v.id === view)?.label ?? "Aktuell lista",
+        }),
+    },
+    ...((isShop ? !!activeStoreId : !!effectiveStore)
+      ? [
+          {
+            key: "settings",
+            label: "Öppettider",
+            icon: Settings,
+            separatorBefore: true,
+            hideLabelOnMobile: true,
+            onClick: () => setSettingsOpen(true),
+          } as CommandAction,
+        ]
+      : []),
+  ];
+
+
+
   return (
-    <div className="space-y-4 p-3 sm:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h1 className="text-xl font-semibold sm:text-2xl">Kundbeställningar</h1>
-          <p className="text-sm text-muted-foreground">
-            Beställningar från privatpersoner{isShop && activeStoreName ? ` — ${activeStoreName}` : ""}.
-            Betalning sker i kassan vid hämtning.
-          </p>
-        </div>
-        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
-          {canEdit && (isShop ? !!activeStoreId : effectiveStore) && (
-            <Button className="h-12 flex-1 sm:flex-none" onClick={() => setWizardOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Ny beställning
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            className="h-12 flex-1 sm:flex-none"
-            disabled={orders.length === 0}
-            onClick={() =>
-              printPackList({
-                orders,
-                storeName: isShop
-                  ? activeStoreName
-                  : stores.find((s: any) => s.id === effectiveStore)?.name,
-                dateLabel: "Aktuell lista",
-              })
-            }
-          >
-            <Printer className="mr-2 h-4 w-4" /> Papperslista
-          </Button>
-          {(isShop ? !!activeStoreId : !!effectiveStore) && (
-            <Button
-              variant="outline"
-              className="h-12 flex-1 sm:flex-none"
-              onClick={() => setSettingsOpen(true)}
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              <span className="sm:hidden">Öppettider</span>
-              <span className="hidden sm:inline">Öppettider och kapacitet</span>
-            </Button>
-          )}
-        </div>
+    <div className="space-y-3 p-3 sm:p-6">
+      <CommandBar actions={commands} />
+
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <ViewSelector
+          title="Kundbeställningar"
+          views={VIEWS}
+          value={view}
+          onChange={(v) => {
+            setView(v);
+            setMarked([]);
+          }}
+          count={viewOrders.length}
+        />
+        <p className="text-xs text-muted-foreground">
+          Privatkunder{isShop && activeStoreName ? ` — ${activeStoreName}` : ""}. Betalning sker i
+          kassan vid hämtning.
+        </p>
       </div>
+
 
       <Tabs defaultValue="orders">
         <div className="-mx-3 overflow-x-auto px-3 pb-1 sm:mx-0 sm:px-0">
@@ -294,36 +376,137 @@ export default function CustomerOrders() {
             </Select>
           </div>
 
-          {!isLoading && orders.length === 0 ? (
+          {!isLoading && viewOrders.length === 0 ? (
             <EmptyState
-              title="Inga kundbeställningar"
-              description="Här samlas dagens och kommande beställningar från privatkunder. Skapa den första med Ny beställning."
+              title={orders.length === 0 ? "Inga kundbeställningar" : "Inga rader i den här vyn"}
+              description={
+                orders.length === 0
+                  ? "Här samlas dagens och kommande beställningar från privatkunder. Skapa den första med Ny beställning."
+                  : "Byt vy i rubriken eller ändra filtren för att se fler beställningar."
+              }
             />
           ) : (
-            <div className="space-y-4">
-              <CustomerOrderRowHeader />
-              {groupByDay(orders).map(([day, list]) => (
-                <div key={day} className="space-y-1">
-                  <div className="sticky top-0 z-20 flex items-center gap-2 rounded-md border border-border bg-muted px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground shadow-sm">
-                    <span className="truncate">{dayLabel(day)}</span>
-                    <span className="shrink-0 font-mono tabular-nums">{list.length} order</span>
-                  </div>
+            <div className="overflow-hidden rounded-sm border border-grid-line bg-card">
+              <div className="flex">
+                <div className="min-w-0 flex-1">
+                  <CustomerOrderRowHeader
+                    selectable
+                    allSelected={allMarked}
+                    onSelectAll={markAll}
+                  />
+                  {groupByDay(viewOrders).map(([day, list]) => (
+                    <div key={day}>
+                      <div className="flex items-center gap-2 border-x border-b border-grid-line bg-muted px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        <span className="truncate">{dayLabel(day)}</span>
+                        <span className="shrink-0 font-mono tabular-nums">
+                          {list.length} order
+                        </span>
+                      </div>
 
-                  {list.map((o) => (
-                    <CustomerOrderRow
-                      key={o.id}
-                      order={o}
-                      onOpen={setSelected}
-                      onEdit={canEdit ? setEditing : undefined}
-                      readOnly={rowReadOnly(o)}
-                      open={openRow === o.id}
-                      onToggle={toggleRow}
-                    />
+                      {list.map((o) => (
+                        <CustomerOrderRow
+                          key={o.id}
+                          order={o}
+                          onOpen={setSelected}
+                          onEdit={canEdit ? setEditing : undefined}
+                          readOnly={rowReadOnly(o)}
+                          open={openRow === o.id}
+                          onToggle={toggleRow}
+                          selected={marked.includes(o.id)}
+                          onSelect={toggleMark}
+                        />
+                      ))}
+                    </div>
                   ))}
                 </div>
-              ))}
+
+                <FactBox title="Orderdetaljer" empty="Markera eller öppna en rad för detaljer.">
+                  {factOrder ? (
+                    <>
+                      <FactGroup title="Kund">
+                        <div className="text-sm font-semibold">
+                          {factOrder.customers_retail?.name ||
+                            factOrder.customer_name_snapshot ||
+                            "Kund"}
+                        </div>
+                        <FactRow
+                          label="Telefon"
+                          numeric
+                          value={
+                            factOrder.customers_retail?.phone ||
+                            factOrder.customer_phone_snapshot ||
+                            "—"
+                          }
+                        />
+                        <FactRow
+                          label="Typ"
+                          value={ORDER_TYPE_LABELS[factOrder.order_type] ?? factOrder.order_type}
+                        />
+                      </FactGroup>
+
+                      <FactGroup title="Sammanfattning">
+                        <FactRow label="Ordernr" numeric value={factOrder.order_number} />
+                        <FactRow
+                          label="Status"
+                          value={ORDER_STATUS_LABELS[factOrder.status] ?? factOrder.status}
+                        />
+                        <FactRow
+                          label="Packning"
+                          value={
+                            PACK_STATUS_LABELS[factOrder.pack_status] ?? factOrder.pack_status
+                          }
+                        />
+                        <FactRow
+                          label="Rader"
+                          numeric
+                          value={
+                            (factOrder.customer_order_lines || []).filter(
+                              (l) => l.pack_status !== "struken",
+                            ).length
+                          }
+                        />
+                        <FactRow
+                          label={factOrder.total_incl_vat ? "Verkligt pris" : "Uppskattat pris"}
+                          numeric
+                          value={`${nf(
+                            factOrder.total_incl_vat || factOrder.estimated_total,
+                            2,
+                          )} kr`}
+                        />
+                      </FactGroup>
+
+                      {(factOrder.allergy_note ||
+                        (factOrder.excluded_allergens || []).length > 0) && (
+                        <div className="rounded-sm border-l-4 border-row-late-edge bg-row-late p-2.5 text-xs text-row-late-text">
+                          <div className="font-bold uppercase tracking-wide">Allergi</div>
+                          <div>
+                            {factOrder.allergy_note ||
+                              (factOrder.excluded_allergens || []).join(", ")}
+                          </div>
+                        </div>
+                      )}
+
+                      <Button
+                        variant="outline"
+                        className="h-9 w-full text-xs"
+                        onClick={() => setSelected(factOrder)}
+                      >
+                        Visa fullständigt kort
+                      </Button>
+                    </>
+                  ) : undefined}
+                </FactBox>
+              </div>
+
+              <StatusBar
+                selectedCount={markedOrders.length}
+                totalCount={viewOrders.length}
+                selectedSum={markedSum}
+                extra={VIEWS.find((v) => v.id === view)?.label}
+              />
             </div>
           )}
+
 
         </TabsContent>
 

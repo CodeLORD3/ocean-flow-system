@@ -11,6 +11,7 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   CustomerOrder,
   ORDER_STATUS_LABELS,
@@ -36,33 +37,79 @@ const weekday = (iso: string) => {
 const shortDate = (iso: string) =>
   new Date(iso + "T00:00:00").toLocaleDateString("sv-SE", { day: "numeric", month: "short" });
 
-type Tone = { row: string; edge: string };
+type Tone = {
+  row: string;
+  hover: string;
+  edge: string;
+  chip: string;
+  label: string;
+};
 
 /**
  * Hela raden tonas efter läge, som i orderlistor i affärssystem.
- * Färgen är aldrig enda bäraren: den mättade vänsterkanten och
- * statusordet i rullgardinen finns kvar.
+ * Färgen är aldrig enda bäraren: den mättade vänsterkanten och den
+ * textade statusetiketten finns kvar även i gråskala.
  */
-const rowTone = (order: CustomerOrder): Tone => {
-  if (order.status === "avbruten") return { row: "bg-row-off", edge: "bg-row-off-edge" };
-  if (isUncollected(order)) return { row: "bg-row-late", edge: "bg-row-late-edge" };
+export const rowTone = (order: CustomerOrder): Tone => {
+  if (order.status === "avbruten")
+    return {
+      row: "bg-row-off",
+      hover: "hover:bg-row-off-hover",
+      edge: "bg-row-off-edge",
+      chip: "bg-card text-row-off-text border-row-off-edge",
+      label: "Avbruten",
+    };
+  if (isUncollected(order))
+    return {
+      row: "bg-row-late",
+      hover: "hover:bg-row-late-hover",
+      edge: "bg-row-late-edge",
+      chip: "bg-card text-row-late-text border-row-late-edge",
+      label: "Ohämtad",
+    };
   if (["levererad", "avhamtad"].includes(order.status))
-    return { row: "bg-row-done", edge: "bg-row-done-edge" };
-  if (order.pack_status === "packad") return { row: "bg-row-ok", edge: "bg-row-ok-edge" };
-  if (order.pack_status === "pagaende") return { row: "bg-row-warn", edge: "bg-row-warn-edge" };
-  return { row: "bg-card", edge: "bg-border" };
+    return {
+      row: "bg-row-done",
+      hover: "hover:bg-row-done-hover",
+      edge: "bg-row-done-edge",
+      chip: "bg-card text-row-done-text border-row-done-edge",
+      label: order.status === "levererad" ? "Levererad" : "Avhämtad",
+    };
+  if (order.pack_status === "packad")
+    return {
+      row: "bg-row-ok",
+      hover: "hover:bg-row-ok-hover",
+      edge: "bg-row-ok-edge",
+      chip: "bg-card text-row-ok-text border-row-ok-edge",
+      label: "Packad",
+    };
+  if (order.pack_status === "pagaende")
+    return {
+      row: "bg-row-warn",
+      hover: "hover:bg-row-warn-hover",
+      edge: "bg-row-warn-edge",
+      chip: "bg-card text-row-warn-text border-row-warn-edge",
+      label: "Pågående",
+    };
+  return {
+    row: "bg-row-neutral",
+    hover: "hover:bg-row-neutral-hover",
+    edge: "bg-border",
+    chip: "bg-card text-muted-foreground border-grid-line",
+    label: "Ny",
+  };
 };
 
 const packTone: Record<string, string> = {
   opackad: "bg-muted text-muted-foreground",
-  pagaende: "bg-row-warn text-foreground",
-  packad: "bg-row-ok text-foreground",
+  pagaende: "bg-row-warn text-row-warn-text",
+  packad: "bg-row-ok text-row-ok-text",
 };
 
 /**
- * En orderrad som fälls ut till full information direkt i listan.
- * Byggd för att kunna användas på en telefon bakom fiskdisken:
- * stora tryckytor, tydlig text och inga dolda menyer.
+ * En orderrad i tätt rutnät med hel statuston, som en listsida i
+ * Dynamics 365. Fälls ut till full information direkt i listan och är
+ * byggd för att kunna användas på en telefon bakom fiskdisken.
  */
 export function CustomerOrderRow({
   order,
@@ -71,6 +118,8 @@ export function CustomerOrderRow({
   readOnly,
   open,
   onToggle,
+  selected,
+  onSelect,
 }: {
   order: CustomerOrder;
   onOpen: (o: CustomerOrder) => void;
@@ -78,6 +127,8 @@ export function CustomerOrderRow({
   readOnly?: boolean;
   open?: boolean;
   onToggle?: (id: string) => void;
+  selected?: boolean;
+  onSelect?: (id: string, next: boolean) => void;
 }) {
   const isOpen = !!open;
   const name = order.customers_retail?.name || order.customer_name_snapshot || "Kund";
@@ -94,46 +145,65 @@ export function CustomerOrderRow({
 
   const time = order.wanted_time ? ` ${order.wanted_time.slice(0, 5)}` : "";
 
+  const statusChip = (
+    <span
+      className={`inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-tight ${tone.chip}`}
+    >
+      {tone.label}
+    </span>
+  );
+
   return (
     <div
-      className={`overflow-hidden rounded-md border shadow-sm ${tone.row} ${
-        isOpen
-          ? "border-primary ring-2 ring-primary ring-offset-2 ring-offset-background"
-          : "border-border"
-      }`}
+      className={`overflow-hidden border-x border-b border-grid-line ${tone.row} ${
+        isOpen ? "border-primary ring-1 ring-primary" : ""
+      } ${selected && !isOpen ? "ring-1 ring-inset ring-primary" : ""}`}
     >
       <div className="flex">
-        <div className={`w-1.5 shrink-0 ${tone.edge}`} aria-hidden />
+        <div className={`w-1 shrink-0 ${tone.edge}`} aria-hidden />
+        {onSelect && (
+          <div className="hidden w-9 shrink-0 items-center justify-center border-r border-grid-line/70 sm:flex">
+            <Checkbox
+              checked={!!selected}
+              onCheckedChange={(v) => onSelect(order.id, !!v)}
+              aria-label={`Markera ${order.order_number}`}
+            />
+          </div>
+        )}
         <button
           type="button"
           onClick={() => onToggle?.(order.id)}
           aria-expanded={isOpen}
-          className="min-w-0 flex-1 px-3 py-2.5 text-left transition-colors hover:bg-foreground/[0.04] active:bg-foreground/[0.07] sm:py-2"
+          className={`min-w-0 flex-1 px-3 py-2 text-left transition-colors ${tone.hover}`}
         >
-          {/* Desktop: en kolumnrad. Mobil: två rader, kundnamnet störst. */}
-          <div className="hidden items-center gap-3 sm:flex">
+          {/* Desktop: fast kolumnraster. Mobil: två rader, kundnamnet störst. */}
+          <div className="hidden items-center gap-0 text-[13px] sm:flex">
             <span
-              className={`w-40 shrink-0 truncate font-mono text-xs tabular-nums text-muted-foreground ${
+              className={`w-28 shrink-0 truncate border-r border-grid-line/70 pr-2 font-mono text-xs tabular-nums text-muted-foreground ${
                 cancelled ? "line-through" : ""
               }`}
             >
               {order.order_number}
             </span>
-            <span className="w-36 shrink-0 font-mono text-sm tabular-nums">
+            <span className="w-24 shrink-0 border-r border-grid-line/70 px-2 font-mono text-xs tabular-nums">
               {weekday(order.wanted_date)} {shortDate(order.wanted_date)}
               {time}
             </span>
-            <span className="w-20 shrink-0 text-sm text-muted-foreground">
-              {active.length} {active.length === 1 ? "vara" : "varor"}
+            <span className="w-16 shrink-0 border-r border-grid-line/70 px-2 font-mono tabular-nums text-muted-foreground">
+              {active.length} st
             </span>
-            <span className="min-w-0 flex-1 truncate text-sm font-semibold">{name}</span>
-            {hasAllergy && (
-              <AlertTriangle className="h-4 w-4 shrink-0 text-destructive" aria-label="Allergi" />
-            )}
-
-            {readOnly && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
-            <span className="w-28 shrink-0 text-right font-mono text-sm font-semibold tabular-nums">
-              {nf(total, 2)} kr
+            <span className="min-w-[6rem] flex-1 truncate border-r border-grid-line/70 px-2 font-semibold">
+              {name}
+            </span>
+            <span className="flex w-24 shrink-0 items-center gap-1 border-r border-grid-line/70 px-2">
+              {statusChip}
+              {hasAllergy && (
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-destructive" aria-label="Allergi" />
+              )}
+              {readOnly && <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />}
+            </span>
+            <span className="w-24 shrink-0 px-2 text-right font-mono font-semibold tabular-nums">
+              {nf(total, 2)}
             </span>
             <ChevronDown
               className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${
@@ -169,9 +239,12 @@ export function CustomerOrderRow({
               )}
               {readOnly && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
             </div>
-            <div className="mt-0.5 font-mono text-xs tabular-nums text-muted-foreground">
-              {weekday(order.wanted_date)} {shortDate(order.wanted_date)}
-              {time} · {active.length} {active.length === 1 ? "vara" : "varor"}
+            <div className="mt-1 flex items-center gap-2 font-mono text-xs tabular-nums text-muted-foreground">
+              {statusChip}
+              <span>
+                {weekday(order.wanted_date)} {shortDate(order.wanted_date)}
+                {time} · {active.length} st
+              </span>
             </div>
           </div>
         </button>
@@ -180,7 +253,7 @@ export function CustomerOrderRow({
       {isOpen && (
         <div className="space-y-3 border-t-2 border-primary bg-card p-3">
           {/* Tydlig rubrik så det aldrig är tvekan om vilken order som är öppen. */}
-          <div className="flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-primary-foreground">
+          <div className="flex items-center gap-2 rounded-sm bg-primary px-3 py-2 text-primary-foreground">
             <Package className="h-5 w-5 shrink-0" />
             <span className="min-w-0 flex-1 truncate text-base font-semibold">{name}</span>
             <span className="shrink-0 font-mono text-xs tabular-nums opacity-90">
@@ -190,7 +263,7 @@ export function CustomerOrderRow({
 
           <div className="flex flex-wrap items-center gap-1.5 text-xs">
             <Badge variant="outline">{ORDER_STATUS_LABELS[order.status] ?? order.status}</Badge>
-            <span className={`rounded px-2 py-0.5 ${packTone[order.pack_status] ?? ""}`}>
+            <span className={`rounded-sm px-2 py-0.5 ${packTone[order.pack_status] ?? ""}`}>
               {PACK_STATUS_LABELS[order.pack_status] ?? order.pack_status}
               {packedCount > 0 && active.length > 0 ? ` ${packedCount}/${active.length}` : ""}
             </span>
@@ -200,12 +273,8 @@ export function CustomerOrderRow({
             {order.category === "catering" && <Badge variant="secondary">Catering</Badge>}
           </div>
 
-
-
-
           <div className="grid gap-2 text-sm sm:grid-cols-2">
             <div className="space-y-1">
-
               {phone && (
                 <a
                   href={`tel:${phone}`}
@@ -231,7 +300,7 @@ export function CustomerOrderRow({
           </div>
 
           {(order.allergy_note || allergens.length > 0) && (
-            <div className="space-y-1.5 rounded-md border border-destructive/40 bg-destructive/10 p-2.5 text-sm">
+            <div className="space-y-1.5 rounded-sm border border-destructive/40 bg-destructive/10 p-2.5 text-sm">
               {order.allergy_note && (
                 <div className="font-semibold">Allergi: {order.allergy_note}</div>
               )}
@@ -248,7 +317,7 @@ export function CustomerOrderRow({
           )}
 
           {readOnly ? (
-            <ul className="divide-y divide-border rounded-md border border-border">
+            <ul className="divide-y divide-grid-line rounded-sm border border-grid-line">
               {lines.map((l) => {
                 const label = (l.products?.name || l.free_text_name || "Vara") as string;
                 const struck = l.pack_status === "struken";
@@ -282,12 +351,12 @@ export function CustomerOrderRow({
           )}
 
           {order.note && (
-            <div className="rounded-md bg-muted/50 p-2.5 text-sm text-muted-foreground">
+            <div className="rounded-sm bg-muted/50 p-2.5 text-sm text-muted-foreground">
               {order.note}
             </div>
           )}
 
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-muted/50 p-2.5 text-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm bg-muted/50 p-2.5 text-sm">
             <span className="text-muted-foreground">
               {order.total_incl_vat ? "Verkligt pris" : "Uppskattat pris"}
             </span>
@@ -308,7 +377,6 @@ export function CustomerOrderRow({
               <ExternalLink className="ml-2 h-4 w-4 opacity-70" />
             </Button>
           </div>
-
         </div>
       )}
     </div>
@@ -316,15 +384,36 @@ export function CustomerOrderRow({
 }
 
 /** Kolumnrubrik som matchar radens desktoplayout. */
-export function CustomerOrderRowHeader() {
+export function CustomerOrderRowHeader({
+  selectable,
+  allSelected,
+  onSelectAll,
+}: {
+  selectable?: boolean;
+  allSelected?: boolean;
+  onSelectAll?: (next: boolean) => void;
+}) {
   return (
-    <div className="hidden items-center gap-3 px-3 pb-1 pl-[1.125rem] text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:flex">
-      <span className="w-40 shrink-0">Order</span>
-      <span className="w-36 shrink-0">Datum</span>
-      <span className="w-20 shrink-0">Antal</span>
-      <span className="min-w-0 flex-1">Kund</span>
-      <span className="w-28 shrink-0 text-right">Summa</span>
-      <span className="w-4 shrink-0" />
+    <div className="hidden items-center border border-grid-line bg-grid-head text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:flex">
+      <span className="w-1 shrink-0" aria-hidden />
+      {selectable && (
+        <span className="flex w-9 shrink-0 items-center justify-center border-r border-grid-line py-1.5">
+          <Checkbox
+            checked={!!allSelected}
+            onCheckedChange={(v) => onSelectAll?.(!!v)}
+            aria-label="Markera alla"
+          />
+        </span>
+      )}
+      <span className="flex min-w-0 flex-1 items-center px-3 py-1.5">
+        <span className="w-28 shrink-0 border-r border-grid-line pr-2">Ordernr</span>
+        <span className="w-24 shrink-0 border-r border-grid-line px-2">Datum</span>
+        <span className="w-16 shrink-0 border-r border-grid-line px-2">Antal</span>
+        <span className="min-w-[6rem] flex-1 border-r border-grid-line px-2">Kund</span>
+        <span className="w-24 shrink-0 border-r border-grid-line px-2">Status</span>
+        <span className="w-24 shrink-0 px-2 text-right">Summa (kr)</span>
+        <span className="w-4 shrink-0" />
+      </span>
     </div>
   );
 }
