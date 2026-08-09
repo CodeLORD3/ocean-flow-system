@@ -20,6 +20,8 @@ import {
   isUncollected,
 } from "@/lib/customerOrders";
 import { allergenLabel } from "@/lib/catering";
+import { InlineOrderPacking } from "./InlineOrderPacking";
+
 
 const nf = (v: unknown, d = 1) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
