@@ -55,6 +55,7 @@ import Arrivals from "@/pages/Arrivals";
 import ExternalProduction from "@/pages/ExternalProduction";
 
 import WasteReports from "@/pages/WasteReports";
+import CustomerOrders from "@/pages/CustomerOrders";
 import TraceabilityPage from "@/pages/TraceabilityPage";
 import { NoAccessView } from "@/components/NoAccessView";
 import { useSite } from "@/contexts/SiteContext";
@@ -68,6 +69,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/": { component: <Dashboard /> },
   "/inventory": { component: <InventoryRouter /> },
   "/orders": { component: <OrdersRouter /> },
+  "/customer-orders": { component: <CustomerOrders /> },
   "/suppliers": { component: <Suppliers /> },
   "/customers": { component: <Customers /> },
   "/stores": { component: <Stores /> },
