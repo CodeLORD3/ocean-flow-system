@@ -171,11 +171,22 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
       : {};
 
 
-  const Card = ({ n, className }: { n: Node; className?: string }) => {
+  const Card = ({
+    n,
+    className,
+    selectable = false,
+  }: {
+    n: Node;
+    className?: string;
+    selectable?: boolean;
+  }) => {
     const Icon = LEVEL_ICON[n.level];
     const totalQty = n.rows.reduce((a, r) => a + qtyOf(r), 0);
     const totalVal = n.rows.reduce((a, r) => a + valueOf(r), 0);
     const isOpen = open === n.key;
+    const canSelect = selectable && canMove;
+    const rowsWithQty = n.rows.filter((r: any) => qtyOf(r) > 0);
+    const allChecked = rowsWithQty.length > 0 && rowsWithQty.every((r: any) => selected[r.id]);
     return (
       <div className={cn("min-w-0", className)}>
         <button
@@ -212,10 +223,64 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
                 Inget lager här just nu.
               </p>
             ) : (
-              <div className="max-h-64 overflow-y-auto">
+              <>
+                {canSelect && (
+                  <div className="mb-2 flex flex-wrap items-center gap-1.5">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-[11px]"
+                      disabled={!!moving || !selectedRows.length}
+                      onClick={() => moveTo("grossistlager")}
+                    >
+                      {moving === "grossistlager" ? (
+                        <Loader2 className="mr-1 h-3 w-3 animate-spin" aria-hidden />
+                      ) : (
+                        <Warehouse className="mr-1 h-3 w-3" aria-hidden />
+                      )}
+                      Flytta till grossistlager
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-[11px]"
+                      disabled={!!moving || !selectedRows.length}
+                      onClick={() => moveTo("tillverkningslager")}
+                    >
+                      {moving === "tillverkningslager" ? (
+                        <Loader2 className="mr-1 h-3 w-3 animate-spin" aria-hidden />
+                      ) : (
+                        <Factory className="mr-1 h-3 w-3" aria-hidden />
+                      )}
+                      Flytta till produktionslager
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-[11px]"
+                      disabled={!!moving || !rowsWithQty.length}
+                      onClick={() =>
+                        setSelected(
+                          allChecked
+                            ? {}
+                            : Object.fromEntries(rowsWithQty.map((r: any) => [r.id, true])),
+                        )
+                      }
+                    >
+                      {allChecked ? "Avmarkera alla" : "Markera hela lagret"}
+                    </Button>
+                    <span className="text-[10px] text-muted-foreground">
+                      {selectedRows.length
+                        ? `${selectedRows.length} rad(er) markerade — dra dem till grossist eller produktion`
+                        : "Bocka i rader och dra dem, eller använd knapparna"}
+                    </span>
+                  </div>
+                )}
+                <div className="max-h-64 overflow-y-auto">
                 <table className="w-full text-[11px]">
                   <thead className="sticky top-0 bg-muted/60 text-muted-foreground">
                     <tr>
+                      {canSelect && <th className="w-6 px-1 py-1" />}
                       <th className="px-1 py-1 text-left font-medium">Artikel</th>
                       <th className="px-1 py-1 text-left font-medium">Plats</th>
                       <th className="px-1 py-1 text-right font-medium">Antal</th>
@@ -227,7 +292,30 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
                       .slice()
                       .sort((a, b) => qtyOf(b) - qtyOf(a))
                       .map((r: any) => (
-                        <tr key={r.id} className="border-t border-border/60">
+                        <tr
+                          key={r.id}
+                          className={cn(
+                            "border-t border-border/60",
+                            canSelect && selected[r.id] && "bg-primary/10",
+                            canSelect && qtyOf(r) > 0 && "cursor-grab",
+                          )}
+                          draggable={canSelect && qtyOf(r) > 0}
+                          onDragStart={() => {
+                            if (!selected[r.id]) setSelected((cur) => ({ ...cur, [r.id]: true }));
+                          }}
+                        >
+                          {canSelect && (
+                            <td className="px-1 py-1">
+                              <Checkbox
+                                checked={!!selected[r.id]}
+                                disabled={qtyOf(r) <= 0}
+                                onCheckedChange={(v) =>
+                                  setSelected((cur) => ({ ...cur, [r.id]: !!v }))
+                                }
+                                aria-label={`Markera ${r.products?.name ?? "rad"}`}
+                              />
+                            </td>
+                          )}
                           <td className="px-1 py-1">
                             <span className="block truncate">{r.products?.name ?? "—"}</span>
                           </td>
@@ -246,8 +334,10 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
                       ))}
                   </tbody>
                 </table>
-              </div>
+                </div>
+              </>
             )}
+
           </div>
         )}
       </div>
