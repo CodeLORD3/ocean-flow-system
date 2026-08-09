@@ -175,7 +175,7 @@ export function CustomerOrderRow({
       </div>
 
       {isOpen && (
-        <div className="space-y-3 border-t border-border bg-card p-3">
+        <div className="space-y-3 border-t-2 border-primary bg-card p-3">
           <div className="flex flex-wrap items-center gap-1.5 text-xs">
             <Badge variant="outline">{ORDER_STATUS_LABELS[order.status] ?? order.status}</Badge>
             <span className={`rounded px-2 py-0.5 ${packTone[order.pack_status] ?? ""}`}>
@@ -186,10 +186,8 @@ export function CustomerOrderRow({
               {ORDER_TYPE_LABELS[order.order_type] ?? order.order_type}
             </Badge>
             {order.category === "catering" && <Badge variant="secondary">Catering</Badge>}
-            {needs.length > 0 && (
-              <span className="rounded bg-row-warn px-2 py-0.5">{needs.length} köps färskt</span>
-            )}
           </div>
+
 
           <div className="grid gap-2 text-sm sm:grid-cols-2">
             <div className="space-y-1">
