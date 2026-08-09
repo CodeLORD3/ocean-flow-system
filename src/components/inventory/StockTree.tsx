@@ -59,7 +59,10 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [moving, setMoving] = useState<null | "grossistlager" | "tillverkningslager">(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
+  /** Rader som följer med det pågående draget (alla ibockade rader). */
+  const dragRowsRef = useRef<any[] | null>(null);
   const qc = useQueryClient();
+
   const { data: transfers = [] } = useTransferOrders();
 
 
