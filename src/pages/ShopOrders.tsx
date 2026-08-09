@@ -801,9 +801,68 @@ export default function ShopOrders() {
         </Card>
       )}
 
+      {/* Produktkort */}
+      <Dialog open={!!previewProduct} onOpenChange={(o) => !o && setPreviewProduct(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-base">{previewProduct?.name}</DialogTitle>
+            <DialogDescription className="text-xs font-mono">
+              {previewProduct?.sku} · {previewProduct?.unit}
+            </DialogDescription>
+          </DialogHeader>
+          {previewProduct?.image_url ? (
+            <img
+              src={previewProduct.image_url}
+              alt={previewProduct.name}
+              className="w-full h-48 object-cover rounded-md border border-border"
+            />
+          ) : (
+            <div className="w-full h-48 rounded-md border border-border bg-muted flex items-center justify-center text-xs text-muted-foreground">
+              Ingen bild uppladdad
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <div className="text-muted-foreground">Kategori</div>
+              <div className="font-medium text-foreground">{previewProduct?.category || "–"}</div>
+            </div>
+            <div>
+              <div className="text-muted-foreground">Enhet</div>
+              <div className="font-medium text-foreground">{previewProduct?.unit || "–"}</div>
+            </div>
+            {previewProduct?.species && (
+              <div>
+                <div className="text-muted-foreground">Art</div>
+                <div className="font-medium text-foreground">{previewProduct.species}</div>
+              </div>
+            )}
+            {previewProduct?.origin && (
+              <div>
+                <div className="text-muted-foreground">Ursprung</div>
+                <div className="font-medium text-foreground">{previewProduct.origin}</div>
+              </div>
+            )}
+          </div>
+          {previewProduct?.description && (
+            <p className="text-xs text-muted-foreground">{previewProduct.description}</p>
+          )}
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setPreviewProduct(null)}>Stäng</Button>
+            <Button
+              size="sm"
+              className="gap-1.5"
+              onClick={() => { const p = previewProduct; setPreviewProduct(null); if (p) addProduct(p); }}
+            >
+              <Plus className="h-3.5 w-3.5" /> Lägg till
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </motion.div>
   );
 }
+
 
 /* ---- Inline edit component for order detail ---- */
 function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays, isDateDisabled, inline }: {
