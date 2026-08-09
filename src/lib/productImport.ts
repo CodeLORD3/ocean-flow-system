@@ -2,6 +2,7 @@ import * as XLSX from "xlsx";
 import { PRODUCT_CATEGORIES, normalizeCategoryKey } from "@/lib/productCategories";
 import { skuKey } from "@/lib/asciiFold";
 import { normalizeSpeciesGroup } from "@/lib/speciesGroups";
+import { parseAllergenCell } from "@/lib/allergens";
 
 export const IMPORT_COLUMNS = [
   "sku",
@@ -24,7 +25,10 @@ export const IMPORT_COLUMNS = [
   "latin_name",
   "species_group",
   "fao_code",
+  "allergens",
+  "may_contain",
 ] as const;
+
 
 export type ImportColumn = (typeof IMPORT_COLUMNS)[number];
 
