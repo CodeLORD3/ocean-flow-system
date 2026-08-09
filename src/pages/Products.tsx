@@ -351,6 +351,8 @@ export default function Products() {
     latin_name: "",
     requires_processing: false,
     allergens: [] as string[],
+    may_contain: [] as string[],
+    allergens_checked: false,
 
   });
 
@@ -425,6 +427,8 @@ export default function Products() {
       latin_name: "",
       requires_processing: false,
       allergens: [],
+      may_contain: [],
+      allergens_checked: false,
 
     });
     setDialogOpen(true);
@@ -449,6 +453,8 @@ export default function Products() {
       latin_name: (p as any).latin_name || "",
       requires_processing: Boolean((p as any).requires_processing),
       allergens: ((p as any).allergens || []) as string[],
+      may_contain: ((p as any).may_contain || []) as string[],
+      allergens_checked: Boolean((p as any).allergens_checked),
 
     });
     setDialogOpen(true);
@@ -504,6 +510,8 @@ export default function Products() {
       latin_name: form.latin_name.trim() || null,
       requires_processing: form.requires_processing,
       allergens: form.allergens || [],
+      may_contain: form.may_contain || [],
+      allergens_checked: true,
 
     };
 
