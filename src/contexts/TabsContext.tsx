@@ -40,7 +40,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/checklist": "Checklista",
   "/dagsrapport": "Dagsrapport",
   "/vehicles": "Bilar & Maskiner",
-  "/production": "Filé/Tillverkning",
+  "/production": "Produktion",
   "/stock-movements": "Lagerrörelser",
   "/traceability": "Spårbarhet",
   "/coverage": "Datakvalitet",

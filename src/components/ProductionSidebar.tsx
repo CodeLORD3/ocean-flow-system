@@ -63,9 +63,7 @@ const salesNav = [
 ];
 
 const produktionSectionNav = [
-  { title: "Filé/Tillverkning", url: "/production", icon: Scissors },
-  { title: "Produktionsschema", url: "/production-schedule", icon: CalendarDays },
-  { title: "Produktionsrapportering", url: "/production-reporting", icon: ClipboardList },
+  { title: "Produktion", url: "/production", icon: Scissors },
 ];
 
 const financeNav = [

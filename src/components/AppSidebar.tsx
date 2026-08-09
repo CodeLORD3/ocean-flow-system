@@ -79,9 +79,7 @@ const purchaseNav = [
 ];
 
 const productionNav = [
-  { title: "Filé/Tillverkning", url: "/production", icon: Scissors },
-  { title: "Produktionsschema", url: "/production-schedule", icon: CalendarDays },
-  { title: "Produktionsrapportering", url: "/production-reporting", icon: FileText },
+  { title: "Produktion", url: "/production", icon: Scissors },
 ];
 
 const inventoryNav = [

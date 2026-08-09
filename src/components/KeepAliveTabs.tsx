@@ -5,6 +5,7 @@ import { useTabs } from "@/contexts/TabsContext";
 import Dashboard from "@/pages/Dashboard";
 import Inventory from "@/pages/Inventory";
 import InventoryRouter from "@/pages/InventoryRouter";
+import ProductionRouter from "@/pages/ProductionRouter";
 import OrdersRouter from "@/pages/OrdersRouter";
 import Receiving from "@/pages/Receiving";
 import Suppliers from "@/pages/Suppliers";
@@ -108,7 +109,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/chat": { component: <Chat /> },
   "/checklist": { component: <Checklist /> },
   "/dagsrapport": { component: <DailyReport /> },
-  "/production": { component: <Production /> },
+  "/production": { component: <ProductionRouter /> },
   "/coverage": { component: <DataCoverage /> },
   "/stock-movements": { component: <StockMovementsPage /> },
   "/stock-transfers": { component: <StockTransfers /> },
