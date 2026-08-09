@@ -32,6 +32,7 @@ import { useStoreActivity } from "@/hooks/useStoreActivity";
 import { useState } from "react";
 import { ChecklistCard } from "@/components/checklist/ChecklistCard";
 import { DailyReportCard } from "@/components/dashboard/DailyReportCard";
+import { PurchaseWeekCard } from "@/components/dashboard/PurchaseWeekCard";
 import { OnDutyStaff } from "@/components/staff/OnDutyStaff";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -323,6 +324,9 @@ export default function OrganisationOverview() {
           />
         </div>
       )}
+
+      {/* Grossist/Admin: veckoschema för inköp */}
+      {!isShop && <PurchaseWeekCard />}
 
       {/* Shop: photos + chat */}
       {isShop && (
