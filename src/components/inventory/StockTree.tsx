@@ -1,7 +1,13 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, Truck, Factory, Warehouse, Store, ShoppingBasket } from "lucide-react";
+import { ChevronDown, Truck, Factory, Warehouse, Store, ShoppingBasket, Loader2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
 import { LEVEL_DESCRIPTION, LEVEL_LABEL, type LocationLevel } from "@/lib/locations";
+import { grossistlagerId, tillverkningslagerId } from "@/lib/locations";
+import { lotBalancesAtLocation, transferStock } from "@/lib/stockLedger";
 import { useTransferOrders, INCOMING_STATUSES } from "@/hooks/useTransferOrders";
 
 interface StockTreeProps {
@@ -12,7 +18,10 @@ interface StockTreeProps {
   showValue?: boolean;
   /** Klick på nod filtrerar även den vanliga tabellen på nivån. */
   onFocusLevel?: (level: LocationLevel) => void;
+  /** Grossistpersonal kan flytta rader från inköpslagret. */
+  canMove?: boolean;
 }
+
 
 type Node = {
   key: string;
