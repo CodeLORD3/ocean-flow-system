@@ -162,6 +162,8 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
   const [renameValue, setRenameValue] = useState("");
   const setWeekdays = useSetTemplateWeekdays();
   const { staff } = useStaffAuth();
+  const { switchTab } = useTabs();
+
   const isAdmin = ((staff?.portal_access ?? []) as string[]).includes("admin");
 
   const todays = useMemo(() => templates.filter((t) => templateAppliesOn(t, iso)), [templates, iso]);
