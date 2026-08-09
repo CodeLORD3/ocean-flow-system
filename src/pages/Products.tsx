@@ -1,4 +1,6 @@
 import { useState, useCallback, useMemo, useRef } from "react";
+import { ALLERGENS } from "@/lib/catering";
+
 import {
   Plus,
   Search,
