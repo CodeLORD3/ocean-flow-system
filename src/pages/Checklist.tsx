@@ -436,7 +436,7 @@ function ShopChecklistLanding({ storeId, storeName }: { storeId: string; storeNa
             <p className="text-xs text-muted-foreground">Laddar checklistor…</p>
           ) : todays.length === 0 ? (
             <p className="text-xs text-muted-foreground">
-              Ingen checklista är schemalagd för {weekdayName(iso).toLowerCase()}. Se veckoschemat nedan.
+              Ingen checklista är schemalagd för {weekdayName(iso).toLowerCase()}. Öppna kalenderikonen högst upp för att ändra veckoschemat.
             </p>
           ) : (
             todays.map((t) => listRow(t))
