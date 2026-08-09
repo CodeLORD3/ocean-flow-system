@@ -3,7 +3,7 @@ import { displayOrderWeek } from "@/lib/orderWeek";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Plus, Search, Clock, CheckCircle2, Truck, XCircle, X, Package,
-  Archive, ListChecks, History, CalendarIcon, Pencil, Send, FileText, Copy, Eye,
+  Archive, CalendarIcon, Pencil, Send, FileText, Copy, Eye,
 } from "lucide-react";
 import { ProductThumb } from "@/components/products/ProductThumb";
 import DeliveryNote from "@/components/DeliveryNote";
@@ -15,7 +15,6 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -469,7 +468,6 @@ export default function ShopOrders() {
     setDesiredDeliveryDate(undefined);
   };
 
-  const pending = liveOrders.filter((o: any) => o.status === "Ny" || o.status === "Pågående").length;
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
@@ -485,66 +483,18 @@ export default function ShopOrders() {
         </Button>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="shadow-card"><CardContent className="p-3">
-          <p className="text-[10px] text-muted-foreground">Aktiva ordrar</p>
-          <p className="text-xl font-heading font-bold text-foreground">{liveOrders.length}</p>
-        </CardContent></Card>
-        <Card className="shadow-card"><CardContent className="p-3">
-          <p className="text-[10px] text-muted-foreground">Pågående</p>
-          <p className="text-xl font-heading font-bold text-warning">{pending}</p>
-        </CardContent></Card>
-        <Card className="shadow-card"><CardContent className="p-3">
-          <p className="text-[10px] text-muted-foreground">Levererade / Arkiverade</p>
-          <p className="text-xl font-heading font-bold text-success">{doneOrders.length}</p>
-        </CardContent></Card>
-        <Card className="shadow-card"><CardContent className="p-3">
-          <p className="text-[10px] text-muted-foreground">Totalt alla</p>
-          <p className="text-xl font-heading font-bold text-foreground">{orders.length}</p>
-        </CardContent></Card>
-      </div>
+      {/* Aktiva beställningar — tidigare ordrar visas inte i butiksportalen */}
+      {!creatingOrder && (
+        <OrderTable
+          orders={liveOrders}
+          products={products}
+          toast={toast}
+          allowedWeekdays={allowedWeekdays}
+          isDateDisabled={isDateDisabled}
+          emptyMsg="Inga aktiva beställningar just nu. Klicka &quot;Ny beställning&quot; för att börja."
+        />
+      )}
 
-      <Tabs defaultValue="live" className="space-y-3">
-        <TabsList className="h-8">
-          <TabsTrigger value="live" className="text-xs h-7 gap-1"><ListChecks className="h-3 w-3" /> Aktiva ({liveOrders.length})</TabsTrigger>
-          <TabsTrigger value="done" className="text-xs h-7 gap-1"><Archive className="h-3 w-3" /> Levererade / Arkiverade ({doneOrders.length})</TabsTrigger>
-          <TabsTrigger value="all" className="text-xs h-7 gap-1"><History className="h-3 w-3" /> Alla ordrar ({orders.length})</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="live">
-          <OrderTable
-            orders={liveOrders}
-            products={products}
-            toast={toast}
-            allowedWeekdays={allowedWeekdays}
-            isDateDisabled={isDateDisabled}
-            emptyMsg="Inga aktiva beställningar just nu."
-          />
-        </TabsContent>
-
-        <TabsContent value="done">
-          <OrderTable
-            orders={doneOrders}
-            products={products}
-            toast={toast}
-            allowedWeekdays={allowedWeekdays}
-            isDateDisabled={isDateDisabled}
-            emptyMsg="Inga levererade eller arkiverade ordrar."
-          />
-        </TabsContent>
-
-        <TabsContent value="all">
-          <OrderTable
-            orders={orders}
-            products={products}
-            toast={toast}
-            allowedWeekdays={allowedWeekdays}
-            isDateDisabled={isDateDisabled}
-            emptyMsg="Inga beställningar ännu. Klicka &quot;Ny beställning&quot; för att börja."
-          />
-        </TabsContent>
-      </Tabs>
 
       {/* Inline order creation view */}
       {creatingOrder && (
