@@ -198,6 +198,10 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                         </table>
                       </>
                     )}
+                    <div className="mt-3 border-t border-border pt-2">
+                      <LotDocumentsPanel lotId={lot.id} />
+                    </div>
+
                   </div>
                 )}
               </CardContent>
