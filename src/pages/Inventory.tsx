@@ -66,6 +66,7 @@ import {
 import { useSite } from "@/contexts/SiteContext";
 import { canSeeCosts } from "@/lib/pageAccess";
 import LevelSelector, { type LevelTotals } from "@/components/inventory/LevelSelector";
+import StockTree from "@/components/inventory/StockTree";
 import {
   LEVEL_ORDER,
   LEVEL_LABEL,
@@ -1396,17 +1397,37 @@ export default function Inventory() {
         </div>
       </div>
 
-      {/* Fem nivåer i flödesordning. Låsta nivåer visar saldo — se men inte röra. */}
+      {/* Grossist/Admin: interaktivt lagerträd. Butik: nivåväljare. */}
       <div className="space-y-2">
-        <LevelSelector
-          available={allowedLevels}
-          visible={shownLevels}
-          value={level}
-          onChange={setLevel}
-          totals={levelTotals}
-          lockedReason={lockedReason}
-          showValue={showCosts}
-        />
+        {isGrossist ? (
+          <StockTree
+            stock={allStock as any[]}
+            stores={(() => {
+              // Bara enheter som faktiskt har ett butikslager — grossistenheten
+              // hör hemma i grossist-/produktionsnoderna, inte bland butikerna.
+              const withShop = new Set(
+                (locations as any[])
+                  .filter((l: any) => l.location_type === "butik" && l.store_id)
+                  .map((l: any) => l.store_id),
+              );
+              return (stores as any[])
+                .filter((s: any) => withShop.has(s.id))
+                .map((s: any) => ({ id: s.id, name: s.name }));
+            })()}
+            showValue={showCosts}
+            onFocusLevel={(l) => setLevel(l)}
+          />
+        ) : (
+          <LevelSelector
+            available={allowedLevels}
+            visible={shownLevels}
+            value={level}
+            onChange={setLevel}
+            totals={levelTotals}
+            lockedReason={lockedReason}
+            showValue={showCosts}
+          />
+        )}
         {level !== "all" && (levelTotals[level]?.quantityKg ?? 0) === 0 && (
           <p className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-xs text-muted-foreground">
             <span className="font-semibold text-foreground">

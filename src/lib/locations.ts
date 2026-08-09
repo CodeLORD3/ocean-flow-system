@@ -246,8 +246,8 @@ export function visibleLevels(site: string | null | undefined): LocationLevel[] 
 export function manageableLevels(site: string | null | undefined): LocationLevel[] {
   // site: "wholesale" = Admin, "production" = Grossist, "shop" = Butik.
   if (site === "wholesale") return [...LEVEL_ORDER];
-  if (site === "production")
-    return ["inkopslager", "grossistlager", "tillverkningslager", "leveranslager"];
+  // Grossisten ser och hanterar hela kedjan, även butikslagren.
+  if (site === "production") return [...LEVEL_ORDER];
   // Butiksportal: butiken hanterar sitt eget lager och tar emot leveranser.
   return ["leveranslager", "butik"];
 }
