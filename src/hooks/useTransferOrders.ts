@@ -31,6 +31,11 @@ export interface TransferOrderRow {
   approved_out_at: string | null;
   approved_in_at: string | null;
   created_at: string;
+  catch_certificate_ref?: string | null;
+  catch_cert_validated?: string | null;
+  reexport_cert?: string | null;
+  export_country?: string | null;
+  seal_number?: string | null;
   from_location?: { name: string; location_type: string } | null;
   to_location?: { name: string; location_type: string; store_id?: string | null } | null;
   transfer_order_lines?: any[];
@@ -46,7 +51,7 @@ export function useTransferOrders(locationIds?: string[]) {
           `*,
            from_location:storage_locations!transfer_orders_from_location_id_fkey(name, location_type),
            to_location:storage_locations!transfer_orders_to_location_id_fkey(name, location_type, store_id),
-           transfer_order_lines(*, products(name, sku, unit), lots(lot_number))`,
+           transfer_order_lines(*, products(name, sku, unit, hs_code, export_documentation_required), lots(lot_number, species_fao_code, latin_name, catch_area, fishing_gear, vessel_name, vessel_reg, catch_date_from, catch_date_to, incoming_catch_cert, statistical_doc, seal_number, fishing_trip_id))`,
         )
         .order("created_at", { ascending: false })
         .limit(300);
@@ -173,5 +178,33 @@ export function useWasteReports(locationIds?: string[]) {
       const allowed = new Set(locationIds);
       return rows.filter((r) => allowed.has(r.location_id));
     },
+  });
+}
+
+/** Sparar exportuppgifter på en utleverans. Varning, aldrig spärr. */
+export function useSaveExportDocumentation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      orderId: string;
+      catchCertificateRef?: string | null;
+      catchCertValidated?: string | null;
+      reexportCert?: string | null;
+      exportCountry?: string | null;
+      sealNumber?: string | null;
+    }) => {
+      const { error } = await supabase
+        .from("transfer_orders" as any)
+        .update({
+          catch_certificate_ref: input.catchCertificateRef || null,
+          catch_cert_validated: input.catchCertValidated || null,
+          reexport_cert: input.reexportCert || null,
+          export_country: input.exportCountry || null,
+          seal_number: input.sealNumber || null,
+        })
+        .eq("id", input.orderId);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["transfer_orders"] }),
   });
 }

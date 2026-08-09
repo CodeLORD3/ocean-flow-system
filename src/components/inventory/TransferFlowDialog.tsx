@@ -12,15 +12,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Printer, ArrowRight, Check, X } from "lucide-react";
+import { Printer, ArrowRight, Check, X, AlertTriangle, FileSpreadsheet } from "lucide-react";
 import { LEVEL_LABEL, type LocationLevel } from "@/lib/locations";
 import { openTransferPdf } from "@/lib/transferPdf";
+import ExportDossierDialog from "@/components/inventory/ExportDossierDialog";
 import {
   useApproveInbound,
   useApproveOutbound,
   useMarkPicklistPrinted,
   useRegisterPicking,
   useRejectTransfer,
+  useSaveExportDocumentation,
   type TransferOrderRow,
 } from "@/hooks/useTransferOrders";
 
@@ -72,6 +74,14 @@ export default function TransferFlowDialog({ order, onOpenChange }: TransferFlow
   const [pick, setPick] = useState<Record<string, { qty: string; reason: string }>>({});
   const [recv, setRecv] = useState<Record<string, { qty: string; reason: string }>>({});
   const [rejectReason, setRejectReason] = useState("");
+  const [showDossier, setShowDossier] = useState(false);
+  const [exportForm, setExportForm] = useState({
+    ref: "",
+    validated: "",
+    reexport: "",
+    country: "",
+    seal: "",
+  });
 
   useEffect(() => {
     if (!order) return;
@@ -90,6 +100,13 @@ export default function TransferFlowDialog({ order, onOpenChange }: TransferFlow
     setPick(p);
     setRecv(r);
     setRejectReason("");
+    setExportForm({
+      ref: order.catch_certificate_ref ?? "",
+      validated: order.catch_cert_validated ?? "",
+      reexport: order.reexport_cert ?? "",
+      country: order.export_country ?? "",
+      seal: order.seal_number ?? "",
+    });
   }, [order?.id, lines.length]);
 
   const printed = useMarkPicklistPrinted();
@@ -97,9 +114,29 @@ export default function TransferFlowDialog({ order, onOpenChange }: TransferFlow
   const outbound = useApproveOutbound();
   const inbound = useApproveInbound();
   const reject = useRejectTransfer();
+  const saveExport = useSaveExportDocumentation();
 
   if (!order) return null;
   const status = order.status;
+  const exportRelevant = lines.some((l) => l.products?.export_documentation_required);
+  const missingValidation = exportRelevant && !exportForm.validated;
+
+  const doSaveExport = async () => {
+    try {
+      await saveExport.mutateAsync({
+        orderId: order.id,
+        catchCertificateRef: exportForm.ref,
+        catchCertValidated: exportForm.validated,
+        reexportCert: exportForm.reexport,
+        exportCountry: exportForm.country,
+        sealNumber: exportForm.seal,
+      });
+      toast.success("Exportuppgifterna är sparade.");
+    } catch (e: any) {
+      toast.error(e.message || "Exportuppgifterna kunde inte sparas.");
+    }
+  };
+
 
   const pdfLines = lines.map((l) => ({
     productName: l.products?.name ?? "Produkt",
@@ -326,7 +363,93 @@ export default function TransferFlowDialog({ order, onOpenChange }: TransferFlow
           </div>
         )}
 
+        {exportRelevant && (
+          <div className="space-y-2 rounded-md border border-border bg-muted/40 p-2">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[11px] font-medium uppercase text-muted-foreground">Exportdokumentation</p>
+              <Badge variant="outline" className="text-[10px]">Kapitel 03 / 1604–1605</Badge>
+            </div>
+
+            {missingValidation && (
+              <div className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 p-2 text-[11px] text-foreground">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 text-warning" />
+                <span>
+                  Exportleverans. Kontrollera att fångstintyget är validerat innan sändningen skickas.
+                </span>
+              </div>
+            )}
+
+            <div className="grid gap-2 sm:grid-cols-3">
+              <div className="space-y-1">
+                <Label className="text-[11px]">Fångstintygets referens</Label>
+                <Input
+                  value={exportForm.ref}
+                  onChange={(e) => setExportForm((f) => ({ ...f, ref: e.target.value }))}
+                  placeholder="CATCH.CC.SE.ÅÅÅÅ.NNNNNNN"
+                  className="h-8 font-mono text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[11px]">Validerat datum</Label>
+                <Input
+                  type="date"
+                  value={exportForm.validated}
+                  onChange={(e) => setExportForm((f) => ({ ...f, validated: e.target.value }))}
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[11px]">Reexportintyg</Label>
+                <Input
+                  value={exportForm.reexport}
+                  onChange={(e) => setExportForm((f) => ({ ...f, reexport: e.target.value }))}
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[11px]">Exportland</Label>
+                <Input
+                  value={exportForm.country}
+                  onChange={(e) => setExportForm((f) => ({ ...f, country: e.target.value }))}
+                  placeholder="Till exempel Schweiz"
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[11px]">Plombnummer</Label>
+                <Input
+                  value={exportForm.seal}
+                  onChange={(e) => setExportForm((f) => ({ ...f, seal: e.target.value }))}
+                  className="h-8 font-mono text-xs"
+                />
+              </div>
+              <div className="flex items-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-full text-xs"
+                  onClick={doSaveExport}
+                  disabled={saveExport.isPending}
+                >
+                  Spara exportuppgifter
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <DialogFooter className="flex-wrap gap-2">
+          {exportRelevant && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1 text-xs"
+              onClick={() => setShowDossier(true)}
+            >
+              <FileSpreadsheet className="h-3 w-3" /> Exportunderlag
+            </Button>
+          )}
+
           {(status === "skapad" || status === "plocklista_utskriven") && (
             <Button
               variant="outline"
@@ -380,6 +503,8 @@ export default function TransferFlowDialog({ order, onOpenChange }: TransferFlow
             </Button>
           )}
         </DialogFooter>
+
+        {showDossier && <ExportDossierDialog order={order} onOpenChange={() => setShowDossier(false)} />}
       </DialogContent>
     </Dialog>
   );

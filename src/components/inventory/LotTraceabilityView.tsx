@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Fish, Search, Ship, Anchor } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
+import LotDocumentsPanel from "@/components/inventory/LotDocumentsPanel";
 
 interface Props {
   currency?: string;
@@ -29,7 +30,7 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
       const { data, error } = await supabase
         .from("lots")
         .select(
-          "id, lot_number, supplier_lot_id, commercial_name, latin_name, species_fao_code, catch_area, fishing_gear, vessel_name, best_before, quantity_kg, unit_cost, status, is_thawed, created_at, suppliers(name), products(name, sku)",
+          "id, lot_number, supplier_lot_id, commercial_name, latin_name, species_fao_code, catch_area, fishing_gear, vessel_name, best_before, quantity_kg, unit_cost, status, is_thawed, created_at, fishing_trip_id, incoming_catch_cert, statistical_doc, seal_number, suppliers(name), products(name, sku, hs_code, export_documentation_required)",
         )
         .order("created_at", { ascending: false })
         .limit(300);
@@ -122,6 +123,9 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                       </span>
                       {lot.is_thawed && <Badge variant="outline" className="text-[10px]">Upptinad</Badge>}
                       <Badge variant="secondary" className="text-[10px]">{lot.status}</Badge>
+                      {lot.products?.export_documentation_required && (
+                        <Badge variant="outline" className="text-[10px]">Exportdokumentation</Badge>
+                      )}
                     </div>
                     <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
                       {lot.suppliers?.name && <span>{lot.suppliers.name}</span>}
@@ -137,8 +141,13 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                           <Ship className="h-3 w-3" /> {lot.vessel_name}
                         </span>
                       )}
+                      {lot.fishing_trip_id && <span>Fiskeresa: {lot.fishing_trip_id}</span>}
+                      {lot.incoming_catch_cert && <span>Fångstintyg: {lot.incoming_catch_cert}</span>}
+                      {lot.statistical_doc && <span>Statistikdok: {lot.statistical_doc}</span>}
+                      {lot.seal_number && <span>Plomb: {lot.seal_number}</span>}
                       {lot.best_before && <span>Bäst före: {lot.best_before}</span>}
                     </div>
+
                   </div>
                   <div className="text-right font-mono tabular-nums">
                     <p className="text-sm font-semibold text-foreground">{nf(Number(lot.quantity_kg || 0), 3)} kg</p>
@@ -189,6 +198,10 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                         </table>
                       </>
                     )}
+                    <div className="mt-3 border-t border-border pt-2">
+                      <LotDocumentsPanel lotId={lot.id} />
+                    </div>
+
                   </div>
                 )}
               </CardContent>
