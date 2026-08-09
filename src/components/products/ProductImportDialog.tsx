@@ -57,6 +57,8 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
   const [importing, setImporting] = useState(false);
   const [fatal, setFatal] = useState<string | null>(null);
   const [missingOptional, setMissingOptional] = useState<string[]>([]);
+  const [unknownColumns, setUnknownColumns] = useState<string[]>([]);
+
   const [diff, setDiff] = useState<DiffRow[] | null>(null);
   const [showUnchanged, setShowUnchanged] = useState(false);
   const [existing, setExisting] = useState<ExistingProduct[]>([]);
