@@ -100,6 +100,77 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
     onFocusLevel?.(n.level);
   };
 
+  const purchaseRows = byLevel["inkopslager"] || [];
+  const selectedRows = useMemo(
+    () => purchaseRows.filter((r: any) => selected[r.id] && qtyOf(r) > 0),
+    [purchaseRows, selected],
+  );
+
+  /**
+   * Flyttar markerade rader (eller hela inköpslagret) till grossist- eller
+   * tillverkningslagret. Partierna följer med FIFO så spårbarheten hålls intakt.
+   */
+  const moveTo = async (level: "grossistlager" | "tillverkningslager", all = false) => {
+    const rows = all ? purchaseRows.filter((r: any) => qtyOf(r) > 0) : selectedRows;
+    if (!rows.length) {
+      toast.error("Markera minst en rad med saldo först.");
+      return;
+    }
+    setMoving(level);
+    try {
+      const target = level === "grossistlager" ? await grossistlagerId() : await tillverkningslagerId();
+      let moved = 0;
+      for (const row of rows) {
+        const productId = row.product_id as string;
+        const from = row.location_id as string;
+        if (from === target) continue;
+        const lots = await lotBalancesAtLocation(productId, from);
+        const picks = lots.length
+          ? lots.map((l) => ({ lotId: l.lotId, qty: l.quantityKg }))
+          : [{ lotId: null as string | null, qty: qtyOf(row) }];
+        for (const pick of picks) {
+          if (pick.qty <= 0) continue;
+          await transferStock({
+            productId,
+            fromLocationId: from,
+            toLocationId: target,
+            quantityKg: pick.qty,
+            lotId: pick.lotId,
+            unitCost: Number(row.avg_cost) || Number(row.unit_cost) || null,
+            note: `Flyttat från inköpslager till ${LEVEL_LABEL[level]}`,
+          });
+          moved += pick.qty;
+        }
+      }
+      setSelected({});
+      qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
+      qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
+      qc.invalidateQueries({ queryKey: ["stock_movements"] });
+      toast.success(`${kg(moved)} flyttat till ${LEVEL_LABEL[level]}.`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Flytten kunde inte bokföras.");
+    } finally {
+      setMoving(null);
+    }
+  };
+
+  const dropProps = (level: "grossistlager" | "tillverkningslager") =>
+    canMove
+      ? {
+          onDragOver: (e: React.DragEvent) => {
+            e.preventDefault();
+            setDropTarget(level);
+          },
+          onDragLeave: () => setDropTarget((cur) => (cur === level ? null : cur)),
+          onDrop: (e: React.DragEvent) => {
+            e.preventDefault();
+            setDropTarget(null);
+            void moveTo(level);
+          },
+        }
+      : {};
+
+
   const Card = ({ n, className }: { n: Node; className?: string }) => {
     const Icon = LEVEL_ICON[n.level];
     const totalQty = n.rows.reduce((a, r) => a + qtyOf(r), 0);
