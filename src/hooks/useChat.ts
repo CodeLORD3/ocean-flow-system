@@ -435,7 +435,10 @@ export function useMarkConversationRead() {
         );
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["chat-unread"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["chat-unread"] });
+      qc.invalidateQueries({ queryKey: ["chat-conv-reads"] });
+    },
   });
 }
 
