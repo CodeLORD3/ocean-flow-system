@@ -123,6 +123,9 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                       </span>
                       {lot.is_thawed && <Badge variant="outline" className="text-[10px]">Upptinad</Badge>}
                       <Badge variant="secondary" className="text-[10px]">{lot.status}</Badge>
+                      {lot.products?.export_documentation_required && (
+                        <Badge variant="outline" className="text-[10px]">Exportdokumentation</Badge>
+                      )}
                     </div>
                     <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
                       {lot.suppliers?.name && <span>{lot.suppliers.name}</span>}
@@ -138,8 +141,13 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                           <Ship className="h-3 w-3" /> {lot.vessel_name}
                         </span>
                       )}
+                      {lot.fishing_trip_id && <span>Fiskeresa: {lot.fishing_trip_id}</span>}
+                      {lot.incoming_catch_cert && <span>Fångstintyg: {lot.incoming_catch_cert}</span>}
+                      {lot.statistical_doc && <span>Statistikdok: {lot.statistical_doc}</span>}
+                      {lot.seal_number && <span>Plomb: {lot.seal_number}</span>}
                       {lot.best_before && <span>Bäst före: {lot.best_before}</span>}
                     </div>
+
                   </div>
                   <div className="text-right font-mono tabular-nums">
                     <p className="text-sm font-semibold text-foreground">{nf(Number(lot.quantity_kg || 0), 3)} kg</p>
