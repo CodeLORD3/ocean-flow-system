@@ -333,83 +333,8 @@ export default function CustomerOrders() {
                   ))}
                 </div>
 
-                <FactBox title="Orderdetaljer" empty="Markera eller öppna en rad för detaljer.">
-                  {factOrder ? (
-                    <>
-                      <FactGroup title="Kund">
-                        <div className="text-sm font-semibold">
-                          {factOrder.customers_retail?.name ||
-                            factOrder.customer_name_snapshot ||
-                            "Kund"}
-                        </div>
-                        <FactRow
-                          label="Telefon"
-                          numeric
-                          value={
-                            factOrder.customers_retail?.phone ||
-                            factOrder.customer_phone_snapshot ||
-                            "—"
-                          }
-                        />
-                        <FactRow
-                          label="Typ"
-                          value={ORDER_TYPE_LABELS[factOrder.order_type] ?? factOrder.order_type}
-                        />
-                      </FactGroup>
-
-                      <FactGroup title="Sammanfattning">
-                        <FactRow label="Ordernr" numeric value={factOrder.order_number} />
-                        <FactRow
-                          label="Status"
-                          value={ORDER_STATUS_LABELS[factOrder.status] ?? factOrder.status}
-                        />
-                        <FactRow
-                          label="Packning"
-                          value={
-                            PACK_STATUS_LABELS[factOrder.pack_status] ?? factOrder.pack_status
-                          }
-                        />
-                        <FactRow
-                          label="Rader"
-                          numeric
-                          value={
-                            (factOrder.customer_order_lines || []).filter(
-                              (l) => l.pack_status !== "struken",
-                            ).length
-                          }
-                        />
-                        <FactRow
-                          label={factOrder.total_incl_vat ? "Verkligt pris" : "Uppskattat pris"}
-                          numeric
-                          value={`${nf(
-                            factOrder.total_incl_vat || factOrder.estimated_total,
-                            2,
-                          )} kr`}
-                        />
-                      </FactGroup>
-
-                      {(factOrder.allergy_note ||
-                        (factOrder.excluded_allergens || []).length > 0) && (
-                        <div className="rounded-sm border-l-4 border-row-late-edge bg-row-late p-2.5 text-xs text-row-late-text">
-                          <div className="font-bold uppercase tracking-wide">Allergi</div>
-                          <div>
-                            {factOrder.allergy_note ||
-                              (factOrder.excluded_allergens || []).join(", ")}
-                          </div>
-                        </div>
-                      )}
-
-                      <Button
-                        variant="outline"
-                        className="h-9 w-full text-xs"
-                        onClick={() => setSelected(factOrder)}
-                      >
-                        Visa fullständigt kort
-                      </Button>
-                    </>
-                  ) : undefined}
-                </FactBox>
               </div>
+
 
               <StatusBar
                 selectedCount={markedOrders.length}
