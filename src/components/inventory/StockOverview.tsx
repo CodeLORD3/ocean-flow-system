@@ -679,7 +679,8 @@ export default function StockOverview({
                                 <Trash2 className="h-3.5 w-3.5 mr-2" /> Radera
                               </DropdownMenuItem>
                             </DropdownMenuContent>
-                          </DropdownMenu>
+                            </DropdownMenu>
+                          </div>
                         </td>
                       </tr>,
                     ];
