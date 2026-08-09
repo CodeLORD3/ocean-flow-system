@@ -117,7 +117,6 @@ const packTone: Record<string, string> = {
  */
 export function CustomerOrderRow({
   order,
-  onOpen,
   onEdit,
   readOnly,
   open,
@@ -126,8 +125,8 @@ export function CustomerOrderRow({
   onSelect,
 }: {
   order: CustomerOrder;
-  onOpen: (o: CustomerOrder) => void;
   onEdit?: (o: CustomerOrder) => void;
+
   readOnly?: boolean;
   open?: boolean;
   onToggle?: (id: string) => void;
