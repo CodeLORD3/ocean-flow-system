@@ -396,6 +396,45 @@ export function useAddOrderLine() {
   });
 }
 
+/**
+ * Tar bort en rad som ännu inte är packad. Packade rader får inte raderas
+ * eftersom uttaget redan är bokfört i lagerboken – de stryks istället.
+ */
+export function useDeleteOrderLine() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      line,
+      orderId,
+    }: {
+      line: { id: string; pack_status: string; free_text_name?: string | null; products?: any };
+      orderId: string;
+    }) => {
+      const name = line.products?.name || line.free_text_name || "Rad";
+      if (line.pack_status === "packad") {
+        const { error } = await db
+          .from("customer_order_lines")
+          .update({ pack_status: "struken", reserved_quantity: 0, reservation_status: "ingen" })
+          .eq("id", line.id);
+        if (error) throw error;
+      } else {
+        const { error } = await db.from("customer_order_lines").delete().eq("id", line.id);
+        if (error) throw error;
+      }
+      await logOrderEvent({
+        orderId,
+        eventType: "rad_borttagen",
+        description: `${name} borttagen`,
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["customer_orders"] });
+      qc.invalidateQueries({ queryKey: ["customer_purchase_needs"] });
+      qc.invalidateQueries({ queryKey: ["customer_reservations"] });
+    },
+  });
+}
+
 /** Packar en rad på vägd vikt och bokför uttaget i lagerboken. */
 export function usePackOrderLine() {
   const qc = useQueryClient();
