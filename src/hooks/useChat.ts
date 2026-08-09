@@ -287,6 +287,70 @@ export function useSendChatMessage() {
   });
 }
 
+/**
+ * Profilbild per portalnyckel: butikens hero-/omslagsbild, och portalbilden
+ * för Grossist respektive Admin. Används i stället för initialer i chatten.
+ */
+export function usePortalAvatars() {
+  const { data } = useQuery({
+    queryKey: ["chat-portal-avatars"],
+    queryFn: async () => {
+      const [{ data: imgs, error: iErr }, { data: stores, error: sErr }] = await Promise.all([
+        supabase
+          .from("entity_images")
+          .select("entity_type, entity_id, url, is_cover, sort_order")
+          .in("entity_type", ["store", PORTAL_IMAGE_ENTITY_TYPE])
+          .order("is_cover", { ascending: false })
+          .order("sort_order", { ascending: true }),
+        supabase.from("stores").select("id, logo_url"),
+      ]);
+      if (iErr) throw iErr;
+      if (sErr) throw sErr;
+
+      const map: Record<string, string> = {};
+      (stores || []).forEach((s: any) => {
+        if (s.logo_url) map[storePortalKey(s.id)] = s.logo_url;
+      });
+      (imgs || []).forEach((img: any) => {
+        const key =
+          img.entity_type === "store"
+            ? storePortalKey(img.entity_id)
+            : img.entity_id === WHOLESALE_IMAGE_ENTITY_ID
+              ? GROSSIST_PROFILE.key
+              : img.entity_id === ADMIN_IMAGE_ENTITY_ID
+                ? ADMIN_PROFILE.key
+                : null;
+        if (!key || !img.url) return;
+        // Första träffen vinner (omslag först, därefter sorteringsordning)
+        if (!map[key] || img.is_cover) map[key] = img.url;
+      });
+      return map;
+    },
+    staleTime: 60_000,
+  });
+  return data ?? {};
+}
+
+/** När varje portal senast läste en chatt – används för "Läst"-taggen. */
+export function useConversationReads(conversationId?: string | null) {
+  const { data } = useQuery({
+    queryKey: ["chat-conv-reads", conversationId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("chat_reads")
+        .select("portal_key, last_read_at")
+        .eq("conversation_id", conversationId!);
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      (data || []).forEach((r: any) => (map[r.portal_key] = r.last_read_at));
+      return map;
+    },
+    enabled: !!conversationId,
+    refetchInterval: 5000,
+  });
+  return data ?? {};
+}
+
 /** Namn på motparterna i en chatt, sett från den egna portalen. */
 export function conversationTitle(conv: ChatConversation, myKey?: string | null) {
   if (conv.title) return conv.title;
