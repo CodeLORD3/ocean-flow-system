@@ -249,6 +249,14 @@ export function RetailCustomerRegistry({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CustomerHistoryDialog
+        open={!!historyCustomer}
+        onOpenChange={(v) => !v && setHistoryCustomer(null)}
+        customerName={historyCustomer?.name || ""}
+        orders={historyCustomer ? historyFor(historyCustomer.id) : []}
+      />
     </div>
+
   );
 }
