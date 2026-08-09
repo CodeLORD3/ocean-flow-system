@@ -524,6 +524,58 @@ export function CustomerOrderWizard({
                 placeholder="t.ex. äggallergi"
               />
             </div>
+            <div className="sm:col-span-2">
+              <Label>Undvik dessa allergener</Label>
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                {ALLERGENS.map((a) => {
+                  const on = excludedAllergens.includes(a.key);
+                  return (
+                    <button
+                      key={a.key}
+                      type="button"
+                      onClick={() =>
+                        setExcludedAllergens((prev) =>
+                          on ? prev.filter((x) => x !== a.key) : [...prev, a.key],
+                        )
+                      }
+                      className={`rounded-full border px-3 py-2 text-xs ${
+                        on
+                          ? "border-destructive bg-destructive/10 font-semibold text-destructive"
+                          : "border-border text-muted-foreground"
+                      }`}
+                    >
+                      {a.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Systemet varnar när en vara innehåller något av dessa. Varning, ingen spärr.
+              </p>
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <div className="rounded-md bg-muted p-3 text-xs">
+                {window_.closed
+                  ? `Stängt ${weekdayLabel(wantedDate)} — ${window_.sourceLabel}`
+                  : window_.open && window_.close
+                    ? `Öppet ${weekdayLabel(wantedDate)} ${window_.open}–${window_.close} (${window_.sourceLabel})`
+                    : "Öppettider är inte upplagda för butiken."}
+              </div>
+              {capacity.blocking && (
+                <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm font-semibold">
+                  {capacity.blocking}
+                </div>
+              )}
+              {capacity.warnings.map((w) => (
+                <div
+                  key={w}
+                  className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
+                >
+                  {w}
+                </div>
+              ))}
+            </div>
+
             {orderType === "leverans" && (
               <>
                 <div className="sm:col-span-2">
@@ -574,28 +626,42 @@ export function CustomerOrderWizard({
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && matches[0]) {
                         e.preventDefault();
-                        setPending({ product: matches[0], qty: "" });
+                        setPending({ product: matches[0], qty: "", portion: "" });
                       }
                     }}
                   />
                 </div>
                 <div className="space-y-2">
-                  {matches.map((p) => (
-                    <button
-                      key={p.id}
-                      onClick={() => setPending({ product: p, qty: "" })}
-                      className="flex w-full items-center gap-3 rounded-md border border-border p-2 text-left hover:bg-accent"
-                    >
-                      <ProductThumb src={p.image_url} alt={p.name} static />
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate font-medium">{p.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {p.category} · {p.unit}
-                          {p.retail_suggested ? ` · ${nf(Number(p.retail_suggested))} kr/${p.unit}` : ""}
+                  {matches.map((p) => {
+                    const conflict = checkAllergens({
+                      productName: p.name,
+                      productAllergens: p.allergens,
+                      excluded: excludedAllergens,
+                    });
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => setPending({ product: p, qty: "", portion: "" })}
+                        className={`flex w-full items-center gap-3 rounded-md border p-2 text-left hover:bg-accent ${
+                          conflict.hits.length > 0 ? "border-destructive" : "border-border"
+                        }`}
+                      >
+                        <ProductThumb src={p.image_url} alt={p.name} static />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate font-medium">{p.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {p.category} · {p.unit}
+                            {p.retail_suggested ? ` · ${nf(Number(p.retail_suggested))} kr/${p.unit}` : ""}
+                          </div>
+                          {conflict.hits.length > 0 && (
+                            <div className="text-xs font-semibold text-destructive">
+                              Innehåller {conflict.hits.map(allergenLabel).join(", ").toLowerCase()}
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               </>
             ) : (
@@ -610,6 +676,30 @@ export function CustomerOrderWizard({
                       </div>
                     </div>
                   </div>
+                  {category === "catering" && Number(guestCount || 0) > 0 && (
+                    <div>
+                      <Label>
+                        Portion per gäst ({pending.product.unit || "kg"}) — {guestCount} gäster
+                      </Label>
+                      <Input
+                        inputMode="decimal"
+                        className="h-12"
+                        value={pending.portion}
+                        onChange={(e) => {
+                          const portion = e.target.value;
+                          const p = Number(String(portion).replace(",", "."));
+                          setPending({
+                            ...pending,
+                            portion,
+                            qty: p ? String(Math.round(p * Number(guestCount) * 1000) / 1000) : pending.qty,
+                          });
+                        }}
+                      />
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Mängden räknas om automatiskt om gästantalet ändras.
+                      </p>
+                    </div>
+                  )}
                   <div>
                     <Label>Antal / mängd ({pending.product.unit || "kg"})</Label>
                     <Input
@@ -623,7 +713,11 @@ export function CustomerOrderWizard({
                           e.preventDefault();
                           const q = Number(String(pending.qty).replace(",", "."));
                           if (!q) return toast.error("Ange en mängd.");
-                          addProduct(pending.product, q);
+                          addProduct(
+                            pending.product,
+                            q,
+                            Number(String(pending.portion).replace(",", ".")) || null,
+                          );
                         }
                       }}
                     />
@@ -634,7 +728,11 @@ export function CustomerOrderWizard({
                       onClick={() => {
                         const q = Number(String(pending.qty).replace(",", "."));
                         if (!q) return toast.error("Ange en mängd.");
-                        addProduct(pending.product, q);
+                        addProduct(
+                          pending.product,
+                          q,
+                          Number(String(pending.portion).replace(",", ".")) || null,
+                        );
                       }}
                     >
                       Lägg till
@@ -646,6 +744,7 @@ export function CustomerOrderWizard({
                 </CardContent>
               </Card>
             )}
+
 
             {lines.length > 0 && (
               <div className="space-y-2">
