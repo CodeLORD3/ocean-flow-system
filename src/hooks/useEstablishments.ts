@@ -131,3 +131,29 @@ export function useUpdateCustomerMark() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["mark_receivers"] }),
   });
 }
+
+/**
+ * Avsändande anläggnings identifieringsmärke. Vi märker allt som packas,
+ * så etiketter och följesedlar hämtar märket härifrån utan val i gränssnittet.
+ */
+export function useSenderMark() {
+  return useQuery({
+    queryKey: ["sender_mark"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("establishments" as any)
+        .select("identification_mark, approval_number")
+        .eq("active", true)
+        .order("created_at")
+        .limit(20);
+      if (error) throw error;
+      const rows = (data ?? []) as any[];
+      const hit = rows.find((r) => r.identification_mark || r.approval_number);
+      if (!hit) return null;
+      return (
+        hit.identification_mark ||
+        (hit.approval_number ? `SE ${hit.approval_number} EG` : null)
+      );
+    },
+  });
+}
