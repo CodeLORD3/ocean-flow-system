@@ -355,12 +355,32 @@ export const BASELINE_REQUIREMENTS: {
   { title: "Handelsdokument för animaliska biprodukter", regulation: "1069/2009", interval_months: 1 },
 ];
 
+/**
+ * Rengöring per yta och utrymme, personalhygien och sjukdomsrapportering samt
+ * handelsdokument för animaliska biprodukter. Zonen anger renhetsgrad:
+ * 1 beredning, 2 butik och disk, 3 mottagning och lager, 4 avfall och personalutrymmen.
+ */
 export const BASELINE_CONTROL_POINTS: Partial<ControlPoint>[] = [
-  { name: "Rengöring, dagligt utrymme och ytor", category: "rengöring", unit: "ja/nej", frequency: "dagligen" },
-  { name: "Rengöring, veckovis storstädning", category: "rengöring", unit: "ja/nej", frequency: "veckovis" },
-  { name: "Skadedjurskontroll, egen rundvandring", category: "skadedjur", unit: "ja/nej", frequency: "månadsvis" },
-  { name: "Personalhygien, kontroll av arbetskläder", category: "utbildning", unit: "ja/nej", frequency: "dagligen" },
+  // Rengöring per yta och utrymme
+  { name: "Rengöring, skärbräda och knivar", category: "rengöring", unit: "ja/nej", frequency: "dagligen", zone: 1 },
+  { name: "Rengöring, filébänk och arbetsytor", category: "rengöring", unit: "ja/nej", frequency: "dagligen", zone: 1 },
+  { name: "Rengöring, fiskdisk och glas", category: "rengöring", unit: "ja/nej", frequency: "dagligen", zone: 2 },
+  { name: "Rengöring, golv och golvbrunn i butik", category: "rengöring", unit: "ja/nej", frequency: "dagligen", zone: 2 },
+  { name: "Rengöring, kyl- och frysrum invändigt", category: "rengöring", unit: "ja/nej", frequency: "veckovis", zone: 3 },
+  { name: "Rengöring, varumottagning och lastkaj", category: "rengöring", unit: "ja/nej", frequency: "veckovis", zone: 3 },
+  { name: "Rengöring, maskiner och skärutrustning isärtagna", category: "rengöring", unit: "ja/nej", frequency: "veckovis", zone: 1 },
+  { name: "Rengöring, avfallsutrymme och kärl", category: "rengöring", unit: "ja/nej", frequency: "veckovis", zone: 4 },
+  { name: "Rengöring, personalutrymme och omklädning", category: "rengöring", unit: "ja/nej", frequency: "veckovis", zone: 4 },
+  { name: "Rengöring, storstädning tak, väggar och ventilation", category: "rengöring", unit: "ja/nej", frequency: "månadsvis", zone: 1 },
+  // Personalhygien och sjukdomsrapportering
+  { name: "Personalhygien, arbetskläder och handtvätt", category: "utbildning", unit: "ja/nej", frequency: "dagligen", zone: 1 },
+  { name: "Sjukdomsrapportering, ingen med magsjuka eller sår i arbete", category: "utbildning", unit: "ja/nej", frequency: "dagligen", zone: 1 },
+  { name: "Personalhygien, kontroll av handtvättställ och engångsmaterial", category: "utbildning", unit: "ja/nej", frequency: "veckovis", zone: 4 },
+  // Skadedjur och animaliska biprodukter
+  { name: "Skadedjurskontroll, egen rundvandring och betesstationer", category: "skadedjur", unit: "ja/nej", frequency: "månadsvis", zone: 3 },
+  { name: "Animaliska biprodukter, handelsdokument vid varje hämtning", category: "övrigt", unit: "ja/nej", frequency: "veckovis", zone: 4 },
 ];
+
 
 export function useSeedBaseline() {
   const qc = useQueryClient();
@@ -406,4 +426,46 @@ export function requirementStatus(next_due: string | null): "aktuell" | "snart" 
   if (d < 0) return "forfallen";
   if (d <= 60) return "snart";
   return "aktuell";
+}
+
+/**
+ * Daglig lagertemperatur per lagerplats. Skapar en temperaturkontrollpunkt för
+ * varje aktiv lagerplats som saknar en, med gräns efter nivå: fryslager under
+ * minus 18, övriga 0 till 2 grader.
+ */
+export function useSeedLocationTemperaturePoints() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const [locs, points] = await Promise.all([
+        table("storage_locations").select("id, name, store_id, location_type").eq("active", true),
+        table("control_points").select("location_id").eq("category", "temperatur"),
+      ]);
+      const have = new Set(
+        ((points.data ?? []) as any[]).map((p) => p.location_id).filter(Boolean),
+      );
+      const rows = ((locs.data ?? []) as any[])
+        .filter((l) => !have.has(l.id))
+        .map((l) => {
+          const frozen = /frys/i.test(l.name ?? "");
+          return {
+            name: `Temperatur, ${l.name}`,
+            category: "temperatur",
+            unit: "grader C",
+            frequency: "dagligen",
+            location_id: l.id,
+            store_id: l.store_id ?? null,
+            limit_min: frozen ? null : -1,
+            limit_max: frozen ? -18 : 2,
+            zone: 3,
+          };
+        });
+      if (rows.length) {
+        const { error } = await table("control_points").insert(rows);
+        if (error) throw error;
+      }
+      return rows.length;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["control_points"] }),
+  });
 }

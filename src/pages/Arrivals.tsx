@@ -30,6 +30,13 @@ import { createWasteReport, WASTE_REASON_LABEL, type WasteReason } from "@/lib/w
 import { grossistStoreId, inkopslagerId } from "@/lib/locations";
 import { openLotLabels } from "@/lib/lotLabelPdf";
 import { useSenderMark } from "@/hooks/useEstablishments";
+import {
+  parseTemp,
+  saveReceivingTemperature,
+  tempLimitText,
+  tempOutOfRange,
+  type TempMode,
+} from "@/lib/receivingTemp";
 
 const nf = (v: any, dec = 1) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: dec, maximumFractionDigits: dec });
@@ -47,6 +54,10 @@ interface DraftLine {
   vesselName?: string | null;
   bestBefore?: string | null;
   supplierLotNumber?: string | null;
+  /** Mottagningstemperatur och orsak vid avvikelse, per parti. */
+  tempC: string;
+  tempMode: TempMode;
+  tempReason: string;
 }
 
 
@@ -130,7 +141,7 @@ export default function Arrivals() {
       if (lotIds.length) {
         const { data } = await supabase
           .from("lots")
-          .select("id, lot_number, catch_area, vessel_name, best_before, supplier_lot_id")
+          .select("id, lot_number, catch_area, vessel_name, best_before, supplier_lot_id, receiving_temp_c, receiving_temp_deviation_reason")
           .in("id", lotIds);
         lotMeta = Object.fromEntries((data ?? []).map((l: any) => [l.id, l]));
       }
@@ -150,6 +161,9 @@ export default function Arrivals() {
             vesselName: meta?.vessel_name ?? null,
             bestBefore: meta?.best_before ?? null,
             supplierLotNumber: meta?.supplier_lot_id ?? null,
+            tempC: meta?.receiving_temp_c != null ? String(meta.receiving_temp_c) : "",
+            tempMode: "fersk" as TempMode,
+            tempReason: meta?.receiving_temp_deviation_reason ?? "",
           };
         }),
       );
@@ -161,11 +175,19 @@ export default function Arrivals() {
     }
   };
 
+  /** Partier med temperatur utanför gränsen, som kräver orsak. */
+  const tempBreaches = useMemo(
+    () => draft.filter((l) => tempOutOfRange(parseTemp(l.tempC), l.tempMode)),
+    [draft],
+  );
+
   const submit = async () => {
     if (!openReport || saving) return;
     if (!draft.length) return toast.error("Följesedeln har inget kvar i inköpslagret.");
     if (deviations.length && !comment.trim())
       return toast.error("Avvikelse mot förväntad kvantitet kräver en kommentar.");
+    if (tempBreaches.some((l) => !l.tempReason.trim()))
+      return toast.error("Temperatur utanför gränsen kräver orsak på raden.");
 
     const reportId = openReport.id as string;
     // Raden försvinner ur listan direkt så att ett andra klick inte kan
@@ -201,6 +223,32 @@ export default function Arrivals() {
         });
       }
 
+      // Mottagningstemperaturen sparas på partiet. Ett värde utanför gränsen
+      // skapar en avvikelse med orsaken som omedelbar åtgärd.
+      let tempDeviations = 0;
+      for (const l of draft) {
+        const t = parseTemp(l.tempC);
+        if (t === null || !l.lotId) continue;
+        try {
+          const res = await saveReceivingTemperature({
+            lotId: l.lotId,
+            lotNumber: l.lotNumber,
+            productName: l.productName,
+            tempC: t,
+            mode: l.tempMode,
+            reason: l.tempReason.trim() || null,
+          });
+          if (res.deviation) tempDeviations += 1;
+        } catch (e: any) {
+          toast.error(e.message || "Mottagningstemperaturen kunde inte sparas.");
+        }
+      }
+      if (tempDeviations > 0) {
+        toast.warning(
+          `${tempDeviations} parti(er) mottogs utanför temperaturgränsen — avvikelse skapad.`,
+        );
+      }
+
       const movedKg = totals.received;
       setDone(
         `Klart. ${nf(movedKg)} kilo flyttades till grossistlagret.` +
@@ -217,6 +265,7 @@ export default function Arrivals() {
       qc.invalidateQueries({ queryKey: ["product_stock_locations"] });
       qc.invalidateQueries({ queryKey: ["all_stock_locations"] });
       qc.invalidateQueries({ queryKey: ["stock_movements"] });
+      qc.invalidateQueries({ queryKey: ["deviations"] });
     } catch (e: any) {
       setHandled((prev) => prev.filter((id) => id !== reportId));
       toast.error(e.message || "Ankomsten kunde inte registreras.");
@@ -329,37 +378,74 @@ export default function Arrivals() {
                 {draft.map((l, i) => {
                   const received = Number(String(l.received).replace(",", ".")) || 0;
                   const missing = l.expected - received;
+                  const temp = parseTemp(l.tempC);
+                  const breach = tempOutOfRange(temp, l.tempMode);
+                  const patch = (v: Partial<typeof l>) =>
+                    setDraft((d) => d.map((x, xi) => (xi === i ? { ...x, ...v } : x)));
                   return (
-                    <div key={l.lineId} className="flex flex-wrap items-center gap-2 p-2 text-xs">
-                      <span className="min-w-[10rem] flex-1 truncate font-medium">
-                        {l.productName ?? "Produkt"}
-                        {l.lotNumber && (
-                          <span className="ml-1 font-mono text-[11px] text-muted-foreground">
-                            {l.lotNumber}
-                          </span>
+                    <div key={l.lineId} className="space-y-1 p-2 text-xs">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="min-w-[10rem] flex-1 truncate font-medium">
+                          {l.productName ?? "Produkt"}
+                          {l.lotNumber && (
+                            <span className="ml-1 font-mono text-[11px] text-muted-foreground">
+                              {l.lotNumber}
+                            </span>
+                          )}
+                        </span>
+                        <span className="font-mono tabular-nums text-muted-foreground">
+                          {nf(l.expected)} kg förväntat
+                        </span>
+                        <Input
+                          value={l.received}
+                          onChange={(e) => patch({ received: e.target.value })}
+                          inputMode="decimal"
+                          className="h-8 w-24 font-mono text-xs tabular-nums"
+                        />
+                        {Math.abs(missing) > 0.0001 && (
+                          <Badge variant="destructive" className="text-[11px]">
+                            {missing > 0 ? `−${nf(missing)} kg` : `+${nf(-missing)} kg`}
+                          </Badge>
                         )}
-                      </span>
-                      <span className="font-mono tabular-nums text-muted-foreground">
-                        {nf(l.expected)} kg förväntat
-                      </span>
-                      <Input
-                        value={l.received}
-                        onChange={(e) =>
-                          setDraft((d) =>
-                            d.map((x, xi) => (xi === i ? { ...x, received: e.target.value } : x)),
-                          )
-                        }
-                        inputMode="decimal"
-                        className="h-8 w-24 font-mono text-xs tabular-nums"
-                      />
-                      {Math.abs(missing) > 0.0001 && (
-                        <Badge variant="destructive" className="text-[11px]">
-                          {missing > 0 ? `−${nf(missing)} kg` : `+${nf(-missing)} kg`}
-                        </Badge>
-                      )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <select
+                          value={l.tempMode}
+                          onChange={(e) => patch({ tempMode: e.target.value as TempMode })}
+                          className="h-8 rounded-md border border-input bg-background px-2 text-[11px]"
+                        >
+                          <option value="fersk">Färsk</option>
+                          <option value="fryst">Fryst</option>
+                          <option value="levande">Levande</option>
+                        </select>
+                        <Input
+                          value={l.tempC}
+                          onChange={(e) => patch({ tempC: e.target.value })}
+                          inputMode="decimal"
+                          placeholder="Temp"
+                          className="h-8 w-20 font-mono text-xs tabular-nums"
+                        />
+                        <span className="text-[11px] text-muted-foreground">
+                          {tempLimitText(l.tempMode)}
+                        </span>
+                        {breach && (
+                          <>
+                            <Badge variant="destructive" className="text-[10px]">
+                              Utanför gräns
+                            </Badge>
+                            <Input
+                              value={l.tempReason}
+                              onChange={(e) => patch({ tempReason: e.target.value })}
+                              placeholder="Orsak och åtgärd"
+                              className="h-8 min-w-[12rem] flex-1 text-xs"
+                            />
+                          </>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
+
               </div>
             )}
           </div>

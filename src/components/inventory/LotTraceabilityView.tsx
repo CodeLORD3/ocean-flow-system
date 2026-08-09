@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Fish, Search, Ship, Anchor } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import LotDocumentsPanel from "@/components/inventory/LotDocumentsPanel";
+import ParasiteFreezePanel from "@/components/inventory/ParasiteFreezePanel";
 
 interface Props {
   currency?: string;
@@ -30,7 +31,7 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
       const { data, error } = await supabase
         .from("lots")
         .select(
-          "id, lot_number, supplier_lot_id, commercial_name, latin_name, species_fao_code, catch_area, fishing_gear, vessel_name, best_before, quantity_kg, unit_cost, status, is_thawed, created_at, fishing_trip_id, incoming_catch_cert, statistical_doc, seal_number, suppliers(name), products(name, sku, hs_code, export_documentation_required)",
+          "id, lot_number, supplier_lot_id, commercial_name, latin_name, species_fao_code, catch_area, fishing_gear, vessel_name, best_before, quantity_kg, unit_cost, status, is_thawed, created_at, fishing_trip_id, incoming_catch_cert, statistical_doc, seal_number, parasite_treatment_required, freeze_start, freeze_end, exemption_reason, exemption_source, suppliers(name), products(name, sku, hs_code, export_documentation_required)",
         )
         .order("created_at", { ascending: false })
         .limit(300);
@@ -126,6 +127,13 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                       {lot.products?.export_documentation_required && (
                         <Badge variant="outline" className="text-[10px]">Exportdokumentation</Badge>
                       )}
+                      {lot.parasite_treatment_required &&
+                        !(lot.freeze_start && lot.freeze_end) &&
+                        !(lot.exemption_reason && lot.exemption_source) && (
+                          <Badge variant="destructive" className="text-[10px]">
+                            Frysbehandling saknas
+                          </Badge>
+                        )}
                     </div>
                     <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
                       {lot.suppliers?.name && <span>{lot.suppliers.name}</span>}
@@ -198,6 +206,9 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                         </table>
                       </>
                     )}
+                    <div className="mt-3 border-t border-border pt-2">
+                      <ParasiteFreezePanel lotId={lot.id} />
+                    </div>
                     <div className="mt-3 border-t border-border pt-2">
                       <LotDocumentsPanel lotId={lot.id} />
                     </div>
