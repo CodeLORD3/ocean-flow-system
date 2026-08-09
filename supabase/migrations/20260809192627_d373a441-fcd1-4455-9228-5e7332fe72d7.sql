@@ -1,0 +1,1 @@
+update public.checklist_templates set name = 'Checklista' where id = '2953935a-6fac-42b9-bc42-e5d6f258acbd';
