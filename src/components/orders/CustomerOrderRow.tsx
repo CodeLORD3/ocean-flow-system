@@ -5,10 +5,10 @@ import {
   MapPin,
   Package,
   AlertTriangle,
-  Sparkles,
   ExternalLink,
   Pencil,
 } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -84,7 +84,7 @@ export function CustomerOrderRow({
   const phone = order.customers_retail?.phone || order.customer_phone_snapshot;
   const lines = [...(order.customer_order_lines || [])].sort((a, b) => a.sort_order - b.sort_order);
   const active = lines.filter((l) => l.pack_status !== "struken");
-  const needs = active.filter((l) => l.reservation_status === "inkopsbehov");
+
   const packedCount = active.filter((l) => l.pack_status === "packad").length;
   const total = Number(order.total_incl_vat || order.estimated_total || 0);
   const allergens = order.excluded_allergens || [];
@@ -95,7 +95,13 @@ export function CustomerOrderRow({
   const time = order.wanted_time ? ` ${order.wanted_time.slice(0, 5)}` : "";
 
   return (
-    <div className={`overflow-hidden rounded-md border border-border shadow-sm ${tone.row}`}>
+    <div
+      className={`overflow-hidden rounded-md border shadow-sm ${tone.row} ${
+        isOpen
+          ? "border-primary ring-2 ring-primary ring-offset-2 ring-offset-background"
+          : "border-border"
+      }`}
+    >
       <div className="flex">
         <div className={`w-1.5 shrink-0 ${tone.edge}`} aria-hidden />
         <button
@@ -124,12 +130,7 @@ export function CustomerOrderRow({
             {hasAllergy && (
               <AlertTriangle className="h-4 w-4 shrink-0 text-destructive" aria-label="Allergi" />
             )}
-            {needs.length > 0 && (
-              <Sparkles
-                className="h-4 w-4 shrink-0 text-row-warn-edge"
-                aria-label="Köps färskt"
-              />
-            )}
+
             {readOnly && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
             <span className="w-28 shrink-0 text-right font-mono text-sm font-semibold tabular-nums">
               {nf(total, 2)} kr
@@ -166,9 +167,6 @@ export function CustomerOrderRow({
               {hasAllergy && (
                 <AlertTriangle className="h-4 w-4 shrink-0 text-destructive" aria-label="Allergi" />
               )}
-              {needs.length > 0 && (
-                <Sparkles className="h-4 w-4 shrink-0 text-row-warn-edge" aria-label="Köps färskt" />
-              )}
               {readOnly && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
             </div>
             <div className="mt-0.5 font-mono text-xs tabular-nums text-muted-foreground">
@@ -180,7 +178,16 @@ export function CustomerOrderRow({
       </div>
 
       {isOpen && (
-        <div className="space-y-3 border-t border-border bg-card p-3">
+        <div className="space-y-3 border-t-2 border-primary bg-card p-3">
+          {/* Tydlig rubrik så det aldrig är tvekan om vilken order som är öppen. */}
+          <div className="flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-primary-foreground">
+            <Package className="h-5 w-5 shrink-0" />
+            <span className="min-w-0 flex-1 truncate text-base font-semibold">{name}</span>
+            <span className="shrink-0 font-mono text-xs tabular-nums opacity-90">
+              {order.order_number}
+            </span>
+          </div>
+
           <div className="flex flex-wrap items-center gap-1.5 text-xs">
             <Badge variant="outline">{ORDER_STATUS_LABELS[order.status] ?? order.status}</Badge>
             <span className={`rounded px-2 py-0.5 ${packTone[order.pack_status] ?? ""}`}>
@@ -191,14 +198,14 @@ export function CustomerOrderRow({
               {ORDER_TYPE_LABELS[order.order_type] ?? order.order_type}
             </Badge>
             {order.category === "catering" && <Badge variant="secondary">Catering</Badge>}
-            {needs.length > 0 && (
-              <span className="rounded bg-row-warn px-2 py-0.5">{needs.length} köps färskt</span>
-            )}
           </div>
+
+
+
 
           <div className="grid gap-2 text-sm sm:grid-cols-2">
             <div className="space-y-1">
-              <div className="font-semibold">{name}</div>
+
               {phone && (
                 <a
                   href={`tel:${phone}`}

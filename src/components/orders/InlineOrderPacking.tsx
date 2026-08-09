@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, Circle, CircleDashed, Printer } from "lucide-react";
+import { CheckCircle2, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -25,11 +25,30 @@ import { printPackLabels } from "@/lib/customerOrderLabelPdf";
 const nf = (v: unknown, d = 2) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
 
-function PackIcon({ status }: { status: string }) {
-  if (status === "packad") return <CheckCircle2 className="h-5 w-5 text-row-ok-edge" />;
-  if (status === "pagaende") return <CircleDashed className="h-5 w-5 text-row-warn-edge" />;
-  return <Circle className="h-5 w-5 text-muted-foreground" />;
+/**
+ * Tydlig statusruta per rad: nummer när den är opackad, bock när den är klar.
+ * Siffran gör det lätt att se hur många varor som är kvar.
+ */
+function PackStep({ status, index }: { status: string; index: number }) {
+  if (status === "packad")
+    return (
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-row-ok-edge text-primary-foreground">
+        <CheckCircle2 className="h-5 w-5" />
+      </span>
+    );
+  if (status === "struken")
+    return (
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted font-mono text-sm text-muted-foreground">
+        –
+      </span>
+    );
+  return (
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border-2 border-border bg-background font-mono text-sm font-semibold tabular-nums">
+      {index}
+    </span>
+  );
 }
+
 
 /**
  * Packning direkt i orderns rullgardin — ingen dialog behövs.
@@ -160,7 +179,7 @@ export function InlineOrderPacking({ order }: { order: CustomerOrder }) {
       )}
 
       <ul className="divide-y divide-border overflow-hidden rounded-md border border-border">
-        {lines.map((l) => {
+        {lines.map((l, i) => {
           const name = (l.products?.name || l.free_text_name || "Vara") as string;
           const done = l.pack_status === "packad";
           const struck = l.pack_status === "struken";
@@ -173,19 +192,22 @@ export function InlineOrderPacking({ order }: { order: CustomerOrder }) {
                 disabled={done || struck}
                 className="flex w-full items-center gap-2.5 px-2.5 py-2 text-left disabled:cursor-default"
               >
-                <PackIcon status={l.pack_status} />
+                <PackStep status={l.pack_status} index={i + 1} />
                 <ProductThumb src={l.products?.image_url} alt={name} static />
                 <div className="min-w-0 flex-1">
                   <div className={`truncate font-semibold ${struck ? "line-through" : ""}`}>{name}</div>
                   <div className="font-mono text-sm tabular-nums text-muted-foreground">
                     {nf(l.quantity_packed ?? l.quantity_ordered, 3)} {l.unit}
-                    {l.reservation_status === "inkopsbehov" && " · köps färskt"}
                   </div>
                 </div>
-                <Badge variant="outline" className="shrink-0 text-[10px]">
-                  {LINE_PACK_LABELS[l.pack_status] ?? l.pack_status}
-                </Badge>
+                {l.pack_status !== "opackad" && (
+                  <Badge variant="outline" className="shrink-0 text-[10px]">
+                    {LINE_PACK_LABELS[l.pack_status] ?? l.pack_status}
+                  </Badge>
+                )}
               </button>
+
+
 
               {expanded && (
                 <div className="grid gap-2 border-t border-border px-2.5 pb-2.5 pt-2 sm:grid-cols-[1fr_1fr_auto]">
