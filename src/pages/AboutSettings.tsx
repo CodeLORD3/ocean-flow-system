@@ -5,8 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Info, Plus, Trash2, Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import AboutComparison from "@/pages/AboutComparison";
+
 
 interface TeamMember {
   name: string;
@@ -121,12 +124,23 @@ export default function AboutSettings() {
   if (isLoading) return <div className="text-xs text-muted-foreground animate-pulse p-4">Loading...</div>;
 
   return (
-    <div className="space-y-4">
+    <Tabs defaultValue="portal" className="space-y-4">
+      <TabsList>
+        <TabsTrigger value="portal" className="text-xs">Investerarportal</TabsTrigger>
+        <TabsTrigger value="comparison" className="text-xs">Jämförelse</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="comparison">
+        <AboutComparison />
+      </TabsContent>
+
+      <TabsContent value="portal" className="space-y-4">
       <div className="flex items-center gap-2">
         <Info className="h-5 w-5 text-primary" />
         <h1 className="text-lg font-bold">About Us Settings</h1>
       </div>
       <p className="text-xs text-muted-foreground">Edit the content shown on the investor portal About Us page.</p>
+
 
       {/* Hero section */}
       <Card>
@@ -243,6 +257,8 @@ export default function AboutSettings() {
       <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full h-8 text-xs">
         {saveMutation.isPending ? "Saving..." : "Save About Us Settings"}
       </Button>
-    </div>
+      </TabsContent>
+    </Tabs>
+
   );
 }
