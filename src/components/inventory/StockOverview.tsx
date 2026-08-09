@@ -284,6 +284,28 @@ export default function StockOverview({
   return (
     <div className="space-y-3">
       {/* KPI-kort */}
+      {compactKpis ? (
+        <div className="grid grid-cols-2 gap-2 sm:max-w-md">
+          <Card className="shadow-card">
+            <CardContent className="p-2.5">
+              <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                <Boxes className="h-3 w-3 text-primary" /> Total kvantitet
+              </p>
+              <p className="text-base font-heading font-bold tabular-nums">
+                {kpis.qty.toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kg
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="shadow-card">
+            <CardContent className="p-2.5">
+              <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                <Package className="h-3 w-3 text-primary" /> Antal produkter
+              </p>
+              <p className="text-base font-heading font-bold tabular-nums">{kpis.count}</p>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
       <div className={cn("grid grid-cols-2 gap-3", showCosts ? "lg:grid-cols-5" : "lg:grid-cols-4")}>
         {showCosts && (
           <Card className="shadow-card">
@@ -346,6 +368,8 @@ export default function StockOverview({
           </CardContent>
         </Card>
       </div>
+      )}
+
 
       {/* Kategoriflikar + sök */}
       <div className="flex flex-col lg:flex-row gap-2 lg:items-center justify-between">
