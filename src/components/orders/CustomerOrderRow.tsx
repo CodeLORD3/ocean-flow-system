@@ -95,7 +95,13 @@ export function CustomerOrderRow({
   const time = order.wanted_time ? ` ${order.wanted_time.slice(0, 5)}` : "";
 
   return (
-    <div className={`overflow-hidden rounded-md border border-border shadow-sm ${tone.row}`}>
+    <div
+      className={`overflow-hidden rounded-md border shadow-sm ${tone.row} ${
+        isOpen
+          ? "border-primary ring-2 ring-primary ring-offset-2 ring-offset-background"
+          : "border-border"
+      }`}
+    >
       <div className="flex">
         <div className={`w-1.5 shrink-0 ${tone.edge}`} aria-hidden />
         <button
