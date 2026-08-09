@@ -40,6 +40,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { EmptyState } from "@/components/EmptyState";
 import ChillingPanel from "@/components/foodsafety/ChillingPanel";
 import AbpPanel from "@/components/foodsafety/AbpPanel";
+import BivalveDueList from "@/components/foodsafety/BivalveDueList";
 import {
   CONTROL_CATEGORIES,
   FREQUENCIES,
