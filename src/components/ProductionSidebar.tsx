@@ -57,6 +57,7 @@ const purchaseNav = [
 
 const salesNav = [
   { title: "Ordrar", url: "/orders", icon: ShoppingCart },
+  { title: "Kundbeställningar", url: "/customer-orders", icon: ClipboardList },
   { title: "Önskemål", url: "/store-wishes", icon: Star },
 ];
 
