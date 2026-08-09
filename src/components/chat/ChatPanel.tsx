@@ -29,6 +29,8 @@ import {
   useConversationReads,
   usePortalAvatars,
 } from "@/hooks/useChat";
+import { useStaffAvatars } from "@/hooks/useStaffAvatars";
+import { useSignedUrl } from "@/hooks/useSignedUrl";
 
 function portalIcon(kind: PortalProfile["kind"]) {
   return kind === "admin" ? Shield : kind === "grossist" ? Factory : Store;
@@ -71,6 +73,20 @@ function PortalAvatar({
       )}
     </span>
   );
+}
+
+/** Profilbild för personal (signerad om filen ligger i privat bucket). */
+function StaffAvatar({
+  name,
+  url,
+  className,
+}: {
+  name: string;
+  url?: string | null;
+  className?: string;
+}) {
+  const signed = useSignedUrl(url ?? null);
+  return <PortalAvatar name={name} url={signed} size="sm" className={className} />;
 }
 
 function timeLabel(iso: string) {
@@ -157,6 +173,7 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
   const send = useSendChatMessage();
   const unread = useChatUnread();
   const avatars = usePortalAvatars();
+  const staffAvatars = useStaffAvatars();
   /** Motpartens profilbild i en chatt (butikens hero-bild / portalbild). */
   const convAvatar = (c: ChatConversation) => {
     const other = c.participants.find((p) => p.portal_key !== portal?.key);
@@ -600,17 +617,24 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
                         </button>
                       )}
 
-                      {!mine &&
-                        (showHeader ? (
-                          <PortalAvatar
-                            name={m.sender_portal_name || m.sender_portal_key}
-                            url={avatars[m.sender_portal_key]}
-                            size="sm"
+                      {showHeader ? (
+                        m.sender_staff_id && staffAvatars[m.sender_staff_id] ? (
+                          <StaffAvatar
+                            name={m.sender_name || m.sender_portal_name || m.sender_portal_key}
+                            url={staffAvatars[m.sender_staff_id]}
                             className="self-end mb-0.5"
                           />
                         ) : (
-                          <span aria-hidden className="h-6 w-6 shrink-0" />
-                        ))}
+                          <PortalAvatar
+                            name={m.sender_name || m.sender_portal_name || m.sender_portal_key}
+                            url={m.sender_staff_id ? null : avatars[m.sender_portal_key]}
+                            size="sm"
+                            className="self-end mb-0.5"
+                          />
+                        )
+                      ) : (
+                        <span aria-hidden className="h-6 w-6 shrink-0" />
+                      )}
 
                       <div
                         className={cn(
