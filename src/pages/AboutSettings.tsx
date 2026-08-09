@@ -257,6 +257,8 @@ export default function AboutSettings() {
       <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full h-8 text-xs">
         {saveMutation.isPending ? "Saving..." : "Save About Us Settings"}
       </Button>
-    </div>
+      </TabsContent>
+    </Tabs>
+
   );
 }
