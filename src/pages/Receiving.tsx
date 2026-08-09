@@ -581,7 +581,7 @@ export default function Receiving() {
                   Ta emot leverans — vecka {displayOrderWeek(selectedOrder)}
                 </DialogTitle>
                 <DialogDescription className="text-xs">
-                  Godkänn varje produkt, ange mottagen kvantitet och fyll i bäst-före-datum för spårbarhet.
+                  Godkänn varje produkt och ange mottagen kvantitet.
                 </DialogDescription>
               </DialogHeader>
 
