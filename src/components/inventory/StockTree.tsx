@@ -314,9 +314,10 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
                         <tr
                           key={r.id}
                           className={cn(
-                            "border-t border-border/60",
+                            "border-t border-border/60 transition-opacity",
                             canSelect && selected[r.id] && "bg-primary/10",
                             canSelect && qtyOf(r) > 0 && "cursor-grab",
+                            dragging && selected[r.id] && "opacity-40",
                           )}
                           draggable={canSelect && qtyOf(r) > 0}
                           onDragStart={(e) => {
@@ -325,14 +326,25 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
                             if (!isChecked) setSelected((cur) => ({ ...cur, [r.id]: true }));
                             const rows = isChecked && selectedRows.length ? selectedRows : [r];
                             dragRowsRef.current = rows;
+                            setDragging(rows.length);
                             e.dataTransfer.effectAllowed = "move";
                             e.dataTransfer.setData("text/plain", `${rows.length} rader`);
+                            // Egen dragbild så det syns att hela markeringen följer med.
+                            const totalKg = rows.reduce((a: number, x: any) => a + qtyOf(x), 0);
+                            const ghost = document.createElement("div");
+                            ghost.textContent = `${rows.length} rad${rows.length > 1 ? "er" : ""} · ${kg(totalKg)}`;
+                            ghost.style.cssText =
+                              "position:fixed;top:-1000px;left:-1000px;padding:6px 10px;border-radius:8px;font:600 12px/1.2 system-ui,sans-serif;background:hsl(var(--primary));color:hsl(var(--primary-foreground));box-shadow:0 6px 16px rgba(0,0,0,.35)";
+                            document.body.appendChild(ghost);
+                            e.dataTransfer.setDragImage(ghost, 10, 10);
+                            window.setTimeout(() => ghost.remove(), 0);
                           }}
                           onDragEnd={() => {
                             dragRowsRef.current = null;
+                            setDragging(null);
                           }}
-
                         >
+
                           {canSelect && (
                             <td className="px-1 py-1">
                               <Checkbox
