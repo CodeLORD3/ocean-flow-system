@@ -1402,7 +1402,18 @@ export default function Inventory() {
         {isGrossist ? (
           <StockTree
             stock={allStock as any[]}
-            stores={(stores as any[]).map((s: any) => ({ id: s.id, name: s.name }))}
+            stores={(() => {
+              // Bara enheter som faktiskt har ett butikslager — grossistenheten
+              // hör hemma i grossist-/produktionsnoderna, inte bland butikerna.
+              const withShop = new Set(
+                (locations as any[])
+                  .filter((l: any) => l.location_type === "butik" && l.store_id)
+                  .map((l: any) => l.store_id),
+              );
+              return (stores as any[])
+                .filter((s: any) => withShop.has(s.id))
+                .map((s: any) => ({ id: s.id, name: s.name }));
+            })()}
             showValue={showCosts}
             onFocusLevel={(l) => setLevel(l)}
           />
