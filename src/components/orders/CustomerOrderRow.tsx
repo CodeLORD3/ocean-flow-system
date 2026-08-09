@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   Sparkles,
   ExternalLink,
+  Pencil,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -64,12 +65,14 @@ const packTone: Record<string, string> = {
 export function CustomerOrderRow({
   order,
   onOpen,
+  onEdit,
   readOnly,
   open,
   onToggle,
 }: {
   order: CustomerOrder;
   onOpen: (o: CustomerOrder) => void;
+  onEdit?: (o: CustomerOrder) => void;
   readOnly?: boolean;
   open?: boolean;
   onToggle?: (id: string) => void;
@@ -278,11 +281,22 @@ export function CustomerOrderRow({
             </span>
           </div>
 
-          <Button className="h-12 w-full" onClick={() => onOpen(order)}>
-            <Package className="mr-2 h-5 w-5" />
-            {readOnly ? "Öppna order" : "Börja packa"}
-            <ExternalLink className="ml-2 h-4 w-4 opacity-70" />
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button className="h-12 flex-1" onClick={() => onOpen(order)}>
+              <Package className="mr-2 h-5 w-5" />
+              {readOnly ? "Öppna order" : "Börja packa"}
+              <ExternalLink className="ml-2 h-4 w-4 opacity-70" />
+            </Button>
+            {!readOnly && onEdit && !cancelled && (
+              <Button
+                variant="outline"
+                className="h-12 sm:w-44"
+                onClick={() => onEdit(order)}
+              >
+                <Pencil className="mr-2 h-4 w-4" /> Redigera order
+              </Button>
+            )}
+          </div>
         </div>
       )}
     </div>
