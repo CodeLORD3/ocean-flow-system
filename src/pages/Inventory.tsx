@@ -1488,6 +1488,7 @@ export default function Inventory() {
           currency={localCurrency}
           onLineAction={handleOverviewAction}
           showCosts={showCosts}
+          compactKpis={isShopPortal}
         />
       )}
 
