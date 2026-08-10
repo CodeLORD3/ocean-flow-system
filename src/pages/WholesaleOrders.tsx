@@ -1396,7 +1396,15 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
               const next = idx === -1 ? "Pågående" : (idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null);
 
               return (
-                <tr key={line.id} className={`border-b border-border/30 h-7 transition-colors ${
+                <React.Fragment key={line.id}>
+                {catHeader && (
+                  <tr className="bg-muted/40">
+                    <td colSpan={9} className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      ▸ {catHeader}
+                    </td>
+                  </tr>
+                )}
+                <tr className={`border-b border-border/30 h-7 transition-colors ${
                   isUnavailable ? "opacity-50 bg-destructive/5" :
                   currentStatus === "Skickad" ? "bg-primary/10" :
                   currentStatus === "Packad" || currentStatus === "Producerad" ? "bg-success/10" :
