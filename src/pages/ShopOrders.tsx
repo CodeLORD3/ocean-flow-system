@@ -42,6 +42,7 @@ type OrderLine = {
   unit: string;
   quantity: string;
   category?: string | null;
+  image_url?: string | null;
 };
 
 
