@@ -106,6 +106,10 @@ export default function OrganisationOverview() {
   const { switchTab } = useTabs();
   const { data: checklistTemplates = [] } = useChecklistTemplates(isShop ? activeStoreId : null);
   const todaysChecklistTemplates = checklistTemplates.filter((t) => templateAppliesOn(t, todayIso()));
+  // Butiker som inte ska visa checklistkort i översikten (Dagsrapport visas fortfarande)
+  const hideChecklistCards = ["morges", "zollikon"].some((k) =>
+    (activeStoreName ?? "").toLowerCase().includes(k)
+  );
 
   const { data: products = [] } = useProducts();
   const { data: stores = [] } = useStores(true);
@@ -415,22 +419,25 @@ export default function OrganisationOverview() {
       {/* Shop: daily checklist */}
       {isShop && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {todaysChecklistTemplates.length > 0 ? (
-            todaysChecklistTemplates.map((t) => (
-              <ChecklistCard
-                key={t.id}
-                storeId={activeStoreId!}
-                templateId={t.id}
-                title={t.name}
-                onOpenFull={() => switchTab("/checklist")}
-              />
-            ))
-          ) : (
-            <ChecklistCard storeId={activeStoreId!} onOpenFull={() => switchTab("/checklist")} />
+          {!hideChecklistCards && (
+            todaysChecklistTemplates.length > 0 ? (
+              todaysChecklistTemplates.map((t) => (
+                <ChecklistCard
+                  key={t.id}
+                  storeId={activeStoreId!}
+                  templateId={t.id}
+                  title={t.name}
+                  onOpenFull={() => switchTab("/checklist")}
+                />
+              ))
+            ) : (
+              <ChecklistCard storeId={activeStoreId!} onOpenFull={() => switchTab("/checklist")} />
+            )
           )}
           <DailyReportCard storeId={activeStoreId!} onOpenFull={() => switchTab("/dagsrapport")} />
         </div>
       )}
+
 
 
 
