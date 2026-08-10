@@ -1420,8 +1420,8 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                   </td>
                   <td className="px-2 py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
                   <td className="px-2 py-0.5 text-right font-mono text-foreground">{qtyOrdered}</td>
-                  <td className={`px-2 py-0.5 text-right font-mono ${availableStock >= qtyOrdered ? "text-success" : availableStock > 0 ? "text-warning" : "text-destructive"}`}>
-                    {availableStock > 0 ? Number(availableStock.toFixed(1)) : "0"}
+                  <td className={`px-2 py-0.5 text-right font-mono ${infiniteStock ? "text-success" : availableStock >= qtyOrdered ? "text-success" : availableStock > 0 ? "text-warning" : "text-destructive"}`}>
+                    {infiniteStock ? <span title="Obegränsat lager (uppstartsläge)">∞</span> : availableStock > 0 ? Number(availableStock.toFixed(1)) : "0"}
                   </td>
                   <td className="px-2 py-0.5 text-right">
                     {(() => {
@@ -1432,7 +1432,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                         <input
                           type="number"
                           min={0}
-                          max={availableStock}
+                          max={infiniteStock ? undefined : availableStock}
                           defaultValue={qtyDelivered || ""}
                           placeholder="0"
                           className="w-16 h-6 text-right text-xs font-mono bg-background border border-border rounded px-1 focus:outline-none focus:ring-1 focus:ring-primary"
