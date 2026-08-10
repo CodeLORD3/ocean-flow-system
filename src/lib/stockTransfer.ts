@@ -134,9 +134,26 @@ export async function moveStockToTransport(orderId: string) {
 
 
     if (remaining > 0) {
-      console.warn(
-        `moveStockToTransport: otillräckligt saldo för produkt ${line.product_id}, ${remaining} kg kunde inte flyttas`,
-      );
+      // Uppstartsläge: lagret är obegränsat, så bristen bokförs som en
+      // justering in på leveranslagret istället för att stoppa leveransen.
+      if (await isInfiniteStock()) {
+        await recordMovements([
+          {
+            productId: line.product_id,
+            locationId: transportId,
+            quantityKg: remaining,
+            movementType: "justering",
+            referenceType: REF_TYPE,
+            referenceId: orderId,
+            note: "Obegränsat lager (uppstartsläge)",
+          },
+        ]);
+        remaining = 0;
+      } else {
+        console.warn(
+          `moveStockToTransport: otillräckligt saldo för produkt ${line.product_id}, ${remaining} kg kunde inte flyttas`,
+        );
+      }
     }
   }
 }
