@@ -1511,8 +1511,11 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                   </td>
                   <td className="px-2 py-0.5 text-right font-mono text-foreground">{lineValue.toFixed(2)}</td>
                 </tr>
+                </React.Fragment>
               );
-            })}
+              });
+            })()}
+
           </tbody>
         </table>
       </div>
