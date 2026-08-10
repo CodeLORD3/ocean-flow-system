@@ -28,7 +28,7 @@ import { StaffDetailDialog } from "@/components/staff/StaffDetailDialog";
 import { StaffAccessDialog, PORTAL_OPTIONS } from "@/components/staff/StaffAccessDialog";
 import { StoreStaffDialog } from "@/components/staff/StoreStaffDialog";
 import { Badge } from "@/components/ui/badge";
-import { Activity, ShieldCheck } from "lucide-react";
+import { Activity, ShieldCheck, KeyRound, Loader2 } from "lucide-react";
 import { useOpenShifts, shiftClock, shiftDuration } from "@/hooks/useStaffShifts";
 
 const ACTIVITY_VIEWER_EMAILS = [
@@ -50,7 +50,7 @@ export default function Staff() {
   const platformView = isAdmin && adminAllStaff;
 
   const storeFilter = !platformView && site === "shop" ? activeStoreId : undefined;
-  const { data: storeStaff = [], isLoading } = useStaff(storeFilter);
+  const { data: storeStaff = [], isLoading, refetch } = useStaff(storeFilter);
   const { data: allStaff = [] } = useStaff();
   const { data: stores = [] } = useStores(true);
   const createStaff = useCreateStaff();
@@ -73,6 +73,9 @@ export default function Staff() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  // Inloggning: skapas separat från personalkortet
+  const [creatingLoginFor, setCreatingLoginFor] = useState<string | null>(null);
+  const [loginResult, setLoginResult] = useState<{ name: string; email: string; password: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [detailStaff, setDetailStaff] = useState<any | null>(null);
@@ -142,6 +145,33 @@ export default function Staff() {
       title: "Inloggningsadress uppdaterad",
       description: `${email} används nu vid inloggning.`,
     });
+  };
+
+  // Skapar ett riktigt inloggningskonto för en personal som saknar konto.
+  // Personen får ett tillfälligt lösenord och måste byta det vid första inloggningen.
+  const createLogin = async (s: any) => {
+    const email = (s.email || "").trim().toLowerCase();
+    if (!email) {
+      toast({ title: "E-postadress saknas", description: "Lägg in en e-postadress på personalkortet först.", variant: "destructive" });
+      return;
+    }
+    setCreatingLoginFor(s.id);
+    const password = `Makrill${Math.floor(1000 + Math.random() * 9000)}!`;
+    const { data, error } = await supabase.functions.invoke("staff-account-email", {
+      body: { staff_id: s.id, email, password },
+    });
+    if (error || (data as any)?.error) {
+      setCreatingLoginFor(null);
+      toast({
+        title: "Kunde inte skapa inloggning",
+        description: (data as any)?.error || error?.message,
+        variant: "destructive",
+      });
+      return;
+    }
+    await supabase.from("staff").update({ must_change_password: true } as any).eq("id", s.id);
+    setCreatingLoginFor(null);
+    setLoginResult({ name: `${s.first_name} ${s.last_name}`, email, password });
   };
 
 
@@ -328,6 +358,20 @@ export default function Staff() {
                         <ShieldCheck className="h-3.5 w-3.5 text-primary" />
                       </Button>
                     )}
+                    {isAdmin && !s.user_id && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        title="Skapa inloggning"
+                        disabled={creatingLoginFor === s.id}
+                        onClick={(e) => { e.stopPropagation(); createLogin(s); }}
+                      >
+                        {creatingLoginFor === s.id
+                          ? <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                          : <KeyRound className="h-3.5 w-3.5 text-amber-500" />}
+                      </Button>
+                    )}
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openEdit(s); }}>
                       <Edit className="h-3.5 w-3.5 text-muted-foreground" />
                     </Button>
@@ -495,6 +539,35 @@ export default function Staff() {
         onOpenChange={(open) => !open && setAccessStaff(null)}
         staff={accessStaff}
       />
+
+      {/* Tillfälligt lösenord visas en gång — kopiera och ge till personen */}
+      <Dialog open={!!loginResult} onOpenChange={(open) => { if (!open) { setLoginResult(null); refetch(); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-base">Inloggning skapad</DialogTitle>
+            <DialogDescription className="text-xs">
+              {loginResult?.name} kan nu logga in. Lösenordet visas bara en gång och måste bytas vid första inloggningen.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 text-xs">
+            <div className="rounded-md border border-border bg-muted/40 p-3 space-y-1 font-mono">
+              <div><span className="text-muted-foreground">E-post: </span>{loginResult?.email}</div>
+              <div><span className="text-muted-foreground">Lösenord: </span>{loginResult?.password}</div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs"
+              onClick={() => {
+                navigator.clipboard?.writeText(`${loginResult?.email} / ${loginResult?.password}`);
+                toast({ title: "Kopierat", description: "Inloggningsuppgifterna ligger i urklipp." });
+              }}
+            >
+              Kopiera uppgifter
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </motion.div>
 
   );
