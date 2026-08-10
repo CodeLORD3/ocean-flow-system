@@ -86,20 +86,28 @@ export function ShopSidebar() {
   const activeStore = stores?.find(s => s.id === activeStoreId);
   const incomingTransfers = useIncomingTransferCount(activeStoreId || null);
 
-  const { hiddenUrls } = useStoreSidebarPrefs();
+  const { hiddenUrls, itemOrder, sectionLabels, sectionOrder } = useStoreSidebarPrefs();
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const LOCKED_URLS = ["/organisation"];
 
   const visibleSections = sections
-    .map(section => ({
+    .map((section, sIdx) => ({
       ...section,
-      items: section.items.filter(
-        item =>
-          canAccessRoute("shop", item.url) &&
-          (LOCKED_URLS.includes(item.url) || !hiddenUrls.includes(item.url))
-      ),
+      label: sectionLabels.get(section.label) ?? section.label,
+      sortOrder: sectionOrder.get(section.label) ?? sIdx,
+      fallback: sIdx,
+      items: section.items
+        .filter(
+          item =>
+            canAccessRoute("shop", item.url) &&
+            (LOCKED_URLS.includes(item.url) || !hiddenUrls.includes(item.url))
+        )
+        .map((item, i) => ({ ...item, sortOrder: itemOrder.get(item.url) ?? i, fallback: i }))
+        .sort((a, b) => a.sortOrder - b.sortOrder || a.fallback - b.fallback),
     }))
+    .sort((a, b) => a.sortOrder - b.sortOrder || a.fallback - b.fallback)
     .filter(section => section.items.length > 0);
+
 
 
 
