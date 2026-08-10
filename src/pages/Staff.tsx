@@ -358,6 +358,20 @@ export default function Staff() {
                         <ShieldCheck className="h-3.5 w-3.5 text-primary" />
                       </Button>
                     )}
+                    {isAdmin && !s.user_id && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        title="Skapa inloggning"
+                        disabled={creatingLoginFor === s.id}
+                        onClick={(e) => { e.stopPropagation(); createLogin(s); }}
+                      >
+                        {creatingLoginFor === s.id
+                          ? <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                          : <KeyRound className="h-3.5 w-3.5 text-amber-500" />}
+                      </Button>
+                    )}
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => { e.stopPropagation(); openEdit(s); }}>
                       <Edit className="h-3.5 w-3.5 text-muted-foreground" />
                     </Button>
