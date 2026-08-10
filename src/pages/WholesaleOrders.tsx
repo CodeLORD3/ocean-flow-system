@@ -1253,11 +1253,16 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
   const { toast } = useToast();
   const createChange = useCreateChangeRequest();
   const updateLineStatus = useUpdateOrderLineStatus();
+  const { data: infiniteStock = true } = useQuery({
+    queryKey: ["infinite_stock"],
+    queryFn: isInfiniteStock,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const savePackedValue = async (el: HTMLInputElement, line: any, qtyOrdered: number, availableStock: number, orderId: string) => {
     const val = Number(el.value);
     if (!val || val <= 0) return;
-    if (val > availableStock) {
+    if (!infiniteStock && val > availableStock) {
       toast({ title: "Otillräckligt lager", description: `Max tillgängligt: ${Number(availableStock.toFixed(1))}`, variant: "destructive" });
       el.value = String(Number(availableStock.toFixed(1)));
       return;
