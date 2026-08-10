@@ -28,6 +28,11 @@ export default function PortalChooser() {
   const [pickStore, setPickStore] = useState(false);
 
   const access = staff?.portal_access ?? [];
+  // Butik ska alltid ligga längst till vänster i portalvalet
+  const PORTAL_ORDER: PortalKey[] = ["shop", "production", "wholesale", "admin"];
+  const orderedAccess = [...access].sort(
+    (a, b) => PORTAL_ORDER.indexOf(a) - PORTAL_ORDER.indexOf(b)
+  );
   const needsPwd = !!staff?.must_change_password;
 
   const allowedStores = useMemo(() => {
