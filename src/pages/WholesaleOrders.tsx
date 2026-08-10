@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { displayOrderWeek } from "@/lib/orderWeek";
 import { ProductThumb } from "@/components/products/ProductThumb";
+import { isInfiniteStock } from "@/lib/infiniteStock";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Search, Clock, CheckCircle2, Truck, XCircle, Package,
@@ -1253,11 +1254,16 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
   const { toast } = useToast();
   const createChange = useCreateChangeRequest();
   const updateLineStatus = useUpdateOrderLineStatus();
+  const { data: infiniteStock = true } = useQuery({
+    queryKey: ["infinite_stock"],
+    queryFn: isInfiniteStock,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const savePackedValue = async (el: HTMLInputElement, line: any, qtyOrdered: number, availableStock: number, orderId: string) => {
     const val = Number(el.value);
     if (!val || val <= 0) return;
-    if (val > availableStock) {
+    if (!infiniteStock && val > availableStock) {
       toast({ title: "Otillräckligt lager", description: `Max tillgängligt: ${Number(availableStock.toFixed(1))}`, variant: "destructive" });
       el.value = String(Number(availableStock.toFixed(1)));
       return;
@@ -1420,8 +1426,8 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                   </td>
                   <td className="px-2 py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
                   <td className="px-2 py-0.5 text-right font-mono text-foreground">{qtyOrdered}</td>
-                  <td className={`px-2 py-0.5 text-right font-mono ${availableStock >= qtyOrdered ? "text-success" : availableStock > 0 ? "text-warning" : "text-destructive"}`}>
-                    {availableStock > 0 ? Number(availableStock.toFixed(1)) : "0"}
+                  <td className={`px-2 py-0.5 text-right font-mono ${infiniteStock ? "text-success" : availableStock >= qtyOrdered ? "text-success" : availableStock > 0 ? "text-warning" : "text-destructive"}`}>
+                    {infiniteStock ? <span title="Obegränsat lager (uppstartsläge)">∞</span> : availableStock > 0 ? Number(availableStock.toFixed(1)) : "0"}
                   </td>
                   <td className="px-2 py-0.5 text-right">
                     {(() => {
@@ -1432,7 +1438,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                         <input
                           type="number"
                           min={0}
-                          max={availableStock}
+                          max={infiniteStock ? undefined : availableStock}
                           defaultValue={qtyDelivered || ""}
                           placeholder="0"
                           className="w-16 h-6 text-right text-xs font-mono bg-background border border-border rounded px-1 focus:outline-none focus:ring-1 focus:ring-primary"
