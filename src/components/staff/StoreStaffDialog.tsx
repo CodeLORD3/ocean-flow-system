@@ -101,7 +101,7 @@ export function StoreStaffDialog({ open, onOpenChange, storeId, storeName }: Pro
             const explicit = ids.includes(storeId);
             const home = s.store_id === storeId;
             const member = explicit || home || allStores || isSuper;
-            const locked = isSuper || allStores;
+            const locked = isSuper || allStores || home;
 
             return (
               <div key={s.id} className="flex items-center gap-2.5 rounded-md border border-border p-2">

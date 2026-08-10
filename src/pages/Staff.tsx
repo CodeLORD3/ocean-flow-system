@@ -26,6 +26,7 @@ import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { StaffDetailDialog } from "@/components/staff/StaffDetailDialog";
 import { StaffAccessDialog, PORTAL_OPTIONS } from "@/components/staff/StaffAccessDialog";
+import { StoreStaffDialog } from "@/components/staff/StoreStaffDialog";
 import { Badge } from "@/components/ui/badge";
 import { Activity, ShieldCheck } from "lucide-react";
 import { useOpenShifts, shiftClock, shiftDuration } from "@/hooks/useStaffShifts";
@@ -67,7 +68,8 @@ export default function Staff() {
       ACTIVITY_VIEWER_EMAILS.includes(currentStaff.email.toLowerCase()));
 
   const [search, setSearch] = useState("");
-  const [showAll, setShowAll] = useState(false);
+  const [showAll, setShowAll] = useState(true);
+  const [storeStaffOpen, setStoreStaffOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
@@ -215,13 +217,20 @@ export default function Staff() {
           <p className="text-xs text-muted-foreground mt-0.5">
             {platformView
               ? "All personal i alla butiker och portaler — redigera uppgifter och behörigheter"
-              : "Instämplad personal på arbetsplatsen — stämpling sker på Min profil"}
+              : "Personal kopplad till butiken — stämpling sker på Min profil"}
           </p>
 
         </div>
-        <Button size="sm" className="gap-1.5 text-xs" onClick={openAdd}>
-          <Plus className="h-3.5 w-3.5" /> Lägg till personal
-        </Button>
+        <div className="flex items-center gap-2">
+          {isAdmin && site === "shop" && activeStoreId && (
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setStoreStaffOpen(true)}>
+              <Users className="h-3.5 w-3.5" /> Personal i butiken
+            </Button>
+          )}
+          <Button size="sm" className="gap-1.5 text-xs" onClick={openAdd}>
+            <Plus className="h-3.5 w-3.5" /> Lägg till personal
+          </Button>
+        </div>
       </div>
 
       {/* KPIs */}
@@ -246,7 +255,7 @@ export default function Staff() {
       )}
       {!platformView && (
         <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowAll(v => !v)}>
-          {showAll ? "Visa endast instämplade" : "Visa all personal"}
+          {showAll ? "Visa endast instämplade" : "Visa all personal i butiken"}
         </Button>
       )}
 
@@ -472,6 +481,15 @@ export default function Staff() {
       />
 
       {/* Portal permissions dialog */}
+      {isAdmin && site === "shop" && activeStoreId && (
+        <StoreStaffDialog
+          open={storeStaffOpen}
+          onOpenChange={setStoreStaffOpen}
+          storeId={activeStoreId}
+          storeName={stores.find((st: any) => st.id === activeStoreId)?.name || "butiken"}
+        />
+      )}
+
       <StaffAccessDialog
         open={!!accessStaff}
         onOpenChange={(open) => !open && setAccessStaff(null)}
