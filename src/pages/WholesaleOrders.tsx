@@ -1364,7 +1364,23 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
             </tr>
           </thead>
           <tbody>
-            {order.shop_order_lines?.map((line: any) => {
+            {(() => {
+              const allLines = order.shop_order_lines || [];
+              const groups = new Map<string, any[]>();
+              for (const l of allLines) {
+                const cat = l.products?.category || "Övrigt";
+                if (!groups.has(cat)) groups.set(cat, []);
+                groups.get(cat)!.push(l);
+              }
+              const sortedCats = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b, "sv"));
+              const ordered: { line: any; catHeader: string | null }[] = [];
+              for (const cat of sortedCats) {
+                const catLines = groups.get(cat)!.slice().sort((a: any, b: any) =>
+                  (a.products?.name || "").localeCompare(b.products?.name || "", "sv"));
+                catLines.forEach((line: any, i: number) => ordered.push({ line, catHeader: i === 0 ? cat : null }));
+              }
+              return ordered.map(({ line, catHeader }: any) => {
+
               const qtyOrdered = line.quantity_ordered || 0;
               const qtyDelivered = line.quantity_delivered || 0;
               const wholesalePrice = line.products?.wholesale_price || 0;
