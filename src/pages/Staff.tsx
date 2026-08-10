@@ -73,6 +73,9 @@ export default function Staff() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  // Inloggning: skapas separat från personalkortet
+  const [creatingLoginFor, setCreatingLoginFor] = useState<string | null>(null);
+  const [loginResult, setLoginResult] = useState<{ name: string; email: string; password: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [detailStaff, setDetailStaff] = useState<any | null>(null);
