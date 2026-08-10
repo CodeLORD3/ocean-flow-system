@@ -1364,7 +1364,23 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
             </tr>
           </thead>
           <tbody>
-            {order.shop_order_lines?.map((line: any) => {
+            {(() => {
+              const allLines = order.shop_order_lines || [];
+              const groups = new Map<string, any[]>();
+              for (const l of allLines) {
+                const cat = l.products?.category || "Övrigt";
+                if (!groups.has(cat)) groups.set(cat, []);
+                groups.get(cat)!.push(l);
+              }
+              const sortedCats = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b, "sv"));
+              const ordered: { line: any; catHeader: string | null }[] = [];
+              for (const cat of sortedCats) {
+                const catLines = groups.get(cat)!.slice().sort((a: any, b: any) =>
+                  (a.products?.name || "").localeCompare(b.products?.name || "", "sv"));
+                catLines.forEach((line: any, i: number) => ordered.push({ line, catHeader: i === 0 ? cat : null }));
+              }
+              return ordered.map(({ line, catHeader }: any) => {
+
               const qtyOrdered = line.quantity_ordered || 0;
               const qtyDelivered = line.quantity_delivered || 0;
               const wholesalePrice = line.products?.wholesale_price || 0;
@@ -1380,7 +1396,15 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
               const next = idx === -1 ? "Pågående" : (idx < STATUS_FLOW.length - 1 ? STATUS_FLOW[idx + 1] : null);
 
               return (
-                <tr key={line.id} className={`border-b border-border/30 h-7 transition-colors ${
+                <React.Fragment key={line.id}>
+                {catHeader && (
+                  <tr className="bg-muted/40">
+                    <td colSpan={9} className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      ▸ {catHeader}
+                    </td>
+                  </tr>
+                )}
+                <tr className={`border-b border-border/30 h-7 transition-colors ${
                   isUnavailable ? "opacity-50 bg-destructive/5" :
                   currentStatus === "Skickad" ? "bg-primary/10" :
                   currentStatus === "Packad" || currentStatus === "Producerad" ? "bg-success/10" :
@@ -1487,8 +1511,11 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                   </td>
                   <td className="px-2 py-0.5 text-right font-mono text-foreground">{lineValue.toFixed(2)}</td>
                 </tr>
+                </React.Fragment>
               );
-            })}
+              });
+            })()}
+
           </tbody>
         </table>
       </div>
