@@ -308,7 +308,7 @@ export default function ShopOrders() {
       if (!activeStoreId) return [];
       const { data, error } = await supabase
         .from("shop_orders")
-        .select("*, stores(name, address, phone, city), shop_order_lines(*, products(name, unit, category, hs_code, weight_per_piece, wholesale_price))")
+        .select("*, stores(name, address, phone, city), shop_order_lines(*, products(name, unit, category, image_url, hs_code, weight_per_piece, wholesale_price))")
         .eq("store_id", activeStoreId)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -379,7 +379,7 @@ export default function ShopOrders() {
 
   const addProduct = (p: any) => {
     setOrderLines(prev => [{
-      product_id: p.id, product_name: p.name, unit: p.unit, quantity: "", category: p.category || null,
+      product_id: p.id, product_name: p.name, unit: p.unit, quantity: "", category: p.category || null, image_url: (p as any).image_url ?? null,
     }, ...prev]);
     setProductSearch("");
     setHighlightedIndex(-1);
@@ -602,6 +602,7 @@ export default function ShopOrders() {
                     unit: l.unit || l.products?.unit || "ST",
                     quantity: String(l.quantity_ordered || ""),
                     category: l.products?.category || null,
+                    image_url: l.products?.image_url ?? null,
                   }));
 
                   setOrderLines(copied);
@@ -649,7 +650,12 @@ export default function ShopOrders() {
                           </tr>
                           {items.map(({ line, idx }) => (
                             <tr key={line.product_id} className="border-b border-border/30">
-                              <td className="py-2 font-medium text-foreground">{line.product_name}</td>
+                              <td className="py-2 font-medium text-foreground">
+                                <div className="flex items-center gap-2">
+                                  <ProductThumb src={line.image_url} alt={line.product_name} static className="w-10 h-8" />
+                                  <span className="truncate">{line.product_name}</span>
+                                </div>
+                              </td>
                               <td className="py-2 text-muted-foreground">{line.unit}</td>
                               <td className="py-2 text-right">
                                 <Input
