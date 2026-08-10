@@ -28,7 +28,7 @@ import { StaffDetailDialog } from "@/components/staff/StaffDetailDialog";
 import { StaffAccessDialog, PORTAL_OPTIONS } from "@/components/staff/StaffAccessDialog";
 import { StoreStaffDialog } from "@/components/staff/StoreStaffDialog";
 import { Badge } from "@/components/ui/badge";
-import { Activity, ShieldCheck } from "lucide-react";
+import { Activity, ShieldCheck, KeyRound, Loader2 } from "lucide-react";
 import { useOpenShifts, shiftClock, shiftDuration } from "@/hooks/useStaffShifts";
 
 const ACTIVITY_VIEWER_EMAILS = [
