@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { displayOrderWeek } from "@/lib/orderWeek";
+import { ProductThumb } from "@/components/products/ProductThumb";
 import { motion } from "framer-motion";
 import {
   ShoppingCart, Search, Clock, CheckCircle2, Truck, XCircle, Package,
