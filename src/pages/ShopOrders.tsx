@@ -270,6 +270,9 @@ export default function ShopOrders() {
     if (city.includes("göteborg") || city.includes("gothenburg") || name.includes("göteborg") || name.includes("amhult") || name.includes("särö")) zoneKey = "gothenburg";
     else if (city.includes("stockholm") || name.includes("stockholm") || name.includes("kungsholmen") || name.includes("ålsten")) zoneKey = "stockholm";
     
+    // Svenska butiker (Göteborg/Stockholm) får välja alla dagar i veckan
+    if (zoneKey !== "international") return null;
+
     const days = transportSchedules.filter(s => s.zone_key === zoneKey).map(s => s.departure_weekday);
     return days.length > 0 ? new Set(days) : null;
   }, [activeStore, transportSchedules]);
