@@ -6893,6 +6893,7 @@ export type Database = {
           hidden: boolean
           id: string
           nav_url: string
+          sort_order: number | null
           store_id: string
           updated_at: string
         }
@@ -6901,6 +6902,7 @@ export type Database = {
           hidden?: boolean
           id?: string
           nav_url: string
+          sort_order?: number | null
           store_id: string
           updated_at?: string
         }
@@ -6909,12 +6911,51 @@ export type Database = {
           hidden?: boolean
           id?: string
           nav_url?: string
+          sort_order?: number | null
           store_id?: string
           updated_at?: string
         }
         Relationships: [
           {
             foreignKeyName: "store_sidebar_prefs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_sidebar_sections: {
+        Row: {
+          created_at: string
+          id: string
+          label: string | null
+          section_key: string
+          sort_order: number | null
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          section_key: string
+          sort_order?: number | null
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          section_key?: string
+          sort_order?: number | null
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_sidebar_sections_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
