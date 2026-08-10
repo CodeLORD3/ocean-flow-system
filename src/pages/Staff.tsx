@@ -156,7 +156,10 @@ export default function Staff() {
       return;
     }
     setCreatingLoginFor(s.id);
-    const password = `Makrill${Math.floor(1000 + Math.random() * 9000)}!`;
+    // Tillfälligt lösenord: förnamnet med stor begynnelsebokstav + 123 (t.ex. "Leonie123")
+    const rawFirst = String(s.first_name || "").trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z]/g, "");
+    const baseName = rawFirst.length >= 2 ? rawFirst : "Makrill";
+    const password = `${baseName.charAt(0).toUpperCase()}${baseName.slice(1).toLowerCase()}123`;
     const { data, error } = await supabase.functions.invoke("staff-account-email", {
       body: { staff_id: s.id, email, password },
     });
