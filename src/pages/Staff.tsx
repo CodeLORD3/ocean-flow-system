@@ -50,7 +50,7 @@ export default function Staff() {
   const platformView = isAdmin && adminAllStaff;
 
   const storeFilter = !platformView && site === "shop" ? activeStoreId : undefined;
-  const { data: storeStaff = [], isLoading } = useStaff(storeFilter);
+  const { data: storeStaff = [], isLoading, refetch } = useStaff(storeFilter);
   const { data: allStaff = [] } = useStaff();
   const { data: stores = [] } = useStores(true);
   const createStaff = useCreateStaff();
@@ -541,7 +541,7 @@ export default function Staff() {
       />
 
       {/* Tillfälligt lösenord visas en gång — kopiera och ge till personen */}
-      <Dialog open={!!loginResult} onOpenChange={(open) => { if (!open) { setLoginResult(null); refetch?.(); } }}>
+      <Dialog open={!!loginResult} onOpenChange={(open) => { if (!open) { setLoginResult(null); refetch(); } }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-base">Inloggning skapad</DialogTitle>
