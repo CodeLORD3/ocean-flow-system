@@ -1411,7 +1411,12 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                   currentStatus === "Pågående" ? "bg-warning/10" :
                   ""
                 }`}>
-                  <td className="px-2 py-0.5 font-medium text-foreground">{line.products?.name || "–"}</td>
+                  <td className="px-2 py-0.5 font-medium text-foreground">
+                    <div className="flex items-center gap-2">
+                      <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="w-10 h-8" />
+                      <span>{line.products?.name || "–"}</span>
+                    </div>
+                  </td>
                   <td className="px-2 py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
                   <td className="px-2 py-0.5 text-right font-mono text-foreground">{qtyOrdered}</td>
                   <td className={`px-2 py-0.5 text-right font-mono ${availableStock >= qtyOrdered ? "text-success" : availableStock > 0 ? "text-warning" : "text-destructive"}`}>
