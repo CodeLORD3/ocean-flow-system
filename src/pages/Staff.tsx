@@ -147,6 +147,33 @@ export default function Staff() {
     });
   };
 
+  // Skapar ett riktigt inloggningskonto för en personal som saknar konto.
+  // Personen får ett tillfälligt lösenord och måste byta det vid första inloggningen.
+  const createLogin = async (s: any) => {
+    const email = (s.email || "").trim().toLowerCase();
+    if (!email) {
+      toast({ title: "E-postadress saknas", description: "Lägg in en e-postadress på personalkortet först.", variant: "destructive" });
+      return;
+    }
+    setCreatingLoginFor(s.id);
+    const password = `Makrill${Math.floor(1000 + Math.random() * 9000)}!`;
+    const { data, error } = await supabase.functions.invoke("staff-account-email", {
+      body: { staff_id: s.id, email, password },
+    });
+    if (error || (data as any)?.error) {
+      setCreatingLoginFor(null);
+      toast({
+        title: "Kunde inte skapa inloggning",
+        description: (data as any)?.error || error?.message,
+        variant: "destructive",
+      });
+      return;
+    }
+    await supabase.from("staff").update({ must_change_password: true } as any).eq("id", s.id);
+    setCreatingLoginFor(null);
+    setLoginResult({ name: `${s.first_name} ${s.last_name}`, email, password });
+  };
+
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
