@@ -19,6 +19,8 @@ import {
   Trash2,
   ShieldCheck,
   ClipboardList,
+  UserCheck,
+  SlidersHorizontal,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -28,7 +30,9 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { useChatUnread } from "@/hooks/useChat";
 import { useIncomingTransferCount } from "@/hooks/useTransferOrders";
 import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useLocalSidebarPrefs } from "@/hooks/useLocalSidebarPrefs";
+import { SidebarVisibilityDialog } from "@/components/SidebarVisibilityDialog";
 import {
   Sidebar,
   SidebarContent,
@@ -62,6 +66,10 @@ const salesNav = [
   { title: "Önskemål", url: "/store-wishes", icon: Star },
 ];
 
+const orgNav = [
+  { title: "Personal", url: "/staff", icon: UserCheck },
+];
+
 const bottomNav = [
   { title: "Rapporter", url: "/reports", icon: BarChart3 },
   { title: "Administration", url: "/settings", icon: Settings },
@@ -73,6 +81,7 @@ const sections: NavSection[] = [
   { label: "Översikt", items: overviewNav },
   { label: "Inköp & Produktion", items: purchaseNav },
   { label: "Försäljning", items: salesNav },
+  { label: "Organisation", items: orgNav },
 ];
 
 export function ProductionSidebar() {
@@ -84,6 +93,9 @@ export function ProductionSidebar() {
   const { getCount, markAsRead } = useNotifications();
   const chatUnread = useChatUnread();
   const incomingTransfers = useIncomingTransferCount(null);
+  const { hiddenUrls, itemOrder, sectionLabels, sectionOrder } = useLocalSidebarPrefs("production");
+  const [customizeOpen, setCustomizeOpen] = useState(false);
+  const LOCKED_URLS = ["/organisation"];
 
   useEffect(() => {
     const count = getCount(location.pathname);
@@ -108,10 +120,21 @@ export function ProductionSidebar() {
 
       <SidebarContent>
         {sections
-          .map((section) => ({
+          .map((section, sIdx) => ({
             ...section,
-            items: section.items.filter((item) => canAccessRoute("production", item.url)),
+            label: sectionLabels.get(section.label) ?? section.label,
+            sortOrder: sectionOrder.get(section.label) ?? sIdx,
+            fallback: sIdx,
+            items: section.items
+              .filter(
+                (item) =>
+                  canAccessRoute("production", item.url) &&
+                  (LOCKED_URLS.includes(item.url) || !hiddenUrls.includes(item.url))
+              )
+              .map((item, i) => ({ ...item, sortOrder: itemOrder.get(item.url) ?? i, fallback: i }))
+              .sort((a, b) => a.sortOrder - b.sortOrder || a.fallback - b.fallback),
           }))
+          .sort((a, b) => a.sortOrder - b.sortOrder || a.fallback - b.fallback)
           .filter((section) => section.items.length > 0)
           .map((section) => (
           <SidebarGroup key={section.label}>
@@ -137,6 +160,12 @@ export function ProductionSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={() => setCustomizeOpen(true)}>
+              <SlidersHorizontal className="h-4 w-4" />
+              {!collapsed && <span>Anpassa meny</span>}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           {bottomNav.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild isActive={isActive(item.url)}>
@@ -149,6 +178,17 @@ export function ProductionSidebar() {
           ))}
         </SidebarMenu>
       </SidebarFooter>
+
+      <SidebarVisibilityDialog
+        open={customizeOpen}
+        onOpenChange={setCustomizeOpen}
+        localScope="production"
+        sections={sections.map((s) => ({
+          label: s.label,
+          items: s.items.map((i) => ({ title: i.title, url: i.url })),
+        }))}
+        lockedUrls={LOCKED_URLS}
+      />
     </Sidebar>
   );
 }
