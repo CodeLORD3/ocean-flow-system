@@ -1,0 +1,1 @@
+UPDATE public.staff SET must_change_password = false WHERE id = '6c7c4b9d-8423-42b7-8346-205082f0f738';
