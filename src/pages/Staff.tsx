@@ -222,7 +222,7 @@ export default function Staff() {
 
         </div>
         <div className="flex items-center gap-2">
-          {isAdmin && site === "shop" && activeStoreId && (
+          {site === "shop" && activeStoreId && (
             <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setStoreStaffOpen(true)}>
               <Users className="h-3.5 w-3.5" /> Personal i butiken
             </Button>
@@ -481,7 +481,7 @@ export default function Staff() {
       />
 
       {/* Portal permissions dialog */}
-      {isAdmin && site === "shop" && activeStoreId && (
+      {site === "shop" && activeStoreId && (
         <StoreStaffDialog
           open={storeStaffOpen}
           onOpenChange={setStoreStaffOpen}
