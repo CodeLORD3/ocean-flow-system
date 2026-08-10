@@ -7,6 +7,7 @@ import {
   lotBalancesForReference,
 } from "@/lib/stockLedger";
 import { GROSSIST_FLYTANDE_ID, leveranslagerId, butikslagerId } from "@/lib/locations";
+import { isInfiniteStock } from "@/lib/infiniteStock";
 
 
 /**
