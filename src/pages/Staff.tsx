@@ -539,6 +539,35 @@ export default function Staff() {
         onOpenChange={(open) => !open && setAccessStaff(null)}
         staff={accessStaff}
       />
+
+      {/* Tillfälligt lösenord visas en gång — kopiera och ge till personen */}
+      <Dialog open={!!loginResult} onOpenChange={(open) => { if (!open) { setLoginResult(null); refetch?.(); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-base">Inloggning skapad</DialogTitle>
+            <DialogDescription className="text-xs">
+              {loginResult?.name} kan nu logga in. Lösenordet visas bara en gång och måste bytas vid första inloggningen.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 text-xs">
+            <div className="rounded-md border border-border bg-muted/40 p-3 space-y-1 font-mono">
+              <div><span className="text-muted-foreground">E-post: </span>{loginResult?.email}</div>
+              <div><span className="text-muted-foreground">Lösenord: </span>{loginResult?.password}</div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs"
+              onClick={() => {
+                navigator.clipboard?.writeText(`${loginResult?.email} / ${loginResult?.password}`);
+                toast({ title: "Kopierat", description: "Inloggningsuppgifterna ligger i urklipp." });
+              }}
+            >
+              Kopiera uppgifter
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </motion.div>
 
   );
