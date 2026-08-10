@@ -106,6 +106,10 @@ export default function OrganisationOverview() {
   const { switchTab } = useTabs();
   const { data: checklistTemplates = [] } = useChecklistTemplates(isShop ? activeStoreId : null);
   const todaysChecklistTemplates = checklistTemplates.filter((t) => templateAppliesOn(t, todayIso()));
+  // Butiker som inte ska visa checklistkort i översikten (Dagsrapport visas fortfarande)
+  const hideChecklistCards = ["morges", "zollikon"].some((k) =>
+    (activeStoreName ?? "").toLowerCase().includes(k)
+  );
 
   const { data: products = [] } = useProducts();
   const { data: stores = [] } = useStores(true);
