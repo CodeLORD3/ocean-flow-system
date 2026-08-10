@@ -19,7 +19,7 @@ const PORTAL_META: Record<PortalKey, { title: string; description: string; icon:
 };
 
 export default function PortalChooser() {
-  const { session, staff, loading, signOut } = useStaffAuth();
+  const { session, staff, loading, signOut, refresh } = useStaffAuth();
   const { setSite, setActiveStore } = useSite();
   const { data: stores = [] } = useStores();
   const storeCovers = useStoreCoverImages();
@@ -68,7 +68,26 @@ export default function PortalChooser() {
   if (!session) return <Navigate to="/" replace />;
   if (needsPwd) return <FirstLoginPasswordChange />;
 
+  // Profilen kunde inte hämtas — visa ett begripligt läge istället för tom sida
+  if (!staff) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
+        <h2 className="text-lg font-semibold mb-2">Kunde inte hämta din behörighet</h2>
+        <p className="text-sm text-muted-foreground mb-4 max-w-sm">
+          Anslutningen till servern svarade inte. Försök igen — dina portaler laddas då om.
+        </p>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => refresh()}>Försök igen</Button>
+          <Button variant="outline" onClick={signOut}>
+            <LogOut className="h-4 w-4 mr-2" /> Logga ut
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (staff && access.length === 0) {
+
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
         <h2 className="text-lg font-semibold mb-2">Ingen portal-åtkomst</h2>

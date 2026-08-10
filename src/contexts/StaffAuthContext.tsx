@@ -44,13 +44,24 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
     }
     // Behörigheten bor i user_scopes. Vyn staff_access sätter ihop personalen
     // med sina scopes, så klienten har ett enda begrepp att läsa.
-    const { data } = await supabase
-      .from("staff_access")
-      .select("id, user_id, first_name, last_name, email, phone, age, workplace, profile_image_url, portal_access, allowed_store_ids, must_change_password")
-      .eq("user_id", uid)
-      .maybeSingle();
-    setStaff((data as unknown as StaffProfile) ?? null);
+    // Hämtningen får inte tysta misslyckas — då blir portalvalet tomt.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const { data, error } = await supabase
+        .from("staff_access")
+        .select("id, user_id, first_name, last_name, email, phone, age, workplace, profile_image_url, portal_access, allowed_store_ids, must_change_password")
+        .eq("user_id", uid)
+        .maybeSingle();
+
+      if (!error) {
+        setStaff((data as unknown as StaffProfile) ?? null);
+        return;
+      }
+      // Nätverksglapp eller kall token: vänta kort och försök igen
+      await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+    }
+    setStaff(null);
   };
+
 
   const refresh = async () => {
     await loadStaff(user?.id);
