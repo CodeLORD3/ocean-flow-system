@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, Phone, Mail, MapPin, Link2, Unlink, Activity } from "lucide-react";
+import { User, Phone, Mail, MapPin, Link2, Unlink, Activity, KeyRound } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -172,6 +172,9 @@ export function StaffDetailDialog({ open, onOpenChange, staff }: Props) {
           <div className="border border-border rounded-lg p-3 space-y-2">
             <p className="text-xs font-medium text-foreground">Koppla till inloggningskonto</p>
             <div className="flex flex-col sm:flex-row gap-2">
+              <Button size="sm" onClick={handleCreateLogin} disabled={linking} className="text-xs">
+                <KeyRound className="h-3 w-3 mr-1" /> Skapa inloggning
+              </Button>
               <Button
                 size="sm"
                 variant="outline"
@@ -188,12 +191,22 @@ export function StaffDetailDialog({ open, onOpenChange, staff }: Props) {
                   onChange={(e) => setLinkEmail(e.target.value)}
                   className="h-8 text-xs"
                 />
-                <Button size="sm" onClick={handleManualLink} disabled={linking || !linkEmail} className="text-xs">
+                <Button size="sm" variant="outline" onClick={handleManualLink} disabled={linking || !linkEmail} className="text-xs">
                   Länka
                 </Button>
               </div>
             </div>
+            {created && (
+              <p className="text-xs text-success">
+                Konto skapat: <span className="font-mono">{created.email}</span> · lösenord{" "}
+                <span className="font-mono font-semibold">{created.password}</span> (måste bytas vid första inloggningen)
+              </p>
+            )}
+            <p className="text-[11px] text-muted-foreground">
+              Skapa inloggning ger personen ett konto med e-posten på kortet och lösenordet förnamn + 123.
+            </p>
           </div>
+
         ) : (
           <div className="flex justify-end">
             <Button size="sm" variant="ghost" onClick={handleUnlink} className="text-xs text-muted-foreground">
