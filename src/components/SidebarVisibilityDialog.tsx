@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Lock, ChevronUp, ChevronDown, Pencil, Check } from "lucide-react";
 import { useStoreSidebarPrefs } from "@/hooks/useStoreSidebarPrefs";
+import { useLocalSidebarPrefs } from "@/hooks/useLocalSidebarPrefs";
 
 export type VisibilityNavItem = { title: string; url: string };
 export type VisibilitySection = { label: string; items: VisibilityNavItem[] };
@@ -15,9 +16,13 @@ interface Props {
   /** Sections in their default (code) order — label is used as section key */
   sections: VisibilitySection[];
   lockedUrls?: string[];
+  /** Local scope key when there is no active store (e.g. "production") */
+  localScope?: string;
 }
 
-export function SidebarVisibilityDialog({ open, onOpenChange, sections, lockedUrls = [] }: Props) {
+export function SidebarVisibilityDialog({ open, onOpenChange, sections, lockedUrls = [], localScope }: Props) {
+  const storePrefs = useStoreSidebarPrefs();
+  const localPrefs = useLocalSidebarPrefs(localScope ?? "default");
   const {
     isHidden,
     setHidden,
@@ -27,7 +32,8 @@ export function SidebarVisibilityDialog({ open, onOpenChange, sections, lockedUr
     sectionOrder,
     setItemOrder,
     upsertSection,
-  } = useStoreSidebarPrefs();
+  } = localScope ? localPrefs : storePrefs;
+
 
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [draftLabel, setDraftLabel] = useState("");
