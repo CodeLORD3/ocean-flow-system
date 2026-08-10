@@ -15,25 +15,42 @@ export interface StaffMember {
   created_at: string | null;
 }
 
+/**
+ * Personal per butik.
+ *
+ * En person kan vara kopplad till flera butiker: hemmabutiken (store_id) plus
+ * de butiker som behörigheten (user_scopes) ger. Tom butikslista + butiksportal
+ * = alla butiker, och då syns personen i varje butiks personallista.
+ */
 export function useStaff(storeId?: string) {
   return useQuery({
     queryKey: ["staff", storeId],
     queryFn: async () => {
       // staff_access = personal + behörigheter (user_scopes) i en vy.
-      let q = supabase
+      const { data, error } = await supabase
         .from("staff_access")
         .select("*")
         .order("first_name", { ascending: true });
-      if (storeId) q = q.eq("store_id", storeId);
-      const { data, error } = await q;
       if (error) throw error;
-      return ((data ?? []) as any[]).map((r) => ({
+      let rows = (data ?? []) as any[];
+      if (storeId) {
+        rows = rows.filter((r) => {
+          const ids: string[] = r.allowed_store_ids ?? [];
+          const portals: string[] = r.portal_access ?? [];
+          if (r.store_id === storeId) return true;
+          if (ids.includes(storeId)) return true;
+          // Tom lista = alla butiker
+          return ids.length === 0 && portals.includes("shop");
+        });
+      }
+      return rows.map((r) => ({
         ...r,
         stores: r.store_name ? { name: r.store_name } : null,
       })) as (StaffMember & { stores: { name: string } | null })[];
     },
   });
 }
+
 
 export function useCreateStaff() {
   const qc = useQueryClient();
