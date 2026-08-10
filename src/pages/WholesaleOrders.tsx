@@ -1420,7 +1420,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                 }`}>
                   <td className="px-2 py-0.5 font-medium text-foreground">
                     <div className="flex items-center gap-2">
-                      <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="w-10 h-8" />
+                      <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="w-7 h-5" />
                       <span>{line.products?.name || "–"}</span>
                     </div>
                   </td>
