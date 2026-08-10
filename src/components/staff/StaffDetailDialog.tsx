@@ -22,6 +22,7 @@ export function StaffDetailDialog({ open, onOpenChange, staff }: Props) {
   const updateStaff = useUpdateStaff();
   const [linkEmail, setLinkEmail] = useState("");
   const [linking, setLinking] = useState(false);
+  const [created, setCreated] = useState<{ email: string; password: string } | null>(null);
 
   if (!staff) return null;
 
@@ -89,6 +90,38 @@ export function StaffDetailDialog({ open, onOpenChange, staff }: Props) {
     await updateStaff.mutateAsync({ id: staff.id, user_id: null } as any);
     toast({ title: "Avlänkat", description: "Inloggningskoppling borttagen." });
   };
+
+  // Skapar ett riktigt inloggningskonto. Första lösenordet är förnamnet med
+  // stor begynnelsebokstav + 123, och måste bytas vid första inloggningen.
+  const handleCreateLogin = async () => {
+    const email = String(staff.email || "").trim().toLowerCase();
+    if (!email) {
+      toast({ title: "E-postadress saknas", description: "Lägg in en e-postadress på personalkortet först.", variant: "destructive" });
+      return;
+    }
+    const rawFirst = String(staff.first_name || "").trim().normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z]/g, "");
+    const baseName = rawFirst.length >= 2 ? rawFirst : "Makrill";
+    const password = `${baseName.charAt(0).toUpperCase()}${baseName.slice(1).toLowerCase()}123`;
+    setLinking(true);
+    const { data, error } = await supabase.functions.invoke("staff-account-email", {
+      body: { staff_id: staff.id, email, password },
+    });
+    if (error || (data as any)?.error) {
+      setLinking(false);
+      toast({
+        title: "Kunde inte skapa inloggning",
+        description: (data as any)?.error || error?.message,
+        variant: "destructive",
+      });
+      return;
+    }
+    await supabase.from("staff").update({ must_change_password: true } as any).eq("id", staff.id);
+    setLinking(false);
+    setCreated({ email, password });
+    toast({ title: "Inloggning skapad", description: `${email} · lösenord ${password}` });
+  };
+
 
   const fullName = `${staff.first_name} ${staff.last_name}`;
 
