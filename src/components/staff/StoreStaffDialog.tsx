@@ -40,25 +40,11 @@ export function StoreStaffDialog({ open, onOpenChange, storeId, storeName }: Pro
   });
 
   const toggle = async (s: any, member: boolean) => {
-    const portals: string[] = (s.portal_access ?? []).filter((p: string) => p !== "admin");
-    const ids: string[] = Array.from(new Set(s.allowed_store_ids ?? []));
-
-    let nextIds: string[];
-    let nextPortals: string[];
-    if (member) {
-      nextIds = ids.filter((id) => id !== storeId);
-      // Tom lista skulle betyda alla butiker — ta då bort butiksportalen istället
-      nextPortals = nextIds.length === 0 ? portals.filter((p) => p !== "shop") : portals;
-    } else {
-      nextIds = [...ids, storeId];
-      nextPortals = portals.includes("shop") ? portals : [...portals, "shop"];
-    }
-
     setSavingId(s.id);
-    const { error } = await supabase.rpc("set_user_scopes", {
+    const { error } = await supabase.rpc("set_store_membership", {
       _staff_id: s.id,
-      _portals: nextPortals,
-      _store_ids: nextIds,
+      _store_id: storeId,
+      _member: !member,
     });
     setSavingId(null);
 
@@ -72,6 +58,7 @@ export function StoreStaffDialog({ open, onOpenChange, storeId, storeName }: Pro
       description: `${s.first_name} ${s.last_name} · ${storeName}`,
     });
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

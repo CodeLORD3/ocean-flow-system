@@ -8512,6 +8512,10 @@ export type Database = {
         Args: { _exempt: boolean; _hs_code: string }
         Returns: boolean
       }
+      set_store_membership: {
+        Args: { _member: boolean; _staff_id: string; _store_id: string }
+        Returns: undefined
+      }
       set_user_scopes: {
         Args: { _portals: string[]; _staff_id: string; _store_ids: string[] }
         Returns: undefined
