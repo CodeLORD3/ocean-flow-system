@@ -569,7 +569,7 @@ export default function ShopOrders() {
                               onClick={() => addProduct(p)}
                               onMouseEnter={() => setHighlightedIndex(idx)}
                             >
-                              <ProductThumb src={(p as any).image_url} alt={p.name} static className="w-10 h-8" />
+                              <ProductThumb src={(p as any).image_url} alt={p.name} static className="w-7 h-5" />
                               <span className="font-medium text-foreground flex-1 truncate">{p.name}</span>
                               <span className="text-muted-foreground font-mono text-[10px]">{p.sku} · {p.unit}</span>
                               <button
@@ -655,7 +655,7 @@ export default function ShopOrders() {
                             <tr key={line.product_id} className="border-b border-border/30">
                               <td className="py-2 font-medium text-foreground">
                                 <div className="flex items-center gap-2">
-                                  <ProductThumb src={line.image_url} alt={line.product_name} static className="w-10 h-8" />
+                                  <ProductThumb src={line.image_url} alt={line.product_name} static className="w-7 h-5" />
                                   <span className="truncate">{line.product_name}</span>
                                 </div>
                               </td>
