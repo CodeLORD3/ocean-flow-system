@@ -28,6 +28,11 @@ export default function PortalChooser() {
   const [pickStore, setPickStore] = useState(false);
 
   const access = staff?.portal_access ?? [];
+  // Butik ska alltid ligga längst till vänster i portalvalet
+  const PORTAL_ORDER: PortalKey[] = ["shop", "production", "wholesale", "admin"];
+  const orderedAccess = [...access].sort(
+    (a, b) => PORTAL_ORDER.indexOf(a) - PORTAL_ORDER.indexOf(b)
+  );
   const needsPwd = !!staff?.must_change_password;
 
   const allowedStores = useMemo(() => {
@@ -175,7 +180,7 @@ export default function PortalChooser() {
 
         <div className={`grid gap-4 ${access.length >= 4 ? "md:grid-cols-2 lg:grid-cols-4" : access.length === 3 ? "md:grid-cols-3" : access.length === 2 ? "md:grid-cols-2" : "grid-cols-1"}`}>
 
-          {access.map((key) => {
+          {orderedAccess.map((key) => {
             const meta = PORTAL_META[key];
             const Icon = meta.icon;
             return (
