@@ -6,6 +6,7 @@ import {
   Archive, CalendarIcon, Pencil, Send, FileText, Copy, Eye,
 } from "lucide-react";
 import { ProductThumb } from "@/components/products/ProductThumb";
+import { ProductPhotosGallery } from "@/components/products/ProductPhotos";
 import { OrderPhotosButton, ORDER_PHOTO_ENTITY, ORDER_LINE_PHOTO_ENTITY } from "@/components/orders/OrderPhotos";
 
 import DeliveryNote from "@/components/DeliveryNote";
@@ -849,6 +850,7 @@ export default function ShopOrders() {
           {previewProduct?.description && (
             <p className="text-xs text-muted-foreground">{previewProduct.description}</p>
           )}
+          <ProductPhotosGallery productId={previewProduct?.id} productName={previewProduct?.name} />
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setPreviewProduct(null)}>Stäng</Button>
             <Button
@@ -1176,6 +1178,7 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
                                   compact
                                   entityType={ORDER_LINE_PHOTO_ENTITY}
                                   entityId={line.id}
+                                  productId={line.product_id}
                                   title={line.products?.name || "Orderrad"}
                                 />
                               </div>

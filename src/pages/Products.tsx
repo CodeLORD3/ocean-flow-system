@@ -20,6 +20,7 @@ import {
   Upload,
   Image as ImageIcon,
 } from "lucide-react";
+import { ProductPhotosGallery } from "@/components/products/ProductPhotos";
 import ProductImportDialog from "@/components/products/ProductImportDialog";
 import PriceListDialog from "@/components/PriceListDialog";
 import SavedPriceLists from "@/components/SavedPriceLists";
@@ -1203,6 +1204,7 @@ export default function Products() {
                 </div>
               </div>
             </div>
+            {editId && <ProductPhotosGallery productId={editId} productName={form.name} />}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">Kategori *</Label>
