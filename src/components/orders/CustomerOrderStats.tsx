@@ -172,10 +172,21 @@ export function CustomerOrderStats({ storeId }: { storeId?: string | null }) {
                 sub: "packat och prissatt",
               },
               {
+                label: "Företagskunder",
+                value: `${nf(stats.companyOrders)} order`,
+                sub: `${nf(stats.companyValue)} kr`,
+              },
+              {
+                label: "Privatkunder",
+                value: `${nf(stats.privateOrders)} order`,
+                sub: `${nf(stats.privateValue)} kr`,
+              },
+              {
                 label: "Vikt avviker över 20 %",
                 value: `${nf(stats.deviating)}`,
                 sub: `av ${nf(stats.packedLines)} vägda rader`,
               },
+
             ].map((k) => (
               <Card key={k.label}>
                 <CardContent className="p-3">
