@@ -765,7 +765,7 @@ export default function StockOverview({
 
                               {/* Egentagna bilder på produkten */}
                               <div className="rounded-md border border-border/60 bg-card p-2.5">
-                                <ProductPhotosGallery productId={g.product_id} productName={g.product_name} />
+                                <ProductPhotosGallery productId={g.product_id} productName={g.name} />
                               </div>
 
                               {/* Spårbarhet som rullgardin inne i produkten */}
