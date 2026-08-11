@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { displayOrderWeek } from "@/lib/orderWeek";
 import { ProductThumb } from "@/components/products/ProductThumb";
+import { OrderPhotosButton, ORDER_PHOTO_ENTITY, ORDER_LINE_PHOTO_ENTITY } from "@/components/orders/OrderPhotos";
+
 import { isInfiniteStock } from "@/lib/infiniteStock";
 import { motion } from "framer-motion";
 import {
@@ -1355,9 +1357,18 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
 
   return (
     <>
+      <div className="flex items-center gap-2 px-2 pb-1">
+        <span className="text-xs text-muted-foreground">Bilder på ordern:</span>
+        <OrderPhotosButton
+          entityType={ORDER_PHOTO_ENTITY}
+          entityId={order.id}
+          title={`Order ${order.order_number || ""}`}
+        />
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
+
             <tr className="border-b border-border bg-muted/30">
               <th className="px-2 py-1 text-left font-medium text-muted-foreground">Produkt</th>
               <th className="px-2 py-1 text-left font-medium text-muted-foreground">Enhet</th>
@@ -1422,6 +1433,13 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                     <div className="flex items-center gap-2">
                       <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="w-7 h-5" />
                       <span>{line.products?.name || "–"}</span>
+                      <OrderPhotosButton
+                        compact
+                        entityType={ORDER_LINE_PHOTO_ENTITY}
+                        entityId={line.id}
+                        title={line.products?.name || "Orderrad"}
+                      />
+
                     </div>
                   </td>
                   <td className="px-2 py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>

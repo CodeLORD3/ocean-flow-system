@@ -6,6 +6,8 @@ import {
   Archive, CalendarIcon, Pencil, Send, FileText, Copy, Eye,
 } from "lucide-react";
 import { ProductThumb } from "@/components/products/ProductThumb";
+import { OrderPhotosButton, ORDER_PHOTO_ENTITY, ORDER_LINE_PHOTO_ENTITY } from "@/components/orders/OrderPhotos";
+
 import DeliveryNote from "@/components/DeliveryNote";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -1050,6 +1052,16 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
         </div>
       )}
 
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground">Bilder på ordern:</span>
+        <OrderPhotosButton
+          entityType={ORDER_PHOTO_ENTITY}
+          entityId={order.id}
+          title={`Order ${order.order_number || ""}`}
+        />
+      </div>
+
+
       {/* Pending changes banner */}
       {pendingForOrder.length > 0 && !editMode && (
         <div className="bg-warning/10 border border-warning/30 rounded-md p-3 text-xs text-warning">
@@ -1156,7 +1168,19 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
                         const hasDiff = qtyDelivered > 0 && qtyDelivered !== qtyOrdered;
                         return (
                           <tr key={line.id} className={`border-b border-border/30 h-6 transition-colors ${rowBgByStatus[line.status || ""] || ""}`}>
-                            <td className="px-1.5 py-0.5 font-medium text-foreground">{line.products?.name || "–"}</td>
+                            <td className="px-1.5 py-0.5 font-medium text-foreground">
+                              <div className="flex items-center gap-1">
+                                <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="w-7 h-5" />
+                                <span>{line.products?.name || "–"}</span>
+                                <OrderPhotosButton
+                                  compact
+                                  entityType={ORDER_LINE_PHOTO_ENTITY}
+                                  entityId={line.id}
+                                  title={line.products?.name || "Orderrad"}
+                                />
+                              </div>
+                            </td>
+
                             <td className="px-1.5 py-0.5 text-muted-foreground">{line.products?.category || "–"}</td>
                             <td className="px-1.5 py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
                             <td className="px-1.5 py-0.5 text-right font-mono text-foreground">{qtyOrdered}</td>
