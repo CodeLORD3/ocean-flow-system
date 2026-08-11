@@ -92,6 +92,8 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/production-schedule": { component: <ProductionSchedule /> },
   "/production-reporting": { component: <ProductionReporting /> },
   "/audit": { component: <AuditRouter /> },
+  "/bug-reports": { component: <BugReports /> },
+
   "/settings": { component: <PlaceholderPage title="Systeminställningar" /> },
   "/trade-offers": { component: <TradeOffers /> },
   "/trade-history": { component: <TradeHistory /> },
