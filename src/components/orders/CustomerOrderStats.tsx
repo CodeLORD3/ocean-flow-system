@@ -21,16 +21,37 @@ export function CustomerOrderStats({ storeId }: { storeId?: string | null }) {
   start.setDate(start.getDate() - 30);
   const [from, setFrom] = useState(iso(start));
   const [to, setTo] = useState(iso(new Date()));
+  const [customerType, setCustomerType] = useState<"all" | "company" | "private">("all");
 
-  const { data: orders = [], isLoading } = useCustomerOrders({
+  const { data: allOrders = [], isLoading } = useCustomerOrders({
     storeId: storeId ?? undefined,
     fromDate: from,
     toDate: to,
   });
 
+  const orders = useMemo(
+    () =>
+      allOrders.filter((o) =>
+        customerType === "all"
+          ? true
+          : customerType === "company"
+            ? !!o.customers_retail?.is_company
+            : !o.customers_retail?.is_company,
+      ),
+    [allOrders, customerType],
+  );
+
   const stats = useMemo(() => {
     const live = orders.filter((o) => o.status !== "avbruten");
     const cancelled = orders.length - live.length;
+    const companyOrders = live.filter((o) => o.customers_retail?.is_company).length;
+    const companyValue = live
+      .filter((o) => o.customers_retail?.is_company)
+      .reduce((s, o) => s + Number(o.total_incl_vat || o.estimated_total || 0), 0);
+    const privateValue = live
+      .filter((o) => !o.customers_retail?.is_company)
+      .reduce((s, o) => s + Number(o.total_incl_vat || o.estimated_total || 0), 0);
+
     const estimated = live.reduce((s, o) => s + Number(o.estimated_total || 0), 0);
     const actual = live.reduce((s, o) => s + Number(o.total_incl_vat || 0), 0);
 
