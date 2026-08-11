@@ -1168,7 +1168,19 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
                         const hasDiff = qtyDelivered > 0 && qtyDelivered !== qtyOrdered;
                         return (
                           <tr key={line.id} className={`border-b border-border/30 h-6 transition-colors ${rowBgByStatus[line.status || ""] || ""}`}>
-                            <td className="px-1.5 py-0.5 font-medium text-foreground">{line.products?.name || "–"}</td>
+                            <td className="px-1.5 py-0.5 font-medium text-foreground">
+                              <div className="flex items-center gap-1">
+                                <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="w-7 h-5" />
+                                <span>{line.products?.name || "–"}</span>
+                                <OrderPhotosButton
+                                  compact
+                                  entityType={ORDER_LINE_PHOTO_ENTITY}
+                                  entityId={line.id}
+                                  title={line.products?.name || "Orderrad"}
+                                />
+                              </div>
+                            </td>
+
                             <td className="px-1.5 py-0.5 text-muted-foreground">{line.products?.category || "–"}</td>
                             <td className="px-1.5 py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
                             <td className="px-1.5 py-0.5 text-right font-mono text-foreground">{qtyOrdered}</td>
