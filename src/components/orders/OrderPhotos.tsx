@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Camera, Link2, Loader2, Trash2 } from "lucide-react";
+import { Camera, Link2, Loader2, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -51,6 +51,7 @@ export function OrderPhotosButton({
   const [open, setOpen] = useState(false);
   const [zoom, setZoom] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
+  const [pending, setPending] = useState<File[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -74,18 +75,25 @@ export function OrderPhotosButton({
     }
   };
 
-  const handleFiles = async (files: FileList | null) => {
+  /** Valda filer väntar på att bekräftas med "Lägg till". */
+  const pickFiles = (files: FileList | null) => {
     if (!files?.length) return;
+    setPending((prev) => [...prev, ...Array.from(files)]);
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const handleAdd = async () => {
+    if (!pending.length) return;
     try {
-      for (const file of Array.from(files)) {
+      for (const file of pending) {
         await upload.mutateAsync({ entityType, entityId, file, caption: caption || undefined });
       }
+      toast({ title: pending.length > 1 ? "Bilderna tillagda" : "Bilden tillagd" });
+      setPending([]);
       setCaption("");
-      toast({ title: "Bild uppladdad" });
+      setOpen(false);
     } catch (e: any) {
       toast({ title: "Kunde inte ladda upp", description: e?.message, variant: "destructive" });
-    } finally {
-      if (fileRef.current) fileRef.current.value = "";
     }
   };
 
@@ -114,7 +122,16 @@ export function OrderPhotosButton({
         {!compact && count === 0 && <span>Bild</span>}
       </Button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog
+        open={open}
+        onOpenChange={(o) => {
+          setOpen(o);
+          if (!o) {
+            setPending([]);
+            setCaption("");
+          }
+        }}
+      >
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle className="text-base">Bilder · {title}</DialogTitle>
@@ -137,7 +154,7 @@ export function OrderPhotosButton({
               capture="environment"
               multiple
               className="hidden"
-              onChange={(e) => handleFiles(e.target.files)}
+              onChange={(e) => pickFiles(e.target.files)}
             />
             <Button
               size="sm"
@@ -152,7 +169,40 @@ export function OrderPhotosButton({
               )}
               Ta / välj bild
             </Button>
+            <Button
+              size="sm"
+              variant="default"
+              className="h-8 gap-1.5 whitespace-nowrap"
+              onClick={handleAdd}
+              disabled={!pending.length || upload.isPending}
+            >
+              {upload.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+              Lägg till{pending.length > 1 ? ` (${pending.length})` : ""}
+            </Button>
           </div>
+
+          {pending.length > 0 && (
+            <div className="flex flex-wrap gap-2 rounded-md border border-dashed border-border p-2">
+              {pending.map((f, i) => (
+                <div key={`${f.name}-${i}`} className="relative">
+                  <img
+                    src={URL.createObjectURL(f)}
+                    alt={f.name}
+                    className="h-16 w-16 rounded-md border border-border object-cover"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute -right-1.5 -top-1.5 h-5 w-5 rounded-full bg-background text-destructive shadow"
+                    onClick={() => setPending((prev) => prev.filter((_, idx) => idx !== i))}
+                    title="Ta bort vald bild"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
 
           {count === 0 ? (
             <p className="py-8 text-center text-xs text-muted-foreground">
