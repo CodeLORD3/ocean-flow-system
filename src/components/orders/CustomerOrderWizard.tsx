@@ -261,8 +261,14 @@ export function CustomerOrderWizard({
     try {
       const created = await createCustomer.mutateAsync({
         ...newCustomer,
+        company_name: newCustomer.is_company ? newCustomer.company_name.trim() || null : null,
+        org_number: newCustomer.is_company ? newCustomer.org_number.trim() || null : null,
+        contact_reference: newCustomer.is_company
+          ? newCustomer.contact_reference.trim() || null
+          : null,
         store_id: storeId,
       } as any);
+
       setCustomer(created);
       setCreatingCustomer(false);
       toast.success("Kunden är sparad.");
