@@ -93,7 +93,7 @@ export default function BugReports() {
         </div>
       ) : reports.length === 0 ? (
         <EmptyState
-          icon={Bug}
+          icon={<Bug className="h-4 w-4" />}
           title="Inga felrapporter"
           description="När någon skickar en felrapport via knappen “Rapportera fel” hamnar den här."
         />
