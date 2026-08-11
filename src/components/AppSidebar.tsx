@@ -108,6 +108,8 @@ const financeNav = [
 const bottomNav = [
   { title: "Inloggningssida", url: "/landing-settings", icon: LogIn },
   { title: "Revision & Logg", url: "/audit", icon: ClipboardList },
+  { title: "Felrapporter", url: "/bug-reports", icon: Bug },
+
   { title: "Administration", url: "/settings", icon: Settings },
 ];
 
