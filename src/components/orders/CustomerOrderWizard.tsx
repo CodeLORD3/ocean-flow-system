@@ -383,6 +383,50 @@ export function CustomerOrderWizard({
               </>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
+                <div className="flex items-center justify-between gap-3 rounded-md border border-border p-3 sm:col-span-2">
+                  <div>
+                    <Label htmlFor="wizard-is-company">Företagskund</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Markera om beställningen görs av ett företag.
+                    </p>
+                  </div>
+                  <Switch
+                    id="wizard-is-company"
+                    checked={newCustomer.is_company}
+                    onCheckedChange={(v) => setNewCustomer({ ...newCustomer, is_company: v })}
+                  />
+                </div>
+                {newCustomer.is_company && (
+                  <>
+                    <div>
+                      <Label>Företagsnamn</Label>
+                      <Input
+                        className="h-12"
+                        value={newCustomer.company_name}
+                        onChange={(e) => setNewCustomer({ ...newCustomer, company_name: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label>Org.nummer</Label>
+                      <Input
+                        className="h-12"
+                        value={newCustomer.org_number}
+                        onChange={(e) => setNewCustomer({ ...newCustomer, org_number: e.target.value })}
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Label>Referens/kontaktperson</Label>
+                      <Input
+                        className="h-12"
+                        value={newCustomer.contact_reference}
+                        onChange={(e) =>
+                          setNewCustomer({ ...newCustomer, contact_reference: e.target.value })
+                        }
+                      />
+                    </div>
+                  </>
+                )}
+
                 <div className="sm:col-span-2">
                   <Label>Namn</Label>
                   <Input
