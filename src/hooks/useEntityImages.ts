@@ -127,6 +127,7 @@ export function useUploadEntityImage() {
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["entity-images", vars.entityType, vars.entityId] });
       qc.invalidateQueries({ queryKey: ["store-cover-images"] });
+      qc.invalidateQueries({ queryKey: ["product-photos"] });
       qc.invalidateQueries({ queryKey: ["our-stores-photos"] });
     },
   });
@@ -163,6 +164,7 @@ export function useUpdateEntityImage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["entity-images"] });
       qc.invalidateQueries({ queryKey: ["store-cover-images"] });
+      qc.invalidateQueries({ queryKey: ["product-photos"] });
       qc.invalidateQueries({ queryKey: ["our-stores-photos"] });
     },
   });
@@ -178,6 +180,7 @@ export function useDeleteEntityImage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["entity-images"] });
       qc.invalidateQueries({ queryKey: ["store-cover-images"] });
+      qc.invalidateQueries({ queryKey: ["product-photos"] });
       qc.invalidateQueries({ queryKey: ["our-stores-photos"] });
     },
   });
@@ -211,6 +214,7 @@ export function useSetCoverImage() {
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["entity-images", vars.entityType, vars.entityId] });
       qc.invalidateQueries({ queryKey: ["store-cover-images"] });
+      qc.invalidateQueries({ queryKey: ["product-photos"] });
       qc.invalidateQueries({ queryKey: ["our-stores-photos"] });
     },
   });
