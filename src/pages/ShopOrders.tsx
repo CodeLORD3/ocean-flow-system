@@ -6,6 +6,8 @@ import {
   Archive, CalendarIcon, Pencil, Send, FileText, Copy, Eye,
 } from "lucide-react";
 import { ProductThumb } from "@/components/products/ProductThumb";
+import { OrderPhotosButton, ORDER_PHOTO_ENTITY, ORDER_LINE_PHOTO_ENTITY } from "@/components/orders/OrderPhotos";
+
 import DeliveryNote from "@/components/DeliveryNote";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
