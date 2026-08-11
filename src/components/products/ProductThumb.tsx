@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Fish } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import ProductImagesDialog from "@/components/products/ProductImagesDialog";
 import { cn } from "@/lib/utils";
 
 interface ProductThumbProps {
@@ -9,10 +9,12 @@ interface ProductThumbProps {
   className?: string;
   /** Disable click-to-enlarge */
   static?: boolean;
+  /** Produktens id – gör att alla egentagna bilder kan bläddras i visaren */
+  productId?: string | null;
 }
 
 /** Landscape 4:3 product thumbnail (~80x56px) used in product lists and receiving. */
-export function ProductThumb({ src, alt, className, static: isStatic }: ProductThumbProps) {
+export function ProductThumb({ src, alt, className, static: isStatic, productId }: ProductThumbProps) {
   const [open, setOpen] = useState(false);
   const [failed, setFailed] = useState(false);
   const hasImage = !!src && !failed;
@@ -22,11 +24,37 @@ export function ProductThumb({ src, alt, className, static: isStatic }: ProductT
     className,
   );
 
+  const openable = !isStatic && (hasImage || !!productId);
+
   if (!hasImage) {
+    if (!openable) {
+      return (
+        <div className={box} aria-hidden>
+          <Fish className="h-5 w-5 text-muted-foreground/50" />
+        </div>
+      );
+    }
     return (
-      <div className={box} aria-hidden>
-        <Fish className="h-5 w-5 text-muted-foreground/50" />
-      </div>
+      <>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen(true);
+          }}
+          className={cn(box, "hover:ring-2 hover:ring-primary/40 transition")}
+          title={`Visa bilder – ${alt}`}
+        >
+          <Fish className="h-5 w-5 text-muted-foreground/50" />
+        </button>
+        <ProductImagesDialog
+          open={open}
+          onOpenChange={setOpen}
+          productId={productId}
+          productName={alt}
+          catalogUrl={null}
+        />
+      </>
     );
   }
 
@@ -55,12 +83,13 @@ export function ProductThumb({ src, alt, className, static: isStatic }: ProductT
       >
         {img}
       </button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl p-2">
-          <img src={src as string} alt={alt} className="w-full h-auto rounded-md" />
-          <p className="text-center text-sm text-muted-foreground pb-1">{alt}</p>
-        </DialogContent>
-      </Dialog>
+      <ProductImagesDialog
+        open={open}
+        onOpenChange={setOpen}
+        productId={productId}
+        productName={alt}
+        catalogUrl={src}
+      />
     </>
   );
 }
