@@ -1,14 +1,17 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const IS_OPAQUE = SERVICE_KEY.startsWith("sb_");
 
-const admin = createClient(Deno.env.get("SUPABASE_URL")!, SERVICE_KEY, {
+// Databasklient med serviceidentitet. Opaka nycklar skickas endast som apikey.
+const admin = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
   global: {
     headers: IS_OPAQUE
-      ? { apikey: SERVICE_KEY, Authorization: "" }
+      ? { apikey: SERVICE_KEY }
       : { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` },
   },
 });
@@ -20,6 +23,27 @@ function json(body: unknown, status = 200) {
   });
 }
 
+// Direkta anrop mot Auth Admin API så att opaka nycklar hanteras korrekt.
+async function authAdmin(path: string, method: string, body?: unknown) {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/admin${path}`, {
+    method,
+    headers: {
+      apikey: SERVICE_KEY,
+      Authorization: `Bearer ${SERVICE_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const text = await res.text();
+  let parsed: any = null;
+  try {
+    parsed = text ? JSON.parse(text) : null;
+  } catch {
+    parsed = { message: text };
+  }
+  return { ok: res.ok, status: res.status, data: parsed };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -28,24 +52,30 @@ Deno.serve(async (req) => {
     const token = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "");
     if (!token) return json({ error: "Inte inloggad" }, 401);
 
-    const { data: userData, error: userErr } = await admin.auth.getUser(token);
-    if (userErr || !userData.user) {
-      console.error("getUser failed", userErr?.message);
+    const authClient = createClient(SUPABASE_URL, ANON_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
+    const { data: claimsData, error: claimsErr } = await authClient.auth.getClaims(token);
+    if (claimsErr || !claimsData?.claims?.sub) {
+      console.error("getClaims failed", claimsErr?.message);
       return json({ error: "Ogiltig session" }, 401);
     }
-    const callerId = userData.user.id;
+    const callerId = claimsData.claims.sub as string;
 
-    // 2. Bara admin får byta någon annans inloggningsadress.
-    const { data: roleRows } = await admin
+    // 2. Behörighet: admin-roll eller portalscope admin/wholesale.
+    const { data: roleRows, error: roleErr } = await admin
       .from("user_roles").select("role").eq("user_id", callerId).eq("role", "admin");
-    // Behörighet läses ur user_scopes — enda begreppet.
-    const { data: scopeRows } = await admin
+    const { data: scopeRows, error: scopeErr } = await admin
       .from("user_scopes").select("scope_value")
       .eq("user_id", callerId).eq("scope_type", "portal")
       .in("scope_value", ["admin", "wholesale"]);
+    if (roleErr || scopeErr) {
+      console.error("permission lookup failed", roleErr?.message, scopeErr?.message);
+      return json({ error: "Kunde inte läsa behörighet" }, 500);
+    }
     const isAdmin = (roleRows?.length ?? 0) > 0 || (scopeRows?.length ?? 0) > 0;
-    console.log("caller", callerId, "roles", roleRows?.length, "scopes", scopeRows?.length);
-    if (!isAdmin) return json({ error: "Endast admin kan ändra inloggningsadress" }, 403);
+    if (!isAdmin) return json({ error: "Endast admin kan skapa/ändra inloggning" }, 403);
 
     // 3. Indata
     const body = await req.json().catch(() => ({}));
@@ -65,28 +95,40 @@ Deno.serve(async (req) => {
     let authUserId = staffRow.user_id as string | null;
 
     if (authUserId) {
-      const { error } = await admin.auth.admin.updateUserById(authUserId, {
+      const res = await authAdmin(`/users/${authUserId}`, "PUT", {
         email,
         email_confirm: true,
         ...(password ? { password } : {}),
       });
-      if (error) return json({ error: error.message }, 400);
+      if (!res.ok) {
+        console.error("updateUser failed", res.status, JSON.stringify(res.data));
+        return json({ error: res.data?.msg || res.data?.message || "Kunde inte uppdatera kontot" }, 400);
+      }
     } else {
-      // Inget konto ännu: skapa ett så adressen faktiskt kan användas för inloggning.
-      const { data: created, error } = await admin.auth.admin.createUser({
+      const res = await authAdmin("/users", "POST", {
         email,
         password: password ?? "Byt123!",
         email_confirm: true,
-        user_metadata: {
-          first_name: staffRow.first_name,
-          last_name: staffRow.last_name,
-        },
+        user_metadata: { first_name: staffRow.first_name, last_name: staffRow.last_name },
       });
-      if (error) {
-        console.error("createUser failed", error.message, error.status);
-        return json({ error: error.message }, 400);
+      if (res.ok && res.data?.id) {
+        authUserId = res.data.id as string;
+      } else {
+        // Kontot kan redan finnas i auth utan koppling till personalkortet.
+        const existing = await authAdmin(`/users?page=1&per_page=1&filter=${encodeURIComponent(email)}`, "GET");
+        const match = existing.data?.users?.find(
+          (u: any) => (u.email ?? "").toLowerCase() === email,
+        );
+        if (!match) {
+          console.error("createUser failed", res.status, JSON.stringify(res.data));
+          return json({ error: res.data?.msg || res.data?.message || "Kunde inte skapa kontot" }, 400);
+        }
+        authUserId = match.id as string;
+        if (password) {
+          const upd = await authAdmin(`/users/${authUserId}`, "PUT", { password, email_confirm: true });
+          if (!upd.ok) console.error("password reset failed", upd.status, JSON.stringify(upd.data));
+        }
       }
-      authUserId = created.user!.id;
     }
 
     const { error: upErr } = await admin
@@ -95,6 +137,7 @@ Deno.serve(async (req) => {
 
     return json({ ok: true, email, user_id: authUserId, created_password: !!password });
   } catch (e) {
+    console.error("unhandled", e instanceof Error ? e.message : e);
     return json({ error: e instanceof Error ? e.message : "Okänt fel" }, 500);
   }
 });
