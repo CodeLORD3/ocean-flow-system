@@ -89,6 +89,10 @@ export function CustomerOrderStats({ storeId }: { storeId?: string | null }) {
       catering,
       estimated,
       actual,
+      companyOrders,
+      privateOrders: live.length - companyOrders,
+      companyValue,
+      privateValue,
       byType: Array.from(byType.entries()),
       top: Array.from(byProduct.entries())
         .sort((a, b) => b[1].value - a[1].value)
@@ -97,6 +101,7 @@ export function CustomerOrderStats({ storeId }: { storeId?: string | null }) {
       deviating,
     };
   }, [orders]);
+
 
   return (
     <div className="space-y-3">
