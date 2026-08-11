@@ -106,6 +106,10 @@ export function RetailCustomerRegistry({
 
   const historyFor = (id: string) => orders.filter((o) => o.customer_id === id);
 
+  const customers = allCustomers.filter((c) =>
+    typeFilter === "all" ? true : typeFilter === "company" ? c.is_company : !c.is_company,
+  );
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
@@ -118,12 +122,30 @@ export function RetailCustomerRegistry({
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+        <ToggleGroup
+          type="single"
+          value={typeFilter}
+          onValueChange={(v) => v && setTypeFilter(v as typeof typeFilter)}
+          className="h-11"
+        >
+          <ToggleGroupItem value="all" className="h-11 px-3 text-xs">
+            Alla
+          </ToggleGroupItem>
+          <ToggleGroupItem value="private" className="h-11 px-3 text-xs">
+            Privat
+          </ToggleGroupItem>
+          <ToggleGroupItem value="company" className="h-11 px-3 text-xs">
+            Företag
+          </ToggleGroupItem>
+        </ToggleGroup>
         {!readOnly && (
           <Button className="h-11" onClick={openNew}>
             <Plus className="mr-2 h-4 w-4" /> Ny kund
           </Button>
         )}
       </div>
+
+
 
       {!isLoading && customers.length === 0 && (
         <EmptyState
