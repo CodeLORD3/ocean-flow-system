@@ -353,12 +353,22 @@ export function CustomerOrderWizard({
                       <div className="flex items-center gap-3">
                         <User className="h-4 w-4 text-muted-foreground" />
                         <div>
-                          <div className="font-medium">{c.name}</div>
+                          <div className="flex items-center gap-2 font-medium">
+                            <span>{c.name}</span>
+                            {c.is_company && (
+                              <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                                Företag
+                              </Badge>
+                            )}
+                          </div>
                           <div className="text-xs text-muted-foreground">
-                            {[c.phone, c.city].filter(Boolean).join(" · ") || "Inga kontaktuppgifter"}
+                            {[c.is_company ? c.company_name : null, c.phone, c.city]
+                              .filter(Boolean)
+                              .join(" · ") || "Inga kontaktuppgifter"}
                           </div>
                         </div>
                       </div>
+
                     </button>
                   ))}
                   {customers.length === 0 && (
