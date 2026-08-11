@@ -94,15 +94,22 @@ export function RetailCustomerRegistry({
 
   const save = async () => {
     if (!form.name.trim()) return toast.error("Kunden behöver ett namn.");
+    const payload = {
+      ...form,
+      company_name: form.is_company ? form.company_name.trim() || null : null,
+      org_number: form.is_company ? form.org_number.trim() || null : null,
+      contact_reference: form.is_company ? form.contact_reference.trim() || null : null,
+    };
     try {
-      if (editing) await update.mutateAsync({ id: editing.id, ...form } as any);
-      else await create.mutateAsync({ ...form, store_id: storeId } as any);
+      if (editing) await update.mutateAsync({ id: editing.id, ...payload } as any);
+      else await create.mutateAsync({ ...payload, store_id: storeId } as any);
       toast.success("Kunden är sparad.");
       setOpen(false);
     } catch (e: any) {
       toast.error(e.message || "Kunden kunde inte sparas.");
     }
   };
+
 
   const historyFor = (id: string) => orders.filter((o) => o.customer_id === id);
 
