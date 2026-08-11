@@ -33,7 +33,12 @@ const empty = {
   postal_code: "",
   city: "",
   note: "",
+  is_company: false,
+  company_name: "",
+  org_number: "",
+  contact_reference: "",
 };
+
 
 /** Kundregister för privatkunder. Skilt från B2B-kunderna i /customers. */
 export function RetailCustomerRegistry({
