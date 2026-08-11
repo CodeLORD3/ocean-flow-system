@@ -26,6 +26,8 @@ import ProductionSchedule from "@/pages/ProductionSchedule";
 import ProductionReporting from "@/pages/ProductionReporting";
 import ReportsRouter from "@/pages/ReportsRouter";
 import AuditRouter from "@/pages/AuditRouter";
+import BugReports from "@/pages/BugReports";
+
 import TradeOffers from "@/pages/TradeOffers";
 import TradeHistory from "@/pages/TradeHistory";
 import InvestorPortal from "@/pages/InvestorPortal";
@@ -92,6 +94,8 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/production-schedule": { component: <ProductionSchedule /> },
   "/production-reporting": { component: <ProductionReporting /> },
   "/audit": { component: <AuditRouter /> },
+  "/bug-reports": { component: <BugReports /> },
+
   "/settings": { component: <PlaceholderPage title="Systeminställningar" /> },
   "/trade-offers": { component: <TradeOffers /> },
   "/trade-history": { component: <TradeHistory /> },

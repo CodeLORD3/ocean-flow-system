@@ -30,6 +30,8 @@ import { Landmark,
   ArrowLeftRight,
   Trash2,
   ShieldCheck,
+  Bug,
+
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -108,6 +110,8 @@ const financeNav = [
 const bottomNav = [
   { title: "Inloggningssida", url: "/landing-settings", icon: LogIn },
   { title: "Revision & Logg", url: "/audit", icon: ClipboardList },
+  { title: "Felrapporter", url: "/bug-reports", icon: Bug },
+
   { title: "Administration", url: "/settings", icon: Settings },
 ];
 
