@@ -40,6 +40,7 @@ import { ProductThumb } from "@/components/products/ProductThumb";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
 import ProductTraceabilityInline from "@/components/inventory/ProductTraceabilityInline";
+import { ProductPhotosGallery } from "@/components/products/ProductPhotos";
 
 /** En lagerrad från product_stock_locations (joinad med products + storage_locations). */
 export interface StockRow {
@@ -761,6 +762,11 @@ export default function StockOverview({
                                   </div>
                                 );
                               })}
+
+                              {/* Egentagna bilder på produkten */}
+                              <div className="rounded-md border border-border/60 bg-card p-2.5">
+                                <ProductPhotosGallery productId={g.product_id} productName={g.product_name} />
+                              </div>
 
                               {/* Spårbarhet som rullgardin inne i produkten */}
                               <ProductTraceabilityInline
