@@ -54,7 +54,7 @@ export function RetailCustomerRegistry({
 }) {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | "company" | "private">("all");
-  const { data: customers: allCustomers = [], isLoading } = useRetailCustomers(storeId, search);
+  const { data: allCustomers = [], isLoading } = useRetailCustomers(storeId, search);
 
   const { data: orders = [] } = useCustomerOrders({ storeId });
   const create = useCreateRetailCustomer();
