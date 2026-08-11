@@ -60,19 +60,22 @@ export function OrderPhotosButton({
   const upload = useUploadEntityImage();
   const del = useDeleteEntityImage();
   const linkToProduct = useLinkImageToProduct();
-  const { data: productImages = [] } = useEntityImages(
-    PRODUCT_PHOTO_ENTITY,
-    open ? productId : null,
+  const { data: productImages = [] } = useProductPhotos(open ? productId : null);
+  const linkedUrls = new Set(
+    productImages.filter((i) => i.source === "product").map((i) => i.url),
   );
-  const linkedUrls = new Set(productImages.map((i) => i.url));
 
   const handleLink = async (url: string, caption: string | null) => {
     if (!productId) return;
     try {
       await linkToProduct.mutateAsync({ productId, url, caption });
-      toast({ title: "Bilden kopplad till produkten" });
+      toast({ title: "Bilden är nu tillagd som produktbild" });
     } catch (e: any) {
-      toast({ title: "Kunde inte koppla bild", description: e?.message, variant: "destructive" });
+      toast({
+        title: "Kunde inte lägga till som produktbild",
+        description: e?.message,
+        variant: "destructive",
+      });
     }
   };
 
