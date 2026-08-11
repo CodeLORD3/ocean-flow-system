@@ -92,7 +92,12 @@ export function CustomerOrderWizard({
     postal_code: "",
     city: "",
     note: "",
+    is_company: false,
+    company_name: "",
+    org_number: "",
+    contact_reference: "",
   });
+
   const [creatingCustomer, setCreatingCustomer] = useState(false);
 
   const [orderType, setOrderType] = useState("upphamtning");
