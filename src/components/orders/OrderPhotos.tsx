@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Camera, Loader2, Trash2 } from "lucide-react";
+import { Camera, Link2, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,6 +14,8 @@ import {
   useEntityImages,
   useUploadEntityImage,
   useDeleteEntityImage,
+  useLinkImageToProduct,
+  PRODUCT_PHOTO_ENTITY,
 } from "@/hooks/useEntityImages";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +30,8 @@ interface OrderPhotosButtonProps {
   title: string;
   /** Kompakt läge (ikon utan text) – används i orderrader */
   compact?: boolean;
+  /** Om bilden hör till en produkt: gör det möjligt att koppla bilden till produkten */
+  productId?: string | null;
   className?: string;
 }
 
@@ -41,6 +45,7 @@ export function OrderPhotosButton({
   entityId,
   title,
   compact,
+  productId,
   className,
 }: OrderPhotosButtonProps) {
   const [open, setOpen] = useState(false);
@@ -52,6 +57,22 @@ export function OrderPhotosButton({
   const { data: images = [] } = useEntityImages(entityType, entityId);
   const upload = useUploadEntityImage();
   const del = useDeleteEntityImage();
+  const linkToProduct = useLinkImageToProduct();
+  const { data: productImages = [] } = useEntityImages(
+    PRODUCT_PHOTO_ENTITY,
+    open ? productId : null,
+  );
+  const linkedUrls = new Set(productImages.map((i) => i.url));
+
+  const handleLink = async (url: string, caption: string | null) => {
+    if (!productId) return;
+    try {
+      await linkToProduct.mutateAsync({ productId, url, caption });
+      toast({ title: "Bilden kopplad till produkten" });
+    } catch (e: any) {
+      toast({ title: "Kunde inte koppla bild", description: e?.message, variant: "destructive" });
+    }
+  };
 
   const handleFiles = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -160,6 +181,27 @@ export function OrderPhotosButton({
                       {new Date(img.created_at).toLocaleDateString("sv-SE")}
                     </p>
                   </div>
+                  {productId && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn(
+                        "absolute left-1 top-1 h-6 w-6 bg-background/80 transition",
+                        linkedUrls.has(img.url)
+                          ? "text-primary"
+                          : "text-muted-foreground opacity-0 group-hover:opacity-100",
+                      )}
+                      onClick={() => handleLink(img.url, img.caption)}
+                      title={
+                        linkedUrls.has(img.url)
+                          ? "Redan kopplad till produkten"
+                          : "Koppla bilden till produkten"
+                      }
+                      disabled={linkedUrls.has(img.url) || linkToProduct.isPending}
+                    >
+                      <Link2 className="h-3 w-3" />
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
