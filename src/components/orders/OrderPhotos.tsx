@@ -250,28 +250,28 @@ export function OrderPhotosButton({
                       {img.uploaded_by_name || "Okänd"} ·{" "}
                       {new Date(img.created_at).toLocaleDateString("sv-SE")}
                     </p>
+                    {productId && (
+                      <Button
+                        type="button"
+                        variant={linkedUrls.has(img.url) ? "ghost" : "outline"}
+                        size="sm"
+                        className={cn(
+                          "h-6 w-full gap-1 text-[10px]",
+                          linkedUrls.has(img.url) && "text-primary",
+                        )}
+                        onClick={() => handleLink(img.url, img.caption)}
+                        title={
+                          linkedUrls.has(img.url)
+                            ? "Bilden är redan en produktbild"
+                            : "Gör bilden till produktbild"
+                        }
+                        disabled={linkedUrls.has(img.url) || linkToProduct.isPending}
+                      >
+                        <Link2 className="h-3 w-3" />
+                        {linkedUrls.has(img.url) ? "Produktbild" : "Gör till produktbild"}
+                      </Button>
+                    )}
                   </div>
-                  {productId && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={cn(
-                        "absolute left-1 top-1 h-6 w-6 bg-background/80 transition",
-                        linkedUrls.has(img.url)
-                          ? "text-primary"
-                          : "text-muted-foreground opacity-0 group-hover:opacity-100",
-                      )}
-                      onClick={() => handleLink(img.url, img.caption)}
-                      title={
-                        linkedUrls.has(img.url)
-                          ? "Redan kopplad till produkten"
-                          : "Koppla bilden till produkten"
-                      }
-                      disabled={linkedUrls.has(img.url) || linkToProduct.isPending}
-                    >
-                      <Link2 className="h-3 w-3" />
-                    </Button>
-                  )}
                   <Button
                     variant="ghost"
                     size="icon"
