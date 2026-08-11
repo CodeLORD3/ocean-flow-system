@@ -1433,6 +1433,13 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                     <div className="flex items-center gap-2">
                       <ProductThumb src={line.products?.image_url} alt={line.products?.name || "Produkt"} static className="w-7 h-5" />
                       <span>{line.products?.name || "–"}</span>
+                      <OrderPhotosButton
+                        compact
+                        entityType={ORDER_LINE_PHOTO_ENTITY}
+                        entityId={line.id}
+                        title={line.products?.name || "Orderrad"}
+                      />
+
                     </div>
                   </td>
                   <td className="px-2 py-0.5 text-muted-foreground">{line.unit || line.products?.unit || "–"}</td>
