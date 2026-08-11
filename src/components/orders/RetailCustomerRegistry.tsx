@@ -77,7 +77,12 @@ export function RetailCustomerRegistry({
       postal_code: c.postal_code || "",
       city: c.city || "",
       note: c.note || "",
+      is_company: !!c.is_company,
+      company_name: c.company_name || "",
+      org_number: c.org_number || "",
+      contact_reference: c.contact_reference || "",
     });
+
     setOpen(true);
   };
 
