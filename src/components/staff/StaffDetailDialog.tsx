@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useUpdateStaff } from "@/hooks/useStaff";
 import { StaffActivityPanel } from "./StaffActivityPanel";
+import { edgeErrorMessage } from "@/lib/edgeError";
 
 interface Props {
   open: boolean;
@@ -111,7 +112,7 @@ export function StaffDetailDialog({ open, onOpenChange, staff }: Props) {
       setLinking(false);
       toast({
         title: "Kunde inte skapa inloggning",
-        description: (data as any)?.error || error?.message,
+        description: await edgeErrorMessage(error, data),
         variant: "destructive",
       });
       return;

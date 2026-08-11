@@ -30,6 +30,7 @@ import { StoreStaffDialog } from "@/components/staff/StoreStaffDialog";
 import { Badge } from "@/components/ui/badge";
 import { Activity, ShieldCheck, KeyRound, Loader2 } from "lucide-react";
 import { useOpenShifts, shiftClock, shiftDuration } from "@/hooks/useStaffShifts";
+import { edgeErrorMessage } from "@/lib/edgeError";
 
 const ACTIVITY_VIEWER_EMAILS = [
   "joakim@fiskskaldjur.ch",
@@ -136,7 +137,7 @@ export default function Staff() {
     if (error || (data as any)?.error) {
       toast({
         title: "Inloggningsadressen kunde inte ändras",
-        description: (data as any)?.error || error?.message,
+        description: await edgeErrorMessage(error, data),
         variant: "destructive",
       });
       return;
@@ -167,7 +168,7 @@ export default function Staff() {
       setCreatingLoginFor(null);
       toast({
         title: "Kunde inte skapa inloggning",
-        description: (data as any)?.error || error?.message,
+        description: await edgeErrorMessage(error, data),
         variant: "destructive",
       });
       return;
