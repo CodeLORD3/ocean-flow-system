@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   PRODUCT_PHOTO_ENTITY,
   useDeleteEntityImage,
-  useEntityImages,
+  useProductPhotos,
   useUploadEntityImage,
 } from "@/hooks/useEntityImages";
 import { cn } from "@/lib/utils";
@@ -33,7 +33,7 @@ export function ProductPhotosGallery({
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const { data: images = [] } = useEntityImages(PRODUCT_PHOTO_ENTITY, productId);
+  const { data: images = [] } = useProductPhotos(productId);
   const upload = useUploadEntityImage();
   const del = useDeleteEntityImage();
 
