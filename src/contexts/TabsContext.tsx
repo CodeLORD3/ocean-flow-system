@@ -30,6 +30,8 @@ const PAGE_TITLES: Record<string, string> = {
   "/production-schedule": "Produktionsschema",
   "/production-reporting": "Produktionsrapporter",
   "/audit": "Revision & Logg",
+  "/bug-reports": "Felrapporter",
+
   "/settings": "Inställningar",
   "/shop-reports": "Butiksrapporter",
   "/schedule": "Kalender",
