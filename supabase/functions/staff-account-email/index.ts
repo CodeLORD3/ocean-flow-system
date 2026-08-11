@@ -1,10 +1,17 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
-const admin = createClient(
-  Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-);
+const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const IS_OPAQUE = SERVICE_KEY.startsWith("sb_");
+
+const admin = createClient(Deno.env.get("SUPABASE_URL")!, SERVICE_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false },
+  global: {
+    headers: IS_OPAQUE
+      ? { apikey: SERVICE_KEY, Authorization: "" }
+      : { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` },
+  },
+});
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -22,7 +29,10 @@ Deno.serve(async (req) => {
     if (!token) return json({ error: "Inte inloggad" }, 401);
 
     const { data: userData, error: userErr } = await admin.auth.getUser(token);
-    if (userErr || !userData.user) return json({ error: "Ogiltig session" }, 401);
+    if (userErr || !userData.user) {
+      console.error("getUser failed", userErr?.message);
+      return json({ error: "Ogiltig session" }, 401);
+    }
     const callerId = userData.user.id;
 
     // 2. Bara admin får byta någon annans inloggningsadress.
@@ -34,6 +44,7 @@ Deno.serve(async (req) => {
       .eq("user_id", callerId).eq("scope_type", "portal")
       .in("scope_value", ["admin", "wholesale"]);
     const isAdmin = (roleRows?.length ?? 0) > 0 || (scopeRows?.length ?? 0) > 0;
+    console.log("caller", callerId, "roles", roleRows?.length, "scopes", scopeRows?.length);
     if (!isAdmin) return json({ error: "Endast admin kan ändra inloggningsadress" }, 403);
 
     // 3. Indata
@@ -71,7 +82,10 @@ Deno.serve(async (req) => {
           last_name: staffRow.last_name,
         },
       });
-      if (error) return json({ error: error.message }, 400);
+      if (error) {
+        console.error("createUser failed", error.message, error.status);
+        return json({ error: error.message }, 400);
+      }
       authUserId = created.user!.id;
     }
 
