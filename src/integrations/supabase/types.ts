@@ -1731,13 +1731,17 @@ export type Database = {
         Row: {
           anonymized_at: string | null
           city: string | null
+          company_name: string | null
+          contact_reference: string | null
           created_at: string
           created_by: string | null
           email: string | null
           excluded_allergens: string[]
           id: string
+          is_company: boolean
           name: string
           note: string | null
+          org_number: string | null
           phone: string | null
           postal_code: string | null
           requires_identification_mark: boolean
@@ -1748,13 +1752,17 @@ export type Database = {
         Insert: {
           anonymized_at?: string | null
           city?: string | null
+          company_name?: string | null
+          contact_reference?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
           excluded_allergens?: string[]
           id?: string
+          is_company?: boolean
           name: string
           note?: string | null
+          org_number?: string | null
           phone?: string | null
           postal_code?: string | null
           requires_identification_mark?: boolean
@@ -1765,13 +1773,17 @@ export type Database = {
         Update: {
           anonymized_at?: string | null
           city?: string | null
+          company_name?: string | null
+          contact_reference?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
           excluded_allergens?: string[]
           id?: string
+          is_company?: boolean
           name?: string
           note?: string | null
+          org_number?: string | null
           phone?: string | null
           postal_code?: string | null
           requires_identification_mark?: boolean
