@@ -124,7 +124,27 @@ export function CustomerOrderStats({ storeId }: { storeId?: string | null }) {
             onChange={(e) => setTo(e.target.value)}
           />
         </div>
+        <div>
+          <Label className="text-xs">Kundtyp</Label>
+          <ToggleGroup
+            type="single"
+            value={customerType}
+            onValueChange={(v) => v && setCustomerType(v as typeof customerType)}
+            className="h-12"
+          >
+            <ToggleGroupItem value="all" className="h-12 px-3 text-xs">
+              Alla
+            </ToggleGroupItem>
+            <ToggleGroupItem value="private" className="h-12 px-3 text-xs">
+              Privat
+            </ToggleGroupItem>
+            <ToggleGroupItem value="company" className="h-12 px-3 text-xs">
+              Företag
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
       </div>
+
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Räknar…</p>
