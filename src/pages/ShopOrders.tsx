@@ -1050,6 +1050,16 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
         </div>
       )}
 
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground">Bilder på ordern:</span>
+        <OrderPhotosButton
+          entityType={ORDER_PHOTO_ENTITY}
+          entityId={order.id}
+          title={`Order ${order.order_number || ""}`}
+        />
+      </div>
+
+
       {/* Pending changes banner */}
       {pendingForOrder.length > 0 && !editMode && (
         <div className="bg-warning/10 border border-warning/30 rounded-md p-3 text-xs text-warning">
