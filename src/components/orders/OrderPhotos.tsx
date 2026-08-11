@@ -15,7 +15,7 @@ import {
   useUploadEntityImage,
   useDeleteEntityImage,
   useLinkImageToProduct,
-  PRODUCT_PHOTO_ENTITY,
+  useProductPhotos,
 } from "@/hooks/useEntityImages";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
