@@ -74,7 +74,12 @@ export interface RetailCustomer {
   city: string | null;
   note: string | null;
   excluded_allergens: string[];
+  is_company: boolean;
+  company_name: string | null;
+  org_number: string | null;
+  contact_reference: string | null;
   anonymized_at: string | null;
+
   created_at: string;
 }
 
