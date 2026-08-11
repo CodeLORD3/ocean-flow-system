@@ -3,6 +3,8 @@ import { BarChart3 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+
 import { EmptyState } from "@/components/EmptyState";
 import { useCustomerOrders } from "@/hooks/useCustomerOrders";
 import { ORDER_TYPE_LABELS } from "@/lib/customerOrders";
