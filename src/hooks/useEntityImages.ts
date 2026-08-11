@@ -419,6 +419,62 @@ export function useLinkImageToProduct() {
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["entity-images", PRODUCT_PHOTO_ENTITY, vars.productId] });
+      qc.invalidateQueries({ queryKey: ["product-photos", vars.productId] });
     },
+  });
+}
+
+export type ProductPhoto = EntityImage & {
+  /** "product" = kopplad till produkten, "order_line" = ligger bara på en orderrad */
+  source: "product" | "order_line";
+};
+
+/**
+ * Alla egentagna bilder för en produkt: både bilder kopplade direkt till
+ * produkten och bilder som ligger på orderrader för samma produkt.
+ * Dedupliceras på bildadress, produktkopplade rader vinner.
+ */
+export function useProductPhotos(productId?: string | null) {
+  return useQuery({
+    queryKey: ["product-photos", productId],
+    queryFn: async () => {
+      const { data: own, error: ownErr } = await supabase
+        .from("entity_images")
+        .select("*")
+        .eq("entity_type", PRODUCT_PHOTO_ENTITY)
+        .eq("entity_id", productId!)
+        .order("sort_order")
+        .order("created_at");
+      if (ownErr) throw ownErr;
+
+      const { data: lines, error: lineErr } = await supabase
+        .from("shop_order_lines")
+        .select("id")
+        .eq("product_id", productId!);
+      if (lineErr) throw lineErr;
+
+      let fromOrders: EntityImage[] = [];
+      const lineIds = (lines || []).map((l) => l.id);
+      if (lineIds.length) {
+        const { data, error } = await supabase
+          .from("entity_images")
+          .select("*")
+          .eq("entity_type", "shop_order_line")
+          .in("entity_id", lineIds)
+          .order("created_at");
+        if (error) throw error;
+        fromOrders = (data || []) as EntityImage[];
+      }
+
+      const byUrl = new Map<string, ProductPhoto>();
+      for (const img of (own || []) as EntityImage[]) {
+        byUrl.set(img.url, { ...img, source: "product" });
+      }
+      for (const img of fromOrders) {
+        if (!byUrl.has(img.url)) byUrl.set(img.url, { ...img, source: "order_line" });
+      }
+      return Array.from(byUrl.values());
+    },
+    enabled: !!productId,
   });
 }
