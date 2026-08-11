@@ -30,6 +30,8 @@ import { Landmark,
   ArrowLeftRight,
   Trash2,
   ShieldCheck,
+  Bug,
+
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
