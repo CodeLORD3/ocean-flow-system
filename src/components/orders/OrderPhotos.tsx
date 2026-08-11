@@ -15,7 +15,7 @@ import {
   useUploadEntityImage,
   useDeleteEntityImage,
   useLinkImageToProduct,
-  PRODUCT_PHOTO_ENTITY,
+  useProductPhotos,
 } from "@/hooks/useEntityImages";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -60,19 +60,22 @@ export function OrderPhotosButton({
   const upload = useUploadEntityImage();
   const del = useDeleteEntityImage();
   const linkToProduct = useLinkImageToProduct();
-  const { data: productImages = [] } = useEntityImages(
-    PRODUCT_PHOTO_ENTITY,
-    open ? productId : null,
+  const { data: productImages = [] } = useProductPhotos(open ? productId : null);
+  const linkedUrls = new Set(
+    productImages.filter((i) => i.source === "product").map((i) => i.url),
   );
-  const linkedUrls = new Set(productImages.map((i) => i.url));
 
   const handleLink = async (url: string, caption: string | null) => {
     if (!productId) return;
     try {
       await linkToProduct.mutateAsync({ productId, url, caption });
-      toast({ title: "Bilden kopplad till produkten" });
+      toast({ title: "Bilden är nu tillagd som produktbild" });
     } catch (e: any) {
-      toast({ title: "Kunde inte koppla bild", description: e?.message, variant: "destructive" });
+      toast({
+        title: "Kunde inte lägga till som produktbild",
+        description: e?.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -247,28 +250,28 @@ export function OrderPhotosButton({
                       {img.uploaded_by_name || "Okänd"} ·{" "}
                       {new Date(img.created_at).toLocaleDateString("sv-SE")}
                     </p>
+                    {productId && (
+                      <Button
+                        type="button"
+                        variant={linkedUrls.has(img.url) ? "ghost" : "outline"}
+                        size="sm"
+                        className={cn(
+                          "h-6 w-full gap-1 text-[10px]",
+                          linkedUrls.has(img.url) && "text-primary",
+                        )}
+                        onClick={() => handleLink(img.url, img.caption)}
+                        title={
+                          linkedUrls.has(img.url)
+                            ? "Bilden är redan en produktbild"
+                            : "Gör bilden till produktbild"
+                        }
+                        disabled={linkedUrls.has(img.url) || linkToProduct.isPending}
+                      >
+                        <Link2 className="h-3 w-3" />
+                        {linkedUrls.has(img.url) ? "Produktbild" : "Gör till produktbild"}
+                      </Button>
+                    )}
                   </div>
-                  {productId && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={cn(
-                        "absolute left-1 top-1 h-6 w-6 bg-background/80 transition",
-                        linkedUrls.has(img.url)
-                          ? "text-primary"
-                          : "text-muted-foreground opacity-0 group-hover:opacity-100",
-                      )}
-                      onClick={() => handleLink(img.url, img.caption)}
-                      title={
-                        linkedUrls.has(img.url)
-                          ? "Redan kopplad till produkten"
-                          : "Koppla bilden till produkten"
-                      }
-                      disabled={linkedUrls.has(img.url) || linkToProduct.isPending}
-                    >
-                      <Link2 className="h-3 w-3" />
-                    </Button>
-                  )}
                   <Button
                     variant="ghost"
                     size="icon"

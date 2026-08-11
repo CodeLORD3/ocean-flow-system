@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   PRODUCT_PHOTO_ENTITY,
   useDeleteEntityImage,
-  useEntityImages,
+  useProductPhotos,
   useUploadEntityImage,
 } from "@/hooks/useEntityImages";
 import { cn } from "@/lib/utils";
@@ -33,7 +33,7 @@ export function ProductPhotosGallery({
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const { data: images = [] } = useEntityImages(PRODUCT_PHOTO_ENTITY, productId);
+  const { data: images = [] } = useProductPhotos(productId);
   const upload = useUploadEntityImage();
   const del = useDeleteEntityImage();
 
@@ -115,13 +115,18 @@ export function ProductPhotosGallery({
               {img.caption && (
                 <p className="truncate px-1 py-0.5 text-[9px] text-muted-foreground">{img.caption}</p>
               )}
-              {!readOnly && (
+              {img.source === "order_line" && (
+                <span className="absolute left-0.5 top-0.5 rounded bg-background/80 px-1 text-[8px] text-muted-foreground">
+                  Order
+                </span>
+              )}
+              {!readOnly && img.source === "product" && (
                 <Button
                   variant="ghost"
                   size="icon"
                   className="absolute right-0.5 top-0.5 h-5 w-5 bg-background/80 text-destructive opacity-0 transition group-hover:opacity-100"
                   onClick={() => del.mutate(img.id)}
-                  title="Ta bort bild från produkten"
+                  title="Ta bort bild från produkten (originalet i ordern påverkas inte)"
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>
