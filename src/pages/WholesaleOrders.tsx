@@ -1357,9 +1357,18 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
 
   return (
     <>
+      <div className="flex items-center gap-2 px-2 pb-1">
+        <span className="text-xs text-muted-foreground">Bilder på ordern:</span>
+        <OrderPhotosButton
+          entityType={ORDER_PHOTO_ENTITY}
+          entityId={order.id}
+          title={`Order ${order.order_number || ""}`}
+        />
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
+
             <tr className="border-b border-border bg-muted/30">
               <th className="px-2 py-1 text-left font-medium text-muted-foreground">Produkt</th>
               <th className="px-2 py-1 text-left font-medium text-muted-foreground">Enhet</th>
