@@ -17,6 +17,7 @@ import {
   useLinkImageToProduct,
   PRODUCT_PHOTO_ENTITY,
 } from "@/hooks/useEntityImages";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 export const ORDER_PHOTO_ENTITY = "shop_order";
@@ -86,7 +87,23 @@ export function OrderPhotosButton({
     if (!pending.length) return;
     try {
       for (const file of pending) {
-        await upload.mutateAsync({ entityType, entityId, file, caption: caption || undefined });
+        const id = await upload.mutateAsync({
+          entityType,
+          entityId,
+          file,
+          caption: caption || undefined,
+        });
+        // Bilden hamnar automatiskt bland produktens egentagna bilder
+        if (productId && id) {
+          const { data: row } = await supabase
+            .from("entity_images")
+            .select("url")
+            .eq("id", id)
+            .maybeSingle();
+          if (row?.url) {
+            await linkToProduct.mutateAsync({ productId, url: row.url, caption: caption || null });
+          }
+        }
       }
       toast({ title: pending.length > 1 ? "Bilderna tillagda" : "Bilden tillagd" });
       setPending([]);

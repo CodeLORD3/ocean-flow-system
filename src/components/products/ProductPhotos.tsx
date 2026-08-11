@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Camera, Loader2, Trash2 } from "lucide-react";
+import { Camera, ChevronLeft, ChevronRight, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -29,7 +29,7 @@ export function ProductPhotosGallery({
   readOnly,
   className,
 }: ProductPhotosGalleryProps) {
-  const [zoom, setZoom] = useState<string | null>(null);
+  const [zoomIdx, setZoomIdx] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -102,7 +102,7 @@ export function ProductPhotosGallery({
             >
               <button
                 type="button"
-                onClick={() => setZoom(img.url)}
+                onClick={() => setZoomIdx(images.indexOf(img))}
                 className="block aspect-square w-full"
               >
                 <img
@@ -131,9 +131,47 @@ export function ProductPhotosGallery({
         </div>
       )}
 
-      <Dialog open={!!zoom} onOpenChange={(o) => !o && setZoom(null)}>
+      <Dialog open={zoomIdx !== null} onOpenChange={(o) => !o && setZoomIdx(null)}>
         <DialogContent className="max-w-3xl p-2">
-          {zoom && <img src={zoom} alt={productName || "Produktbild"} className="h-auto w-full rounded-md" />}
+          {zoomIdx !== null && images[zoomIdx] && (
+            <div className="relative">
+              <img
+                src={images[zoomIdx].url}
+                alt={images[zoomIdx].caption || productName || "Produktbild"}
+                className="h-auto max-h-[75vh] w-full rounded-md object-contain"
+              />
+              {images.length > 1 && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute left-1 top-1/2 h-9 w-9 -translate-y-1/2 rounded-full bg-background/80"
+                    onClick={() => setZoomIdx((i) => ((i ?? 0) - 1 + images.length) % images.length)}
+                    title="Föregående bild"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 h-9 w-9 -translate-y-1/2 rounded-full bg-background/80"
+                    onClick={() => setZoomIdx((i) => ((i ?? 0) + 1) % images.length)}
+                    title="Nästa bild"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
+                </>
+              )}
+              <div className="flex items-center justify-between px-1 pt-1.5">
+                <p className="text-[11px] text-muted-foreground">
+                  {images[zoomIdx].caption || productName || ""}
+                </p>
+                <span className="font-mono text-[11px] text-muted-foreground">
+                  {zoomIdx + 1}/{images.length}
+                </span>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
