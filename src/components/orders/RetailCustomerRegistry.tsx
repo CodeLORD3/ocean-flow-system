@@ -211,6 +211,48 @@ export function RetailCustomerRegistry({
             <DialogDescription>Uppgifterna är personuppgifter och syns bara i din butik.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex items-center justify-between gap-3 rounded-md border border-border p-3 sm:col-span-2">
+              <div>
+                <Label htmlFor="reg-is-company">Företagskund</Label>
+                <p className="text-xs text-muted-foreground">
+                  Kan ändras i efterhand om kunden ska faktureras som företag.
+                </p>
+              </div>
+              <Switch
+                id="reg-is-company"
+                checked={form.is_company}
+                onCheckedChange={(v) => setForm({ ...form, is_company: v })}
+              />
+            </div>
+            {form.is_company && (
+              <>
+                <div>
+                  <Label>Företagsnamn</Label>
+                  <Input
+                    className="h-12"
+                    value={form.company_name}
+                    onChange={(e) => setForm({ ...form, company_name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Org.nummer</Label>
+                  <Input
+                    className="h-12"
+                    value={form.org_number}
+                    onChange={(e) => setForm({ ...form, org_number: e.target.value })}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label>Referens/kontaktperson</Label>
+                  <Input
+                    className="h-12"
+                    value={form.contact_reference}
+                    onChange={(e) => setForm({ ...form, contact_reference: e.target.value })}
+                  />
+                </div>
+              </>
+            )}
+
             <div className="sm:col-span-2">
               <Label>Namn</Label>
               <Input className="h-12" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
