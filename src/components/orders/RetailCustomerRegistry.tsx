@@ -7,6 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+
 import {
   Dialog,
   DialogContent,
@@ -33,7 +37,12 @@ const empty = {
   postal_code: "",
   city: "",
   note: "",
+  is_company: false,
+  company_name: "",
+  org_number: "",
+  contact_reference: "",
 };
+
 
 /** Kundregister för privatkunder. Skilt från B2B-kunderna i /customers. */
 export function RetailCustomerRegistry({
@@ -44,7 +53,9 @@ export function RetailCustomerRegistry({
   readOnly?: boolean;
 }) {
   const [search, setSearch] = useState("");
-  const { data: customers = [], isLoading } = useRetailCustomers(storeId, search);
+  const [typeFilter, setTypeFilter] = useState<"all" | "company" | "private">("all");
+  const { data: allCustomers = [], isLoading } = useRetailCustomers(storeId, search);
+
   const { data: orders = [] } = useCustomerOrders({ storeId });
   const create = useCreateRetailCustomer();
   const update = useUpdateRetailCustomer();
@@ -72,15 +83,26 @@ export function RetailCustomerRegistry({
       postal_code: c.postal_code || "",
       city: c.city || "",
       note: c.note || "",
+      is_company: !!c.is_company,
+      company_name: c.company_name || "",
+      org_number: c.org_number || "",
+      contact_reference: c.contact_reference || "",
     });
+
     setOpen(true);
   };
 
   const save = async () => {
     if (!form.name.trim()) return toast.error("Kunden behöver ett namn.");
+    const payload = {
+      ...form,
+      company_name: form.is_company ? form.company_name.trim() || null : null,
+      org_number: form.is_company ? form.org_number.trim() || null : null,
+      contact_reference: form.is_company ? form.contact_reference.trim() || null : null,
+    };
     try {
-      if (editing) await update.mutateAsync({ id: editing.id, ...form } as any);
-      else await create.mutateAsync({ ...form, store_id: storeId } as any);
+      if (editing) await update.mutateAsync({ id: editing.id, ...payload } as any);
+      else await create.mutateAsync({ ...payload, store_id: storeId } as any);
       toast.success("Kunden är sparad.");
       setOpen(false);
     } catch (e: any) {
@@ -88,7 +110,12 @@ export function RetailCustomerRegistry({
     }
   };
 
+
   const historyFor = (id: string) => orders.filter((o) => o.customer_id === id);
+
+  const customers = allCustomers.filter((c) =>
+    typeFilter === "all" ? true : typeFilter === "company" ? c.is_company : !c.is_company,
+  );
 
   return (
     <div className="space-y-4">
@@ -102,12 +129,30 @@ export function RetailCustomerRegistry({
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+        <ToggleGroup
+          type="single"
+          value={typeFilter}
+          onValueChange={(v) => v && setTypeFilter(v as typeof typeFilter)}
+          className="h-11"
+        >
+          <ToggleGroupItem value="all" className="h-11 px-3 text-xs">
+            Alla
+          </ToggleGroupItem>
+          <ToggleGroupItem value="private" className="h-11 px-3 text-xs">
+            Privat
+          </ToggleGroupItem>
+          <ToggleGroupItem value="company" className="h-11 px-3 text-xs">
+            Företag
+          </ToggleGroupItem>
+        </ToggleGroup>
         {!readOnly && (
           <Button className="h-11" onClick={openNew}>
             <Plus className="mr-2 h-4 w-4" /> Ny kund
           </Button>
         )}
       </div>
+
+
 
       {!isLoading && customers.length === 0 && (
         <EmptyState
@@ -136,7 +181,19 @@ export function RetailCustomerRegistry({
               <CardContent className="space-y-2 p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="truncate font-semibold">{c.name}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="truncate font-semibold">{c.name}</span>
+                      {c.is_company && (
+                        <Badge variant="secondary" className="h-5 shrink-0 px-1.5 text-[10px]">
+                          Företag
+                        </Badge>
+                      )}
+                    </div>
+                    {c.is_company && (c.company_name || c.org_number) && (
+                      <div className="truncate text-xs text-muted-foreground">
+                        {[c.company_name, c.org_number].filter(Boolean).join(" · ")}
+                      </div>
+                    )}
                     <div className="truncate text-xs text-muted-foreground">
                       {[c.phone, c.email].filter(Boolean).join(" · ") || "Inga kontaktuppgifter"}
                     </div>
@@ -144,6 +201,7 @@ export function RetailCustomerRegistry({
                       {[c.street, c.postal_code, c.city].filter(Boolean).join(", ")}
                     </div>
                   </div>
+
                   {!readOnly && (
                     <div className="flex shrink-0 gap-1">
                       <Button size="icon" variant="ghost" onClick={() => openEdit(c)}>
@@ -201,6 +259,48 @@ export function RetailCustomerRegistry({
             <DialogDescription>Uppgifterna är personuppgifter och syns bara i din butik.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex items-center justify-between gap-3 rounded-md border border-border p-3 sm:col-span-2">
+              <div>
+                <Label htmlFor="reg-is-company">Företagskund</Label>
+                <p className="text-xs text-muted-foreground">
+                  Kan ändras i efterhand om kunden ska faktureras som företag.
+                </p>
+              </div>
+              <Switch
+                id="reg-is-company"
+                checked={form.is_company}
+                onCheckedChange={(v) => setForm({ ...form, is_company: v })}
+              />
+            </div>
+            {form.is_company && (
+              <>
+                <div>
+                  <Label>Företagsnamn</Label>
+                  <Input
+                    className="h-12"
+                    value={form.company_name}
+                    onChange={(e) => setForm({ ...form, company_name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Org.nummer</Label>
+                  <Input
+                    className="h-12"
+                    value={form.org_number}
+                    onChange={(e) => setForm({ ...form, org_number: e.target.value })}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label>Referens/kontaktperson</Label>
+                  <Input
+                    className="h-12"
+                    value={form.contact_reference}
+                    onChange={(e) => setForm({ ...form, contact_reference: e.target.value })}
+                  />
+                </div>
+              </>
+            )}
+
             <div className="sm:col-span-2">
               <Label>Namn</Label>
               <Input className="h-12" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />

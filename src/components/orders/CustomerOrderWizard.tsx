@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
@@ -92,7 +94,12 @@ export function CustomerOrderWizard({
     postal_code: "",
     city: "",
     note: "",
+    is_company: false,
+    company_name: "",
+    org_number: "",
+    contact_reference: "",
   });
+
   const [creatingCustomer, setCreatingCustomer] = useState(false);
 
   const [orderType, setOrderType] = useState("upphamtning");
@@ -254,8 +261,14 @@ export function CustomerOrderWizard({
     try {
       const created = await createCustomer.mutateAsync({
         ...newCustomer,
+        company_name: newCustomer.is_company ? newCustomer.company_name.trim() || null : null,
+        org_number: newCustomer.is_company ? newCustomer.org_number.trim() || null : null,
+        contact_reference: newCustomer.is_company
+          ? newCustomer.contact_reference.trim() || null
+          : null,
         store_id: storeId,
       } as any);
+
       setCustomer(created);
       setCreatingCustomer(false);
       toast.success("Kunden är sparad.");
@@ -348,12 +361,22 @@ export function CustomerOrderWizard({
                       <div className="flex items-center gap-3">
                         <User className="h-4 w-4 text-muted-foreground" />
                         <div>
-                          <div className="font-medium">{c.name}</div>
+                          <div className="flex items-center gap-2 font-medium">
+                            <span>{c.name}</span>
+                            {c.is_company && (
+                              <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                                Företag
+                              </Badge>
+                            )}
+                          </div>
                           <div className="text-xs text-muted-foreground">
-                            {[c.phone, c.city].filter(Boolean).join(" · ") || "Inga kontaktuppgifter"}
+                            {[c.is_company ? c.company_name : null, c.phone, c.city]
+                              .filter(Boolean)
+                              .join(" · ") || "Inga kontaktuppgifter"}
                           </div>
                         </div>
                       </div>
+
                     </button>
                   ))}
                   {customers.length === 0 && (
@@ -368,6 +391,50 @@ export function CustomerOrderWizard({
               </>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
+                <div className="flex items-center justify-between gap-3 rounded-md border border-border p-3 sm:col-span-2">
+                  <div>
+                    <Label htmlFor="wizard-is-company">Företagskund</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Markera om beställningen görs av ett företag.
+                    </p>
+                  </div>
+                  <Switch
+                    id="wizard-is-company"
+                    checked={newCustomer.is_company}
+                    onCheckedChange={(v) => setNewCustomer({ ...newCustomer, is_company: v })}
+                  />
+                </div>
+                {newCustomer.is_company && (
+                  <>
+                    <div>
+                      <Label>Företagsnamn</Label>
+                      <Input
+                        className="h-12"
+                        value={newCustomer.company_name}
+                        onChange={(e) => setNewCustomer({ ...newCustomer, company_name: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label>Org.nummer</Label>
+                      <Input
+                        className="h-12"
+                        value={newCustomer.org_number}
+                        onChange={(e) => setNewCustomer({ ...newCustomer, org_number: e.target.value })}
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Label>Referens/kontaktperson</Label>
+                      <Input
+                        className="h-12"
+                        value={newCustomer.contact_reference}
+                        onChange={(e) =>
+                          setNewCustomer({ ...newCustomer, contact_reference: e.target.value })
+                        }
+                      />
+                    </div>
+                  </>
+                )}
+
                 <div className="sm:col-span-2">
                   <Label>Namn</Label>
                   <Input

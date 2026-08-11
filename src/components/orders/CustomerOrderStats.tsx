@@ -3,6 +3,8 @@ import { BarChart3 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+
 import { EmptyState } from "@/components/EmptyState";
 import { useCustomerOrders } from "@/hooks/useCustomerOrders";
 import { ORDER_TYPE_LABELS } from "@/lib/customerOrders";
@@ -21,16 +23,37 @@ export function CustomerOrderStats({ storeId }: { storeId?: string | null }) {
   start.setDate(start.getDate() - 30);
   const [from, setFrom] = useState(iso(start));
   const [to, setTo] = useState(iso(new Date()));
+  const [customerType, setCustomerType] = useState<"all" | "company" | "private">("all");
 
-  const { data: orders = [], isLoading } = useCustomerOrders({
+  const { data: allOrders = [], isLoading } = useCustomerOrders({
     storeId: storeId ?? undefined,
     fromDate: from,
     toDate: to,
   });
 
+  const orders = useMemo(
+    () =>
+      allOrders.filter((o) =>
+        customerType === "all"
+          ? true
+          : customerType === "company"
+            ? !!o.customers_retail?.is_company
+            : !o.customers_retail?.is_company,
+      ),
+    [allOrders, customerType],
+  );
+
   const stats = useMemo(() => {
     const live = orders.filter((o) => o.status !== "avbruten");
     const cancelled = orders.length - live.length;
+    const companyOrders = live.filter((o) => o.customers_retail?.is_company).length;
+    const companyValue = live
+      .filter((o) => o.customers_retail?.is_company)
+      .reduce((s, o) => s + Number(o.total_incl_vat || o.estimated_total || 0), 0);
+    const privateValue = live
+      .filter((o) => !o.customers_retail?.is_company)
+      .reduce((s, o) => s + Number(o.total_incl_vat || o.estimated_total || 0), 0);
+
     const estimated = live.reduce((s, o) => s + Number(o.estimated_total || 0), 0);
     const actual = live.reduce((s, o) => s + Number(o.total_incl_vat || 0), 0);
 
@@ -68,6 +91,10 @@ export function CustomerOrderStats({ storeId }: { storeId?: string | null }) {
       catering,
       estimated,
       actual,
+      companyOrders,
+      privateOrders: live.length - companyOrders,
+      companyValue,
+      privateValue,
       byType: Array.from(byType.entries()),
       top: Array.from(byProduct.entries())
         .sort((a, b) => b[1].value - a[1].value)
@@ -76,6 +103,7 @@ export function CustomerOrderStats({ storeId }: { storeId?: string | null }) {
       deviating,
     };
   }, [orders]);
+
 
   return (
     <div className="space-y-3">
@@ -98,7 +126,27 @@ export function CustomerOrderStats({ storeId }: { storeId?: string | null }) {
             onChange={(e) => setTo(e.target.value)}
           />
         </div>
+        <div>
+          <Label className="text-xs">Kundtyp</Label>
+          <ToggleGroup
+            type="single"
+            value={customerType}
+            onValueChange={(v) => v && setCustomerType(v as typeof customerType)}
+            className="h-12"
+          >
+            <ToggleGroupItem value="all" className="h-12 px-3 text-xs">
+              Alla
+            </ToggleGroupItem>
+            <ToggleGroupItem value="private" className="h-12 px-3 text-xs">
+              Privat
+            </ToggleGroupItem>
+            <ToggleGroupItem value="company" className="h-12 px-3 text-xs">
+              Företag
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
       </div>
+
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Räknar…</p>
@@ -124,10 +172,21 @@ export function CustomerOrderStats({ storeId }: { storeId?: string | null }) {
                 sub: "packat och prissatt",
               },
               {
+                label: "Företagskunder",
+                value: `${nf(stats.companyOrders)} order`,
+                sub: `${nf(stats.companyValue)} kr`,
+              },
+              {
+                label: "Privatkunder",
+                value: `${nf(stats.privateOrders)} order`,
+                sub: `${nf(stats.privateValue)} kr`,
+              },
+              {
                 label: "Vikt avviker över 20 %",
                 value: `${nf(stats.deviating)}`,
                 sub: `av ${nf(stats.packedLines)} vägda rader`,
               },
+
             ].map((k) => (
               <Card key={k.label}>
                 <CardContent className="p-3">
