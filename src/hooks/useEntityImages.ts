@@ -372,3 +372,53 @@ export function useDeleteImageComment() {
     },
   });
 }
+
+/** Entitetstyp för egentagna bilder som hör till en produkt. */
+export const PRODUCT_PHOTO_ENTITY = "product";
+
+/**
+ * Kopplar en befintlig bild (t.ex. från en order) till en produkt genom att
+ * skapa en ny rad som pekar på samma bildfil.
+ */
+export function useLinkImageToProduct() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      productId,
+      url,
+      caption,
+    }: {
+      productId: string;
+      url: string;
+      caption?: string | null;
+    }) => {
+      const { data: existing } = await supabase
+        .from("entity_images")
+        .select("id")
+        .eq("entity_type", PRODUCT_PHOTO_ENTITY)
+        .eq("entity_id", productId)
+        .eq("url", url)
+        .maybeSingle();
+      if (existing) return existing.id as string;
+      const { uid, name } = await currentActorName();
+      const { data: inserted, error } = await supabase
+        .from("entity_images")
+        .insert({
+          entity_type: PRODUCT_PHOTO_ENTITY,
+          entity_id: productId,
+          url,
+          caption: caption || null,
+          sort_order: 0,
+          uploaded_by: uid,
+          uploaded_by_name: name,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      return inserted?.id as string;
+    },
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["entity-images", PRODUCT_PHOTO_ENTITY, vars.productId] });
+    },
+  });
+}

@@ -1437,6 +1437,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                         compact
                         entityType={ORDER_LINE_PHOTO_ENTITY}
                         entityId={line.id}
+                        productId={line.product_id}
                         title={line.products?.name || "Orderrad"}
                       />
 
