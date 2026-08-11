@@ -146,7 +146,19 @@ export function RetailCustomerRegistry({
               <CardContent className="space-y-2 p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="truncate font-semibold">{c.name}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="truncate font-semibold">{c.name}</span>
+                      {c.is_company && (
+                        <Badge variant="secondary" className="h-5 shrink-0 px-1.5 text-[10px]">
+                          Företag
+                        </Badge>
+                      )}
+                    </div>
+                    {c.is_company && (c.company_name || c.org_number) && (
+                      <div className="truncate text-xs text-muted-foreground">
+                        {[c.company_name, c.org_number].filter(Boolean).join(" · ")}
+                      </div>
+                    )}
                     <div className="truncate text-xs text-muted-foreground">
                       {[c.phone, c.email].filter(Boolean).join(" · ") || "Inga kontaktuppgifter"}
                     </div>
@@ -154,6 +166,7 @@ export function RetailCustomerRegistry({
                       {[c.street, c.postal_code, c.city].filter(Boolean).join(", ")}
                     </div>
                   </div>
+
                   {!readOnly && (
                     <div className="flex shrink-0 gap-1">
                       <Button size="icon" variant="ghost" onClick={() => openEdit(c)}>
