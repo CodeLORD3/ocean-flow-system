@@ -686,7 +686,7 @@ export default function Products() {
             )}
             {isSubproduct && <span className="ml-5 text-muted-foreground shrink-0">└</span>}
             {!isSubproduct && !hasChildren && <span className="w-5 shrink-0" />}
-            <ProductThumb src={(p as any).image_url} alt={p.name} />
+            <ProductThumb src={(p as any).image_url} alt={p.name} productId={p.id} />
             <span className={`truncate ${isSubproduct ? "text-muted-foreground" : ""}`} title={p.name}>{p.name}</span>
             {hasChildren && (
               <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-1 rounded-none shrink-0">

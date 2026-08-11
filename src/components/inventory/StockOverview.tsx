@@ -558,7 +558,7 @@ export default function StockOverview({
                               <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                             )}
                             {!dense && (
-                              <ProductThumb src={g.image_url} alt={g.name} className="w-11 h-8" />
+                              <ProductThumb src={g.image_url} alt={g.name} productId={g.product_id} className="w-11 h-8" />
                             )}
                             <div className="min-w-0">
                               <div className="font-semibold text-foreground truncate">{g.name}</div>
