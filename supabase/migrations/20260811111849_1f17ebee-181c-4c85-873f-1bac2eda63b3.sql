@@ -1,0 +1,3 @@
+CREATE POLICY "Staff can upload store images" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'logos' AND is_staff());
+CREATE POLICY "Staff can update store images" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'logos' AND is_staff()) WITH CHECK (bucket_id = 'logos' AND is_staff());
+CREATE POLICY "Staff can delete store images" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'logos' AND is_staff());
