@@ -5612,6 +5612,7 @@ export type Database = {
           requires_processing: boolean
           retail_suggested: number | null
           shelf_life_days: number | null
+          shelf_life_open_days: number | null
           size_grade_id: string | null
           sku: string
           species_group: string | null
@@ -5653,6 +5654,7 @@ export type Database = {
           requires_processing?: boolean
           retail_suggested?: number | null
           shelf_life_days?: number | null
+          shelf_life_open_days?: number | null
           size_grade_id?: string | null
           sku: string
           species_group?: string | null
@@ -5694,6 +5696,7 @@ export type Database = {
           requires_processing?: boolean
           retail_suggested?: number | null
           shelf_life_days?: number | null
+          shelf_life_open_days?: number | null
           size_grade_id?: string | null
           sku?: string
           species_group?: string | null
