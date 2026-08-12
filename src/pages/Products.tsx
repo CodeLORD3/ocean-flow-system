@@ -1361,7 +1361,7 @@ export default function Products() {
             <div className="space-y-1.5">
               <Label className="text-xs font-medium flex items-center gap-1.5">
                 <Clock className="h-3 w-3 text-primary" />
-                Hållbarhet (dagar) *
+                Hållbarhet sluten förpackning (dagar) *
               </Label>
               <div className="flex items-center gap-2">
                 <Input
@@ -1370,19 +1370,33 @@ export default function Products() {
                   max="9999"
                   value={form.shelf_life_days}
                   onChange={(e) => setField("shelf_life_days", e.target.value)}
-                  placeholder="T.ex. 5"
+                  placeholder="T.ex. 9"
                   className="h-8 text-xs w-28"
                 />
-                <span className="text-xs text-muted-foreground">dagar från produktions- eller ankomstdatum</span>
+                <span className="text-xs text-muted-foreground">
+                  dagar från produktions- eller ankomstdatum, oöppnad/skyddande atmosfär
+                </span>
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <Input
+                  type="number"
+                  min="1"
+                  max="9999"
+                  value={form.shelf_life_open_days}
+                  onChange={(e) => setField("shelf_life_open_days", e.target.value)}
+                  placeholder="T.ex. 3"
+                  className="h-8 text-xs w-28"
+                />
+                <span className="text-xs text-muted-foreground">dagar efter öppnad förpackning</span>
               </div>
               {/* Quick presets */}
               <div className="flex flex-wrap gap-1 mt-1">
                 {[
                   { label: "Färsk fisk (3d)", value: "3" },
                   { label: "Beredd (5d)", value: "5" },
+                  { label: "Kokta skaldjur (9d)", value: "9" },
                   { label: "Rökt (14d)", value: "14" },
-                  { label: "Fryst (180d)", value: "180" },
-                  { label: "Torr (365d)", value: "365" },
+                  { label: "Fryst (365d)", value: "365" },
                 ].map((preset) => (
                   <button
                     key={preset.value}
