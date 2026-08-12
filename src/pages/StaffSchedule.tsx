@@ -1,21 +1,27 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { CalendarRange, ChevronLeft, ChevronRight, Plus, Users, Wallet, ShieldCheck, CalendarDays, Table2 } from "lucide-react";
+import { CalendarRange, ChevronLeft, ChevronRight, Plus, Users, Wallet, ShieldCheck, CalendarDays, Table2, Clock, Timer } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useStores } from "@/hooks/useStores";
 import { useStaff } from "@/hooks/useStaff";
+import { useStaffAvatars } from "@/hooks/useStaffAvatars";
 import { usePlannedShiftsRange } from "@/hooks/usePlannedShifts";
+import { useShiftsRange } from "@/hooks/useStaffShifts";
 import { PlannedShiftDialog } from "@/components/livestaff/PlannedShiftDialog";
 import { StaffAccessDialog } from "@/components/staff/StaffAccessDialog";
 import { StaffSalaryDialog } from "@/components/staff/StaffSalaryDialog";
 import { useEffectiveRates } from "@/hooks/useSalaryHistory";
 import { usePayrollOverhead, useStoreRevenueRange } from "@/hooks/useStaffKpi";
+import { useMinuteTick } from "@/hooks/useLiveStaff";
+import { buildActualMap, diffTone, localDay, signedMinutes } from "@/lib/scheduleCompare";
 import { dateKey, formatMinutes, type PlannedShiftRow } from "@/lib/liveStaff";
+
 
 const DAY_NAMES = ["Mån", "Tis", "Ons", "Tors", "Fre", "Lör", "Sön"];
 
