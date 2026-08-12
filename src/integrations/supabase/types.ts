@@ -6500,11 +6500,13 @@ export type Database = {
           age: number | null
           created_at: string | null
           email: string | null
+          employment_type: string
           first_name: string
           hourly_rate: number | null
           id: string
           last_name: string
           legal_entity_id: string | null
+          monthly_salary: number | null
           must_change_password: boolean
           phone: string | null
           profile_image_url: string | null
@@ -6516,11 +6518,13 @@ export type Database = {
           age?: number | null
           created_at?: string | null
           email?: string | null
+          employment_type?: string
           first_name: string
           hourly_rate?: number | null
           id?: string
           last_name: string
           legal_entity_id?: string | null
+          monthly_salary?: number | null
           must_change_password?: boolean
           phone?: string | null
           profile_image_url?: string | null
@@ -6532,11 +6536,13 @@ export type Database = {
           age?: number | null
           created_at?: string | null
           email?: string | null
+          employment_type?: string
           first_name?: string
           hourly_rate?: number | null
           id?: string
           last_name?: string
           legal_entity_id?: string | null
+          monthly_salary?: number | null
           must_change_password?: boolean
           phone?: string | null
           profile_image_url?: string | null
@@ -6615,6 +6621,60 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_salary_history: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          employment_type: string
+          hourly_rate: number | null
+          id: string
+          monthly_salary: number | null
+          note: string | null
+          staff_id: string
+          updated_at: string
+          valid_from: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          employment_type?: string
+          hourly_rate?: number | null
+          id?: string
+          monthly_salary?: number | null
+          note?: string | null
+          staff_id: string
+          updated_at?: string
+          valid_from?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          employment_type?: string
+          hourly_rate?: number | null
+          id?: string
+          monthly_salary?: number | null
+          note?: string | null
+          staff_id?: string
+          updated_at?: string
+          valid_from?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_salary_history_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_salary_history_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
             referencedColumns: ["id"]
           },
         ]
@@ -8620,11 +8680,13 @@ export type Database = {
           age: number | null
           created_at: string | null
           email: string | null
+          employment_type: string
           first_name: string
           hourly_rate: number | null
           id: string
           last_name: string
           legal_entity_id: string | null
+          monthly_salary: number | null
           must_change_password: boolean
           phone: string | null
           profile_image_url: string | null
