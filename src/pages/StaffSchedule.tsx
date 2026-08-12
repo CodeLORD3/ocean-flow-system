@@ -98,12 +98,27 @@ export default function StaffSchedule() {
     storeFilter === "all" ? null : storeFilter,
   );
 
+  const { data: actualShifts = [] } = useShiftsRange(
+    rangeFrom,
+    rangeTo,
+    storeFilter === "all" ? null : storeFilter,
+  );
+  const now = useMinuteTick();
+  const avatars = useStaffAvatars();
+
   const rates = useEffectiveRates(rangeFrom);
   const overhead = usePayrollOverhead();
   const revenue = useStoreRevenueRange(rangeFrom, rangeTo);
 
   const rateMap = rates.data ?? new Map<string, number | null>();
   const factor = 1 + Math.max(0, overhead.data ?? 0) / 100;
+
+  /** Arbetad tid per anställd och dag — pågående pass räknas mot nu. */
+  const actualMap = useMemo(
+    () => buildActualMap(actualShifts, now.getTime()),
+    [actualShifts, now],
+  );
+
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogDay, setDialogDay] = useState(days[0]);
