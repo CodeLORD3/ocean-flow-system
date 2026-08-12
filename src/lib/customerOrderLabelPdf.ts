@@ -17,6 +17,8 @@ export interface PackLabel {
   total: number | null;
   packedDate: string;
   bestBefore?: string | null;
+  /** Hållbarhet efter öppnad förpackning, i dagar. */
+  shelfLifeOpenDays?: number | null;
   lotNumber?: string | null;
   barcode?: string | null;
 }
