@@ -10,6 +10,7 @@ import {
   computeStoreKpis,
   computeTotals,
 } from "@/lib/staffKpi";
+import { useEffectiveRates } from "@/hooks/useSalaryHistory";
 
 /** Timlön per anställd — tom om ingen lön är inlagd. */
 export function useStaffRates() {
@@ -104,7 +105,7 @@ export interface StaffKpiResult {
 
 /** Personalkostnad och kostnadsandel per butik och stad för ett datum. */
 export function useStaffKpi(day: string, sources: StoreKpiSource[]): StaffKpiResult {
-  const rates = useStaffRates();
+  const rates = useEffectiveRates(day);
   const revenue = useStoreRevenue(day);
   const overhead = usePayrollOverhead();
 

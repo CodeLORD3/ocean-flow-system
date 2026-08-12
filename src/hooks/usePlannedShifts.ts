@@ -71,3 +71,23 @@ export function useDeletePlannedShift() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["planned-shifts"] }),
   });
 }
+
+/** Planerade pass i ett datumintervall (t.ex. en vecka). */
+export function usePlannedShiftsRange(from: string, to: string, storeId?: string | null) {
+  return useQuery({
+    queryKey: ["planned-shifts-range", from, to, storeId ?? "all"],
+    enabled: !!from && !!to,
+    queryFn: async () => {
+      let q = supabase
+        .from("staff_planned_shifts")
+        .select(SELECT)
+        .gte("shift_date", from)
+        .lte("shift_date", to)
+        .order("start_time", { ascending: true });
+      if (storeId) q = q.eq("store_id", storeId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as PlannedShiftRow[];
+    },
+  });
+}
