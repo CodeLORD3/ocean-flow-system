@@ -537,6 +537,7 @@ export default function Arrivals() {
                         vesselName: l.vesselName,
                         bestBefore: l.bestBefore,
                         supplierLotNumber: l.supplierLotNumber,
+                        shelfLifeOpenDays: l.shelfLifeOpenDays ?? null,
                         identificationMark: senderMark ?? null,
                       })),
                   );
