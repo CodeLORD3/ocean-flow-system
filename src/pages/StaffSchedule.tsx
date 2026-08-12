@@ -511,17 +511,26 @@ export default function StaffSchedule() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[980px] border-collapse text-xs">
+              <table className="w-full min-w-[1040px] border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-border bg-muted/40">
-                    <th className="sticky left-0 z-10 bg-muted/40 px-2 py-2 text-left font-medium text-muted-foreground">
+                    <th className="sticky left-0 z-10 w-[250px] bg-muted/40 px-2 py-2 text-left font-medium text-muted-foreground">
                       Anställd
                     </th>
-                    {days.map((d, i) => (
-                      <th key={d} className="px-2 py-2 text-left font-medium text-muted-foreground">
-                        {DAY_NAMES[i]} <span className="tabular-nums font-normal">{d.slice(5)}</span>
-                      </th>
-                    ))}
+                    {days.map((d, i) => {
+                      const isToday = d === dateKey();
+                      return (
+                        <th
+                          key={d}
+                          className={`px-2 py-1.5 text-left font-medium ${
+                            isToday ? "bg-primary/10 text-primary" : "text-muted-foreground"
+                          }`}
+                        >
+                          <span className="block text-[10px] uppercase tracking-wide">{DAY_NAMES[i]}</span>
+                          <span className="block font-mono text-[11px] tabular-nums">{d.slice(8)}/{d.slice(5, 7)}</span>
+                        </th>
+                      );
+                    })}
                     <th className="px-2 py-2 text-right font-medium text-muted-foreground">Vecka</th>
                   </tr>
                 </thead>
@@ -531,53 +540,56 @@ export default function StaffSchedule() {
                     const home = s.store_id ? (storeById.get(s.store_id) as any) : null;
                     const extra = (s.allowed_store_ids ?? []).filter((id: string) => id !== s.store_id).length;
                     const rate = rateMap.get(s.id);
+                    const initials = `${s.first_name?.[0] ?? ""}${s.last_name?.[0] ?? ""}`.toUpperCase();
                     return (
-                      <tr key={s.id} className="border-b border-border last:border-0">
-                        <td className="sticky left-0 z-10 max-w-[240px] border-r border-border bg-card px-2 py-1.5">
-                          <div className="flex items-center gap-1">
-                            <span className="truncate font-medium text-foreground">
-                              {s.first_name} {s.last_name}
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              title="Lön"
-                              onClick={() => setSalaryStaff(s)}
-                            >
-                              <Wallet className={`h-3 w-3 ${rate ? "text-emerald-500" : "text-amber-500"}`} />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              title="Behörighet (stad/butik)"
-                              onClick={() => setAccessStaff(s)}
-                            >
-                              <ShieldCheck className="h-3 w-3 text-muted-foreground" />
-                            </Button>
-                          </div>
-                          <div className="mt-0.5 flex flex-wrap items-center gap-1">
-                            {home && (
-                              <Badge variant="secondary" className="px-1 py-0 text-[9px]">
-                                {home.name}{home.city ? ` · ${home.city}` : ""}
-                              </Badge>
-                            )}
-                            {extra > 0 && (
-                              <Badge variant="outline" className="px-1 py-0 text-[9px]">+{extra} enheter</Badge>
-                            )}
-                            {(s.allowed_store_ids ?? []).length === 0 && (s.portal_access ?? []).includes("shop") && (
-                              <Badge variant="outline" className="px-1 py-0 text-[9px]">Alla butiker</Badge>
-                            )}
-                            <span className="font-mono text-[9px] tabular-nums text-muted-foreground">
-                              {rate ? `${Math.round(rate)} kr/h` : "lön saknas"}
-                            </span>
+                      <tr key={s.id} className="border-b border-border transition-colors last:border-0 hover:bg-muted/20">
+                        <td className="sticky left-0 z-10 max-w-[250px] border-r border-border bg-card px-2 py-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <Avatar className="h-7 w-7 shrink-0">
+                              <AvatarImage src={avatars[s.id]} alt="" />
+                              <AvatarFallback className="text-[9px]">{initials || "?"}</AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0 flex-1">
+                              <span className="block truncate font-medium text-foreground">
+                                {s.first_name} {s.last_name}
+                              </span>
+                              <div className="flex flex-wrap items-center gap-1">
+                                {home && (
+                                  <Badge variant="secondary" className="px-1 py-0 text-[9px]">
+                                    {home.name}{home.city ? ` · ${home.city}` : ""}
+                                  </Badge>
+                                )}
+                                {extra > 0 && (
+                                  <Badge variant="outline" className="px-1 py-0 text-[9px]">+{extra}</Badge>
+                                )}
+                                <span className="font-mono text-[9px] tabular-nums text-muted-foreground">
+                                  {rate ? `${Math.round(rate)} kr/h` : "lön saknas"}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex shrink-0 flex-col">
+                              <Button variant="ghost" size="icon" className="h-5 w-5" title="Lön" onClick={() => setSalaryStaff(s)}>
+                                <Wallet className={`h-3 w-3 ${rate ? "text-emerald-500" : "text-amber-500"}`} />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-5 w-5"
+                                title="Behörighet (stad/butik)"
+                                onClick={() => setAccessStaff(s)}
+                              >
+                                <ShieldCheck className="h-3 w-3 text-muted-foreground" />
+                              </Button>
+                            </div>
                           </div>
                         </td>
                         {days.map((d) => {
                           const rows = byStaffDay.get(`${s.id}|${d}`) ?? [];
+                          const act = actualDay(s.id, d);
+                          const plannedMin = rows.reduce((a, p) => a + shiftMinutes(p), 0);
+                          const isToday = d === dateKey();
                           return (
-                            <td key={d} className="align-top px-1 py-1">
+                            <td key={d} className={`align-top px-1 py-1 ${isToday ? "bg-primary/5" : ""}`}>
                               <div className="flex flex-col gap-1">
                                 {rows.map((p) => {
                                   const c = shiftCost(p);
@@ -586,31 +598,69 @@ export default function StaffSchedule() {
                                       key={p.id}
                                       type="button"
                                       onClick={() => openDialog(s.id, d, p)}
-                                      className="rounded border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-left tabular-nums text-[11px] text-foreground hover:bg-primary/20"
+                                      className="group rounded-md border-l-2 border-primary bg-primary/10 px-1.5 py-1 text-left transition-colors hover:bg-primary/20"
                                     >
-                                      {p.start_time.slice(0, 5)}–{p.end_time.slice(0, 5)}
-                                      <span className="block font-mono text-[9px] text-muted-foreground">
+                                      <span className="block font-mono text-[11px] font-medium tabular-nums text-foreground">
+                                        {p.start_time.slice(0, 5)}–{p.end_time.slice(0, 5)}
+                                      </span>
+                                      <span className="block truncate text-[9px] text-muted-foreground">
                                         {storeName(p.store_id)}
                                         {c !== null ? ` · ${kr(c)}` : ""}
                                       </span>
                                     </button>
                                   );
                                 })}
+
+                                {act ? (
+                                  <div
+                                    className={`rounded-md border-l-2 px-1.5 py-1 ${
+                                      act.ongoing ? "border-sky-500 bg-sky-500/10" : "border-emerald-500 bg-emerald-500/10"
+                                    }`}
+                                    title="Arbetad tid enligt stämpling"
+                                  >
+                                    <span className="flex items-center gap-1 font-mono text-[11px] font-medium tabular-nums text-foreground">
+                                      <Clock className="h-2.5 w-2.5 shrink-0" />
+                                      {formatMinutes(act.minutes)}
+                                      {act.ongoing && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-sky-500" />}
+                                    </span>
+                                    <span className="block font-mono text-[9px] tabular-nums text-muted-foreground">
+                                      {act.firstIn}–{act.lastOut ?? "nu"}
+                                    </span>
+                                    {plannedMin > 0 && (
+                                      <span className={`block text-[9px] tabular-nums ${diffTone(act.minutes - plannedMin, act.ongoing)}`}>
+                                        {signedMinutes(act.minutes - plannedMin)}
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : plannedMin > 0 ? (
+                                  <span className="px-1.5 text-[9px] text-muted-foreground">Ej stämplat</span>
+                                ) : null}
+
                                 <button
                                   type="button"
                                   onClick={() => openDialog(s.id, d, null)}
-                                  className="rounded border border-dashed border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                                  className="rounded-md border border-dashed border-border px-1.5 py-0.5 text-[10px] text-muted-foreground opacity-60 transition-all hover:border-primary/50 hover:text-foreground hover:opacity-100"
                                   aria-label={`Planera pass ${d}`}
                                 >
-                                  +
+                                  + pass
                                 </button>
                               </div>
                             </td>
                           );
                         })}
-                        <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">
-                          <span className="block font-mono">{formatMinutes(wk.minutes)}</span>
-                          <span className="block font-mono text-[10px] text-foreground">
+                        <td className="px-2 py-1.5 text-right tabular-nums">
+                          <span className="block font-mono text-[11px] text-muted-foreground">
+                            plan {formatMinutes(wk.minutes)}
+                          </span>
+                          <span className="block font-mono text-[11px] font-medium text-foreground">
+                            arb {formatMinutes(wk.worked)}
+                          </span>
+                          {wk.minutes > 0 && (
+                            <span className={`block font-mono text-[10px] ${diffTone(wk.worked - wk.minutes, wk.ongoing)}`}>
+                              {signedMinutes(wk.worked - wk.minutes)}
+                            </span>
+                          )}
+                          <span className="block font-mono text-[10px] text-muted-foreground">
                             {wk.cost !== null && wk.cost > 0 ? kr(wk.cost) : "—"}
                           </span>
                         </td>
@@ -621,28 +671,47 @@ export default function StaffSchedule() {
                 <tfoot>
                   <tr className="border-t border-border bg-muted/30">
                     <td className="sticky left-0 z-10 bg-muted/30 px-2 py-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                      Kostnad / dag
+                      Plan / arbetad / kostnad
                     </td>
                     {days.map((d) => {
                       const t = dayTotals(d);
+                      const w = actualDayTotal(d);
                       const pct = ratio(t.cost, t.revenue);
                       return (
                         <td key={d} className="px-2 py-1.5 font-mono text-[10px] tabular-nums">
-                          <span className="block text-foreground">{t.cost > 0 ? kr(t.cost) : "—"}</span>
                           <span className="block text-muted-foreground">{formatMinutes(t.minutes)}</span>
+                          <span className={`block ${w.ongoing ? "text-sky-500" : "text-foreground"}`}>
+                            {formatMinutes(w.minutes)}
+                          </span>
+                          <span className="block text-foreground">{t.cost > 0 ? kr(t.cost) : "—"}</span>
                           <span className="block text-primary">{pct ?? ""}</span>
                         </td>
                       );
                     })}
                     <td className="px-2 py-1.5 text-right font-mono text-[10px] tabular-nums">
+                      <span className="block text-muted-foreground">{formatMinutes(weekTotals.minutes)}</span>
+                      <span className="block text-foreground">{formatMinutes(weekTotals.workedMinutes)}</span>
                       <span className="block text-foreground">{weekTotals.cost > 0 ? kr(weekTotals.cost) : "—"}</span>
                       <span className="block text-primary">{ratio(weekTotals.cost, weekTotals.revenue) ?? ""}</span>
                     </td>
                   </tr>
                 </tfoot>
               </table>
+              <div className="flex flex-wrap items-center gap-3 border-t border-border px-3 py-2 text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <span className="h-2.5 w-1 rounded bg-primary" /> Planerat pass
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="h-2.5 w-1 rounded bg-emerald-500" /> Arbetad tid (stämplat)
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="h-2.5 w-1 rounded bg-sky-500" /> Pågår just nu
+                </span>
+                <span>+/− visar arbetad tid mot planerat pass.</span>
+              </div>
             </div>
           )}
+
         </CardContent>
       </Card>
 
