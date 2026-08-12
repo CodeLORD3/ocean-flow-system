@@ -91,6 +91,7 @@ const inventoryNav = [
 const orgNav = [
   { title: "Butiker", url: "/stores", icon: Store },
   { title: "Personal", url: "/staff", icon: UserCheck },
+  { title: "Live personal", url: "/live-staff", icon: Activity },
   { title: "Bilar & Maskiner", url: "/vehicles", icon: TruckIcon },
   { title: "Anläggningar", url: "/establishments", icon: Building2 },
   { title: "Bolag", url: "/legal-entities", icon: Landmark },

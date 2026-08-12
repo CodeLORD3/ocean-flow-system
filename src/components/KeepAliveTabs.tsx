@@ -27,6 +27,7 @@ import ProductionReporting from "@/pages/ProductionReporting";
 import ReportsRouter from "@/pages/ReportsRouter";
 import AuditRouter from "@/pages/AuditRouter";
 import BugReports from "@/pages/BugReports";
+import LiveStaff from "@/pages/LiveStaff";
 
 import TradeOffers from "@/pages/TradeOffers";
 import TradeHistory from "@/pages/TradeHistory";
@@ -95,6 +96,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/production-reporting": { component: <ProductionReporting /> },
   "/audit": { component: <AuditRouter /> },
   "/bug-reports": { component: <BugReports /> },
+  "/live-staff": { component: <LiveStaff /> },
 
   "/settings": { component: <PlaceholderPage title="Systeminställningar" /> },
   "/trade-offers": { component: <TradeOffers /> },
