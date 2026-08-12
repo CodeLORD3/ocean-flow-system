@@ -529,6 +529,7 @@ export default function Products() {
       origin: form.origin || null,
       producer: form.producer || null,
       shelf_life_days: form.shelf_life_days ? Number(form.shelf_life_days) : null, // NEW
+      shelf_life_open_days: form.shelf_life_open_days ? Number(form.shelf_life_open_days) : null,
       image_url: form.image_url.trim() || null,
       latin_name: form.latin_name.trim() || null,
       requires_processing: form.requires_processing,
