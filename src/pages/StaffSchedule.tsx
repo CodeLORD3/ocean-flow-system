@@ -380,13 +380,36 @@ export default function StaffSchedule() {
       </Card>
 
       {view === "week" && (
-        <div className="grid gap-2 sm:grid-cols-3">
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
           <Card className="shadow-card">
             <CardContent className="p-3">
-              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Planerad tid</p>
+              <p className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                <CalendarRange className="h-3 w-3" /> Planerad tid
+              </p>
               <p className="mt-0.5 font-mono text-lg tabular-nums text-foreground">{formatMinutes(weekTotals.minutes)}</p>
             </CardContent>
           </Card>
+          <Card className="shadow-card">
+            <CardContent className="p-3">
+              <p className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                <Timer className="h-3 w-3" /> Arbetad tid
+              </p>
+              <p className="mt-0.5 flex items-baseline gap-2 font-mono text-lg tabular-nums text-foreground">
+                {formatMinutes(weekTotals.workedMinutes)}
+                {weekTotals.workedOngoing && (
+                  <span className="flex items-center gap-1 font-sans text-[10px] font-medium text-sky-500">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-sky-500" /> live
+                  </span>
+                )}
+              </p>
+              {weekTotals.minutes > 0 && (
+                <p className={`text-[10px] tabular-nums ${diffTone(weekTotals.workedMinutes - weekTotals.minutes, weekTotals.workedOngoing)}`}>
+                  {signedMinutes(weekTotals.workedMinutes - weekTotals.minutes)} mot schema
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
           <Card className="shadow-card">
             <CardContent className="p-3">
               <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Personalkostnad vecka</p>
