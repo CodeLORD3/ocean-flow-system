@@ -84,7 +84,10 @@ export interface OutputLotInput {
   detailName?: string | null;
   detailForm?: string | null;
   bestBefore?: string | null;
+  /** Fast kod i partinumret, t.ex. "KOKT" vid omvandling. */
+  lotCode?: string | null;
 }
+
 
 /**
  * Kort detaljkod ur detaljens form/namn, t.ex. "rygg" → RYG.
@@ -122,7 +125,10 @@ export async function createOutputLot(
   }
 
   const seq = String(sourceIndex).padStart(2, "0");
-  const code = detailLotCode(out.detailForm || out.detailName);
+  const code = out.lotCode
+    ? out.lotCode.toUpperCase()
+    : detailLotCode(out.detailForm || out.detailName);
+
   const lotNumber = source
     ? `${source.lot_number}-${seq}-${code}`
     : `OKAND-${new Date().toISOString().slice(0, 10)}-${orderRef.slice(0, 8)}-${seq}-${code}`;

@@ -19,6 +19,7 @@ import OrganisationOverview from "@/pages/OrganisationOverview";
 import PlaceholderPage from "@/pages/PlaceholderPage";
 import Invoices from "@/pages/Invoices";
 import SizeGrades from "@/pages/SizeGrades";
+import TransformationRecipes from "@/pages/TransformationRecipes";
 import PurchaseReporting from "@/pages/PurchaseReporting";
 import Pricing from "@/pages/Pricing";
 import ShopReports from "@/pages/ShopReports";
@@ -90,6 +91,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/invoices": { component: <Invoices /> },
   "/purchase-reporting": { component: <PurchaseReporting /> },
   "/size-grades": { component: <SizeGrades /> },
+  "/transformation-recipes": { component: <TransformationRecipes /> },
   "/receiving": { component: <Receiving /> },
   "/products": { component: <Products /> },
   "/barcodes": { component: <Barcodes /> },

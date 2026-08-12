@@ -8068,6 +8068,60 @@ export type Database = {
           },
         ]
       }
+      transformation_recipes: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          notes: string | null
+          output_product_id: string
+          raw_product_id: string
+          surcharge_per_kg: number
+          transform_type: string
+          updated_at: string
+          yield_pct: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          notes?: string | null
+          output_product_id: string
+          raw_product_id: string
+          surcharge_per_kg?: number
+          transform_type?: string
+          updated_at?: string
+          yield_pct?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          notes?: string | null
+          output_product_id?: string
+          raw_product_id?: string
+          surcharge_per_kg?: number
+          transform_type?: string
+          updated_at?: string
+          yield_pct?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transformation_recipes_output_product_id_fkey"
+            columns: ["output_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transformation_recipes_raw_product_id_fkey"
+            columns: ["raw_product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transport_schedules: {
         Row: {
           badge_color: string

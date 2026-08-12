@@ -23,6 +23,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/invoices": "Fakturor",
   "/purchase-reporting": "Inköpsrapporter",
   "/size-grades": "Storlekssortering",
+  "/transformation-recipes": "Omvandlingsrecept",
   "/receiving": "Inleveranser",
   "/products": "Produkter",
   "/barcodes": "Streckkoder",
