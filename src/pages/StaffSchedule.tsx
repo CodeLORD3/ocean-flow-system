@@ -173,6 +173,22 @@ export default function StaffSchedule() {
     return (shiftMinutes(p) / 60) * rate * factor;
   };
 
+  /** Arbetad tid (och ev. pågående pass) för en anställd en dag. */
+  const actualDay = (staffId: string, day: string) => actualMap.get(`${staffId}|${day}`) ?? null;
+
+  /** Summerad arbetad tid för alla synliga anställda en dag. */
+  const actualDayTotal = (day: string) => {
+    let minutes = 0;
+    let ongoing = false;
+    visibleStaffIds.forEach((id) => {
+      const a = actualMap.get(`${id}|${day}`);
+      if (!a) return;
+      minutes += a.minutes;
+      ongoing = ongoing || a.ongoing;
+    });
+    return { minutes, ongoing };
+  };
+
   interface DayTotals {
     minutes: number;
     cost: number;
@@ -206,15 +222,18 @@ export default function StaffSchedule() {
 
   const weekTotals = useMemo(() => {
     const list = days.map(dayTotals);
+    const worked = days.map(actualDayTotal);
     return {
       minutes: list.reduce((a, t) => a + t.minutes, 0),
       cost: list.reduce((a, t) => a + t.cost, 0),
       unratedMinutes: list.reduce((a, t) => a + t.unratedMinutes, 0),
+      workedMinutes: worked.reduce((a, t) => a + t.minutes, 0),
+      workedOngoing: worked.some((t) => t.ongoing),
       revenue: list.some((t) => t.revenue !== null)
         ? list.reduce((a, t) => a + (t.revenue ?? 0), 0)
         : null,
     };
-  }, [days, visibleShifts, rateMap, revenue.data, scopeStoreIds, factor]);
+  }, [days, visibleShifts, rateMap, revenue.data, scopeStoreIds, factor, actualMap, visibleStaffIds]);
 
   const ratio = (cost: number, rev: number | null) =>
     rev && rev > 0 && cost > 0 ? `${((cost / rev) * 100).toFixed(1)} %` : null;
@@ -224,11 +243,22 @@ export default function StaffSchedule() {
     const minutes = rows.reduce((a, p) => a + shiftMinutes(p), 0);
     const costs = rows.map(shiftCost);
     const hasRate = costs.some((c) => c !== null);
+    let worked = 0;
+    let ongoing = false;
+    days.forEach((d) => {
+      const a = actualMap.get(`${staffId}|${d}`);
+      if (!a) return;
+      worked += a.minutes;
+      ongoing = ongoing || a.ongoing;
+    });
     return {
       minutes,
+      worked,
+      ongoing,
       cost: hasRate ? costs.reduce((a, c) => a + (c ?? 0), 0) : null,
     };
   };
+
 
   const openDialog = (staffId: string | null, day: string, shift: PlannedShiftRow | null) => {
     setDialogDay(day);
