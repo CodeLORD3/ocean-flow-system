@@ -765,8 +765,8 @@ export default function Products() {
             <span className="text-[11px] text-muted-foreground/40 font-mono tabular-nums">–</span>
           ) : (
             <div className="inline-flex items-center gap-1">
-              <ShelfLifeBadge days={shelfLifeDays} />
-              <span className="inline-flex items-center">
+              <ShelfLifeBadge days={shelfLifeDays} openDays={shelfLifeOpenDays} />
+              <span className="inline-flex items-center" title="Sluten förpackning (dagar)">
                 <input
                   type="number"
                   min="1"
@@ -784,7 +784,32 @@ export default function Products() {
                     qc.invalidateQueries({ queryKey: ["products"] });
                     toast({
                       title: "Hållbarhet sparad",
-                      description: `${p.name}: ${val ? `${val} dagar` : "borttagen"}`,
+                      description: `${p.name}: ${val ? `${val} dagar sluten` : "borttagen"}`,
+                    });
+                  }}
+                />
+                <span className="text-[10px] text-muted-foreground/50 ml-0.5">d</span>
+              </span>
+              <span className="text-[10px] text-muted-foreground/40">/</span>
+              <span className="inline-flex items-center" title="Efter öppnad förpackning (dagar)">
+                <input
+                  type="number"
+                  min="1"
+                  max="9999"
+                  defaultValue={shelfLifeOpenDays || ""}
+                  placeholder="–"
+                  className="w-9 h-6 !text-[11px] font-mono tabular-nums text-right rounded border border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  onBlur={async (e) => {
+                    const val = e.target.value ? Number(e.target.value) : null;
+                    if (val === shelfLifeOpenDays) return;
+                    await supabase
+                      .from("products")
+                      .update({ shelf_life_open_days: val } as any)
+                      .eq("id", p.id);
+                    qc.invalidateQueries({ queryKey: ["products"] });
+                    toast({
+                      title: "Hållbarhet öppnad sparad",
+                      description: `${p.name}: ${val ? `${val} dagar öppnad` : "borttagen"}`,
                     });
                   }}
                 />
