@@ -9,6 +9,27 @@
 
 export type RevenueSource = "pos" | "daily";
 
+/** Antagna arbetstimmar per månad när månadslön slås ut per arbetad timme. */
+export const MONTHLY_HOURS = 165;
+
+/**
+ * Timlönsekvivalent: timanställd använder timlönen, månadsanställd får
+ * månadslönen fördelad över {@link MONTHLY_HOURS}. Saknas lön returneras null.
+ */
+export function effectiveHourlyRate(
+  type: "hourly" | "monthly" | string | null | undefined,
+  hourlyRate: number | null | undefined,
+  monthlySalary: number | null | undefined,
+): number | null {
+  const num = (v: number | null | undefined) =>
+    v === null || v === undefined || !Number.isFinite(Number(v)) || Number(v) <= 0 ? null : Number(v);
+  if (type === "monthly") {
+    const m = num(monthlySalary);
+    return m === null ? null : m / MONTHLY_HOURS;
+  }
+  return num(hourlyRate);
+}
+
 export interface RevenueEntry {
   amount: number;
   source: RevenueSource;
