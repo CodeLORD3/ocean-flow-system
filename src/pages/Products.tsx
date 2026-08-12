@@ -649,7 +649,7 @@ export default function Products() {
   const getAggregated = (p: any) => {
     if (!p.subproducts || p.subproducts.length === 0) return null;
     return {
-      cost_price: p.subproducts.reduce((s: number, sp: any) => s + Number(sp.cost_price), 0),
+      cost_price: p.subproducts.reduce((s: number, sp: any) => s + effectiveCost(sp).value, 0),
       wholesale_price: p.subproducts.reduce((s: number, sp: any) => s + Number(sp.wholesale_price), 0),
       retail_suggested: p.subproducts.reduce((s: number, sp: any) => s + Number(sp.retail_suggested || 0), 0),
       stock: p.subproducts.reduce((s: number, sp: any) => s + Number(sp.stock), 0),
