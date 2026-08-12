@@ -136,13 +136,18 @@ export interface SpeciesPurchaseStat {
   speciesGroup: string;
   /** Antal inköpsrader — används för att sortera de viktigaste arterna först. */
   purchaseCount: number;
-  /** Rullande snitt av de tre senaste inköpen, kr/kg. */
+  /**
+   * Föreslagen referenskostnad, kr/kg. Utgår från produkternas dagspris
+   * (aktiva partier) när sådant finns, annars snittet av de tre senaste inköpen.
+   */
   rollingAvgCost: number | null;
+  /** Vilken källa förslaget bygger på. */
+  costSource: "day_price" | "purchase_avg" | null;
 }
 
 /**
- * Inköpsfrekvens och rullande snittkostnad per artgrupp, hämtat ur
- * inköpsrapportraderna. Ger både sorteringen och förslaget på referenskostnad.
+ * Inköpsfrekvens och referenskostnad per artgrupp. Referenskostnaden utgår från
+ * samma dagspris som prissättningen; inköpssnittet används bara som reserv.
  */
 export function useSpeciesPurchaseStats() {
   return useQuery({
@@ -155,6 +160,24 @@ export function useSpeciesPurchaseStats() {
         .limit(2000);
       if (error) throw error;
 
+      const { data: prodRows } = await supabase
+        .from("products")
+        .select("species_group, day_price, day_price_lots");
+
+      // Dagsprissnitt per artgrupp, viktat på antal aktiva partier.
+      const dayPrice = new Map<string, { sum: number; weight: number }>();
+      for (const row of (prodRows ?? []) as any[]) {
+        const species = row.species_group;
+        const price = Number(row.day_price ?? 0);
+        const lots = Number(row.day_price_lots ?? 0);
+        if (!species || !(price > 0) || !(lots > 0)) continue;
+        const key = speciesKey(species);
+        const acc = dayPrice.get(key) ?? { sum: 0, weight: 0 };
+        acc.sum += price * lots;
+        acc.weight += lots;
+        dayPrice.set(key, acc);
+      }
+
       const buckets = new Map<string, { species: string; rows: any[] }>();
       for (const row of (data ?? []) as any[]) {
         const species = row.products?.species_group;
@@ -165,11 +188,17 @@ export function useSpeciesPurchaseStats() {
       }
 
       const stats = new Map<string, SpeciesPurchaseStat>();
-      for (const [key, b] of buckets) {
+      const keys = new Set<string>([...buckets.keys(), ...dayPrice.keys()]);
+      for (const key of keys) {
+        const b = buckets.get(key);
+        const dp = dayPrice.get(key);
+        const dpAvg = dp && dp.weight > 0 ? dp.sum / dp.weight : null;
+        const purchaseAvg = b ? rollingPurchaseAverage(b.rows, 3) : null;
         stats.set(key, {
-          speciesGroup: b.species,
-          purchaseCount: b.rows.length,
-          rollingAvgCost: rollingPurchaseAverage(b.rows, 3),
+          speciesGroup: b?.species ?? key,
+          purchaseCount: b?.rows.length ?? 0,
+          rollingAvgCost: dpAvg ?? purchaseAvg,
+          costSource: dpAvg != null ? "day_price" : purchaseAvg != null ? "purchase_avg" : null,
         });
       }
       return stats;
