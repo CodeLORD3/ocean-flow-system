@@ -192,7 +192,7 @@ export function AppSidebar() {
             <CollapsibleTrigger className="w-full">
               <SidebarGroupLabel className="cursor-pointer flex items-center justify-between pr-2">
                 {section.label}
-                <ChevronDown className={cn("h-3 w-3 transition-transform", calendarOpen && "rotate-180")} />
+                <ChevronDown className={cn("h-3 w-3 transition-transform", open && "rotate-180")} />
               </SidebarGroupLabel>
             </CollapsibleTrigger>
             <CollapsibleContent>
