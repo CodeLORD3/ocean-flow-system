@@ -57,6 +57,7 @@ export const ROUTE_ACCESS: Record<string, SiteMode[]> = {
 
   // Inköp och prissättning — inte för butik
   "/purchase-reporting": all(GROSSIST, ADMIN),
+  "/size-grades": all(GROSSIST, ADMIN),
   "/purchase-schedule": all(GROSSIST, ADMIN),
   "/suppliers": all(GROSSIST, ADMIN),
   "/pricing": all(GROSSIST, ADMIN),
