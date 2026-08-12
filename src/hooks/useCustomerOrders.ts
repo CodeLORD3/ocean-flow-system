@@ -262,6 +262,8 @@ export function useCreateCustomerOrder() {
           reserved_lot_id,
           reserved_quantity,
           sort_order: i,
+          cost_at_order: l.product_id ? (costMap.get(l.product_id)?.value ?? null) : null,
+          cost_source_at_order: l.product_id ? (costMap.get(l.product_id)?.source ?? null) : null,
         });
       }
 
