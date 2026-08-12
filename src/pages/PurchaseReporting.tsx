@@ -1400,8 +1400,13 @@ export default function PurchaseReporting() {
 
   const grandTotal = allLines.reduce((s, l) => s + (l.line_total ?? 0), 0);
 
-  const searchedProducts = products.filter((p) =>
-    searchQuery.length > 0 && p.name.toLowerCase().includes(searchQuery.toLowerCase())
+  // Spärrade grundprodukter kan inte läggas till på en inleverans.
+  const searchedProducts = products.filter(
+    (p: any) =>
+      p.purchasable !== false &&
+      p.active !== false &&
+      searchQuery.length > 0 &&
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
