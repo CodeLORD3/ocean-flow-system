@@ -78,15 +78,19 @@ const UNITS = ["KG", "ST", "L", "FÖRP"];
 const PRODUCERS = ["Inköp", "Produktion", "Inköp/Produktion"];
 
 // ── Shelf life helper ────────────────────────────────────────────────────────
-function ShelfLifeBadge({ days }: { days: number | null }) {
+function ShelfLifeBadge({ days, openDays }: { days: number | null; openDays?: number | null }) {
   if (!days) return <span className="text-[11px] text-muted-foreground/40 font-mono tabular-nums">–</span>;
   let color = "bg-emerald-500/10 text-emerald-700 border-emerald-500/20";
   if (days <= 3) color = "bg-destructive/10 text-destructive border-destructive/20";
   else if (days <= 7) color = "bg-amber-500/10 text-amber-700 border-amber-500/20";
   return (
-    <Badge variant="outline" className={`text-[10px] gap-0.5 font-mono tabular-nums ${color}`}>
+    <Badge
+      variant="outline"
+      className={`text-[10px] gap-0.5 font-mono tabular-nums ${color}`}
+      title={openDays ? `${days} d sluten / ${openDays} d öppnad` : `${days} d sluten förpackning`}
+    >
       <Clock className="h-2.5 w-2.5" />
-      {days}d
+      {days}d{openDays ? ` / ${openDays}d` : ""}
     </Badge>
   );
 }
