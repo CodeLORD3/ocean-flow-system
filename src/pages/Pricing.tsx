@@ -17,10 +17,14 @@ import { Check, ChevronDown, ChevronRight, DollarSign, History, Layers, Search, 
 import { format } from "date-fns";
 import SavedPriceLists from "@/components/SavedPriceLists";
 import { ReferencePricesPanel } from "@/components/pricing/ReferencePricesPanel";
-
+import { effectiveCost, COST_SOURCE_LABEL } from "@/lib/effectiveCost";
 
 interface InlineEdit {
+  /** Manuellt reservpris (products.cost_price). */
   cost_price: number;
+  /** Gällande pris som marginalen räknas mot (dagspris om aktivt, annars reservpris). */
+  basis: number;
+  basisSource: "day_price" | "cost_price";
   wholesale_price: number;
   margin: number;
 }
