@@ -105,12 +105,15 @@ export default function Pricing() {
   };
 
   const startInlineEdit = (p: any) => {
+    const eff = effectiveCost(p);
     setInlineEdits((prev) => ({
       ...prev,
       [p.id]: {
         cost_price: Number(p.cost_price),
+        basis: eff.value,
+        basisSource: eff.source,
         wholesale_price: Number(p.wholesale_price),
-        margin: calcMargin(Number(p.cost_price), Number(p.wholesale_price)),
+        margin: calcMargin(eff.value, Number(p.wholesale_price)),
       },
     }));
   };
@@ -124,7 +127,9 @@ export default function Pricing() {
       const current = prev[id];
       if (!current) return prev;
       const m = current.margin;
-      return { ...prev, [id]: { cost_price: cost, margin: m, wholesale_price: Number((cost / (1 - m / 100)).toFixed(2)) } };
+      // Dagspris styr kalkylen när det finns — reservpriset ändrar då inte utpriset.
+      const basis = current.basisSource === "day_price" ? current.basis : cost;
+      return { ...prev, [id]: { ...current, cost_price: cost, basis, margin: m, wholesale_price: Number((basis / (1 - m / 100)).toFixed(2)) } };
     });
   };
 
@@ -132,7 +137,7 @@ export default function Pricing() {
     setInlineEdits((prev) => {
       const current = prev[id];
       if (!current) return prev;
-      return { ...prev, [id]: { ...current, wholesale_price: wholesale, margin: calcMargin(current.cost_price, wholesale) } };
+      return { ...prev, [id]: { ...current, wholesale_price: wholesale, margin: calcMargin(current.basis, wholesale) } };
     });
   };
 
@@ -140,7 +145,7 @@ export default function Pricing() {
     setInlineEdits((prev) => {
       const current = prev[id];
       if (!current) return prev;
-      return { ...prev, [id]: { ...current, margin, wholesale_price: Number((current.cost_price / (1 - margin / 100)).toFixed(2)) } };
+      return { ...prev, [id]: { ...current, margin, wholesale_price: Number((current.basis / (1 - margin / 100)).toFixed(2)) } };
     });
   };
 
