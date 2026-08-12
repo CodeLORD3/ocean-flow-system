@@ -72,6 +72,7 @@ import {
   selectableCategories,
 } from "@/lib/productCategories";
 import ProductImageBulkUpload from "@/components/products/ProductImageBulkUpload";
+import { effectiveCost, COST_SOURCE_LABEL } from "@/lib/effectiveCost";
 
 const UNITS = ["KG", "ST", "L", "FÖRP"];
 const PRODUCERS = ["Inköp", "Produktion", "Inköp/Produktion"];
