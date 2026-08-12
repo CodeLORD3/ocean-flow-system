@@ -97,6 +97,7 @@ type ReportLine = {
   latin_name?: string | null;
   species_fao_code?: string | null;
   presentation?: string | null;
+  size_grade?: number | null;
   match_method?: string | null;
 };
 
@@ -199,10 +200,11 @@ function EditableRow({
         latin_name: line.latin_name ?? null,
         species_fao_code: line.species_fao_code ?? null,
         presentation: line.presentation ?? null,
+        size_grade: line.size_grade ?? null,
       },
       { products: products as any, articleMap, supplierId, grades },
     );
-  }, [locked, line.product_id, line.product_name, line.supplier_article_no, line.latin_name, line.species_fao_code, line.presentation, products, articleMap, supplierId, grades]);
+  }, [locked, line.product_id, line.product_name, line.supplier_article_no, line.latin_name, line.species_fao_code, line.presentation, line.size_grade, products, articleMap, supplierId, grades]);
 
   const gradeTextFor = (p: any) => {
     const g = grades.find((x) => x.id === p?.size_grade_id);
@@ -1275,6 +1277,7 @@ export default function PurchaseReporting() {
               product_id: match.needsConfirmation ? null : match.productId,
               match_method: match.method,
               supplier_article_no: p.supplier_article_no ?? null,
+              size_grade: p.size_grade ?? null,
               quantity: qty,
               ordered_quantity: ordered,
               qty_variance_flag: !!ordered && Math.abs(qty - ordered) / ordered > 0.1,
