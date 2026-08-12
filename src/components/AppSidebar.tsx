@@ -20,6 +20,7 @@ import { Landmark,
   Factory,
   ScanLine,
   CalendarDays,
+  CalendarRange,
   ChevronDown,
   ListTodo,
   LogIn,
@@ -91,12 +92,16 @@ const inventoryNav = [
 
 const orgNav = [
   { title: "Butiker", url: "/stores", icon: Store },
-  { title: "Personal", url: "/staff", icon: UserCheck },
-  { title: "Live personal", url: "/live-staff", icon: Activity },
   { title: "Bilar & Maskiner", url: "/vehicles", icon: TruckIcon },
   { title: "Anläggningar", url: "/establishments", icon: Building2 },
   { title: "Bolag", url: "/legal-entities", icon: Landmark },
   { title: "Egenkontroll", url: "/food-safety", icon: ShieldCheck },
+];
+
+const staffNav = [
+  { title: "Personal", url: "/staff", icon: UserCheck },
+  { title: "Live personal", url: "/live-staff", icon: Activity },
+  { title: "Schema", url: "/staff-schedule", icon: CalendarRange },
 ];
 
 const financeNav = [
@@ -126,6 +131,7 @@ const sections: NavSection[] = [
   { label: "Försäljning", items: salesNav },
   { label: "Inköp & Produktion", items: purchaseNav },
   { label: "Lagerstyrning", items: inventoryNav },
+  { label: "Personal", items: staffNav },
   { label: "Organisation", items: orgNav },
   { label: "Ekonomi & Rapporter", items: financeNav },
 ];

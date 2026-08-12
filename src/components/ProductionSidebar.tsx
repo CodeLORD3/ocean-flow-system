@@ -21,6 +21,8 @@ import {
   ClipboardList,
   UserCheck,
   SlidersHorizontal,
+,
+  CalendarRange,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -68,6 +70,7 @@ const salesNav = [
 
 const orgNav = [
   { title: "Personal", url: "/staff", icon: UserCheck },
+  { title: "Schema", url: "/staff-schedule", icon: CalendarRange },
 ];
 
 const bottomNav = [

@@ -57,7 +57,7 @@ export function useSavePlannedShift() {
       });
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["planned-shifts"] }),
+    onSuccess: () => (qc.invalidateQueries({ queryKey: ["planned-shifts"] }), qc.invalidateQueries({ queryKey: ["planned-shifts-range"] })),
   });
 }
 
@@ -68,7 +68,7 @@ export function useDeletePlannedShift() {
       const { error } = await supabase.from("staff_planned_shifts").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["planned-shifts"] }),
+    onSuccess: () => (qc.invalidateQueries({ queryKey: ["planned-shifts"] }), qc.invalidateQueries({ queryKey: ["planned-shifts-range"] })),
   });
 }
 
