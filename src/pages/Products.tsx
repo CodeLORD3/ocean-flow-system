@@ -1134,7 +1134,14 @@ export default function Products() {
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">HS</th>
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Prod.</th>
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Håll.</th>
-                  {isWholesale && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Ink.pris</th>}
+                  {isWholesale && (
+                    <th
+                      className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider"
+                      title="Reservpris: manuellt inköpspris som bara används när produkten saknar aktivt dagspris."
+                    >
+                      Reservpris
+                    </th>
+                  )}
                   {isWholesale && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider" title="Senaste prisändring">Sen.ink.</th>}
                   {isWholesale && (
                     <th
