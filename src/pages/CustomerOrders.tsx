@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft } from "lucide-react";
+import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, Truck, ChefHat, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,6 +33,9 @@ import { StatusBar } from "@/components/shell/StatusBar";
 
 import { RetailCustomerRegistry } from "@/components/orders/RetailCustomerRegistry";
 import { CustomerOrderStats } from "@/components/orders/CustomerOrderStats";
+import { DeliveryRouteView } from "@/components/orders/DeliveryRouteView";
+import { CateringKitchenList } from "@/components/orders/CateringKitchenList";
+import { PurchaseNeedsView } from "@/components/orders/PurchaseNeedsView";
 
 
 
