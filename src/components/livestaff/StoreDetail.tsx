@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, CalendarClock, LogIn, LogOut, PencilLine, Plus, Users } from "lucide-react";
+import { ArrowLeft, CalendarClock, LogIn, LogOut, Pencil, PencilLine, Plus, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -113,10 +113,27 @@ export function StoreDetail({
                   <TimeAxisHeader axis={axis} labelWidth={LABEL_W} />
                   {row.staffRows.map((sr) => {
                     const name = staffName(staffById, sr.staffId);
+                    const staffShifts = row.shifts
+                      .filter((sh) => sh.staff_id === sr.staffId)
+                      .sort((a, b) => a.clocked_in_at.localeCompare(b.clocked_in_at));
                     return (
                       <div key={sr.staffId} className="flex border-b border-border last:border-0">
                         <div className={`sticky left-0 z-10 shrink-0 border-r border-border bg-card px-2 py-1.5 ${LABEL_W}`}>
-                          <p className="truncate text-xs font-medium text-foreground">{name}</p>
+                          <div className="flex items-center gap-1">
+                            <p className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">{name}</p>
+                            {canEditShifts && staffShifts.length > 0 && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-5 w-5 shrink-0"
+                                onClick={() => openShift(staffShifts[staffShifts.length - 1])}
+                                aria-label={`Rätta stämpling för ${name}`}
+                                title="Rätta stämpling"
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
                           <div className="mt-0.5 flex items-center gap-1">
                             <StatusChip status={sr.status} />
                             {editedStaff.has(sr.staffId) && (
@@ -126,6 +143,7 @@ export function StoreDetail({
                             )}
                           </div>
                         </div>
+
                         <div className="relative flex-1 py-1.5">
                           <OpeningHoursBackdrop
                             axis={axis}
