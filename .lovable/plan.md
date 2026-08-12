@@ -11,7 +11,8 @@ Nuvarande värden i registret (kontrollerat): kokta havskräftor, signalkräftor
 ## Vad som byggs
 
 1. **Nytt fält "hållbarhet öppnad förpackning"** på produkter, vid sidan av befintlig hållbarhet (som nu tydligt betyder sluten förpackning).
-2. **Uppdaterade värden** för kokta färska skaldjur: 9 dagar sluten, 3 dagar öppnad. Gäller kokta havskräftor (alla storlekar), kokta signalkräftor, kokta krabbklor och kokt hummer. Frysta varor (365 dagar) lämnas orörda; kamtjatkaben och hummerkött justeras bara om du vill.
+2. **Uppdaterade värden** för kokta färska skaldjur: 9 dagar sluten, 3 dagar öppnad. Gäller kokta havskräftor (alla storlekar), kokta signalkräftor, kokta krabbklor och kokt hummer.
+   **Frysvaror sätts till 365 dagar sluten**: Hummerkött kokt (FS-010-KOT) och Kamtjatkakrabbaben kokta (SK-024-BEN-K), i linje med övriga frysta kokta räkor. Öppnad/tinad förpackning sätts till 3 dagar.
 3. **Produktvyn**: båda fälten redigerbara, hållbarhetsbadgen visar "9 d sluten / 3 d öppnad".
 4. **Kokningsflödet** i Filé/Tillverkning räknar bäst-före på det nya partiet från den slutna hållbarheten (blir 9 dagar i stället för 4).
 5. **Etiketter och kundorder**: bäst-före baseras fortsatt på sluten hållbarhet, med texten "Efter öppnad förpackning: 3 dagar" på etiketten och i produktkortet.
