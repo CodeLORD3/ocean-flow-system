@@ -8574,6 +8574,7 @@ export type Database = {
           created_at: string | null
           email: string | null
           first_name: string | null
+          hourly_rate: number | null
           id: string | null
           last_name: string | null
           legal_entity_id: string | null
