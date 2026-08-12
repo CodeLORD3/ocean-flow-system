@@ -201,7 +201,7 @@ export default function StockOverview({
       }
       g.lines.push(r);
       g.totalKg += qtyToKg(qty, p);
-      const unitPrice = Number(r.unit_cost) || Number(p.cost_price) || Number(master.cost_price) || 0;
+      const unitPrice = Number(r.unit_cost) || 0;
       g.value += qty * unitPrice;
       g.minStock += Number(r.min_stock) || 0;
       if (r.expiry_date && (!g.earliestExpiry || r.expiry_date < g.earliestExpiry)) {
