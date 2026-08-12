@@ -54,6 +54,8 @@ interface DraftLine {
   vesselName?: string | null;
   bestBefore?: string | null;
   supplierLotNumber?: string | null;
+  /** Hållbarhet efter öppnad förpackning, från produktregistret. */
+  shelfLifeOpenDays?: number | null;
   /** Mottagningstemperatur och orsak vid avvikelse, per parti. */
   tempC: string;
   tempMode: TempMode;
