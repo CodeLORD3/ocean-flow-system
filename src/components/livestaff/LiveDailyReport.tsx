@@ -19,12 +19,14 @@ export function LiveDailyReport({
   day,
   live,
   stores,
+  cities,
   totals,
   overheadPct,
 }: {
   day: string;
   live: boolean;
   stores: StoreKpi[];
+  cities: CityKpi[];
   totals: CityKpi;
   overheadPct: number;
 }) {
@@ -112,7 +114,7 @@ export function LiveDailyReport({
                   </td>
                   <td className="py-1 pr-2 text-right tabular-nums">
                     {s.laborCost === null ? (
-                      <span className="text-[10px] text-muted-foreground">Timlön saknas</span>
+                      <span className="text-[10px] text-muted-foreground">Lön saknas</span>
                     ) : (
                       <span className="text-foreground">{formatSek(s.laborCost)}</span>
                     )}
@@ -130,10 +132,50 @@ export function LiveDailyReport({
           </table>
         </div>
 
+        {cities.length > 0 && (
+          <div className="overflow-x-auto">
+            <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Per stad</p>
+            <table className="w-full min-w-[520px] text-xs">
+              <thead>
+                <tr className="border-b border-border text-left text-[10px] uppercase tracking-wide text-muted-foreground">
+                  <th className="py-1 pr-2 font-medium">Stad</th>
+                  <th className="py-1 pr-2 text-right font-medium">Enheter</th>
+                  <th className="py-1 pr-2 text-right font-medium">Arbetad tid</th>
+                  <th className="py-1 pr-2 text-right font-medium">Personalkostnad</th>
+                  <th className="py-1 text-right font-medium">Andel av omsättning</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cities.map((c) => (
+                  <tr key={c.city} className="border-b border-border/60 last:border-0">
+                    <td className="py-1 pr-2 text-foreground">{c.city}</td>
+                    <td className="py-1 pr-2 text-right tabular-nums text-muted-foreground">{c.stores}</td>
+                    <td className="py-1 pr-2 text-right tabular-nums text-foreground">{formatMinutes(c.workedMinutes)}</td>
+                    <td className="py-1 pr-2 text-right tabular-nums">
+                      {c.laborCost === null ? (
+                        <span className="text-[10px] text-muted-foreground">Lön saknas</span>
+                      ) : (
+                        <span className="text-foreground">{formatSek(c.laborCost)}</span>
+                      )}
+                    </td>
+                    <td className="py-1 text-right tabular-nums">
+                      {c.costRatioPct === null ? (
+                        <span className="text-[10px] text-muted-foreground">Omsättning saknas</span>
+                      ) : (
+                        <span className="text-foreground">{c.costRatioPct.toFixed(1)} %</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
         <p className="text-[10px] text-muted-foreground">
           {withCost.length === 0
-            ? `${MISSING_COST_HINT}. Timlön sätts per person på Personal, omsättning hämtas från kassan eller butikens dagsrapport.`
-            : `Kostnad = arbetad tid × timlön${overheadPct > 0 ? ` + ${overheadPct} % påslag` : ""}. Personer utan timlön räknas inte in.`}
+            ? `${MISSING_COST_HINT}. Lön sätts per person på Personal, omsättning hämtas från kassan eller butikens dagsrapport.`
+            : `Kostnad = arbetad tid × timlön (månadslön fördelas per timme)${overheadPct > 0 ? ` + ${overheadPct} % påslag` : ""}. Personer utan lön räknas inte in.`}
         </p>
       </CardContent>
     </Card>
