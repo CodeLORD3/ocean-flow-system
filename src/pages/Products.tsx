@@ -72,6 +72,7 @@ import {
   selectableCategories,
 } from "@/lib/productCategories";
 import ProductImageBulkUpload from "@/components/products/ProductImageBulkUpload";
+import { effectiveCost, COST_SOURCE_LABEL } from "@/lib/effectiveCost";
 
 const UNITS = ["KG", "ST", "L", "FÖRP"];
 const PRODUCERS = ["Inköp", "Produktion", "Inköp/Produktion"];
@@ -200,7 +201,11 @@ function CategoryBadge({ name }: { name: string | null | undefined }) {
 
 
 interface InlineEdit {
+  /** Manuellt reservpris (products.cost_price). */
   cost_price: number;
+  /** Gällande pris som marginalen räknas mot (dagspris om aktivt, annars reservpris). */
+  basis: number;
+  basisSource: "day_price" | "cost_price";
   wholesale_price: number;
   margin: number;
 }
@@ -248,12 +253,15 @@ export default function Products() {
   };
 
   const startInlineEdit = (p: any) => {
+    const eff = effectiveCost(p);
     setInlineEdits((prev) => ({
       ...prev,
       [p.id]: {
         cost_price: Number(p.cost_price),
+        basis: eff.value,
+        basisSource: eff.source,
         wholesale_price: Number(p.wholesale_price),
-        margin: calcMargin(Number(p.cost_price), Number(p.wholesale_price)),
+        margin: calcMargin(eff.value, Number(p.wholesale_price)),
       },
     }));
   };
@@ -270,12 +278,16 @@ export default function Products() {
     setInlineEdits((prev) => {
       const current = prev[id];
       if (!current) return prev;
+      // Dagspris styr kalkylen när det finns — reservpriset ändrar då inte utpriset.
+      const basis = current.basisSource === "day_price" ? current.basis : cost;
       return {
         ...prev,
         [id]: {
+          ...current,
           cost_price: cost,
+          basis,
           margin: current.margin,
-          wholesale_price: Number((cost / (1 - current.margin / 100)).toFixed(2)),
+          wholesale_price: Number((basis / (1 - current.margin / 100)).toFixed(2)),
         },
       };
     });
@@ -287,7 +299,7 @@ export default function Products() {
       if (!current) return prev;
       return {
         ...prev,
-        [id]: { ...current, wholesale_price: wholesale, margin: calcMargin(current.cost_price, wholesale) },
+        [id]: { ...current, wholesale_price: wholesale, margin: calcMargin(current.basis, wholesale) },
       };
     });
   };
@@ -298,10 +310,11 @@ export default function Products() {
       if (!current) return prev;
       return {
         ...prev,
-        [id]: { ...current, margin, wholesale_price: Number((current.cost_price / (1 - margin / 100)).toFixed(2)) },
+        [id]: { ...current, margin, wholesale_price: Number((current.basis / (1 - margin / 100)).toFixed(2)) },
       };
     });
   };
+
 
   const saveInlineEdit = (p: any) => {
     const edit = inlineEdits[p.id];
@@ -636,7 +649,7 @@ export default function Products() {
   const getAggregated = (p: any) => {
     if (!p.subproducts || p.subproducts.length === 0) return null;
     return {
-      cost_price: p.subproducts.reduce((s: number, sp: any) => s + Number(sp.cost_price), 0),
+      cost_price: p.subproducts.reduce((s: number, sp: any) => s + effectiveCost(sp).value, 0),
       wholesale_price: p.subproducts.reduce((s: number, sp: any) => s + Number(sp.wholesale_price), 0),
       retail_suggested: p.subproducts.reduce((s: number, sp: any) => s + Number(sp.retail_suggested || 0), 0),
       stock: p.subproducts.reduce((s: number, sp: any) => s + Number(sp.stock), 0),
@@ -661,7 +674,8 @@ export default function Products() {
 
     const costVal = inlineEdits[p.id]?.cost_price ?? Number(p.cost_price);
     const wholesaleVal = inlineEdits[p.id]?.wholesale_price ?? Number(p.wholesale_price);
-    const marginVal = inlineEdits[p.id]?.margin ?? calcMargin(Number(p.cost_price), Number(p.wholesale_price));
+    const eff = effectiveCost(p);
+    const marginVal = inlineEdits[p.id]?.margin ?? calcMargin(eff.value, Number(p.wholesale_price));
     const hasChanges =
       !!inlineEdits[p.id] &&
       (inlineEdits[p.id].cost_price !== Number(p.cost_price) ||
@@ -864,18 +878,30 @@ export default function Products() {
                 {calcMargin(agg!.cost_price, agg!.wholesale_price)}%
               </span>
             ) : (
-              <NumCell
-                value={marginVal}
-                decimals={0}
-                suffix="%"
-                widthClass="w-14"
-                muted={Number(marginVal) === 0}
-                onFocusStart={() => {
-                  if (!inlineEdits[p.id]) startInlineEdit(p);
-                }}
-                onChange={(n) => updateInlineMargin(p.id, n)}
-                onEnter={() => saveInlineEdit(p)}
-              />
+              <div className="leading-tight">
+                <NumCell
+                  value={marginVal}
+                  decimals={0}
+                  suffix="%"
+                  widthClass="w-14"
+                  muted={Number(marginVal) === 0}
+                  onFocusStart={() => {
+                    if (!inlineEdits[p.id]) startInlineEdit(p);
+                  }}
+                  onChange={(n) => updateInlineMargin(p.id, n)}
+                  onEnter={() => saveInlineEdit(p)}
+                />
+                <span
+                  className={`block text-[9px] ${eff.source === "day_price" ? "text-primary" : "text-muted-foreground"}`}
+                  title={
+                    eff.source === "day_price"
+                      ? `Marginal och utpris räknas mot dagspriset ${fmtNum(eff.value)} kr (${eff.lots} aktiva parti(er)).`
+                      : `Inget aktivt dagspris — marginal och utpris räknas mot reservpriset ${fmtNum(eff.value)} kr.`
+                  }
+                >
+                  {COST_SOURCE_LABEL[eff.source]}
+                </span>
+              </div>
             )}
           </td>
         )}
@@ -1108,7 +1134,14 @@ export default function Products() {
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">HS</th>
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Prod.</th>
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Håll.</th>
-                  {isWholesale && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Ink.pris</th>}
+                  {isWholesale && (
+                    <th
+                      className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider"
+                      title="Reservpris: manuellt inköpspris som bara används när produkten saknar aktivt dagspris."
+                    >
+                      Reservpris
+                    </th>
+                  )}
                   {isWholesale && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider" title="Senaste prisändring">Sen.ink.</th>}
                   {isWholesale && (
                     <th
@@ -1414,7 +1447,7 @@ export default function Products() {
               <>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">Prod.pris (SEK)</Label>
+                    <Label className="text-xs text-muted-foreground">Reservpris (SEK)</Label>
                     <Input
                       value={form.cost_price}
                       readOnly
@@ -1450,7 +1483,7 @@ export default function Products() {
               <>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1.5">
-                    <Label className="text-xs">Prod.pris (SEK)</Label>
+                    <Label className="text-xs">Reservpris (SEK)</Label>
                     <Input
                       value={form.cost_price}
                       onChange={(e) => setField("cost_price", e.target.value)}
@@ -1590,7 +1623,7 @@ export default function Products() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs">Prod.pris</Label>
+                <Label className="text-xs">Reservpris</Label>
                 <Input
                   value={subForm.cost_price}
                   onChange={(e) => setSubForm((f) => ({ ...f, cost_price: e.target.value }))}

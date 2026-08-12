@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { syncBehandlasFromStock } from "@/lib/orderStatusSync";
 import { logActivity } from "@/hooks/useActivityLog";
+import { fetchEffectiveCosts } from "@/lib/effectiveCost";
 
 export function useShopOrders(storeId?: string) {
   return useQuery({
@@ -34,15 +35,22 @@ export function useCreateShopOrder() {
         .single();
       if (error) throw error;
 
-      const lines = params.lines.map((l) => ({
-        shop_order_id: order.id,
-        product_id: l.product_id,
-        quantity_ordered: l.quantity_ordered,
-        unit: l.unit,
-        order_date: l.order_date || new Date().toISOString().slice(0, 10),
-        delivery_date: l.delivery_date,
-        category_section: l.category_section,
-      }));
+      // Gällande pris låses på raden vid ordertillfället och räknas aldrig om.
+      const costMap = await fetchEffectiveCosts(params.lines.map((l) => l.product_id));
+      const lines = params.lines.map((l) => {
+        const eff = costMap.get(l.product_id);
+        return {
+          shop_order_id: order.id,
+          product_id: l.product_id,
+          quantity_ordered: l.quantity_ordered,
+          unit: l.unit,
+          order_date: l.order_date || new Date().toISOString().slice(0, 10),
+          delivery_date: l.delivery_date,
+          category_section: l.category_section,
+          cost_at_order: eff ? eff.value : null,
+          cost_source_at_order: eff ? eff.source : null,
+        };
+      });
       const { error: lineErr } = await supabase.from("shop_order_lines").insert(lines);
       if (lineErr) throw lineErr;
       // After creating the order, sync statuses with existing stock

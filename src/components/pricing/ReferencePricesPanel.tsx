@@ -36,6 +36,7 @@ interface RowKeyed {
   role: "primary" | "byproduct";
   purchaseCount: number;
   rollingAvgCost: number | null;
+  costSource: "day_price" | "purchase_avg" | null;
 }
 
 /**
@@ -109,6 +110,7 @@ export function ReferencePricesPanel() {
           role: f.role,
           purchaseCount: st?.purchaseCount ?? 0,
           rollingAvgCost: st?.rollingAvgCost ?? null,
+          costSource: st?.costSource ?? null,
         });
       }
     }
@@ -256,7 +258,12 @@ export function ReferencePricesPanel() {
                 <TableHead className="text-[11px]">Detalj</TableHead>
                 <TableHead className="text-[11px] text-right">Referenspris</TableHead>
                 <TableHead className="text-[11px] text-right">Referenskostnad kr/kg</TableHead>
-                <TableHead className="text-[11px] text-right">Snitt 3 senaste inköp</TableHead>
+                <TableHead
+                  className="text-[11px] text-right"
+                  title="Dagspris för artens aktiva partier. Saknas dagspris visas snittet av de tre senaste inköpen."
+                >
+                  Dagspris (annars inköpssnitt)
+                </TableHead>
                 <TableHead className="text-[11px] text-right">Inköpsrader</TableHead>
                 <TableHead className="text-[11px] text-right">Spara</TableHead>
               </TableRow>
@@ -268,8 +275,8 @@ export function ReferencePricesPanel() {
                 const storedPrice = Number((stored as any)?.price_incl_vat ?? stored?.last_set_price ?? 0);
                 const storedCost = Number((stored as any)?.reference_cost_per_kg ?? 0);
                 const priceValue = edits[k]?.price ?? (storedPrice > 0 ? String(storedPrice) : "");
-                // Referenskostnaden förifylls från artens rullande snitt av de tre
-                // senaste inköpen när inget eget värde är sparat.
+                // Referenskostnaden förifylls från artens dagspris (aktiva partier)
+                // när inget eget värde är sparat — annars från inköpssnittet.
                 const prefillCost =
                   r.rollingAvgCost != null ? String(Math.round(r.rollingAvgCost * 100) / 100) : "";
                 const costValue =
@@ -317,7 +324,13 @@ export function ReferencePricesPanel() {
                         className={`h-8 w-24 text-right font-mono text-xs tabular-nums ${
                           costIsPrefill ? "text-muted-foreground" : ""
                         }`}
-                        title={costIsPrefill ? "Förifyllt från snittet av de tre senaste inköpen" : undefined}
+                        title={
+                          costIsPrefill
+                            ? r.costSource === "day_price"
+                              ? "Förifyllt från dagspriset för artens aktiva partier"
+                              : "Förifyllt från snittet av de tre senaste inköpen"
+                            : undefined
+                        }
                       />
                     </TableCell>
                     <TableCell className="text-right font-mono text-xs tabular-nums">
@@ -333,6 +346,9 @@ export function ReferencePricesPanel() {
                           }
                         >
                           {fmt(r.rollingAvgCost, 2)} kr
+                          <span className="block text-[9px] text-muted-foreground">
+                            {r.costSource === "day_price" ? "Dagspris" : "Inköpssnitt"}
+                          </span>
                         </button>
                       ) : (
                         <span className="text-muted-foreground">—</span>

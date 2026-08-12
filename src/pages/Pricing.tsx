@@ -17,10 +17,14 @@ import { Check, ChevronDown, ChevronRight, DollarSign, History, Layers, Search, 
 import { format } from "date-fns";
 import SavedPriceLists from "@/components/SavedPriceLists";
 import { ReferencePricesPanel } from "@/components/pricing/ReferencePricesPanel";
-
+import { effectiveCost, COST_SOURCE_LABEL } from "@/lib/effectiveCost";
 
 interface InlineEdit {
+  /** Manuellt reservpris (products.cost_price). */
   cost_price: number;
+  /** Gällande pris som marginalen räknas mot (dagspris om aktivt, annars reservpris). */
+  basis: number;
+  basisSource: "day_price" | "cost_price";
   wholesale_price: number;
   margin: number;
 }
@@ -105,12 +109,15 @@ export default function Pricing() {
   };
 
   const startInlineEdit = (p: any) => {
+    const eff = effectiveCost(p);
     setInlineEdits((prev) => ({
       ...prev,
       [p.id]: {
         cost_price: Number(p.cost_price),
+        basis: eff.value,
+        basisSource: eff.source,
         wholesale_price: Number(p.wholesale_price),
-        margin: calcMargin(Number(p.cost_price), Number(p.wholesale_price)),
+        margin: calcMargin(eff.value, Number(p.wholesale_price)),
       },
     }));
   };
@@ -124,7 +131,9 @@ export default function Pricing() {
       const current = prev[id];
       if (!current) return prev;
       const m = current.margin;
-      return { ...prev, [id]: { cost_price: cost, margin: m, wholesale_price: Number((cost / (1 - m / 100)).toFixed(2)) } };
+      // Dagspris styr kalkylen när det finns — reservpriset ändrar då inte utpriset.
+      const basis = current.basisSource === "day_price" ? current.basis : cost;
+      return { ...prev, [id]: { ...current, cost_price: cost, basis, margin: m, wholesale_price: Number((basis / (1 - m / 100)).toFixed(2)) } };
     });
   };
 
@@ -132,7 +141,7 @@ export default function Pricing() {
     setInlineEdits((prev) => {
       const current = prev[id];
       if (!current) return prev;
-      return { ...prev, [id]: { ...current, wholesale_price: wholesale, margin: calcMargin(current.cost_price, wholesale) } };
+      return { ...prev, [id]: { ...current, wholesale_price: wholesale, margin: calcMargin(current.basis, wholesale) } };
     });
   };
 
@@ -140,7 +149,7 @@ export default function Pricing() {
     setInlineEdits((prev) => {
       const current = prev[id];
       if (!current) return prev;
-      return { ...prev, [id]: { ...current, margin, wholesale_price: Number((current.cost_price / (1 - margin / 100)).toFixed(2)) } };
+      return { ...prev, [id]: { ...current, margin, wholesale_price: Number((current.basis / (1 - margin / 100)).toFixed(2)) } };
     });
   };
 
@@ -184,7 +193,7 @@ export default function Pricing() {
   const getAggregated = (p: any) => {
     if (!p.subproducts || p.subproducts.length === 0) return null;
     return {
-      cost_price: p.subproducts.reduce((s: number, sp: any) => s + Number(sp.cost_price), 0),
+      cost_price: p.subproducts.reduce((s: number, sp: any) => s + effectiveCost(sp).value, 0),
       wholesale_price: p.subproducts.reduce((s: number, sp: any) => s + Number(sp.wholesale_price), 0),
       retail_suggested: p.subproducts.reduce((s: number, sp: any) => s + Number(sp.retail_suggested || 0), 0),
     };
@@ -198,7 +207,8 @@ export default function Pricing() {
 
     const costVal = inlineEdits[p.id]?.cost_price ?? Number(p.cost_price);
     const wholesaleVal = inlineEdits[p.id]?.wholesale_price ?? Number(p.wholesale_price);
-    const marginVal = inlineEdits[p.id]?.margin ?? calcMargin(Number(p.cost_price), Number(p.wholesale_price));
+    const eff = effectiveCost(p);
+    const marginVal = inlineEdits[p.id]?.margin ?? calcMargin(eff.value, Number(p.wholesale_price));
     const hasChanges = !!inlineEdits[p.id] && (
       inlineEdits[p.id].cost_price !== Number(p.cost_price) ||
       inlineEdits[p.id].wholesale_price !== Number(p.wholesale_price)
@@ -305,6 +315,18 @@ export default function Pricing() {
             )}
             {!isAggregatedParent && <span className="text-xs text-muted-foreground">%</span>}
           </div>
+          {!isAggregatedParent && !isShop && (
+            <span
+              className={`block text-[10px] ${eff.source === "day_price" ? "text-primary" : "text-muted-foreground"}`}
+              title={
+                eff.source === "day_price"
+                  ? `Marginal och utpris räknas mot dagspriset ${eff.value.toFixed(2)} kr (${eff.lots} aktiva parti(er)).`
+                  : `Inget aktivt dagspris — marginal och utpris räknas mot reservpriset ${eff.value.toFixed(2)} kr.`
+              }
+            >
+              {COST_SOURCE_LABEL[eff.source]}
+            </span>
+          )}
         </TableCell>
 
         {/* Actions */}
@@ -387,7 +409,14 @@ export default function Pricing() {
                     <TableHead>Produkt</TableHead>
                     <TableHead>SKU</TableHead>
                     <TableHead>Kategori</TableHead>
-                    {!isShop && <TableHead className="text-right">Inköpspris</TableHead>}
+                    {!isShop && (
+                      <TableHead
+                        className="text-right"
+                        title="Reservpris: manuellt inköpspris som bara används när produkten saknar aktivt dagspris."
+                      >
+                        Reservpris
+                      </TableHead>
+                    )}
                     <TableHead className="text-right">Grossistpris</TableHead>
                     <TableHead className="text-right">{isShop ? "Försäljningspris" : "Rek. butik"}</TableHead>
                     <TableHead className="text-right">Marginal</TableHead>
@@ -437,7 +466,7 @@ export default function Pricing() {
             ) : (
               <>
                 <div>
-                  <Label>Inköpspris (kr)</Label>
+                  <Label>Reservpris (kr)</Label>
                   <Input type="number" value={editPrices.cost_price} onChange={(e) => {
                     const cost = Number(e.target.value);
                     setEditPrices((p) => ({ ...p, cost_price: cost, wholesale_price: Number((cost * 1.35).toFixed(2)) }));

@@ -1405,6 +1405,8 @@ export type Database = {
       }
       customer_order_lines: {
         Row: {
+          cost_at_order: number | null
+          cost_source_at_order: string | null
           created_at: string
           customer_order_id: string
           estimated_price_per_unit: number | null
@@ -1436,6 +1438,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cost_at_order?: number | null
+          cost_source_at_order?: string | null
           created_at?: string
           customer_order_id: string
           estimated_price_per_unit?: number | null
@@ -1467,6 +1471,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cost_at_order?: number | null
+          cost_source_at_order?: string | null
           created_at?: string
           customer_order_id?: string
           estimated_price_per_unit?: number | null
@@ -6263,6 +6269,8 @@ export type Database = {
       shop_order_lines: {
         Row: {
           category_section: string | null
+          cost_at_order: number | null
+          cost_source_at_order: string | null
           delivery_date: string | null
           deviation: string | null
           id: string
@@ -6277,6 +6285,8 @@ export type Database = {
         }
         Insert: {
           category_section?: string | null
+          cost_at_order?: number | null
+          cost_source_at_order?: string | null
           delivery_date?: string | null
           deviation?: string | null
           id?: string
@@ -6291,6 +6301,8 @@ export type Database = {
         }
         Update: {
           category_section?: string | null
+          cost_at_order?: number | null
+          cost_source_at_order?: string | null
           delivery_date?: string | null
           deviation?: string | null
           id?: string

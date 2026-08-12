@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { logActivity } from "@/hooks/useActivityLog";
+import { fetchEffectiveCosts } from "@/lib/effectiveCost";
 import {
   CustomerOrder,
   CustomerOrderLine,
@@ -225,6 +226,8 @@ export function useCreateCustomerOrder() {
 
       // Reservationsregeln körs per rad. En förfrågan reserverar inget lager
       // och skapar inget inköpsbehov.
+      // Gällande pris låses på raden vid ordertillfället och räknas aldrig om.
+      const costMap = await fetchEffectiveCosts(lines.map((l: any) => l.product_id));
       const lineRows = [];
       for (let i = 0; i < lines.length; i++) {
         const l = lines[i];
@@ -259,6 +262,8 @@ export function useCreateCustomerOrder() {
           reserved_lot_id,
           reserved_quantity,
           sort_order: i,
+          cost_at_order: l.product_id ? (costMap.get(l.product_id)?.value ?? null) : null,
+          cost_source_at_order: l.product_id ? (costMap.get(l.product_id)?.source ?? null) : null,
         });
       }
 
@@ -372,6 +377,10 @@ export function useAddOrderLine() {
         reserved_lot_id = outcome.lotId;
         reserved_quantity = outcome.status === "reserverad" ? Number(line.quantity_ordered || 0) : 0;
       }
+      // Gällande pris låses på raden vid ordertillfället och räknas aldrig om.
+      const eff = line.product_id
+        ? (await fetchEffectiveCosts([line.product_id])).get(line.product_id)
+        : undefined;
       const { error } = await db.from("customer_order_lines").insert({
         customer_order_id: order.id,
         product_id: line.product_id ?? null,
@@ -385,6 +394,8 @@ export function useAddOrderLine() {
         reserved_lot_id,
         reserved_quantity,
         sort_order: (order.customer_order_lines?.length ?? 0) + 1,
+        cost_at_order: eff?.value ?? null,
+        cost_source_at_order: eff?.source ?? null,
       });
       if (error) throw error;
       await logOrderEvent({
