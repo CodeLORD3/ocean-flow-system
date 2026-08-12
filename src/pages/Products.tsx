@@ -471,6 +471,7 @@ export default function Products() {
       origin: p.origin || "",
       producer: (p as any).producer || "",
       shelf_life_days: String((p as any).shelf_life_days || ""), // NEW
+      shelf_life_open_days: String((p as any).shelf_life_open_days || ""),
       image_url: (p as any).image_url || "",
       latin_name: (p as any).latin_name || "",
       requires_processing: Boolean((p as any).requires_processing),
