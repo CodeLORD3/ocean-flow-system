@@ -6558,6 +6558,64 @@ export type Database = {
           },
         ]
       }
+      staff_planned_shifts: {
+        Row: {
+          created_at: string
+          end_time: string
+          id: string
+          note: string | null
+          shift_date: string
+          staff_id: string
+          start_time: string
+          store_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_time: string
+          id?: string
+          note?: string | null
+          shift_date: string
+          staff_id: string
+          start_time: string
+          store_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_time?: string
+          id?: string
+          note?: string | null
+          shift_date?: string
+          staff_id?: string
+          start_time?: string
+          store_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_planned_shifts_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_planned_shifts_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_planned_shifts_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_shifts: {
         Row: {
           clocked_in_at: string
@@ -6895,6 +6953,47 @@ export type Database = {
           value?: Json
         }
         Relationships: []
+      }
+      store_opening_hours: {
+        Row: {
+          close_time: string | null
+          closed: boolean
+          created_at: string
+          id: string
+          open_time: string | null
+          store_id: string
+          updated_at: string
+          weekday: number
+        }
+        Insert: {
+          close_time?: string | null
+          closed?: boolean
+          created_at?: string
+          id?: string
+          open_time?: string | null
+          store_id: string
+          updated_at?: string
+          weekday: number
+        }
+        Update: {
+          close_time?: string | null
+          closed?: boolean
+          created_at?: string
+          id?: string
+          open_time?: string | null
+          store_id?: string
+          updated_at?: string
+          weekday?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_opening_hours_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       store_order_settings: {
         Row: {
