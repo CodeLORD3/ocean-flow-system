@@ -68,6 +68,7 @@ export function buildPackLabelDoc(labels: PackLabel[]) {
     const meta = [
       `Packat ${l.packedDate}`,
       l.bestBefore ? `Bäst före ${l.bestBefore}` : null,
+      l.shelfLifeOpenDays ? `Öppnad ${l.shelfLifeOpenDays} d` : null,
       l.lotNumber ? `Parti ${l.lotNumber}` : null,
     ]
       .filter(Boolean)
