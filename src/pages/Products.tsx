@@ -801,6 +801,43 @@ export default function Products() {
             })()}
           </td>
         )}
+        {isWholesale && (
+          <td className="px-2 py-0 align-middle text-right min-w-[96px]">
+            {isAggregatedParent ? (
+              <span className="!text-[11px] font-mono tabular-nums text-muted-foreground/40">–</span>
+            ) : (
+              <div
+                className="leading-tight"
+                title={
+                  Number((p as any).day_price) > 0
+                    ? `Viktat snitt av ${(p as any).day_price_lots || 0} aktiva parti(er). Senast omräknat ${
+                        (p as any).day_price_updated_at
+                          ? format(new Date((p as any).day_price_updated_at), "yy-MM-dd HH:mm")
+                          : "–"
+                      }. Används för prissättning och beställningar, aldrig lagervärdering.`
+                    : "Inget aktivt partisaldo — dagspriset är nollat."
+                }
+              >
+                <span
+                  className={`!text-[11px] font-mono tabular-nums ${
+                    Number((p as any).day_price) > 0 ? "text-primary" : "text-muted-foreground/40"
+                  }`}
+                >
+                  {Number((p as any).day_price) > 0 ? fmtNum(Number((p as any).day_price)) : "–"}
+                </span>
+                <span className="block text-[9px] text-muted-foreground">
+                  {Number((p as any).day_price) > 0
+                    ? `${(p as any).day_price_lots || 0} parti${
+                        (p as any).day_price_updated_at
+                          ? " · " + format(new Date((p as any).day_price_updated_at), "HH:mm")
+                          : ""
+                      }`
+                    : "0 parti"}
+                </span>
+              </div>
+            )}
+          </td>
+        )}
         <td className="px-2 py-0 align-middle text-right min-w-[92px]">
           {isAggregatedParent ? (
             <span className="!text-[11px] font-mono tabular-nums text-foreground">
@@ -1073,6 +1110,14 @@ export default function Products() {
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Håll.</th>
                   {isWholesale && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Ink.pris</th>}
                   {isWholesale && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider" title="Senaste prisändring">Sen.ink.</th>}
+                  {isWholesale && (
+                    <th
+                      className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider"
+                      title="Dagspris: viktat snitt av aktiva partier. Används för prissättning och beställningar, aldrig för lagervärdering."
+                    >
+                      Dagspris
+                    </th>
+                  )}
                   <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">
                     {isWholesale ? "Gr.pris" : "Pris"}
                   </th>
