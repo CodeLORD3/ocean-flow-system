@@ -249,6 +249,7 @@ export default function LiveStaff() {
                               row={sr}
                               axis={axis}
                               name={staffName(staffById, sr.staffId)}
+                              imageUrl={staffById.get(sr.staffId)?.profile_image_url ?? null}
                               compact
                             />
                           ))

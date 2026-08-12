@@ -100,7 +100,7 @@ export function StoreDetail({
                         </div>
                         <div className="relative flex-1 py-1.5">
                           <NowLine axis={axis} nowMinutes={live ? nowMinutes : -1} />
-                          <StaffSegments row={sr} axis={axis} name={name} />
+                          <StaffSegments row={sr} axis={axis} name={name} imageUrl={staffById.get(sr.staffId)?.profile_image_url ?? null} />
                           {sr.planned.map((p) => (
                             <button
                               key={p.id}

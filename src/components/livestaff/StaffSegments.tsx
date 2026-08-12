@@ -8,6 +8,15 @@ interface Props {
   axis: Axis;
   name: string;
   compact?: boolean;
+  /** Profilbild för personen — visas som markör i början av bjälken. */
+  imageUrl?: string | null;
+}
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.charAt(0) ?? "?";
+  const last = parts.length > 1 ? parts[parts.length - 1].charAt(0) : "";
+  return (first + last).toUpperCase();
 }
 
 function tone(seg: Segment, row: StaffDayRow) {
@@ -18,14 +27,49 @@ function tone(seg: Segment, row: StaffDayRow) {
 }
 
 /** Segmenten för en anställd, planerat under och faktiskt ovanpå. */
-export function StaffSegments({ row, axis, name, compact }: Props) {
+export function StaffSegments({ row, axis, name, compact, imageUrl }: Props) {
   const segments: Segment[] = [...row.plannedSegments, ...row.actualSegments];
   const plannedText = row.plannedSegments.length
     ? row.plannedSegments.map((s) => `${minutesToTime(s.from)}–${minutesToTime(s.to)}`).join(", ")
     : "Inget planerat pass";
 
+  const marker = segments.length ? Math.min(...segments.map((s) => s.from)) : null;
+  const markerTone =
+    row.deviations.length
+      ? "bg-destructive/15 text-destructive ring-destructive/40"
+      : row.status === "break"
+        ? "bg-amber-500/15 text-amber-700 ring-amber-500/40"
+        : "bg-emerald-500/15 text-emerald-700 ring-emerald-500/40";
+
   return (
-    <div className={cn("relative", compact ? "h-5" : "h-6")}>
+    <div className={cn("relative", compact ? "h-6" : "h-7")}>
+      {marker !== null && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              className={cn(
+                "absolute top-0.5 z-20 flex shrink-0 -translate-x-full items-center justify-center overflow-hidden rounded-full ring-2",
+                compact ? "-ml-0.5 h-4 w-4" : "-ml-1 h-5 w-5",
+                markerTone,
+              )}
+              style={{ left: `${pct(axis, marker)}%` }}
+            >
+              {imageUrl ? (
+                <img src={imageUrl} alt={name} className="h-full w-full object-cover" />
+              ) : (
+                <span className={compact ? "text-[7px] font-semibold leading-none" : "text-[8px] font-semibold leading-none"}>
+                  {initials(name)}
+                </span>
+              )}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-xs">
+            <p className="font-semibold">{name}</p>
+            <p className="text-muted-foreground">Planerat: {plannedText}</p>
+            <p className="text-muted-foreground">Arbetad tid: {formatMinutes(row.workedMinutes)}</p>
+          </TooltipContent>
+        </Tooltip>
+      )}
       {segments.map((seg, i) => (
         <Tooltip key={`${seg.kind}-${i}`}>
           <TooltipTrigger asChild>
