@@ -670,7 +670,9 @@ export default function Inventory() {
       } else {
         map.set(pid, {
           quantity: Number(s.quantity) || 0,
-          cost_price: Number(s.products?.cost_price) || 0,
+          // Lagervärde kommer alltid från partiets bokförda pris (saldots
+          // kostpris), aldrig från produktens prisfält.
+          cost_price: Number(s.unit_cost) || 0,
           min_stock: Number(s.min_stock) || 0,
           product: s.products,
         });
