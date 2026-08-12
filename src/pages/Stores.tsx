@@ -19,6 +19,7 @@ import { useStoreCoverImages } from "@/hooks/useStoreCoverImages";
 import { focalStyle } from "@/lib/imageFocal";
 import { supabase } from "@/integrations/supabase/client";
 import storeHero from "@/assets/store-hero.jpg";
+import { StoreOpeningHoursDialog } from "@/components/livestaff/StoreOpeningHoursDialog";
 
 export default function Stores() {
   const { data: stores = [], isLoading } = useStores(true);
@@ -27,6 +28,7 @@ export default function Stores() {
   const covers = useStoreCoverImages();
   const [editStore, setEditStore] = useState<Store | null>(null);
   const [hoveredStore, setHoveredStore] = useState<string | null>(null);
+  const [hoursStore, setHoursStore] = useState<Store | null>(null);
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
   // Lagerplatser för butiken som redigeras — underlag för inventeringsplatsen.
@@ -207,6 +209,14 @@ export default function Stores() {
                       <span className="text-[10px]">{store.hours}</span>
                     </div>
                   )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 w-full gap-1 text-[10px]"
+                    onClick={() => setHoursStore(store)}
+                  >
+                    <Clock className="h-3 w-3" /> Öppettider per veckodag
+                  </Button>
                   {store.sqm ? (
                     <div className="flex items-center gap-1.5 text-muted-foreground">
                       <span className="text-[10px]">📐 {store.sqm} m²</span>
@@ -218,6 +228,13 @@ export default function Stores() {
           ))}
         </div>
       )}
+
+      <StoreOpeningHoursDialog
+        storeId={hoursStore?.id ?? null}
+        storeName={hoursStore?.name ?? ""}
+        open={!!hoursStore}
+        onOpenChange={(o) => !o && setHoursStore(null)}
+      />
 
       {/* Edit Dialog */}
       <Dialog open={!!editStore} onOpenChange={(open) => !open && setEditStore(null)}>

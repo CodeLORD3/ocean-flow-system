@@ -71,6 +71,7 @@ export const ROUTE_ACCESS: Record<string, SiteMode[]> = {
 
   // Endast Admin
   "/stores": ADMIN,
+  "/live-staff": ADMIN,
   "/vehicles": ADMIN,
   "/establishments": ADMIN,
   "/legal-entities": ADMIN,
