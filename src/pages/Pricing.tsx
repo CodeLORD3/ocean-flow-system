@@ -454,7 +454,7 @@ export default function Pricing() {
             ) : (
               <>
                 <div>
-                  <Label>Inköpspris (kr)</Label>
+                  <Label>Reservpris (kr)</Label>
                   <Input type="number" value={editPrices.cost_price} onChange={(e) => {
                     const cost = Number(e.target.value);
                     setEditPrices((p) => ({ ...p, cost_price: cost, wholesale_price: Number((cost * 1.35).toFixed(2)) }));
