@@ -318,6 +318,38 @@ export default function CustomerOrders() {
 
           <div className="ml-auto flex shrink-0 gap-2">
             <Button
+              variant={panel === "route" ? "default" : "outline"}
+              size="icon"
+              className="h-11 w-11"
+              title="Leveransrutt"
+              aria-label="Leveransrutt"
+              onClick={() => setPanel(panel === "route" ? "orders" : "route")}
+            >
+              <Truck className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={panel === "kitchen" ? "default" : "outline"}
+              size="icon"
+              className="h-11 w-11"
+              title="Kökslista (catering)"
+              aria-label="Kökslista"
+              onClick={() => setPanel(panel === "kitchen" ? "orders" : "kitchen")}
+            >
+              <ChefHat className="h-4 w-4" />
+            </Button>
+            {!isShop && (
+              <Button
+                variant={panel === "needs" ? "default" : "outline"}
+                size="icon"
+                className="h-11 w-11"
+                title="Inköpsbehov per butik"
+                aria-label="Inköpsbehov"
+                onClick={() => setPanel(panel === "needs" ? "orders" : "needs")}
+              >
+                <ShoppingCart className="h-4 w-4" />
+              </Button>
+            )}
+            <Button
               variant={panel === "customers" ? "default" : "outline"}
               size="icon"
               className="h-11 w-11"
@@ -346,7 +378,15 @@ export default function CustomerOrders() {
               <ArrowLeft className="mr-1.5 h-4 w-4" /> Tillbaka till beställningar
             </Button>
             <span className="text-sm font-medium text-foreground">
-              {panel === "customers" ? "Kundregister" : "Statistik"}
+              {panel === "customers"
+                ? "Kundregister"
+                : panel === "stats"
+                  ? "Statistik"
+                  : panel === "route"
+                    ? "Leveransrutt"
+                    : panel === "kitchen"
+                      ? "Kökslista — att förbereda"
+                      : "Inköpsbehov per butik"}
             </span>
           </div>
         )}
