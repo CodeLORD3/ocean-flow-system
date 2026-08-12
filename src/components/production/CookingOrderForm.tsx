@@ -99,6 +99,7 @@ export function CookingOrderForm() {
   }, [recipe?.raw_product_id]);
 
   const shelfLifeDays = Number((outProduct as any)?.shelf_life_days) || null;
+  const shelfLifeOpenDays = Number((outProduct as any)?.shelf_life_open_days) || null;
   const bestBeforeForOutput = () => {
     if (!shelfLifeDays) return null;
     const d = new Date();
