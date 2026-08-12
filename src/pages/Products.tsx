@@ -702,6 +702,12 @@ export default function Products() {
             {!isSubproduct && !hasChildren && <span className="w-5 shrink-0" />}
             <ProductThumb src={(p as any).image_url} alt={p.name} productId={p.id} />
             <span className={`truncate ${isSubproduct ? "text-muted-foreground" : ""}`} title={p.name}>{p.name}</span>
+            {/* Arter med sorteringsregister köps bara in på storleksvariant. */}
+            {(p as any).purchasable === false && (
+              <Badge variant="outline" className="shrink-0 px-1 py-0 text-[9px] text-muted-foreground">
+                ej inköpsbar
+              </Badge>
+            )}
             {hasChildren && (
               <Badge variant="secondary" className="text-[9px] px-1 py-0 ml-1 rounded-none shrink-0">
                 {p.subproducts.length} del

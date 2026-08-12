@@ -127,3 +127,51 @@ describe("bokföringsplan", () => {
     expect(evenBatchSplit(["A", "B", "C"], 10)).toEqual({ A: 3.333, B: 3.333, C: 3.334 });
   });
 });
+
+import { suggestProducts, nameSimilarity } from "@/lib/foljesedelMatch";
+import { parseSizeGradeNo } from "@/lib/sizeGrades";
+
+const torskGrades = [
+  { id: "g1", species_group: "torsk", grade_no: 1, label: "1", min_weight_kg: 7, max_weight_kg: null, min_count_per_kg: null, max_count_per_kg: null, note: null, active: true },
+  { id: "g3", species_group: "torsk", grade_no: 3, label: "3", min_weight_kg: 2, max_weight_kg: 4, min_count_per_kg: null, max_count_per_kg: null, note: null, active: true },
+] as any[];
+
+const torskProducts = [
+  { id: "base", name: "Hel Torsk Svensk", sku: "TOR-001-HEL-SE", latin_name: "Gadus morhua", species_group: "torsk", purchasable: false },
+  { id: "t1", name: "Hel Torsk 1", sku: "TOR-001-HEL-1", latin_name: "Gadus morhua", species_group: "torsk", size_grade_id: "g1" },
+  { id: "t3", name: "Hel Torsk 3", sku: "TOR-001-HEL-3", latin_name: "Gadus morhua", species_group: "torsk", size_grade_id: "g3" },
+] as any[];
+
+describe("storlekssortering", () => {
+  it("läser sorteringssiffran ur handelsbeteckningen", () => {
+    expect(parseSizeGradeNo("Torsk 3")).toBe(3);
+    expect(parseSizeGradeNo("Sej stl 1 färsk")).toBe(1);
+    expect(parseSizeGradeNo("Havskräfta 16-20")).toBeNull();
+    expect(parseSizeGradeNo("Hel Torsk")).toBeNull();
+  });
+
+  it("matchar 'Torsk 3' mot rätt storleksvariant", () => {
+    const res = matchProduct(
+      { product_name: "Torsk 3", latin_name: "Gadus morhua" },
+      { products: torskProducts, grades: torskGrades },
+    );
+    expect(res.productId).toBe("t3");
+    expect(res.method).toBe("size_grade");
+  });
+
+  it("kräver manuellt val när sorteringen saknas och föreslår aldrig grundprodukten", () => {
+    const res = matchProduct(
+      { product_name: "Torsk", latin_name: "Gadus morhua" },
+      { products: torskProducts, grades: torskGrades },
+    );
+    expect(res.productId).toBeNull();
+    expect(res.needsConfirmation).toBe(true);
+    const sugg = suggestProducts({ product_name: "Torsk", latin_name: "Gadus morhua" }, { products: torskProducts, grades: torskGrades });
+    expect(sugg.map((s) => s.product.id)).not.toContain("base");
+  });
+
+  it("är tålig mot stavfel och ordföljd i namnlikheten", () => {
+    expect(nameSimilarity("Torskfilé m skinn", "Torskfilé med skinn")).toBeGreaterThan(0.8);
+    expect(nameSimilarity("Skruv M6", "Hel Torsk 3")).toBeLessThan(0.2);
+  });
+});

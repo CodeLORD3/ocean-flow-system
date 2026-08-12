@@ -131,9 +131,10 @@ Extract BOTH the document header and ALL product lines.
 Header: supplier_name, supplier_org_no, document_number (följesedelsnummer/fakturanummer/avräkningsnummer), document_type (foljesedel|faktura|auktionsavrakning), document_date, delivery_date, total_ex_vat, total_amount, notes.
 If the document has no number at all (common on auction notes), leave document_number null — do not invent one.
 
-Each line: product_name, supplier_article_no, quantity, unit (kg/st/förp/låda), unit_price, line_total, ordered_quantity (only if the document shows both ordered and delivered), latin_name, species_fao_code, lot_numbers (array — every parti-/batch-/klubbslagsnummer printed on the line), best_before, catch_area (FAO area), catch_date_from, catch_date_to, fishing_gear, fishing_gear_code, vessel_name, vessel_reg, vessel_nation, presentation (hel/urtagen/filé/skalad), condition (färsk/fryst/kokt), grade, certificate.
+Each line: product_name, supplier_article_no, size_grade, quantity, unit (kg/st/förp/låda), unit_price, line_total, ordered_quantity (only if the document shows both ordered and delivered), latin_name, species_fao_code, lot_numbers (array — every parti-/batch-/klubbslagsnummer printed on the line), best_before, catch_area (FAO area), catch_date_from, catch_date_to, fishing_gear, fishing_gear_code, vessel_name, vessel_reg, vessel_nation, presentation (hel/urtagen/filé/skalad), condition (färsk/fryst/kokt), grade, certificate.
 
 Rules:
+- size_grade: the EU sorting class printed on the line as a single digit 1-9 ("Torsk 3", "Sej stl 1", "klass 2"). A count range like "16-20" or "6-10" is NOT a sorting class — leave size_grade null and keep the range in product_name.
 - Report DELIVERED quantity in quantity, never ordered quantity.
 - Copy latin names and batch numbers exactly as printed, including misspellings.
 - Dates as YYYY-MM-DD.
@@ -181,6 +182,7 @@ Rules:
                       properties: {
                         product_name: { type: "string" },
                         supplier_article_no: { type: ["string", "null"] },
+                        size_grade: { type: ["number", "null"] },
                         quantity: { type: ["number", "null"] },
                         unit: { type: ["string", "null"] },
                         unit_price: { type: ["number", "null"] },

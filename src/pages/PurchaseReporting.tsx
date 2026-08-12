@@ -26,6 +26,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useProducts } from "@/hooks/useProducts";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
+import { useSizeGrades, useSupplierArticleMap, learnSupplierArticle } from "@/hooks/useSizeGrades";
+import { suggestProducts } from "@/lib/foljesedelMatch";
+import { gradeRangeText } from "@/lib/sizeGrades";
 
 // Magnifying glass overlay for document viewer
 function DocumentMagnifier({ children }: { children: React.ReactNode }) {
@@ -89,6 +92,13 @@ type ReportLine = {
   supplier_name: string | null;
   status: string;
   purchase_date: string | null;
+  /** Underlag för matchningen — finns på rader inlästa från följesedel. */
+  supplier_article_no?: string | null;
+  latin_name?: string | null;
+  species_fao_code?: string | null;
+  presentation?: string | null;
+  size_grade?: number | null;
+  match_method?: string | null;
 };
 
 type Report = {
@@ -140,6 +150,16 @@ function EditableRow({
   const supplierInputRef = useRef<HTMLInputElement>(null);
   const qtyInputRef = useRef<HTMLInputElement>(null);
 
+  // Sorteringsregister och inlärda artikelkopplingar styr förslagen på raden.
+  const { data: grades = [] } = useSizeGrades();
+  const { data: articleMap = [] } = useSupplierArticleMap();
+  const supplierId =
+    suppliers.find((s: any) => s.name === line.supplier_name)?.id ?? null;
+  const onLearnArticle = (productId: string) =>
+    learnSupplierArticle(supplierId, line.supplier_article_no, productId);
+
+
+
   useEffect(() => {
     if (autoFocusQty && qtyInputRef.current) {
       qtyInputRef.current.focus();
@@ -160,9 +180,36 @@ function EditableRow({
     saveTimeout.current = setTimeout(() => onSave(updates), 400);
   };
 
-  const filteredProducts = products.filter((p: any) =>
-    productSearch.length > 0 && p.name.toLowerCase().includes(productSearch.toLowerCase())
-  ).slice(0, 12);
+  // Spärrade grundprodukter (arter med sorteringsregister) och inaktiva
+  // produkter är aldrig valbara vid inleverans — bara storleksvarianterna.
+  const purchasable = products.filter((p: any) => p.purchasable !== false && p.active !== false);
+
+  const filteredProducts = purchasable.filter((p: any) => {
+    if (productSearch.length === 0) return false;
+    const q = productSearch.toLowerCase();
+    return p.name.toLowerCase().includes(q) || String(p.sku ?? "").toLowerCase().includes(q);
+  }).slice(0, 12);
+
+  // Rankade förslag när raden saknar koppling: 3–5 mest sannolika produkter.
+  const suggestions = useMemo(() => {
+    if (locked || line.product_id) return [];
+    return suggestProducts(
+      {
+        product_name: line.product_name,
+        supplier_article_no: line.supplier_article_no ?? null,
+        latin_name: line.latin_name ?? null,
+        species_fao_code: line.species_fao_code ?? null,
+        presentation: line.presentation ?? null,
+        size_grade: line.size_grade ?? null,
+      },
+      { products: products as any, articleMap, supplierId, grades },
+    );
+  }, [locked, line.product_id, line.product_name, line.supplier_article_no, line.latin_name, line.species_fao_code, line.presentation, line.size_grade, products, articleMap, supplierId, grades]);
+
+  const gradeTextFor = (p: any) => {
+    const g = grades.find((x) => x.id === p?.size_grade_id);
+    return g ? gradeRangeText(g) : null;
+  };
 
   const filteredSuppliers = suppliers
     .filter((s: any) => supplierSearch.length > 0 && s.name.toLowerCase().includes(supplierSearch.toLowerCase()))
@@ -174,10 +221,12 @@ function EditableRow({
       product_name: p.name,
       product_id: p.id,
       unit: p.unit || line.unit,
-      unit_price: p.cost_price || line.unit_price,
+      unit_price: line.unit_price || p.cost_price,
       supplier_name: p.suppliers?.name || line.supplier_name,
-      line_total: line.quantity * (p.cost_price || line.unit_price || 0),
+      line_total: line.quantity * (line.unit_price || p.cost_price || 0),
     });
+    // Systemet lär sig valet: samma leverantörsartikel matchas automatiskt nästa gång.
+    void onLearnArticle?.(p.id);
     setProductOpen(false);
     setProductSearch("");
     if (productInputRef.current) productInputRef.current.value = p.name;
@@ -297,7 +346,7 @@ function EditableRow({
             </div>
           </PopoverTrigger>
           {productSearch.length > 0 && filteredProducts.length > 0 && (
-            <PopoverContent className="p-0 w-[260px]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+            <PopoverContent className="p-0 w-[280px]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
               <div className="max-h-[200px] overflow-y-auto py-1">
                 {filteredProducts.map((p: any, i: number) => (
                   <div
@@ -307,14 +356,36 @@ function EditableRow({
                     onMouseDown={(e) => { e.preventDefault(); selectProduct(p); }}
                   >
                     <div className="font-medium">{p.name}</div>
-                    <div className="text-[10px] text-muted-foreground">{p.sku} · {p.category}</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {p.sku} · {p.category}
+                      {gradeTextFor(p) ? ` · ${gradeTextFor(p)}` : ""}
+                    </div>
                   </div>
                 ))}
               </div>
             </PopoverContent>
           )}
         </Popover>
+        {/* Rankade förslag: de mest sannolika produkterna, med sorteringsintervall som stöd. */}
+        {!line.product_id && suggestions.length > 0 && (
+          <div className="mt-0.5 flex flex-wrap items-center gap-1">
+            <span className="text-[9px] uppercase tracking-wide text-muted-foreground">Förslag</span>
+            {suggestions.map((s) => (
+              <button
+                key={s.product.id}
+                type="button"
+                title={`${s.product.sku} · ${s.reasons.join(", ")}${gradeTextFor(s.product) ? ` · ${gradeTextFor(s.product)}` : ""}`}
+                onClick={() => selectProduct(s.product)}
+                className="rounded border border-border bg-muted/60 px-1 py-0 text-[10px] hover:border-primary hover:text-primary"
+              >
+                {s.product.name}
+                {gradeTextFor(s.product) ? ` (${gradeTextFor(s.product)})` : ""}
+              </button>
+            ))}
+          </div>
+        )}
       </TableCell>
+
       <TableCell className="py-0.5 px-1 w-[50px]">
         <Input
           ref={qtyInputRef}
@@ -766,6 +837,7 @@ export default function PurchaseReporting() {
   });
 
   const { data: products = [] } = useProducts();
+  const { data: sizeGrades = [] } = useSizeGrades();
   const { data: suppliers = [] } = useSuppliers();
 
   const { data: reports = [], isLoading: reportsLoading } = useQuery({
@@ -1191,6 +1263,7 @@ export default function PurchaseReporting() {
               aliases: (aliases ?? []) as any,
               articleMap: (articleMap ?? []) as any,
               supplierId,
+              grades: sizeGrades as any,
             });
 
             const qty = Number(p.quantity) || 0;
@@ -1204,6 +1277,7 @@ export default function PurchaseReporting() {
               product_id: match.needsConfirmation ? null : match.productId,
               match_method: match.method,
               supplier_article_no: p.supplier_article_no ?? null,
+              size_grade: p.size_grade ?? null,
               quantity: qty,
               ordered_quantity: ordered,
               qty_variance_flag: !!ordered && Math.abs(qty - ordered) / ordered > 0.1,
@@ -1262,7 +1336,7 @@ export default function PurchaseReporting() {
         e.target.value = "";
       }
     },
-    [queryClient, products, suppliers]
+    [queryClient, products, suppliers, sizeGrades]
   );
 
   const currentIdx = reports.findIndex((r) => r.id === selectedReportId);
@@ -1329,8 +1403,13 @@ export default function PurchaseReporting() {
 
   const grandTotal = allLines.reduce((s, l) => s + (l.line_total ?? 0), 0);
 
-  const searchedProducts = products.filter((p) =>
-    searchQuery.length > 0 && p.name.toLowerCase().includes(searchQuery.toLowerCase())
+  // Spärrade grundprodukter kan inte läggas till på en inleverans.
+  const searchedProducts = products.filter(
+    (p: any) =>
+      p.purchasable !== false &&
+      p.active !== false &&
+      searchQuery.length > 0 &&
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (

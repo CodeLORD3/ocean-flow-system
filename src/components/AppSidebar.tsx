@@ -1,4 +1,5 @@
-import { Landmark,
+import { Ruler,
+  Landmark,
   Building2,
   LayoutDashboard,
   Fish,
@@ -110,6 +111,7 @@ const financeNav = [
   { title: "Checklistor", url: "/checklist", icon: ClipboardCheck },
 
   { title: "Datakvalitet", url: "/coverage", icon: Shield },
+  { title: "Storlekssortering", url: "/size-grades", icon: Ruler },
   { title: "Ekonomi", url: "/finance", icon: CreditCard },
   { title: "Prognoser", url: "/forecasts", icon: TrendingUp },
 ];
