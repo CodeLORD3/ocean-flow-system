@@ -1447,7 +1447,7 @@ export default function Products() {
               <>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">Prod.pris (SEK)</Label>
+                    <Label className="text-xs text-muted-foreground">Reservpris (SEK)</Label>
                     <Input
                       value={form.cost_price}
                       readOnly
@@ -1483,7 +1483,7 @@ export default function Products() {
               <>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1.5">
-                    <Label className="text-xs">Prod.pris (SEK)</Label>
+                    <Label className="text-xs">Reservpris (SEK)</Label>
                     <Input
                       value={form.cost_price}
                       onChange={(e) => setField("cost_price", e.target.value)}
@@ -1623,7 +1623,7 @@ export default function Products() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs">Prod.pris</Label>
+                <Label className="text-xs">Reservpris</Label>
                 <Input
                   value={subForm.cost_price}
                   onChange={(e) => setSubForm((f) => ({ ...f, cost_price: e.target.value }))}
