@@ -889,6 +889,13 @@ export type Database = {
             foreignKeyName: "chilling_records_lot_id_fkey"
             columns: ["lot_id"]
             isOneToOne: false
+            referencedRelation: "lot_remaining"
+            referencedColumns: ["lot_id"]
+          },
+          {
+            foreignKeyName: "chilling_records_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
             referencedRelation: "lots"
             referencedColumns: ["id"]
           },
@@ -1308,6 +1315,13 @@ export type Database = {
             foreignKeyName: "control_records_lot_id_fkey"
             columns: ["lot_id"]
             isOneToOne: false
+            referencedRelation: "lot_remaining"
+            referencedColumns: ["lot_id"]
+          },
+          {
+            foreignKeyName: "control_records_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
             referencedRelation: "lots"
             referencedColumns: ["id"]
           },
@@ -1525,6 +1539,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_order_lines_reserved_lot_id_fkey"
+            columns: ["reserved_lot_id"]
+            isOneToOne: false
+            referencedRelation: "lot_remaining"
+            referencedColumns: ["lot_id"]
           },
           {
             foreignKeyName: "customer_order_lines_reserved_lot_id_fkey"
@@ -2905,6 +2926,13 @@ export type Database = {
             foreignKeyName: "incoming_delivery_lines_lot_id_fkey"
             columns: ["lot_id"]
             isOneToOne: false
+            referencedRelation: "lot_remaining"
+            referencedColumns: ["lot_id"]
+          },
+          {
+            foreignKeyName: "incoming_delivery_lines_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
             referencedRelation: "lots"
             referencedColumns: ["id"]
           },
@@ -3420,6 +3448,13 @@ export type Database = {
             foreignKeyName: "lot_documents_lot_id_fkey"
             columns: ["lot_id"]
             isOneToOne: false
+            referencedRelation: "lot_remaining"
+            referencedColumns: ["lot_id"]
+          },
+          {
+            foreignKeyName: "lot_documents_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
             referencedRelation: "lots"
             referencedColumns: ["id"]
           },
@@ -3489,6 +3524,13 @@ export type Database = {
             foreignKeyName: "lot_transformations_from_lot_id_fkey"
             columns: ["from_lot_id"]
             isOneToOne: false
+            referencedRelation: "lot_remaining"
+            referencedColumns: ["lot_id"]
+          },
+          {
+            foreignKeyName: "lot_transformations_from_lot_id_fkey"
+            columns: ["from_lot_id"]
+            isOneToOne: false
             referencedRelation: "lots"
             referencedColumns: ["id"]
           },
@@ -3498,6 +3540,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "production_orders"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lot_transformations_to_lot_id_fkey"
+            columns: ["to_lot_id"]
+            isOneToOne: false
+            referencedRelation: "lot_remaining"
+            referencedColumns: ["lot_id"]
           },
           {
             foreignKeyName: "lot_transformations_to_lot_id_fkey"
@@ -5536,6 +5585,9 @@ export type Database = {
           category: string
           cost_price: number
           created_at: string | null
+          day_price: number
+          day_price_lots: number
+          day_price_updated_at: string | null
           export_documentation_required: boolean | null
           fao_code: string | null
           hs_code: string | null
@@ -5572,6 +5624,9 @@ export type Database = {
           category: string
           cost_price?: number
           created_at?: string | null
+          day_price?: number
+          day_price_lots?: number
+          day_price_updated_at?: string | null
           export_documentation_required?: boolean | null
           fao_code?: string | null
           hs_code?: string | null
@@ -5608,6 +5663,9 @@ export type Database = {
           category?: string
           cost_price?: number
           created_at?: string | null
+          day_price?: number
+          day_price_lots?: number
+          day_price_updated_at?: string | null
           export_documentation_required?: boolean | null
           fao_code?: string | null
           hs_code?: string | null
@@ -5777,6 +5835,13 @@ export type Database = {
           zero_price_confirmed?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "purchase_report_lines_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "lot_remaining"
+            referencedColumns: ["lot_id"]
+          },
           {
             foreignKeyName: "purchase_report_lines_lot_id_fkey"
             columns: ["lot_id"]
@@ -6915,6 +6980,13 @@ export type Database = {
             foreignKeyName: "stock_movements_lot_id_fkey"
             columns: ["lot_id"]
             isOneToOne: false
+            referencedRelation: "lot_remaining"
+            referencedColumns: ["lot_id"]
+          },
+          {
+            foreignKeyName: "stock_movements_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
             referencedRelation: "lots"
             referencedColumns: ["id"]
           },
@@ -7702,6 +7774,13 @@ export type Database = {
             foreignKeyName: "transfer_order_lines_lot_id_fkey"
             columns: ["lot_id"]
             isOneToOne: false
+            referencedRelation: "lot_remaining"
+            referencedColumns: ["lot_id"]
+          },
+          {
+            foreignKeyName: "transfer_order_lines_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
             referencedRelation: "lots"
             referencedColumns: ["id"]
           },
@@ -8206,6 +8285,13 @@ export type Database = {
             foreignKeyName: "waste_report_lines_lot_id_fkey"
             columns: ["lot_id"]
             isOneToOne: false
+            referencedRelation: "lot_remaining"
+            referencedColumns: ["lot_id"]
+          },
+          {
+            foreignKeyName: "waste_report_lines_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
             referencedRelation: "lots"
             referencedColumns: ["id"]
           },
@@ -8642,6 +8728,35 @@ export type Database = {
           },
         ]
       }
+      lot_remaining: {
+        Row: {
+          lot_id: string | null
+          product_id: string | null
+          remaining_kg: number | null
+          unit_cost: number | null
+        }
+        Insert: {
+          lot_id?: string | null
+          product_id?: string | null
+          remaining_kg?: never
+          unit_cost?: number | null
+        }
+        Update: {
+          lot_id?: string | null
+          product_id?: string | null
+          remaining_kg?: never
+          unit_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lots_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_access: {
         Row: {
           age: number | null
@@ -8790,6 +8905,10 @@ export type Database = {
         Args: { _exempt: boolean; _hs_code: string }
         Returns: boolean
       }
+      recalc_product_day_price: {
+        Args: { _product_id: string }
+        Returns: number
+      }
       set_store_membership: {
         Args: { _member: boolean; _staff_id: string; _store_id: string }
         Returns: undefined
@@ -8802,6 +8921,7 @@ export type Database = {
       staff_has_store: { Args: { _store: string }; Returns: boolean }
       user_portals: { Args: { _user_id: string }; Returns: string[] }
       user_store_ids: { Args: { _user_id: string }; Returns: string[] }
+      zero_stale_day_prices: { Args: never; Returns: number }
     }
     Enums: {
       app_role: "admin" | "client"
