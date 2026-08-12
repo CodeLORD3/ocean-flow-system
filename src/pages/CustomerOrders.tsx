@@ -110,7 +110,9 @@ export default function CustomerOrders() {
   const [orderType, setOrderType] = useState("all");
   const [wizardOpen, setWizardOpen] = useState(false);
   const [openRow, setOpenRow] = useState<string | null>(null);
-  const [panel, setPanel] = useState<"orders" | "customers" | "stats">("orders");
+  const [panel, setPanel] = useState<"orders" | "customers" | "stats" | "route" | "kitchen" | "needs">(
+    "orders",
+  );
 
   const [view, setView] = useState("alla");
   const [marked, setMarked] = useState<string[]>([]);
