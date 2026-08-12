@@ -15,7 +15,13 @@ export interface TransformationRecipe {
   active: boolean;
   notes: string | null;
   raw?: { id: string; sku: string; name: string } | null;
-  output?: { id: string; sku: string; name: string; shelf_life_days: number | null } | null;
+  output?: {
+    id: string;
+    sku: string;
+    name: string;
+    shelf_life_days: number | null;
+    shelf_life_open_days?: number | null;
+  } | null;
 }
 
 export const TRANSFORM_TYPES = [{ value: "kokning", label: "Kokning" }];
