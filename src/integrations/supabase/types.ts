@@ -5760,6 +5760,7 @@ export type Database = {
           qty_variance_flag: boolean
           quantity: number
           report_id: string
+          size_grade: number | null
           species_fao_code: string | null
           status: string
           supplier_article_no: string | null
@@ -5801,6 +5802,7 @@ export type Database = {
           qty_variance_flag?: boolean
           quantity?: number
           report_id: string
+          size_grade?: number | null
           species_fao_code?: string | null
           status?: string
           supplier_article_no?: string | null
@@ -5842,6 +5844,7 @@ export type Database = {
           qty_variance_flag?: boolean
           quantity?: number
           report_id?: string
+          size_grade?: number | null
           species_fao_code?: string | null
           status?: string
           supplier_article_no?: string | null
