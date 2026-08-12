@@ -179,7 +179,9 @@ export default function TransformationRecipes() {
                         {fmt(Number(r.surcharge_per_kg), 0)} kr/kg
                       </TableCell>
                       <TableCell className="py-1.5 text-right font-mono text-[11px] tabular-nums">
-                        {r.output?.shelf_life_days ? `${r.output.shelf_life_days} d` : "—"}
+                        {r.output?.shelf_life_days
+                          ? `${r.output.shelf_life_days} d${r.output.shelf_life_open_days ? ` / ${r.output.shelf_life_open_days} d öppn.` : ""}`
+                          : "—"}
                       </TableCell>
                       <TableCell className="py-1.5">
                         <Button
