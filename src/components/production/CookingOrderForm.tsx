@@ -288,6 +288,13 @@ export function CookingOrderForm() {
             </div>
           </div>
 
+          {outProduct && shelfLifeDays && (
+            <p className="text-[10px] text-muted-foreground">
+              Hållbarhet: {shelfLifeDays} dagar sluten förpackning → bäst före {bestBeforeForOutput()}
+              {shelfLifeOpenDays ? ` · ${shelfLifeOpenDays} dagar efter öppnad förpackning` : ""}
+            </p>
+          )}
+
           {recipe && (
             <LotPicker
               lots={lots}
