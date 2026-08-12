@@ -61,7 +61,6 @@ export default function Staff() {
   const deleteStaff = useDeleteStaff();
 
   const saveSalary = useSaveSalary();
-  const salaryHistory = useSalaryHistory(editId);
   const { data: openShifts = [] } = useOpenShifts(platformView ? undefined : storeFilter);
   const shiftByStaff = new Map(openShifts.map((s) => [s.staff_id, s]));
 
@@ -77,6 +76,7 @@ export default function Staff() {
   const [storeStaffOpen, setStoreStaffOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const salaryHistory = useSalaryHistory(editId);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   // Inloggning: skapas separat från personalkortet
   const [creatingLoginFor, setCreatingLoginFor] = useState<string | null>(null);
