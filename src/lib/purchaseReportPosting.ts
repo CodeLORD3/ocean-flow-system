@@ -11,6 +11,9 @@ import { grossistStoreId, inkopslagerId } from "@/lib/locations";
 
 export interface PostingProduct {
   id: string;
+  name?: string | null;
+  /** false = spärrad grundprodukt för art med sorteringsregister. */
+  purchasable?: boolean | null;
   unit?: string | null;
   shelf_life_days?: number | null;
   weight_per_piece?: number | null;
@@ -140,6 +143,11 @@ export function buildPostingPlan(
       return;
     }
     const product = productById.get(line.product_id);
+    // Arter med sorteringsregister får bara bokföras på en storleksvariant.
+    if (product && product.purchasable === false) {
+      blockers.push(`${label}: grundprodukten är ej inköpsbar — välj storlek`);
+      return;
+    }
     const { kg, reason } = quantityToKg(line, product);
     if (kg === null) {
       blockers.push(`${label}: ${reason}`);
