@@ -1,7 +1,10 @@
 # Hållbarhet för kokta skaldjur: 9 dagar sluten, 3 dagar öppnad
 
-## Bakgrund
-Idag har produkterna bara ett hållbarhetsfält (`shelf_life_days`). När kokningsrecepten sattes upp fick de kokta varianterna 4 dagar, vilket är för kort. Rätt värde är minst 9 dagar i sluten (skyddande) atmosfär och 3 dagar efter öppnad förpackning.
+## Faktakontroll mot externa källor
+- Feldt's "Havskräftor i lake, kokt" (Dabas, artnr 71177 och 71285): total hållbarhet **14 dagar** vid 0–4 °C i sluten förpackning.
+- Forskning på hel havskräfta (Nephrops norvegicus) i skyddande atmosfär visar tydligt förlängd hållbarhet jämfört med luftpackat.
+
+Med säkerhetsmarginal drar vi ner **5 dagar** från leverantörernas 14 → **9 dagar** i sluten/skyddande atmosfär, och **3 dagar** efter öppnad förpackning. Dagens värde i registret är 4 dagar, vilket är för kort.
 
 Nuvarande värden i registret (kontrollerat): kokta havskräftor, signalkräftor, krabbklor och hummer står på 4 dagar; hummerkött 3 dagar; kamtjatkaben 5 dagar; frysta/kokta räkor 365 dagar.
 
