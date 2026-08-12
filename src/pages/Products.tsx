@@ -679,6 +679,7 @@ export default function Products() {
     const agg = hasChildren ? getAggregated(p) : null;
     const isAggregatedParent = hasChildren;
     const shelfLifeDays: number | null = (p as any).shelf_life_days || null;
+    const shelfLifeOpenDays: number | null = (p as any).shelf_life_open_days || null;
 
     const costVal = inlineEdits[p.id]?.cost_price ?? Number(p.cost_price);
     const wholesaleVal = inlineEdits[p.id]?.wholesale_price ?? Number(p.wholesale_price);
