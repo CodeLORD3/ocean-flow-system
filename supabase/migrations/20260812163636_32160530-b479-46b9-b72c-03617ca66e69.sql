@@ -1,0 +1,1 @@
+ALTER VIEW public.lot_remaining SET (security_invoker = on);
