@@ -131,3 +131,54 @@ export function useStaffKpi(day: string, sources: StoreKpiSource[]): StaffKpiRes
     overheadPct,
   };
 }
+
+/**
+ * Omsättning per butik och dag i ett datumintervall.
+ *
+ * Nyckel: `${store_id}|${YYYY-MM-DD}`. Kassan går före dagsrapporten, precis
+ * som i dagsvyn. Används av personalkalendern för att räkna personalkostnad
+ * i procent av omsättningen per dag och vecka.
+ */
+export function useStoreRevenueRange(from: string, to: string) {
+  return useQuery({
+    queryKey: ["store-revenue-range", from, to],
+    enabled: !!from && !!to,
+    queryFn: async () => {
+      const map = new Map<string, RevenueEntry>();
+
+      const { data: pos, error: posErr } = await supabase
+        .from("pos_transactions")
+        .select("store_id, total_ore, status, occurred_at")
+        .gte("occurred_at", `${from}T00:00:00`)
+        .lte("occurred_at", `${to}T23:59:59`);
+      if (posErr) throw posErr;
+
+      (pos ?? []).forEach((t: any) => {
+        if (!t.store_id || !t.occurred_at) return;
+        if (t.status && String(t.status).toLowerCase().includes("revers")) return;
+        const day = String(t.occurred_at).slice(0, 10);
+        const key = `${t.store_id}|${day}`;
+        const amount = Number(t.total_ore ?? 0) / 100;
+        const prev = map.get(key);
+        map.set(key, { amount: (prev?.amount ?? 0) + amount, source: "pos" });
+      });
+
+      const { data: daily, error: dailyErr } = await supabase
+        .from("daily_reports")
+        .select("store_id, report_date, gross_sales, net_sales")
+        .gte("report_date", from)
+        .lte("report_date", to);
+      if (dailyErr) throw dailyErr;
+
+      (daily ?? []).forEach((r: any) => {
+        if (!r.store_id || !r.report_date) return;
+        const key = `${r.store_id}|${String(r.report_date).slice(0, 10)}`;
+        if (map.has(key)) return;
+        const amount = Number(r.gross_sales ?? r.net_sales ?? 0);
+        if (amount > 0) map.set(key, { amount, source: "daily" });
+      });
+
+      return map;
+    },
+  });
+}
