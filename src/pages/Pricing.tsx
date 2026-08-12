@@ -397,7 +397,14 @@ export default function Pricing() {
                     <TableHead>Produkt</TableHead>
                     <TableHead>SKU</TableHead>
                     <TableHead>Kategori</TableHead>
-                    {!isShop && <TableHead className="text-right">Inköpspris</TableHead>}
+                    {!isShop && (
+                      <TableHead
+                        className="text-right"
+                        title="Reservpris: manuellt inköpspris som bara används när produkten saknar aktivt dagspris."
+                      >
+                        Reservpris
+                      </TableHead>
+                    )}
                     <TableHead className="text-right">Grossistpris</TableHead>
                     <TableHead className="text-right">{isShop ? "Försäljningspris" : "Rek. butik"}</TableHead>
                     <TableHead className="text-right">Marginal</TableHead>
