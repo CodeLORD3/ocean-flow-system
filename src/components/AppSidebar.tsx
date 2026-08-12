@@ -127,14 +127,17 @@ type NavSection = { label: string; items: NavItem[]; collapsible?: boolean };
 
 const sections: NavSection[] = [
   { label: "Översikt", items: overviewNav },
-  { label: "Kalender", items: calendarNav },
-  { label: "Försäljning", items: salesNav },
-  { label: "Inköp & Produktion", items: purchaseNav },
-  { label: "Lagerstyrning", items: inventoryNav },
-  { label: "Personal", items: staffNav },
-  { label: "Organisation", items: orgNav },
-  { label: "Ekonomi & Rapporter", items: financeNav },
+  { label: "Kalender", items: calendarNav, collapsible: true },
+  { label: "Försäljning", items: salesNav, collapsible: true },
+  { label: "Inköp & Produktion", items: purchaseNav, collapsible: true },
+  { label: "Lagerstyrning", items: inventoryNav, collapsible: true },
+  { label: "Personal", items: staffNav, collapsible: true },
+  { label: "Organisation", items: orgNav, collapsible: true },
+  { label: "Ekonomi & Rapporter", items: financeNav, collapsible: true },
 ];
+
+const OPEN_KEY = "admin-sidebar-open-sections";
+
 
 export function AppSidebar() {
   const { state, isMobile, setOpenMobile } = useSidebar();
