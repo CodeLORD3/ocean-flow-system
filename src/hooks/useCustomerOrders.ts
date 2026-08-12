@@ -226,6 +226,8 @@ export function useCreateCustomerOrder() {
 
       // Reservationsregeln körs per rad. En förfrågan reserverar inget lager
       // och skapar inget inköpsbehov.
+      // Gällande pris låses på raden vid ordertillfället och räknas aldrig om.
+      const costMap = await fetchEffectiveCosts(lines.map((l: any) => l.product_id));
       const lineRows = [];
       for (let i = 0; i < lines.length; i++) {
         const l = lines[i];
