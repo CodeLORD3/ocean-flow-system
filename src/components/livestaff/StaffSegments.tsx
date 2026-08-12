@@ -1,5 +1,12 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Segment, formatMinutes, minutesToTime, StaffDayRow } from "@/lib/liveStaff";
+import {
+  Segment,
+  formatMinutes,
+  formatMinutesShort,
+  hasOngoing,
+  minutesToTime,
+  StaffDayRow,
+} from "@/lib/liveStaff";
 import { Axis, pct } from "./TimeAxis";
 import { cn } from "@/lib/utils";
 
@@ -10,6 +17,10 @@ interface Props {
   compact?: boolean;
   /** Profilbild för personen — visas som markör i början av bjälken. */
   imageUrl?: string | null;
+  /** Överlagrat läge: alla personer i samma rad, en "fil" per person. */
+  overlay?: boolean;
+  lane?: number;
+  lanes?: number;
 }
 
 function initials(name: string): string {
@@ -27,13 +38,14 @@ function tone(seg: Segment, row: StaffDayRow) {
 }
 
 /** Segmenten för en anställd, planerat under och faktiskt ovanpå. */
-export function StaffSegments({ row, axis, name, compact, imageUrl }: Props) {
+export function StaffSegments({ row, axis, name, compact, imageUrl, overlay, lane = 0, lanes = 1 }: Props) {
   const segments: Segment[] = [...row.plannedSegments, ...row.actualSegments];
   const plannedText = row.plannedSegments.length
     ? row.plannedSegments.map((s) => `${minutesToTime(s.from)}–${minutesToTime(s.to)}`).join(", ")
     : "Inget planerat pass";
 
   const marker = segments.length ? Math.min(...segments.map((s) => s.from)) : null;
+  const ongoing = hasOngoing(row);
   const markerTone =
     row.deviations.length
       ? "bg-destructive/15 text-destructive ring-destructive/40"
@@ -43,23 +55,41 @@ export function StaffSegments({ row, axis, name, compact, imageUrl }: Props) {
 
   const lastEnd = segments.length ? Math.max(...segments.map((s) => s.to)) : null;
 
+  // Överlagrat läge: varje person får sin egen "fil" inom samma radhöjd.
+  const laneTop = ((lane + 0.5) / Math.max(1, lanes)) * 100;
+  const barHeight = lanes <= 2 ? 12 : Math.max(4, Math.round(26 / lanes));
+  const showLabel = !overlay || lanes <= 4;
+
+  const laneStyle = (seg: Segment) =>
+    overlay
+      ? {
+          top: `${laneTop}%`,
+          transform: "translateY(-50%)",
+          height: seg.kind === "planned" ? `${barHeight + 6}px` : `${barHeight}px`,
+        }
+      : undefined;
+
   return (
-    <div className={cn("relative", compact ? "h-8" : "h-9")}>
+    <div className={cn(overlay ? "absolute inset-0" : "relative", !overlay && (compact ? "h-8" : "h-9"))}>
       {marker !== null && (
         <Tooltip>
           <TooltipTrigger asChild>
             <span
               className={cn(
-                "absolute top-1 z-20 flex shrink-0 -translate-x-full items-center justify-center overflow-hidden rounded-full ring-2",
-                compact ? "-ml-1 h-6 w-6" : "-ml-1.5 h-7 w-7",
+                "absolute z-20 flex shrink-0 -translate-x-full items-center justify-center overflow-hidden rounded-full ring-2",
+                overlay ? "-ml-1 h-5 w-5" : compact ? "-ml-1 top-1 h-6 w-6" : "-ml-1.5 top-1 h-7 w-7",
                 markerTone,
               )}
-              style={{ left: `${pct(axis, marker)}%` }}
+              style={
+                overlay
+                  ? { left: `${pct(axis, marker)}%`, top: `${laneTop}%`, transform: "translate(-100%, -50%)" }
+                  : { left: `${pct(axis, marker)}%` }
+              }
             >
               {imageUrl ? (
                 <img src={imageUrl} alt={name} className="h-full w-full object-cover" />
               ) : (
-                <span className={compact ? "text-[9px] font-semibold leading-none" : "text-[10px] font-semibold leading-none"}>
+                <span className={cn("font-semibold leading-none", overlay || compact ? "text-[9px]" : "text-[10px]")}>
                   {initials(name)}
                 </span>
               )}
@@ -69,7 +99,10 @@ export function StaffSegments({ row, axis, name, compact, imageUrl }: Props) {
           <TooltipContent side="top" className="text-xs">
             <p className="font-semibold">{name}</p>
             <p className="text-muted-foreground">Planerat: {plannedText}</p>
-            <p className="text-muted-foreground">Arbetad tid: {formatMinutes(row.workedMinutes)}</p>
+            <p className="text-muted-foreground">
+              {ongoing ? "Arbetad tid (pågår): " : "Arbetad tid: "}
+              {formatMinutes(row.workedMinutes)}
+            </p>
           </TooltipContent>
         </Tooltip>
       )}
@@ -80,11 +113,12 @@ export function StaffSegments({ row, axis, name, compact, imageUrl }: Props) {
               className={cn(
                 "absolute rounded-sm",
                 tone(seg, row),
-                seg.kind === "planned" ? "top-0 h-full" : compact ? "top-2 h-4" : "top-2.5 h-4",
+                !overlay && (seg.kind === "planned" ? "top-0 h-full" : compact ? "top-2 h-4" : "top-2.5 h-4"),
               )}
               style={{
                 left: `${pct(axis, seg.from)}%`,
                 width: `${Math.max(0.6, pct(axis, seg.to) - pct(axis, seg.from))}%`,
+                ...laneStyle(seg),
               }}
             />
           </TooltipTrigger>
@@ -98,7 +132,10 @@ export function StaffSegments({ row, axis, name, compact, imageUrl }: Props) {
                   ? `Planerat ${minutesToTime(seg.from)}–${minutesToTime(seg.to)}`
                   : `Instämplad ${minutesToTime(seg.from)}${seg.open ? " (pågår)" : `–${minutesToTime(seg.to)}`}`}
             </p>
-            <p className="text-muted-foreground">Arbetad tid: {formatMinutes(row.workedMinutes)}</p>
+            <p className="text-muted-foreground">
+              {ongoing ? "Arbetad tid (pågår): " : "Arbetad tid: "}
+              {formatMinutes(row.workedMinutes)}
+            </p>
             {row.deviations.map((d) => (
               <p key={d.kind} className="text-destructive">
                 {d.detail}
@@ -107,18 +144,29 @@ export function StaffSegments({ row, axis, name, compact, imageUrl }: Props) {
           </TooltipContent>
         </Tooltip>
       ))}
-      {lastEnd !== null && (
+      {lastEnd !== null && showLabel && (
         <span
           className={cn(
-            "pointer-events-none absolute top-1.5 z-20 whitespace-nowrap font-medium text-foreground",
-            compact ? "ml-1.5 text-[11px]" : "ml-2 text-xs",
+            "pointer-events-none absolute z-20 flex items-center gap-1 whitespace-nowrap font-medium text-foreground",
+            overlay ? "ml-1.5 text-[10px]" : compact ? "ml-1.5 top-1.5 text-[11px]" : "ml-2 top-1.5 text-xs",
           )}
-          style={{ left: `${pct(axis, lastEnd)}%` }}
+          style={
+            overlay
+              ? { left: `${pct(axis, lastEnd)}%`, top: `${laneTop}%`, transform: "translateY(-50%)" }
+              : { left: `${pct(axis, lastEnd)}%` }
+          }
         >
           {name}
+          <span
+            className={cn(
+              "rounded px-1 tabular-nums",
+              ongoing ? "bg-emerald-500/15 text-emerald-700" : "bg-muted text-muted-foreground",
+            )}
+          >
+            {formatMinutesShort(row.workedMinutes)}
+          </span>
         </span>
       )}
     </div>
-
   );
 }

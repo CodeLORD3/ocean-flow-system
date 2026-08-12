@@ -85,7 +85,7 @@ export default function Staff() {
 
 
   const emptyForm = {
-    first_name: "", last_name: "", age: "", phone: "", email: "", workplace: "", store_id: "", profile_image_url: "",
+    first_name: "", last_name: "", age: "", phone: "", email: "", workplace: "", store_id: "", profile_image_url: "", hourly_rate: "",
   };
   const [form, setForm] = useState(emptyForm);
   const [originalEmail, setOriginalEmail] = useState("");
@@ -123,6 +123,7 @@ export default function Staff() {
       age: s.age ? String(s.age) : "", phone: s.phone || "",
       email: s.email || "", workplace: s.workplace || "",
       store_id: s.store_id || "", profile_image_url: s.profile_image_url || "",
+      hourly_rate: s.hourly_rate !== null && s.hourly_rate !== undefined ? String(s.hourly_rate) : "",
     });
     setPreviewUrl(s.profile_image_url || null);
     setDialogOpen(true);
@@ -208,6 +209,7 @@ export default function Staff() {
       workplace: form.workplace || null,
       store_id: form.store_id || null,
       profile_image_url: form.profile_image_url || null,
+      hourly_rate: form.hourly_rate ? Number(form.hourly_rate) : null,
     };
 
     if (editId) {
@@ -482,6 +484,18 @@ export default function Staff() {
               <div className="space-y-1.5">
                 <Label className="text-xs">Arbetsplats</Label>
                 <Input value={form.workplace} onChange={e => setField("workplace", e.target.value)} className="h-8 text-xs" placeholder="t.ex. Produktion" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Timlön (kr/h)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={form.hourly_rate}
+                  onChange={e => setField("hourly_rate", e.target.value)}
+                  className="h-8 text-xs"
+                  placeholder="t.ex. 175"
+                />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Butik</Label>

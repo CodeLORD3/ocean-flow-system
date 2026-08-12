@@ -6501,6 +6501,7 @@ export type Database = {
           created_at: string | null
           email: string | null
           first_name: string
+          hourly_rate: number | null
           id: string
           last_name: string
           legal_entity_id: string | null
@@ -6516,6 +6517,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           first_name: string
+          hourly_rate?: number | null
           id?: string
           last_name: string
           legal_entity_id?: string | null
@@ -6531,6 +6533,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           first_name?: string
+          hourly_rate?: number | null
           id?: string
           last_name?: string
           legal_entity_id?: string | null
@@ -6612,6 +6615,47 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_shift_edits: {
+        Row: {
+          created_at: string
+          edited_by: string | null
+          edited_by_name: string | null
+          field: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          shift_id: string
+        }
+        Insert: {
+          created_at?: string
+          edited_by?: string | null
+          edited_by_name?: string | null
+          field: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          shift_id: string
+        }
+        Update: {
+          created_at?: string
+          edited_by?: string | null
+          edited_by_name?: string | null
+          field?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          shift_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_shift_edits_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "staff_shifts"
             referencedColumns: ["id"]
           },
         ]
@@ -8530,6 +8574,7 @@ export type Database = {
           created_at: string | null
           email: string | null
           first_name: string | null
+          hourly_rate: number | null
           id: string | null
           last_name: string | null
           legal_entity_id: string | null
@@ -8576,6 +8621,7 @@ export type Database = {
           created_at: string | null
           email: string | null
           first_name: string
+          hourly_rate: number | null
           id: string
           last_name: string
           legal_entity_id: string | null

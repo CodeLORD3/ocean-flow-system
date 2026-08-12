@@ -21,11 +21,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useLiveStaffDay, staffName } from "@/hooks/useLiveStaff";
 import { dateKey, formatDayHours, isToday } from "@/lib/liveStaff";
-import { buildAxis, NowLine, TimeAxisHeader } from "@/components/livestaff/TimeAxis";
+import { buildAxis, NowLine, OpeningHoursBackdrop, TimeAxisHeader } from "@/components/livestaff/TimeAxis";
 import { StaffSegments } from "@/components/livestaff/StaffSegments";
 import { StatusLegend } from "@/components/livestaff/StatusChip";
 import { StoreDetail } from "@/components/livestaff/StoreDetail";
 import { OnDutyAvatars } from "@/components/livestaff/OnDutyAvatars";
+import { CityKpiCards } from "@/components/livestaff/CityKpiCards";
+import { LiveDailyReport } from "@/components/livestaff/LiveDailyReport";
+import { useStaffKpi } from "@/hooks/useStaffKpi";
 
 const LABEL_W = "w-40 sm:w-52";
 
@@ -68,6 +71,23 @@ export default function LiveStaff() {
       : null;
     return { workingNow, openNow, total: visible.length, plannedToday, deviations, compliance };
   }, [visible]);
+
+  const kpiSources = useMemo(
+    () =>
+      visible.map((r) => ({
+        storeId: r.id,
+        name: r.name,
+        city: r.city,
+        workingNow: r.workingNow,
+        deviations: r.deviations.length,
+        workedMinutes: r.workedMinutes,
+        plannedMinutes: r.plannedMinutes,
+        staffRows: r.staffRows.map((sr) => ({ staffId: sr.staffId, workedMinutes: sr.workedMinutes })),
+      })),
+    [visible],
+  );
+
+  const costKpi = useStaffKpi(day, kpiSources);
 
   const shiftDay = (delta: number) => {
     const d = new Date(`${day}T12:00:00`);
@@ -182,6 +202,16 @@ export default function LiveStaff() {
         </CardContent></Card>
       </div>
 
+      <CityKpiCards cities={costKpi.cities} />
+
+      <LiveDailyReport
+        day={day}
+        live={live}
+        stores={costKpi.stores}
+        totals={costKpi.totals}
+        overheadPct={costKpi.overheadPct}
+      />
+
       <StatusLegend />
 
       {selectedRow ? (
@@ -192,6 +222,7 @@ export default function LiveStaff() {
           nowMinutes={nowMinutes}
           live={live}
           day={day}
+          stores={rows.map((r) => ({ id: r.id, name: r.name }))}
           onBack={() => setSelected(null)}
         />
       ) : isLoading ? (
@@ -234,7 +265,13 @@ export default function LiveStaff() {
                           </p>
                         </button>
                       </div>
-                      <div className="relative min-h-[2.5rem] flex-1 py-1">
+                      <div className="relative min-h-[2.75rem] flex-1 py-1.5">
+                        <OpeningHoursBackdrop
+                          axis={axis}
+                          open={r.hours.open}
+                          close={r.hours.close}
+                          closed={r.hours.closed}
+                        />
                         <NowLine axis={axis} nowMinutes={live ? nowMinutes : -1} />
                         {r.staffRows.length === 0 ? (
                           <p className="px-2 py-1.5 text-[10px] text-muted-foreground">
@@ -243,16 +280,24 @@ export default function LiveStaff() {
                               : "Inga planerade pass och inga stämplingar"}
                           </p>
                         ) : (
-                          r.staffRows.map((sr) => (
-                            <StaffSegments
-                              key={sr.staffId}
-                              row={sr}
-                              axis={axis}
-                              name={staffName(staffById, sr.staffId)}
-                              imageUrl={staffById.get(sr.staffId)?.profile_image_url ?? null}
-                              compact
-                            />
-                          ))
+                          <div
+                            className="relative"
+                            style={{ height: `${Math.max(2.25, Math.min(4.5, r.staffRows.length * 0.9))}rem` }}
+                          >
+                            {r.staffRows.map((sr, i) => (
+                              <StaffSegments
+                                key={sr.staffId}
+                                row={sr}
+                                axis={axis}
+                                name={staffName(staffById, sr.staffId)}
+                                imageUrl={staffById.get(sr.staffId)?.profile_image_url ?? null}
+                                compact
+                                overlay
+                                lane={i}
+                                lanes={r.staffRows.length}
+                              />
+                            ))}
+                          </div>
                         )}
                       </div>
                     </div>

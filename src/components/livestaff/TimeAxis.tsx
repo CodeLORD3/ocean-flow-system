@@ -62,3 +62,30 @@ export function NowLine({ axis, nowMinutes }: { axis: Axis; nowMinutes: number }
     </div>
   );
 }
+
+/**
+ * Öppettiden som genomskinlig bakgrundsbjälke — personalens pass läggs ovanpå
+ * i samma rad så att luckor i bemanningen syns direkt.
+ */
+export function OpeningHoursBackdrop({
+  axis,
+  open,
+  close,
+  closed,
+}: {
+  axis: Axis;
+  open: number | null;
+  close: number | null;
+  closed?: boolean;
+}) {
+  if (closed || open === null || close === null || close <= open) return null;
+  const left = pct(axis, open);
+  const width = Math.max(0.6, pct(axis, close) - left);
+  return (
+    <div
+      className="pointer-events-none absolute inset-y-1 rounded-md border border-emerald-500/30 bg-emerald-500/10"
+      style={{ left: `${left}%`, width: `${width}%` }}
+      aria-hidden
+    />
+  );
+}

@@ -6,10 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DEVIATION_LABEL, formatMinutes, formatDayHours, minutesToTime, type PlannedShiftRow } from "@/lib/liveStaff";
 import { staffName, type LiveStoreRow } from "@/hooks/useLiveStaff";
-import { Axis, NowLine, TimeAxisHeader, pct } from "./TimeAxis";
+import { Axis, NowLine, OpeningHoursBackdrop, TimeAxisHeader, pct } from "./TimeAxis";
 import { StaffSegments } from "./StaffSegments";
 import { StatusChip } from "./StatusChip";
 import { PlannedShiftDialog } from "./PlannedShiftDialog";
+import { ShiftEditDialog } from "./ShiftEditDialog";
+import { ShiftLogList } from "./ShiftLogList";
+import { useShiftEdits } from "@/hooks/useStaffShifts";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
+import type { ActualShiftRow } from "@/lib/liveStaff";
 
 const LABEL_W = "w-40 sm:w-52";
 
@@ -21,6 +26,7 @@ export function StoreDetail({
   nowMinutes,
   live,
   day,
+  stores,
   onBack,
 }: {
   row: LiveStoreRow;
@@ -29,10 +35,22 @@ export function StoreDetail({
   nowMinutes: number;
   live: boolean;
   day: string;
+  stores: { id: string; name: string }[];
   onBack: () => void;
 }) {
   const [planOpen, setPlanOpen] = useState(false);
   const [editing, setEditing] = useState<PlannedShiftRow | null>(null);
+  const [shiftOpen, setShiftOpen] = useState(false);
+  const [editingShift, setEditingShift] = useState<ActualShiftRow | null>(null);
+
+  const { staff } = useStaffAuth();
+  const canEditShifts = ((staff?.portal_access ?? []) as string[]).includes("admin");
+  const edits = useShiftEdits(row.shifts.map((s) => s.id));
+
+  const openShift = (shift: ActualShiftRow) => {
+    setEditingShift(shift);
+    setShiftOpen(true);
+  };
 
   const openPlan = (shift: PlannedShiftRow | null) => {
     setEditing(shift);
@@ -99,6 +117,12 @@ export function StoreDetail({
                           </div>
                         </div>
                         <div className="relative flex-1 py-1.5">
+                          <OpeningHoursBackdrop
+                            axis={axis}
+                            open={row.hours.open}
+                            close={row.hours.close}
+                            closed={row.hours.closed}
+                          />
                           <NowLine axis={axis} nowMinutes={live ? nowMinutes : -1} />
                           <StaffSegments row={sr} axis={axis} name={name} imageUrl={staffById.get(sr.staffId)?.profile_image_url ?? null} />
                           {sr.planned.map((p) => (
@@ -122,6 +146,26 @@ export function StoreDetail({
               </div>
             </TooltipProvider>
           )}
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-card">
+        <CardContent className="p-3">
+          <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            Stämplingar {canEditShifts ? "— klicka på pennan för att rätta tid eller flytta pass" : ""}
+          </p>
+          <TooltipProvider>
+            <ShiftLogList
+              shifts={row.shifts}
+              day={day}
+              nowMinutes={nowMinutes}
+              live={live}
+              nameOf={(id) => staffName(staffById, id)}
+              editsByShift={edits.data ?? new Map()}
+              canEdit={canEditShifts}
+              onEdit={openShift}
+            />
+          </TooltipProvider>
         </CardContent>
       </Card>
 
@@ -183,6 +227,14 @@ export function StoreDetail({
         storeName={row.name}
         day={day}
         editing={editing}
+      />
+      <ShiftEditDialog
+        open={shiftOpen}
+        onOpenChange={setShiftOpen}
+        shift={editingShift}
+        staffName={editingShift ? staffName(staffById, editingShift.staff_id) : ""}
+        day={day}
+        stores={stores}
       />
       <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
         <CalendarClock className="h-3 w-3" /> Rast härleds ur stämplingspar — ut och in igen samma dag.
