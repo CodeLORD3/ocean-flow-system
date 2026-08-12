@@ -31,6 +31,8 @@ import { Badge } from "@/components/ui/badge";
 import { Activity, ShieldCheck, KeyRound, Loader2 } from "lucide-react";
 import { useOpenShifts, shiftClock, shiftDuration } from "@/hooks/useStaffShifts";
 import { edgeErrorMessage } from "@/lib/edgeError";
+import { useSaveSalary, useSalaryHistory } from "@/hooks/useSalaryHistory";
+import { MONTHLY_HOURS } from "@/lib/staffKpi";
 
 const ACTIVITY_VIEWER_EMAILS = [
   "joakim@fiskskaldjur.ch",
@@ -58,6 +60,7 @@ export default function Staff() {
   const updateStaff = useUpdateStaff();
   const deleteStaff = useDeleteStaff();
 
+  const saveSalary = useSaveSalary();
   const { data: openShifts = [] } = useOpenShifts(platformView ? undefined : storeFilter);
   const shiftByStaff = new Map(openShifts.map((s) => [s.staff_id, s]));
 
@@ -73,6 +76,7 @@ export default function Staff() {
   const [storeStaffOpen, setStoreStaffOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const salaryHistory = useSalaryHistory(editId);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   // Inloggning: skapas separat från personalkortet
   const [creatingLoginFor, setCreatingLoginFor] = useState<string | null>(null);
@@ -86,6 +90,7 @@ export default function Staff() {
 
   const emptyForm = {
     first_name: "", last_name: "", age: "", phone: "", email: "", workplace: "", store_id: "", profile_image_url: "", hourly_rate: "",
+    employment_type: "hourly", monthly_salary: "", salary_from: new Date().toISOString().slice(0, 10),
   };
   const [form, setForm] = useState(emptyForm);
   const [originalEmail, setOriginalEmail] = useState("");
@@ -124,6 +129,9 @@ export default function Staff() {
       email: s.email || "", workplace: s.workplace || "",
       store_id: s.store_id || "", profile_image_url: s.profile_image_url || "",
       hourly_rate: s.hourly_rate !== null && s.hourly_rate !== undefined ? String(s.hourly_rate) : "",
+      employment_type: s.employment_type === "monthly" ? "monthly" : "hourly",
+      monthly_salary: s.monthly_salary !== null && s.monthly_salary !== undefined ? String(s.monthly_salary) : "",
+      salary_from: new Date().toISOString().slice(0, 10),
     });
     setPreviewUrl(s.profile_image_url || null);
     setDialogOpen(true);
@@ -198,6 +206,25 @@ export default function Staff() {
     setUploading(false);
   };
 
+  // Löneändring sparas som egen historikpost med giltig-från-datum, så att
+  // redan bokförda personalkostnader inte räknas om retroaktivt.
+  const recordSalary = async (staffId: string) => {
+    const hourly = form.hourly_rate ? Number(form.hourly_rate) : null;
+    const monthly = form.monthly_salary ? Number(form.monthly_salary) : null;
+    if (form.employment_type === "monthly" ? !monthly : !hourly) return;
+    try {
+      await saveSalary.mutateAsync({
+        staff_id: staffId,
+        employment_type: form.employment_type as "hourly" | "monthly",
+        hourly_rate: form.employment_type === "hourly" ? hourly : null,
+        monthly_salary: form.employment_type === "monthly" ? monthly : null,
+        valid_from: form.salary_from || new Date().toISOString().slice(0, 10),
+      });
+    } catch (e: any) {
+      toast({ title: "Lönen kunde inte sparas", description: e.message, variant: "destructive" });
+    }
+  };
+
   const handleSave = () => {
     if (!form.first_name || !form.last_name) return;
     const payload = {
@@ -210,7 +237,9 @@ export default function Staff() {
       store_id: form.store_id || null,
       profile_image_url: form.profile_image_url || null,
       hourly_rate: form.hourly_rate ? Number(form.hourly_rate) : null,
-    };
+      employment_type: form.employment_type,
+      monthly_salary: form.monthly_salary ? Number(form.monthly_salary) : null,
+    } as any;
 
     if (editId) {
       const newEmail = (form.email || "").trim().toLowerCase();
@@ -219,6 +248,7 @@ export default function Staff() {
         onSuccess: async () => {
           toast({ title: "Personal uppdaterad", description: `${form.first_name} ${form.last_name}` });
           setDialogOpen(false);
+          await recordSalary(editId);
           if (emailChanged && isAdmin) await syncLoginEmail(editId, newEmail);
           setOriginalEmail(newEmail);
         },
@@ -226,7 +256,11 @@ export default function Staff() {
       });
     } else {
       createStaff.mutate(payload, {
-        onSuccess: () => { toast({ title: "Personal tillagd", description: `${form.first_name} ${form.last_name}` }); setDialogOpen(false); },
+        onSuccess: async (created: any) => {
+          if (created?.id) await recordSalary(created.id);
+          toast({ title: "Personal tillagd", description: `${form.first_name} ${form.last_name}` });
+          setDialogOpen(false);
+        },
         onError: (err) => toast({ title: "Fel", description: err.message, variant: "destructive" }),
       });
     }
@@ -486,16 +520,56 @@ export default function Staff() {
                 <Input value={form.workplace} onChange={e => setField("workplace", e.target.value)} className="h-8 text-xs" placeholder="t.ex. Produktion" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Timlön (kr/h)</Label>
+                <Label className="text-xs">Anställningstyp</Label>
+                <Select value={form.employment_type} onValueChange={v => setField("employment_type", v)}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="hourly" className="text-xs">Timanställd</SelectItem>
+                    <SelectItem value="monthly" className="text-xs">Månadsanställd</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {form.employment_type === "monthly" ? (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Månadslön (kr/mån)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="100"
+                    value={form.monthly_salary}
+                    onChange={e => setField("monthly_salary", e.target.value)}
+                    className="h-8 text-xs"
+                    placeholder="t.ex. 32000"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Fördelas på {MONTHLY_HOURS} h/mån i kostnadsberäkningen.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Timlön (kr/h)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={form.hourly_rate}
+                    onChange={e => setField("hourly_rate", e.target.value)}
+                    className="h-8 text-xs"
+                    placeholder="t.ex. 175"
+                  />
+                </div>
+              )}
+              <div className="space-y-1.5">
+                <Label className="text-xs">Lön gäller från</Label>
                 <Input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={form.hourly_rate}
-                  onChange={e => setField("hourly_rate", e.target.value)}
+                  type="date"
+                  value={form.salary_from}
+                  onChange={e => setField("salary_from", e.target.value)}
                   className="h-8 text-xs"
-                  placeholder="t.ex. 175"
                 />
+                <p className="text-[10px] text-muted-foreground">
+                  Sparas som lönehistorik — äldre perioder räknas med tidigare lön.
+                </p>
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Butik</Label>
@@ -510,6 +584,23 @@ export default function Staff() {
               </div>
             </div>
           </div>
+          {editId && (salaryHistory.data ?? []).length > 0 && (
+            <div className="rounded-md border border-border p-2">
+              <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Lönehistorik</p>
+              <ul className="max-h-32 space-y-1 overflow-y-auto">
+                {(salaryHistory.data ?? []).map(row => (
+                  <li key={row.id} className="flex items-center justify-between text-[11px]">
+                    <span className="tabular-nums text-muted-foreground">{row.valid_from}</span>
+                    <span className="text-foreground">
+                      {row.employment_type === "monthly"
+                        ? `${Number(row.monthly_salary ?? 0).toLocaleString("sv-SE")} kr/mån`
+                        : `${Number(row.hourly_rate ?? 0).toLocaleString("sv-SE")} kr/h`}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setDialogOpen(false)}>Avbryt</Button>
             <Button size="sm" onClick={handleSave} disabled={!form.first_name || !form.last_name || uploading}>

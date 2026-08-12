@@ -1,5 +1,6 @@
 import {
   LayoutDashboard, ShoppingCart, Users, Fish, Package, Truck, Store, UserCheck, BarChart3, Settings, Anchor, CreditCard, ClipboardList, CalendarDays, Star, BookOpen, ListTodo, ChevronDown, FileText, SlidersHorizontal, MessageSquare, ClipboardCheck, History, ShieldCheck, ArrowLeftRight, Trash2,
+  CalendarRange,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -51,6 +52,7 @@ const inventoryNav = [
 
 const orgNav = [
   { title: "Personal", url: "/staff", icon: UserCheck },
+  { title: "Schema", url: "/staff-schedule", icon: CalendarRange },
   { title: "Aktivitetslogg", url: "/audit", icon: ClipboardList },
 ];
 

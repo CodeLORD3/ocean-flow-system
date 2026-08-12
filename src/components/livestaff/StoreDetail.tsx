@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, CalendarClock, LogIn, LogOut, Plus, Users } from "lucide-react";
+import { ArrowLeft, CalendarClock, LogIn, LogOut, PencilLine, Plus, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +46,11 @@ export function StoreDetail({
   const { staff } = useStaffAuth();
   const canEditShifts = ((staff?.portal_access ?? []) as string[]).includes("admin");
   const edits = useShiftEdits(row.shifts.map((s) => s.id));
+
+  // Personal med rättad stämpling märks direkt i tidslinjen, inte bara i loggen.
+  const editedStaff = new Set(
+    row.shifts.filter((sh) => ((edits.data ?? new Map()).get(sh.id) ?? []).length > 0).map((sh) => sh.staff_id),
+  );
 
   const openShift = (shift: ActualShiftRow) => {
     setEditingShift(shift);
@@ -114,6 +119,11 @@ export function StoreDetail({
                           <p className="truncate text-xs font-medium text-foreground">{name}</p>
                           <div className="mt-0.5 flex items-center gap-1">
                             <StatusChip status={sr.status} />
+                            {editedStaff.has(sr.staffId) && (
+                              <Badge variant="outline" className="gap-1 border-amber-500/40 px-1 text-[9px] text-amber-600">
+                                <PencilLine className="h-2.5 w-2.5" /> Redigerad
+                              </Badge>
+                            )}
                           </div>
                         </div>
                         <div className="relative flex-1 py-1.5">

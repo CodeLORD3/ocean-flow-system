@@ -205,7 +205,8 @@ export default function LiveStaff() {
       <CityKpiCards cities={costKpi.cities} />
 
       <LiveDailyReport
-        day={day}
+            cities={costKpi.cities}
+            day={day}
         live={live}
         stores={costKpi.stores}
         totals={costKpi.totals}

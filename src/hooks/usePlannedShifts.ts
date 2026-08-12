@@ -57,7 +57,7 @@ export function useSavePlannedShift() {
       });
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["planned-shifts"] }),
+    onSuccess: () => (qc.invalidateQueries({ queryKey: ["planned-shifts"] }), qc.invalidateQueries({ queryKey: ["planned-shifts-range"] })),
   });
 }
 
@@ -68,6 +68,26 @@ export function useDeletePlannedShift() {
       const { error } = await supabase.from("staff_planned_shifts").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["planned-shifts"] }),
+    onSuccess: () => (qc.invalidateQueries({ queryKey: ["planned-shifts"] }), qc.invalidateQueries({ queryKey: ["planned-shifts-range"] })),
+  });
+}
+
+/** Planerade pass i ett datumintervall (t.ex. en vecka). */
+export function usePlannedShiftsRange(from: string, to: string, storeId?: string | null) {
+  return useQuery({
+    queryKey: ["planned-shifts-range", from, to, storeId ?? "all"],
+    enabled: !!from && !!to,
+    queryFn: async () => {
+      let q = supabase
+        .from("staff_planned_shifts")
+        .select(SELECT)
+        .gte("shift_date", from)
+        .lte("shift_date", to)
+        .order("start_time", { ascending: true });
+      if (storeId) q = q.eq("store_id", storeId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as PlannedShiftRow[];
+    },
   });
 }

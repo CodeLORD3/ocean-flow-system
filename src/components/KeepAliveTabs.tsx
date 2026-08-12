@@ -28,6 +28,7 @@ import ReportsRouter from "@/pages/ReportsRouter";
 import AuditRouter from "@/pages/AuditRouter";
 import BugReports from "@/pages/BugReports";
 import LiveStaff from "@/pages/LiveStaff";
+import StaffSchedule from "@/pages/StaffSchedule";
 
 import TradeOffers from "@/pages/TradeOffers";
 import TradeHistory from "@/pages/TradeHistory";
@@ -97,6 +98,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/audit": { component: <AuditRouter /> },
   "/bug-reports": { component: <BugReports /> },
   "/live-staff": { component: <LiveStaff /> },
+  "/staff-schedule": { component: <StaffSchedule /> },
 
   "/settings": { component: <PlaceholderPage title="Systeminställningar" /> },
   "/trade-offers": { component: <TradeOffers /> },
