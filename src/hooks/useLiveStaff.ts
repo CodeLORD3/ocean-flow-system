@@ -65,6 +65,8 @@ export interface LiveStoreRow {
   workedMinutes: number;
   plannedMinutes: number;
   events: LiveEvent[];
+  /** Råa stämplingar för butiken — underlag för admin-redigering. */
+  shifts: ActualShiftRow[];
 }
 
 export interface LiveEvent {
@@ -113,6 +115,10 @@ export function useLiveStaffDay(day: string) {
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "staff_planned_shifts" }, () => {
         qc.invalidateQueries({ queryKey: ["planned-shifts"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "staff_shift_edits" }, () => {
+        qc.invalidateQueries({ queryKey: ["shift-edits"] });
+        qc.invalidateQueries({ queryKey: ["live-staff-shifts"] });
       })
       .subscribe();
     return () => {
@@ -201,6 +207,7 @@ export function useLiveStaffDay(day: string) {
         workedMinutes: staffRows.reduce((sum, r) => sum + r.workedMinutes, 0),
         plannedMinutes: staffRows.reduce((sum, r) => sum + r.plannedMinutes, 0),
         events,
+        shifts: storeActual,
       };
     });
   }, [stores.data, weekly.data, specials.data, actual.data, planned.data, day, nowMinutes, live]);
