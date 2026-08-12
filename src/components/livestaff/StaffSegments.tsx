@@ -41,15 +41,17 @@ export function StaffSegments({ row, axis, name, compact, imageUrl }: Props) {
         ? "bg-amber-500/15 text-amber-700 ring-amber-500/40"
         : "bg-emerald-500/15 text-emerald-700 ring-emerald-500/40";
 
+  const lastEnd = segments.length ? Math.max(...segments.map((s) => s.to)) : null;
+
   return (
-    <div className={cn("relative", compact ? "h-6" : "h-7")}>
+    <div className={cn("relative", compact ? "h-8" : "h-9")}>
       {marker !== null && (
         <Tooltip>
           <TooltipTrigger asChild>
             <span
               className={cn(
-                "absolute top-0.5 z-20 flex shrink-0 -translate-x-full items-center justify-center overflow-hidden rounded-full ring-2",
-                compact ? "-ml-0.5 h-4 w-4" : "-ml-1 h-5 w-5",
+                "absolute top-1 z-20 flex shrink-0 -translate-x-full items-center justify-center overflow-hidden rounded-full ring-2",
+                compact ? "-ml-1 h-6 w-6" : "-ml-1.5 h-7 w-7",
                 markerTone,
               )}
               style={{ left: `${pct(axis, marker)}%` }}
@@ -57,12 +59,13 @@ export function StaffSegments({ row, axis, name, compact, imageUrl }: Props) {
               {imageUrl ? (
                 <img src={imageUrl} alt={name} className="h-full w-full object-cover" />
               ) : (
-                <span className={compact ? "text-[7px] font-semibold leading-none" : "text-[8px] font-semibold leading-none"}>
+                <span className={compact ? "text-[9px] font-semibold leading-none" : "text-[10px] font-semibold leading-none"}>
                   {initials(name)}
                 </span>
               )}
             </span>
           </TooltipTrigger>
+
           <TooltipContent side="top" className="text-xs">
             <p className="font-semibold">{name}</p>
             <p className="text-muted-foreground">Planerat: {plannedText}</p>
