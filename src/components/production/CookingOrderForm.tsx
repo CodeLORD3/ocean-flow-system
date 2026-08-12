@@ -14,7 +14,7 @@ import { useTransformationRecipes } from "@/hooks/useTransformationRecipes";
 import { useCreateProductionOrder } from "@/hooks/useProductionYields";
 import { fefoLotsAtLocation, type FefoAllocationResult, type FefoLot } from "@/lib/fefo";
 import { LotPicker } from "@/components/production/LotPicker";
-import { addStock, withdrawStock, GROSSIST_FLYTANDE_ID } from "@/lib/productionStock";
+import { addStock, withdrawLot, GROSSIST_FLYTANDE_ID } from "@/lib/productionStock";
 import { createOutputLot, recordLotTransformation } from "@/lib/lotTransformation";
 import { fmt } from "@/lib/filletMath";
 import { supabase } from "@/integrations/supabase/client";
@@ -165,8 +165,8 @@ export function CookingOrderForm() {
       for (let i = 0; i < alloc.allocations.length; i++) {
         const a = alloc.allocations[i];
         // Ut ur råvarupartiet
-        await withdrawStock(rawProduct.id, a.quantityKg, GROSSIST_FLYTANDE_ID, {
-          lotId: a.lotId,
+        await withdrawLot(rawProduct.id, a.lotId, a.quantityKg, GROSSIST_FLYTANDE_ID, {
+          unitCost: lots.find((l) => l.lotId === a.lotId)?.unitCost ?? null,
           referenceType: "production_order",
           referenceId: order.id,
           note: `Kokning → ${outProduct.name}`,
