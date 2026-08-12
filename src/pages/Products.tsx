@@ -444,6 +444,7 @@ export default function Products() {
       origin: "",
       producer: "",
       shelf_life_days: "",
+      shelf_life_open_days: "",
       image_url: "",
       latin_name: "",
       requires_processing: false,
