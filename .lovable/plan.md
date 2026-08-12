@@ -6,7 +6,7 @@
 
 Med säkerhetsmarginal drar vi ner **5 dagar** från leverantörernas 14 → **9 dagar** i sluten/skyddande atmosfär, och **3 dagar** efter öppnad förpackning. Dagens värde i registret är 4 dagar, vilket är för kort.
 
-Nuvarande värden i registret (kontrollerat): kokta havskräftor, signalkräftor, krabbklor och hummer står på 4 dagar; hummerkött 3 dagar; kamtjatkaben 5 dagar; frysta/kokta räkor 365 dagar.
+Nuvarande värden i registret (kontrollerat): kokta havskräftor, signalkräftor, krabbklor och hummer står på 4 dagar; hummerkött 3 dagar och kamtjatkakrabbaben 5 dagar (fel — de är frysvaror); frysta/kokta räkor 365 dagar.
 
 ## Vad som byggs
 
