@@ -207,7 +207,8 @@ export default function Pricing() {
 
     const costVal = inlineEdits[p.id]?.cost_price ?? Number(p.cost_price);
     const wholesaleVal = inlineEdits[p.id]?.wholesale_price ?? Number(p.wholesale_price);
-    const marginVal = inlineEdits[p.id]?.margin ?? calcMargin(Number(p.cost_price), Number(p.wholesale_price));
+    const eff = effectiveCost(p);
+    const marginVal = inlineEdits[p.id]?.margin ?? calcMargin(eff.value, Number(p.wholesale_price));
     const hasChanges = !!inlineEdits[p.id] && (
       inlineEdits[p.id].cost_price !== Number(p.cost_price) ||
       inlineEdits[p.id].wholesale_price !== Number(p.wholesale_price)
