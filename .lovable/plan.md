@@ -18,9 +18,7 @@ Nuvarande värden i registret (kontrollerat): kokta havskräftor, signalkräftor
 5. **Etiketter och kundorder**: bäst-före baseras fortsatt på sluten hållbarhet, med texten "Efter öppnad förpackning: 3 dagar" på etiketten och i produktkortet.
 
 ## Teknik
-- Migration: `ALTER TABLE public.products ADD COLUMN shelf_life_open_days integer`, plus `UPDATE` av kokta färska skaldjur till `shelf_life_days = 9`, `shelf_life_open_days = 3`.
+- Migration: `ALTER TABLE public.products ADD COLUMN shelf_life_open_days integer`.
+- Datauppdatering: kokta färska skaldjur → `shelf_life_days = 9`, `shelf_life_open_days = 3`; FS-010-KOT och SK-024-BEN-K → `shelf_life_days = 365`, `shelf_life_open_days = 3`.
 - Frontend: `src/pages/Products.tsx` (formulär + `ShelfLifeBadge`), `src/components/production/CookingOrderForm.tsx` (bäst-före-beräkning), etikett-PDF och `CustomerOrderWizard`/`shelfLifeWarning` läser samma fält.
 - Inleverans (`src/pages/Receiving.tsx`) fortsätter använda sluten hållbarhet vid autoifyllning av utgångsdatum.
-
-## Fråga innan bygge
-Ska hummerkött (3 d) och kamtjatkakrabbaben (5 d) också sättas till 9/3, eller behålla sina värden?
