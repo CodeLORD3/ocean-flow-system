@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/EmptyState";
 import LotDocumentsPanel from "@/components/inventory/LotDocumentsPanel";
 import ParasiteFreezePanel from "@/components/inventory/ParasiteFreezePanel";
 import BivalvePanel from "@/components/inventory/BivalvePanel";
+import LotPricePanel from "@/components/inventory/LotPricePanel";
 
 interface Props {
   currency?: string;
@@ -32,7 +33,7 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
       const { data, error } = await supabase
         .from("lots")
         .select(
-          "id, lot_number, supplier_lot_id, commercial_name, latin_name, species_fao_code, catch_area, fishing_gear, vessel_name, best_before, quantity_kg, unit_cost, status, is_thawed, created_at, fishing_trip_id, incoming_catch_cert, statistical_doc, seal_number, parasite_treatment_required, freeze_start, freeze_end, exemption_reason, exemption_source, suppliers(name), products(name, sku, hs_code, export_documentation_required)",
+          "id, lot_number, supplier_lot_id, commercial_name, latin_name, species_fao_code, catch_area, fishing_gear, vessel_name, best_before, quantity_kg, unit_cost, price_status, preliminary_unit_cost, invoice_number, invoice_date, status, is_thawed, created_at, fishing_trip_id, incoming_catch_cert, statistical_doc, seal_number, parasite_treatment_required, freeze_start, freeze_end, exemption_reason, exemption_source, suppliers(name), products(name, sku, hs_code, export_documentation_required)",
         )
         .order("created_at", { ascending: false })
         .limit(300);
@@ -165,6 +166,9 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                         {nf(Number(lot.unit_cost), 2)} {currency}/kg
                       </p>
                     )}
+                    {showCosts && (lot.price_status || "preliminar") !== "faststalld" && (
+                      <p className="text-[10px] text-amber-500">Preliminärt pris</p>
+                    )}
                   </div>
                 </button>
 
@@ -206,6 +210,20 @@ export default function LotTraceabilityView({ currency = "SEK", showCosts = true
                           </tbody>
                         </table>
                       </>
+                    )}
+                    {showCosts && (
+                      <div className="mt-3 border-t border-border pt-2">
+                        <LotPricePanel
+                          lotId={lot.id}
+                          lotNumber={lot.lot_number}
+                          currency={currency}
+                          unitCost={lot.unit_cost}
+                          priceStatus={lot.price_status}
+                          preliminaryUnitCost={lot.preliminary_unit_cost}
+                          invoiceNumber={lot.invoice_number}
+                          invoiceDate={lot.invoice_date}
+                        />
+                      </div>
                     )}
                     <div className="mt-3 border-t border-border pt-2">
                       <ParasiteFreezePanel lotId={lot.id} />

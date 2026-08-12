@@ -3538,6 +3538,8 @@ export type Database = {
           harvest_date: string | null
           id: string
           incoming_catch_cert: string | null
+          invoice_date: string | null
+          invoice_number: string | null
           is_bivalve: boolean
           is_thawed: boolean
           latin_name: string | null
@@ -3545,7 +3547,10 @@ export type Database = {
           lot_number: string
           origin_lot_id: string | null
           parasite_treatment_required: boolean
+          preliminary_unit_cost: number | null
           presentation: string | null
+          price_finalized_at: string | null
+          price_finalized_by: string | null
           price_status: string
           product_id: string | null
           production_area_classification: string | null
@@ -3597,6 +3602,8 @@ export type Database = {
           harvest_date?: string | null
           id?: string
           incoming_catch_cert?: string | null
+          invoice_date?: string | null
+          invoice_number?: string | null
           is_bivalve?: boolean
           is_thawed?: boolean
           latin_name?: string | null
@@ -3604,7 +3611,10 @@ export type Database = {
           lot_number?: string
           origin_lot_id?: string | null
           parasite_treatment_required?: boolean
+          preliminary_unit_cost?: number | null
           presentation?: string | null
+          price_finalized_at?: string | null
+          price_finalized_by?: string | null
           price_status?: string
           product_id?: string | null
           production_area_classification?: string | null
@@ -3656,6 +3666,8 @@ export type Database = {
           harvest_date?: string | null
           id?: string
           incoming_catch_cert?: string | null
+          invoice_date?: string | null
+          invoice_number?: string | null
           is_bivalve?: boolean
           is_thawed?: boolean
           latin_name?: string | null
@@ -3663,7 +3675,10 @@ export type Database = {
           lot_number?: string
           origin_lot_id?: string | null
           parasite_treatment_required?: boolean
+          preliminary_unit_cost?: number | null
           presentation?: string | null
+          price_finalized_at?: string | null
+          price_finalized_by?: string | null
           price_status?: string
           product_id?: string | null
           production_area_classification?: string | null
@@ -8704,6 +8719,15 @@ export type Database = {
       entity_series_code: {
         Args: { _legal_entity_id: string }
         Returns: string
+      }
+      finalize_lot_price: {
+        Args: {
+          _final_unit_cost: number
+          _invoice_date?: string
+          _invoice_number?: string
+          _lot_id: string
+        }
+        Returns: Json
       }
       has_role: {
         Args: {
