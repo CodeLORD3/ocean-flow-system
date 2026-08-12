@@ -107,6 +107,18 @@ export function StaffSegments({ row, axis, name, compact, imageUrl }: Props) {
           </TooltipContent>
         </Tooltip>
       ))}
+      {lastEnd !== null && (
+        <span
+          className={cn(
+            "pointer-events-none absolute top-1.5 z-20 whitespace-nowrap font-medium text-foreground",
+            compact ? "ml-1.5 text-[11px]" : "ml-2 text-xs",
+          )}
+          style={{ left: `${pct(axis, lastEnd)}%` }}
+        >
+          {name}
+        </span>
+      )}
     </div>
+
   );
 }
