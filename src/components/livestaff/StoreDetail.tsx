@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, CalendarClock, LogIn, LogOut, PencilLine, Plus, Users } from "lucide-react";
+import { ArrowLeft, CalendarClock, LogIn, LogOut, Pencil, PencilLine, Plus, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
