@@ -201,7 +201,11 @@ function CategoryBadge({ name }: { name: string | null | undefined }) {
 
 
 interface InlineEdit {
+  /** Manuellt reservpris (products.cost_price). */
   cost_price: number;
+  /** Gällande pris som marginalen räknas mot (dagspris om aktivt, annars reservpris). */
+  basis: number;
+  basisSource: "day_price" | "cost_price";
   wholesale_price: number;
   margin: number;
 }
