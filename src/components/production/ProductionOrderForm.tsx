@@ -64,6 +64,9 @@ import { SPECIES_GROUP_SUGGESTIONS } from "@/lib/speciesGroups";
 import { speciesKey } from "@/lib/asciiFold";
 import { addStock, withdrawStock, GROSSIST_FLYTANDE_ID } from "@/lib/productionStock";
 import { pickRawLots, createOutputLot, recordLotTransformation, type RawPick } from "@/lib/lotTransformation";
+import { LotPicker } from "@/components/production/LotPicker";
+import { fefoLotsAtLocation, type FefoAllocationResult, type FefoLot } from "@/lib/fefo";
+
 import { t } from "@/lib/i18n";
 
 import { evaluateAutoApproval } from "@/lib/autoApproval";
@@ -113,6 +116,11 @@ export function ProductionOrderForm() {
   const qc = useQueryClient();
 
   const [rawProductId, setRawProductId] = useState<string | null>(null);
+  // FEFO-partival för råvaran (samma logik som kokningsflödet).
+  const [fefoLots, setFefoLots] = useState<FefoLot[]>([]);
+  const [loadingFefo, setLoadingFefo] = useState(false);
+  const [fefoAlloc, setFefoAlloc] = useState<(FefoAllocationResult & { startLotId: string | null }) | null>(null);
+
   const [rawName, setRawName] = useState("");
   const [rawSku, setRawSku] = useState("");
   const [species, setSpecies] = useState("");
@@ -261,6 +269,30 @@ export function ProductionOrderForm() {
       cancelled = true;
     };
   }, [rawProductId]);
+
+  /** Partier av råvaran med saldo, FEFO-sorterade. */
+  useEffect(() => {
+    let cancelled = false;
+    if (!rawProductId) {
+      setFefoLots([]);
+      setFefoAlloc(null);
+      return;
+    }
+    setLoadingFefo(true);
+    (async () => {
+      try {
+        const rows = await fefoLotsAtLocation(rawProductId, GROSSIST_FLYTANDE_ID);
+        if (!cancelled) setFefoLots(rows);
+      } finally {
+        if (!cancelled) setLoadingFefo(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [rawProductId]);
+
+
 
   const storedPrice = (form: string, list: string) =>
     priceFor(detailPrices, list, species, normalizeDetailForm(form));
@@ -516,9 +548,14 @@ export function ProductionOrderForm() {
       return;
     }
     try {
-      const picks = rawProductId
-        ? await pickRawLots(rawProductId, GROSSIST_FLYTANDE_ID, rawQtyNum)
-        : [];
+      // FEFO-fördelningen från partivalet styr plocket; utan partival faller vi
+      // tillbaka på FIFO-plocket ur rörelseloggen.
+      const picks: RawPick[] = fefoAlloc?.allocations.length
+        ? fefoAlloc.allocations.map((a) => ({ lotId: a.lotId, quantityKg: a.quantityKg }))
+        : rawProductId
+          ? await pickRawLots(rawProductId, GROSSIST_FLYTANDE_ID, rawQtyNum)
+          : [];
+
       const distinctLots = new Set(picks.map((p) => p.lotId ?? "utan-parti")).size;
       if (distinctLots > 1) {
         setSplitWarning({ picks, detailCount: included.length });
@@ -864,6 +901,19 @@ export function ProductionOrderForm() {
               <Input value={batch} onChange={(e) => setBatch(e.target.value)} className="h-10 text-xs" />
             </div>
           </div>
+          {rawProductId && (
+            <div className="space-y-1">
+              <Label className="text-[11px]">Partival (FEFO — kortast hållbarhet först)</Label>
+              <LotPicker
+                lots={fefoLots}
+                quantityKg={rawQtyNum}
+                loading={loadingFefo}
+                onChange={setFefoAlloc}
+                emptyHint="Inga partier av råvaran med saldo i grossistlagret — plocket bokförs utan parti (okänd härkomst)."
+              />
+            </div>
+          )}
+
           <div className="flex flex-wrap items-center gap-2">
             <Button size="sm" variant="outline" className="h-10 gap-1.5 text-xs" onClick={suggest} disabled={!species}>
               <Plus className="h-3.5 w-3.5" /> Föreslå styckdetaljer
