@@ -377,6 +377,10 @@ export function useAddOrderLine() {
         reserved_lot_id = outcome.lotId;
         reserved_quantity = outcome.status === "reserverad" ? Number(line.quantity_ordered || 0) : 0;
       }
+      // Gällande pris låses på raden vid ordertillfället och räknas aldrig om.
+      const eff = line.product_id
+        ? (await fetchEffectiveCosts([line.product_id])).get(line.product_id)
+        : undefined;
       const { error } = await db.from("customer_order_lines").insert({
         customer_order_id: order.id,
         product_id: line.product_id ?? null,
@@ -390,6 +394,8 @@ export function useAddOrderLine() {
         reserved_lot_id,
         reserved_quantity,
         sort_order: (order.customer_order_lines?.length ?? 0) + 1,
+        cost_at_order: eff?.value ?? null,
+        cost_source_at_order: eff?.source ?? null,
       });
       if (error) throw error;
       await logOrderEvent({
