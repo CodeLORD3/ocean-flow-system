@@ -25,6 +25,7 @@ import { buildAxis, NowLine, TimeAxisHeader } from "@/components/livestaff/TimeA
 import { StaffSegments } from "@/components/livestaff/StaffSegments";
 import { StatusLegend } from "@/components/livestaff/StatusChip";
 import { StoreDetail } from "@/components/livestaff/StoreDetail";
+import { OnDutyAvatars } from "@/components/livestaff/OnDutyAvatars";
 
 const LABEL_W = "w-40 sm:w-52";
 
