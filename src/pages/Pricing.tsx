@@ -315,6 +315,18 @@ export default function Pricing() {
             )}
             {!isAggregatedParent && <span className="text-xs text-muted-foreground">%</span>}
           </div>
+          {!isAggregatedParent && !isShop && (
+            <span
+              className={`block text-[10px] ${eff.source === "day_price" ? "text-primary" : "text-muted-foreground"}`}
+              title={
+                eff.source === "day_price"
+                  ? `Marginal och utpris räknas mot dagspriset ${eff.value.toFixed(2)} kr (${eff.lots} aktiva parti(er)).`
+                  : `Inget aktivt dagspris — marginal och utpris räknas mot reservpriset ${eff.value.toFixed(2)} kr.`
+              }
+            >
+              {COST_SOURCE_LABEL[eff.source]}
+            </span>
+          )}
         </TableCell>
 
         {/* Actions */}
