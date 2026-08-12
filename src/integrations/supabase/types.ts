@@ -8922,6 +8922,7 @@ export type Database = {
       user_portals: { Args: { _user_id: string }; Returns: string[] }
       user_store_ids: { Args: { _user_id: string }; Returns: string[] }
       zero_stale_day_prices: { Args: never; Returns: number }
+      zero_stale_day_prices_midnight: { Args: never; Returns: number }
     }
     Enums: {
       app_role: "admin" | "client"
