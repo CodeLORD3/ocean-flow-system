@@ -26,7 +26,7 @@ export function ShiftEditDialog({
   stores: { id: string; name: string }[];
 }) {
   const { toast } = useToast();
-  const { profile } = useStaffAuth();
+  const { staff } = useStaffAuth();
   const update = useUpdateShift();
 
   const [inTime, setInTime] = useState("");
@@ -60,7 +60,7 @@ export function ShiftEditDialog({
         clocked_in_at: clockedIn,
         clocked_out_at: clockedOut,
         store_id: storeId || null,
-        editorName: profile ? `${profile.first_name} ${profile.last_name}`.trim() : "Administratör",
+        editorName: staff ? `${staff.first_name ?? ""} ${staff.last_name ?? ""}`.trim() || "Administratör" : "Administratör",
         storeLabels: Object.fromEntries(stores.map((s) => [s.id, s.name])),
       },
       {
