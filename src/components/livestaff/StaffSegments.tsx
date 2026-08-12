@@ -80,7 +80,7 @@ export function StaffSegments({ row, axis, name, compact, imageUrl }: Props) {
               className={cn(
                 "absolute rounded-sm",
                 tone(seg, row),
-                seg.kind === "planned" ? "top-0 h-full" : compact ? "top-1 h-3" : "top-1.5 h-3",
+                seg.kind === "planned" ? "top-0 h-full" : compact ? "top-2 h-4" : "top-2.5 h-4",
               )}
               style={{
                 left: `${pct(axis, seg.from)}%`,
