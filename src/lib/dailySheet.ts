@@ -148,7 +148,7 @@ export async function computeLedgerColumns({ locationIds, sheetDate }: BuildArgs
       received: 0,
       other: 0,
       sales: 0,
-      cost: Number(s.unit_cost) || Number(s.products?.cost_price) || 0,
+      cost: Number(s.unit_cost) || 0,
       product: s.products,
     });
   });
@@ -180,7 +180,6 @@ async function fillProductMeta(perProduct: Map<string, any>) {
     const e = perProduct.get(p.id);
     if (e) {
       e.product = p;
-      if (!e.cost) e.cost = Number(p.cost_price) || 0;
     }
   });
 }

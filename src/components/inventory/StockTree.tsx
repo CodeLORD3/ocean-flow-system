@@ -39,7 +39,7 @@ const money = (v: number) =>
 
 const qtyOf = (r: any) => Number(r.quantity) || 0;
 const valueOf = (r: any) =>
-  qtyOf(r) * (Number(r.unit_cost) || Number(r.products?.cost_price) || 0);
+  qtyOf(r) * (Number(r.unit_cost) || 0);
 
 const LEVEL_ICON: Record<LocationLevel, any> = {
   inkopslager: ShoppingBasket,

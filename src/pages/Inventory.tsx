@@ -363,7 +363,7 @@ export default function Inventory() {
         return;
       const qty = Number(s.quantity) || 0;
       const value =
-        qty * (Number(s.unit_cost) || Number(s.products?.cost_price) || 0);
+        qty * (Number(s.unit_cost) || 0);
       add(lvl, qty, value);
       // "Alla nivåer" speglar det portalen faktiskt hanterar, så summan aldrig
       // säger 769 kg när tabellen visar noll rader.
@@ -670,7 +670,9 @@ export default function Inventory() {
       } else {
         map.set(pid, {
           quantity: Number(s.quantity) || 0,
-          cost_price: Number(s.products?.cost_price) || 0,
+          // Lagervärde kommer alltid från partiets bokförda pris (saldots
+          // kostpris), aldrig från produktens prisfält.
+          cost_price: Number(s.unit_cost) || 0,
           min_stock: Number(s.min_stock) || 0,
           product: s.products,
         });
@@ -721,7 +723,7 @@ export default function Inventory() {
       const totalValue = items.reduce((sum: number, s: any) => {
         const qty = Number(s.quantity);
         if (isRawLager) return sum + qty * (Number(s.products?.wholesale_price) || 0);
-        return sum + qty * (Number(s.unit_cost) || Number(s.products?.cost_price) || 0);
+        return sum + qty * (Number(s.unit_cost) || 0);
       }, 0);
       // Count expiry warnings per location
       const expiryWarnings = items.filter((s: any) => {
@@ -780,7 +782,7 @@ export default function Inventory() {
   const totalProducts = aggregatedStock.size;
   const totalQty = Array.from(aggregatedStock.values()).reduce((s, i) => s + qtyToKg(i.quantity, i.product), 0);
   const totalValue = storeStock.reduce(
-    (s: number, i: any) => s + Number(i.quantity) * (Number(i.unit_cost) || Number(i.products?.cost_price) || 0),
+    (s: number, i: any) => s + Number(i.quantity) * (Number(i.unit_cost) || 0),
     0,
   );
   const lowStockItems = Array.from(aggregatedStock.values()).filter(
@@ -1079,7 +1081,7 @@ export default function Inventory() {
               const isRawLager = loc.location_type === "butik";
               const unitPrice = isRawLager
                 ? Number(s.products?.wholesale_price) || 0
-                : Number(s.unit_cost) || Number(s.products?.cost_price) || 0;
+                : Number(s.unit_cost) || 0;
               const value = Number(s.quantity) * unitPrice;
               const isChecked = getSelectedForLocation(loc.id).has(s.id);
               const freshness = getFreshnessInfo(s.expiry_date);
@@ -1168,7 +1170,7 @@ export default function Inventory() {
                   const isRawLager = loc.location_type === "butik";
                   const unitPrice = isRawLager
                     ? Number(s.products?.wholesale_price) || 0
-                    : Number(s.unit_cost) || Number(s.products?.cost_price) || 0;
+                    : Number(s.unit_cost) || 0;
                   const value = Number(s.quantity) * unitPrice;
                   const isChecked = getSelectedForLocation(loc.id).has(s.id);
                   const freshness = getFreshnessInfo(s.expiry_date);
@@ -1892,7 +1894,7 @@ export default function Inventory() {
                                   (s: number, i: any) =>
                                     s +
                                     Number(i.quantity) *
-                                      (Number(i.unit_cost) || Number(i.products?.cost_price) || 0),
+                                      (Number(i.unit_cost) || 0),
                                   0,
                                 );
                                 return (
