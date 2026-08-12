@@ -878,18 +878,30 @@ export default function Products() {
                 {calcMargin(agg!.cost_price, agg!.wholesale_price)}%
               </span>
             ) : (
-              <NumCell
-                value={marginVal}
-                decimals={0}
-                suffix="%"
-                widthClass="w-14"
-                muted={Number(marginVal) === 0}
-                onFocusStart={() => {
-                  if (!inlineEdits[p.id]) startInlineEdit(p);
-                }}
-                onChange={(n) => updateInlineMargin(p.id, n)}
-                onEnter={() => saveInlineEdit(p)}
-              />
+              <div className="leading-tight">
+                <NumCell
+                  value={marginVal}
+                  decimals={0}
+                  suffix="%"
+                  widthClass="w-14"
+                  muted={Number(marginVal) === 0}
+                  onFocusStart={() => {
+                    if (!inlineEdits[p.id]) startInlineEdit(p);
+                  }}
+                  onChange={(n) => updateInlineMargin(p.id, n)}
+                  onEnter={() => saveInlineEdit(p)}
+                />
+                <span
+                  className={`block text-[9px] ${eff.source === "day_price" ? "text-primary" : "text-muted-foreground"}`}
+                  title={
+                    eff.source === "day_price"
+                      ? `Marginal och utpris räknas mot dagspriset ${fmtNum(eff.value)} kr (${eff.lots} aktiva parti(er)).`
+                      : `Inget aktivt dagspris — marginal och utpris räknas mot reservpriset ${fmtNum(eff.value)} kr.`
+                  }
+                >
+                  {COST_SOURCE_LABEL[eff.source]}
+                </span>
+              </div>
             )}
           </td>
         )}
