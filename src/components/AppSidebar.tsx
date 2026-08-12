@@ -32,6 +32,7 @@ import { Landmark,
   ShieldCheck,
   Bug,
 
+  Activity,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
