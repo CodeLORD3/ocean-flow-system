@@ -476,10 +476,17 @@ export default function StaffSchedule() {
                               <span className="text-[10px] tabular-nums text-muted-foreground">{t.shifts} pass</span>
                             )}
                           </div>
-                          {t.minutes > 0 ? (
+                          {t.minutes > 0 || actualDayTotal(day).minutes > 0 ? (
                             <div className="mt-1 space-y-0.5">
                               <p className="font-mono text-[10px] tabular-nums text-muted-foreground">
-                                {formatMinutes(t.minutes)}
+                                plan {formatMinutes(t.minutes)}
+                              </p>
+                              <p
+                                className={`font-mono text-[10px] tabular-nums ${
+                                  actualDayTotal(day).ongoing ? "text-sky-500" : "text-emerald-500"
+                                }`}
+                              >
+                                arb {formatMinutes(actualDayTotal(day).minutes)}
                               </p>
                               <p className="font-mono text-[11px] tabular-nums text-foreground">
                                 {t.cost > 0 ? kr(t.cost) : "—"}
@@ -491,6 +498,7 @@ export default function StaffSchedule() {
                           ) : (
                             <p className="mt-1 text-[10px] text-muted-foreground">Inga pass</p>
                           )}
+
                         </button>
                       );
                     })()
