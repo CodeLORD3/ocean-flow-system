@@ -5608,9 +5608,11 @@ export type Database = {
           parasite_treatment_required: boolean
           parent_product_id: string | null
           producer: string | null
+          purchasable: boolean
           requires_processing: boolean
           retail_suggested: number | null
           shelf_life_days: number | null
+          size_grade_id: string | null
           sku: string
           species_group: string | null
           stock: number
@@ -5647,9 +5649,11 @@ export type Database = {
           parasite_treatment_required?: boolean
           parent_product_id?: string | null
           producer?: string | null
+          purchasable?: boolean
           requires_processing?: boolean
           retail_suggested?: number | null
           shelf_life_days?: number | null
+          size_grade_id?: string | null
           sku: string
           species_group?: string | null
           stock?: number
@@ -5686,9 +5690,11 @@ export type Database = {
           parasite_treatment_required?: boolean
           parent_product_id?: string | null
           producer?: string | null
+          purchasable?: boolean
           requires_processing?: boolean
           retail_suggested?: number | null
           shelf_life_days?: number | null
+          size_grade_id?: string | null
           sku?: string
           species_group?: string | null
           stock?: number
@@ -5705,6 +5711,13 @@ export type Database = {
             columns: ["parent_product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_size_grade_id_fkey"
+            columns: ["size_grade_id"]
+            isOneToOne: false
+            referencedRelation: "size_grades"
             referencedColumns: ["id"]
           },
           {
@@ -6530,6 +6543,51 @@ export type Database = {
           },
         ]
       }
+      size_grades: {
+        Row: {
+          active: boolean
+          created_at: string
+          grade_no: number
+          id: string
+          label: string | null
+          max_count_per_kg: number | null
+          max_weight_kg: number | null
+          min_count_per_kg: number | null
+          min_weight_kg: number | null
+          note: string | null
+          species_group: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          grade_no: number
+          id?: string
+          label?: string | null
+          max_count_per_kg?: number | null
+          max_weight_kg?: number | null
+          min_count_per_kg?: number | null
+          min_weight_kg?: number | null
+          note?: string | null
+          species_group: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          grade_no?: number
+          id?: string
+          label?: string | null
+          max_count_per_kg?: number | null
+          max_weight_kg?: number | null
+          min_count_per_kg?: number | null
+          min_weight_kg?: number | null
+          note?: string | null
+          species_group?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       species_cut_models: {
         Row: {
           created_at: string
@@ -6538,6 +6596,7 @@ export type Database = {
           id: string
           min_piece_weight_kg: number | null
           note: string | null
+          size_grade: number | null
           species_group: string
           updated_at: string
         }
@@ -6548,6 +6607,7 @@ export type Database = {
           id?: string
           min_piece_weight_kg?: number | null
           note?: string | null
+          size_grade?: number | null
           species_group: string
           updated_at?: string
         }
@@ -6558,6 +6618,7 @@ export type Database = {
           id?: string
           min_piece_weight_kg?: number | null
           note?: string | null
+          size_grade?: number | null
           species_group?: string
           updated_at?: string
         }
@@ -8920,6 +8981,10 @@ export type Database = {
       recalc_product_day_price: {
         Args: { _product_id: string }
         Returns: number
+      }
+      reclassify_lot_product: {
+        Args: { _lot_id: string; _new_product_id: string }
+        Returns: Json
       }
       set_store_membership: {
         Args: { _member: boolean; _staff_id: string; _store_id: string }
