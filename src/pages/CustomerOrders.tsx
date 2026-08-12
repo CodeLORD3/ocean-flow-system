@@ -455,6 +455,15 @@ export default function CustomerOrders() {
           <RetailCustomerRegistry storeId={effectiveStore} readOnly={!canEdit} />
         )}
         {panel === "stats" && <CustomerOrderStats storeId={effectiveStore} />}
+        {panel === "route" && (
+          <DeliveryRouteView
+            storeId={effectiveStore}
+            storeName={isShop ? activeStoreName : stores.find((s: any) => s.id === effectiveStore)?.name}
+            readOnly={!canEdit}
+          />
+        )}
+        {panel === "kitchen" && <CateringKitchenList storeId={effectiveStore} />}
+        {panel === "needs" && <PurchaseNeedsView />}
       </div>
 
 
