@@ -223,3 +223,129 @@ export function shiftTimeValue(iso?: string | null): string {
   const d = new Date(iso);
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
+
+export interface ShiftEdit {
+  id: string;
+  shift_id: string;
+  field: string;
+  old_value: string | null;
+  new_value: string | null;
+  edited_by_name: string | null;
+  created_at: string;
+}
+
+export const SHIFT_FIELD_LABEL: Record<string, string> = {
+  clocked_in_at: "Instämpling",
+  clocked_out_at: "Utstämpling",
+  store_id: "Enhet",
+};
+
+/** Ändringslogg för en uppsättning stämplingar — tom map när inget ändrats. */
+export function useShiftEdits(shiftIds: string[]) {
+  const ids = [...shiftIds].sort();
+  return useQuery({
+    queryKey: ["shift-edits", ids.join(",")],
+    enabled: ids.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("staff_shift_edits")
+        .select("id, shift_id, field, old_value, new_value, edited_by_name, created_at")
+        .in("shift_id", ids)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      const map = new Map<string, ShiftEdit[]>();
+      ((data ?? []) as ShiftEdit[]).forEach((e) => {
+        map.set(e.shift_id, [...(map.get(e.shift_id) ?? []), e]);
+      });
+      return map;
+    },
+  });
+}
+
+export interface ShiftUpdateInput {
+  shiftId: string;
+  original: { clocked_in_at: string; clocked_out_at: string | null; store_id: string | null };
+  clocked_in_at: string;
+  clocked_out_at: string | null;
+  store_id: string | null;
+  /** Namnet som skrivs i loggen — vem som gjorde ändringen. */
+  editorName: string;
+  /** Läsbara namn på enheter, för en begriplig logg. */
+  storeLabels?: Record<string, string>;
+}
+
+/**
+ * Admin rättar en stämpling.
+ *
+ * Ändringen skrivs på befintlig rad i staff_shifts — ingen parallell datakälla —
+ * och varje ändrat fält loggas med gammalt värde, nytt värde, vem och när.
+ */
+export function useUpdateShift() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: ShiftUpdateInput) => {
+      const { shiftId, original, editorName, storeLabels = {} } = input;
+
+      const changes: { field: string; old_value: string | null; new_value: string | null }[] = [];
+      const label = (id: string | null) => (id ? storeLabels[id] ?? id : "Ingen enhet");
+
+      if (new Date(input.clocked_in_at).getTime() !== new Date(original.clocked_in_at).getTime()) {
+        changes.push({ field: "clocked_in_at", old_value: original.clocked_in_at, new_value: input.clocked_in_at });
+      }
+      const oldOut = original.clocked_out_at ? new Date(original.clocked_out_at).getTime() : null;
+      const newOut = input.clocked_out_at ? new Date(input.clocked_out_at).getTime() : null;
+      if (oldOut !== newOut) {
+        changes.push({ field: "clocked_out_at", old_value: original.clocked_out_at, new_value: input.clocked_out_at });
+      }
+      if ((original.store_id ?? null) !== (input.store_id ?? null)) {
+        changes.push({
+          field: "store_id",
+          old_value: label(original.store_id ?? null),
+          new_value: label(input.store_id ?? null),
+        });
+      }
+
+      if (changes.length === 0) return { changed: 0 };
+
+      const { error } = await supabase
+        .from("staff_shifts")
+        .update({
+          clocked_in_at: input.clocked_in_at,
+          clocked_out_at: input.clocked_out_at,
+          store_id: input.store_id,
+        })
+        .eq("id", shiftId);
+      if (error) throw error;
+
+      const { data: auth } = await supabase.auth.getUser();
+      const { error: logErr } = await supabase.from("staff_shift_edits").insert(
+        changes.map((c) => ({
+          shift_id: shiftId,
+          field: c.field,
+          old_value: c.old_value,
+          new_value: c.new_value,
+          edited_by: auth?.user?.id ?? null,
+          edited_by_name: editorName,
+        })),
+      );
+      if (logErr) throw logErr;
+
+      return { changed: changes.length };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["live-staff-shifts"] });
+      qc.invalidateQueries({ queryKey: ["staff-shifts-open"] });
+      qc.invalidateQueries({ queryKey: ["staff-shifts-date"] });
+      qc.invalidateQueries({ queryKey: ["staff-shift-history"] });
+      qc.invalidateQueries({ queryKey: ["shift-edits"] });
+    },
+  });
+}
+
+/** HH:MM på ett datum → ISO-tidsstämpel i lokal tid. */
+export function timeOnDayToIso(day: string, hhmm: string): string {
+  const [h, m] = hhmm.split(":").map(Number);
+  const d = new Date(`${day}T00:00:00`);
+  d.setHours(h || 0, m || 0, 0, 0);
+  return d.toISOString();
+}
