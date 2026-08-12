@@ -212,22 +212,28 @@ export default function LiveStaff() {
                   <TimeAxisHeader axis={axis} labelWidth={LABEL_W} />
                   {visible.map((r) => (
                     <div key={r.id} className="flex border-b border-border last:border-0 hover:bg-muted/30">
-                      <button
-                        type="button"
-                        onClick={() => setSelected(r.id)}
-                        className={`sticky left-0 z-10 shrink-0 border-r border-border bg-card px-2 py-1.5 text-left ${LABEL_W}`}
+                      <div
+                        className={`sticky left-0 z-10 shrink-0 space-y-1 border-r border-border bg-card px-2 py-1.5 text-left ${LABEL_W}`}
                       >
-                        <p className="truncate text-xs font-medium text-foreground">{r.name}</p>
-                        <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                          <span
-                            className={`h-1.5 w-1.5 rounded-full ${r.openNow ? "bg-emerald-500" : "bg-muted-foreground/40"}`}
-                          />
-                          {formatDayHours(r.hours)}
-                          {r.deviations.length > 0 && (
-                            <span className="text-destructive">· {r.deviations.length} avvikelse(r)</span>
-                          )}
-                        </p>
-                      </button>
+                        <OnDutyAvatars
+                          staffRows={r.staffRows}
+                          staffById={staffById}
+                          live={live}
+                          onSelect={() => setSelected(r.id)}
+                        />
+                        <button type="button" onClick={() => setSelected(r.id)} className="block w-full text-left">
+                          <p className="truncate text-xs font-medium text-foreground">{r.name}</p>
+                          <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                            <span
+                              className={`h-1.5 w-1.5 rounded-full ${r.openNow ? "bg-emerald-500" : "bg-muted-foreground/40"}`}
+                            />
+                            {formatDayHours(r.hours)}
+                            {r.deviations.length > 0 && (
+                              <span className="text-destructive">· {r.deviations.length} avvikelse(r)</span>
+                            )}
+                          </p>
+                        </button>
+                      </div>
                       <div className="relative min-h-[2.5rem] flex-1 py-1">
                         <NowLine axis={axis} nowMinutes={live ? nowMinutes : -1} />
                         {r.staffRows.length === 0 ? (
