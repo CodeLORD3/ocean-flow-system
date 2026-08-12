@@ -349,3 +349,24 @@ export function timeOnDayToIso(day: string, hhmm: string): string {
   d.setHours(h || 0, m || 0, 0, 0);
   return d.toISOString();
 }
+
+/** Alla stämplingar i ett datumintervall — underlag för arbetad tid i schemat. */
+export function useShiftsRange(from?: string, to?: string, storeId?: string | null) {
+  return useQuery({
+    queryKey: ["staff-shifts-range", from, to, storeId ?? "all"],
+    enabled: !!from && !!to,
+    queryFn: async () => {
+      let q = supabase
+        .from("staff_shifts")
+        .select("id, staff_id, store_id, clocked_in_at, clocked_out_at")
+        .gte("clocked_in_at", `${from}T00:00:00`)
+        .lte("clocked_in_at", `${to}T23:59:59`)
+        .order("clocked_in_at", { ascending: true });
+      if (storeId) q = q.eq("store_id", storeId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as StaffShift[];
+    },
+    refetchInterval: 60_000,
+  });
+}
