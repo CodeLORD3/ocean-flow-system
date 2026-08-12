@@ -117,6 +117,17 @@ export async function currentBalance(productId: string, locationId: string) {
   };
 }
 
+/**
+ * Partiets bokförda inköpspris per kg. Detta är enda källan till lagervärde
+ * för ett parti — aldrig produktens prisfält och aldrig lagerplatsens
+ * blandade snittpris.
+ */
+export async function lotUnitCost(lotId: string): Promise<number | null> {
+  const { data } = await supabase.from("lots").select("unit_cost").eq("id", lotId).maybeSingle();
+  const cost = Number((data as any)?.unit_cost);
+  return Number.isFinite(cost) && cost > 0 ? cost : null;
+}
+
 /** Flyttar kvantitet mellan två lagerplatser som två motbokade rörelser. */
 export async function transferStock(params: {
   productId: string;
@@ -131,8 +142,12 @@ export async function transferStock(params: {
 }) {
   const { quantityKg } = params;
   if (!quantityKg) return;
+  // Partipriset följer alltid med partiet oförändrat vid flytt. Först när
+  // rörelsen saknar parti används lagerplatsens snittpris som reserv.
   const cost =
-    params.unitCost ?? (await currentBalance(params.productId, params.fromLocationId)).avgCost;
+    (params.lotId ? await lotUnitCost(params.lotId) : null) ??
+    params.unitCost ??
+    (await currentBalance(params.productId, params.fromLocationId)).avgCost;
 
   await recordMovements([
     {
