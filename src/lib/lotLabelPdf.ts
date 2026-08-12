@@ -15,6 +15,8 @@ export interface LotLabel {
   catchArea?: string | null;
   vesselName?: string | null;
   bestBefore?: string | null;
+  /** Hållbarhet efter öppnad förpackning, i dagar. */
+  shelfLifeOpenDays?: number | null;
   supplierLotNumber?: string | null;
   /** Identifieringsmärke, exempelvis "SE 6742 EG". Skrivs som ovalt märke. */
   identificationMark?: string | null;
