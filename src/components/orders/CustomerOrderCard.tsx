@@ -165,6 +165,7 @@ export function CustomerOrderCard({
         total: l.line_total != null ? Number(l.line_total) : null,
         packedDate: new Date().toISOString().slice(0, 10),
         bestBefore: l.lots?.best_before ?? null,
+        shelfLifeOpenDays: (l.products as any)?.shelf_life_open_days ?? null,
         lotNumber: l.lots?.lot_number ?? null,
         barcode: l.products?.sku ?? null,
       })),
