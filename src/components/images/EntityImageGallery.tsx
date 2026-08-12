@@ -130,14 +130,23 @@ export function EntityImageGallery({
   const featured = images.filter((i) => i.is_featured && dayKey(i.created_at) === todayKey);
   const favorites = images.filter((i) => favoriteIds.includes(i.id));
 
-  /** Poolen med utvalda bilder (valfritt antal), sorterad så framsidans bilder ligger först. */
-  const pool = useMemo(
-    () =>
-      featured
+  /**
+   * Poolen med utvalda bilder (valfritt antal), sorterad så framsidans bilder ligger först.
+   * Saknas utvalda bilder för idag visas dagens senaste bilder automatiskt tills
+   * någon markerar egna favoriter med stjärnan.
+   */
+  const pool = useMemo(() => {
+    if (featured.length)
+      return featured
         .slice()
-        .sort((a, b) => a.sort_order - b.sort_order || a.created_at.localeCompare(b.created_at)),
-    [featured],
-  );
+        .sort((a, b) => a.sort_order - b.sort_order || a.created_at.localeCompare(b.created_at));
+    return images
+      .filter((i) => dayKey(i.created_at) === todayKey)
+      .slice()
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+      .slice(0, previewCount || 4);
+  }, [featured, images, todayKey, previewCount]);
+
 
   /**
    * Datum i katalogen som en sammanhängande kalender: varje dag från idag och
