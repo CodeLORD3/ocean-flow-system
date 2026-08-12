@@ -149,14 +149,31 @@ export function AppSidebar() {
   const chatUnread = useChatUnread();
   const incomingTransfers = useIncomingTransferCount(null);
 
-  // Calendar section starts open if any of its routes are active
-  const calendarRoutes = calendarNav.map(n => n.url);
-  const isCalendarActive = calendarRoutes.some(r => isActive(r));
-  const [calendarOpen, setCalendarOpen] = useState(isCalendarActive);
+  // Varje sektion kan fällas ihop så att alla kategorier syns i korta fönster.
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
+    try {
+      const raw = localStorage.getItem(OPEN_KEY);
+      if (raw) return JSON.parse(raw) as Record<string, boolean>;
+    } catch { /* ignorera trasig cache */ }
+    return {};
+  });
 
+  const isSectionOpen = (section: NavSection) =>
+    openSections[section.label] ?? section.items.some(i => isActive(i.url));
+
+  const setSectionOpen = (label: string, open: boolean) => {
+    setOpenSections(prev => {
+      const next = { ...prev, [label]: open };
+      try { localStorage.setItem(OPEN_KEY, JSON.stringify(next)); } catch { /* ignorera */ }
+      return next;
+    });
+  };
+
+  // Sektionen med aktiv sida fälls alltid upp.
   useEffect(() => {
-    if (isCalendarActive && !calendarOpen) setCalendarOpen(true);
-  }, [isCalendarActive]);
+    const active = sections.find(s => s.items.some(i => isActive(i.url)));
+    if (active && openSections[active.label] === false) setSectionOpen(active.label, true);
+  }, [location.pathname]);
 
   useEffect(() => {
     const count = getCount(location.pathname);
@@ -167,9 +184,11 @@ export function AppSidebar() {
 
   const renderSection = (section: NavSection) => {
     if (section.collapsible) {
+      const open = isSectionOpen(section);
       return (
         <SidebarGroup key={section.label}>
-          <Collapsible open={calendarOpen} onOpenChange={setCalendarOpen}>
+          <Collapsible open={open} onOpenChange={(v) => setSectionOpen(section.label, v)}>
+
             <CollapsibleTrigger className="w-full">
               <SidebarGroupLabel className="cursor-pointer flex items-center justify-between pr-2">
                 {section.label}
