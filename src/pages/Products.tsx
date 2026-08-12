@@ -78,15 +78,19 @@ const UNITS = ["KG", "ST", "L", "FÖRP"];
 const PRODUCERS = ["Inköp", "Produktion", "Inköp/Produktion"];
 
 // ── Shelf life helper ────────────────────────────────────────────────────────
-function ShelfLifeBadge({ days }: { days: number | null }) {
+function ShelfLifeBadge({ days, openDays }: { days: number | null; openDays?: number | null }) {
   if (!days) return <span className="text-[11px] text-muted-foreground/40 font-mono tabular-nums">–</span>;
   let color = "bg-emerald-500/10 text-emerald-700 border-emerald-500/20";
   if (days <= 3) color = "bg-destructive/10 text-destructive border-destructive/20";
   else if (days <= 7) color = "bg-amber-500/10 text-amber-700 border-amber-500/20";
   return (
-    <Badge variant="outline" className={`text-[10px] gap-0.5 font-mono tabular-nums ${color}`}>
+    <Badge
+      variant="outline"
+      className={`text-[10px] gap-0.5 font-mono tabular-nums ${color}`}
+      title={openDays ? `${days} d sluten / ${openDays} d öppnad` : `${days} d sluten förpackning`}
+    >
       <Clock className="h-2.5 w-2.5" />
-      {days}d
+      {days}d{openDays ? ` / ${openDays}d` : ""}
     </Badge>
   );
 }
@@ -363,6 +367,7 @@ export default function Products() {
     origin: "",
     producer: "",
     shelf_life_days: "", // NEW
+    shelf_life_open_days: "",
     image_url: "",
     latin_name: "",
     requires_processing: false,
@@ -439,6 +444,7 @@ export default function Products() {
       origin: "",
       producer: "",
       shelf_life_days: "",
+      shelf_life_open_days: "",
       image_url: "",
       latin_name: "",
       requires_processing: false,
@@ -465,6 +471,7 @@ export default function Products() {
       origin: p.origin || "",
       producer: (p as any).producer || "",
       shelf_life_days: String((p as any).shelf_life_days || ""), // NEW
+      shelf_life_open_days: String((p as any).shelf_life_open_days || ""),
       image_url: (p as any).image_url || "",
       latin_name: (p as any).latin_name || "",
       requires_processing: Boolean((p as any).requires_processing),
@@ -522,6 +529,7 @@ export default function Products() {
       origin: form.origin || null,
       producer: form.producer || null,
       shelf_life_days: form.shelf_life_days ? Number(form.shelf_life_days) : null, // NEW
+      shelf_life_open_days: form.shelf_life_open_days ? Number(form.shelf_life_open_days) : null,
       image_url: form.image_url.trim() || null,
       latin_name: form.latin_name.trim() || null,
       requires_processing: form.requires_processing,
@@ -671,6 +679,7 @@ export default function Products() {
     const agg = hasChildren ? getAggregated(p) : null;
     const isAggregatedParent = hasChildren;
     const shelfLifeDays: number | null = (p as any).shelf_life_days || null;
+    const shelfLifeOpenDays: number | null = (p as any).shelf_life_open_days || null;
 
     const costVal = inlineEdits[p.id]?.cost_price ?? Number(p.cost_price);
     const wholesaleVal = inlineEdits[p.id]?.wholesale_price ?? Number(p.wholesale_price);
@@ -756,8 +765,8 @@ export default function Products() {
             <span className="text-[11px] text-muted-foreground/40 font-mono tabular-nums">–</span>
           ) : (
             <div className="inline-flex items-center gap-1">
-              <ShelfLifeBadge days={shelfLifeDays} />
-              <span className="inline-flex items-center">
+              <ShelfLifeBadge days={shelfLifeDays} openDays={shelfLifeOpenDays} />
+              <span className="inline-flex items-center" title="Sluten förpackning (dagar)">
                 <input
                   type="number"
                   min="1"
@@ -775,7 +784,32 @@ export default function Products() {
                     qc.invalidateQueries({ queryKey: ["products"] });
                     toast({
                       title: "Hållbarhet sparad",
-                      description: `${p.name}: ${val ? `${val} dagar` : "borttagen"}`,
+                      description: `${p.name}: ${val ? `${val} dagar sluten` : "borttagen"}`,
+                    });
+                  }}
+                />
+                <span className="text-[10px] text-muted-foreground/50 ml-0.5">d</span>
+              </span>
+              <span className="text-[10px] text-muted-foreground/40">/</span>
+              <span className="inline-flex items-center" title="Efter öppnad förpackning (dagar)">
+                <input
+                  type="number"
+                  min="1"
+                  max="9999"
+                  defaultValue={shelfLifeOpenDays || ""}
+                  placeholder="–"
+                  className="w-9 h-6 !text-[11px] font-mono tabular-nums text-right rounded border border-transparent bg-transparent hover:border-input focus:border-input focus:bg-background focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  onBlur={async (e) => {
+                    const val = e.target.value ? Number(e.target.value) : null;
+                    if (val === shelfLifeOpenDays) return;
+                    await supabase
+                      .from("products")
+                      .update({ shelf_life_open_days: val } as any)
+                      .eq("id", p.id);
+                    qc.invalidateQueries({ queryKey: ["products"] });
+                    toast({
+                      title: "Hållbarhet öppnad sparad",
+                      description: `${p.name}: ${val ? `${val} dagar öppnad` : "borttagen"}`,
                     });
                   }}
                 />
@@ -1327,7 +1361,7 @@ export default function Products() {
             <div className="space-y-1.5">
               <Label className="text-xs font-medium flex items-center gap-1.5">
                 <Clock className="h-3 w-3 text-primary" />
-                Hållbarhet (dagar) *
+                Hållbarhet sluten förpackning (dagar) *
               </Label>
               <div className="flex items-center gap-2">
                 <Input
@@ -1336,19 +1370,33 @@ export default function Products() {
                   max="9999"
                   value={form.shelf_life_days}
                   onChange={(e) => setField("shelf_life_days", e.target.value)}
-                  placeholder="T.ex. 5"
+                  placeholder="T.ex. 9"
                   className="h-8 text-xs w-28"
                 />
-                <span className="text-xs text-muted-foreground">dagar från produktions- eller ankomstdatum</span>
+                <span className="text-xs text-muted-foreground">
+                  dagar från produktions- eller ankomstdatum, oöppnad/skyddande atmosfär
+                </span>
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <Input
+                  type="number"
+                  min="1"
+                  max="9999"
+                  value={form.shelf_life_open_days}
+                  onChange={(e) => setField("shelf_life_open_days", e.target.value)}
+                  placeholder="T.ex. 3"
+                  className="h-8 text-xs w-28"
+                />
+                <span className="text-xs text-muted-foreground">dagar efter öppnad förpackning</span>
               </div>
               {/* Quick presets */}
               <div className="flex flex-wrap gap-1 mt-1">
                 {[
                   { label: "Färsk fisk (3d)", value: "3" },
                   { label: "Beredd (5d)", value: "5" },
+                  { label: "Kokta skaldjur (9d)", value: "9" },
                   { label: "Rökt (14d)", value: "14" },
-                  { label: "Fryst (180d)", value: "180" },
-                  { label: "Torr (365d)", value: "365" },
+                  { label: "Fryst (365d)", value: "365" },
                 ].map((preset) => (
                   <button
                     key={preset.value}

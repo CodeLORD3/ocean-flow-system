@@ -15,6 +15,8 @@ export interface LotLabel {
   catchArea?: string | null;
   vesselName?: string | null;
   bestBefore?: string | null;
+  /** Hållbarhet efter öppnad förpackning, i dagar. */
+  shelfLifeOpenDays?: number | null;
   supplierLotNumber?: string | null;
   /** Identifieringsmärke, exempelvis "SE 6742 EG". Skrivs som ovalt märke. */
   identificationMark?: string | null;
@@ -61,6 +63,7 @@ export async function buildLotLabelDoc(labels: LotLabel[], copiesPerLabel = 1) {
         label.catchArea,
         label.vesselName,
         label.bestBefore ? `Bäst före ${label.bestBefore}` : null,
+        label.shelfLifeOpenDays ? `Öppnad: ${label.shelfLifeOpenDays} dagar` : null,
         label.supplierLotNumber ? `Lev.parti ${label.supplierLotNumber}` : null,
       ].filter(Boolean) as string[];
 

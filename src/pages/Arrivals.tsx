@@ -54,6 +54,8 @@ interface DraftLine {
   vesselName?: string | null;
   bestBefore?: string | null;
   supplierLotNumber?: string | null;
+  /** Hållbarhet efter öppnad förpackning, från produktregistret. */
+  shelfLifeOpenDays?: number | null;
   /** Mottagningstemperatur och orsak vid avvikelse, per parti. */
   tempC: string;
   tempMode: TempMode;
@@ -145,6 +147,16 @@ export default function Arrivals() {
           .in("id", lotIds);
         lotMeta = Object.fromEntries((data ?? []).map((l: any) => [l.id, l]));
       }
+      // Hållbarhet efter öppnad förpackning hämtas från produktregistret för etiketterna.
+      const productIds = Array.from(new Set(lines.map((l) => l.productId).filter(Boolean)));
+      let openDays: Record<string, number | null> = {};
+      if (productIds.length) {
+        const { data } = await supabase
+          .from("products")
+          .select("id, shelf_life_open_days")
+          .in("id", productIds as string[]);
+        openDays = Object.fromEntries((data ?? []).map((p: any) => [p.id, p.shelf_life_open_days ?? null]));
+      }
       setDraft(
         lines.map((l) => {
           const meta = l.lotId ? lotMeta[l.lotId] : null;
@@ -161,6 +173,7 @@ export default function Arrivals() {
             vesselName: meta?.vessel_name ?? null,
             bestBefore: meta?.best_before ?? null,
             supplierLotNumber: meta?.supplier_lot_id ?? null,
+            shelfLifeOpenDays: openDays[l.productId] ?? null,
             tempC: meta?.receiving_temp_c != null ? String(meta.receiving_temp_c) : "",
             tempMode: "fersk" as TempMode,
             tempReason: meta?.receiving_temp_deviation_reason ?? "",
@@ -524,6 +537,7 @@ export default function Arrivals() {
                         vesselName: l.vesselName,
                         bestBefore: l.bestBefore,
                         supplierLotNumber: l.supplierLotNumber,
+                        shelfLifeOpenDays: l.shelfLifeOpenDays ?? null,
                         identificationMark: senderMark ?? null,
                       })),
                   );

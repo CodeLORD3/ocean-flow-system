@@ -17,6 +17,8 @@ export interface PackLabel {
   total: number | null;
   packedDate: string;
   bestBefore?: string | null;
+  /** Hållbarhet efter öppnad förpackning, i dagar. */
+  shelfLifeOpenDays?: number | null;
   lotNumber?: string | null;
   barcode?: string | null;
 }
@@ -66,6 +68,7 @@ export function buildPackLabelDoc(labels: PackLabel[]) {
     const meta = [
       `Packat ${l.packedDate}`,
       l.bestBefore ? `Bäst före ${l.bestBefore}` : null,
+      l.shelfLifeOpenDays ? `Öppnad ${l.shelfLifeOpenDays} d` : null,
       l.lotNumber ? `Parti ${l.lotNumber}` : null,
     ]
       .filter(Boolean)

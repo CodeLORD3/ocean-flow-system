@@ -15,7 +15,13 @@ export interface TransformationRecipe {
   active: boolean;
   notes: string | null;
   raw?: { id: string; sku: string; name: string } | null;
-  output?: { id: string; sku: string; name: string; shelf_life_days: number | null } | null;
+  output?: {
+    id: string;
+    sku: string;
+    name: string;
+    shelf_life_days: number | null;
+    shelf_life_open_days?: number | null;
+  } | null;
 }
 
 export const TRANSFORM_TYPES = [{ value: "kokning", label: "Kokning" }];
@@ -27,7 +33,7 @@ export function useTransformationRecipes() {
       const { data, error } = await supabase
         .from("transformation_recipes")
         .select(
-          "*, raw:products!transformation_recipes_raw_product_id_fkey(id, sku, name), output:products!transformation_recipes_output_product_id_fkey(id, sku, name, shelf_life_days)",
+          "*, raw:products!transformation_recipes_raw_product_id_fkey(id, sku, name), output:products!transformation_recipes_output_product_id_fkey(id, sku, name, shelf_life_days, shelf_life_open_days)",
         )
         .order("created_at");
       if (error) throw error;
