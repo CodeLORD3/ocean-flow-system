@@ -335,3 +335,16 @@ export function isOpenNow(h: DayHours, nowMinutes: number): boolean {
   if (h.closed || h.open === null || h.close === null) return false;
   return nowMinutes >= h.open && nowMinutes < h.close;
 }
+
+/** Kompakt arbetstid, "2h 14m" — för liveräknare på bjälkarna. */
+export function formatMinutesShort(total: number): string {
+  const m = Math.max(0, Math.round(total));
+  const h = Math.floor(m / 60);
+  const rest = m % 60;
+  return h > 0 ? `${h}h ${rest}m` : `${rest}m`;
+}
+
+/** Har personen ett pågående (ej utstämplat) pass? */
+export function hasOngoing(row: StaffDayRow): boolean {
+  return row.actualSegments.some((s) => s.kind === "work" && s.open);
+}
