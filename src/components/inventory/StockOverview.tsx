@@ -132,6 +132,8 @@ interface ProductGroup {
   unit: string;
   image_url: string | null;
   lines: StockRow[];
+  /** Kvantitet i produktens egen enhet: antal för st, kilo för kg. */
+  totalQty: number;
   totalKg: number;
   value: number;
   minStock: number;
@@ -190,6 +192,7 @@ export default function StockOverview({
           unit: p.unit || master.unit || "kg",
           image_url: master.image_url ?? p.image_url ?? null,
           lines: [],
+          totalQty: 0,
           totalKg: 0,
           value: 0,
           minStock: 0,
@@ -200,6 +203,7 @@ export default function StockOverview({
         map.set(r.product_id, g);
       }
       g.lines.push(r);
+      g.totalQty += qty;
       g.totalKg += qtyToKg(qty, p);
       const unitPrice = Number(r.unit_cost) || 0;
       g.value += qty * unitPrice;
@@ -211,7 +215,7 @@ export default function StockOverview({
     const list = Array.from(map.values());
     for (const g of list) {
       g.daysLeft = g.earliestExpiry ? differenceInDays(parseISO(g.earliestExpiry), new Date()) : null;
-      const low = g.minStock > 0 && g.totalKg < g.minStock;
+      const low = g.minStock > 0 && g.totalQty < g.minStock;
       g.status = statusOf(g.daysLeft, low);
       g.lines.sort((a, b) => (a.expiry_date || "9999").localeCompare(b.expiry_date || "9999"));
     }
@@ -229,7 +233,7 @@ export default function StockOverview({
     return groups.filter((g) => {
       if (category !== "__all__" && g.category !== category) return false;
       if (statusFilter !== "all") {
-        if (statusFilter === "low" && !(g.minStock > 0 && g.totalKg < g.minStock)) return false;
+        if (statusFilter === "low" && !(g.minStock > 0 && g.totalQty < g.minStock)) return false;
         if (statusFilter === "expiring" && !(g.daysLeft !== null && g.daysLeft <= 5)) return false;
         if (statusFilter === "expired" && !(g.daysLeft !== null && g.daysLeft < 0)) return false;
         if (statusFilter === "ok" && g.status !== "ok") return false;
@@ -247,7 +251,7 @@ export default function StockOverview({
   const kpis = useMemo(() => {
     const value = filtered.reduce((s, g) => s + g.value, 0);
     const qty = filtered.reduce((s, g) => s + g.totalKg, 0);
-    const low = filtered.filter((g) => g.minStock > 0 && g.totalKg < g.minStock).length;
+    const low = filtered.filter((g) => g.minStock > 0 && g.totalQty < g.minStock).length;
     const critical = filtered.filter((g) => g.daysLeft !== null && g.daysLeft <= 2).length;
     return { value, qty, count: filtered.length, low, critical };
   }, [filtered]);
@@ -500,7 +504,7 @@ export default function StockOverview({
                 <th className="w-8 px-2 py-2 text-left font-medium">#</th>
                 <th className="px-2 py-2 text-left font-medium">Produkt</th>
                 <th className="px-2 py-2 text-left font-medium">Kategori</th>
-                <th className="px-2 py-2 text-left font-medium">Lager (kg)</th>
+                <th className="px-2 py-2 text-left font-medium">Lager</th>
                 <th className="px-2 py-2 text-right font-medium">Totalt</th>
                 {showCosts && <th className="px-2 py-2 text-right font-medium">Lagervärde</th>}
                 <th className="px-2 py-2 text-center font-medium">Bäst före</th>
@@ -603,7 +607,7 @@ export default function StockOverview({
                           </div>
                         </td>
                         <td className="px-2 text-right font-semibold tabular-nums whitespace-nowrap">
-                          {g.totalKg.toLocaleString("sv-SE", { maximumFractionDigits: 1 })} kg
+                          {g.totalQty.toLocaleString("sv-SE", { maximumFractionDigits: g.unit === "st" ? 0 : 1 })} {g.unit}
                         </td>
                         {showCosts && (
                           <td className="px-2 text-right tabular-nums whitespace-nowrap">{fmt(g.value)}</td>
