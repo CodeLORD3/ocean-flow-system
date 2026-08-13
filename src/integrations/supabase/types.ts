@@ -3301,6 +3301,27 @@ export type Database = {
         }
         Relationships: []
       }
+      job_runs: {
+        Row: {
+          job_name: string
+          ran_at: string
+          result: Json | null
+          run_date: string
+        }
+        Insert: {
+          job_name: string
+          ran_at?: string
+          result?: Json | null
+          run_date: string
+        }
+        Update: {
+          job_name?: string
+          ran_at?: string
+          result?: Json | null
+          run_date?: string
+        }
+        Relationships: []
+      }
       landing_settings: {
         Row: {
           card_subtitle: string
@@ -9079,6 +9100,15 @@ export type Database = {
         Args: { _product_id: string }
         Returns: number
       }
+      receiving_link_lot: {
+        Args: {
+          _best_before?: string
+          _location_id: string
+          _order_id: string
+          _product_id: string
+        }
+        Returns: Json
+      }
       reclassify_lot_product: {
         Args: { _lot_id: string; _new_product_id: string }
         Returns: Json
@@ -9094,6 +9124,7 @@ export type Database = {
       species_key: { Args: { v: string }; Returns: string }
       staff_has_store: { Args: { _store: string }; Returns: boolean }
       stock_reconciliation_check: { Args: { _source?: string }; Returns: Json }
+      unpost_purchase_report: { Args: { _report_id: string }; Returns: Json }
       user_portals: { Args: { _user_id: string }; Returns: string[] }
       user_store_ids: { Args: { _user_id: string }; Returns: string[] }
       zero_stale_day_prices: { Args: never; Returns: number }
