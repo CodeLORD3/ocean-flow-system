@@ -13,16 +13,19 @@ export type CutModel =
   | "salmon_side"
   | "flatfish"
   | "tail_only"
-  | "single";
+  | "single"
+  | "hel";
 
 export const CUT_MODEL_LABELS: Record<CutModel, string> = {
   loin_four: "Fyrdelad filé (rygg, benfri filé, slag, kontrarygg)",
   loin_whole: "Hela loins (loin, buk, avskär)",
   salmon_side: "Laxsida (rygg, buk)",
-  flatfish: "Plattfisk (hel filé, kotlett, fletch)",
+  flatfish: "Plattfisk (hel filé)",
   tail_only: "Endast stjärt",
   single: "Endast hel filé",
+  hel: "Hel (säljs hel, ingen styckning)",
 };
+
 
 export interface ModelDetail {
   form: string;
