@@ -80,6 +80,8 @@ export interface CoverageInput {
   detailPrices: DetailPriceRow[];
   marginTargets: MarginTargetRow[];
   vatRates: VatRateRow[];
+  /** Produktkategorier med flaggan "kräver ej artgrupp/utbyte". */
+  exemptCategories?: string[];
   /** ISO-datum (YYYY-MM-DD) som momsgiltigheten prövas mot. */
   today?: string;
 }
@@ -91,12 +93,21 @@ const num = (v: unknown): number => {
 
 const formKey = (v: unknown): string => String(v ?? "").trim().toLowerCase();
 
+/** Produkter i undantagna kategorier (emballage, konserver, såser, rom, delikatesser). */
+export function isExemptProduct(p: ProductRow, input: CoverageInput): boolean {
+  const set = new Set((input.exemptCategories ?? []).map((c) => formKey(c)));
+  return set.has(formKey(p.category));
+}
+
 /* ── 1. Utbytestäckning ───────────────────────────────────────── */
 
 export function checkYieldCoverage(input: CoverageInput): CoverageFinding[] {
   const covered = new Set(input.yields.map((y) => speciesKey(y.species_group)));
   const out: CoverageFinding[] = [];
-  const activeProducts = input.products.filter((p) => p.active !== false);
+  const activeProducts = input.products.filter(
+    (p) => p.active !== false && !isExemptProduct(p, input),
+  );
+
 
   for (const p of activeProducts) {
     const g = speciesKey(p.species_group);
