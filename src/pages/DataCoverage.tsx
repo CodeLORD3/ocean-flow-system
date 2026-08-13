@@ -20,7 +20,10 @@ const CHECK_ORDER: CheckId[] = ["yields", "cut_models", "cut_splits", "detail_pr
 async function loadCoverageInput(): Promise<CoverageInput> {
   const [products, yields, cutModels, cutSplits, detailPrices, marginTargets, vatRates, categories] =
     await Promise.all([
-      supabase.from("products").select("sku, name, species_group, active, category").eq("active", true),
+      supabase
+        .from("products")
+        .select("sku, name, species_group, active, category, exempt_species_data" as any)
+        .eq("active", true),
       supabase.from("yields").select("species_group"),
       supabase.from("species_cut_models").select("species_group, cut_model"),
       supabase

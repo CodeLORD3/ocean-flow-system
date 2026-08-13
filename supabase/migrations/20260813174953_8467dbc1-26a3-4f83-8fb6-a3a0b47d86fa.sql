@@ -1,0 +1,1 @@
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS exempt_species_data boolean NOT NULL DEFAULT false;

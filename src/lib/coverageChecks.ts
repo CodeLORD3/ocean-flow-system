@@ -35,6 +35,8 @@ export interface ProductRow {
   active?: boolean | null;
   /** Produktkategori — kategorier med undantag kontrolleras inte mot artgrupp/utbyte. */
   category?: string | null;
+  /** Per-produkt-undantag: blandningar, alger och beredningar utan enskild art. */
+  exempt_species_data?: boolean | null;
 }
 
 export interface YieldRow {
@@ -93,8 +95,9 @@ const num = (v: unknown): number => {
 
 const formKey = (v: unknown): string => String(v ?? "").trim().toLowerCase();
 
-/** Produkter i undantagna kategorier (emballage, konserver, såser, rom, delikatesser). */
+/** Produkter undantagna via kategoriflagga eller per-produkt-flagga. */
 export function isExemptProduct(p: ProductRow, input: CoverageInput): boolean {
+  if (p.exempt_species_data) return true;
   const set = new Set((input.exemptCategories ?? []).map((c) => formKey(c)));
   return set.has(formKey(p.category));
 }
