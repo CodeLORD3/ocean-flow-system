@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { AlertTriangle, CheckCircle2, Loader2, RefreshCw, Wrench } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -15,11 +17,26 @@ interface ReconRun {
   details: any;
 }
 
+interface NegFlag {
+  id: string;
+  created_at: string;
+  resulting_qty: number;
+  movement_qty: number | null;
+  movement_type: string | null;
+  driver_note: string | null;
+  acknowledged_at: string | null;
+  ack_note: string | null;
+  products?: { name: string; sku: string } | null;
+  storage_locations?: { name: string; stores?: { name: string } | null } | null;
+  lots?: { lot_number: string } | null;
+}
+
 const fmtTime = (v: string) =>
   new Date(v).toLocaleString("sv-SE", { dateStyle: "short", timeStyle: "short" });
 
 const fmtQty = (n: number) =>
   Number(n || 0).toLocaleString("sv-SE", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+
 
 export default function SystemStatus() {
   const qc = useQueryClient();
