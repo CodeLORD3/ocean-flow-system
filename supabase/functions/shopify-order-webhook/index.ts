@@ -328,7 +328,7 @@ async function createOrder(db: SupabaseClient, payload: any, storeId: string, vi
       delivery_city: isPickup ? null : customer.city,
       status: "bekraftad",
       pack_status: "opackad",
-      source: "Shopify",
+      source: "shopify",
       received_by_name: "Shopify",
       note: notes.join(" · "),
       shopify_order_id: shopifyOrderId,
