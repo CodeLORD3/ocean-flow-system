@@ -37,6 +37,11 @@ export interface ProductRow {
   category?: string | null;
   /** Per-produkt-undantag: blandningar, alger och beredningar utan enskild art. */
   exempt_species_data?: boolean | null;
+  /** Dagspris (viktat snitt av aktiva partier) och antal partier bakom det. */
+  day_price?: number | string | null;
+  day_price_lots?: number | string | null;
+  /** Manuellt Reservpris — används när dagspris saknas. */
+  cost_price?: number | string | null;
 }
 
 export interface YieldRow {
