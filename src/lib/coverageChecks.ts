@@ -42,6 +42,8 @@ export interface ProductRow {
   day_price_lots?: number | string | null;
   /** Manuellt Reservpris — används när dagspris saknas. */
   cost_price?: number | string | null;
+  /** Sant när Reservpriset är ärvt från grundprodukten och inte satt manuellt. */
+  cost_price_inherited?: boolean | null;
 }
 
 export interface YieldRow {
