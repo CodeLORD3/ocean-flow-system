@@ -518,7 +518,79 @@ async function createOrder(db: SupabaseClient, payload: any, storeId: string, vi
   };
 }
 
+/* ------------------------------------------------------------- avbokning */
+
+const PACK_LABEL: Record<string, string> = {
+  pagaende: "under packning",
+  packad: "färdigpackad",
+};
+
+/**
+ * Avbokning från webben: markerar kundordern avbokad, frisläpper reserverade
+ * partier och inköpsbehov, och signalerar larm om ordern redan var packad
+ * eller under packning (varorna finns då fysiskt plockade i butiken).
+ */
+async function cancelOrder(
+  db: SupabaseClient,
+  payload: any,
+  shopifyOrderId: string,
+  orderName: string,
+) {
+  const { data: order } = await db
+    .from("customer_orders")
+    .select("id, order_number, store_id, status, pack_status")
+    .eq("shopify_order_id", shopifyOrderId)
+    .maybeSingle();
+  if (!order) return { found: false as const, wasPacked: false };
+
+  const handedOver = ["levererad", "avhamtad", "delvis_utlamnad"].includes(String(order.status));
+  const packState = String(order.pack_status);
+  const wasPacked = handedOver || packState === "packad" || packState === "pagaende";
+  const packLabel = handedOver ? "redan utlämnad" : (PACK_LABEL[packState] ?? "opackad");
+
+  const reason = String(payload?.cancel_reason ?? "").trim() || "avbokad i webbutiken";
+
+  await db
+    .from("customer_orders")
+    .update({
+      status: "avbruten",
+      cancelled_at: payload?.cancelled_at ?? new Date().toISOString(),
+      cancelled_reason: reason,
+      cancelled_source: "shopify",
+      cancelled_was_packed: wasPacked,
+    })
+    .eq("id", order.id);
+
+  // Frisläpper reservationer och inköpsbehov så att partierna blir sökbara igen.
+  const { data: released } = await db
+    .from("customer_order_lines")
+    .update({ reservation_status: "ingen", reserved_lot_id: null, reserved_quantity: 0 })
+    .eq("customer_order_id", order.id)
+    .in("reservation_status", ["reserverad", "inkopsbehov"])
+    .select("id");
+
+  await db.from("customer_order_events").insert({
+    customer_order_id: order.id,
+    event_type: "webborder_avbokad",
+    description:
+      `Shopify ${orderName} avbokad (${reason}). ${(released || []).length} rader frisläppta.` +
+      (wasPacked ? ` LARM: ordern var ${packLabel} — kontrollera varorna.` : ""),
+    new_value: { shopify_order_id: shopifyOrderId, was_packed: wasPacked, pack_status: packState },
+  });
+
+  return {
+    found: true as const,
+    orderId: order.id as string,
+    orderNumber: order.order_number as string,
+    storeId: order.store_id as string,
+    wasPacked,
+    packLabel,
+    released: (released || []).length,
+  };
+}
+
 /* ------------------------------------------------------------ bearbetning */
+
 
 /**
  * Bearbetar en köad händelse. Körs ALLTID efter att svaret gått till Shopify,
