@@ -235,6 +235,11 @@ export function CustomerOrderRow({
 
           <div className="sm:hidden">
             <div className="flex h-6 items-center gap-2">
+              {order.is_web_order && (
+                <span className="shrink-0 rounded-sm bg-primary/15 px-1 text-[10px] font-bold uppercase text-primary">
+                  Webb
+                </span>
+              )}
               <span
                 className={`min-w-0 flex-1 truncate text-base font-semibold leading-tight ${
                   cancelled ? "line-through" : ""
@@ -242,6 +247,7 @@ export function CustomerOrderRow({
               >
                 {name}
               </span>
+
               {hasAllergy && (
                 <AlertTriangle
                   className="h-4 w-4 shrink-0 text-destructive"
