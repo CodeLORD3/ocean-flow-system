@@ -66,13 +66,31 @@ export default function DataCoverage() {
     queryFn: async () => {
       const input = await loadCoverageInput();
       setRanAt(new Date());
-      return runCoverageChecks(input);
+      return { findings: runCoverageChecks(input), derived: deriveDetailPrices(input) };
     },
     enabled: false,
   });
 
-  const findings = data ?? [];
+  const findings = data?.findings ?? [];
+  const derived = data?.derived ?? [];
   const totals = useMemo(() => summarize(findings), [findings]);
+
+  const priceSources = useMemo(() => {
+    const counts = { day_price: 0, cost_price: 0, missing: 0 };
+    const missingByGroup = new Map<string, Map<string, DerivedPriceRow>>();
+    for (const r of derived) {
+      counts[r.source] += 1;
+      if (r.source === "missing") {
+        const g = missingByGroup.get(r.group) ?? new Map<string, DerivedPriceRow>();
+        if (!g.has(r.sku)) g.set(r.sku, r);
+        missingByGroup.set(r.group, g);
+      }
+    }
+    const groups = [...missingByGroup.entries()]
+      .map(([group, skus]) => ({ group, rows: [...skus.values()] }))
+      .sort((a, b) => b.rows.length - a.rows.length || a.group.localeCompare(b.group, "sv"));
+    return { counts, groups };
+  }, [derived]);
 
   const grouped = useMemo(() => {
     const map = new Map<CheckId, CoverageFinding[]>();
