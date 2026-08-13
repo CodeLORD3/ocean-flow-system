@@ -211,11 +211,19 @@ export function InlineOrderPacking({
                     ? `${nf(l.line_total)} kr`
                     : `${nf(Number(l.quantity_ordered || 0) * Number(l.estimated_price_per_unit ?? 0))} kr`}
                 </span>
+                {l.paid_quantity != null &&
+                  l.quantity_packed != null &&
+                  Math.abs(Number(l.quantity_packed) - Number(l.paid_quantity)) > 0.001 && (
+                    <Badge variant="outline" className="shrink-0 text-[10px] text-amber-600">
+                      Betald {nf(l.paid_quantity, 3)} {l.unit}
+                    </Badge>
+                  )}
                 {l.pack_status !== "opackad" && (
                   <Badge variant="outline" className="shrink-0 text-[10px]">
                     {LINE_PACK_LABELS[l.pack_status] ?? l.pack_status}
                   </Badge>
                 )}
+
               </button>
               {(done || struck || l.pack_status === "restnoterad") && (
                 <div className="flex justify-end px-2 pb-1">
