@@ -51,6 +51,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/stock-movements": "Lagerrörelser",
   "/traceability": "Spårbarhet",
   "/coverage": "Datakvalitet",
+  "/system-status": "Systemstatus",
 };
 
 export function getTitleForPath(path: string): string {
