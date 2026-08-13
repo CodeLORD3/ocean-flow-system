@@ -13,16 +13,19 @@ export type CutModel =
   | "salmon_side"
   | "flatfish"
   | "tail_only"
-  | "single";
+  | "single"
+  | "hel";
 
 export const CUT_MODEL_LABELS: Record<CutModel, string> = {
   loin_four: "Fyrdelad filé (rygg, benfri filé, slag, kontrarygg)",
   loin_whole: "Hela loins (loin, buk, avskär)",
   salmon_side: "Laxsida (rygg, buk)",
-  flatfish: "Plattfisk (hel filé, kotlett, fletch)",
+  flatfish: "Plattfisk (hel filé)",
   tail_only: "Endast stjärt",
   single: "Endast hel filé",
+  hel: "Hel (säljs hel, ingen styckning)",
 };
+
 
 export interface ModelDetail {
   form: string;
@@ -49,14 +52,12 @@ export const CUT_MODEL_TEMPLATES: Record<CutModel, ModelDetail[]> = {
     { form: "rygg", name: "Rygg (backloin)", pctOfFillet: 60, role: "primary" },
     { form: "buk", name: "Buk (bellyloin)", pctOfFillet: 40, role: "byproduct" },
   ],
-  flatfish: [
-    { form: "hel filé", name: "Hel filé", pctOfFillet: 100, role: "primary" },
-    { form: "kotlett", name: "Kotlett/tronçon", pctOfFillet: 0, role: "primary", optional: true },
-    { form: "fletch", name: "Fletch", pctOfFillet: 0, role: "primary", optional: true },
-  ],
+  flatfish: [{ form: "hel filé", name: "Hel filé", pctOfFillet: 100, role: "primary" }],
   tail_only: [{ form: "stjärt", name: "Stjärt", pctOfFillet: 100, role: "primary" }],
   single: [{ form: "hel filé", name: "Hel filé", pctOfFillet: 100, role: "primary" }],
+  hel: [{ form: "hel", name: "Hel", pctOfFillet: 100, role: "primary" }],
 };
+
 
 /** Minsta styckvikt för att modellen ska vara försvarbar (kg). */
 export const MODEL_MIN_PIECE_WEIGHT: Partial<Record<CutModel, number>> = {
@@ -102,7 +103,44 @@ export const SPECIES_CUT_MODEL: Record<string, CutModel> = {
   sillflundra: "flatfish",
 
   marulk: "tail_only",
+
+  gos: "single",
+  stillahavslax: "salmon_side",
+
+  // Skaldjur och blötdjur säljs hela — ingen styckning, en detalj på 100 %.
+  abalone: "hel",
+  "argentinsk-rodraka": "hel",
+  blamussla: "hel",
+  calamari: "hel",
+  carabinero: "hel",
+  drottningkammussla: "hel",
+  flodkrafta: "hel",
+  gronmussla: "hel",
+  havskrafta: "hel",
+  hjartmussla: "hel",
+  "hummer-amerikansk": "hel",
+  "hummer-europeisk": "hel",
+  kammussla: "hel",
+  knivmussla: "hel",
+  kungskrabba: "hel",
+  langust: "hel",
+  mandelmussla: "hel",
+  octopus: "hel",
+  "ostron-gigas": "hel",
+  "ostron-platt": "hel",
+  "raka-nordhav": "hel",
+  signalkrafta: "hel",
+  snokrabba: "hel",
+  "softshell-crab": "hel",
+  strandsnacka: "hel",
+  taskkrabba: "hel",
+  tigerraka: "hel",
+  valthornssnacka: "hel",
+  vannameiraka: "hel",
+  venusmussla: "hel",
+  vongole: "hel",
 };
+
 
 /** Alias för stjärtdetaljen — "Benfri filé" är namnet som visas i butik. */
 export const BENFRI_FILE_ALIASES = ["benfri filé", "benfri file", "stjärtbit"];

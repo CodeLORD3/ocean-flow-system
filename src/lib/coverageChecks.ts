@@ -33,7 +33,10 @@ export interface ProductRow {
   name: string;
   species_group?: string | null;
   active?: boolean | null;
+  /** Produktkategori — kategorier med undantag kontrolleras inte mot artgrupp/utbyte. */
+  category?: string | null;
 }
+
 export interface YieldRow {
   species_group: string;
 }
@@ -77,6 +80,8 @@ export interface CoverageInput {
   detailPrices: DetailPriceRow[];
   marginTargets: MarginTargetRow[];
   vatRates: VatRateRow[];
+  /** Produktkategorier med flaggan "kräver ej artgrupp/utbyte". */
+  exemptCategories?: string[];
   /** ISO-datum (YYYY-MM-DD) som momsgiltigheten prövas mot. */
   today?: string;
 }
@@ -88,12 +93,21 @@ const num = (v: unknown): number => {
 
 const formKey = (v: unknown): string => String(v ?? "").trim().toLowerCase();
 
+/** Produkter i undantagna kategorier (emballage, konserver, såser, rom, delikatesser). */
+export function isExemptProduct(p: ProductRow, input: CoverageInput): boolean {
+  const set = new Set((input.exemptCategories ?? []).map((c) => formKey(c)));
+  return set.has(formKey(p.category));
+}
+
 /* ── 1. Utbytestäckning ───────────────────────────────────────── */
 
 export function checkYieldCoverage(input: CoverageInput): CoverageFinding[] {
   const covered = new Set(input.yields.map((y) => speciesKey(y.species_group)));
   const out: CoverageFinding[] = [];
-  const activeProducts = input.products.filter((p) => p.active !== false);
+  const activeProducts = input.products.filter(
+    (p) => p.active !== false && !isExemptProduct(p, input),
+  );
+
 
   for (const p of activeProducts) {
     const g = speciesKey(p.species_group);
@@ -124,7 +138,7 @@ export function checkYieldCoverage(input: CoverageInput): CoverageFinding[] {
 export function usedSpeciesGroups(input: CoverageInput): Map<string, string> {
   const map = new Map<string, string>();
   for (const p of input.products) {
-    if (p.active === false) continue;
+    if (p.active === false || isExemptProduct(p, input)) continue;
     const k = speciesKey(p.species_group);
     if (k && !map.has(k)) map.set(k, p.species_group as string);
   }

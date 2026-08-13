@@ -356,16 +356,19 @@ export type Database = {
       categories: {
         Row: {
           created_at: string | null
+          exempt_species_data: boolean
           id: string
           name: string
         }
         Insert: {
           created_at?: string | null
+          exempt_species_data?: boolean
           id?: string
           name: string
         }
         Update: {
           created_at?: string | null
+          exempt_species_data?: boolean
           id?: string
           name?: string
         }
@@ -9178,6 +9181,20 @@ export type Database = {
         Args: { p_location_id: string; p_lots: Json; p_report_id: string }
         Returns: string[]
       }
+      preview_stock_zeroing: {
+        Args: never
+        Returns: {
+          balance_qty: number
+          diff_qty: number
+          ledger_qty: number
+          location_id: string
+          location_name: string
+          product_id: string
+          product_name: string
+          sku: string
+          stock_value: number
+        }[]
+      }
       product_export_documentation_required: {
         Args: { _hs_code: string }
         Returns: boolean
@@ -9220,6 +9237,10 @@ export type Database = {
       user_store_ids: { Args: { _user_id: string }; Returns: string[] }
       zero_stale_day_prices: { Args: never; Returns: number }
       zero_stale_day_prices_midnight: { Args: never; Returns: number }
+      zero_stock_balances: {
+        Args: { _reason: string; _rows: Json }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "client"

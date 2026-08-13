@@ -78,7 +78,7 @@ export function ReferencePricesPanel() {
     if (dbSplits.length > 0) {
       return dbSplits.map((s) => ({
         form: normalizeDetailForm(s.detail_form),
-        role: (s.role === "primary" ? "primary" : "byproduct") as "primary" | "byproduct",
+        role: (s.role === "primary" || s.role === "main" ? "primary" : "byproduct") as "primary" | "byproduct",
       }));
     }
     return (CUT_MODEL_TEMPLATES[model] ?? []).map((d) => ({

@@ -42,7 +42,11 @@ export function CookingOrderForm() {
   const [actualOut, setActualOut] = useState("");
   const [lots, setLots] = useState<FefoLot[]>([]);
   const [loadingLots, setLoadingLots] = useState(false);
-  const [alloc, setAlloc] = useState<(FefoAllocationResult & { startLotId: string | null }) | null>(null);
+  const [alloc, setAlloc] = useState<(FefoAllocationResult & {
+    startLotId: string | null;
+    expiredJustification?: string;
+    blockedByExpiry?: boolean;
+  }) | null>(null);
   const [busy, setBusy] = useState(false);
 
   const recipe = active.find((r) => r.id === recipeId) ?? null;
@@ -120,8 +124,26 @@ export function CookingOrderForm() {
       });
       return;
     }
+    if (alloc.blockedByExpiry) {
+      toast({
+        title: "Motivering krävs",
+        description: "Ett utgånget parti är valt. Ange motivering i partivalet.",
+        variant: "destructive",
+      });
+      return;
+    }
     setBusy(true);
     try {
+      if (alloc.usesExpired) {
+        await supabase.from("activity_logs").insert({
+          action: "expired_lot_used",
+          entity_type: "production_order",
+          description: `Kokning med utgånget parti: ${alloc.allocations
+            .filter((a) => a.expired)
+            .map((a) => a.lotNumber)
+            .join(", ")} — motivering: ${alloc.expiredJustification ?? ""}`,
+        } as any);
+      }
       const totalIn = alloc.allocations.reduce((s, a) => s + a.quantityKg, 0);
       const order = await createOrder.mutateAsync({
         order: {

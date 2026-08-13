@@ -69,9 +69,26 @@ export async function fefoLotsAtLocation(
   return sortFefo(rows);
 }
 
-/** Kortast hållbarhet först, partier utan bäst före sist. */
-export function sortFefo(lots: FefoLot[]): FefoLot[] {
-  return [...lots].sort((a, b) => {
+/** Sant när partiets bäst före har passerat. */
+export function isExpiredLot(lot: Pick<FefoLot, "bestBefore">, now: Date = new Date()): boolean {
+  if (!lot.bestBefore) return false;
+  const bb = new Date(`${lot.bestBefore}T23:59:59`);
+  return bb.getTime() < now.getTime();
+}
+
+/** Sant när partiet går ut inom 24 timmar (men inte redan är utgånget). */
+export function isExpiringSoon(lot: Pick<FefoLot, "bestBefore">, now: Date = new Date()): boolean {
+  if (!lot.bestBefore || isExpiredLot(lot, now)) return false;
+  const bb = new Date(`${lot.bestBefore}T23:59:59`);
+  return bb.getTime() - now.getTime() <= 24 * 60 * 60 * 1000;
+}
+
+/**
+ * Kortast hållbarhet först, partier utan bäst före sist.
+ * Utgångna partier föreslås aldrig — de läggs sist och plockas bara vid aktivt val.
+ */
+export function sortFefo(lots: FefoLot[], now: Date = new Date()): FefoLot[] {
+  const byDate = (a: FefoLot, b: FefoLot) => {
     if (a.bestBefore && b.bestBefore) {
       const cmp = a.bestBefore.localeCompare(b.bestBefore);
       if (cmp !== 0) return cmp;
@@ -80,6 +97,12 @@ export function sortFefo(lots: FefoLot[]): FefoLot[] {
     if (a.bestBefore) return -1;
     if (b.bestBefore) return 1;
     return (a.arrivedAt ?? "").localeCompare(b.arrivedAt ?? "");
+  };
+  return [...lots].sort((a, b) => {
+    const ea = isExpiredLot(a, now);
+    const eb = isExpiredLot(b, now);
+    if (ea !== eb) return ea ? 1 : -1;
+    return byDate(a, b);
   });
 }
 
@@ -88,6 +111,8 @@ export interface FefoAllocation {
   lotNumber: string;
   quantityKg: number;
   bestBefore: string | null;
+  /** Sant när partiet är utgånget och valdes aktivt. */
+  expired?: boolean;
 }
 
 export interface FefoAllocationResult {
@@ -97,6 +122,8 @@ export interface FefoAllocationResult {
   shortBy: number;
   /** Sant när uttaget startar i ett annat parti än FEFO-förslaget. */
   manualDeviation: boolean;
+  /** Sant när något utgånget parti ingår i uttaget. */
+  usesExpired: boolean;
 }
 
 const r3 = (n: number) => Math.round(n * 1000) / 1000;
@@ -105,13 +132,20 @@ const r3 = (n: number) => Math.round(n * 1000) / 1000;
  * Fördelar ett uttag över partierna i FEFO-ordning. Anges startLotId börjar
  * uttaget där och fortsätter sedan i FEFO-ordning — avsteget rapporteras så att
  * gränssnittet kan varna.
+ *
+ * Utgångna partier hoppas över om de inte valts aktivt (startLotId eller
+ * allowExpiredLotIds), och ett sådant val kräver motivering i gränssnittet.
  */
 export function allocateFefo(
   lots: FefoLot[],
   quantityKg: number,
   startLotId?: string | null,
+  allowExpiredLotIds: string[] = [],
 ): FefoAllocationResult {
-  const ordered = sortFefo(lots);
+  const now = new Date();
+  const allowed = new Set([...(allowExpiredLotIds || []), ...(startLotId ? [startLotId] : [])]);
+  const ordered = sortFefo(lots, now);
+  const fresh = ordered.filter((l) => !isExpiredLot(l, now));
   const queue = startLotId
     ? [
         ...ordered.filter((l) => l.lotId === startLotId),
@@ -121,16 +155,21 @@ export function allocateFefo(
 
   const allocations: FefoAllocation[] = [];
   let left = r3(Math.abs(Number(quantityKg) || 0));
+  let usesExpired = false;
   for (const lot of queue) {
     if (left <= 0) break;
     if (lot.quantityKg <= 0) continue;
+    const expired = isExpiredLot(lot, now);
+    if (expired && !allowed.has(lot.lotId)) continue;
     const take = r3(Math.min(left, lot.quantityKg));
     allocations.push({
       lotId: lot.lotId,
       lotNumber: lot.lotNumber,
       quantityKg: take,
       bestBefore: lot.bestBefore,
+      expired,
     });
+    if (expired) usesExpired = true;
     left = r3(left - take);
   }
 
@@ -138,6 +177,8 @@ export function allocateFefo(
     allocations,
     fullyAllocated: left <= 0,
     shortBy: Math.max(0, left),
-    manualDeviation: Boolean(startLotId && ordered[0] && ordered[0].lotId !== startLotId),
+    manualDeviation: Boolean(startLotId && fresh[0] && fresh[0].lotId !== startLotId),
+    usesExpired,
   };
 }
+
