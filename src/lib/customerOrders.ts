@@ -57,6 +57,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   telefon: "Telefon",
   i_butik: "I butik",
   epost: "E-post",
+  shopify: "Webb (Shopify)",
 };
 
 /** Avvikelsegränser: vikt per rad och totalbelopp för ordern. */
