@@ -119,7 +119,11 @@ export function ProductionOrderForm() {
   // FEFO-partival för råvaran (samma logik som kokningsflödet).
   const [fefoLots, setFefoLots] = useState<FefoLot[]>([]);
   const [loadingFefo, setLoadingFefo] = useState(false);
-  const [fefoAlloc, setFefoAlloc] = useState<(FefoAllocationResult & { startLotId: string | null }) | null>(null);
+  const [fefoAlloc, setFefoAlloc] = useState<(FefoAllocationResult & {
+    startLotId: string | null;
+    expiredJustification?: string;
+    blockedByExpiry?: boolean;
+  }) | null>(null);
 
   const [rawName, setRawName] = useState("");
   const [rawSku, setRawSku] = useState("");
