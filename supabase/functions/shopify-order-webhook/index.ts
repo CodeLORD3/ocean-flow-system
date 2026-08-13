@@ -227,12 +227,17 @@ function normPhone(v: unknown): string | null {
 const normEmail = (v: unknown) =>
   v == null ? null : String(v).trim().toLowerCase() || null;
 
+/** Sista ordet i ett fritt namnfält (används som reserv för gamla poster). */
 const lastNameKey = (v: unknown) => {
   const s = String(v ?? "").trim();
   if (!s) return null;
   const parts = s.split(/\s+/);
   return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : null;
 };
+
+/** Nyckel för det egna efternamnsfältet. */
+const nameKey = (v: unknown) => String(v ?? "").trim().toLowerCase() || null;
+
 
 type CustomerMatch =
   | { kind: "match"; id: string; via: string }
@@ -248,10 +253,17 @@ type CustomerMatch =
 async function matchCustomer(
   db: SupabaseClient,
   entityId: string | null,
-  keys: { shopifyCustomerId: string | null; email: string | null; phone: string | null; name: string },
+  keys: {
+    shopifyCustomerId: string | null;
+    email: string | null;
+    phone: string | null;
+    name: string;
+    lastName: string | null;
+  },
 ): Promise<CustomerMatch> {
   const base = () => {
-    let q = db.from("customers_retail").select("id, name").is("anonymized_at", null);
+    let q = db.from("customers_retail").select("id, name, last_name").is("anonymized_at", null);
+
     if (entityId) q = q.eq("legal_entity_id", entityId);
     return q;
   };
@@ -268,10 +280,15 @@ async function matchCustomer(
     if (rows.length === 1) return { kind: "match", id: rows[0].id, via: "e-post" };
     if (rows.length > 1) return { kind: "ambiguous", candidates: rows.map((r: any) => r.id), via: "e-post" };
   }
-  const lk = lastNameKey(keys.name);
+  // Efternamnsfältet används exakt. Gamla poster utan fältet jämförs mot
+  // sista ordet i det fria namnfältet så matchningen fungerar i övergången.
+  const lk = nameKey(keys.lastName) ?? lastNameKey(keys.name);
   if (keys.phone && lk) {
     const { data } = await base().eq("phone_normalized", keys.phone);
-    const rows = (data || []).filter((r: any) => lastNameKey(r.name) === lk);
+    const rows = (data || []).filter(
+      (r: any) => (nameKey(r.last_name) ?? lastNameKey(r.name)) === lk,
+    );
+
     if (rows.length === 1) return { kind: "match", id: rows[0].id, via: "telefon + efternamn" };
     if (rows.length > 1) return { kind: "ambiguous", candidates: rows.map((r: any) => r.id), via: "telefon + efternamn" };
   }
@@ -286,9 +303,12 @@ async function resolveCustomer(db: SupabaseClient, payload: any, storeId: string
     [ship.first_name, ship.last_name].filter(Boolean).join(" ").trim() ||
     String(payload?.email ?? "").trim() ||
     "Webbkund";
+  const firstName = String(c.first_name ?? ship.first_name ?? "").trim() || null;
+  const lastName = String(c.last_name ?? ship.last_name ?? "").trim() || null;
   const phoneRaw = c.phone ?? ship.phone ?? payload?.phone ?? null;
   const emailRaw = c.email ?? payload?.email ?? payload?.contact_email ?? null;
   const shopifyCustomerId = c?.id != null ? String(c.id) : null;
+
 
   const { data: store } = await db
     .from("stores")
@@ -309,7 +329,9 @@ async function resolveCustomer(db: SupabaseClient, payload: any, storeId: string
     email: normEmail(emailRaw),
     phone: normPhone(phoneRaw),
     name,
+    lastName,
   });
+
 
   if (match.kind === "ambiguous") {
     return {
@@ -355,6 +377,9 @@ async function resolveCustomer(db: SupabaseClient, payload: any, storeId: string
       store_id: storeId,
       legal_entity_id: entityId,
       name,
+      first_name: firstName,
+      last_name: lastName,
+
       phone: phoneRaw ?? null,
       email: emailRaw ?? null,
       shopify_customer_id: shopifyCustomerId,
