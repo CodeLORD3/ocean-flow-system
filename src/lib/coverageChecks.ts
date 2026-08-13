@@ -268,6 +268,8 @@ export interface DerivedPriceRow {
   cost: number;
   /** Härlett riktpris kr/kg, eller 0 när källa saknas. */
   derived: number;
+  /** Sant när källan är ett Reservpris som ärvts från grundprodukten. */
+  inherited: boolean;
 }
 
 /** Samma reservkedja som marginalkalkylerna: dagspris → Reservpris. */
