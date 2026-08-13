@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { AlertTriangle, CheckCircle2, Loader2, RefreshCw, Wrench } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -15,14 +17,67 @@ interface ReconRun {
   details: any;
 }
 
+interface NegFlag {
+  id: string;
+  created_at: string;
+  resulting_qty: number;
+  movement_qty: number | null;
+  movement_type: string | null;
+  driver_note: string | null;
+  acknowledged_at: string | null;
+  ack_note: string | null;
+  products?: { name: string; sku: string } | null;
+  storage_locations?: { name: string; stores?: { name: string } | null } | null;
+  lots?: { lot_number: string } | null;
+}
+
 const fmtTime = (v: string) =>
   new Date(v).toLocaleString("sv-SE", { dateStyle: "short", timeStyle: "short" });
 
 const fmtQty = (n: number) =>
   Number(n || 0).toLocaleString("sv-SE", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
 
+
 export default function SystemStatus() {
   const qc = useQueryClient();
+  const [ackNotes, setAckNotes] = useState<Record<string, string>>({});
+
+  const flags = useQuery({
+    queryKey: ["stock_negative_flags"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("stock_negative_flags" as any)
+        .select(
+          "id, created_at, resulting_qty, movement_qty, movement_type, driver_note, acknowledged_at, ack_note, products(name, sku), storage_locations(name, stores(name)), lots:suggested_lot_id(lot_number)"
+        )
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      return (data || []) as unknown as NegFlag[];
+    },
+  });
+
+  const ack = useMutation({
+    mutationFn: async (id: string) => {
+      const { data: u } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from("stock_negative_flags" as any)
+        .update({
+          acknowledged_at: new Date().toISOString(),
+          acknowledged_by: u.user?.id ?? null,
+          ack_note: ackNotes[id]?.trim() || null,
+        } as any)
+        .eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast({ title: "Avvikelsen kvitterad" });
+      qc.invalidateQueries({ queryKey: ["stock_negative_flags"] });
+    },
+    onError: (e: any) =>
+      toast({ title: "Kunde inte kvittera", description: e.message, variant: "destructive" }),
+  });
+
 
   const runs = useQuery({
     queryKey: ["stock_reconciliation_runs"],
@@ -78,6 +133,9 @@ export default function SystemStatus() {
   const latest = runs.data?.[0];
   const hasDiff = (latest?.diff_count ?? 0) > 0;
   const details: any[] = Array.isArray(latest?.details) ? latest!.details : [];
+  const openFlags = (flags.data ?? []).filter((f) => !f.acknowledged_at);
+  const ackedFlags = (flags.data ?? []).filter((f) => f.acknowledged_at);
+
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -160,6 +218,83 @@ export default function SystemStatus() {
             )}
           </CardContent>
         </Card>
+
+        <Card className={openFlags.length ? "border-amber-500/60" : undefined}>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              {openFlags.length ? (
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              )}
+              Inventeringsavvikelser att kvittera
+              {openFlags.length > 0 && <Badge variant="destructive">{openFlags.length}</Badge>}
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Försäljning blockeras aldrig av saldo — disken går alltid först. När ett uttag drar ett saldo
+              under noll loggas det här som inventeringsavvikelse att kvittera.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-3 p-4 pt-0 text-sm">
+            {flags.isLoading ? (
+              <p className="text-muted-foreground">Läser avvikelser…</p>
+            ) : !openFlags.length ? (
+              <p className="text-muted-foreground">Inga öppna avvikelser.</p>
+            ) : (
+              openFlags.map((f) => (
+                <div key={f.id} className="rounded-md border p-3">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <div>
+                      <span className="font-medium">{f.products?.name ?? "Okänd produkt"}</span>{" "}
+                      <span className="font-mono text-xs text-muted-foreground">{f.products?.sku}</span>
+                    </div>
+                    <span className="font-mono tabular-nums text-destructive">{fmtQty(f.resulting_qty)} kg</span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {f.storage_locations?.stores?.name ? `${f.storage_locations.stores.name} · ` : ""}
+                    {f.storage_locations?.name} · {fmtTime(f.created_at)} · {f.movement_type ?? "uttag"}
+                  </p>
+                  <p className="mt-1 text-xs">
+                    Drevs av: <span className="text-muted-foreground">{f.driver_note ?? "okänt uttag"}</span>
+                    {f.movement_qty != null && (
+                      <span className="font-mono tabular-nums"> ({fmtQty(f.movement_qty)} kg)</span>
+                    )}
+                  </p>
+                  <p className="text-xs">
+                    Borde ha burits av parti:{" "}
+                    <span className="font-mono">{f.lots?.lot_number ?? "inget aktivt parti hittat"}</span>
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Input
+                      className="h-8 max-w-sm text-xs"
+                      placeholder="Kommentar (våg, spill, delad förpackning…)"
+                      value={ackNotes[f.id] ?? ""}
+                      onChange={(e) => setAckNotes((p) => ({ ...p, [f.id]: e.target.value }))}
+                    />
+                    <Button size="sm" onClick={() => ack.mutate(f.id)} disabled={ack.isPending}>
+                      Kvittera
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+            {ackedFlags.length > 0 && (
+              <details className="text-xs text-muted-foreground">
+                <summary className="cursor-pointer">Kvitterade avvikelser ({ackedFlags.length})</summary>
+                <ul className="mt-2 space-y-1">
+                  {ackedFlags.map((f) => (
+                    <li key={f.id}>
+                      {fmtTime(f.acknowledged_at!)} · {f.products?.name} · {fmtQty(f.resulting_qty)} kg
+                      {f.ack_note ? ` — ${f.ack_note}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </CardContent>
+        </Card>
+
+
 
         <Card>
           <CardHeader className="pb-2">
