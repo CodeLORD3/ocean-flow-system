@@ -8,6 +8,13 @@
 import { supabase } from "@/integrations/supabase/client";
 import { recordMovement } from "@/lib/stockLedger";
 import { grossistStoreId, inkopslagerId } from "@/lib/locations";
+import {
+  stockQtyToKg,
+  toStockQuantity,
+  toStockUnitPrice,
+  type StockUnit,
+} from "@/lib/units";
+
 
 export interface PostingProduct {
   id: string;
@@ -71,32 +78,28 @@ export interface PostingPlan {
 const round = (n: number, d = 3) => Math.round(n * 10 ** d) / 10 ** d;
 
 /**
- * Räknar om levererad kvantitet till kilo. Styck och lådor kräver vikt på
- * produkten — saknas den blir det ett hinder i stället för en gissad vikt.
+ * Räknar om levererad kvantitet till PRODUKTENS LAGERENHET: antal för
+ * styckprodukter, kilo för viktprodukter. Saknas styck- eller lådvikt när
+ * omräkning krävs blir det ett hinder i stället för en gissad vikt.
  */
+export function quantityToStockUnit(
+  line: PostingLine,
+  product?: PostingProduct,
+): { qty: number | null; unit: StockUnit; reason?: string } {
+  return toStockQuantity(line.quantity, line.unit ?? product?.unit, product);
+}
+
+/** Bakåtkompatibel vy: kvantiteten uttryckt i kilo (endast för viktvisning). */
 export function quantityToKg(
   line: PostingLine,
   product?: PostingProduct,
 ): { kg: number | null; reason?: string } {
-  const qty = Number(line.quantity ?? 0);
-  if (!Number.isFinite(qty) || qty <= 0) {
-    return { kg: null, reason: "kvantiteten saknas eller är noll" };
-  }
-  const unit = String(line.unit ?? product?.unit ?? "kg").toLowerCase().trim();
-  if (["kg", "kilo", "kilogram", ""].includes(unit)) return { kg: qty };
-  if (["g", "gram"].includes(unit)) return { kg: qty / 1000 };
-  if (["st", "stk", "styck", "pcs"].includes(unit)) {
-    const per = Number(product?.weight_per_piece ?? 0);
-    if (per > 0) return { kg: round(qty * per) };
-    return { kg: null, reason: "styckvikt saknas på produkten" };
-  }
-  if (["låda", "lada", "box", "förp", "forp", "kolli", "krt"].includes(unit)) {
-    const per = Number(product?.nominal_weight_kg ?? 0);
-    if (per > 0) return { kg: round(qty * per) };
-    return { kg: null, reason: "lådvikt (nominell vikt) saknas på produkten" };
-  }
-  return { kg: null, reason: `okänd enhet "${unit}"` };
+  const res = quantityToStockUnit(line, product);
+  if (res.qty === null) return { kg: null, reason: res.reason };
+  const kg = stockQtyToKg(res.qty, product);
+  return kg === null ? { kg: null, reason: "styckvikt saknas på produkten" } : { kg };
 }
+
 
 /** Jämn fördelning av kvantitet över flera batchnummer — förval i dialogen. */
 export function evenBatchSplit(lotNumbers: string[], totalKg: number): Record<string, number> {
@@ -148,23 +151,41 @@ export function buildPostingPlan(
       blockers.push(`${label}: grundprodukten är ej inköpsbar — välj storlek`);
       return;
     }
-    const { kg, reason } = quantityToKg(line, product);
+    // Kvantiteten bokförs i produktens lagerenhet: antal för styckprodukter,
+    // kilo för viktprodukter.
+    const { qty: kg, unit: stockUnit, reason } = quantityToStockUnit(line, product);
     if (kg === null) {
       blockers.push(`${label}: ${reason}`);
       return;
     }
+    const u = stockUnit;
 
-    const unitPrice = Number(line.unit_price ?? 0);
+    // Priset räknas om till pris per samma enhet som kvantiteten — annars kan
+    // en styckvara värderas som om antalet vore kilon.
+    const { price: normalizedPrice, reason: priceReason } = toStockUnitPrice(
+      line.unit_price,
+      line.unit ?? product?.unit,
+      product,
+    );
+    if (normalizedPrice === null) {
+      blockers.push(`${label}: ${priceReason}`);
+      return;
+    }
+    const unitPrice = normalizedPrice;
     if (!(unitPrice > 0) && !line.zero_price_confirmed) {
       blockers.push(`${label}: nollpris måste bekräftas manuellt innan bokföring`);
       return;
     }
 
-    // Levererad vikt gäller — beställd vikt ger bara larm vid stor avvikelse.
-    const ordered = Number(line.ordered_quantity ?? 0);
+    // Levererad mängd gäller — beställd mängd ger bara larm vid stor avvikelse.
+    const orderedRaw = Number(line.ordered_quantity ?? 0);
+    const ordered =
+      orderedRaw > 0
+        ? toStockQuantity(orderedRaw, line.unit ?? product?.unit, product).qty ?? 0
+        : 0;
     if (ordered > 0 && Math.abs(kg - ordered) / ordered > 0.1) {
       warnings.push(
-        `${label}: levererat ${round(kg)} kg mot beställt ${round(ordered)} kg (avvikelse över 10 %)`,
+        `${label}: levererat ${round(kg)} ${u} mot beställt ${round(ordered)} ${u} (avvikelse över 10 %)`,
       );
     }
 
@@ -189,11 +210,13 @@ export function buildPostingPlan(
       const sum = Object.values(allocation).reduce((s, v) => s + Number(v || 0), 0);
       if (Math.abs(sum - kg) > 0.005) {
         blockers.push(
-          `${label}: fördelningen över partinummer (${round(sum)} kg) stämmer inte med levererad kvantitet (${round(kg)} kg)`,
+          `${label}: fördelningen över partinummer (${round(sum)} ${u}) stämmer inte med levererad kvantitet (${round(kg)} ${u})`,
         );
         return;
       }
     }
+
+
 
     for (const [lotNumber, lotQty] of Object.entries(allocation)) {
       const qty = Number(lotQty || 0);

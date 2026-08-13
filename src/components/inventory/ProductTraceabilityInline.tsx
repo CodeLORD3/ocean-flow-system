@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronRight, Fish, Ship, Anchor } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { sv } from "date-fns/locale";
+import { perUnitLabel, unitLabel } from "@/lib/units";
 
 const nf = (n: number, d = 1) =>
   n.toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/\u00a0/g, " ");
@@ -12,10 +13,13 @@ const nf = (n: number, d = 1) =>
 /** Spårbarhet för en enskild produkt — rullgardin inne i produktraden i lagret. */
 export default function ProductTraceabilityInline({
   productId,
+  product,
   showCosts = true,
   fmt,
 }: {
   productId: string;
+  /** Produktens enhet styr om kvantitet och pris visas per st eller per kg. */
+  product?: { unit?: string | null; weight_per_piece?: number | null } | null;
   showCosts?: boolean;
   fmt?: (v: number) => string;
 }) {
@@ -104,7 +108,7 @@ export default function ProductTraceabilityInline({
                       </Badge>
                     )}
                     <span className="ml-auto text-[11px] tabular-nums font-semibold">
-                      {nf(Number(lot.quantity_kg) || 0)} kg
+                      {nf(Number(lot.quantity_kg) || 0)} {unitLabel(product)}
                     </span>
                   </button>
 
@@ -143,7 +147,11 @@ export default function ProductTraceabilityInline({
                     {showCosts && (
                       <div>
                         <span className="text-muted-foreground">Inpris: </span>
-                        {fmt ? `${fmt(Number(lot.unit_cost) || 0)}/kg` : `${nf(Number(lot.unit_cost) || 0, 2)}/kg`}
+                        {(() => {
+                          const per = perUnitLabel(product);
+                          const v = Number(lot.unit_cost) || 0;
+                          return fmt ? `${fmt(v)}${per}` : `${nf(v, 2)}${per}`;
+                        })()}
                       </div>
                     )}
                     <div>
@@ -168,7 +176,7 @@ export default function ProductTraceabilityInline({
                             <Badge variant="outline" className="text-[10px] h-4">
                               {m.movement_type}
                             </Badge>
-                            <span className="tabular-nums">{nf(Number(m.quantity_kg) || 0)} kg</span>
+                            <span className="tabular-nums">{nf(Number(m.quantity_kg) || 0)} {unitLabel(product)}</span>
                             <span className="text-muted-foreground truncate">
                               {m.storage_locations?.name || ""} {m.note ? `· ${m.note}` : ""}
                             </span>
