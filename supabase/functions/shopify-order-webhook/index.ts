@@ -63,11 +63,15 @@ function safeEqual(a: string, b: string): boolean {
 
 /* --------------------------------------------------------- note_attributes */
 
-type Attr = { key?: string; value?: unknown };
+type Attr = { name?: string; key?: string; value?: unknown };
 
 function attr(payload: any, key: string): string | null {
   const list: Attr[] = Array.isArray(payload?.note_attributes) ? payload.note_attributes : [];
-  const hit = list.find((a) => String(a?.key ?? "").trim().toLowerCase() === key.toLowerCase());
+  // Shopify skickar note_attributes som {name, value}; äldre exporter använder {key, value}.
+  const hit = list.find((a) => {
+    const k = String((a as any)?.name ?? (a as any)?.key ?? "").trim().toLowerCase();
+    return k === key.toLowerCase();
+  });
   const v = hit?.value;
   return v == null || String(v).trim() === "" ? null : String(v).trim();
 }
@@ -205,7 +209,76 @@ async function evaluateReservation(
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const round3 = (n: number) => Math.round(n * 1000) / 1000;
 
-async function upsertCustomer(db: SupabaseClient, payload: any, storeId: string) {
+/** Normaliserar telefon till +46-format. Rådata sparas orört i phone. */
+function normPhone(v: unknown): string | null {
+  if (v == null) return null;
+  let d = String(v).replace(/[^0-9+]/g, "");
+  if (!d) return null;
+  if (d.startsWith("00")) d = "+" + d.slice(2);
+  if (!d.startsWith("+")) {
+    if (d.startsWith("46")) d = "+" + d;
+    else if (d.startsWith("0")) d = "+46" + d.slice(1);
+    else d = "+46" + d;
+  }
+  d = "+" + d.slice(1).replace(/[^0-9]/g, "");
+  return d.length < 8 ? null : d;
+}
+
+const normEmail = (v: unknown) =>
+  v == null ? null : String(v).trim().toLowerCase() || null;
+
+const lastNameKey = (v: unknown) => {
+  const s = String(v ?? "").trim();
+  if (!s) return null;
+  const parts = s.split(/\s+/);
+  return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : null;
+};
+
+type CustomerMatch =
+  | { kind: "match"; id: string; via: string }
+  | { kind: "ambiguous"; candidates: string[]; via: string }
+  | { kind: "none" };
+
+/**
+ * Kundmatchning inom BOLAGET (inte butiken): Ålsten och Kungsholmen är samma
+ * bolag och samma webbutik, så samma person är en kund.
+ * Ordning: shopify_customer_id, normaliserad e-post, normaliserad telefon +
+ * efternamn. Flera kandidater ger alltid granskning, aldrig tyst första rad.
+ */
+async function matchCustomer(
+  db: SupabaseClient,
+  entityId: string | null,
+  keys: { shopifyCustomerId: string | null; email: string | null; phone: string | null; name: string },
+): Promise<CustomerMatch> {
+  const base = () => {
+    let q = db.from("customers_retail").select("id, name").is("anonymized_at", null);
+    if (entityId) q = q.eq("legal_entity_id", entityId);
+    return q;
+  };
+
+  if (keys.shopifyCustomerId) {
+    const { data } = await base().eq("shopify_customer_id", keys.shopifyCustomerId);
+    const rows = data || [];
+    if (rows.length === 1) return { kind: "match", id: rows[0].id, via: "shopify_customer_id" };
+    if (rows.length > 1) return { kind: "ambiguous", candidates: rows.map((r: any) => r.id), via: "shopify_customer_id" };
+  }
+  if (keys.email) {
+    const { data } = await base().eq("email_normalized", keys.email);
+    const rows = data || [];
+    if (rows.length === 1) return { kind: "match", id: rows[0].id, via: "e-post" };
+    if (rows.length > 1) return { kind: "ambiguous", candidates: rows.map((r: any) => r.id), via: "e-post" };
+  }
+  const lk = lastNameKey(keys.name);
+  if (keys.phone && lk) {
+    const { data } = await base().eq("phone_normalized", keys.phone);
+    const rows = (data || []).filter((r: any) => lastNameKey(r.name) === lk);
+    if (rows.length === 1) return { kind: "match", id: rows[0].id, via: "telefon + efternamn" };
+    if (rows.length > 1) return { kind: "ambiguous", candidates: rows.map((r: any) => r.id), via: "telefon + efternamn" };
+  }
+  return { kind: "none" };
+}
+
+async function resolveCustomer(db: SupabaseClient, payload: any, storeId: string) {
   const c = payload?.customer ?? {};
   const ship = payload?.shipping_address ?? payload?.billing_address ?? {};
   const name =
@@ -213,51 +286,87 @@ async function upsertCustomer(db: SupabaseClient, payload: any, storeId: string)
     [ship.first_name, ship.last_name].filter(Boolean).join(" ").trim() ||
     String(payload?.email ?? "").trim() ||
     "Webbkund";
-  const phone = c.phone ?? ship.phone ?? payload?.phone ?? null;
-  const email = c.email ?? payload?.email ?? payload?.contact_email ?? null;
+  const phoneRaw = c.phone ?? ship.phone ?? payload?.phone ?? null;
+  const emailRaw = c.email ?? payload?.email ?? payload?.contact_email ?? null;
+  const shopifyCustomerId = c?.id != null ? String(c.id) : null;
 
-  let existing: any = null;
-  if (email) {
-    const { data } = await db
-      .from("customers_retail")
-      .select("*")
-      .eq("store_id", storeId)
-      .eq("email", email)
-      .limit(1);
-    existing = (data || [])[0] ?? null;
-  }
-  if (!existing && phone) {
-    const { data } = await db
-      .from("customers_retail")
-      .select("*")
-      .eq("store_id", storeId)
-      .eq("phone", phone)
-      .limit(1);
-    existing = (data || [])[0] ?? null;
-  }
+  const { data: store } = await db
+    .from("stores")
+    .select("legal_entity_id")
+    .eq("id", storeId)
+    .maybeSingle();
+  const entityId = (store?.legal_entity_id as string | null) ?? null;
 
-  const fields = {
-    store_id: storeId,
-    name,
-    phone,
-    email,
+  const address = {
     street: ship.address1 ?? null,
     postal_code: ship.zip ?? null,
     city: ship.city ?? null,
   };
+  const snapshot = { name, phone: phoneRaw ?? null, ...address };
 
-  if (existing) {
-    await db.from("customers_retail").update(fields).eq("id", existing.id);
-    return { id: existing.id as string, ...fields };
+  const match = await matchCustomer(db, entityId, {
+    shopifyCustomerId,
+    email: normEmail(emailRaw),
+    phone: normPhone(phoneRaw),
+    name,
+  });
+
+  if (match.kind === "ambiguous") {
+    return {
+      id: null as string | null,
+      created: false,
+      review: `Tvetydig kundmatchning på ${match.via}: ${match.candidates.length} kandidater — kräver granskning`,
+      matchedVia: match.via,
+      ...snapshot,
+    };
   }
+
+  if (match.kind === "match") {
+    // Kompletterar tomma fält utan att skriva över befintliga uppgifter.
+    const { data: existing } = await db
+      .from("customers_retail")
+      .select("*")
+      .eq("id", match.id)
+      .maybeSingle();
+    const patch: Record<string, unknown> = {};
+    if (shopifyCustomerId && !existing?.shopify_customer_id) patch.shopify_customer_id = shopifyCustomerId;
+    if (emailRaw && !existing?.email) patch.email = emailRaw;
+    if (phoneRaw && !existing?.phone) patch.phone = phoneRaw;
+    for (const k of ["street", "postal_code", "city"] as const) {
+      if ((address as any)[k] && !existing?.[k]) patch[k] = (address as any)[k];
+    }
+    if (Object.keys(patch).length) await db.from("customers_retail").update(patch).eq("id", match.id);
+    return {
+      id: match.id,
+      created: false,
+      review: null as string | null,
+      matchedVia: match.via,
+      name: existing?.name ?? name,
+      phone: existing?.phone ?? phoneRaw ?? null,
+      street: existing?.street ?? address.street,
+      postal_code: existing?.postal_code ?? address.postal_code,
+      city: existing?.city ?? address.city,
+    };
+  }
+
   const { data, error } = await db
     .from("customers_retail")
-    .insert(fields)
+    .insert({
+      store_id: storeId,
+      legal_entity_id: entityId,
+      name,
+      phone: phoneRaw ?? null,
+      email: emailRaw ?? null,
+      shopify_customer_id: shopifyCustomerId,
+      source: "shopify",
+      ...address,
+    })
     .select("id")
     .single();
   if (error) throw new Error(`kunden kunde inte sparas: ${error.message}`);
-  return { id: data.id as string, ...fields };
+  return { id: data.id as string, created: true, review: null as string | null, matchedVia: "ny kund", ...snapshot };
 }
+
 
 /** Skapar kundordern med rader. Anropas av webhooken och av manuellt butiksval. */
 async function createOrder(db: SupabaseClient, payload: any, storeId: string, via: string) {
@@ -271,7 +380,7 @@ async function createOrder(db: SupabaseClient, payload: any, storeId: string, vi
     parseDeliveryDate(attr(payload, "Delivery Date")) ??
     String(payload?.created_at ?? new Date().toISOString()).slice(0, 10);
 
-  const customer = await upsertCustomer(db, payload, storeId);
+  const customer = await resolveCustomer(db, payload, storeId);
 
   const { data: orderNumber, error: numErr } = await db.rpc("next_customer_order_number", {
     _store_id: storeId,
@@ -306,6 +415,8 @@ async function createOrder(db: SupabaseClient, payload: any, storeId: string, vi
   const notes: string[] = [];
   if (payload?.note) notes.push(String(payload.note));
   notes.push(`Shopify ${orderName} — butik via ${via}`);
+  notes.push(`Kund: ${customer.matchedVia}`);
+  if (customer.review) notes.push(customer.review);
 
   const paidTotal = Number(payload?.total_price ?? 0);
   const paid = String(payload?.financial_status ?? "").toLowerCase() === "paid";
@@ -400,10 +511,90 @@ async function createOrder(db: SupabaseClient, payload: any, storeId: string, vi
     new_value: { shopify_order_id: shopifyOrderId, paid_total: paidTotal },
   });
 
-  return { orderId: order.id as string, orderNumber, unmatched };
+  return {
+    orderId: order.id as string,
+    orderNumber,
+    unmatched,
+    customerId: customer.id,
+    customerCreated: customer.created,
+    customerReview: customer.review,
+    matchedVia: customer.matchedVia,
+  };
+}
+
+/* ------------------------------------------------------------- avbokning */
+
+const PACK_LABEL: Record<string, string> = {
+  pagaende: "under packning",
+  packad: "färdigpackad",
+};
+
+/**
+ * Avbokning från webben: markerar kundordern avbokad, frisläpper reserverade
+ * partier och inköpsbehov, och signalerar larm om ordern redan var packad
+ * eller under packning (varorna finns då fysiskt plockade i butiken).
+ */
+async function cancelOrder(
+  db: SupabaseClient,
+  payload: any,
+  shopifyOrderId: string,
+  orderName: string,
+) {
+  const { data: order } = await db
+    .from("customer_orders")
+    .select("id, order_number, store_id, status, pack_status")
+    .eq("shopify_order_id", shopifyOrderId)
+    .maybeSingle();
+  if (!order) return { found: false as const, wasPacked: false };
+
+  const handedOver = ["levererad", "avhamtad", "delvis_utlamnad"].includes(String(order.status));
+  const packState = String(order.pack_status);
+  const wasPacked = handedOver || packState === "packad" || packState === "pagaende";
+  const packLabel = handedOver ? "redan utlämnad" : (PACK_LABEL[packState] ?? "opackad");
+
+  const reason = String(payload?.cancel_reason ?? "").trim() || "avbokad i webbutiken";
+
+  await db
+    .from("customer_orders")
+    .update({
+      status: "avbruten",
+      cancelled_at: payload?.cancelled_at ?? new Date().toISOString(),
+      cancelled_reason: reason,
+      cancelled_source: "shopify",
+      cancelled_was_packed: wasPacked,
+    })
+    .eq("id", order.id);
+
+  // Frisläpper reservationer och inköpsbehov så att partierna blir sökbara igen.
+  const { data: released } = await db
+    .from("customer_order_lines")
+    .update({ reservation_status: "ingen", reserved_lot_id: null, reserved_quantity: 0 })
+    .eq("customer_order_id", order.id)
+    .in("reservation_status", ["reserverad", "inkopsbehov"])
+    .select("id");
+
+  await db.from("customer_order_events").insert({
+    customer_order_id: order.id,
+    event_type: "webborder_avbokad",
+    description:
+      `Shopify ${orderName} avbokad (${reason}). ${(released || []).length} rader frisläppta.` +
+      (wasPacked ? ` LARM: ordern var ${packLabel} — kontrollera varorna.` : ""),
+    new_value: { shopify_order_id: shopifyOrderId, was_packed: wasPacked, pack_status: packState },
+  });
+
+  return {
+    found: true as const,
+    orderId: order.id as string,
+    orderNumber: order.order_number as string,
+    storeId: order.store_id as string,
+    wasPacked,
+    packLabel,
+    released: (released || []).length,
+  };
 }
 
 /* ------------------------------------------------------------ bearbetning */
+
 
 /**
  * Bearbetar en köad händelse. Körs ALLTID efter att svaret gått till Shopify,
@@ -463,10 +654,64 @@ async function processEvent(db: SupabaseClient, eventId: string): Promise<void> 
       .update({ payload, shopify_order_id: shopifyOrderId, shopify_order_number: orderName })
       .eq("id", eventId);
 
-    // Idempotens: samma Shopify-order får aldrig bli två kundordrar.
+    const topic = String(ev.topic ?? "orders/create").toLowerCase();
+
+    /**
+     * Idempotensnyckeln är order-id PLUS topic. En orders/cancelled för en känd
+     * order är en ny händelse; bara omsändning av samma topic är ett duplikat.
+     */
+    const { data: sameTopic } = await db
+      .from("shopify_webhook_events")
+      .select("id, status, customer_order_id")
+      .eq("shopify_order_id", shopifyOrderId)
+      .eq("topic", ev.topic)
+      .neq("id", eventId)
+      .in("status", ["skapad", "avbokad", "avbokad_larm", "duplikat", "osorterad"]);
+    if ((sameTopic || []).length) {
+      const prev = (sameTopic || [])[0];
+      await db
+        .from("shopify_webhook_events")
+        .update({
+          status: "duplikat",
+          customer_order_id: prev.customer_order_id ?? null,
+          processed_at: new Date().toISOString(),
+        })
+        .eq("id", eventId);
+      return;
+    }
+
+    /* ---- Avbokning från webben ---- */
+    if (topic === "orders/cancelled") {
+      const res = await cancelOrder(db, payload, shopifyOrderId, orderName);
+      if (!res.found) {
+        await fail(`Avbokning för okänd order ${orderName} — ingen kundorder hittades`);
+        return;
+      }
+      await db
+        .from("shopify_webhook_events")
+        .update({
+          status: res.wasPacked ? "avbokad_larm" : "avbokad",
+          store_id: res.storeId,
+          customer_order_id: res.orderId,
+          error: res.wasPacked
+            ? `LARM: ${orderName} (${res.orderNumber}) avbokades men var ${res.packLabel} — kontrollera varorna i butiken`
+            : null,
+          processed_at: new Date().toISOString(),
+        })
+        .eq("id", eventId);
+      return;
+    }
+
+    if (topic !== "orders/create" && topic !== "orders/paid") {
+      await fail(`Topic ${topic} hanteras inte av systemet`, "okand_topic");
+      return;
+    }
+
+    /* ---- Ny order ---- */
+    // Samma order får aldrig bli två kundordrar.
     const { data: dupe } = await db
       .from("customer_orders")
-      .select("id, order_number")
+      .select("id")
       .eq("shopify_order_id", shopifyOrderId)
       .maybeSingle();
     if (dupe) {
@@ -477,22 +722,6 @@ async function processEvent(db: SupabaseClient, eventId: string): Promise<void> 
           customer_order_id: dupe.id,
           processed_at: new Date().toISOString(),
         })
-        .eq("id", eventId);
-      return;
-    }
-
-    // Väntar redan på manuellt butiksval? Då är den här en omsändning.
-    const { data: pendingRows } = await db
-      .from("shopify_webhook_events")
-      .select("id")
-      .eq("shopify_order_id", shopifyOrderId)
-      .eq("status", "osorterad")
-      .neq("id", eventId)
-      .limit(1);
-    if ((pendingRows || []).length) {
-      await db
-        .from("shopify_webhook_events")
-        .update({ status: "duplikat", processed_at: new Date().toISOString() })
         .eq("id", eventId);
       return;
     }
@@ -514,10 +743,11 @@ async function processEvent(db: SupabaseClient, eventId: string): Promise<void> 
         status: "skapad",
         store_id: storeId,
         customer_order_id: res.orderId,
-        error: null,
+        error: res.customerReview,
         processed_at: new Date().toISOString(),
       })
       .eq("id", eventId);
+
   } catch (e) {
     await fail(e instanceof Error ? e.message : String(e));
   }

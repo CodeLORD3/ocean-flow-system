@@ -34,8 +34,8 @@ export default function ShopifyWebhookStatus() {
     queryFn: async () => {
       const { data, error } = await db
         .from("shopify_webhook_events")
-        .select("id, status, error, shopify_order_number, received_at, hmac_valid, attempts")
-        .in("status", ["fel", "koad", "bearbetar", "ogiltig_hmac", "osorterad"])
+        .select("id, status, error, shopify_order_number, received_at, hmac_valid, attempts, customer_order_id")
+        .in("status", ["fel", "koad", "bearbetar", "ogiltig_hmac", "osorterad", "avbokad_larm", "okand_topic"])
         .order("received_at", { ascending: false })
         .limit(50);
       if (error) throw error;
@@ -98,13 +98,16 @@ export default function ShopifyWebhookStatus() {
   const queued = rows.filter((e) => e.status === "koad" || e.status === "bearbetar");
   const badHmac = rows.filter((e) => e.status === "ogiltig_hmac");
   const unsorted = rows.filter((e) => e.status === "osorterad");
+  const cancelAlarm = rows.filter((e) => e.status === "avbokad_larm");
+  const unknownTopic = rows.filter((e) => e.status === "okand_topic");
   const staleLines = stale.data || [];
 
   const last = lastReceived.data ?? null;
   const silent = !last || Date.now() - new Date(last).getTime() > DAY;
   const silentHours = hoursSince(last);
 
-  const problems = failed.length + badHmac.length + unsorted.length + staleLines.length;
+  const problems =
+    failed.length + badHmac.length + unsorted.length + staleLines.length + cancelAlarm.length;
   const alarm = problems > 0 || silent;
 
   return (
@@ -149,6 +152,9 @@ export default function ShopifyWebhookStatus() {
           <Badge variant={staleLines.length ? "destructive" : "secondary"}>
             {staleLines.length} omatchade rader äldre än 2 h
           </Badge>
+          <Badge variant={cancelAlarm.length ? "destructive" : "secondary"}>
+            {cancelAlarm.length} avbokade efter packning
+          </Badge>
           <Badge variant="secondary" className="font-mono tabular-nums">
             senast {fmtTime(last)}
           </Badge>
@@ -178,9 +184,28 @@ export default function ShopifyWebhookStatus() {
           </ul>
         )}
 
+        {cancelAlarm.length > 0 && (
+          <ul className="space-y-1 text-xs">
+            {cancelAlarm.slice(0, 10).map((e) => (
+              <li
+                key={e.id}
+                className="flex items-start gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-2"
+              >
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive" />
+                <span className="min-w-0 flex-1">
+                  {e.error ?? `${e.shopify_order_number ?? "Webborder"} avbokad efter packning`}
+                </span>
+                <Button asChild size="sm" variant="outline" className="h-6 shrink-0 text-xs">
+                  <Link to="/customer-orders">Öppna ordern</Link>
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+
         {(badHmac.length > 0 || unsorted.length > 0 || staleLines.length > 0) && (
           <ul className="space-y-1 text-xs text-muted-foreground">
-            {[...badHmac, ...unsorted].slice(0, 10).map((e) => (
+            {[...badHmac, ...unsorted, ...unknownTopic].slice(0, 10).map((e) => (
               <li key={e.id} className="font-mono">
                 {fmtTime(e.received_at)} · {e.shopify_order_number ?? "—"} · {e.status}
                 {e.error ? ` · ${e.error}` : ""}

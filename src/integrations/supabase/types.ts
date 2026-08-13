@@ -1589,6 +1589,9 @@ export type Database = {
           archived_at: string | null
           archived_by: string | null
           cancelled_at: string | null
+          cancelled_reason: string | null
+          cancelled_source: string | null
+          cancelled_was_packed: boolean
           category: string
           created_at: string
           created_by: string | null
@@ -1631,6 +1634,9 @@ export type Database = {
           archived_at?: string | null
           archived_by?: string | null
           cancelled_at?: string | null
+          cancelled_reason?: string | null
+          cancelled_source?: string | null
+          cancelled_was_packed?: boolean
           category?: string
           created_at?: string
           created_by?: string | null
@@ -1673,6 +1679,9 @@ export type Database = {
           archived_at?: string | null
           archived_by?: string | null
           cancelled_at?: string | null
+          cancelled_reason?: string | null
+          cancelled_source?: string | null
+          cancelled_was_packed?: boolean
           category?: string
           created_at?: string
           created_by?: string | null
@@ -1731,6 +1740,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers_retail"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "retail_customer_duplicates"
+            referencedColumns: ["customer_a"]
+          },
+          {
+            foreignKeyName: "customer_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "retail_customer_duplicates"
+            referencedColumns: ["customer_b"]
           },
           {
             foreignKeyName: "customer_orders_received_by_fkey"
@@ -1814,15 +1837,20 @@ export type Database = {
           created_at: string
           created_by: string | null
           email: string | null
+          email_normalized: string | null
           excluded_allergens: string[]
           id: string
           is_company: boolean
+          legal_entity_id: string | null
           name: string
           note: string | null
           org_number: string | null
           phone: string | null
+          phone_normalized: string | null
           postal_code: string | null
           requires_identification_mark: boolean
+          shopify_customer_id: string | null
+          source: string | null
           store_id: string | null
           street: string | null
           updated_at: string
@@ -1835,15 +1863,20 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           email?: string | null
+          email_normalized?: string | null
           excluded_allergens?: string[]
           id?: string
           is_company?: boolean
+          legal_entity_id?: string | null
           name: string
           note?: string | null
           org_number?: string | null
           phone?: string | null
+          phone_normalized?: string | null
           postal_code?: string | null
           requires_identification_mark?: boolean
+          shopify_customer_id?: string | null
+          source?: string | null
           store_id?: string | null
           street?: string | null
           updated_at?: string
@@ -1856,15 +1889,20 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           email?: string | null
+          email_normalized?: string | null
           excluded_allergens?: string[]
           id?: string
           is_company?: boolean
+          legal_entity_id?: string | null
           name?: string
           note?: string | null
           org_number?: string | null
           phone?: string | null
+          phone_normalized?: string | null
           postal_code?: string | null
           requires_identification_mark?: boolean
+          shopify_customer_id?: string | null
+          source?: string | null
           store_id?: string | null
           street?: string | null
           updated_at?: string
@@ -9243,6 +9281,21 @@ export type Database = {
           },
         ]
       }
+      retail_customer_duplicates: {
+        Row: {
+          customer_a: string | null
+          customer_b: string | null
+          email_a: string | null
+          email_b: string | null
+          legal_entity_id: string | null
+          match_reason: string | null
+          name_a: string | null
+          name_b: string | null
+          phone_a: string | null
+          phone_b: string | null
+        }
+        Relationships: []
+      }
       staff_access: {
         Row: {
           age: number | null
@@ -9344,6 +9397,7 @@ export type Database = {
       is_investor: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       is_staff_manager: { Args: never; Returns: boolean }
+      last_name_key: { Args: { v: string }; Returns: string }
       latin_norm: { Args: { v: string }; Returns: string }
       ledger_zero_empty_costs: { Args: never; Returns: number }
       lot_parasite_block_reason: { Args: { _lot_id: string }; Returns: string }
@@ -9368,6 +9422,8 @@ export type Database = {
         }
         Returns: string
       }
+      normalize_email: { Args: { v: string }; Returns: string }
+      normalize_phone_se: { Args: { v: string }; Returns: string }
       notify_event: {
         Args: {
           _eid: string
