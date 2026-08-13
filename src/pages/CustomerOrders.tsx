@@ -73,20 +73,56 @@ const dayLabel = (iso: string) => {
   return pretty.charAt(0).toUpperCase() + pretty.slice(1);
 };
 
-/** Grupperar order per önskat datum, tidigast först. */
-function groupByDay(list: CustomerOrder[]) {
-  const map = new Map<string, CustomerOrder[]>();
-  for (const o of [...list].sort(
+/** ISO-veckonummer och ISO-år för ett datum. */
+function isoWeek(iso: string) {
+  const d = new Date(iso + "T00:00:00");
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  const week = Math.ceil(((t.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  return { week, year: t.getUTCFullYear() };
+}
+
+const rangeLabel = (days: string[]) => {
+  const fmt = (iso: string) =>
+    new Date(iso + "T00:00:00").toLocaleDateString("sv-SE", { day: "numeric", month: "short" });
+  const first = days[0];
+  const last = days[days.length - 1];
+  return first === last ? fmt(first) : `${fmt(first)} – ${fmt(last)}`;
+};
+
+/** Grupperar order per vecka och därunder per önskat datum, tidigast först. */
+function groupByWeek(list: CustomerOrder[]) {
+  const sorted = [...list].sort(
     (a, b) =>
       a.wanted_date.localeCompare(b.wanted_date) ||
       (a.wanted_time || "").localeCompare(b.wanted_time || ""),
-  )) {
-    const arr = map.get(o.wanted_date) ?? [];
+  );
+  const weeks = new Map<string, { week: number; year: number; days: Map<string, CustomerOrder[]> }>();
+  for (const o of sorted) {
+    const { week, year } = isoWeek(o.wanted_date);
+    const key = `${year}-${String(week).padStart(2, "0")}`;
+    const entry = weeks.get(key) ?? { week, year, days: new Map<string, CustomerOrder[]>() };
+    const arr = entry.days.get(o.wanted_date) ?? [];
     arr.push(o);
-    map.set(o.wanted_date, arr);
+    entry.days.set(o.wanted_date, arr);
+    weeks.set(key, entry);
   }
-  return [...map.entries()];
+  return [...weeks.entries()].map(([key, entry]) => {
+    const days = [...entry.days.entries()];
+    const orders = days.flatMap(([, list]) => list);
+    return {
+      key,
+      week: entry.week,
+      year: entry.year,
+      days,
+      count: orders.length,
+      sum: orders.reduce((s, o) => s + Number(o.total_incl_vat || o.estimated_total || 0), 0),
+    };
+  });
 }
+
 
 
 /**
@@ -450,29 +486,50 @@ export default function CustomerOrders() {
                   allSelected={allMarked}
                   onSelectAll={markAll}
                 />
-                {groupByDay(viewOrders).map(([day, list]) => (
-                  <div key={day}>
-                    <div className="flex items-center gap-2 border-x border-b border-grid-line bg-muted px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                      <span className="truncate">{dayLabel(day)}</span>
-                      <span className="shrink-0 font-mono tabular-nums">
-                        {list.length} order
+                {groupByWeek(viewOrders).map((w) => (
+                  <div key={w.key}>
+                    {/* Veckoseparator med antal och summa, tydligt avskild från dagsraderna. */}
+                    <div className="flex items-center gap-3 border-x border-b-2 border-grid-line border-b-primary bg-primary/10 px-2.5 py-1.5">
+                      <span className="text-[12px] font-bold uppercase tracking-wide text-foreground">
+                        Vecka {w.week}
+                      </span>
+                      <span className="truncate text-[11px] text-muted-foreground">
+                        {rangeLabel(w.days.map(([d]) => d))}
+                      </span>
+                      <span className="ml-auto shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
+                        {w.count} order
+                      </span>
+                      <span className="shrink-0 font-mono text-[12px] font-semibold tabular-nums text-foreground">
+                        {nf(w.sum, 2)} kr
                       </span>
                     </div>
 
-                    {list.map((o) => (
-                      <CustomerOrderRow
-                        key={o.id}
-                        order={o}
-                        canEdit={canEdit}
-                        readOnly={rowReadOnly(o)}
-                        open={openRow === o.id}
-                        onToggle={toggleRow}
-                        selected={marked.includes(o.id)}
-                        onSelect={toggleMark}
-                      />
+                    {w.days.map(([day, list]) => (
+                      <div key={day}>
+                        <div className="flex items-center gap-2 border-x border-b border-grid-line bg-muted px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          <span className="truncate">{dayLabel(day)}</span>
+                          <span className="shrink-0 font-mono tabular-nums">
+                            {list.length} order
+                          </span>
+                        </div>
+
+                        {list.map((o) => (
+                          <CustomerOrderRow
+                            key={o.id}
+                            order={o}
+                            canEdit={canEdit}
+                            readOnly={rowReadOnly(o)}
+                            open={openRow === o.id}
+                            onToggle={toggleRow}
+                            selected={marked.includes(o.id)}
+                            onSelect={toggleMark}
+                          />
+                        ))}
+                      </div>
                     ))}
                   </div>
                 ))}
+
               </div>
 
 
