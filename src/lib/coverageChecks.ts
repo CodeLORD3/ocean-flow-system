@@ -138,7 +138,7 @@ export function checkYieldCoverage(input: CoverageInput): CoverageFinding[] {
 export function usedSpeciesGroups(input: CoverageInput): Map<string, string> {
   const map = new Map<string, string>();
   for (const p of input.products) {
-    if (p.active === false) continue;
+    if (p.active === false || isExemptProduct(p, input)) continue;
     const k = speciesKey(p.species_group);
     if (k && !map.has(k)) map.set(k, p.species_group as string);
   }
