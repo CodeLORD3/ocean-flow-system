@@ -5621,6 +5621,7 @@ export type Database = {
           category: string
           cost_price: number
           cost_price_inherited: boolean
+          cost_price_source: string | null
           created_at: string | null
           day_price: number
           day_price_lots: number
@@ -5665,6 +5666,7 @@ export type Database = {
           category: string
           cost_price?: number
           cost_price_inherited?: boolean
+          cost_price_source?: string | null
           created_at?: string | null
           day_price?: number
           day_price_lots?: number
@@ -5709,6 +5711,7 @@ export type Database = {
           category?: string
           cost_price?: number
           cost_price_inherited?: boolean
+          cost_price_source?: string | null
           created_at?: string | null
           day_price?: number
           day_price_lots?: number
