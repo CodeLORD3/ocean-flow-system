@@ -58,6 +58,7 @@ import Checklist from "@/pages/Checklist";
 import DailyReport from "@/pages/DailyReport";
 import Production from "@/pages/Production";
 import DataCoverage from "@/pages/DataCoverage";
+import SystemStatus from "@/pages/SystemStatus";
 import StockMovementsPage from "@/pages/StockMovementsPage";
 import StockTransfers from "@/pages/StockTransfers";
 import Arrivals from "@/pages/Arrivals";
@@ -131,6 +132,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/dagsrapport": { component: <DailyReport /> },
   "/production": { component: <ProductionRouter /> },
   "/coverage": { component: <DataCoverage /> },
+  "/system-status": { component: <SystemStatus /> },
   "/stock-movements": { component: <StockMovementsPage /> },
   "/stock-transfers": { component: <StockTransfers /> },
   "/waste": { component: <WasteReports /> },

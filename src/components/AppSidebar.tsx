@@ -112,6 +112,7 @@ const financeNav = [
   { title: "Checklistor", url: "/checklist", icon: ClipboardCheck },
 
   { title: "Datakvalitet", url: "/coverage", icon: Shield },
+  { title: "Systemstatus", url: "/system-status", icon: Activity },
   { title: "Storlekssortering", url: "/size-grades", icon: Ruler },
   { title: "Omvandlingsrecept", url: "/transformation-recipes", icon: CookingPot },
   { title: "Ekonomi", url: "/finance", icon: CreditCard },
