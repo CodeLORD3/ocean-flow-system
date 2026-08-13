@@ -1742,20 +1742,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "customer_orders_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "retail_customer_duplicates"
-            referencedColumns: ["customer_a"]
-          },
-          {
-            foreignKeyName: "customer_orders_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "retail_customer_duplicates"
-            referencedColumns: ["customer_b"]
-          },
-          {
             foreignKeyName: "customer_orders_received_by_fkey"
             columns: ["received_by"]
             isOneToOne: false
@@ -1839,10 +1825,13 @@ export type Database = {
           email: string | null
           email_normalized: string | null
           excluded_allergens: string[]
+          first_name: string | null
           id: string
           is_company: boolean
+          last_name: string | null
           legal_entity_id: string | null
           name: string
+          name_review_needed: boolean
           note: string | null
           org_number: string | null
           phone: string | null
@@ -1865,10 +1854,13 @@ export type Database = {
           email?: string | null
           email_normalized?: string | null
           excluded_allergens?: string[]
+          first_name?: string | null
           id?: string
           is_company?: boolean
+          last_name?: string | null
           legal_entity_id?: string | null
           name: string
+          name_review_needed?: boolean
           note?: string | null
           org_number?: string | null
           phone?: string | null
@@ -1891,10 +1883,13 @@ export type Database = {
           email?: string | null
           email_normalized?: string | null
           excluded_allergens?: string[]
+          first_name?: string | null
           id?: string
           is_company?: boolean
+          last_name?: string | null
           legal_entity_id?: string | null
           name?: string
+          name_review_needed?: boolean
           note?: string | null
           org_number?: string | null
           phone?: string | null
@@ -9287,7 +9282,6 @@ export type Database = {
           customer_b: string | null
           email_a: string | null
           email_b: string | null
-          legal_entity_id: string | null
           match_reason: string | null
           name_a: string | null
           name_b: string | null

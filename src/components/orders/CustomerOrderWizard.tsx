@@ -88,6 +88,9 @@ export function CustomerOrderWizard({
   const [customer, setCustomer] = useState<RetailCustomer | null>(null);
   const [newCustomer, setNewCustomer] = useState({
     name: "",
+    first_name: "",
+    last_name: "",
+
     phone: "",
     email: "",
     street: "",
@@ -257,10 +260,21 @@ export function CustomerOrderWizard({
   };
 
   const saveCustomer = async () => {
-    if (!newCustomer.name.trim()) return toast.error("Kunden behöver ett namn.");
+    const first = newCustomer.first_name.trim();
+    const last = newCustomer.last_name.trim();
+    if (newCustomer.is_company) {
+      if (!newCustomer.company_name.trim()) return toast.error("Organisationen behöver ett namn.");
+    } else if (!first || !last) {
+      return toast.error("Ange både förnamn och efternamn.");
+    }
     try {
       const created = await createCustomer.mutateAsync({
         ...newCustomer,
+        first_name: first || null,
+        last_name: last || null,
+        name: newCustomer.is_company
+          ? newCustomer.company_name.trim()
+          : [first, last].filter(Boolean).join(" "),
         company_name: newCustomer.is_company ? newCustomer.company_name.trim() || null : null,
         org_number: newCustomer.is_company ? newCustomer.org_number.trim() || null : null,
         contact_reference: newCustomer.is_company
@@ -268,6 +282,7 @@ export function CustomerOrderWizard({
           : null,
         store_id: storeId,
       } as any);
+
 
       setCustomer(created);
       setCreatingCustomer(false);
@@ -393,9 +408,9 @@ export function CustomerOrderWizard({
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="flex items-center justify-between gap-3 rounded-md border border-border p-3 sm:col-span-2">
                   <div>
-                    <Label htmlFor="wizard-is-company">Företagskund</Label>
+                    <Label htmlFor="wizard-is-company">Organisation</Label>
                     <p className="text-xs text-muted-foreground">
-                      Markera om beställningen görs av ett företag.
+                      Klubb, förening eller företag. Förnamn/efternamn avser kontaktpersonen.
                     </p>
                   </div>
                   <Switch
@@ -407,7 +422,7 @@ export function CustomerOrderWizard({
                 {newCustomer.is_company && (
                   <>
                     <div>
-                      <Label>Företagsnamn</Label>
+                      <Label>Organisationsnamn</Label>
                       <Input
                         className="h-12"
                         value={newCustomer.company_name}
@@ -435,15 +450,30 @@ export function CustomerOrderWizard({
                   </>
                 )}
 
-                <div className="sm:col-span-2">
-                  <Label>Namn</Label>
+                <div>
+                  <Label>
+                    Förnamn{" "}
+                    {newCustomer.is_company && <span className="text-muted-foreground">(valfritt)</span>}
+                  </Label>
                   <Input
                     autoFocus
                     className="h-12"
-                    value={newCustomer.name}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
+                    value={newCustomer.first_name}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, first_name: e.target.value })}
                   />
                 </div>
+                <div>
+                  <Label>
+                    Efternamn{" "}
+                    {newCustomer.is_company && <span className="text-muted-foreground">(valfritt)</span>}
+                  </Label>
+                  <Input
+                    className="h-12"
+                    value={newCustomer.last_name}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, last_name: e.target.value })}
+                  />
+                </div>
+
                 <div>
                   <Label>Telefon</Label>
                   <Input

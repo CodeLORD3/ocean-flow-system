@@ -27,10 +27,12 @@ import {
   useRetailCustomers,
   useUpdateRetailCustomer,
 } from "@/hooks/useCustomerOrders";
-import { RetailCustomer } from "@/lib/customerOrders";
+import { RetailCustomer, customerDisplayName } from "@/lib/customerOrders";
 
 const empty = {
   name: "",
+  first_name: "",
+  last_name: "",
   phone: "",
   email: "",
   street: "",
@@ -44,6 +46,7 @@ const empty = {
 };
 
 
+
 /** Kundregister för privatkunder. Skilt från B2B-kunderna i /customers. */
 export function RetailCustomerRegistry({
   storeId,
@@ -53,7 +56,7 @@ export function RetailCustomerRegistry({
   readOnly?: boolean;
 }) {
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<"all" | "company" | "private">("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "company" | "private" | "review">("all");
   const { data: allCustomers = [], isLoading } = useRetailCustomers(storeId, search);
 
   const { data: orders = [] } = useCustomerOrders({ storeId });
@@ -77,6 +80,8 @@ export function RetailCustomerRegistry({
     setEditing(c);
     setForm({
       name: c.name,
+      first_name: c.first_name || "",
+      last_name: c.last_name || "",
       phone: c.phone || "",
       email: c.email || "",
       street: c.street || "",
@@ -93,9 +98,23 @@ export function RetailCustomerRegistry({
   };
 
   const save = async () => {
-    if (!form.name.trim()) return toast.error("Kunden behöver ett namn.");
+    const first = form.first_name.trim();
+    const last = form.last_name.trim();
+    if (form.is_company) {
+      if (!form.company_name.trim()) return toast.error("Organisationen behöver ett namn.");
+    } else if (!first || !last) {
+      return toast.error("Ange både förnamn och efternamn.");
+    }
+    const displayName = form.is_company
+      ? form.company_name.trim()
+      : [first, last].filter(Boolean).join(" ");
     const payload = {
       ...form,
+      first_name: first || null,
+      last_name: last || null,
+      // Originalnamnet behålls på befintliga poster, nya får det sammansatta namnet.
+      name: editing ? editing.name : displayName,
+      name_review_needed: false,
       company_name: form.is_company ? form.company_name.trim() || null : null,
       org_number: form.is_company ? form.org_number.trim() || null : null,
       contact_reference: form.is_company ? form.contact_reference.trim() || null : null,
@@ -113,9 +132,18 @@ export function RetailCustomerRegistry({
 
   const historyFor = (id: string) => orders.filter((o) => o.customer_id === id);
 
+  const reviewCount = allCustomers.filter((c) => c.name_review_needed).length;
+
   const customers = allCustomers.filter((c) =>
-    typeFilter === "all" ? true : typeFilter === "company" ? c.is_company : !c.is_company,
+    typeFilter === "all"
+      ? true
+      : typeFilter === "review"
+        ? c.name_review_needed
+        : typeFilter === "company"
+          ? c.is_company
+          : !c.is_company,
   );
+
 
   return (
     <div className="space-y-4">
@@ -142,9 +170,13 @@ export function RetailCustomerRegistry({
             Privat
           </ToggleGroupItem>
           <ToggleGroupItem value="company" className="h-11 px-3 text-xs">
-            Företag
+            Organisation
+          </ToggleGroupItem>
+          <ToggleGroupItem value="review" className="h-11 px-3 text-xs">
+            Genomgång {reviewCount > 0 && `(${reviewCount})`}
           </ToggleGroupItem>
         </ToggleGroup>
+
         {!readOnly && (
           <Button className="h-11" onClick={openNew}>
             <Plus className="mr-2 h-4 w-4" /> Ny kund
@@ -152,14 +184,20 @@ export function RetailCustomerRegistry({
         )}
       </div>
 
-
+      {typeFilter === "review" && (
+        <p className="text-xs text-muted-foreground">
+          Namn som inte kunde delas säkert i förnamn och efternamn. Öppna posten, välj person
+          eller organisation och rätta fälten — posten fungerar som vanligt under tiden.
+        </p>
+      )}
 
       {!isLoading && customers.length === 0 && (
         <EmptyState
-          title="Inga privatkunder ännu"
+          title={typeFilter === "review" ? "Inget att gå igenom" : "Inga privatkunder ännu"}
           description="Kunder läggs upp när du tar emot första beställningen, eller här direkt."
         />
       )}
+
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {customers.map((c) => {
@@ -182,10 +220,15 @@ export function RetailCustomerRegistry({
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="truncate font-semibold">{c.name}</span>
+                      <span className="truncate font-semibold">{customerDisplayName(c)}</span>
                       {c.is_company && (
                         <Badge variant="secondary" className="h-5 shrink-0 px-1.5 text-[10px]">
-                          Företag
+                          Organisation
+                        </Badge>
+                      )}
+                      {c.name_review_needed && (
+                        <Badge variant="outline" className="h-5 shrink-0 px-1.5 text-[10px]">
+                          Genomgång
                         </Badge>
                       )}
                     </div>
@@ -194,6 +237,12 @@ export function RetailCustomerRegistry({
                         {[c.company_name, c.org_number].filter(Boolean).join(" · ")}
                       </div>
                     )}
+                    {c.name_review_needed && (
+                      <div className="truncate text-xs text-muted-foreground">
+                        Originalnamn: {c.name || "—"}
+                      </div>
+                    )}
+
                     <div className="truncate text-xs text-muted-foreground">
                       {[c.phone, c.email].filter(Boolean).join(" · ") || "Inga kontaktuppgifter"}
                     </div>
@@ -261,9 +310,10 @@ export function RetailCustomerRegistry({
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="flex items-center justify-between gap-3 rounded-md border border-border p-3 sm:col-span-2">
               <div>
-                <Label htmlFor="reg-is-company">Företagskund</Label>
+                <Label htmlFor="reg-is-company">Organisation</Label>
                 <p className="text-xs text-muted-foreground">
-                  Kan ändras i efterhand om kunden ska faktureras som företag.
+                  Klubb, förening eller företag. Hela namnet ligger i organisationsnamnet och
+                  förnamn/efternamn avser kontaktpersonen.
                 </p>
               </div>
               <Switch
@@ -275,7 +325,7 @@ export function RetailCustomerRegistry({
             {form.is_company && (
               <>
                 <div>
-                  <Label>Företagsnamn</Label>
+                  <Label>Organisationsnamn</Label>
                   <Input
                     className="h-12"
                     value={form.company_name}
@@ -301,10 +351,28 @@ export function RetailCustomerRegistry({
               </>
             )}
 
-            <div className="sm:col-span-2">
-              <Label>Namn</Label>
-              <Input className="h-12" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <div>
+              <Label>Förnamn {form.is_company && <span className="text-muted-foreground">(valfritt)</span>}</Label>
+              <Input
+                className="h-12"
+                value={form.first_name}
+                onChange={(e) => setForm({ ...form, first_name: e.target.value })}
+              />
             </div>
+            <div>
+              <Label>Efternamn {form.is_company && <span className="text-muted-foreground">(valfritt)</span>}</Label>
+              <Input
+                className="h-12"
+                value={form.last_name}
+                onChange={(e) => setForm({ ...form, last_name: e.target.value })}
+              />
+            </div>
+            {editing && (
+              <div className="sm:col-span-2 text-xs text-muted-foreground">
+                Originalnamn (oförändrat): {editing.name || "—"}
+              </div>
+            )}
+
             <div>
               <Label>Telefon</Label>
               <Input

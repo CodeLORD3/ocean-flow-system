@@ -67,7 +67,12 @@ export const TOTAL_DEVIATION_LIMIT = 0.15;
 export interface RetailCustomer {
   id: string;
   store_id: string | null;
+  /** Originaldata: fritt namnfält. Skrivs aldrig över av migreringar. */
   name: string;
+  first_name: string | null;
+  last_name: string | null;
+  /** Namnet kunde inte delas säkert vid migreringen — behöver genomgång. */
+  name_review_needed: boolean;
   phone: string | null;
   email: string | null;
   street: string | null;
@@ -83,6 +88,23 @@ export interface RetailCustomer {
 
   created_at: string;
 }
+
+/**
+ * Visningsnamn: organisationer visas med organisationsnamnet, personer med
+ * förnamn + efternamn. Faller tillbaka på det gamla fria namnfältet.
+ */
+export function customerDisplayName(c: {
+  name?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  is_company?: boolean | null;
+  company_name?: string | null;
+}): string {
+  if (c.is_company && c.company_name?.trim()) return c.company_name.trim();
+  const person = [c.first_name, c.last_name].filter((v) => v?.trim()).join(" ").trim();
+  return person || (c.name ?? "").trim();
+}
+
 
 export interface CustomerOrderLine {
   id: string;

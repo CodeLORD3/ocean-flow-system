@@ -6,8 +6,8 @@ import { Users } from "lucide-react";
 
 /**
  * Kundpar som ser ut som dubbletter inom samma bolag: samma e-post, eller
- * samma normaliserade telefon och samma efternamn. Listan är endast
- * beslutsunderlag — ingen automatisk sammanslagning sker.
+ * samma normaliserade telefon och samma efternamn. Kortet är ett rent
+ * informationskort: inga sammanslagnings- eller raderingsåtgärder finns.
  */
 
 const db = supabase as any;
@@ -62,7 +62,8 @@ export default function RetailCustomerDuplicates() {
         ))}
         {!!rows.length && (
           <p className="pt-1 text-muted-foreground">
-            Sammanslagning görs manuellt — systemet slår aldrig ihop kunder automatiskt.
+            Endast upplysning. Systemet har ingen sammanslagningsfunktion — inga kundposter
+            slås ihop, raderas eller kopplas om härifrån.
           </p>
         )}
       </CardContent>

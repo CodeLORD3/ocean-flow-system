@@ -40,12 +40,17 @@ interface ReviewRow {
   order: any;
   email: string | null;
   phone: string | null;
+  firstName: string | null;
+  lastName: string | null;
   shopifyCustomerId: string | null;
   candidates: any[];
 }
 
+
 export default function CustomerMatchReview() {
   const [busy, setBusy] = useState<string | null>(null);
+  const [names, setNames] = useState<Record<string, { first: string; last: string }>>({});
+
 
   const review = useQuery({
     queryKey: ["shopify_customer_review"],
@@ -104,15 +109,19 @@ export default function CustomerMatchReview() {
           candidates = byPhone || [];
         }
 
+        const ship = ev.payload?.shipping_address ?? ev.payload?.billing_address ?? {};
         out.push({
           eventId: ev.id,
           message: String(ev.error),
           order,
           email,
           phone,
+          firstName: String(c.first_name ?? ship.first_name ?? "").trim() || null,
+          lastName: String(c.last_name ?? ship.last_name ?? "").trim() || null,
           shopifyCustomerId: c?.id != null ? String(c.id) : null,
           candidates,
         });
+
       }
       return out;
     },
@@ -160,14 +169,25 @@ export default function CustomerMatchReview() {
     }
   };
 
+  /** Nyregistrering kräver förnamn och efternamn. */
   const createNew = async (row: ReviewRow) => {
+    const snap = String(row.order.customer_name_snapshot ?? "").trim();
+    const first = names[row.eventId]?.first ?? row.firstName ?? snap.replace(/\s+\S+$/, "").trim();
+    const last = names[row.eventId]?.last ?? row.lastName ?? (/\s/.test(snap) ? snap.replace(/^.*\s+/, "") : "");
+    if (!first.trim() || !last.trim()) {
+      toast.error("Ange både förnamn och efternamn innan kunden skapas.");
+      setNames((s) => ({ ...s, [row.eventId]: { first, last } }));
+      return;
+    }
     setBusy(row.eventId);
     try {
       const { data: created, error } = await db
         .from("customers_retail")
         .insert({
           store_id: row.order.store_id,
-          name: row.order.customer_name_snapshot || "Webbkund",
+          name: `${first.trim()} ${last.trim()}`,
+          first_name: first.trim(),
+          last_name: last.trim(),
           phone: row.order.customer_phone_snapshot,
           email: row.email,
           shopify_customer_id: row.shopifyCustomerId,
@@ -185,6 +205,7 @@ export default function CustomerMatchReview() {
       setBusy(null);
     }
   };
+
 
   const rows = review.data || [];
 
@@ -236,15 +257,46 @@ export default function CustomerMatchReview() {
                 </li>
               ))}
             </ul>
-            <Button
-              size="sm"
-              variant="secondary"
-              className="h-6 text-xs"
-              disabled={busy === row.eventId}
-              onClick={() => createNew(row)}
-            >
-              Ingen av dessa — skapa ny kund
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                className="h-7 w-32 rounded-md border border-input bg-background px-2 text-xs"
+                placeholder="Förnamn"
+                value={names[row.eventId]?.first ?? row.firstName ?? ""}
+                onChange={(e) =>
+                  setNames((s) => ({
+                    ...s,
+                    [row.eventId]: {
+                      first: e.target.value,
+                      last: s[row.eventId]?.last ?? row.lastName ?? "",
+                    },
+                  }))
+                }
+              />
+              <input
+                className="h-7 w-32 rounded-md border border-input bg-background px-2 text-xs"
+                placeholder="Efternamn"
+                value={names[row.eventId]?.last ?? row.lastName ?? ""}
+                onChange={(e) =>
+                  setNames((s) => ({
+                    ...s,
+                    [row.eventId]: {
+                      first: s[row.eventId]?.first ?? row.firstName ?? "",
+                      last: e.target.value,
+                    },
+                  }))
+                }
+              />
+              <Button
+                size="sm"
+                variant="secondary"
+                className="h-6 text-xs"
+                disabled={busy === row.eventId}
+                onClick={() => createNew(row)}
+              >
+                Ingen av dessa — skapa ny kund
+              </Button>
+            </div>
+
           </div>
         ))}
       </CardContent>
