@@ -403,6 +403,133 @@ async function createOrder(db: SupabaseClient, payload: any, storeId: string, vi
   return { orderId: order.id as string, orderNumber, unmatched };
 }
 
+/* ------------------------------------------------------------ bearbetning */
+
+/**
+ * Bearbetar en köad händelse. Körs ALLTID efter att svaret gått till Shopify,
+ * så ett internt fel kan aldrig ge Shopify ett felsvar (Shopify raderar
+ * prenumerationen om URL:en upprepat svarar annat än 200).
+ */
+async function processEvent(db: SupabaseClient, eventId: string): Promise<void> {
+  const { data: ev } = await db
+    .from("shopify_webhook_events")
+    .select("*")
+    .eq("id", eventId)
+    .maybeSingle();
+  if (!ev) return;
+
+  const stamp = new Date().toISOString();
+  await db
+    .from("shopify_webhook_events")
+    .update({
+      status: "bearbetar",
+      attempts: Number(ev.attempts ?? 0) + 1,
+      last_attempt_at: stamp,
+      error: null,
+    })
+    .eq("id", eventId);
+
+  const fail = async (msg: string, status = "fel") => {
+    await db
+      .from("shopify_webhook_events")
+      .update({ status, error: msg, processed_at: new Date().toISOString() })
+      .eq("id", eventId);
+  };
+
+  try {
+    let payload: any = ev.payload;
+    if (!payload && ev.raw_body) {
+      try {
+        payload = JSON.parse(ev.raw_body);
+      } catch {
+        await fail("Ogiltig JSON i webhookens body");
+        return;
+      }
+    }
+    if (!payload) {
+      await fail("Händelsen saknar payload");
+      return;
+    }
+
+    const shopifyOrderId = payload?.id != null ? String(payload.id) : null;
+    const orderName = String(payload?.name ?? payload?.order_number ?? shopifyOrderId ?? "");
+    if (!shopifyOrderId) {
+      await fail("Ordern saknar id");
+      return;
+    }
+
+    await db
+      .from("shopify_webhook_events")
+      .update({ payload, shopify_order_id: shopifyOrderId, shopify_order_number: orderName })
+      .eq("id", eventId);
+
+    // Idempotens: samma Shopify-order får aldrig bli två kundordrar.
+    const { data: dupe } = await db
+      .from("customer_orders")
+      .select("id, order_number")
+      .eq("shopify_order_id", shopifyOrderId)
+      .maybeSingle();
+    if (dupe) {
+      await db
+        .from("shopify_webhook_events")
+        .update({
+          status: "duplikat",
+          customer_order_id: dupe.id,
+          processed_at: new Date().toISOString(),
+        })
+        .eq("id", eventId);
+      return;
+    }
+
+    // Väntar redan på manuellt butiksval? Då är den här en omsändning.
+    const { data: pendingRows } = await db
+      .from("shopify_webhook_events")
+      .select("id")
+      .eq("shopify_order_id", shopifyOrderId)
+      .eq("status", "osorterad")
+      .neq("id", eventId)
+      .limit(1);
+    if ((pendingRows || []).length) {
+      await db
+        .from("shopify_webhook_events")
+        .update({ status: "duplikat", processed_at: new Date().toISOString() })
+        .eq("id", eventId);
+      return;
+    }
+
+    const { data: mapRows } = await db
+      .from("shopify_store_map")
+      .select("key_type, key_value, store_id, active");
+    const { storeId, via } = resolveStore(payload, (mapRows || []) as MapRow[]);
+
+    if (!storeId) {
+      await fail("Butiken kunde inte avgöras — kräver manuellt butiksval", "osorterad");
+      return;
+    }
+
+    const res = await createOrder(db, payload, storeId, via);
+    await db
+      .from("shopify_webhook_events")
+      .update({
+        status: "skapad",
+        store_id: storeId,
+        customer_order_id: res.orderId,
+        error: null,
+        processed_at: new Date().toISOString(),
+      })
+      .eq("id", eventId);
+  } catch (e) {
+    await fail(e instanceof Error ? e.message : String(e));
+  }
+}
+
+/** Kör bearbetningen efter att svaret skickats, utan att blockera svaret. */
+function afterResponse(work: Promise<unknown>) {
+  const runtime = (globalThis as any).EdgeRuntime;
+  if (runtime?.waitUntil) runtime.waitUntil(work);
+  else void work;
+}
+
 /* ---------------------------------------------------------------- handler */
 
 Deno.serve(async (req) => {
@@ -439,7 +566,9 @@ Deno.serve(async (req) => {
     if (ev.status !== "osorterad") return json({ ok: false, error: "Händelsen är redan hanterad" }, 409);
 
     try {
-      const res = await createOrder(db, ev.payload, storeId, "manuellt butiksval");
+      const payload = ev.payload ?? (ev.raw_body ? JSON.parse(ev.raw_body) : null);
+      if (!payload) return json({ ok: false, error: "Händelsen saknar payload" }, 400);
+      const res = await createOrder(db, payload, storeId, "manuellt butiksval");
       await db
         .from("shopify_webhook_events")
         .update({
@@ -459,29 +588,65 @@ Deno.serve(async (req) => {
     }
   }
 
+  /* Kör om en misslyckad köad rad från Systemstatus (kräver inloggad personal). */
+  if (path.endsWith("/reprocess")) {
+    const auth = req.headers.get("Authorization") ?? "";
+    const { data: userData } = await db.auth.getUser(auth.replace(/^Bearer\s+/i, ""));
+    if (!userData?.user) return json({ ok: false, error: "Inloggning krävs" }, 401);
+    let body: any;
+    try {
+      body = JSON.parse(raw);
+    } catch {
+      return json({ ok: false, error: "Ogiltig JSON" }, 400);
+    }
+    const eventId = String(body?.event_id ?? "");
+    if (!eventId) return json({ ok: false, error: "event_id krävs" }, 400);
+    const { data: ev } = await db
+      .from("shopify_webhook_events")
+      .select("id, status")
+      .eq("id", eventId)
+      .maybeSingle();
+    if (!ev) return json({ ok: false, error: "Händelsen finns inte" }, 404);
+    if (!["fel", "koad", "bearbetar"].includes(String(ev.status))) {
+      return json({ ok: false, error: "Raden är redan färdigbehandlad" }, 409);
+    }
+    await processEvent(db, eventId);
+    const { data: after } = await db
+      .from("shopify_webhook_events")
+      .select("status, error, customer_order_id")
+      .eq("id", eventId)
+      .maybeSingle();
+    return json({ ok: after?.status !== "fel", ...after });
+  }
+
   const secret = Deno.env.get("SHOPIFY_WEBHOOK_SECRET") ?? "";
   const topic = req.headers.get("x-shopify-topic") ?? "orders/create";
   const header = req.headers.get("x-shopify-hmac-sha256") ?? "";
+
+  /**
+   * Saknad nyckel är ett internt konfigurationsfel, inte Shopifys fel:
+   * logga det och svara 200 så att prenumerationen inte raderas.
+   */
+  if (!secret) {
+    await db.from("shopify_webhook_events").insert({
+      topic,
+      hmac_valid: false,
+      status: "fel",
+      raw_body: raw,
+      error: "SHOPIFY_WEBHOOK_SECRET saknas i miljön — signaturen kunde inte kontrolleras",
+      processed_at: new Date().toISOString(),
+    });
+    return json({ ok: false, error: "Signeringsnyckel saknas" }, 200);
+  }
+
+  const expected = await hmacBase64(secret, raw);
+  let signature = header;
 
   /**
    * Egen kontrollkörning: signaturen räknas ut med den konfigurerade nyckeln
    * och verifieras sedan i exakt samma kodväg som en riktig webhook. Kräver
    * inloggad personal och kan aldrig användas för att kringgå kontrollen.
    */
-  let expected = "";
-  let signature = header;
-  if (!secret) {
-    await db.from("shopify_webhook_events").insert({
-      topic,
-      hmac_valid: false,
-      status: "ogiltig_hmac",
-      error: "SHOPIFY_WEBHOOK_SECRET saknas i miljön",
-      processed_at: new Date().toISOString(),
-    });
-    return json({ ok: false, error: "Signeringsnyckel saknas" }, 500);
-  }
-  expected = await hmacBase64(secret, raw);
-
   if (path.endsWith("/selftest")) {
     const auth = req.headers.get("Authorization") ?? "";
     const { data: userData } = await db.auth.getUser(auth.replace(/^Bearer\s+/i, ""));
@@ -489,6 +654,7 @@ Deno.serve(async (req) => {
     signature = expected;
   }
 
+  /* Enda felsvaret: ogiltig signatur. */
   if (!signature || !safeEqual(signature, expected)) {
     await db.from("shopify_webhook_events").insert({
       topic,
@@ -500,111 +666,35 @@ Deno.serve(async (req) => {
     return json({ ok: false, error: "Ogiltig signatur" }, 401);
   }
 
-  let payload: any;
+  /* Signaturen är verifierad: spara rått i kön och kvittera direkt med 200. */
+  let payload: any = null;
   try {
     payload = JSON.parse(raw);
   } catch {
-    await db.from("shopify_webhook_events").insert({
-      topic,
-      hmac_valid: true,
-      status: "fel",
-      error: "Ogiltig JSON i webhooken",
-      processed_at: new Date().toISOString(),
-    });
-    return json({ ok: false, error: "Ogiltig JSON" }, 400);
+    payload = null;
   }
 
-  const shopifyOrderId = payload?.id != null ? String(payload.id) : null;
-  const orderName = String(payload?.name ?? payload?.order_number ?? shopifyOrderId ?? "");
-  if (!shopifyOrderId) {
-    await db.from("shopify_webhook_events").insert({
-      topic,
-      hmac_valid: true,
-      status: "fel",
-      error: "Ordern saknar id",
-      payload,
-      processed_at: new Date().toISOString(),
-    });
-    return json({ ok: false, error: "Ordern saknar id" }, 400);
-  }
-
-  // Idempotens: samma Shopify-order får aldrig bli två kundordrar.
-  const { data: dupe } = await db
-    .from("customer_orders")
-    .select("id, order_number")
-    .eq("shopify_order_id", shopifyOrderId)
-    .maybeSingle();
-  if (dupe) {
-    await db.from("shopify_webhook_events").insert({
-      topic,
-      shopify_order_id: shopifyOrderId,
-      shopify_order_number: orderName,
-      hmac_valid: true,
-      status: "duplikat",
-      customer_order_id: dupe.id,
-      processed_at: new Date().toISOString(),
-    });
-    return json({ ok: true, duplicate: true, order_number: dupe.order_number });
-  }
-  const { data: pending } = await db
+  const { data: queued, error: queueErr } = await db
     .from("shopify_webhook_events")
+    .insert({
+      topic,
+      hmac_valid: true,
+      status: "koad",
+      raw_body: raw,
+      payload,
+      shopify_order_id: payload?.id != null ? String(payload.id) : null,
+      shopify_order_number: payload?.name ?? payload?.order_number ?? null,
+    })
     .select("id")
-    .eq("shopify_order_id", shopifyOrderId)
-    .eq("status", "osorterad")
-    .maybeSingle();
-  if (pending) {
-    return json({ ok: true, unsorted: true, event_id: pending.id, duplicate: true });
+    .single();
+
+  if (queueErr || !queued) {
+    // Kön kunde inte skrivas — logga i funktionsloggen och kvittera ändå med 200.
+    console.error("kön kunde inte skrivas:", queueErr?.message);
+    return json({ ok: false, queued: false, error: "Kön kunde inte skrivas" }, 200);
   }
 
-  const { data: mapRows } = await db
-    .from("shopify_store_map")
-    .select("key_type, key_value, store_id, active");
-  const { storeId, via } = resolveStore(payload, (mapRows || []) as MapRow[]);
-
-  if (!storeId) {
-    const { data: ev } = await db
-      .from("shopify_webhook_events")
-      .insert({
-        topic,
-        shopify_order_id: shopifyOrderId,
-        shopify_order_number: orderName,
-        hmac_valid: true,
-        status: "osorterad",
-        error: "Butiken kunde inte avgöras — kräver manuellt butiksval",
-        payload,
-      })
-      .select("id")
-      .single();
-    return json({ ok: true, unsorted: true, event_id: ev?.id ?? null });
-  }
-
-  try {
-    const res = await createOrder(db, payload, storeId, via);
-    await db.from("shopify_webhook_events").insert({
-      topic,
-      shopify_order_id: shopifyOrderId,
-      shopify_order_number: orderName,
-      hmac_valid: true,
-      status: "skapad",
-      store_id: storeId,
-      customer_order_id: res.orderId,
-      payload,
-      processed_at: new Date().toISOString(),
-    });
-    return json({ ok: true, order_number: res.orderNumber, unmatched_lines: res.unmatched });
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    await db.from("shopify_webhook_events").insert({
-      topic,
-      shopify_order_id: shopifyOrderId,
-      shopify_order_number: orderName,
-      hmac_valid: true,
-      status: "fel",
-      store_id: storeId,
-      error: msg,
-      payload,
-      processed_at: new Date().toISOString(),
-    });
-    return json({ ok: false, error: msg }, 500);
-  }
+  afterResponse(processEvent(db, queued.id));
+  return json({ ok: true, queued: true, event_id: queued.id }, 200);
 });
+

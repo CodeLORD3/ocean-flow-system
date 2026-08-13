@@ -1,34 +1,60 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, CheckCircle2, Globe } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Globe, RefreshCw, WifiOff } from "lucide-react";
+import { toast } from "sonner";
 
 /**
- * Webbordrarnas hälsa på Systemstatus: misslyckade webhooks, ogiltiga
- * signaturer, osorterade ordrar och omatchade rader äldre än två timmar.
+ * Webbordrarnas hälsa på Systemstatus: misslyckad bearbetning av köade ordrar
+ * (med möjlighet att köra om raden), ogiltiga signaturer, osorterade ordrar,
+ * omatchade rader äldre än två timmar samt vakthunden som larmar om ingen
+ * webhook tagits emot på 24 timmar — det kan betyda att Shopify raderat
+ * prenumerationen.
  */
 
 const db = supabase as any;
 const TWO_HOURS = 2 * 3600 * 1000;
+const DAY = 24 * 3600 * 1000;
 
 const fmtTime = (v?: string | null) =>
   v ? new Date(v).toLocaleString("sv-SE", { dateStyle: "short", timeStyle: "short" }) : "—";
 
+const hoursSince = (v?: string | null) =>
+  v ? Math.floor((Date.now() - new Date(v).getTime()) / 3600000) : null;
+
 export default function ShopifyWebhookStatus() {
+  const [busy, setBusy] = useState<string | null>(null);
+
   const events = useQuery({
     queryKey: ["shopify_status_events"],
     queryFn: async () => {
       const { data, error } = await db
         .from("shopify_webhook_events")
-        .select("id, status, error, shopify_order_number, received_at, hmac_valid")
-        .in("status", ["fel", "ogiltig_hmac", "osorterad"])
+        .select("id, status, error, shopify_order_number, received_at, hmac_valid, attempts")
+        .in("status", ["fel", "koad", "bearbetar", "ogiltig_hmac", "osorterad"])
         .order("received_at", { ascending: false })
         .limit(50);
       if (error) throw error;
       return (data || []) as any[];
+    },
+    refetchInterval: 60000,
+  });
+
+  /** Vakthund: senaste mottagna webhook oavsett utfall. */
+  const lastReceived = useQuery({
+    queryKey: ["shopify_status_last_received"],
+    queryFn: async () => {
+      const { data, error } = await db
+        .from("shopify_webhook_events")
+        .select("received_at")
+        .order("received_at", { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      return ((data || [])[0]?.received_at ?? null) as string | null;
     },
     refetchInterval: 60000,
   });
@@ -49,17 +75,43 @@ export default function ShopifyWebhookStatus() {
     refetchInterval: 60000,
   });
 
-  const failed = (events.data || []).filter((e) => e.status === "fel");
-  const badHmac = (events.data || []).filter((e) => e.status === "ogiltig_hmac");
-  const unsorted = (events.data || []).filter((e) => e.status === "osorterad");
+  const reprocess = async (id: string) => {
+    setBusy(id);
+    try {
+      const { data, error } = await supabase.functions.invoke("shopify-order-webhook/reprocess", {
+        body: { event_id: id },
+      });
+      if (error) throw error;
+      const res = data as any;
+      if (res?.ok) toast.success("Raden bearbetades om");
+      else toast.error(res?.error ?? "Bearbetningen misslyckades igen");
+      await events.refetch();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Omkörningen misslyckades");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const rows = events.data || [];
+  const failed = rows.filter((e) => e.status === "fel");
+  const queued = rows.filter((e) => e.status === "koad" || e.status === "bearbetar");
+  const badHmac = rows.filter((e) => e.status === "ogiltig_hmac");
+  const unsorted = rows.filter((e) => e.status === "osorterad");
   const staleLines = stale.data || [];
+
+  const last = lastReceived.data ?? null;
+  const silent = !last || Date.now() - new Date(last).getTime() > DAY;
+  const silentHours = hoursSince(last);
+
   const problems = failed.length + badHmac.length + unsorted.length + staleLines.length;
+  const alarm = problems > 0 || silent;
 
   return (
-    <Card className={problems ? "border-destructive" : undefined}>
+    <Card className={alarm ? "border-destructive" : undefined}>
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-base">
-          {problems ? (
+          {alarm ? (
             <AlertTriangle className="h-4 w-4 text-destructive" />
           ) : (
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
@@ -71,10 +123,23 @@ export default function ShopifyWebhookStatus() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
+        {silent && (
+          <div className="flex items-start gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-2 text-xs">
+            <WifiOff className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+            <span>
+              Ingen webhook mottagen{" "}
+              {last ? `på ${silentHours} timmar (senast ${fmtTime(last)})` : "över huvud taget"}.
+              Kontrollera att prenumerationen finns kvar i Shopify — Shopify raderar den om
+              URL:en upprepat svarar annat än 200.
+            </span>
+          </div>
+        )}
+
         <div className="flex flex-wrap gap-2">
           <Badge variant={failed.length ? "destructive" : "secondary"}>
-            {failed.length} misslyckade webhooks
+            {failed.length} misslyckad bearbetning
           </Badge>
+          <Badge variant={queued.length ? "outline" : "secondary"}>{queued.length} i kö</Badge>
           <Badge variant={badHmac.length ? "destructive" : "secondary"}>
             {badHmac.length} ogiltiga signaturer
           </Badge>
@@ -84,11 +149,38 @@ export default function ShopifyWebhookStatus() {
           <Badge variant={staleLines.length ? "destructive" : "secondary"}>
             {staleLines.length} omatchade rader äldre än 2 h
           </Badge>
+          <Badge variant="secondary" className="font-mono tabular-nums">
+            senast {fmtTime(last)}
+          </Badge>
         </div>
 
-        {problems > 0 && (
+        {(failed.length > 0 || queued.length > 0) && (
+          <ul className="space-y-1 text-xs">
+            {[...failed, ...queued].slice(0, 10).map((e) => (
+              <li key={e.id} className="flex items-center gap-2 font-mono">
+                <span className="flex-1 truncate text-muted-foreground">
+                  {fmtTime(e.received_at)} · {e.shopify_order_number ?? "—"} · {e.status}
+                  {e.attempts ? ` · försök ${e.attempts}` : ""}
+                  {e.error ? ` · ${e.error}` : ""}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-6 shrink-0 text-xs"
+                  disabled={busy === e.id}
+                  onClick={() => reprocess(e.id)}
+                >
+                  <RefreshCw className={`mr-1 h-3 w-3 ${busy === e.id ? "animate-spin" : ""}`} />
+                  Kör om
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {(badHmac.length > 0 || unsorted.length > 0 || staleLines.length > 0) && (
           <ul className="space-y-1 text-xs text-muted-foreground">
-            {[...failed, ...badHmac, ...unsorted].slice(0, 10).map((e) => (
+            {[...badHmac, ...unsorted].slice(0, 10).map((e) => (
               <li key={e.id} className="font-mono">
                 {fmtTime(e.received_at)} · {e.shopify_order_number ?? "—"} · {e.status}
                 {e.error ? ` · ${e.error}` : ""}

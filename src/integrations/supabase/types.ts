@@ -6711,12 +6711,15 @@ export type Database = {
       }
       shopify_webhook_events: {
         Row: {
+          attempts: number
           customer_order_id: string | null
           error: string | null
           hmac_valid: boolean
           id: string
+          last_attempt_at: string | null
           payload: Json | null
           processed_at: string | null
+          raw_body: string | null
           received_at: string
           resolved_by: string | null
           shopify_order_id: string | null
@@ -6726,12 +6729,15 @@ export type Database = {
           topic: string
         }
         Insert: {
+          attempts?: number
           customer_order_id?: string | null
           error?: string | null
           hmac_valid?: boolean
           id?: string
+          last_attempt_at?: string | null
           payload?: Json | null
           processed_at?: string | null
+          raw_body?: string | null
           received_at?: string
           resolved_by?: string | null
           shopify_order_id?: string | null
@@ -6741,12 +6747,15 @@ export type Database = {
           topic?: string
         }
         Update: {
+          attempts?: number
           customer_order_id?: string | null
           error?: string | null
           hmac_valid?: boolean
           id?: string
+          last_attempt_at?: string | null
           payload?: Json | null
           processed_at?: string | null
+          raw_body?: string | null
           received_at?: string
           resolved_by?: string | null
           shopify_order_id?: string | null
