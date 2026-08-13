@@ -67,14 +67,16 @@ Deno.serve(async (req) => {
   const { data: userData } = await db.auth.getUser(auth.replace(/^Bearer\s+/i, ""));
   if (!userData?.user) return json({ ok: false, error: "Inloggning krävs" }, 401);
 
-  const token = Deno.env.get("SHOPIFY_ADMIN_TOKEN") ?? "";
+  // Token kan ligga under endera namnet; värdet läses bara från miljön.
+  const token =
+    Deno.env.get("SHOPIFY_ADMIN_TOKEN") ?? Deno.env.get("SHOPIFY_ACCESS_TOKEN") ?? "";
   const domainRaw = Deno.env.get("SHOPIFY_SHOP_DOMAIN") ?? "";
   if (!token || !domainRaw) {
     return json(
       {
         ok: false,
         error:
-          "SHOPIFY_ADMIN_TOKEN och SHOPIFY_SHOP_DOMAIN måste finnas som hemligheter innan backfyllnaden kan köras",
+          "Shopify-token (SHOPIFY_ADMIN_TOKEN/SHOPIFY_ACCESS_TOKEN) och SHOPIFY_SHOP_DOMAIN måste finnas som hemligheter innan backfyllnaden kan köras",
       },
       400,
     );
