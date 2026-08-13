@@ -194,7 +194,7 @@ export function ProductionOrderForm() {
         form: s.detail_form,
         name: s.detail_name || detailFormLabel(s.detail_form),
         pctOfFillet: Number(s.pct_of_fillet),
-        role: (s.role === "primary" ? "primary" : "byproduct") as "primary" | "byproduct",
+        role: (s.role === "primary" || s.role === "main" ? "primary" : "byproduct") as "primary" | "byproduct",
         optional: s.is_optional,
       }));
     return CUT_MODEL_TEMPLATES[cutModel].map((d) => ({
