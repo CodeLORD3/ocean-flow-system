@@ -26,7 +26,7 @@ async function loadCoverageInput(): Promise<CoverageInput> {
       supabase
         .from("products")
         .select(
-          "sku, name, species_group, active, category, exempt_species_data, day_price, day_price_lots, cost_price, cost_price_inherited" as any,
+          "sku, name, species_group, active, category, exempt_species_data, day_price, day_price_lots, cost_price, cost_price_inherited, cost_price_source" as any,
         )
         .eq("active", true),
       supabase.from("yields").select("species_group"),

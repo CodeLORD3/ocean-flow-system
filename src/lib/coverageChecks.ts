@@ -44,6 +44,8 @@ export interface ProductRow {
   cost_price?: number | string | null;
   /** Sant när Reservpriset är ärvt från grundprodukten och inte satt manuellt. */
   cost_price_inherited?: boolean | null;
+  /** Ursprung för Reservpriset: inkopshistorik | recept | utpris | platshallare. */
+  cost_price_source?: string | null;
 }
 
 export interface YieldRow {
@@ -278,7 +280,9 @@ export function productCost(p: ProductRow): { source: PriceSource; cost: number 
   const lots = num(p.day_price_lots);
   if (day > 0 && lots > 0) return { source: "day_price", cost: day };
   const reserve = num(p.cost_price);
-  if (reserve > 0) return { source: "cost_price", cost: reserve };
+  // Platshållarpris (1 kr) är ingen kostnad — behandlas som saknad källa.
+  if (reserve > 0 && p.cost_price_source !== "platshallare")
+    return { source: "cost_price", cost: reserve };
   return { source: "missing", cost: 0 };
 }
 
@@ -349,7 +353,7 @@ export function checkDetailPrices(input: CoverageInput): CoverageFinding[] {
       severity: "blocking",
       group: p.species_group ?? key,
       subject: p.sku,
-      message: `${p.name}: saknar både dagspris och Reservpris — referenspris kan inte härledas.`,
+      message: `${p.name}: ${p.cost_price_source === "platshallare" ? "har bara platshållarpris" : "saknar både dagspris och Reservpris"} — referenspris kan inte härledas.`,
     });
   }
   return out;
