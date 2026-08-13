@@ -110,9 +110,17 @@ export interface CustomerOrderLine {
   movement_id: string | null;
   packed_at: string | null;
   sort_order: number;
+  /* Webborder från Shopify */
+  shopify_line_id?: string | null;
+  shopify_sku?: string | null;
+  shopify_title?: string | null;
+  paid_quantity?: number | null;
+  price_locked?: boolean;
+  needs_product_match?: boolean;
   products?: any;
   lots?: any;
 }
+
 
 export interface CustomerOrder {
   id: string;
