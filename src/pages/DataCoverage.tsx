@@ -175,6 +175,11 @@ export default function DataCoverage() {
                   <Badge variant="outline" className="border-sky-500 text-[10px] text-sky-600">
                     {priceSources.counts.cost_price} {PRICE_SOURCE_LABEL.cost_price}
                   </Badge>
+                  {priceSources.inherited > 0 && (
+                    <Badge variant="outline" className="border-amber-500 text-[10px] text-amber-600">
+                      {priceSources.inherited} ärvt från grundprodukt
+                    </Badge>
+                  )}
                   <Badge
                     variant={priceSources.counts.missing > 0 ? "destructive" : "outline"}
                     className="text-[10px]"
