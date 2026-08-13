@@ -108,7 +108,7 @@ export default function ProductTraceabilityInline({
                       </Badge>
                     )}
                     <span className="ml-auto text-[11px] tabular-nums font-semibold">
-                      {nf(Number(lot.quantity_kg) || 0)} kg
+                      {nf(Number(lot.quantity_kg) || 0)} {unitLabel(product)}
                     </span>
                   </button>
 
@@ -176,7 +176,7 @@ export default function ProductTraceabilityInline({
                             <Badge variant="outline" className="text-[10px] h-4">
                               {m.movement_type}
                             </Badge>
-                            <span className="tabular-nums">{nf(Number(m.quantity_kg) || 0)} kg</span>
+                            <span className="tabular-nums">{nf(Number(m.quantity_kg) || 0)} {unitLabel(product)}</span>
                             <span className="text-muted-foreground truncate">
                               {m.storage_locations?.name || ""} {m.note ? `· ${m.note}` : ""}
                             </span>
