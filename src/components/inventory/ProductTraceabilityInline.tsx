@@ -143,7 +143,11 @@ export default function ProductTraceabilityInline({
                     {showCosts && (
                       <div>
                         <span className="text-muted-foreground">Inpris: </span>
-                        {fmt ? `${fmt(Number(lot.unit_cost) || 0)}/kg` : `${nf(Number(lot.unit_cost) || 0, 2)}/kg`}
+                        {(() => {
+                          const per = perUnitLabel(product);
+                          const v = Number(lot.unit_cost) || 0;
+                          return fmt ? `${fmt(v)}${per}` : `${nf(v, 2)}${per}`;
+                        })()}
                       </div>
                     )}
                     <div>

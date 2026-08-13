@@ -21,7 +21,7 @@ import {
   buildPostingPlan,
   evenBatchSplit,
   postPurchaseReport,
-  quantityToKg,
+  quantityToStockUnit,
   type PostingLine,
   type PostingProduct,
 } from "@/lib/purchaseReportPosting";
@@ -90,8 +90,8 @@ export default function PostIncomingDialog({ open, onOpenChange, report, lines, 
     const numbers = (line.lot_numbers ?? []).filter(Boolean);
     if (allocations[line.id]) return allocations[line.id];
     if (line.batch_quantities && Object.keys(line.batch_quantities).length) return line.batch_quantities;
-    const { kg } = quantityToKg(line, productById.get(line.product_id ?? ""));
-    return evenBatchSplit(numbers, kg ?? 0);
+    const { qty } = quantityToStockUnit(line, productById.get(line.product_id ?? ""));
+    return evenBatchSplit(numbers, qty ?? 0);
   };
 
   const setAllocation = (lineId: string, batch: string, value: string) => {
@@ -183,14 +183,14 @@ export default function PostIncomingDialog({ open, onOpenChange, report, lines, 
                 {multiBatchLines.map((line) => {
                   const alloc = allocationFor(line);
                   const total = Object.values(alloc).reduce((s, v) => s + Number(v || 0), 0);
-                  const { kg } = quantityToKg(line, productById.get(line.product_id ?? ""));
-                  const diff = Math.abs(total - (kg ?? 0)) > 0.005;
+                  const { qty, unit } = quantityToStockUnit(line, productById.get(line.product_id ?? ""));
+                  const diff = Math.abs(total - (qty ?? 0)) > 0.005;
                   return (
                     <div key={line.id} className="rounded-md border p-3 space-y-2">
                       <div className="flex items-center justify-between text-sm">
                         <span className="font-medium">{line.product_name}</span>
                         <span className={diff ? "text-destructive" : "text-muted-foreground"}>
-                          {nf(total)} / {nf(kg ?? 0)} kg
+                          {nf(total)} / {nf(qty ?? 0)} {unit}
                         </span>
                       </div>
                       <div className="grid gap-2 sm:grid-cols-3">
