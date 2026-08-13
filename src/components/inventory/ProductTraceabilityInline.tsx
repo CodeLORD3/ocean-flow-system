@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronRight, Fish, Ship, Anchor } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { sv } from "date-fns/locale";
+import { perUnitLabel, unitLabel } from "@/lib/units";
 
 const nf = (n: number, d = 1) =>
   n.toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d }).replace(/\u00a0/g, " ");
@@ -12,10 +13,13 @@ const nf = (n: number, d = 1) =>
 /** Spårbarhet för en enskild produkt — rullgardin inne i produktraden i lagret. */
 export default function ProductTraceabilityInline({
   productId,
+  product,
   showCosts = true,
   fmt,
 }: {
   productId: string;
+  /** Produktens enhet styr om kvantitet och pris visas per st eller per kg. */
+  product?: { unit?: string | null; weight_per_piece?: number | null } | null;
   showCosts?: boolean;
   fmt?: (v: number) => string;
 }) {
