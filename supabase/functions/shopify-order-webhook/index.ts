@@ -67,7 +67,11 @@ type Attr = { key?: string; value?: unknown };
 
 function attr(payload: any, key: string): string | null {
   const list: Attr[] = Array.isArray(payload?.note_attributes) ? payload.note_attributes : [];
-  const hit = list.find((a) => String(a?.key ?? "").trim().toLowerCase() === key.toLowerCase());
+  // Shopify skickar note_attributes som {name, value}; äldre exporter använder {key, value}.
+  const hit = list.find((a) => {
+    const k = String((a as any)?.name ?? (a as any)?.key ?? "").trim().toLowerCase();
+    return k === key.toLowerCase();
+  });
   const v = hit?.value;
   return v == null || String(v).trim() === "" ? null : String(v).trim();
 }
