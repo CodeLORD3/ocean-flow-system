@@ -253,53 +253,19 @@ export default function Receiving() {
           const line = (selectedOrder.shop_order_lines || []).find((l: any) => l.id === lineId);
           if (!line) continue;
 
-          const lots = await lotBalancesAtLocation(line.product_id, rawLocation.id);
-          const lotIds = lots.map((l) => l.lotId).filter((id): id is string => !!id);
-
-          if (lotIds.length) {
-            await supabase
-              .from("lots")
-              .update({
-                best_before: report.expiry_date || null,
-                updated_at: new Date().toISOString(),
-              })
-              .in("id", lotIds);
-          } else {
-            // Rader från tiden före partiskapandet: skapa parti med okänd härkomst
-            // istället för att tysta ner att spårbarheten saknas.
-            const qty =
-              Number(report.quantity_received) ||
-              Number(line.quantity_delivered) ||
-              Number(line.quantity_ordered) ||
-              0;
-            const lotNumber = `OKÄND-${new Date().toISOString().slice(0, 10)}-${lineId.slice(0, 8)}`;
-            const { data: newLot } = await supabase
-              .from("lots")
-              .insert({
-                lot_number: lotNumber,
-                product_id: line.product_id,
-                quantity_kg: qty,
-                best_before: report.expiry_date || null,
-                traceability_required: true,
-                status: "aktiv",
-                terminated_reason: null,
-                catch_area: "Okänd härkomst — parti saknades vid mottagning",
-              } as any)
-              .select("id")
-              .maybeSingle();
-            if (newLot?.id) {
-              await supabase
-                .from("stock_movements")
-                .update({ lot_id: newLot.id })
-                .eq("product_id", line.product_id)
-                .eq("location_id", rawLocation.id)
-                .eq("reference_type", "shop_order")
-                .eq("reference_id", selectedOrder.id)
-                .is("lot_id", null);
-            }
-          }
+          // Servern kopplar mottagningen till det parti som redan följt med leveransen.
+          // Ett nytt parti skapas bara när kedjan verkligen saknar parti — och kopplas då
+          // alltid till rörelserna, så inga lösa partier uppstår.
+          const { error: linkErr } = await supabase.rpc("receiving_link_lot", {
+            _order_id: selectedOrder.id,
+            _product_id: line.product_id,
+            _location_id: rawLocation.id,
+            _best_before: report.expiry_date || null,
+          });
+          if (linkErr) console.error("receiving_link_lot:", linkErr);
         }
       }
+
 
 
       const hasIssues = Object.values(lineReports).some((r) => r.status === "Rapporterad");
