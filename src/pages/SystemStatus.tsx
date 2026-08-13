@@ -216,6 +216,83 @@ export default function SystemStatus() {
           </CardContent>
         </Card>
 
+        <Card className={openFlags.length ? "border-amber-500/60" : undefined}>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              {openFlags.length ? (
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              )}
+              Inventeringsavvikelser att kvittera
+              {openFlags.length > 0 && <Badge variant="destructive">{openFlags.length}</Badge>}
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Försäljning blockeras aldrig av saldo — disken går alltid först. När ett uttag drar ett saldo
+              under noll loggas det här som inventeringsavvikelse att kvittera.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-3 p-4 pt-0 text-sm">
+            {flags.isLoading ? (
+              <p className="text-muted-foreground">Läser avvikelser…</p>
+            ) : !openFlags.length ? (
+              <p className="text-muted-foreground">Inga öppna avvikelser.</p>
+            ) : (
+              openFlags.map((f) => (
+                <div key={f.id} className="rounded-md border p-3">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <div>
+                      <span className="font-medium">{f.products?.name ?? "Okänd produkt"}</span>{" "}
+                      <span className="font-mono text-xs text-muted-foreground">{f.products?.sku}</span>
+                    </div>
+                    <span className="font-mono tabular-nums text-destructive">{fmtQty(f.resulting_qty)} kg</span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {f.storage_locations?.stores?.name ? `${f.storage_locations.stores.name} · ` : ""}
+                    {f.storage_locations?.name} · {fmtTime(f.created_at)} · {f.movement_type ?? "uttag"}
+                  </p>
+                  <p className="mt-1 text-xs">
+                    Drevs av: <span className="text-muted-foreground">{f.driver_note ?? "okänt uttag"}</span>
+                    {f.movement_qty != null && (
+                      <span className="font-mono tabular-nums"> ({fmtQty(f.movement_qty)} kg)</span>
+                    )}
+                  </p>
+                  <p className="text-xs">
+                    Borde ha burits av parti:{" "}
+                    <span className="font-mono">{f.lots?.lot_number ?? "inget aktivt parti hittat"}</span>
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Input
+                      className="h-8 max-w-sm text-xs"
+                      placeholder="Kommentar (våg, spill, delad förpackning…)"
+                      value={ackNotes[f.id] ?? ""}
+                      onChange={(e) => setAckNotes((p) => ({ ...p, [f.id]: e.target.value }))}
+                    />
+                    <Button size="sm" onClick={() => ack.mutate(f.id)} disabled={ack.isPending}>
+                      Kvittera
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+            {ackedFlags.length > 0 && (
+              <details className="text-xs text-muted-foreground">
+                <summary className="cursor-pointer">Kvitterade avvikelser ({ackedFlags.length})</summary>
+                <ul className="mt-2 space-y-1">
+                  {ackedFlags.map((f) => (
+                    <li key={f.id}>
+                      {fmtTime(f.acknowledged_at!)} · {f.products?.name} · {fmtQty(f.resulting_qty)} kg
+                      {f.ack_note ? ` — ${f.ack_note}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </CardContent>
+        </Card>
+
+
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Avstämningshistorik</CardTitle>
