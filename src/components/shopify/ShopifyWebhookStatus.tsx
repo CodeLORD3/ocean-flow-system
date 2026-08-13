@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, CheckCircle2, Globe, RefreshCw, WifiOff } from "lucide-react";
+import { AlertTriangle, CheckCircle2, DownloadCloud, Globe, RefreshCw, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 
 /**
@@ -93,6 +93,31 @@ export default function ShopifyWebhookStatus() {
     }
   };
 
+  /** Backfyllnad: hämtar öppna betalda ordrar från Shopify in i webhook-kön. */
+  const backfill = async () => {
+    setBusy("backfill");
+    try {
+      const { data, error } = await supabase.functions.invoke("shopify-backfill", { body: {} });
+      if (error) throw error;
+      const r = data as any;
+      if (r?.ok === false) {
+        toast.error(r?.error ?? "Backfyllnaden misslyckades");
+      } else {
+        toast.success(
+          `Hämtade ${r?.fetched ?? 0} · köade ${r?.queued ?? 0} · duplikat ${r?.duplicates ?? 0} · osorterade ${r?.unsorted ?? 0} · fel ${r?.errors ?? 0}`,
+        );
+      }
+      if (Array.isArray(r?.messages)) {
+        for (const m of r.messages.slice(0, 5)) toast.warning(String(m));
+      }
+      await Promise.all([events.refetch(), lastReceived.refetch()]);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Backfyllnaden misslyckades");
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const rows = events.data || [];
   const failed = rows.filter((e) => e.status === "fel");
   const queued = rows.filter((e) => e.status === "koad" || e.status === "bearbetar");
@@ -120,7 +145,17 @@ export default function ShopifyWebhookStatus() {
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
           )}
           <Globe className="h-4 w-4" /> Webbordrar från Shopify
-          <Button asChild variant="ghost" size="sm" className="ml-auto h-6 text-xs">
+          <Button
+            variant="outline"
+            size="sm"
+            className="ml-auto h-6 text-xs"
+            disabled={busy === "backfill"}
+            onClick={backfill}
+          >
+            <DownloadCloud className={`mr-1 h-3 w-3 ${busy === "backfill" ? "animate-pulse" : ""}`} />
+            Hämta öppna ordrar från Shopify
+          </Button>
+          <Button asChild variant="ghost" size="sm" className="h-6 text-xs">
             <Link to="/shopify">Öppna webbordrar</Link>
           </Button>
         </CardTitle>
