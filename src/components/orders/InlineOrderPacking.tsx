@@ -211,11 +211,19 @@ export function InlineOrderPacking({
                     ? `${nf(l.line_total)} kr`
                     : `${nf(Number(l.quantity_ordered || 0) * Number(l.estimated_price_per_unit ?? 0))} kr`}
                 </span>
+                {l.paid_quantity != null &&
+                  l.quantity_packed != null &&
+                  Math.abs(Number(l.quantity_packed) - Number(l.paid_quantity)) > 0.001 && (
+                    <Badge variant="outline" className="shrink-0 text-[10px] text-amber-600">
+                      Betald {nf(l.paid_quantity, 3)} {l.unit}
+                    </Badge>
+                  )}
                 {l.pack_status !== "opackad" && (
                   <Badge variant="outline" className="shrink-0 text-[10px]">
                     {LINE_PACK_LABELS[l.pack_status] ?? l.pack_status}
                   </Badge>
                 )}
+
               </button>
               {(done || struck || l.pack_status === "restnoterad") && (
                 <div className="flex justify-end px-2 pb-1">
@@ -273,19 +281,31 @@ export function InlineOrderPacking({
                     />
                   </div>
                   <div className="space-y-0.5">
-                    <Label className="text-[11px] text-muted-foreground">Dagens pris / {l.unit}</Label>
+                    <Label className="text-[11px] text-muted-foreground">
+                      {l.price_locked ? `Betalt pris / ${l.unit} (låst)` : `Dagens pris / ${l.unit}`}
+                    </Label>
                     <Input
                       inputMode="decimal"
-                      className="h-8 font-mono text-sm tabular-nums"
+                      readOnly={!!l.price_locked}
+                      title={
+                        l.price_locked
+                          ? "Webbordern är förskottsbetald — radpriset är låst från Shopify."
+                          : undefined
+                      }
+                      className={`h-8 font-mono text-sm tabular-nums ${
+                        l.price_locked ? "bg-muted text-muted-foreground" : ""
+                      }`}
                       value={prices[l.id] ?? ""}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        if (l.price_locked) return;
                         setPrices({
                           ...prices,
                           [l.id]: Number(String(e.target.value).replace(",", ".")) || 0,
-                        })
-                      }
+                        });
+                      }}
                     />
                   </div>
+
                   <div className="flex items-end">
                     <Button size="sm" className="h-8 w-full text-xs sm:w-auto" onClick={() => doPack(l)}>
                       <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> Packad

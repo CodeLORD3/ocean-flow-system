@@ -204,9 +204,18 @@ export function CustomerOrderRow({
             <span className="w-16 shrink-0 border-r border-grid-line/70 px-2 font-mono tabular-nums text-muted-foreground">
               {active.length} st
             </span>
-            <span className="min-w-[6rem] flex-1 truncate border-r border-grid-line/70 px-2 font-semibold">
-              {name}
+            <span className="flex min-w-[6rem] flex-1 items-center gap-1.5 truncate border-r border-grid-line/70 px-2 font-semibold">
+              {order.is_web_order && (
+                <span
+                  className="shrink-0 rounded-sm bg-primary/15 px-1 text-[10px] font-bold uppercase tracking-wide text-primary"
+                  title="Ny webborder från Shopify"
+                >
+                  Webb
+                </span>
+              )}
+              <span className="truncate">{name}</span>
             </span>
+
             <span className="flex w-24 shrink-0 items-center gap-1 border-r border-grid-line/70 px-2">
               {statusChip}
               {hasAllergy && (
@@ -226,6 +235,11 @@ export function CustomerOrderRow({
 
           <div className="sm:hidden">
             <div className="flex h-6 items-center gap-2">
+              {order.is_web_order && (
+                <span className="shrink-0 rounded-sm bg-primary/15 px-1 text-[10px] font-bold uppercase text-primary">
+                  Webb
+                </span>
+              )}
               <span
                 className={`min-w-0 flex-1 truncate text-base font-semibold leading-tight ${
                   cancelled ? "line-through" : ""
@@ -233,6 +247,7 @@ export function CustomerOrderRow({
               >
                 {name}
               </span>
+
               {hasAllergy && (
                 <AlertTriangle
                   className="h-4 w-4 shrink-0 text-destructive"
@@ -275,10 +290,36 @@ export function CustomerOrderRow({
               {ORDER_TYPE_LABELS[order.order_type] ?? order.order_type}
             </Badge>
             {order.category === "catering" && <Badge variant="secondary">Catering</Badge>}
+            {order.is_web_order && (
+              <>
+                <Badge className="bg-primary/15 text-primary hover:bg-primary/15">
+                  Webborder {order.shopify_order_number ?? ""}
+                </Badge>
+                {order.web_paid && <Badge variant="secondary">Betald via webben</Badge>}
+                {order.price_locked && <Badge variant="outline">Låsta priser</Badge>}
+              </>
+            )}
+            {order.wanted_time_window && (
+              <Badge variant="outline" className="font-mono tabular-nums">
+                {order.wanted_time_window}
+              </Badge>
+            )}
             <span className="ml-auto shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
               {order.order_number}
             </span>
           </div>
+
+          {order.is_web_order && order.paid_total != null && (
+            <div className="text-xs text-muted-foreground">
+              Betalt via webben: {nf(Number(order.paid_total), 2)} kr
+              {Math.abs(total - Number(order.paid_total)) > 0.5 && (
+                <span className="ml-1 font-semibold text-amber-600">
+                  · vägd summa {nf(total, 2)} kr avviker, justering görs manuellt i Shopify
+                </span>
+              )}
+            </div>
+          )}
+
 
 
           <div className="grid gap-2 text-sm sm:grid-cols-2">

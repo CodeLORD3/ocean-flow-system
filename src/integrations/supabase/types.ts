@@ -1419,12 +1419,15 @@ export type Database = {
           line_total: number | null
           locked_from_scaling: boolean
           movement_id: string | null
+          needs_product_match: boolean
           note: string | null
           original_product_id: string | null
           pack_status: string
           packed_at: string | null
           packed_by: string | null
+          paid_quantity: number | null
           portion_per_guest: number | null
+          price_locked: boolean
           price_override_by: string | null
           price_override_reason: string | null
           price_per_unit: number | null
@@ -1434,6 +1437,9 @@ export type Database = {
           reservation_status: string
           reserved_lot_id: string | null
           reserved_quantity: number
+          shopify_line_id: string | null
+          shopify_sku: string | null
+          shopify_title: string | null
           sort_order: number
           substitution_approved: boolean
           substitution_note: string | null
@@ -1452,12 +1458,15 @@ export type Database = {
           line_total?: number | null
           locked_from_scaling?: boolean
           movement_id?: string | null
+          needs_product_match?: boolean
           note?: string | null
           original_product_id?: string | null
           pack_status?: string
           packed_at?: string | null
           packed_by?: string | null
+          paid_quantity?: number | null
           portion_per_guest?: number | null
+          price_locked?: boolean
           price_override_by?: string | null
           price_override_reason?: string | null
           price_per_unit?: number | null
@@ -1467,6 +1476,9 @@ export type Database = {
           reservation_status?: string
           reserved_lot_id?: string | null
           reserved_quantity?: number
+          shopify_line_id?: string | null
+          shopify_sku?: string | null
+          shopify_title?: string | null
           sort_order?: number
           substitution_approved?: boolean
           substitution_note?: string | null
@@ -1485,12 +1497,15 @@ export type Database = {
           line_total?: number | null
           locked_from_scaling?: boolean
           movement_id?: string | null
+          needs_product_match?: boolean
           note?: string | null
           original_product_id?: string | null
           pack_status?: string
           packed_at?: string | null
           packed_by?: string | null
+          paid_quantity?: number | null
           portion_per_guest?: number | null
+          price_locked?: boolean
           price_override_by?: string | null
           price_override_reason?: string | null
           price_per_unit?: number | null
@@ -1500,6 +1515,9 @@ export type Database = {
           reservation_status?: string
           reserved_lot_id?: string | null
           reserved_quantity?: number
+          shopify_line_id?: string | null
+          shopify_sku?: string | null
+          shopify_title?: string | null
           sort_order?: number
           substitution_approved?: boolean
           substitution_note?: string | null
@@ -1585,13 +1603,18 @@ export type Database = {
           guest_count: number | null
           handed_over_at: string | null
           id: string
+          is_web_order: boolean
           note: string | null
           order_number: string
           order_type: string
           pack_status: string
           packed_at: string | null
+          paid_total: number | null
+          price_locked: boolean
           received_by: string | null
           received_by_name: string | null
+          shopify_order_id: string | null
+          shopify_order_number: string | null
           source: string
           status: string
           store_id: string
@@ -1599,6 +1622,9 @@ export type Database = {
           updated_at: string
           wanted_date: string
           wanted_time: string | null
+          wanted_time_window: string | null
+          web_delivery_method: string | null
+          web_paid: boolean
         }
         Insert: {
           allergy_note?: string | null
@@ -1619,13 +1645,18 @@ export type Database = {
           guest_count?: number | null
           handed_over_at?: string | null
           id?: string
+          is_web_order?: boolean
           note?: string | null
           order_number: string
           order_type?: string
           pack_status?: string
           packed_at?: string | null
+          paid_total?: number | null
+          price_locked?: boolean
           received_by?: string | null
           received_by_name?: string | null
+          shopify_order_id?: string | null
+          shopify_order_number?: string | null
           source?: string
           status?: string
           store_id: string
@@ -1633,6 +1664,9 @@ export type Database = {
           updated_at?: string
           wanted_date: string
           wanted_time?: string | null
+          wanted_time_window?: string | null
+          web_delivery_method?: string | null
+          web_paid?: boolean
         }
         Update: {
           allergy_note?: string | null
@@ -1653,13 +1687,18 @@ export type Database = {
           guest_count?: number | null
           handed_over_at?: string | null
           id?: string
+          is_web_order?: boolean
           note?: string | null
           order_number?: string
           order_type?: string
           pack_status?: string
           packed_at?: string | null
+          paid_total?: number | null
+          price_locked?: boolean
           received_by?: string | null
           received_by_name?: string | null
+          shopify_order_id?: string | null
+          shopify_order_number?: string | null
           source?: string
           status?: string
           store_id?: string
@@ -1667,6 +1706,9 @@ export type Database = {
           updated_at?: string
           wanted_date?: string
           wanted_time?: string | null
+          wanted_time_window?: string | null
+          web_delivery_method?: string | null
+          web_paid?: boolean
         }
         Relationships: [
           {
@@ -6581,6 +6623,148 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "shop_wishes_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopify_product_map: {
+        Row: {
+          confirmed_by: string | null
+          created_at: string
+          id: string
+          product_id: string
+          shopify_sku: string
+          shopify_title: string | null
+          updated_at: string
+        }
+        Insert: {
+          confirmed_by?: string | null
+          created_at?: string
+          id?: string
+          product_id: string
+          shopify_sku: string
+          shopify_title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          confirmed_by?: string | null
+          created_at?: string
+          id?: string
+          product_id?: string
+          shopify_sku?: string
+          shopify_title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopify_product_map_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopify_store_map: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          key_type: string
+          key_value: string
+          label: string | null
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          key_type: string
+          key_value: string
+          label?: string | null
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          key_type?: string
+          key_value?: string
+          label?: string | null
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopify_store_map_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopify_webhook_events: {
+        Row: {
+          customer_order_id: string | null
+          error: string | null
+          hmac_valid: boolean
+          id: string
+          payload: Json | null
+          processed_at: string | null
+          received_at: string
+          resolved_by: string | null
+          shopify_order_id: string | null
+          shopify_order_number: string | null
+          status: string
+          store_id: string | null
+          topic: string
+        }
+        Insert: {
+          customer_order_id?: string | null
+          error?: string | null
+          hmac_valid?: boolean
+          id?: string
+          payload?: Json | null
+          processed_at?: string | null
+          received_at?: string
+          resolved_by?: string | null
+          shopify_order_id?: string | null
+          shopify_order_number?: string | null
+          status?: string
+          store_id?: string | null
+          topic?: string
+        }
+        Update: {
+          customer_order_id?: string | null
+          error?: string | null
+          hmac_valid?: boolean
+          id?: string
+          payload?: Json | null
+          processed_at?: string | null
+          received_at?: string
+          resolved_by?: string | null
+          shopify_order_id?: string | null
+          shopify_order_number?: string | null
+          status?: string
+          store_id?: string | null
+          topic?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopify_webhook_events_customer_order_id_fkey"
+            columns: ["customer_order_id"]
+            isOneToOne: false
+            referencedRelation: "customer_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopify_webhook_events_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"

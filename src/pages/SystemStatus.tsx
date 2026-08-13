@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { AlertTriangle, CheckCircle2, Loader2, RefreshCw, Wrench } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import ShopifyWebhookStatus from "@/components/shopify/ShopifyWebhookStatus";
 
 interface ReconRun {
   id: string;
@@ -159,6 +160,7 @@ export default function SystemStatus() {
       </div>
 
       <div className="flex-1 space-y-4 overflow-auto p-4">
+        <ShopifyWebhookStatus />
         <Card className={hasDiff ? "border-destructive" : undefined}>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
