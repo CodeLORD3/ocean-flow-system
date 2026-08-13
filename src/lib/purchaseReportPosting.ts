@@ -8,6 +8,13 @@
 import { supabase } from "@/integrations/supabase/client";
 import { recordMovement } from "@/lib/stockLedger";
 import { grossistStoreId, inkopslagerId } from "@/lib/locations";
+import {
+  stockQtyToKg,
+  toStockQuantity,
+  toStockUnitPrice,
+  type StockUnit,
+} from "@/lib/units";
+
 
 export interface PostingProduct {
   id: string;
