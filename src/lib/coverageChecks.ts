@@ -33,7 +33,10 @@ export interface ProductRow {
   name: string;
   species_group?: string | null;
   active?: boolean | null;
+  /** Produktkategori — kategorier med undantag kontrolleras inte mot artgrupp/utbyte. */
+  category?: string | null;
 }
+
 export interface YieldRow {
   species_group: string;
 }
