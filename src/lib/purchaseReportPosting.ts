@@ -293,56 +293,24 @@ export async function postPurchaseReport(params: {
 
 /** Motbokar en tidigare bokförd rapport så saldot aldrig suddas ut. */
 export async function unpostPurchaseReport(reportId: string): Promise<void> {
-  const { data: lines, error } = await supabase
-    .from("purchase_report_lines")
-    .select("id, product_id, quantity, lot_id")
-    .eq("report_id", reportId)
-    .not("lot_id", "is", null);
+  // Hela avbokningen sker i databasen: den motbokar där partiet faktiskt ligger,
+  // spärras om partiet flyttats eller förbrukats, och är idempotent vid dubbelklick.
+  const { data, error } = await supabase.rpc("unpost_purchase_report", { _report_id: reportId });
   if (error) throw error;
 
-  const byLot = new Map<string, { productId: string; qty: number }>();
-  for (const line of lines ?? []) {
-    const lotId = (line as any).lot_id as string;
-    if (!lotId || !(line as any).product_id) continue;
-    const prev = byLot.get(lotId);
-    byLot.set(lotId, {
-      productId: (line as any).product_id,
-      qty: (prev?.qty ?? 0) + Number((line as any).quantity || 0),
-    });
+  const result = data as any;
+  if (result?.status === "blocked") {
+    const details = (result.blocked_lots ?? [])
+      .map((l: any) => {
+        const events = (l.events ?? [])
+          .map((e: any) => `${e.movement_type} ${e.quantity_kg} kg på ${e.location}`)
+          .join(", ");
+        return `${l.product} (parti ${l.lot_number}): ${l.received_kg} kg mottaget, ${l.remaining_kg} kg kvar${events ? ` — ${events}` : ""}`;
+      })
+      .join("\n");
+    throw new Error(
+      `Följesedeln kan inte avbokas eftersom varan redan flyttats eller förbrukats:\n${details}`,
+    );
   }
-
-  for (const [lotId, { productId }] of byLot) {
-    const { data: lot } = await supabase
-      .from("lots")
-      .select("quantity_kg")
-      .eq("id", lotId)
-      .maybeSingle();
-    const qty = Number((lot as any)?.quantity_kg || 0);
-    if (qty > 0) {
-      await recordMovement({
-        productId,
-        locationId: await inkopslagerId(await grossistStoreId()),
-        quantityKg: -qty,
-        movementType: "justering",
-        lotId,
-        referenceType: "purchase_report",
-        referenceId: reportId,
-        note: "Följesedel avbokad — inleverans återförd",
-      });
-    }
-    await supabase
-      .from("lots")
-      .update({ status: "terminerad", terminated_reason: "Följesedel avbokad" } as any)
-      .eq("id", lotId);
-  }
-
-  await supabase
-    .from("purchase_report_lines")
-    .update({ lot_id: null, movement_id: null, parent_line_id: null } as any)
-    .eq("report_id", reportId);
-
-  await supabase
-    .from("purchase_reports")
-    .update({ posted_at: null } as any)
-    .eq("id", reportId);
 }
+
