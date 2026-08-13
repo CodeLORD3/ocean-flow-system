@@ -161,6 +161,62 @@ export default function DataCoverage() {
           </Card>
         )}
 
+        {data && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                <span>Prisunderlag per detaljrad</span>
+                <span className="flex items-center gap-2">
+                  <Badge variant="outline" className="border-emerald-600 text-[10px] text-emerald-700">
+                    {priceSources.counts.day_price} {PRICE_SOURCE_LABEL.day_price}
+                  </Badge>
+                  <Badge variant="outline" className="border-sky-500 text-[10px] text-sky-600">
+                    {priceSources.counts.cost_price} {PRICE_SOURCE_LABEL.cost_price}
+                  </Badge>
+                  <Badge
+                    variant={priceSources.counts.missing > 0 ? "destructive" : "outline"}
+                    className="text-[10px]"
+                  >
+                    {priceSources.counts.missing} {PRICE_SOURCE_LABEL.missing}
+                  </Badge>
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <p className="text-[11px] text-muted-foreground">
+                Riktpriset härleds automatiskt: dagspris när produkten har aktivt dagspris, annars Reservpris, gånger
+                detaljens utbytesandel och kanalens marginalmål. Inga statiska referenspriser krävs.
+              </p>
+              {priceSources.groups.length === 0 ? (
+                <p className="text-[11px] text-emerald-700">
+                  Alla detaljrader kan härledas ur dagspris eller Reservpris.
+                </p>
+              ) : (
+                <div className="max-h-80 space-y-2 overflow-auto">
+                  {priceSources.groups.map((g) => (
+                    <div key={g.group} className="rounded-md border bg-background p-2">
+                      <div className="flex items-baseline justify-between text-[11px] font-medium">
+                        <span>{g.group}</span>
+                        <span className="text-muted-foreground">{g.rows.length} produkter</span>
+                      </div>
+                      <div className="mt-1 space-y-0.5">
+                        {g.rows.map((r) => (
+                          <div key={r.sku} className="flex gap-2 text-[11px] text-muted-foreground">
+                            <span className="font-mono tabular-nums">{r.sku}</span>
+                            <span>{r.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+
+
         {data &&
           CHECK_ORDER.map((id) => {
             const rows = grouped.get(id) ?? [];
