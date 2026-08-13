@@ -103,7 +103,44 @@ export const SPECIES_CUT_MODEL: Record<string, CutModel> = {
   sillflundra: "flatfish",
 
   marulk: "tail_only",
+
+  gos: "single",
+  stillahavslax: "salmon_side",
+
+  // Skaldjur och blötdjur säljs hela — ingen styckning, en detalj på 100 %.
+  abalone: "hel",
+  "argentinsk-rodraka": "hel",
+  blamussla: "hel",
+  calamari: "hel",
+  carabinero: "hel",
+  drottningkammussla: "hel",
+  flodkrafta: "hel",
+  gronmussla: "hel",
+  havskrafta: "hel",
+  hjartmussla: "hel",
+  "hummer-amerikansk": "hel",
+  "hummer-europeisk": "hel",
+  kammussla: "hel",
+  knivmussla: "hel",
+  kungskrabba: "hel",
+  langust: "hel",
+  mandelmussla: "hel",
+  octopus: "hel",
+  "ostron-gigas": "hel",
+  "ostron-platt": "hel",
+  "raka-nordhav": "hel",
+  signalkrafta: "hel",
+  snokrabba: "hel",
+  "softshell-crab": "hel",
+  strandsnacka: "hel",
+  taskkrabba: "hel",
+  tigerraka: "hel",
+  valthornssnacka: "hel",
+  vannameiraka: "hel",
+  venusmussla: "hel",
+  vongole: "hel",
 };
+
 
 /** Alias för stjärtdetaljen — "Benfri filé" är namnet som visas i butik. */
 export const BENFRI_FILE_ALIASES = ["benfri filé", "benfri file", "stjärtbit"];
