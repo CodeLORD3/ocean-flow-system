@@ -486,29 +486,50 @@ export default function CustomerOrders() {
                   allSelected={allMarked}
                   onSelectAll={markAll}
                 />
-                {groupByDay(viewOrders).map(([day, list]) => (
-                  <div key={day}>
-                    <div className="flex items-center gap-2 border-x border-b border-grid-line bg-muted px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                      <span className="truncate">{dayLabel(day)}</span>
-                      <span className="shrink-0 font-mono tabular-nums">
-                        {list.length} order
+                {groupByWeek(viewOrders).map((w) => (
+                  <div key={w.key}>
+                    {/* Veckoseparator med antal och summa, tydligt avskild från dagsraderna. */}
+                    <div className="flex items-center gap-3 border-x border-b-2 border-grid-line border-b-primary bg-primary/10 px-2.5 py-1.5">
+                      <span className="text-[12px] font-bold uppercase tracking-wide text-foreground">
+                        Vecka {w.week}
+                      </span>
+                      <span className="truncate text-[11px] text-muted-foreground">
+                        {rangeLabel(w.days.map(([d]) => d))}
+                      </span>
+                      <span className="ml-auto shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
+                        {w.count} order
+                      </span>
+                      <span className="shrink-0 font-mono text-[12px] font-semibold tabular-nums text-foreground">
+                        {nf(w.sum, 2)} kr
                       </span>
                     </div>
 
-                    {list.map((o) => (
-                      <CustomerOrderRow
-                        key={o.id}
-                        order={o}
-                        canEdit={canEdit}
-                        readOnly={rowReadOnly(o)}
-                        open={openRow === o.id}
-                        onToggle={toggleRow}
-                        selected={marked.includes(o.id)}
-                        onSelect={toggleMark}
-                      />
+                    {w.days.map(([day, list]) => (
+                      <div key={day}>
+                        <div className="flex items-center gap-2 border-x border-b border-grid-line bg-muted px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          <span className="truncate">{dayLabel(day)}</span>
+                          <span className="shrink-0 font-mono tabular-nums">
+                            {list.length} order
+                          </span>
+                        </div>
+
+                        {list.map((o) => (
+                          <CustomerOrderRow
+                            key={o.id}
+                            order={o}
+                            canEdit={canEdit}
+                            readOnly={rowReadOnly(o)}
+                            open={openRow === o.id}
+                            onToggle={toggleRow}
+                            selected={marked.includes(o.id)}
+                            onSelect={toggleMark}
+                          />
+                        ))}
+                      </div>
                     ))}
                   </div>
                 ))}
+
               </div>
 
 
