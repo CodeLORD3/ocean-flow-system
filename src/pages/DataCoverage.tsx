@@ -18,19 +18,21 @@ import {
 const CHECK_ORDER: CheckId[] = ["yields", "cut_models", "cut_splits", "detail_prices", "margins_vat"];
 
 async function loadCoverageInput(): Promise<CoverageInput> {
-  const [products, yields, cutModels, cutSplits, detailPrices, marginTargets, vatRates] = await Promise.all([
-    supabase.from("products").select("sku, name, species_group, active").eq("active", true),
-    supabase.from("yields").select("species_group"),
-    supabase.from("species_cut_models").select("species_group, cut_model"),
-    supabase
-      .from("cut_model_splits")
-      .select("cut_model, detail_form, detail_name, pct_of_fillet, role, is_optional"),
-    supabase.from("detail_prices").select("species_group, detail_form, price_list, price_incl_vat, last_set_price"),
-    supabase.from("margin_targets").select("price_list, target_pct"),
-    supabase.from("vat_rates").select("category, rate, valid_from, valid_to"),
-  ]);
+  const [products, yields, cutModels, cutSplits, detailPrices, marginTargets, vatRates, categories] =
+    await Promise.all([
+      supabase.from("products").select("sku, name, species_group, active, category").eq("active", true),
+      supabase.from("yields").select("species_group"),
+      supabase.from("species_cut_models").select("species_group, cut_model"),
+      supabase
+        .from("cut_model_splits")
+        .select("cut_model, detail_form, detail_name, pct_of_fillet, role, is_optional"),
+      supabase.from("detail_prices").select("species_group, detail_form, price_list, price_incl_vat, last_set_price"),
+      supabase.from("margin_targets").select("price_list, target_pct"),
+      supabase.from("vat_rates").select("category, rate, valid_from, valid_to"),
+      supabase.from("categories").select("name, exempt_species_data" as any),
+    ]);
 
-  for (const res of [products, yields, cutModels, cutSplits, detailPrices, marginTargets, vatRates]) {
+  for (const res of [products, yields, cutModels, cutSplits, detailPrices, marginTargets, vatRates, categories]) {
     if (res.error) throw res.error;
   }
 
@@ -42,8 +44,12 @@ async function loadCoverageInput(): Promise<CoverageInput> {
     detailPrices: (detailPrices.data ?? []) as any,
     marginTargets: (marginTargets.data ?? []) as any,
     vatRates: (vatRates.data ?? []) as any,
+    exemptCategories: ((categories.data ?? []) as any[])
+      .filter((c) => c.exempt_species_data)
+      .map((c) => c.name as string),
   };
 }
+
 
 export default function DataCoverage() {
   const [ranAt, setRanAt] = useState<Date | null>(null);
