@@ -151,23 +151,41 @@ export function buildPostingPlan(
       blockers.push(`${label}: grundprodukten är ej inköpsbar — välj storlek`);
       return;
     }
-    const { kg, reason } = quantityToKg(line, product);
+    // Kvantiteten bokförs i produktens lagerenhet: antal för styckprodukter,
+    // kilo för viktprodukter.
+    const { qty: kg, unit: stockUnit, reason } = quantityToStockUnit(line, product);
     if (kg === null) {
       blockers.push(`${label}: ${reason}`);
       return;
     }
+    const u = stockUnit;
 
-    const unitPrice = Number(line.unit_price ?? 0);
+    // Priset räknas om till pris per samma enhet som kvantiteten — annars kan
+    // en styckvara värderas som om antalet vore kilon.
+    const { price: normalizedPrice, reason: priceReason } = toStockUnitPrice(
+      line.unit_price,
+      line.unit ?? product?.unit,
+      product,
+    );
+    if (normalizedPrice === null) {
+      blockers.push(`${label}: ${priceReason}`);
+      return;
+    }
+    const unitPrice = normalizedPrice;
     if (!(unitPrice > 0) && !line.zero_price_confirmed) {
       blockers.push(`${label}: nollpris måste bekräftas manuellt innan bokföring`);
       return;
     }
 
-    // Levererad vikt gäller — beställd vikt ger bara larm vid stor avvikelse.
-    const ordered = Number(line.ordered_quantity ?? 0);
+    // Levererad mängd gäller — beställd mängd ger bara larm vid stor avvikelse.
+    const orderedRaw = Number(line.ordered_quantity ?? 0);
+    const ordered =
+      orderedRaw > 0
+        ? toStockQuantity(orderedRaw, line.unit ?? product?.unit, product).qty ?? 0
+        : 0;
     if (ordered > 0 && Math.abs(kg - ordered) / ordered > 0.1) {
       warnings.push(
-        `${label}: levererat ${round(kg)} kg mot beställt ${round(ordered)} kg (avvikelse över 10 %)`,
+        `${label}: levererat ${round(kg)} ${u} mot beställt ${round(ordered)} ${u} (avvikelse över 10 %)`,
       );
     }
 
@@ -192,11 +210,13 @@ export function buildPostingPlan(
       const sum = Object.values(allocation).reduce((s, v) => s + Number(v || 0), 0);
       if (Math.abs(sum - kg) > 0.005) {
         blockers.push(
-          `${label}: fördelningen över partinummer (${round(sum)} kg) stämmer inte med levererad kvantitet (${round(kg)} kg)`,
+          `${label}: fördelningen över partinummer (${round(sum)} ${u}) stämmer inte med levererad kvantitet (${round(kg)} ${u})`,
         );
         return;
       }
     }
+
+
 
     for (const [lotNumber, lotQty] of Object.entries(allocation)) {
       const qty = Number(lotQty || 0);
