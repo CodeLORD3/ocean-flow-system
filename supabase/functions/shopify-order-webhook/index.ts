@@ -578,10 +578,64 @@ async function processEvent(db: SupabaseClient, eventId: string): Promise<void> 
       .update({ payload, shopify_order_id: shopifyOrderId, shopify_order_number: orderName })
       .eq("id", eventId);
 
-    // Idempotens: samma Shopify-order får aldrig bli två kundordrar.
+    const topic = String(ev.topic ?? "orders/create").toLowerCase();
+
+    /**
+     * Idempotensnyckeln är order-id PLUS topic. En orders/cancelled för en känd
+     * order är en ny händelse; bara omsändning av samma topic är ett duplikat.
+     */
+    const { data: sameTopic } = await db
+      .from("shopify_webhook_events")
+      .select("id, status, customer_order_id")
+      .eq("shopify_order_id", shopifyOrderId)
+      .eq("topic", ev.topic)
+      .neq("id", eventId)
+      .in("status", ["skapad", "avbokad", "avbokad_larm", "duplikat", "osorterad"]);
+    if ((sameTopic || []).length) {
+      const prev = (sameTopic || [])[0];
+      await db
+        .from("shopify_webhook_events")
+        .update({
+          status: "duplikat",
+          customer_order_id: prev.customer_order_id ?? null,
+          processed_at: new Date().toISOString(),
+        })
+        .eq("id", eventId);
+      return;
+    }
+
+    /* ---- Avbokning från webben ---- */
+    if (topic === "orders/cancelled") {
+      const res = await cancelOrder(db, payload, shopifyOrderId, orderName);
+      if (!res.found) {
+        await fail(`Avbokning för okänd order ${orderName} — ingen kundorder hittades`);
+        return;
+      }
+      await db
+        .from("shopify_webhook_events")
+        .update({
+          status: res.wasPacked ? "avbokad_larm" : "avbokad",
+          store_id: res.storeId,
+          customer_order_id: res.orderId,
+          error: res.wasPacked
+            ? `LARM: ${orderName} (${res.orderNumber}) avbokades men var ${res.packLabel} — kontrollera varorna i butiken`
+            : null,
+          processed_at: new Date().toISOString(),
+        })
+        .eq("id", eventId);
+      return;
+    }
+
+    if (topic !== "orders/create" && topic !== "orders/paid") {
+      await fail(`Topic ${topic} hanteras inte av systemet`, "okand_topic");
+      return;
+    }
+
+    /* ---- Ny order ---- */
+    // Samma order får aldrig bli två kundordrar.
     const { data: dupe } = await db
       .from("customer_orders")
-      .select("id, order_number")
+      .select("id")
       .eq("shopify_order_id", shopifyOrderId)
       .maybeSingle();
     if (dupe) {
@@ -592,22 +646,6 @@ async function processEvent(db: SupabaseClient, eventId: string): Promise<void> 
           customer_order_id: dupe.id,
           processed_at: new Date().toISOString(),
         })
-        .eq("id", eventId);
-      return;
-    }
-
-    // Väntar redan på manuellt butiksval? Då är den här en omsändning.
-    const { data: pendingRows } = await db
-      .from("shopify_webhook_events")
-      .select("id")
-      .eq("shopify_order_id", shopifyOrderId)
-      .eq("status", "osorterad")
-      .neq("id", eventId)
-      .limit(1);
-    if ((pendingRows || []).length) {
-      await db
-        .from("shopify_webhook_events")
-        .update({ status: "duplikat", processed_at: new Date().toISOString() })
         .eq("id", eventId);
       return;
     }
@@ -629,10 +667,11 @@ async function processEvent(db: SupabaseClient, eventId: string): Promise<void> 
         status: "skapad",
         store_id: storeId,
         customer_order_id: res.orderId,
-        error: null,
+        error: res.customerReview,
         processed_at: new Date().toISOString(),
       })
       .eq("id", eventId);
+
   } catch (e) {
     await fail(e instanceof Error ? e.message : String(e));
   }
