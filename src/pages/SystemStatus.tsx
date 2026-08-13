@@ -40,6 +40,44 @@ const fmtQty = (n: number) =>
 
 export default function SystemStatus() {
   const qc = useQueryClient();
+  const [ackNotes, setAckNotes] = useState<Record<string, string>>({});
+
+  const flags = useQuery({
+    queryKey: ["stock_negative_flags"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("stock_negative_flags" as any)
+        .select(
+          "id, created_at, resulting_qty, movement_qty, movement_type, driver_note, acknowledged_at, ack_note, products(name, sku), storage_locations(name, stores(name)), lots:suggested_lot_id(lot_number)"
+        )
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      return (data || []) as unknown as NegFlag[];
+    },
+  });
+
+  const ack = useMutation({
+    mutationFn: async (id: string) => {
+      const { data: u } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from("stock_negative_flags" as any)
+        .update({
+          acknowledged_at: new Date().toISOString(),
+          acknowledged_by: u.user?.id ?? null,
+          ack_note: ackNotes[id]?.trim() || null,
+        } as any)
+        .eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      toast({ title: "Avvikelsen kvitterad" });
+      qc.invalidateQueries({ queryKey: ["stock_negative_flags"] });
+    },
+    onError: (e: any) =>
+      toast({ title: "Kunde inte kvittera", description: e.message, variant: "destructive" }),
+  });
+
 
   const runs = useQuery({
     queryKey: ["stock_reconciliation_runs"],
