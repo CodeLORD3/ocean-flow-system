@@ -5624,6 +5624,7 @@ export type Database = {
           day_price: number
           day_price_lots: number
           day_price_updated_at: string | null
+          exempt_species_data: boolean
           export_documentation_required: boolean | null
           fao_code: string | null
           hs_code: string | null
@@ -5666,6 +5667,7 @@ export type Database = {
           day_price?: number
           day_price_lots?: number
           day_price_updated_at?: string | null
+          exempt_species_data?: boolean
           export_documentation_required?: boolean | null
           fao_code?: string | null
           hs_code?: string | null
@@ -5708,6 +5710,7 @@ export type Database = {
           day_price?: number
           day_price_lots?: number
           day_price_updated_at?: string | null
+          exempt_species_data?: boolean
           export_documentation_required?: boolean | null
           fao_code?: string | null
           hs_code?: string | null
