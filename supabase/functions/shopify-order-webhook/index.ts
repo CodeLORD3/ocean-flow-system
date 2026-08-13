@@ -205,7 +205,76 @@ async function evaluateReservation(
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const round3 = (n: number) => Math.round(n * 1000) / 1000;
 
-async function upsertCustomer(db: SupabaseClient, payload: any, storeId: string) {
+/** Normaliserar telefon till +46-format. Rådata sparas orört i phone. */
+function normPhone(v: unknown): string | null {
+  if (v == null) return null;
+  let d = String(v).replace(/[^0-9+]/g, "");
+  if (!d) return null;
+  if (d.startsWith("00")) d = "+" + d.slice(2);
+  if (!d.startsWith("+")) {
+    if (d.startsWith("46")) d = "+" + d;
+    else if (d.startsWith("0")) d = "+46" + d.slice(1);
+    else d = "+46" + d;
+  }
+  d = "+" + d.slice(1).replace(/[^0-9]/g, "");
+  return d.length < 8 ? null : d;
+}
+
+const normEmail = (v: unknown) =>
+  v == null ? null : String(v).trim().toLowerCase() || null;
+
+const lastNameKey = (v: unknown) => {
+  const s = String(v ?? "").trim();
+  if (!s) return null;
+  const parts = s.split(/\s+/);
+  return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : null;
+};
+
+type CustomerMatch =
+  | { kind: "match"; id: string; via: string }
+  | { kind: "ambiguous"; candidates: string[]; via: string }
+  | { kind: "none" };
+
+/**
+ * Kundmatchning inom BOLAGET (inte butiken): Ålsten och Kungsholmen är samma
+ * bolag och samma webbutik, så samma person är en kund.
+ * Ordning: shopify_customer_id, normaliserad e-post, normaliserad telefon +
+ * efternamn. Flera kandidater ger alltid granskning, aldrig tyst första rad.
+ */
+async function matchCustomer(
+  db: SupabaseClient,
+  entityId: string | null,
+  keys: { shopifyCustomerId: string | null; email: string | null; phone: string | null; name: string },
+): Promise<CustomerMatch> {
+  const base = () => {
+    let q = db.from("customers_retail").select("id, name").is("anonymized_at", null);
+    if (entityId) q = q.eq("legal_entity_id", entityId);
+    return q;
+  };
+
+  if (keys.shopifyCustomerId) {
+    const { data } = await base().eq("shopify_customer_id", keys.shopifyCustomerId);
+    const rows = data || [];
+    if (rows.length === 1) return { kind: "match", id: rows[0].id, via: "shopify_customer_id" };
+    if (rows.length > 1) return { kind: "ambiguous", candidates: rows.map((r: any) => r.id), via: "shopify_customer_id" };
+  }
+  if (keys.email) {
+    const { data } = await base().eq("email_normalized", keys.email);
+    const rows = data || [];
+    if (rows.length === 1) return { kind: "match", id: rows[0].id, via: "e-post" };
+    if (rows.length > 1) return { kind: "ambiguous", candidates: rows.map((r: any) => r.id), via: "e-post" };
+  }
+  const lk = lastNameKey(keys.name);
+  if (keys.phone && lk) {
+    const { data } = await base().eq("phone_normalized", keys.phone);
+    const rows = (data || []).filter((r: any) => lastNameKey(r.name) === lk);
+    if (rows.length === 1) return { kind: "match", id: rows[0].id, via: "telefon + efternamn" };
+    if (rows.length > 1) return { kind: "ambiguous", candidates: rows.map((r: any) => r.id), via: "telefon + efternamn" };
+  }
+  return { kind: "none" };
+}
+
+async function resolveCustomer(db: SupabaseClient, payload: any, storeId: string) {
   const c = payload?.customer ?? {};
   const ship = payload?.shipping_address ?? payload?.billing_address ?? {};
   const name =
@@ -213,51 +282,87 @@ async function upsertCustomer(db: SupabaseClient, payload: any, storeId: string)
     [ship.first_name, ship.last_name].filter(Boolean).join(" ").trim() ||
     String(payload?.email ?? "").trim() ||
     "Webbkund";
-  const phone = c.phone ?? ship.phone ?? payload?.phone ?? null;
-  const email = c.email ?? payload?.email ?? payload?.contact_email ?? null;
+  const phoneRaw = c.phone ?? ship.phone ?? payload?.phone ?? null;
+  const emailRaw = c.email ?? payload?.email ?? payload?.contact_email ?? null;
+  const shopifyCustomerId = c?.id != null ? String(c.id) : null;
 
-  let existing: any = null;
-  if (email) {
-    const { data } = await db
-      .from("customers_retail")
-      .select("*")
-      .eq("store_id", storeId)
-      .eq("email", email)
-      .limit(1);
-    existing = (data || [])[0] ?? null;
-  }
-  if (!existing && phone) {
-    const { data } = await db
-      .from("customers_retail")
-      .select("*")
-      .eq("store_id", storeId)
-      .eq("phone", phone)
-      .limit(1);
-    existing = (data || [])[0] ?? null;
-  }
+  const { data: store } = await db
+    .from("stores")
+    .select("legal_entity_id")
+    .eq("id", storeId)
+    .maybeSingle();
+  const entityId = (store?.legal_entity_id as string | null) ?? null;
 
-  const fields = {
-    store_id: storeId,
-    name,
-    phone,
-    email,
+  const address = {
     street: ship.address1 ?? null,
     postal_code: ship.zip ?? null,
     city: ship.city ?? null,
   };
+  const snapshot = { name, phone: phoneRaw ?? null, ...address };
 
-  if (existing) {
-    await db.from("customers_retail").update(fields).eq("id", existing.id);
-    return { id: existing.id as string, ...fields };
+  const match = await matchCustomer(db, entityId, {
+    shopifyCustomerId,
+    email: normEmail(emailRaw),
+    phone: normPhone(phoneRaw),
+    name,
+  });
+
+  if (match.kind === "ambiguous") {
+    return {
+      id: null as string | null,
+      created: false,
+      review: `Tvetydig kundmatchning på ${match.via}: ${match.candidates.length} kandidater — kräver granskning`,
+      matchedVia: match.via,
+      ...snapshot,
+    };
   }
+
+  if (match.kind === "match") {
+    // Kompletterar tomma fält utan att skriva över befintliga uppgifter.
+    const { data: existing } = await db
+      .from("customers_retail")
+      .select("*")
+      .eq("id", match.id)
+      .maybeSingle();
+    const patch: Record<string, unknown> = {};
+    if (shopifyCustomerId && !existing?.shopify_customer_id) patch.shopify_customer_id = shopifyCustomerId;
+    if (emailRaw && !existing?.email) patch.email = emailRaw;
+    if (phoneRaw && !existing?.phone) patch.phone = phoneRaw;
+    for (const k of ["street", "postal_code", "city"] as const) {
+      if ((address as any)[k] && !existing?.[k]) patch[k] = (address as any)[k];
+    }
+    if (Object.keys(patch).length) await db.from("customers_retail").update(patch).eq("id", match.id);
+    return {
+      id: match.id,
+      created: false,
+      review: null as string | null,
+      matchedVia: match.via,
+      name: existing?.name ?? name,
+      phone: existing?.phone ?? phoneRaw ?? null,
+      street: existing?.street ?? address.street,
+      postal_code: existing?.postal_code ?? address.postal_code,
+      city: existing?.city ?? address.city,
+    };
+  }
+
   const { data, error } = await db
     .from("customers_retail")
-    .insert(fields)
+    .insert({
+      store_id: storeId,
+      legal_entity_id: entityId,
+      name,
+      phone: phoneRaw ?? null,
+      email: emailRaw ?? null,
+      shopify_customer_id: shopifyCustomerId,
+      source: "shopify",
+      ...address,
+    })
     .select("id")
     .single();
   if (error) throw new Error(`kunden kunde inte sparas: ${error.message}`);
-  return { id: data.id as string, ...fields };
+  return { id: data.id as string, created: true, review: null as string | null, matchedVia: "ny kund", ...snapshot };
 }
+
 
 /** Skapar kundordern med rader. Anropas av webhooken och av manuellt butiksval. */
 async function createOrder(db: SupabaseClient, payload: any, storeId: string, via: string) {
