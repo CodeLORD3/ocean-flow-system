@@ -133,6 +133,9 @@ export default function SystemStatus() {
   const latest = runs.data?.[0];
   const hasDiff = (latest?.diff_count ?? 0) > 0;
   const details: any[] = Array.isArray(latest?.details) ? latest!.details : [];
+  const openFlags = (flags.data ?? []).filter((f) => !f.acknowledged_at);
+  const ackedFlags = (flags.data ?? []).filter((f) => f.acknowledged_at);
+
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
