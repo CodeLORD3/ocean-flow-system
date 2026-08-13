@@ -323,6 +323,7 @@ export function deriveDetailPrices(input: CoverageInput): DerivedPriceRow[] {
           source,
           cost,
           derived: Math.round(derived * 100) / 100,
+          inherited: source === "cost_price" && !!p.cost_price_inherited,
         });
       }
     }
