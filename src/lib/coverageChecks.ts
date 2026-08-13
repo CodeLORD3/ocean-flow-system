@@ -22,7 +22,7 @@ export const CHECK_LABELS: Record<CheckId, string> = {
   yields: "Utbytestäckning",
   cut_models: "Styckningsmodell per artgrupp",
   cut_splits: "Andelar i styckningsmodeller",
-  detail_prices: "Referenspriser per kanal",
+  detail_prices: "Härledda referenspriser (dagspris → Reservpris)",
   margins_vat: "Marginalmål och moms",
 };
 
