@@ -63,7 +63,7 @@ function safeEqual(a: string, b: string): boolean {
 
 /* --------------------------------------------------------- note_attributes */
 
-type Attr = { key?: string; value?: unknown };
+type Attr = { name?: string; key?: string; value?: unknown };
 
 function attr(payload: any, key: string): string | null {
   const list: Attr[] = Array.isArray(payload?.note_attributes) ? payload.note_attributes : [];
