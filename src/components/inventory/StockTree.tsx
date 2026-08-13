@@ -32,12 +32,24 @@ type Node = {
   rows: any[];
 };
 
+import { stockQtyToKg, unitLabel } from "@/lib/units";
 const kg = (v: number) =>
   `${Number(v || 0).toLocaleString("sv-SE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} kg`;
 const money = (v: number) =>
   `${Number(v || 0).toLocaleString("sv-SE", { maximumFractionDigits: 0 })} kr`;
 
 const qtyOf = (r: any) => Number(r.quantity) || 0;
+/** Kvantitet med produktens egen enhet — st visas som st, aldrig som kg. */
+const qtyLabel = (r: any) => {
+  const u = unitLabel(r.products);
+  const v = qtyOf(r);
+  return `${v.toLocaleString("sv-SE", {
+    minimumFractionDigits: u === "st" ? 0 : 1,
+    maximumFractionDigits: u === "st" ? 0 : 1,
+  })} ${u}`;
+};
+/** Vikten i kilo för aggregat — värdering använder aldrig detta. */
+const kgOf = (r: any) => stockQtyToKg(qtyOf(r), r.products) ?? qtyOf(r);
 const valueOf = (r: any) =>
   qtyOf(r) * (Number(r.unit_cost) || 0);
 
@@ -203,7 +215,7 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
     selectable?: boolean;
   }) => {
     const Icon = LEVEL_ICON[n.level];
-    const totalQty = n.rows.reduce((a, r) => a + qtyOf(r), 0);
+    const totalQty = n.rows.reduce((a, r) => a + kgOf(r), 0);
     const totalVal = n.rows.reduce((a, r) => a + valueOf(r), 0);
     const isOpen = open === n.key;
     const canSelect = selectable && canMove;
@@ -333,7 +345,7 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
                             e.dataTransfer.effectAllowed = "move";
                             e.dataTransfer.setData("text/plain", `${rows.length} rader`);
                             // Egen dragbild så det syns att hela markeringen följer med.
-                            const totalKg = rows.reduce((a: number, x: any) => a + qtyOf(x), 0);
+                            const totalKg = rows.reduce((a: number, x: any) => a + kgOf(x), 0);
                             const ghost = document.createElement("div");
                             ghost.textContent = `${rows.length} rad${rows.length > 1 ? "er" : ""} · ${kg(totalKg)}`;
                             ghost.style.cssText =
@@ -367,7 +379,7 @@ export default function StockTree({ stock, stores, showValue = true, onFocusLeve
                             <span className="block truncate">{r.storage_locations?.name ?? "—"}</span>
                           </td>
                           <td className="px-1 py-1 text-right font-mono tabular-nums">
-                            {kg(qtyOf(r))}
+                            {qtyLabel(r)}
                           </td>
                           {showValue && (
                             <td className="px-1 py-1 text-right font-mono tabular-nums">
