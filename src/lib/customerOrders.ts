@@ -150,9 +150,19 @@ export interface CustomerOrder {
   handed_over_at: string | null;
   archived_at?: string | null;
   created_at: string;
+  /* Webborder från Shopify */
+  shopify_order_id?: string | null;
+  shopify_order_number?: string | null;
+  is_web_order?: boolean;
+  web_paid?: boolean;
+  paid_total?: number | null;
+  price_locked?: boolean;
+  wanted_time_window?: string | null;
+  web_delivery_method?: string | null;
   customers_retail?: RetailCustomer | null;
   customer_order_lines?: CustomerOrderLine[];
 }
+
 
 const round3 = (n: number) => Math.round(n * 1000) / 1000;
 const round2 = (n: number) => Math.round(n * 100) / 100;
