@@ -204,9 +204,18 @@ export function CustomerOrderRow({
             <span className="w-16 shrink-0 border-r border-grid-line/70 px-2 font-mono tabular-nums text-muted-foreground">
               {active.length} st
             </span>
-            <span className="min-w-[6rem] flex-1 truncate border-r border-grid-line/70 px-2 font-semibold">
-              {name}
+            <span className="flex min-w-[6rem] flex-1 items-center gap-1.5 truncate border-r border-grid-line/70 px-2 font-semibold">
+              {order.is_web_order && (
+                <span
+                  className="shrink-0 rounded-sm bg-primary/15 px-1 text-[10px] font-bold uppercase tracking-wide text-primary"
+                  title="Ny webborder från Shopify"
+                >
+                  Webb
+                </span>
+              )}
+              <span className="truncate">{name}</span>
             </span>
+
             <span className="flex w-24 shrink-0 items-center gap-1 border-r border-grid-line/70 px-2">
               {statusChip}
               {hasAllergy && (
