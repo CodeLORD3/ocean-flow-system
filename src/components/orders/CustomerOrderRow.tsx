@@ -60,14 +60,24 @@ type Tone = {
  * textade statusetiketten finns kvar även i gråskala.
  */
 export const rowTone = (order: CustomerOrder): Tone => {
-  if (order.status === "avbruten")
+  if (order.status === "avbruten") {
+    // Avbokad webborder som redan var packad: larmläge, varorna finns plockade.
+    if (order.cancelled_was_packed)
+      return {
+        row: "bg-row-late",
+        hover: "hover:bg-row-late-hover",
+        edge: "bg-row-late-edge",
+        chip: "bg-card text-row-late-text border-row-late-edge",
+        label: "Avbokad efter packning",
+      };
     return {
       row: "bg-row-off",
       hover: "hover:bg-row-off-hover",
       edge: "bg-row-off-edge",
       chip: "bg-card text-row-off-text border-row-off-edge",
-      label: "Avbruten",
+      label: order.cancelled_source === "shopify" ? "Avbokad på webben" : "Avbruten",
     };
+  }
   if (isUncollected(order))
     return {
       row: "bg-row-late",
@@ -157,6 +167,8 @@ export function CustomerOrderRow({
   const tone = rowTone(order);
 
   const time = order.wanted_time ? ` ${order.wanted_time.slice(0, 5)}` : "";
+
+  const packedAlarm = cancelled && !!order.cancelled_was_packed;
 
   const statusChip = (
     <span

@@ -150,6 +150,10 @@ export interface CustomerOrder {
   packed_at: string | null;
   handed_over_at: string | null;
   archived_at?: string | null;
+  cancelled_at?: string | null;
+  cancelled_reason?: string | null;
+  cancelled_source?: string | null;
+  cancelled_was_packed?: boolean | null;
   created_at: string;
   /* Webborder från Shopify */
   shopify_order_id?: string | null;
