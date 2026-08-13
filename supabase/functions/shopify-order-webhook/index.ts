@@ -376,7 +376,7 @@ async function createOrder(db: SupabaseClient, payload: any, storeId: string, vi
     parseDeliveryDate(attr(payload, "Delivery Date")) ??
     String(payload?.created_at ?? new Date().toISOString()).slice(0, 10);
 
-  const customer = await upsertCustomer(db, payload, storeId);
+  const customer = await resolveCustomer(db, payload, storeId);
 
   const { data: orderNumber, error: numErr } = await db.rpc("next_customer_order_number", {
     _store_id: storeId,
@@ -411,6 +411,8 @@ async function createOrder(db: SupabaseClient, payload: any, storeId: string, vi
   const notes: string[] = [];
   if (payload?.note) notes.push(String(payload.note));
   notes.push(`Shopify ${orderName} — butik via ${via}`);
+  notes.push(`Kund: ${customer.matchedVia}`);
+  if (customer.review) notes.push(customer.review);
 
   const paidTotal = Number(payload?.total_price ?? 0);
   const paid = String(payload?.financial_status ?? "").toLowerCase() === "paid";
@@ -505,7 +507,15 @@ async function createOrder(db: SupabaseClient, payload: any, storeId: string, vi
     new_value: { shopify_order_id: shopifyOrderId, paid_total: paidTotal },
   });
 
-  return { orderId: order.id as string, orderNumber, unmatched };
+  return {
+    orderId: order.id as string,
+    orderNumber,
+    unmatched,
+    customerId: customer.id,
+    customerCreated: customer.created,
+    customerReview: customer.review,
+    matchedVia: customer.matchedVia,
+  };
 }
 
 /* ------------------------------------------------------------ bearbetning */
