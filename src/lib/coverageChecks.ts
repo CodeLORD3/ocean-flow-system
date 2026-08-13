@@ -242,10 +242,50 @@ export function checkCutSplits(input: CoverageInput): CoverageFinding[] {
   return out;
 }
 
-/* ── 4. Referenspriser per kanal ──────────────────────────────── */
+/* ── 4. Härledda referenspriser per kanal ─────────────────────── */
 
-export function checkDetailPrices(input: CoverageInput): CoverageFinding[] {
-  const out: CoverageFinding[] = [];
+/** Priskälla för den automatiska härledningen. */
+export type PriceSource = "day_price" | "cost_price" | "missing";
+
+export const PRICE_SOURCE_LABEL: Record<PriceSource, string> = {
+  day_price: "Dagspris",
+  cost_price: "Reservpris",
+  missing: "Saknas",
+};
+
+export interface DerivedPriceRow {
+  /** Artgrupp (etikett som i produktregistret). */
+  group: string;
+  sku: string;
+  name: string;
+  /** Styckningsmodellens detalj som priset härleds till. */
+  detail: string;
+  channel: string;
+  source: PriceSource;
+  /** Underliggande råvarukostnad kr/kg (dagspris eller Reservpris). */
+  cost: number;
+  /** Härlett riktpris kr/kg, eller 0 när källa saknas. */
+  derived: number;
+}
+
+/** Samma reservkedja som marginalkalkylerna: dagspris → Reservpris. */
+export function productCost(p: ProductRow): { source: PriceSource; cost: number } {
+  const day = num(p.day_price);
+  const lots = num(p.day_price_lots);
+  if (day > 0 && lots > 0) return { source: "day_price", cost: day };
+  const reserve = num(p.cost_price);
+  if (reserve > 0) return { source: "cost_price", cost: reserve };
+  return { source: "missing", cost: 0 };
+}
+
+/**
+ * Härleder riktpris per detalj och kanal ur produktens gällande kostnad,
+ * detaljens utbytesandel och kanalens marginalmål. Ingen statisk prislista krävs.
+ */
+export function deriveDetailPrices(input: CoverageInput): DerivedPriceRow[] {
+  const modelByGroup = new Map<string, string>();
+  for (const m of input.cutModels) modelByGroup.set(speciesKey(m.species_group), m.cut_model);
+
   const splitsByModel = new Map<string, CutSplitRow[]>();
   for (const s of input.cutSplits) {
     const arr = splitsByModel.get(formKey(s.cut_model)) ?? [];
@@ -253,54 +293,59 @@ export function checkDetailPrices(input: CoverageInput): CoverageFinding[] {
     splitsByModel.set(formKey(s.cut_model), arr);
   }
 
-  const priceIndex = new Map<string, DetailPriceRow>();
-  for (const p of input.detailPrices) {
-    priceIndex.set(`${p.price_list}|${speciesKey(p.species_group)}|${formKey(p.detail_form)}`, p);
-  }
+  const targetByList = new Map<string, number>();
+  for (const t of input.marginTargets) targetByList.set(t.price_list, num(t.target_pct));
 
-  const used = usedSpeciesGroups(input);
-
-  for (const m of input.cutModels) {
-    const key = speciesKey(m.species_group);
-    if (!used.has(key)) continue; // bara modeller för artgrupper i bruk
-    const splits = splitsByModel.get(formKey(m.cut_model)) ?? [];
+  const out: DerivedPriceRow[] = [];
+  for (const p of input.products) {
+    if (p.active === false || isExemptProduct(p, input)) continue;
+    const key = speciesKey(p.species_group);
+    const model = modelByGroup.get(key);
+    if (!model) continue; // saknad modell fångas av kontroll 2
+    const splits = splitsByModel.get(formKey(model)) ?? [];
+    const { source, cost } = productCost(p);
     for (const s of splits) {
+      const pct = num(s.pct_of_fillet);
       for (const list of [PRICE_LIST_BUTIK, PRICE_LIST_GROSSIST]) {
-        const row = priceIndex.get(`${list}|${key}|${formKey(s.detail_form)}`);
-        const severity: Severity = list === PRICE_LIST_BUTIK ? "blocking" : "warning";
-        const label = list === PRICE_LIST_BUTIK ? "butik" : "grossist";
-        if (!row) {
-          out.push({
-            check: "detail_prices",
-            severity,
-            group: m.species_group,
-            subject: `${s.detail_name || s.detail_form} (${label})`,
-            message: `Referenspris saknas i prislistan ${list}.`,
-          });
-          continue;
-        }
-        const price = num(row.price_incl_vat) || num(row.last_set_price);
-        if (price <= 0) {
-          out.push({
-            check: "detail_prices",
-            severity,
-            group: m.species_group,
-            subject: `${s.detail_name || s.detail_form} (${label})`,
-            message: `Referenspriset är 0 i prislistan ${list}.`,
-          });
-        }
-        if (price > 0 && num(row.reference_cost_per_kg) <= 0) {
-          out.push({
-            check: "detail_prices",
-            severity: "warning",
-            group: m.species_group,
-            subject: `${s.detail_name || s.detail_form} (${label})`,
-            message: `Referenskostnad kr/kg saknas — skalfaktorn kan inte bedömas i prislistan ${list}.`,
-          });
-        }
-
+        const target = targetByList.get(list) ?? 0;
+        const derived =
+          source === "missing" || pct <= 0 ? 0 : (cost / (pct / 100)) * (1 + target / 100);
+        out.push({
+          group: p.species_group ?? key,
+          sku: p.sku,
+          name: p.name,
+          detail: s.detail_name || s.detail_form,
+          channel: list === PRICE_LIST_BUTIK ? "butik" : "grossist",
+          source,
+          cost,
+          derived: Math.round(derived * 100) / 100,
+        });
       }
     }
+  }
+  return out;
+}
+
+/**
+ * En detalj är täckt så snart priset kan härledas ur dagspris eller Reservpris.
+ * Riktig datalucka = produkten saknar båda.
+ */
+export function checkDetailPrices(input: CoverageInput): CoverageFinding[] {
+  const out: CoverageFinding[] = [];
+  const modelByGroup = new Set(input.cutModels.map((m) => speciesKey(m.species_group)));
+
+  for (const p of input.products) {
+    if (p.active === false || isExemptProduct(p, input)) continue;
+    const key = speciesKey(p.species_group);
+    if (!key || !modelByGroup.has(key)) continue;
+    if (productCost(p).source !== "missing") continue;
+    out.push({
+      check: "detail_prices",
+      severity: "blocking",
+      group: p.species_group ?? key,
+      subject: p.sku,
+      message: `${p.name}: saknar både dagspris och Reservpris — referenspris kan inte härledas.`,
+    });
   }
   return out;
 }
