@@ -289,7 +289,28 @@ export function CustomerOrderRow({
         </button>
       </div>
 
+      {cancelled && (
+        <div
+          className={`flex items-start gap-2 border-t border-grid-line px-3 py-1.5 text-[11px] font-semibold ${
+            packedAlarm
+              ? "bg-row-late-edge/15 text-row-late-text"
+              : "bg-row-off/60 text-row-off-text"
+          }`}
+        >
+          <span aria-hidden>{packedAlarm ? "⚠" : "✕"}</span>
+          <span className="min-w-0">
+            {packedAlarm
+              ? "Avbokad efter att varorna packats — kontrollera och hantera varorna i butiken"
+              : order.cancelled_source === "shopify"
+                ? "Avbokad i webbutiken — reservationer frisläppta"
+                : "Avbruten order"}
+            {order.cancelled_reason ? ` · ${order.cancelled_reason}` : ""}
+          </span>
+        </div>
+      )}
+
       {isOpen && (
+
         <div className="space-y-3 border-t-2 border-primary bg-muted/60 p-3">
           {/* Ordernumret räcker som identifikation — namnet står redan i raden ovanför. */}
           <div className="flex flex-wrap items-center gap-1.5 text-xs">
