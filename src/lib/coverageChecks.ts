@@ -44,6 +44,8 @@ export interface ProductRow {
   cost_price?: number | string | null;
   /** Sant när Reservpriset är ärvt från grundprodukten och inte satt manuellt. */
   cost_price_inherited?: boolean | null;
+  /** Ursprung för Reservpriset: inkopshistorik | recept | utpris | platshallare. */
+  cost_price_source?: string | null;
 }
 
 export interface YieldRow {
