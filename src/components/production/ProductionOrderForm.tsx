@@ -551,10 +551,29 @@ export function ProductionOrderForm() {
       toast({ title: "Ofullständigt", description: "Ange råvara, kvantitet och minst en detalj.", variant: "destructive" });
       return;
     }
+    if (fefoAlloc?.blockedByExpiry) {
+      toast({
+        title: "Motivering krävs",
+        description: "Ett utgånget parti är valt. Ange motivering i partivalet.",
+        variant: "destructive",
+      });
+      return;
+    }
     try {
+      if (fefoAlloc?.usesExpired) {
+        await supabase.from("activity_logs").insert({
+          action: "expired_lot_used",
+          entity_type: "production_order",
+          description: `Styckning med utgånget parti: ${fefoAlloc.allocations
+            .filter((a) => a.expired)
+            .map((a) => a.lotNumber)
+            .join(", ")} — motivering: ${fefoAlloc.expiredJustification ?? ""}`,
+        } as any);
+      }
       // FEFO-fördelningen från partivalet styr plocket; utan partival faller vi
       // tillbaka på FIFO-plocket ur rörelseloggen.
       const picks: RawPick[] = fefoAlloc?.allocations.length
+
         ? fefoAlloc.allocations.map((a) => ({ lotId: a.lotId, quantityKg: a.quantityKg }))
         : rawProductId
           ? await pickRawLots(rawProductId, GROSSIST_FLYTANDE_ID, rawQtyNum)
