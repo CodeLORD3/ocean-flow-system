@@ -124,10 +124,7 @@ export default function SystemStatus() {
                     {hasDiff ? `${latest.diff_count} avvikelser` : "Inga avvikelser"}
                   </Badge>
                   <span className="text-muted-foreground">
-                    {fmtQty(latest.checked_rows)
-                      .replace(/,000$/, "")
-                      .replace(/\s/g, " ")}{" "}
-                    kontrollerade kombinationer · senast {fmtTime(latest.ran_at)} ({latest.source})
+                    {latest.checked_rows} kontrollerade kombinationer · senast {fmtTime(latest.ran_at)} ({latest.source})
                   </span>
                 </div>
 
