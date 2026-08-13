@@ -5620,6 +5620,7 @@ export type Database = {
           catch_weight: boolean
           category: string
           cost_price: number
+          cost_price_inherited: boolean
           created_at: string | null
           day_price: number
           day_price_lots: number
@@ -5663,6 +5664,7 @@ export type Database = {
           catch_weight?: boolean
           category: string
           cost_price?: number
+          cost_price_inherited?: boolean
           created_at?: string | null
           day_price?: number
           day_price_lots?: number
@@ -5706,6 +5708,7 @@ export type Database = {
           catch_weight?: boolean
           category?: string
           cost_price?: number
+          cost_price_inherited?: boolean
           created_at?: string | null
           day_price?: number
           day_price_lots?: number

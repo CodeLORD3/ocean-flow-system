@@ -26,7 +26,7 @@ async function loadCoverageInput(): Promise<CoverageInput> {
       supabase
         .from("products")
         .select(
-          "sku, name, species_group, active, category, exempt_species_data, day_price, day_price_lots, cost_price" as any,
+          "sku, name, species_group, active, category, exempt_species_data, day_price, day_price_lots, cost_price, cost_price_inherited" as any,
         )
         .eq("active", true),
       supabase.from("yields").select("species_group"),
@@ -77,9 +77,11 @@ export default function DataCoverage() {
 
   const priceSources = useMemo(() => {
     const counts = { day_price: 0, cost_price: 0, missing: 0 };
+    let inherited = 0;
     const missingByGroup = new Map<string, Map<string, DerivedPriceRow>>();
     for (const r of derived) {
       counts[r.source] += 1;
+      if (r.inherited) inherited += 1;
       if (r.source === "missing") {
         const g = missingByGroup.get(r.group) ?? new Map<string, DerivedPriceRow>();
         if (!g.has(r.sku)) g.set(r.sku, r);
@@ -89,7 +91,7 @@ export default function DataCoverage() {
     const groups = [...missingByGroup.entries()]
       .map(([group, skus]) => ({ group, rows: [...skus.values()] }))
       .sort((a, b) => b.rows.length - a.rows.length || a.group.localeCompare(b.group, "sv"));
-    return { counts, groups };
+    return { counts, groups, inherited };
   }, [derived]);
 
   const grouped = useMemo(() => {
@@ -173,6 +175,11 @@ export default function DataCoverage() {
                   <Badge variant="outline" className="border-sky-500 text-[10px] text-sky-600">
                     {priceSources.counts.cost_price} {PRICE_SOURCE_LABEL.cost_price}
                   </Badge>
+                  {priceSources.inherited > 0 && (
+                    <Badge variant="outline" className="border-amber-500 text-[10px] text-amber-600">
+                      {priceSources.inherited} ärvt från grundprodukt
+                    </Badge>
+                  )}
                   <Badge
                     variant={priceSources.counts.missing > 0 ? "destructive" : "outline"}
                     className="text-[10px]"

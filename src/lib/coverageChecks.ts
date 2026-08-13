@@ -42,6 +42,8 @@ export interface ProductRow {
   day_price_lots?: number | string | null;
   /** Manuellt Reservpris — används när dagspris saknas. */
   cost_price?: number | string | null;
+  /** Sant när Reservpriset är ärvt från grundprodukten och inte satt manuellt. */
+  cost_price_inherited?: boolean | null;
 }
 
 export interface YieldRow {
@@ -266,6 +268,8 @@ export interface DerivedPriceRow {
   cost: number;
   /** Härlett riktpris kr/kg, eller 0 när källa saknas. */
   derived: number;
+  /** Sant när källan är ett Reservpris som ärvts från grundprodukten. */
+  inherited: boolean;
 }
 
 /** Samma reservkedja som marginalkalkylerna: dagspris → Reservpris. */
@@ -319,6 +323,7 @@ export function deriveDetailPrices(input: CoverageInput): DerivedPriceRow[] {
           source,
           cost,
           derived: Math.round(derived * 100) / 100,
+          inherited: source === "cost_price" && !!p.cost_price_inherited,
         });
       }
     }
