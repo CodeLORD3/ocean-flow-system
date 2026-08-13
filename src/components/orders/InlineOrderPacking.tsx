@@ -273,19 +273,31 @@ export function InlineOrderPacking({
                     />
                   </div>
                   <div className="space-y-0.5">
-                    <Label className="text-[11px] text-muted-foreground">Dagens pris / {l.unit}</Label>
+                    <Label className="text-[11px] text-muted-foreground">
+                      {l.price_locked ? `Betalt pris / ${l.unit} (låst)` : `Dagens pris / ${l.unit}`}
+                    </Label>
                     <Input
                       inputMode="decimal"
-                      className="h-8 font-mono text-sm tabular-nums"
+                      readOnly={!!l.price_locked}
+                      title={
+                        l.price_locked
+                          ? "Webbordern är förskottsbetald — radpriset är låst från Shopify."
+                          : undefined
+                      }
+                      className={`h-8 font-mono text-sm tabular-nums ${
+                        l.price_locked ? "bg-muted text-muted-foreground" : ""
+                      }`}
                       value={prices[l.id] ?? ""}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        if (l.price_locked) return;
                         setPrices({
                           ...prices,
                           [l.id]: Number(String(e.target.value).replace(",", ".")) || 0,
-                        })
-                      }
+                        });
+                      }}
                     />
                   </div>
+
                   <div className="flex items-end">
                     <Button size="sm" className="h-8 w-full text-xs sm:w-auto" onClick={() => doPack(l)}>
                       <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> Packad
