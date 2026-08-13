@@ -359,7 +359,7 @@ export default function ShopifyWebOrders() {
                     </div>
                     <div className="mt-2 flex flex-wrap items-end gap-2">
                       <Select
-                        value={picked[l.id] ?? sugg[0]?.productId ?? ""}
+                        value={picked[l.id] ?? sugg[0]?.product.id ?? ""}
                         onValueChange={(v) => setPicked({ ...picked, [l.id]: v })}
                       >
                         <SelectTrigger className="h-8 w-80 text-xs">
@@ -367,12 +367,12 @@ export default function ShopifyWebOrders() {
                         </SelectTrigger>
                         <SelectContent>
                           {sugg.map((s) => (
-                            <SelectItem key={s.productId} value={s.productId}>
-                              {s.name} ({s.sku}) · {s.score}
+                            <SelectItem key={s.product.id} value={s.product.id}>
+                              {s.product.name} ({s.product.sku}) · {s.score}
                             </SelectItem>
                           ))}
                           {(products.data || [])
-                            .filter((p) => !sugg.some((s) => s.productId === p.id))
+                            .filter((p) => !sugg.some((s) => s.product.id === p.id))
                             .slice(0, 300)
                             .map((p) => (
                               <SelectItem key={p.id} value={p.id}>
@@ -388,7 +388,7 @@ export default function ShopifyWebOrders() {
                         onClick={() =>
                           confirmMatch.mutate({
                             line: l,
-                            productId: picked[l.id] ?? sugg[0]?.productId ?? "",
+                            productId: picked[l.id] ?? sugg[0]?.product.id ?? "",
                           })
                         }
                       >
