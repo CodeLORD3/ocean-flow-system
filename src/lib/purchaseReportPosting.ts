@@ -71,32 +71,28 @@ export interface PostingPlan {
 const round = (n: number, d = 3) => Math.round(n * 10 ** d) / 10 ** d;
 
 /**
- * Räknar om levererad kvantitet till kilo. Styck och lådor kräver vikt på
- * produkten — saknas den blir det ett hinder i stället för en gissad vikt.
+ * Räknar om levererad kvantitet till PRODUKTENS LAGERENHET: antal för
+ * styckprodukter, kilo för viktprodukter. Saknas styck- eller lådvikt när
+ * omräkning krävs blir det ett hinder i stället för en gissad vikt.
  */
+export function quantityToStockUnit(
+  line: PostingLine,
+  product?: PostingProduct,
+): { qty: number | null; unit: StockUnit; reason?: string } {
+  return toStockQuantity(line.quantity, line.unit ?? product?.unit, product);
+}
+
+/** Bakåtkompatibel vy: kvantiteten uttryckt i kilo (endast för viktvisning). */
 export function quantityToKg(
   line: PostingLine,
   product?: PostingProduct,
 ): { kg: number | null; reason?: string } {
-  const qty = Number(line.quantity ?? 0);
-  if (!Number.isFinite(qty) || qty <= 0) {
-    return { kg: null, reason: "kvantiteten saknas eller är noll" };
-  }
-  const unit = String(line.unit ?? product?.unit ?? "kg").toLowerCase().trim();
-  if (["kg", "kilo", "kilogram", ""].includes(unit)) return { kg: qty };
-  if (["g", "gram"].includes(unit)) return { kg: qty / 1000 };
-  if (["st", "stk", "styck", "pcs"].includes(unit)) {
-    const per = Number(product?.weight_per_piece ?? 0);
-    if (per > 0) return { kg: round(qty * per) };
-    return { kg: null, reason: "styckvikt saknas på produkten" };
-  }
-  if (["låda", "lada", "box", "förp", "forp", "kolli", "krt"].includes(unit)) {
-    const per = Number(product?.nominal_weight_kg ?? 0);
-    if (per > 0) return { kg: round(qty * per) };
-    return { kg: null, reason: "lådvikt (nominell vikt) saknas på produkten" };
-  }
-  return { kg: null, reason: `okänd enhet "${unit}"` };
+  const res = quantityToStockUnit(line, product);
+  if (res.qty === null) return { kg: null, reason: res.reason };
+  const kg = stockQtyToKg(res.qty, product);
+  return kg === null ? { kg: null, reason: "styckvikt saknas på produkten" } : { kg };
 }
+
 
 /** Jämn fördelning av kvantitet över flera batchnummer — förval i dialogen. */
 export function evenBatchSplit(lotNumbers: string[], totalKg: number): Record<string, number> {
