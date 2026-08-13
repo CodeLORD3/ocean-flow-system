@@ -775,9 +775,11 @@ export default function StockOverview({
                               {/* Spårbarhet som rullgardin inne i produkten */}
                               <ProductTraceabilityInline
                                 productId={g.product_id}
+                                product={productsById.get(g.product_id) || { unit: g.unit }}
                                 showCosts={showCosts}
                                 fmt={fmt}
                               />
+
                             </div>
                           </td>
                         </tr>,
