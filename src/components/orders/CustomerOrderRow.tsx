@@ -12,10 +12,11 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Archive, ArchiveRestore } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useUpdateCustomerOrder } from "@/hooks/useCustomerOrders";
+import { useUpdateCustomerOrder, useArchiveCustomerOrder } from "@/hooks/useCustomerOrders";
 import {
   CustomerOrder,
   ORDER_STATUS_LABELS,
@@ -139,6 +140,8 @@ export function CustomerOrderRow({
 }) {
   const [editing, setEditing] = useState(false);
   const updateOrder = useUpdateCustomerOrder();
+  const archiveOrder = useArchiveCustomerOrder();
+  const isArchived = !!order.archived_at;
   const isOpen = !!open;
   const name = order.customers_retail?.name || order.customer_name_snapshot || "Kund";
   const phone = order.customers_retail?.phone || order.customer_phone_snapshot;
@@ -437,6 +440,25 @@ export function CustomerOrderRow({
             >
               <Download className="mr-1 h-3.5 w-3.5" /> Ladda ner PDF
             </Button>
+            {!readOnly && canEdit && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs"
+                disabled={archiveOrder.isPending}
+                onClick={() => archiveOrder.mutate({ ids: [order.id], archive: !isArchived })}
+              >
+                {isArchived ? (
+                  <>
+                    <ArchiveRestore className="mr-1 h-3.5 w-3.5" /> Återställ
+                  </>
+                ) : (
+                  <>
+                    <Archive className="mr-1 h-3.5 w-3.5" /> Arkivera
+                  </>
+                )}
+              </Button>
+            )}
           </div>
 
 

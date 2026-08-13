@@ -140,6 +140,7 @@ export interface CustomerOrder {
   note: string | null;
   packed_at: string | null;
   handed_over_at: string | null;
+  archived_at?: string | null;
   created_at: string;
   customers_retail?: RetailCustomer | null;
   customer_order_lines?: CustomerOrderLine[];

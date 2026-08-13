@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, Truck, ChefHat, ShoppingCart } from "lucide-react";
+import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, Truck, ChefHat, ShoppingCart, Archive, ArchiveRestore } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,7 +18,7 @@ import {
 import { EmptyState } from "@/components/EmptyState";
 import { useSite } from "@/contexts/SiteContext";
 import { useStores } from "@/hooks/useStores";
-import { useCustomerOrders } from "@/hooks/useCustomerOrders";
+import { useCustomerOrders, useArchiveCustomerOrder } from "@/hooks/useCustomerOrders";
 import {
   CustomerOrder,
   ORDER_STATUS_LABELS,
@@ -46,6 +46,7 @@ const VIEWS: SavedView[] = [
   { id: "idag", label: "Dagens packning", description: "Endast dagens datum" },
   { id: "ejpackade", label: "Ej packade", description: "Opackade och pågående" },
   { id: "avvikelser", label: "Avvikelser", description: "Ohämtat, allergi eller avbrutet" },
+  { id: "arkiverade", label: "Arkiverade", description: "Arkiverade beställningar" },
 ];
 
 
@@ -123,13 +124,17 @@ export default function CustomerOrders() {
 
 
 
+  const isArchiveView = view === "arkiverade";
+  const archiveOrders = useArchiveCustomerOrder();
+
   const { data: orders = [], isLoading } = useCustomerOrders({
     storeId: effectiveStore,
     status,
     packStatus,
     orderType,
     search,
-    fromDate: view === "alla" ? undefined : today(),
+    fromDate: view === "alla" || isArchiveView ? undefined : today(),
+    archived: isArchiveView,
   });
 
   const { data: tomorrowOrders = [] } = useCustomerOrders({
@@ -194,6 +199,30 @@ export default function CustomerOrders() {
           }}
           count={viewOrders.length}
         />
+        {canEdit && marked.length > 0 && (
+          <Button
+            variant="outline"
+            size="lg"
+            className="h-12 px-5 text-base"
+            disabled={archiveOrders.isPending}
+            onClick={() =>
+              archiveOrders.mutate(
+                { ids: marked, archive: !isArchiveView },
+                { onSuccess: () => setMarked([]) },
+              )
+            }
+          >
+            {isArchiveView ? (
+              <>
+                <ArchiveRestore className="mr-2 h-5 w-5" /> Återställ {marked.length}
+              </>
+            ) : (
+              <>
+                <Archive className="mr-2 h-5 w-5" /> Arkivera {marked.length}
+              </>
+            )}
+          </Button>
+        )}
         {canCreate && (
           <Button size="lg" className="h-12 px-5 text-base" onClick={() => setWizardOpen(true)}>
             <Plus className="mr-2 h-5 w-5" /> Ny beställning
@@ -398,9 +427,17 @@ export default function CustomerOrders() {
           {!isLoading && viewOrders.length === 0 ? (
 
             <EmptyState
-              title={orders.length === 0 ? "Inga kundbeställningar" : "Inga rader i den här vyn"}
+              title={
+                isArchiveView
+                  ? "Inga arkiverade beställningar"
+                  : orders.length === 0
+                    ? "Inga kundbeställningar"
+                    : "Inga rader i den här vyn"
+              }
               description={
-                orders.length === 0
+                isArchiveView
+                  ? "Beställningar du arkiverar försvinner från listan och hamnar här."
+                  : orders.length === 0
                   ? "Här samlas dagens och kommande beställningar från privatkunder. Skapa den första med Ny beställning."
                   : "Byt vy i rubriken eller ändra filtren för att se fler beställningar."
               }

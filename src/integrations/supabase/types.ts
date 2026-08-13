@@ -1565,6 +1565,8 @@ export type Database = {
       customer_orders: {
         Row: {
           allergy_note: string | null
+          archived_at: string | null
+          archived_by: string | null
           cancelled_at: string | null
           category: string
           created_at: string
@@ -1597,6 +1599,8 @@ export type Database = {
         }
         Insert: {
           allergy_note?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           cancelled_at?: string | null
           category?: string
           created_at?: string
@@ -1629,6 +1633,8 @@ export type Database = {
         }
         Update: {
           allergy_note?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           cancelled_at?: string | null
           category?: string
           created_at?: string

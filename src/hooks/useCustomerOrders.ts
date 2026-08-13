@@ -112,6 +112,8 @@ export interface OrderFilter {
   fromDate?: string;
   toDate?: string;
   search?: string;
+  /** true = endast arkiverade, false/undefined = endast ej arkiverade. */
+  archived?: boolean;
 }
 
 export function useCustomerOrders(filter: OrderFilter = {}) {
@@ -129,6 +131,8 @@ export function useCustomerOrders(filter: OrderFilter = {}) {
       if (filter.orderType && filter.orderType !== "all") q = q.eq("order_type", filter.orderType);
       if (filter.fromDate) q = q.gte("wanted_date", filter.fromDate);
       if (filter.toDate) q = q.lte("wanted_date", filter.toDate);
+      if (filter.archived) q = q.not("archived_at", "is", null);
+      else q = q.is("archived_at", null);
       const { data, error } = await q;
       if (error) throw error;
       let rows = (data || []) as CustomerOrder[];
@@ -286,6 +290,34 @@ export function useCreateCustomerOrder() {
       qc.invalidateQueries({ queryKey: ["customer_purchase_needs"] });
       qc.invalidateQueries({ queryKey: ["customer_reservations"] });
     },
+  });
+}
+
+/** Arkiverar eller återställer en kundbeställning. */
+export function useArchiveCustomerOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ids, archive }: { ids: string[]; archive: boolean }) => {
+      const { data: auth } = await supabase.auth.getUser();
+      const { error } = await db
+        .from("customer_orders")
+        .update(
+          archive
+            ? { archived_at: new Date().toISOString(), archived_by: auth?.user?.id ?? null }
+            : { archived_at: null, archived_by: null },
+        )
+        .in("id", ids);
+      if (error) throw error;
+      for (const id of ids) {
+        await logOrderEvent({
+          orderId: id,
+          eventType: archive ? "arkiverad" : "aterstalld",
+          description: archive ? "Beställningen arkiverades" : "Beställningen återställdes från arkivet",
+          performedBy: auth?.user?.id ?? null,
+        });
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["customer_orders"] }),
   });
 }
 
