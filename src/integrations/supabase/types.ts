@@ -7105,6 +7105,97 @@ export type Database = {
           },
         ]
       }
+      stock_negative_flags: {
+        Row: {
+          ack_note: string | null
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          created_at: string
+          driver_note: string | null
+          id: string
+          location_id: string
+          movement_id: string | null
+          movement_qty: number | null
+          movement_type: string | null
+          product_id: string
+          resulting_qty: number
+          suggested_lot_id: string | null
+        }
+        Insert: {
+          ack_note?: string | null
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string
+          driver_note?: string | null
+          id?: string
+          location_id: string
+          movement_id?: string | null
+          movement_qty?: number | null
+          movement_type?: string | null
+          product_id: string
+          resulting_qty: number
+          suggested_lot_id?: string | null
+        }
+        Update: {
+          ack_note?: string | null
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          created_at?: string
+          driver_note?: string | null
+          id?: string
+          location_id?: string
+          movement_id?: string | null
+          movement_qty?: number | null
+          movement_type?: string | null
+          product_id?: string
+          resulting_qty?: number
+          suggested_lot_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_negative_flags_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "location_stock_rollup"
+            referencedColumns: ["location_id"]
+          },
+          {
+            foreignKeyName: "stock_negative_flags_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "storage_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_negative_flags_movement_id_fkey"
+            columns: ["movement_id"]
+            isOneToOne: false
+            referencedRelation: "stock_movements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_negative_flags_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_negative_flags_suggested_lot_id_fkey"
+            columns: ["suggested_lot_id"]
+            isOneToOne: false
+            referencedRelation: "lot_remaining"
+            referencedColumns: ["lot_id"]
+          },
+          {
+            foreignKeyName: "stock_negative_flags_suggested_lot_id_fkey"
+            columns: ["suggested_lot_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_reconciliation_runs: {
         Row: {
           checked_rows: number
