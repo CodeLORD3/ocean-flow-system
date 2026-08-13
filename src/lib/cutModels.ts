@@ -52,14 +52,12 @@ export const CUT_MODEL_TEMPLATES: Record<CutModel, ModelDetail[]> = {
     { form: "rygg", name: "Rygg (backloin)", pctOfFillet: 60, role: "primary" },
     { form: "buk", name: "Buk (bellyloin)", pctOfFillet: 40, role: "byproduct" },
   ],
-  flatfish: [
-    { form: "hel filé", name: "Hel filé", pctOfFillet: 100, role: "primary" },
-    { form: "kotlett", name: "Kotlett/tronçon", pctOfFillet: 0, role: "primary", optional: true },
-    { form: "fletch", name: "Fletch", pctOfFillet: 0, role: "primary", optional: true },
-  ],
+  flatfish: [{ form: "hel filé", name: "Hel filé", pctOfFillet: 100, role: "primary" }],
   tail_only: [{ form: "stjärt", name: "Stjärt", pctOfFillet: 100, role: "primary" }],
   single: [{ form: "hel filé", name: "Hel filé", pctOfFillet: 100, role: "primary" }],
+  hel: [{ form: "hel", name: "Hel", pctOfFillet: 100, role: "primary" }],
 };
+
 
 /** Minsta styckvikt för att modellen ska vara försvarbar (kg). */
 export const MODEL_MIN_PIECE_WEIGHT: Partial<Record<CutModel, number>> = {
