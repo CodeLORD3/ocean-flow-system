@@ -290,10 +290,36 @@ export function CustomerOrderRow({
               {ORDER_TYPE_LABELS[order.order_type] ?? order.order_type}
             </Badge>
             {order.category === "catering" && <Badge variant="secondary">Catering</Badge>}
+            {order.is_web_order && (
+              <>
+                <Badge className="bg-primary/15 text-primary hover:bg-primary/15">
+                  Webborder {order.shopify_order_number ?? ""}
+                </Badge>
+                {order.web_paid && <Badge variant="secondary">Betald via webben</Badge>}
+                {order.price_locked && <Badge variant="outline">Låsta priser</Badge>}
+              </>
+            )}
+            {order.wanted_time_window && (
+              <Badge variant="outline" className="font-mono tabular-nums">
+                {order.wanted_time_window}
+              </Badge>
+            )}
             <span className="ml-auto shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
               {order.order_number}
             </span>
           </div>
+
+          {order.is_web_order && order.paid_total != null && (
+            <div className="text-xs text-muted-foreground">
+              Betalt via webben: {nf(Number(order.paid_total), 2)} kr
+              {Math.abs(total - Number(order.paid_total)) > 0.5 && (
+                <span className="ml-1 font-semibold text-amber-600">
+                  · vägd summa {nf(total, 2)} kr avviker, justering görs manuellt i Shopify
+                </span>
+              )}
+            </div>
+          )}
+
 
 
           <div className="grid gap-2 text-sm sm:grid-cols-2">
