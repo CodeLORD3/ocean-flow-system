@@ -17,6 +17,8 @@ import { toast } from "sonner";
 import { Copy, Globe, Inbox, Link2, Loader2, Plus, Trash2 } from "lucide-react";
 import { suggestProducts, type MatchProduct } from "@/lib/foljesedelMatch";
 import { EmptyState } from "@/components/EmptyState";
+import CustomerMatchReview from "@/components/shopify/CustomerMatchReview";
+import RetailCustomerDuplicates from "@/components/shopify/RetailCustomerDuplicates";
 
 /**
  * Webbordrar (Shopify).
@@ -242,6 +244,8 @@ export default function ShopifyWebOrders() {
       </div>
 
       <div className="flex-1 space-y-4 overflow-auto p-4">
+        <CustomerMatchReview />
+        <RetailCustomerDuplicates />
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Webhook</CardTitle>
