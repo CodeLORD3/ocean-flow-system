@@ -10,6 +10,9 @@ import {
   CheckId,
   CoverageFinding,
   CoverageInput,
+  DerivedPriceRow,
+  PRICE_SOURCE_LABEL,
+  deriveDetailPrices,
   findingsToCsv,
   runCoverageChecks,
   summarize,
@@ -22,7 +25,9 @@ async function loadCoverageInput(): Promise<CoverageInput> {
     await Promise.all([
       supabase
         .from("products")
-        .select("sku, name, species_group, active, category, exempt_species_data" as any)
+        .select(
+          "sku, name, species_group, active, category, exempt_species_data, day_price, day_price_lots, cost_price" as any,
+        )
         .eq("active", true),
       supabase.from("yields").select("species_group"),
       supabase.from("species_cut_models").select("species_group, cut_model"),
@@ -61,13 +66,31 @@ export default function DataCoverage() {
     queryFn: async () => {
       const input = await loadCoverageInput();
       setRanAt(new Date());
-      return runCoverageChecks(input);
+      return { findings: runCoverageChecks(input), derived: deriveDetailPrices(input) };
     },
     enabled: false,
   });
 
-  const findings = data ?? [];
+  const findings = data?.findings ?? [];
+  const derived = data?.derived ?? [];
   const totals = useMemo(() => summarize(findings), [findings]);
+
+  const priceSources = useMemo(() => {
+    const counts = { day_price: 0, cost_price: 0, missing: 0 };
+    const missingByGroup = new Map<string, Map<string, DerivedPriceRow>>();
+    for (const r of derived) {
+      counts[r.source] += 1;
+      if (r.source === "missing") {
+        const g = missingByGroup.get(r.group) ?? new Map<string, DerivedPriceRow>();
+        if (!g.has(r.sku)) g.set(r.sku, r);
+        missingByGroup.set(r.group, g);
+      }
+    }
+    const groups = [...missingByGroup.entries()]
+      .map(([group, skus]) => ({ group, rows: [...skus.values()] }))
+      .sort((a, b) => b.rows.length - a.rows.length || a.group.localeCompare(b.group, "sv"));
+    return { counts, groups };
+  }, [derived]);
 
   const grouped = useMemo(() => {
     const map = new Map<CheckId, CoverageFinding[]>();
@@ -137,6 +160,62 @@ export default function DataCoverage() {
             </CardContent>
           </Card>
         )}
+
+        {data && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                <span>Prisunderlag per detaljrad</span>
+                <span className="flex items-center gap-2">
+                  <Badge variant="outline" className="border-emerald-600 text-[10px] text-emerald-700">
+                    {priceSources.counts.day_price} {PRICE_SOURCE_LABEL.day_price}
+                  </Badge>
+                  <Badge variant="outline" className="border-sky-500 text-[10px] text-sky-600">
+                    {priceSources.counts.cost_price} {PRICE_SOURCE_LABEL.cost_price}
+                  </Badge>
+                  <Badge
+                    variant={priceSources.counts.missing > 0 ? "destructive" : "outline"}
+                    className="text-[10px]"
+                  >
+                    {priceSources.counts.missing} {PRICE_SOURCE_LABEL.missing}
+                  </Badge>
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <p className="text-[11px] text-muted-foreground">
+                Riktpriset härleds automatiskt: dagspris när produkten har aktivt dagspris, annars Reservpris, gånger
+                detaljens utbytesandel och kanalens marginalmål. Inga statiska referenspriser krävs.
+              </p>
+              {priceSources.groups.length === 0 ? (
+                <p className="text-[11px] text-emerald-700">
+                  Alla detaljrader kan härledas ur dagspris eller Reservpris.
+                </p>
+              ) : (
+                <div className="max-h-80 space-y-2 overflow-auto">
+                  {priceSources.groups.map((g) => (
+                    <div key={g.group} className="rounded-md border bg-background p-2">
+                      <div className="flex items-baseline justify-between text-[11px] font-medium">
+                        <span>{g.group}</span>
+                        <span className="text-muted-foreground">{g.rows.length} produkter</span>
+                      </div>
+                      <div className="mt-1 space-y-0.5">
+                        {g.rows.map((r) => (
+                          <div key={r.sku} className="flex gap-2 text-[11px] text-muted-foreground">
+                            <span className="font-mono tabular-nums">{r.sku}</span>
+                            <span>{r.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+
 
         {data &&
           CHECK_ORDER.map((id) => {
