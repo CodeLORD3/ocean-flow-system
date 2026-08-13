@@ -36,6 +36,7 @@ import { Ruler,
 
   Activity,
   CookingPot,
+  Globe,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -113,6 +114,7 @@ const financeNav = [
 
   { title: "Datakvalitet", url: "/coverage", icon: Shield },
   { title: "Systemstatus", url: "/system-status", icon: Activity },
+  { title: "Webbordrar", url: "/shopify", icon: Globe },
   { title: "Storlekssortering", url: "/size-grades", icon: Ruler },
   { title: "Omvandlingsrecept", url: "/transformation-recipes", icon: CookingPot },
   { title: "Ekonomi", url: "/finance", icon: CreditCard },
