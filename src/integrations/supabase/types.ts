@@ -7084,6 +7084,36 @@ export type Database = {
           },
         ]
       }
+      stock_reconciliation_runs: {
+        Row: {
+          checked_rows: number
+          created_at: string
+          details: Json
+          diff_count: number
+          id: string
+          ran_at: string
+          source: string
+        }
+        Insert: {
+          checked_rows?: number
+          created_at?: string
+          details?: Json
+          diff_count?: number
+          id?: string
+          ran_at?: string
+          source?: string
+        }
+        Update: {
+          checked_rows?: number
+          created_at?: string
+          details?: Json
+          diff_count?: number
+          id?: string
+          ran_at?: string
+          source?: string
+        }
+        Relationships: []
+      }
       storage_locations: {
         Row: {
           active: boolean
@@ -9044,6 +9074,7 @@ export type Database = {
         Args: { _exempt: boolean; _hs_code: string }
         Returns: boolean
       }
+      rebuild_stock_from_movements: { Args: never; Returns: Json }
       recalc_product_day_price: {
         Args: { _product_id: string }
         Returns: number
@@ -9062,6 +9093,7 @@ export type Database = {
       }
       species_key: { Args: { v: string }; Returns: string }
       staff_has_store: { Args: { _store: string }; Returns: boolean }
+      stock_reconciliation_check: { Args: { _source?: string }; Returns: Json }
       user_portals: { Args: { _user_id: string }; Returns: string[] }
       user_store_ids: { Args: { _user_id: string }; Returns: string[] }
       zero_stale_day_prices: { Args: never; Returns: number }
