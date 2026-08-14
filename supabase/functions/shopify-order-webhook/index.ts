@@ -91,6 +91,14 @@ const MONTHS: Record<string, number> = {
   january: 1, february: 2, march: 3, may: 5, june: 6, july: 7, august: 8, october: 10,
 };
 
+/** Månadsnamn eller förkortning ("aug", "Aug.", "augusti") → månadsnummer. */
+function monthOf(raw: string): number | null {
+  const k = raw.toLowerCase().replace(/\.$/, "").trim();
+  if (MONTHS[k]) return MONTHS[k];
+  const hit = Object.keys(MONTHS).find((m) => k.length >= 3 && m.startsWith(k));
+  return hit ? MONTHS[hit] : null;
+}
+
 /** Tolkar Shopifys "Delivery Date" i de format kassan skickar. */
 export function parseDeliveryDate(raw: string | null): string | null {
   if (!raw) return null;
@@ -101,13 +109,15 @@ export function parseDeliveryDate(raw: string | null): string | null {
   if (dmy) {
     return `${dmy[3]}-${String(dmy[2]).padStart(2, "0")}-${String(dmy[1]).padStart(2, "0")}`;
   }
-  const words = s.toLowerCase().match(/(\d{1,2})\s+([a-zåäö]+)\s+(\d{4})/);
-  if (words && MONTHS[words[2]]) {
-    return `${words[3]}-${String(MONTHS[words[2]]).padStart(2, "0")}-${String(words[1]).padStart(2, "0")}`;
+  const words = s.toLowerCase().match(/(\d{1,2})\s+([a-zåäö]+)\.?\s+(\d{4})/);
+  const wm = words ? monthOf(words[2]) : null;
+  if (wm) {
+    return `${words![3]}-${String(wm).padStart(2, "0")}-${String(words![1]).padStart(2, "0")}`;
   }
-  const enWords = s.toLowerCase().match(/([a-zåäö]+)\s+(\d{1,2}),?\s+(\d{4})/);
-  if (enWords && MONTHS[enWords[1]]) {
-    return `${enWords[3]}-${String(MONTHS[enWords[1]]).padStart(2, "0")}-${String(enWords[2]).padStart(2, "0")}`;
+  const enWords = s.toLowerCase().match(/([a-zåäö]+)\.?\s+(\d{1,2}),?\s+(\d{4})/);
+  const em = enWords ? monthOf(enWords[1]) : null;
+  if (em) {
+    return `${enWords![3]}-${String(em).padStart(2, "0")}-${String(enWords![2]).padStart(2, "0")}`;
   }
   return null;
 }
