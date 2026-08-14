@@ -72,6 +72,29 @@ export function useEntityImages(entityType: string, entityId?: string | null) {
   });
 }
 
+/** Antal bilder per objekt-id, hämtat i en enda fråga för en lista. */
+export function useEntityImageCounts(entityType: string, ids: string[]) {
+  const key = [...ids].sort().join(",");
+  return useQuery({
+    queryKey: ["entity-image-counts", entityType, key],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entity_images")
+        .select("entity_id")
+        .eq("entity_type", entityType)
+        .in("entity_id", ids);
+      if (error) throw error;
+      const map: Record<string, number> = {};
+      for (const r of data || []) {
+        const id = (r as { entity_id: string }).entity_id;
+        map[id] = (map[id] ?? 0) + 1;
+      }
+      return map;
+    },
+    enabled: ids.length > 0,
+  });
+}
+
 const BUCKET = "logos";
 
 export function useUploadEntityImage() {
