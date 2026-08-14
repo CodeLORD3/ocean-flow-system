@@ -28,6 +28,7 @@ import {
 } from "@/lib/customerOrders";
 import { CustomerOrderWizard } from "@/components/orders/CustomerOrderWizard";
 import { CustomerOrderRow, CustomerOrderRowHeader } from "@/components/orders/CustomerOrderRow";
+import { useEntityImageCounts } from "@/hooks/useEntityImages";
 import { ViewSelector, SavedView } from "@/components/shell/ViewSelector";
 import { StatusBar } from "@/components/shell/StatusBar";
 
