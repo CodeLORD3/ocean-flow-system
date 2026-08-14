@@ -42,6 +42,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/landing-settings": "Inloggningssida",
   "/chat": "Chatt",
   "/checklist": "Checklista",
+  "/manual": "Manual",
   "/dagsrapport": "Dagsrapport",
   "/vehicles": "Bilar & Maskiner",
   "/establishments": "Anläggningar",

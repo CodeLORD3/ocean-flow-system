@@ -59,6 +59,10 @@ const orgNav = [
   { title: "Aktivitetslogg", url: "/audit", icon: ClipboardList },
 ];
 
+const helpNav = [
+  { title: "Manual", url: "/manual", icon: BookOpen },
+];
+
 const financeNav = [
   { title: "Rapporter", url: "/reports", icon: BarChart3 },
   { title: "Dagsrapport", url: "/dagsrapport", icon: FileText },
@@ -75,6 +79,7 @@ const sections: NavSection[] = [
   { label: "Organisation", items: orgNav },
   { label: "Rapporter", items: financeNav },
   { label: "Kalender", items: calendarNav },
+  { label: "Hjälp", items: helpNav },
 ];
 
 export function ShopSidebar() {
