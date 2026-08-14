@@ -30,3 +30,10 @@ verify_jwt = false
 [functions.shopify-oauth]
 verify_jwt = false
 
+[functions.booking-api]
+verify_jwt = false
+
+[functions.booking-reminders]
+verify_jwt = false
+
+
