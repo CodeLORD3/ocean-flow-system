@@ -192,7 +192,7 @@ export function InlineOrderPacking({
                 <ProductThumb
                   src={l.products?.image_url}
                   alt={name}
-                  static
+                  productId={l.product_id}
                   className="h-8 w-10 rounded"
                 />
                 <span className={`min-w-0 flex-1 truncate font-medium ${struck ? "line-through" : ""}`}>
