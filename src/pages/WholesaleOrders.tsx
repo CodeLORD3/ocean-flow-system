@@ -78,7 +78,7 @@ const statusIcon: Record<string, React.ReactNode> = {
   Avbruten: <XCircle className="h-3 w-3" />,
 };
 
-const LINE_STATUSES = ["", "Pågående", "Producerad", "Packad", "Skickad", "Ej tillgänglig"];
+const LINE_STATUSES = ["", "Pågående", "Beställd", "Producerad", "Packad", "Skickad", "Ej tillgänglig"];
 
 const FULFILLED_LINE_STATUSES = ["Packad", "Skickad", "Klar / Levererad", "Levererad", "Producerad"];
 
@@ -1426,6 +1426,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                   isUnavailable ? "opacity-50 bg-destructive/5" :
                   currentStatus === "Skickad" ? "bg-primary/10" :
                   currentStatus === "Packad" || currentStatus === "Producerad" ? "bg-success/10" :
+                  currentStatus === "Beställd" ? "bg-accent/20" :
                   currentStatus === "Pågående" ? "bg-warning/10" :
                   ""
                 }`}>
@@ -1504,13 +1505,14 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                         currentStatus === "Ej tillgänglig" ? "text-destructive border-destructive/20" :
                         currentStatus === "Packad" || currentStatus === "Producerad" ? "text-success border-success/20" :
                         currentStatus === "Skickad" ? "text-primary border-primary/20" :
+                        currentStatus === "Beställd" ? "text-accent-foreground border-accent" :
                         currentStatus === "Pågående" ? "text-warning border-warning/20" :
                         ""
                       }`}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {[...STATUS_FLOW, "Ej tillgänglig"].map((s) => (
+                        {[...STATUS_FLOW, "Beställd", "Ej tillgänglig"].map((s) => (
                           <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
                         ))}
                       </SelectContent>
