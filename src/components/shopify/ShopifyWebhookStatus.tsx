@@ -227,6 +227,36 @@ export default function ShopifyWebhookStatus() {
           </div>
         )}
 
+        {authorizeUrl && (
+          <div className="flex items-start gap-2 rounded-md border border-primary/40 bg-primary/5 p-2 text-xs">
+            <Link2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <span className="min-w-0 flex-1">
+              Blev Shopify-fliken blockerad (ERR_BLOCKED_BY_RESPONSE)? Shopify tillåter inte
+              godkännande inuti förhandsvisningen — öppna länken i en egen webbläsarflik:{" "}
+              <a
+                href={authorizeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="break-all font-mono underline"
+              >
+                Godkänn i Shopify
+              </a>
+            </span>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-6 shrink-0 text-xs"
+              onClick={() => {
+                navigator.clipboard.writeText(authorizeUrl);
+                toast.success("Länken kopierad");
+              }}
+            >
+              Kopiera länk
+            </Button>
+          </div>
+        )}
+
+
 
         {silent && (
           <div className="flex items-start gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-2 text-xs">
