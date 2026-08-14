@@ -1510,11 +1510,10 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {[...STATUS_FLOW, "Ej tillgänglig"].map((s) => (
+                        {[...STATUS_FLOW, "Beställd", "Ej tillgänglig"].map((s) => (
                           <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
                         ))}
                       </SelectContent>
-                    </Select>
                   </td>
                   <td className="px-2 py-0.5 text-center">
                     {!isUnavailable && (
