@@ -462,35 +462,6 @@ export function CustomerOrderRow({
             <span className="font-mono text-sm font-semibold tabular-nums">{nf(total, 2)} kr</span>
           </div>
 
-          {/* Interna bilder på beställningen — syns aldrig på utskrifter. */}
-          <div className="rounded-sm border border-grid-line bg-card p-2">
-            <button
-              type="button"
-              onClick={() => setShowPhotos((v) => !v)}
-              className="flex w-full items-center justify-between gap-2 text-xs font-semibold text-foreground"
-            >
-              <span className="flex items-center gap-1.5">
-                <ImageIcon className="h-3.5 w-3.5 text-primary" /> Bilder på beställningen
-                <span className="font-normal text-muted-foreground">(internt)</span>
-              </span>
-              <span className="text-primary underline-offset-2 hover:underline">
-                {showPhotos ? "Stäng" : "Öppna"}
-              </span>
-            </button>
-            {showPhotos && (
-              <div className="mt-2">
-                <EntityImageGallery
-                  entityType="customer_order"
-                  entityId={order.id}
-                  title=""
-                  description="Interna bilder, t.ex. packad vara eller var beställningen står. Kommer inte med på utskrifter."
-                  editable={!readOnly}
-                  columnsClassName="grid-cols-3 sm:grid-cols-4"
-                />
-              </div>
-            )}
-          </div>
-
           <button
             type="button"
             onClick={() => setShowMore((v) => !v)}
@@ -502,7 +473,42 @@ export function CustomerOrderRow({
 
           {showMore && (
             <div className="space-y-2.5">
+              {/* Interna bilder på beställningen — syns aldrig på utskrifter. */}
+              <div className="rounded-sm border border-grid-line bg-card p-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPhotos((v) => !v)}
+                  className="flex w-full items-center justify-between gap-2 text-xs font-semibold text-foreground"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <ImageIcon className="h-3.5 w-3.5 text-primary" /> Bilder på beställningen
+                    {photoCount > 0 && (
+                      <span className="font-mono tabular-nums text-muted-foreground">
+                        ({photoCount})
+                      </span>
+                    )}
+                    <span className="font-normal text-muted-foreground">(internt)</span>
+                  </span>
+                  <span className="text-primary underline-offset-2 hover:underline">
+                    {showPhotos ? "Stäng" : "Öppna"}
+                  </span>
+                </button>
+                {showPhotos && (
+                  <div className="mt-2">
+                    <EntityImageGallery
+                      entityType="customer_order"
+                      entityId={order.id}
+                      title=""
+                      description="Interna bilder, t.ex. packad vara eller var beställningen står. Kommer inte med på utskrifter."
+                      editable={!readOnly}
+                      columnsClassName="grid-cols-3 sm:grid-cols-4"
+                    />
+                  </div>
+                )}
+              </div>
+
               <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+
                 <Badge variant="outline" className="text-[10px]">
                   {ORDER_STATUS_LABELS[order.status] ?? order.status}
                 </Badge>
