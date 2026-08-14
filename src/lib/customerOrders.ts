@@ -192,6 +192,8 @@ export interface CustomerOrder {
   wanted_time_window?: string | null;
   web_delivery_method?: string | null;
   customers_retail?: RetailCustomer | null;
+  /** Butiken där beställningen hämtas (joinad). */
+  stores?: { id: string; name: string } | null;
   customer_order_lines?: CustomerOrderLine[];
 }
 
