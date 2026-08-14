@@ -481,7 +481,7 @@ async function sendCode(db: SupabaseClient, body: any, ip: string) {
     await guard(db, honeypotFilled ? "honeypot" : "tidsfalla", honeypotFilled ? "ifyllt dolt fält" : "submit under 3 sekunder", phone, ip);
     return { ok: true, sent: true };
   }
-  if (!phone) throw new Error("Vi behöver ett svenskt mobilnummer för att skicka bekräftelsekoden.");
+  if (!phone) throw new Error(PHONE_ERROR);
 
   if (await overLimit(db, `ip:${ip}`, HOUR, 10)) {
     await guard(db, "rate_limit_ip", "över 10 kodutskick per timme", phone, ip);
@@ -577,7 +577,7 @@ async function createBooking(db: SupabaseClient, body: any) {
 
 /** Telefonvägen: fullvärdig kanal, kräver inloggad butikspersonal. */
 async function staffBooking(db: SupabaseClient, body: any, authHeader: string | null) {
-  if (!authHeader) throw new Error("Inloggning krävs.");
+  if (!authHeader) throw new AuthError("Inloggning krävs.");
   const userClient = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_ANON_KEY")!,
@@ -585,12 +585,12 @@ async function staffBooking(db: SupabaseClient, body: any, authHeader: string | 
   );
   const { data: userData } = await userClient.auth.getUser();
   const user = userData?.user;
-  if (!user) throw new Error("Inloggning krävs.");
+  if (!user) throw new AuthError("Inloggning krävs.");
   const { data: isStaff } = await userClient.rpc("is_staff");
-  if (!isStaff) throw new Error("Bara butikspersonal kan boka åt kund.");
+  if (!isStaff) throw new AuthError("Bara butikspersonal kan boka åt kund.");
 
   const phone = normalizePhoneSe(body?.phone);
-  if (!phone) throw new Error("Kundens mobilnummer behövs (svenskt format).");
+  if (!phone) throw new Error(PHONE_ERROR);
 
   const { data: staff } = await db.from("staff").select("id").eq("user_id", user.id).maybeSingle();
   return await createBookingRow(db, { body, phone, verified: false, staffId: staff?.id ?? null });
@@ -636,7 +636,8 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ ok: false, error: "Okänd förfrågan." }), { status: 404, headers });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Något gick fel. Ring gärna butiken.";
+    const status = e instanceof AuthError ? 401 : 400;
     console.error("booking-api", action, message);
-    return new Response(JSON.stringify({ ok: false, error: message }), { status: 400, headers });
+    return new Response(JSON.stringify({ ok: false, error: message }), { status, headers });
   }
 });
