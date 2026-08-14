@@ -235,7 +235,7 @@ export function CustomerOrderRow({
               {time && <span className="font-semibold text-foreground">{time.trim()}</span>}
             </span>
 
-            <span className="w-20 shrink-0 border-r border-grid-line/70 px-2 font-mono text-[11px] tabular-nums text-muted-foreground">
+            <span className="w-16 shrink-0 whitespace-nowrap border-r border-grid-line/70 px-2 font-mono text-[10px] tabular-nums text-muted-foreground">
               {itemsLabel}
             </span>
             <span className="flex min-w-[6rem] flex-1 items-center gap-1.5 truncate border-r border-grid-line/70 px-2 font-semibold">
@@ -273,8 +273,11 @@ export function CustomerOrderRow({
               )}
               {readOnly && <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />}
             </span>
-            <span className="w-24 shrink-0 px-2 text-right font-mono text-[11px] font-semibold tabular-nums">
+            <span className="w-24 shrink-0 border-r border-grid-line/70 px-2 text-right font-mono text-[11px] font-semibold tabular-nums">
               {nf(total, 2)}
+            </span>
+            <span className="w-28 shrink-0 truncate px-2 text-[11px] text-muted-foreground">
+              {order.stores?.name ?? ""}
             </span>
             <ChevronDown
               className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${
@@ -326,6 +329,7 @@ export function CustomerOrderRow({
               <span className="truncate">
                 {weekday(order.wanted_date)} {shortDate(order.wanted_date)}
                 {time} · {itemsLabel}
+                {order.stores?.name ? ` · ${order.stores.name}` : ""}
               </span>
             </div>
           </div>
@@ -724,10 +728,11 @@ export function CustomerOrderRowHeader({
       )}
       <span className="flex min-w-0 flex-1 items-center px-2.5 py-1">
         <span className="w-36 shrink-0 border-r border-grid-line pr-2">Datum</span>
-        <span className="w-20 shrink-0 border-r border-grid-line px-2">Artiklar</span>
+        <span className="w-16 shrink-0 border-r border-grid-line px-2">Art.</span>
         <span className="min-w-[6rem] flex-1 border-r border-grid-line px-2">Kund</span>
         <span className="w-24 shrink-0 border-r border-grid-line px-2">Status</span>
-        <span className="w-24 shrink-0 px-2 text-right">Summa (kr)</span>
+        <span className="w-24 shrink-0 border-r border-grid-line px-2 text-right">Summa (kr)</span>
+        <span className="w-28 shrink-0 px-2">Butik</span>
         <span className="w-3.5 shrink-0" />
       </span>
     </div>
