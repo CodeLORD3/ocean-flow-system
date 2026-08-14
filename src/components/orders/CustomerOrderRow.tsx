@@ -246,30 +246,15 @@ export function CustomerOrderRow({
               {time && <span className="font-semibold text-foreground">{time.trim()}</span>}
             </span>
 
-            <span className="w-16 shrink-0 whitespace-nowrap border-r border-grid-line/70 px-2 font-mono text-[10px] tabular-nums text-muted-foreground">
+            <span className="w-16 shrink-0 whitespace-nowrap border-r border-grid-line/70 px-2 font-mono text-[9px] tabular-nums text-muted-foreground">
               {itemsLabel}
             </span>
+            {/* Kundnamnet börjar alltid på samma x-position — källan står i egen kolumn efter namnet. */}
             <span className="flex min-w-[14rem] shrink-0 flex-1 items-center gap-2 whitespace-nowrap border-r border-grid-line/70 pl-3 pr-5 font-semibold">
-              {order.is_web_order && (
-                <span
-                  className="shrink-0 rounded-sm bg-primary/15 px-1 text-[10px] font-bold uppercase tracking-wide text-primary"
-                  title="Ny webborder från Shopify"
-                >
-                  Webb
-                </span>
-              )}
-              {phoneBooked && (
-                <span
-                  className="shrink-0 rounded-sm bg-muted px-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground"
-                  title="Bokad per telefon av butikspersonal — numret är inte verifierat med kod"
-                >
-                  Tel
-                </span>
-              )}
-              {/* Hela namnet ska alltid synas — därför ingen avklippning här. */}
               <span className="whitespace-nowrap leading-tight">{name}</span>
               {hasComment && (
                 <span className="shrink-0" title={`Kommentar: ${commentPreview}`}>
+
                   <MessageSquare
                     className="h-3.5 w-3.5 text-primary"
                     aria-label="Kommentar finns"
