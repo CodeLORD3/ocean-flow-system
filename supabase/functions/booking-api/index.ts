@@ -120,7 +120,7 @@ async function catalog(db: SupabaseClient, storeId: string | null) {
   const { data: stores, error: storeErr } = await db
     .from("stores")
     .select("id, name, address, phone, booking_open, booking_closed_message")
-    .eq("city", "Göteborg")
+    .eq("region", "vast")
     .eq("is_wholesale", false)
     .order("name");
   if (storeErr) throw new Error(storeErr.message);
@@ -313,10 +313,10 @@ async function validateBooking(
   if (!storeId) throw new Error("Välj en butik.");
   const { data: store } = await db
     .from("stores")
-    .select("id, name, address, phone, booking_open, booking_closed_message, city, is_wholesale")
+    .select("id, name, address, phone, booking_open, booking_closed_message, city, region, is_wholesale")
     .eq("id", storeId)
     .maybeSingle();
-  if (!store || store.is_wholesale || store.city !== "Göteborg") throw new Error("Butiken kan inte tas emot bokningar.");
+  if (!store || store.is_wholesale || store.region !== "vast") throw new Error("Butiken kan inte tas emot bokningar.");
 
   const rawLines: Line[] = Array.isArray(body?.lines) ? body.lines : [];
   if (!rawLines.length) throw new Error("Välj minst en vara.");
