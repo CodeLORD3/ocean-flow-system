@@ -28,6 +28,8 @@ const hoursSince = (v?: string | null) =>
 
 export default function ShopifyWebhookStatus() {
   const [busy, setBusy] = useState<string | null>(null);
+  const [authorizeUrl, setAuthorizeUrl] = useState<string | null>(null);
+
 
   const events = useQuery({
     queryKey: ["shopify_status_events"],
