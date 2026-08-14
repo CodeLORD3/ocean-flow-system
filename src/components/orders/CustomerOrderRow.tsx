@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ImageIcon } from "lucide-react";
+import { ImageIcon, Camera } from "lucide-react";
 import {
   ChevronDown,
   Lock,
