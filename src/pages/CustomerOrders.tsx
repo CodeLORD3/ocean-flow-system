@@ -207,6 +207,11 @@ export default function CustomerOrders() {
   );
   const allMarked = viewOrders.length > 0 && markedOrders.length === viewOrders.length;
   const markAll = (next: boolean) => setMarked(next ? viewOrders.map((o) => o.id) : []);
+  /* Antal interna bilder per order, hämtas i en fråga för hela listan. */
+  const { data: photoCounts } = useEntityImageCounts(
+    "customer_order",
+    useMemo(() => viewOrders.map((o) => o.id), [viewOrders]),
+  );
   /** Antal aktiva filter, visas som badge på filterknappen. */
   const activeFilters =
     (status !== "all" ? 1 : 0) +
