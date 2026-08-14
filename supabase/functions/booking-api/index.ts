@@ -184,9 +184,9 @@ const normEmail = (v: unknown) => {
 async function resolveCustomer(
   db: SupabaseClient,
   storeId: string,
-  входные: { phone: string; firstName: string; lastName: string; email: string | null },
+  input: { phone: string; firstName: string; lastName: string; email: string | null },
 ) {
-  const { phone, firstName, lastName, email } = входные;
+  const { phone, firstName, lastName, email } = input;
   const { data: store } = await db
     .from("stores")
     .select("legal_entity_id")
