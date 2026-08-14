@@ -272,6 +272,26 @@ export function CustomerOrderRow({
               )}
             </span>
 
+            <span className="w-14 shrink-0 whitespace-nowrap border-r border-grid-line/70 px-2">
+              {order.is_web_order ? (
+                <span
+                  className="rounded-sm bg-primary/15 px-1 text-[10px] font-bold uppercase tracking-wide text-primary"
+                  title="Ny webborder från Shopify"
+                >
+                  Webb
+                </span>
+              ) : phoneBooked ? (
+                <span
+                  className="rounded-sm bg-muted px-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground"
+                  title="Bokad per telefon av butikspersonal — numret är inte verifierat med kod"
+                >
+                  Tel
+                </span>
+              ) : null}
+            </span>
+
+
+
             <span className="flex w-24 shrink-0 items-center gap-1 border-r border-grid-line/70 px-2">
               {statusChip}
               {hasAllergy && (
