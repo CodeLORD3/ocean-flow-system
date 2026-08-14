@@ -430,7 +430,7 @@ export function CustomerOrderRow({
                       {LINE_PACK_LABELS[l.pack_status] ?? l.pack_status}
                     </Badge>
                     <span className="font-mono tabular-nums">
-                      {nf(l.quantity_packed ?? l.quantity_ordered, 3)} {l.unit}
+                      {qtyText(l.quantity_packed ?? l.quantity_ordered, l.unit)} {l.unit}
                     </span>
                     {l.note && (
                       <span className="w-full text-[11px] text-muted-foreground">{l.note}</span>
