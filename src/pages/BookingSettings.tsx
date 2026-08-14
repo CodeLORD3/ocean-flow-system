@@ -24,6 +24,7 @@ export default function BookingSettings() {
   const { data: stores = [], isLoading } = useBookingStores(isShop ? activeStoreId : null);
   const update = useUpdateBookingStore();
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
 
   const toggle = (id: string, name: string, open: boolean) =>
     update.mutate(
@@ -41,6 +42,16 @@ export default function BookingSettings() {
       { id, name, booking_closed_message: text.trim() || null },
       {
         onSuccess: () => toast({ title: "Meddelandet sparat", description: name }),
+        onError: (e: any) =>
+          toast({ title: "Kunde inte spara", description: e.message, variant: "destructive" }),
+      },
+    );
+
+  const saveNote = (id: string, name: string, text: string) =>
+    update.mutate(
+      { id, name, booking_note: text.trim() || null },
+      {
+        onSuccess: () => toast({ title: "Informationstexten sparad", description: name }),
         onError: (e: any) =>
           toast({ title: "Kunde inte spara", description: e.message, variant: "destructive" }),
       },
