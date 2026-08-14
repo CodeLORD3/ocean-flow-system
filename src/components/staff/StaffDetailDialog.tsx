@@ -100,6 +100,15 @@ export function StaffDetailDialog({ open, onOpenChange, staff }: Props) {
       toast({ title: "E-postadress saknas", description: "Lägg in en e-postadress på personalkortet först.", variant: "destructive" });
       return;
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast({
+        title: "Ogiltig e-postadress",
+        description: `E-postfältet innehåller "${staff.email}". Rätta det till enbart adressen, t.ex. namn@exempel.se.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     const rawFirst = String(staff.first_name || "").trim().normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z]/g, "");
     const baseName = rawFirst.length >= 2 ? rawFirst : "Makrill";

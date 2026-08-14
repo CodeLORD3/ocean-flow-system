@@ -165,6 +165,15 @@ export default function Staff() {
       toast({ title: "E-postadress saknas", description: "Lägg in en e-postadress på personalkortet först.", variant: "destructive" });
       return;
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast({
+        title: "Ogiltig e-postadress",
+        description: `E-postfältet innehåller "${s.email}". Rätta det till enbart adressen, t.ex. namn@exempel.se.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setCreatingLoginFor(s.id);
     // Tillfälligt lösenord: förnamnet med stor begynnelsebokstav + 123 (t.ex. "Leonie123")
     const rawFirst = String(s.first_name || "").trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z]/g, "");
