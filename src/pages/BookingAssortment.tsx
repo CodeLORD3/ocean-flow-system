@@ -45,6 +45,7 @@ export default function BookingAssortment() {
     booking_circa_price: "",
     booking_step: "",
     booking_lead_days: "",
+    booking_volume_alarm: "",
     image_url: "",
   });
   const [uploading, setUploading] = useState(false);
@@ -60,6 +61,7 @@ export default function BookingAssortment() {
       booking_circa_price: p.booking_circa_price != null ? String(p.booking_circa_price) : "",
       booking_step: p.booking_step != null ? String(p.booking_step) : "",
       booking_lead_days: p.booking_lead_days != null ? String(p.booking_lead_days) : "",
+      booking_volume_alarm: p.booking_volume_alarm != null ? String(p.booking_volume_alarm) : "",
       image_url: p.image_url ?? "",
     });
   };
@@ -112,6 +114,7 @@ export default function BookingAssortment() {
         booking_circa_price: form.booking_circa_price ? Number(form.booking_circa_price) : null,
         booking_step: form.booking_step ? Number(form.booking_step) : null,
         booking_lead_days: form.booking_lead_days ? Number(form.booking_lead_days) : null,
+        booking_volume_alarm: form.booking_volume_alarm ? Number(form.booking_volume_alarm) : null,
         image_url: form.image_url.trim() || null,
       } as any,
       {
@@ -269,6 +272,21 @@ export default function BookingAssortment() {
                   onChange={(e) => setForm((f) => ({ ...f, booking_lead_days: e.target.value }))}
                 />
               </div>
+            </div>
+            <div>
+              <Label className="text-xs">Informationsgräns bokad volym per hämtdag</Label>
+              <Input
+                className="h-9 font-mono tabular-nums"
+                type="number"
+                step="0.5"
+                placeholder="tomt = av"
+                value={form.booking_volume_alarm}
+                onChange={(e) => setForm((f) => ({ ...f, booking_volume_alarm: e.target.value }))}
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Larmar bara inköpet på Systemstatus när bokad volym för en hämtdag passerar gränsen.
+                Kunden hindras aldrig — bokningssidan har inga volymtak.
+              </p>
             </div>
             <div>
               <Label className="text-xs">Bild</Label>
