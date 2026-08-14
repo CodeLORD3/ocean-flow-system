@@ -65,8 +65,11 @@ Telefonnummer saknas i registret för samtliga fyra — fyll i dem i
 Makrilltrade (butiksinställningar) och de följer automatiskt med i `/catalog`.
 
 Hämta hellre listan live än att hårdkoda den: `GET /catalog` returnerar
-butiker med `address`, `phone`, `booking_open`, `booking_closed_message` och
-`opening_hours` (per veckodag).
+butiker med `address`, `phone`, `booking_open`, `booking_closed_message`,
+`booking_note` och `opening_hours` (per veckodag).
+
+`booking_note` är en informationstext som alltid ska visas vid butiken.
+Marstrand har t.ex. "Förbokningar endast – ingen fiskvagn på plats."
 
 ---
 
