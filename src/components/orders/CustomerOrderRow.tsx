@@ -145,6 +145,7 @@ export function CustomerOrderRow({
   onToggle,
   selected,
   onSelect,
+  photoCount = 0,
 }: {
   order: CustomerOrder;
   canEdit?: boolean;
@@ -154,6 +155,8 @@ export function CustomerOrderRow({
   onToggle?: (id: string) => void;
   selected?: boolean;
   onSelect?: (id: string, next: boolean) => void;
+  /** Antal interna bilder på beställningen, visas som kameraikon på namnraden. */
+  photoCount?: number;
 }) {
   const [editing, setEditing] = useState(false);
   const [showMore, setShowMore] = useState(false);
