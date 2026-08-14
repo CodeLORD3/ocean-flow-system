@@ -73,6 +73,7 @@ const statusSegmentColor: Record<string, string> = {
   "": "transparent",
   "Ny": "transparent",
   "Pågående": "#fef3c7",
+  "Beställd": "#e9d5ff",
   "Producerad": "#dbeafe",
   "Packad": "#d1fae5",
   "Skickad": "#bbf7d0",
