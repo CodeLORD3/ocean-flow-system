@@ -145,10 +145,27 @@ async function catalog(db: SupabaseClient, storeId: string | null) {
 
   const { data: products } = await db
     .from("products")
-    .select("id, name, booking_display_name, booking_circa_price, unit, booking_step, booking_lead_days, image_url")
+    .select(
+      "id, name, booking_display_name, booking_circa_price, day_price, unit, booking_step, booking_lead_days, image_url",
+    )
     .eq("bookable_online", true)
     .eq("active", true)
     .order("name");
+
+  // Butiksfoto: omslagsbilden i entity_images, annars första bilden.
+  const { data: storeImages } = ids.length
+    ? await db
+      .from("entity_images")
+      .select("entity_id, url, is_cover, sort_order")
+      .eq("entity_type", "store")
+      .in("entity_id", ids)
+      .order("is_cover", { ascending: false })
+      .order("sort_order")
+    : { data: [] as any[] };
+  const imageByStore = new Map<string, string>();
+  (storeImages ?? []).forEach((img: any) => {
+    if (!imageByStore.has(img.entity_id)) imageByStore.set(img.entity_id, img.url);
+  });
 
   const shaped = (stores ?? [])
     .filter((s: any) => !storeId || s.id === storeId)
