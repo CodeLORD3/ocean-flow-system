@@ -66,7 +66,8 @@ Makrilltrade (butiksinställningar) och de följer automatiskt med i `/catalog`.
 
 Hämta hellre listan live än att hårdkoda den: `GET /catalog` returnerar
 butiker med `address`, `phone`, `booking_open`, `booking_closed_message`,
-`booking_note` och `opening_hours` (per veckodag).
+`booking_note`, `image_url` (butiksfoto, kan vara null) och `opening_hours`
+(per veckodag).
 
 `booking_note` är en informationstext som alltid ska visas vid butiken.
 Marstrand har t.ex. "Förbokningar endast – ingen fiskvagn på plats."
@@ -127,7 +128,7 @@ async function bookingApi(action: string, body?: unknown, query?: string) {
   "ok": true,
   "stores": [
     { "id": "…", "name": "…", "address": "…", "phone": null,
-      "booking_open": true, "booking_closed_message": null,
+      "booking_open": true, "booking_closed_message": null, "image_url": "https://…/butik.jpeg",
       "opening_hours": [{ "weekday": 2, "open_time": "10:00:00", "close_time": "18:00:00", "closed": false }] }
   ],
   "products": [
