@@ -384,6 +384,12 @@ export function CustomerOrderRow({
                     key={l.id}
                     className="flex flex-wrap items-center gap-x-2 gap-y-1 px-2.5 py-1.5 text-xs"
                   >
+                    <ProductThumb
+                      src={l.products?.image_url}
+                      alt={label}
+                      productId={l.product_id}
+                      className="h-8 w-10 rounded"
+                    />
                     <span
                       className={`min-w-0 flex-1 truncate ${
                         struck ? "line-through text-muted-foreground" : ""
