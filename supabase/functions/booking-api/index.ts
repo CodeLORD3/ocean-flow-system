@@ -177,6 +177,7 @@ async function catalog(db: SupabaseClient, storeId: string | null) {
       booking_open: s.booking_open !== false,
       booking_closed_message: s.booking_closed_message ?? null,
       booking_note: s.booking_note ?? null,
+      image_url: imageByStore.get(s.id) ?? null,
       opening_hours: (hours ?? [])
         .filter((h: any) => h.store_id === s.id)
         .map((h: any) => ({
@@ -202,7 +203,12 @@ async function catalog(db: SupabaseClient, storeId: string | null) {
     products: (products ?? []).map((p: any) => ({
       id: p.id,
       name: p.booking_display_name || p.name,
-      circa_price: p.booking_circa_price != null ? Number(p.booking_circa_price) : null,
+      circa_price:
+        p.booking_circa_price != null
+          ? Number(p.booking_circa_price)
+          : p.day_price != null
+            ? Number(p.day_price)
+            : null,
       unit: p.unit,
       step: p.booking_step != null ? Number(p.booking_step) : (p.unit === "st" ? 1 : 0.5),
       lead_days: Number(p.booking_lead_days ?? 1),
