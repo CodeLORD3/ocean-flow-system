@@ -727,10 +727,11 @@ export function CustomerOrderRowHeader({
       )}
       <span className="flex min-w-0 flex-1 items-center px-2.5 py-1">
         <span className="w-36 shrink-0 border-r border-grid-line pr-2">Datum</span>
-        <span className="w-20 shrink-0 border-r border-grid-line px-2">Artiklar</span>
+        <span className="w-16 shrink-0 border-r border-grid-line px-2">Art.</span>
         <span className="min-w-[6rem] flex-1 border-r border-grid-line px-2">Kund</span>
         <span className="w-24 shrink-0 border-r border-grid-line px-2">Status</span>
-        <span className="w-24 shrink-0 px-2 text-right">Summa (kr)</span>
+        <span className="w-24 shrink-0 border-r border-grid-line px-2 text-right">Summa (kr)</span>
+        <span className="w-28 shrink-0 px-2">Butik</span>
         <span className="w-3.5 shrink-0" />
       </span>
     </div>
