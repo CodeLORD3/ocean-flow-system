@@ -118,6 +118,35 @@ export default function ShopifyWebhookStatus() {
     }
   };
 
+  /** OAuth-status: finns en giltig Admin-token för butiken? */
+  const oauth = useQuery({
+    queryKey: ["shopify-oauth-status"],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("shopify-oauth/status");
+      if (error) throw error;
+      return data as any;
+    },
+    retry: false,
+  });
+
+  /** Startar OAuth: hämtar authorize-URL och öppnar Shopifys godkännande. */
+  const connect = async () => {
+    setBusy("oauth");
+    try {
+      const { data, error } = await supabase.functions.invoke("shopify-oauth/start", { body: {} });
+      if (error) throw error;
+      const r = data as any;
+      if (!r?.authorize_url) throw new Error(r?.error ?? "Kunde inte starta anslutningen");
+      window.open(r.authorize_url, "_blank", "noopener");
+      toast.info("Godkänn appen i Shopify-fönstret, kom sedan tillbaka hit.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Kunde inte starta anslutningen");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+
   const rows = events.data || [];
   const failed = rows.filter((e) => e.status === "fel");
   const queued = rows.filter((e) => e.status === "koad" || e.status === "bearbetar");
