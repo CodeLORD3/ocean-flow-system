@@ -24,9 +24,15 @@ export default function Manual() {
       <style>{`
         @media print {
           @page { size: A4; margin: 14mm; }
-          aside, header, nav, [data-sidebar], .no-print { display: none !important; }
+          aside, header, nav, [data-sidebar], [data-sidebar-wrapper], .no-print { display: none !important; }
+          html, body, #root, main, div, section {
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+          }
+          body * { position: static !important; }
           .manual-chapter { break-inside: avoid; page-break-inside: avoid; }
-          .manual-chapter img { max-height: 120mm; }
+          .manual-chapter img { max-height: 110mm; object-fit: contain; }
         }
       `}</style>
 
