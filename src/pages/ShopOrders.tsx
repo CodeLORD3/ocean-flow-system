@@ -87,6 +87,7 @@ const rowBgByStatus: Record<string, string> = {
   "": "",
   "Ny": "",
   "Pågående": "bg-amber-50 dark:bg-amber-950/20",
+  "Beställd": "bg-purple-50 dark:bg-purple-950/20",
   "Producerad": "bg-blue-50 dark:bg-blue-950/20",
   "Packad": "bg-emerald-50 dark:bg-emerald-950/20",
   "Skickad": "bg-green-50 dark:bg-green-950/20",
