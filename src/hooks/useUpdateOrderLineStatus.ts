@@ -70,7 +70,7 @@ export function useUpdateOrderLineStatus() {
         newOrderStatus = "Skickad";
       } else if (statuses.every((s) => s === "Packad" || s === "Skickad" || s === "Klar / Levererad")) {
         newOrderStatus = "Packad";
-      } else if (statuses.some((s) => s === "Pågående" || s === "Packad" || s === "Skickad" || s === "Klar / Levererad")) {
+      } else if (statuses.some((s) => s === "Pågående" || s === "Beställd" || s === "Packad" || s === "Skickad" || s === "Klar / Levererad")) {
         newOrderStatus = "Pågående";
       }
 
