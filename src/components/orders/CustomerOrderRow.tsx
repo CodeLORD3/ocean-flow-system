@@ -250,26 +250,8 @@ export function CustomerOrderRow({
               {itemsLabel}
             </span>
             {/* Kundnamnet börjar alltid på samma x-position — källan står i egen kolumn efter namnet. */}
-            <span className="flex min-w-[14rem] shrink-0 flex-1 items-center gap-2 whitespace-nowrap border-r border-grid-line/70 pl-3 pr-5 font-semibold">
+            <span className="flex min-w-[14rem] shrink-0 flex-1 items-center whitespace-nowrap border-r border-grid-line/70 pl-3 pr-5 font-semibold">
               <span className="whitespace-nowrap leading-tight">{name}</span>
-              {hasComment && (
-                <span className="shrink-0" title={`Kommentar: ${commentPreview}`}>
-
-                  <MessageSquare
-                    className="h-3.5 w-3.5 text-primary"
-                    aria-label="Kommentar finns"
-                  />
-                </span>
-              )}
-              {photoCount > 0 && (
-                <span
-                  className="flex shrink-0 items-center gap-0.5 font-mono text-[10px] tabular-nums text-muted-foreground"
-                  title={`${photoCount} interna bilder på beställningen`}
-                >
-                  <Camera className="h-3.5 w-3.5" aria-label="Bilder finns" />
-                  {photoCount}
-                </span>
-              )}
             </span>
 
             <span className="w-14 shrink-0 whitespace-nowrap border-r border-grid-line/70 px-2">
@@ -289,6 +271,25 @@ export function CustomerOrderRow({
                 </span>
               ) : null}
             </span>
+
+            {/* Kommentar och bilder i egen kolumn så namnen står symmetriskt. */}
+            <span className="flex w-12 shrink-0 items-center gap-1 whitespace-nowrap border-r border-grid-line/70 px-2">
+              {hasComment && (
+                <span className="shrink-0" title={`Kommentar: ${commentPreview}`}>
+                  <MessageSquare className="h-3.5 w-3.5 text-primary" aria-label="Kommentar finns" />
+                </span>
+              )}
+              {photoCount > 0 && (
+                <span
+                  className="flex shrink-0 items-center gap-0.5 font-mono text-[10px] tabular-nums text-muted-foreground"
+                  title={`${photoCount} interna bilder på beställningen`}
+                >
+                  <Camera className="h-3.5 w-3.5" aria-label="Bilder finns" />
+                  {photoCount}
+                </span>
+              )}
+            </span>
+
 
 
 
@@ -769,6 +770,7 @@ export function CustomerOrderRowHeader({
         <span className="w-16 shrink-0 border-r border-grid-line px-2">Art.</span>
         <span className="min-w-[14rem] flex-1 border-r border-grid-line pl-3 pr-5">Kund</span>
         <span className="w-14 shrink-0 border-r border-grid-line px-2">Källa</span>
+        <span className="w-12 shrink-0 border-r border-grid-line px-2">Kom.</span>
         <span className="w-24 shrink-0 border-r border-grid-line px-2">Status</span>
         <span className="w-24 shrink-0 border-r border-grid-line px-2 text-right">Summa (kr)</span>
         <span className="w-28 shrink-0 px-2">Butik</span>
