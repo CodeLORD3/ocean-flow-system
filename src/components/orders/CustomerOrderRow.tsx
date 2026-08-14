@@ -329,6 +329,7 @@ export function CustomerOrderRow({
               <span className="truncate">
                 {weekday(order.wanted_date)} {shortDate(order.wanted_date)}
                 {time} · {itemsLabel}
+                {order.stores?.name ? ` · ${order.stores.name}` : ""}
               </span>
             </div>
           </div>
