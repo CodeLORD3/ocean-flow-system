@@ -5,6 +5,7 @@ import {
   Phone,
   MapPin,
   AlertTriangle,
+  MessageSquare,
   Pencil,
   Printer,
   Download,
@@ -152,6 +153,7 @@ export function CustomerOrderRow({
   onSelect?: (id: string, next: boolean) => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const [showMore, setShowMore] = useState(false);
   const updateOrder = useUpdateCustomerOrder();
   const archiveOrder = useArchiveCustomerOrder();
   const markNoShow = useMarkNoShow();
@@ -161,6 +163,14 @@ export function CustomerOrderRow({
   const phone = order.customers_retail?.phone || order.customer_phone_snapshot;
   const lines = [...(order.customer_order_lines || [])].sort((a, b) => a.sort_order - b.sort_order);
   const active = lines.filter((l) => l.pack_status !== "struken");
+
+  /* Kommentarer: orderns egen not och eventuella noteringar på raderna. */
+  const lineNotes = lines.map((l) => l.note).filter((n): n is string => !!n && !!n.trim());
+  const hasComment = !!order.note?.trim() || lineNotes.length > 0;
+  const commentPreview = [order.note?.trim(), ...lineNotes].filter(Boolean).join(" · ").slice(0, 140);
+  const itemsLabel = `${active.length} ${active.length === 1 ? "artikel" : "artiklar"}`;
+
+
 
 
   const packedCount = active.filter((l) => l.pack_status === "packad").length;
@@ -208,12 +218,12 @@ export function CustomerOrderRow({
           type="button"
           onClick={() => onToggle?.(order.id)}
           aria-expanded={isOpen}
-          className={`min-w-0 flex-1 px-3 py-2 text-left transition-colors ${tone.hover}`}
+          className={`min-w-0 flex-1 px-2.5 py-1.5 text-left transition-colors ${tone.hover}`}
         >
           {/* Desktop: fast kolumnraster. Mobil: två rader, kundnamnet störst. */}
-          <div className="hidden h-6 items-center gap-0 text-[13px] sm:flex">
+          <div className="hidden h-5 items-center gap-0 text-xs sm:flex">
             <span
-              className={`flex w-36 shrink-0 items-center gap-1.5 whitespace-nowrap border-r border-grid-line/70 pr-2 font-mono text-xs tabular-nums ${
+              className={`flex w-36 shrink-0 items-center gap-1.5 whitespace-nowrap border-r border-grid-line/70 pr-2 font-mono text-[11px] tabular-nums ${
                 cancelled ? "line-through" : ""
               }`}
             >
@@ -221,9 +231,8 @@ export function CustomerOrderRow({
               {time && <span className="font-semibold text-foreground">{time.trim()}</span>}
             </span>
 
-
-            <span className="w-16 shrink-0 border-r border-grid-line/70 px-2 font-mono tabular-nums text-muted-foreground">
-              {active.length} st
+            <span className="w-20 shrink-0 border-r border-grid-line/70 px-2 font-mono text-[11px] tabular-nums text-muted-foreground">
+              {itemsLabel}
             </span>
             <span className="flex min-w-[6rem] flex-1 items-center gap-1.5 truncate border-r border-grid-line/70 px-2 font-semibold">
               {order.is_web_order && (
@@ -243,6 +252,14 @@ export function CustomerOrderRow({
                 </span>
               )}
               <span className="truncate">{name}</span>
+              {hasComment && (
+                <span className="shrink-0" title={`Kommentar: ${commentPreview}`}>
+                  <MessageSquare
+                    className="h-3.5 w-3.5 text-primary"
+                    aria-label="Kommentar finns"
+                  />
+                </span>
+              )}
             </span>
 
             <span className="flex w-24 shrink-0 items-center gap-1 border-r border-grid-line/70 px-2">
@@ -252,56 +269,63 @@ export function CustomerOrderRow({
               )}
               {readOnly && <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />}
             </span>
-            <span className="w-24 shrink-0 px-2 text-right font-mono font-semibold tabular-nums">
+            <span className="w-24 shrink-0 px-2 text-right font-mono text-[11px] font-semibold tabular-nums">
               {nf(total, 2)}
             </span>
             <ChevronDown
-              className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${
+              className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${
                 isOpen ? "rotate-180" : ""
               }`}
             />
           </div>
 
           <div className="sm:hidden">
-            <div className="flex h-6 items-center gap-2">
+            <div className="flex h-5 items-center gap-2">
               {order.is_web_order && (
                 <span className="shrink-0 rounded-sm bg-primary/15 px-1 text-[10px] font-bold uppercase text-primary">
                   Webb
                 </span>
               )}
               <span
-                className={`min-w-0 flex-1 truncate text-base font-semibold leading-tight ${
+                className={`min-w-0 flex-1 truncate text-sm font-semibold leading-tight ${
                   cancelled ? "line-through" : ""
                 }`}
               >
                 {name}
               </span>
 
+              {hasComment && (
+                <MessageSquare
+                  className="h-3.5 w-3.5 shrink-0 text-primary"
+                  aria-label="Kommentar finns"
+                />
+              )}
               {hasAllergy && (
                 <AlertTriangle
-                  className="h-4 w-4 shrink-0 text-destructive"
+                  className="h-3.5 w-3.5 shrink-0 text-destructive"
                   aria-label="Allergi"
                 />
               )}
               {readOnly && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
-              <span className="font-mono text-sm font-semibold tabular-nums">
+              <span className="font-mono text-xs font-semibold tabular-nums">
                 {nf(total, 2)} kr
               </span>
               <ChevronDown
-                className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${
+                className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${
                   isOpen ? "rotate-180" : ""
                 }`}
               />
             </div>
 
-            <div className="mt-1 flex h-6 items-center gap-2 font-mono text-xs tabular-nums text-muted-foreground">
+            <div className="mt-0.5 flex h-5 items-center gap-2 font-mono text-[11px] tabular-nums text-muted-foreground">
               {statusChip}
               <span className="truncate">
                 {weekday(order.wanted_date)} {shortDate(order.wanted_date)}
-                {time} · {active.length} st
+                {time} · {itemsLabel}
               </span>
             </div>
           </div>
+
 
         </button>
       </div>
@@ -327,93 +351,17 @@ export function CustomerOrderRow({
       )}
 
       {isOpen && (
-
-        <div className="space-y-3 border-t-2 border-primary bg-muted/60 p-3">
-          {/* Ordernumret räcker som identifikation — namnet står redan i raden ovanför. */}
-          <div className="flex flex-wrap items-center gap-1.5 text-xs">
-            <Badge variant="outline">{ORDER_STATUS_LABELS[order.status] ?? order.status}</Badge>
-            <span className={`rounded-sm px-2 py-0.5 ${packTone[order.pack_status] ?? ""}`}>
-              {PACK_STATUS_LABELS[order.pack_status] ?? order.pack_status}
-              {packedCount > 0 && active.length > 0 ? ` ${packedCount}/${active.length}` : ""}
-            </span>
-            <Badge variant="secondary">
-              {ORDER_TYPE_LABELS[order.order_type] ?? order.order_type}
-            </Badge>
-            {order.category === "catering" && <Badge variant="secondary">Catering</Badge>}
-            {order.is_web_order && (
-              <>
-                <Badge className="bg-primary/15 text-primary hover:bg-primary/15">
-                  Webborder {order.shopify_order_number ?? ""}
-                </Badge>
-                {order.web_paid && <Badge variant="secondary">Betald via webben</Badge>}
-                {order.price_locked && <Badge variant="outline">Låsta priser</Badge>}
-              </>
-            )}
-            {phoneBooked && (
-              <Badge variant="outline" title="Bokad per telefon av butikspersonal, numret är inte verifierat med kod">
-                Bokad per telefon
-              </Badge>
-            )}
-            {isBooking && !phoneBooked && <Badge variant="outline">Förbokning, kod verifierad</Badge>}
-            {noShow && <Badge variant="destructive">Uteblev</Badge>}
-            {order.wanted_time_window && (
-              <Badge variant="outline" className="font-mono tabular-nums">
-                {order.wanted_time_window}
-              </Badge>
-            )}
-            <span className="ml-auto shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
-              {order.order_number}
-            </span>
-          </div>
-
-          {order.is_web_order && order.paid_total != null && (
-            <div className="text-xs text-muted-foreground">
-              Betalt via webben: {nf(Number(order.paid_total), 2)} kr
-              {Math.abs(total - Number(order.paid_total)) > 0.5 && (
-                <span className="ml-1 font-semibold text-amber-600">
-                  · vägd summa {nf(total, 2)} kr avviker, justering görs manuellt i Shopify
-                </span>
-              )}
-            </div>
-          )}
-
-
-
-          <div className="grid gap-2 text-sm sm:grid-cols-2">
-            <div className="space-y-1">
-              {phone && (
-                <a
-                  href={`tel:${phone}`}
-                  className="inline-flex items-center gap-1.5 font-mono tabular-nums text-primary underline-offset-2 hover:underline"
-                >
-                  <Phone className="h-3.5 w-3.5" /> {phone}
-                </a>
-              )}
-              {order.guest_count ? (
-                <div className="text-muted-foreground">{order.guest_count} gäster</div>
-              ) : null}
-            </div>
-            {order.order_type === "leverans" && (
-              <div className="flex items-start gap-1.5 text-muted-foreground">
-                <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                <span>
-                  {[order.delivery_street, order.delivery_postal_code, order.delivery_city]
-                    .filter(Boolean)
-                    .join(", ") || "Adress saknas"}
-                </span>
-              </div>
-            )}
-          </div>
-
+        <div className="space-y-2.5 border-t-2 border-primary bg-muted/60 p-2.5">
+          {/* Allergi är säkerhetskritisk och visas alltid först. */}
           {(order.allergy_note || allergens.length > 0) && (
-            <div className="space-y-1.5 rounded-sm border border-destructive/40 bg-destructive/10 p-2.5 text-sm">
+            <div className="space-y-1.5 rounded-sm border border-destructive/40 bg-destructive/10 p-2 text-xs">
               {order.allergy_note && (
                 <div className="font-semibold">Allergi: {order.allergy_note}</div>
               )}
               {allergens.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {allergens.map((a) => (
-                    <Badge key={a} variant="destructive">
+                    <Badge key={a} variant="destructive" className="text-[10px]">
                       Undvik {allergenLabel(a).toLowerCase()}
                     </Badge>
                   ))}
@@ -422,43 +370,7 @@ export function CustomerOrderRow({
             </div>
           )}
 
-          {/* Datum och tid ändras direkt i rullgardinen, utan nytt fönster. */}
-          {!readOnly && canEdit && !cancelled && !editing && (
-            <div className="flex flex-wrap items-end gap-2 rounded-sm border border-grid-line bg-muted/30 p-2">
-              <div className="space-y-1">
-                <Label className="text-[11px] text-muted-foreground">Datum</Label>
-                <Input
-                  type="date"
-                  className="h-8 w-[9.5rem] font-mono text-xs tabular-nums"
-                  value={order.wanted_date}
-                  onChange={(e) =>
-                    e.target.value &&
-                    updateOrder.mutate({
-                      id: order.id,
-                      patch: { wanted_date: e.target.value },
-                      event: { type: "andrad", description: `Datum ändrat till ${e.target.value}` },
-                    })
-                  }
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-[11px] text-muted-foreground">Tid</Label>
-                <Input
-                  type="time"
-                  className="h-8 w-[7rem] font-mono text-xs tabular-nums"
-                  value={order.wanted_time ? order.wanted_time.slice(0, 5) : ""}
-                  onChange={(e) =>
-                    updateOrder.mutate({
-                      id: order.id,
-                      patch: { wanted_time: e.target.value || null },
-                      event: { type: "andrad", description: "Tid ändrad" },
-                    })
-                  }
-                />
-              </div>
-            </div>
-          )}
-
+          {/* Varorna först: vad är beställt och hur mycket. */}
           {readOnly ? (
             <ul className="divide-y divide-grid-line rounded-sm border border-grid-line">
               {lines.map((l) => {
@@ -467,7 +379,7 @@ export function CustomerOrderRow({
                 return (
                   <li
                     key={l.id}
-                    className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 py-2 text-sm"
+                    className="flex flex-wrap items-center gap-x-2 gap-y-1 px-2.5 py-1.5 text-xs"
                   >
                     <span
                       className={`min-w-0 flex-1 truncate ${
@@ -483,7 +395,7 @@ export function CustomerOrderRow({
                       {nf(l.quantity_packed ?? l.quantity_ordered, 3)} {l.unit}
                     </span>
                     {l.note && (
-                      <span className="w-full text-xs text-muted-foreground">{l.note}</span>
+                      <span className="w-full text-[11px] text-muted-foreground">{l.note}</span>
                     )}
                   </li>
                 );
@@ -495,99 +407,255 @@ export function CustomerOrderRow({
             <InlineOrderPacking order={order} onOrderPacked={() => onToggle?.(order.id)} />
           )}
 
-
-          {order.note && (
-            <div className="rounded-sm bg-muted/50 p-2.5 text-sm text-muted-foreground">
-              {order.note}
+          {/* Kommentaren direkt under varorna — den styr ofta packningen. */}
+          {(order.note || lineNotes.length > 0) && (
+            <div className="space-y-1 rounded-sm border border-grid-line bg-card p-2 text-xs">
+              <div className="flex items-center gap-1.5 font-semibold text-foreground">
+                <MessageSquare className="h-3.5 w-3.5 text-primary" /> Kommentar
+              </div>
+              {order.note && <div className="text-muted-foreground">{order.note}</div>}
+              {lineNotes.map((n, i) => (
+                <div key={i} className="text-muted-foreground">
+                  · {n}
+                </div>
+              ))}
             </div>
           )}
 
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm bg-muted/50 p-2.5 text-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm bg-muted/50 p-2 text-xs">
             <span className="text-muted-foreground">
               {order.total_incl_vat ? "Verkligt pris" : "Uppskattat pris"}
             </span>
-            <span className="font-mono text-base font-semibold tabular-nums">
-              {nf(total, 2)} kr
-            </span>
+            <span className="font-mono text-sm font-semibold tabular-nums">{nf(total, 2)} kr</span>
           </div>
 
-          <div className="flex flex-wrap gap-1.5">
-            {!readOnly && canEdit && !cancelled && (
-              <Button
-                variant={editing ? "default" : "outline"}
-                size="sm"
-                className="h-8 text-xs"
-                onClick={() => setEditing((v) => !v)}
-              >
-                <Pencil className="mr-1 h-3.5 w-3.5" /> Redigera order
-              </Button>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-xs"
-              onClick={() => printConfirmation(order)}
-            >
-              <Printer className="mr-1 h-3.5 w-3.5" /> Skriv ut order
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-xs"
-              onClick={() => downloadConfirmation(order)}
-            >
-              <Download className="mr-1 h-3.5 w-3.5" /> Ladda ner PDF
-            </Button>
-            {!readOnly && canEdit && isBooking && (
-              <Button
-                variant={noShow ? "outline" : "destructive"}
-                size="sm"
-                className="h-8 text-xs"
-                disabled={markNoShow.isPending}
-                onClick={() =>
-                  markNoShow.mutate({
-                    orderId: order.id,
-                    customerId: order.customer_id,
-                    orderNumber: order.order_number,
-                    undo: noShow,
-                  })
-                }
-              >
-                {noShow ? (
+          <button
+            type="button"
+            onClick={() => setShowMore((v) => !v)}
+            className="text-xs font-semibold text-primary underline-offset-2 hover:underline"
+          >
+            {showMore ? "Visa mindre" : "Visa mer"}
+          </button>
+
+          {showMore && (
+            <div className="space-y-2.5">
+              <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                <Badge variant="outline" className="text-[10px]">
+                  {ORDER_STATUS_LABELS[order.status] ?? order.status}
+                </Badge>
+                <span className={`rounded-sm px-1.5 py-0.5 ${packTone[order.pack_status] ?? ""}`}>
+                  {PACK_STATUS_LABELS[order.pack_status] ?? order.pack_status}
+                  {packedCount > 0 && active.length > 0 ? ` ${packedCount}/${active.length}` : ""}
+                </span>
+                <Badge variant="secondary" className="text-[10px]">
+                  {ORDER_TYPE_LABELS[order.order_type] ?? order.order_type}
+                </Badge>
+                {order.category === "catering" && (
+                  <Badge variant="secondary" className="text-[10px]">
+                    Catering
+                  </Badge>
+                )}
+                {order.is_web_order && (
                   <>
-                    <Undo2 className="mr-1 h-3.5 w-3.5" /> Ångra uteblev
-                  </>
-                ) : (
-                  <>
-                    <UserX className="mr-1 h-3.5 w-3.5" /> Uteblev
+                    <Badge className="bg-primary/15 text-[10px] text-primary hover:bg-primary/15">
+                      Webborder {order.shopify_order_number ?? ""}
+                    </Badge>
+                    {order.web_paid && (
+                      <Badge variant="secondary" className="text-[10px]">
+                        Betald via webben
+                      </Badge>
+                    )}
+                    {order.price_locked && (
+                      <Badge variant="outline" className="text-[10px]">
+                        Låsta priser
+                      </Badge>
+                    )}
                   </>
                 )}
-              </Button>
-            )}
-            {!readOnly && canEdit && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 text-xs"
-                disabled={archiveOrder.isPending}
-                onClick={() => archiveOrder.mutate({ ids: [order.id], archive: !isArchived })}
-              >
-                {isArchived ? (
-                  <>
-                    <ArchiveRestore className="mr-1 h-3.5 w-3.5" /> Återställ
-                  </>
-                ) : (
-                  <>
-                    <Archive className="mr-1 h-3.5 w-3.5" /> Arkivera
-                  </>
+                {phoneBooked && (
+                  <Badge
+                    variant="outline"
+                    className="text-[10px]"
+                    title="Bokad per telefon av butikspersonal, numret är inte verifierat med kod"
+                  >
+                    Bokad per telefon
+                  </Badge>
                 )}
-              </Button>
-            )}
-          </div>
+                {isBooking && !phoneBooked && (
+                  <Badge variant="outline" className="text-[10px]">
+                    Förbokning, kod verifierad
+                  </Badge>
+                )}
+                {noShow && (
+                  <Badge variant="destructive" className="text-[10px]">
+                    Uteblev
+                  </Badge>
+                )}
+                {order.wanted_time_window && (
+                  <Badge variant="outline" className="font-mono text-[10px] tabular-nums">
+                    {order.wanted_time_window}
+                  </Badge>
+                )}
+                <span className="ml-auto shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
+                  {order.order_number}
+                </span>
+              </div>
 
+              {order.is_web_order && order.paid_total != null && (
+                <div className="text-[11px] text-muted-foreground">
+                  Betalt via webben: {nf(Number(order.paid_total), 2)} kr
+                  {Math.abs(total - Number(order.paid_total)) > 0.5 && (
+                    <span className="ml-1 font-semibold text-amber-600">
+                      · vägd summa {nf(total, 2)} kr avviker, justering görs manuellt i Shopify
+                    </span>
+                  )}
+                </div>
+              )}
 
+              <div className="grid gap-2 text-xs sm:grid-cols-2">
+                <div className="space-y-1">
+                  {phone && (
+                    <a
+                      href={`tel:${phone}`}
+                      className="inline-flex items-center gap-1.5 font-mono tabular-nums text-primary underline-offset-2 hover:underline"
+                    >
+                      <Phone className="h-3.5 w-3.5" /> {phone}
+                    </a>
+                  )}
+                  {order.guest_count ? (
+                    <div className="text-muted-foreground">{order.guest_count} gäster</div>
+                  ) : null}
+                </div>
+                {order.order_type === "leverans" && (
+                  <div className="flex items-start gap-1.5 text-muted-foreground">
+                    <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      {[order.delivery_street, order.delivery_postal_code, order.delivery_city]
+                        .filter(Boolean)
+                        .join(", ") || "Adress saknas"}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Datum och tid ändras direkt i rullgardinen, utan nytt fönster. */}
+              {!readOnly && canEdit && !cancelled && !editing && (
+                <div className="flex flex-wrap items-end gap-2 rounded-sm border border-grid-line bg-muted/30 p-2">
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-muted-foreground">Datum</Label>
+                    <Input
+                      type="date"
+                      className="h-8 w-[9.5rem] font-mono text-xs tabular-nums"
+                      value={order.wanted_date}
+                      onChange={(e) =>
+                        e.target.value &&
+                        updateOrder.mutate({
+                          id: order.id,
+                          patch: { wanted_date: e.target.value },
+                          event: {
+                            type: "andrad",
+                            description: `Datum ändrat till ${e.target.value}`,
+                          },
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-muted-foreground">Tid</Label>
+                    <Input
+                      type="time"
+                      className="h-8 w-[7rem] font-mono text-xs tabular-nums"
+                      value={order.wanted_time ? order.wanted_time.slice(0, 5) : ""}
+                      onChange={(e) =>
+                        updateOrder.mutate({
+                          id: order.id,
+                          patch: { wanted_time: e.target.value || null },
+                          event: { type: "andrad", description: "Tid ändrad" },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-1.5">
+                {!readOnly && canEdit && !cancelled && (
+                  <Button
+                    variant={editing ? "default" : "outline"}
+                    size="sm"
+                    className="h-7 text-[11px]"
+                    onClick={() => setEditing((v) => !v)}
+                  >
+                    <Pencil className="mr-1 h-3.5 w-3.5" /> Redigera order
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-[11px]"
+                  onClick={() => printConfirmation(order)}
+                >
+                  <Printer className="mr-1 h-3.5 w-3.5" /> Skriv ut order
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-[11px]"
+                  onClick={() => downloadConfirmation(order)}
+                >
+                  <Download className="mr-1 h-3.5 w-3.5" /> Ladda ner PDF
+                </Button>
+                {!readOnly && canEdit && isBooking && (
+                  <Button
+                    variant={noShow ? "outline" : "destructive"}
+                    size="sm"
+                    className="h-7 text-[11px]"
+                    disabled={markNoShow.isPending}
+                    onClick={() =>
+                      markNoShow.mutate({
+                        orderId: order.id,
+                        customerId: order.customer_id,
+                        orderNumber: order.order_number,
+                        undo: noShow,
+                      })
+                    }
+                  >
+                    {noShow ? (
+                      <>
+                        <Undo2 className="mr-1 h-3.5 w-3.5" /> Ångra uteblev
+                      </>
+                    ) : (
+                      <>
+                        <UserX className="mr-1 h-3.5 w-3.5" /> Uteblev
+                      </>
+                    )}
+                  </Button>
+                )}
+                {!readOnly && canEdit && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[11px]"
+                    disabled={archiveOrder.isPending}
+                    onClick={() => archiveOrder.mutate({ ids: [order.id], archive: !isArchived })}
+                  >
+                    {isArchived ? (
+                      <>
+                        <ArchiveRestore className="mr-1 h-3.5 w-3.5" /> Återställ
+                      </>
+                    ) : (
+                      <>
+                        <Archive className="mr-1 h-3.5 w-3.5" /> Arkivera
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
+
     </div>
   );
 }
@@ -603,10 +671,10 @@ export function CustomerOrderRowHeader({
   onSelectAll?: (next: boolean) => void;
 }) {
   return (
-    <div className="hidden items-center border border-grid-line bg-grid-head text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:flex">
+    <div className="hidden items-center border border-grid-line bg-grid-head text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:flex">
       <span className="w-1 shrink-0" aria-hidden />
       {selectable && (
-        <span className="flex w-9 shrink-0 items-center justify-center border-r border-grid-line py-1.5">
+        <span className="flex w-9 shrink-0 items-center justify-center border-r border-grid-line py-1">
           <Checkbox
             checked={!!allSelected}
             onCheckedChange={(v) => onSelectAll?.(!!v)}
@@ -614,14 +682,13 @@ export function CustomerOrderRowHeader({
           />
         </span>
       )}
-      <span className="flex min-w-0 flex-1 items-center px-3 py-1.5">
-        <span className="w-24 shrink-0 border-r border-grid-line pr-2">Datum</span>
-
-        <span className="w-16 shrink-0 border-r border-grid-line px-2">Antal</span>
+      <span className="flex min-w-0 flex-1 items-center px-2.5 py-1">
+        <span className="w-36 shrink-0 border-r border-grid-line pr-2">Datum</span>
+        <span className="w-20 shrink-0 border-r border-grid-line px-2">Artiklar</span>
         <span className="min-w-[6rem] flex-1 border-r border-grid-line px-2">Kund</span>
         <span className="w-24 shrink-0 border-r border-grid-line px-2">Status</span>
         <span className="w-24 shrink-0 px-2 text-right">Summa (kr)</span>
-        <span className="w-4 shrink-0" />
+        <span className="w-3.5 shrink-0" />
       </span>
     </div>
   );
