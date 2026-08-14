@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Printer, Search, BookOpen, HelpCircle, ListChecks, Lightbulb } from "lucide-react";
 import { MANUAL_CHAPTERS } from "@/lib/manualContent";
+import { printManual } from "@/lib/manualPrint";
 
 export default function Manual() {
   const [query, setQuery] = useState("");
@@ -56,7 +57,7 @@ export default function Manual() {
               className="pl-8 w-56"
             />
           </div>
-          <Button onClick={() => window.print()}>
+          <Button onClick={printManual}>
             <Printer className="h-4 w-4 mr-2" /> Skriv ut / PDF
           </Button>
         </div>
