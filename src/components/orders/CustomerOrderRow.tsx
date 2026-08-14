@@ -253,11 +253,12 @@ export function CustomerOrderRow({
               )}
               <span className="truncate">{name}</span>
               {hasComment && (
-                <MessageSquare
-                  className="h-3.5 w-3.5 shrink-0 text-primary"
-                  aria-label="Kommentar finns"
-                  title={`Kommentar: ${commentPreview}`}
-                />
+                <span className="shrink-0" title={`Kommentar: ${commentPreview}`}>
+                  <MessageSquare
+                    className="h-3.5 w-3.5 text-primary"
+                    aria-label="Kommentar finns"
+                  />
+                </span>
               )}
             </span>
 
