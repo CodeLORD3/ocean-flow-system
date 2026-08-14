@@ -17,18 +17,24 @@
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { normalizePhoneSe, sendSms, smsTestMode } from "../_shared/sms.ts";
 
+/** Exakt felmeddelande vid ogiltigt eller utländskt nummer — samma text överallt. */
+const PHONE_ERROR = "Ange ett svenskt mobilnummer, eller ring butiken så bokar vi åt dig.";
+
+/** Kastas när anroparen inte är inloggad butikspersonal → svarar 401. */
+class AuthError extends Error {}
+
 const ALLOWED_ORIGINS = [
   "https://bokafiskskaldjur.se",
   "https://www.bokafiskskaldjur.se",
+  // Förhandsvisningen under etapp 2-bygget:
+  "https://ocean-flow-system.lovable.app",
+  "https://id-preview--dc92d94e-c472-4cf5-a88c-37dbe635baaa.lovable.app",
+  "https://dc92d94e-c472-4cf5-a88c-37dbe635baaa.lovableproject.com",
+  "http://localhost:8080",
 ];
 
 function cors(origin: string | null) {
-  const allowLocal = !!origin && /^http:\/\/localhost(:\d+)?$/.test(origin);
-  const allowLovable = !!origin && /^https:\/\/[a-z0-9-]+\.lovable\.app$/.test(origin);
-  const allow =
-    origin && (ALLOWED_ORIGINS.includes(origin) || allowLocal || allowLovable)
-      ? origin
-      : ALLOWED_ORIGINS[0];
+  const allow = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
     "Access-Control-Allow-Origin": allow,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -36,6 +42,7 @@ function cors(origin: string | null) {
     Vary: "Origin",
   };
 }
+
 
 function service(): SupabaseClient {
   return createClient(
