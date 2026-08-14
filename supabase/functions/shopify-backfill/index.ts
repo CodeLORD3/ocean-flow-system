@@ -67,8 +67,16 @@ Deno.serve(async (req) => {
   const { data: userData } = await db.auth.getUser(auth.replace(/^Bearer\s+/i, ""));
   if (!userData?.user) return json({ ok: false, error: "Inloggning krävs" }, 401);
 
+  let body: any = {};
+  try {
+    body = req.body ? await req.json() : {};
+  } catch {
+    body = {};
+  }
+  const maxPages = Math.min(Math.max(Number(body?.max_pages ?? 10), 1), 50);
+
   /* ---- Token: OAuth-token för butiken, annars äldre shpat_-hemlighet ---- */
-  const domain = shopDomain(body_shop(req) ?? configuredShop());
+  const domain = shopDomain(body?.shop || configuredShop());
   if (!domain) {
     return json({ ok: false, error: "SHOPIFY_SHOP_DOMAIN måste finnas som hemlighet" }, 400);
   }
@@ -78,21 +86,13 @@ Deno.serve(async (req) => {
       {
         ok: false,
         error:
-          "Ingen Admin-token finns för butiken. Anslut Shopify via OAuth (knappen \"Anslut Shopify\") först.",
+          'Ingen Admin-token finns för butiken. Anslut Shopify via OAuth (knappen "Anslut Shopify") först.',
         needs_oauth: true,
       },
       400,
     );
   }
 
-
-  let body: any = {};
-  try {
-    body = req.body ? await req.json() : {};
-  } catch {
-    body = {};
-  }
-  const maxPages = Math.min(Math.max(Number(body?.max_pages ?? 10), 1), 50);
 
   const result = {
     ok: true,
