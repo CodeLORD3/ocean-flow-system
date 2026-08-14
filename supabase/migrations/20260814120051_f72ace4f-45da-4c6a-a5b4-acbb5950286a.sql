@@ -1,0 +1,1 @@
+ALTER TABLE public.sms_log ALTER COLUMN phone_normalized DROP NOT NULL;
