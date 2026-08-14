@@ -1514,6 +1514,7 @@ function WholesaleOrderDetail({ order, onClose, stores }: { order: any; onClose:
                           <SelectItem key={s} value={s} className="text-xs">{s}</SelectItem>
                         ))}
                       </SelectContent>
+                    </Select>
                   </td>
                   <td className="px-2 py-0.5 text-center">
                     {!isUnavailable && (
