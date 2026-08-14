@@ -641,6 +641,11 @@ Deno.serve(async (req) => {
     const message = e instanceof Error ? e.message : "Något gick fel. Ring gärna butiken.";
     const status = e instanceof AuthError ? 401 : 400;
     console.error("booking-api", action, message);
+    // Misslyckade bokningsförsök loggas så att Systemstatus kan larma på dem.
+    if (action === "create-booking" || action === "staff-booking") {
+      await guard(db, `bokning_misslyckad_${action === "staff-booking" ? "telefon" : "webb"}`, message.slice(0, 300), null, ip)
+        .catch(() => { /* loggen får aldrig sänka svaret till kunden */ });
+    }
     return new Response(JSON.stringify({ ok: false, error: message }), { status, headers });
   }
 });
