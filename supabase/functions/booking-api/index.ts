@@ -145,10 +145,27 @@ async function catalog(db: SupabaseClient, storeId: string | null) {
 
   const { data: products } = await db
     .from("products")
-    .select("id, name, booking_display_name, booking_circa_price, unit, booking_step, booking_lead_days, image_url")
+    .select(
+      "id, name, booking_display_name, booking_circa_price, day_price, unit, booking_step, booking_lead_days, image_url",
+    )
     .eq("bookable_online", true)
     .eq("active", true)
     .order("name");
+
+  // Butiksfoto: omslagsbilden i entity_images, annars första bilden.
+  const { data: storeImages } = ids.length
+    ? await db
+      .from("entity_images")
+      .select("entity_id, url, is_cover, sort_order")
+      .eq("entity_type", "store")
+      .in("entity_id", ids)
+      .order("is_cover", { ascending: false })
+      .order("sort_order")
+    : { data: [] as any[] };
+  const imageByStore = new Map<string, string>();
+  (storeImages ?? []).forEach((img: any) => {
+    if (!imageByStore.has(img.entity_id)) imageByStore.set(img.entity_id, img.url);
+  });
 
   const shaped = (stores ?? [])
     .filter((s: any) => !storeId || s.id === storeId)
@@ -160,6 +177,7 @@ async function catalog(db: SupabaseClient, storeId: string | null) {
       booking_open: s.booking_open !== false,
       booking_closed_message: s.booking_closed_message ?? null,
       booking_note: s.booking_note ?? null,
+      image_url: imageByStore.get(s.id) ?? null,
       opening_hours: (hours ?? [])
         .filter((h: any) => h.store_id === s.id)
         .map((h: any) => ({
@@ -185,7 +203,12 @@ async function catalog(db: SupabaseClient, storeId: string | null) {
     products: (products ?? []).map((p: any) => ({
       id: p.id,
       name: p.booking_display_name || p.name,
-      circa_price: p.booking_circa_price != null ? Number(p.booking_circa_price) : null,
+      circa_price:
+        Number(p.booking_circa_price) > 0
+          ? Number(p.booking_circa_price)
+          : Number(p.day_price) > 0
+            ? Number(p.day_price)
+            : null,
       unit: p.unit,
       step: p.booking_step != null ? Number(p.booking_step) : (p.unit === "st" ? 1 : 0.5),
       lead_days: Number(p.booking_lead_days ?? 1),
