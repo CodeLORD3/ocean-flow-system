@@ -33,6 +33,8 @@ import { allergenLabel } from "@/lib/catering";
 import { printConfirmation, downloadConfirmation } from "@/lib/customerOrderConfirmation";
 import { InlineOrderPacking } from "./InlineOrderPacking";
 import { InlineOrderEdit } from "./InlineOrderEdit";
+import { ProductThumb } from "@/components/products/ProductThumb";
+import { EntityImageGallery } from "@/components/images/EntityImageGallery";
 
 
 
