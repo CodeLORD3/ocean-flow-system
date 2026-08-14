@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, CheckCircle2, DownloadCloud, Globe, RefreshCw, WifiOff } from "lucide-react";
+import { AlertTriangle, CheckCircle2, DownloadCloud, Globe, Link2, RefreshCw, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 
 /**
