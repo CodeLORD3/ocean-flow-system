@@ -14,6 +14,12 @@
  * Hemligheter: SHOPIFY_ADMIN_TOKEN och SHOPIFY_SHOP_DOMAIN — aldrig i koden.
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import {
+  SHOPIFY_API_VERSION,
+  configuredShop,
+  getAdminToken,
+  shopDomain,
+} from "../_shared/shopify-admin.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,14 +41,7 @@ function service(): SupabaseClient {
   );
 }
 
-const API_VERSION = "2024-10";
-
-/** Normaliserar butiksdomänen: "min-butik" → "min-butik.myshopify.com". */
-function shopDomain(raw: string): string {
-  let d = raw.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-  if (!d.includes(".")) d = `${d}.myshopify.com`;
-  return d;
-}
+const API_VERSION = SHOPIFY_API_VERSION;
 
 /** Nästa sida ur Shopifys Link-huvud (cursor-paginering). */
 function nextPageInfo(link: string | null): string | null {
@@ -55,6 +54,7 @@ function nextPageInfo(link: string | null): string | null {
   }
   return null;
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
