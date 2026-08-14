@@ -133,6 +133,16 @@ async function catalog(db: SupabaseClient, storeId: string | null) {
       .in("store_id", ids)
     : { data: [] as any[] };
 
+  // Helgdagskalendern: avvikande öppettider och stängda dagar framåt i tiden.
+  const { data: specialDays } = ids.length
+    ? await db
+      .from("store_special_days")
+      .select("store_id, day, closed, open_time, close_time, note")
+      .in("store_id", ids)
+      .gte("day", todayIso())
+      .order("day")
+    : { data: [] as any[] };
+
   const { data: products } = await db
     .from("products")
     .select("id, name, booking_display_name, booking_circa_price, unit, booking_step, booking_lead_days, image_url")
@@ -158,6 +168,15 @@ async function catalog(db: SupabaseClient, storeId: string | null) {
           closed: !!h.closed,
         }))
         .sort((a: any, b: any) => a.weekday - b.weekday),
+      special_days: (specialDays ?? [])
+        .filter((d: any) => d.store_id === s.id)
+        .map((d: any) => ({
+          day: d.day,
+          closed: !!d.closed,
+          open_time: d.open_time,
+          close_time: d.close_time,
+          note: d.note ?? null,
+        })),
     }));
 
   return {
@@ -317,7 +336,7 @@ async function validateBooking(
     }
     const qty = round3(Number(l.quantity));
     if (!(qty > 0)) throw new Error(`Ange mängd för ${product.booking_display_name || product.name}.`);
-    if (qty > 10) throw new Error(`Högst 10 per vara — ring butiken för större mängder.`);
+    // Inget volymtak: bokad volym syns i inköpsunderlaget i stället.
     return { product, qty };
   });
 
@@ -336,14 +355,39 @@ async function validateBooking(
     .from("store_opening_hours")
     .select("weekday, open_time, close_time, closed")
     .eq("store_id", storeId);
-  const day = (hours ?? []).find((h: any) => Number(h.weekday) === weekday);
-  if (hours?.length && (!day || day.closed)) throw new Error("Butiken har stängt den dagen.");
+  const weekDay = (hours ?? []).find((h: any) => Number(h.weekday) === weekday);
+
+  // Helgdagskalendern går före veckoschemat: stängd dag kan aldrig bokas.
+  const { data: special } = await db
+    .from("store_special_days")
+    .select("day, closed, open_time, close_time, note")
+    .eq("store_id", storeId)
+    .eq("day", wantedDate)
+    .maybeSingle();
+  if (special?.closed) {
+    throw new Error(
+      special.note
+        ? `Butiken har stängt den dagen (${special.note}). Välj en annan hämtdag.`
+        : "Butiken har stängt den dagen. Välj en annan hämtdag.",
+    );
+  }
+
+  const day = special
+    ? {
+      closed: false,
+      open_time: special.open_time ?? weekDay?.open_time ?? null,
+      close_time: special.close_time ?? weekDay?.close_time ?? null,
+    }
+    : weekDay;
+  if (!special && hours?.length && (!weekDay || weekDay.closed)) {
+    throw new Error("Butiken har stängt den dagen.");
+  }
 
   const timeWindow = String(body?.time_window ?? "").trim();
   if (!/^\d{1,2}(:\d{2})?\s*[-–]\s*\d{1,2}(:\d{2})?$/.test(timeWindow)) {
     throw new Error("Välj en hämttid.");
   }
-  if (day && !day.closed) {
+  if (day && !day.closed && day.open_time && day.close_time) {
     const startHour = Number(timeWindow.split(/[-–]/)[0].trim().split(":")[0]);
     const endHour = Number(timeWindow.split(/[-–]/)[1].trim().split(":")[0]);
     const openHour = Number(String(day.open_time).slice(0, 2));

@@ -5843,6 +5843,7 @@ export type Database = {
           booking_display_name: string | null
           booking_lead_days: number
           booking_step: number | null
+          booking_volume_alarm: number | null
           catch_weight: boolean
           category: string
           cost_price: number
@@ -5893,6 +5894,7 @@ export type Database = {
           booking_display_name?: string | null
           booking_lead_days?: number
           booking_step?: number | null
+          booking_volume_alarm?: number | null
           catch_weight?: boolean
           category: string
           cost_price?: number
@@ -5943,6 +5945,7 @@ export type Database = {
           booking_display_name?: string | null
           booking_lead_days?: number
           booking_step?: number | null
+          booking_volume_alarm?: number | null
           catch_weight?: boolean
           category?: string
           cost_price?: number
@@ -9582,7 +9585,23 @@ export type Database = {
       }
     }
     Functions: {
+      anonymize_retail_customer: {
+        Args: { _customer_id: string; _reason?: string }
+        Returns: Json
+      }
       booking_status_day: { Args: { _day?: string }; Returns: Json }
+      booking_volume_by_day: {
+        Args: { _days?: number; _from?: string }
+        Returns: {
+          over_threshold: boolean
+          product_id: string
+          product_name: string
+          threshold: number
+          total: number
+          unit: string
+          wanted_date: string
+        }[]
+      }
       company_of_location: {
         Args: { _location_id: string; _on?: string }
         Returns: string
@@ -9710,6 +9729,7 @@ export type Database = {
         Returns: boolean
       }
       purge_booking_otp: { Args: never; Returns: number }
+      purge_sms_log_phones: { Args: never; Returns: number }
       rebuild_stock_from_movements: { Args: never; Returns: Json }
       recalc_product_day_price: {
         Args: { _product_id: string }

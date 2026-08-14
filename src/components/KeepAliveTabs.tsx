@@ -71,6 +71,7 @@ import TraceabilityPage from "@/pages/TraceabilityPage";
 import BookingAssortment from "@/pages/BookingAssortment";
 import BookingSettings from "@/pages/BookingSettings";
 import BookingBlocklist from "@/pages/BookingBlocklist";
+import BookingHolidays from "@/pages/BookingHolidays";
 import { NoAccessView } from "@/components/NoAccessView";
 import { useSite } from "@/contexts/SiteContext";
 import { canAccessRoute } from "@/lib/pageAccess";
@@ -148,6 +149,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/booking-assortment": { component: <BookingAssortment /> },
   "/booking-settings": { component: <BookingSettings /> },
   "/booking-blocklist": { component: <BookingBlocklist /> },
+  "/booking-holidays": { component: <BookingHolidays /> },
 };
 
 /**

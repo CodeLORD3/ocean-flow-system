@@ -19,10 +19,12 @@ export interface BookingProduct {
   booking_circa_price: number | null;
   booking_step: number | null;
   booking_lead_days: number | null;
+  /** Informationsgräns för bokad volym per hämtdag. null = av. */
+  booking_volume_alarm: number | null;
 }
 
 const PRODUCT_FIELDS =
-  "id, name, sku, unit, category, image_url, active, bookable_online, booking_display_name, booking_circa_price, booking_step, booking_lead_days";
+  "id, name, sku, unit, category, image_url, active, bookable_online, booking_display_name, booking_circa_price, booking_step, booking_lead_days, booking_volume_alarm";
 
 /** Alla aktiva produkter, med de bokningsbara samlade först. */
 export function useBookingProducts(search = "") {
@@ -265,6 +267,14 @@ export interface BookingStatus {
     completed_bookings: number;
     rate: number | null;
   };
+  volume_alarms: {
+    wanted_date: string;
+    product_id: string | null;
+    product_name: string;
+    unit: string;
+    total: number;
+    threshold: number;
+  }[];
   failed_bookings: number;
   reminders_failed: number;
 }
@@ -332,6 +342,141 @@ export function useMarkNoShow() {
       qc.invalidateQueries({ queryKey: ["customer_orders"] });
       qc.invalidateQueries({ queryKey: ["customers_retail"] });
       qc.invalidateQueries({ queryKey: ["booking_blocklist"] });
+    },
+  });
+}
+
+/* --------------------------------------------------- bokad volym per hämtdag */
+
+export interface BookedVolumeRow {
+  wanted_date: string;
+  product_id: string | null;
+  product_name: string;
+  unit: string;
+  total: number;
+  threshold: number | null;
+  over_threshold: boolean;
+}
+
+/**
+ * Bokad volym per vara och hämtdag. Underlag för inköpet — bokningssidan
+ * begränsar aldrig volymen, så inköpet måste kunna ta höjd i förväg.
+ */
+export function useBookedVolumes(from?: string, days = 14) {
+  return useQuery({
+    queryKey: ["booking_volume_by_day", from ?? "idag", days],
+    queryFn: async () => {
+      const { data, error } = await db.rpc("booking_volume_by_day", {
+        _from: from ?? null,
+        _days: days,
+      });
+      if (error) throw error;
+      return ((data || []) as any[]).map((r) => ({
+        ...r,
+        total: Number(r.total ?? 0),
+        threshold: r.threshold != null ? Number(r.threshold) : null,
+        over_threshold: !!r.over_threshold,
+      })) as BookedVolumeRow[];
+    },
+  });
+}
+
+/* -------------------------------------------------------- helgdagskalender */
+
+export interface SpecialDay {
+  id: string;
+  store_id: string;
+  day: string;
+  closed: boolean;
+  open_time: string | null;
+  close_time: string | null;
+  note: string | null;
+}
+
+/** Avvikande öppettider per butik och datum, dagens datum och framåt. */
+export function useStoreSpecialDays(storeId?: string | null) {
+  return useQuery({
+    queryKey: ["store_special_days", storeId ?? "alla"],
+    queryFn: async () => {
+      let q = db
+        .from("store_special_days")
+        .select("id, store_id, day, closed, open_time, close_time, note")
+        .gte("day", new Date().toISOString().slice(0, 10))
+        .order("day");
+      if (storeId) q = q.eq("store_id", storeId);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data || []) as SpecialDay[];
+    },
+  });
+}
+
+export function useSaveSpecialDay() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (row: {
+      store_id: string;
+      storeName?: string;
+      day: string;
+      closed: boolean;
+      open_time: string | null;
+      close_time: string | null;
+      note: string | null;
+    }) => {
+      const { storeName, ...patch } = row;
+      const { error } = await db.from("store_special_days").upsert(
+        {
+          ...patch,
+          open_time: patch.closed ? null : patch.open_time || null,
+          close_time: patch.closed ? null : patch.close_time || null,
+        },
+        { onConflict: "store_id,day" },
+      );
+      if (error) throw new Error(error.message);
+      await logActivity({
+        action_type: "update",
+        description: `${patch.closed ? "Stängd dag" : "Avvikande öppettider"} ${patch.day}: ${storeName ?? "butik"}`,
+        entity_type: "store_special_days",
+        store_id: patch.store_id,
+        details: patch as Record<string, unknown>,
+      });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["store_special_days"] }),
+  });
+}
+
+export function useDeleteSpecialDay() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await db.from("store_special_days").delete().eq("id", id);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["store_special_days"] }),
+  });
+}
+
+/* ------------------------------------------------------------ GDPR-radering */
+
+/**
+ * Raderar kundens personuppgifter på begäran. Orderhistoriken behålls, men
+ * avidentifierad — omsättning och statistik påverkas aldrig.
+ */
+export function useAnonymizeCustomer() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: { customerId: string; reason: string }) => {
+      const { data, error } = await db.rpc("anonymize_retail_customer", {
+        _customer_id: params.customerId,
+        _reason: params.reason.trim() || null,
+      });
+      if (error) throw new Error(error.message);
+      return data as { orders_anonymized: number; sms_rows_cleared: number };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["booking_blocklist"] });
+      qc.invalidateQueries({ queryKey: ["customers_retail"] });
+      qc.invalidateQueries({ queryKey: ["customer_orders"] });
     },
   });
 }

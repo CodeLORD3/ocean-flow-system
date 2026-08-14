@@ -32,6 +32,8 @@ export default function BookingStatusCard() {
     .filter((g) => g.kind === "honeypot" || g.kind === "tidsfalla" || g.kind.startsWith("rate_limit"))
     .reduce((s, g) => s + Number(g.count), 0);
 
+  const volumeAlarms = data?.volume_alarms ?? [];
+
   const anyAlarm = otpAlarm || smsAlarm || smsErrors > 0 || remindersFailed > 0;
 
   return (
@@ -142,6 +144,28 @@ export default function BookingStatusCard() {
                 <p className="text-[11px] text-muted-foreground">Ring kunden om siffran inte är noll</p>
               </div>
             </div>
+
+            {volumeAlarms.length > 0 && (
+              <div className="rounded-md border border-amber-500/60 bg-amber-500/5 p-2">
+                <p className="text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                  Information till inköpet: bokad volym över gränsen
+                </p>
+                <div className="mt-1 space-y-0.5">
+                  {volumeAlarms.map((a) => (
+                    <p
+                      key={`${a.wanted_date}-${a.product_id ?? a.product_name}`}
+                      className="font-mono text-[11px] tabular-nums"
+                    >
+                      {a.wanted_date} · {a.product_name}: {n(a.total)} {a.unit} bokat (gräns{" "}
+                      {n(a.threshold)} {a.unit})
+                    </p>
+                  ))}
+                </div>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Larmet informerar bara — kundens bokning släpps alltid igenom.
+                </p>
+              </div>
+            )}
 
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs text-muted-foreground">

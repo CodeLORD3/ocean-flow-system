@@ -76,6 +76,7 @@ export const ROUTE_ACCESS: Record<string, SiteMode[]> = {
   "/booking-settings": all(BUTIK, ADMIN),
   "/booking-assortment": ADMIN,
   "/booking-blocklist": ADMIN,
+  "/booking-holidays": all(BUTIK, ADMIN),
 
   // Endast Admin
   "/stores": ADMIN,

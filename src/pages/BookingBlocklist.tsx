@@ -3,7 +3,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Ban, Search, ShieldOff, Undo2 } from "lucide-react";
+import { Ban, Search, ShieldOff, Trash2, Undo2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import {
@@ -11,6 +22,7 @@ import {
   useBlockAudit,
   useBlockedCustomers,
   useSetCustomerBlocked,
+  useAnonymizeCustomer,
 } from "@/hooks/useBookingAdmin";
 
 const fmtTime = (v?: string | null) =>
@@ -33,6 +45,23 @@ export default function BookingBlocklist() {
   const audit = useBlockAudit();
   const setBlocked = useSetCustomerBlocked();
   const [reasons, setReasons] = useState<Record<string, string>>({});
+  const anonymize = useAnonymizeCustomer();
+
+  /** Radering på begäran: personuppgifterna tas bort, orderhistoriken behålls avidentifierad. */
+  const erase = (c: BlockedCustomer) => {
+    anonymize.mutate(
+      { customerId: c.id, reason: reasons[c.id] ?? "" },
+      {
+        onSuccess: (res) =>
+          toast({
+            title: "Kunduppgifterna är raderade",
+            description: `${res?.orders_anonymized ?? 0} ordrar avidentifierade, telefonnummer rensade ur SMS-loggen.`,
+          }),
+        onError: (e: any) =>
+          toast({ title: "Kunde inte radera", description: e.message, variant: "destructive" }),
+      },
+    );
+  };
 
   const act = (customer: BlockedCustomer, blocked: boolean) => {
     const reason = reasons[customer.id] ?? "";
@@ -99,6 +128,26 @@ export default function BookingBlocklist() {
             </>
           )}
         </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button size="sm" variant="ghost" disabled={anonymize.isPending}>
+              <Trash2 className="mr-2 h-4 w-4" /> Radera kunduppgifter
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Radera kunduppgifter på begäran?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Namn, telefon, e-post och adress för {label(c)} tas bort permanent. Orderhistoriken
+                behålls avidentifierad så att bokföring och statistik stämmer. Går inte att ångra.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Avbryt</AlertDialogCancel>
+              <AlertDialogAction onClick={() => erase(c)}>Radera</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
@@ -110,6 +159,7 @@ export default function BookingBlocklist() {
           <ShieldOff className="h-5 w-5 text-destructive" /> Spärrlista bokning
         </h1>
         <p className="text-xs text-muted-foreground">
+          Här sköts också radering av kunduppgifter på begäran (GDPR) — sök fram kunden nedan.
           Ett spärrat nummer får normalt svar utåt när det ber om kod, men ingen kod skickas och
           ingen bokning kan skapas. Varje beslut loggas med vem och när.
         </p>

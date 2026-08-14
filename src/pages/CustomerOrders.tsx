@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, Truck, ChefHat, ShoppingCart, Archive, ArchiveRestore } from "lucide-react";
+import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, Truck, ChefHat, ShoppingCart, Archive, ArchiveRestore, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -36,6 +36,7 @@ import { CustomerOrderStats } from "@/components/orders/CustomerOrderStats";
 import { DeliveryRouteView } from "@/components/orders/DeliveryRouteView";
 import { CateringKitchenList } from "@/components/orders/CateringKitchenList";
 import { PurchaseNeedsView } from "@/components/orders/PurchaseNeedsView";
+import { TodayPickupsView } from "@/components/orders/TodayPickupsView";
 
 
 
@@ -147,7 +148,7 @@ export default function CustomerOrders() {
   const [orderType, setOrderType] = useState("all");
   const [wizardOpen, setWizardOpen] = useState(false);
   const [openRow, setOpenRow] = useState<string | null>(null);
-  const [panel, setPanel] = useState<"orders" | "customers" | "stats" | "route" | "kitchen" | "needs">(
+  const [panel, setPanel] = useState<"orders" | "customers" | "stats" | "route" | "kitchen" | "needs" | "pickups">(
     "orders",
   );
 
@@ -383,6 +384,16 @@ export default function CustomerOrders() {
 
           <div className="ml-auto flex shrink-0 gap-2">
             <Button
+              variant={panel === "pickups" ? "default" : "outline"}
+              size="icon"
+              className="h-11 w-11"
+              title="Dagens hämtningar"
+              aria-label="Dagens hämtningar"
+              onClick={() => setPanel(panel === "pickups" ? "orders" : "pickups")}
+            >
+              <Clock className="h-4 w-4" />
+            </Button>
+            <Button
               variant={panel === "route" ? "default" : "outline"}
               size="icon"
               className="h-11 w-11"
@@ -451,7 +462,9 @@ export default function CustomerOrders() {
                     ? "Leveransrutt"
                     : panel === "kitchen"
                       ? "Kökslista — att förbereda"
-                      : "Inköpsbehov per butik"}
+                      : panel === "pickups"
+                        ? "Dagens hämtningar"
+                        : "Inköpsbehov per butik"}
             </span>
           </div>
         )}
@@ -558,6 +571,12 @@ export default function CustomerOrders() {
         )}
         {panel === "kitchen" && <CateringKitchenList storeId={effectiveStore} />}
         {panel === "needs" && <PurchaseNeedsView />}
+        {panel === "pickups" && (
+          <TodayPickupsView
+            storeId={effectiveStore}
+            storeName={stores.find((s) => s.id === effectiveStore)?.name ?? null}
+          />
+        )}
       </div>
 
 
