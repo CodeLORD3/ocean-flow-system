@@ -30,6 +30,9 @@ const ALLOWED_ORIGINS = [
   "https://ocean-flow-system.lovable.app",
   "https://id-preview--dc92d94e-c472-4cf5-a88c-37dbe635baaa.lovable.app",
   "https://dc92d94e-c472-4cf5-a88c-37dbe635baaa.lovableproject.com",
+  // Bokningssajtens eget projekt (etapp 2):
+  "https://id-preview--e69a8370-7972-4560-b5fa-a06f34cf1f5b.lovable.app",
+  "https://e69a8370-7972-4560-b5fa-a06f34cf1f5b.lovableproject.com",
   "http://localhost:8080",
 ];
 
