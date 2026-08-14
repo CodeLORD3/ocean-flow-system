@@ -235,7 +235,7 @@ export function CustomerOrderRow({
               {time && <span className="font-semibold text-foreground">{time.trim()}</span>}
             </span>
 
-            <span className="w-20 shrink-0 border-r border-grid-line/70 px-2 font-mono text-[11px] tabular-nums text-muted-foreground">
+            <span className="w-16 shrink-0 whitespace-nowrap border-r border-grid-line/70 px-2 font-mono text-[10px] tabular-nums text-muted-foreground">
               {itemsLabel}
             </span>
             <span className="flex min-w-[6rem] flex-1 items-center gap-1.5 truncate border-r border-grid-line/70 px-2 font-semibold">
