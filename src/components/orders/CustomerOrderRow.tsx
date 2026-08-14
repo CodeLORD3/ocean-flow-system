@@ -156,6 +156,7 @@ export function CustomerOrderRow({
 }) {
   const [editing, setEditing] = useState(false);
   const [showMore, setShowMore] = useState(false);
+  const [showPhotos, setShowPhotos] = useState(false);
   const updateOrder = useUpdateCustomerOrder();
   const archiveOrder = useArchiveCustomerOrder();
   const markNoShow = useMarkNoShow();
