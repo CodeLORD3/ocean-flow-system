@@ -175,15 +175,26 @@ export default function ShopifyWebhookStatus() {
           )}
           <Globe className="h-4 w-4" /> Webbordrar från Shopify
           <Button
-            variant="outline"
+            variant={oauth.data?.connected ? "ghost" : "default"}
             size="sm"
             className="ml-auto h-6 text-xs"
+            disabled={busy === "oauth"}
+            onClick={connect}
+          >
+            <Link2 className={`mr-1 h-3 w-3 ${busy === "oauth" ? "animate-pulse" : ""}`} />
+            {oauth.data?.connected ? "Anslut Shopify igen" : "Anslut Shopify"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-6 text-xs"
             disabled={busy === "backfill"}
             onClick={backfill}
           >
             <DownloadCloud className={`mr-1 h-3 w-3 ${busy === "backfill" ? "animate-pulse" : ""}`} />
             Hämta öppna ordrar från Shopify
           </Button>
+
           <Button asChild variant="ghost" size="sm" className="h-6 text-xs">
             <Link to="/shopify">Öppna webbordrar</Link>
           </Button>
