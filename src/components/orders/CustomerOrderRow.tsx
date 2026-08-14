@@ -43,9 +43,12 @@ import { EntityImageGallery } from "@/components/images/EntityImageGallery";
 const nf = (v: unknown, d = 1) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
 
-/** Vikt visas med en decimal på kilo och utan decimal på styck. */
+/** Vikt visas med max en decimal på kilo (2 kg blir "2") och utan decimal på styck. */
 const qtyText = (v: unknown, unit?: string | null) =>
-  nf(v, String(unit ?? "").toLowerCase().startsWith("st") ? 0 : 1);
+  Number(v ?? 0).toLocaleString("sv-SE", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: String(unit ?? "").toLowerCase().startsWith("st") ? 0 : 1,
+  });
 
 
 /** Veckodag på svenska, t.ex. "Lör". */
