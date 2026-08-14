@@ -43,9 +43,12 @@ import { EntityImageGallery } from "@/components/images/EntityImageGallery";
 const nf = (v: unknown, d = 1) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
 
-/** Vikt visas med en decimal på kilo och utan decimal på styck. */
+/** Vikt visas med max en decimal på kilo (2 kg blir "2") och utan decimal på styck. */
 const qtyText = (v: unknown, unit?: string | null) =>
-  nf(v, String(unit ?? "").toLowerCase().startsWith("st") ? 0 : 1);
+  Number(v ?? 0).toLocaleString("sv-SE", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: String(unit ?? "").toLowerCase().startsWith("st") ? 0 : 1,
+  });
 
 
 /** Veckodag på svenska, t.ex. "Lör". */
@@ -243,30 +246,15 @@ export function CustomerOrderRow({
               {time && <span className="font-semibold text-foreground">{time.trim()}</span>}
             </span>
 
-            <span className="w-16 shrink-0 whitespace-nowrap border-r border-grid-line/70 px-2 font-mono text-[10px] tabular-nums text-muted-foreground">
+            <span className="w-16 shrink-0 whitespace-nowrap border-r border-grid-line/70 px-2 font-mono text-[9px] tabular-nums text-muted-foreground">
               {itemsLabel}
             </span>
+            {/* Kundnamnet börjar alltid på samma x-position — källan står i egen kolumn efter namnet. */}
             <span className="flex min-w-[14rem] shrink-0 flex-1 items-center gap-2 whitespace-nowrap border-r border-grid-line/70 pl-3 pr-5 font-semibold">
-              {order.is_web_order && (
-                <span
-                  className="shrink-0 rounded-sm bg-primary/15 px-1 text-[10px] font-bold uppercase tracking-wide text-primary"
-                  title="Ny webborder från Shopify"
-                >
-                  Webb
-                </span>
-              )}
-              {phoneBooked && (
-                <span
-                  className="shrink-0 rounded-sm bg-muted px-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground"
-                  title="Bokad per telefon av butikspersonal — numret är inte verifierat med kod"
-                >
-                  Tel
-                </span>
-              )}
-              {/* Hela namnet ska alltid synas — därför ingen avklippning här. */}
               <span className="whitespace-nowrap leading-tight">{name}</span>
               {hasComment && (
                 <span className="shrink-0" title={`Kommentar: ${commentPreview}`}>
+
                   <MessageSquare
                     className="h-3.5 w-3.5 text-primary"
                     aria-label="Kommentar finns"
@@ -283,6 +271,26 @@ export function CustomerOrderRow({
                 </span>
               )}
             </span>
+
+            <span className="w-14 shrink-0 whitespace-nowrap border-r border-grid-line/70 px-2">
+              {order.is_web_order ? (
+                <span
+                  className="rounded-sm bg-primary/15 px-1 text-[10px] font-bold uppercase tracking-wide text-primary"
+                  title="Ny webborder från Shopify"
+                >
+                  Webb
+                </span>
+              ) : phoneBooked ? (
+                <span
+                  className="rounded-sm bg-muted px-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground"
+                  title="Bokad per telefon av butikspersonal — numret är inte verifierat med kod"
+                >
+                  Tel
+                </span>
+              ) : null}
+            </span>
+
+
 
             <span className="flex w-24 shrink-0 items-center gap-1 border-r border-grid-line/70 px-2">
               {statusChip}
@@ -760,6 +768,7 @@ export function CustomerOrderRowHeader({
         <span className="w-36 shrink-0 border-r border-grid-line pr-2">Datum</span>
         <span className="w-16 shrink-0 border-r border-grid-line px-2">Art.</span>
         <span className="min-w-[14rem] flex-1 border-r border-grid-line pl-3 pr-5">Kund</span>
+        <span className="w-14 shrink-0 border-r border-grid-line px-2">Källa</span>
         <span className="w-24 shrink-0 border-r border-grid-line px-2">Status</span>
         <span className="w-24 shrink-0 border-r border-grid-line px-2 text-right">Summa (kr)</span>
         <span className="w-28 shrink-0 px-2">Butik</span>
