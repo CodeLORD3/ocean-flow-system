@@ -581,7 +581,7 @@ export default function Staff() {
                 </p>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Butik</Label>
+                <Label className="text-xs">Huvudbutik</Label>
                 <Select value={form.store_id} onValueChange={v => setField("store_id", v)}>
                   <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Välj butik..." /></SelectTrigger>
                   <SelectContent>
@@ -590,8 +590,34 @@ export default function Staff() {
                     ))}
                   </SelectContent>
                 </Select>
+                <p className="text-[10px] text-muted-foreground">
+                  Butiken personen tillhör. Åtkomst till flera butiker sätts under Behörigheter.
+                </p>
               </div>
             </div>
+
+            {editId && canManageAccess && (
+              <div className="flex items-start justify-between gap-3 rounded-md border border-border p-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-foreground">Portaler och butiksåtkomst</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Byt butik eller ge åtkomst till flera butiker.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs shrink-0"
+                  onClick={() => {
+                    const target = [...staffList, ...allStaff].find((s: any) => s.id === editId);
+                    if (target) setAccessStaff(target);
+                  }}
+                >
+                  <ShieldCheck className="h-3 w-3 mr-1.5" /> Behörigheter
+                </Button>
+              </div>
+            )}
+
           </div>
           {editId && (salaryHistory.data ?? []).length > 0 && (
             <div className="rounded-md border border-border p-2">
