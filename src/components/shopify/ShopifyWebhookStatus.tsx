@@ -207,6 +207,19 @@ export default function ShopifyWebhookStatus() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
+        {oauth.data && oauth.data.connected === false && (
+          <div className="flex items-start gap-2 rounded-md border border-amber-500/50 bg-amber-500/10 p-2 text-xs">
+            <Link2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+            <span>
+              Shopify är inte anslutet ({oauth.data.shop || "ingen butiksdomän"}). Tryck
+              “Anslut Shopify” och godkänn i Shopify-fönstret. Godkännandet kräver att denna URL
+              ligger under <em>Allowed redirection URL(s)</em> i appen:{" "}
+              <code className="font-mono">{oauth.data.redirect_uri}</code>
+            </span>
+          </div>
+        )}
+
+
         {silent && (
           <div className="flex items-start gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-2 text-xs">
             <WifiOff className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
