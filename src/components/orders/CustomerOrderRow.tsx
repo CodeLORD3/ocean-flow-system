@@ -5,6 +5,7 @@ import {
   Phone,
   MapPin,
   AlertTriangle,
+  MessageSquare,
   Pencil,
   Printer,
   Download,
