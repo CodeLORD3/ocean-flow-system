@@ -129,7 +129,11 @@ export default function ShopifyWebhookStatus() {
     retry: false,
   });
 
-  /** Startar OAuth: hämtar authorize-URL och öppnar Shopifys godkännande. */
+  /**
+   * Startar OAuth: hämtar authorize-URL. Shopify vägrar visas i en iframe
+   * (ERR_BLOCKED_BY_RESPONSE), så URL:en visas även som länk att öppna i en
+   * riktig flik om popup-fönstret blockeras av förhandsvisningen.
+   */
   const connect = async () => {
     setBusy("oauth");
     try {
@@ -137,14 +141,16 @@ export default function ShopifyWebhookStatus() {
       if (error) throw error;
       const r = data as any;
       if (!r?.authorize_url) throw new Error(r?.error ?? "Kunde inte starta anslutningen");
-      window.open(r.authorize_url, "_blank", "noopener");
-      toast.info("Godkänn appen i Shopify-fönstret, kom sedan tillbaka hit.");
+      setAuthorizeUrl(r.authorize_url as string);
+      window.open(r.authorize_url, "_blank", "noopener,noreferrer");
+      toast.info("Godkänn appen i Shopify-fliken. Blev fliken blockerad? Använd länken i kortet.");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Kunde inte starta anslutningen");
     } finally {
       setBusy(null);
     }
   };
+
 
 
   const rows = events.data || [];
