@@ -7072,7 +7072,7 @@ export type Database = {
           customer_order_id: string | null
           error: string | null
           id: string
-          phone_normalized: string
+          phone_normalized: string | null
           provider_id: string | null
           status: string
           type: string
@@ -7083,7 +7083,7 @@ export type Database = {
           customer_order_id?: string | null
           error?: string | null
           id?: string
-          phone_normalized: string
+          phone_normalized?: string | null
           provider_id?: string | null
           status: string
           type: string
@@ -7094,7 +7094,7 @@ export type Database = {
           customer_order_id?: string | null
           error?: string | null
           id?: string
-          phone_normalized?: string
+          phone_normalized?: string | null
           provider_id?: string | null
           status?: string
           type?: string
