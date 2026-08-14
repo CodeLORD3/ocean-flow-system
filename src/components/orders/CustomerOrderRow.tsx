@@ -273,8 +273,11 @@ export function CustomerOrderRow({
               )}
               {readOnly && <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />}
             </span>
-            <span className="w-24 shrink-0 px-2 text-right font-mono text-[11px] font-semibold tabular-nums">
+            <span className="w-24 shrink-0 border-r border-grid-line/70 px-2 text-right font-mono text-[11px] font-semibold tabular-nums">
               {nf(total, 2)}
+            </span>
+            <span className="w-28 shrink-0 truncate px-2 text-[11px] text-muted-foreground">
+              {order.stores?.name ?? ""}
             </span>
             <ChevronDown
               className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${
