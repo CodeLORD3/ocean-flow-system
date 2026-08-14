@@ -228,7 +228,7 @@ export function CustomerOrderRow({
           className={`min-w-0 flex-1 px-2.5 py-1.5 text-left transition-colors ${tone.hover}`}
         >
           {/* Desktop: fast kolumnraster. Mobil: två rader, kundnamnet störst. */}
-          <div className="hidden h-5 items-center gap-0 text-xs sm:flex">
+          <div className="hidden min-h-5 items-center gap-0 text-xs sm:flex">
             <span
               className={`flex w-36 shrink-0 items-center gap-1.5 whitespace-nowrap border-r border-grid-line/70 pr-2 font-mono text-[11px] tabular-nums ${
                 cancelled ? "line-through" : ""
