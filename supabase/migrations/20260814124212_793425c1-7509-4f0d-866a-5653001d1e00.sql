@@ -1,0 +1,2 @@
+ALTER TABLE public.stores ADD COLUMN IF NOT EXISTS booking_note text;
+UPDATE public.stores SET booking_note = 'Förbokningar endast – ingen fiskvagn på plats. Varorna packas till din bokade hämttid.' WHERE name = 'Fiskskaldjur Marstrand';

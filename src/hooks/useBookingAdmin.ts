@@ -77,6 +77,7 @@ export interface BookingStore {
   city: string;
   booking_open: boolean | null;
   booking_closed_message: string | null;
+  booking_note: string | null;
 }
 
 /** Butiker som ligger på bokningssidan (Göteborg), eller en enskild butik. */
@@ -86,7 +87,7 @@ export function useBookingStores(storeId?: string | null) {
     queryFn: async () => {
       let q = db
         .from("stores")
-        .select("id, name, city, booking_open, booking_closed_message")
+        .select("id, name, city, booking_open, booking_closed_message, booking_note")
         .eq("is_wholesale", false)
         .order("name");
       if (storeId) q = q.eq("id", storeId);
@@ -104,7 +105,13 @@ export function useUpdateBookingStore() {
       id,
       name,
       ...patch
-    }: { id: string; name?: string; booking_open?: boolean; booking_closed_message?: string | null }) => {
+    }: {
+      id: string;
+      name?: string;
+      booking_open?: boolean;
+      booking_closed_message?: string | null;
+      booking_note?: string | null;
+    }) => {
       const { error } = await db.from("stores").update(patch).eq("id", id);
       if (error) throw error;
       await logActivity({

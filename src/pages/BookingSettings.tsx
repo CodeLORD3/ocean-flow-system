@@ -24,6 +24,7 @@ export default function BookingSettings() {
   const { data: stores = [], isLoading } = useBookingStores(isShop ? activeStoreId : null);
   const update = useUpdateBookingStore();
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
 
   const toggle = (id: string, name: string, open: boolean) =>
     update.mutate(
@@ -41,6 +42,16 @@ export default function BookingSettings() {
       { id, name, booking_closed_message: text.trim() || null },
       {
         onSuccess: () => toast({ title: "Meddelandet sparat", description: name }),
+        onError: (e: any) =>
+          toast({ title: "Kunde inte spara", description: e.message, variant: "destructive" }),
+      },
+    );
+
+  const saveNote = (id: string, name: string, text: string) =>
+    update.mutate(
+      { id, name, booking_note: text.trim() || null },
+      {
+        onSuccess: () => toast({ title: "Informationstexten sparad", description: name }),
         onError: (e: any) =>
           toast({ title: "Kunde inte spara", description: e.message, variant: "destructive" }),
       },
@@ -103,6 +114,28 @@ export default function BookingSettings() {
                     >
                       <Save className="mr-2 h-4 w-4" /> Spara meddelande
                     </Button>
+                  </div>
+
+                  <div className="space-y-2 border-t pt-2">
+                    <Textarea
+                      className="min-h-[70px] text-sm"
+                      placeholder="Förbokningar endast – ingen fiskvagn på plats."
+                      value={noteDrafts[s.id] ?? s.booking_note ?? ""}
+                      onChange={(e) => setNoteDrafts((d) => ({ ...d, [s.id]: e.target.value }))}
+                    />
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[11px] text-muted-foreground">
+                        Informationstext som alltid visas för kunden på bokningssidan.
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={update.isPending}
+                        onClick={() => saveNote(s.id, s.name, noteDrafts[s.id] ?? s.booking_note ?? "")}
+                      >
+                        <Save className="mr-2 h-4 w-4" /> Spara info
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

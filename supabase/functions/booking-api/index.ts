@@ -119,7 +119,7 @@ const DAY = 24 * HOUR;
 async function catalog(db: SupabaseClient, storeId: string | null) {
   const { data: stores, error: storeErr } = await db
     .from("stores")
-    .select("id, name, address, phone, booking_open, booking_closed_message")
+    .select("id, name, address, phone, booking_open, booking_closed_message, booking_note")
     .eq("region", "vast")
     .eq("is_wholesale", false)
     .order("name");
@@ -159,6 +159,7 @@ async function catalog(db: SupabaseClient, storeId: string | null) {
       phone: s.phone ?? null,
       booking_open: s.booking_open !== false,
       booking_closed_message: s.booking_closed_message ?? null,
+      booking_note: s.booking_note ?? null,
       opening_hours: (hours ?? [])
         .filter((h: any) => h.store_id === s.id)
         .map((h: any) => ({

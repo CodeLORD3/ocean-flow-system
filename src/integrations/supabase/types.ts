@@ -8064,6 +8064,7 @@ export type Database = {
           active: boolean
           address: string | null
           booking_closed_message: string | null
+          booking_note: string | null
           booking_open: boolean
           city: string
           country: string
@@ -8089,6 +8090,7 @@ export type Database = {
           active?: boolean
           address?: string | null
           booking_closed_message?: string | null
+          booking_note?: string | null
           booking_open?: boolean
           city: string
           country: string
@@ -8114,6 +8116,7 @@ export type Database = {
           active?: boolean
           address?: string | null
           booking_closed_message?: string | null
+          booking_note?: string | null
           booking_open?: boolean
           city?: string
           country?: string
