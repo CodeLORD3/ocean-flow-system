@@ -78,7 +78,7 @@ const statusIcon: Record<string, React.ReactNode> = {
   Avbruten: <XCircle className="h-3 w-3" />,
 };
 
-const LINE_STATUSES = ["", "Pågående", "Producerad", "Packad", "Skickad", "Ej tillgänglig"];
+const LINE_STATUSES = ["", "Pågående", "Beställd", "Producerad", "Packad", "Skickad", "Ej tillgänglig"];
 
 const FULFILLED_LINE_STATUSES = ["Packad", "Skickad", "Klar / Levererad", "Levererad", "Producerad"];
 
