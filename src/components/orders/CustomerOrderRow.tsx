@@ -153,6 +153,7 @@ export function CustomerOrderRow({
   onSelect?: (id: string, next: boolean) => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const [showMore, setShowMore] = useState(false);
   const updateOrder = useUpdateCustomerOrder();
   const archiveOrder = useArchiveCustomerOrder();
   const markNoShow = useMarkNoShow();
@@ -162,6 +163,14 @@ export function CustomerOrderRow({
   const phone = order.customers_retail?.phone || order.customer_phone_snapshot;
   const lines = [...(order.customer_order_lines || [])].sort((a, b) => a.sort_order - b.sort_order);
   const active = lines.filter((l) => l.pack_status !== "struken");
+
+  /* Kommentarer: orderns egen not och eventuella noteringar på raderna. */
+  const lineNotes = lines.map((l) => l.note).filter((n): n is string => !!n && !!n.trim());
+  const hasComment = !!order.note?.trim() || lineNotes.length > 0;
+  const commentPreview = [order.note?.trim(), ...lineNotes].filter(Boolean).join(" · ").slice(0, 140);
+  const itemsLabel = `${active.length} ${active.length === 1 ? "artikel" : "artiklar"}`;
+
+
 
 
   const packedCount = active.filter((l) => l.pack_status === "packad").length;
