@@ -188,12 +188,18 @@ export default function ShopifyWebhookStatus() {
             variant="outline"
             size="sm"
             className="h-6 text-xs"
-            disabled={busy === "backfill"}
+            disabled={busy === "backfill" || oauth.data?.connected === false}
+            title={
+              oauth.data?.connected === false
+                ? "Anslut Shopify först — ingen Admin-token finns för butiken"
+                : undefined
+            }
             onClick={backfill}
           >
             <DownloadCloud className={`mr-1 h-3 w-3 ${busy === "backfill" ? "animate-pulse" : ""}`} />
             Hämta öppna ordrar från Shopify
           </Button>
+
 
           <Button asChild variant="ghost" size="sm" className="h-6 text-xs">
             <Link to="/shopify">Öppna webbordrar</Link>
