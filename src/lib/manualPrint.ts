@@ -46,13 +46,15 @@ export function buildManualPrintHtml(origin = window.location.origin) {
   .toc { border: 1px solid #dfe4e8; padding: 5mm 5mm 5mm 10mm; margin-bottom: 8mm; }
   .toc h2 { font-size: 11pt; margin: 0 0 3mm; }
   .toc ol { margin: 0; padding-left: 4mm; color: #55636f; font-size: 10pt; }
-  .ch { border-top: 2px solid #16202b; padding-top: 4mm; margin-top: 8mm; page-break-inside: avoid; break-inside: avoid; }
+  .ch { border-top: 2px solid #16202b; padding-top: 4mm; margin-top: 8mm; }
+  .ch h2, .ch h3, .route, .purpose { break-after: avoid; page-break-after: avoid; }
+  figure, .tips, dl, ol { break-inside: avoid; page-break-inside: avoid; }
   .ch h2 { font-size: 14pt; margin: 0 0 2mm; }
   .ch h3 { font-size: 10.5pt; margin: 5mm 0 2mm; }
   .route { font-size: 9pt; color: #7b8794; margin: 0 0 2mm; }
   .purpose { margin: 0; color: #3c4a57; }
   figure { margin: 4mm 0; border: 1px solid #dfe4e8; }
-  img { display: block; width: 100%; max-height: 105mm; object-fit: contain; }
+  img { display: block; width: 100%; max-height: 88mm; object-fit: contain; }
   ol, ul { margin: 0; padding-left: 6mm; }
   li { margin-bottom: 1.5mm; }
   .tips { background: #f6f8f9; border: 1px solid #dfe4e8; padding: 3mm 3mm 3mm 1mm; margin-top: 4mm; }
