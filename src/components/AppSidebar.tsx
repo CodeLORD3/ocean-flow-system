@@ -1,4 +1,5 @@
-import { Ruler,
+import {
+  CalendarOff, Ruler,
   Landmark,
   Building2,
   LayoutDashboard,
@@ -126,6 +127,7 @@ const financeNav = [
 const bookingNav = [
   { title: "Bokningssortiment", url: "/booking-assortment", icon: CalendarCheck },
   { title: "Bokningsinställningar", url: "/booking-settings", icon: Settings },
+  { title: "Helgdagskalender", url: "/booking-holidays", icon: CalendarOff },
   { title: "Spärrlista bokning", url: "/booking-blocklist", icon: ShieldOff },
 ];
 
