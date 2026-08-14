@@ -241,7 +241,7 @@ export function CustomerOrderRow({
             <span className="w-16 shrink-0 whitespace-nowrap border-r border-grid-line/70 px-2 font-mono text-[10px] tabular-nums text-muted-foreground">
               {itemsLabel}
             </span>
-            <span className="flex min-w-[6rem] flex-1 items-center gap-1.5 truncate border-r border-grid-line/70 px-2 font-semibold">
+            <span className="flex min-w-[10rem] flex-1 items-center gap-1.5 border-r border-grid-line/70 px-2 font-semibold">
               {order.is_web_order && (
                 <span
                   className="shrink-0 rounded-sm bg-primary/15 px-1 text-[10px] font-bold uppercase tracking-wide text-primary"
@@ -258,13 +258,23 @@ export function CustomerOrderRow({
                   Tel
                 </span>
               )}
-              <span className="truncate">{name}</span>
+              {/* Hela namnet ska alltid synas — därför ingen avklippning här. */}
+              <span className="whitespace-normal break-words leading-tight">{name}</span>
               {hasComment && (
                 <span className="shrink-0" title={`Kommentar: ${commentPreview}`}>
                   <MessageSquare
                     className="h-3.5 w-3.5 text-primary"
                     aria-label="Kommentar finns"
                   />
+                </span>
+              )}
+              {photoCount > 0 && (
+                <span
+                  className="flex shrink-0 items-center gap-0.5 font-mono text-[10px] tabular-nums text-muted-foreground"
+                  title={`${photoCount} interna bilder på beställningen`}
+                >
+                  <Camera className="h-3.5 w-3.5" aria-label="Bilder finns" />
+                  {photoCount}
                 </span>
               )}
             </span>
