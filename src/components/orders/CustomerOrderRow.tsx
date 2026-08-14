@@ -218,12 +218,12 @@ export function CustomerOrderRow({
           type="button"
           onClick={() => onToggle?.(order.id)}
           aria-expanded={isOpen}
-          className={`min-w-0 flex-1 px-3 py-2 text-left transition-colors ${tone.hover}`}
+          className={`min-w-0 flex-1 px-2.5 py-1.5 text-left transition-colors ${tone.hover}`}
         >
           {/* Desktop: fast kolumnraster. Mobil: två rader, kundnamnet störst. */}
-          <div className="hidden h-6 items-center gap-0 text-[13px] sm:flex">
+          <div className="hidden h-5 items-center gap-0 text-xs sm:flex">
             <span
-              className={`flex w-36 shrink-0 items-center gap-1.5 whitespace-nowrap border-r border-grid-line/70 pr-2 font-mono text-xs tabular-nums ${
+              className={`flex w-36 shrink-0 items-center gap-1.5 whitespace-nowrap border-r border-grid-line/70 pr-2 font-mono text-[11px] tabular-nums ${
                 cancelled ? "line-through" : ""
               }`}
             >
@@ -231,9 +231,8 @@ export function CustomerOrderRow({
               {time && <span className="font-semibold text-foreground">{time.trim()}</span>}
             </span>
 
-
-            <span className="w-16 shrink-0 border-r border-grid-line/70 px-2 font-mono tabular-nums text-muted-foreground">
-              {active.length} st
+            <span className="w-20 shrink-0 border-r border-grid-line/70 px-2 font-mono text-[11px] tabular-nums text-muted-foreground">
+              {itemsLabel}
             </span>
             <span className="flex min-w-[6rem] flex-1 items-center gap-1.5 truncate border-r border-grid-line/70 px-2 font-semibold">
               {order.is_web_order && (
@@ -253,6 +252,13 @@ export function CustomerOrderRow({
                 </span>
               )}
               <span className="truncate">{name}</span>
+              {hasComment && (
+                <MessageSquare
+                  className="h-3.5 w-3.5 shrink-0 text-primary"
+                  aria-label="Kommentar finns"
+                  title={`Kommentar: ${commentPreview}`}
+                />
+              )}
             </span>
 
             <span className="flex w-24 shrink-0 items-center gap-1 border-r border-grid-line/70 px-2">
@@ -262,56 +268,63 @@ export function CustomerOrderRow({
               )}
               {readOnly && <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />}
             </span>
-            <span className="w-24 shrink-0 px-2 text-right font-mono font-semibold tabular-nums">
+            <span className="w-24 shrink-0 px-2 text-right font-mono text-[11px] font-semibold tabular-nums">
               {nf(total, 2)}
             </span>
             <ChevronDown
-              className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${
+              className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${
                 isOpen ? "rotate-180" : ""
               }`}
             />
           </div>
 
           <div className="sm:hidden">
-            <div className="flex h-6 items-center gap-2">
+            <div className="flex h-5 items-center gap-2">
               {order.is_web_order && (
                 <span className="shrink-0 rounded-sm bg-primary/15 px-1 text-[10px] font-bold uppercase text-primary">
                   Webb
                 </span>
               )}
               <span
-                className={`min-w-0 flex-1 truncate text-base font-semibold leading-tight ${
+                className={`min-w-0 flex-1 truncate text-sm font-semibold leading-tight ${
                   cancelled ? "line-through" : ""
                 }`}
               >
                 {name}
               </span>
 
+              {hasComment && (
+                <MessageSquare
+                  className="h-3.5 w-3.5 shrink-0 text-primary"
+                  aria-label="Kommentar finns"
+                />
+              )}
               {hasAllergy && (
                 <AlertTriangle
-                  className="h-4 w-4 shrink-0 text-destructive"
+                  className="h-3.5 w-3.5 shrink-0 text-destructive"
                   aria-label="Allergi"
                 />
               )}
               {readOnly && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
-              <span className="font-mono text-sm font-semibold tabular-nums">
+              <span className="font-mono text-xs font-semibold tabular-nums">
                 {nf(total, 2)} kr
               </span>
               <ChevronDown
-                className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${
+                className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${
                   isOpen ? "rotate-180" : ""
                 }`}
               />
             </div>
 
-            <div className="mt-1 flex h-6 items-center gap-2 font-mono text-xs tabular-nums text-muted-foreground">
+            <div className="mt-0.5 flex h-5 items-center gap-2 font-mono text-[11px] tabular-nums text-muted-foreground">
               {statusChip}
               <span className="truncate">
                 {weekday(order.wanted_date)} {shortDate(order.wanted_date)}
-                {time} · {active.length} st
+                {time} · {itemsLabel}
               </span>
             </div>
           </div>
+
 
         </button>
       </div>
