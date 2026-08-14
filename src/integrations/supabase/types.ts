@@ -318,6 +318,84 @@ export type Database = {
           },
         ]
       }
+      booking_guard_events: {
+        Row: {
+          created_at: string
+          detail: string | null
+          id: string
+          ip: string | null
+          kind: string
+          phone_normalized: string | null
+        }
+        Insert: {
+          created_at?: string
+          detail?: string | null
+          id?: string
+          ip?: string | null
+          kind: string
+          phone_normalized?: string | null
+        }
+        Update: {
+          created_at?: string
+          detail?: string | null
+          id?: string
+          ip?: string | null
+          kind?: string
+          phone_normalized?: string | null
+        }
+        Relationships: []
+      }
+      booking_otp: {
+        Row: {
+          attempts: number
+          code_hash: string
+          created_at: string
+          created_ip: string | null
+          expires_at: string
+          id: string
+          phone_normalized: string
+          verified_at: string | null
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          created_at?: string
+          created_ip?: string | null
+          expires_at: string
+          id?: string
+          phone_normalized: string
+          verified_at?: string | null
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          created_at?: string
+          created_ip?: string | null
+          expires_at?: string
+          id?: string
+          phone_normalized?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
+      booking_rate_limits: {
+        Row: {
+          count: number
+          key: string
+          window_start: string
+        }
+        Insert: {
+          count?: number
+          key: string
+          window_start: string
+        }
+        Update: {
+          count?: number
+          key?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       bug_report_states: {
         Row: {
           created_at: string
@@ -1588,6 +1666,7 @@ export type Database = {
           allergy_note: string | null
           archived_at: string | null
           archived_by: string | null
+          booked_by_staff_id: string | null
           cancelled_at: string | null
           cancelled_reason: string | null
           cancelled_source: string | null
@@ -1613,6 +1692,7 @@ export type Database = {
           pack_status: string
           packed_at: string | null
           paid_total: number | null
+          phone_verified_at: string | null
           price_locked: boolean
           received_by: string | null
           received_by_name: string | null
@@ -1633,6 +1713,7 @@ export type Database = {
           allergy_note?: string | null
           archived_at?: string | null
           archived_by?: string | null
+          booked_by_staff_id?: string | null
           cancelled_at?: string | null
           cancelled_reason?: string | null
           cancelled_source?: string | null
@@ -1658,6 +1739,7 @@ export type Database = {
           pack_status?: string
           packed_at?: string | null
           paid_total?: number | null
+          phone_verified_at?: string | null
           price_locked?: boolean
           received_by?: string | null
           received_by_name?: string | null
@@ -1678,6 +1760,7 @@ export type Database = {
           allergy_note?: string | null
           archived_at?: string | null
           archived_by?: string | null
+          booked_by_staff_id?: string | null
           cancelled_at?: string | null
           cancelled_reason?: string | null
           cancelled_source?: string | null
@@ -1703,6 +1786,7 @@ export type Database = {
           pack_status?: string
           packed_at?: string | null
           paid_total?: number | null
+          phone_verified_at?: string | null
           price_locked?: boolean
           received_by?: string | null
           received_by_name?: string | null
@@ -1817,6 +1901,7 @@ export type Database = {
       customers_retail: {
         Row: {
           anonymized_at: string | null
+          booking_blocked: boolean
           city: string | null
           company_name: string | null
           contact_reference: string | null
@@ -1832,6 +1917,7 @@ export type Database = {
           legal_entity_id: string | null
           name: string
           name_review_needed: boolean
+          no_show_count: number
           note: string | null
           org_number: string | null
           phone: string | null
@@ -1846,6 +1932,7 @@ export type Database = {
         }
         Insert: {
           anonymized_at?: string | null
+          booking_blocked?: boolean
           city?: string | null
           company_name?: string | null
           contact_reference?: string | null
@@ -1861,6 +1948,7 @@ export type Database = {
           legal_entity_id?: string | null
           name: string
           name_review_needed?: boolean
+          no_show_count?: number
           note?: string | null
           org_number?: string | null
           phone?: string | null
@@ -1875,6 +1963,7 @@ export type Database = {
         }
         Update: {
           anonymized_at?: string | null
+          booking_blocked?: boolean
           city?: string | null
           company_name?: string | null
           contact_reference?: string | null
@@ -1890,6 +1979,7 @@ export type Database = {
           legal_entity_id?: string | null
           name?: string
           name_review_needed?: boolean
+          no_show_count?: number
           note?: string | null
           org_number?: string | null
           phone?: string | null
@@ -5692,6 +5782,11 @@ export type Database = {
           allergens: string[]
           allergens_checked: boolean
           barcode: string | null
+          bookable_online: boolean
+          booking_circa_price: number | null
+          booking_display_name: string | null
+          booking_lead_days: number
+          booking_step: number | null
           catch_weight: boolean
           category: string
           cost_price: number
@@ -5737,6 +5832,11 @@ export type Database = {
           allergens?: string[]
           allergens_checked?: boolean
           barcode?: string | null
+          bookable_online?: boolean
+          booking_circa_price?: number | null
+          booking_display_name?: string | null
+          booking_lead_days?: number
+          booking_step?: number | null
           catch_weight?: boolean
           category: string
           cost_price?: number
@@ -5782,6 +5882,11 @@ export type Database = {
           allergens?: string[]
           allergens_checked?: boolean
           barcode?: string | null
+          bookable_online?: boolean
+          booking_circa_price?: number | null
+          booking_display_name?: string | null
+          booking_lead_days?: number
+          booking_step?: number | null
           catch_weight?: boolean
           category?: string
           cost_price?: number
@@ -6901,6 +7006,50 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_log: {
+        Row: {
+          cost: number | null
+          created_at: string
+          customer_order_id: string | null
+          error: string | null
+          id: string
+          phone_normalized: string
+          provider_id: string | null
+          status: string
+          type: string
+        }
+        Insert: {
+          cost?: number | null
+          created_at?: string
+          customer_order_id?: string | null
+          error?: string | null
+          id?: string
+          phone_normalized: string
+          provider_id?: string | null
+          status: string
+          type: string
+        }
+        Update: {
+          cost?: number | null
+          created_at?: string
+          customer_order_id?: string | null
+          error?: string | null
+          id?: string
+          phone_normalized?: string
+          provider_id?: string | null
+          status?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_log_customer_order_id_fkey"
+            columns: ["customer_order_id"]
+            isOneToOne: false
+            referencedRelation: "customer_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       species_cut_models: {
         Row: {
           created_at: string
@@ -7855,6 +8004,8 @@ export type Database = {
         Row: {
           active: boolean
           address: string | null
+          booking_closed_message: string | null
+          booking_open: boolean
           city: string
           country: string
           created_at: string | null
@@ -7878,6 +8029,8 @@ export type Database = {
         Insert: {
           active?: boolean
           address?: string | null
+          booking_closed_message?: string | null
+          booking_open?: boolean
           city: string
           country: string
           created_at?: string | null
@@ -7901,6 +8054,8 @@ export type Database = {
         Update: {
           active?: boolean
           address?: string | null
+          booking_closed_message?: string | null
+          booking_open?: boolean
           city?: string
           country?: string
           created_at?: string | null
@@ -9497,6 +9652,7 @@ export type Database = {
         Args: { _exempt: boolean; _hs_code: string }
         Returns: boolean
       }
+      purge_booking_otp: { Args: never; Returns: number }
       rebuild_stock_from_movements: { Args: never; Returns: Json }
       recalc_product_day_price: {
         Args: { _product_id: string }
