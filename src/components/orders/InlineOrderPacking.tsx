@@ -204,7 +204,7 @@ export function InlineOrderPacking({
                   {name}
                 </span>
                 <span className="w-24 shrink-0 text-right font-mono text-xs tabular-nums">
-                  {nf(l.quantity_packed ?? l.quantity_ordered, 3)} {l.unit}
+                  {qtyText(l.quantity_packed ?? l.quantity_ordered, l.unit)} {l.unit}
                 </span>
                 <span className="hidden w-20 shrink-0 text-right font-mono text-xs tabular-nums text-muted-foreground sm:block">
                   {l.price_per_unit != null || l.estimated_price_per_unit != null
@@ -220,7 +220,7 @@ export function InlineOrderPacking({
                   l.quantity_packed != null &&
                   Math.abs(Number(l.quantity_packed) - Number(l.paid_quantity)) > 0.001 && (
                     <Badge variant="outline" className="shrink-0 text-[10px] text-amber-600">
-                      Betald {nf(l.paid_quantity, 3)} {l.unit}
+                      Betald {qtyText(l.paid_quantity, l.unit)} {l.unit}
                     </Badge>
                   )}
                 {l.pack_status !== "opackad" && (
