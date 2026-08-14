@@ -28,6 +28,7 @@ import {
 } from "@/lib/customerOrders";
 import { CustomerOrderWizard } from "@/components/orders/CustomerOrderWizard";
 import { CustomerOrderRow, CustomerOrderRowHeader } from "@/components/orders/CustomerOrderRow";
+import { useEntityImageCounts } from "@/hooks/useEntityImages";
 import { ViewSelector, SavedView } from "@/components/shell/ViewSelector";
 import { StatusBar } from "@/components/shell/StatusBar";
 
@@ -207,6 +208,11 @@ export default function CustomerOrders() {
   );
   const allMarked = viewOrders.length > 0 && markedOrders.length === viewOrders.length;
   const markAll = (next: boolean) => setMarked(next ? viewOrders.map((o) => o.id) : []);
+  /* Antal interna bilder per order, hämtas i en fråga för hela listan. */
+  const { data: photoCounts } = useEntityImageCounts(
+    "customer_order",
+    useMemo(() => viewOrders.map((o) => o.id), [viewOrders]),
+  );
   /** Antal aktiva filter, visas som badge på filterknappen. */
   const activeFilters =
     (status !== "all" ? 1 : 0) +
@@ -536,6 +542,7 @@ export default function CustomerOrders() {
                             onToggle={toggleRow}
                             selected={marked.includes(o.id)}
                             onSelect={toggleMark}
+                            photoCount={photoCounts?.[o.id] ?? 0}
                           />
                         ))}
                       </div>

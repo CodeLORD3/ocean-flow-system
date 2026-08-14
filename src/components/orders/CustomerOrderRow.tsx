@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ImageIcon } from "lucide-react";
+import { ImageIcon, Camera } from "lucide-react";
 import {
   ChevronDown,
   Lock,
@@ -145,6 +145,7 @@ export function CustomerOrderRow({
   onToggle,
   selected,
   onSelect,
+  photoCount = 0,
 }: {
   order: CustomerOrder;
   canEdit?: boolean;
@@ -154,6 +155,8 @@ export function CustomerOrderRow({
   onToggle?: (id: string) => void;
   selected?: boolean;
   onSelect?: (id: string, next: boolean) => void;
+  /** Antal interna bilder på beställningen, visas som kameraikon på namnraden. */
+  photoCount?: number;
 }) {
   const [editing, setEditing] = useState(false);
   const [showMore, setShowMore] = useState(false);
@@ -225,7 +228,7 @@ export function CustomerOrderRow({
           className={`min-w-0 flex-1 px-2.5 py-1.5 text-left transition-colors ${tone.hover}`}
         >
           {/* Desktop: fast kolumnraster. Mobil: två rader, kundnamnet störst. */}
-          <div className="hidden h-5 items-center gap-0 text-xs sm:flex">
+          <div className="hidden min-h-5 items-center gap-0 text-xs sm:flex">
             <span
               className={`flex w-36 shrink-0 items-center gap-1.5 whitespace-nowrap border-r border-grid-line/70 pr-2 font-mono text-[11px] tabular-nums ${
                 cancelled ? "line-through" : ""
@@ -238,7 +241,7 @@ export function CustomerOrderRow({
             <span className="w-16 shrink-0 whitespace-nowrap border-r border-grid-line/70 px-2 font-mono text-[10px] tabular-nums text-muted-foreground">
               {itemsLabel}
             </span>
-            <span className="flex min-w-[6rem] flex-1 items-center gap-1.5 truncate border-r border-grid-line/70 px-2 font-semibold">
+            <span className="flex min-w-[10rem] flex-1 items-center gap-1.5 border-r border-grid-line/70 px-2 font-semibold">
               {order.is_web_order && (
                 <span
                   className="shrink-0 rounded-sm bg-primary/15 px-1 text-[10px] font-bold uppercase tracking-wide text-primary"
@@ -255,13 +258,23 @@ export function CustomerOrderRow({
                   Tel
                 </span>
               )}
-              <span className="truncate">{name}</span>
+              {/* Hela namnet ska alltid synas — därför ingen avklippning här. */}
+              <span className="whitespace-normal break-words leading-tight">{name}</span>
               {hasComment && (
                 <span className="shrink-0" title={`Kommentar: ${commentPreview}`}>
                   <MessageSquare
                     className="h-3.5 w-3.5 text-primary"
                     aria-label="Kommentar finns"
                   />
+                </span>
+              )}
+              {photoCount > 0 && (
+                <span
+                  className="flex shrink-0 items-center gap-0.5 font-mono text-[10px] tabular-nums text-muted-foreground"
+                  title={`${photoCount} interna bilder på beställningen`}
+                >
+                  <Camera className="h-3.5 w-3.5" aria-label="Bilder finns" />
+                  {photoCount}
                 </span>
               )}
             </span>
@@ -287,14 +300,14 @@ export function CustomerOrderRow({
           </div>
 
           <div className="sm:hidden">
-            <div className="flex h-5 items-center gap-2">
+            <div className="flex min-h-5 items-center gap-2">
               {order.is_web_order && (
                 <span className="shrink-0 rounded-sm bg-primary/15 px-1 text-[10px] font-bold uppercase text-primary">
                   Webb
                 </span>
               )}
               <span
-                className={`min-w-0 flex-1 truncate text-sm font-semibold leading-tight ${
+                className={`min-w-0 flex-1 whitespace-normal break-words text-sm font-semibold leading-tight ${
                   cancelled ? "line-through" : ""
                 }`}
               >
@@ -306,6 +319,12 @@ export function CustomerOrderRow({
                   className="h-3.5 w-3.5 shrink-0 text-primary"
                   aria-label="Kommentar finns"
                 />
+              )}
+              {photoCount > 0 && (
+                <span className="flex shrink-0 items-center gap-0.5 font-mono text-[10px] tabular-nums text-muted-foreground">
+                  <Camera className="h-3.5 w-3.5" aria-label="Bilder finns" />
+                  {photoCount}
+                </span>
               )}
               {hasAllergy && (
                 <AlertTriangle
@@ -443,35 +462,6 @@ export function CustomerOrderRow({
             <span className="font-mono text-sm font-semibold tabular-nums">{nf(total, 2)} kr</span>
           </div>
 
-          {/* Interna bilder på beställningen — syns aldrig på utskrifter. */}
-          <div className="rounded-sm border border-grid-line bg-card p-2">
-            <button
-              type="button"
-              onClick={() => setShowPhotos((v) => !v)}
-              className="flex w-full items-center justify-between gap-2 text-xs font-semibold text-foreground"
-            >
-              <span className="flex items-center gap-1.5">
-                <ImageIcon className="h-3.5 w-3.5 text-primary" /> Bilder på beställningen
-                <span className="font-normal text-muted-foreground">(internt)</span>
-              </span>
-              <span className="text-primary underline-offset-2 hover:underline">
-                {showPhotos ? "Stäng" : "Öppna"}
-              </span>
-            </button>
-            {showPhotos && (
-              <div className="mt-2">
-                <EntityImageGallery
-                  entityType="customer_order"
-                  entityId={order.id}
-                  title=""
-                  description="Interna bilder, t.ex. packad vara eller var beställningen står. Kommer inte med på utskrifter."
-                  editable={!readOnly}
-                  columnsClassName="grid-cols-3 sm:grid-cols-4"
-                />
-              </div>
-            )}
-          </div>
-
           <button
             type="button"
             onClick={() => setShowMore((v) => !v)}
@@ -483,7 +473,42 @@ export function CustomerOrderRow({
 
           {showMore && (
             <div className="space-y-2.5">
+              {/* Interna bilder på beställningen — syns aldrig på utskrifter. */}
+              <div className="rounded-sm border border-grid-line bg-card p-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPhotos((v) => !v)}
+                  className="flex w-full items-center justify-between gap-2 text-xs font-semibold text-foreground"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <ImageIcon className="h-3.5 w-3.5 text-primary" /> Bilder på beställningen
+                    {photoCount > 0 && (
+                      <span className="font-mono tabular-nums text-muted-foreground">
+                        ({photoCount})
+                      </span>
+                    )}
+                    <span className="font-normal text-muted-foreground">(internt)</span>
+                  </span>
+                  <span className="text-primary underline-offset-2 hover:underline">
+                    {showPhotos ? "Stäng" : "Öppna"}
+                  </span>
+                </button>
+                {showPhotos && (
+                  <div className="mt-2">
+                    <EntityImageGallery
+                      entityType="customer_order"
+                      entityId={order.id}
+                      title=""
+                      description="Interna bilder, t.ex. packad vara eller var beställningen står. Kommer inte med på utskrifter."
+                      editable={!readOnly}
+                      columnsClassName="grid-cols-3 sm:grid-cols-4"
+                    />
+                  </div>
+                )}
+              </div>
+
               <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+
                 <Badge variant="outline" className="text-[10px]">
                   {ORDER_STATUS_LABELS[order.status] ?? order.status}
                 </Badge>
