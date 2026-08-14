@@ -241,7 +241,7 @@ export function CustomerOrderRow({
             <span className="w-16 shrink-0 whitespace-nowrap border-r border-grid-line/70 px-2 font-mono text-[10px] tabular-nums text-muted-foreground">
               {itemsLabel}
             </span>
-            <span className="flex min-w-[10rem] flex-1 items-center gap-1.5 border-r border-grid-line/70 px-2 font-semibold">
+            <span className="flex min-w-[10rem] shrink-0 flex-1 items-center gap-1.5 whitespace-nowrap border-r border-grid-line/70 px-2 font-semibold">
               {order.is_web_order && (
                 <span
                   className="shrink-0 rounded-sm bg-primary/15 px-1 text-[10px] font-bold uppercase tracking-wide text-primary"
