@@ -300,14 +300,14 @@ export function CustomerOrderRow({
           </div>
 
           <div className="sm:hidden">
-            <div className="flex h-5 items-center gap-2">
+            <div className="flex min-h-5 items-center gap-2">
               {order.is_web_order && (
                 <span className="shrink-0 rounded-sm bg-primary/15 px-1 text-[10px] font-bold uppercase text-primary">
                   Webb
                 </span>
               )}
               <span
-                className={`min-w-0 flex-1 truncate text-sm font-semibold leading-tight ${
+                className={`min-w-0 flex-1 whitespace-normal break-words text-sm font-semibold leading-tight ${
                   cancelled ? "line-through" : ""
                 }`}
               >
@@ -319,6 +319,12 @@ export function CustomerOrderRow({
                   className="h-3.5 w-3.5 shrink-0 text-primary"
                   aria-label="Kommentar finns"
                 />
+              )}
+              {photoCount > 0 && (
+                <span className="flex shrink-0 items-center gap-0.5 font-mono text-[10px] tabular-nums text-muted-foreground">
+                  <Camera className="h-3.5 w-3.5" aria-label="Bilder finns" />
+                  {photoCount}
+                </span>
               )}
               {hasAllergy && (
                 <AlertTriangle
