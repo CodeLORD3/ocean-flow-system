@@ -29,6 +29,7 @@ const overviewNav = [
   { title: "Checklista", url: "/checklist", icon: ClipboardCheck },
   { title: "Egenkontroll", url: "/food-safety", icon: ClipboardCheck },
   { title: "Kundbeställningar", url: "/customer-orders", icon: ClipboardList },
+  { title: "Bokningsinställningar", url: "/booking-settings", icon: SlidersHorizontal },
 ];
 
 const calendarNav = [

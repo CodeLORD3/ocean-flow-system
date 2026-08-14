@@ -37,6 +37,8 @@ import { Ruler,
   Activity,
   CookingPot,
   Globe,
+  CalendarCheck,
+  ShieldOff,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
 import { NavLink } from "@/components/NavLink";
@@ -121,6 +123,12 @@ const financeNav = [
   { title: "Prognoser", url: "/forecasts", icon: TrendingUp },
 ];
 
+const bookingNav = [
+  { title: "Bokningssortiment", url: "/booking-assortment", icon: CalendarCheck },
+  { title: "Bokningsinställningar", url: "/booking-settings", icon: Settings },
+  { title: "Spärrlista bokning", url: "/booking-blocklist", icon: ShieldOff },
+];
+
 const bottomNav = [
   { title: "Inloggningssida", url: "/landing-settings", icon: LogIn },
   { title: "Revision & Logg", url: "/audit", icon: ClipboardList },
@@ -141,6 +149,7 @@ const sections: NavSection[] = [
   { label: "Personal", items: staffNav, collapsible: true },
   { label: "Organisation", items: orgNav, collapsible: true },
   { label: "Ekonomi & Rapporter", items: financeNav, collapsible: true },
+  { label: "Bokningssidan", items: bookingNav, collapsible: true },
 ];
 
 const OPEN_KEY = "admin-sidebar-open-sections";

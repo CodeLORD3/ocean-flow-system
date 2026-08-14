@@ -72,6 +72,11 @@ export const ROUTE_ACCESS: Record<string, SiteMode[]> = {
   "/finance": all(GROSSIST, ADMIN),
   "/forecasts": all(GROSSIST, ADMIN),
 
+  // Bokningssidan (bokafiskskaldjur.se)
+  "/booking-settings": all(BUTIK, ADMIN),
+  "/booking-assortment": ADMIN,
+  "/booking-blocklist": ADMIN,
+
   // Endast Admin
   "/stores": ADMIN,
   "/live-staff": ADMIN,

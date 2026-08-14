@@ -68,6 +68,9 @@ import ExternalProduction from "@/pages/ExternalProduction";
 import WasteReports from "@/pages/WasteReports";
 import CustomerOrders from "@/pages/CustomerOrders";
 import TraceabilityPage from "@/pages/TraceabilityPage";
+import BookingAssortment from "@/pages/BookingAssortment";
+import BookingSettings from "@/pages/BookingSettings";
+import BookingBlocklist from "@/pages/BookingBlocklist";
 import { NoAccessView } from "@/components/NoAccessView";
 import { useSite } from "@/contexts/SiteContext";
 import { canAccessRoute } from "@/lib/pageAccess";
@@ -142,6 +145,9 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/external-production": { component: <ExternalProduction /> },
 
   "/traceability": { component: <TraceabilityPage /> },
+  "/booking-assortment": { component: <BookingAssortment /> },
+  "/booking-settings": { component: <BookingSettings /> },
+  "/booking-blocklist": { component: <BookingBlocklist /> },
 };
 
 /**
