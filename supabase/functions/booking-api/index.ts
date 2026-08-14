@@ -204,9 +204,9 @@ async function catalog(db: SupabaseClient, storeId: string | null) {
       id: p.id,
       name: p.booking_display_name || p.name,
       circa_price:
-        p.booking_circa_price != null
+        Number(p.booking_circa_price) > 0
           ? Number(p.booking_circa_price)
-          : p.day_price != null
+          : Number(p.day_price) > 0
             ? Number(p.day_price)
             : null,
       unit: p.unit,
