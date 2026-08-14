@@ -259,7 +259,7 @@ export function CustomerOrderRow({
                 </span>
               )}
               {/* Hela namnet ska alltid synas — därför ingen avklippning här. */}
-              <span className="whitespace-normal break-words leading-tight">{name}</span>
+              <span className="whitespace-nowrap leading-tight">{name}</span>
               {hasComment && (
                 <span className="shrink-0" title={`Kommentar: ${commentPreview}`}>
                   <MessageSquare
@@ -307,7 +307,7 @@ export function CustomerOrderRow({
                 </span>
               )}
               <span
-                className={`min-w-0 flex-1 whitespace-normal break-words text-sm font-semibold leading-tight ${
+                className={`min-w-0 flex-1 whitespace-nowrap text-sm font-semibold leading-tight ${
                   cancelled ? "line-through" : ""
                 }`}
               >
