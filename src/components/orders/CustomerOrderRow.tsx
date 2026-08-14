@@ -43,6 +43,11 @@ import { EntityImageGallery } from "@/components/images/EntityImageGallery";
 const nf = (v: unknown, d = 1) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
 
+/** Vikt visas med en decimal på kilo och utan decimal på styck. */
+const qtyText = (v: unknown, unit?: string | null) =>
+  nf(v, String(unit ?? "").toLowerCase().startsWith("st") ? 0 : 1);
+
+
 /** Veckodag på svenska, t.ex. "Lör". */
 const weekday = (iso: string) => {
   const s = new Date(iso + "T00:00:00").toLocaleDateString("sv-SE", { weekday: "short" });
@@ -241,7 +246,7 @@ export function CustomerOrderRow({
             <span className="w-16 shrink-0 whitespace-nowrap border-r border-grid-line/70 px-2 font-mono text-[10px] tabular-nums text-muted-foreground">
               {itemsLabel}
             </span>
-            <span className="flex min-w-[10rem] shrink-0 flex-1 items-center gap-1.5 whitespace-nowrap border-r border-grid-line/70 px-2 font-semibold">
+            <span className="flex min-w-[14rem] shrink-0 flex-1 items-center gap-2 whitespace-nowrap border-r border-grid-line/70 pl-3 pr-5 font-semibold">
               {order.is_web_order && (
                 <span
                   className="shrink-0 rounded-sm bg-primary/15 px-1 text-[10px] font-bold uppercase tracking-wide text-primary"
@@ -425,7 +430,7 @@ export function CustomerOrderRow({
                       {LINE_PACK_LABELS[l.pack_status] ?? l.pack_status}
                     </Badge>
                     <span className="font-mono tabular-nums">
-                      {nf(l.quantity_packed ?? l.quantity_ordered, 3)} {l.unit}
+                      {qtyText(l.quantity_packed ?? l.quantity_ordered, l.unit)} {l.unit}
                     </span>
                     {l.note && (
                       <span className="w-full text-[11px] text-muted-foreground">{l.note}</span>
@@ -754,7 +759,7 @@ export function CustomerOrderRowHeader({
       <span className="flex min-w-0 flex-1 items-center px-2.5 py-1">
         <span className="w-36 shrink-0 border-r border-grid-line pr-2">Datum</span>
         <span className="w-16 shrink-0 border-r border-grid-line px-2">Art.</span>
-        <span className="min-w-[6rem] flex-1 border-r border-grid-line px-2">Kund</span>
+        <span className="min-w-[14rem] flex-1 border-r border-grid-line pl-3 pr-5">Kund</span>
         <span className="w-24 shrink-0 border-r border-grid-line px-2">Status</span>
         <span className="w-24 shrink-0 border-r border-grid-line px-2 text-right">Summa (kr)</span>
         <span className="w-28 shrink-0 px-2">Butik</span>
