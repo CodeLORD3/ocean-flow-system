@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, CheckCircle2, DownloadCloud, Globe, RefreshCw, WifiOff } from "lucide-react";
+import { AlertTriangle, CheckCircle2, DownloadCloud, Globe, Link2, RefreshCw, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 
 /**
@@ -118,6 +118,35 @@ export default function ShopifyWebhookStatus() {
     }
   };
 
+  /** OAuth-status: finns en giltig Admin-token för butiken? */
+  const oauth = useQuery({
+    queryKey: ["shopify-oauth-status"],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("shopify-oauth/status");
+      if (error) throw error;
+      return data as any;
+    },
+    retry: false,
+  });
+
+  /** Startar OAuth: hämtar authorize-URL och öppnar Shopifys godkännande. */
+  const connect = async () => {
+    setBusy("oauth");
+    try {
+      const { data, error } = await supabase.functions.invoke("shopify-oauth/start", { body: {} });
+      if (error) throw error;
+      const r = data as any;
+      if (!r?.authorize_url) throw new Error(r?.error ?? "Kunde inte starta anslutningen");
+      window.open(r.authorize_url, "_blank", "noopener");
+      toast.info("Godkänn appen i Shopify-fönstret, kom sedan tillbaka hit.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Kunde inte starta anslutningen");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+
   const rows = events.data || [];
   const failed = rows.filter((e) => e.status === "fel");
   const queued = rows.filter((e) => e.status === "koad" || e.status === "bearbetar");
@@ -146,15 +175,26 @@ export default function ShopifyWebhookStatus() {
           )}
           <Globe className="h-4 w-4" /> Webbordrar från Shopify
           <Button
-            variant="outline"
+            variant={oauth.data?.connected ? "ghost" : "default"}
             size="sm"
             className="ml-auto h-6 text-xs"
+            disabled={busy === "oauth"}
+            onClick={connect}
+          >
+            <Link2 className={`mr-1 h-3 w-3 ${busy === "oauth" ? "animate-pulse" : ""}`} />
+            {oauth.data?.connected ? "Anslut Shopify igen" : "Anslut Shopify"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-6 text-xs"
             disabled={busy === "backfill"}
             onClick={backfill}
           >
             <DownloadCloud className={`mr-1 h-3 w-3 ${busy === "backfill" ? "animate-pulse" : ""}`} />
             Hämta öppna ordrar från Shopify
           </Button>
+
           <Button asChild variant="ghost" size="sm" className="h-6 text-xs">
             <Link to="/shopify">Öppna webbordrar</Link>
           </Button>

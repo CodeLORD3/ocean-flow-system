@@ -14,6 +14,12 @@
  * Hemligheter: SHOPIFY_ADMIN_TOKEN och SHOPIFY_SHOP_DOMAIN — aldrig i koden.
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import {
+  SHOPIFY_API_VERSION,
+  configuredShop,
+  getAdminToken,
+  shopDomain,
+} from "../_shared/shopify-admin.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,14 +41,7 @@ function service(): SupabaseClient {
   );
 }
 
-const API_VERSION = "2024-10";
-
-/** Normaliserar butiksdomänen: "min-butik" → "min-butik.myshopify.com". */
-function shopDomain(raw: string): string {
-  let d = raw.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-  if (!d.includes(".")) d = `${d}.myshopify.com`;
-  return d;
-}
+const API_VERSION = SHOPIFY_API_VERSION;
 
 /** Nästa sida ur Shopifys Link-huvud (cursor-paginering). */
 function nextPageInfo(link: string | null): string | null {
@@ -56,6 +55,7 @@ function nextPageInfo(link: string | null): string | null {
   return null;
 }
 
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ ok: false, error: "Endast POST" }, 405);
@@ -67,22 +67,6 @@ Deno.serve(async (req) => {
   const { data: userData } = await db.auth.getUser(auth.replace(/^Bearer\s+/i, ""));
   if (!userData?.user) return json({ ok: false, error: "Inloggning krävs" }, 401);
 
-  // Token kan ligga under endera namnet; värdet läses bara från miljön.
-  const token =
-    Deno.env.get("SHOPIFY_ADMIN_TOKEN") ?? Deno.env.get("SHOPIFY_ACCESS_TOKEN") ?? "";
-  const domainRaw = Deno.env.get("SHOPIFY_SHOP_DOMAIN") ?? "";
-  if (!token || !domainRaw) {
-    return json(
-      {
-        ok: false,
-        error:
-          "Shopify-token (SHOPIFY_ADMIN_TOKEN/SHOPIFY_ACCESS_TOKEN) och SHOPIFY_SHOP_DOMAIN måste finnas som hemligheter innan backfyllnaden kan köras",
-      },
-      400,
-    );
-  }
-  const domain = shopDomain(domainRaw);
-
   let body: any = {};
   try {
     body = req.body ? await req.json() : {};
@@ -90,6 +74,25 @@ Deno.serve(async (req) => {
     body = {};
   }
   const maxPages = Math.min(Math.max(Number(body?.max_pages ?? 10), 1), 50);
+
+  /* ---- Token: OAuth-token för butiken, annars äldre shpat_-hemlighet ---- */
+  const domain = shopDomain(body?.shop || configuredShop());
+  if (!domain) {
+    return json({ ok: false, error: "SHOPIFY_SHOP_DOMAIN måste finnas som hemlighet" }, 400);
+  }
+  const token = await getAdminToken(db, domain);
+  if (!token) {
+    return json(
+      {
+        ok: false,
+        error:
+          'Ingen Admin-token finns för butiken. Anslut Shopify via OAuth (knappen "Anslut Shopify") först.',
+        needs_oauth: true,
+      },
+      400,
+    );
+  }
+
 
   const result = {
     ok: true,
