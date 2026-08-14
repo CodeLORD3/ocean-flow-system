@@ -482,17 +482,17 @@ async function sendCode(db: SupabaseClient, body: any, ip: string) {
   // Botfiltret körs FÖRE utskicket: inget SMS, tyst normalt svar.
   if (honeypotFilled || tooFast) {
     await guard(db, honeypotFilled ? "honeypot" : "tidsfalla", honeypotFilled ? "ifyllt dolt fält" : "submit under 3 sekunder", phone, ip);
-    return { ok: true, sent: true };
+    return { ok: true, sent: true, test_mode: smsTestMode() };
   }
   if (!phone) throw new Error(PHONE_ERROR);
 
   if (await overLimit(db, `ip:${ip}`, HOUR, 10)) {
     await guard(db, "rate_limit_ip", "över 10 kodutskick per timme", phone, ip);
-    return { ok: true, sent: true };
+    return { ok: true, sent: true, test_mode: smsTestMode() };
   }
   if (await overLimit(db, `phone:${phone}`, DAY, 5)) {
     await guard(db, "rate_limit_phone", "över 5 kodutskick per dygn", phone, ip);
-    return { ok: true, sent: true };
+    return { ok: true, sent: true, test_mode: smsTestMode() };
   }
 
   const { data: blocked } = await db
@@ -503,7 +503,9 @@ async function sendCode(db: SupabaseClient, body: any, ip: string) {
     .limit(1);
   if (blocked?.length) {
     await guard(db, "sparrlista", "spärrat nummer bad om kod", phone, ip);
-    return { ok: true, sent: true }; // inget läckage om vilka nummer som är spärrade
+    // Svaret är byte för byte identiskt med ett lyckat utskick — inget läckage
+    // om vilka nummer som är spärrade.
+    return { ok: true, sent: true, test_mode: smsTestMode() };
   }
 
   const code = String(Math.floor(100000 + Math.random() * 900000));
@@ -641,6 +643,11 @@ Deno.serve(async (req) => {
     const message = e instanceof Error ? e.message : "Något gick fel. Ring gärna butiken.";
     const status = e instanceof AuthError ? 401 : 400;
     console.error("booking-api", action, message);
+    // Misslyckade bokningsförsök loggas så att Systemstatus kan larma på dem.
+    if (action === "create-booking" || action === "staff-booking") {
+      await guard(db, `bokning_misslyckad_${action === "staff-booking" ? "telefon" : "webb"}`, message.slice(0, 300), null, ip)
+        .catch(() => { /* loggen får aldrig sänka svaret till kunden */ });
+    }
     return new Response(JSON.stringify({ ok: false, error: message }), { status, headers });
   }
 });

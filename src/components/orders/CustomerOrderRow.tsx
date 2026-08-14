@@ -8,6 +8,8 @@ import {
   Pencil,
   Printer,
   Download,
+  UserX,
+  Undo2,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +19,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useUpdateCustomerOrder, useArchiveCustomerOrder } from "@/hooks/useCustomerOrders";
+import { useMarkNoShow } from "@/hooks/useBookingAdmin";
 import {
   CustomerOrder,
   ORDER_STATUS_LABELS,
@@ -151,6 +154,7 @@ export function CustomerOrderRow({
   const [editing, setEditing] = useState(false);
   const updateOrder = useUpdateCustomerOrder();
   const archiveOrder = useArchiveCustomerOrder();
+  const markNoShow = useMarkNoShow();
   const isArchived = !!order.archived_at;
   const isOpen = !!open;
   const name = order.customers_retail?.name || order.customer_name_snapshot || "Kund";
@@ -169,6 +173,11 @@ export function CustomerOrderRow({
   const time = order.wanted_time ? ` ${order.wanted_time.slice(0, 5)}` : "";
 
   const packedAlarm = cancelled && !!order.cancelled_was_packed;
+
+  /* Förbokning: telefonvägen har personal som bokare och saknar verifierad kod. */
+  const isBooking = !!order.phone_verified_at || !!order.booked_by_staff_id;
+  const phoneBooked = !!order.booked_by_staff_id && !order.phone_verified_at;
+  const noShow = !!order.no_show_at;
 
   const statusChip = (
     <span
@@ -223,6 +232,14 @@ export function CustomerOrderRow({
                   title="Ny webborder från Shopify"
                 >
                   Webb
+                </span>
+              )}
+              {phoneBooked && (
+                <span
+                  className="shrink-0 rounded-sm bg-muted px-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground"
+                  title="Bokad per telefon av butikspersonal — numret är inte verifierat med kod"
+                >
+                  Tel
                 </span>
               )}
               <span className="truncate">{name}</span>
@@ -332,6 +349,13 @@ export function CustomerOrderRow({
                 {order.price_locked && <Badge variant="outline">Låsta priser</Badge>}
               </>
             )}
+            {phoneBooked && (
+              <Badge variant="outline" title="Bokad per telefon av butikspersonal, numret är inte verifierat med kod">
+                Bokad per telefon
+              </Badge>
+            )}
+            {isBooking && !phoneBooked && <Badge variant="outline">Förbokning, kod verifierad</Badge>}
+            {noShow && <Badge variant="destructive">Uteblev</Badge>}
             {order.wanted_time_window && (
               <Badge variant="outline" className="font-mono tabular-nums">
                 {order.wanted_time_window}
@@ -514,6 +538,32 @@ export function CustomerOrderRow({
             >
               <Download className="mr-1 h-3.5 w-3.5" /> Ladda ner PDF
             </Button>
+            {!readOnly && canEdit && isBooking && (
+              <Button
+                variant={noShow ? "outline" : "destructive"}
+                size="sm"
+                className="h-8 text-xs"
+                disabled={markNoShow.isPending}
+                onClick={() =>
+                  markNoShow.mutate({
+                    orderId: order.id,
+                    customerId: order.customer_id,
+                    orderNumber: order.order_number,
+                    undo: noShow,
+                  })
+                }
+              >
+                {noShow ? (
+                  <>
+                    <Undo2 className="mr-1 h-3.5 w-3.5" /> Ångra uteblev
+                  </>
+                ) : (
+                  <>
+                    <UserX className="mr-1 h-3.5 w-3.5" /> Uteblev
+                  </>
+                )}
+              </Button>
+            )}
             {!readOnly && canEdit && (
               <Button
                 variant="outline"

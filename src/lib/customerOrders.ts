@@ -177,6 +177,11 @@ export interface CustomerOrder {
   cancelled_source?: string | null;
   cancelled_was_packed?: boolean | null;
   created_at: string;
+  /* Förbokning via bokafiskskaldjur.se */
+  booked_by_staff_id?: string | null;
+  phone_verified_at?: string | null;
+  no_show_at?: string | null;
+  no_show_by?: string | null;
   /* Webborder från Shopify */
   shopify_order_id?: string | null;
   shopify_order_number?: string | null;

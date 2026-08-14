@@ -318,6 +318,47 @@ export type Database = {
           },
         ]
       }
+      booking_block_audit: {
+        Row: {
+          action: string
+          actor_name: string | null
+          actor_user_id: string | null
+          created_at: string
+          customer_id: string
+          id: string
+          phone_normalized: string | null
+          reason: string | null
+        }
+        Insert: {
+          action: string
+          actor_name?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          phone_normalized?: string | null
+          reason?: string | null
+        }
+        Update: {
+          action?: string
+          actor_name?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          phone_normalized?: string | null
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_block_audit_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers_retail"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_guard_events: {
         Row: {
           created_at: string
@@ -1686,6 +1727,8 @@ export type Database = {
           handed_over_at: string | null
           id: string
           is_web_order: boolean
+          no_show_at: string | null
+          no_show_by: string | null
           note: string | null
           order_number: string
           order_type: string
@@ -1733,6 +1776,8 @@ export type Database = {
           handed_over_at?: string | null
           id?: string
           is_web_order?: boolean
+          no_show_at?: string | null
+          no_show_by?: string | null
           note?: string | null
           order_number: string
           order_type?: string
@@ -1780,6 +1825,8 @@ export type Database = {
           handed_over_at?: string | null
           id?: string
           is_web_order?: boolean
+          no_show_at?: string | null
+          no_show_by?: string | null
           note?: string | null
           order_number?: string
           order_type?: string
@@ -1901,7 +1948,10 @@ export type Database = {
       customers_retail: {
         Row: {
           anonymized_at: string | null
+          booking_block_reason: string | null
           booking_blocked: boolean
+          booking_blocked_at: string | null
+          booking_blocked_by: string | null
           city: string | null
           company_name: string | null
           contact_reference: string | null
@@ -1932,7 +1982,10 @@ export type Database = {
         }
         Insert: {
           anonymized_at?: string | null
+          booking_block_reason?: string | null
           booking_blocked?: boolean
+          booking_blocked_at?: string | null
+          booking_blocked_by?: string | null
           city?: string | null
           company_name?: string | null
           contact_reference?: string | null
@@ -1963,7 +2016,10 @@ export type Database = {
         }
         Update: {
           anonymized_at?: string | null
+          booking_block_reason?: string | null
           booking_blocked?: boolean
+          booking_blocked_at?: string | null
+          booking_blocked_by?: string | null
           city?: string | null
           company_name?: string | null
           contact_reference?: string | null
@@ -9526,6 +9582,7 @@ export type Database = {
       }
     }
     Functions: {
+      booking_status_day: { Args: { _day?: string }; Returns: Json }
       company_of_location: {
         Args: { _location_id: string; _on?: string }
         Returns: string
