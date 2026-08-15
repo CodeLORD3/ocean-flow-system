@@ -37,3 +37,6 @@ verify_jwt = false
 verify_jwt = false
 
 
+
+[functions.compress-stored-images]
+verify_jwt = false
