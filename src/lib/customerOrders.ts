@@ -85,9 +85,19 @@ export interface RetailCustomer {
   org_number: string | null;
   contact_reference: string | null;
   anonymized_at: string | null;
+  /* Kundkortet */
+  nickname?: string | null;
+  avatar_url?: string | null;
+  tags?: string[] | null;
+  customer_no?: number | null;
+  /* Spärrlistan i Admin */
+  booking_blocked?: boolean | null;
+  booking_block_reason?: string | null;
+  no_show_count?: number | null;
 
   created_at: string;
 }
+
 
 /**
  * Visningsnamn: organisationer visas med organisationsnamnet, personer med
