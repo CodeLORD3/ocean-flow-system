@@ -13,6 +13,10 @@ import {
   Download,
   UserX,
   Undo2,
+  PackageCheck,
+  BadgeCheck,
+  Trash2,
+  RotateCcw,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -863,7 +867,64 @@ export function CustomerOrderRow({
                     )}
                   </Button>
                 )}
+                {!readOnly && canEdit && !cancelled && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[11px] text-destructive"
+                    onClick={() => setDeleteReason((v) => (v === null ? "" : null))}
+                  >
+                    <Trash2 className="mr-1 h-3.5 w-3.5" /> Ta bort order
+                  </Button>
+                )}
+                {!readOnly && canEdit && cancelled && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[11px]"
+                    disabled={softDelete.isPending}
+                    onClick={() => softDelete.mutate({ order, restore: true })}
+                  >
+                    <RotateCcw className="mr-1 h-3.5 w-3.5" /> Återställ order
+                  </Button>
+                )}
               </div>
+
+              {/* Borttagning raderar inget — ordern flyttas till Borttagna med anledning. */}
+              {deleteReason !== null && !cancelled && (
+                <div className="space-y-1.5 rounded-sm border border-destructive/40 bg-destructive/5 p-2">
+                  <span className="text-[11px] font-semibold text-destructive">
+                    Varför tas beställningen bort? Den sparas i Borttagna för historiken.
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {DELETE_REASONS.map((r) => (
+                      <Button
+                        key={r}
+                        variant="destructive"
+                        size="sm"
+                        className="h-7 text-[11px]"
+                        disabled={softDelete.isPending}
+                        onClick={() =>
+                          softDelete.mutate(
+                            { order, reason: r },
+                            { onSuccess: () => setDeleteReason(null) },
+                          )
+                        }
+                      >
+                        {r}
+                      </Button>
+                    ))}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-[11px]"
+                      onClick={() => setDeleteReason(null)}
+                    >
+                      Avbryt
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
