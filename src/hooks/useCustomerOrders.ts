@@ -738,6 +738,38 @@ export async function fetchTodaysPrice(productId: string, storeId: string) {
 /* ----------------------------------------------------- orderflödet i flikarna */
 
 /**
+ * Markerar hela beställningen som packad (eller ångrar det).
+ *
+ * Enkel knapp för butiken: ordern flyttas till fliken Packade och taggen blir
+ * "Packad". Radvis vägning påverkas inte — den kan göras före eller efter.
+ */
+export function useMarkCustomerOrderPacked() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ order, undo }: { order: CustomerOrder; undo?: boolean }) => {
+      await db
+        .from("customer_orders")
+        .update(
+          undo
+            ? { pack_status: "opackad", packed_at: null, status: "bekraftad" }
+            : { pack_status: "packad", packed_at: new Date().toISOString(), status: "packad" },
+        )
+        .eq("id", order.id);
+      await logOrderEvent({
+        orderId: order.id,
+        eventType: undo ? "packning_angrad" : "order_packad",
+        description: undo ? "Packning ångrad" : "Beställningen markerad som packad",
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["customer_orders"] });
+      qc.invalidateQueries({ queryKey: ["customer_order_events"] });
+    },
+  });
+}
+
+/**
+
  * Markerar beställningen som hämtad/levererad.
  *
  * Är den redan betald (t.ex. webborder) arkiveras den direkt. Är den obetald
