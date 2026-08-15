@@ -1718,6 +1718,7 @@ export type Database = {
           customer_id: string | null
           customer_name_snapshot: string | null
           customer_phone_snapshot: string | null
+          deleted_reason: string | null
           delivery_city: string | null
           delivery_postal_code: string | null
           delivery_street: string | null
@@ -1734,6 +1735,8 @@ export type Database = {
           order_type: string
           pack_status: string
           packed_at: string | null
+          paid_at: string | null
+          paid_by: string | null
           paid_total: number | null
           phone_verified_at: string | null
           price_locked: boolean
@@ -1767,6 +1770,7 @@ export type Database = {
           customer_id?: string | null
           customer_name_snapshot?: string | null
           customer_phone_snapshot?: string | null
+          deleted_reason?: string | null
           delivery_city?: string | null
           delivery_postal_code?: string | null
           delivery_street?: string | null
@@ -1783,6 +1787,8 @@ export type Database = {
           order_type?: string
           pack_status?: string
           packed_at?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
           paid_total?: number | null
           phone_verified_at?: string | null
           price_locked?: boolean
@@ -1816,6 +1822,7 @@ export type Database = {
           customer_id?: string | null
           customer_name_snapshot?: string | null
           customer_phone_snapshot?: string | null
+          deleted_reason?: string | null
           delivery_city?: string | null
           delivery_postal_code?: string | null
           delivery_street?: string | null
@@ -1832,6 +1839,8 @@ export type Database = {
           order_type?: string
           pack_status?: string
           packed_at?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
           paid_total?: number | null
           phone_verified_at?: string | null
           price_locked?: boolean

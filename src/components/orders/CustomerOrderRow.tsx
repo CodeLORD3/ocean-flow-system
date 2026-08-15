@@ -13,6 +13,10 @@ import {
   Download,
   UserX,
   Undo2,
+  PackageCheck,
+  BadgeCheck,
+  Trash2,
+  RotateCcw,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +25,13 @@ import { Archive, ArchiveRestore } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useUpdateCustomerOrder, useArchiveCustomerOrder } from "@/hooks/useCustomerOrders";
+import {
+  useUpdateCustomerOrder,
+  useArchiveCustomerOrder,
+  useHandOverCustomerOrder,
+  useMarkCustomerOrderPaid,
+  useSoftDeleteCustomerOrder,
+} from "@/hooks/useCustomerOrders";
 import { useMarkNoShow } from "@/hooks/useBookingAdmin";
 import {
   CustomerOrder,
@@ -30,6 +40,10 @@ import {
   PACK_STATUS_LABELS,
   LINE_PACK_LABELS,
   isUncollected,
+  isHandedOver,
+  isPaid,
+  lateText,
+  DELETE_REASONS,
 } from "@/lib/customerOrders";
 import { allergenLabel } from "@/lib/catering";
 import { printConfirmation, downloadConfirmation } from "@/lib/customerOrderConfirmation";
@@ -102,6 +116,14 @@ export const rowTone = (order: CustomerOrder): Tone => {
       chip: "bg-card text-row-late-text border-row-late-edge",
       label: "Ohämtad",
     };
+  if (isHandedOver(order) && !isPaid(order))
+    return {
+      row: "bg-row-late",
+      hover: "hover:bg-row-late-hover",
+      edge: "bg-row-late-edge",
+      chip: "bg-card text-row-late-text border-row-late-edge",
+      label: "Ej betald",
+    };
   if (["levererad", "avhamtad"].includes(order.status))
     return {
       row: "bg-row-done",
@@ -110,6 +132,7 @@ export const rowTone = (order: CustomerOrder): Tone => {
       chip: "bg-card text-row-done-text border-row-done-edge",
       label: order.status === "levererad" ? "Levererad" : "Avhämtad",
     };
+
   if (order.pack_status === "packad")
     return {
       row: "bg-row-ok",
@@ -177,6 +200,10 @@ export function CustomerOrderRow({
   const updateOrder = useUpdateCustomerOrder();
   const archiveOrder = useArchiveCustomerOrder();
   const markNoShow = useMarkNoShow();
+  const handOver = useHandOverCustomerOrder();
+  const markPaid = useMarkCustomerOrderPaid();
+  const softDelete = useSoftDeleteCustomerOrder();
+  const [deleteReason, setDeleteReason] = useState<string | null>(null);
   const isArchived = !!order.archived_at;
   const isOpen = !!open;
   const name = order.customers_retail?.name || order.customer_name_snapshot || "Kund";
@@ -209,13 +236,26 @@ export function CustomerOrderRow({
   const phoneBooked = !!order.booked_by_staff_id && !order.phone_verified_at;
   const noShow = !!order.no_show_at;
 
+  /* Försenad hämtning markeras inne i Pågående/Packade — ingen egen flik. */
+  const late = !cancelled && !isHandedOver(order) ? lateText(order) : null;
+  const handedOver = isHandedOver(order);
+  const paid = isPaid(order);
+
   const statusChip = (
-    <span
-      className={`inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-tight ${tone.chip}`}
-    >
-      {tone.label}
+    <span className="inline-flex flex-wrap items-center gap-1">
+      <span
+        className={`inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-tight ${tone.chip}`}
+      >
+        {tone.label}
+      </span>
+      {late && (
+        <span className="inline-flex items-center rounded-sm border border-row-late-edge bg-card px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-tight text-row-late-text">
+          {late}
+        </span>
+      )}
     </span>
   );
+
 
   return (
     <div
@@ -712,6 +752,50 @@ export function CustomerOrderRow({
               )}
 
               <div className="flex flex-wrap gap-1.5">
+                {!readOnly && canEdit && !cancelled && !handedOver && (
+                  <Button
+                    size="sm"
+                    className="h-7 text-[11px]"
+                    disabled={handOver.isPending}
+                    onClick={() => handOver.mutate({ order })}
+                  >
+                    <PackageCheck className="mr-1 h-3.5 w-3.5" />
+                    {order.order_type === "leverans" ? "Markera levererad" : "Markera hämtad"}
+                  </Button>
+                )}
+                {!readOnly && canEdit && !cancelled && handedOver && !paid && (
+                  <Button
+                    size="sm"
+                    className="h-7 text-[11px]"
+                    disabled={markPaid.isPending}
+                    onClick={() => markPaid.mutate({ order })}
+                  >
+                    <BadgeCheck className="mr-1 h-3.5 w-3.5" /> Markera betald
+                  </Button>
+                )}
+                {!readOnly && canEdit && !cancelled && handedOver && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[11px]"
+                    disabled={handOver.isPending}
+                    onClick={() => handOver.mutate({ order, undo: true })}
+                  >
+                    <Undo2 className="mr-1 h-3.5 w-3.5" /> Ångra utlämning
+                  </Button>
+                )}
+                {!readOnly && canEdit && !cancelled && !!order.paid_at && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[11px]"
+                    disabled={markPaid.isPending}
+                    onClick={() => markPaid.mutate({ order, undo: true })}
+                  >
+                    <Undo2 className="mr-1 h-3.5 w-3.5" /> Ångra betalning
+                  </Button>
+                )}
+
                 {!readOnly && canEdit && !cancelled && (
                   <Button
                     variant={editing ? "default" : "outline"}
@@ -783,7 +867,64 @@ export function CustomerOrderRow({
                     )}
                   </Button>
                 )}
+                {!readOnly && canEdit && !cancelled && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[11px] text-destructive"
+                    onClick={() => setDeleteReason((v) => (v === null ? "" : null))}
+                  >
+                    <Trash2 className="mr-1 h-3.5 w-3.5" /> Ta bort order
+                  </Button>
+                )}
+                {!readOnly && canEdit && cancelled && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[11px]"
+                    disabled={softDelete.isPending}
+                    onClick={() => softDelete.mutate({ order, restore: true })}
+                  >
+                    <RotateCcw className="mr-1 h-3.5 w-3.5" /> Återställ order
+                  </Button>
+                )}
               </div>
+
+              {/* Borttagning raderar inget — ordern flyttas till Borttagna med anledning. */}
+              {deleteReason !== null && !cancelled && (
+                <div className="space-y-1.5 rounded-sm border border-destructive/40 bg-destructive/5 p-2">
+                  <span className="text-[11px] font-semibold text-destructive">
+                    Varför tas beställningen bort? Den sparas i Borttagna för historiken.
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {DELETE_REASONS.map((r) => (
+                      <Button
+                        key={r}
+                        variant="destructive"
+                        size="sm"
+                        className="h-7 text-[11px]"
+                        disabled={softDelete.isPending}
+                        onClick={() =>
+                          softDelete.mutate(
+                            { order, reason: r },
+                            { onSuccess: () => setDeleteReason(null) },
+                          )
+                        }
+                      >
+                        {r}
+                      </Button>
+                    ))}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-[11px]"
+                      onClick={() => setDeleteReason(null)}
+                    >
+                      Avbryt
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

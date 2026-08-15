@@ -186,6 +186,10 @@ export interface CustomerOrder {
   cancelled_reason?: string | null;
   cancelled_source?: string | null;
   cancelled_was_packed?: boolean | null;
+  /** Betalning hanteras skilt från packflödet. */
+  paid_at?: string | null;
+  paid_by?: string | null;
+  deleted_reason?: string | null;
   created_at: string;
   /* Förbokning via bokafiskskaldjur.se */
   booked_by_staff_id?: string | null;
@@ -570,4 +574,82 @@ export function isUncollected(order: CustomerOrder) {
   const wanted = new Date(order.wanted_date + "T00:00:00").getTime();
   const days = (Date.now() - wanted) / (24 * 3600 * 1000);
   return days >= 3;
+}
+
+/* ------------------------------------------------------------ ordermenyn */
+
+/**
+ * Orderflikarna i Kundbeställningar. Fem lägen, inte fler, så personalen
+ * direkt ser vad som pågår, vad som är färdigpackat och vad som är utlämnat
+ * men obetalt. Betalstatus hanteras separat från packflödet.
+ */
+export type OrderTab = "pagaende" | "packade" | "obetalda" | "arkiverade" | "borttagna";
+
+export const ORDER_TAB_LABELS: Record<OrderTab, string> = {
+  pagaende: "Pågående",
+  packade: "Packade",
+  obetalda: "Hämtade – ej betalda",
+  arkiverade: "Arkiverade",
+  borttagna: "Borttagna",
+};
+
+/** Anledningar vid borttagning av en order — ordern sparas för historiken. */
+export const DELETE_REASONS = [
+  "Kund avbokade",
+  "Felregistrerad",
+  "Dubbelorder",
+  "Annat",
+] as const;
+
+export type OrderFlowFields = {
+  archived_at?: string | null;
+  cancelled_at?: string | null;
+  status?: string;
+  pack_status?: string;
+  handed_over_at?: string | null;
+  paid_at?: string | null;
+  web_paid?: boolean | null;
+  wanted_date?: string;
+  wanted_time?: string | null;
+};
+
+/** Är beställningen betald? Webbordrar är betalda redan vid köpet. */
+export function isPaid(o: OrderFlowFields) {
+  return !!o.paid_at || !!o.web_paid;
+}
+
+/** Är beställningen utlämnad/levererad? */
+export function isHandedOver(o: OrderFlowFields) {
+  return !!o.handed_over_at || ["levererad", "avhamtad"].includes(String(o.status));
+}
+
+/** Vilken flik hör beställningen till? En order ligger alltid i exakt en flik. */
+export function orderTab(o: OrderFlowFields): OrderTab {
+  if (o.cancelled_at || o.status === "avbruten") return "borttagna";
+  if (o.archived_at) return "arkiverade";
+  if (isHandedOver(o)) return isPaid(o) ? "arkiverade" : "obetalda";
+  if (o.pack_status === "packad") return "packade";
+  return "pagaende";
+}
+
+/**
+ * Minuter efter planerad hämtning. Visas som "Försenad 35 min" inne i
+ * Pågående och Packade — ingen egen flik för försenat.
+ */
+export function lateMinutes(o: OrderFlowFields): number {
+  if (!o.wanted_date) return 0;
+  const time = (o.wanted_time || "").slice(0, 5) || "23:59";
+  const due = new Date(`${o.wanted_date}T${time}:00`).getTime();
+  const diff = Math.floor((Date.now() - due) / 60000);
+  return diff > 0 ? diff : 0;
+}
+
+/** "Försenad 35 min" eller "Försenad 2 dagar". */
+export function lateText(o: OrderFlowFields): string | null {
+  const m = lateMinutes(o);
+  if (m <= 0) return null;
+  if (m < 60) return `Försenad ${m} min`;
+  if (m < 24 * 60) return `Försenad ${Math.floor(m / 60)} h`;
+  const d = Math.floor(m / (24 * 60));
+  return `Försenad ${d} ${d === 1 ? "dag" : "dagar"}`;
 }

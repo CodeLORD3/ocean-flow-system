@@ -22,18 +22,20 @@ import {
   useCustomerOrders,
   useArchiveCustomerOrder,
   useCustomerOrderCounts,
+  useCustomerOrderTabCounts,
 } from "@/hooks/useCustomerOrders";
 import {
   CustomerOrder,
   ORDER_STATUS_LABELS,
   ORDER_TYPE_LABELS,
   PACK_STATUS_LABELS,
-  isUncollected,
+  ORDER_TAB_LABELS,
+  OrderTab,
+  orderTab,
 } from "@/lib/customerOrders";
 import { CustomerOrderWizard } from "@/components/orders/CustomerOrderWizard";
 import { CustomerOrderRow, CustomerOrderRowHeader } from "@/components/orders/CustomerOrderRow";
 import { useEntityImageCounts } from "@/hooks/useEntityImages";
-import { ViewSelector, SavedView } from "@/components/shell/ViewSelector";
 import { StatusBar } from "@/components/shell/StatusBar";
 
 import { RetailCustomerRegistry } from "@/components/orders/RetailCustomerRegistry";
@@ -43,17 +45,15 @@ import { CateringKitchenList } from "@/components/orders/CateringKitchenList";
 import { PurchaseNeedsView } from "@/components/orders/PurchaseNeedsView";
 import { TodayPickupsView } from "@/components/orders/TodayPickupsView";
 
-
-
-/** Sparade vyer, som listsidorna i Dynamics 365. */
-const VIEWS: SavedView[] = [
-  { id: "alla", label: "Alla beställningar", description: "Hela historiken" },
-  { id: "aktiva", label: "Aktiva beställningar", description: "Idag och framåt" },
-  { id: "idag", label: "Dagens packning", description: "Endast dagens datum" },
-  { id: "ejpackade", label: "Ej packade", description: "Opackade och pågående" },
-  { id: "avvikelser", label: "Avvikelser", description: "Ohämtat, allergi eller avbrutet" },
-  { id: "arkiverade", label: "Arkiverade", description: "Arkiverade beställningar" },
+/** Orderflikarna: tre operativa lägen först, historiken nedtonad sist. */
+const TABS: { id: OrderTab; hint: string; muted?: boolean }[] = [
+  { id: "pagaende", hint: "Aktiva, ännu inte färdigpackade" },
+  { id: "packade", hint: "Färdiga, väntar på hämtning eller leverans" },
+  { id: "obetalda", hint: "Utlämnade men betalning saknas" },
+  { id: "arkiverade", hint: "Avslutade — hämtade och betalda", muted: true },
+  { id: "borttagna", hint: "Avbokade eller felregistrerade, sparas för historik", muted: true },
 ];
+
 
 
 const nf = (v: any, d = 1) =>
@@ -157,17 +157,16 @@ export default function CustomerOrders() {
     "orders",
   );
 
-  const [view, setView] = useState("alla");
+  const [tab, setTab] = useState<OrderTab>("pagaende");
   const [marked, setMarked] = useState<string[]>([]);
 
   const toggleRow = (id: string) => setOpenRow((cur) => (cur === id ? null : id));
   const toggleMark = (id: string, next: boolean) =>
     setMarked((cur) => (next ? [...new Set([...cur, id])] : cur.filter((x) => x !== id)));
 
-
-
-  const isArchiveView = view === "arkiverade";
+  const isArchiveView = tab === "arkiverade";
   const archiveOrders = useArchiveCustomerOrder();
+  const { data: tabCounts } = useCustomerOrderTabCounts(effectiveStore);
 
   const { data: orders = [], isLoading } = useCustomerOrders({
     storeId: effectiveStore,
@@ -175,35 +174,15 @@ export default function CustomerOrders() {
     packStatus,
     orderType,
     search,
-    fromDate: view === "alla" || isArchiveView ? undefined : today(),
     archived: isArchiveView,
   });
-
-  const { data: tomorrowOrders = [] } = useCustomerOrders({
-    storeId: effectiveStore,
-    fromDate: tomorrow(),
-    toDate: tomorrow(),
-  });
-
-
 
   const rowReadOnly = (o: CustomerOrder) =>
     isShop ? o.store_id !== activeStoreId : site === "production";
 
-  /** Den valda vyn filtrerar listan utan att röra serverfiltren. */
-  const viewOrders = useMemo(() => {
-    if (view === "idag") return orders.filter((o) => o.wanted_date === today());
-    if (view === "ejpackade") return orders.filter((o) => o.pack_status !== "packad");
-    if (view === "avvikelser")
-      return orders.filter(
-        (o) =>
-          isUncollected(o) ||
-          o.status === "avbruten" ||
-          !!o.allergy_note ||
-          (o.excluded_allergens || []).length > 0,
-      );
-    return orders;
-  }, [orders, view]);
+  /** Den valda fliken avgör listan — en order ligger alltid i exakt en flik. */
+  const viewOrders = useMemo(() => orders.filter((o) => orderTab(o) === tab), [orders, tab]);
+
 
   const markedOrders = viewOrders.filter((o) => marked.includes(o.id));
   const markedSum = markedOrders.reduce(
@@ -238,16 +217,13 @@ export default function CustomerOrders() {
   return (
     <div className="space-y-3 p-3 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <ViewSelector
-          title="Kundbeställningar"
-          views={VIEWS}
-          value={view}
-          onChange={(v) => {
-            setView(v);
-            setMarked([]);
-          }}
-          count={viewOrders.length}
-        />
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2">
+          <h1 className="text-lg font-semibold sm:text-xl">Kundbeställningar</h1>
+          <span className="font-mono text-xs tabular-nums text-muted-foreground">
+            {viewOrders.length} rader
+          </span>
+        </div>
+
         {canEdit && marked.length > 0 && (
           <Button
             variant="outline"
@@ -283,7 +259,63 @@ export default function CustomerOrders() {
         kassan vid hämtning.
       </p>
 
+      {/* Ordermenyn: tre operativa flikar först, historiken nedtonad sist. */}
+      {panel === "orders" && (
+        <div
+          role="tablist"
+          aria-label="Orderflikar"
+          className="flex flex-wrap items-stretch gap-1 overflow-x-auto rounded-sm border border-grid-line bg-card p-1"
+        >
+          {TABS.map((t) => {
+            const active = tab === t.id;
+            const count = tabCounts?.[t.id] ?? 0;
+            const alert = t.id === "obetalda" && count > 0;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                title={t.hint}
+                onClick={() => {
+                  setTab(t.id);
+                  setMarked([]);
+                  setOpenRow(null);
+                }}
+                className={`flex items-center gap-1.5 whitespace-nowrap rounded-sm px-3 py-2 text-xs transition-colors ${
+                  active
+                    ? alert
+                      ? "bg-destructive text-destructive-foreground font-semibold"
+                      : "bg-primary text-primary-foreground font-semibold"
+                    : t.muted
+                      ? "text-muted-foreground hover:bg-muted"
+                      : "text-foreground hover:bg-muted"
+                } ${!active && alert ? "text-destructive" : ""}`}
+              >
+                <span className={t.muted && !active ? "" : "font-semibold"}>
+                  {ORDER_TAB_LABELS[t.id]}
+                </span>
+                {count > 0 && (
+                  <span
+                    className={`rounded-sm px-1 font-mono text-[10px] tabular-nums ${
+                      active
+                        ? "bg-background/20"
+                        : alert
+                          ? "bg-destructive text-destructive-foreground"
+                          : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <div className="space-y-3">
+
         <div className="flex flex-wrap items-center gap-2">
           <div
             className={`flex min-w-[200px] flex-1 items-center gap-2 ${
@@ -477,21 +509,20 @@ export default function CustomerOrders() {
           {!isLoading && viewOrders.length === 0 ? (
 
             <EmptyState
-              title={
-                isArchiveView
-                  ? "Inga arkiverade beställningar"
-                  : orders.length === 0
-                    ? "Inga kundbeställningar"
-                    : "Inga rader i den här vyn"
-              }
+              title={`Inget i ${ORDER_TAB_LABELS[tab].toLowerCase()}`}
               description={
-                isArchiveView
-                  ? "Beställningar du arkiverar försvinner från listan och hamnar här."
-                  : orders.length === 0
-                  ? "Här samlas dagens och kommande beställningar från privatkunder. Skapa den första med Ny beställning."
-                  : "Byt vy i rubriken eller ändra filtren för att se fler beställningar."
+                tab === "pagaende"
+                  ? "Här ligger beställningar som är aktiva och ännu inte färdigpackade. Skapa en med Ny beställning."
+                  : tab === "packade"
+                    ? "Färdigpackade beställningar som väntar på hämtning eller leverans hamnar här."
+                    : tab === "obetalda"
+                      ? "Inga utlämnade beställningar väntar på betalning. Bra jobbat."
+                      : tab === "arkiverade"
+                        ? "Beställningar som är både hämtade och betalda hamnar här automatiskt."
+                        : "Borttagna beställningar sparas här för historik och statistik."
               }
             />
+
           ) : (
             <div className="overflow-hidden rounded-sm border border-grid-line bg-card">
               <div>
@@ -557,7 +588,7 @@ export default function CustomerOrders() {
                 selectedCount={markedOrders.length}
                 totalCount={viewOrders.length}
                 selectedSum={markedSum}
-                extra={VIEWS.find((v) => v.id === view)?.label}
+                extra={ORDER_TAB_LABELS[tab]}
               />
             </div>
           )}
