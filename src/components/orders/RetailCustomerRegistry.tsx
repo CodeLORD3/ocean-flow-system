@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Plus, Search, Trash2, Pencil, History, ArrowRight } from "lucide-react";
+import { Plus, Search, Trash2, Pencil, History, ChevronRight } from "lucide-react";
 import { CustomerHistoryDialog } from "@/components/orders/CustomerHistoryDialog";
 import { RetailCustomerDialog } from "@/components/orders/RetailCustomerDialog";
 import { Button } from "@/components/ui/button";
@@ -65,12 +65,12 @@ export function RetailCustomerRegistry({
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-[220px] flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <div className="relative min-w-[200px] flex-1">
+          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            className="h-11 pl-9"
+            className="h-8 pl-8 text-xs"
             placeholder="Sök namn, telefon eller e-post"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -80,31 +80,31 @@ export function RetailCustomerRegistry({
           type="single"
           value={typeFilter}
           onValueChange={(v) => v && setTypeFilter(v as typeof typeFilter)}
-          className="h-11"
+          className="h-8"
         >
-          <ToggleGroupItem value="all" className="h-11 px-3 text-xs">
+          <ToggleGroupItem value="all" className="h-8 px-2.5 text-[11px]">
             Alla
           </ToggleGroupItem>
-          <ToggleGroupItem value="private" className="h-11 px-3 text-xs">
+          <ToggleGroupItem value="private" className="h-8 px-2.5 text-[11px]">
             Privat
           </ToggleGroupItem>
-          <ToggleGroupItem value="company" className="h-11 px-3 text-xs">
+          <ToggleGroupItem value="company" className="h-8 px-2.5 text-[11px]">
             Organisation
           </ToggleGroupItem>
-          <ToggleGroupItem value="review" className="h-11 px-3 text-xs">
+          <ToggleGroupItem value="review" className="h-8 px-2.5 text-[11px]">
             Genomgång {reviewCount > 0 && `(${reviewCount})`}
           </ToggleGroupItem>
         </ToggleGroup>
 
         {!readOnly && (
-          <Button className="h-11" onClick={openNew}>
-            <Plus className="mr-2 h-4 w-4" /> Ny kund
+          <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={openNew}>
+            <Plus className="h-3.5 w-3.5" /> Ny kund
           </Button>
         )}
       </div>
 
       {typeFilter === "review" && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-[11px] text-muted-foreground">
           Namn som inte kunde delas säkert i förnamn och efternamn. Öppna posten, välj person
           eller organisation och rätta fälten — posten fungerar som vanligt under tiden.
         </p>
@@ -117,125 +117,161 @@ export function RetailCustomerRegistry({
         />
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {customers.map((c) => {
-          const history = historyFor(c.id);
-          const uncollected = history.filter((o) => o.status === "packad").length;
-          const common = new Map<string, number>();
-          for (const o of history)
-            for (const l of o.customer_order_lines || []) {
-              const n = (l.products?.name || l.free_text_name) as string | undefined;
-              if (n) common.set(n, (common.get(n) || 0) + 1);
-            }
-          const top = Array.from(common.entries())
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 3)
-            .map(([n]) => n);
+      {customers.length > 0 && (
+        <Card className="shadow-card">
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-[11px]">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30 text-[10px] uppercase text-muted-foreground">
+                    <th className="px-3 py-2 text-left font-medium">Namn</th>
+                    <th className="px-2 py-2 text-left font-medium">Kontakt</th>
+                    <th className="px-2 py-2 text-left font-medium">Adress</th>
+                    {!storeId && <th className="px-2 py-2 text-left font-medium">Butik</th>}
+                    <th className="px-2 py-2 text-left font-medium">Brukar beställa</th>
+                    <th className="px-2 py-2 text-right font-medium">Ordrar</th>
+                    <th className="px-2 py-2 text-right font-medium"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {customers.map((c) => {
+                    const history = historyFor(c.id);
+                    const uncollected = history.filter((o) => o.status === "packad").length;
+                    const common = new Map<string, number>();
+                    for (const o of history)
+                      for (const l of o.customer_order_lines || []) {
+                        const n = (l.products?.name || l.free_text_name) as string | undefined;
+                        if (n) common.set(n, (common.get(n) || 0) + 1);
+                      }
+                    const top = Array.from(common.entries())
+                      .sort((a, b) => b[1] - a[1])
+                      .slice(0, 2)
+                      .map(([n]) => n);
 
-          return (
-            <Card key={c.id}>
-              <CardContent className="space-y-2 p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => openProfile(c)}
-                        className="truncate text-left font-semibold hover:text-primary hover:underline"
+                    return (
+                      <tr
+                        key={c.id}
+                        className="border-b border-border/40 transition-colors hover:bg-muted/20"
                       >
-                        {customerDisplayName(c)}
-                      </button>
-                      {c.is_company && (
-                        <Badge variant="secondary" className="h-5 shrink-0 px-1.5 text-[10px]">
-                          Organisation
-                        </Badge>
-                      )}
-                      {c.name_review_needed && (
-                        <Badge variant="outline" className="h-5 shrink-0 px-1.5 text-[10px]">
-                          Genomgång
-                        </Badge>
-                      )}
-                    </div>
-                    {c.is_company && (c.company_name || c.org_number) && (
-                      <div className="truncate text-xs text-muted-foreground">
-                        {[c.company_name, c.org_number].filter(Boolean).join(" · ")}
-                      </div>
-                    )}
-                    {c.name_review_needed && (
-                      <div className="truncate text-xs text-muted-foreground">
-                        Originalnamn: {c.name || "—"}
-                      </div>
-                    )}
-
-                    <div className="truncate text-xs text-muted-foreground">
-                      {[c.phone, c.email].filter(Boolean).join(" · ") || "Inga kontaktuppgifter"}
-                    </div>
-                    <div className="truncate text-xs text-muted-foreground">
-                      {[c.street, c.postal_code, c.city].filter(Boolean).join(", ")}
-                    </div>
-                    {!storeId && (c as any).stores?.name && (
-                      <div className="truncate text-xs text-muted-foreground">
-                        Butik: {(c as any).stores.name}
-                      </div>
-                    )}
-                  </div>
-
-                  {!readOnly && (
-                    <div className="flex shrink-0 gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => openEdit(c)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={async () => {
-                          if (
-                            !window.confirm(
-                              "Radera kundens personuppgifter? Ordrarna behålls anonymiserade för bokföringen.",
-                            )
-                          )
-                            return;
-                          await anonymize.mutateAsync(c.id);
-                          toast.success("Kunduppgifterna är raderade.");
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-                {c.note && <p className="text-xs text-muted-foreground">{c.note}</p>}
-                {top.length > 0 && (
-                  <p className="text-xs">
-                    <span className="text-muted-foreground">Brukar beställa: </span>
-                    {top.join(", ")}
-                  </p>
-                )}
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  <span>{history.length} order</span>
-                  {uncollected > 0 && <span>{uncollected} väntar på hämtning</span>}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="ml-auto h-9"
-                    onClick={() => setHistoryCustomer(c)}
-                  >
-                    <History className="mr-1 h-4 w-4" /> Historik
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-9"
-                    onClick={() => openProfile(c)}
-                  >
-                    Kundkort <ArrowRight className="ml-1 h-4 w-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                        <td className="px-3 py-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => openProfile(c)}
+                              className="max-w-[13rem] truncate text-left font-medium text-foreground hover:text-primary hover:underline"
+                            >
+                              {customerDisplayName(c)}
+                            </button>
+                            {c.is_company && (
+                              <Badge
+                                variant="secondary"
+                                className="h-4 shrink-0 px-1 text-[9px]"
+                              >
+                                Org
+                              </Badge>
+                            )}
+                            {c.name_review_needed && (
+                              <Badge variant="outline" className="h-4 shrink-0 px-1 text-[9px]">
+                                Genomgång
+                              </Badge>
+                            )}
+                          </div>
+                          {c.is_company && (c.company_name || c.org_number) && (
+                            <div className="max-w-[13rem] truncate text-[10px] text-muted-foreground">
+                              {[c.company_name, c.org_number].filter(Boolean).join(" · ")}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-2 py-1.5 text-muted-foreground">
+                          <span className="block max-w-[12rem] truncate">
+                            {[c.phone, c.email].filter(Boolean).join(" · ") || "–"}
+                          </span>
+                        </td>
+                        <td className="px-2 py-1.5 text-[10px] text-muted-foreground">
+                          <span className="block max-w-[12rem] truncate">
+                            {[c.street, c.postal_code, c.city].filter(Boolean).join(", ") || "–"}
+                          </span>
+                        </td>
+                        {!storeId && (
+                          <td className="px-2 py-1.5 text-[10px] text-muted-foreground">
+                            {(c as any).stores?.name || "–"}
+                          </td>
+                        )}
+                        <td className="px-2 py-1.5 text-[10px] text-muted-foreground">
+                          <span className="block max-w-[12rem] truncate">
+                            {top.join(", ") || "–"}
+                          </span>
+                        </td>
+                        <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">
+                          {history.length}
+                          {uncollected > 0 && (
+                            <span className="ml-1 text-[10px] text-primary">
+                              ({uncollected} väntar)
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <div className="flex items-center justify-end gap-0.5">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              title="Historik"
+                              onClick={() => setHistoryCustomer(c)}
+                            >
+                              <History className="h-3.5 w-3.5" />
+                            </Button>
+                            {!readOnly && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  title="Redigera"
+                                  onClick={() => openEdit(c)}
+                                >
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-destructive hover:text-destructive"
+                                  title="Radera personuppgifter"
+                                  onClick={async () => {
+                                    if (
+                                      !window.confirm(
+                                        "Radera kundens personuppgifter? Ordrarna behålls anonymiserade för bokföringen.",
+                                      )
+                                    )
+                                      return;
+                                    await anonymize.mutateAsync(c.id);
+                                    toast.success("Kunduppgifterna är raderade.");
+                                  }}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              title="Kundkort"
+                              onClick={() => openProfile(c)}
+                            >
+                              <ChevronRight className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <RetailCustomerDialog
         open={open}
