@@ -186,6 +186,10 @@ export interface CustomerOrder {
   cancelled_reason?: string | null;
   cancelled_source?: string | null;
   cancelled_was_packed?: boolean | null;
+  /** Betalning hanteras skilt från packflödet. */
+  paid_at?: string | null;
+  paid_by?: string | null;
+  deleted_reason?: string | null;
   created_at: string;
   /* Förbokning via bokafiskskaldjur.se */
   booked_by_staff_id?: string | null;
