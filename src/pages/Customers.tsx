@@ -22,6 +22,8 @@ import { useCustomers, useCreateCustomer, useUpdateCustomer, useDeleteCustomer, 
 import { useStores } from "@/hooks/useStores";
 import { useSite } from "@/contexts/SiteContext";
 import { useNotificationFlash } from "@/lib/notificationFlash";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { RetailCustomerRegistry } from "@/components/orders/RetailCustomerRegistry";
 
 /* ===== Wholesale view: Customers with store linking ===== */
 function WholesaleCustomers() {
@@ -257,6 +259,7 @@ function ShopCustomers() {
   const deleteCustomer = useDeleteCustomer();
 
   const [search, setSearch] = useState("");
+  const [view, setView] = useState<"registry" | "special">("registry");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
@@ -294,23 +297,37 @@ function ShopCustomers() {
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <div>
           <h1 className="text-xl font-heading font-bold text-foreground flex items-center gap-2"><Users className="h-5 w-5 text-primary" /> Kunder</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">Hantera specialkunder kopplade till butiken.</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Kundregister för privatkunder och specialkunder kopplade till butiken.</p>
         </div>
-        <Button size="sm" className="gap-1.5 text-xs" onClick={openAdd}><Plus className="h-3.5 w-3.5" /> Lägg till kund</Button>
+        {view === "special" && (
+          <Button size="sm" className="gap-1.5 text-xs" onClick={openAdd}><Plus className="h-3.5 w-3.5" /> Lägg till kund</Button>
+        )}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <ToggleGroup
+        type="single"
+        value={view}
+        onValueChange={(v) => v && setView(v as typeof view)}
+        className="h-8 justify-start"
+      >
+        <ToggleGroupItem value="registry" className="h-8 px-3 text-[11px]">Kundregister</ToggleGroupItem>
+        <ToggleGroupItem value="special" className="h-8 px-3 text-[11px]">Specialkunder</ToggleGroupItem>
+      </ToggleGroup>
+
+      {view === "registry" && <RetailCustomerRegistry storeId={activeStoreId} />}
+
+      <div className={view === "special" ? "grid grid-cols-2 md:grid-cols-3 gap-3" : "hidden"}>
         <Card className="shadow-card"><CardContent className="p-3"><p className="text-[10px] text-muted-foreground">Totalt kunder</p><p className="text-xl font-heading font-bold text-foreground">{customers.length}</p></CardContent></Card>
         <Card className="shadow-card"><CardContent className="p-3"><p className="text-[10px] text-muted-foreground">Med e-post</p><p className="text-xl font-heading font-bold text-foreground">{customers.filter(c => c.email).length}</p></CardContent></Card>
         <Card className="shadow-card"><CardContent className="p-3"><p className="text-[10px] text-muted-foreground">Städer</p><p className="text-xl font-heading font-bold text-foreground">{new Set(customers.map(c => c.city).filter(Boolean)).size}</p></CardContent></Card>
       </div>
 
-      <div className="relative max-w-xs">
+      <div className={view === "special" ? "relative max-w-xs" : "hidden"}>
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
         <Input placeholder="Sök kund..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
       </div>
 
-      <Card className="shadow-card">
+      <Card className={view === "special" ? "shadow-card" : "hidden"}>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
