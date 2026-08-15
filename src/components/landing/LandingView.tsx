@@ -60,7 +60,7 @@ export function LandingView({ settings, scale = 1, children, footer, className }
         alt="Logotyp"
         className="object-contain"
         style={{ height: logoSize, width: logoSize, marginBottom: 20 * scale }}
-       loading="lazy" decoding="async" />
+       decoding="async" />
       <h1
         className={cn("text-center max-w-3xl leading-tight whitespace-pre-line", fontClass(settings?.headline_font), colorClass(settings?.headline_color))}
         style={{

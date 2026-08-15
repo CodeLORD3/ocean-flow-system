@@ -58,19 +58,6 @@ async function shrink(bytes: Uint8Array): Promise<Uint8Array | null> {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const token = req.headers.get("x-job-token");
-  const bearer = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "") ?? "";
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const authorized =
-    (token && token === Deno.env.get("IMAGE_JOB_TOKEN")) || (bearer && bearer === serviceKey);
-  if (!authorized) {
-    return new Response(JSON.stringify({ error: "unauthorized" }), {
-      status: 401,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-
   const body = await req.json().catch(() => ({}));
   const table: string = body.table ?? "entity_images";
   const column: string = body.column ?? "url";
@@ -78,10 +65,48 @@ Deno.serve(async (req) => {
   const offset: number = Number(body.offset ?? 0);
   const minBytes: number = Number(body.minBytes ?? 400_000);
 
+  const ALLOWED: Record<string, string> = {
+    entity_images: "url",
+    products: "image_url",
+    staff: "profile_image_url",
+    chat_messages: "image_url",
+  };
+  if (ALLOWED[table] !== column) {
+    return new Response(JSON.stringify({ error: "otillåten tabell/kolumn" }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
+
+  // Antingen jobbtoken (engångskörning) eller en inloggad admin.
+  const token = req.headers.get("x-job-token");
+  let authorized = !!token && token === Deno.env.get("IMAGE_JOB_TOKEN");
+  if (!authorized) {
+    const jwt = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "") ?? "";
+    if (jwt) {
+      const { data: userData } = await supabase.auth.getUser(jwt);
+      const uid = userData?.user?.id;
+      if (uid) {
+        const { data: isAdmin } = await supabase.rpc("has_role", {
+          _user_id: uid,
+          _role: "admin",
+        });
+        authorized = isAdmin === true;
+      }
+    }
+  }
+  if (!authorized) {
+    return new Response(JSON.stringify({ error: "unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
 
   const { data: rows, error } = await supabase
     .from(table)
