@@ -17,6 +17,7 @@ import {
   BadgeCheck,
   Trash2,
   RotateCcw,
+  HandCoins,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -783,7 +784,7 @@ export function CustomerOrderRow({
                     disabled={handOver.isPending}
                     onClick={() => handOver.mutate({ order })}
                   >
-                    <PackageCheck className="mr-1 h-3.5 w-3.5" />
+                    <HandCoins className="mr-1 h-3.5 w-3.5" />
                     {order.order_type === "leverans" ? "Markera levererad" : "Markera hämtad"}
                   </Button>
                 )}
