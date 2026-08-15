@@ -9,6 +9,7 @@ import { AlertTriangle, CheckCircle2, Loader2, RefreshCw, Wrench } from "lucide-
 import { toast } from "@/hooks/use-toast";
 import ShopifyWebhookStatus from "@/components/shopify/ShopifyWebhookStatus";
 import BookingStatusCard from "@/components/booking/BookingStatusCard";
+import ImageCompressionCard from "@/components/admin/ImageCompressionCard";
 
 interface ReconRun {
   id: string;
@@ -162,6 +163,8 @@ export default function SystemStatus() {
 
       <div className="flex-1 space-y-4 overflow-auto p-4">
         <BookingStatusCard />
+
+        <ImageCompressionCard />
         <ShopifyWebhookStatus />
         <Card className={hasDiff ? "border-destructive" : undefined}>
           <CardHeader className="pb-2">
