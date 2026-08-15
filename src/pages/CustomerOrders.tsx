@@ -217,16 +217,13 @@ export default function CustomerOrders() {
   return (
     <div className="space-y-3 p-3 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <ViewSelector
-          title="Kundbeställningar"
-          views={VIEWS}
-          value={view}
-          onChange={(v) => {
-            setView(v);
-            setMarked([]);
-          }}
-          count={viewOrders.length}
-        />
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2">
+          <h1 className="text-lg font-semibold sm:text-xl">Kundbeställningar</h1>
+          <span className="font-mono text-xs tabular-nums text-muted-foreground">
+            {viewOrders.length} rader
+          </span>
+        </div>
+
         {canEdit && marked.length > 0 && (
           <Button
             variant="outline"
