@@ -748,6 +748,50 @@ export function CustomerOrderRow({
               )}
 
               <div className="flex flex-wrap gap-1.5">
+                {!readOnly && canEdit && !cancelled && !handedOver && (
+                  <Button
+                    size="sm"
+                    className="h-7 text-[11px]"
+                    disabled={handOver.isPending}
+                    onClick={() => handOver.mutate({ order })}
+                  >
+                    <PackageCheck className="mr-1 h-3.5 w-3.5" />
+                    {order.order_type === "leverans" ? "Markera levererad" : "Markera hämtad"}
+                  </Button>
+                )}
+                {!readOnly && canEdit && !cancelled && handedOver && !paid && (
+                  <Button
+                    size="sm"
+                    className="h-7 text-[11px]"
+                    disabled={markPaid.isPending}
+                    onClick={() => markPaid.mutate({ order })}
+                  >
+                    <BadgeCheck className="mr-1 h-3.5 w-3.5" /> Markera betald
+                  </Button>
+                )}
+                {!readOnly && canEdit && !cancelled && handedOver && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[11px]"
+                    disabled={handOver.isPending}
+                    onClick={() => handOver.mutate({ order, undo: true })}
+                  >
+                    <Undo2 className="mr-1 h-3.5 w-3.5" /> Ångra utlämning
+                  </Button>
+                )}
+                {!readOnly && canEdit && !cancelled && !!order.paid_at && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[11px]"
+                    disabled={markPaid.isPending}
+                    onClick={() => markPaid.mutate({ order, undo: true })}
+                  >
+                    <Undo2 className="mr-1 h-3.5 w-3.5" /> Ångra betalning
+                  </Button>
+                )}
+
                 {!readOnly && canEdit && !cancelled && (
                   <Button
                     variant={editing ? "default" : "outline"}
