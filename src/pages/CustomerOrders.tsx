@@ -213,6 +213,8 @@ export default function CustomerOrders() {
     "customer_order",
     useMemo(() => viewOrders.map((o) => o.id), [viewOrders]),
   );
+  /* Stamkundsstjärnan: kundens totala antal ordrar i hela kedjan. */
+  const { data: customerOrderCounts } = useCustomerOrderCounts();
   /** Antal aktiva filter, visas som badge på filterknappen. */
   const activeFilters =
     (status !== "all" ? 1 : 0) +
