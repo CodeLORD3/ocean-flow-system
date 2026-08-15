@@ -102,6 +102,14 @@ export const rowTone = (order: CustomerOrder): Tone => {
       chip: "bg-card text-row-late-text border-row-late-edge",
       label: "Ohämtad",
     };
+  if (isHandedOver(order) && !isPaid(order))
+    return {
+      row: "bg-row-late",
+      hover: "hover:bg-row-late-hover",
+      edge: "bg-row-late-edge",
+      chip: "bg-card text-row-late-text border-row-late-edge",
+      label: "Ej betald",
+    };
   if (["levererad", "avhamtad"].includes(order.status))
     return {
       row: "bg-row-done",
@@ -110,6 +118,7 @@ export const rowTone = (order: CustomerOrder): Tone => {
       chip: "bg-card text-row-done-text border-row-done-edge",
       label: order.status === "levererad" ? "Levererad" : "Avhämtad",
     };
+
   if (order.pack_status === "packad")
     return {
       row: "bg-row-ok",
