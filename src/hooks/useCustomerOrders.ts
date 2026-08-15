@@ -14,6 +14,7 @@ import {
   unpackLine as unpackLineLedger,
   reverseLine,
   todaysPrice,
+  orderTab,
 } from "@/lib/customerOrders";
 
 const db = supabase as any;
@@ -732,4 +733,203 @@ export function useReservedQuantities(storeId?: string | null) {
 /** Dagens pris för en produkt i en butik (uppdateras vid packning). */
 export async function fetchTodaysPrice(productId: string, storeId: string) {
   return todaysPrice(productId, storeId);
+}
+
+/* ----------------------------------------------------- orderflödet i flikarna */
+
+/**
+ * Markerar beställningen som hämtad/levererad.
+ *
+ * Är den redan betald (t.ex. webborder) arkiveras den direkt. Är den obetald
+ * hamnar den i "Hämtade – ej betalda" tills betalningen registreras.
+ */
+export function useHandOverCustomerOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ order, undo }: { order: CustomerOrder; undo?: boolean }) => {
+      if (undo) {
+        await db
+          .from("customer_orders")
+          .update({
+            handed_over_at: null,
+            archived_at: null,
+            archived_by: null,
+            status: order.pack_status === "packad" ? "packad" : "bekraftad",
+          })
+          .eq("id", order.id);
+        await logOrderEvent({
+          orderId: order.id,
+          eventType: "utlamning_angrad",
+          description: "Utlämning ångrad",
+        });
+        return;
+      }
+      const paid = !!order.paid_at || !!order.web_paid;
+      const { data: auth } = await supabase.auth.getUser();
+      const now = new Date().toISOString();
+      await db
+        .from("customer_orders")
+        .update({
+          handed_over_at: now,
+          status: order.order_type === "leverans" ? "levererad" : "avhamtad",
+          ...(paid ? { archived_at: now, archived_by: auth?.user?.id ?? null } : {}),
+        })
+        .eq("id", order.id);
+      await logOrderEvent({
+        orderId: order.id,
+        eventType: "utlamnad",
+        description: paid
+          ? "Utlämnad och betald — arkiverad"
+          : "Utlämnad, betalning saknas",
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["customer_orders"] });
+      qc.invalidateQueries({ queryKey: ["customer_order_events"] });
+    },
+  });
+}
+
+/**
+ * Registrerar betalning. Är beställningen redan utlämnad flyttas den
+ * automatiskt till Arkiverade.
+ */
+export function useMarkCustomerOrderPaid() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ order, undo }: { order: CustomerOrder; undo?: boolean }) => {
+      const { data: auth } = await supabase.auth.getUser();
+      if (undo) {
+        await db
+          .from("customer_orders")
+          .update({ paid_at: null, paid_by: null, archived_at: null, archived_by: null })
+          .eq("id", order.id);
+        await logOrderEvent({
+          orderId: order.id,
+          eventType: "betalning_angrad",
+          description: "Betalning ångrad",
+        });
+        return;
+      }
+      const now = new Date().toISOString();
+      const handedOver =
+        !!order.handed_over_at || ["levererad", "avhamtad"].includes(order.status);
+      await db
+        .from("customer_orders")
+        .update({
+          paid_at: now,
+          paid_by: auth?.user?.id ?? null,
+          ...(handedOver ? { archived_at: now, archived_by: auth?.user?.id ?? null } : {}),
+        })
+        .eq("id", order.id);
+      await logOrderEvent({
+        orderId: order.id,
+        eventType: "betald",
+        description: handedOver ? "Betald — arkiverad" : "Betald",
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["customer_orders"] });
+      qc.invalidateQueries({ queryKey: ["customer_order_events"] });
+    },
+  });
+}
+
+/**
+ * Ta bort order: ordern raderas aldrig, den flyttas till fliken Borttagna med
+ * en anledning så historik och statistik behålls. Packade rader motbokas.
+ */
+export function useSoftDeleteCustomerOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      order,
+      reason,
+      restore,
+    }: {
+      order: CustomerOrder;
+      reason?: string;
+      restore?: boolean;
+    }) => {
+      if (restore) {
+        await db
+          .from("customer_orders")
+          .update({
+            cancelled_at: null,
+            cancelled_reason: null,
+            cancelled_was_packed: null,
+            deleted_reason: null,
+            status: order.pack_status === "packad" ? "packad" : "bekraftad",
+          })
+          .eq("id", order.id);
+        await logOrderEvent({
+          orderId: order.id,
+          eventType: "aterstalld",
+          description: "Beställningen återställdes från Borttagna",
+        });
+        return;
+      }
+      const wasPacked = (order.customer_order_lines || []).some(
+        (l) => l.pack_status === "packad" && Number(l.quantity_packed || 0) > 0,
+      );
+      for (const line of order.customer_order_lines || []) {
+        if (line.pack_status === "packad" && Number(line.quantity_packed || 0) > 0) {
+          await reverseLine({ order, line, reason: reason || "Borttagen order" });
+        }
+      }
+      await db
+        .from("customer_order_lines")
+        .update({ reserved_quantity: 0, reservation_status: "ingen" })
+        .eq("customer_order_id", order.id);
+      await db
+        .from("customer_orders")
+        .update({
+          status: "avbruten",
+          cancelled_at: new Date().toISOString(),
+          cancelled_reason: reason ?? null,
+          cancelled_was_packed: wasPacked,
+          deleted_reason: reason ?? null,
+        })
+        .eq("id", order.id);
+      await logOrderEvent({
+        orderId: order.id,
+        eventType: "borttagen",
+        description: `Borttagen: ${reason || "Ingen anledning angiven"}`,
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["customer_orders"] });
+      qc.invalidateQueries({ queryKey: ["stock_movements"] });
+      qc.invalidateQueries({ queryKey: ["customer_order_events"] });
+    },
+  });
+}
+
+/**
+ * Antal beställningar per flik. Hämtas som en lätt fråga så flikarna kan visa
+ * siffror utan att hela listan laddas för varje flik.
+ */
+export function useCustomerOrderTabCounts(storeId?: string | null) {
+  return useQuery({
+    queryKey: ["customer_orders", "tab-counts", storeId],
+    queryFn: async () => {
+      let q = db
+        .from("customer_orders")
+        .select(
+          "id, status, pack_status, archived_at, cancelled_at, handed_over_at, paid_at, web_paid, wanted_date",
+        );
+      if (storeId) q = q.eq("store_id", storeId);
+      const { data, error } = await q;
+      if (error) throw error;
+      const counts: Record<string, number> = {
+        pagaende: 0,
+        packade: 0,
+        obetalda: 0,
+        arkiverade: 0,
+        borttagna: 0,
+      };
+      for (const row of (data || []) as any[]) counts[orderTab(row)] += 1;
+      return counts;
+    },
+  });
 }
