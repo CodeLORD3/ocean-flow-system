@@ -157,17 +157,16 @@ export default function CustomerOrders() {
     "orders",
   );
 
-  const [view, setView] = useState("alla");
+  const [tab, setTab] = useState<OrderTab>("pagaende");
   const [marked, setMarked] = useState<string[]>([]);
 
   const toggleRow = (id: string) => setOpenRow((cur) => (cur === id ? null : id));
   const toggleMark = (id: string, next: boolean) =>
     setMarked((cur) => (next ? [...new Set([...cur, id])] : cur.filter((x) => x !== id)));
 
-
-
-  const isArchiveView = view === "arkiverade";
+  const isArchiveView = tab === "arkiverade";
   const archiveOrders = useArchiveCustomerOrder();
+  const { data: tabCounts } = useCustomerOrderTabCounts(effectiveStore);
 
   const { data: orders = [], isLoading } = useCustomerOrders({
     storeId: effectiveStore,
@@ -175,35 +174,15 @@ export default function CustomerOrders() {
     packStatus,
     orderType,
     search,
-    fromDate: view === "alla" || isArchiveView ? undefined : today(),
     archived: isArchiveView,
   });
-
-  const { data: tomorrowOrders = [] } = useCustomerOrders({
-    storeId: effectiveStore,
-    fromDate: tomorrow(),
-    toDate: tomorrow(),
-  });
-
-
 
   const rowReadOnly = (o: CustomerOrder) =>
     isShop ? o.store_id !== activeStoreId : site === "production";
 
-  /** Den valda vyn filtrerar listan utan att röra serverfiltren. */
-  const viewOrders = useMemo(() => {
-    if (view === "idag") return orders.filter((o) => o.wanted_date === today());
-    if (view === "ejpackade") return orders.filter((o) => o.pack_status !== "packad");
-    if (view === "avvikelser")
-      return orders.filter(
-        (o) =>
-          isUncollected(o) ||
-          o.status === "avbruten" ||
-          !!o.allergy_note ||
-          (o.excluded_allergens || []).length > 0,
-      );
-    return orders;
-  }, [orders, view]);
+  /** Den valda fliken avgör listan — en order ligger alltid i exakt en flik. */
+  const viewOrders = useMemo(() => orders.filter((o) => orderTab(o) === tab), [orders, tab]);
+
 
   const markedOrders = viewOrders.filter((o) => marked.includes(o.id));
   const markedSum = markedOrders.reduce(
