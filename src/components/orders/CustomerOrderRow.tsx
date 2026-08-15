@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ImageIcon, Camera } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ImageIcon, Camera, Star } from "lucide-react";
 import {
   ChevronDown,
   Lock,
