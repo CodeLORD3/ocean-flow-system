@@ -509,21 +509,20 @@ export default function CustomerOrders() {
           {!isLoading && viewOrders.length === 0 ? (
 
             <EmptyState
-              title={
-                isArchiveView
-                  ? "Inga arkiverade beställningar"
-                  : orders.length === 0
-                    ? "Inga kundbeställningar"
-                    : "Inga rader i den här vyn"
-              }
+              title={`Inget i ${ORDER_TAB_LABELS[tab].toLowerCase()}`}
               description={
-                isArchiveView
-                  ? "Beställningar du arkiverar försvinner från listan och hamnar här."
-                  : orders.length === 0
-                  ? "Här samlas dagens och kommande beställningar från privatkunder. Skapa den första med Ny beställning."
-                  : "Byt vy i rubriken eller ändra filtren för att se fler beställningar."
+                tab === "pagaende"
+                  ? "Här ligger beställningar som är aktiva och ännu inte färdigpackade. Skapa en med Ny beställning."
+                  : tab === "packade"
+                    ? "Färdigpackade beställningar som väntar på hämtning eller leverans hamnar här."
+                    : tab === "obetalda"
+                      ? "Inga utlämnade beställningar väntar på betalning. Bra jobbat."
+                      : tab === "arkiverade"
+                        ? "Beställningar som är både hämtade och betalda hamnar här automatiskt."
+                        : "Borttagna beställningar sparas här för historik och statistik."
               }
             />
+
           ) : (
             <div className="overflow-hidden rounded-sm border border-grid-line bg-card">
               <div>
