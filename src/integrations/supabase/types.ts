@@ -1895,6 +1895,85 @@ export type Database = {
           },
         ]
       }
+      customer_retail_notes: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          customer_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          customer_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          customer_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_retail_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers_retail"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_retail_preferences: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          customer_id: string
+          id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          customer_id: string
+          id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          customer_id?: string
+          id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_retail_preferences_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers_retail"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           address: string | null
@@ -1948,6 +2027,7 @@ export type Database = {
       customers_retail: {
         Row: {
           anonymized_at: string | null
+          avatar_url: string | null
           booking_block_reason: string | null
           booking_blocked: boolean
           booking_blocked_at: string | null
@@ -1957,6 +2037,7 @@ export type Database = {
           contact_reference: string | null
           created_at: string
           created_by: string | null
+          customer_no: number | null
           email: string | null
           email_normalized: string | null
           excluded_allergens: string[]
@@ -1967,6 +2048,7 @@ export type Database = {
           legal_entity_id: string | null
           name: string
           name_review_needed: boolean
+          nickname: string | null
           no_show_count: number
           note: string | null
           org_number: string | null
@@ -1978,10 +2060,12 @@ export type Database = {
           source: string | null
           store_id: string | null
           street: string | null
+          tags: string[]
           updated_at: string
         }
         Insert: {
           anonymized_at?: string | null
+          avatar_url?: string | null
           booking_block_reason?: string | null
           booking_blocked?: boolean
           booking_blocked_at?: string | null
@@ -1991,6 +2075,7 @@ export type Database = {
           contact_reference?: string | null
           created_at?: string
           created_by?: string | null
+          customer_no?: number | null
           email?: string | null
           email_normalized?: string | null
           excluded_allergens?: string[]
@@ -2001,6 +2086,7 @@ export type Database = {
           legal_entity_id?: string | null
           name: string
           name_review_needed?: boolean
+          nickname?: string | null
           no_show_count?: number
           note?: string | null
           org_number?: string | null
@@ -2012,10 +2098,12 @@ export type Database = {
           source?: string | null
           store_id?: string | null
           street?: string | null
+          tags?: string[]
           updated_at?: string
         }
         Update: {
           anonymized_at?: string | null
+          avatar_url?: string | null
           booking_block_reason?: string | null
           booking_blocked?: boolean
           booking_blocked_at?: string | null
@@ -2025,6 +2113,7 @@ export type Database = {
           contact_reference?: string | null
           created_at?: string
           created_by?: string | null
+          customer_no?: number | null
           email?: string | null
           email_normalized?: string | null
           excluded_allergens?: string[]
@@ -2035,6 +2124,7 @@ export type Database = {
           legal_entity_id?: string | null
           name?: string
           name_review_needed?: boolean
+          nickname?: string | null
           no_show_count?: number
           note?: string | null
           org_number?: string | null
@@ -2046,6 +2136,7 @@ export type Database = {
           source?: string | null
           store_id?: string | null
           street?: string | null
+          tags?: string[]
           updated_at?: string
         }
         Relationships: [

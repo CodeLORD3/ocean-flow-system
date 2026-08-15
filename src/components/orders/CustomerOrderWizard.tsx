@@ -71,13 +71,16 @@ export function CustomerOrderWizard({
   onOpenChange,
   storeId,
   storeName,
+  initialCustomer,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   storeId: string;
   storeName?: string | null;
+  /** Förvald kund, används av genvägen "Ny order" på kundkortet. */
+  initialCustomer?: RetailCustomer | null;
 }) {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(initialCustomer ? 2 : 1);
   const { activeUser } = useActiveUser();
   const { data: products = [] } = useProducts();
   const createOrder = useCreateCustomerOrder();
@@ -85,7 +88,8 @@ export function CustomerOrderWizard({
 
   const [customerSearch, setCustomerSearch] = useState("");
   const { data: customers = [] } = useRetailCustomers(storeId, customerSearch);
-  const [customer, setCustomer] = useState<RetailCustomer | null>(null);
+  const [customer, setCustomer] = useState<RetailCustomer | null>(initialCustomer ?? null);
+
   const [newCustomer, setNewCustomer] = useState({
     name: "",
     first_name: "",

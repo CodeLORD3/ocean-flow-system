@@ -1,3 +1,4 @@
+import { RetailCustomerProfile } from "@/components/orders/RetailCustomerProfile";
 import React, { ComponentType, useMemo } from "react";
 import { useTabs } from "@/contexts/TabsContext";
 
@@ -166,8 +167,12 @@ export function KeepAliveTabs() {
   return (
     <>
       {tabs.map((tab) => {
-        const route = ROUTE_MAP[tab.path];
+        const kund = tab.path.match(/^\/customer-orders\/kund\/([^/]+)$/);
+        const route: RouteEntry | undefined = kund
+          ? { component: <RetailCustomerProfile customerId={kund[1]} /> }
+          : ROUTE_MAP[tab.path];
         if (!route) return null;
+
         const isActive = tab.path === activeTab;
         const allowed = canAccessRoute(site, tab.path);
         return (

@@ -56,8 +56,10 @@ const PAGE_TITLES: Record<string, string> = {
 };
 
 export function getTitleForPath(path: string): string {
+  if (path.startsWith("/customer-orders/kund/")) return "Kundkort";
   return PAGE_TITLES[path] || "Sida";
 }
+
 
 interface TabsContextValue {
   tabs: TabItem[];
