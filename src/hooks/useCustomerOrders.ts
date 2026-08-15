@@ -27,7 +27,10 @@ export function useRetailCustomers(storeId?: string | null, search?: string) {
   return useQuery({
     queryKey: ["customers_retail", storeId, search],
     queryFn: async () => {
-      let q = db.from("customers_retail").select("*").order("name");
+      let q = db
+        .from("customers_retail")
+        .select("*, stores(id, name)")
+        .order("name");
       if (storeId) q = q.eq("store_id", storeId);
       if (search && search.trim()) {
         const s = `%${search.trim()}%`;
