@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useShopOrders } from "@/hooks/useShopOrders";
 import { useStores } from "@/hooks/useStores";
 import { useCustomers } from "@/hooks/useCustomers";
+import { useCurrentStaff, staffFullName } from "@/hooks/useCurrentStaff";
 import { useProducts } from "@/hooks/useProducts";
 import { useTransportSchedules } from "@/hooks/useTransportSchedules";
 import { useStaff } from "@/hooks/useStaff";
@@ -106,6 +107,8 @@ export default function WholesaleOrders() {
   const { data: transportSchedules = [] } = useTransportSchedules();
   const retailStores = stores.filter(s => !s.is_wholesale);
   const { activeUser } = useActiveUser();
+  const { data: currentStaff } = useCurrentStaff();
+  const loggedInName = staffFullName(currentStaff);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Alla");
@@ -211,7 +214,7 @@ export default function WholesaleOrders() {
         order_week: weekNum,
         notes: newOrderNote || null,
         status: "Ny",
-        created_by: activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : "Grossist",
+        created_by: loggedInName ?? "Grossist",
         desired_delivery_date: format(newOrderDeliveryDate, "yyyy-MM-dd"),
       } as any)
       .select()
@@ -239,12 +242,12 @@ export default function WholesaleOrders() {
 
     await logActivity({
       action_type: "create",
-      description: `Ny grossistorder skapad av ${activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : "Grossist"} för ${selectedCustomer.name} (${validLines.length} rader)`,
+      description: `Ny grossistorder skapad av ${loggedInName ?? "Grossist"} för ${selectedCustomer.name} (${validLines.length} rader)`,
       portal: "wholesale",
       store_id: selectedCustomer.store_id,
       entity_type: "shop_order",
       entity_id: order.id,
-      performed_by: activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : "Grossist",
+      performed_by: loggedInName ?? "Grossist",
       details: { line_count: validLines.length, week: weekNum },
     });
 
@@ -414,7 +417,7 @@ export default function WholesaleOrders() {
       }
     }
 
-    const userName = activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : undefined;
+    const userName = loggedInName ?? undefined;
     await logActivity({
       action_type: "status_change",
       description: `Orderstatus ändrad till "${newStatus}"${packer ? ` (packare: ${packer})` : ""}`,
@@ -454,7 +457,7 @@ export default function WholesaleOrders() {
       description: `Order arkiverad`,
       entity_type: "shop_order",
       entity_id: orderId,
-      performed_by: activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : undefined,
+      performed_by: loggedInName ?? undefined,
     });
     qc.invalidateQueries({ queryKey: ["shop_orders"] });
     qc.invalidateQueries({ queryKey: ["shop-orders-shop"] });

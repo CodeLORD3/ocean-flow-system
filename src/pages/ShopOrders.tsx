@@ -29,6 +29,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format, getDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useCurrentStaff, staffFullName } from "@/hooks/useCurrentStaff";
 import { useProducts } from "@/hooks/useProducts";
 import { useTransportSchedules } from "@/hooks/useTransportSchedules";
 import { supabase } from "@/integrations/supabase/client";
@@ -235,6 +236,8 @@ export default function ShopOrders() {
   const qc = useQueryClient();
   const { activeStoreId } = useSite();
   const { activeUser } = useActiveUser();
+  const { data: currentStaff } = useCurrentStaff();
+  const loggedInName = staffFullName(currentStaff);
   const { data: products = [] } = useProducts();
   const { data: transportSchedules = [] } = useTransportSchedules();
   const [creatingOrder, setCreatingOrder] = useState(false);
@@ -437,7 +440,7 @@ export default function ShopOrders() {
         order_week: weekNum,
         notes: orderNote || null,
         status: "Ny",
-        created_by: activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : null,
+        created_by: loggedInName,
         desired_delivery_date: desiredDeliveryDate ? format(desiredDeliveryDate, "yyyy-MM-dd") : null,
       } as any)
       .select()
@@ -463,7 +466,7 @@ export default function ShopOrders() {
       return;
     }
 
-    const userName = activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : undefined;
+    const userName = loggedInName ?? undefined;
     await logActivity({
       action_type: "create",
       description: `Ny butiksorder skapad av ${userName || "okänd"} (${weekNum}, ${validLines.length} rader)`,
