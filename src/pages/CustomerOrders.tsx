@@ -18,7 +18,11 @@ import {
 import { EmptyState } from "@/components/EmptyState";
 import { useSite } from "@/contexts/SiteContext";
 import { useStores } from "@/hooks/useStores";
-import { useCustomerOrders, useArchiveCustomerOrder } from "@/hooks/useCustomerOrders";
+import {
+  useCustomerOrders,
+  useArchiveCustomerOrder,
+  useCustomerOrderCounts,
+} from "@/hooks/useCustomerOrders";
 import {
   CustomerOrder,
   ORDER_STATUS_LABELS,
