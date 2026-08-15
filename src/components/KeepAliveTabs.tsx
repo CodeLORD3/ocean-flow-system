@@ -1,3 +1,4 @@
+import { RetailCustomerProfile } from "@/components/orders/RetailCustomerProfile";
 import React, { ComponentType, useMemo } from "react";
 import { useTabs } from "@/contexts/TabsContext";
 
