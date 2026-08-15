@@ -394,70 +394,59 @@ export default function CustomerOrders() {
             </Popover>
           </div>
 
-          <div className="ml-auto flex shrink-0 gap-2">
+          <div className="ml-auto flex shrink-0 flex-wrap gap-2">
             <Button
               variant={panel === "pickups" ? "default" : "outline"}
-              size="icon"
-              className="h-11 w-11"
-              title="Dagens hämtningar"
-              aria-label="Dagens hämtningar"
+              size="sm"
+              className="h-11 gap-1.5 px-3 text-xs"
               onClick={() => setPanel(panel === "pickups" ? "orders" : "pickups")}
             >
-              <Clock className="h-4 w-4" />
+              <Clock className="h-4 w-4" /> Hämtningar
             </Button>
             <Button
               variant={panel === "route" ? "default" : "outline"}
-              size="icon"
-              className="h-11 w-11"
-              title="Leveransrutt"
-              aria-label="Leveransrutt"
+              size="sm"
+              className="h-11 gap-1.5 px-3 text-xs"
               onClick={() => setPanel(panel === "route" ? "orders" : "route")}
             >
-              <Truck className="h-4 w-4" />
+              <Truck className="h-4 w-4" /> Leveransrutt
             </Button>
             <Button
               variant={panel === "kitchen" ? "default" : "outline"}
-              size="icon"
-              className="h-11 w-11"
-              title="Kökslista (catering)"
-              aria-label="Kökslista"
+              size="sm"
+              className="h-11 gap-1.5 px-3 text-xs"
               onClick={() => setPanel(panel === "kitchen" ? "orders" : "kitchen")}
             >
-              <ChefHat className="h-4 w-4" />
+              <ChefHat className="h-4 w-4" /> Kökslista
             </Button>
             {!isShop && (
               <Button
                 variant={panel === "needs" ? "default" : "outline"}
-                size="icon"
-                className="h-11 w-11"
-                title="Inköpsbehov per butik"
-                aria-label="Inköpsbehov"
+                size="sm"
+                className="h-11 gap-1.5 px-3 text-xs"
                 onClick={() => setPanel(panel === "needs" ? "orders" : "needs")}
               >
-                <ShoppingCart className="h-4 w-4" />
+                <ShoppingCart className="h-4 w-4" /> Inköpsbehov
               </Button>
             )}
             <Button
               variant={panel === "customers" ? "default" : "outline"}
-              size="icon"
-              className="h-11 w-11"
-              title="Kundregister"
-              aria-label="Kundregister"
+              size="sm"
+              className="h-11 gap-1.5 px-3 text-xs"
               onClick={() => setPanel(panel === "customers" ? "orders" : "customers")}
             >
-              <Users className="h-4 w-4" />
+              <Users className="h-4 w-4" /> Kundregister
             </Button>
             <Button
               variant={panel === "stats" ? "default" : "outline"}
-              size="icon"
-              className="h-11 w-11"
-              title="Statistik"
-              aria-label="Statistik"
+              size="sm"
+              className="h-11 gap-1.5 px-3 text-xs"
               onClick={() => setPanel(panel === "stats" ? "orders" : "stats")}
             >
-              <BarChart3 className="h-4 w-4" />
+              <BarChart3 className="h-4 w-4" /> Statistik
             </Button>
           </div>
+
         </div>
 
         {panel !== "orders" && (
