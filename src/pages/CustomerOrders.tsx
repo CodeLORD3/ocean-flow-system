@@ -259,7 +259,63 @@ export default function CustomerOrders() {
         kassan vid hämtning.
       </p>
 
+      {/* Ordermenyn: tre operativa flikar först, historiken nedtonad sist. */}
+      {panel === "orders" && (
+        <div
+          role="tablist"
+          aria-label="Orderflikar"
+          className="flex flex-wrap items-stretch gap-1 overflow-x-auto rounded-sm border border-grid-line bg-card p-1"
+        >
+          {TABS.map((t) => {
+            const active = tab === t.id;
+            const count = tabCounts?.[t.id] ?? 0;
+            const alert = t.id === "obetalda" && count > 0;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                title={t.hint}
+                onClick={() => {
+                  setTab(t.id);
+                  setMarked([]);
+                  setOpenRow(null);
+                }}
+                className={`flex items-center gap-1.5 whitespace-nowrap rounded-sm px-3 py-2 text-xs transition-colors ${
+                  active
+                    ? alert
+                      ? "bg-destructive text-destructive-foreground font-semibold"
+                      : "bg-primary text-primary-foreground font-semibold"
+                    : t.muted
+                      ? "text-muted-foreground hover:bg-muted"
+                      : "text-foreground hover:bg-muted"
+                } ${!active && alert ? "text-destructive" : ""}`}
+              >
+                <span className={t.muted && !active ? "" : "font-semibold"}>
+                  {ORDER_TAB_LABELS[t.id]}
+                </span>
+                {count > 0 && (
+                  <span
+                    className={`rounded-sm px-1 font-mono text-[10px] tabular-nums ${
+                      active
+                        ? "bg-background/20"
+                        : alert
+                          ? "bg-destructive text-destructive-foreground"
+                          : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <div className="space-y-3">
+
         <div className="flex flex-wrap items-center gap-2">
           <div
             className={`flex min-w-[200px] flex-1 items-center gap-2 ${
