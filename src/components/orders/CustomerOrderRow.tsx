@@ -155,6 +155,7 @@ export function CustomerOrderRow({
   selected,
   onSelect,
   photoCount = 0,
+  orderCount = 0,
 }: {
   order: CustomerOrder;
   canEdit?: boolean;
