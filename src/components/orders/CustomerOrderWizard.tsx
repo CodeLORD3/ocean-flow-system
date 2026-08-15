@@ -1,12 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Search, Trash2, User, Fish, ArrowLeft, ArrowRight, Check } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Trash2,
+  User,
+  Fish,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -25,16 +35,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ProductThumb } from "@/components/products/ProductThumb";
+import { RetailCustomerDialog } from "@/components/orders/RetailCustomerDialog";
 import { useProducts } from "@/hooks/useProducts";
+import { useStores } from "@/hooks/useStores";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
 import {
   useCreateCustomerOrder,
-  useCreateRetailCustomer,
   useRetailCustomers,
   fetchTodaysPrice,
   NewOrderLineInput,
 } from "@/hooks/useCustomerOrders";
 import { RetailCustomer, shelfLifeWarning } from "@/lib/customerOrders";
+import { qtyText } from "@/lib/retailCustomerStats";
 import {
   useMajorHolidays,
   useSameDayOrders,
@@ -43,7 +56,6 @@ import {
 } from "@/hooks/useStoreOrderSettings";
 import {
   ALLERGENS,
-  allergenLabel,
   checkAllergens,
   checkCapacity,
   dayWindow,
@@ -58,13 +70,16 @@ interface DraftLine extends NewOrderLineInput {
   key: string;
   productName: string;
   imageUrl?: string | null;
+  allergens?: string[] | null;
   warning?: string | null;
   locked_from_scaling?: boolean;
 }
 
+const STEP_TITLES = ["Lägg till produkter", "Välj kund", "Hämtning", "Bekräfta"];
+
 /**
- * Guidat flöde i fyra steg: kund, tid, artiklar, bekräfta.
- * En uppgift per skärm, produktbild före text, stora fält.
+ * Guidat flöde i fyra steg: produkter, kund, hämtning, bekräfta.
+ * Produkterna först — personalen börjar oftast med vad kunden vill ha.
  */
 export function CustomerOrderWizard({
   open,
@@ -80,36 +95,21 @@ export function CustomerOrderWizard({
   /** Förvald kund, används av genvägen "Ny order" på kundkortet. */
   initialCustomer?: RetailCustomer | null;
 }) {
-  const [step, setStep] = useState(initialCustomer ? 2 : 1);
+  const [step, setStep] = useState(1);
   const { activeUser } = useActiveUser();
+  const { staff } = useStaffAuth();
   const { data: products = [] } = useProducts();
+  const { data: stores = [] } = useStores();
   const createOrder = useCreateCustomerOrder();
-  const createCustomer = useCreateRetailCustomer();
+
+  /** Hämtningsbutik. Byte flyttar hela ordern (priser, kundsök, sparning). */
+  const [pickupStoreId, setPickupStoreId] = useState(storeId);
 
   const [customerSearch, setCustomerSearch] = useState("");
-  const { data: customers = [] } = useRetailCustomers(storeId, customerSearch);
+  const { data: customers = [] } = useRetailCustomers(pickupStoreId, customerSearch);
   const [customer, setCustomer] = useState<RetailCustomer | null>(initialCustomer ?? null);
+  const [customerDialog, setCustomerDialog] = useState(false);
 
-  const [newCustomer, setNewCustomer] = useState({
-    name: "",
-    first_name: "",
-    last_name: "",
-
-    phone: "",
-    email: "",
-    street: "",
-    postal_code: "",
-    city: "",
-    note: "",
-    is_company: false,
-    company_name: "",
-    org_number: "",
-    contact_reference: "",
-  });
-
-  const [creatingCustomer, setCreatingCustomer] = useState(false);
-
-  const [orderType, setOrderType] = useState("upphamtning");
   const [category, setCategory] = useState("vanlig");
   const [status, setStatus] = useState("ny");
   const [wantedDate, setWantedDate] = useState(new Date().toISOString().slice(0, 10));
@@ -119,7 +119,7 @@ export function CustomerOrderWizard({
   const [allergyNote, setAllergyNote] = useState("");
   const [excludedAllergens, setExcludedAllergens] = useState<string[]>([]);
   const [note, setNote] = useState("");
-  const [address, setAddress] = useState({ street: "", postal_code: "", city: "" });
+  const [showMore, setShowMore] = useState(false);
 
   const [lines, setLines] = useState<DraftLine[]>([]);
   const [productSearch, setProductSearch] = useState("");
@@ -128,25 +128,42 @@ export function CustomerOrderWizard({
   const productInput = useRef<HTMLInputElement>(null);
   const qtyInput = useRef<HTMLInputElement>(null);
 
-  /* Öppettider, kapacitetstak och storhelger för butiken */
-  const { data: settings } = useStoreOrderSettings(storeId);
-  const { data: specialDays = [] } = useSpecialDays(storeId);
-  const { data: holidays = [] } = useMajorHolidays(storeId);
-  const { data: sameDayOrders = [] } = useSameDayOrders(storeId, wantedDate);
+  /* Butiker användaren får hämta i. Tom behörighetslista = alla butiker. */
+  const allowedStores = useMemo(() => {
+    const shops = stores.filter((s) => !s.is_wholesale);
+    const ids = new Set([
+      ...(staff?.allowed_store_ids ?? []),
+      ...(staff?.allowed_store_id ? [staff.allowed_store_id] : []),
+    ]);
+    const list = ids.size === 0 ? shops : shops.filter((s) => ids.has(s.id));
+    // Den butik flödet startade i ska alltid gå att välja
+    return list.some((s) => s.id === storeId)
+      ? list
+      : [...shops.filter((s) => s.id === storeId), ...list];
+  }, [stores, staff?.allowed_store_ids, staff?.allowed_store_id, storeId]);
+
+  const pickupStoreName =
+    allowedStores.find((s) => s.id === pickupStoreId)?.name ?? storeName ?? "";
+
+  /* Öppettider, kapacitetstak och storhelger för hämtningsbutiken */
+  const { data: settings } = useStoreOrderSettings(pickupStoreId);
+  const { data: specialDays = [] } = useSpecialDays(pickupStoreId);
+  const { data: holidays = [] } = useMajorHolidays(pickupStoreId);
+  const { data: sameDayOrders = [] } = useSameDayOrders(pickupStoreId, wantedDate);
 
   const capacity = useMemo(
     () =>
       checkCapacity({
         date: wantedDate,
         time: wantedTime || null,
-        orderType,
+        orderType: "upphamtning",
         category,
         settings,
         specialDays,
         holidays,
         sameDayOrders,
       }),
-    [wantedDate, wantedTime, orderType, category, settings, specialDays, holidays, sameDayOrders],
+    [wantedDate, wantedTime, category, settings, specialDays, holidays, sameDayOrders],
   );
 
   const window_ = useMemo(
@@ -157,7 +174,7 @@ export function CustomerOrderWizard({
   useEffect(() => {
     if (!open) {
       setStep(1);
-      setCustomer(null);
+      setCustomer(initialCustomer ?? null);
       setCustomerSearch("");
       setLines([]);
       setPending(null);
@@ -169,19 +186,14 @@ export function CustomerOrderWizard({
       setNote("");
       setStatus("ny");
       setCategory("vanlig");
-      setOrderType("upphamtning");
+      setShowMore(false);
+      setPickupStoreId(storeId);
     }
-  }, [open]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, storeId]);
 
   useEffect(() => {
-    if (customer) {
-      setAddress({
-        street: customer.street || "",
-        postal_code: customer.postal_code || "",
-        city: customer.city || "",
-      });
-      setExcludedAllergens(customer.excluded_allergens || []);
-    }
+    if (customer) setExcludedAllergens(customer.excluded_allergens || []);
   }, [customer]);
 
   /* Cateringrader räknas om när gästantalet ändras. Låsta rader står kvar. */
@@ -205,8 +217,8 @@ export function CustomerOrderWizard({
   }, [guestCount, category]);
 
   useEffect(() => {
-    if (step === 3) setTimeout(() => productInput.current?.focus(), 50);
-  }, [step]);
+    if (open && step === 1) setTimeout(() => productInput.current?.focus(), 50);
+  }, [open, step]);
 
   useEffect(() => {
     if (pending) setTimeout(() => qtyInput.current?.focus(), 50);
@@ -225,19 +237,25 @@ export function CustomerOrderWizard({
     0,
   );
 
-  const addProduct = async (product: any, quantity: number, portionPerGuest?: number | null) => {
-    // Allergivarning vid artikelval — varnar, spärrar inte.
-    const conflict = checkAllergens({
-      productName: product.name,
-      productAllergens: product.allergens,
-      excluded: excludedAllergens,
-    });
-    if (conflict.message) {
-      const ok = window.confirm(`${conflict.message}\n\nLägga till varan ändå?`);
-      if (!ok) return;
-    }
+  /** Allergivarningar räknas om löpande, allergenvalen görs i steg 3. */
+  const allergenConflicts = useMemo(
+    () =>
+      lines
+        .map((l) => ({
+          key: l.key,
+          name: l.productName,
+          message: checkAllergens({
+            productName: l.productName,
+            productAllergens: l.allergens,
+            excluded: excludedAllergens,
+          }).message,
+        }))
+        .filter((c) => !!c.message),
+    [lines, excludedAllergens],
+  );
 
-    const price = await fetchTodaysPrice(product.id, storeId);
+  const addProduct = async (product: any, quantity: number, portionPerGuest?: number | null) => {
+    const price = await fetchTodaysPrice(product.id, pickupStoreId);
     const warning = shelfLifeWarning({
       productName: product.name,
       shelfLifeDays: product.shelf_life_days,
@@ -250,11 +268,12 @@ export function CustomerOrderWizard({
         product_id: product.id,
         productName: product.name,
         imageUrl: product.image_url,
+        allergens: product.allergens ?? null,
         quantity_ordered: quantity,
         unit: product.unit || "kg",
         estimated_price_per_unit: price,
         portion_per_guest: portionPerGuest ?? null,
-        warning: conflict.message ?? warning,
+        warning,
       },
     ]);
     if (warning) toast.info(warning);
@@ -263,65 +282,45 @@ export function CustomerOrderWizard({
     setTimeout(() => productInput.current?.focus(), 50);
   };
 
-  const saveCustomer = async () => {
-    const first = newCustomer.first_name.trim();
-    const last = newCustomer.last_name.trim();
-    if (newCustomer.is_company) {
-      if (!newCustomer.company_name.trim()) return toast.error("Organisationen behöver ett namn.");
-    } else if (!first || !last) {
-      return toast.error("Ange både förnamn och efternamn.");
-    }
-    try {
-      const created = await createCustomer.mutateAsync({
-        ...newCustomer,
-        first_name: first || null,
-        last_name: last || null,
-        name: newCustomer.is_company
-          ? newCustomer.company_name.trim()
-          : [first, last].filter(Boolean).join(" "),
-        company_name: newCustomer.is_company ? newCustomer.company_name.trim() || null : null,
-        org_number: newCustomer.is_company ? newCustomer.org_number.trim() || null : null,
-        contact_reference: newCustomer.is_company
-          ? newCustomer.contact_reference.trim() || null
-          : null,
-        store_id: storeId,
-      } as any);
-
-
-      setCustomer(created);
-      setCreatingCustomer(false);
-      toast.success("Kunden är sparad.");
-    } catch (e: any) {
-      toast.error(e.message || "Kunden kunde inte sparas.");
-    }
-  };
+  const setQty = (key: string, raw: string) =>
+    setLines((prev) =>
+      prev.map((l) =>
+        l.key === key
+          ? {
+              ...l,
+              quantity_ordered: Number(String(raw).replace(",", ".")) || 0,
+              locked_from_scaling: true,
+            }
+          : l,
+      ),
+    );
 
   const submit = async () => {
+    if (lines.length === 0) return toast.error("Ordern behöver minst en rad.");
     if (!customer) return toast.error("Välj kund först.");
     if (capacity.blocking) return toast.error(capacity.blocking);
 
-    if (lines.length === 0) return toast.error("Ordern behöver minst en rad.");
     try {
       await createOrder.mutateAsync({
-        store_id: storeId,
+        store_id: pickupStoreId,
         customer_id: customer.id,
         customer_name_snapshot: customer.name,
         customer_phone_snapshot: customer.phone,
-        order_type: orderType,
+        order_type: "upphamtning",
         category,
         status,
         wanted_date: wantedDate,
         wanted_time: wantedTime || null,
-        delivery_street: orderType === "leverans" ? address.street : null,
-        delivery_postal_code: orderType === "leverans" ? address.postal_code : null,
-        delivery_city: orderType === "leverans" ? address.city : null,
+        delivery_street: null,
+        delivery_postal_code: null,
+        delivery_city: null,
         guest_count: category === "catering" && guestCount ? Number(guestCount) : null,
         allergy_note: allergyNote || null,
         excluded_allergens: excludedAllergens,
         source,
         received_by_name: activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : null,
         note: note || null,
-        lines: lines.map(({ key, productName, imageUrl, warning, ...l }) => l),
+        lines: lines.map(({ key, productName, imageUrl, warning, allergens, ...l }) => l),
       });
       toast.success("Ordern är sparad.");
       onOpenChange(false);
@@ -330,392 +329,49 @@ export function CustomerOrderWizard({
     }
   };
 
-  const stepTitles = ["Kund", "Tid och typ", "Varor", "Bekräfta"];
+  const goNext = () => {
+    if (step === 1 && lines.length === 0) return toast.error("Lägg till minst en produkt.");
+    if (step === 2 && !customer) return toast.error("Välj eller skapa kund.");
+    if (step === 3 && capacity.blocking) return toast.error(capacity.blocking);
+    setStep(step + 1);
+  };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
+
       <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Ny kundbeställning{storeName ? ` — ${storeName}` : ""}</DialogTitle>
           <DialogDescription>
-            Steg {step} av 4: {stepTitles[step - 1]}
+            Steg {step} av 4: {STEP_TITLES[step - 1]}
           </DialogDescription>
         </DialogHeader>
 
+        {/* Stegindikator: alla fyra steg synliga, kommande steg dämpade */}
         <div className="flex gap-2">
-          {stepTitles.map((t, i) => (
-            <div
-              key={t}
-              className={`h-1.5 flex-1 rounded-full ${i + 1 <= step ? "bg-primary" : "bg-muted"}`}
-            />
+          {STEP_TITLES.map((t, i) => (
+            <div key={t} className="flex-1 space-y-1">
+              <div
+                className={`h-1.5 rounded-full ${i + 1 <= step ? "bg-primary" : "bg-muted"}`}
+              />
+              <div
+                className={`truncate text-[11px] ${
+                  i + 1 === step
+                    ? "font-semibold text-foreground"
+                    : i + 1 < step
+                      ? "text-muted-foreground"
+                      : "text-muted-foreground/50"
+                }`}
+              >
+                {i + 1}. {t}
+              </div>
+            </div>
           ))}
         </div>
 
+        {/* ------------------------------------------ steg 1: produkter */}
         {step === 1 && (
-          <div className="space-y-4">
-            {!creatingCustomer ? (
-              <>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    autoFocus
-                    className="h-12 pl-9"
-                    placeholder="Sök namn eller telefon"
-                    value={customerSearch}
-                    onChange={(e) => setCustomerSearch(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {customers.map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => {
-                        setCustomer(c);
-                        setStep(2);
-                      }}
-                      className={`w-full rounded-md border p-3 text-left hover:bg-accent ${
-                        customer?.id === c.id ? "border-primary bg-accent" : "border-border"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <div className="flex items-center gap-2 font-medium">
-                            <span>{c.name}</span>
-                            {c.is_company && (
-                              <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
-                                Företag
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {[c.is_company ? c.company_name : null, c.phone, c.city]
-                              .filter(Boolean)
-                              .join(" · ") || "Inga kontaktuppgifter"}
-                          </div>
-                        </div>
-                      </div>
-
-                    </button>
-                  ))}
-                  {customers.length === 0 && (
-                    <p className="py-6 text-center text-sm text-muted-foreground">
-                      Ingen kund matchar sökningen. Lägg upp kunden nedan.
-                    </p>
-                  )}
-                </div>
-                <Button variant="outline" className="h-12 w-full" onClick={() => setCreatingCustomer(true)}>
-                  <Plus className="mr-2 h-4 w-4" /> Ny kund
-                </Button>
-              </>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="flex items-center justify-between gap-3 rounded-md border border-border p-3 sm:col-span-2">
-                  <div>
-                    <Label htmlFor="wizard-is-company">Organisation</Label>
-                    <p className="text-xs text-muted-foreground">
-                      Klubb, förening eller företag. Förnamn/efternamn avser kontaktpersonen.
-                    </p>
-                  </div>
-                  <Switch
-                    id="wizard-is-company"
-                    checked={newCustomer.is_company}
-                    onCheckedChange={(v) => setNewCustomer({ ...newCustomer, is_company: v })}
-                  />
-                </div>
-                {newCustomer.is_company && (
-                  <>
-                    <div>
-                      <Label>Organisationsnamn</Label>
-                      <Input
-                        className="h-12"
-                        value={newCustomer.company_name}
-                        onChange={(e) => setNewCustomer({ ...newCustomer, company_name: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <Label>Org.nummer</Label>
-                      <Input
-                        className="h-12"
-                        value={newCustomer.org_number}
-                        onChange={(e) => setNewCustomer({ ...newCustomer, org_number: e.target.value })}
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <Label>Referens/kontaktperson</Label>
-                      <Input
-                        className="h-12"
-                        value={newCustomer.contact_reference}
-                        onChange={(e) =>
-                          setNewCustomer({ ...newCustomer, contact_reference: e.target.value })
-                        }
-                      />
-                    </div>
-                  </>
-                )}
-
-                <div>
-                  <Label>
-                    Förnamn{" "}
-                    {newCustomer.is_company && <span className="text-muted-foreground">(valfritt)</span>}
-                  </Label>
-                  <Input
-                    autoFocus
-                    className="h-12"
-                    value={newCustomer.first_name}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, first_name: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>
-                    Efternamn{" "}
-                    {newCustomer.is_company && <span className="text-muted-foreground">(valfritt)</span>}
-                  </Label>
-                  <Input
-                    className="h-12"
-                    value={newCustomer.last_name}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, last_name: e.target.value })}
-                  />
-                </div>
-
-                <div>
-                  <Label>Telefon</Label>
-                  <Input
-                    className="h-12"
-                    inputMode="tel"
-                    value={newCustomer.phone}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>E-post</Label>
-                  <Input
-                    className="h-12"
-                    value={newCustomer.email}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <Label>Gata</Label>
-                  <Input
-                    className="h-12"
-                    value={newCustomer.street}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, street: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>Postnummer</Label>
-                  <Input
-                    className="h-12"
-                    value={newCustomer.postal_code}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, postal_code: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>Ort</Label>
-                  <Input
-                    className="h-12"
-                    value={newCustomer.city}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, city: e.target.value })}
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <Label>Anteckning (t.ex. portkod)</Label>
-                  <Textarea
-                    value={newCustomer.note}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, note: e.target.value })}
-                  />
-                </div>
-                <div className="flex gap-2 sm:col-span-2">
-                  <Button className="h-12 flex-1" onClick={saveCustomer}>
-                    Spara kund
-                  </Button>
-                  <Button variant="outline" className="h-12" onClick={() => setCreatingCustomer(false)}>
-                    Avbryt
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <Label>Ordertyp</Label>
-              <Select value={orderType} onValueChange={setOrderType}>
-                <SelectTrigger className="h-12">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="upphamtning">Upphämtning</SelectItem>
-                  <SelectItem value="leverans">Leverans</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Kategori</Label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="h-12">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="vanlig">Vanlig order</SelectItem>
-                  <SelectItem value="catering">Catering</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Önskat datum</Label>
-              <Input
-                type="date"
-                className="h-12"
-                value={wantedDate}
-                onChange={(e) => setWantedDate(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>Önskad tid</Label>
-              <Input
-                type="time"
-                className="h-12"
-                value={wantedTime}
-                onChange={(e) => setWantedTime(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>Källa</Label>
-              <Select value={source} onValueChange={setSource}>
-                <SelectTrigger className="h-12">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="telefon">Telefon</SelectItem>
-                  <SelectItem value="i_butik">I butik</SelectItem>
-                  <SelectItem value="epost">E-post</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Status</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="h-12">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ny">Ny order</SelectItem>
-                  <SelectItem value="forfragan">Förfrågan (reserverar inget)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {category === "catering" && (
-              <div>
-                <Label>Antal gäster</Label>
-                <Input
-                  inputMode="numeric"
-                  className="h-12"
-                  value={guestCount}
-                  onChange={(e) => setGuestCount(e.target.value)}
-                />
-              </div>
-            )}
-            <div className="sm:col-span-2">
-              <Label>Allergianmärkning</Label>
-              <Input
-                className="h-12"
-                value={allergyNote}
-                onChange={(e) => setAllergyNote(e.target.value)}
-                placeholder="t.ex. äggallergi"
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <Label>Undvik dessa allergener</Label>
-              <div className="mt-1 flex flex-wrap gap-1.5">
-                {ALLERGENS.map((a) => {
-                  const on = excludedAllergens.includes(a.key);
-                  return (
-                    <button
-                      key={a.key}
-                      type="button"
-                      onClick={() =>
-                        setExcludedAllergens((prev) =>
-                          on ? prev.filter((x) => x !== a.key) : [...prev, a.key],
-                        )
-                      }
-                      className={`rounded-full border px-3 py-2 text-xs ${
-                        on
-                          ? "border-destructive bg-destructive/10 font-semibold text-destructive"
-                          : "border-border text-muted-foreground"
-                      }`}
-                    >
-                      {a.label}
-                    </button>
-                  );
-                })}
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Systemet varnar när en vara innehåller något av dessa. Varning, ingen spärr.
-              </p>
-            </div>
-            <div className="space-y-2 sm:col-span-2">
-              <div className="rounded-md bg-muted p-3 text-xs">
-                {window_.closed
-                  ? `Stängt ${weekdayName(wantedDate)} — ${window_.sourceLabel}`
-                  : window_.open && window_.close
-                    ? `Öppet ${weekdayName(wantedDate)} ${window_.open}–${window_.close} (${window_.sourceLabel})`
-                    : "Öppettider är inte upplagda för butiken."}
-              </div>
-              {capacity.blocking && (
-                <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm font-semibold">
-                  {capacity.blocking}
-                </div>
-              )}
-              {capacity.warnings.map((w) => (
-                <div
-                  key={w}
-                  className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
-                >
-                  {w}
-                </div>
-              ))}
-            </div>
-
-            {orderType === "leverans" && (
-              <>
-                <div className="sm:col-span-2">
-                  <Label>Leveransadress</Label>
-                  <Input
-                    className="h-12"
-                    value={address.street}
-                    onChange={(e) => setAddress({ ...address, street: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>Postnummer</Label>
-                  <Input
-                    className="h-12"
-                    value={address.postal_code}
-                    onChange={(e) => setAddress({ ...address, postal_code: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>Ort</Label>
-                  <Input
-                    className="h-12"
-                    value={address.city}
-                    onChange={(e) => setAddress({ ...address, city: e.target.value })}
-                  />
-                </div>
-              </>
-            )}
-            <div className="sm:col-span-2">
-              <Label>Anteckning</Label>
-              <Textarea value={note} onChange={(e) => setNote(e.target.value)} />
-            </div>
-          </div>
-        )}
-
-        {step === 3 && (
           <div className="space-y-4">
             {!pending ? (
               <>
@@ -724,7 +380,8 @@ export function CustomerOrderWizard({
                   <Input
                     ref={productInput}
                     className="h-12 pl-9"
-                    placeholder="Sök produkt"
+                    aria-label="Sök efter en produkt"
+                    placeholder="Sök efter en produkt"
                     value={productSearch}
                     onChange={(e) => setProductSearch(e.target.value)}
                     onKeyDown={(e) => {
@@ -735,38 +392,28 @@ export function CustomerOrderWizard({
                     }}
                   />
                 </div>
-                <div className="space-y-2">
-                  {matches.map((p) => {
-                    const conflict = checkAllergens({
-                      productName: p.name,
-                      productAllergens: p.allergens,
-                      excluded: excludedAllergens,
-                    });
-                    return (
+                {matches.length > 0 && (
+                  <div className="space-y-2 rounded-md border border-border p-2">
+                    {matches.map((p) => (
                       <button
                         key={p.id}
                         onClick={() => setPending({ product: p, qty: "", portion: "" })}
-                        className={`flex w-full items-center gap-3 rounded-md border p-2 text-left hover:bg-accent ${
-                          conflict.hits.length > 0 ? "border-destructive" : "border-border"
-                        }`}
+                        className="flex w-full items-center gap-3 rounded-md border border-border p-2 text-left hover:bg-accent"
                       >
                         <ProductThumb src={p.image_url} alt={p.name} static />
                         <div className="min-w-0 flex-1">
-                          <div className="truncate font-medium">{p.name}</div>
+                          <div className="truncate text-sm font-medium">{p.name}</div>
                           <div className="text-xs text-muted-foreground">
                             {p.category} · {p.unit}
-                            {p.retail_suggested ? ` · ${nf(Number(p.retail_suggested))} kr/${p.unit}` : ""}
+                            {p.retail_suggested
+                              ? ` · ${nf(Number(p.retail_suggested))} kr/${p.unit}`
+                              : ""}
                           </div>
-                          {conflict.hits.length > 0 && (
-                            <div className="text-xs font-semibold text-destructive">
-                              Innehåller {conflict.hits.map(allergenLabel).join(", ").toLowerCase()}
-                            </div>
-                          )}
                         </div>
                       </button>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
+                )}
               </>
             ) : (
               <Card>
@@ -782,10 +429,11 @@ export function CustomerOrderWizard({
                   </div>
                   {category === "catering" && Number(guestCount || 0) > 0 && (
                     <div>
-                      <Label>
+                      <Label htmlFor="wiz-portion">
                         Portion per gäst ({pending.product.unit || "kg"}) — {guestCount} gäster
                       </Label>
                       <Input
+                        id="wiz-portion"
                         inputMode="decimal"
                         className="h-12"
                         value={pending.portion}
@@ -795,18 +443,20 @@ export function CustomerOrderWizard({
                           setPending({
                             ...pending,
                             portion,
-                            qty: p ? String(Math.round(p * Number(guestCount) * 1000) / 1000) : pending.qty,
+                            qty: p
+                              ? String(Math.round(p * Number(guestCount) * 1000) / 1000)
+                              : pending.qty,
                           });
                         }}
                       />
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Mängden räknas om automatiskt om gästantalet ändras.
-                      </p>
                     </div>
                   )}
                   <div>
-                    <Label>Antal / mängd ({pending.product.unit || "kg"})</Label>
+                    <Label htmlFor="wiz-qty">
+                      Antal / mängd ({pending.product.unit || "kg"})
+                    </Label>
                     <Input
+                      id="wiz-qty"
                       ref={qtyInput}
                       inputMode="decimal"
                       className="h-14 text-lg"
@@ -849,13 +499,19 @@ export function CustomerOrderWizard({
               </Card>
             )}
 
+            <div className="text-xs font-semibold text-muted-foreground">
+              Du har lagt till {lines.length} {lines.length === 1 ? "produkt" : "produkter"}
+            </div>
 
             {lines.length > 0 && (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {lines.map((l) => (
-                  <div key={l.key} className="flex items-center gap-3 rounded-md border border-border p-2">
+                  <div
+                    key={l.key}
+                    className="flex items-center gap-2 rounded-md border border-border p-2 text-xs"
+                  >
                     {l.is_free_text ? (
-                      <div className="flex h-14 w-20 shrink-0 items-center justify-center rounded-md border border-dashed border-border">
+                      <div className="flex h-10 w-14 shrink-0 items-center justify-center rounded-md border border-dashed border-border">
                         <Fish className="h-4 w-4 text-muted-foreground" />
                       </div>
                     ) : (
@@ -870,107 +526,430 @@ export function CustomerOrderWizard({
                           </Badge>
                         )}
                       </div>
-                      <div className="font-mono text-xs tabular-nums text-muted-foreground">
-                        {nf(Number(l.quantity_ordered), 3)} {l.unit} ×{" "}
+                      <div className="font-mono tabular-nums text-muted-foreground">
                         {l.estimated_price_per_unit != null
-                          ? `${nf(Number(l.estimated_price_per_unit))} kr`
+                          ? `${nf(Number(l.estimated_price_per_unit))} kr/${l.unit}`
                           : "pris saknas"}
                       </div>
                     </div>
+                    <div className="flex items-center gap-1">
+                      <Input
+                        inputMode="decimal"
+                        aria-label={`Antal ${l.productName}`}
+                        className="h-9 w-20 text-right font-mono tabular-nums"
+                        value={qtyText(l.quantity_ordered, l.unit)}
+                        onChange={(e) => setQty(l.key, e.target.value)}
+                      />
+                      <span className="w-6 text-muted-foreground">{l.unit}</span>
+                    </div>
                     <Button
-                      size="icon"
+                      size="sm"
                       variant="ghost"
+                      className="h-9 text-muted-foreground"
                       onClick={() => setLines((prev) => prev.filter((x) => x.key !== l.key))}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="mr-1 h-3.5 w-3.5" /> Ta bort
                     </Button>
                   </div>
                 ))}
               </div>
             )}
 
-            {category === "catering" && (
-              <Card>
-                <CardContent className="grid gap-2 p-3 sm:grid-cols-4">
-                  <div className="sm:col-span-2">
-                    <Label className="text-xs">Fritextrad (t.ex. upplägg)</Label>
-                    <Input
-                      className="h-11"
-                      value={freeText.name}
-                      onChange={(e) => setFreeText({ ...freeText, name: e.target.value })}
-                    />
+            <Card>
+              <CardContent className="grid gap-2 p-3 sm:grid-cols-4">
+                <div className="sm:col-span-2">
+                  <Label className="text-xs">Fritextrad (t.ex. upplägg)</Label>
+                  <Input
+                    className="h-11"
+                    value={freeText.name}
+                    onChange={(e) => setFreeText({ ...freeText, name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Antal</Label>
+                  <Input
+                    inputMode="decimal"
+                    className="h-11"
+                    value={freeText.qty}
+                    onChange={(e) => setFreeText({ ...freeText, qty: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Pris</Label>
+                  <Input
+                    inputMode="decimal"
+                    className="h-11"
+                    value={freeText.price}
+                    onChange={(e) => setFreeText({ ...freeText, price: e.target.value })}
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  className="h-11 sm:col-span-4"
+                  onClick={() => {
+                    const q = Number(String(freeText.qty).replace(",", "."));
+                    if (!freeText.name.trim() || !q)
+                      return toast.error("Fritextraden behöver namn och antal.");
+                    setLines((prev) => [
+                      ...prev,
+                      {
+                        key: crypto.randomUUID(),
+                        is_free_text: true,
+                        free_text_name: freeText.name.trim(),
+                        productName: freeText.name.trim(),
+                        quantity_ordered: q,
+                        unit: "st",
+                        estimated_price_per_unit:
+                          Number(String(freeText.price).replace(",", ".")) || null,
+                      },
+                    ]);
+                    setFreeText({ name: "", qty: "", price: "" });
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" /> Lägg till fritextrad
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* ------------------------------------------ steg 2: kund */}
+        {step === 2 && (
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                autoFocus
+                className="h-12 pl-9"
+                aria-label="Sök namn eller telefon"
+                placeholder="Sök namn eller telefon"
+                value={customerSearch}
+                onChange={(e) => setCustomerSearch(e.target.value)}
+              />
+            </div>
+            <div className="max-h-64 space-y-2 overflow-y-auto">
+              {customers.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => setCustomer(c)}
+                  className={`w-full rounded-md border p-3 text-left hover:bg-accent ${
+                    customer?.id === c.id ? "border-primary bg-accent" : "border-border"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <div className="flex items-center gap-2 font-medium">
+                        <span>{c.name}</span>
+                        {c.is_company && (
+                          <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                            Företag
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {[c.is_company ? c.company_name : null, c.phone, c.city]
+                          .filter(Boolean)
+                          .join(" · ") || "Inga kontaktuppgifter"}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <Label className="text-xs">Antal</Label>
-                    <Input
-                      inputMode="decimal"
-                      className="h-11"
-                      value={freeText.qty}
-                      onChange={(e) => setFreeText({ ...freeText, qty: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs">Pris</Label>
-                    <Input
-                      inputMode="decimal"
-                      className="h-11"
-                      value={freeText.price}
-                      onChange={(e) => setFreeText({ ...freeText, price: e.target.value })}
-                    />
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="h-11 sm:col-span-4"
-                    onClick={() => {
-                      const q = Number(String(freeText.qty).replace(",", "."));
-                      if (!freeText.name.trim() || !q) return toast.error("Fritextraden behöver namn och antal.");
-                      setLines((prev) => [
-                        ...prev,
-                        {
-                          key: crypto.randomUUID(),
-                          is_free_text: true,
-                          free_text_name: freeText.name.trim(),
-                          productName: freeText.name.trim(),
-                          quantity_ordered: q,
-                          unit: "st",
-                          estimated_price_per_unit: Number(String(freeText.price).replace(",", ".")) || null,
-                        },
-                      ]);
-                      setFreeText({ name: "", qty: "", price: "" });
-                    }}
-                  >
-                    <Plus className="mr-2 h-4 w-4" /> Lägg till fritextrad
+                </button>
+              ))}
+              {customers.length === 0 && (
+                <div className="space-y-2 py-4 text-center">
+                  <p className="text-sm text-muted-foreground">Ingen kund matchar sökningen.</p>
+                  <Button variant="outline" className="h-11" onClick={() => setCustomerDialog(true)}>
+                    <Plus className="mr-2 h-4 w-4" /> Lägg till som ny kund
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+              )}
+            </div>
+
+            <Card>
+              <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+                <div>
+                  <div className="text-sm font-semibold">Är kunden ny?</div>
+                  <p className="text-xs text-muted-foreground">
+                    Lägg upp kunden direkt här — samma formulär som i kundregistret.
+                  </p>
+                </div>
+                <Button variant="outline" className="h-11" onClick={() => setCustomerDialog(true)}>
+                  <Plus className="mr-2 h-4 w-4" /> lägg till ny kund
+                </Button>
+              </CardContent>
+            </Card>
+
+            {customer && (
+              <div className="rounded-md bg-muted p-3 text-sm">
+                Vald kund: <span className="font-semibold">{customer.name}</span>
+                {customer.phone ? ` · ${customer.phone}` : ""}
+              </div>
             )}
           </div>
         )}
 
+        {/* ------------------------------------------ steg 3: hämtning */}
+        {step === 3 && (
+          <Card>
+            <CardContent className="grid gap-3 p-4 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <Label htmlFor="wiz-store">Hämtningsbutik</Label>
+                <Select value={pickupStoreId} onValueChange={setPickupStoreId}>
+                  <SelectTrigger id="wiz-store" className="h-12">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allowedStores.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {pickupStoreId !== storeId && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Ordern sparas på {pickupStoreName} och priser hämtas därifrån.
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="wiz-date">Hämtningsdatum</Label>
+                <Input
+                  id="wiz-date"
+                  type="date"
+                  className="h-12"
+                  value={wantedDate}
+                  onChange={(e) => setWantedDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="wiz-time">Hämtningstid</Label>
+                <Input
+                  id="wiz-time"
+                  type="time"
+                  className="h-12"
+                  value={wantedTime}
+                  onChange={(e) => setWantedTime(e.target.value)}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <Label htmlFor="wiz-note">Anteckning till hämtningen</Label>
+                <Textarea
+                  id="wiz-note"
+                  placeholder="t.ex. ring innan avhämtning, extra is"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2 sm:col-span-2">
+                <div className="rounded-md bg-muted p-3 text-xs">
+                  {window_.closed
+                    ? `Stängt ${weekdayName(wantedDate)} — ${window_.sourceLabel}`
+                    : window_.open && window_.close
+                      ? `Öppet ${weekdayName(wantedDate)} ${window_.open}–${window_.close} (${window_.sourceLabel})`
+                      : "Öppettider är inte upplagda för butiken."}
+                </div>
+                {capacity.blocking && (
+                  <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm font-semibold">
+                    {capacity.blocking}
+                  </div>
+                )}
+                {capacity.warnings.map((w) => (
+                  <div
+                    key={w}
+                    className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
+                  >
+                    {w}
+                  </div>
+                ))}
+              </div>
+
+              <div className="sm:col-span-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-9 px-0 text-xs text-muted-foreground"
+                  onClick={() => setShowMore((v) => !v)}
+                >
+                  Mer{" "}
+                  {showMore ? (
+                    <ChevronUp className="ml-1 h-3.5 w-3.5" />
+                  ) : (
+                    <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                  )}
+                </Button>
+              </div>
+
+              {showMore && (
+                <>
+                  <div>
+                    <Label htmlFor="wiz-category">Kategori</Label>
+                    <Select value={category} onValueChange={setCategory}>
+                      <SelectTrigger id="wiz-category" className="h-12">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="vanlig">Vanlig order</SelectItem>
+                        <SelectItem value="catering">Catering</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {category === "catering" && (
+                    <div>
+                      <Label htmlFor="wiz-guests">Antal gäster</Label>
+                      <Input
+                        id="wiz-guests"
+                        inputMode="numeric"
+                        className="h-12"
+                        value={guestCount}
+                        onChange={(e) => setGuestCount(e.target.value)}
+                      />
+                    </div>
+                  )}
+                  <div>
+                    <Label htmlFor="wiz-status">Status</Label>
+                    <Select value={status} onValueChange={setStatus}>
+                      <SelectTrigger id="wiz-status" className="h-12">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ny">Ny order</SelectItem>
+                        <SelectItem value="forfragan">Förfrågan (reserverar inget)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="wiz-source">Källa</Label>
+                    <Select value={source} onValueChange={setSource}>
+                      <SelectTrigger id="wiz-source" className="h-12">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="telefon">Telefon</SelectItem>
+                        <SelectItem value="i_butik">I butik</SelectItem>
+                        <SelectItem value="epost">E-post</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label htmlFor="wiz-allergy">Allergianmärkning</Label>
+                    <Input
+                      id="wiz-allergy"
+                      className="h-12"
+                      value={allergyNote}
+                      onChange={(e) => setAllergyNote(e.target.value)}
+                      placeholder="t.ex. äggallergi"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label>Undvik dessa allergener</Label>
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      {ALLERGENS.map((a) => {
+                        const on = excludedAllergens.includes(a.key);
+                        return (
+                          <button
+                            key={a.key}
+                            type="button"
+                            onClick={() =>
+                              setExcludedAllergens((prev) =>
+                                on ? prev.filter((x) => x !== a.key) : [...prev, a.key],
+                              )
+                            }
+                            className={`rounded-full border px-3 py-2 text-xs ${
+                              on
+                                ? "border-destructive bg-destructive/10 font-semibold text-destructive"
+                                : "border-border text-muted-foreground"
+                            }`}
+                          >
+                            {a.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Systemet varnar när en vara innehåller något av dessa. Varning, ingen spärr.
+                    </p>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ------------------------------------------ steg 4: bekräfta */}
         {step === 4 && (
           <div className="space-y-3">
             <Card>
               <CardContent className="space-y-1 p-4 text-sm">
-                <div className="text-base font-semibold">{customer?.name}</div>
-                <div className="text-muted-foreground">{customer?.phone}</div>
-                <div>
-                  {orderType === "leverans" ? "Leverans" : "Upphämtning"} {wantedDate}
-                  {wantedTime ? ` kl ${wantedTime}` : ""}
-                </div>
-                {orderType === "leverans" && (
-                  <div className="text-muted-foreground">
-                    {[address.street, address.postal_code, address.city].filter(Boolean).join(", ")}
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="text-base font-semibold">{customer?.name}</div>
+                    <div className="text-muted-foreground">{customer?.phone}</div>
                   </div>
-                )}
-                {allergyNote && <div className="font-semibold">Allergi: {allergyNote}</div>}
+                  <Button variant="ghost" size="sm" className="h-8" onClick={() => setStep(2)}>
+                    Ändra
+                  </Button>
+                </div>
+                <div className="flex items-start justify-between pt-2">
+                  <div>
+                    <div>
+                      Hämtning i {pickupStoreName} {wantedDate}
+                      {wantedTime ? ` kl ${wantedTime}` : ""}
+                    </div>
+                    {note && <div className="text-muted-foreground">{note}</div>}
+                    {allergyNote && <div className="font-semibold">Allergi: {allergyNote}</div>}
+                  </div>
+                  <Button variant="ghost" size="sm" className="h-8" onClick={() => setStep(3)}>
+                    Ändra
+                  </Button>
+                </div>
               </CardContent>
             </Card>
+
+            {allergenConflicts.length > 0 && (
+              <div className="space-y-1">
+                {allergenConflicts.map((c) => (
+                  <div
+                    key={c.key}
+                    className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
+                  >
+                    {c.message}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
+              <span>
+                {lines.length} {lines.length === 1 ? "produkt" : "produkter"}
+              </span>
+              <Button variant="ghost" size="sm" className="h-8" onClick={() => setStep(1)}>
+                Ändra
+              </Button>
+            </div>
             <div className="space-y-1">
               {lines.map((l) => (
-                <div key={l.key} className="flex justify-between rounded border border-border px-3 py-2 text-sm">
-                  <span>{l.productName}</span>
+                <div
+                  key={l.key}
+                  className="flex items-center justify-between gap-3 rounded border border-border px-3 py-2 text-xs"
+                >
+                  <span className="min-w-0 flex-1 truncate">{l.productName}</span>
                   <span className="font-mono tabular-nums">
-                    {nf(Number(l.quantity_ordered), 3)} {l.unit}
+                    {qtyText(l.quantity_ordered, l.unit)} {l.unit}
+                  </span>
+                  <span className="w-20 text-right font-mono tabular-nums text-muted-foreground">
+                    {l.estimated_price_per_unit != null
+                      ? `${nf(Number(l.estimated_price_per_unit))} kr`
+                      : "—"}
+                  </span>
+                  <span className="w-24 text-right font-mono tabular-nums">
+                    {l.estimated_price_per_unit != null
+                      ? `${nf(
+                          Number(l.quantity_ordered || 0) * Number(l.estimated_price_per_unit),
+                        )} kr`
+                      : "—"}
                   </span>
                 </div>
               ))}
@@ -987,32 +966,41 @@ export function CustomerOrderWizard({
           </div>
         )}
 
-        <DialogFooter className="gap-2">
-          {step > 1 && (
-            <Button variant="outline" className="h-12" onClick={() => setStep(step - 1)}>
-              <ArrowLeft className="mr-2 h-4 w-4" /> Tillbaka
-            </Button>
-          )}
-          {step < 4 ? (
-            <Button
-              className="h-12"
-              onClick={() => {
-                if (step === 1 && !customer) return toast.error("Välj eller skapa kund.");
-                if (step === 2 && capacity.blocking) return toast.error(capacity.blocking);
-
-                if (step === 3 && lines.length === 0) return toast.error("Lägg till minst en vara.");
-                setStep(step + 1);
-              }}
-            >
-              Nästa <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          ) : (
-            <Button className="h-12" onClick={submit} disabled={createOrder.isPending}>
-              <Check className="mr-2 h-4 w-4" /> Spara order
-            </Button>
-          )}
+        <DialogFooter className="gap-2 sm:justify-between">
+          <Button variant="ghost" className="h-12" onClick={() => onOpenChange(false)}>
+            Avbryt
+          </Button>
+          <div className="flex gap-2">
+            {step > 1 && (
+              <Button variant="outline" className="h-12" onClick={() => setStep(step - 1)}>
+                <ArrowLeft className="mr-2 h-4 w-4" /> Föregående
+              </Button>
+            )}
+            {step < 4 ? (
+              <Button className="h-12" onClick={goNext}>
+                Fortsätt <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            ) : (
+              <Button className="h-12" onClick={submit} disabled={createOrder.isPending}>
+                <Check className="mr-2 h-4 w-4" /> Skapa order
+              </Button>
+            )}
+          </div>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
+      </Dialog>
+
+      <RetailCustomerDialog
+        open={customerDialog}
+        onOpenChange={setCustomerDialog}
+        editing={null}
+        storeId={pickupStoreId}
+        onCreated={(c) => {
+          setCustomer(c);
+          setCustomerSearch("");
+        }}
+      />
+    </>
   );
 }
+

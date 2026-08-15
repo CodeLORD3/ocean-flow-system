@@ -42,14 +42,18 @@ export function RetailCustomerDialog({
   onOpenChange,
   editing,
   storeId,
+  onCreated,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   editing: RetailCustomer | null;
   storeId?: string | null;
+  /** Anropas med den nyskapade kunden, används av orderflödet för autoval. */
+  onCreated?: (customer: RetailCustomer) => void;
 }) {
   const create = useCreateRetailCustomer();
   const update = useUpdateRetailCustomer();
+
   const [form, setForm] = useState(empty);
 
   useEffect(() => {
@@ -98,9 +102,13 @@ export function RetailCustomerDialog({
     };
     try {
       if (editing) await update.mutateAsync({ id: editing.id, ...payload } as any);
-      else await create.mutateAsync({ ...payload, store_id: storeId } as any);
+      else {
+        const created = await create.mutateAsync({ ...payload, store_id: storeId } as any);
+        if (created) onCreated?.(created);
+      }
       toast.success("Kunden är sparad.");
       onOpenChange(false);
+
     } catch (e: any) {
       toast.error(e.message || "Kunden kunde inte sparas.");
     }
@@ -159,7 +167,11 @@ export function RetailCustomerDialog({
             </>
           )}
 
+          <h4 className="sm:col-span-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Kunduppgifter
+          </h4>
           <div>
+
             <Label>
               Förnamn {form.is_company && <span className="text-muted-foreground">(valfritt)</span>}
             </Label>
@@ -193,7 +205,11 @@ export function RetailCustomerDialog({
             </div>
           )}
 
+          <h4 className="sm:col-span-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Kontaktinformation
+          </h4>
           <div>
+
             <Label>Telefon</Label>
             <Input
               className="h-12"
@@ -210,7 +226,11 @@ export function RetailCustomerDialog({
               onChange={(e) => setForm({ ...form, email: e.target.value })}
             />
           </div>
+          <h4 className="sm:col-span-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Adress
+          </h4>
           <div className="sm:col-span-2">
+
             <Label>Gata</Label>
             <Input
               className="h-12"
@@ -234,8 +254,12 @@ export function RetailCustomerDialog({
               onChange={(e) => setForm({ ...form, city: e.target.value })}
             />
           </div>
+          <h4 className="sm:col-span-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Anteckning
+          </h4>
           <div className="sm:col-span-2">
-            <Label>Anteckning</Label>
+            <Label>Anteckning (t.ex. föredraget kontaktsätt eller hämtningsönskemål)</Label>
+
             <Textarea
               value={form.note}
               onChange={(e) => setForm({ ...form, note: e.target.value })}
