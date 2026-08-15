@@ -8,6 +8,10 @@ interface SiteContextType {
   activeStoreId: string | null;
   activeStoreName: string | null;
   setActiveStore: (id: string | null, name: string | null) => void;
+  /** Har användaren aktivt valt portal (och butik) i portalvalet? */
+  portalChosen: boolean;
+  /** Nollställ portalvalet, t.ex. vid utloggning eller byte av portal */
+  clearPortal: () => void;
 }
 
 const SiteContext = createContext<SiteContextType>({
@@ -16,6 +20,8 @@ const SiteContext = createContext<SiteContextType>({
   activeStoreId: null,
   activeStoreName: null,
   setActiveStore: () => {},
+  portalChosen: false,
+  clearPortal: () => {},
 });
 
 const SITE_STORAGE_KEY = "erp_site_context";
@@ -26,6 +32,7 @@ function getStoredSiteContext() {
       site: "wholesale" as SiteMode,
       activeStoreId: null as string | null,
       activeStoreName: null as string | null,
+      chosen: false,
     };
   }
 
@@ -43,18 +50,21 @@ function getStoredSiteContext() {
       site?: SiteMode;
       activeStoreId?: string | null;
       activeStoreName?: string | null;
+      chosen?: boolean;
     };
 
     return {
       site: parsed.site ?? "wholesale",
       activeStoreId: parsed.activeStoreId ?? null,
       activeStoreName: parsed.activeStoreName ?? null,
+      chosen: parsed.chosen ?? false,
     };
   } catch {
     return {
       site: "wholesale" as SiteMode,
       activeStoreId: null as string | null,
       activeStoreName: null as string | null,
+      chosen: false,
     };
   }
 }
@@ -63,6 +73,18 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   const [site, setSite] = useState<SiteMode>(() => getStoredSiteContext().site);
   const [activeStoreId, setActiveStoreId] = useState<string | null>(() => getStoredSiteContext().activeStoreId);
   const [activeStoreName, setActiveStoreName] = useState<string | null>(() => getStoredSiteContext().activeStoreName);
+  const [portalChosen, setPortalChosen] = useState<boolean>(() => getStoredSiteContext().chosen);
+
+  const setSiteMode = (s: SiteMode) => {
+    setSite(s);
+    setPortalChosen(true);
+  };
+
+  const clearPortal = () => {
+    setPortalChosen(false);
+    setActiveStoreId(null);
+    setActiveStoreName(null);
+  };
 
   const setActiveStore = (id: string | null, name: string | null) => {
     setActiveStoreId(id);
@@ -76,12 +98,13 @@ export function SiteProvider({ children }: { children: ReactNode }) {
         site,
         activeStoreId,
         activeStoreName,
+        chosen: portalChosen,
       })
     );
-  }, [site, activeStoreId, activeStoreName]);
+  }, [site, activeStoreId, activeStoreName, portalChosen]);
 
   return (
-    <SiteContext.Provider value={{ site, setSite, activeStoreId, activeStoreName, setActiveStore }}>
+    <SiteContext.Provider value={{ site, setSite: setSiteMode, activeStoreId, activeStoreName, setActiveStore, portalChosen, clearPortal }}>
       {children}
     </SiteContext.Provider>
   );
