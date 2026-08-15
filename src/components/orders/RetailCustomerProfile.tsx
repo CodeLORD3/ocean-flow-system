@@ -694,7 +694,7 @@ export function RetailCustomerProfile({
         <CustomerOrderWizard
           open={wizardOpen}
           onOpenChange={setWizardOpen}
-          storeId={customer.store_id}
+          storeId={customer.store_id ?? ""}
           initialCustomer={customer}
         />
       )}
