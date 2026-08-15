@@ -43,6 +43,7 @@ function getStoredSiteContext() {
         site: "wholesale" as SiteMode,
         activeStoreId: null as string | null,
         activeStoreName: null as string | null,
+        chosen: false,
       };
     }
 
