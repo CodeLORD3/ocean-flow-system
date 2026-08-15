@@ -322,12 +322,12 @@ function ShopCustomers() {
         <Card className="shadow-card"><CardContent className="p-3"><p className="text-[10px] text-muted-foreground">Städer</p><p className="text-xl font-heading font-bold text-foreground">{new Set(customers.map(c => c.city).filter(Boolean)).size}</p></CardContent></Card>
       </div>
 
-      <div className="relative max-w-xs">
+      <div className={view === "special" ? "relative max-w-xs" : "hidden"}>
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
         <Input placeholder="Sök kund..." value={search} onChange={e => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
       </div>
 
-      <Card className="shadow-card">
+      <Card className={view === "special" ? "shadow-card" : "hidden"}>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
