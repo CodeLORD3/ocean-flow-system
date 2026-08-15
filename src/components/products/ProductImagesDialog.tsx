@@ -61,7 +61,7 @@ export function ProductImagesDialog({
               src={current.url}
               alt={current.caption || productName}
               className="h-auto max-h-[75vh] w-full rounded-md object-contain"
-            />
+             loading="lazy" decoding="async" />
             {images.length > 1 && (
               <>
                 <Button
@@ -104,7 +104,7 @@ export function ProductImagesDialog({
                       i === idx ? "border-primary" : "border-border opacity-70"
                     }`}
                   >
-                    <img src={img.url} alt="" className="h-full w-full object-cover" />
+                    <img src={img.url} alt="" className="h-full w-full object-cover"  loading="lazy" decoding="async" />
                   </button>
                 ))}
               </div>

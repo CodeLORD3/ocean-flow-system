@@ -151,7 +151,7 @@ export function StaffDetailDialog({ open, onOpenChange, staff }: Props) {
         <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
           <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
             {staff.profile_image_url ? (
-              <img src={staff.profile_image_url} alt={fullName} className="h-full w-full object-cover" />
+              <img src={staff.profile_image_url} alt={fullName} className="h-full w-full object-cover"  loading="lazy" decoding="async" />
             ) : (
               <User className="h-7 w-7 text-primary" />
             )}

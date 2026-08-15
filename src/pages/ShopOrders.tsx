@@ -824,7 +824,7 @@ export default function ShopOrders() {
               src={previewProduct.image_url}
               alt={previewProduct.name}
               className="w-full h-48 object-cover rounded-md border border-border"
-            />
+             loading="lazy" decoding="async" />
           ) : (
             <div className="w-full h-48 rounded-md border border-border bg-muted flex items-center justify-center text-xs text-muted-foreground">
               Ingen bild uppladdad

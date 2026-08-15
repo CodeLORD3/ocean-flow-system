@@ -99,7 +99,7 @@ export function StoreStaffDialog({ open, onOpenChange, storeId, storeName }: Pro
                 />
                 <div className="h-7 w-7 rounded-full bg-primary/10 overflow-hidden flex items-center justify-center shrink-0">
                   {s.profile_image_url ? (
-                    <img src={s.profile_image_url} alt={`${s.first_name} ${s.last_name}`} className="h-full w-full object-cover" />
+                    <img src={s.profile_image_url} alt={`${s.first_name} ${s.last_name}`} className="h-full w-full object-cover"  loading="lazy" decoding="async" />
                   ) : (
                     <User className="h-3.5 w-3.5 text-primary" />
                   )}

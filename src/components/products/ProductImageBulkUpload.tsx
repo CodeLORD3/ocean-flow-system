@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { prepareUpload, COMPRESS_PHOTO, COMPRESS_AVATAR } from "@/lib/imageCompress";
 import { compareKey, storageKey } from "@/lib/asciiFold";
 
 import { Image as ImageIcon, Upload, Check, X, Loader2, ChevronsUpDown } from "lucide-react";
@@ -294,11 +295,11 @@ export default function ProductImageBulkUpload({ open, onOpenChange }: Props) {
       next[i] = { ...row, status: "uploading" };
       setRows([...next]);
       try {
-        const ext = row.file.name.split(".").pop()?.toLowerCase() || "jpg";
-        const key = `${storageKey(row.sku)}.${ext}`;
+        const prepared = await prepareUpload(row.file, COMPRESS_PHOTO);
+        const key = `${storageKey(row.sku)}.${prepared.ext}`;
         const { error: upErr } = await supabase.storage
           .from(PRODUCT_IMAGE_BUCKET)
-          .upload(key, row.file, { upsert: true, contentType: row.file.type || undefined });
+          .upload(key, prepared.file, { upsert: true, contentType: prepared.contentType });
         if (upErr) throw upErr;
         const { data: pub } = supabase.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(key);
         const publicUrl = pub?.publicUrl;

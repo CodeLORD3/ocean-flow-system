@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { prepareUpload, COMPRESS_PHOTO } from "@/lib/imageCompress";
 import { supabase } from "@/integrations/supabase/client";
 import { useSite } from "@/contexts/SiteContext";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
@@ -259,9 +260,11 @@ export function useSendChatMessage() {
       if (!portal) throw new Error("Ingen aktiv portal.");
       let imageUrl: string | null = existingImageUrl ?? null;
       if (file) {
-        const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-        const path = `chat/${conversationId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-        const { error: upErr } = await supabase.storage.from(CHAT_BUCKET).upload(path, file, { upsert: true });
+        const prepared = await prepareUpload(file, COMPRESS_PHOTO);
+        const path = `chat/${conversationId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${prepared.ext}`;
+        const { error: upErr } = await supabase.storage
+          .from(CHAT_BUCKET)
+          .upload(path, prepared.file, { upsert: true, contentType: prepared.contentType });
         if (upErr) throw upErr;
         imageUrl = supabase.storage.from(CHAT_BUCKET).getPublicUrl(path).data.publicUrl;
       }

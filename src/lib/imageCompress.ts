@@ -42,3 +42,20 @@ export async function compressImage(file: File, opts: CompressOptions = {}): Pro
     return file;
   }
 }
+
+/** Förinställningar: foton visas stora, avatarer/logotyper alltid små. */
+export const COMPRESS_PHOTO: CompressOptions = { maxWidth: 1600, maxHeight: 1600, quality: 0.82 };
+export const COMPRESS_AVATAR: CompressOptions = { maxWidth: 512, maxHeight: 512, quality: 0.85 };
+
+/**
+ * Komprimerar inför uppladdning och returnerar även filändelse + content type
+ * så anropande kod kan bygga rätt lagringsnyckel.
+ */
+export async function prepareUpload(
+  file: File,
+  opts: CompressOptions = COMPRESS_PHOTO,
+): Promise<{ file: File; ext: string; contentType: string }> {
+  const out = await compressImage(file, opts);
+  const ext = out.name.split(".").pop()?.toLowerCase() || "jpg";
+  return { file: out, ext, contentType: out.type || "application/octet-stream" };
+}

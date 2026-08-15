@@ -92,7 +92,7 @@ export default function LandingSettings() {
             <div className="flex items-center gap-3">
               <div className="h-16 w-16 rounded-lg border border-border flex items-center justify-center overflow-hidden bg-muted/30">
                 {draft.logo_url ? (
-                  <img src={draft.logo_url} alt="Logotyp" className="h-full w-full object-contain" />
+                  <img src={draft.logo_url} alt="Logotyp" className="h-full w-full object-contain"  loading="lazy" decoding="async" />
                 ) : (
                   <span className="text-[10px] text-muted-foreground text-center px-1">Standard</span>
                 )}

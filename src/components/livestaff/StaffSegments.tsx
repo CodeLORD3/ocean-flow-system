@@ -87,7 +87,7 @@ export function StaffSegments({ row, axis, name, compact, imageUrl, overlay, lan
               }
             >
               {imageUrl ? (
-                <img src={imageUrl} alt={name} className="h-full w-full object-cover" />
+                <img src={imageUrl} alt={name} className="h-full w-full object-cover"  loading="lazy" decoding="async" />
               ) : (
                 <span className={cn("font-semibold leading-none", overlay || compact ? "text-[9px]" : "text-[10px]")}>
                   {initials(name)}

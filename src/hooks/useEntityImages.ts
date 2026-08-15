@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { prepareUpload, COMPRESS_PHOTO, COMPRESS_AVATAR } from "@/lib/imageCompress";
 import { supabase } from "@/integrations/supabase/client";
 
 export type EntityImage = {
@@ -124,11 +125,13 @@ export function useUploadEntityImage() {
           .maybeSingle();
         if (st) uploaderName = `${st.first_name ?? ""} ${st.last_name ?? ""}`.trim() || uploaderName;
       }
-      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const prepared = await prepareUpload(file, COMPRESS_PHOTO);
       const path = `entity-images/${entityType}/${entityId}/${Date.now()}-${Math.random()
         .toString(36)
-        .slice(2, 8)}.${ext}`;
-      const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: true });
+        .slice(2, 8)}.${prepared.ext}`;
+      const { error: upErr } = await supabase.storage
+        .from(BUCKET)
+        .upload(path, prepared.file, { upsert: true, contentType: prepared.contentType });
       if (upErr) throw upErr;
       const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(path);
       const { data: inserted, error } = await supabase

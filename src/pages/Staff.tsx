@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { prepareUpload, COMPRESS_PHOTO, COMPRESS_AVATAR } from "@/lib/imageCompress";
 import { motion } from "framer-motion";
 import {
   Users, Plus, Search, Edit, Trash2, Camera, User, Phone, Mail, MapPin, Save,
@@ -201,9 +202,11 @@ export default function Staff() {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const ext = file.name.split(".").pop();
-    const path = `profiles/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from("staff-photos").upload(path, file, { upsert: true });
+    const prepared = await prepareUpload(file, COMPRESS_AVATAR);
+    const path = `profiles/${Date.now()}-${Math.random().toString(36).slice(2)}.${prepared.ext}`;
+    const { error } = await supabase.storage
+      .from("staff-photos")
+      .upload(path, prepared.file, { upsert: true, contentType: prepared.contentType });
     if (error) {
       toast({ title: "Fel", description: "Kunde inte ladda upp bilden", variant: "destructive" });
       setUploading(false);
@@ -362,7 +365,7 @@ export default function Staff() {
                   <div className="flex items-center gap-3">
                     <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
                       {s.profile_image_url ? (
-                        <img src={s.profile_image_url} alt={`${s.first_name} ${s.last_name}`} className="h-full w-full object-cover" />
+                        <img src={s.profile_image_url} alt={`${s.first_name} ${s.last_name}`} className="h-full w-full object-cover"  loading="lazy" decoding="async" />
                       ) : (
                         <User className="h-5 w-5 text-primary" />
                       )}
@@ -479,7 +482,7 @@ export default function Staff() {
                 onClick={() => fileRef.current?.click()}
               >
                 {previewUrl ? (
-                  <img src={previewUrl} alt="Profil" className="h-full w-full object-cover" />
+                  <img src={previewUrl} alt="Profil" className="h-full w-full object-cover"  loading="lazy" decoding="async" />
                 ) : (
                   <User className="h-6 w-6 text-primary" />
                 )}

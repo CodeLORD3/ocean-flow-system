@@ -86,7 +86,7 @@ export function OnDutyAvatars({
               )}
             >
               {p.imageUrl ? (
-                <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
+                <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover"  loading="lazy" decoding="async" />
               ) : (
                 <span className="text-[8px] font-semibold leading-none">{initials(p.name)}</span>
               )}
