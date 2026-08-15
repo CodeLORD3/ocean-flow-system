@@ -21,7 +21,13 @@ import { Archive, ArchiveRestore } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useUpdateCustomerOrder, useArchiveCustomerOrder } from "@/hooks/useCustomerOrders";
+import {
+  useUpdateCustomerOrder,
+  useArchiveCustomerOrder,
+  useHandOverCustomerOrder,
+  useMarkCustomerOrderPaid,
+  useSoftDeleteCustomerOrder,
+} from "@/hooks/useCustomerOrders";
 import { useMarkNoShow } from "@/hooks/useBookingAdmin";
 import {
   CustomerOrder,
@@ -30,6 +36,10 @@ import {
   PACK_STATUS_LABELS,
   LINE_PACK_LABELS,
   isUncollected,
+  isHandedOver,
+  isPaid,
+  lateText,
+  DELETE_REASONS,
 } from "@/lib/customerOrders";
 import { allergenLabel } from "@/lib/catering";
 import { printConfirmation, downloadConfirmation } from "@/lib/customerOrderConfirmation";
@@ -186,6 +196,10 @@ export function CustomerOrderRow({
   const updateOrder = useUpdateCustomerOrder();
   const archiveOrder = useArchiveCustomerOrder();
   const markNoShow = useMarkNoShow();
+  const handOver = useHandOverCustomerOrder();
+  const markPaid = useMarkCustomerOrderPaid();
+  const softDelete = useSoftDeleteCustomerOrder();
+  const [deleteReason, setDeleteReason] = useState<string | null>(null);
   const isArchived = !!order.archived_at;
   const isOpen = !!open;
   const name = order.customers_retail?.name || order.customer_name_snapshot || "Kund";
