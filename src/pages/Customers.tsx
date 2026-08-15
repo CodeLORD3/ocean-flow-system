@@ -259,6 +259,7 @@ function ShopCustomers() {
   const deleteCustomer = useDeleteCustomer();
 
   const [search, setSearch] = useState("");
+  const [view, setView] = useState<"registry" | "special">("registry");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
