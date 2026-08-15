@@ -294,12 +294,26 @@ function ShopCustomers() {
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <div>
           <h1 className="text-xl font-heading font-bold text-foreground flex items-center gap-2"><Users className="h-5 w-5 text-primary" /> Kunder</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">Hantera specialkunder kopplade till butiken.</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Kundregister för privatkunder och specialkunder kopplade till butiken.</p>
         </div>
-        <Button size="sm" className="gap-1.5 text-xs" onClick={openAdd}><Plus className="h-3.5 w-3.5" /> Lägg till kund</Button>
+        {view === "special" && (
+          <Button size="sm" className="gap-1.5 text-xs" onClick={openAdd}><Plus className="h-3.5 w-3.5" /> Lägg till kund</Button>
+        )}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <ToggleGroup
+        type="single"
+        value={view}
+        onValueChange={(v) => v && setView(v as typeof view)}
+        className="h-8 justify-start"
+      >
+        <ToggleGroupItem value="registry" className="h-8 px-3 text-[11px]">Kundregister</ToggleGroupItem>
+        <ToggleGroupItem value="special" className="h-8 px-3 text-[11px]">Specialkunder</ToggleGroupItem>
+      </ToggleGroup>
+
+      {view === "registry" && <RetailCustomerRegistry storeId={activeStoreId} />}
+
+      <div className={view === "special" ? "grid grid-cols-2 md:grid-cols-3 gap-3" : "hidden"}>
         <Card className="shadow-card"><CardContent className="p-3"><p className="text-[10px] text-muted-foreground">Totalt kunder</p><p className="text-xl font-heading font-bold text-foreground">{customers.length}</p></CardContent></Card>
         <Card className="shadow-card"><CardContent className="p-3"><p className="text-[10px] text-muted-foreground">Med e-post</p><p className="text-xl font-heading font-bold text-foreground">{customers.filter(c => c.email).length}</p></CardContent></Card>
         <Card className="shadow-card"><CardContent className="p-3"><p className="text-[10px] text-muted-foreground">Städer</p><p className="text-xl font-heading font-bold text-foreground">{new Set(customers.map(c => c.city).filter(Boolean)).size}</p></CardContent></Card>
