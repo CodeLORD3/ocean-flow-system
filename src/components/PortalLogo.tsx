@@ -158,7 +158,7 @@ export function PortalLogo({
         title="Klicka för att byta logotyp"
       >
         {logoUrl ? (
-          <img src={logoUrl} alt={displayName} className="h-full w-full object-contain bg-white"  loading="lazy" decoding="async" />
+          <img src={logoUrl} alt={displayName} className="h-full w-full object-contain bg-white" decoding="async" />
         ) : (
           <FallbackIcon className={`h-5 w-5 ${iconColorClass}`} />
         )}
