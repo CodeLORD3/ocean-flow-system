@@ -82,7 +82,7 @@ export default function PortalAbout() {
                   alt={person.name}
                   className="h-14 w-14 rounded-full object-cover mx-auto border border-border"
                   style={{ objectPosition: person.image_position || "center" }}
-                />
+                / loading="lazy" decoding="async">
               ) : (
                 <div className="h-14 w-14 bg-muted mx-auto flex items-center justify-center rounded-full">
                   <Users className="h-6 w-6 text-muted-foreground" />

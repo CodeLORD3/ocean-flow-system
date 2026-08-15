@@ -209,7 +209,7 @@ export default function AboutSettings() {
               <div className="shrink-0 flex flex-col items-center gap-1">
                 <label className="cursor-pointer">
                   {m.image_url ? (
-                    <img src={m.image_url} className="h-12 w-12 rounded-full border border-border" style={{ objectFit: "cover", objectPosition: m.image_position || "center" }} />
+                    <img src={m.image_url} className="h-12 w-12 rounded-full border border-border" style={{ objectFit: "cover", objectPosition: m.image_position || "center" }} / loading="lazy" decoding="async">
                   ) : (
                     <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center border border-dashed border-border">
                       {uploading === i ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : <Upload className="h-4 w-4 text-muted-foreground" />}

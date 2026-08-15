@@ -116,7 +116,7 @@ export default function StaffProfile() {
             <div className="flex items-center gap-4">
               <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
                 {staff.profile_image_url ? (
-                  <img src={staff.profile_image_url} alt={fullName} className="h-full w-full object-cover" />
+                  <img src={staff.profile_image_url} alt={fullName} className="h-full w-full object-cover" / loading="lazy" decoding="async">
                 ) : (
                   <User className="h-8 w-8 text-primary" />
                 )}

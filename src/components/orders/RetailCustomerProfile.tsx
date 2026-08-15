@@ -290,7 +290,7 @@ export function RetailCustomerProfile({
                     src={customer.avatar_url}
                     alt={`Kundbild för ${fullName}`}
                     className="h-full w-full object-cover"
-                  />
+                  / loading="lazy" decoding="async">
                 ) : (
                   <User className="h-7 w-7 text-muted-foreground" />
                 )}

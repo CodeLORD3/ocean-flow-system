@@ -474,7 +474,7 @@ export function ImageLightbox({
                         alt={img.caption || title}
                         className="max-h-full w-full object-contain select-none"
                         draggable={false}
-                      />
+                      / loading="lazy" decoding="async">
                     </div>
                   ))}
                 </div>
@@ -631,7 +631,7 @@ export function ImageLightbox({
                   src={current.url}
                   alt={current.caption || title}
                   className="max-h-[70vh] w-full object-contain"
-                />
+                / loading="lazy" decoding="async">
 
                 {images.length > 1 && (
                   <>
