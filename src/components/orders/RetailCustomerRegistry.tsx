@@ -130,7 +130,7 @@ export function RetailCustomerRegistry({
                     {!storeId && <th className="px-2 py-2 text-left font-medium">Butik</th>}
                     <th className="px-2 py-2 text-left font-medium">Brukar beställa</th>
                     <th className="px-2 py-2 text-right font-medium">Ordrar</th>
-                    <th className="px-2 py-2 text-right font-medium"></th>
+                    <th className="px-2 py-2 text-right font-medium">Åtgärder</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -211,32 +211,29 @@ export function RetailCustomerRegistry({
                           )}
                         </td>
                         <td className="px-2 py-1.5">
-                          <div className="flex items-center justify-end gap-0.5">
+                          <div className="flex items-center justify-end gap-1">
                             <Button
                               variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              title="Historik"
+                              size="sm"
+                              className="h-6 gap-1 px-1.5 text-[10px]"
                               onClick={() => setHistoryCustomer(c)}
                             >
-                              <History className="h-3.5 w-3.5" />
+                              <History className="h-3 w-3" /> Historik
                             </Button>
                             {!readOnly && (
                               <>
                                 <Button
                                   variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6"
-                                  title="Redigera"
+                                  size="sm"
+                                  className="h-6 gap-1 px-1.5 text-[10px]"
                                   onClick={() => openEdit(c)}
                                 >
-                                  <Pencil className="h-3.5 w-3.5" />
+                                  <Pencil className="h-3 w-3" /> Redigera
                                 </Button>
                                 <Button
                                   variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 text-destructive hover:text-destructive"
-                                  title="Radera personuppgifter"
+                                  size="sm"
+                                  className="h-6 gap-1 px-1.5 text-[10px] text-destructive hover:text-destructive"
                                   onClick={async () => {
                                     if (
                                       !window.confirm(
@@ -248,21 +245,21 @@ export function RetailCustomerRegistry({
                                     toast.success("Kunduppgifterna är raderade.");
                                   }}
                                 >
-                                  <Trash2 className="h-3.5 w-3.5" />
+                                  <Trash2 className="h-3 w-3" /> Radera
                                 </Button>
                               </>
                             )}
                             <Button
                               variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              title="Kundkort"
+                              size="sm"
+                              className="h-6 gap-1 px-1.5 text-[10px]"
                               onClick={() => openProfile(c)}
                             >
-                              <ChevronRight className="h-4 w-4" />
+                              Kundkort <ChevronRight className="h-3 w-3" />
                             </Button>
                           </div>
                         </td>
+
                       </tr>
                     );
                   })}
