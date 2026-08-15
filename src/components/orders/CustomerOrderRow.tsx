@@ -167,7 +167,10 @@ export function CustomerOrderRow({
   onSelect?: (id: string, next: boolean) => void;
   /** Antal interna bilder på beställningen, visas som kameraikon på namnraden. */
   photoCount?: number;
+  /** Kundens totala antal beställningar i kedjan, visas som stjärna. */
+  orderCount?: number;
 }) {
+  const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [showMore, setShowMore] = useState(false);
   const [showPhotos, setShowPhotos] = useState(false);
