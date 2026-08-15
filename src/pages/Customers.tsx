@@ -22,6 +22,8 @@ import { useCustomers, useCreateCustomer, useUpdateCustomer, useDeleteCustomer, 
 import { useStores } from "@/hooks/useStores";
 import { useSite } from "@/contexts/SiteContext";
 import { useNotificationFlash } from "@/lib/notificationFlash";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { RetailCustomerRegistry } from "@/components/orders/RetailCustomerRegistry";
 
 /* ===== Wholesale view: Customers with store linking ===== */
 function WholesaleCustomers() {
