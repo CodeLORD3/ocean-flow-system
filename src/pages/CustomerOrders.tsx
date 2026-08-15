@@ -549,6 +549,9 @@ export default function CustomerOrders() {
                             selected={marked.includes(o.id)}
                             onSelect={toggleMark}
                             photoCount={photoCounts?.[o.id] ?? 0}
+                            orderCount={
+                              o.customer_id ? customerOrderCounts?.[o.customer_id] ?? 0 : 0
+                            }
                           />
                         ))}
                       </div>
