@@ -1,51 +1,21 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Plus, Search, Trash2, Pencil, History } from "lucide-react";
+import { Plus, Search, Trash2, Pencil, History, ArrowRight } from "lucide-react";
 import { CustomerHistoryDialog } from "@/components/orders/CustomerHistoryDialog";
+import { RetailCustomerDialog } from "@/components/orders/RetailCustomerDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { EmptyState } from "@/components/EmptyState";
 import {
   useAnonymizeRetailCustomer,
-  useCreateRetailCustomer,
   useCustomerOrders,
   useRetailCustomers,
-  useUpdateRetailCustomer,
 } from "@/hooks/useCustomerOrders";
 import { RetailCustomer, customerDisplayName } from "@/lib/customerOrders";
-
-const empty = {
-  name: "",
-  first_name: "",
-  last_name: "",
-  phone: "",
-  email: "",
-  street: "",
-  postal_code: "",
-  city: "",
-  note: "",
-  is_company: false,
-  company_name: "",
-  org_number: "",
-  contact_reference: "",
-};
-
-
 
 /** Kundregister för privatkunder. Skilt från B2B-kunderna i /customers. */
 export function RetailCustomerRegistry({
@@ -55,80 +25,30 @@ export function RetailCustomerRegistry({
   storeId: string | null;
   readOnly?: boolean;
 }) {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<"all" | "company" | "private" | "review">("all");
   const { data: allCustomers = [], isLoading } = useRetailCustomers(storeId, search);
 
   const { data: orders = [] } = useCustomerOrders({ storeId });
-  const create = useCreateRetailCustomer();
-  const update = useUpdateRetailCustomer();
   const anonymize = useAnonymizeRetailCustomer();
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<RetailCustomer | null>(null);
-  const [form, setForm] = useState(empty);
   const [historyCustomer, setHistoryCustomer] = useState<RetailCustomer | null>(null);
-
 
   const openNew = () => {
     setEditing(null);
-    setForm(empty);
     setOpen(true);
   };
 
   const openEdit = (c: RetailCustomer) => {
     setEditing(c);
-    setForm({
-      name: c.name,
-      first_name: c.first_name || "",
-      last_name: c.last_name || "",
-      phone: c.phone || "",
-      email: c.email || "",
-      street: c.street || "",
-      postal_code: c.postal_code || "",
-      city: c.city || "",
-      note: c.note || "",
-      is_company: !!c.is_company,
-      company_name: c.company_name || "",
-      org_number: c.org_number || "",
-      contact_reference: c.contact_reference || "",
-    });
-
     setOpen(true);
   };
 
-  const save = async () => {
-    const first = form.first_name.trim();
-    const last = form.last_name.trim();
-    if (form.is_company) {
-      if (!form.company_name.trim()) return toast.error("Organisationen behöver ett namn.");
-    } else if (!first || !last) {
-      return toast.error("Ange både förnamn och efternamn.");
-    }
-    const displayName = form.is_company
-      ? form.company_name.trim()
-      : [first, last].filter(Boolean).join(" ");
-    const payload = {
-      ...form,
-      first_name: first || null,
-      last_name: last || null,
-      // Originalnamnet behålls på befintliga poster, nya får det sammansatta namnet.
-      name: editing ? editing.name : displayName,
-      name_review_needed: false,
-      company_name: form.is_company ? form.company_name.trim() || null : null,
-      org_number: form.is_company ? form.org_number.trim() || null : null,
-      contact_reference: form.is_company ? form.contact_reference.trim() || null : null,
-    };
-    try {
-      if (editing) await update.mutateAsync({ id: editing.id, ...payload } as any);
-      else await create.mutateAsync({ ...payload, store_id: storeId } as any);
-      toast.success("Kunden är sparad.");
-      setOpen(false);
-    } catch (e: any) {
-      toast.error(e.message || "Kunden kunde inte sparas.");
-    }
-  };
-
+  /** Kundkortet: egen sida per kund, öppnas som flik. */
+  const openProfile = (c: RetailCustomer) => navigate(`/customer-orders/kund/${c.id}`);
 
   const historyFor = (id: string) => orders.filter((o) => o.customer_id === id);
 
@@ -143,7 +63,6 @@ export function RetailCustomerRegistry({
           ? c.is_company
           : !c.is_company,
   );
-
 
   return (
     <div className="space-y-4">
@@ -198,7 +117,6 @@ export function RetailCustomerRegistry({
         />
       )}
 
-
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {customers.map((c) => {
           const history = historyFor(c.id);
@@ -220,7 +138,13 @@ export function RetailCustomerRegistry({
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="truncate font-semibold">{customerDisplayName(c)}</span>
+                      <button
+                        type="button"
+                        onClick={() => openProfile(c)}
+                        className="truncate text-left font-semibold hover:text-primary hover:underline"
+                      >
+                        {customerDisplayName(c)}
+                      </button>
                       {c.is_company && (
                         <Badge variant="secondary" className="h-5 shrink-0 px-1.5 text-[10px]">
                           Organisation
@@ -287,136 +211,33 @@ export function RetailCustomerRegistry({
                   {uncollected > 0 && <span>{uncollected} väntar på hämtning</span>}
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant="ghost"
                     className="ml-auto h-9"
                     onClick={() => setHistoryCustomer(c)}
                   >
                     <History className="mr-1 h-4 w-4" /> Historik
                   </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-9"
+                    onClick={() => openProfile(c)}
+                  >
+                    Kundkort <ArrowRight className="ml-1 h-4 w-4" />
+                  </Button>
                 </div>
-
               </CardContent>
             </Card>
           );
         })}
       </div>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editing ? "Redigera kund" : "Ny kund"}</DialogTitle>
-            <DialogDescription>Uppgifterna är personuppgifter och syns bara i din butik.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="flex items-center justify-between gap-3 rounded-md border border-border p-3 sm:col-span-2">
-              <div>
-                <Label htmlFor="reg-is-company">Organisation</Label>
-                <p className="text-xs text-muted-foreground">
-                  Klubb, förening eller företag. Hela namnet ligger i organisationsnamnet och
-                  förnamn/efternamn avser kontaktpersonen.
-                </p>
-              </div>
-              <Switch
-                id="reg-is-company"
-                checked={form.is_company}
-                onCheckedChange={(v) => setForm({ ...form, is_company: v })}
-              />
-            </div>
-            {form.is_company && (
-              <>
-                <div>
-                  <Label>Organisationsnamn</Label>
-                  <Input
-                    className="h-12"
-                    value={form.company_name}
-                    onChange={(e) => setForm({ ...form, company_name: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>Org.nummer</Label>
-                  <Input
-                    className="h-12"
-                    value={form.org_number}
-                    onChange={(e) => setForm({ ...form, org_number: e.target.value })}
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <Label>Referens/kontaktperson</Label>
-                  <Input
-                    className="h-12"
-                    value={form.contact_reference}
-                    onChange={(e) => setForm({ ...form, contact_reference: e.target.value })}
-                  />
-                </div>
-              </>
-            )}
-
-            <div>
-              <Label>Förnamn {form.is_company && <span className="text-muted-foreground">(valfritt)</span>}</Label>
-              <Input
-                className="h-12"
-                value={form.first_name}
-                onChange={(e) => setForm({ ...form, first_name: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>Efternamn {form.is_company && <span className="text-muted-foreground">(valfritt)</span>}</Label>
-              <Input
-                className="h-12"
-                value={form.last_name}
-                onChange={(e) => setForm({ ...form, last_name: e.target.value })}
-              />
-            </div>
-            {editing && (
-              <div className="sm:col-span-2 text-xs text-muted-foreground">
-                Originalnamn (oförändrat): {editing.name || "—"}
-              </div>
-            )}
-
-            <div>
-              <Label>Telefon</Label>
-              <Input
-                className="h-12"
-                inputMode="tel"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>E-post</Label>
-              <Input className="h-12" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-            </div>
-            <div className="sm:col-span-2">
-              <Label>Gata</Label>
-              <Input className="h-12" value={form.street} onChange={(e) => setForm({ ...form, street: e.target.value })} />
-            </div>
-            <div>
-              <Label>Postnummer</Label>
-              <Input
-                className="h-12"
-                value={form.postal_code}
-                onChange={(e) => setForm({ ...form, postal_code: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label>Ort</Label>
-              <Input className="h-12" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
-            </div>
-            <div className="sm:col-span-2">
-              <Label>Anteckning</Label>
-              <Textarea value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" className="h-12" onClick={() => setOpen(false)}>
-              Avbryt
-            </Button>
-            <Button className="h-12" onClick={save}>
-              Spara
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <RetailCustomerDialog
+        open={open}
+        onOpenChange={setOpen}
+        editing={editing}
+        storeId={storeId}
+      />
 
       <CustomerHistoryDialog
         open={!!historyCustomer}
@@ -425,6 +246,5 @@ export function RetailCustomerRegistry({
         orders={historyCustomer ? historyFor(historyCustomer.id) : []}
       />
     </div>
-
   );
 }
