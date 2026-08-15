@@ -30,6 +30,7 @@ import {
   useArchiveCustomerOrder,
   useHandOverCustomerOrder,
   useMarkCustomerOrderPaid,
+  useMarkCustomerOrderPacked,
   useSoftDeleteCustomerOrder,
 } from "@/hooks/useCustomerOrders";
 import { useMarkNoShow } from "@/hooks/useBookingAdmin";
@@ -202,6 +203,7 @@ export function CustomerOrderRow({
   const markNoShow = useMarkNoShow();
   const handOver = useHandOverCustomerOrder();
   const markPaid = useMarkCustomerOrderPaid();
+  const markPacked = useMarkCustomerOrderPacked();
   const softDelete = useSoftDeleteCustomerOrder();
   const [deleteReason, setDeleteReason] = useState<string | null>(null);
   const isArchived = !!order.archived_at;
@@ -752,9 +754,31 @@ export function CustomerOrderRow({
               )}
 
               <div className="flex flex-wrap gap-1.5">
+                {!readOnly && canEdit && !cancelled && !handedOver && order.pack_status !== "packad" && (
+                  <Button
+                    size="sm"
+                    className="h-7 text-[11px]"
+                    disabled={markPacked.isPending}
+                    onClick={() => markPacked.mutate({ order })}
+                  >
+                    <PackageCheck className="mr-1 h-3.5 w-3.5" /> Markera packad
+                  </Button>
+                )}
+                {!readOnly && canEdit && !cancelled && !handedOver && order.pack_status === "packad" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[11px]"
+                    disabled={markPacked.isPending}
+                    onClick={() => markPacked.mutate({ order, undo: true })}
+                  >
+                    <Undo2 className="mr-1 h-3.5 w-3.5" /> Ångra packad
+                  </Button>
+                )}
                 {!readOnly && canEdit && !cancelled && !handedOver && (
                   <Button
                     size="sm"
+                    variant={order.pack_status === "packad" ? "default" : "outline"}
                     className="h-7 text-[11px]"
                     disabled={handOver.isPending}
                     onClick={() => handOver.mutate({ order })}
