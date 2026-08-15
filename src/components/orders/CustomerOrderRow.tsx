@@ -251,8 +251,53 @@ export function CustomerOrderRow({
             </span>
             {/* Kundnamnet börjar alltid på samma x-position — källan står i egen kolumn efter namnet. */}
             <span className="flex min-w-[14rem] shrink-0 flex-1 items-center whitespace-nowrap border-r border-grid-line/70 pl-3 pr-5 font-semibold">
-              <span className="whitespace-nowrap leading-tight">{name}</span>
+              {order.customer_id ? (
+                <span
+                  role="link"
+                  tabIndex={0}
+                  title="Öppna kundkortet"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/customer-orders/kund/${order.customer_id}`);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      navigate(`/customer-orders/kund/${order.customer_id}`);
+                    }
+                  }}
+                  className="cursor-pointer whitespace-nowrap leading-tight hover:text-primary hover:underline"
+                >
+                  {name}
+                </span>
+              ) : (
+                <span className="whitespace-nowrap leading-tight">{name}</span>
+              )}
             </span>
+
+            {/* Stamkund: antal beställningar. Nya kunder (1 order) visas utan stjärna. */}
+            <span className="flex w-12 shrink-0 items-center justify-center gap-0.5 whitespace-nowrap border-r border-grid-line/70 px-2">
+              {orderCount > 1 && (
+                <>
+                  <Star
+                    className={`h-3.5 w-3.5 ${
+                      orderCount > 10
+                        ? "fill-amber-400 text-amber-500"
+                        : "text-muted-foreground"
+                    }`}
+                    aria-hidden
+                  />
+                  <span
+                    className="font-mono text-[10px] tabular-nums text-muted-foreground"
+                    title={`${orderCount} beställningar totalt`}
+                  >
+                    {orderCount}
+                  </span>
+                </>
+              )}
+            </span>
+
 
             <span className="w-14 shrink-0 whitespace-nowrap border-r border-grid-line/70 px-2">
               {order.is_web_order ? (
