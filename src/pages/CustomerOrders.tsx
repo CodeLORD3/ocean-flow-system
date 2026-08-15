@@ -589,7 +589,7 @@ export default function CustomerOrders() {
                 selectedCount={markedOrders.length}
                 totalCount={viewOrders.length}
                 selectedSum={markedSum}
-                extra={VIEWS.find((v) => v.id === view)?.label}
+                extra={ORDER_TAB_LABELS[tab]}
               />
             </div>
           )}
