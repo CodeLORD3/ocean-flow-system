@@ -232,13 +232,26 @@ export function CustomerOrderRow({
   const phoneBooked = !!order.booked_by_staff_id && !order.phone_verified_at;
   const noShow = !!order.no_show_at;
 
+  /* Försenad hämtning markeras inne i Pågående/Packade — ingen egen flik. */
+  const late = !cancelled && !isHandedOver(order) ? lateText(order) : null;
+  const handedOver = isHandedOver(order);
+  const paid = isPaid(order);
+
   const statusChip = (
-    <span
-      className={`inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-tight ${tone.chip}`}
-    >
-      {tone.label}
+    <span className="inline-flex flex-wrap items-center gap-1">
+      <span
+        className={`inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-tight ${tone.chip}`}
+      >
+        {tone.label}
+      </span>
+      {late && (
+        <span className="inline-flex items-center rounded-sm border border-row-late-edge bg-card px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-tight text-row-late-text">
+          {late}
+        </span>
+      )}
     </span>
   );
+
 
   return (
     <div
