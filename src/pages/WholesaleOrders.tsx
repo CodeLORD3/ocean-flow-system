@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useShopOrders } from "@/hooks/useShopOrders";
 import { useStores } from "@/hooks/useStores";
 import { useCustomers } from "@/hooks/useCustomers";
+import { useCurrentStaff, staffFullName } from "@/hooks/useCurrentStaff";
 import { useProducts } from "@/hooks/useProducts";
 import { useTransportSchedules } from "@/hooks/useTransportSchedules";
 import { useStaff } from "@/hooks/useStaff";
@@ -211,7 +212,7 @@ export default function WholesaleOrders() {
         order_week: weekNum,
         notes: newOrderNote || null,
         status: "Ny",
-        created_by: activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : "Grossist",
+        created_by: staffFullName(currentStaff) ?? "Grossist",
         desired_delivery_date: format(newOrderDeliveryDate, "yyyy-MM-dd"),
       } as any)
       .select()
