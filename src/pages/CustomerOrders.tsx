@@ -22,18 +22,20 @@ import {
   useCustomerOrders,
   useArchiveCustomerOrder,
   useCustomerOrderCounts,
+  useCustomerOrderTabCounts,
 } from "@/hooks/useCustomerOrders";
 import {
   CustomerOrder,
   ORDER_STATUS_LABELS,
   ORDER_TYPE_LABELS,
   PACK_STATUS_LABELS,
-  isUncollected,
+  ORDER_TAB_LABELS,
+  OrderTab,
+  orderTab,
 } from "@/lib/customerOrders";
 import { CustomerOrderWizard } from "@/components/orders/CustomerOrderWizard";
 import { CustomerOrderRow, CustomerOrderRowHeader } from "@/components/orders/CustomerOrderRow";
 import { useEntityImageCounts } from "@/hooks/useEntityImages";
-import { ViewSelector, SavedView } from "@/components/shell/ViewSelector";
 import { StatusBar } from "@/components/shell/StatusBar";
 
 import { RetailCustomerRegistry } from "@/components/orders/RetailCustomerRegistry";
@@ -43,17 +45,15 @@ import { CateringKitchenList } from "@/components/orders/CateringKitchenList";
 import { PurchaseNeedsView } from "@/components/orders/PurchaseNeedsView";
 import { TodayPickupsView } from "@/components/orders/TodayPickupsView";
 
-
-
-/** Sparade vyer, som listsidorna i Dynamics 365. */
-const VIEWS: SavedView[] = [
-  { id: "alla", label: "Alla beställningar", description: "Hela historiken" },
-  { id: "aktiva", label: "Aktiva beställningar", description: "Idag och framåt" },
-  { id: "idag", label: "Dagens packning", description: "Endast dagens datum" },
-  { id: "ejpackade", label: "Ej packade", description: "Opackade och pågående" },
-  { id: "avvikelser", label: "Avvikelser", description: "Ohämtat, allergi eller avbrutet" },
-  { id: "arkiverade", label: "Arkiverade", description: "Arkiverade beställningar" },
+/** Orderflikarna: tre operativa lägen först, historiken nedtonad sist. */
+const TABS: { id: OrderTab; hint: string; muted?: boolean }[] = [
+  { id: "pagaende", hint: "Aktiva, ännu inte färdigpackade" },
+  { id: "packade", hint: "Färdiga, väntar på hämtning eller leverans" },
+  { id: "obetalda", hint: "Utlämnade men betalning saknas" },
+  { id: "arkiverade", hint: "Avslutade — hämtade och betalda", muted: true },
+  { id: "borttagna", hint: "Avbokade eller felregistrerade, sparas för historik", muted: true },
 ];
+
 
 
 const nf = (v: any, d = 1) =>
