@@ -141,14 +141,19 @@ export function useCustomerOrders(filter: OrderFilter = {}) {
       if (error) throw error;
       let rows = (data || []) as CustomerOrder[];
 
-      // Fritextsök mot kundnamn, telefon och ordernummer — efternamn ska räcka
+      // Fritextsök mot kundnamn, telefon, ordernummer och produkt (namn/SKU/fritext)
       const s = filter.search?.trim().toLowerCase();
       if (s) {
         rows = rows.filter((o) => {
           const name = (o.customers_retail?.name || o.customer_name_snapshot || "").toLowerCase();
           const phone = (o.customers_retail?.phone || o.customer_phone_snapshot || "").toLowerCase();
+          const product = (o.customer_order_lines ?? []).some((l) =>
+            [l.products?.name, l.products?.sku, l.free_text_name]
+              .filter(Boolean)
+              .some((v) => String(v).toLowerCase().includes(s)),
+          );
           return (
-            name.includes(s) || phone.includes(s) || o.order_number.toLowerCase().includes(s)
+            name.includes(s) || phone.includes(s) || o.order_number.toLowerCase().includes(s) || product
           );
         });
       }
