@@ -105,10 +105,13 @@ export const ROUTE_ACCESS: Record<string, SiteMode[]> = {
 
 /** Får den aktiva portalen öppna rutten? */
 export function canAccessRoute(site: SiteMode, path: string): boolean {
-  const allowed = ROUTE_ACCESS[path];
+  // Kundkortet ligger under Kundbeställningar och ärver dess behörighet.
+  const key = path.startsWith("/customer-orders/") ? "/customer-orders" : path;
+  const allowed = ROUTE_ACCESS[key];
   if (!allowed) return site === "wholesale";
   return allowed.includes(site);
 }
+
 
 /**
  * Får portalen se inköpspris, självkostnad och marginal?
