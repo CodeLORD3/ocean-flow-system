@@ -144,7 +144,7 @@ export function StoreHero() {
           alt={cover?.caption || `Omslagsbild för ${heroTitle}`}
           className="h-full w-full object-cover"
           style={focalStyle(focalDraft != null ? String(focalDraft) : cover?.focal_point)}
-        / loading="lazy" decoding="async">
+         loading="lazy" decoding="async" />
       ) : (
         <div className="flex h-full w-full items-center justify-center">
           <StoreIcon className="h-8 w-8 text-muted-foreground" />
@@ -231,7 +231,7 @@ export function StoreHero() {
                         img.id === cover?.id ? "border-primary" : "border-border hover:border-primary/60"
                       }`}
                     >
-                      <img src={img.url} alt={img.caption || "Portalbild"} className="h-full w-full object-cover" / loading="lazy" decoding="async">
+                      <img src={img.url} alt={img.caption || "Portalbild"} className="h-full w-full object-cover"  loading="lazy" decoding="async" />
                     </button>
                   ))}
                 </div>

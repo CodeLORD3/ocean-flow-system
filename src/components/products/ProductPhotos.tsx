@@ -144,7 +144,7 @@ export function ProductPhotosGallery({
                 src={images[zoomIdx].url}
                 alt={images[zoomIdx].caption || productName || "Produktbild"}
                 className="h-auto max-h-[75vh] w-full rounded-md object-contain"
-              / loading="lazy" decoding="async">
+               loading="lazy" decoding="async" />
               {images.length > 1 && (
                 <>
                   <Button

@@ -209,7 +209,7 @@ export function OrderPhotosButton({
                     src={URL.createObjectURL(f)}
                     alt={f.name}
                     className="h-16 w-16 rounded-md border border-border object-cover"
-                  / loading="lazy" decoding="async">
+                   loading="lazy" decoding="async" />
                   <Button
                     variant="ghost"
                     size="icon"
@@ -290,7 +290,7 @@ export function OrderPhotosButton({
 
       <Dialog open={!!zoom} onOpenChange={(o) => !o && setZoom(null)}>
         <DialogContent className="max-w-4xl p-2">
-          {zoom && <img src={zoom} alt={title} className="h-auto w-full rounded-md" / loading="lazy" decoding="async">}
+          {zoom && <img src={zoom} alt={title} className="h-auto w-full rounded-md"  loading="lazy" decoding="async" />}
         </DialogContent>
       </Dialog>
     </>

@@ -293,7 +293,7 @@ export default function BookingAssortment() {
               <div className="flex items-center gap-3">
                 <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
                   {form.image_url ? (
-                    <img src={form.image_url} alt="Produktbild" className="h-full w-full object-cover" / loading="lazy" decoding="async">
+                    <img src={form.image_url} alt="Produktbild" className="h-full w-full object-cover"  loading="lazy" decoding="async" />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center">
                       <ImageIcon className="h-5 w-5 text-muted-foreground" />

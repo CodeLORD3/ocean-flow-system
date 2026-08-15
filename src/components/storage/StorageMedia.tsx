@@ -8,7 +8,7 @@ type StorageImageProps = Omit<React.ImgHTMLAttributes<HTMLImageElement>, "src"> 
 export function StorageImage({ url, alt = "", ...rest }: StorageImageProps) {
   const src = useSignedUrl(url);
   if (!src) return null;
-  return <img src={src} alt={alt} {...rest} / loading="lazy" decoding="async">;
+  return <img src={src} alt={alt} {...rest}  loading="lazy" decoding="async" />;
 }
 
 type StorageLinkProps = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "href"> & {

@@ -160,7 +160,7 @@ export default function Stores() {
                       title="Klicka för att byta logotyp"
                     >
                       {store.logo_url ? (
-                        <img src={store.logo_url} alt={store.name} className="h-full w-full object-contain" / loading="lazy" decoding="async">
+                        <img src={store.logo_url} alt={store.name} className="h-full w-full object-contain"  loading="lazy" decoding="async" />
                       ) : (
                         <StoreIcon className="h-5 w-5 text-primary" />
                       )}

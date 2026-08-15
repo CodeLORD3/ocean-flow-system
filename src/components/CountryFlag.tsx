@@ -45,6 +45,6 @@ export default function CountryFlag({ country, size = 16, className = "" }: Coun
       height={size}
       className={`rounded-full object-cover shrink-0 ${className}`}
       style={{ width: size, height: size }}
-    / loading="lazy" decoding="async">
+     loading="lazy" decoding="async" />
   );
 }

@@ -362,7 +362,7 @@ export default function Staff() {
                   <div className="flex items-center gap-3">
                     <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
                       {s.profile_image_url ? (
-                        <img src={s.profile_image_url} alt={`${s.first_name} ${s.last_name}`} className="h-full w-full object-cover" / loading="lazy" decoding="async">
+                        <img src={s.profile_image_url} alt={`${s.first_name} ${s.last_name}`} className="h-full w-full object-cover"  loading="lazy" decoding="async" />
                       ) : (
                         <User className="h-5 w-5 text-primary" />
                       )}
@@ -479,7 +479,7 @@ export default function Staff() {
                 onClick={() => fileRef.current?.click()}
               >
                 {previewUrl ? (
-                  <img src={previewUrl} alt="Profil" className="h-full w-full object-cover" / loading="lazy" decoding="async">
+                  <img src={previewUrl} alt="Profil" className="h-full w-full object-cover"  loading="lazy" decoding="async" />
                 ) : (
                   <User className="h-6 w-6 text-primary" />
                 )}

@@ -1944,7 +1944,7 @@ function PurchaseDocPreview({ url, fileName, zoom }: { url: string; fileName: st
         className="rounded-md shadow-sm max-w-full"
         style={{ transform: `scale(${zoom})`, transformOrigin: "top center" }}
         draggable={false}
-      / loading="lazy" decoding="async">
+       loading="lazy" decoding="async" />
     </div>
   );
 }

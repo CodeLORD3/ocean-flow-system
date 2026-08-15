@@ -136,7 +136,7 @@ export function OnDutyStaff({ storeId }: { storeId?: string | null }) {
                       src={person.profile_image_url}
                       alt={`${person.first_name} ${person.last_name}`}
                       className="h-3.5 w-3.5 rounded-full object-cover"
-                    / loading="lazy" decoding="async">
+                     loading="lazy" decoding="async" />
                   ) : (
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                   )}
