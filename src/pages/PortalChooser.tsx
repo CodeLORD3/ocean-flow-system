@@ -113,13 +113,9 @@ export default function PortalChooser() {
       setSite("wholesale");
       setActiveStore(null, null);
     } else if (key === "shop") {
-      if (allowedStores.length > 1) {
-        setPickStore(true);
-        return;
-      }
-      setSite("shop");
-      const first = allowedStores[0];
-      setActiveStore(first?.id ?? null, first?.name ?? null);
+      // Butiksportalen kräver alltid ett aktivt butiksval
+      setPickStore(true);
+      return;
     } else {
       setSite(key);
       setActiveStore(null, null);

@@ -86,6 +86,12 @@ export function StaffAuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    // Nollställ portalvalet så nästa inloggning alltid börjar i portalvalet
+    try {
+      sessionStorage.removeItem("erp_site_context");
+    } catch {
+      /* ignore */
+    }
     setSession(null);
     setUser(null);
     setStaff(null);
