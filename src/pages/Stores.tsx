@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { prepareUpload, COMPRESS_PHOTO, COMPRESS_AVATAR } from "@/lib/imageCompress";
 import { motion } from "framer-motion";
 import { MapPin, Phone, Clock, Edit, X, Save, Camera, Store as StoreIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -60,12 +61,12 @@ export default function Stores() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const ext = file.name.split(".").pop();
-    const path = `stores/${storeId}/logo-${Date.now()}.${ext}`;
+    const prepared = await prepareUpload(file, COMPRESS_AVATAR);
+    const path = `stores/${storeId}/logo-${Date.now()}.${prepared.ext}`;
 
     const { error: uploadError } = await supabase.storage
       .from("logos")
-      .upload(path, file, { upsert: true });
+      .upload(path, prepared.file, { upsert: true, contentType: prepared.contentType });
 
     if (uploadError) {
       toast({ title: "Fel", description: "Kunde inte ladda upp logotypen", variant: "destructive" });

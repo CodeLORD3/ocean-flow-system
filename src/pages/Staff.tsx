@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { prepareUpload, COMPRESS_PHOTO, COMPRESS_AVATAR } from "@/lib/imageCompress";
 import { motion } from "framer-motion";
 import {
   Users, Plus, Search, Edit, Trash2, Camera, User, Phone, Mail, MapPin, Save,
@@ -201,9 +202,11 @@ export default function Staff() {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    const ext = file.name.split(".").pop();
-    const path = `profiles/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from("staff-photos").upload(path, file, { upsert: true });
+    const prepared = await prepareUpload(file, COMPRESS_AVATAR);
+    const path = `profiles/${Date.now()}-${Math.random().toString(36).slice(2)}.${prepared.ext}`;
+    const { error } = await supabase.storage
+      .from("staff-photos")
+      .upload(path, prepared.file, { upsert: true, contentType: prepared.contentType });
     if (error) {
       toast({ title: "Fel", description: "Kunde inte ladda upp bilden", variant: "destructive" });
       setUploading(false);

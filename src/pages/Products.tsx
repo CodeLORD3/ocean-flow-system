@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useRef } from "react";
+import { prepareUpload, COMPRESS_PHOTO, COMPRESS_AVATAR } from "@/lib/imageCompress";
 import { ALLERGENS } from "@/lib/catering";
 
 import {
@@ -412,9 +413,11 @@ export default function Products() {
   const uploadProductImage = async (file: File) => {
     setUploadingImage(true);
     try {
-      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      const key = `product-images/${(form.sku || "ny").replace(/[^a-zA-Z0-9-_]/g, "")}/${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from("logos").upload(key, file, { upsert: true });
+      const prepared = await prepareUpload(file, COMPRESS_PHOTO);
+      const key = `product-images/${(form.sku || "ny").replace(/[^a-zA-Z0-9-_]/g, "")}/${Date.now()}.${prepared.ext}`;
+      const { error } = await supabase.storage
+        .from("logos")
+        .upload(key, prepared.file, { upsert: true, contentType: prepared.contentType });
       if (error) throw error;
       const { data } = supabase.storage.from("logos").getPublicUrl(key);
       setField("image_url", data.publicUrl);

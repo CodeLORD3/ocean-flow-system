@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { prepareUpload, COMPRESS_PHOTO, COMPRESS_AVATAR } from "@/lib/imageCompress";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -145,10 +146,11 @@ export function RetailCustomerProfile({
 
   const uploadAvatar = async (file: File) => {
     try {
-      const key = `retail-customers/${customerId}-${Date.now()}-${file.name.replace(/[^\w.-]/g, "_")}`;
+      const prepared = await prepareUpload(file, COMPRESS_AVATAR);
+      const key = `retail-customers/${customerId}-${Date.now()}-${prepared.file.name.replace(/[^\w.-]/g, "_")}`;
       const { error } = await supabase.storage
         .from(AVATAR_BUCKET)
-        .upload(key, file, { upsert: true });
+        .upload(key, prepared.file, { upsert: true, contentType: prepared.contentType });
       if (error) throw error;
       const { data } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(key);
       await update.mutateAsync({ id: customerId, avatar_url: data.publicUrl } as any);
