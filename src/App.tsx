@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import ScrollToTop from "@/components/ScrollToTop";
 import { AppLayout } from "@/components/AppLayout";
-import { SiteProvider } from "@/contexts/SiteContext";
+import { SiteProvider, useSite } from "@/contexts/SiteContext";
 import { ActiveUserProvider } from "@/contexts/ActiveUserContext";
 import { TabsProvider } from "@/contexts/TabsContext";
 import { KeepAliveTabs } from "@/components/KeepAliveTabs";
@@ -39,6 +39,7 @@ const queryClient = new QueryClient();
 
 const ERPGate = () => {
   const { session, staff, loading } = useStaffAuth();
+  const { site, activeStoreId, portalChosen } = useSite();
   const location = useLocation();
 
   if (loading) {
@@ -57,6 +58,10 @@ const ERPGate = () => {
   }
   // Mark current path as the post-login destination
   if (location.pathname === "/") return <Navigate to="/choose-portal" replace />;
+  // Inget odefinierat läge: portal (och butik) måste alltid vara aktivt valt
+  if (!portalChosen || (site === "shop" && !activeStoreId)) {
+    return <Navigate to="/choose-portal" replace />;
+  }
 
   return (
     <ActiveUserProvider>
