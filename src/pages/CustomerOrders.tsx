@@ -18,7 +18,11 @@ import {
 import { EmptyState } from "@/components/EmptyState";
 import { useSite } from "@/contexts/SiteContext";
 import { useStores } from "@/hooks/useStores";
-import { useCustomerOrders, useArchiveCustomerOrder } from "@/hooks/useCustomerOrders";
+import {
+  useCustomerOrders,
+  useArchiveCustomerOrder,
+  useCustomerOrderCounts,
+} from "@/hooks/useCustomerOrders";
 import {
   CustomerOrder,
   ORDER_STATUS_LABELS,
@@ -213,6 +217,8 @@ export default function CustomerOrders() {
     "customer_order",
     useMemo(() => viewOrders.map((o) => o.id), [viewOrders]),
   );
+  /* Stamkundsstjärnan: kundens totala antal ordrar i hela kedjan. */
+  const { data: customerOrderCounts } = useCustomerOrderCounts();
   /** Antal aktiva filter, visas som badge på filterknappen. */
   const activeFilters =
     (status !== "all" ? 1 : 0) +
@@ -543,6 +549,9 @@ export default function CustomerOrders() {
                             selected={marked.includes(o.id)}
                             onSelect={toggleMark}
                             photoCount={photoCounts?.[o.id] ?? 0}
+                            orderCount={
+                              o.customer_id ? customerOrderCounts?.[o.customer_id] ?? 0 : 0
+                            }
                           />
                         ))}
                       </div>

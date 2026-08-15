@@ -173,6 +173,11 @@ export function RetailCustomerRegistry({
                     <div className="truncate text-xs text-muted-foreground">
                       {[c.street, c.postal_code, c.city].filter(Boolean).join(", ")}
                     </div>
+                    {!storeId && (c as any).stores?.name && (
+                      <div className="truncate text-xs text-muted-foreground">
+                        Butik: {(c as any).stores.name}
+                      </div>
+                    )}
                   </div>
 
                   {!readOnly && (
