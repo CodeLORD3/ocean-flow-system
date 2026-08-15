@@ -153,6 +153,28 @@ export function useCustomerOrders(filter: OrderFilter = {}) {
   });
 }
 
+/**
+ * Antal beställningar per kund i hela kedjan, oavsett butik och arkivstatus.
+ * Används för stjärnan i orderlistan (stamkund) och räknas på verkliga ordrar.
+ */
+export function useCustomerOrderCounts() {
+  return useQuery({
+    queryKey: ["customer_orders", "counts-per-customer"],
+    queryFn: async () => {
+      const { data, error } = await db
+        .from("customer_orders")
+        .select("customer_id")
+        .not("customer_id", "is", null);
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      for (const r of (data || []) as { customer_id: string }[])
+        counts[r.customer_id] = (counts[r.customer_id] || 0) + 1;
+      return counts;
+    },
+  });
+}
+
+
 export function useCustomerOrderEvents(orderId?: string | null) {
   return useQuery({
     queryKey: ["customer_order_events", orderId],
