@@ -175,10 +175,12 @@ export default function ShopifyWebhookStatus() {
    * (ERR_BLOCKED_BY_RESPONSE), så URL:en visas även som länk att öppna i en
    * riktig flik om popup-fönstret blockeras av förhandsvisningen.
    */
-  const connect = async () => {
-    setBusy("oauth");
+  const connect = async (shopDomain?: string) => {
+    setBusy(shopDomain ? `oauth:${shopDomain}` : "oauth");
     try {
-      const { data, error } = await supabase.functions.invoke("shopify-oauth/start", { body: {} });
+      const { data, error } = await supabase.functions.invoke("shopify-oauth/start", {
+        body: shopDomain ? { shop: shopDomain } : {},
+      });
       if (error) throw error;
       const r = data as any;
       if (!r?.authorize_url) throw new Error(r?.error ?? "Kunde inte starta anslutningen");
