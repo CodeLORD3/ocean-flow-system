@@ -27,6 +27,8 @@ import { PosStoreCard } from "@/components/poslive/PosStoreCard";
 import { PosHourChart } from "@/components/poslive/PosHourChart";
 import { PosReceiptList } from "@/components/poslive/PosReceiptList";
 import { NimposProductMapping, NimposStoreMapping } from "@/components/poslive/NimposMappingPanel";
+import { SumupHealthCard } from "@/components/poslive/SumupHealthCard";
+import { SumupProductMapping } from "@/components/poslive/SumupProductMapping";
 import { PosHealthCard } from "@/components/poslive/PosHealthCard";
 import { PosLineReview } from "@/components/poslive/PosLineReview";
 import { PosPricePanel } from "@/components/poslive/PosPricePanel";
@@ -217,6 +219,7 @@ export default function PosLive() {
           <PosLineReview />
           <NimposStoreMapping />
           <NimposProductMapping />
+          <SumupProductMapping />
         </TabsContent>
 
         <TabsContent value="prices" className="mt-4">
@@ -227,6 +230,7 @@ export default function PosLive() {
 
         <TabsContent value="ops" className="space-y-4 mt-4">
           <PosHealthCard />
+          <SumupHealthCard />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             <Kpi icon={AlertTriangle} label="Misslyckade" value={String(ops?.failed ?? 0)} />
             <Kpi icon={AlertTriangle} label="Okänd kassa" value={String(ops?.unmapped ?? 0)} />
