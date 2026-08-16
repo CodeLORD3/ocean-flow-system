@@ -704,8 +704,8 @@ export default function Products() {
         className={`border-b border-border/40 hover:bg-primary/20 transition-colors h-16 ${isSubproduct ? "bg-muted/10" : rowIndex % 2 === 1 ? "bg-muted/30" : ""}`}
       >
         {/* Name */}
-        <td className="px-2 py-1 align-middle font-medium text-foreground sticky left-0 z-10 bg-card border-r border-border/60 min-w-[300px]">
-          <div className="flex items-center gap-1.5">
+        <td className="px-2 py-1 align-middle font-medium text-foreground sticky left-0 z-10 bg-card border-r border-border/60 min-w-[320px] max-w-[420px]">
+          <div className="flex flex-wrap items-center gap-1.5">
             {!isSubproduct && hasChildren && (
               <button onClick={() => toggleExpand(p.id)} className="p-0.5 rounded hover:bg-muted shrink-0">
                 {isExpanded ? (
@@ -718,7 +718,12 @@ export default function Products() {
             {isSubproduct && <span className="ml-5 text-muted-foreground shrink-0">└</span>}
             {!isSubproduct && !hasChildren && <span className="w-5 shrink-0" />}
             <ProductThumb src={(p as any).image_url} alt={p.name} productId={p.id} />
-            <span className={`truncate ${isSubproduct ? "text-muted-foreground" : ""}`} title={p.name}>{p.name}</span>
+            <span
+              className={`whitespace-normal break-words leading-tight text-[11px] ${isSubproduct ? "text-muted-foreground" : ""}`}
+              title={p.name}
+            >
+              {p.name}
+            </span>
             {/* Arter med sorteringsregister köps bara in på storleksvariant. */}
             {(p as any).purchasable === false && (
               <Badge variant="outline" className="shrink-0 px-1 py-0 text-[9px] text-muted-foreground">
