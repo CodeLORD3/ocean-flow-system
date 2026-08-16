@@ -143,13 +143,15 @@ async function matchProduct(
 
 /* -------------------------------------------------------------------- pollning */
 
-async function pollMerchant(db: SupabaseClient, m: Merchant) {
+async function pollMerchant(db: SupabaseClient, m: Merchant, sinceOverride?: string | null) {
   const key = keyFor(m);
   const startedAt = new Date().toISOString();
-  const since = new Date(
-    (m.last_success_at ? new Date(m.last_success_at).getTime() : Date.now() - 24 * 3600 * 1000) -
-      5 * 60 * 1000,
-  ).toISOString();
+  const since = sinceOverride
+    ? new Date(sinceOverride).toISOString()
+    : new Date(
+        (m.last_success_at ? new Date(m.last_success_at).getTime() : Date.now() - 24 * 3600 * 1000) -
+          5 * 60 * 1000,
+      ).toISOString();
 
   const run = {
     merchant_code: m.merchant_code,
