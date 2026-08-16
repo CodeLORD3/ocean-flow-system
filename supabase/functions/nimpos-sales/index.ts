@@ -187,13 +187,80 @@ async function mapProduct(
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-  if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+  if (req.method !== "POST" && req.method !== "GET") {
+    return json({ error: "method_not_allowed" }, 405);
+  }
 
   const secret = Deno.env.get("NIMPOS_WEBHOOK_SECRET");
   if (!secret) {
     console.error("NIMPOS_WEBHOOK_SECRET saknas");
     return json({ error: "not_configured" }, 500);
   }
+
+  /* ------------------------------------------------- GET: statusuppslag
+   * Låter den externa parten själv verifiera att ett kvitto tagits emot,
+   * utan att ha konto i systemet. Signaturen räknas över query-strängen
+   * (utan inledande "?") med samma delade hemlighet som för POST.
+   *   GET ...?external_id=nimpos-tx-1
+   *   X-Nimpos-Signature: sha256=<hmac över "external_id=nimpos-tx-1">
+   */
+  if (req.method === "GET") {
+    const url = new URL(req.url);
+    const qs = url.search.replace(/^\?/, "");
+    const externalId = url.searchParams.get("external_id") ?? "";
+    if (!externalId) return json({ error: "missing_external_id" }, 400);
+
+    const providedGet = (req.headers.get("x-nimpos-signature") ?? "")
+      .replace(/^sha256=/i, "")
+      .trim()
+      .toLowerCase();
+    if (!providedGet) return json({ error: "missing_headers" }, 400);
+    if (!safeEqual(await hmacHex(secret, qs), providedGet)) {
+      return json({ error: "bad_signature" }, 401);
+    }
+
+    const dbGet = service();
+    const { data: txRow } = await dbGet
+      .from("pos_transactions")
+      .select("id, occurred_at, total_ore, status")
+      .eq("source", "nimpos")
+      .eq("external_id", externalId)
+      .maybeSingle();
+
+    if (txRow?.id) {
+      const { count } = await dbGet
+        .from("pos_transaction_items")
+        .select("id", { count: "exact", head: true })
+        .eq("transaction_id", txRow.id);
+      return json({
+        received: true,
+        status: txRow.status,
+        occurred_at: txRow.occurred_at,
+        total_ore: txRow.total_ore,
+        item_count: count ?? 0,
+      });
+    }
+
+    const { data: evRow } = await dbGet
+      .from("nimpos_webhook_events")
+      .select("status, last_error, received_at")
+      .contains("payload", { receipt: { external_id: externalId } })
+      .order("received_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (evRow) {
+      return json({
+        received: true,
+        status: evRow.status,
+        message: evRow.last_error ?? null,
+        received_at: evRow.received_at,
+      });
+    }
+
+    return json({ received: false, status: "unknown" }, 404);
+  }
+
 
   const raw = await req.text();
   const sigHeader = req.headers.get("x-nimpos-signature") ?? "";
