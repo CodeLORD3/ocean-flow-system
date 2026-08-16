@@ -1178,6 +1178,16 @@ export default function Products() {
             </SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          variant={showDetails ? "secondary" : "outline"}
+          size="sm"
+          className="h-8 text-xs gap-1.5 sm:ml-auto"
+          onClick={() => setShowDetails((v) => !v)}
+          title="Visa eller göm HS-kod, producent, hållbarhet, EAN, marginal och rek. butikspris"
+        >
+          {showDetails ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+          {showDetails ? "Göm detaljer" : "Visa detaljer"}
+        </Button>
       </div>
 
       {/* Table */}
