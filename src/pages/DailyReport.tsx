@@ -375,6 +375,9 @@ export default function DailyReport() {
           onKeyDown={handleFormKeyDown}
           className="space-y-4"
         >
+          {/* Kassan live — grund för stängningsrapporten */}
+          {pos && <PosSalesCard summary={pos} onApply={applyPos} diff={posDiff} />}
+
           {/* Försäljning */}
           <Card className="shadow-card">
             <CardHeader className="pb-2">
