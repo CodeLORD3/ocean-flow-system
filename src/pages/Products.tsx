@@ -743,7 +743,10 @@ export default function Products() {
         <td className="px-2 py-0 align-middle whitespace-nowrap"><CategoryBadge name={p.category} /></td>
 
         <td className="px-2 py-0 align-middle text-muted-foreground">{p.unit}</td>
-        <td className="px-2 py-0 align-middle font-mono text-muted-foreground">{(p as any).hs_code || "–"}</td>
+        {showDetails && (
+          <td className="px-2 py-0 align-middle font-mono text-muted-foreground">{(p as any).hs_code || "–"}</td>
+        )}
+        {showDetails && (
         <td className="px-2 py-0 align-middle">
           <Select
             value={(p as any).producer || "__none__"}
