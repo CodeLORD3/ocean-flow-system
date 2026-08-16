@@ -30,6 +30,7 @@ import { NimposProductMapping, NimposStoreMapping } from "@/components/poslive/N
 import { SumupHealthCard } from "@/components/poslive/SumupHealthCard";
 import { SumupProductMapping } from "@/components/poslive/SumupProductMapping";
 import { SumupLineReview } from "@/components/poslive/SumupLineReview";
+import { SumupCatalogPanel } from "@/components/poslive/SumupCatalogPanel";
 import { PosHealthCard } from "@/components/poslive/PosHealthCard";
 import { PosLineReview } from "@/components/poslive/PosLineReview";
 import { PosPricePanel } from "@/components/poslive/PosPricePanel";
@@ -268,6 +269,7 @@ export default function PosLive() {
 
         <TabsContent value="prices" className="mt-4">
           <PosPricePanel />
+          <SumupCatalogPanel />
         </TabsContent>
 
 
