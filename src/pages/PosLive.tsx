@@ -219,6 +219,12 @@ export default function PosLive() {
           <NimposProductMapping />
         </TabsContent>
 
+        <TabsContent value="prices" className="mt-4">
+          <PosPricePanel />
+        </TabsContent>
+
+
+
         <TabsContent value="ops" className="space-y-4 mt-4">
           <PosHealthCard />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
