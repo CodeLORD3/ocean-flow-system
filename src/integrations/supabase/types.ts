@@ -3721,6 +3721,7 @@ export type Database = {
           accounting_provider: string | null
           active: boolean
           country: string
+          country_tag: string | null
           created_at: string
           currency: string
           fiscal_year_end: string | null
@@ -3731,15 +3732,18 @@ export type Database = {
           locale: string
           org_nr: string
           series_code: string | null
+          tenant_id: string | null
           updated_at: string
           vat_regime: string | null
           vat_registration: string | null
+          vat_rules: Json
         }
         Insert: {
           accounting_config?: Json
           accounting_provider?: string | null
           active?: boolean
           country: string
+          country_tag?: string | null
           created_at?: string
           currency: string
           fiscal_year_end?: string | null
@@ -3750,15 +3754,18 @@ export type Database = {
           locale?: string
           org_nr: string
           series_code?: string | null
+          tenant_id?: string | null
           updated_at?: string
           vat_regime?: string | null
           vat_registration?: string | null
+          vat_rules?: Json
         }
         Update: {
           accounting_config?: Json
           accounting_provider?: string | null
           active?: boolean
           country?: string
+          country_tag?: string | null
           created_at?: string
           currency?: string
           fiscal_year_end?: string | null
@@ -3769,11 +3776,21 @@ export type Database = {
           locale?: string
           org_nr?: string
           series_code?: string | null
+          tenant_id?: string | null
           updated_at?: string
           vat_regime?: string | null
           vat_registration?: string | null
+          vat_rules?: Json
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "legal_entities_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lot_documents: {
         Row: {
@@ -8575,6 +8592,33 @@ export type Database = {
         }
         Relationships: []
       }
+      tenants: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       trade_offers: {
         Row: {
           annual_return: number | null
@@ -9882,6 +9926,8 @@ export type Database = {
           wanted_date: string
         }[]
       }
+      can_see_company: { Args: { _legal_entity_id: string }; Returns: boolean }
+      can_see_store: { Args: { _store_id: string }; Returns: boolean }
       company_of_location: {
         Args: { _location_id: string; _on?: string }
         Returns: string
@@ -9930,6 +9976,11 @@ export type Database = {
         }
         Returns: Json
       }
+      has_company_access: {
+        Args: { _legal_entity_id: string; _user_id: string }
+        Returns: boolean
+      }
+      has_company_scoping: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -9942,6 +9993,7 @@ export type Database = {
         Returns: boolean
       }
       is_investor: { Args: never; Returns: boolean }
+      is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       is_staff_manager: { Args: never; Returns: boolean }
       last_name_key: { Args: { v: string }; Returns: string }
@@ -10047,6 +10099,7 @@ export type Database = {
       unpost_purchase_report: { Args: { _report_id: string }; Returns: Json }
       user_portals: { Args: { _user_id: string }; Returns: string[] }
       user_store_ids: { Args: { _user_id: string }; Returns: string[] }
+      user_tenant_ids: { Args: { _user_id: string }; Returns: string[] }
       zero_stale_day_prices: { Args: never; Returns: number }
       zero_stale_day_prices_midnight: { Args: never; Returns: number }
       zero_stock_balances: {
@@ -10055,7 +10108,16 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "client"
+      app_role:
+        | "admin"
+        | "client"
+        | "store_staff"
+        | "store_manager"
+        | "wholesale_staff"
+        | "company_admin"
+        | "region_admin"
+        | "group_admin"
+        | "platform_admin"
       location_type:
         | "inkopslager"
         | "grossistlager"
@@ -10197,7 +10259,17 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "client"],
+      app_role: [
+        "admin",
+        "client",
+        "store_staff",
+        "store_manager",
+        "wholesale_staff",
+        "company_admin",
+        "region_admin",
+        "group_admin",
+        "platform_admin",
+      ],
       location_type: [
         "inkopslager",
         "grossistlager",
