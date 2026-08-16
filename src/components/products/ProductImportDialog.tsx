@@ -284,14 +284,18 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
       }
       if (mapped > 0) {
         // Lös upp orderrader som väntat på matchning
-        const skus = mapRows.map((r) => r.shopify_sku);
+        const keys = mapRows.map((r) => r.shopify_sku);
         const { data: pending } = await supabase
           .from("customer_order_lines")
-          .select("id, shopify_sku")
-          .eq("needs_product_match", true)
-          .in("shopify_sku", skus);
+          .select("id, shopify_sku, shopify_title, free_text_name")
+          .eq("needs_product_match", true);
         for (const line of pending ?? []) {
-          const target = mapRows.find((r) => r.shopify_sku === line.shopify_sku);
+          // Nyckeln är Shopify-SKU när den finns, annars produkttiteln
+          const lineKeys = [line.shopify_sku, line.shopify_title, line.free_text_name]
+            .map((v) => (v ?? "").trim())
+            .filter(Boolean);
+          if (!lineKeys.some((k) => keys.includes(k))) continue;
+          const target = mapRows.find((r) => lineKeys.includes(r.shopify_sku));
           if (!target) continue;
           await supabase
             .from("customer_order_lines")
