@@ -365,9 +365,11 @@ Deno.serve(async (req) => {
     : await q;
   if (error) return json({ error: error.message }, 500);
 
+  // changes_since kan sättas manuellt för att hämta en längre historik.
+  const sinceOverride = body?.changes_since ? String(body.changes_since) : null;
   const results = [];
   for (const m of (merchants ?? []) as Merchant[]) {
-    results.push(await pollMerchant(db, m));
+    results.push(await pollMerchant(db, m, sinceOverride));
   }
   return json({ ok: true, merchants: results.length, results });
 });
