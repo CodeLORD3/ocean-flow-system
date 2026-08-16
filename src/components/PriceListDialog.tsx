@@ -256,8 +256,12 @@ export default function PriceListDialog({ open, onOpenChange, allProducts }: Pro
           .insert({
             name: `Prislista ${dateStr}`,
             store_id: store.id,
+            legal_entity_id: (store as any).legal_entity_id ?? null,
+            pos_enabled: posEnabled,
+            valid_from: dateStr,
             total_products: rows.length,
           } as any)
+
           .select()
           .single();
         if (listErr) throw listErr;
