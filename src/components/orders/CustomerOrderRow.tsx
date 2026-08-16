@@ -955,6 +955,15 @@ export function CustomerOrderRow({
         </div>
       )}
 
+      {isOpen && (
+        <OrderAuditLine
+          createdBy={(order as any).created_by}
+          createdAt={order.created_at}
+          updatedBy={(order as any).updated_by}
+          updatedAt={(order as any).updated_at}
+          className="border-t border-grid-line/60 px-3 py-1"
+        />
+      )}
     </div>
   );
 }
