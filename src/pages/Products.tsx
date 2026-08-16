@@ -832,6 +832,7 @@ export default function Products() {
             </div>
           )}
         </td>
+        )}
 
         {/* Prices */}
         {isWholesale && (
