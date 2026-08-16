@@ -134,10 +134,22 @@ export default function ShopifyWebhookStatus() {
       const { data, error } = await supabase.functions.invoke("shopify-backfill", {
         body: shopDomain ? { shop: shopDomain } : {},
       });
-      if (error) throw error;
-      const r = data as any;
+      // Vid 400 ligger felmeddelandet i svarskroppen, inte i error.message.
+      let r = data as any;
+      if (error) {
+        try {
+          r = await (error as any)?.context?.json?.();
+        } catch {
+          r = null;
+        }
+        if (!r) throw error;
+      }
       if (r?.ok === false) {
         toast.error(r?.error ?? "Backfyllnaden misslyckades");
+        if (r?.needs_oauth && shopDomain) {
+          toast.info("Anslut butiken via OAuth först — jag öppnar Shopify-godkännandet.");
+          await connect(shopDomain);
+        }
       } else {
         toast.success(
           `Hämtade ${r?.fetched ?? 0} · köade ${r?.queued ?? 0} · duplikat ${r?.duplicates ?? 0} · osorterade ${r?.unsorted ?? 0} · fel ${r?.errors ?? 0}`,
