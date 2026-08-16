@@ -305,7 +305,7 @@ export async function processSumupEvent(
   const fail = async (message: string): Promise<ProcessResult> => {
     await db
       .from("sumup_events")
-      .update({ status: "fel", last_error: message.slice(0, 400), attempts: undefined })
+      .update({ status: "fel", last_error: message.slice(0, 400) })
       .eq("id", ev.id);
     await db.from("nimpos_rejects").insert({
       reason: "sumup_bearbetning",
