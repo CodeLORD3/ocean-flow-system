@@ -228,6 +228,8 @@ export default function Products() {
   const updateProduct = useUpdateProduct();
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  /** Detaljläge: visar sekundära kolumner (HS, producent, hållbarhet, EAN, marginal, rek. butikspris). */
+  const [showDetails, setShowDetails] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
