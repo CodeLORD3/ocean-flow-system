@@ -54,6 +54,8 @@ export default function PriceListDialog({ open, onOpenChange, allProducts }: Pro
   const [prices, setPrices] = useState<Record<string, number>>({}); // product_id -> price
   const [included, setIncluded] = useState<Record<string, boolean>>({});
   const [selectedStores, setSelectedStores] = useState<Record<string, boolean>>({});
+  const [posEnabled, setPosEnabled] = useState(false);
+
   const [search, setSearch] = useState("");
   const [freshAllProducts, setFreshAllProducts] = useState<AnyProduct[] | null>(null);
 
@@ -254,8 +256,12 @@ export default function PriceListDialog({ open, onOpenChange, allProducts }: Pro
           .insert({
             name: `Prislista ${dateStr}`,
             store_id: store.id,
+            legal_entity_id: (store as any).legal_entity_id ?? null,
+            pos_enabled: posEnabled,
+            valid_from: dateStr,
             total_products: rows.length,
           } as any)
+
           .select()
           .single();
         if (listErr) throw listErr;
@@ -358,9 +364,14 @@ export default function PriceListDialog({ open, onOpenChange, allProducts }: Pro
               );
             })}
           </div>
+          <label className="flex items-center gap-2 text-xs cursor-pointer">
+            <Checkbox checked={posEnabled} onCheckedChange={(v) => setPosEnabled(!!v)} />
+            <span>Gäller i kassan — priserna skickas till kassasystemet</span>
+          </label>
           <p className="text-[10px] text-muted-foreground">
             En separat PDF skapas per vald butik. Om ingen butik väljs skapas en generell prislista.
           </p>
+
         </section>
 
         {/* Section 1: Today's purchases */}

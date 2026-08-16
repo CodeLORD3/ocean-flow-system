@@ -29,6 +29,8 @@ import { PosReceiptList } from "@/components/poslive/PosReceiptList";
 import { NimposProductMapping, NimposStoreMapping } from "@/components/poslive/NimposMappingPanel";
 import { PosHealthCard } from "@/components/poslive/PosHealthCard";
 import { PosLineReview } from "@/components/poslive/PosLineReview";
+import { PosPricePanel } from "@/components/poslive/PosPricePanel";
+
 
 const kr = (n: number) => Math.round(n).toLocaleString("sv-SE").replace(/\u00a0/g, " ");
 
@@ -140,7 +142,9 @@ export default function PosLive() {
               </Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="prices">Priser</TabsTrigger>
           <TabsTrigger value="ops">Drift</TabsTrigger>
+
         </TabsList>
 
         <TabsContent value="live" className="space-y-4 mt-4">
@@ -214,6 +218,12 @@ export default function PosLive() {
           <NimposStoreMapping />
           <NimposProductMapping />
         </TabsContent>
+
+        <TabsContent value="prices" className="mt-4">
+          <PosPricePanel />
+        </TabsContent>
+
+
 
         <TabsContent value="ops" className="space-y-4 mt-4">
           <PosHealthCard />
