@@ -247,7 +247,7 @@ export default function ShopifyWebhookStatus() {
             size="sm"
             className="ml-auto h-6 text-xs"
             disabled={busy === "oauth"}
-            onClick={connect}
+            onClick={() => connect()}
           >
             <Link2 className={`mr-1 h-3 w-3 ${busy === "oauth" ? "animate-pulse" : ""}`} />
             {oauth.data?.connected ? "Anslut Shopify igen" : "Anslut Shopify"}
