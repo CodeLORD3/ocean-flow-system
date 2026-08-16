@@ -260,7 +260,14 @@ export default function ShopifyWebhookStatus() {
                 ? "Anslut Shopify först — ingen Admin-token finns för butiken"
                 : undefined
             }
-            onClick={() => backfill()}
+            onClick={async () => {
+              const list = (shops.data || []).map((s: any) => s.shop_domain);
+              if (list.length === 0) {
+                toast.error("Ingen aktiv webbutik är konfigurerad");
+                return;
+              }
+              for (const d of list) await backfill(d);
+            }}
           >
             <DownloadCloud
               className={`mr-1 h-3 w-3 ${busy?.startsWith("backfill") ? "animate-pulse" : ""}`}
