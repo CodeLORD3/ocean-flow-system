@@ -49,3 +49,9 @@ verify_jwt = false
 
 [functions.sumup-poll]
 verify_jwt = false
+
+[functions.sumup-process]
+verify_jwt = false
+
+[functions.sumup-reconcile]
+verify_jwt = false
