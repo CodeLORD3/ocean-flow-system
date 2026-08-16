@@ -311,6 +311,19 @@ export default function DailyReport() {
         net_sales: num(net),
         receipt_count: num(receipts) != null ? Math.round(num(receipts)!) : null,
         largest_sale: num(largest),
+        // Frys kassans siffror vid stängning så avvikelser går att spåra i efterhand.
+        ...(pos && pos.receipt_count > 0
+          ? {
+              pos_gross_sales: pos.gross_sales,
+              pos_net_sales: pos.net_sales,
+              pos_receipt_count: pos.receipt_count,
+              pos_largest_sale: pos.largest_sale,
+              pos_payments: pos.payments,
+              pos_vat_breakdown: pos.vat_breakdown,
+              pos_source: pos.sources.join(",") || "pos",
+              pos_snapshot_at: new Date().toISOString(),
+            }
+          : {}),
         staff_entries: entries.map(([staff_id, r]) => ({
           staff_id,
           start: r.active ? r.start : "",
