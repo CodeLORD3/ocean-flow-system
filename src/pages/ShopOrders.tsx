@@ -36,6 +36,7 @@ import { useTransportSchedules } from "@/hooks/useTransportSchedules";
 import { supabase } from "@/integrations/supabase/client";
 import { logActivity } from "@/hooks/useActivityLog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCategoryVisibility } from "@/hooks/useCategoryVisibility";
 import { useSite } from "@/contexts/SiteContext";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
 import { useCreateChangeRequest, useOrderChangeRequests, useResolveChangeRequest } from "@/hooks/useOrderChangeRequests";
@@ -240,6 +241,7 @@ export default function ShopOrders() {
   const { data: currentStaff } = useCurrentStaff();
   const loggedInName = staffFullName(currentStaff);
   const { data: products = [] } = useProducts();
+  const { isCategoryVisible } = useCategoryVisibility(activeStoreId);
   const { data: transportSchedules = [] } = useTransportSchedules();
   const [creatingOrder, setCreatingOrder] = useState(false);
   const [confirmSendOpen, setConfirmSendOpen] = useState(false);
@@ -350,6 +352,7 @@ export default function ShopOrders() {
   const doneOrders = useMemo(() => orders.filter((o: any) => DONE_STATUSES.includes(o.status)), [orders]);
 
   const filteredProducts = products.filter(p =>
+    isCategoryVisible(p.category) &&
     productSearch &&
     (p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
      p.sku.toLowerCase().includes(productSearch.toLowerCase())) &&

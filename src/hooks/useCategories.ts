@@ -10,7 +10,17 @@ export function useCategories() {
         .select("*")
         .order("name");
       if (error) throw error;
-      return data as { id: string; name: string; created_at: string }[];
+      return data as {
+        id: string;
+        name: string;
+        created_at: string;
+        sku_prefix: string | null;
+        exempt_species_data: boolean | null;
+        traceability_exempt: boolean | null;
+        /** Tom lista = kategorin visas för alla butiker */
+        visible_store_ids: string[] | null;
+        wholesale_visible: boolean | null;
+      }[];
     },
   });
 }

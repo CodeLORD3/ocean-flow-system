@@ -43,7 +43,12 @@ const statusLabel: Record<string, string> = {
   changed: "Ändrad",
   unchanged: "Oförändrad",
   error: "Fel",
+  activated: "Aktiveras",
+  deactivated: "Inaktiveras",
 };
+
+/** Rader som faktiskt skrivs vid import */
+const IMPORTABLE: string[] = ["new", "changed", "activated", "deactivated"];
 
 export default function ProductImportDialog({ open, onOpenChange }: Props) {
   const { toast } = useToast();
@@ -64,7 +69,7 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
   const [existing, setExisting] = useState<ExistingProduct[]>([]);
 
   const counts = useMemo(() => {
-    const c = { new: 0, changed: 0, unchanged: 0, error: 0 };
+    const c = { new: 0, changed: 0, unchanged: 0, error: 0, activated: 0, deactivated: 0 };
     (diff ?? []).forEach((d) => {
       c[d.status] += 1;
     });
@@ -100,14 +105,23 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
       }
       setMissingOptional(parsed.missingOptionalColumns);
       setUnknownColumns(parsed.unknownColumns);
-      const { data, error } = await supabase
-        .from("products")
-        .select(
-          "id, sku, name, category, unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier_id, barcode, hs_code, weight_per_piece, shelf_life_days, parent_product_id, active, image_url, latin_name, species_group, fao_code, allergens, may_contain, allergens_checked",
-        );
-
-      if (error) throw error;
-      const existingRows = (data ?? []) as unknown as ExistingProduct[];
+      // Hela registret måste med — PostgREST returnerar max 1000 rader per anrop,
+      // annars flaggas produkter efter rad 1000 felaktigt som nya.
+      const PAGE = 1000;
+      const rows: unknown[] = [];
+      for (let from = 0; ; from += PAGE) {
+        const { data, error } = await supabase
+          .from("products")
+          .select(
+            "id, sku, name, category, unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier_id, barcode, hs_code, weight_per_piece, shelf_life_days, parent_product_id, active, image_url, latin_name, species_group, fao_code, allergens, may_contain, allergens_checked",
+          )
+          .order("sku")
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        rows.push(...(data ?? []));
+        if (!data || data.length < PAGE) break;
+      }
+      const existingRows = rows as unknown as ExistingProduct[];
       setExisting(existingRows);
       setDiff(
         buildDiff({
@@ -155,7 +169,7 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
 
   const runImport = async () => {
     if (!diff) return;
-    const importable = diff.filter((d) => d.status === "new" || d.status === "changed");
+    const importable = diff.filter((d) => IMPORTABLE.includes(d.status));
     if (importable.length === 0) {
       if (rejectedRows.length === 0) return;
       // Inget kunde importeras — logga ändå de avvisade raderna så de kan spåras i efterhand
@@ -256,8 +270,13 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
       }
 
       // Refresh sku -> id map so variants can resolve parents created above
-      const { data: refreshed } = await supabase.from("products").select("id, sku");
-      const idBySku = new Map((refreshed ?? []).map((p) => [String(p.sku).toLowerCase(), p.id]));
+      const refreshed: { id: string; sku: string }[] = [];
+      for (let from = 0; ; from += 1000) {
+        const { data } = await supabase.from("products").select("id, sku").order("sku").range(from, from + 999);
+        refreshed.push(...((data ?? []) as { id: string; sku: string }[]));
+        if (!data || data.length < 1000) break;
+      }
+      const idBySku = new Map(refreshed.map((p) => [String(p.sku).toLowerCase(), p.id]));
 
       for (const batch of chunk(variants, 200)) {
         const rows = batch.map((d) => buildRow(d, idBySku.get((d.row.parent_sku ?? "").toLowerCase()) ?? null));
@@ -406,6 +425,7 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
   };
 
   const visibleRows = (diff ?? []).filter((d) => showUnchanged || d.status !== "unchanged");
+  const importableCount = counts.new + counts.changed + counts.activated + counts.deactivated;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -511,6 +531,12 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
               <Badge variant="outline" className="border-amber-500/40 text-amber-600">
                 {counts.changed} ändrade
               </Badge>
+              <Badge variant="outline" className="border-sky-500/40 text-sky-600">
+                {counts.activated} aktiveras
+              </Badge>
+              <Badge variant="outline" className="border-muted-foreground/40 text-muted-foreground">
+                {counts.deactivated} inaktiveras
+              </Badge>
               <Badge variant="outline">{counts.unchanged} oförändrade</Badge>
               <Badge variant="outline" className="border-destructive/40 text-destructive">
                 {counts.error} fel
@@ -557,11 +583,15 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
                           className={
                             d.status === "new"
                               ? "text-emerald-600"
-                              : d.status === "changed"
-                                ? "text-amber-600"
-                                : d.status === "error"
-                                  ? "text-destructive"
-                                  : "text-muted-foreground"
+                              : d.status === "activated"
+                                ? "text-sky-600"
+                                : d.status === "deactivated"
+                                  ? "text-muted-foreground"
+                                  : d.status === "changed"
+                                    ? "text-amber-600"
+                                    : d.status === "error"
+                                      ? "text-destructive"
+                                      : "text-muted-foreground"
                           }
                         >
                           {statusLabel[d.status]}
@@ -609,11 +639,11 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
           <Button
             size="sm"
             className="gap-1.5 text-xs"
-            disabled={!diff || importing || counts.new + counts.changed === 0}
+            disabled={!diff || importing || importableCount === 0}
             onClick={runImport}
           >
             {importing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-            Importera {counts.new + counts.changed} rader
+            Importera {importableCount} rader
           </Button>
         </DialogFooter>
       </DialogContent>
