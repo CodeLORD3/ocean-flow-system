@@ -481,7 +481,13 @@ export async function processSumupEvent(
     if (txErr) throw txErr;
 
     const locationId = await salesLocation(db, m.store_id);
-    const products: any[] = Array.isArray(payload?.products) ? payload.products : [];
+    // Transaktionslistan saknar ibland artikelnamn — kvittot har dem.
+    const txProducts: any[] = Array.isArray(payload?.products) ? payload.products : [];
+    const receiptProducts: any[] = Array.isArray(ev.receipt_payload?.transaction_data?.products)
+      ? ev.receipt_payload.transaction_data.products
+      : [];
+    const hasNames = (rows: any[]) => rows.some((p) => String(p?.name ?? p?.description ?? "").trim());
+    const products: any[] = hasNames(txProducts) || !hasNames(receiptProducts) ? txProducts : receiptProducts;
     let unmatched = 0;
     let unknownQty = 0;
     let notStocked = 0;
