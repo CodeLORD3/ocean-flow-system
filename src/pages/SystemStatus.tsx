@@ -10,6 +10,8 @@ import { toast } from "@/hooks/use-toast";
 import ShopifyWebhookStatus from "@/components/shopify/ShopifyWebhookStatus";
 import BookingStatusCard from "@/components/booking/BookingStatusCard";
 import ImageCompressionCard from "@/components/admin/ImageCompressionCard";
+import { PosHealthCard } from "@/components/poslive/PosHealthCard";
+import { PosLineReview } from "@/components/poslive/PosLineReview";
 
 interface ReconRun {
   id: string;
@@ -162,6 +164,10 @@ export default function SystemStatus() {
       </div>
 
       <div className="flex-1 space-y-4 overflow-auto p-4">
+        <PosHealthCard />
+
+        <PosLineReview />
+
         <BookingStatusCard />
 
         <ImageCompressionCard />

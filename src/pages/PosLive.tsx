@@ -27,6 +27,8 @@ import { PosStoreCard } from "@/components/poslive/PosStoreCard";
 import { PosHourChart } from "@/components/poslive/PosHourChart";
 import { PosReceiptList } from "@/components/poslive/PosReceiptList";
 import { NimposProductMapping, NimposStoreMapping } from "@/components/poslive/NimposMappingPanel";
+import { PosHealthCard } from "@/components/poslive/PosHealthCard";
+import { PosLineReview } from "@/components/poslive/PosLineReview";
 
 const kr = (n: number) => Math.round(n).toLocaleString("sv-SE").replace(/\u00a0/g, " ");
 
@@ -208,11 +210,13 @@ export default function PosLive() {
         </TabsContent>
 
         <TabsContent value="mapping" className="space-y-4 mt-4">
+          <PosLineReview />
           <NimposStoreMapping />
           <NimposProductMapping />
         </TabsContent>
 
         <TabsContent value="ops" className="space-y-4 mt-4">
+          <PosHealthCard />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             <Kpi icon={AlertTriangle} label="Misslyckade" value={String(ops?.failed ?? 0)} />
             <Kpi icon={AlertTriangle} label="Okänd kassa" value={String(ops?.unmapped ?? 0)} />
