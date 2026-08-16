@@ -15,30 +15,42 @@ Två merchant-koder har förekommit: MKC571XH (rättad) och MCNGCU6L. Pollningen
 
 ## Det som byggs i etapp 1
 
-1. **Hemligheter och konfiguration**
+1. **Viktvarutestet först — blockerar resten**
+   - Innan pollningen byggs klar körs testprotokollet i sandbox och råa JSON-svar hämtas för tre fall: kg-artikel med **1,24 kg**, styckvara med **2 st**, och en **retur** av kg-artikeln.
+   - Ur svaren låses hur kvantitet läses: rapporterad kvantitet om `quantity` bär 1.24, annars härledd ur radtotal delat med dagens kilopris ur prislistan, annars okänd. Härledningskällan sparas per rad så inventeringsavvikelser går att förklara.
+   - Returens JSON avgör om returrader bär `products[]` (partivis motrörelse i etapp 2) eller bara belopp (beloppsjustering med flagga).
+   - Resultatet dokumenteras i `docs/sumup-integration.md` med de tre råa svaren och den valda tolkningen. Koden stödjer alla tre vägarna, men bara den verifierade används som standard. Ingen bearbetningslogik låses förrän detta är gjort.
+
+2. **Hemligheter och konfiguration**
    - `SUMUP_API_KEY` (restricted, endast `transactions.history`, `transactions.read`, `receipts.read`) och `SUMUP_API_KEY_SANDBOX` läggs som secrets. Nyckeln som delats i chatt ska roteras/raderas i SumUp innan vi kör skarpt.
    - Merchant-koder konfigureras i databasen, inte i kod: en mappningstabell merchant-kod → butik → bolag, med fält för valuta, aktiv, testläge. Klar för flera koder.
 
-2. **Valuta och belopp**
+3. **Valuta och belopp**
    - Valutakolumn på kassatransaktionen med CHF för SumUp och SEK som standard för befintlig data. Belopp konverteras från SumUps decimaltal (10.10) till rappen vid mottagning. Transaktioner med annan valuta än butikens parkeras med larm i stället för att bokföras.
 
-3. **Kö och hämtning**
+4. **Kö och hämtning**
    - Kö-tabell `sumup_events`: `transaction_id` som unik idempotensnyckel, rå payload, status (koad/bearbetad/duplikat/fel), försök, felmeddelande, testläge.
-   - Edge function `sumup-poll`: läser `transactions/history` per merchant med `changes_since` = senaste lyckade körning minus 5 minuter, paginerar till slutet, hämtar fullt transaktionsobjekt (`products[]`, `vat_rates[]`) och kvitto (`receipt_no`, `card_reader.code`) för varje ny transaktion, köar rått. Ompollning ska ge `duplikat`, aldrig dubbla rader.
-   - Robusthet: 401 (nyckel), 429 (backoff), 5xx (retry) loggas per typ; körningarna stämplas i en körningslogg som Systemstatus kan läsa.
+   - Edge function `sumup-poll`, tre anrop per ny transaktion:
+     - `GET /v2.1/merchants/{merchant_code}/transactions/history` med `changes_since` = senaste lyckade körning minus 5 minuter, paginerad till slutet — ger listan av nya `transaction_id`.
+     - `GET /v2.1/merchants/{merchant_code}/transactions?id=` — ger `products[]`, `vat_rates[]`, `device_info`, `local_time`.
+     - `GET /v1.1/receipts/{transaction_id}?mid=` — ger `receipt_no` (kvittonummer), `card_reader.code` (terminal) och radbeskrivningar. Kvittonummer hämtas alltid härifrån, aldrig gissat ur history.
+   - Ompollning ska ge `duplikat`, aldrig dubbla rader.
+   - Robusthet: 401 (nyckel), 429 (backoff), 5xx (retry) loggas per typ; varje körning stämplas i en körningslogg (starttid, utfall, antal hämtade, felkod) som Systemstatus läser.
    - Testläge: sandbox-nyckel och sandbox-merchant markerar allt som `test_mode`, så testförsäljning aldrig blandas med skarp statistik.
    - Kortdata: `last_4_digits` sparas aldrig — skrubbas vid mottagning, samma regel som Nimpos.
 
-4. **Produktnamnsmappning (lärande)**
+5. **Produktnamnsmappning (lärande)**
    - Tabell `sumup_product_map`: SumUp-namn → produkt, med räknare för omatchade och senast sedd. Första gången ett namn dyker upp hamnar det i granskningsvyn med rankade förslag; bekräftat val matchar automatiskt därefter.
    - Namnstandard: SumUp-artikelns namn ska vara identiskt med Makrilltrades kundvänliga namn.
 
-5. **Viktvarutestet dokumenteras**
-   - `docs/sumup-integration.md` med arkitekturen, endpoints, fältmappning och ett tydligt testprotokoll för viktvaran: sälj 1,24 kg i sandbox, klistra in JSON:en, och vi låser hur kvantiteten läses (rapporterad kvantitet, härledd ur radtotal delat med dagens kilopris, eller okänd). Härledningskällan sparas per rad så inventeringsavvikelser går att förklara.
-   - Kod skrivs så att alla tre vägarna finns, men bara den verifierade används som standard.
+6. **Larm redan i etapp 1**
+   - Körningsloggen driver två larm som visas direkt (fullständiga Systemstatus-kortet byggs i etapp 4):
+     - pollningen misslyckad **tre gånger i rad** per merchant → larm med senaste felkod.
+     - **tyst kassa över 60 minuter under butikens öppettider** (öppettiderna finns redan per butik) → larm, tyst utanför öppettid.
 
-6. **Bevis (acceptans för etapp 1)**
-   - Sandbox-försäljning (kort, kontant, viktvara, retur) hämtad och köad, dubblettkörning ger duplikat, omatchat namn syns i granskningsvyn, felkoder syns i körningsloggen. Inga lagerrörelser i denna etapp.
+7. **Bevis (acceptans för etapp 1)**
+   - De tre råa JSON-svaren i punkt 1 dokumenterade, sandbox-försäljning (kort, kontant, viktvara, retur) hämtad och köad med `receipt_no` på plats, dubblettkörning ger duplikat, omatchat namn syns i granskningsvyn, felkoder och de två larmen syns i körningsloggen. Inga lagerrörelser i denna etapp.
+
 
 ## Etapp 2–5 (för överblick, byggs efter etapp 1)
 
