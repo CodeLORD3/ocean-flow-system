@@ -30,7 +30,8 @@ från receipts-endpointen, aldrig gissat ur history.
 
 | Post | Värde |
 | --- | --- |
-| Merchant code | `MKC571XH` (skarp) |
+| Merchant code | `MCNGCU6L` — **den kod nyckeln och försäljningen ligger på** (Componia AG, CH) |
+| Merchant code | `MKC571XH` — svarar men har noll transaktioner, ligger inaktiv i registret |
 | Secrets | `SUMUP_API_KEY` (skarp), `SUMUP_API_KEY_SANDBOX` (sandbox) |
 | Scopes | `transactions.history`, `transactions.read`, `receipts.read` |
 | Butik | `zollikon` → bolag `fsab-ch`, valuta CHF |
@@ -38,6 +39,11 @@ från receipts-endpointen, aldrig gissat ur history.
 Merchant-koder ligger i tabellen `sumup_merchants` (kod → butik → bolag, valuta,
 testläge, aktiv), aldrig i kod. Flera koder stöds: dyker MCNGCU6L upp som en
 egen profil med försäljning läggs den till som ytterligare rad, ingen kodändring.
+
+`SUMUP_API_KEY` verifierad mot `GET /v0.1/me`: den tillhör merchant **MCNGCU6L**,
+Componia AG, CH — inte MKC571XH. Därför flyttades pollningen till MCNGCU6L.
+`SUMUP_API_KEY_SANDBOX` svarar **401** och måste bytas innan sandbox-tester körs;
+verifieringen ovan gjordes därför mot skarp läsning (läsning bokför inget).
 
 Nyckeln som delats i chatt ska roteras i SumUp-dashboarden. Nycklar går aldrig
 via chatt eller kod.
@@ -73,31 +79,77 @@ styckvara och som kg-vara — så det syns direkt vilken väg som är sann.
 2. styckvara såld i **2 st**
 3. **retur** av kg-artikeln
 
+**Vad de riktiga svaren visade (kört mot MCNGCU6L, se 4.1):** kassan skickar
+**alltid `quantity: 1`** för viktvaror och lägger **vikten som prefix i namnet**,
+medan `price`/`total_with_vat` är radens **totalbelopp** — inte kilopris.
+
 **Tolkningsordning (implementerad i `_shared/sumup.ts`, `interpretLine`):**
 
-| Fall | Villkor | Källa som sparas |
+| Steg | Villkor | Källa som sparas |
 | --- | --- | --- |
-| 1 | `quantity` bär decimaler (1.24) | `rapporterad` |
-| 2 | kg-vara med heltalskvantitet, radtotal och kilopris finns | `harledd_pris` (radtotal / kilopris) |
-| 3 | varken kvantitet eller pris räcker | `okand` — raden flaggas, inget gissas |
+| 1 | namnet börjar med vikt (`0.724 kg Lachs filet`, även `150 g`, komma-decimal) | `namn_vikt` — vikten ur namnet, kilopris = radtotal / vikt, namnet rensas |
+| 2 | `quantity` bär decimaler (1.24) | `rapporterad` |
+| 3 | kg-vara, heltalskvantitet, radtotal och kilopris finns | `harledd_pris` |
+| 4 | inget av ovan räcker | `okand` — raden flaggas, inget gissas |
 
-Källan sparas per rad i `pos_transaction_items.quantity_source`, och den råa
-kvantiteten i `external_quantity`, så varje inventeringsavvikelse går att
-förklara i efterhand. Returens JSON avgör om returrader bär `products[]`
-(partivis motrörelse i etapp 2) eller bara belopp (beloppsjustering med flagga).
+Steg 1 är den väg Zollikon faktiskt använder; steg 2–4 ligger kvar som skydd om
+kassan konfigureras om. Källan sparas per rad i
+`pos_transaction_items.quantity_source` och den råa kvantiteten i
+`external_quantity`, så varje inventeringsavvikelse går att förklara i efterhand.
 
-### 4.1 Resultat från sandbox
+Viktprefixet rensas innan namnmatchningen — annars hade varje vägning blivit ett
+nytt artikelnamn i mappningen.
 
-| Fall | Datum | `quantity` i svaret | `price` | `total_with_vat` | Vald källa |
-| --- | --- | --- | --- | --- | --- |
-| kg 1,24 | _ej kört_ | | | | |
-| styck 2 | _ej kört_ | | | | |
-| retur | _ej kört_ | | | | |
+### 4.1 Resultat från skarp läsning (2026-08-16, merchant MCNGCU6L)
 
-Klistra in de tre råa JSON-svaren här när de körts. Först då sätts standardvägen
-i koden; till dess stödjer koden alla tre och flaggar det som är osäkert.
+Kg-artikel, transaktion `TAAA2UVXQGS` (195,10 CHF), rad ur `products[]`:
+
+```json
+{"name": "0.724 kg Lachs filet", "price": 55.75, "price_with_vat": 57.2,
+ "quantity": 1, "vat_amount": 1.45, "total_price": 55.75,
+ "total_with_vat": 57.2, "vat_rate": 0.026}
+```
+
+Tolkas som 0,724 kg "Lachs filet", radtotal 5720 rappen, kilopris 79,01 CHF/kg,
+källa `namn_vikt`. Samma transaktion innehåller `"1.60 kg Seezunge (ganz)"`
+(126,40 CHF) — också `quantity: 1`.
+
+Styckvara, transaktion `TAAA2UV2PLN`:
+
+```json
+{"name": " Sourgood Brot", "price": 11.69, "price_with_vat": 11.99,
+ "quantity": 2, "total_price": 23.39, "total_with_vat": 24.0, "vat_rate": 0.026}
+```
+
+Tolkas som 2 st, radtotal 2400 rappen, källa `rapporterad`.
+
+Kvitto, `GET /v1.1/receipts/{id}?mid=MCNGCU6L` → `transaction_data.receipt_no`
+= `S20260009988`, `card_reader.code` = `201100164125`. Kvittots `products[]`
+skickar beloppen som **strängar** (`"11.69"`), history/transactions som tal —
+båda hanteras.
+
+| Fall | Bevis | `quantity` | Vald källa |
+| --- | --- | --- | --- |
+| kg (0,724 kg) | `TAAA2UVXQGS` | 1 + vikt i namnet | `namn_vikt` |
+| kg (1,60 kg) | `TAAA2UVXQGS` | 1 + vikt i namnet | `namn_vikt` |
+| styck 2 st | `TAAA2UV2PLN` | 2 | `rapporterad` |
+| retur | **ej observerad** — 200 transaktioner i fönstret är alla `PAYMENT` (180 lyckade, 20 misslyckade), noll `REFUND` | — | — |
+
+**Öppet:** returen måste göras i kassan (eller hittas i äldre historik) innan
+etapp 2 låser motrörelsen. Koden hanterar redan negativa belopp, men det är
+otestat mot verkligt svar. Misslyckade betalningar (`FAILED`) ska aldrig ge
+lagerrörelse — de finns i historiken och filtreras bort.
 
 ## 5. Kö och idempotens
+
+Skarpt bevis 2026-08-16: 126 kvitton hämtade och köade i första körningen,
+därefter ny körning på samma fönster → 89 hämtade, **0 nya, 89 dubbletter**.
+Kortdata saknas i lagrad payload (skrubbat), valutan är CHF, kvittonummer finns.
+19 artikelnamn hamnade i granskningsvyn utan produkt — Zollikons tyska namn
+behöver kopplas en gång.
+
+Pagineringen i history returnerar `links[].href` som **enbart frågesträng**
+(utan sökväg); klienten sätter tillbaka sökvägen innan nästa sida hämtas.
 
 `sumup_events`: unik på (`merchant_code`, `external_id`), status
 `koad` / `bearbetad` / `duplikat` / `fel`, plus försök, felmeddelande och
