@@ -473,6 +473,7 @@ export async function processSumupEvent(
     const products: any[] = Array.isArray(payload?.products) ? payload.products : [];
     let unmatched = 0;
     let unknownQty = 0;
+    let notStocked = 0;
     let movementCount = 0;
     let lineNo = 0;
 
