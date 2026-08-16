@@ -98,11 +98,41 @@ export function useSumupHealth() {
         hours = (data ?? []) as SumupOpeningHour[];
       }
 
+      // Andel kvitton med artikelrader idag (Zürich-tid) per butik. Slår kassan
+      // bara in belopp saknas varukorgen och lagret kan inte dras.
+      const today = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Zurich" }).format(
+        new Date(),
+      );
+      const basket: Record<string, { total: number; withItems: number }> = {};
+      const { data: txToday } = await supabase
+        .from("pos_transactions")
+        .select("id, store_id")
+        .eq("source", "sumup")
+        .gte("occurred_at", `${today}T00:00:00`)
+        .lte("occurred_at", `${today}T23:59:59.999`);
+      const txIds = (txToday ?? []).map((t: any) => t.id);
+      let withItems = new Set<string>();
+      if (txIds.length) {
+        const { data: items } = await supabase
+          .from("pos_transaction_items")
+          .select("transaction_id, review_status")
+          .in("transaction_id", txIds)
+          .neq("review_status", "utan_artikelrader");
+        withItems = new Set((items ?? []).map((i: any) => i.transaction_id));
+      }
+      for (const t of txToday ?? []) {
+        const key = (t as any).store_id ?? "";
+        basket[key] = basket[key] ?? { total: 0, withItems: 0 };
+        basket[key].total += 1;
+        if (withItems.has((t as any).id)) basket[key].withItems += 1;
+      }
+
       const events = queue.data ?? [];
       return {
         merchants: (merchants.data ?? []) as SumupMerchant[],
         runs: (runs.data ?? []) as SumupRun[],
         hours,
+        basketToday: basket,
         queue: {
           koad: events.filter((e: any) => e.status === "koad").length,
           bearbetad: events.filter((e: any) => e.status === "bearbetad").length,
@@ -117,6 +147,7 @@ export function useSumupHealth() {
           last_seen_at: string;
         }[],
       };
+
     },
   });
 }
