@@ -494,7 +494,7 @@ export async function processSumupEvent(
       const named = parseNameWeight(rawName);
       const cleanName = named?.cleanName ?? rawName;
       const match = await matchLine(db, m.merchant_code, cleanName, lineSku(raw));
-      if (!match.productId && !match.notStocked) {
+      if (!match.productId && !match.notStocked && match.matchedBy !== "tomt_namn") {
         unmatched += 1;
         await bumpUnmatched(db, m.merchant_code, cleanName);
       }
@@ -504,7 +504,11 @@ export async function processSumupEvent(
       const line = interpretLine(raw, { isWeightItem });
       if (line.quantitySource === "okand" && match.productId) unknownQty += 1;
 
-      const reviewStatus = match.notStocked
+      // Terminalsalg utan varukorg (kortköp där kassan bara skickar belopp) är
+      // inget att granska — de får egen status och hamnar utanför granskningsvyn.
+      const reviewStatus = match.matchedBy === "tomt_namn"
+        ? "utan_artikelrader"
+        : match.notStocked
         ? "not_stocked"
         : !match.productId
           ? "unmatched"
