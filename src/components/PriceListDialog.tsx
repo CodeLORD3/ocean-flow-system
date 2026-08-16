@@ -54,6 +54,8 @@ export default function PriceListDialog({ open, onOpenChange, allProducts }: Pro
   const [prices, setPrices] = useState<Record<string, number>>({}); // product_id -> price
   const [included, setIncluded] = useState<Record<string, boolean>>({});
   const [selectedStores, setSelectedStores] = useState<Record<string, boolean>>({});
+  const [posEnabled, setPosEnabled] = useState(false);
+
   const [search, setSearch] = useState("");
   const [freshAllProducts, setFreshAllProducts] = useState<AnyProduct[] | null>(null);
 
