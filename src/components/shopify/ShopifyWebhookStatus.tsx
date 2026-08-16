@@ -175,10 +175,12 @@ export default function ShopifyWebhookStatus() {
    * (ERR_BLOCKED_BY_RESPONSE), så URL:en visas även som länk att öppna i en
    * riktig flik om popup-fönstret blockeras av förhandsvisningen.
    */
-  const connect = async () => {
-    setBusy("oauth");
+  const connect = async (shopDomain?: string) => {
+    setBusy(shopDomain ? `oauth:${shopDomain}` : "oauth");
     try {
-      const { data, error } = await supabase.functions.invoke("shopify-oauth/start", { body: {} });
+      const { data, error } = await supabase.functions.invoke("shopify-oauth/start", {
+        body: shopDomain ? { shop: shopDomain } : {},
+      });
       if (error) throw error;
       const r = data as any;
       if (!r?.authorize_url) throw new Error(r?.error ?? "Kunde inte starta anslutningen");
@@ -245,7 +247,7 @@ export default function ShopifyWebhookStatus() {
             size="sm"
             className="ml-auto h-6 text-xs"
             disabled={busy === "oauth"}
-            onClick={connect}
+            onClick={() => connect()}
           >
             <Link2 className={`mr-1 h-3 w-3 ${busy === "oauth" ? "animate-pulse" : ""}`} />
             {oauth.data?.connected ? "Anslut Shopify igen" : "Anslut Shopify"}
@@ -365,6 +367,20 @@ export default function ShopifyWebhookStatus() {
                   {sh.staleShop && <WifiOff className="h-3 w-3" />}
                   senast {fmtTime(sh.lastSeen)}
                 </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-6 text-xs"
+                  disabled={busy === `oauth:${sh.shop_domain}`}
+                  onClick={() => connect(sh.shop_domain)}
+                >
+                  <Link2
+                    className={`mr-1 h-3 w-3 ${
+                      busy === `oauth:${sh.shop_domain}` ? "animate-pulse" : ""
+                    }`}
+                  />
+                  Anslut
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"
