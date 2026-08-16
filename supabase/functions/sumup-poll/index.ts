@@ -41,10 +41,7 @@ async function requireStaff(req: Request, db: SupabaseClient): Promise<boolean> 
   if (!token) return false;
   const { data } = await db.auth.getUser(token);
   if (!data?.user) return false;
-  const { data: ok } = await db.rpc("is_staff_user", { _user_id: data.user.id }).maybeSingle?.() ??
-    { data: null };
-  if (typeof ok === "boolean") return ok;
-  // Reserv: personalregistret direkt.
+  // Personalregistret avgör — samma spärr som i appen.
   const { data: staff } = await db
     .from("staff")
     .select("id")
