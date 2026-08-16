@@ -358,9 +358,14 @@ export default function PriceListDialog({ open, onOpenChange, allProducts }: Pro
               );
             })}
           </div>
+          <label className="flex items-center gap-2 text-xs cursor-pointer">
+            <Checkbox checked={posEnabled} onCheckedChange={(v) => setPosEnabled(!!v)} />
+            <span>Gäller i kassan — priserna skickas till kassasystemet</span>
+          </label>
           <p className="text-[10px] text-muted-foreground">
             En separat PDF skapas per vald butik. Om ingen butik väljs skapas en generell prislista.
           </p>
+
         </section>
 
         {/* Section 1: Today's purchases */}
