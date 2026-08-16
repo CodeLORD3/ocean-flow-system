@@ -642,9 +642,12 @@ export default function Products() {
     w.document.close();
   };
 
-  const productsWithout = allProducts.filter((p: any) => !(p as any).barcode).length;
   // Paraplyrader (produkter med varianter under sig) och icke-färskvaror ska inte räknas
   const SHELF_LIFE_EXEMPT_CATEGORIES = ["Emballage & Förbrukning", "Råvaror & Storhushåll"];
+  const productsWithout = allProducts.filter(
+    (p: any) =>
+      p.active && !(p as any).barcode && !SHELF_LIFE_EXEMPT_CATEGORIES.includes(p.category),
+  ).length;
   const parentIdsWithChildren = new Set(
     allProducts.map((p: any) => p.parent_product_id).filter(Boolean),
   );
