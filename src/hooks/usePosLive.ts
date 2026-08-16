@@ -42,9 +42,15 @@ export function posDateIso(d = new Date()) {
 }
 
 export const PAYMENT_LABEL: Record<string, string> = {
+  kort: "Kort",
+  kontant: "Kontant",
+  swish: "Swish",
+  twint: "TWINT",
+  faktura: "Faktura",
+  ovrigt: "Övrigt",
+  delad: "Delad",
   card: "Kort",
   cash: "Kontant",
-  swish: "Swish",
   invoice: "Faktura",
   other: "Övrigt",
 };
