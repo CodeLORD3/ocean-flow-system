@@ -53,13 +53,13 @@ export async function sendSms(
   const user = Deno.env.get("ELKS_API_USERNAME")!;
   const pass = Deno.env.get("ELKS_API_PASSWORD")!;
   try {
-    const res = await fetch("https://api.46elks.com/a1/sms", {
+    const res = await fetch("https://api.46elks.com/a1/SMS", {
       method: "POST",
       headers: {
         Authorization: `Basic ${btoa(`${user}:${pass}`)}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: new URLSearchParams({ from: SENDER, to: args.phone, message: args.text }),
+      body: new URLSearchParams({ from: sender(), to: args.phone, message: args.text }),
     });
     const body = await res.text();
     if (!res.ok) {
