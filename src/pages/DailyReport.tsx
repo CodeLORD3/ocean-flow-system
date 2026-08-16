@@ -27,6 +27,8 @@ import {
   formatWeekdayDate,
   type WasteItem,
 } from "@/hooks/useDailyReport";
+import { usePosDaySummary, usePosRealtime } from "@/hooks/usePosLive";
+import { PosSalesCard } from "@/components/dailyreport/PosSalesCard";
 
 const REASONS = ["Utgångsdatum", "Kvalitet", "Skadad", "Annat"];
 const DEVIATIONS = [
