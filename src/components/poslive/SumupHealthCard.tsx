@@ -37,6 +37,9 @@ export function SumupHealthCard() {
   const { data, isLoading, refetch, isFetching } = useSumupHealth();
   const poll = useSumupPoll();
   const probe = useSumupProbe();
+  const process = useSumupProcess();
+  const reconcile = useSumupReconcile();
+  const { data: recons } = useSumupReconciliations();
   const [txId, setTxId] = useState("");
   const [raw, setRaw] = useState<string | null>(null);
 
