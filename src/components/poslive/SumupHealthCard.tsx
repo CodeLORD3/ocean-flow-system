@@ -70,8 +70,21 @@ export function SumupHealthCard() {
         });
       }
     }
+    if ((data?.queue.fel ?? 0) > 0) {
+      list.push({
+        code: "queue-fel",
+        text: `${data?.queue.fel} kvitton kunde inte bearbetas — se felkön nedan`,
+      });
+    }
+    const latest = recons?.[0];
+    if (latest && latest.status !== "ok") {
+      list.push({
+        code: `recon-${latest.recon_date}`,
+        text: `Avstämningen ${latest.recon_date} visar avvikelse — ${latest.message ?? ""}`,
+      });
+    }
     return list;
-  }, [merchants, hours]);
+  }, [merchants, hours, data?.queue.fel, recons]);
 
   const runPoll = async (code?: string) => {
     try {
@@ -80,6 +93,31 @@ export function SumupHealthCard() {
       toast.success(`Hämtning klar — ${queued} nya kvitton i kön`);
     } catch (e: any) {
       toast.error(e.message ?? "Hämtningen misslyckades");
+    }
+  };
+
+  const runProcess = async () => {
+    try {
+      const res = await process.mutateAsync(undefined);
+      toast.success(
+        `Bearbetning klar — ${res.bearbetade} kvitton, ${res.rorelser} lagerrörelser${
+          res.omatchade ? `, ${res.omatchade} omatchade rader` : ""
+        }`,
+      );
+    } catch (e: any) {
+      toast.error(e.message ?? "Bearbetningen misslyckades");
+    }
+  };
+
+  const runReconcile = async () => {
+    try {
+      const res = await reconcile.mutateAsync({});
+      const bad = (res?.results ?? []).filter((r) => r.status !== "ok").length;
+      toast[bad ? "warning" : "success"](
+        bad ? `Avstämning klar med ${bad} avvikelse(r)` : `Avstämning klar för ${res.date}`,
+      );
+    } catch (e: any) {
+      toast.error(e.message ?? "Avstämningen misslyckades");
     }
   };
 
