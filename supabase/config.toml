@@ -43,3 +43,6 @@ verify_jwt = false
 
 [functions.nimpos-sales]
 verify_jwt = false
+
+[functions.nimpos-reconcile]
+verify_jwt = false

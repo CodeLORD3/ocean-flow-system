@@ -4688,6 +4688,92 @@ export type Database = {
           },
         ]
       }
+      nimpos_reconciliations: {
+        Row: {
+          business_date: string
+          created_at: string
+          external_count: number | null
+          external_total_ore: number | null
+          fetched_count: number
+          id: string
+          local_count: number
+          local_total_ore: number
+          message: string | null
+          missing_external_ids: Json
+          status: string
+          store_code: string | null
+          store_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_date: string
+          created_at?: string
+          external_count?: number | null
+          external_total_ore?: number | null
+          fetched_count?: number
+          id?: string
+          local_count?: number
+          local_total_ore?: number
+          message?: string | null
+          missing_external_ids?: Json
+          status?: string
+          store_code?: string | null
+          store_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_date?: string
+          created_at?: string
+          external_count?: number | null
+          external_total_ore?: number | null
+          fetched_count?: number
+          id?: string
+          local_count?: number
+          local_total_ore?: number
+          message?: string | null
+          missing_external_ids?: Json
+          status?: string
+          store_code?: string | null
+          store_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nimpos_reconciliations_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nimpos_rejects: {
+        Row: {
+          created_at: string
+          detail: string | null
+          event_id: string | null
+          id: string
+          reason: string
+          store_code: string | null
+        }
+        Insert: {
+          created_at?: string
+          detail?: string | null
+          event_id?: string | null
+          id?: string
+          reason: string
+          store_code?: string | null
+        }
+        Update: {
+          created_at?: string
+          detail?: string | null
+          event_id?: string | null
+          id?: string
+          reason?: string
+          store_code?: string | null
+        }
+        Relationships: []
+      }
       nimpos_store_map: {
         Row: {
           active: boolean
@@ -4738,6 +4824,7 @@ export type Database = {
           received_at: string
           status: string
           store_code: string | null
+          test_mode: boolean
           transaction_id: string | null
         }
         Insert: {
@@ -4751,6 +4838,7 @@ export type Database = {
           received_at?: string
           status?: string
           store_code?: string | null
+          test_mode?: boolean
           transaction_id?: string | null
         }
         Update: {
@@ -4764,6 +4852,7 @@ export type Database = {
           received_at?: string
           status?: string
           store_code?: string | null
+          test_mode?: boolean
           transaction_id?: string | null
         }
         Relationships: [
@@ -5354,12 +5443,18 @@ export type Database = {
           external_line_no: number | null
           id: string
           line_total_ore: number
+          lot_id: string | null
+          matched_by: string | null
+          movement_id: string | null
+          pos_unit: string | null
           product_id: string | null
           product_name: string
           quantity: number
+          review_status: string
           sku: string | null
           transaction_id: string
           unit: string
+          unit_mismatch: boolean
           unit_price_ore: number
           vat_rate: number
         }
@@ -5369,12 +5464,18 @@ export type Database = {
           external_line_no?: number | null
           id?: string
           line_total_ore: number
+          lot_id?: string | null
+          matched_by?: string | null
+          movement_id?: string | null
+          pos_unit?: string | null
           product_id?: string | null
           product_name: string
           quantity: number
+          review_status?: string
           sku?: string | null
           transaction_id: string
           unit: string
+          unit_mismatch?: boolean
           unit_price_ore: number
           vat_rate: number
         }
@@ -5384,16 +5485,43 @@ export type Database = {
           external_line_no?: number | null
           id?: string
           line_total_ore?: number
+          lot_id?: string | null
+          matched_by?: string | null
+          movement_id?: string | null
+          pos_unit?: string | null
           product_id?: string | null
           product_name?: string
           quantity?: number
+          review_status?: string
           sku?: string | null
           transaction_id?: string
           unit?: string
+          unit_mismatch?: boolean
           unit_price_ore?: number
           vat_rate?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "pos_transaction_items_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "lot_remaining"
+            referencedColumns: ["lot_id"]
+          },
+          {
+            foreignKeyName: "pos_transaction_items_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pos_transaction_items_movement_id_fkey"
+            columns: ["movement_id"]
+            isOneToOne: false
+            referencedRelation: "stock_movements"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "pos_transaction_items_product_id_fkey"
             columns: ["product_id"]
@@ -5431,6 +5559,7 @@ export type Database = {
           source: string
           status: string
           store_id: string | null
+          test_mode: boolean
           total_ore: number
           vat_breakdown: Json
         }
@@ -5454,6 +5583,7 @@ export type Database = {
           source?: string
           status?: string
           store_id?: string | null
+          test_mode?: boolean
           total_ore?: number
           vat_breakdown?: Json
         }
@@ -5477,6 +5607,7 @@ export type Database = {
           source?: string
           status?: string
           store_id?: string | null
+          test_mode?: boolean
           total_ore?: number
           vat_breakdown?: Json
         }
@@ -10026,6 +10157,7 @@ export type Database = {
         }
         Returns: string
       }
+      nimpos_health: { Args: { _date?: string }; Returns: Json }
       normalize_email: { Args: { v: string }; Returns: string }
       normalize_phone_se: { Args: { v: string }; Returns: string }
       notify_event: {
@@ -10042,6 +10174,15 @@ export type Database = {
       pos_day_summary: {
         Args: { _date: string; _store_id: string }
         Returns: Json
+      }
+      pos_fefo_lots: {
+        Args: { _location_id: string; _product_id: string }
+        Returns: {
+          available: number
+          best_before: string
+          lot_id: string
+          unit_cost: number
+        }[]
       }
       pos_live_summary: { Args: { _date: string }; Returns: Json }
       post_purchase_report: {

@@ -91,6 +91,8 @@ export type PosTransaction = {
   external_cashier: string | null;
   external_register: string | null;
   vat_breakdown: any;
+  test_mode?: boolean;
+  type?: string | null;
 };
 
 /** Senaste kvitton (live-lista). */
@@ -101,7 +103,7 @@ export function usePosRecentTransactions(date = posDateIso(), storeId?: string |
       let q = (supabase as any)
         .from("pos_transactions")
         .select(
-          "id, source, receipt_no, external_receipt_no, store_id, occurred_at, status, total_ore, payment_method, payment_details, external_cashier, external_register, vat_breakdown",
+          "id, source, receipt_no, external_receipt_no, store_id, occurred_at, status, total_ore, payment_method, payment_details, external_cashier, external_register, vat_breakdown, test_mode, type",
         )
         .gte("occurred_at", `${date}T00:00:00`)
         .lte("occurred_at", `${date}T23:59:59.999`)

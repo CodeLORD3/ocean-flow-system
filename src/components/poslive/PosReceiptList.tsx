@@ -80,6 +80,11 @@ export function PosReceiptList({
                   {t.source}
                 </Badge>
               )}
+              {t.test_mode && (
+                <Badge variant="outline" className="text-[9px] text-muted-foreground">
+                  test
+                </Badge>
+              )}
               {isReturn && (
                 <Badge variant="outline" className="text-[9px] text-destructive border-destructive/40">
                   retur

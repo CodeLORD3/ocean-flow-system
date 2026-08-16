@@ -10,6 +10,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { useStores } from "@/hooks/useStores";
 import { OurStoresSection } from "@/components/dashboard/OurStoresSection";
 import { EntityImageGallery } from "@/components/images/EntityImageGallery";
+import { PosTodayLive } from "@/components/dashboard/PosTodayLive";
 
 import { useCustomers } from "@/hooks/useCustomers";
 import { useSuppliers } from "@/hooks/useSuppliers";
@@ -266,6 +267,11 @@ export default function Dashboard() {
           </motion.div>
         ))}
       </div>
+
+      {/* Kassan idag (live från Nimpos + egna kassor) */}
+      <motion.div variants={fadeUp}>
+        <PosTodayLive storeId={isShop ? activeStoreId : null} />
+      </motion.div>
 
       {/* Our stores */}
       <OurStoresSection storeFilterId={isShop ? activeStoreId : null} />

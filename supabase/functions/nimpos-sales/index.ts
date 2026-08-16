@@ -1,24 +1,27 @@
 /**
- * Nimpos → Makrill Trade: liveförsäljning från de externa kassorna.
+ * Nimpos → Makrill Trade: Sales Ingest API v1.
  *
- * Kontrakt: se docs/nimpos-integration.md avsnitt 3.
+ * Kontrakt: docs/nimpos-utvecklarinstruktion.md (avsnitt 5 svarskoder, 6 curl,
+ * 7 statusuppslag, 8 avstämning, 9 testkvitton).
  *
- * Ordning (samma filosofi som shopify-order-webhook):
- *   1. HMAC-SHA256 över RAW body mot NIMPOS_WEBHOOK_SECRET (ingen JSON-parsning före det)
- *   2. Replay-skydd: X-Nimpos-Timestamp får vara max 5 min gammal
- *   3. Rå händelse loggas i nimpos_webhook_events (unikt event_id = idempotens)
- *   4. Mappning butik → kassör → produkt, sedan pos_transactions + pos_transaction_items
+ * Ordning:
+ *   1. HMAC-SHA256 över RAW body mot NIMPOS_WEBHOOK_SECRET (ingen JSON först)
+ *   2. Replay-skydd: X-Nimpos-Timestamp max 300 s gammal → 400 stale_timestamp
+ *   3. Kvittot köas rått i nimpos_webhook_events (status "koad"), event_id är
+ *      primär idempotensnyckel, receipt.external_id sekundär
+ *   4. Bearbetning: pos_transactions + rader + lagerrörelser (FEFO) ur butikens
+ *      försäljningslager. Kortets last4 kastas alltid vid mottagning.
  *
- * Aldrig 5xx för fel vi orsakat i mappningen — då parkeras händelsen som
- * unmapped_store/failed och syns i driftpanelen på /pos-live. 5xx är reserverat
- * för verkliga serverfel så att Nimpos retry:ar rätt saker.
+ * Aldrig 5xx för innehållsfel — då retry:ar kassan i onödan. Innehållsfel
+ * parkeras (unmapped_store/failed) och syns på /pos-live och Systemstatus.
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { processEvent, scrubCardData } from "../_shared/nimpos.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-nimpos-signature, x-nimpos-event-id, x-nimpos-timestamp",
+    "authorization, x-client-info, apikey, content-type, x-nimpos-signature, x-nimpos-event-id, x-nimpos-timestamp, x-nimpos-test",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
@@ -61,128 +64,6 @@ function safeEqual(a: string, b: string): boolean {
 
 /* ------------------------------------------------------------- normalisering */
 
-type Payment = { method?: string; amount_ore?: number; card_brand?: string; last4?: string };
-
-function normalizeMethod(raw?: string): string {
-  const m = (raw ?? "").toLowerCase();
-  if (/card|kort|visa|master|debit|credit/.test(m)) return "card";
-  if (/cash|kontant/.test(m)) return "cash";
-  if (/swish/.test(m)) return "swish";
-  if (/invoice|faktura/.test(m)) return "invoice";
-  return "other";
-}
-
-function toOre(v: unknown): number {
-  const n = Number(v ?? 0);
-  return Number.isFinite(n) ? Math.round(n) : 0;
-}
-
-/* ------------------------------------------------------------------ mappning */
-
-async function mapStore(
-  db: SupabaseClient,
-  storeCode?: string,
-  registerId?: string,
-): Promise<string | null> {
-  if (storeCode) {
-    const { data } = await db
-      .from("nimpos_store_map")
-      .select("store_id")
-      .eq("store_code", storeCode)
-      .eq("active", true)
-      .maybeSingle();
-    if (data?.store_id) return data.store_id as string;
-  }
-  if (registerId) {
-    const { data } = await db
-      .from("nimpos_store_map")
-      .select("store_id")
-      .eq("register_id", registerId)
-      .eq("active", true)
-      .limit(1)
-      .maybeSingle();
-    if (data?.store_id) return data.store_id as string;
-  }
-  return null;
-}
-
-async function mapCashier(
-  db: SupabaseClient,
-  storeId: string,
-  code?: string,
-): Promise<string | null> {
-  if (!code) return null;
-  const { data } = await db
-    .from("pos_cashiers")
-    .select("id, store_id, display_name")
-    .ilike("display_name", code)
-    .limit(5);
-  if (!data?.length) return null;
-  return (data.find((c) => c.store_id === storeId) ?? data[0]).id as string;
-}
-
-/** Produktmappning: streckkod → pos_products → nimpos_product_map. */
-async function mapProduct(
-  db: SupabaseClient,
-  sku?: string,
-  barcode?: string,
-  name?: string,
-): Promise<string | null> {
-  if (barcode) {
-    const { data } = await db.from("products").select("id").eq("barcode", barcode).maybeSingle();
-    if (data?.id) return data.id as string;
-  }
-  if (sku) {
-    const { data } = await db.from("products").select("id").eq("sku", sku).maybeSingle();
-    if (data?.id) return data.id as string;
-    const { data: pp } = await db
-      .from("pos_products")
-      .select("erp_id")
-      .or(`sku.eq.${sku},article_sku.eq.${sku}`)
-      .not("erp_id", "is", null)
-      .limit(1)
-      .maybeSingle();
-    if (pp?.erp_id) return pp.erp_id as string;
-  }
-  const map = await db
-    .from("nimpos_product_map")
-    .select("id, product_id")
-    .or([sku ? `external_sku.eq.${sku}` : null, barcode ? `barcode.eq.${barcode}` : null]
-      .filter(Boolean)
-      .join(","))
-    .limit(1)
-    .maybeSingle();
-  if (map.data?.product_id) return map.data.product_id as string;
-
-  // Omatchad: registrera för manuell koppling i /pos-live
-  if (sku || barcode) {
-    if (map.data?.id) {
-      const { data: cur } = await db
-        .from("nimpos_product_map")
-        .select("unmatched_count")
-        .eq("id", map.data.id)
-        .maybeSingle();
-      await db
-        .from("nimpos_product_map")
-        .update({
-          last_seen_at: new Date().toISOString(),
-          external_name: name ?? null,
-          unmatched_count: (cur?.unmatched_count ?? 0) + 1,
-        })
-        .eq("id", map.data.id);
-    } else {
-      await db.from("nimpos_product_map").insert({
-        external_sku: sku ?? null,
-        barcode: barcode ?? null,
-        external_name: name ?? null,
-        unmatched_count: 1,
-        last_seen_at: new Date().toISOString(),
-      });
-    }
-  }
-  return null;
-}
-
 /* ------------------------------------------------------------------ handler */
 
 Deno.serve(async (req) => {
@@ -197,12 +78,8 @@ Deno.serve(async (req) => {
     return json({ error: "not_configured" }, 500);
   }
 
-  /* ------------------------------------------------- GET: statusuppslag
-   * Låter den externa parten själv verifiera att ett kvitto tagits emot,
-   * utan att ha konto i systemet. Signaturen räknas över query-strängen
-   * (utan inledande "?") med samma delade hemlighet som för POST.
-   *   GET ...?external_id=nimpos-tx-1
-   *   X-Nimpos-Signature: sha256=<hmac över "external_id=nimpos-tx-1">
+  /* ---------------------------------------- GET: statusuppslag (avsnitt 7)
+   * Signaturen räknas över query-strängen (utan "?") med samma hemlighet.
    */
   if (req.method === "GET") {
     const url = new URL(req.url);
@@ -222,7 +99,7 @@ Deno.serve(async (req) => {
     const dbGet = service();
     const { data: txRow } = await dbGet
       .from("pos_transactions")
-      .select("id, occurred_at, total_ore, status")
+      .select("id, occurred_at, total_ore, status, test_mode")
       .eq("source", "nimpos")
       .eq("external_id", externalId)
       .maybeSingle();
@@ -238,6 +115,7 @@ Deno.serve(async (req) => {
         occurred_at: txRow.occurred_at,
         total_ore: txRow.total_ore,
         item_count: count ?? 0,
+        test_mode: txRow.test_mode,
       });
     }
 
@@ -261,7 +139,6 @@ Deno.serve(async (req) => {
     return json({ received: false, status: "unknown" }, 404);
   }
 
-
   const raw = await req.text();
   const sigHeader = req.headers.get("x-nimpos-signature") ?? "";
   const eventId = req.headers.get("x-nimpos-event-id") ?? "";
@@ -269,30 +146,52 @@ Deno.serve(async (req) => {
 
   if (!sigHeader || !eventId) return json({ error: "missing_headers" }, 400);
 
+  const db = service();
+  const storeCodeHint = (() => {
+    const m = raw.match(/"store_code"\s*:\s*"([^"]+)"/);
+    return m?.[1] ?? null;
+  })();
+  const reject = async (reason: string, detail?: string) => {
+    await db.from("nimpos_rejects").insert({
+      reason,
+      store_code: storeCodeHint,
+      event_id: eventId || null,
+      detail: detail ?? null,
+    });
+  };
+
   const expected = await hmacHex(secret, raw);
   const provided = sigHeader.replace(/^sha256=/i, "").trim().toLowerCase();
-  if (!safeEqual(expected, provided)) return json({ error: "bad_signature" }, 401);
+  if (!safeEqual(expected, provided)) {
+    await reject("bad_signature");
+    return json({ error: "bad_signature" }, 401);
+  }
 
   if (tsHeader) {
     const ts = Number(tsHeader);
     if (!Number.isFinite(ts) || Math.abs(Date.now() / 1000 - ts) > 300) {
+      await reject("stale_timestamp", tsHeader);
       return json({ error: "stale_timestamp" }, 400);
     }
   }
 
   let body: any;
   try {
-    body = JSON.parse(raw);
+    body = scrubCardData(JSON.parse(raw));
   } catch {
+    await reject("bad_json");
     return json({ error: "bad_json" }, 400);
   }
 
   const r = body?.receipt ?? body;
   if (!r || typeof r !== "object") return json({ error: "missing_receipt" }, 400);
 
-  const db = service();
+  const testMode =
+    r.test === true ||
+    body?.test === true ||
+    (req.headers.get("x-nimpos-test") ?? "").toLowerCase() === "true";
 
-  // 1. Råhändelse (idempotent på event_id)
+  // 1. Råhändelse i kön (idempotent på event_id)
   const { data: ev, error: evErr } = await db
     .from("nimpos_webhook_events")
     .insert({
@@ -300,137 +199,20 @@ Deno.serve(async (req) => {
       event_type: body?.event_type ?? "sale.completed",
       payload: body,
       store_code: r.store_code ?? null,
-      status: "pending",
+      status: "koad",
+      test_mode: testMode,
     })
     .select("id")
     .single();
 
   if (evErr) {
-    // 23505 = unique violation → redan mottagen, kvittera utan att skapa dubblett
+    // 23505 = unique violation → redan mottaget, kvittera utan dubblett
     if ((evErr as any).code === "23505") return json({ ok: true, duplicate: true });
-    console.error("kunde inte logga händelse", evErr);
+    console.error("kunde inte köa händelse", evErr);
     return json({ error: "log_failed" }, 500);
   }
 
-  const fail = async (status: string, message: string) => {
-    await db
-      .from("nimpos_webhook_events")
-      .update({ status, last_error: message, attempts: 1, processed_at: new Date().toISOString() })
-      .eq("id", ev.id);
-    // 200: felet är vårt/mappningens, Nimpos ska inte retry:a i evighet
-    return json({ ok: true, parked: status, message });
-  };
-
-  try {
-    // 2. Butik
-    const storeId = await mapStore(db, r.store_code, r.register_id);
-    if (!storeId) {
-      return await fail("unmapped_store", `Okänd butikskod: ${r.store_code ?? "(saknas)"}`);
-    }
-
-    // 3. Redan bokförd transaktion? (samma externa id)
-    const externalId = String(r.external_id ?? eventId);
-    const { data: existing } = await db
-      .from("pos_transactions")
-      .select("id")
-      .eq("source", "nimpos")
-      .eq("external_id", externalId)
-      .maybeSingle();
-    if (existing?.id) {
-      await db
-        .from("nimpos_webhook_events")
-        .update({ status: "duplicate", transaction_id: existing.id, processed_at: new Date().toISOString() })
-        .eq("id", ev.id);
-      return json({ ok: true, duplicate: true });
-    }
-
-    const cashierId = await mapCashier(db, storeId, r.cashier_code);
-    const payments: Payment[] = Array.isArray(r.payments) ? r.payments : [];
-    const isReturn = String(r.type ?? "sale") === "return";
-    const sign = isReturn ? -1 : 1;
-
-    const { data: store } = await db
-      .from("stores")
-      .select("legal_entity_id")
-      .eq("id", storeId)
-      .maybeSingle();
-
-    let reversedId: string | null = null;
-    if (r.reverses_external_id) {
-      const { data: orig } = await db
-        .from("pos_transactions")
-        .select("id")
-        .eq("source", "nimpos")
-        .eq("external_id", String(r.reverses_external_id))
-        .maybeSingle();
-      reversedId = orig?.id ?? null;
-    }
-
-    const { data: tx, error: txErr } = await db
-      .from("pos_transactions")
-      .insert({
-        source: "nimpos",
-        external_id: externalId,
-        external_receipt_no: r.receipt_no ?? null,
-        external_register: r.register_id ?? null,
-        external_cashier: r.cashier_code ?? null,
-        cashier_id: cashierId,
-        store_id: storeId,
-        legal_entity_id: store?.legal_entity_id ?? null,
-        occurred_at: r.occurred_at ? new Date(r.occurred_at).toISOString() : new Date().toISOString(),
-        status: isReturn ? "reversed" : "completed",
-        total_ore: sign * Math.abs(toOre(r.total_ore)),
-        vat_breakdown: Array.isArray(r.vat_breakdown) ? r.vat_breakdown : [],
-        payment_method: normalizeMethod(payments[0]?.method),
-        payment_details: payments.map((p) => ({ ...p, method: normalizeMethod(p.method) })),
-        control_code: r.control_code ?? null,
-        reversed_transaction_id: reversedId,
-      })
-      .select("id")
-      .single();
-
-    if (txErr) throw txErr;
-
-    // 4. Rader
-    const items = Array.isArray(r.items) ? r.items : [];
-    let unmatched = 0;
-    if (items.length) {
-      const rows = [];
-      for (const it of items) {
-        const productId = await mapProduct(db, it.sku ?? undefined, it.barcode ?? undefined, it.name);
-        if (!productId) unmatched++;
-        rows.push({
-          transaction_id: tx.id,
-          product_id: productId,
-          product_name: it.name ?? "Okänd artikel",
-          sku: it.sku ?? null,
-          barcode: it.barcode ?? null,
-          external_line_no: it.line_no ?? null,
-          quantity: sign * Math.abs(Number(it.quantity ?? 0)),
-          unit: it.unit ?? "st",
-          unit_price_ore: Math.abs(toOre(it.unit_price_ore)),
-          line_total_ore: sign * Math.abs(toOre(it.line_total_ore)),
-          discount_ore: Math.abs(toOre(it.discount_ore)),
-          vat_rate: Number(it.vat_rate ?? 12),
-        });
-      }
-      const { error: itemErr } = await db.from("pos_transaction_items").insert(rows);
-      if (itemErr) throw itemErr;
-    }
-
-    await db
-      .from("nimpos_webhook_events")
-      .update({
-        status: unmatched > 0 ? "processed_partial" : "processed",
-        transaction_id: tx.id,
-        processed_at: new Date().toISOString(),
-        last_error: unmatched > 0 ? `${unmatched} omatchade artiklar` : null,
-      })
-      .eq("id", ev.id);
-
-    return json({ ok: true, duplicate: false, transaction_id: tx.id, unmatched_items: unmatched });
-  } catch (e) {
-    console.error("bearbetning misslyckades", e);
-    return await fail("failed", (e as Error).message ?? String(e));
-  }
+  const result = await processEvent(db, ev.id, body, eventId, testMode);
+  return json(result.body, result.status);
 });
+
