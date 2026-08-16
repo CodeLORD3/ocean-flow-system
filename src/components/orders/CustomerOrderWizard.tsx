@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ProductThumb } from "@/components/products/ProductThumb";
+import { useCategoryVisibility } from "@/hooks/useCategoryVisibility";
 import { RetailCustomerDialog } from "@/components/orders/RetailCustomerDialog";
 import { useProducts } from "@/hooks/useProducts";
 import { useStores } from "@/hooks/useStores";
@@ -99,6 +100,7 @@ export function CustomerOrderWizard({
   const { activeUser } = useActiveUser();
   const { staff } = useStaffAuth();
   const { data: products = [] } = useProducts();
+  const { isCategoryVisible } = useCategoryVisibility(pickupStoreId ?? storeId);
   const { data: stores = [] } = useStores();
   const createOrder = useCreateCustomerOrder();
 
@@ -228,9 +230,10 @@ export function CustomerOrderWizard({
     const s = productSearch.trim().toLowerCase();
     if (!s) return [];
     return (products as any[])
+      .filter((p) => isCategoryVisible(p.category))
       .filter((p) => p.name?.toLowerCase().includes(s) || p.sku?.toLowerCase().includes(s))
       .slice(0, 8);
-  }, [products, productSearch]);
+  }, [products, productSearch, isCategoryVisible]);
 
   const estimatedTotal = lines.reduce(
     (sum, l) => sum + Number(l.quantity_ordered || 0) * Number(l.estimated_price_per_unit || 0),
