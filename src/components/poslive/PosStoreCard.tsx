@@ -19,13 +19,17 @@ export function PosStoreCard({
   isToday,
   selected,
   onSelect,
+  currency = "SEK",
 }: {
   name: string;
   summary: PosDaySummary;
   isToday: boolean;
+  /** Butikens valuta — Zollikon redovisas i CHF och blandas aldrig med SEK. */
+  currency?: string;
   selected: boolean;
   onSelect: () => void;
 }) {
+  const unit = currency.toUpperCase() === "SEK" ? "kr" : currency.toUpperCase();
   const idle = minutesSince(summary.last_receipt_at);
   // Informationslarm, inget kapacitetstak: kassan har varit tyst länge under öppettid.
   const silent = isToday && summary.receipt_count > 0 && idle != null && idle >= 45;
@@ -56,7 +60,7 @@ export function PosStoreCard({
         </div>
 
         <p className="font-mono tabular-nums text-xl text-foreground">
-          {kr(summary.gross_sales)} <span className="text-xs text-muted-foreground">kr</span>
+          {kr(summary.gross_sales)} <span className="text-xs text-muted-foreground">{unit}</span>
         </p>
 
         <div className="grid grid-cols-3 gap-2 text-[11px] text-muted-foreground">

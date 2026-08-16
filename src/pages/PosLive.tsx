@@ -29,6 +29,7 @@ import { PosReceiptList } from "@/components/poslive/PosReceiptList";
 import { NimposProductMapping, NimposStoreMapping } from "@/components/poslive/NimposMappingPanel";
 import { SumupHealthCard } from "@/components/poslive/SumupHealthCard";
 import { SumupProductMapping } from "@/components/poslive/SumupProductMapping";
+import { SumupLineReview } from "@/components/poslive/SumupLineReview";
 import { PosHealthCard } from "@/components/poslive/PosHealthCard";
 import { PosLineReview } from "@/components/poslive/PosLineReview";
 import { PosPricePanel } from "@/components/poslive/PosPricePanel";
@@ -234,6 +235,7 @@ export default function PosLive() {
                   key={s.store_id}
                   name={s.name}
                   summary={s.summary}
+                  currency={currencyOf(s.store_id)}
                   isToday={isToday}
                   selected={storeId === s.store_id}
                   onSelect={() => setStoreId(storeId === s.store_id ? null : s.store_id)}
@@ -261,6 +263,7 @@ export default function PosLive() {
           <NimposStoreMapping />
           <NimposProductMapping />
           <SumupProductMapping />
+          <SumupLineReview />
         </TabsContent>
 
         <TabsContent value="prices" className="mt-4">
