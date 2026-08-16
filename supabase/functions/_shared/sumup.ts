@@ -50,10 +50,12 @@ export function normalizePayment(raw?: string): string {
 
 /* --------------------------------------------------------- kvantitetstolkning */
 
-export type QuantitySource = "rapporterad" | "harledd_pris" | "okand";
+export type QuantitySource = "namn_vikt" | "rapporterad" | "harledd_pris" | "okand";
 
 export type SumupLine = {
   name: string;
+  /** Namnet utan viktprefix — nyckeln som matchas mot produktregistret. */
+  cleanName: string;
   /** Rå kvantitet precis som SumUp skickade den (kan vara heltal även för kg). */
   externalQuantity: number | null;
   /** Kvantitet vi bokför på. */
@@ -87,6 +89,24 @@ export type RawSumupProduct = {
  *
  * `isWeightItem` styrs av produktens enhet i Makrilltrade (kg), inte av SumUp.
  */
+/**
+ * Zollikons kassa skickar vikten som prefix i artikelnamnet
+ * ("0.724 kg Lachs filet") med quantity = 1 och price = radens totalbelopp.
+ * Detta är den verkliga vägen enligt viktvarutestet (se docs, avsnitt 4.1).
+ */
+export function parseNameWeight(
+  name: string,
+): { quantity: number; cleanName: string; unit: "kg" } | null {
+  const m = /^\s*(\d+(?:[.,]\d+)?)\s*(kg|g)\b\s*(.+)$/i.exec(name ?? "");
+  if (!m) return null;
+  const value = Number(m[1].replace(",", "."));
+  if (!Number.isFinite(value) || value <= 0) return null;
+  const kg = m[2].toLowerCase() === "g" ? value / 1000 : value;
+  const cleanName = m[3].trim();
+  if (!cleanName) return null;
+  return { quantity: round3(kg), cleanName, unit: "kg" };
+}
+
 export function interpretLine(
   raw: RawSumupProduct,
   opts: { isWeightItem?: boolean; kgPriceMinor?: number | null } = {},
@@ -96,13 +116,31 @@ export function interpretLine(
   const lineTotalMinor = majorToMinor(raw.total_with_vat ?? raw.total_price ?? 0);
   const vatRate = raw.vat_rate === undefined || raw.vat_rate === null ? null : Number(raw.vat_rate);
 
+  // 1. Vikten står i namnet — kassans faktiska sätt att sälja kg-varor.
+  const named = parseNameWeight(name);
   const rawQty = raw.quantity === undefined || raw.quantity === null ? null : Number(raw.quantity);
   const externalQuantity = rawQty !== null && Number.isFinite(rawQty) ? rawQty : null;
 
-  // 1. Rapporterad kvantitet med decimaler — bästa fallet.
+  if (named) {
+    const qty = named.quantity;
+    return {
+      name,
+      cleanName: named.cleanName,
+      externalQuantity: rawQty !== null && Number.isFinite(rawQty) ? rawQty : null,
+      quantity: qty,
+      quantitySource: "namn_vikt",
+      // price är radens totalbelopp när vikten ligger i namnet — räkna om till kilopris.
+      unitPriceMinor: qty > 0 ? Math.round(Math.abs(lineTotalMinor || unitPriceMinor) / qty) : unitPriceMinor,
+      lineTotalMinor: lineTotalMinor || unitPriceMinor,
+      vatRate,
+    };
+  }
+
+  // 2. Rapporterad kvantitet med decimaler.
   if (externalQuantity !== null && !Number.isInteger(externalQuantity) && externalQuantity !== 0) {
     return {
       name,
+      cleanName: name,
       externalQuantity,
       quantity: round3(Math.abs(externalQuantity)),
       quantitySource: "rapporterad",
@@ -117,6 +155,7 @@ export function interpretLine(
     const qty = externalQuantity !== null && externalQuantity !== 0 ? Math.abs(externalQuantity) : 1;
     return {
       name,
+      cleanName: name,
       externalQuantity,
       quantity: qty,
       quantitySource: externalQuantity !== null ? "rapporterad" : "okand",
@@ -131,6 +170,7 @@ export function interpretLine(
   if (perKg > 0 && lineTotalMinor !== 0) {
     return {
       name,
+      cleanName: name,
       externalQuantity,
       quantity: round3(Math.abs(lineTotalMinor) / perKg),
       quantitySource: "harledd_pris",
@@ -143,6 +183,7 @@ export function interpretLine(
   // 3. Ingen väg fram — gissa inte.
   return {
     name,
+    cleanName: name,
     externalQuantity,
     quantity: externalQuantity !== null && externalQuantity !== 0 ? Math.abs(externalQuantity) : 1,
     quantitySource: "okand",
