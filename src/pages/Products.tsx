@@ -996,6 +996,7 @@ export default function Products() {
             </Button>
           )}
         </td>
+        )}
 
         {/* Stock */}
         <td className="px-2 py-0 align-middle text-right !text-[11px] font-mono tabular-nums font-medium">
