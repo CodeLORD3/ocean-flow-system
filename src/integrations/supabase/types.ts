@@ -1749,6 +1749,7 @@ export type Database = {
           store_id: string
           total_incl_vat: number
           updated_at: string
+          updated_by: string | null
           wanted_date: string
           wanted_time: string | null
           wanted_time_window: string | null
@@ -1801,6 +1802,7 @@ export type Database = {
           store_id: string
           total_incl_vat?: number
           updated_at?: string
+          updated_by?: string | null
           wanted_date: string
           wanted_time?: string | null
           wanted_time_window?: string | null
@@ -1853,6 +1855,7 @@ export type Database = {
           store_id?: string
           total_incl_vat?: number
           updated_at?: string
+          updated_by?: string | null
           wanted_date?: string
           wanted_time?: string | null
           wanted_time_window?: string | null
@@ -7093,6 +7096,7 @@ export type Database = {
         Row: {
           created_at: string | null
           created_by: string | null
+          created_by_user: string | null
           desired_delivery_date: string | null
           id: string
           invoice_status: string | null
@@ -7103,10 +7107,13 @@ export type Database = {
           priority: number | null
           status: string
           store_id: string
+          updated_at: string
+          updated_by: string | null
         }
         Insert: {
           created_at?: string | null
           created_by?: string | null
+          created_by_user?: string | null
           desired_delivery_date?: string | null
           id?: string
           invoice_status?: string | null
@@ -7117,10 +7124,13 @@ export type Database = {
           priority?: number | null
           status?: string
           store_id: string
+          updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           created_at?: string | null
           created_by?: string | null
+          created_by_user?: string | null
           desired_delivery_date?: string | null
           id?: string
           invoice_status?: string | null
@@ -7131,6 +7141,8 @@ export type Database = {
           priority?: number | null
           status?: string
           store_id?: string
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
           {
@@ -9957,6 +9969,21 @@ export type Database = {
       }
     }
     Views: {
+      actor_names: {
+        Row: {
+          display_name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          display_name?: never
+          user_id?: string | null
+        }
+        Update: {
+          display_name?: never
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       location_stock_rollup: {
         Row: {
           active: boolean | null

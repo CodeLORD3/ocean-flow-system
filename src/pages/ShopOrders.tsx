@@ -12,6 +12,7 @@ import { OrderPhotosButton, ORDER_PHOTO_ENTITY, ORDER_LINE_PHOTO_ENTITY } from "
 import DeliveryNote from "@/components/DeliveryNote";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { OrderAuditLine } from "@/components/orders/OrderAuditLine";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -1051,7 +1052,16 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
             </DialogDescription>
           </DialogHeader>
         )}
+        <OrderAuditLine
+          stacked
+          createdBy={(order as any).created_by_user}
+          createdAt={order.created_at}
+          updatedBy={(order as any).updated_by}
+          updatedAt={(order as any).updated_at}
+          className="mt-1"
+        />
       </div>
+
 
       {order.notes && (
         <div className="bg-muted/30 rounded-md p-3 text-xs text-muted-foreground">
