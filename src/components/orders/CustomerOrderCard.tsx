@@ -521,6 +521,14 @@ export function CustomerOrderCard({
                   Mottagen av {order.received_by_name || "okänd"} ·{" "}
                   {new Date(order.created_at).toLocaleString("sv-SE")}
                 </div>
+                <OrderAuditLine
+                  stacked
+                  createdBy={(order as any).created_by}
+                  createdAt={order.created_at}
+                  updatedBy={(order as any).updated_by}
+                  updatedAt={(order as any).updated_at}
+                  className="pt-1"
+                />
               </CardContent>
             </Card>
             <div className="grid gap-2 sm:grid-cols-2">
