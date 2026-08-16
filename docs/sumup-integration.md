@@ -184,12 +184,37 @@ Systemstatus:
 - **Etapp 2**: bearbetning till lagerrörelser (FEFO ur Zollikons
   försäljningslager, försäljning blockeras aldrig av saldo), transaktionsregister,
   returer som motrörelse, live i Översikt.
-- **Etapp 3**: CH-prislista i CHF (2,6 % livsmedel, 8,1 % övrigt),
-  katalogexport i SumUps CSV-format samt uppladdning och avstämning av SumUps
-  katalogexport. Inget katalog-API finns i dag — kontrollera
-  developer.sumup.com/changelog vid bygget.
-- **Etapp 4**: nattlig avstämning av föregående dag och fullt Systemstatus-kort.
 - **Etapp 5**: skarpa nycklar och verifiering mot en hel handelsdag.
+
+## 10. Etapp 3, CHF-priser och katalogutbyte (klar)
+
+`price_lists.currency` (standard SEK) sätts automatiskt till CHF för Zollikon.
+Momsen sätts per rad ur `vat_rates` för bolaget: Componia AG har 2,6 % som
+standardsats (livsmedel), 8,1 % för "Emballage & Förbrukning" och 8,1 % för
+"Servering på plats". Uppslaget sker i `src/lib/vatRates.ts` (kategorimatchning
+före bolagets standardsats `*`).
+
+Katalogen hanteras i fliken **Priser → Katalog Zollikon**:
+
+1. **Exportera CSV** i SumUps importformat (`Item name, Description, Category,
+   Variant name, SKU, Price, Currency, Tax rate (%), On/Off, Track inventory`),
+   byggd från den CHF-prislista som är markerad "gäller i kassan".
+2. **Stäm av kassans export** — SumUps egen katalogexport (CSV eller XLSX) läses
+   in och jämförs på artikelnamn: stämmer, prisavvikelse, saknas i kassan eller
+   saknas i Makrilltrade. Prisjämförelsen tolererar 0,01.
+3. Varje avstämning sparas i `sumup_catalog_audits` (antal rader, träffar,
+   prisavvikelser, saknade i vardera riktning samt de 500 första avvikelserna).
+
+Inget katalog-API finns hos SumUp i dag — CSV-vägen är därför sanningen.
+Kontrollera developer.sumup.com/changelog innan detta byts mot ett API.
+
+## 11. Etapp 4, nattlig avstämning (klar)
+
+`sumup-reconcile` körs 03:30 Zürich-tid, hämtar föregående dags historik, fyller
+i kvittonummer och skriver `sumup_reconciliations` (antal och belopp i CHF på
+båda sidor plus differens). Kassapanelen och Systemstatus visar de senaste
+dagarna med larm när differensen inte är noll. CHF blandas aldrig med SEK: i
+Kassa live räknas totalerna per valuta.
 
 ## 9. Beroende utanför koden
 

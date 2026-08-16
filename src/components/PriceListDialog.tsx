@@ -9,6 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
+import { getStoreCurrency } from "@/lib/currency";
+import { resolveVatRate, type VatRateRow } from "@/lib/vatRates";
 import { useToast } from "@/hooks/use-toast";
 import { useStores } from "@/hooks/useStores";
 import { generatePriceListPdf } from "@/lib/priceListPdf";
@@ -250,13 +252,21 @@ export default function PriceListDialog({ open, onOpenChange, allProducts }: Pro
     setSaving(true);
     const dateStr = format(new Date(), "yyyy-MM-dd");
     try {
+      // Momssatser per bolag hämtas en gång; Zollikon får CHF och schweizisk moms.
+      const { data: vatRows } = await (supabase as any)
+        .from("vat_rates")
+        .select("legal_entity_id, category, rate");
+
       for (const store of chosen) {
+        const entityId = (store as any).legal_entity_id ?? null;
+        const currency = getStoreCurrency(store as any);
         const { data: list, error: listErr } = await supabase
           .from("price_lists")
           .insert({
             name: `Prislista ${dateStr}`,
             store_id: store.id,
-            legal_entity_id: (store as any).legal_entity_id ?? null,
+            legal_entity_id: entityId,
+            currency,
             pos_enabled: posEnabled,
             valid_from: dateStr,
             total_products: rows.length,
@@ -273,6 +283,7 @@ export default function PriceListDialog({ open, onOpenChange, allProducts }: Pro
           unit: r.unit,
           category: r.category,
           price: r.price,
+          vat_rate: resolveVatRate((vatRows ?? []) as VatRateRow[], entityId, r.category, currency),
           sort_order: i,
         }));
         const { error: itemsErr } = await supabase.from("price_list_items").insert(items as any);
