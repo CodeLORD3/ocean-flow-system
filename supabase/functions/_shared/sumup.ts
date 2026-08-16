@@ -165,7 +165,7 @@ export function interpretLine(
     };
   }
 
-  // 2. Viktvara utan decimaler: härled vikten ur radtotal / kilopris.
+  // 3. Viktvara utan decimaler: härled vikten ur radtotal / kilopris.
   const perKg = unitPriceMinor > 0 ? unitPriceMinor : (opts.kgPriceMinor ?? 0);
   if (perKg > 0 && lineTotalMinor !== 0) {
     return {
@@ -180,7 +180,7 @@ export function interpretLine(
     };
   }
 
-  // 3. Ingen väg fram — gissa inte.
+  // 4. Ingen väg fram — gissa inte.
   return {
     name,
     cleanName: name,
