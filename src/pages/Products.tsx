@@ -774,6 +774,7 @@ export default function Products() {
             </SelectContent>
           </Select>
         </td>
+        )}
 
         {/* ── Hållbarhet ── */}
         {showDetails && (
