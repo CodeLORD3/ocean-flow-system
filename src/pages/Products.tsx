@@ -773,6 +773,7 @@ export default function Products() {
         </td>
 
         {/* ── Hållbarhet ── */}
+        {showDetails && (
         <td className="px-2 py-0 align-middle">
           {isAggregatedParent ? (
             <span className="text-[11px] text-muted-foreground/40 font-mono tabular-nums">–</span>
