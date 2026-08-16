@@ -74,6 +74,10 @@ export default function DailyReport() {
   const { data: shifts = [] } = useShiftsForDate(activeStoreId, date);
   const { data: existing, isLoading } = useDailyReport(activeStoreId, date);
   const save = useSaveDailyReport();
+  // Kassan (egna kassor + externa Nimpos-kassor) är grunden för rapporten.
+  usePosRealtime(true);
+  const { data: pos } = usePosDaySummary(activeStoreId, date);
+
 
   const [gross, setGross] = useState("");
   const [net, setNet] = useState("");
