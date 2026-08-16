@@ -72,6 +72,7 @@ export type RawSumupProduct = {
   price?: number | string;
   quantity?: number | string;
   vat_rate?: number | string;
+  price_with_vat?: number | string;
   total_with_vat?: number | string;
   total_price?: number | string;
 };
