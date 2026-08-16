@@ -142,7 +142,9 @@ export default function PosLive() {
               </Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="prices">Priser</TabsTrigger>
           <TabsTrigger value="ops">Drift</TabsTrigger>
+
         </TabsList>
 
         <TabsContent value="live" className="space-y-4 mt-4">
