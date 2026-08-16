@@ -247,7 +247,15 @@ export class SumupClient {
         | string
         | undefined;
       if (!next || batch.length === 0) break;
-      path = next.startsWith("http") ? next.replace(SUMUP_BASE, "") : next;
+      // SumUp svarar med enbart frågesträngen ("changes_since=...&oldest_ref=..."),
+      // så sökvägen måste sättas tillbaka innan nästa sida hämtas.
+      path = next.startsWith("http")
+        ? next.replace(SUMUP_BASE, "")
+        : next.startsWith("/")
+        ? next
+        : `/v2.1/merchants/${encodeURIComponent(merchantCode)}/transactions/history?${
+          next.replace(/^\?/, "")
+        }`;
     }
     return items;
   }
