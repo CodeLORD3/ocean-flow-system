@@ -475,7 +475,7 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
             <div className="space-y-1">
               <p>
                 Obligatoriska kolumner: <code>sku</code>, <code>name</code>, <code>category</code>. Övriga kolumner:{" "}
-                <code>unit, cost_price, wholesale_price, retail_suggested, stock, origin, producer, supplier, hs_code, barcode, weight_per_piece, shelf_life_days, active, parent_sku, image_url, latin_name, species_group</code>.
+                <code>unit, cost_price, wholesale_price, retail_suggested, stock, origin, producer, supplier, hs_code, barcode, weight_per_piece, shelf_life_days, active, parent_sku, image_url, latin_name, species_group, shopify_sku</code>.
                 Kolumnordningen spelar ingen roll och <code>stock</code> ignoreras alltid.
               </p>
               <p>
