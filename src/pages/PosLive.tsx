@@ -34,6 +34,7 @@ import { SumupCatalogPanel } from "@/components/poslive/SumupCatalogPanel";
 import { PosHealthCard } from "@/components/poslive/PosHealthCard";
 import { PosLineReview } from "@/components/poslive/PosLineReview";
 import { PosPricePanel } from "@/components/poslive/PosPricePanel";
+import { useFxRate } from "@/hooks/useFxRate";
 
 
 const kr = (n: number) => Math.round(n).toLocaleString("sv-SE").replace(/\u00a0/g, " ");
@@ -122,6 +123,12 @@ export default function PosLive() {
     avg: 0,
   };
 
+  // Zollikon säljer i CHF. CHF står först och SEK visas som växling mot
+  // livekursen från internet (uppdateras varje sekund).
+  const hasChf = sums.some((t) => t.currency !== "SEK");
+  const { data: fx } = useFxRate("CHF", "SEK", hasChf);
+  const toSek = (n: number) => (fx ? `≈ ${kr(n * fx.rate)} kr` : undefined);
+
   const ops = summary?.ops;
   const opsIssues = (ops?.failed ?? 0) + (ops?.unmapped ?? 0) + (ops?.unmatched_products ?? 0);
 
@@ -180,22 +187,51 @@ export default function PosLive() {
         <TabsContent value="live" className="space-y-4 mt-4">
           {(sums.length ? sums : [totals]).map((t) => {
             const cur = t.currency === "SEK" ? "kr" : t.currency;
+            const foreign = t.currency !== "SEK";
             return (
               <div key={t.currency} className="space-y-1">
-                {sums.length > 1 && (
-                  <p className="text-[11px] text-muted-foreground">Totalt i {t.currency}</p>
+                {(sums.length > 1 || foreign) && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Totalt i {t.currency}
+                    {foreign &&
+                      (fx
+                        ? ` — växlingskurs 1 ${t.currency} = ${fx.rate.toFixed(4)} kr (${fx.source}, ${new Date(
+                            fx.fetchedAt,
+                          ).toLocaleTimeString("sv-SE")})`
+                        : " — hämtar växlingskurs …")}
+                  </p>
                 )}
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                  <Kpi icon={TrendingUp} label="Brutto" value={`${kr(t.gross)} ${cur}`} />
-                  <Kpi icon={CreditCard} label="Netto (ex moms)" value={`${kr(t.net)} ${cur}`} />
+                  <Kpi
+                    icon={TrendingUp}
+                    label="Brutto"
+                    value={`${kr(t.gross)} ${cur}`}
+                    hint={foreign ? toSek(t.gross) : undefined}
+                  />
+                  <Kpi
+                    icon={CreditCard}
+                    label="Netto (ex moms)"
+                    value={`${kr(t.net)} ${cur}`}
+                    hint={foreign ? toSek(t.net) : undefined}
+                  />
                   <Kpi
                     icon={ShoppingBag}
                     label="Antal köp"
                     value={String(t.count)}
                     hint={`${t.returns} returer`}
                   />
-                  <Kpi icon={Receipt} label="Snittköp" value={`${kr(t.avg)} ${cur}`} />
-                  <Kpi icon={Activity} label="Största köp" value={`${kr(t.largest)} ${cur}`} />
+                  <Kpi
+                    icon={Receipt}
+                    label="Snittköp"
+                    value={`${kr(t.avg)} ${cur}`}
+                    hint={foreign ? toSek(t.avg) : undefined}
+                  />
+                  <Kpi
+                    icon={Activity}
+                    label="Största köp"
+                    value={`${kr(t.largest)} ${cur}`}
+                    hint={foreign ? toSek(t.largest) : undefined}
+                  />
                 </div>
               </div>
             );
@@ -237,6 +273,7 @@ export default function PosLive() {
                   name={s.name}
                   summary={s.summary}
                   currency={currencyOf(s.store_id)}
+                  sekRate={currencyOf(s.store_id) === "SEK" ? null : fx?.rate ?? null}
                   isToday={isToday}
                   selected={storeId === s.store_id}
                   onSelect={() => setStoreId(storeId === s.store_id ? null : s.store_id)}
