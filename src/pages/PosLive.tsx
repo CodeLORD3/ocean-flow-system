@@ -83,16 +83,42 @@ export default function PosLive() {
   const { data: problems = [] } = useNimposEvents("problem");
 
   const storeName = (id: string | null) => stores.find((s) => s.id === id)?.name ?? "—";
+  const currencyOf = (id: string) =>
+    ((stores.find((s) => s.id === id) as any)?.currency ?? "SEK").toUpperCase();
 
-  const totals = useMemo(() => {
+  /**
+   * Valutor blandas aldrig: totalerna räknas per valuta. Utan vald butik visas
+   * hemvalutan (SEK) och butiker i annan valuta (Zollikon, CHF) får en egen rad.
+   */
+  const sums = useMemo(() => {
     const rows = (summary?.stores ?? []).filter((s) => !storeId || s.store_id === storeId);
-    const gross = rows.reduce((s, r) => s + r.summary.gross_sales, 0);
-    const net = rows.reduce((s, r) => s + r.summary.net_sales, 0);
-    const count = rows.reduce((s, r) => s + r.summary.receipt_count, 0);
-    const returns = rows.reduce((s, r) => s + r.summary.return_count, 0);
-    const largest = Math.max(0, ...rows.map((r) => r.summary.largest_sale));
-    return { gross, net, count, returns, largest, avg: count ? gross / count : 0 };
-  }, [summary, storeId]);
+    const byCurrency = new Map<string, typeof rows>();
+    for (const r of rows) {
+      const cur = currencyOf(r.store_id);
+      byCurrency.set(cur, [...(byCurrency.get(cur) ?? []), r]);
+    }
+    const total = (list: typeof rows) => {
+      const gross = list.reduce((s, r) => s + r.summary.gross_sales, 0);
+      const net = list.reduce((s, r) => s + r.summary.net_sales, 0);
+      const count = list.reduce((s, r) => s + r.summary.receipt_count, 0);
+      const returns = list.reduce((s, r) => s + r.summary.return_count, 0);
+      const largest = Math.max(0, ...list.map((r) => r.summary.largest_sale));
+      return { gross, net, count, returns, largest, avg: count ? gross / count : 0 };
+    };
+    return [...byCurrency.entries()]
+      .sort(([a], [b]) => (a === "SEK" ? -1 : b === "SEK" ? 1 : a.localeCompare(b)))
+      .map(([currency, list]) => ({ currency, ...total(list) }));
+  }, [summary, storeId, stores]);
+
+  const totals = sums[0] ?? {
+    currency: "SEK",
+    gross: 0,
+    net: 0,
+    count: 0,
+    returns: 0,
+    largest: 0,
+    avg: 0,
+  };
 
   const ops = summary?.ops;
   const opsIssues = (ops?.failed ?? 0) + (ops?.unmapped ?? 0) + (ops?.unmatched_products ?? 0);
