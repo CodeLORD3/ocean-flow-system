@@ -517,7 +517,14 @@ async function createOrder(
     })
     .select("id")
     .single();
-  if (orderErr) throw new Error(`ordern kunde inte skapas: ${orderErr.message}`);
+  if (orderErr) {
+    /**
+     * Två samtidiga omsändningar av samma order kan båda passera dubblettkollen.
+     * Unikhetsindexet fångar det — då är händelsen ett duplikat, inte ett fel.
+     */
+    if ((orderErr as any).code === "23505") throw new Error("DUPLIKAT");
+    throw new Error(`ordern kunde inte skapas: ${orderErr.message}`);
+  }
 
   let estimated = 0;
   let unmatched = 0;
@@ -839,7 +846,25 @@ async function processEvent(db: SupabaseClient, eventId: string): Promise<void> 
       .eq("id", eventId);
 
   } catch (e) {
-    await fail(e instanceof Error ? e.message : String(e));
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg === "DUPLIKAT") {
+      const { data: existing } = await db
+        .from("customer_orders")
+        .select("id")
+        .eq("shopify_order_id", shopifyOrderId)
+        .maybeSingle();
+      await db
+        .from("shopify_webhook_events")
+        .update({
+          status: "duplikat",
+          customer_order_id: existing?.id ?? null,
+          error: null,
+          processed_at: new Date().toISOString(),
+        })
+        .eq("id", eventId);
+      return;
+    }
+    await fail(msg);
   }
 }
 
