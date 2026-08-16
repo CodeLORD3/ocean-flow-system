@@ -850,7 +850,7 @@ export default function Products() {
             )}
           </td>
         )}
-        {isWholesale && (
+        {isWholesale && showDetails && (
           <td className="px-2 py-0 align-middle text-right">
             {(() => {
               const last = latestPriceMap?.get(p.id);
