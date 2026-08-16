@@ -164,6 +164,162 @@ export function useSumupMapProduct() {
         .eq("id", input.id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["sumup-health"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sumup-health"] });
+      qc.invalidateQueries({ queryKey: ["sumup-review-lines"] });
+    },
+  });
+}
+
+/**
+ * Skapar produkten i Makrilltrade och kopplar SumUp-namnet direkt.
+ * SKU sätts från kategorins prefix så registret behåller sin numrering.
+ */
+export function useSumupCreateProduct() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      id: string;
+      name: string;
+      unit: string;
+      categoryId: string;
+      categoryName: string;
+      skuPrefix: string;
+    }) => {
+      const prefix = (input.skuPrefix || "SV").toUpperCase();
+      const { data: last } = await supabase
+        .from("products")
+        .select("sku")
+        .like("sku", `${prefix}-%`)
+        .order("sku", { ascending: false })
+        .limit(1);
+      const lastNo = Number(String(last?.[0]?.sku ?? "").split("-")[1] ?? 0);
+      const sku = `${prefix}-${String((Number.isFinite(lastNo) ? lastNo : 0) + 1).padStart(3, "0")}`;
+
+      const { data: product, error } = await supabase
+        .from("products")
+        .insert({
+          name: input.name,
+          sku,
+          unit: input.unit,
+          category: input.categoryName,
+          category_id: input.categoryId,
+          active: true,
+        } as any)
+        .select("id, unit, sku")
+        .single();
+      if (error) throw error;
+
+      const { error: mapErr } = await supabase
+        .from("sumup_product_map")
+        .update({ product_id: product.id, unit: product.unit, unmatched_count: 0 })
+        .eq("id", input.id);
+      if (mapErr) throw mapErr;
+      return product;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sumup-health"] });
+      qc.invalidateQueries({ queryKey: ["sumup-review-lines"] });
+    },
+  });
+}
+
+/** Bearbetar kön till transaktioner och lagerrörelser (etapp 2). */
+export function useSumupProcess() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (merchantCode?: string) => {
+      const { data, error } = await supabase.functions.invoke("sumup-process", {
+        body: merchantCode ? { merchant_code: merchantCode } : {},
+      });
+      if (error) throw error;
+      return data as {
+        ok: boolean;
+        bearbetade: number;
+        duplikat: number;
+        fel: number;
+        rorelser: number;
+        omatchade: number;
+      };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sumup-health"] });
+      qc.invalidateQueries({ queryKey: ["sumup-review-lines"] });
+      qc.invalidateQueries({ queryKey: ["pos-live-summary"] });
+      qc.invalidateQueries({ queryKey: ["pos-recent"] });
+    },
+  });
+}
+
+/** Kör nattavstämningen manuellt för ett datum. */
+export function useSumupReconcile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { date?: string; merchantCode?: string } = {}) => {
+      const { data, error } = await supabase.functions.invoke("sumup-reconcile", {
+        body: {
+          ...(input.date ? { date: input.date } : {}),
+          ...(input.merchantCode ? { merchant_code: input.merchantCode } : {}),
+        },
+      });
+      if (error) throw error;
+      return data as { ok: boolean; date: string; results: SumupReconciliation[] };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sumup-health"] });
+      qc.invalidateQueries({ queryKey: ["sumup-reconciliations"] });
+    },
+  });
+}
+
+export type SumupReconciliation = {
+  id: string;
+  merchant_code: string;
+  recon_date: string;
+  currency: string;
+  sumup_count: number;
+  sumup_total_minor: number;
+  local_count: number;
+  local_total_minor: number;
+  diff_minor: number;
+  missing_external_ids: string[];
+  refetched_count: number;
+  receipt_filled_count: number;
+  status: string;
+  message: string | null;
+};
+
+export function useSumupReconciliations(limit = 7) {
+  return useQuery({
+    queryKey: ["sumup-reconciliations", limit],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("sumup_reconciliations")
+        .select("*")
+        .order("recon_date", { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return (data ?? []) as SumupReconciliation[];
+    },
+  });
+}
+
+/** Rader som bokförts men behöver granskas (omatchade eller okänd kvantitet). */
+export function useSumupReviewLines(limit = 50) {
+  return useQuery({
+    queryKey: ["sumup-review-lines", limit],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("pos_transaction_items")
+        .select(
+          "id, product_name, quantity, unit, quantity_source, review_status, line_total_ore, transaction_id, pos_transactions!inner(source, occurred_at, currency, external_receipt_no)",
+        )
+        .in("review_status", ["unmatched", "unknown_quantity"])
+        .eq("pos_transactions.source", "sumup")
+        .order("id", { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
   });
 }
