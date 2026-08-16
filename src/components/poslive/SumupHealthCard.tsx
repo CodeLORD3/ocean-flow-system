@@ -227,6 +227,23 @@ export function SumupHealthCard() {
               <span>Senaste kvitto: {fmtTime(m.last_transaction_at)}</span>
               <span>Fel i rad: {m.fail_streak ?? 0}</span>
             </div>
+            {(() => {
+              const b = data?.basketToday?.[m.store_id];
+              if (!b || !b.total) {
+                return (
+                  <div className="text-muted-foreground">Artikelrader idag: inga kvitton ännu</div>
+                );
+              }
+              const pct = Math.round((b.withItems / b.total) * 100);
+              const low = pct < 80;
+              return (
+                <div className={`tabular-nums ${low ? "text-destructive" : "text-muted-foreground"}`}>
+                  Kvitton med artikelrader idag: {b.withItems} av {b.total} ({pct} %)
+                  {low && " — under 80 %, kassan slår mest in belopp"}
+                </div>
+              );
+            })()}
+
           </div>
         ))}
 
