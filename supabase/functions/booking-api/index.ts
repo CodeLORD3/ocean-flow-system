@@ -33,6 +33,9 @@ const ALLOWED_ORIGINS = [
   // Bokningssajtens eget projekt (etapp 2):
   "https://id-preview--e69a8370-7972-4560-b5fa-a06f34cf1f5b.lovable.app",
   "https://e69a8370-7972-4560-b5fa-a06f34cf1f5b.lovableproject.com",
+  // Bokningssajtens publicerade förhandsvisning:
+  "https://preview--snabb-bokning-start.lovable.app",
+  "https://snabb-bokning-start.lovable.app",
   "http://localhost:8080",
 ];
 
