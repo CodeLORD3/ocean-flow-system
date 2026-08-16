@@ -5785,6 +5785,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          currency: string
           id: string
           legal_entity_id: string | null
           name: string
@@ -5798,6 +5799,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          currency?: string
           id?: string
           legal_entity_id?: string | null
           name: string
@@ -5811,6 +5813,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          currency?: string
           id?: string
           legal_entity_id?: string | null
           name?: string
@@ -8691,6 +8694,68 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      sumup_catalog_audits: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          currency: string
+          details: Json
+          id: string
+          legal_entity_id: string | null
+          matched_count: number
+          merchant_code: string
+          missing_in_erp_count: number
+          missing_in_pos_count: number
+          price_diff_count: number
+          row_count: number
+          source_filename: string | null
+          store_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          details?: Json
+          id?: string
+          legal_entity_id?: string | null
+          matched_count?: number
+          merchant_code: string
+          missing_in_erp_count?: number
+          missing_in_pos_count?: number
+          price_diff_count?: number
+          row_count?: number
+          source_filename?: string | null
+          store_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          details?: Json
+          id?: string
+          legal_entity_id?: string | null
+          matched_count?: number
+          merchant_code?: string
+          missing_in_erp_count?: number
+          missing_in_pos_count?: number
+          price_diff_count?: number
+          row_count?: number
+          source_filename?: string | null
+          store_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sumup_catalog_audits_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sumup_events: {
         Row: {
