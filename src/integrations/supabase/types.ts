@@ -5692,8 +5692,10 @@ export type Database = {
       }
       price_list_items: {
         Row: {
+          barcode: string | null
           category: string | null
           id: string
+          pos_enabled: boolean
           price: number
           price_list_id: string
           product_id: string | null
@@ -5701,10 +5703,13 @@ export type Database = {
           sku: string | null
           sort_order: number
           unit: string | null
+          vat_rate: number
         }
         Insert: {
+          barcode?: string | null
           category?: string | null
           id?: string
+          pos_enabled?: boolean
           price?: number
           price_list_id: string
           product_id?: string | null
@@ -5712,10 +5717,13 @@ export type Database = {
           sku?: string | null
           sort_order?: number
           unit?: string | null
+          vat_rate?: number
         }
         Update: {
+          barcode?: string | null
           category?: string | null
           id?: string
+          pos_enabled?: boolean
           price?: number
           price_list_id?: string
           product_id?: string | null
@@ -5723,8 +5731,16 @@ export type Database = {
           sku?: string | null
           sort_order?: number
           unit?: string | null
+          vat_rate?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "price_list_items_price_list_id_fkey"
+            columns: ["price_list_id"]
+            isOneToOne: false
+            referencedRelation: "pos_price_overview"
+            referencedColumns: ["price_list_id"]
+          },
           {
             foreignKeyName: "price_list_items_price_list_id_fkey"
             columns: ["price_list_id"]
@@ -5746,30 +5762,49 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          legal_entity_id: string | null
           name: string
           notes: string | null
+          pos_enabled: boolean
           store_id: string | null
           total_products: number
+          updated_at: string
+          valid_from: string
         }
         Insert: {
           created_at?: string
           created_by?: string | null
           id?: string
+          legal_entity_id?: string | null
           name: string
           notes?: string | null
+          pos_enabled?: boolean
           store_id?: string | null
           total_products?: number
+          updated_at?: string
+          valid_from?: string
         }
         Update: {
           created_at?: string
           created_by?: string | null
           id?: string
+          legal_entity_id?: string | null
           name?: string
           notes?: string | null
+          pos_enabled?: boolean
           store_id?: string | null
           total_products?: number
+          updated_at?: string
+          valid_from?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "price_lists_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
           {
             foreignKeyName: "price_lists_store_id_fkey"
             columns: ["store_id"]
@@ -9987,6 +10022,43 @@ export type Database = {
           },
         ]
       }
+      pos_price_overview: {
+        Row: {
+          barcode: string | null
+          category: string | null
+          item_id: string | null
+          item_pos_enabled: boolean | null
+          legal_entity_id: string | null
+          legal_name: string | null
+          pos_enabled: boolean | null
+          price: number | null
+          price_list_id: string | null
+          price_list_name: string | null
+          product_name: string | null
+          sku: string | null
+          store_id: string | null
+          store_name: string | null
+          unit: string | null
+          valid_from: string | null
+          vat_rate: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_lists_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "price_lists_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       retail_customer_duplicates: {
         Row: {
           customer_a: string | null
@@ -10185,6 +10257,7 @@ export type Database = {
         }[]
       }
       pos_live_summary: { Args: { _date: string }; Returns: Json }
+      pos_queue_health: { Args: never; Returns: Json }
       post_purchase_report: {
         Args: { p_location_id: string; p_lots: Json; p_report_id: string }
         Returns: string[]
