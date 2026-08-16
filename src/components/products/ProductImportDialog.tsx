@@ -43,7 +43,12 @@ const statusLabel: Record<string, string> = {
   changed: "Ändrad",
   unchanged: "Oförändrad",
   error: "Fel",
+  activated: "Aktiveras",
+  deactivated: "Inaktiveras",
 };
+
+/** Rader som faktiskt skrivs vid import */
+const IMPORTABLE: string[] = ["new", "changed", "activated", "deactivated"];
 
 export default function ProductImportDialog({ open, onOpenChange }: Props) {
   const { toast } = useToast();
@@ -64,7 +69,7 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
   const [existing, setExisting] = useState<ExistingProduct[]>([]);
 
   const counts = useMemo(() => {
-    const c = { new: 0, changed: 0, unchanged: 0, error: 0 };
+    const c = { new: 0, changed: 0, unchanged: 0, error: 0, activated: 0, deactivated: 0 };
     (diff ?? []).forEach((d) => {
       c[d.status] += 1;
     });
@@ -100,14 +105,23 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
       }
       setMissingOptional(parsed.missingOptionalColumns);
       setUnknownColumns(parsed.unknownColumns);
-      const { data, error } = await supabase
-        .from("products")
-        .select(
-          "id, sku, name, category, unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier_id, barcode, hs_code, weight_per_piece, shelf_life_days, parent_product_id, active, image_url, latin_name, species_group, fao_code, allergens, may_contain, allergens_checked",
-        );
-
-      if (error) throw error;
-      const existingRows = (data ?? []) as unknown as ExistingProduct[];
+      // Hela registret måste med — PostgREST returnerar max 1000 rader per anrop,
+      // annars flaggas produkter efter rad 1000 felaktigt som nya.
+      const PAGE = 1000;
+      const rows: unknown[] = [];
+      for (let from = 0; ; from += PAGE) {
+        const { data, error } = await supabase
+          .from("products")
+          .select(
+            "id, sku, name, category, unit, cost_price, wholesale_price, retail_suggested, origin, producer, supplier_id, barcode, hs_code, weight_per_piece, shelf_life_days, parent_product_id, active, image_url, latin_name, species_group, fao_code, allergens, may_contain, allergens_checked",
+          )
+          .order("sku")
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        rows.push(...(data ?? []));
+        if (!data || data.length < PAGE) break;
+      }
+      const existingRows = rows as unknown as ExistingProduct[];
       setExisting(existingRows);
       setDiff(
         buildDiff({

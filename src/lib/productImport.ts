@@ -69,7 +69,7 @@ export interface ParsedRow {
 }
 
 
-export type DiffStatus = "new" | "changed" | "unchanged" | "error";
+export type DiffStatus = "new" | "changed" | "unchanged" | "error" | "activated" | "deactivated";
 
 export interface FieldChange {
   field: string;
@@ -513,7 +513,13 @@ export function buildDiff({ rows, existing, categories, suppliers }: BuildDiffAr
 
     return {
       row,
-      status: changes.length > 0 ? ("changed" as DiffStatus) : ("unchanged" as DiffStatus),
+      status: (() => {
+        if (changes.length === 0) return "unchanged" as DiffStatus;
+        // aktiv/inaktiv-byten redovisas separat i förhandsgranskningen
+        const activeChange = changes.find((c) => c.field === "active");
+        if (activeChange) return (row.active ? "activated" : "deactivated") as DiffStatus;
+        return "changed" as DiffStatus;
+      })(),
       errors,
       warnings,
       changes,
