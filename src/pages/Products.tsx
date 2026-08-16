@@ -228,6 +228,8 @@ export default function Products() {
   const updateProduct = useUpdateProduct();
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  /** Detaljläge: visar sekundära kolumner (HS, producent, hållbarhet, EAN, marginal, rek. butikspris). */
+  const [showDetails, setShowDetails] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
@@ -702,8 +704,8 @@ export default function Products() {
         className={`border-b border-border/40 hover:bg-primary/20 transition-colors h-16 ${isSubproduct ? "bg-muted/10" : rowIndex % 2 === 1 ? "bg-muted/30" : ""}`}
       >
         {/* Name */}
-        <td className="px-2 py-1 align-middle font-medium text-foreground sticky left-0 z-10 bg-card border-r border-border/60 min-w-[300px]">
-          <div className="flex items-center gap-1.5">
+        <td className="px-2 py-1 align-middle font-medium text-foreground sticky left-0 z-10 bg-card border-r border-border/60 min-w-[320px] max-w-[420px]">
+          <div className="flex flex-wrap items-center gap-1.5">
             {!isSubproduct && hasChildren && (
               <button onClick={() => toggleExpand(p.id)} className="p-0.5 rounded hover:bg-muted shrink-0">
                 {isExpanded ? (
@@ -716,7 +718,12 @@ export default function Products() {
             {isSubproduct && <span className="ml-5 text-muted-foreground shrink-0">└</span>}
             {!isSubproduct && !hasChildren && <span className="w-5 shrink-0" />}
             <ProductThumb src={(p as any).image_url} alt={p.name} productId={p.id} />
-            <span className={`truncate ${isSubproduct ? "text-muted-foreground" : ""}`} title={p.name}>{p.name}</span>
+            <span
+              className={`whitespace-normal break-words leading-tight text-[11px] ${isSubproduct ? "text-muted-foreground" : ""}`}
+              title={p.name}
+            >
+              {p.name}
+            </span>
             {/* Arter med sorteringsregister köps bara in på storleksvariant. */}
             {(p as any).purchasable === false && (
               <Badge variant="outline" className="shrink-0 px-1 py-0 text-[9px] text-muted-foreground">
@@ -736,7 +743,10 @@ export default function Products() {
         <td className="px-2 py-0 align-middle whitespace-nowrap"><CategoryBadge name={p.category} /></td>
 
         <td className="px-2 py-0 align-middle text-muted-foreground">{p.unit}</td>
-        <td className="px-2 py-0 align-middle font-mono text-muted-foreground">{(p as any).hs_code || "–"}</td>
+        {showDetails && (
+          <td className="px-2 py-0 align-middle font-mono text-muted-foreground">{(p as any).hs_code || "–"}</td>
+        )}
+        {showDetails && (
         <td className="px-2 py-0 align-middle">
           <Select
             value={(p as any).producer || "__none__"}
@@ -764,8 +774,10 @@ export default function Products() {
             </SelectContent>
           </Select>
         </td>
+        )}
 
         {/* ── Hållbarhet ── */}
+        {showDetails && (
         <td className="px-2 py-0 align-middle">
           {isAggregatedParent ? (
             <span className="text-[11px] text-muted-foreground/40 font-mono tabular-nums">–</span>
@@ -824,6 +836,7 @@ export default function Products() {
             </div>
           )}
         </td>
+        )}
 
         {/* Prices */}
         {isWholesale && (
@@ -843,7 +856,7 @@ export default function Products() {
             )}
           </td>
         )}
-        {isWholesale && (
+        {isWholesale && showDetails && (
           <td className="px-2 py-0 align-middle text-right">
             {(() => {
               const last = latestPriceMap?.get(p.id);
@@ -917,7 +930,7 @@ export default function Products() {
             <span className="!text-[11px] font-mono tabular-nums text-foreground">{fmtNum(Number(p.wholesale_price))}</span>
           )}
         </td>
-        {isWholesale && (
+        {isWholesale && showDetails && (
           <td className="px-2 py-0 align-middle text-right min-w-[64px]">
             {isAggregatedParent ? (
               <span className="!text-[11px] font-mono tabular-nums text-muted-foreground">
@@ -951,7 +964,7 @@ export default function Products() {
             )}
           </td>
         )}
-        {isWholesale && (
+        {isWholesale && showDetails && (
           <td className="px-2 py-0 align-middle text-right min-w-[92px] !text-[11px] font-mono tabular-nums text-muted-foreground">
             {(() => {
               const v = agg ? agg.retail_suggested : (p.retail_suggested ? Number(p.retail_suggested) : 0);
@@ -963,6 +976,7 @@ export default function Products() {
 
 
         {/* Barcode */}
+        {showDetails && (
         <td className="px-2 py-0 align-middle">
           {barcode ? (
             <div className="flex items-center gap-1.5">
@@ -988,6 +1002,7 @@ export default function Products() {
             </Button>
           )}
         </td>
+        )}
 
         {/* Stock */}
         <td className="px-2 py-0 align-middle text-right !text-[11px] font-mono tabular-nums font-medium">
@@ -1163,6 +1178,16 @@ export default function Products() {
             </SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          variant={showDetails ? "secondary" : "outline"}
+          size="sm"
+          className="h-8 text-xs gap-1.5 sm:ml-auto"
+          onClick={() => setShowDetails((v) => !v)}
+          title="Visa eller göm HS-kod, producent, hållbarhet, EAN, marginal och rek. butikspris"
+        >
+          {showDetails ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+          {showDetails ? "Göm detaljer" : "Visa detaljer"}
+        </Button>
       </div>
 
       {/* Table */}
@@ -1177,9 +1202,9 @@ export default function Products() {
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">SKU</th>
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Kat.</th>
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Enh.</th>
-                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">HS</th>
-                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Prod.</th>
-                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Håll.</th>
+                  {showDetails && <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">HS</th>}
+                  {showDetails && <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Prod.</th>}
+                  {showDetails && <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Håll.</th>}
                   {isWholesale && (
                     <th
                       className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider"
@@ -1188,7 +1213,7 @@ export default function Products() {
                       Reservpris
                     </th>
                   )}
-                  {isWholesale && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider" title="Senaste prisändring">Sen.ink.</th>}
+                  {isWholesale && showDetails && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider" title="Senaste prisändring">Sen.ink.</th>}
                   {isWholesale && (
                     <th
                       className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider"
@@ -1200,9 +1225,9 @@ export default function Products() {
                   <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">
                     {isWholesale ? "Gr.pris" : "Pris"}
                   </th>
-                  {isWholesale && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Marg.</th>}
-                  {isWholesale && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Rek.but.</th>}
-                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">EAN</th>
+                  {isWholesale && showDetails && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Marg.</th>}
+                  {isWholesale && showDetails && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Rek.but.</th>}
+                  {showDetails && <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">EAN</th>}
                   <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Lager</th>
                   <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Åtg.</th>
                 </tr>
@@ -1210,7 +1235,7 @@ export default function Products() {
               <tbody>
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={isWholesale ? 15 : 11} className="p-8 text-center text-muted-foreground">
+                    <td colSpan={20} className="p-8 text-center text-muted-foreground">
                       Inga produkter hittades.
                     </td>
                   </tr>
