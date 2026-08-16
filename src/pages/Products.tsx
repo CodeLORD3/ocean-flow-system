@@ -958,7 +958,7 @@ export default function Products() {
             )}
           </td>
         )}
-        {isWholesale && (
+        {isWholesale && showDetails && (
           <td className="px-2 py-0 align-middle text-right min-w-[92px] !text-[11px] font-mono tabular-nums text-muted-foreground">
             {(() => {
               const v = agg ? agg.retail_suggested : (p.retail_suggested ? Number(p.retail_suggested) : 0);
