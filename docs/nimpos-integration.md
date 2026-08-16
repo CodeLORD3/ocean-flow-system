@@ -133,6 +133,59 @@ Ny sida `/pos-live` i admin (+ per butik i butiksportalen, filtrerad på egen `s
 Aggregat görs via en `security definer`-funktion (`pos_live_summary(_from, _to)`) så vi inte
 drar hem tusentals rader till klienten.
 
+## 6b. Grund för stängningsrapporten (Dagsrapport)
+
+Kassadatan ska inte bara visas live — den ska vara **källan** till stängningsrapporten på
+`/daily-report`, så att butiken inte skriver av siffror manuellt från Nimpos-portalen.
+
+### Fältmappning Nimpos → `daily_reports`
+
+| Fält i stängningsrapporten | Källa från kassadatan | Regel |
+|---|---|---|
+| `gross_sales` | SUM(`pos_transactions.total_ore`)/100 för dagen och butiken | inkl. moms, retur/makulering med negativt tecken |
+| `net_sales` | brutto − moms (`vat_breakdown.vat_ore`) | fallback: brutto/1,12 om momsrader saknas |
+| `receipt_count` | COUNT(kvitton med status `completed`) | returer räknas separat, ej som köp |
+| `largest_sale` | MAX(`total_ore`)/100 | endast positiva kvitton |
+| Betalsätt (kort/kontant/Swish) | SUM per `payments.method` | visas som avstämningsrad mot brutto |
+| Moms per sats | SUM per `vat_breakdown.rate` | 12 % / 25 % / 6 % separat |
+| Topprodukter | `pos_transaction_items` | informativ, sparas ej i rapporten |
+| `staff_entries` | `pos_cashiers` + `staff_shifts` (stämpelklockan) | kassörskod matchas mot personal |
+| `waste_items` | manuellt (svinn finns inte i kassan) | oförändrat |
+| `comment`, `staff_notes` | manuellt | oförändrat |
+
+### Live-beteende i formuläret
+
+- Sidan prenumererar på `pos_transactions` (Realtime) för valt datum + butik och räknar om
+  summorna direkt när ett nytt kvitto kommer in — fälten är alltså ifyllda **innan** man
+  börjar skriva, och uppdateras under dagen.
+- Varje autoifyllt fält visas som förifyllt värde med källmarkering ("från kassan") och en
+  **lås-/redigera-knapp**. Om personalen skriver över värdet sparas både det manuella
+  värdet och kassans värde, plus en diff (`pos_diff`) så avvikelser syns i admin.
+- Är kassan offline/omappad visas en varning i toppen ("kassadata saknas för X — fyll i
+  manuellt") och fälten faller tillbaka till dagens beteende (helt manuella).
+- Vid dagens slut (stängning) fryses kassavärdena i rapporten: `pos_snapshot_at` sätts och
+  senare inkommande kvitton för samma datum flaggas som efterregistrering i driftpanelen.
+
+### DB-tillägg för detta
+
+```sql
+alter table public.daily_reports
+  add column pos_gross_sales   numeric(12,2),
+  add column pos_net_sales     numeric(12,2),
+  add column pos_receipt_count integer,
+  add column pos_largest_sale  numeric(12,2),
+  add column pos_payments      jsonb not null default '[]'::jsonb,
+  add column pos_vat_breakdown jsonb not null default '[]'::jsonb,
+  add column pos_snapshot_at   timestamptz,
+  add column pos_source        text;   -- 'nimpos' | 'manual'
+```
+
+Plus en `security definer`-funktion `pos_day_summary(_store_id uuid, _date date)` som
+returnerar exakt de fält tabellen ovan behöver — samma funktion används av både live-vyn och
+stängningsrapporten så siffrorna alltid är identiska.
+
+Detta blir **etapp 4b** (efter live-vyn), eftersom det bygger på samma aggregatfunktion.
+
 ## 7. Fallback och avstämning
 
 1. **Retry hos Nimpos** (deras ansvar, se svarskoder ovan).
@@ -159,6 +212,7 @@ drar hem tusentals rader till klienten.
 | 2 | Edge-funktion `nimpos-sales`: signatur, idempotens, råloggning | medel |
 | 3 | Bearbetning: butik/kassör/produkt-mappning → pos_transactions/items | medel |
 | 4 | Adminvy `/pos-live` + Realtime + `pos_live_summary()` | medel |
+| 4b | Stängningsrapporten autoifylld live från kassan (se 6b) | medel |
 | 5 | Mappnings-UI (omatchade butiker/produkter) + driftpanel | liten |
 | 6 | `nimpos-reconcile` cron + offline-larm | medel |
 | 7 | (valfritt) koppling till lager/partiavdrag och dagsrapporter | större |
