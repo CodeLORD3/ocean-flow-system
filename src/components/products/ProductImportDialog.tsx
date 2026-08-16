@@ -266,9 +266,45 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
         batch.forEach((d) => (d.status === "new" ? inserted++ : updated++));
       }
 
+      // Shopify-SKU-kolumnen: koppla webbshopens artikelnummer till MakrillTrade-SKU
+      let mapped = 0;
+      const mapRows = importable.flatMap((d) =>
+        (d.row.shopify_sku ?? []).map((sSku) => ({
+          shopify_sku: sSku,
+          shopify_title: d.row.name,
+          product_id: idBySku.get(d.row.sku.toLowerCase()) ?? null,
+        })),
+      ).filter((r) => r.product_id);
+      for (const batch of chunk(mapRows, 200)) {
+        const { error } = await supabase
+          .from("shopify_product_map")
+          .upsert(batch as never, { onConflict: "shopify_sku" });
+        if (error) throw error;
+        mapped += batch.length;
+      }
+      if (mapped > 0) {
+        // Lös upp orderrader som väntat på matchning
+        const skus = mapRows.map((r) => r.shopify_sku);
+        const { data: pending } = await supabase
+          .from("customer_order_lines")
+          .select("id, shopify_sku")
+          .eq("needs_product_match", true)
+          .in("shopify_sku", skus);
+        for (const line of pending ?? []) {
+          const target = mapRows.find((r) => r.shopify_sku === line.shopify_sku);
+          if (!target) continue;
+          await supabase
+            .from("customer_order_lines")
+            .update({ product_id: target.product_id, needs_product_match: false })
+            .eq("id", line.id);
+        }
+        qc.invalidateQueries({ queryKey: ["shopify-web-orders"] });
+        qc.invalidateQueries({ queryKey: ["customer-orders"] });
+      }
+
       await logActivity({
         action_type: "product_import",
-        description: `Produktimport: ${inserted} nya, ${updated} uppdaterade${
+        description: `Produktimport: ${inserted} nya, ${updated} uppdaterade${mapped ? `, ${mapped} Shopify-kopplingar` : ""}${
           rejectedRows.length ? `, ${rejectedRows.length} avvisade` : ""
         } (${fileName ?? "fil"})`,
         entity_type: "products",
@@ -318,6 +354,14 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
     }
     const { data: all } = await supabase.from("products").select("id, sku");
     const skuById = new Map((all ?? []).map((p) => [p.id, p.sku]));
+    const { data: mapRows } = await supabase.from("shopify_product_map").select("shopify_sku, product_id");
+    const shopifyByProduct = new Map<string, string[]>();
+    (mapRows ?? []).forEach((m) => {
+      const list = shopifyByProduct.get(m.product_id) ?? [];
+      list.push(m.shopify_sku);
+      shopifyByProduct.set(m.product_id, list);
+    });
+    const idBySkuExport = new Map((all ?? []).map((p) => [String(p.sku), p.id]));
     const supplierById = new Map(suppliers.map((s) => [s.id, s.name]));
     const rows = data.map((p) => ({
       sku: p.sku,
@@ -339,6 +383,7 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
       image_url: (p as any).image_url ?? "",
       latin_name: (p as any).latin_name ?? "",
       species_group: (p as any).species_group ?? "",
+      shopify_sku: (shopifyByProduct.get(idBySkuExport.get(String(p.sku)) ?? "") ?? []).join("; "),
     }));
     const ws = XLSX.utils.json_to_sheet(rows, { header: [...IMPORT_COLUMNS] });
     const wb = XLSX.utils.book_new();
