@@ -15,7 +15,14 @@
  * health kräver inloggad personal (JWT valideras i koden, verify_jwt = false).
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { SumupClient, interpretLine, majorToMinor, normalizePayment, scrubCard } from "../_shared/sumup.ts";
+import {
+  SumupClient,
+  interpretLine,
+  majorToMinor,
+  normalizePayment,
+  parseNameWeight,
+  scrubCard,
+} from "../_shared/sumup.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
