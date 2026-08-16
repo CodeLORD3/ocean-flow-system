@@ -337,7 +337,8 @@ export function deriveDetailPrices(input: CoverageInput): DerivedPriceRow[] {
 
 /**
  * En detalj är täckt så snart priset kan härledas ur dagspris eller Reservpris.
- * Riktig datalucka = produkten saknar båda.
+ * Saknat pris är INTE ett fel: inköpspriset sätts först när varan köps in,
+ * så produkter utan pris rapporteras som information (severity "info").
  */
 export function checkDetailPrices(input: CoverageInput): CoverageFinding[] {
   const out: CoverageFinding[] = [];
@@ -350,12 +351,13 @@ export function checkDetailPrices(input: CoverageInput): CoverageFinding[] {
     if (productCost(p).source !== "missing") continue;
     out.push({
       check: "detail_prices",
-      severity: "blocking",
+      severity: "warning",
       group: p.species_group ?? key,
       subject: p.sku,
-      message: `${p.name}: ${p.cost_price_source === "platshallare" ? "har bara platshållarpris" : "saknar både dagspris och Reservpris"} — referenspris kan inte härledas.`,
+      message: `${p.name}: pris sätts vid inköp — inget referenspris ännu.`,
     });
   }
+
   return out;
 }
 
