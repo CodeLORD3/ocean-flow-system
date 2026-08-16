@@ -14,12 +14,7 @@
  * Hemligheter: SHOPIFY_ADMIN_TOKEN och SHOPIFY_SHOP_DOMAIN — aldrig i koden.
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import {
-  SHOPIFY_API_VERSION,
-  configuredShop,
-  getAdminToken,
-  shopDomain,
-} from "../_shared/shopify-admin.ts";
+import { adminToken, listShops, resolveShop } from "../_shared/shopify-shops.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -40,8 +35,6 @@ function service(): SupabaseClient {
     { auth: { persistSession: false, autoRefreshToken: false } },
   );
 }
-
-const API_VERSION = SHOPIFY_API_VERSION;
 
 /** Nästa sida ur Shopifys Link-huvud (cursor-paginering). */
 function nextPageInfo(link: string | null): string | null {
@@ -75,18 +68,27 @@ Deno.serve(async (req) => {
   }
   const maxPages = Math.min(Math.max(Number(body?.max_pages ?? 10), 1), 50);
 
-  /* ---- Token: OAuth-token för butiken, annars äldre shpat_-hemlighet ---- */
-  const domain = shopDomain(body?.shop || configuredShop());
-  if (!domain) {
-    return json({ ok: false, error: "SHOPIFY_SHOP_DOMAIN måste finnas som hemlighet" }, 400);
+  /* ---- Vilken webbutik? Backfyllnaden körs alltid per butik ---- */
+  const shop = await resolveShop(db, { shop: body?.shop, shop_id: body?.shop_id });
+  if (!shop) {
+    const shops = await listShops(db);
+    return json(
+      {
+        ok: false,
+        error: "Ange vilken webbutik som ska backfyllas",
+        shops: shops.map((s) => ({ id: s.id, shop_domain: s.shop_domain, label: s.label })),
+      },
+      400,
+    );
   }
-  const token = await getAdminToken(db, domain);
+  const domain = shop.shop_domain;
+  const API_VERSION = shop.api_version;
+  const token = await adminToken(db, shop);
   if (!token) {
     return json(
       {
         ok: false,
-        error:
-          'Ingen Admin-token finns för butiken. Anslut Shopify via OAuth (knappen "Anslut Shopify") först.',
+        error: `Ingen Admin-token finns för ${shop.label}. Lägg hemligheten ${shop.admin_token_env}, eller anslut butiken via OAuth.`,
         needs_oauth: true,
       },
       400,
@@ -102,6 +104,8 @@ Deno.serve(async (req) => {
     errors: 0,
     unsorted: 0,
     pages: 0,
+    shop: domain,
+    shop_label: shop.label,
     messages: [] as string[],
   };
 
@@ -160,6 +164,7 @@ Deno.serve(async (req) => {
           .select("id")
           .eq("shopify_order_id", shopifyOrderId)
           .eq("topic", "orders/create")
+          .eq("shop_domain", domain)
           .in("status", ["skapad", "duplikat", "osorterad", "avbokad", "avbokad_larm"])
           .limit(1);
         if ((existing || []).length) {
@@ -178,6 +183,8 @@ Deno.serve(async (req) => {
             payload: order,
             shopify_order_id: shopifyOrderId,
             shopify_order_number: order?.name ?? order?.order_number ?? null,
+            shop_domain: domain,
+            shop_id: shop.id,
           })
           .select("id")
           .single();
