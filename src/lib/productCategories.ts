@@ -17,6 +17,7 @@ export const PRODUCT_CATEGORIES = [
   "Frys",
   "Emballage & Förbrukning",
   "Råvaror & Storhushåll",
+  "Svenska specerivaror",
 ] as const;
 
 export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number];
@@ -52,6 +53,7 @@ export const CATEGORY_SKU_PREFIX: Record<string, string> = {
   Frys: "FR",
   "Emballage & Förbrukning": "EM",
   "Råvaror & Storhushåll": "RÅ",
+  "Svenska specerivaror": "SV",
 };
 
 export function isDeprecatedCategory(name: string | null | undefined): boolean {
