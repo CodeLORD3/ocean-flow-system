@@ -62,35 +62,98 @@ export async function salesLocation(db: SupabaseClient, storeId: string): Promis
   return (data?.id as string) ?? null;
 }
 
-type Match = { productId: string | null; unit: string | null; sku: string | null; matchedBy: string };
+type Match = {
+  productId: string | null;
+  unit: string | null;
+  sku: string | null;
+  matchedBy: string;
+  notStocked: boolean;
+};
 
-/** Bekräftad namnmappning vinner, annars exakt produktnamn. Aldrig gissning. */
-async function matchByName(
+const nameKey = (v: string) => v.replace(/\s+/g, " ").trim().toLowerCase();
+
+/** Kassans egna artikelnummer (SumUp exponerar dem olika beroende på endpoint). */
+function lineSku(raw: any): string | null {
+  const c = [raw?.sku, raw?.item_sku, raw?.reference, raw?.item?.sku, raw?.product?.sku];
+  for (const v of c) {
+    const s = v == null ? "" : String(v).trim();
+    if (s) return s;
+  }
+  return null;
+}
+
+async function byProductId(db: SupabaseClient, productId: string, matchedBy: string, unit?: string | null) {
+  const { data: p } = await db
+    .from("products")
+    .select("id, sku, unit")
+    .eq("id", productId)
+    .maybeSingle();
+  return {
+    productId,
+    unit: unit ?? (p?.unit as string) ?? null,
+    sku: (p?.sku as string) ?? null,
+    matchedBy,
+    notStocked: false,
+  } satisfies Match;
+}
+
+/**
+ * Matchningsordning: kassans SKU på raden → bekräftad namnmappning (nytt tyskt
+ * standardnamn eller gammalt kassanamn, båda ligger i tabellen) → exakt
+ * produktnamn. Rader flaggade "ej lagerförd" bokförs som försäljning utan
+ * lagerrörelse och hamnar inte i granskningsvyn.
+ */
+async function matchLine(
   db: SupabaseClient,
   merchantCode: string,
   cleanName: string,
+  rawSku: string | null,
 ): Promise<Match> {
-  const key = cleanName.trim().toLowerCase();
-  if (!key) return { productId: null, unit: null, sku: null, matchedBy: "tomt_namn" };
+  const none = (matchedBy: string): Match => ({
+    productId: null,
+    unit: null,
+    sku: null,
+    matchedBy,
+    notStocked: false,
+  });
 
-  const { data: mapped } = await db
-    .from("sumup_product_map")
-    .select("product_id, unit, merchant_code")
-    .eq("external_name_key", key)
-    .limit(3);
-  const hit = mapped?.find((m: any) => m.merchant_code === merchantCode) ?? mapped?.[0];
-  if (hit?.product_id) {
+  if (rawSku) {
     const { data: p } = await db
       .from("products")
       .select("id, sku, unit")
-      .eq("id", hit.product_id)
+      .eq("sku", rawSku)
       .maybeSingle();
-    return {
-      productId: hit.product_id as string,
-      unit: (p?.unit as string) ?? hit.unit ?? null,
-      sku: (p?.sku as string) ?? null,
-      matchedBy: "mappning",
-    };
+    if (p?.id) return await byProductId(db, p.id as string, "sku");
+  }
+
+  const key = nameKey(cleanName);
+  if (!key) return none("tomt_namn");
+
+  const { data: mapped } = await db
+    .from("sumup_product_map")
+    .select("product_id, unit, merchant_code, external_sku, erp_name, not_stocked")
+    .eq("external_name_key", key)
+    .limit(3);
+  const hit = mapped?.find((m: any) => m.merchant_code === merchantCode) ?? mapped?.[0];
+
+  if (hit?.not_stocked && !hit?.product_id) {
+    return { productId: null, unit: null, sku: hit.external_sku ?? null, matchedBy: "ej_lagerford", notStocked: true };
+  }
+  if (hit?.product_id) {
+    return await byProductId(
+      db,
+      hit.product_id as string,
+      hit.erp_name ? "mappning_katalog" : "mappning",
+      hit.unit ?? null,
+    );
+  }
+  if (hit?.external_sku) {
+    const { data: p } = await db
+      .from("products")
+      .select("id, sku, unit")
+      .eq("sku", hit.external_sku)
+      .maybeSingle();
+    if (p?.id) return await byProductId(db, p.id as string, "mappning_sku", hit.unit ?? null);
   }
 
   const { data: exact } = await db
@@ -106,9 +169,10 @@ async function matchByName(
       unit: (exact.unit as string) ?? null,
       sku: (exact.sku as string) ?? null,
       matchedBy: "namn",
+      notStocked: false,
     };
   }
-  return { productId: null, unit: null, sku: null, matchedBy: "omatchad" };
+  return none("omatchad");
 }
 
 /** Räknar upp omatchat namn så granskningsvyn kan prioritera. */
