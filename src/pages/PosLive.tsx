@@ -29,6 +29,7 @@ import { PosReceiptList } from "@/components/poslive/PosReceiptList";
 import { NimposProductMapping, NimposStoreMapping } from "@/components/poslive/NimposMappingPanel";
 import { SumupHealthCard } from "@/components/poslive/SumupHealthCard";
 import { SumupProductMapping } from "@/components/poslive/SumupProductMapping";
+import { SumupLineReview } from "@/components/poslive/SumupLineReview";
 import { PosHealthCard } from "@/components/poslive/PosHealthCard";
 import { PosLineReview } from "@/components/poslive/PosLineReview";
 import { PosPricePanel } from "@/components/poslive/PosPricePanel";
@@ -83,16 +84,42 @@ export default function PosLive() {
   const { data: problems = [] } = useNimposEvents("problem");
 
   const storeName = (id: string | null) => stores.find((s) => s.id === id)?.name ?? "—";
+  const currencyOf = (id: string) =>
+    ((stores.find((s) => s.id === id) as any)?.currency ?? "SEK").toUpperCase();
 
-  const totals = useMemo(() => {
+  /**
+   * Valutor blandas aldrig: totalerna räknas per valuta. Utan vald butik visas
+   * hemvalutan (SEK) och butiker i annan valuta (Zollikon, CHF) får en egen rad.
+   */
+  const sums = useMemo(() => {
     const rows = (summary?.stores ?? []).filter((s) => !storeId || s.store_id === storeId);
-    const gross = rows.reduce((s, r) => s + r.summary.gross_sales, 0);
-    const net = rows.reduce((s, r) => s + r.summary.net_sales, 0);
-    const count = rows.reduce((s, r) => s + r.summary.receipt_count, 0);
-    const returns = rows.reduce((s, r) => s + r.summary.return_count, 0);
-    const largest = Math.max(0, ...rows.map((r) => r.summary.largest_sale));
-    return { gross, net, count, returns, largest, avg: count ? gross / count : 0 };
-  }, [summary, storeId]);
+    const byCurrency = new Map<string, typeof rows>();
+    for (const r of rows) {
+      const cur = currencyOf(r.store_id);
+      byCurrency.set(cur, [...(byCurrency.get(cur) ?? []), r]);
+    }
+    const total = (list: typeof rows) => {
+      const gross = list.reduce((s, r) => s + r.summary.gross_sales, 0);
+      const net = list.reduce((s, r) => s + r.summary.net_sales, 0);
+      const count = list.reduce((s, r) => s + r.summary.receipt_count, 0);
+      const returns = list.reduce((s, r) => s + r.summary.return_count, 0);
+      const largest = Math.max(0, ...list.map((r) => r.summary.largest_sale));
+      return { gross, net, count, returns, largest, avg: count ? gross / count : 0 };
+    };
+    return [...byCurrency.entries()]
+      .sort(([a], [b]) => (a === "SEK" ? -1 : b === "SEK" ? 1 : a.localeCompare(b)))
+      .map(([currency, list]) => ({ currency, ...total(list) }));
+  }, [summary, storeId, stores]);
+
+  const totals = sums[0] ?? {
+    currency: "SEK",
+    gross: 0,
+    net: 0,
+    count: 0,
+    returns: 0,
+    largest: 0,
+    avg: 0,
+  };
 
   const ops = summary?.ops;
   const opsIssues = (ops?.failed ?? 0) + (ops?.unmapped ?? 0) + (ops?.unmatched_products ?? 0);
@@ -150,13 +177,28 @@ export default function PosLive() {
         </TabsList>
 
         <TabsContent value="live" className="space-y-4 mt-4">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-            <Kpi icon={TrendingUp} label="Brutto" value={`${kr(totals.gross)} kr`} />
-            <Kpi icon={CreditCard} label="Netto (ex moms)" value={`${kr(totals.net)} kr`} />
-            <Kpi icon={ShoppingBag} label="Antal köp" value={String(totals.count)} hint={`${totals.returns} returer`} />
-            <Kpi icon={Receipt} label="Snittköp" value={`${kr(totals.avg)} kr`} />
-            <Kpi icon={Activity} label="Största köp" value={`${kr(totals.largest)} kr`} />
-          </div>
+          {(sums.length ? sums : [totals]).map((t) => {
+            const cur = t.currency === "SEK" ? "kr" : t.currency;
+            return (
+              <div key={t.currency} className="space-y-1">
+                {sums.length > 1 && (
+                  <p className="text-[11px] text-muted-foreground">Totalt i {t.currency}</p>
+                )}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                  <Kpi icon={TrendingUp} label="Brutto" value={`${kr(t.gross)} ${cur}`} />
+                  <Kpi icon={CreditCard} label="Netto (ex moms)" value={`${kr(t.net)} ${cur}`} />
+                  <Kpi
+                    icon={ShoppingBag}
+                    label="Antal köp"
+                    value={String(t.count)}
+                    hint={`${t.returns} returer`}
+                  />
+                  <Kpi icon={Receipt} label="Snittköp" value={`${kr(t.avg)} ${cur}`} />
+                  <Kpi icon={Activity} label="Största köp" value={`${kr(t.largest)} ${cur}`} />
+                </div>
+              </div>
+            );
+          })}
 
           <Card className="shadow-card">
             <CardHeader className="pb-2">
@@ -193,6 +235,7 @@ export default function PosLive() {
                   key={s.store_id}
                   name={s.name}
                   summary={s.summary}
+                  currency={currencyOf(s.store_id)}
                   isToday={isToday}
                   selected={storeId === s.store_id}
                   onSelect={() => setStoreId(storeId === s.store_id ? null : s.store_id)}
@@ -220,6 +263,7 @@ export default function PosLive() {
           <NimposStoreMapping />
           <NimposProductMapping />
           <SumupProductMapping />
+          <SumupLineReview />
         </TabsContent>
 
         <TabsContent value="prices" className="mt-4">

@@ -8921,6 +8921,63 @@ export type Database = {
           },
         ]
       }
+      sumup_reconciliations: {
+        Row: {
+          created_at: string
+          currency: string
+          diff_minor: number
+          id: string
+          local_count: number
+          local_total_minor: number
+          merchant_code: string
+          message: string | null
+          missing_external_ids: Json
+          receipt_filled_count: number
+          recon_date: string
+          refetched_count: number
+          status: string
+          sumup_count: number
+          sumup_total_minor: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          diff_minor?: number
+          id?: string
+          local_count?: number
+          local_total_minor?: number
+          merchant_code: string
+          message?: string | null
+          missing_external_ids?: Json
+          receipt_filled_count?: number
+          recon_date: string
+          refetched_count?: number
+          status?: string
+          sumup_count?: number
+          sumup_total_minor?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          diff_minor?: number
+          id?: string
+          local_count?: number
+          local_total_minor?: number
+          merchant_code?: string
+          message?: string | null
+          missing_external_ids?: Json
+          receipt_filled_count?: number
+          recon_date?: string
+          refetched_count?: number
+          status?: string
+          sumup_count?: number
+          sumup_total_minor?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       supplier_article_map: {
         Row: {
           created_at: string

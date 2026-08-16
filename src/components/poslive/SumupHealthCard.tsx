@@ -5,7 +5,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { isOpenNow, useSumupHealth, useSumupPoll, useSumupProbe } from "@/hooks/useSumupHealth";
+import {
+  isOpenNow,
+  useSumupHealth,
+  useSumupPoll,
+  useSumupProbe,
+  useSumupProcess,
+  useSumupReconcile,
+  useSumupReconciliations,
+} from "@/hooks/useSumupHealth";
 
 const fmtTime = (v: string | null) =>
   v
@@ -29,6 +37,9 @@ export function SumupHealthCard() {
   const { data, isLoading, refetch, isFetching } = useSumupHealth();
   const poll = useSumupPoll();
   const probe = useSumupProbe();
+  const process = useSumupProcess();
+  const reconcile = useSumupReconcile();
+  const { data: recons } = useSumupReconciliations();
   const [txId, setTxId] = useState("");
   const [raw, setRaw] = useState<string | null>(null);
 
@@ -59,8 +70,21 @@ export function SumupHealthCard() {
         });
       }
     }
+    if ((data?.queue.fel ?? 0) > 0) {
+      list.push({
+        code: "queue-fel",
+        text: `${data?.queue.fel} kvitton kunde inte bearbetas — se felkön nedan`,
+      });
+    }
+    const latest = recons?.[0];
+    if (latest && latest.status !== "ok") {
+      list.push({
+        code: `recon-${latest.recon_date}`,
+        text: `Avstämningen ${latest.recon_date} visar avvikelse — ${latest.message ?? ""}`,
+      });
+    }
     return list;
-  }, [merchants, hours]);
+  }, [merchants, hours, data?.queue.fel, recons]);
 
   const runPoll = async (code?: string) => {
     try {
@@ -69,6 +93,31 @@ export function SumupHealthCard() {
       toast.success(`Hämtning klar — ${queued} nya kvitton i kön`);
     } catch (e: any) {
       toast.error(e.message ?? "Hämtningen misslyckades");
+    }
+  };
+
+  const runProcess = async () => {
+    try {
+      const res = await process.mutateAsync(undefined);
+      toast.success(
+        `Bearbetning klar — ${res.bearbetade} kvitton, ${res.rorelser} lagerrörelser${
+          res.omatchade ? `, ${res.omatchade} omatchade rader` : ""
+        }`,
+      );
+    } catch (e: any) {
+      toast.error(e.message ?? "Bearbetningen misslyckades");
+    }
+  };
+
+  const runReconcile = async () => {
+    try {
+      const res = await reconcile.mutateAsync({});
+      const bad = (res?.results ?? []).filter((r) => r.status !== "ok").length;
+      toast[bad ? "warning" : "success"](
+        bad ? `Avstämning klar med ${bad} avvikelse(r)` : `Avstämning klar för ${res.date}`,
+      );
+    } catch (e: any) {
+      toast.error(e.message ?? "Avstämningen misslyckades");
     }
   };
 
@@ -108,6 +157,24 @@ export function SumupHealthCard() {
             disabled={poll.isPending}
           >
             Hämta nu
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7"
+            onClick={runProcess}
+            disabled={process.isPending}
+          >
+            Bearbeta kön
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7"
+            onClick={runReconcile}
+            disabled={reconcile.isPending}
+          >
+            Avstäm i natt
           </Button>
           <Button
             size="icon"
@@ -169,6 +236,35 @@ export function SumupHealthCard() {
           <span>Fel: {data?.queue.fel ?? 0}</span>
           <span>Omatchade artikelnamn: {data?.unmatched.length ?? 0}</span>
         </div>
+
+        {(recons ?? []).length > 0 && (
+          <div className="space-y-0.5 border-t border-border/60 pt-2">
+            <div className="font-medium">Nattavstämning</div>
+            {(recons ?? []).map((r) => (
+              <div
+                key={r.id}
+                className="flex items-center justify-between gap-2 tabular-nums text-muted-foreground"
+              >
+                <span className="font-mono">{r.recon_date}</span>
+                <span>
+                  SumUp {r.sumup_count} ({(r.sumup_total_minor / 100).toFixed(2)} {r.currency})
+                </span>
+                <span>
+                  Makrilltrade {r.local_count} ({(r.local_total_minor / 100).toFixed(2)} {r.currency}
+                  )
+                </span>
+                <Badge
+                  variant={r.status === "ok" ? "outline" : "destructive"}
+                  className="h-5 shrink-0"
+                >
+                  {r.status === "ok" ? "ok" : `diff ${(r.diff_minor / 100).toFixed(2)}`}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        )}
+
+
 
         <div className="space-y-1.5 border-t border-border/60 pt-2">
           <div className="flex items-center gap-1.5 font-medium">
