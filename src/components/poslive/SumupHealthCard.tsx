@@ -159,6 +159,24 @@ export function SumupHealthCard() {
             Hämta nu
           </Button>
           <Button
+            size="sm"
+            variant="ghost"
+            className="h-7"
+            onClick={runProcess}
+            disabled={process.isPending}
+          >
+            Bearbeta kön
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7"
+            onClick={runReconcile}
+            disabled={reconcile.isPending}
+          >
+            Avstäm i natt
+          </Button>
+          <Button
             size="icon"
             variant="ghost"
             className="h-7 w-7"
