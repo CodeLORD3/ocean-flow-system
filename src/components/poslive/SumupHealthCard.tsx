@@ -69,6 +69,16 @@ export function SumupHealthCard() {
           }`,
         });
       }
+      const b = data?.basketToday?.[m.store_id];
+      if (b && b.total >= 5 && b.withItems / b.total < 0.8) {
+        list.push({
+          code: `basket-${m.merchant_code}`,
+          text: `Bara ${b.withItems} av ${b.total} kvitton idag (${Math.round(
+            (b.withItems / b.total) * 100,
+          )} %) har artikelrader — butiken slår in belopp utan artiklar, lagret dras inte`,
+        });
+      }
+
     }
     if ((data?.queue.fel ?? 0) > 0) {
       list.push({
