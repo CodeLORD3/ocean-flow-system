@@ -1,0 +1,1 @@
+update public.shopify_shops set shop_domain = 'iqnb3f-ga.myshopify.com', updated_at = now() where id = 'b633ee63-d74e-4f11-84a8-a0e786465a02';
