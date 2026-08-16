@@ -91,6 +91,8 @@ export type PosTransaction = {
   external_cashier: string | null;
   external_register: string | null;
   vat_breakdown: any;
+  test_mode?: boolean;
+  type?: string | null;
 };
 
 /** Senaste kvitton (live-lista). */
