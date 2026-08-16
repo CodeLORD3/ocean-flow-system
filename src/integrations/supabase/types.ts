@@ -5547,7 +5547,7 @@ export type Database = {
             foreignKeyName: "pos_transaction_items_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
-            referencedRelation: "pos_products"
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
           {
@@ -8940,11 +8940,15 @@ export type Database = {
         Row: {
           confirmed_by: string | null
           created_at: string
+          erp_name: string | null
           external_name: string
           external_name_key: string | null
+          external_sku: string | null
           id: string
           last_seen_at: string
           merchant_code: string | null
+          not_stocked: boolean
+          pos_category: string | null
           product_id: string | null
           unit: string | null
           unmatched_count: number
@@ -8953,11 +8957,15 @@ export type Database = {
         Insert: {
           confirmed_by?: string | null
           created_at?: string
+          erp_name?: string | null
           external_name: string
           external_name_key?: string | null
+          external_sku?: string | null
           id?: string
           last_seen_at?: string
           merchant_code?: string | null
+          not_stocked?: boolean
+          pos_category?: string | null
           product_id?: string | null
           unit?: string | null
           unmatched_count?: number
@@ -8966,11 +8974,15 @@ export type Database = {
         Update: {
           confirmed_by?: string | null
           created_at?: string
+          erp_name?: string | null
           external_name?: string
           external_name_key?: string | null
+          external_sku?: string | null
           id?: string
           last_seen_at?: string
           merchant_code?: string | null
+          not_stocked?: boolean
+          pos_category?: string | null
           product_id?: string | null
           unit?: string | null
           unmatched_count?: number
@@ -10726,6 +10738,7 @@ export type Database = {
       species_key: { Args: { v: string }; Returns: string }
       staff_has_store: { Args: { _store: string }; Returns: boolean }
       stock_reconciliation_check: { Args: { _source?: string }; Returns: Json }
+      sumup_name_key: { Args: { _name: string }; Returns: string }
       unpost_purchase_report: { Args: { _report_id: string }; Returns: Json }
       user_company_ids: { Args: { _user_id: string }; Returns: string[] }
       user_portals: { Args: { _user_id: string }; Returns: string[] }

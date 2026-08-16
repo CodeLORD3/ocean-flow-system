@@ -62,35 +62,108 @@ export async function salesLocation(db: SupabaseClient, storeId: string): Promis
   return (data?.id as string) ?? null;
 }
 
-type Match = { productId: string | null; unit: string | null; sku: string | null; matchedBy: string };
+/** Systemets betalsättskoder är svenska; SumUps engelska koder mappas hit. */
+const PAYMENT_CODE: Record<string, string> = {
+  cash: "kontant",
+  card: "kort",
+  twint: "twint",
+  invoice: "faktura",
+  other: "ovrigt",
+};
+const paymentCode = (raw?: string) => PAYMENT_CODE[normalizePayment(raw)] ?? "ovrigt";
 
-/** Bekräftad namnmappning vinner, annars exakt produktnamn. Aldrig gissning. */
-async function matchByName(
+type Match = {
+  productId: string | null;
+  unit: string | null;
+  sku: string | null;
+  matchedBy: string;
+  notStocked: boolean;
+};
+
+const nameKey = (v: string) => v.replace(/\s+/g, " ").trim().toLowerCase();
+
+/** Kassans egna artikelnummer (SumUp exponerar dem olika beroende på endpoint). */
+function lineSku(raw: any): string | null {
+  const c = [raw?.sku, raw?.item_sku, raw?.reference, raw?.item?.sku, raw?.product?.sku];
+  for (const v of c) {
+    const s = v == null ? "" : String(v).trim();
+    if (s) return s;
+  }
+  return null;
+}
+
+async function byProductId(db: SupabaseClient, productId: string, matchedBy: string, unit?: string | null) {
+  const { data: p } = await db
+    .from("products")
+    .select("id, sku, unit")
+    .eq("id", productId)
+    .maybeSingle();
+  return {
+    productId,
+    unit: unit ?? (p?.unit as string) ?? null,
+    sku: (p?.sku as string) ?? null,
+    matchedBy,
+    notStocked: false,
+  } satisfies Match;
+}
+
+/**
+ * Matchningsordning: kassans SKU på raden → bekräftad namnmappning (nytt tyskt
+ * standardnamn eller gammalt kassanamn, båda ligger i tabellen) → exakt
+ * produktnamn. Rader flaggade "ej lagerförd" bokförs som försäljning utan
+ * lagerrörelse och hamnar inte i granskningsvyn.
+ */
+async function matchLine(
   db: SupabaseClient,
   merchantCode: string,
   cleanName: string,
+  rawSku: string | null,
 ): Promise<Match> {
-  const key = cleanName.trim().toLowerCase();
-  if (!key) return { productId: null, unit: null, sku: null, matchedBy: "tomt_namn" };
+  const none = (matchedBy: string): Match => ({
+    productId: null,
+    unit: null,
+    sku: null,
+    matchedBy,
+    notStocked: false,
+  });
 
-  const { data: mapped } = await db
-    .from("sumup_product_map")
-    .select("product_id, unit, merchant_code")
-    .eq("external_name_key", key)
-    .limit(3);
-  const hit = mapped?.find((m: any) => m.merchant_code === merchantCode) ?? mapped?.[0];
-  if (hit?.product_id) {
+  if (rawSku) {
     const { data: p } = await db
       .from("products")
       .select("id, sku, unit")
-      .eq("id", hit.product_id)
+      .eq("sku", rawSku)
       .maybeSingle();
-    return {
-      productId: hit.product_id as string,
-      unit: (p?.unit as string) ?? hit.unit ?? null,
-      sku: (p?.sku as string) ?? null,
-      matchedBy: "mappning",
-    };
+    if (p?.id) return await byProductId(db, p.id as string, "sku");
+  }
+
+  const key = nameKey(cleanName);
+  if (!key) return none("tomt_namn");
+
+  const { data: mapped } = await db
+    .from("sumup_product_map")
+    .select("product_id, unit, merchant_code, external_sku, erp_name, not_stocked")
+    .eq("external_name_key", key)
+    .limit(3);
+  const hit = mapped?.find((m: any) => m.merchant_code === merchantCode) ?? mapped?.[0];
+
+  if (hit?.not_stocked && !hit?.product_id) {
+    return { productId: null, unit: null, sku: hit.external_sku ?? null, matchedBy: "ej_lagerford", notStocked: true };
+  }
+  if (hit?.product_id) {
+    return await byProductId(
+      db,
+      hit.product_id as string,
+      hit.erp_name ? "mappning_katalog" : "mappning",
+      hit.unit ?? null,
+    );
+  }
+  if (hit?.external_sku) {
+    const { data: p } = await db
+      .from("products")
+      .select("id, sku, unit")
+      .eq("sku", hit.external_sku)
+      .maybeSingle();
+    if (p?.id) return await byProductId(db, p.id as string, "mappning_sku", hit.unit ?? null);
   }
 
   const { data: exact } = await db
@@ -106,9 +179,10 @@ async function matchByName(
       unit: (exact.unit as string) ?? null,
       sku: (exact.sku as string) ?? null,
       matchedBy: "namn",
+      notStocked: false,
     };
   }
-  return { productId: null, unit: null, sku: null, matchedBy: "omatchad" };
+  return none("omatchad");
 }
 
 /** Räknar upp omatchat namn så granskningsvyn kan prioritera. */
@@ -294,6 +368,7 @@ export type ProcessResult = {
   movements?: number;
   unmatched?: number;
   unknown_quantity?: number;
+  not_stocked?: number;
   message?: string;
 };
 
@@ -302,7 +377,16 @@ export async function processSumupEvent(
   ev: SumupEventRow,
   m: SumupMerchantRow,
 ): Promise<ProcessResult> {
+  // Sätts när kvittohuvudet skapats, så en halvfärdig bokföring kan rullas
+  // tillbaka i stället för att blockera omkörningen som "duplikat".
+  let createdTxId: string | null = null;
+
   const fail = async (message: string): Promise<ProcessResult> => {
+    if (createdTxId) {
+      await db.from("stock_movements").delete().eq("reference_id", createdTxId);
+      await db.from("pos_transaction_items").delete().eq("transaction_id", createdTxId);
+      await db.from("pos_transactions").delete().eq("id", createdTxId);
+    }
     await db
       .from("sumup_events")
       .update({ status: "fel", last_error: message.slice(0, 400) })
@@ -390,10 +474,10 @@ export async function processSumupEvent(
         status: isReturn ? "reversed" : "completed",
         total_ore: sign * Math.abs(majorToMinor(payload?.amount)),
         vat_breakdown: vatBreakdown(payload),
-        payment_method: normalizePayment(payload?.payment_type ?? payload?.card?.type),
+        payment_method: paymentCode(payload?.payment_type ?? payload?.card?.type),
         payment_details: [
           {
-            method: normalizePayment(payload?.payment_type ?? payload?.card?.type),
+            method: paymentCode(payload?.payment_type ?? payload?.card?.type),
             amount_minor: sign * Math.abs(majorToMinor(payload?.amount)),
             currency,
           },
@@ -404,11 +488,19 @@ export async function processSumupEvent(
       .select("id")
       .single();
     if (txErr) throw txErr;
+    createdTxId = tx.id as string;
 
     const locationId = await salesLocation(db, m.store_id);
-    const products: any[] = Array.isArray(payload?.products) ? payload.products : [];
+    // Transaktionslistan saknar ibland artikelnamn — kvittot har dem.
+    const txProducts: any[] = Array.isArray(payload?.products) ? payload.products : [];
+    const receiptProducts: any[] = Array.isArray(ev.receipt_payload?.transaction_data?.products)
+      ? ev.receipt_payload.transaction_data.products
+      : [];
+    const hasNames = (rows: any[]) => rows.some((p) => String(p?.name ?? p?.description ?? "").trim());
+    const products: any[] = hasNames(txProducts) || !hasNames(receiptProducts) ? txProducts : receiptProducts;
     let unmatched = 0;
     let unknownQty = 0;
+    let notStocked = 0;
     let movementCount = 0;
     let lineNo = 0;
 
@@ -417,21 +509,28 @@ export async function processSumupEvent(
       const rawName = String(raw?.name ?? raw?.description ?? "").trim();
       const named = parseNameWeight(rawName);
       const cleanName = named?.cleanName ?? rawName;
-      const match = await matchByName(db, m.merchant_code, cleanName);
-      if (!match.productId) {
+      const match = await matchLine(db, m.merchant_code, cleanName, lineSku(raw));
+      if (!match.productId && !match.notStocked && match.matchedBy !== "tomt_namn") {
         unmatched += 1;
         await bumpUnmatched(db, m.merchant_code, cleanName);
       }
+      if (match.notStocked) notStocked += 1;
 
       const isWeightItem = (match.unit ?? (named ? "kg" : "st")).toLowerCase().startsWith("kg");
       const line = interpretLine(raw, { isWeightItem });
-      if (line.quantitySource === "okand") unknownQty += 1;
+      if (line.quantitySource === "okand" && match.productId) unknownQty += 1;
 
-      const reviewStatus = !match.productId
-        ? "unmatched"
-        : line.quantitySource === "okand"
-          ? "unknown_quantity"
-          : "ok";
+      // Terminalsalg utan varukorg (kortköp där kassan bara skickar belopp) är
+      // inget att granska — de får egen status och hamnar utanför granskningsvyn.
+      const reviewStatus = match.matchedBy === "tomt_namn"
+        ? "utan_artikelrader"
+        : match.notStocked
+        ? "not_stocked"
+        : !match.productId
+          ? "unmatched"
+          : line.quantitySource === "okand"
+            ? "unknown_quantity"
+            : "ok";
 
       const { data: item, error: itemErr } = await db
         .from("pos_transaction_items")
@@ -519,6 +618,7 @@ export async function processSumupEvent(
       movements: movementCount,
       unmatched,
       unknown_quantity: unknownQty,
+      not_stocked: notStocked,
       message: problems.length ? problems.join(", ") : undefined,
     };
   } catch (e: any) {
