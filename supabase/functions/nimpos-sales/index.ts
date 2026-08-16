@@ -157,12 +157,19 @@ async function mapProduct(
   // Omatchad: registrera för manuell koppling i /pos-live
   if (sku || barcode) {
     if (map.data?.id) {
-      await db.rpc("noop").catch(() => {});
+      const { data: cur } = await db
+        .from("nimpos_product_map")
+        .select("unmatched_count")
+        .eq("id", map.data.id)
+        .maybeSingle();
       await db
         .from("nimpos_product_map")
-        .update({ last_seen_at: new Date().toISOString(), external_name: name ?? null })
+        .update({
+          last_seen_at: new Date().toISOString(),
+          external_name: name ?? null,
+          unmatched_count: (cur?.unmatched_count ?? 0) + 1,
+        })
         .eq("id", map.data.id);
-      await db.rpc("nimpos_bump_unmatched", { _id: map.data.id }).catch(() => {});
     } else {
       await db.from("nimpos_product_map").insert({
         external_sku: sku ?? null,
