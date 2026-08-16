@@ -27,6 +27,7 @@ import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { StaffDetailDialog } from "@/components/staff/StaffDetailDialog";
 import { StaffAccessDialog, PORTAL_OPTIONS } from "@/components/staff/StaffAccessDialog";
+import { roleLabel } from "@/lib/roles";
 import { StoreStaffDialog } from "@/components/staff/StoreStaffDialog";
 import { Badge } from "@/components/ui/badge";
 import { Activity, ShieldCheck, KeyRound, Loader2 } from "lucide-react";
