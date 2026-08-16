@@ -369,6 +369,20 @@ export default function ShopifyWebhookStatus() {
                   size="sm"
                   variant="outline"
                   className="h-6 text-xs"
+                  disabled={busy === `oauth:${sh.shop_domain}`}
+                  onClick={() => connect(sh.shop_domain)}
+                >
+                  <Link2
+                    className={`mr-1 h-3 w-3 ${
+                      busy === `oauth:${sh.shop_domain}` ? "animate-pulse" : ""
+                    }`}
+                  />
+                  Anslut
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-6 text-xs"
                   disabled={busy === `backfill:${sh.shop_domain}`}
                   onClick={() => backfill(sh.shop_domain)}
                 >
