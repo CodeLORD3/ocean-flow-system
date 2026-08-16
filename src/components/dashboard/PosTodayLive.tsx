@@ -21,15 +21,20 @@ export function PosTodayLive({ storeId }: { storeId: string | null }) {
   const { data: storeSummary } = usePosDaySummary(storeId, date);
   const { data: liveAll } = usePosLiveSummary(storeId ? undefined : date);
 
-  const summary = storeId
-    ? storeSummary
-    : liveAll?.total ?? null;
+  const agg = (liveAll?.stores ?? []).reduce(
+    (a, s) => ({
+      gross: a.gross + (s.summary?.gross_sales ?? 0),
+      net: a.net + (s.summary?.net_sales ?? 0),
+      receipts: a.receipts + (s.summary?.receipt_count ?? 0),
+    }),
+    { gross: 0, net: 0, receipts: 0 },
+  );
 
-  const receipts = summary?.receipt_count ?? 0;
-  const gross = (summary?.gross_ore ?? 0) / 100;
-  const net = (summary?.net_ore ?? 0) / 100;
+  const receipts = storeId ? storeSummary?.receipt_count ?? 0 : agg.receipts;
+  const gross = storeId ? storeSummary?.gross_sales ?? 0 : agg.gross;
+  const net = storeId ? storeSummary?.net_sales ?? 0 : agg.net;
   const avg = receipts > 0 ? gross / receipts : 0;
-  const hours = (summary as any)?.hours ?? [];
+  const hours = liveAll?.hours ?? [];
 
   return (
     <Card className="shadow-card border-primary/30">
