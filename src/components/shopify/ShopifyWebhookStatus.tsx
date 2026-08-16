@@ -36,10 +36,25 @@ export default function ShopifyWebhookStatus() {
     queryFn: async () => {
       const { data, error } = await db
         .from("shopify_webhook_events")
-        .select("id, status, error, shopify_order_number, received_at, hmac_valid, attempts, customer_order_id")
+        .select("id, status, error, shopify_order_number, received_at, hmac_valid, attempts, customer_order_id, shop_domain")
         .in("status", ["fel", "koad", "bearbetar", "ogiltig_hmac", "osorterad", "avbokad_larm", "okand_topic"])
         .order("received_at", { ascending: false })
         .limit(50);
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+    refetchInterval: 60000,
+  });
+
+  /** Webbutikerna: en rad per Shopify-konto (Sverige, Schweiz, ...). */
+  const shops = useQuery({
+    queryKey: ["shopify_shops"],
+    queryFn: async () => {
+      const { data, error } = await db
+        .from("shopify_shops")
+        .select("id, shop_domain, label, currency, last_webhook_at, active")
+        .eq("active", true)
+        .order("label");
       if (error) throw error;
       return (data || []) as any[];
     },
@@ -96,10 +111,12 @@ export default function ShopifyWebhookStatus() {
   };
 
   /** Backfyllnad: hämtar öppna betalda ordrar från Shopify in i webhook-kön. */
-  const backfill = async () => {
-    setBusy("backfill");
+  const backfill = async (shopDomain?: string) => {
+    setBusy(`backfill:${shopDomain ?? "alla"}`);
     try {
-      const { data, error } = await supabase.functions.invoke("shopify-backfill", { body: {} });
+      const { data, error } = await supabase.functions.invoke("shopify-backfill", {
+        body: shopDomain ? { shop: shopDomain } : {},
+      });
       if (error) throw error;
       const r = data as any;
       if (r?.ok === false) {
@@ -112,7 +129,7 @@ export default function ShopifyWebhookStatus() {
       if (Array.isArray(r?.messages)) {
         for (const m of r.messages.slice(0, 5)) toast.warning(String(m));
       }
-      await Promise.all([events.refetch(), lastReceived.refetch()]);
+      await Promise.all([events.refetch(), lastReceived.refetch(), shops.refetch()]);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Backfyllnaden misslyckades");
     } finally {
@@ -196,15 +213,17 @@ export default function ShopifyWebhookStatus() {
             variant="outline"
             size="sm"
             className="h-6 text-xs"
-            disabled={busy === "backfill" || oauth.data?.connected === false}
+            disabled={busy?.startsWith("backfill") || oauth.data?.connected === false}
             title={
               oauth.data?.connected === false
                 ? "Anslut Shopify först — ingen Admin-token finns för butiken"
                 : undefined
             }
-            onClick={backfill}
+            onClick={() => backfill()}
           >
-            <DownloadCloud className={`mr-1 h-3 w-3 ${busy === "backfill" ? "animate-pulse" : ""}`} />
+            <DownloadCloud
+              className={`mr-1 h-3 w-3 ${busy?.startsWith("backfill") ? "animate-pulse" : ""}`}
+            />
             Hämta öppna ordrar från Shopify
           </Button>
 
