@@ -924,7 +924,7 @@ export default function Products() {
             <span className="!text-[11px] font-mono tabular-nums text-foreground">{fmtNum(Number(p.wholesale_price))}</span>
           )}
         </td>
-        {isWholesale && (
+        {isWholesale && showDetails && (
           <td className="px-2 py-0 align-middle text-right min-w-[64px]">
             {isAggregatedParent ? (
               <span className="!text-[11px] font-mono tabular-nums text-muted-foreground">
