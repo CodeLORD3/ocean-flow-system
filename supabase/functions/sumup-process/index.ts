@@ -71,6 +71,7 @@ Deno.serve(async (req) => {
       fel: results.filter((r) => r.status === "fel").length,
       rorelser: results.reduce((a, r) => a + (r.movements ?? 0), 0),
       omatchade: results.reduce((a, r) => a + (r.unmatched ?? 0), 0),
+      ej_lagerforda: results.reduce((a, r) => a + (r.not_stocked ?? 0), 0),
     };
     return json({ ok: true, ...summary, results });
   } catch (e: any) {
