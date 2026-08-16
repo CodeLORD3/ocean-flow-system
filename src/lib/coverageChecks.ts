@@ -351,7 +351,7 @@ export function checkDetailPrices(input: CoverageInput): CoverageFinding[] {
     if (productCost(p).source !== "missing") continue;
     out.push({
       check: "detail_prices",
-      severity: "info",
+      severity: "warning",
       group: p.species_group ?? key,
       subject: p.sku,
       message: `${p.name}: pris sätts vid inköp — inget referenspris ännu.`,
