@@ -229,8 +229,14 @@ export default function ProductImportDialog({ open, onOpenChange }: Props) {
             null
           : existingBySku.get(d.row.sku.toLowerCase())?.supplier_id ?? null;
 
-        return { ...payload, supplier_id: supplierId, parent_product_id: parentId };
+        // Ett importerat verkligt reservpris ersätter platshållarpriset (1 kr),
+        // annars flaggas produkten som prislös i datakvalitetskontrollen.
+        const importedCost = Number((payload as any).cost_price ?? 0);
+        const sourcePatch = importedCost > 1 ? { cost_price_source: "import" } : {};
+
+        return { ...payload, ...sourcePatch, supplier_id: supplierId, parent_product_id: parentId };
       };
+
 
       const chunk = <T,>(arr: T[], size: number): T[][] => {
         const out: T[][] = [];
