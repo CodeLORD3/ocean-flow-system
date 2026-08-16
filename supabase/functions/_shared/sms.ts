@@ -50,8 +50,15 @@ export async function sendSms(
     return { ok: true, testMode: true };
   }
 
-  const user = Deno.env.get("ELKS_API_USERNAME")!;
-  const pass = Deno.env.get("ELKS_API_PASSWORD")!;
+  // Klipp bort radbrytningar och blanksteg — klistrade nycklar får ofta med sådant,
+  // och 46elks svarar då att Basic-autentiseringen saknas.
+  const user = (Deno.env.get("ELKS_API_USERNAME") ?? "").trim();
+  const pass = (Deno.env.get("ELKS_API_PASSWORD") ?? "").trim();
+  if (!user || !pass) {
+    const msg = `46elks-uppgifter saknas (användare ${user.length} tecken, lösenord ${pass.length} tecken)`;
+    await db.from("sms_log").insert({ ...base, status: "fel", error: msg });
+    return { ok: false, testMode: false, error: msg };
+  }
   try {
     const res = await fetch("https://api.46elks.com/a1/SMS", {
       method: "POST",
