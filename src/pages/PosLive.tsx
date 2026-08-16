@@ -86,8 +86,14 @@ export default function PosLive() {
   const { data: problems = [] } = useNimposEvents("problem");
 
   const storeName = (id: string | null) => stores.find((s) => s.id === id)?.name ?? "—";
+  // Valutan kommer från livesammanställningen (butikens valuta i databasen) så
+  // Zollikon alltid redovisas i CHF, även för användare som ser få butiker.
   const currencyOf = (id: string) =>
-    ((stores.find((s) => s.id === id) as any)?.currency ?? "SEK").toUpperCase();
+    (
+      (summary?.stores ?? []).find((s) => s.store_id === id)?.currency ??
+      (stores.find((s) => s.id === id) as any)?.currency ??
+      "SEK"
+    ).toUpperCase();
 
   /**
    * Valutor blandas aldrig: totalerna räknas per valuta. Utan vald butik visas
