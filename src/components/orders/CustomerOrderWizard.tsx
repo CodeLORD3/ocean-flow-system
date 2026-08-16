@@ -100,7 +100,7 @@ export function CustomerOrderWizard({
   const { activeUser } = useActiveUser();
   const { staff } = useStaffAuth();
   const { data: products = [] } = useProducts();
-  const { isCategoryVisible } = useCategoryVisibility(pickupStoreId ?? storeId);
+  const { isCategoryVisible } = useCategoryVisibility(storeId);
   const { data: stores = [] } = useStores();
   const createOrder = useCreateCustomerOrder();
 
