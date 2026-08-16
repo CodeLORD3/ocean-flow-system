@@ -970,6 +970,7 @@ export default function Products() {
 
 
         {/* Barcode */}
+        {showDetails && (
         <td className="px-2 py-0 align-middle">
           {barcode ? (
             <div className="flex items-center gap-1.5">
