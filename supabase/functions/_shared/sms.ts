@@ -9,7 +9,10 @@ import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0
 
 export type SmsType = "otp" | "bekraftelse" | "paminnelse" | "paminnelse_tidig";
 
-const SENDER = (Deno.env.get("SMS_SENDER") ?? "Fiskbutiken").slice(0, 11);
+/** Alfanumerisk avsändare hos 46elks — max 11 tecken. */
+function sender(): string {
+  return (Deno.env.get("ELKS_FROM") ?? Deno.env.get("SMS_SENDER") ?? "Fiskbutiken").slice(0, 11);
+}
 
 export function smsTestMode(): boolean {
   const flag = (Deno.env.get("SMS_TEST_MODE") ?? "").toLowerCase();
@@ -50,13 +53,13 @@ export async function sendSms(
   const user = Deno.env.get("ELKS_API_USERNAME")!;
   const pass = Deno.env.get("ELKS_API_PASSWORD")!;
   try {
-    const res = await fetch("https://api.46elks.com/a1/sms", {
+    const res = await fetch("https://api.46elks.com/a1/SMS", {
       method: "POST",
       headers: {
         Authorization: `Basic ${btoa(`${user}:${pass}`)}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: new URLSearchParams({ from: SENDER, to: args.phone, message: args.text }),
+      body: new URLSearchParams({ from: sender(), to: args.phone, message: args.text }),
     });
     const body = await res.text();
     if (!res.ok) {
