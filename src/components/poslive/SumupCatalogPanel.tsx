@@ -47,7 +47,9 @@ export function SumupCatalogPanel() {
 
   const rows = catalog?.rows ?? [];
   const currency = catalog?.currency ?? "CHF";
-  const merchant = (health?.merchants ?? [])[0] as any;
+  const merchants = (health?.merchants ?? []) as any[];
+  // Avstämningen loggas mot den aktiva kassan (den nyckeln vi verkligen pollar).
+  const merchant = merchants.find((m) => m.active) ?? merchants[0];
 
   const onExport = () => {
     if (rows.length === 0) {
