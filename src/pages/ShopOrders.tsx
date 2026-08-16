@@ -1051,7 +1051,16 @@ function OrderDetailWithEdit({ order, products, onClose, toast, allowedWeekdays,
             </DialogDescription>
           </DialogHeader>
         )}
+        <OrderAuditLine
+          stacked
+          createdBy={(order as any).created_by_user}
+          createdAt={order.created_at}
+          updatedBy={(order as any).updated_by}
+          updatedAt={(order as any).updated_at}
+          className="mt-1"
+        />
       </div>
+
 
       {order.notes && (
         <div className="bg-muted/30 rounded-md p-3 text-xs text-muted-foreground">
