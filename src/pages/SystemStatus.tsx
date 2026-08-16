@@ -11,6 +11,7 @@ import ShopifyWebhookStatus from "@/components/shopify/ShopifyWebhookStatus";
 import BookingStatusCard from "@/components/booking/BookingStatusCard";
 import ImageCompressionCard from "@/components/admin/ImageCompressionCard";
 import { PosHealthCard } from "@/components/poslive/PosHealthCard";
+import { SumupHealthCard } from "@/components/poslive/SumupHealthCard";
 import { PosLineReview } from "@/components/poslive/PosLineReview";
 
 interface ReconRun {
@@ -165,6 +166,7 @@ export default function SystemStatus() {
 
       <div className="flex-1 space-y-4 overflow-auto p-4">
         <PosHealthCard />
+        <SumupHealthCard />
 
         <PosLineReview />
 
