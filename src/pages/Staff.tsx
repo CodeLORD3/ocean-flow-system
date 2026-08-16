@@ -27,6 +27,7 @@ import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { StaffDetailDialog } from "@/components/staff/StaffDetailDialog";
 import { StaffAccessDialog, PORTAL_OPTIONS } from "@/components/staff/StaffAccessDialog";
+import { roleLabel } from "@/lib/roles";
 import { StoreStaffDialog } from "@/components/staff/StoreStaffDialog";
 import { Badge } from "@/components/ui/badge";
 import { Activity, ShieldCheck, KeyRound, Loader2 } from "lucide-react";
@@ -425,7 +426,17 @@ export default function Staff() {
                   {s.email && <div className="flex items-center gap-1.5 text-muted-foreground"><Mail className="h-3 w-3 shrink-0 text-primary/60" /><span className="text-[10px]">{s.email}</span></div>}
                   {canManageAccess && (
                     <div className="flex flex-wrap gap-1 pt-1">
+                      {roleLabel(s.primary_role) && (
+                        <Badge className="text-[9px] px-1.5 py-0">{roleLabel(s.primary_role)}</Badge>
+                      )}
+                      {(s.allowed_company_ids ?? []).map((c: string) => (
+                        <Badge key={c} variant="outline" className="text-[9px] px-1.5 py-0">{c}</Badge>
+                      ))}
+                      {(s.allowed_region_tags ?? []).map((r: string) => (
+                        <Badge key={r} variant="outline" className="text-[9px] px-1.5 py-0">Region {r}</Badge>
+                      ))}
                       {(s.portal_access ?? []).includes("admin") ? (
+
                         <Badge variant="secondary" className="text-[9px] px-1.5 py-0">Full admin</Badge>
                       ) : (s.portal_access ?? []).length === 0 ? (
                         <Badge variant="outline" className="text-[9px] px-1.5 py-0">Ingen portalåtkomst</Badge>

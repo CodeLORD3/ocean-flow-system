@@ -9873,17 +9873,22 @@ export type Database = {
       staff_access: {
         Row: {
           age: number | null
+          allowed_company_ids: string[] | null
+          allowed_region_tags: string[] | null
           allowed_store_ids: string[] | null
+          allowed_tenant_ids: string[] | null
           created_at: string | null
           email: string | null
           first_name: string | null
           hourly_rate: number | null
           id: string | null
+          is_platform_admin: boolean | null
           last_name: string | null
           legal_entity_id: string | null
           must_change_password: boolean | null
           phone: string | null
           portal_access: string[] | null
+          primary_role: string | null
           profile_image_url: string | null
           store_id: string | null
           store_name: string | null
@@ -10089,6 +10094,18 @@ export type Database = {
         Args: { _member: boolean; _staff_id: string; _store_id: string }
         Returns: undefined
       }
+      set_user_access: {
+        Args: {
+          _company_ids: string[]
+          _portals: string[]
+          _region_tags: string[]
+          _role: string
+          _staff_id: string
+          _store_ids: string[]
+          _tenant_ids: string[]
+        }
+        Returns: undefined
+      }
       set_user_scopes: {
         Args: { _portals: string[]; _staff_id: string; _store_ids: string[] }
         Returns: undefined
@@ -10097,7 +10114,10 @@ export type Database = {
       staff_has_store: { Args: { _store: string }; Returns: boolean }
       stock_reconciliation_check: { Args: { _source?: string }; Returns: Json }
       unpost_purchase_report: { Args: { _report_id: string }; Returns: Json }
+      user_company_ids: { Args: { _user_id: string }; Returns: string[] }
       user_portals: { Args: { _user_id: string }; Returns: string[] }
+      user_primary_role: { Args: { _user_id: string }; Returns: string }
+      user_region_tags: { Args: { _user_id: string }; Returns: string[] }
       user_store_ids: { Args: { _user_id: string }; Returns: string[] }
       user_tenant_ids: { Args: { _user_id: string }; Returns: string[] }
       zero_stale_day_prices: { Args: never; Returns: number }
