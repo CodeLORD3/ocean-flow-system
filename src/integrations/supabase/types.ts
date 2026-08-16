@@ -478,18 +478,30 @@ export type Database = {
           exempt_species_data: boolean
           id: string
           name: string
+          sku_prefix: string | null
+          traceability_exempt: boolean
+          visible_store_ids: string[]
+          wholesale_visible: boolean
         }
         Insert: {
           created_at?: string | null
           exempt_species_data?: boolean
           id?: string
           name: string
+          sku_prefix?: string | null
+          traceability_exempt?: boolean
+          visible_store_ids?: string[]
+          wholesale_visible?: boolean
         }
         Update: {
           created_at?: string | null
           exempt_species_data?: boolean
           id?: string
           name?: string
+          sku_prefix?: string | null
+          traceability_exempt?: boolean
+          visible_store_ids?: string[]
+          wholesale_visible?: boolean
         }
         Relationships: []
       }
