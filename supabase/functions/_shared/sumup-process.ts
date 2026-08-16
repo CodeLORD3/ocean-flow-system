@@ -481,21 +481,24 @@ export async function processSumupEvent(
       const rawName = String(raw?.name ?? raw?.description ?? "").trim();
       const named = parseNameWeight(rawName);
       const cleanName = named?.cleanName ?? rawName;
-      const match = await matchByName(db, m.merchant_code, cleanName);
-      if (!match.productId) {
+      const match = await matchLine(db, m.merchant_code, cleanName, lineSku(raw));
+      if (!match.productId && !match.notStocked) {
         unmatched += 1;
         await bumpUnmatched(db, m.merchant_code, cleanName);
       }
+      if (match.notStocked) notStocked += 1;
 
       const isWeightItem = (match.unit ?? (named ? "kg" : "st")).toLowerCase().startsWith("kg");
       const line = interpretLine(raw, { isWeightItem });
-      if (line.quantitySource === "okand") unknownQty += 1;
+      if (line.quantitySource === "okand" && match.productId) unknownQty += 1;
 
-      const reviewStatus = !match.productId
-        ? "unmatched"
-        : line.quantitySource === "okand"
-          ? "unknown_quantity"
-          : "ok";
+      const reviewStatus = match.notStocked
+        ? "not_stocked"
+        : !match.productId
+          ? "unmatched"
+          : line.quantitySource === "okand"
+            ? "unknown_quantity"
+            : "ok";
 
       const { data: item, error: itemErr } = await db
         .from("pos_transaction_items")
