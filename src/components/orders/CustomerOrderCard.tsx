@@ -44,6 +44,7 @@ import { printQuote } from "@/lib/customerQuotePdf";
 import { printConfirmation, confirmationText } from "@/lib/customerOrderConfirmation";
 import { printPackList } from "@/lib/customerOrderPackListPdf";
 import { allergenLabel, scaleQuantity } from "@/lib/catering";
+import { OrderAuditLine } from "./OrderAuditLine";
 
 
 const nf = (v: any, d = 2) =>
