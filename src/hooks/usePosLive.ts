@@ -32,7 +32,7 @@ export type PosDaySummary = {
 
 export type PosLiveSummary = {
   date: string;
-  stores: { store_id: string; name: string; summary: PosDaySummary }[];
+  stores: { store_id: string; name: string; currency?: string; summary: PosDaySummary }[];
   hours: { hour: number; amount: number; receipts: number }[];
   ops: { failed: number; unmapped: number; pending: number; unmatched_products: number };
 };

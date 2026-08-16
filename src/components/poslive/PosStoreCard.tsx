@@ -20,12 +20,15 @@ export function PosStoreCard({
   selected,
   onSelect,
   currency = "SEK",
+  sekRate = null,
 }: {
   name: string;
   summary: PosDaySummary;
   isToday: boolean;
   /** Butikens valuta — Zollikon redovisas i CHF och blandas aldrig med SEK. */
   currency?: string;
+  /** Livekurs butikens valuta → SEK. CHF visas först, SEK som växling under. */
+  sekRate?: number | null;
   selected: boolean;
   onSelect: () => void;
 }) {
@@ -59,9 +62,16 @@ export function PosStoreCard({
           )}
         </div>
 
-        <p className="font-mono tabular-nums text-xl text-foreground">
-          {kr(summary.gross_sales)} <span className="text-xs text-muted-foreground">{unit}</span>
-        </p>
+        <div>
+          <p className="font-mono tabular-nums text-xl text-foreground">
+            {kr(summary.gross_sales)} <span className="text-xs text-muted-foreground">{unit}</span>
+          </p>
+          {sekRate ? (
+            <p className="font-mono tabular-nums text-[11px] text-muted-foreground">
+              ≈ {kr(summary.gross_sales * sekRate)} kr
+            </p>
+          ) : null}
+        </div>
 
         <div className="grid grid-cols-3 gap-2 text-[11px] text-muted-foreground">
           <div>
