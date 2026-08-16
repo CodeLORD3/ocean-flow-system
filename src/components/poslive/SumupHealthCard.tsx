@@ -69,6 +69,16 @@ export function SumupHealthCard() {
           }`,
         });
       }
+      const b = data?.basketToday?.[m.store_id];
+      if (b && b.total >= 5 && b.withItems / b.total < 0.8) {
+        list.push({
+          code: `basket-${m.merchant_code}`,
+          text: `Bara ${b.withItems} av ${b.total} kvitton idag (${Math.round(
+            (b.withItems / b.total) * 100,
+          )} %) har artikelrader — butiken slår in belopp utan artiklar, lagret dras inte`,
+        });
+      }
+
     }
     if ((data?.queue.fel ?? 0) > 0) {
       list.push({
@@ -84,7 +94,7 @@ export function SumupHealthCard() {
       });
     }
     return list;
-  }, [merchants, hours, data?.queue.fel, recons]);
+  }, [merchants, hours, data?.queue.fel, data?.basketToday, recons]);
 
   const runPoll = async (code?: string) => {
     try {
@@ -227,6 +237,23 @@ export function SumupHealthCard() {
               <span>Senaste kvitto: {fmtTime(m.last_transaction_at)}</span>
               <span>Fel i rad: {m.fail_streak ?? 0}</span>
             </div>
+            {(() => {
+              const b = data?.basketToday?.[m.store_id];
+              if (!b || !b.total) {
+                return (
+                  <div className="text-muted-foreground">Artikelrader idag: inga kvitton ännu</div>
+                );
+              }
+              const pct = Math.round((b.withItems / b.total) * 100);
+              const low = pct < 80;
+              return (
+                <div className={`tabular-nums ${low ? "text-destructive" : "text-muted-foreground"}`}>
+                  Kvitton med artikelrader idag: {b.withItems} av {b.total} ({pct} %)
+                  {low && " — under 80 %, kassan slår mest in belopp"}
+                </div>
+              );
+            })()}
+
           </div>
         ))}
 
