@@ -176,13 +176,28 @@ export default function PosLive() {
         </TabsList>
 
         <TabsContent value="live" className="space-y-4 mt-4">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-            <Kpi icon={TrendingUp} label="Brutto" value={`${kr(totals.gross)} kr`} />
-            <Kpi icon={CreditCard} label="Netto (ex moms)" value={`${kr(totals.net)} kr`} />
-            <Kpi icon={ShoppingBag} label="Antal köp" value={String(totals.count)} hint={`${totals.returns} returer`} />
-            <Kpi icon={Receipt} label="Snittköp" value={`${kr(totals.avg)} kr`} />
-            <Kpi icon={Activity} label="Största köp" value={`${kr(totals.largest)} kr`} />
-          </div>
+          {(sums.length ? sums : [totals]).map((t) => {
+            const cur = t.currency === "SEK" ? "kr" : t.currency;
+            return (
+              <div key={t.currency} className="space-y-1">
+                {sums.length > 1 && (
+                  <p className="text-[11px] text-muted-foreground">Totalt i {t.currency}</p>
+                )}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                  <Kpi icon={TrendingUp} label="Brutto" value={`${kr(t.gross)} ${cur}`} />
+                  <Kpi icon={CreditCard} label="Netto (ex moms)" value={`${kr(t.net)} ${cur}`} />
+                  <Kpi
+                    icon={ShoppingBag}
+                    label="Antal köp"
+                    value={String(t.count)}
+                    hint={`${t.returns} returer`}
+                  />
+                  <Kpi icon={Receipt} label="Snittköp" value={`${kr(t.avg)} ${cur}`} />
+                  <Kpi icon={Activity} label="Största köp" value={`${kr(t.largest)} ${cur}`} />
+                </div>
+              </div>
+            );
+          })}
 
           <Card className="shadow-card">
             <CardHeader className="pb-2">
