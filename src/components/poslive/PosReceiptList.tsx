@@ -39,21 +39,6 @@ function ReceiptRows({ id }: { id: string }) {
   );
 }
 
-const RECEIPT_BADGES = (r: PosTransaction) => (
-  <>
-    {r.test_mode && (
-      <Badge variant="outline" className="text-[9px] text-muted-foreground">
-        test
-      </Badge>
-    )}
-    {r.type === "return" && (
-      <Badge variant="outline" className="text-[9px] text-warning border-warning/40">
-        retur
-      </Badge>
-    )}
-  </>
-);
-
 /** Live-lista över kvitton, expanderbar per kvitto. */
 export function PosReceiptList({
   rows,
@@ -93,6 +78,11 @@ export function PosReceiptList({
               {t.source !== "internal" && (
                 <Badge variant="outline" className="text-[9px]">
                   {t.source}
+                </Badge>
+              )}
+              {t.test_mode && (
+                <Badge variant="outline" className="text-[9px] text-muted-foreground">
+                  test
                 </Badge>
               )}
               {isReturn && (
