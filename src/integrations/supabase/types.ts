@@ -5456,6 +5456,7 @@ export type Database = {
           barcode: string | null
           discount_ore: number
           external_line_no: number | null
+          external_quantity: number | null
           id: string
           line_total_ore: number
           lot_id: string | null
@@ -5465,6 +5466,7 @@ export type Database = {
           product_id: string | null
           product_name: string
           quantity: number
+          quantity_source: string | null
           review_status: string
           sku: string | null
           transaction_id: string
@@ -5477,6 +5479,7 @@ export type Database = {
           barcode?: string | null
           discount_ore?: number
           external_line_no?: number | null
+          external_quantity?: number | null
           id?: string
           line_total_ore: number
           lot_id?: string | null
@@ -5486,6 +5489,7 @@ export type Database = {
           product_id?: string | null
           product_name: string
           quantity: number
+          quantity_source?: string | null
           review_status?: string
           sku?: string | null
           transaction_id: string
@@ -5498,6 +5502,7 @@ export type Database = {
           barcode?: string | null
           discount_ore?: number
           external_line_no?: number | null
+          external_quantity?: number | null
           id?: string
           line_total_ore?: number
           lot_id?: string | null
@@ -5507,6 +5512,7 @@ export type Database = {
           product_id?: string | null
           product_name?: string
           quantity?: number
+          quantity_source?: string | null
           review_status?: string
           sku?: string | null
           transaction_id?: string
@@ -5557,6 +5563,7 @@ export type Database = {
         Row: {
           cashier_id: string | null
           control_code: string | null
+          currency: string
           external_cashier: string | null
           external_id: string | null
           external_receipt_no: string | null
@@ -5581,6 +5588,7 @@ export type Database = {
         Insert: {
           cashier_id?: string | null
           control_code?: string | null
+          currency?: string
           external_cashier?: string | null
           external_id?: string | null
           external_receipt_no?: string | null
@@ -5605,6 +5613,7 @@ export type Database = {
         Update: {
           cashier_id?: string | null
           control_code?: string | null
+          currency?: string
           external_cashier?: string | null
           external_id?: string | null
           external_receipt_no?: string | null
@@ -8682,6 +8691,235 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      sumup_events: {
+        Row: {
+          attempts: number
+          event_type: string
+          external_id: string
+          id: string
+          last_error: string | null
+          merchant_code: string
+          occurred_at: string | null
+          payload: Json
+          processed_at: string | null
+          receipt_payload: Json | null
+          received_at: string
+          status: string
+          test_mode: boolean
+          transaction_code: string | null
+          transaction_id: string | null
+        }
+        Insert: {
+          attempts?: number
+          event_type?: string
+          external_id: string
+          id?: string
+          last_error?: string | null
+          merchant_code: string
+          occurred_at?: string | null
+          payload?: Json
+          processed_at?: string | null
+          receipt_payload?: Json | null
+          received_at?: string
+          status?: string
+          test_mode?: boolean
+          transaction_code?: string | null
+          transaction_id?: string | null
+        }
+        Update: {
+          attempts?: number
+          event_type?: string
+          external_id?: string
+          id?: string
+          last_error?: string | null
+          merchant_code?: string
+          occurred_at?: string | null
+          payload?: Json
+          processed_at?: string | null
+          receipt_payload?: Json | null
+          received_at?: string
+          status?: string
+          test_mode?: boolean
+          transaction_code?: string | null
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sumup_events_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "pos_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sumup_merchants: {
+        Row: {
+          active: boolean
+          created_at: string
+          currency: string
+          fail_streak: number
+          id: string
+          label: string | null
+          last_error: string | null
+          last_polled_at: string | null
+          last_success_at: string | null
+          last_transaction_at: string | null
+          legal_entity_id: string
+          merchant_code: string
+          store_id: string
+          test_mode: boolean
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          currency?: string
+          fail_streak?: number
+          id?: string
+          label?: string | null
+          last_error?: string | null
+          last_polled_at?: string | null
+          last_success_at?: string | null
+          last_transaction_at?: string | null
+          legal_entity_id: string
+          merchant_code: string
+          store_id: string
+          test_mode?: boolean
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          currency?: string
+          fail_streak?: number
+          id?: string
+          label?: string | null
+          last_error?: string | null
+          last_polled_at?: string | null
+          last_success_at?: string | null
+          last_transaction_at?: string | null
+          legal_entity_id?: string
+          merchant_code?: string
+          store_id?: string
+          test_mode?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sumup_merchants_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "sumup_merchants_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sumup_poll_runs: {
+        Row: {
+          changes_since: string | null
+          duplicate_count: number
+          error_code: string | null
+          fetched_count: number
+          finished_at: string | null
+          http_status: number | null
+          id: string
+          merchant_code: string
+          message: string | null
+          queued_count: number
+          started_at: string
+          status: string
+          test_mode: boolean
+        }
+        Insert: {
+          changes_since?: string | null
+          duplicate_count?: number
+          error_code?: string | null
+          fetched_count?: number
+          finished_at?: string | null
+          http_status?: number | null
+          id?: string
+          merchant_code: string
+          message?: string | null
+          queued_count?: number
+          started_at?: string
+          status?: string
+          test_mode?: boolean
+        }
+        Update: {
+          changes_since?: string | null
+          duplicate_count?: number
+          error_code?: string | null
+          fetched_count?: number
+          finished_at?: string | null
+          http_status?: number | null
+          id?: string
+          merchant_code?: string
+          message?: string | null
+          queued_count?: number
+          started_at?: string
+          status?: string
+          test_mode?: boolean
+        }
+        Relationships: []
+      }
+      sumup_product_map: {
+        Row: {
+          confirmed_by: string | null
+          created_at: string
+          external_name: string
+          external_name_key: string | null
+          id: string
+          last_seen_at: string
+          merchant_code: string | null
+          product_id: string | null
+          unit: string | null
+          unmatched_count: number
+          updated_at: string
+        }
+        Insert: {
+          confirmed_by?: string | null
+          created_at?: string
+          external_name: string
+          external_name_key?: string | null
+          id?: string
+          last_seen_at?: string
+          merchant_code?: string | null
+          product_id?: string | null
+          unit?: string | null
+          unmatched_count?: number
+          updated_at?: string
+        }
+        Update: {
+          confirmed_by?: string | null
+          created_at?: string
+          external_name?: string
+          external_name_key?: string | null
+          id?: string
+          last_seen_at?: string
+          merchant_code?: string | null
+          product_id?: string | null
+          unit?: string | null
+          unmatched_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sumup_product_map_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       supplier_article_map: {
         Row: {
