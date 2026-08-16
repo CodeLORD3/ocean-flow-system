@@ -61,6 +61,23 @@ export default function ShopifyWebhookStatus() {
     refetchInterval: 60000,
   });
 
+  /** Alla händelser sista veckan, för statistiken per webbutik. */
+  const week = useQuery({
+    queryKey: ["shopify_status_week"],
+    queryFn: async () => {
+      const since = new Date(Date.now() - 7 * DAY).toISOString();
+      const { data, error } = await db
+        .from("shopify_webhook_events")
+        .select("status, shop_domain, received_at")
+        .gte("received_at", since)
+        .order("received_at", { ascending: false })
+        .limit(2000);
+      if (error) throw error;
+      return (data || []) as any[];
+    },
+    refetchInterval: 60000,
+  });
+
   /** Vakthund: senaste mottagna webhook oavsett utfall. */
   const lastReceived = useQuery({
     queryKey: ["shopify_status_last_received"],
@@ -129,7 +146,12 @@ export default function ShopifyWebhookStatus() {
       if (Array.isArray(r?.messages)) {
         for (const m of r.messages.slice(0, 5)) toast.warning(String(m));
       }
-      await Promise.all([events.refetch(), lastReceived.refetch(), shops.refetch()]);
+      await Promise.all([
+        events.refetch(),
+        lastReceived.refetch(),
+        shops.refetch(),
+        week.refetch(),
+      ]);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Backfyllnaden misslyckades");
     } finally {
@@ -184,6 +206,25 @@ export default function ShopifyWebhookStatus() {
   const last = lastReceived.data ?? null;
   const silent = !last || Date.now() - new Date(last).getTime() > DAY;
   const silentHours = hoursSince(last);
+
+  /** Per webbutik: mottagna, köade, fel, ogiltig HMAC, osorterade, avbokade efter packning. */
+  const perShop = (shops.data || []).map((shop: any) => {
+    const mine = (week.data || []).filter((e) => e.shop_domain === shop.shop_domain);
+    const count = (...st: string[]) => mine.filter((e) => st.includes(String(e.status))).length;
+    const lastSeen = shop.last_webhook_at ?? mine[0]?.received_at ?? null;
+    const staleShop = !lastSeen || Date.now() - new Date(lastSeen).getTime() > DAY;
+    return {
+      ...shop,
+      received: mine.length,
+      queued: count("koad", "bearbetar"),
+      failed: count("fel"),
+      badHmac: count("ogiltig_hmac"),
+      unsorted: count("osorterad"),
+      cancelAlarm: count("avbokad_larm"),
+      lastSeen,
+      staleShop,
+    };
+  });
 
   const problems =
     failed.length + badHmac.length + unsorted.length + staleLines.length + cancelAlarm.length;
@@ -286,6 +327,53 @@ export default function ShopifyWebhookStatus() {
               Kontrollera att prenumerationen finns kvar i Shopify — Shopify raderar den om
               URL:en upprepat svarar annat än 200.
             </span>
+          </div>
+        )}
+
+        {perShop.length > 0 && (
+          <div className="space-y-1">
+            {perShop.map((sh: any) => (
+              <div
+                key={sh.id}
+                className={`flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border p-2 text-xs ${
+                  sh.staleShop || sh.failed || sh.badHmac || sh.unsorted || sh.cancelAlarm
+                    ? "border-destructive/50 bg-destructive/5"
+                    : "border-border"
+                }`}
+              >
+                <span className="font-medium">{sh.label}</span>
+                <code className="font-mono text-[10px] text-muted-foreground">{sh.shop_domain}</code>
+                <Badge variant="outline" className="h-5">
+                  {sh.currency}
+                </Badge>
+                <span className="font-mono tabular-nums text-muted-foreground">
+                  {sh.received} mottagna · {sh.queued} i kö · {sh.failed} fel · {sh.badHmac} ogiltig
+                  HMAC · {sh.unsorted} osorterade · {sh.cancelAlarm} avbokade efter packning
+                </span>
+                <span
+                  className={`ml-auto flex items-center gap-1 font-mono tabular-nums ${
+                    sh.staleShop ? "text-destructive" : "text-muted-foreground"
+                  }`}
+                >
+                  {sh.staleShop && <WifiOff className="h-3 w-3" />}
+                  senast {fmtTime(sh.lastSeen)}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-6 text-xs"
+                  disabled={busy === `backfill:${sh.shop_domain}`}
+                  onClick={() => backfill(sh.shop_domain)}
+                >
+                  <DownloadCloud
+                    className={`mr-1 h-3 w-3 ${
+                      busy === `backfill:${sh.shop_domain}` ? "animate-pulse" : ""
+                    }`}
+                  />
+                  Backfyll
+                </Button>
+              </div>
+            ))}
           </div>
         )}
 
