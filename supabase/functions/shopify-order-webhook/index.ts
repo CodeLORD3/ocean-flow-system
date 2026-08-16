@@ -14,6 +14,14 @@
  * ordern hamnar i inkorgen "Osorterade webbordrar" för manuellt butiksval.
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import {
+  type ShopifyShop,
+  adminToken as _adminToken,
+  fxRateToSek,
+  shopByDomain,
+  shopDomain,
+  webhookSecret,
+} from "../_shared/shopify-shops.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -404,7 +412,13 @@ async function resolveCustomer(db: SupabaseClient, payload: any, storeId: string
 
 
 /** Skapar kundordern med rader. Anropas av webhooken och av manuellt butiksval. */
-async function createOrder(db: SupabaseClient, payload: any, storeId: string, via: string) {
+async function createOrder(
+  db: SupabaseClient,
+  payload: any,
+  storeId: string,
+  via: string,
+  shop: ShopifyShop | null = null,
+) {
   const shopifyOrderId = String(payload?.id ?? "");
   const orderName = String(payload?.name ?? payload?.order_number ?? shopifyOrderId);
 
@@ -460,6 +474,15 @@ async function createOrder(db: SupabaseClient, payload: any, storeId: string, vi
   const paidTotal = Number(payload?.total_price ?? 0);
   const paid = String(payload?.financial_status ?? "").toLowerCase() === "paid";
 
+  /**
+   * Valutan tas från ordern, annars från webbutikens konfiguration. Dagskursen
+   * mot SEK låses vid mottagning så att bolagens summeringar aldrig blandas.
+   */
+  const currency = String(
+    payload?.currency ?? payload?.presentment_currency ?? shop?.currency ?? "SEK",
+  ).toUpperCase();
+  const fxRate = currency === "SEK" ? null : await fxRateToSek(currency);
+
   const { data: order, error: orderErr } = await db
     .from("customer_orders")
     .insert({
@@ -488,6 +511,9 @@ async function createOrder(db: SupabaseClient, payload: any, storeId: string, vi
       paid_total: paidTotal || null,
       price_locked: true,
       web_delivery_method: deliveryMethod,
+      currency,
+      fx_rate_to_sek: fxRate,
+      fx_rate_at: fxRate ? new Date().toISOString() : null,
     })
     .select("id")
     .single();
@@ -704,12 +730,17 @@ async function processEvent(db: SupabaseClient, eventId: string): Promise<void> 
      * Idempotensnyckeln är order-id PLUS topic. En orders/cancelled för en känd
      * order är en ny händelse; bara omsändning av samma topic är ett duplikat.
      */
-    const { data: sameTopic } = await db
+    // Nyckeln är (shop, order-id, topic) — två butiker kan ha samma order-id.
+    let dupQuery = db
       .from("shopify_webhook_events")
       .select("id, status, customer_order_id")
       .eq("shopify_order_id", shopifyOrderId)
       .eq("topic", ev.topic)
-      .neq("id", eventId)
+      .neq("id", eventId);
+    dupQuery = ev.shop_domain
+      ? dupQuery.eq("shop_domain", ev.shop_domain)
+      : dupQuery.is("shop_domain", null);
+    const { data: sameTopic } = await dupQuery
       .in("status", ["skapad", "avbokad", "avbokad_larm", "duplikat", "osorterad"]);
     if ((sameTopic || []).length) {
       const prev = (sameTopic || [])[0];
@@ -770,17 +801,32 @@ async function processEvent(db: SupabaseClient, eventId: string): Promise<void> 
       return;
     }
 
-    const { data: mapRows } = await db
-      .from("shopify_store_map")
-      .select("key_type, key_value, store_id, active");
-    const { storeId, via } = resolveStore(payload, (mapRows || []) as MapRow[]);
+    const shop = await shopByDomain(db, ev.shop_domain ?? null);
+
+    /**
+     * Butiker utan hämtställesortering (fiskskaldjur.ch) går alltid till sin
+     * standardbutik. Övriga sorteras som förut via shopify_store_map.
+     */
+    let storeId: string | null = null;
+    let via = "";
+    if (shop && shop.sort_by_pickup_location === false) {
+      storeId = shop.default_store_id;
+      via = `standardbutik för ${shop.label}`;
+    } else {
+      const { data: mapRows } = await db
+        .from("shopify_store_map")
+        .select("key_type, key_value, store_id, active");
+      const resolved = resolveStore(payload, (mapRows || []) as MapRow[]);
+      storeId = resolved.storeId ?? shop?.default_store_id ?? null;
+      via = resolved.storeId ? resolved.via : `standardbutik för ${shop?.label ?? "butiken"}`;
+    }
 
     if (!storeId) {
       await fail("Butiken kunde inte avgöras — kräver manuellt butiksval", "osorterad");
       return;
     }
 
-    const res = await createOrder(db, payload, storeId, via);
+    const res = await createOrder(db, payload, storeId, via, shop);
     await db
       .from("shopify_webhook_events")
       .update({
@@ -893,7 +939,10 @@ Deno.serve(async (req) => {
     return json({ ok: after?.status !== "fel", ...after });
   }
 
-  const secret = Deno.env.get("SHOPIFY_WEBHOOK_SECRET") ?? "";
+  /* Vilken webbutik? Domänen i headern avgör vilken hemlighet som gäller. */
+  const domain = shopDomain(req.headers.get("x-shopify-shop-domain"));
+  const shop = await shopByDomain(db, domain);
+  const secret = webhookSecret(shop);
   const topic = req.headers.get("x-shopify-topic") ?? "orders/create";
   const header = req.headers.get("x-shopify-hmac-sha256") ?? "";
 
@@ -907,7 +956,11 @@ Deno.serve(async (req) => {
       hmac_valid: false,
       status: "fel",
       raw_body: raw,
-      error: "SHOPIFY_WEBHOOK_SECRET saknas i miljön — signaturen kunde inte kontrolleras",
+      shop_domain: domain || null,
+      shop_id: shop?.id ?? null,
+      error: shop
+        ? `${shop.webhook_secret_env} saknas i miljön — signaturen kunde inte kontrolleras`
+        : `Okänd shop-domän "${domain || "saknas"}" — lägg till butiken i shopify_shops`,
       processed_at: new Date().toISOString(),
     });
     return json({ ok: false, error: "Signeringsnyckel saknas" }, 200);
@@ -934,6 +987,8 @@ Deno.serve(async (req) => {
       topic,
       hmac_valid: false,
       status: "ogiltig_hmac",
+      shop_domain: domain || null,
+      shop_id: shop?.id ?? null,
       error: "X-Shopify-Hmac-Sha256 stämmer inte med beräknad signatur",
       processed_at: new Date().toISOString(),
     });
@@ -958,9 +1013,19 @@ Deno.serve(async (req) => {
       payload,
       shopify_order_id: payload?.id != null ? String(payload.id) : null,
       shopify_order_number: payload?.name ?? payload?.order_number ?? null,
+      shop_domain: domain || null,
+      shop_id: shop?.id ?? null,
     })
     .select("id")
     .single();
+
+  /* Vakthunden per shop: senaste verifierade webhook för butiken. */
+  if (shop) {
+    await db
+      .from("shopify_shops")
+      .update({ last_webhook_at: new Date().toISOString() })
+      .eq("id", shop.id);
+  }
 
   if (queueErr || !queued) {
     // Kön kunde inte skrivas — logga i funktionsloggen och kvittera ändå med 200.
