@@ -425,13 +425,17 @@ async function createOrder(db: SupabaseClient, payload: any, storeId: string, vi
 
   const lineItems: any[] = Array.isArray(payload?.line_items) ? payload.line_items : [];
   const skus = lineItems.map((l) => String(l?.sku ?? "").trim()).filter(Boolean);
+  // Shopify lämnar ibland SKU tomt (t.ex. signalkräftorna) — då kopplas raden
+  // på produkttiteln istället, som också kan ligga som nyckel i kopplingstabellen.
+  const titles = lineItems.map((l) => String(l?.title ?? l?.name ?? "").trim()).filter(Boolean);
+  const mapKeys = [...new Set([...skus, ...titles])];
 
   const [{ data: products }, { data: mapped }] = await Promise.all([
     skus.length
       ? db.from("products").select("id, sku, unit, name").in("sku", skus)
       : Promise.resolve({ data: [] as any[] } as any),
-    skus.length
-      ? db.from("shopify_product_map").select("shopify_sku, product_id").in("shopify_sku", skus)
+    mapKeys.length
+      ? db.from("shopify_product_map").select("shopify_sku, product_id").in("shopify_sku", mapKeys)
       : Promise.resolve({ data: [] as any[] } as any),
   ]);
 
@@ -495,7 +499,12 @@ async function createOrder(db: SupabaseClient, payload: any, storeId: string, vi
     const li = lineItems[i];
     const sku = String(li?.sku ?? "").trim();
     const title = String(li?.title ?? li?.name ?? "Okänd artikel");
-    const product = bySku.get(sku) ?? (mapBySku.has(sku) ? byId.get(mapBySku.get(sku)!) : null);
+    const mapKey = sku || title.trim();
+    const product =
+      (sku ? bySku.get(sku) : null) ??
+      (mapBySku.has(mapKey) ? byId.get(mapBySku.get(mapKey)!) : null) ??
+      (mapBySku.has(title.trim()) ? byId.get(mapBySku.get(title.trim())!) : null) ??
+      null;
     // Styckvaror i antal, viktvaror i kg — mängden tas som den är.
     const qty = round3(Number(li?.quantity ?? 0));
     const price = round2(Number(li?.price ?? 0));

@@ -27,6 +27,7 @@ export const IMPORT_COLUMNS = [
   "fao_code",
   "allergens",
   "may_contain",
+  "shopify_sku",
 ] as const;
 
 
@@ -63,6 +64,8 @@ export interface ParsedRow {
   allergens_checked: boolean | null;
   /** null = kolumnen saknas eller är tom → befintligt värde lämnas orört */
   may_contain: string[] | null;
+  /** En eller flera Shopify-SKU:er (";"-separerade) som ska kopplas till denna produkt */
+  shopify_sku: string[] | null;
 }
 
 
@@ -154,6 +157,12 @@ const HEADER_ALIASES: Record<string, ImportColumn> = {
   kaninnehalla: "may_contain",
   spar_av: "may_contain",
   maycontain: "may_contain",
+  shopifysku: "shopify_sku",
+  "shopify-sku": "shopify_sku",
+  shopify: "shopify_sku",
+  webbsku: "shopify_sku",
+  webbshop_sku: "shopify_sku",
+  webb_sku: "shopify_sku",
 };
 
 
@@ -283,6 +292,15 @@ export async function parseProductFile(file: File): Promise<ParseResult> {
         return n === null ? null : Math.round(n);
       })(),
       parent_sku: nullableStr(get("parent_sku")),
+      shopify_sku: (() => {
+        const v = nullableStr(get("shopify_sku"));
+        if (!v) return null;
+        const list = v
+          .split(/[;|\n]/)
+          .map((x) => x.trim())
+          .filter(Boolean);
+        return list.length ? list : null;
+      })(),
       active: parseBool(get("active")),
       image_url: nullableStr(get("image_url")),
       latin_name: nullableStr(get("latin_name")),
@@ -561,5 +579,5 @@ export function toPayload(row: ParsedRow): UpsertPayload {
 
 
 export function buildTemplateCsv(): string {
-  return `${IMPORT_COLUMNS.join(",")}\nFS-045,Lax filé,Färsk Fisk,kg,120.00,162.00,199.00,Norge,Salmar,,7311234567890,0304,,5,,TRUE,https://exempel.se/bilder/lax-file.jpg,Salmo salar,lax,SAL,Fisk,Kräftdjur\n`;
+  return `${IMPORT_COLUMNS.join(",")}\nFS-045,Lax filé,Färsk Fisk,kg,120.00,162.00,199.00,Norge,Salmar,,7311234567890,0304,,5,,TRUE,https://exempel.se/bilder/lax-file.jpg,Salmo salar,lax,SAL,Fisk,Kräftdjur,Lax filé 1kg\n`;
 }

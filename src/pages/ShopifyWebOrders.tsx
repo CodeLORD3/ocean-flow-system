@@ -174,10 +174,11 @@ export default function ShopifyWebOrders() {
         })
         .eq("id", line.id);
       if (error) throw new Error(error.message);
-      if (line.shopify_sku) {
+      const mapKey = String(line.shopify_sku ?? line.shopify_title ?? line.free_text_name ?? "").trim();
+      if (mapKey) {
         const { error: mapErr } = await db.from("shopify_product_map").upsert(
           {
-            shopify_sku: line.shopify_sku,
+            shopify_sku: mapKey,
             shopify_title: line.shopify_title,
             product_id: productId,
             confirmed_by: (await supabase.auth.getUser()).data.user?.id ?? null,
