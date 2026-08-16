@@ -5,7 +5,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { isOpenNow, useSumupHealth, useSumupPoll, useSumupProbe } from "@/hooks/useSumupHealth";
+import {
+  isOpenNow,
+  useSumupHealth,
+  useSumupPoll,
+  useSumupProbe,
+  useSumupProcess,
+  useSumupReconcile,
+  useSumupReconciliations,
+} from "@/hooks/useSumupHealth";
 
 const fmtTime = (v: string | null) =>
   v
