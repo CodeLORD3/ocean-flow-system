@@ -1192,9 +1192,9 @@ export default function Products() {
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">SKU</th>
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Kat.</th>
                   <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Enh.</th>
-                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">HS</th>
-                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Prod.</th>
-                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Håll.</th>
+                  {showDetails && <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">HS</th>}
+                  {showDetails && <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Prod.</th>}
+                  {showDetails && <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Håll.</th>}
                   {isWholesale && (
                     <th
                       className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider"
@@ -1203,7 +1203,7 @@ export default function Products() {
                       Reservpris
                     </th>
                   )}
-                  {isWholesale && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider" title="Senaste prisändring">Sen.ink.</th>}
+                  {isWholesale && showDetails && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider" title="Senaste prisändring">Sen.ink.</th>}
                   {isWholesale && (
                     <th
                       className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider"
@@ -1215,9 +1215,9 @@ export default function Products() {
                   <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">
                     {isWholesale ? "Gr.pris" : "Pris"}
                   </th>
-                  {isWholesale && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Marg.</th>}
-                  {isWholesale && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Rek.but.</th>}
-                  <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">EAN</th>
+                  {isWholesale && showDetails && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Marg.</th>}
+                  {isWholesale && showDetails && <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Rek.but.</th>}
+                  {showDetails && <th className="px-2 py-0 text-left font-medium text-muted-foreground text-[9px] uppercase tracking-wider">EAN</th>}
                   <th className="px-2 py-0 text-right font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Lager</th>
                   <th className="px-2 py-0 text-center font-medium text-muted-foreground text-[9px] uppercase tracking-wider">Åtg.</th>
                 </tr>
@@ -1225,7 +1225,7 @@ export default function Products() {
               <tbody>
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={isWholesale ? 15 : 11} className="p-8 text-center text-muted-foreground">
+                    <td colSpan={20} className="p-8 text-center text-muted-foreground">
                       Inga produkter hittades.
                     </td>
                   </tr>
