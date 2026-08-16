@@ -1727,6 +1727,7 @@ export type Database = {
           category: string
           created_at: string
           created_by: string | null
+          currency: string
           customer_id: string | null
           customer_name_snapshot: string | null
           customer_phone_snapshot: string | null
@@ -1736,6 +1737,8 @@ export type Database = {
           delivery_street: string | null
           estimated_total: number
           excluded_allergens: string[]
+          fx_rate_at: string | null
+          fx_rate_to_sek: number | null
           guest_count: number | null
           handed_over_at: string | null
           id: string
@@ -1780,6 +1783,7 @@ export type Database = {
           category?: string
           created_at?: string
           created_by?: string | null
+          currency?: string
           customer_id?: string | null
           customer_name_snapshot?: string | null
           customer_phone_snapshot?: string | null
@@ -1789,6 +1793,8 @@ export type Database = {
           delivery_street?: string | null
           estimated_total?: number
           excluded_allergens?: string[]
+          fx_rate_at?: string | null
+          fx_rate_to_sek?: number | null
           guest_count?: number | null
           handed_over_at?: string | null
           id?: string
@@ -1833,6 +1839,7 @@ export type Database = {
           category?: string
           created_at?: string
           created_by?: string | null
+          currency?: string
           customer_id?: string | null
           customer_name_snapshot?: string | null
           customer_phone_snapshot?: string | null
@@ -1842,6 +1849,8 @@ export type Database = {
           delivery_street?: string | null
           estimated_total?: number
           excluded_allergens?: string[]
+          fx_rate_at?: string | null
+          fx_rate_to_sek?: number | null
           guest_count?: number | null
           handed_over_at?: string | null
           id?: string
@@ -7369,28 +7378,46 @@ export type Database = {
         Row: {
           confirmed_by: string | null
           created_at: string
+          free_text_only: boolean
           id: string
           product_id: string
+          quantity_factor: number
+          shop_id: string | null
+          shopify_handle: string | null
           shopify_sku: string
           shopify_title: string | null
+          shopify_variant: string | null
+          store_id: string | null
           updated_at: string
         }
         Insert: {
           confirmed_by?: string | null
           created_at?: string
+          free_text_only?: boolean
           id?: string
           product_id: string
+          quantity_factor?: number
+          shop_id?: string | null
+          shopify_handle?: string | null
           shopify_sku: string
           shopify_title?: string | null
+          shopify_variant?: string | null
+          store_id?: string | null
           updated_at?: string
         }
         Update: {
           confirmed_by?: string | null
           created_at?: string
+          free_text_only?: boolean
           id?: string
           product_id?: string
+          quantity_factor?: number
+          shop_id?: string | null
+          shopify_handle?: string | null
           shopify_sku?: string
           shopify_title?: string | null
+          shopify_variant?: string | null
+          store_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -7400,6 +7427,86 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopify_product_map_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shopify_shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopify_product_map_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopify_shops: {
+        Row: {
+          active: boolean
+          admin_token_env: string
+          api_version: string
+          created_at: string
+          currency: string
+          default_store_id: string | null
+          id: string
+          label: string
+          last_webhook_at: string | null
+          legal_entity_id: string | null
+          shop_domain: string
+          sort_by_pickup_location: boolean
+          updated_at: string
+          webhook_secret_env: string
+        }
+        Insert: {
+          active?: boolean
+          admin_token_env: string
+          api_version?: string
+          created_at?: string
+          currency?: string
+          default_store_id?: string | null
+          id?: string
+          label: string
+          last_webhook_at?: string | null
+          legal_entity_id?: string | null
+          shop_domain: string
+          sort_by_pickup_location?: boolean
+          updated_at?: string
+          webhook_secret_env: string
+        }
+        Update: {
+          active?: boolean
+          admin_token_env?: string
+          api_version?: string
+          created_at?: string
+          currency?: string
+          default_store_id?: string | null
+          id?: string
+          label?: string
+          last_webhook_at?: string | null
+          legal_entity_id?: string | null
+          shop_domain?: string
+          sort_by_pickup_location?: boolean
+          updated_at?: string
+          webhook_secret_env?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopify_shops_default_store_id_fkey"
+            columns: ["default_store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopify_shops_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
           },
         ]
       }
@@ -7457,6 +7564,8 @@ export type Database = {
           raw_body: string | null
           received_at: string
           resolved_by: string | null
+          shop_domain: string | null
+          shop_id: string | null
           shopify_order_id: string | null
           shopify_order_number: string | null
           status: string
@@ -7475,6 +7584,8 @@ export type Database = {
           raw_body?: string | null
           received_at?: string
           resolved_by?: string | null
+          shop_domain?: string | null
+          shop_id?: string | null
           shopify_order_id?: string | null
           shopify_order_number?: string | null
           status?: string
@@ -7493,6 +7604,8 @@ export type Database = {
           raw_body?: string | null
           received_at?: string
           resolved_by?: string | null
+          shop_domain?: string | null
+          shop_id?: string | null
           shopify_order_id?: string | null
           shopify_order_number?: string | null
           status?: string
@@ -7505,6 +7618,13 @@ export type Database = {
             columns: ["customer_order_id"]
             isOneToOne: false
             referencedRelation: "customer_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shopify_webhook_events_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shopify_shops"
             referencedColumns: ["id"]
           },
           {
