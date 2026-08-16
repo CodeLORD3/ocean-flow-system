@@ -576,7 +576,8 @@ async function sendCode(db: SupabaseClient, body: any, ip: string) {
     return { ok: true, sent: true, test_mode: smsTestMode() };
   }
 
-  const code = String(Math.floor(100000 + Math.random() * 900000));
+  // I testläge skickas inget SMS — då är koden alltid 123456 så flödet går att testa.
+  const code = smsTestMode() ? "123456" : String(Math.floor(100000 + Math.random() * 900000));
   const { error } = await db.from("booking_otp").insert({
     phone_normalized: phone,
     code_hash: await hashCode(phone, code),
