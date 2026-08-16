@@ -377,7 +377,16 @@ export async function processSumupEvent(
   ev: SumupEventRow,
   m: SumupMerchantRow,
 ): Promise<ProcessResult> {
+  // Sätts när kvittohuvudet skapats, så en halvfärdig bokföring kan rullas
+  // tillbaka i stället för att blockera omkörningen som "duplikat".
+  let createdTxId: string | null = null;
+
   const fail = async (message: string): Promise<ProcessResult> => {
+    if (createdTxId) {
+      await db.from("stock_movements").delete().eq("reference_id", createdTxId);
+      await db.from("pos_transaction_items").delete().eq("transaction_id", createdTxId);
+      await db.from("pos_transactions").delete().eq("id", createdTxId);
+    }
     await db
       .from("sumup_events")
       .update({ status: "fel", last_error: message.slice(0, 400) })
@@ -479,6 +488,7 @@ export async function processSumupEvent(
       .select("id")
       .single();
     if (txErr) throw txErr;
+    createdTxId = tx.id as string;
 
     const locationId = await salesLocation(db, m.store_id);
     // Transaktionslistan saknar ibland artikelnamn — kvittot har dem.
