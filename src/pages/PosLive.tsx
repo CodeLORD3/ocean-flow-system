@@ -29,6 +29,8 @@ import { PosReceiptList } from "@/components/poslive/PosReceiptList";
 import { NimposProductMapping, NimposStoreMapping } from "@/components/poslive/NimposMappingPanel";
 import { PosHealthCard } from "@/components/poslive/PosHealthCard";
 import { PosLineReview } from "@/components/poslive/PosLineReview";
+import { PosPricePanel } from "@/components/poslive/PosPricePanel";
+
 
 const kr = (n: number) => Math.round(n).toLocaleString("sv-SE").replace(/\u00a0/g, " ");
 
