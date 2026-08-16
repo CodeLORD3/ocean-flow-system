@@ -94,7 +94,7 @@ export function SumupHealthCard() {
       });
     }
     return list;
-  }, [merchants, hours, data?.queue.fel, recons]);
+  }, [merchants, hours, data?.queue.fel, data?.basketToday, recons]);
 
   const runPoll = async (code?: string) => {
     try {
