@@ -249,6 +249,41 @@ export default function DailyReport() {
   const errCls = (bad: boolean) =>
     showErrors && bad ? "border-destructive ring-1 ring-destructive/40" : "";
 
+  /** Skriv in kassans siffror i formuläret (kan alltid ändras manuellt efteråt). */
+  const applyPos = () => {
+    if (!pos) return;
+    setGross(String(pos.gross_sales));
+    setNet(String(pos.net_sales));
+    setReceipts(String(pos.receipt_count));
+    setLargest(String(pos.largest_sale));
+    toast.success("Kassans siffror inlagda");
+  };
+
+  // Förifyll automatiskt när rapporten är tom och kassan har data.
+  useEffect(() => {
+    if (!hydrated || !pos || pos.receipt_count === 0) return;
+    if (gross || net || receipts || largest) return;
+    setGross(String(pos.gross_sales));
+    setNet(String(pos.net_sales));
+    setReceipts(String(pos.receipt_count));
+    setLargest(String(pos.largest_sale));
+  }, [hydrated, pos, gross, net, receipts, largest]);
+
+  // Diff mot kassan så manuella överskrivningar syns tydligt.
+  const posDiff = useMemo(() => {
+    if (!pos || pos.receipt_count === 0) return [];
+    const rows: { field: string; report: number | null; pos: number }[] = [];
+    const cmp = (field: string, val: number | null, posVal: number) => {
+      if (val != null && Math.abs(val - posVal) > 0.5) rows.push({ field, report: val, pos: posVal });
+    };
+    cmp("Brutto", num(gross), pos.gross_sales);
+    cmp("Netto", num(net), pos.net_sales);
+    cmp("Antal köp", num(receipts), pos.receipt_count);
+    cmp("Största köp", num(largest), pos.largest_sale);
+    return rows;
+  }, [pos, gross, net, receipts, largest]);
+
+
   const staffName = (id: string) => {
     const s = allStaff.find((x) => x.id === id);
     return s ? `${s.first_name} ${s.last_name}` : "";
