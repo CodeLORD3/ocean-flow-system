@@ -17,6 +17,7 @@ import {
   User,
   X,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -101,6 +102,8 @@ export function RetailCustomerProfile({
   onBack?: () => void;
   readOnly?: boolean;
 }) {
+  const navigate = useNavigate();
+  const goBack = onBack ?? (() => navigate("/customer-orders"));
   const { data: customer, isLoading } = useRetailCustomer(customerId);
   const { data: orders = [] } = useOrdersForCustomer(customerId);
   const update = useUpdateRetailCustomer();
@@ -334,11 +337,14 @@ export function RetailCustomerProfile({
 
             <div className="min-w-0 flex-1 space-y-1.5">
               <div className="flex flex-wrap items-center gap-2">
-                {onBack && (
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={onBack}>
-                    <ArrowLeft className="h-4 w-4" />
-                  </Button>
-                )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 gap-1.5 px-2 text-[11px]"
+                  onClick={goBack}
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" /> Kundbeställningar
+                </Button>
                 <h1 className="text-lg font-semibold">{fullName}</h1>
                 {customer.nickname && (
                   <span className="text-sm text-muted-foreground">”{customer.nickname}”</span>
@@ -413,7 +419,7 @@ export function RetailCustomerProfile({
                         return;
                       await anonymize.mutateAsync(customerId);
                       toast.success("Kunduppgifterna är raderade.");
-                      onBack?.();
+                      goBack();
                     }}
                   >
                     <Trash2 className="mr-1 h-4 w-4" /> GDPR-radering
