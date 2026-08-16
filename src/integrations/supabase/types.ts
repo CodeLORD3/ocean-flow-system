@@ -9926,6 +9926,8 @@ export type Database = {
           wanted_date: string
         }[]
       }
+      can_see_company: { Args: { _legal_entity_id: string }; Returns: boolean }
+      can_see_store: { Args: { _store_id: string }; Returns: boolean }
       company_of_location: {
         Args: { _location_id: string; _on?: string }
         Returns: string
@@ -9974,6 +9976,11 @@ export type Database = {
         }
         Returns: Json
       }
+      has_company_access: {
+        Args: { _legal_entity_id: string; _user_id: string }
+        Returns: boolean
+      }
+      has_company_scoping: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -9986,6 +9993,7 @@ export type Database = {
         Returns: boolean
       }
       is_investor: { Args: never; Returns: boolean }
+      is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       is_staff_manager: { Args: never; Returns: boolean }
       last_name_key: { Args: { v: string }; Returns: string }
@@ -10091,6 +10099,7 @@ export type Database = {
       unpost_purchase_report: { Args: { _report_id: string }; Returns: Json }
       user_portals: { Args: { _user_id: string }; Returns: string[] }
       user_store_ids: { Args: { _user_id: string }; Returns: string[] }
+      user_tenant_ids: { Args: { _user_id: string }; Returns: string[] }
       zero_stale_day_prices: { Args: never; Returns: number }
       zero_stale_day_prices_midnight: { Args: never; Returns: number }
       zero_stock_balances: {
