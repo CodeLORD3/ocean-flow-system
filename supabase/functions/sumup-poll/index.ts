@@ -15,7 +15,14 @@
  * health kräver inloggad personal (JWT valideras i koden, verify_jwt = false).
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { SumupClient, interpretLine, majorToMinor, normalizePayment, scrubCard } from "../_shared/sumup.ts";
+import {
+  SumupClient,
+  interpretLine,
+  majorToMinor,
+  normalizePayment,
+  parseNameWeight,
+  scrubCard,
+} from "../_shared/sumup.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -143,13 +150,15 @@ async function matchProduct(
 
 /* -------------------------------------------------------------------- pollning */
 
-async function pollMerchant(db: SupabaseClient, m: Merchant) {
+async function pollMerchant(db: SupabaseClient, m: Merchant, sinceOverride?: string | null) {
   const key = keyFor(m);
   const startedAt = new Date().toISOString();
-  const since = new Date(
-    (m.last_success_at ? new Date(m.last_success_at).getTime() : Date.now() - 24 * 3600 * 1000) -
-      5 * 60 * 1000,
-  ).toISOString();
+  const since = sinceOverride
+    ? new Date(sinceOverride).toISOString()
+    : new Date(
+        (m.last_success_at ? new Date(m.last_success_at).getTime() : Date.now() - 24 * 3600 * 1000) -
+          5 * 60 * 1000,
+      ).toISOString();
 
   const run = {
     merchant_code: m.merchant_code,
@@ -235,8 +244,10 @@ async function pollMerchant(db: SupabaseClient, m: Merchant) {
       latestTx = occurredAt ?? latestTx;
 
       // Namnmatchning körs redan här så granskningsvyn fylls i etapp 1.
+      // Viktprefixet ("0.724 kg ") rensas bort — annars blir varje vägning ett nytt namn.
       for (const p of (tx?.products ?? []) as any[]) {
-        const name = String(p?.name ?? p?.description ?? "").trim();
+        const raw = String(p?.name ?? p?.description ?? "").trim();
+        const name = parseNameWeight(raw)?.cleanName ?? raw;
         if (name) await matchProduct(db, m.merchant_code, name);
       }
 
@@ -363,9 +374,11 @@ Deno.serve(async (req) => {
     : await q;
   if (error) return json({ error: error.message }, 500);
 
+  // changes_since kan sättas manuellt för att hämta en längre historik.
+  const sinceOverride = body?.changes_since ? String(body.changes_since) : null;
   const results = [];
   for (const m of (merchants ?? []) as Merchant[]) {
-    results.push(await pollMerchant(db, m));
+    results.push(await pollMerchant(db, m, sinceOverride));
   }
   return json({ ok: true, merchants: results.length, results });
 });
