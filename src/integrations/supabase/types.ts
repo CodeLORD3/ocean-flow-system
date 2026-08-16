@@ -2265,6 +2265,14 @@ export type Database = {
           id: string
           largest_sale: number | null
           net_sales: number | null
+          pos_gross_sales: number | null
+          pos_largest_sale: number | null
+          pos_net_sales: number | null
+          pos_payments: Json
+          pos_receipt_count: number | null
+          pos_snapshot_at: string | null
+          pos_source: string | null
+          pos_vat_breakdown: Json
           receipt_count: number | null
           report_date: string
           staff_entries: Json
@@ -2281,6 +2289,14 @@ export type Database = {
           id?: string
           largest_sale?: number | null
           net_sales?: number | null
+          pos_gross_sales?: number | null
+          pos_largest_sale?: number | null
+          pos_net_sales?: number | null
+          pos_payments?: Json
+          pos_receipt_count?: number | null
+          pos_snapshot_at?: string | null
+          pos_source?: string | null
+          pos_vat_breakdown?: Json
           receipt_count?: number | null
           report_date: string
           staff_entries?: Json
@@ -2297,6 +2313,14 @@ export type Database = {
           id?: string
           largest_sale?: number | null
           net_sales?: number | null
+          pos_gross_sales?: number | null
+          pos_largest_sale?: number | null
+          pos_net_sales?: number | null
+          pos_payments?: Json
+          pos_receipt_count?: number | null
+          pos_snapshot_at?: string | null
+          pos_source?: string | null
+          pos_vat_breakdown?: Json
           receipt_count?: number | null
           report_date?: string
           staff_entries?: Json
@@ -4603,6 +4627,138 @@ export type Database = {
           },
         ]
       }
+      nimpos_product_map: {
+        Row: {
+          barcode: string | null
+          created_at: string
+          external_name: string | null
+          external_sku: string | null
+          id: string
+          last_seen_at: string | null
+          product_id: string | null
+          unmatched_count: number
+          updated_at: string
+        }
+        Insert: {
+          barcode?: string | null
+          created_at?: string
+          external_name?: string | null
+          external_sku?: string | null
+          id?: string
+          last_seen_at?: string | null
+          product_id?: string | null
+          unmatched_count?: number
+          updated_at?: string
+        }
+        Update: {
+          barcode?: string | null
+          created_at?: string
+          external_name?: string | null
+          external_sku?: string | null
+          id?: string
+          last_seen_at?: string | null
+          product_id?: string | null
+          unmatched_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nimpos_product_map_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nimpos_store_map: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          register_id: string | null
+          store_code: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          register_id?: string | null
+          store_code: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          register_id?: string | null
+          store_code?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nimpos_store_map_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nimpos_webhook_events: {
+        Row: {
+          attempts: number
+          event_id: string
+          event_type: string
+          id: string
+          last_error: string | null
+          payload: Json
+          processed_at: string | null
+          received_at: string
+          status: string
+          store_code: string | null
+          transaction_id: string | null
+        }
+        Insert: {
+          attempts?: number
+          event_id: string
+          event_type?: string
+          id?: string
+          last_error?: string | null
+          payload: Json
+          processed_at?: string | null
+          received_at?: string
+          status?: string
+          store_code?: string | null
+          transaction_id?: string | null
+        }
+        Update: {
+          attempts?: number
+          event_id?: string
+          event_type?: string
+          id?: string
+          last_error?: string | null
+          payload?: Json
+          processed_at?: string | null
+          received_at?: string
+          status?: string
+          store_code?: string | null
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nimpos_webhook_events_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "pos_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           funds_received: boolean
@@ -5176,7 +5332,9 @@ export type Database = {
       }
       pos_transaction_items: {
         Row: {
+          barcode: string | null
           discount_ore: number
+          external_line_no: number | null
           id: string
           line_total_ore: number
           product_id: string | null
@@ -5189,7 +5347,9 @@ export type Database = {
           vat_rate: number
         }
         Insert: {
+          barcode?: string | null
           discount_ore?: number
+          external_line_no?: number | null
           id?: string
           line_total_ore: number
           product_id?: string | null
@@ -5202,7 +5362,9 @@ export type Database = {
           vat_rate: number
         }
         Update: {
+          barcode?: string | null
           discount_ore?: number
+          external_line_no?: number | null
           id?: string
           line_total_ore?: number
           product_id?: string | null
@@ -5233,8 +5395,12 @@ export type Database = {
       }
       pos_transactions: {
         Row: {
-          cashier_id: string
+          cashier_id: string | null
           control_code: string | null
+          external_cashier: string | null
+          external_id: string | null
+          external_receipt_no: string | null
+          external_register: string | null
           id: string
           legal_entity_id: string | null
           occurred_at: string
@@ -5245,14 +5411,19 @@ export type Database = {
           receipt_no: number
           reversed_transaction_id: string | null
           shift_id: string | null
+          source: string
           status: string
           store_id: string | null
           total_ore: number
           vat_breakdown: Json
         }
         Insert: {
-          cashier_id: string
+          cashier_id?: string | null
           control_code?: string | null
+          external_cashier?: string | null
+          external_id?: string | null
+          external_receipt_no?: string | null
+          external_register?: string | null
           id?: string
           legal_entity_id?: string | null
           occurred_at?: string
@@ -5263,14 +5434,19 @@ export type Database = {
           receipt_no?: number
           reversed_transaction_id?: string | null
           shift_id?: string | null
+          source?: string
           status?: string
           store_id?: string | null
           total_ore?: number
           vat_breakdown?: Json
         }
         Update: {
-          cashier_id?: string
+          cashier_id?: string | null
           control_code?: string | null
+          external_cashier?: string | null
+          external_id?: string | null
+          external_receipt_no?: string | null
+          external_register?: string | null
           id?: string
           legal_entity_id?: string | null
           occurred_at?: string
@@ -5281,6 +5457,7 @@ export type Database = {
           receipt_no?: number
           reversed_transaction_id?: string | null
           shift_id?: string | null
+          source?: string
           status?: string
           store_id?: string | null
           total_ore?: number
@@ -9805,6 +9982,11 @@ export type Database = {
         }
         Returns: undefined
       }
+      pos_day_summary: {
+        Args: { _date: string; _store_id: string }
+        Returns: Json
+      }
+      pos_live_summary: { Args: { _date: string }; Returns: Json }
       post_purchase_report: {
         Args: { p_location_id: string; p_lots: Json; p_report_id: string }
         Returns: string[]

@@ -27,6 +27,8 @@ import {
   formatWeekdayDate,
   type WasteItem,
 } from "@/hooks/useDailyReport";
+import { usePosDaySummary, usePosRealtime } from "@/hooks/usePosLive";
+import { PosSalesCard } from "@/components/dailyreport/PosSalesCard";
 
 const REASONS = ["Utgångsdatum", "Kvalitet", "Skadad", "Annat"];
 const DEVIATIONS = [
@@ -72,6 +74,10 @@ export default function DailyReport() {
   const { data: shifts = [] } = useShiftsForDate(activeStoreId, date);
   const { data: existing, isLoading } = useDailyReport(activeStoreId, date);
   const save = useSaveDailyReport();
+  // Kassan (egna kassor + externa Nimpos-kassor) är grunden för rapporten.
+  usePosRealtime(true);
+  const { data: pos } = usePosDaySummary(activeStoreId, date);
+
 
   const [gross, setGross] = useState("");
   const [net, setNet] = useState("");
@@ -243,6 +249,41 @@ export default function DailyReport() {
   const errCls = (bad: boolean) =>
     showErrors && bad ? "border-destructive ring-1 ring-destructive/40" : "";
 
+  /** Skriv in kassans siffror i formuläret (kan alltid ändras manuellt efteråt). */
+  const applyPos = () => {
+    if (!pos) return;
+    setGross(String(pos.gross_sales));
+    setNet(String(pos.net_sales));
+    setReceipts(String(pos.receipt_count));
+    setLargest(String(pos.largest_sale));
+    toast.success("Kassans siffror inlagda");
+  };
+
+  // Förifyll automatiskt när rapporten är tom och kassan har data.
+  useEffect(() => {
+    if (!hydrated || !pos || pos.receipt_count === 0) return;
+    if (gross || net || receipts || largest) return;
+    setGross(String(pos.gross_sales));
+    setNet(String(pos.net_sales));
+    setReceipts(String(pos.receipt_count));
+    setLargest(String(pos.largest_sale));
+  }, [hydrated, pos, gross, net, receipts, largest]);
+
+  // Diff mot kassan så manuella överskrivningar syns tydligt.
+  const posDiff = useMemo(() => {
+    if (!pos || pos.receipt_count === 0) return [];
+    const rows: { field: string; report: number | null; pos: number }[] = [];
+    const cmp = (field: string, val: number | null, posVal: number) => {
+      if (val != null && Math.abs(val - posVal) > 0.5) rows.push({ field, report: val, pos: posVal });
+    };
+    cmp("Brutto", num(gross), pos.gross_sales);
+    cmp("Netto", num(net), pos.net_sales);
+    cmp("Antal köp", num(receipts), pos.receipt_count);
+    cmp("Största köp", num(largest), pos.largest_sale);
+    return rows;
+  }, [pos, gross, net, receipts, largest]);
+
+
   const staffName = (id: string) => {
     const s = allStaff.find((x) => x.id === id);
     return s ? `${s.first_name} ${s.last_name}` : "";
@@ -270,6 +311,19 @@ export default function DailyReport() {
         net_sales: num(net),
         receipt_count: num(receipts) != null ? Math.round(num(receipts)!) : null,
         largest_sale: num(largest),
+        // Frys kassans siffror vid stängning så avvikelser går att spåra i efterhand.
+        ...(pos && pos.receipt_count > 0
+          ? {
+              pos_gross_sales: pos.gross_sales,
+              pos_net_sales: pos.net_sales,
+              pos_receipt_count: pos.receipt_count,
+              pos_largest_sale: pos.largest_sale,
+              pos_payments: pos.payments,
+              pos_vat_breakdown: pos.vat_breakdown,
+              pos_source: pos.sources.join(",") || "pos",
+              pos_snapshot_at: new Date().toISOString(),
+            }
+          : {}),
         staff_entries: entries.map(([staff_id, r]) => ({
           staff_id,
           start: r.active ? r.start : "",
@@ -321,6 +375,9 @@ export default function DailyReport() {
           onKeyDown={handleFormKeyDown}
           className="space-y-4"
         >
+          {/* Kassan live — grund för stängningsrapporten */}
+          {pos && <PosSalesCard summary={pos} onApply={applyPos} diff={posDiff} />}
+
           {/* Försäljning */}
           <Card className="shadow-card">
             <CardHeader className="pb-2">

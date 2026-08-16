@@ -40,3 +40,6 @@ verify_jwt = false
 
 [functions.compress-stored-images]
 verify_jwt = false
+
+[functions.nimpos-sales]
+verify_jwt = false
