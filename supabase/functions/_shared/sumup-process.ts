@@ -358,6 +358,7 @@ export type ProcessResult = {
   movements?: number;
   unmatched?: number;
   unknown_quantity?: number;
+  not_stocked?: number;
   message?: string;
 };
 
@@ -587,6 +588,7 @@ export async function processSumupEvent(
       movements: movementCount,
       unmatched,
       unknown_quantity: unknownQty,
+      not_stocked: notStocked,
       message: problems.length ? problems.join(", ") : undefined,
     };
   } catch (e: any) {
