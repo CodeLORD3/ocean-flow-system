@@ -62,6 +62,16 @@ export async function salesLocation(db: SupabaseClient, storeId: string): Promis
   return (data?.id as string) ?? null;
 }
 
+/** Systemets betalsättskoder är svenska; SumUps engelska koder mappas hit. */
+const PAYMENT_CODE: Record<string, string> = {
+  cash: "kontant",
+  card: "kort",
+  twint: "twint",
+  invoice: "faktura",
+  other: "ovrigt",
+};
+const paymentCode = (raw?: string) => PAYMENT_CODE[normalizePayment(raw)] ?? "ovrigt";
+
 type Match = {
   productId: string | null;
   unit: string | null;
@@ -455,10 +465,10 @@ export async function processSumupEvent(
         status: isReturn ? "reversed" : "completed",
         total_ore: sign * Math.abs(majorToMinor(payload?.amount)),
         vat_breakdown: vatBreakdown(payload),
-        payment_method: normalizePayment(payload?.payment_type ?? payload?.card?.type),
+        payment_method: paymentCode(payload?.payment_type ?? payload?.card?.type),
         payment_details: [
           {
-            method: normalizePayment(payload?.payment_type ?? payload?.card?.type),
+            method: paymentCode(payload?.payment_type ?? payload?.card?.type),
             amount_minor: sign * Math.abs(majorToMinor(payload?.amount)),
             currency,
           },
