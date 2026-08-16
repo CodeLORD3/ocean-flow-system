@@ -237,8 +237,10 @@ async function pollMerchant(db: SupabaseClient, m: Merchant, sinceOverride?: str
       latestTx = occurredAt ?? latestTx;
 
       // Namnmatchning körs redan här så granskningsvyn fylls i etapp 1.
+      // Viktprefixet ("0.724 kg ") rensas bort — annars blir varje vägning ett nytt namn.
       for (const p of (tx?.products ?? []) as any[]) {
-        const name = String(p?.name ?? p?.description ?? "").trim();
+        const raw = String(p?.name ?? p?.description ?? "").trim();
+        const name = parseNameWeight(raw)?.cleanName ?? raw;
         if (name) await matchProduct(db, m.merchant_code, name);
       }
 
