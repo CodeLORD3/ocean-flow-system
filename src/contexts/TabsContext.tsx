@@ -53,6 +53,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/traceability": "Spårbarhet",
   "/coverage": "Datakvalitet",
   "/system-status": "Systemstatus",
+  "/pos-live": "Kassa live",
 };
 
 export function getTitleForPath(path: string): string {
