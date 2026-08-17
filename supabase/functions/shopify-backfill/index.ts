@@ -14,7 +14,7 @@
  * Hemligheter: SHOPIFY_ADMIN_TOKEN och SHOPIFY_SHOP_DOMAIN — aldrig i koden.
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { adminToken, listShops, resolveShop } from "../_shared/shopify-shops.ts";
+import { adminToken, listShops, mintClientCredentialsToken, resolveShop } from "../_shared/shopify-shops.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -85,15 +85,20 @@ Deno.serve(async (req) => {
   const API_VERSION = shop.api_version;
   const token = await adminToken(db, shop);
   if (!token) {
+    // Visa exakt varför client_credentials-flödet inte gav någon token.
+    const minted = await mintClientCredentialsToken(db, shop);
     return json(
       {
         ok: false,
-        error: `Ingen Admin-token finns för ${shop.label}. Lägg hemligheten ${shop.admin_token_env}, eller anslut butiken via OAuth.`,
+        error:
+          minted.error ??
+          `Ingen Admin-token finns för ${shop.label}. Lägg hemligheten ${shop.admin_token_env}, eller anslut butiken via OAuth.`,
         needs_oauth: true,
       },
       400,
     );
   }
+
 
 
   const result = {
