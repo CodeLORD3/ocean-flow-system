@@ -164,13 +164,17 @@ export default function Receiving() {
     return d.toISOString().slice(0, 10);
   };
 
-  // Compute auto CHF cost for a line based on product cost (SEK) + transport
+  /** Inköpspris i leverantörens valuta (SEK) per enhet. */
+  const sourceCost = (line: any): number => Number(line?.products?.cost_price) || 0;
+
+  /** Auto-förslag på bokfört värde i bolagets valuta: SEK × kurs + transport. */
   const autoChfCost = (line: any): string => {
-    if (!isChfStore || !currencySettings) return "";
-    const sek = Number(line?.products?.cost_price) || 0;
+    if (!isChfStore || !effectiveFx) return "";
+    const sek = sourceCost(line);
     if (sek <= 0) return "";
-    return String(convertSekToChfCost(sek, currencySettings));
+    return String(Number((sek * effectiveFx + transportPerKg).toFixed(2)));
   };
+
 
   const openOrder = (order: any) => {
     setSelectedOrder(order);
