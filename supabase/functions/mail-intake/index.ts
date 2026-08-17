@@ -52,6 +52,42 @@ export function isReminder(subject: string, fileName: string, docType?: string |
   return REMINDER_WORDS.some((w) => hay.includes(w));
 }
 
+// Nyhetsbrev och marknadsföring ska aldrig tolkas som inköpsdokument. De känns
+// igen på massutskicks-headers (List-Unsubscribe, Precedence: bulk) eller på
+// typiska reklamord i ämnesraden.
+const NEWSLETTER_WORDS = [
+  "nyhetsbrev", "newsletter", "infolettre", "kampanj", "erbjudande", "rabatt",
+  "förboka", "forboka", "säsongens", "sasongens", "avregistrera", "prenumer",
+  "unsubscribe", "nyheter från", "nyheter fran", "inbjudan", "promotion",
+  "angebot", "aktion", "veckans erbjudande", "vårt sortiment", "vart sortiment",
+];
+
+// Ord som visar att mejlet trots allt är ett affärsdokument.
+const DOC_WORDS = [
+  "faktura", "invoice", "följesedel", "foljesedel", "avräkning", "avrakning",
+  "auktion", "kredit", "leveransbesked", "packsedel", "rechnung", "facture",
+];
+
+export function isNewsletter(
+  subject: string,
+  headers?: Map<string, unknown> | null,
+  fileNames: string[] = [],
+): boolean {
+  const hay = `${subject} ${fileNames.join(" ")}`.toLowerCase();
+  if (DOC_WORDS.some((w) => hay.includes(w))) return false;
+  const get = (k: string) => {
+    const v = headers?.get(k);
+    return typeof v === "string" ? v.toLowerCase() : v ? String(v).toLowerCase() : "";
+  };
+  if (headers) {
+    if (get("list-unsubscribe") || get("list-id") || get("list-help")) return true;
+    if (/bulk|list|junk/.test(get("precedence"))) return true;
+    if (get("x-campaign") || get("x-mailer-lid") || get("x-mailchimp-campaign-id")) return true;
+    if (/mailchimp|sendgrid|mailerlite|klaviyo|hubspot|apsis|rule\.io|getanewsletter/.test(get("x-mailer"))) return true;
+  }
+  return NEWSLETTER_WORDS.some((w) => hay.includes(w));
+}
+
 function classify(docType: string | null | undefined, subject: string, fileName: string): string {
   if (isReminder(subject, fileName, docType)) return "paminnelse";
   const raw = (docType || "").toLowerCase();
@@ -225,6 +261,32 @@ Deno.serve(async (req) => {
             await client.markSeen(uid);
             await client.moveUid(uid, PROCESSED);
           }
+          continue;
+        }
+
+        // Nyhetsbrev/utskick: loggas som information, bilagor öppnas aldrig.
+        const newsletter = isNewsletter(
+          subject,
+          parsedMail.headers as unknown as Map<string, unknown>,
+          attachments.map((a) => a.filename || ""),
+        );
+        if (newsletter) {
+          await supabase.from("mail_intake_messages").insert({
+            message_id: messageId,
+            from_email: fromEmail,
+            from_name: fromAddr?.name || null,
+            subject,
+            sent_at: parsedMail.date ? new Date(parsedMail.date).toISOString() : null,
+            folder,
+            attachment_count: attachments.length,
+            status: "nyhetsbrev",
+          });
+          skipped++;
+          if (moveMail) {
+            await client.markSeen(uid);
+            await client.moveUid(uid, PARKED);
+          }
+          results.push({ messageId, fromEmail, subject, action: "nyhetsbrev_ignorerat" });
           continue;
         }
 
