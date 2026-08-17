@@ -292,7 +292,7 @@ Deno.serve(async (req) => {
         const newsletter = isNewsletter(
           subject,
           parsedMail.headers as unknown as Map<string, unknown>,
-          attachments.map((a) => a.filename || ""),
+          fileNames,
         );
         if (newsletter) {
           await supabase.from("mail_intake_messages").insert({
