@@ -65,13 +65,24 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
   const [folder, setFolder] = useState("Test");
 
   const drafts = useMemo(
-    () => documents.filter((d) => d.status === "utkast" && d.parse_status === "tolkad"),
+    () =>
+      documents.filter(
+        (d) => d.status === "utkast" && d.parse_status === "tolkad" && d.doc_type !== "paminnelse",
+      ),
+    [documents],
+  );
+  const reminders = useMemo(
+    () => documents.filter((d) => d.doc_type === "paminnelse" || d.status === "endast_info"),
     [documents],
   );
   const problems = useMemo(
-    () => documents.filter((d) => d.status === "dubblett" || d.parse_status === "fel"),
+    () =>
+      documents.filter(
+        (d) => (d.status === "dubblett" || d.parse_status === "fel") && d.doc_type !== "paminnelse",
+      ),
     [documents],
   );
+
   const unknownSenders = useMemo(
     () => messages.filter((m) => m.status === "okand_avsandare"),
     [messages],
