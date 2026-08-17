@@ -538,7 +538,9 @@ export default function CustomerOrders() {
             <EmptyState
               title={`Inget i ${ORDER_TAB_LABELS[tab].toLowerCase()}`}
               description={
-                tab === "pagaende"
+                tab === "godkannande"
+                  ? "Webbordrar för hämtning i butik som kräver godkännande hamnar här innan de går in i flödet."
+                  : tab === "pagaende"
                   ? "Här ligger beställningar som är aktiva och ännu inte färdigpackade. Skapa en med Ny beställning."
                   : tab === "packade"
                     ? "Färdigpackade beställningar som väntar på hämtning eller leverans hamnar här."
