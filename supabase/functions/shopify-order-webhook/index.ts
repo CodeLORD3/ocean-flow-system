@@ -704,6 +704,12 @@ async function processEvent(db: SupabaseClient, eventId: string): Promise<void> 
       .eq("id", eventId);
   };
 
+  /**
+   * Deklareras UTANFÖR try: catch-grenen läser den vid DUPLIKAT. Låg den kvar
+   * inne i try blev catch en ReferenceError och raden fastnade på "bearbetar".
+   */
+  let shopifyOrderId: string | null = null;
+
   try {
     let payload: any = ev.payload;
     if (!payload && ev.raw_body) {
