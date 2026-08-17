@@ -168,8 +168,10 @@ Deno.serve(async (req) => {
           break;
         }
         fetched++;
-
+        console.log("mail-intake: hämtar uid", uid);
+        let source: Uint8Array | null = null;
         try {
+
           source = await client.fetchSource(uid);
         } catch (e) {
           console.log("mail-intake: kunde inte hämta uid", uid, String(e));
