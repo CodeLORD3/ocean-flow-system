@@ -1064,7 +1064,12 @@ Deno.serve(async (req) => {
     return json({ ok: false, queued: false, error: "Kön kunde inte skrivas" }, 200);
   }
 
-  afterResponse(processEvent(db, queued.id));
+  afterResponse(
+    (async () => {
+      await processEvent(db, queued.id);
+      await reclaimStale(db);
+    })(),
+  );
   return json({ ok: true, queued: true, event_id: queued.id }, 200);
 });
 
