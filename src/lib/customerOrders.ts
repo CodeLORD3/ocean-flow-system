@@ -205,6 +205,10 @@ export interface CustomerOrder {
   price_locked?: boolean;
   wanted_time_window?: string | null;
   web_delivery_method?: string | null;
+  /* Extra godkännandesteg innan ordern går in i flödet */
+  needs_approval?: boolean | null;
+  approved_at?: string | null;
+  approved_by?: string | null;
   customers_retail?: RetailCustomer | null;
   /** Butiken där beställningen hämtas (joinad). */
   stores?: {
