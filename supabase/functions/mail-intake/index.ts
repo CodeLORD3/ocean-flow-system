@@ -82,8 +82,8 @@ Deno.serve(async (req) => {
   } catch {
     body = {};
   }
-  // Verifiering sker mot en testmapp först — inkorgen pekas ut explicit.
-  const folder = typeof body.folder === "string" && body.folder ? body.folder : "Test";
+  // Inkorgen är standard; en testmapp kan pekas ut explicit.
+  const folder = typeof body.folder === "string" && body.folder ? body.folder : "INBOX";
   const limit = typeof body.limit === "number" ? Math.min(body.limit, 50) : 20;
   const moveMail = body.move !== false;
 
@@ -146,16 +146,50 @@ Deno.serve(async (req) => {
       }
     }
 
-    const lock = await client.getMailboxLock(folder);
+    // Hitta rätt mapp (case-insensitivt), annars fall tillbaka till INBOX
+    let targetFolder = folder;
+    if (folder.toUpperCase() !== "INBOX") {
+      try {
+        const boxes = await client.list();
+        const hit = (boxes || []).find(
+          (b: { path: string; name?: string }) =>
+            b.path.toLowerCase() === folder.toLowerCase() ||
+            (b.name || "").toLowerCase() === folder.toLowerCase() ||
+            b.path.toLowerCase().endsWith(`.${folder.toLowerCase()}`) ||
+            b.path.toLowerCase().endsWith(`/${folder.toLowerCase()}`),
+        );
+        targetFolder = hit?.path || "INBOX";
+      } catch {
+        targetFolder = "INBOX";
+      }
+    }
+    console.log("mail-intake: öppnar mapp", targetFolder);
+
+    const lock = await client.getMailboxLock(targetFolder);
     try {
-      const uids = (await client.search({ seen: false })) || [];
-      const batch = (uids as number[]).slice(0, limit);
+      const uids = (await client.search({ seen: false }, { uid: true })) || [];
+      console.log("mail-intake: olästa", (uids as number[]).length);
+      const batch = (uids as number[]).slice(-limit);
 
       for (const uid of batch) {
         fetched++;
-        const msg = await client.fetchOne(String(uid), { source: true, envelope: true }, { uid: true });
-        if (!msg?.source) continue;
-        const parsedMail = await simpleParser(msg.source as Uint8Array);
+        console.log("mail-intake: hämtar uid", uid);
+        let source: Uint8Array | null = null;
+        try {
+          for await (const m of client.fetch({ uid: String(uid) }, { source: true }, { uid: true })) {
+            const raw = m?.source as unknown;
+            if (raw) {
+              source = raw instanceof Uint8Array ? raw : new Uint8Array(raw as ArrayBufferLike);
+            }
+            break;
+          }
+        } catch (e) {
+          console.log("mail-intake: kunde inte hämta uid", uid, String(e));
+        }
+        console.log("mail-intake: hämtad", uid, source?.length ?? 0);
+        if (!source) continue;
+        const parsedMail = await simpleParser(source);
+        console.log("mail-intake: tolkad", uid, parsedMail.subject || "");
         const messageId = parsedMail.messageId || `uid-${folder}-${uid}`;
         const fromAddr = parsedMail.from?.value?.[0];
         const fromEmail = (fromAddr?.address || "").toLowerCase();
