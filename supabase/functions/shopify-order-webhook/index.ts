@@ -731,6 +731,7 @@ async function processEvent(db: SupabaseClient, eventId: string): Promise<void> 
       await fail("Ordern saknar id");
       return;
     }
+    const orderId: string = shopifyOrderId;
 
     await db
       .from("shopify_webhook_events")
