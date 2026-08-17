@@ -268,7 +268,34 @@ export default function Suppliers() {
                 <Input value={form.address} onChange={e => setField("address", e.target.value)} className="h-8 text-xs" />
               </div>
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Fakturavaluta</Label>
+                <Select value={form.currency} onValueChange={v => setField("currency", v)}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CURRENCY_OPTIONS.map(c => <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground">
+                  Inköp från leverantören visas i den här valutan. Bokförs i bolagets valuta med kursen vid inköpstillfället.
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Koncernintern</Label>
+                <div className="flex items-center gap-2 h-8">
+                  <Switch
+                    checked={form.is_intercompany}
+                    onCheckedChange={v => setField("is_intercompany", v)}
+                  />
+                  <span className="text-[11px] text-muted-foreground">
+                    {form.is_intercompany ? "Ja – egen grossist" : "Nej – extern leverantör"}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
+
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setDialogOpen(false)}>Avbryt</Button>
             <Button size="sm" onClick={handleSave} disabled={!form.name}>Spara</Button>
