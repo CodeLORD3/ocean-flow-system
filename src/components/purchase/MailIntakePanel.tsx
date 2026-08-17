@@ -282,68 +282,34 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
                   Inga dokument väntar på attest.
                 </div>
               )}
-              {drafts.map((doc) => {
-                const lines = doc.parsed?.lines ?? [];
-                const old = ageHours(doc.created_at) > 48;
-                return (
-                  <div key={doc.id} className="p-3 flex flex-wrap items-start justify-between gap-2">
-                    <div className="min-w-[200px] flex-1">
-                      <div className="flex items-center gap-2 text-xs font-medium">
-                        <Badge variant="outline" className="h-4 px-1 text-[10px]">{docTypeLabel[doc.doc_type] ?? doc.doc_type}</Badge>
-                        <span className="truncate">{doc.file_name}</span>
-                        {old && (
-                          <span className="flex items-center gap-1 text-amber-600 text-[10px]">
-                            <AlertTriangle className="h-3 w-3" /> äldre än 48 h
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
-                        {doc.parsed?.document?.supplier_name ?? "Okänd leverantör"}
-                        {!doc.supplier_id ? " · välj leverantör innan attest" : ""}
-                        {doc.document_number ? ` · nr ${doc.document_number}` : ""}
-                        {doc.document_date ? ` · ${doc.document_date}` : ""} · {lines.length} rader
-                        {doc.total_ex_vat ? ` · ${doc.total_ex_vat.toLocaleString("sv-SE")} ex moms` : ""}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {!doc.supplier_id && (
-                        <Select
-                          onValueChange={(supplier_id) =>
-                            setDocumentSupplier.mutate(
-                              { id: doc.id, supplier_id },
-                              { onSuccess: () => toast({ title: "Leverantör kopplad" }) },
-                            )
-                          }
-                        >
-                          <SelectTrigger className="h-7 w-[190px] max-w-full text-xs">
-                            <SelectValue placeholder="Välj leverantör" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {suppliers.map((s: any) => (
-                              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => handleReject(doc)}>
-                        Avvisa
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="h-7 text-xs gap-1"
-                        disabled={busyId === doc.id || !doc.supplier_id}
-                        onClick={() => handleApprove(doc)}
-                      >
-                        {busyId === doc.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShieldCheck className="h-3 w-3" />}
-                        Attestera
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
+              {/* Ett dokument i taget: kön öppnas först när detta är attesterat eller avvisat. */}
+              {drafts.slice(0, 1).map((doc) => (
+                <DraftQueueCard
+                  key={doc.id}
+                  doc={doc}
+                  suppliers={suppliers as any[]}
+                  busy={busyId === doc.id}
+                  queueLength={drafts.length}
+                  onSetSupplier={(supplier_id) =>
+                    setDocumentSupplier.mutate(
+                      { id: doc.id, supplier_id },
+                      { onSuccess: () => toast({ title: "Leverantör kopplad" }) },
+                    )
+                  }
+                  onApprove={() => handleApprove(doc)}
+                  onReject={() => handleReject(doc)}
+                />
+              ))}
+              {drafts.length > 1 && (
+                <div className="p-3 text-[11px] text-muted-foreground flex items-center gap-1.5">
+                  <Lock className="h-3 w-3" />
+                  {drafts.length - 1} dokument väntar i kön — nästa visas när det här är attesterat eller avvisat.
+                </div>
+              )}
             </div>
           </ScrollArea>
         </TabsContent>
+
 
         <TabsContent value="unknown" className="flex-1 min-h-0 m-0">
           <ScrollArea className="h-full">
