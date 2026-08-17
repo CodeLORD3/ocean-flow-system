@@ -10,7 +10,7 @@
  * IMAP-sessionen hålls kort och stängs varje körning (Loopia begränsar samtidiga anslutningar).
  */
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { SimpleImap } from "./imap.ts";
+import { SimpleImap, parseAddress } from "./imap.ts";
 import { simpleParser } from "npm:mailparser@3.7.1";
 import { Buffer } from "node:buffer";
 
