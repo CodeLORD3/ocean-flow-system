@@ -60,7 +60,11 @@ export async function approveDeliveryNote(
   ctx: ApproveContext,
 ): Promise<string> {
   if (doc.status === "dubblett") throw new Error("Dokumentet är redan registrerat.");
+  if (doc.doc_type === "paminnelse") {
+    throw new Error("Påminnelser och inkassokrav kan inte bokföras som inköp.");
+  }
   if (doc.parse_status !== "tolkad") throw new Error("Dokumentet är inte tolkat.");
+
   if (doc.purchase_report_id) return doc.purchase_report_id;
 
   const header = doc.parsed?.document ?? {};
