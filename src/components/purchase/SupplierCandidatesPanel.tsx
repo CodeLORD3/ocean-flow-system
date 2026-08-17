@@ -109,7 +109,8 @@ export function SupplierCandidatesPanel() {
     setForm({
       name: r?.name || c.names[0] || c.domain,
       contact_person: "",
-      email: r?.email || c.emails[0] || "",
+      // Förmedlarens adress (t.ex. Fortnox) är inte leverantörens e-post.
+      email: r?.email || (c.viaPortal ? "" : c.emails[0] || ""),
       phone: r?.phone || "",
       country: r?.country || "Sverige",
       address: r?.address || "",
@@ -117,8 +118,9 @@ export function SupplierCandidatesPanel() {
       currency: r?.currency || "SEK",
       org_nr: r?.org_nr || "",
     });
-    setOpenDomain(c.domain);
+    setOpenDomain(c.key);
   };
+
 
   const linkSender = async (pattern: string, supplierId: string, note?: string) => {
     await saveSender.mutateAsync({ pattern, kind: "email", supplier_id: supplierId, is_portal: false, note } as any);
