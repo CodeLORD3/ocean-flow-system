@@ -198,7 +198,7 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
           </TabsTrigger>
           <TabsTrigger value="reminders" className="text-xs">
             Påminnelser
-            {reminders.length > 0 && <Badge variant="secondary" className="ml-1.5 h-4 px-1 text-[10px]">{reminders.length}</Badge>}
+            {reminders.length + reminderMessages.length > 0 && <Badge variant="secondary" className="ml-1.5 h-4 px-1 text-[10px]">{reminders.length + reminderMessages.length}</Badge>}
           </TabsTrigger>
           <TabsTrigger value="newsletters" className="text-xs">
             Nyhetsbrev
