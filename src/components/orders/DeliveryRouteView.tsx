@@ -10,6 +10,8 @@ import { EmptyState } from "@/components/EmptyState";
 import { useCustomerOrders, useUpdateCustomerOrder } from "@/hooks/useCustomerOrders";
 import { CustomerOrder, ORDER_STATUS_LABELS } from "@/lib/customerOrders";
 import { printPackList } from "@/lib/customerOrderPackListPdf";
+import { CurrencyAmount } from "@/components/orders/CurrencyAmount";
+import { getStoreCurrency } from "@/lib/currency";
 
 const nf = (v: unknown, d = 2) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
