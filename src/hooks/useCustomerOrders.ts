@@ -324,6 +324,35 @@ export function useCreateCustomerOrder() {
   });
 }
 
+/**
+ * Godkänner webbupphämtningar som kräver ett extra steg (t.ex. Zollikon).
+ * Först efter godkännandet flyttas ordern in i Pågående.
+ */
+export function useApproveCustomerOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ ids }: { ids: string[] }) => {
+      const { data: auth } = await supabase.auth.getUser();
+      const { error } = await db
+        .from("customer_orders")
+        .update({ approved_at: new Date().toISOString(), approved_by: auth?.user?.id ?? null })
+        .in("id", ids);
+      if (error) throw error;
+      for (const id of ids) {
+        await logOrderEvent({
+          orderId: id,
+          eventType: "godkand",
+          description: "Hämtning i butik godkändes",
+          performedBy: auth?.user?.id ?? null,
+        });
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["customer_orders"] });
+    },
+  });
+}
+
 /** Arkiverar eller återställer en kundbeställning. */
 export function useArchiveCustomerOrder() {
   const qc = useQueryClient();
