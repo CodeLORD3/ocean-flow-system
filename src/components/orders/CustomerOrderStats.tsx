@@ -18,7 +18,7 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
  * Statistik över kundbeställningar: antal, belopp, mest sålda varor och
  * hur ofta vägd vikt avviker från beställd. Underlag för inköpsplaneringen.
  */
-export function CustomerOrderStats({ storeId }: { storeId?: string | null }) {
+export function CustomerOrderStats({ storeId, currency = "SEK" }: { storeId?: string | null; currency?: string }) {
   const start = new Date();
   start.setDate(start.getDate() - 30);
   const [from, setFrom] = useState(iso(start));
@@ -163,23 +163,23 @@ export function CustomerOrderStats({ storeId }: { storeId?: string | null }) {
               { label: "Order", value: nf(stats.count), sub: `${nf(stats.cancelled)} avbrutna` },
               {
                 label: "Uppskattat belopp",
-                value: `${nf(stats.estimated)} kr`,
+                value: `${nf(stats.estimated)} ${currency}`,
                 sub: "vid registrering",
               },
               {
                 label: "Verkligt belopp",
-                value: `${nf(stats.actual)} kr`,
+                value: `${nf(stats.actual)} ${currency}`,
                 sub: "packat och prissatt",
               },
               {
                 label: "Företagskunder",
                 value: `${nf(stats.companyOrders)} order`,
-                sub: `${nf(stats.companyValue)} kr`,
+                sub: `${nf(stats.companyValue)} ${currency}`,
               },
               {
                 label: "Privatkunder",
                 value: `${nf(stats.privateOrders)} order`,
-                sub: `${nf(stats.privateValue)} kr`,
+                sub: `${nf(stats.privateValue)} ${currency}`,
               },
               {
                 label: "Vikt avviker över 20 %",
@@ -226,7 +226,7 @@ export function CustomerOrderStats({ storeId }: { storeId?: string | null }) {
                   <div key={name} className="flex items-center justify-between gap-2">
                     <span className="truncate">{name}</span>
                     <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
-                      {nf(v.qty, 1)} kg · {nf(v.value)} kr
+                      {nf(v.qty, 1)} kg · {nf(v.value)} {currency}
                     </span>
                   </div>
                 ))}

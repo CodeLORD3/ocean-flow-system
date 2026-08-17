@@ -65,9 +65,11 @@ function PackStep({ status, index }: { status: string; index: number }) {
  */
 export function InlineOrderPacking({
   order,
+  currency,
   onOrderPacked,
 }: {
   order: CustomerOrder;
+  currency: string;
   /** Anropas när sista raden packats (ordern blir grön) så rullgardinen kan stängas. */
   onOrderPacked?: () => void;
 }) {
@@ -177,7 +179,7 @@ export function InlineOrderPacking({
         <div className="rounded-md border border-row-warn-edge/40 bg-row-warn p-2.5 text-sm">
           Verkligt pris avviker mer än 15 % från uppskattningen — ring kunden innan packning.
           <div className="font-mono tabular-nums">
-            Uppskattat {nf(order.estimated_total)} kr · nu {nf(actualTotal)} kr
+            Uppskattat {nf(order.estimated_total)} {currency} · nu {nf(actualTotal)} {currency}
           </div>
         </div>
       )}
@@ -211,13 +213,13 @@ export function InlineOrderPacking({
                 </span>
                 <span className="hidden w-20 shrink-0 text-right font-mono text-xs tabular-nums text-muted-foreground sm:block">
                   {l.price_per_unit != null || l.estimated_price_per_unit != null
-                    ? `${nf(l.price_per_unit ?? l.estimated_price_per_unit)} kr`
+                    ? `${nf(l.price_per_unit ?? l.estimated_price_per_unit)} ${currency}`
                     : "—"}
                 </span>
                 <span className="w-20 shrink-0 text-right font-mono text-xs font-semibold tabular-nums">
                   {l.line_total != null
-                    ? `${nf(l.line_total)} kr`
-                    : `${nf(Number(l.quantity_ordered || 0) * Number(l.estimated_price_per_unit ?? 0))} kr`}
+                    ? `${nf(l.line_total)} ${currency}`
+                    : `${nf(Number(l.quantity_ordered || 0) * Number(l.estimated_price_per_unit ?? 0))} ${currency}`}
                 </span>
                 {l.paid_quantity != null &&
                   l.quantity_packed != null &&

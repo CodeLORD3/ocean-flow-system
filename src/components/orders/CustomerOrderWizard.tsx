@@ -49,6 +49,7 @@ import {
 } from "@/hooks/useCustomerOrders";
 import { RetailCustomer, shelfLifeWarning } from "@/lib/customerOrders";
 import { qtyText } from "@/lib/retailCustomerStats";
+import { getStoreCurrency } from "@/lib/currency";
 import {
   useMajorHolidays,
   useSameDayOrders,
@@ -87,12 +88,14 @@ export function CustomerOrderWizard({
   onOpenChange,
   storeId,
   storeName,
+  currency: currencyProp,
   initialCustomer,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   storeId: string;
   storeName?: string | null;
+  currency?: string;
   /** Förvald kund, används av genvägen "Ny order" på kundkortet. */
   initialCustomer?: RetailCustomer | null;
 }) {
@@ -106,6 +109,8 @@ export function CustomerOrderWizard({
 
   /** Hämtningsbutik. Byte flyttar hela ordern (priser, kundsök, sparning). */
   const [pickupStoreId, setPickupStoreId] = useState(storeId);
+  const pickupStore = stores.find((store) => store.id === pickupStoreId);
+  const currency = pickupStore ? getStoreCurrency(pickupStore) : currencyProp ?? "SEK";
 
   const [customerSearch, setCustomerSearch] = useState("");
   const { data: customers = [] } = useRetailCustomers(pickupStoreId, customerSearch);
@@ -409,7 +414,7 @@ export function CustomerOrderWizard({
                           <div className="text-xs text-muted-foreground">
                             {p.category} · {p.unit}
                             {p.retail_suggested
-                              ? ` · ${nf(Number(p.retail_suggested))} kr/${p.unit}`
+                              ? ` · ${nf(Number(p.retail_suggested))} ${currency}/${p.unit}`
                               : ""}
                           </div>
                         </div>
@@ -531,7 +536,7 @@ export function CustomerOrderWizard({
                       </div>
                       <div className="font-mono tabular-nums text-muted-foreground">
                         {l.estimated_price_per_unit != null
-                          ? `${nf(Number(l.estimated_price_per_unit))} kr/${l.unit}`
+                          ? `${nf(Number(l.estimated_price_per_unit))} ${currency}/${l.unit}`
                           : "pris saknas"}
                       </div>
                     </div>
@@ -944,14 +949,14 @@ export function CustomerOrderWizard({
                   </span>
                   <span className="w-20 text-right font-mono tabular-nums text-muted-foreground">
                     {l.estimated_price_per_unit != null
-                      ? `${nf(Number(l.estimated_price_per_unit))} kr`
+                      ? `${nf(Number(l.estimated_price_per_unit))} ${currency}`
                       : "—"}
                   </span>
                   <span className="w-24 text-right font-mono tabular-nums">
                     {l.estimated_price_per_unit != null
                       ? `${nf(
                           Number(l.quantity_ordered || 0) * Number(l.estimated_price_per_unit),
-                        )} kr`
+                        )} ${currency}`
                       : "—"}
                   </span>
                 </div>
@@ -960,7 +965,7 @@ export function CustomerOrderWizard({
             <div className="rounded-md bg-muted p-3 text-sm">
               <div className="flex justify-between font-semibold">
                 <span>Uppskattat pris</span>
-                <span className="font-mono tabular-nums">{nf(estimatedTotal)} kr</span>
+                <span className="font-mono tabular-nums">{nf(estimatedTotal)} {currency}</span>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 Uppskattat pris. Dagens pris gäller vid hämtning.

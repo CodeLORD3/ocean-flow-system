@@ -54,6 +54,7 @@ import { InlineOrderEdit } from "./InlineOrderEdit";
 import { ProductThumb } from "@/components/products/ProductThumb";
 import { EntityImageGallery } from "@/components/images/EntityImageGallery";
 import { OrderAuditLine } from "./OrderAuditLine";
+import { getStoreCurrency } from "@/lib/currency";
 
 
 
@@ -226,6 +227,7 @@ export function CustomerOrderRow({
 
   const packedCount = active.filter((l) => l.pack_status === "packad").length;
   const total = Number(order.total_incl_vat || order.estimated_total || 0);
+  const currency = getStoreCurrency(order.stores);
   const allergens = order.excluded_allergens || [];
   const hasAllergy = allergens.length > 0 || !!order.allergy_note;
   const cancelled = order.status === "avbruten";
@@ -442,7 +444,7 @@ export function CustomerOrderRow({
               )}
               {readOnly && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
               <span className="font-mono text-xs font-semibold tabular-nums">
-                {nf(total, 2)} kr
+                {nf(total, 2)} {currency}
               </span>
               <ChevronDown
                 className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${
@@ -543,9 +545,9 @@ export function CustomerOrderRow({
               })}
             </ul>
           ) : editing ? (
-            <InlineOrderEdit order={order} onClose={() => setEditing(false)} />
+            <InlineOrderEdit order={order} currency={currency} onClose={() => setEditing(false)} />
           ) : (
-            <InlineOrderPacking order={order} onOrderPacked={() => onToggle?.(order.id)} />
+            <InlineOrderPacking order={order} currency={currency} onOrderPacked={() => onToggle?.(order.id)} />
           )}
 
           {/* Kommentaren direkt under varorna — den styr ofta packningen. */}
@@ -567,7 +569,7 @@ export function CustomerOrderRow({
             <span className="text-muted-foreground">
               {order.total_incl_vat ? "Verkligt pris" : "Uppskattat pris"}
             </span>
-            <span className="font-mono text-sm font-semibold tabular-nums">{nf(total, 2)} kr</span>
+            <span className="font-mono text-sm font-semibold tabular-nums">{nf(total, 2)} {currency}</span>
           </div>
 
           <button
@@ -680,10 +682,10 @@ export function CustomerOrderRow({
 
               {order.is_web_order && order.paid_total != null && (
                 <div className="text-[11px] text-muted-foreground">
-                  Betalt via webben: {nf(Number(order.paid_total), 2)} kr
+                  Betalt via webben: {nf(Number(order.paid_total), 2)} {currency}
                   {Math.abs(total - Number(order.paid_total)) > 0.5 && (
                     <span className="ml-1 font-semibold text-amber-600">
-                      · vägd summa {nf(total, 2)} kr avviker, justering görs manuellt i Shopify
+                      · vägd summa {nf(total, 2)} {currency} avviker, justering görs manuellt i Shopify
                     </span>
                   )}
                 </div>
@@ -971,10 +973,12 @@ export function CustomerOrderRow({
 
 /** Kolumnrubrik som matchar radens desktoplayout. */
 export function CustomerOrderRowHeader({
+  currency = "SEK",
   selectable,
   allSelected,
   onSelectAll,
 }: {
+  currency?: string;
   selectable?: boolean;
   allSelected?: boolean;
   onSelectAll?: (next: boolean) => void;
@@ -999,7 +1003,7 @@ export function CustomerOrderRowHeader({
         <span className="w-14 shrink-0 border-r border-grid-line px-2">Källa</span>
         <span className="w-12 shrink-0 border-r border-grid-line px-2">Kom.</span>
         <span className="w-24 shrink-0 border-r border-grid-line px-2">Status</span>
-        <span className="w-24 shrink-0 border-r border-grid-line px-2 text-right">Summa (kr)</span>
+        <span className="w-24 shrink-0 border-r border-grid-line px-2 text-right">Summa ({currency})</span>
         <span className="w-28 shrink-0 px-2">Butik</span>
         <span className="w-3.5 shrink-0" />
       </span>

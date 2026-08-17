@@ -37,6 +37,7 @@ import { CustomerOrderWizard } from "@/components/orders/CustomerOrderWizard";
 import { CustomerOrderRow, CustomerOrderRowHeader } from "@/components/orders/CustomerOrderRow";
 import { useEntityImageCounts } from "@/hooks/useEntityImages";
 import { StatusBar } from "@/components/shell/StatusBar";
+import { getStoreCurrency } from "@/lib/currency";
 
 import { RetailCustomerRegistry } from "@/components/orders/RetailCustomerRegistry";
 import { CustomerOrderStats } from "@/components/orders/CustomerOrderStats";
@@ -146,6 +147,8 @@ export default function CustomerOrders() {
 
   const [storeFilter, setStoreFilter] = useState<string>("all");
   const effectiveStore = isShop ? activeStoreId : storeFilter === "all" ? null : storeFilter;
+  const selectedStore = stores.find((store) => store.id === effectiveStore) ?? null;
+  const currency = getStoreCurrency(selectedStore);
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -527,6 +530,7 @@ export default function CustomerOrders() {
             <div className="overflow-hidden rounded-sm border border-grid-line bg-card">
               <div>
                 <CustomerOrderRowHeader
+                  currency={currency}
                   selectable
                   allSelected={allMarked}
                   onSelectAll={markAll}
@@ -545,7 +549,7 @@ export default function CustomerOrders() {
                         {w.count} order
                       </span>
                       <span className="shrink-0 font-mono text-[12px] font-semibold tabular-nums text-foreground">
-                        {nf(w.sum, 2)} kr
+                        {nf(w.sum, 2)} {currency}
                       </span>
                     </div>
 
@@ -588,6 +592,7 @@ export default function CustomerOrders() {
                 selectedCount={markedOrders.length}
                 totalCount={viewOrders.length}
                 selectedSum={markedSum}
+                currency={currency}
                 extra={ORDER_TAB_LABELS[tab]}
               />
             </div>
@@ -597,7 +602,7 @@ export default function CustomerOrders() {
         {panel === "customers" && (
           <RetailCustomerRegistry storeId={effectiveStore} readOnly={!canEdit} />
         )}
-        {panel === "stats" && <CustomerOrderStats storeId={effectiveStore} />}
+        {panel === "stats" && <CustomerOrderStats storeId={effectiveStore} currency={currency} />}
         {panel === "route" && (
           <DeliveryRouteView
             storeId={effectiveStore}
@@ -623,6 +628,7 @@ export default function CustomerOrders() {
             onOpenChange={setWizardOpen}
             storeId={(isShop ? activeStoreId : effectiveStore) as string}
             storeName={isShop ? activeStoreName : stores.find((s: any) => s.id === effectiveStore)?.name}
+            currency={currency}
           />
         </>
       )}

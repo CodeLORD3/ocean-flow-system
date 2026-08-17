@@ -54,6 +54,7 @@ import {
   qtyText,
   shortDate,
 } from "@/lib/retailCustomerStats";
+import { getStoreCurrency } from "@/lib/currency";
 
 const AVATAR_BUCKET = "logos";
 
@@ -180,6 +181,7 @@ export function RetailCustomerProfile({
   const noShows = Number(customer.no_show_count || 0);
   const tags = customer.tags || [];
   const upcoming = stats.upcoming;
+  const customerCurrency = getStoreCurrency(orders.find((order) => order.store_id === customer.store_id)?.stores);
 
   const lineText = (o: CustomerOrder) =>
     (o.customer_order_lines || [])
@@ -265,7 +267,7 @@ export function RetailCustomerProfile({
         />
       ) : (
         <div>
-          <CustomerOrderRowHeader />
+          <CustomerOrderRowHeader currency={customerCurrency} />
           {filtered.map((o) => (
             <CustomerOrderRow
               key={o.id}
@@ -580,7 +582,7 @@ export function RetailCustomerProfile({
                 <p className="text-xs text-muted-foreground">Kunden har inte beställt något ännu.</p>
               ) : (
                 <div>
-                  <CustomerOrderRowHeader />
+                  <CustomerOrderRowHeader currency={customerCurrency} />
                   {orders.slice(0, 5).map((o) => (
                     <CustomerOrderRow
                       key={o.id}
@@ -703,6 +705,7 @@ export function RetailCustomerProfile({
           open={wizardOpen}
           onOpenChange={setWizardOpen}
           storeId={customer.store_id ?? ""}
+          currency={customerCurrency}
           initialCustomer={customer}
         />
       )}

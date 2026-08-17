@@ -6,11 +6,13 @@ export function StatusBar({
   selectedCount,
   totalCount,
   selectedSum,
+  currency = "SEK",
   extra,
 }: {
   selectedCount: number;
   totalCount: number;
   selectedSum?: number;
+  currency?: string;
   extra?: string;
 }) {
   const nf = (v: number) =>
@@ -22,7 +24,7 @@ export function StatusBar({
         {selectedCount} av {totalCount} rader markerade
       </span>
       {selectedCount > 0 && typeof selectedSum === "number" && (
-        <span className="font-mono tabular-nums">Summa valda: {nf(selectedSum)} kr</span>
+        <span className="font-mono tabular-nums">Summa valda: {nf(selectedSum)} {currency}</span>
       )}
       {extra && <span>{extra}</span>}
       <span className="ml-auto flex items-center gap-1.5">
