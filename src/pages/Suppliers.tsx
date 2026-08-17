@@ -20,6 +20,9 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier } from "@/hooks/useSuppliers";
 import { useNotificationFlash } from "@/lib/notificationFlash";
+import { Switch } from "@/components/ui/switch";
+import { CURRENCY_OPTIONS } from "@/lib/currency";
+
 
 const SUPPLIER_TYPES = ["Färsk fisk", "Skaldjur", "Rökt fisk", "Emballage", "Kryddor & Tillbehör", "Transport", "Övrigt"];
 
