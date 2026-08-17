@@ -176,6 +176,7 @@ export function CustomerOrderCard({
         shelfLifeOpenDays: (l.products as any)?.shelf_life_open_days ?? null,
         lotNumber: l.lots?.lot_number ?? null,
         barcode: l.products?.sku ?? null,
+        currency,
       })),
     );
   };
@@ -187,6 +188,7 @@ export function CustomerOrderCard({
   const makeQuote = () =>
     printQuote({
       orderNumber: order.order_number,
+      currency,
       storeName: (order as any).stores?.name || "",
       customerName,
       customerPhone: order.customers_retail?.phone || order.customer_phone_snapshot,

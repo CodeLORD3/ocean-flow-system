@@ -26,6 +26,8 @@ export interface QuoteInput {
   excludedAllergens?: string[];
   deliveryAddress?: string | null;
   note?: string | null;
+  /** Butikens valuta, t.ex. "CHF" för Zollikon. Standard "kr" (SEK). */
+  currency?: string;
   lines: QuoteLine[];
 }
 
@@ -33,6 +35,7 @@ const nf = (v: number, d = 2) =>
   Number(v || 0).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
 
 export function buildQuoteDoc(input: QuoteInput) {
+  const cur = input.currency || "kr";
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const left = 16;
   let y = 20;
@@ -106,8 +109,8 @@ export function buildQuoteDoc(input: QuoteInput) {
     total += sum;
     doc.text(doc.splitTextToSize(l.name, 92)[0] ?? "", left, y);
     doc.text(`${nf(l.quantity, 3)} ${l.unit}`, 118, y, { align: "right" });
-    doc.text(l.pricePerUnit != null ? `${nf(l.pricePerUnit)} kr` : "—", 150, y, { align: "right" });
-    doc.text(l.pricePerUnit != null ? `${nf(sum)} kr` : "—", 194, y, { align: "right" });
+    doc.text(l.pricePerUnit != null ? `${nf(l.pricePerUnit)} ${cur}` : "—", 150, y, { align: "right" });
+    doc.text(l.pricePerUnit != null ? `${nf(sum)} ${cur}` : "—", 194, y, { align: "right" });
     y += 5;
     if (l.note) {
       doc.setFontSize(8);
@@ -129,7 +132,7 @@ export function buildQuoteDoc(input: QuoteInput) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.text("Preliminär summa", left, y);
-  doc.text(`${nf(total)} kr`, 194, y, { align: "right" });
+  doc.text(`${nf(total)} ${cur}`, 194, y, { align: "right" });
   y += 9;
 
   doc.setFont("helvetica", "normal");
