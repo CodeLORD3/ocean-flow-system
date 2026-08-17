@@ -26,14 +26,19 @@ const norm = (v: string) =>
   v.toLowerCase().replace(/\b(ab|as|a\/s|oy|gmbh|sa|sarl|group|sweden)\b/g, "").replace(/[^a-z0-9]/g, "");
 
 type Candidate = {
+  /** Nyckel: avsändardomän, eller "namn:x" för dokument via förmedlare (Fortnox). */
+  key: string;
   domain: string;
   emails: string[];
   names: string[];
   subjects: string[];
   count: number;
+  /** Förmedlarpost: avsändaren är redan vitlistad, leverantören avgörs per dokument. */
+  viaPortal?: boolean;
   match?: { id: string; name: string };
   registry?: RegistryEntry;
 };
+
 
 export function SupplierCandidatesPanel() {
   const { data: messages = [] } = useMailMessages();
