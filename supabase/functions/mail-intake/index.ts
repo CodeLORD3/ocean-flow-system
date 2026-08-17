@@ -36,7 +36,23 @@ const isDoc = (a: { contentType?: string; filename?: string }) => {
     /\.(pdf|png|jpe?g|webp|gif|tiff?)$/.test(name);
 };
 
+// Påminnelser, kravbrev och inkasso är rena betalningsärenden. De får aldrig
+// bli inköpsrapport eller påverka partipriser, så de plockas ut FÖRE tolkningen.
+const REMINDER_WORDS = [
+  "paminnelse", "påminnelse", "betalningspaminnelse", "betalningspåminnelse",
+  "inkasso", "kravbrev", "betalningskrav", "dröjsmål", "drojsmal",
+  "dröjsmålsränta", "drojsmalsranta", "förfallen", "forfallen", "obetald",
+  "reminder", "overdue", "dunning", "debt collection", "collection notice",
+  "rappel", "mahnung", "sollecito",
+];
+
+export function isReminder(subject: string, fileName: string, docType?: string | null): boolean {
+  const hay = `${subject} ${fileName} ${docType ?? ""}`.toLowerCase();
+  return REMINDER_WORDS.some((w) => hay.includes(w));
+}
+
 function classify(docType: string | null | undefined, subject: string, fileName: string): string {
+  if (isReminder(subject, fileName, docType)) return "paminnelse";
   const raw = (docType || "").toLowerCase();
   if (raw.includes("kredit")) return "kreditnota";
   if (raw.includes("faktur")) return "faktura";
@@ -49,6 +65,7 @@ function classify(docType: string | null | undefined, subject: string, fileName:
   }
   return "ovrigt";
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -238,6 +255,24 @@ Deno.serve(async (req) => {
             continue;
           }
           stored++;
+
+          // Påminnelse/inkasso: arkiveras som information, tolkas inte och kan
+          // aldrig attesteras — den ska inte påverka inköp, lager eller priser.
+          if (isReminder(subject, fileName)) {
+            await supabase
+              .from("supplier_documents")
+              .update({
+                doc_type: "paminnelse",
+                parse_status: "ej_tolkad",
+                status: "endast_info",
+                reject_reason: "Betalningspåminnelse/inkasso — påverkar inte inköp eller priser",
+              })
+              .eq("id", doc.id);
+            results.push({ messageId, fileName, action: "paminnelse_arkiverad" });
+            continue;
+          }
+
+
 
           // Tolkning med samma motor som den manuella inläsningen.
           try {
