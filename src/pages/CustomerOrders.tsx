@@ -39,6 +39,7 @@ import { CustomerOrderRow, CustomerOrderRowHeader } from "@/components/orders/Cu
 import { useEntityImageCounts } from "@/hooks/useEntityImages";
 import { StatusBar } from "@/components/shell/StatusBar";
 import { getStoreCurrency } from "@/lib/currency";
+import { CurrencyAmount } from "@/components/orders/CurrencyAmount";
 
 import { RetailCustomerRegistry } from "@/components/orders/RetailCustomerRegistry";
 import { CustomerOrderStats } from "@/components/orders/CustomerOrderStats";
@@ -574,9 +575,11 @@ export default function CustomerOrders() {
                       <span className="ml-auto shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
                         {w.count} order
                       </span>
-                      <span className="shrink-0 font-mono text-[12px] font-semibold tabular-nums text-foreground">
-                        {nf(w.sum, 2)} {currency}
-                      </span>
+                      <CurrencyAmount
+                        amount={w.sum}
+                        currency={currency}
+                        className="shrink-0 font-mono text-[12px] font-semibold tabular-nums text-foreground"
+                      />
                     </div>
 
                     {w.days.map(([day, list]) => (
