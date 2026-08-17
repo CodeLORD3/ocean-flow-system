@@ -725,7 +725,7 @@ async function processEvent(db: SupabaseClient, eventId: string): Promise<void> 
       return;
     }
 
-    const shopifyOrderId = payload?.id != null ? String(payload.id) : null;
+    shopifyOrderId = payload?.id != null ? String(payload.id) : null;
     const orderName = String(payload?.name ?? payload?.order_number ?? shopifyOrderId ?? "");
     if (!shopifyOrderId) {
       await fail("Ordern saknar id");
