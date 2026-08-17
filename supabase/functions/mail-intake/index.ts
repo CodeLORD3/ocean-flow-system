@@ -56,11 +56,16 @@ export function isReminder(subject: string, fileName: string, docType?: string |
 // igen på massutskicks-headers (List-Unsubscribe, Precedence: bulk) eller på
 // typiska reklamord i ämnesraden.
 const NEWSLETTER_WORDS = [
-  "nyhetsbrev", "newsletter", "kampanj", "erbjudande", "rabatt", "veckans",
+  "nyhetsbrev", "newsletter", "infolettre", "kampanj", "erbjudande", "rabatt",
   "förboka", "forboka", "säsongens", "sasongens", "avregistrera", "prenumer",
-  "unsubscribe", "webshop", "webbshop", "nyheter från", "nyheter fran",
-  "inbjudan", "event", "sale", "promotion", "angebot", "aktion", "infolettre",
-  "smakprov", "tips", "recept",
+  "unsubscribe", "nyheter från", "nyheter fran", "inbjudan", "promotion",
+  "angebot", "aktion", "veckans erbjudande", "vårt sortiment", "vart sortiment",
+];
+
+// Ord som visar att mejlet trots allt är ett affärsdokument.
+const DOC_WORDS = [
+  "faktura", "invoice", "följesedel", "foljesedel", "avräkning", "avrakning",
+  "auktion", "kredit", "leveransbesked", "packsedel", "rechnung", "facture",
 ];
 
 export function isNewsletter(subject: string, headers?: Map<string, unknown> | null): boolean {
