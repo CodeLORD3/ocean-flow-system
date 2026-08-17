@@ -27,6 +27,14 @@ export function useCreateIncomingDelivery() {
       received_date: string;
       received_by: string;
       notes?: string;
+      /** Leverantörens fakturavaluta. Priserna nedan anges i den här valutan. */
+      source_currency?: string;
+      /** Bolagets bokföringsvaluta (CHF för Componia AG, annars SEK). */
+      book_currency?: string;
+      /** Kurs källvaluta → bokföringsvaluta. 1 när valutorna är samma. */
+      fx_rate?: number;
+      /** Var kursen kom ifrån, t.ex. "Frankfurter (ECB)" eller "manuell". */
+      fx_source?: string;
       lines: {
         product_id: string;
         quantity: number;
@@ -43,8 +51,22 @@ export function useCreateIncomingDelivery() {
       const { data: numData, error: numErr } = await supabase.rpc("next_delivery_number", {});
       if (numErr) throw numErr;
       const deliveryNumber = String(numData);
+
+      // Valuta: priserna kommer i leverantörens valuta. Bokfört värde räknas om
+      // med kursen vid inköpstillfället och kursen sparas historiskt på
+      // inleverans, parti och rörelse — gamla inköp ändras aldrig retroaktivt.
+      const sourceCurrency = (params.source_currency || "SEK").toUpperCase();
+      const bookCurrency = (params.book_currency || sourceCurrency).toUpperCase();
+      const crossCurrency = sourceCurrency !== bookCurrency;
+      const fxRate = crossCurrency ? Number(params.fx_rate) || 0 : 1;
+      if (crossCurrency && fxRate <= 0) {
+        throw new Error(`Växelkurs ${sourceCurrency}→${bookCurrency} saknas för inleveransen.`);
+      }
+      const toBook = (amount: number) => Number((amount * fxRate).toFixed(4));
+
       const totalWeight = params.lines.reduce((s, l) => s + l.quantity, 0);
-      const totalCost = params.lines.reduce((s, l) => s + l.quantity * l.unit_cost, 0);
+      const totalCostSource = params.lines.reduce((s, l) => s + l.quantity * l.unit_cost, 0);
+      const totalCost = toBook(totalCostSource);
 
       const { data: del, error } = await supabase.from("incoming_deliveries").insert({
         delivery_number: deliveryNumber,
@@ -54,12 +76,19 @@ export function useCreateIncomingDelivery() {
         notes: params.notes,
         total_weight: totalWeight,
         total_cost: totalCost,
+        total_cost_source: crossCurrency ? Number(totalCostSource.toFixed(2)) : null,
+        source_currency: crossCurrency ? sourceCurrency : null,
+        fx_rate_to_entity: crossCurrency ? fxRate : null,
+        fx_rate_date: crossCurrency ? params.received_date : null,
+        fx_source: crossCurrency ? params.fx_source || "manuell" : null,
       }).select().single();
       if (error) throw error;
 
       // Mållagerplats för inleveransen: Grossist Flytande, uppslaget på id
       // eftersom sex lagerplatser bär samma namn.
       const targetLocationId: string | null = GROSSIST_FLYTANDE_ID;
+
+
 
 
       // Ett parti per inleveransrad — grunden för spårbarhet
