@@ -29,6 +29,9 @@ import { useSignedUrl } from "@/hooks/useSignedUrl";
 import { useSizeGrades, useSupplierArticleMap, learnSupplierArticle } from "@/hooks/useSizeGrades";
 import { suggestProducts } from "@/lib/foljesedelMatch";
 import { gradeRangeText } from "@/lib/sizeGrades";
+import { useEntityCurrency } from "@/hooks/useEntityCurrency";
+import { useFxRate } from "@/hooks/useFxRate";
+import { fmtCur, fmtDual, convertWithRate } from "@/lib/currency";
 
 // Magnifying glass overlay for document viewer
 function DocumentMagnifier({ children }: { children: React.ReactNode }) {
@@ -111,6 +114,9 @@ type Report = {
   notes: string | null;
   total_amount: number;
   display_name: string | null;
+  source_currency?: string | null;
+  fx_rate?: number | null;
+  total_amount_source?: number | null;
 };
 
 // Inline always-editable row
@@ -539,6 +545,7 @@ function ReportSection({
   onUpdateReportDate,
   focusLineId,
   onQtyFocused,
+  entityCurrency,
 }: {
   report: Report;
   lines: ReportLine[];
@@ -549,12 +556,13 @@ function ReportSection({
   onDeleteLine: (id: string) => void;
   onViewDocument: (reportId: string) => void;
   onSelect?: (reportId: string) => void;
-  onConfirm: (reportId: string) => void;
+  onConfirm: (reportId: string, fx: PurchaseFx | null) => void;
   onUnlock: (reportId: string) => void;
   onRenameReport: (reportId: string, newName: string) => void;
   onUpdateReportDate: (reportId: string, newDate: string) => void;
   focusLineId: string | null;
   onQtyFocused: () => void;
+  entityCurrency: string;
 }) {
   const isLocked = report.status === "Godkänd";
   const [expanded, setExpanded] = useState(!isLocked);
@@ -581,6 +589,42 @@ function ReportSection({
   };
 
   const sectionTotal = lines.reduce((s, l) => s + (l.line_total ?? 0), 0);
+
+  // Leverantörens fakturavaluta styr vilken valuta beloppen matas in i. Skiljer
+  // den sig från bolagets valuta (Componia AG = CHF) visas ursprungsvalutan
+  // först och bolagsvalutan som referens.
+  const supplierCurrency = useMemo(() => {
+    const names = Array.from(new Set(lines.map((l) => l.supplier_name).filter(Boolean) as string[]));
+    const curs = Array.from(
+      new Set(
+        names
+          .map((n) => String((suppliers.find((s: any) => s.name === n) as any)?.currency || "").trim().toUpperCase())
+          .filter(Boolean),
+      ),
+    );
+    if (report.source_currency) return String(report.source_currency).toUpperCase();
+    return curs.length === 1 ? curs[0] : entityCurrency;
+  }, [lines, suppliers, entityCurrency, report.source_currency]);
+
+  const needsFx = supplierCurrency !== entityCurrency;
+  const { data: liveFx } = useFxRate(supplierCurrency, entityCurrency, needsFx && !isLocked);
+  const [fxInput, setFxInput] = useState<string>("");
+  const effectiveFx = needsFx
+    ? Number(fxInput) > 0
+      ? Number(fxInput)
+      : report.fx_rate ?? liveFx?.rate ?? null
+    : null;
+  const fxPayload: PurchaseFx | null = needsFx
+    ? {
+        source_currency: supplierCurrency,
+        fx_rate: effectiveFx,
+        fx_source: Number(fxInput) > 0 ? "manuell" : liveFx?.source ?? null,
+        fx_rate_date: new Date().toISOString().slice(0, 10),
+      }
+    : null;
+  const totalText = needsFx
+    ? fmtDual(sectionTotal, supplierCurrency, effectiveFx, entityCurrency)
+    : fmtCur(sectionTotal, entityCurrency, { minimumFractionDigits: 2 } as any);
 
   return (
     <div className="border-b last:border-b-0">
@@ -627,7 +671,7 @@ function ReportSection({
           </button>
         )}
         <span className="text-xs text-muted-foreground shrink-0">
-          {lines.length} rader · {sectionTotal.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr
+          {lines.length} rader · {totalText}
         </span>
         <div className="shrink-0 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
           <Label htmlFor={`report-date-${report.id}`} className="text-[10px] text-muted-foreground">
@@ -761,6 +805,29 @@ function ReportSection({
                 <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => onViewDocument(report.id)}>
                   <FileText className="h-3.5 w-3.5 mr-1" /> Visa dokument
                 </Button>
+                {needsFx && (
+                  <div className="flex items-center gap-1.5">
+                    <Label htmlFor={`fx-${report.id}`} className="text-[10px] text-muted-foreground">
+                      Kurs {supplierCurrency}→{entityCurrency}
+                    </Label>
+                    <Input
+                      id={`fx-${report.id}`}
+                      type="number"
+                      step="0.0001"
+                      className="h-6 w-[86px] text-[11px] px-1.5 tabular-nums"
+                      placeholder={effectiveFx ? effectiveFx.toFixed(4) : ""}
+                      value={fxInput}
+                      onChange={(e) => setFxInput(e.target.value)}
+                    />
+                    <span className="text-[10px] text-muted-foreground">
+                      {Number(fxInput) > 0
+                        ? "manuell kurs"
+                        : liveFx
+                          ? `${liveFx.source} · ${new Date(liveFx.fetchedAt).toLocaleTimeString("sv-SE")}`
+                          : "hämtar kurs…"}
+                    </span>
+                  </div>
+                )}
               </div>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -775,14 +842,14 @@ function ReportSection({
                     <AlertDialogDescription>
                       Du är på väg att låsa <strong>{displayName}</strong> med {lines.length} rader
                       och ett totalt värde på{" "}
-                      <strong>{sectionTotal.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr</strong>.
+                      <strong>{totalText}</strong>.
                       <br /><br />
                       När inköpet är bekräftat kan raderna inte längre redigeras. Dokumentet och listan kommer att vikas ihop.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => onConfirm(report.id)}>
+                    <AlertDialogAction onClick={() => onConfirm(report.id, fxPayload)}>
                       <CheckCircle2 className="h-4 w-4 mr-1" /> Bekräfta
                     </AlertDialogAction>
                   </AlertDialogFooter>
