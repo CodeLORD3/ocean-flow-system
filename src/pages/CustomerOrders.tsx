@@ -48,6 +48,10 @@ import { TodayPickupsView } from "@/components/orders/TodayPickupsView";
 
 /** Orderflikarna: tre operativa lägen först, historiken nedtonad sist. */
 const TABS: { id: OrderTab; hint: string; muted?: boolean }[] = [
+  {
+    id: "godkannande",
+    hint: "Webbordrar för hämtning i butik som väntar på godkännande",
+  },
   { id: "pagaende", hint: "Aktiva, ännu inte färdigpackade" },
   { id: "packade", hint: "Färdiga, väntar på hämtning eller leverans" },
   { id: "obetalda", hint: "Utlämnade men betalning saknas" },
