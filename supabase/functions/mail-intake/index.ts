@@ -256,6 +256,24 @@ Deno.serve(async (req) => {
           }
           stored++;
 
+          // Påminnelse/inkasso: arkiveras som information, tolkas inte och kan
+          // aldrig attesteras — den ska inte påverka inköp, lager eller priser.
+          if (isReminder(subject, fileName)) {
+            await supabase
+              .from("supplier_documents")
+              .update({
+                doc_type: "paminnelse",
+                parse_status: "ej_tolkad",
+                status: "endast_info",
+                reject_reason: "Betalningspåminnelse/inkasso — påverkar inte inköp eller priser",
+              })
+              .eq("id", doc.id);
+            results.push({ messageId, fileName, action: "paminnelse_arkiverad" });
+            continue;
+          }
+
+
+
           // Tolkning med samma motor som den manuella inläsningen.
           try {
             const fileUrl = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/${BUCKET}/${encodeURI(path)}`;
