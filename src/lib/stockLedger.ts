@@ -25,11 +25,19 @@ export interface StockMovementInput {
   movementType: MovementType;
   lotId?: string | null;
   quantityPieces?: number | null;
+  /** Bokfört värde per enhet i bolagets valuta. */
   unitCost?: number | null;
+  /** Ursprungligt pris per enhet i leverantörens valuta (t.ex. SEK). */
+  unitCostSource?: number | null;
+  /** Ursprungsvalutan, t.ex. "SEK" för inköp från grossisten. */
+  sourceCurrency?: string | null;
+  /** Kursen som användes vid bokföringen — sparas historiskt. */
+  fxRate?: number | null;
   referenceType?: string | null;
   referenceId?: string | null;
   note?: string | null;
 }
+
 
 /**
  * Rörelsetyper som alltid är utflöden (kvantitet lagras negativ).
@@ -83,6 +91,10 @@ export async function recordMovements(movements: StockMovementInput[]) {
       quantity_kg: m.signed,
       quantity_pieces: m.quantityPieces ?? null,
       unit_cost: m.unitCost ?? null,
+      unit_cost_source: m.unitCostSource ?? null,
+      source_currency: m.sourceCurrency ?? null,
+      fx_rate: m.fxRate ?? null,
+
       reference_type: m.referenceType ?? null,
       reference_id: m.referenceId ?? null,
       note: m.note ?? null,
@@ -136,6 +148,10 @@ export async function transferStock(params: {
   quantityKg: number;
   lotId?: string | null;
   unitCost?: number | null;
+  /** Ursprungspris per enhet + kurs, när flytten korsar valutagräns. */
+  unitCostSource?: number | null;
+  sourceCurrency?: string | null;
+  fxRate?: number | null;
   referenceType?: string | null;
   referenceId?: string | null;
   note?: string | null;
@@ -144,10 +160,24 @@ export async function transferStock(params: {
   if (!quantityKg) return;
   // Partipriset följer alltid med partiet oförändrat vid flytt. Först när
   // rörelsen saknar parti används lagerplatsens snittpris som reserv.
+  // Undantag: när flytten bär ett eget omräknat värde (valutabyte) gäller det.
   const cost =
-    (params.lotId ? await lotUnitCost(params.lotId) : null) ??
-    params.unitCost ??
-    (await currentBalance(params.productId, params.fromLocationId)).avgCost;
+    params.unitCostSource != null && params.fxRate != null
+      ? params.unitCost ?? null
+      : (params.lotId ? await lotUnitCost(params.lotId) : null) ??
+        params.unitCost ??
+        (await currentBalance(params.productId, params.fromLocationId)).avgCost;
+
+  const shared = {
+    lotId: params.lotId,
+    unitCost: cost || null,
+    unitCostSource: params.unitCostSource ?? null,
+    sourceCurrency: params.sourceCurrency ?? null,
+    fxRate: params.fxRate ?? null,
+    referenceType: params.referenceType,
+    referenceId: params.referenceId,
+    note: params.note,
+  };
 
   await recordMovements([
     {
@@ -155,25 +185,18 @@ export async function transferStock(params: {
       locationId: params.fromLocationId,
       quantityKg,
       movementType: "overforing_ut",
-      lotId: params.lotId,
-      unitCost: cost || null,
-      referenceType: params.referenceType,
-      referenceId: params.referenceId,
-      note: params.note,
+      ...shared,
     },
     {
       productId: params.productId,
       locationId: params.toLocationId,
       quantityKg,
       movementType: "overforing_in",
-      lotId: params.lotId,
-      unitCost: cost || null,
-      referenceType: params.referenceType,
-      referenceId: params.referenceId,
-      note: params.note,
+      ...shared,
     },
   ]);
 }
+
 
 /** Ett partis kvarvarande kvantitet på en lagerplats. */
 export interface LotBalance {

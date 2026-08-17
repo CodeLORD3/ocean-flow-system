@@ -11,8 +11,13 @@ export type Supplier = {
   country: string | null;
   address: string | null;
   supplier_type: string | null;
+  /** Valutan leverantören fakturerar i. Grossisten fakturerar Componia i SEK. */
+  currency: string | null;
+  /** Koncernintern leverantör (Fisk & Skaldjursspecialisten). */
+  is_intercompany: boolean | null;
   created_at: string | null;
 };
+
 
 export function useSuppliers() {
   return useQuery({

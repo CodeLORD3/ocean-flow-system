@@ -40,8 +40,10 @@ import { butikslagerId } from "@/lib/locations";
 
 import { format, differenceInDays, parseISO } from "date-fns";
 import { sv } from "date-fns/locale";
-import { getStoreCurrency, fmtCur } from "@/lib/currency";
-import { useCurrencySettings, convertSekToChfCost } from "@/hooks/useCurrencySettings";
+import { getStoreCurrency, fmtCur, fmtDual } from "@/lib/currency";
+import { useCurrencySettings } from "@/hooks/useCurrencySettings";
+import { useFxRate } from "@/hooks/useFxRate";
+
 import { ProductThumb } from "@/components/products/ProductThumb";
 
 const REPORT_TYPES = ["Skadad", "Fel kvantitet", "Dålig kvalitet", "Saknas", "Annat"];
@@ -70,17 +72,32 @@ export default function Receiving() {
   const [lineReports, setLineReports] = useState<Record<string, LineReport>>({});
   const { data: currencySettings } = useCurrencySettings();
 
-  // Fetch active store row to derive local currency (CHF for Zollikon, SEK otherwise)
+  // Butiksraden bär bolagets valuta (Componia AG = CHF för Zollikon och Morges)
   const { data: activeStore } = useQuery({
     queryKey: ["store_row", activeStoreId],
     enabled: !!activeStoreId,
     queryFn: async () => {
-      const { data } = await supabase.from("stores").select("id, name, city").eq("id", activeStoreId!).maybeSingle();
+      const { data } = await supabase
+        .from("stores")
+        .select("id, name, city, country, currency, legal_entity_id")
+        .eq("id", activeStoreId!)
+        .maybeSingle();
       return data;
     },
   });
   const localCurrency = getStoreCurrency(activeStore as any);
-  const isChfStore = localCurrency === "CHF";
+  // Grossisten (Fisk & Skaldjursspecialisten) fakturerar alltid i SEK.
+  const SUPPLIER_CURRENCY = "SEK";
+  const isChfStore = localCurrency !== SUPPLIER_CURRENCY;
+
+  // Kursen hämtas automatiskt men får redigeras per leverans. Den som används
+  // sparas på rörelsen, så gamla inleveranser står kvar oförändrade.
+  const { data: liveFx } = useFxRate(SUPPLIER_CURRENCY, localCurrency, isChfStore);
+  const [fxOverride, setFxOverride] = useState("");
+  const effectiveFx = Number(fxOverride) > 0 ? Number(fxOverride) : (liveFx?.rate ?? 0);
+  const fxSource = Number(fxOverride) > 0 ? "manuell" : (liveFx?.source ?? "okänd källa");
+  const transportPerKg = Number(currencySettings?.transport_chf_per_kg) || 0;
+
 
   // Only fetch orders with status "Skickad"
   const { data: pendingOrders = [] } = useQuery({
@@ -147,13 +164,17 @@ export default function Receiving() {
     return d.toISOString().slice(0, 10);
   };
 
-  // Compute auto CHF cost for a line based on product cost (SEK) + transport
+  /** Inköpspris i leverantörens valuta (SEK) per enhet. */
+  const sourceCost = (line: any): number => Number(line?.products?.cost_price) || 0;
+
+  /** Auto-förslag på bokfört värde i bolagets valuta: SEK × kurs + transport. */
   const autoChfCost = (line: any): string => {
-    if (!isChfStore || !currencySettings) return "";
-    const sek = Number(line?.products?.cost_price) || 0;
+    if (!isChfStore || !effectiveFx) return "";
+    const sek = sourceCost(line);
     if (sek <= 0) return "";
-    return String(convertSekToChfCost(sek, currencySettings));
+    return String(Number((sek * effectiveFx + transportPerKg).toFixed(2)));
   };
+
 
   const openOrder = (order: any) => {
     setSelectedOrder(order);
@@ -223,20 +244,36 @@ export default function Receiving() {
           .eq("id", lineId);
       }
 
-      // Move stock from Transportlager to shop's Raw-lager (with optional CHF unit costs for Zollikon)
+      // Flytta från transportlager till butikens lager. Vid valutabyte bokförs
+      // värdet i bolagets valuta, men SEK-priset och kursen sparas på rörelsen.
       try {
         const unitCostMap: Record<string, number> = {};
+        const sourceCostMap: Record<string, number> = {};
         if (isChfStore) {
           for (const [lineId, report] of Object.entries(lineReports)) {
             const line = (selectedOrder.shop_order_lines || []).find((l: any) => l.id === lineId);
             const cost = Number(report.unit_cost_local);
             if (line && Number.isFinite(cost) && cost > 0) {
               unitCostMap[line.product_id] = cost;
+              const sek = sourceCost(line);
+              if (sek > 0) sourceCostMap[line.product_id] = sek;
             }
           }
         }
-        await moveStockToRawLager(selectedOrder.id, activeStoreId, isChfStore ? unitCostMap : undefined);
+        await moveStockToRawLager(
+          selectedOrder.id,
+          activeStoreId,
+          isChfStore ? unitCostMap : undefined,
+          isChfStore && effectiveFx > 0
+            ? {
+                sourceCurrency: SUPPLIER_CURRENCY,
+                fxRate: effectiveFx,
+                sourceCostByProductId: sourceCostMap,
+              }
+            : undefined,
+        );
       } catch (err) {
+
         console.error("Stock transfer to Raw-lager error:", err);
       }
 
@@ -521,12 +558,43 @@ export default function Receiving() {
                 </DialogDescription>
               </DialogHeader>
 
-              {isChfStore && currencySettings && (
-                <div className="text-[10px] rounded-md border border-primary/20 bg-primary/5 p-2 text-foreground">
-                  <span className="font-medium">CHF-konvertering aktiv:</span>{" "}
-                  Inköpspris (SEK) × {currencySettings.sek_to_chf} + {currencySettings.transport_chf_per_kg} CHF/kg transport. Justera värdet per rad om behövs.
+              {isChfStore && (
+                <div className="text-[10px] rounded-md border border-primary/20 bg-primary/5 p-2 text-foreground space-y-1.5">
+                  <div>
+                    <span className="font-medium">Inköp från grossisten sker i {SUPPLIER_CURRENCY}.</span>{" "}
+                    Lagervärdet bokförs i {localCurrency} med kursen nedan
+                    {transportPerKg > 0 && <> plus {transportPerKg} {localCurrency}/kg transport</>}. Kursen sparas
+                    på leveransen — gamla inleveranser ändras aldrig i efterhand.
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Label className="text-[9px] uppercase tracking-wide text-muted-foreground">
+                      Kurs {SUPPLIER_CURRENCY}→{localCurrency}
+                    </Label>
+                    <Input
+                      type="number"
+                      step="0.0001"
+                      value={fxOverride}
+                      placeholder={liveFx ? String(liveFx.rate) : "0.0000"}
+                      onChange={(e) => setFxOverride(e.target.value)}
+                      className="h-6 w-28 text-[10px] bg-background font-mono tabular-nums"
+                    />
+                    <span className="text-[9px] text-muted-foreground">
+                      Använd kurs: <span className="font-mono tabular-nums">{effectiveFx ? effectiveFx.toFixed(4) : "–"}</span> · {fxSource}
+                    </span>
+                    {fxOverride && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-5 text-[9px] px-1.5"
+                        onClick={() => setFxOverride("")}
+                      >
+                        Använd dagskurs
+                      </Button>
+                    )}
+                  </div>
                 </div>
               )}
+
 
               {/* Quick actions */}
               <div className="flex flex-wrap gap-2 mb-1">
@@ -644,10 +712,17 @@ export default function Receiving() {
                           />
                         </div>
                         {isChfStore && (
-                          <div className="col-span-2 space-y-0.5 pt-1 border-t border-border/40">
-
+                          <div className="col-span-2 space-y-1 pt-1 border-t border-border/40">
+                            {/* Inköpsvy för grossisten: SEK är primärvaluta, bolagsvalutan är referens. */}
+                            <div className="text-[10px] text-foreground">
+                              Inköpspris:{" "}
+                              <span className="font-mono tabular-nums font-medium">
+                                {fmtDual(sourceCost(line), SUPPLIER_CURRENCY, effectiveFx, localCurrency)}
+                              </span>
+                              <span className="text-muted-foreground"> / {line.products?.unit || "kg"}</span>
+                            </div>
                             <Label className="text-[9px] text-muted-foreground uppercase tracking-wide">
-                              Värde per {line.products?.unit || "kg"} ({localCurrency}) — auto-förslag, redigerbart
+                              Bokfört värde per {line.products?.unit || "kg"} ({localCurrency}) — auto, redigerbart
                             </Label>
                             <div className="flex items-center gap-2">
                               <Input
@@ -655,18 +730,31 @@ export default function Receiving() {
                                 step="0.01"
                                 value={report.unit_cost_local || ""}
                                 onChange={(e) => updateLineReport(line.id, "unit_cost_local", e.target.value)}
-                                className="h-6 text-[10px] bg-background w-32"
+                                className="h-6 text-[10px] bg-background w-32 font-mono tabular-nums"
                                 placeholder={autoChfCost(line) || "0.00"}
                               />
                               <span className="text-[9px] text-muted-foreground">
-                                Inköp: {Number(line.products?.cost_price || 0).toLocaleString("sv-SE")} SEK
                                 {Number(report.quantity_received) > 0 && Number(report.unit_cost_local) > 0 && (
-                                  <> · Totalt: {fmtCur(Number(report.quantity_received) * Number(report.unit_cost_local), localCurrency, { maximumFractionDigits: 2 })}</>
+                                  <>
+                                    Totalt:{" "}
+                                    {fmtCur(
+                                      Number(report.quantity_received) * sourceCost(line),
+                                      SUPPLIER_CURRENCY,
+                                      { maximumFractionDigits: 2 },
+                                    )}{" "}
+                                    ≈{" "}
+                                    {fmtCur(
+                                      Number(report.quantity_received) * Number(report.unit_cost_local),
+                                      localCurrency,
+                                      { maximumFractionDigits: 2 },
+                                    )}
+                                  </>
                                 )}
                               </span>
                             </div>
                           </div>
                         )}
+
                       </div>
 
                       {/* Deviation fields */}

@@ -167,6 +167,16 @@ export async function moveStockToRawLager(
   orderId: string,
   storeId: string,
   unitCostByProductId?: Record<string, number>,
+  /**
+   * Valutaspår när butiken bokför i annan valuta än grossisten fakturerar i.
+   * Ursprungspriset (t.ex. SEK) och kursen sparas på rörelsen så gamla
+   * inleveranser aldrig ändras retroaktivt när kursen rör sig.
+   */
+  fx?: {
+    sourceCurrency: string;
+    fxRate: number;
+    sourceCostByProductId?: Record<string, number>;
+  },
 ) {
   const transportId = await getTransportlagerId(storeId);
   if (!transportId) {
@@ -198,6 +208,7 @@ export async function moveStockToRawLager(
       unitCostByProductId?.[productId] ??
       (await currentBalance(productId, transportId)).avgCost ??
       null;
+    const sourceCost = fx?.sourceCostByProductId?.[productId] ?? null;
 
     for (const lot of lots) {
       if (lot.quantityKg <= 0) continue;
@@ -209,6 +220,9 @@ export async function moveStockToRawLager(
         // Samma parti som grossisten skapade — inget nytt parti i butiksledet.
         lotId: lot.lotId,
         unitCost: cost || null,
+        unitCostSource: sourceCost,
+        sourceCurrency: sourceCost != null ? fx?.sourceCurrency ?? null : null,
+        fxRate: sourceCost != null ? fx?.fxRate ?? null : null,
         referenceType: REF_TYPE,
         referenceId: orderId,
         note: "Inleverans godkänd i butik",
@@ -217,6 +231,7 @@ export async function moveStockToRawLager(
   }
 
 }
+
 
 /** Bokför en manuell justering (endast via loggen). */
 export async function adjustStock(params: {

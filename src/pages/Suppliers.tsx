@@ -20,6 +20,9 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier } from "@/hooks/useSuppliers";
 import { useNotificationFlash } from "@/lib/notificationFlash";
+import { Switch } from "@/components/ui/switch";
+import { CURRENCY_OPTIONS } from "@/lib/currency";
+
 
 const SUPPLIER_TYPES = ["Färsk fisk", "Skaldjur", "Rökt fisk", "Emballage", "Kryddor & Tillbehör", "Transport", "Övrigt"];
 
@@ -39,9 +42,10 @@ export default function Suppliers() {
 
   const [form, setForm] = useState({
     name: "", contact_person: "", email: "", phone: "", country: "Sverige", address: "", supplier_type: "Övrigt",
+    currency: "SEK", is_intercompany: false,
   });
 
-  const setField = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }));
+  const setField = (key: string, value: string | boolean) => setForm(f => ({ ...f, [key]: value }));
 
   const filtered = suppliers.filter(s => {
     const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -52,7 +56,7 @@ export default function Suppliers() {
 
   const openAdd = () => {
     setEditId(null);
-    setForm({ name: "", contact_person: "", email: "", phone: "", country: "Sverige", address: "", supplier_type: "Övrigt" });
+    setForm({ name: "", contact_person: "", email: "", phone: "", country: "Sverige", address: "", supplier_type: "Övrigt", currency: "SEK", is_intercompany: false });
     setDialogOpen(true);
   };
 
@@ -62,6 +66,8 @@ export default function Suppliers() {
       name: s.name, contact_person: s.contact_person || "", email: s.email || "",
       phone: s.phone || "", country: s.country || "Sverige", address: s.address || "",
       supplier_type: s.supplier_type || "Övrigt",
+      currency: (s.currency || "SEK").toUpperCase(),
+      is_intercompany: !!s.is_intercompany,
     });
     setDialogOpen(true);
   };
@@ -72,6 +78,8 @@ export default function Suppliers() {
       name: form.name, contact_person: form.contact_person || null, email: form.email || null,
       phone: form.phone || null, country: form.country || null, address: form.address || null,
       supplier_type: form.supplier_type || "Övrigt",
+      currency: form.currency || "SEK",
+      is_intercompany: form.is_intercompany,
     };
 
     if (editId) {
@@ -86,6 +94,7 @@ export default function Suppliers() {
       });
     }
   };
+
 
   const handleDelete = () => {
     if (!deleteTarget) return;
@@ -163,6 +172,8 @@ export default function Suppliers() {
                 <tr className="border-b border-border bg-muted/30">
                   <th className="p-3 text-left font-medium text-muted-foreground">LEVERANTÖR</th>
                   <th className="p-3 text-left font-medium text-muted-foreground">TYP</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground">VALUTA</th>
+
                   <th className="p-3 text-left font-medium text-muted-foreground">KONTAKT</th>
                   <th className="p-3 text-left font-medium text-muted-foreground">E-POST</th>
                   <th className="p-3 text-left font-medium text-muted-foreground">TELEFON</th>
@@ -173,7 +184,7 @@ export default function Suppliers() {
               </thead>
               <tbody>
                 {filtered.length === 0 && (
-                  <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">
+                  <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">
                     {suppliers.length === 0 ? "Inga leverantörer ännu. Klicka \"Ny leverantör\" för att börja." : "Inga leverantörer matchar sökningen."}
                   </td></tr>
                 )}
@@ -185,6 +196,13 @@ export default function Suppliers() {
                         {s.supplier_type || "Övrigt"}
                       </Badge>
                     </td>
+                    <td className="p-3">
+                      <span className="font-mono tabular-nums text-foreground">{(s.currency || "SEK").toUpperCase()}</span>
+                      {s.is_intercompany && (
+                        <Badge variant="outline" className="ml-1.5 text-[9px] border-primary/30 text-primary">Koncernintern</Badge>
+                      )}
+                    </td>
+
                     <td className="p-3 text-muted-foreground">{s.contact_person || "–"}</td>
                     <td className="p-3 text-muted-foreground">{s.email || "–"}</td>
                     <td className="p-3 text-muted-foreground">{s.phone || "–"}</td>
@@ -253,7 +271,34 @@ export default function Suppliers() {
                 <Input value={form.address} onChange={e => setField("address", e.target.value)} className="h-8 text-xs" />
               </div>
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Fakturavaluta</Label>
+                <Select value={form.currency} onValueChange={v => setField("currency", v)}>
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CURRENCY_OPTIONS.map(c => <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground">
+                  Inköp från leverantören visas i den här valutan. Bokförs i bolagets valuta med kursen vid inköpstillfället.
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Koncernintern</Label>
+                <div className="flex items-center gap-2 h-8">
+                  <Switch
+                    checked={form.is_intercompany}
+                    onCheckedChange={v => setField("is_intercompany", v)}
+                  />
+                  <span className="text-[11px] text-muted-foreground">
+                    {form.is_intercompany ? "Ja – egen grossist" : "Nej – extern leverantör"}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
+
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setDialogOpen(false)}>Avbryt</Button>
             <Button size="sm" onClick={handleSave} disabled={!form.name}>Spara</Button>
