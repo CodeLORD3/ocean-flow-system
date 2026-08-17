@@ -35,6 +35,8 @@ type Candidate = {
   count: number;
   /** Förmedlarpost: avsändaren är redan vitlistad, leverantören avgörs per dokument. */
   viaPortal?: boolean;
+  /** Gömt företag bakom en redan vitlistad avsändare. */
+  hidden?: boolean;
   match?: { id: string; name: string };
   registry?: RegistryEntry;
 };
@@ -66,6 +68,17 @@ export function SupplierCandidatesPanel() {
     [senders],
   );
 
+  // Vilken leverantör en vitlistad avsändare är kopplad till — används för att
+  // upptäcka företag som "gömmer sig" bakom en redan vitlistad adress.
+  const senderSupplier = useMemo(() => {
+    const byPattern = new Map<string, string>();
+    for (const s of senders as any[]) {
+      const sup = suppliers.find((x) => x.id === s.supplier_id);
+      if (sup) byPattern.set((s.pattern || "").toLowerCase(), sup.name);
+    }
+    return byPattern;
+  }, [senders, suppliers]);
+
   const candidates = useMemo<Candidate[]>(() => {
     const map = new Map<string, Candidate>();
     for (const m of messages as any[]) {
@@ -73,11 +86,26 @@ export function SupplierCandidatesPanel() {
       const domain = domainOf(email);
       if (!domain) continue;
       const viaPortal = portals.has(email) || portals.has(domain) || portals.has(`@${domain}`);
-      if (!viaPortal && (whitelisted.has(email) || whitelisted.has(domain) || whitelisted.has(`@${domain}`))) continue;
+      const isWhitelisted =
+        !viaPortal && (whitelisted.has(email) || whitelisted.has(domain) || whitelisted.has(`@${domain}`));
+      // Gömt företag: vitlistad avsändare men avsändarnamnet matchar inte den
+      // leverantör adressen är kopplad till (t.ex. Sjömat Group via absjomat.se).
+      let hidden = false;
+      if (isWhitelisted) {
+        const linked = senderSupplier.get(email) || senderSupplier.get(domain) || senderSupplier.get(`@${domain}`);
+        const nm = norm(String(m.from_name || ""));
+        const sn = norm(String(linked || ""));
+        const dn = norm(domain.split(".")[0]);
+        const looksSame = !nm || nm.length <= 3 || (!!sn && (nm.includes(sn) || sn.includes(nm))) || nm.includes(dn) || dn.includes(nm);
+        if (looksSame) continue;
+        hidden = true;
+      }
+      const grouped = viaPortal || hidden;
       // Förmedlarmejl utan företagsnamn går inte att koppla till någon leverantör.
-      if (viaPortal && !m.from_name) continue;
-      const key = viaPortal ? `namn:${norm(String(m.from_name))}` : domain;
-      const c = map.get(key) ?? { key, domain, emails: [], names: [], subjects: [], count: 0, viaPortal };
+      if (grouped && !m.from_name) continue;
+      const key = grouped ? `namn:${norm(String(m.from_name))}` : domain;
+      const c =
+        map.get(key) ?? { key, domain, emails: [], names: [], subjects: [], count: 0, viaPortal: grouped, hidden };
       if (!c.emails.includes(email)) c.emails.push(email);
       if (m.from_name && !c.names.includes(m.from_name)) c.names.push(m.from_name);
       if (m.subject && c.subjects.length < 3) c.subjects.push(m.subject);
@@ -101,7 +129,8 @@ export function SupplierCandidatesPanel() {
         return { ...c, registry, match: match ? { id: match.id, name: match.name } : undefined };
       })
       .sort((a, b) => b.count - a.count);
-  }, [messages, whitelisted, portals, suppliers]);
+  }, [messages, whitelisted, portals, senderSupplier, suppliers]);
+
 
 
   const openCreate = (c: Candidate) => {
