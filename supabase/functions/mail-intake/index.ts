@@ -52,6 +52,32 @@ export function isReminder(subject: string, fileName: string, docType?: string |
   return REMINDER_WORDS.some((w) => hay.includes(w));
 }
 
+// Nyhetsbrev och marknadsföring ska aldrig tolkas som inköpsdokument. De känns
+// igen på massutskicks-headers (List-Unsubscribe, Precedence: bulk) eller på
+// typiska reklamord i ämnesraden.
+const NEWSLETTER_WORDS = [
+  "nyhetsbrev", "newsletter", "kampanj", "erbjudande", "rabatt", "veckans",
+  "förboka", "forboka", "säsongens", "sasongens", "avregistrera", "prenumer",
+  "unsubscribe", "webshop", "webbshop", "nyheter från", "nyheter fran",
+  "inbjudan", "event", "sale", "promotion", "angebot", "aktion", "infolettre",
+  "smakprov", "tips", "recept",
+];
+
+export function isNewsletter(subject: string, headers?: Map<string, unknown> | null): boolean {
+  const get = (k: string) => {
+    const v = headers?.get(k);
+    return typeof v === "string" ? v.toLowerCase() : v ? String(v).toLowerCase() : "";
+  };
+  if (headers) {
+    if (get("list-unsubscribe") || get("list-id") || get("list-help")) return true;
+    if (/bulk|list|junk/.test(get("precedence"))) return true;
+    if (get("x-campaign") || get("x-mailer-lid") || get("x-mailchimp-campaign-id")) return true;
+    if (/mailchimp|sendgrid|mailerlite|klaviyo|hubspot|apsis|rule\.io|getanewsletter/.test(get("x-mailer"))) return true;
+  }
+  const hay = subject.toLowerCase();
+  return NEWSLETTER_WORDS.some((w) => hay.includes(w));
+}
+
 function classify(docType: string | null | undefined, subject: string, fileName: string): string {
   if (isReminder(subject, fileName, docType)) return "paminnelse";
   const raw = (docType || "").toLowerCase();
