@@ -447,11 +447,41 @@ async function createBookingRow(
   const customer = await resolveCustomer(db, storeId, { phone: args.phone, firstName, lastName, email });
   if (customer.blocked) throw new Error("Vi kan inte ta emot bokningen på webben. Ring gärna butiken.");
 
+  /**
+   * Dubblettskydd: bokningssidan kan skicka samma formulär två gånger
+   * (dubbelklick, nätverksretry). En identisk bokning inom 10 minuter
+   * returnerar den redan skapade ordern istället för att skapa en ny.
+   */
+  const dupeCutoff = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+  const { data: existing } = await db
+    .from("customer_orders")
+    .select("id, order_number")
+    .eq("store_id", storeId)
+    .eq("customer_phone_snapshot", args.phone)
+    .eq("wanted_date", wantedDate)
+    .eq("wanted_time_window", timeWindow)
+    .eq("source", "bokningssida")
+    .gte("created_at", dupeCutoff)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (existing?.id) {
+    return {
+      booking_number: existing.order_number,
+      store: store.name,
+      wanted_date: wantedDate,
+      time_window: timeWindow,
+      customer_known: customer.via !== "ny kund",
+      duplicate: true,
+    };
+  }
+
   const { data: orderNumber, error: numErr } = await db.rpc("next_customer_order_number", {
     _store_id: storeId,
     _date: todayIso(),
   });
   if (numErr) throw new Error(`ordernummer kunde inte hämtas: ${numErr.message}`);
+
 
   const notes = [
     args.staffId ? "Bokad per telefon av butikspersonal" : "Förbokad via bokafiskskaldjur.se",
