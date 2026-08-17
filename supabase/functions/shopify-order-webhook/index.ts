@@ -731,11 +731,11 @@ async function processEvent(db: SupabaseClient, eventId: string): Promise<void> 
       await fail("Ordern saknar id");
       return;
     }
-    const orderId: string = shopifyOrderId;
+    const orderId: string = orderId;
 
     await db
       .from("shopify_webhook_events")
-      .update({ payload, shopify_order_id: shopifyOrderId, shopify_order_number: orderName })
+      .update({ payload, shopify_order_id: orderId, shopify_order_number: orderName })
       .eq("id", eventId);
 
     const topic = String(ev.topic ?? "orders/create").toLowerCase();
@@ -748,7 +748,7 @@ async function processEvent(db: SupabaseClient, eventId: string): Promise<void> 
     let dupQuery = db
       .from("shopify_webhook_events")
       .select("id, status, customer_order_id")
-      .eq("shopify_order_id", shopifyOrderId)
+      .eq("shopify_order_id", orderId)
       .eq("topic", ev.topic)
       .neq("id", eventId);
     dupQuery = ev.shop_domain
@@ -771,7 +771,7 @@ async function processEvent(db: SupabaseClient, eventId: string): Promise<void> 
 
     /* ---- Avbokning från webben ---- */
     if (topic === "orders/cancelled") {
-      const res = await cancelOrder(db, payload, shopifyOrderId, orderName);
+      const res = await cancelOrder(db, payload, orderId, orderName);
       if (!res.found) {
         await fail(`Avbokning för okänd order ${orderName} — ingen kundorder hittades`);
         return;
@@ -801,7 +801,7 @@ async function processEvent(db: SupabaseClient, eventId: string): Promise<void> 
     const { data: dupe } = await db
       .from("customer_orders")
       .select("id")
-      .eq("shopify_order_id", shopifyOrderId)
+      .eq("shopify_order_id", orderId)
       .maybeSingle();
     if (dupe) {
       await db
