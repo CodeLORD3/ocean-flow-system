@@ -244,20 +244,36 @@ export default function Receiving() {
           .eq("id", lineId);
       }
 
-      // Move stock from Transportlager to shop's Raw-lager (with optional CHF unit costs for Zollikon)
+      // Flytta från transportlager till butikens lager. Vid valutabyte bokförs
+      // värdet i bolagets valuta, men SEK-priset och kursen sparas på rörelsen.
       try {
         const unitCostMap: Record<string, number> = {};
+        const sourceCostMap: Record<string, number> = {};
         if (isChfStore) {
           for (const [lineId, report] of Object.entries(lineReports)) {
             const line = (selectedOrder.shop_order_lines || []).find((l: any) => l.id === lineId);
             const cost = Number(report.unit_cost_local);
             if (line && Number.isFinite(cost) && cost > 0) {
               unitCostMap[line.product_id] = cost;
+              const sek = sourceCost(line);
+              if (sek > 0) sourceCostMap[line.product_id] = sek;
             }
           }
         }
-        await moveStockToRawLager(selectedOrder.id, activeStoreId, isChfStore ? unitCostMap : undefined);
+        await moveStockToRawLager(
+          selectedOrder.id,
+          activeStoreId,
+          isChfStore ? unitCostMap : undefined,
+          isChfStore && effectiveFx > 0
+            ? {
+                sourceCurrency: SUPPLIER_CURRENCY,
+                fxRate: effectiveFx,
+                sourceCostByProductId: sourceCostMap,
+              }
+            : undefined,
+        );
       } catch (err) {
+
         console.error("Stock transfer to Raw-lager error:", err);
       }
 
