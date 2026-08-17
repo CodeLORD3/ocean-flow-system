@@ -558,12 +558,43 @@ export default function Receiving() {
                 </DialogDescription>
               </DialogHeader>
 
-              {isChfStore && currencySettings && (
-                <div className="text-[10px] rounded-md border border-primary/20 bg-primary/5 p-2 text-foreground">
-                  <span className="font-medium">CHF-konvertering aktiv:</span>{" "}
-                  Inköpspris (SEK) × {currencySettings.sek_to_chf} + {currencySettings.transport_chf_per_kg} CHF/kg transport. Justera värdet per rad om behövs.
+              {isChfStore && (
+                <div className="text-[10px] rounded-md border border-primary/20 bg-primary/5 p-2 text-foreground space-y-1.5">
+                  <div>
+                    <span className="font-medium">Inköp från grossisten sker i {SUPPLIER_CURRENCY}.</span>{" "}
+                    Lagervärdet bokförs i {localCurrency} med kursen nedan
+                    {transportPerKg > 0 && <> plus {transportPerKg} {localCurrency}/kg transport</>}. Kursen sparas
+                    på leveransen — gamla inleveranser ändras aldrig i efterhand.
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Label className="text-[9px] uppercase tracking-wide text-muted-foreground">
+                      Kurs {SUPPLIER_CURRENCY}→{localCurrency}
+                    </Label>
+                    <Input
+                      type="number"
+                      step="0.0001"
+                      value={fxOverride}
+                      placeholder={liveFx ? String(liveFx.rate) : "0.0000"}
+                      onChange={(e) => setFxOverride(e.target.value)}
+                      className="h-6 w-28 text-[10px] bg-background font-mono tabular-nums"
+                    />
+                    <span className="text-[9px] text-muted-foreground">
+                      Använd kurs: <span className="font-mono tabular-nums">{effectiveFx ? effectiveFx.toFixed(4) : "–"}</span> · {fxSource}
+                    </span>
+                    {fxOverride && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-5 text-[9px] px-1.5"
+                        onClick={() => setFxOverride("")}
+                      >
+                        Använd dagskurs
+                      </Button>
+                    )}
+                  </div>
                 </div>
               )}
+
 
               {/* Quick actions */}
               <div className="flex flex-wrap gap-2 mb-1">
