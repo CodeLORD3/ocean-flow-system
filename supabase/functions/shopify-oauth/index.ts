@@ -44,9 +44,12 @@ async function credentialsFor(
     const m = String((data as any)?.admin_token_env || "").match(/^SHOPIFY_([A-Z0-9]+)_ADMIN_TOKEN$/);
     if (m) prefix = `SHOPIFY_${m[1]}_`;
   }
+  // Städa värdet: klipp bort mellanslag och ett eventuellt "-<tidsstämpel>"-suffix
+  // som kan följa med vid kopiering (Shopify-nycklar är 32 hex-tecken).
+  const clean = (v: string) => v.trim().replace(/^["']|["']$/g, "").replace(/-\d{6,}$/, "");
   const scoped = {
-    id: prefix ? Deno.env.get(`${prefix}API_KEY`) ?? "" : "",
-    secret: prefix ? Deno.env.get(`${prefix}API_SECRET`) ?? "" : "",
+    id: prefix ? clean(Deno.env.get(`${prefix}API_KEY`) ?? "") : "",
+    secret: prefix ? clean(Deno.env.get(`${prefix}API_SECRET`) ?? "") : "",
   };
   if (scoped.id && scoped.secret) {
     return {
