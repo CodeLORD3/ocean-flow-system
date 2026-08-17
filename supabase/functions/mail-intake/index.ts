@@ -122,13 +122,7 @@ Deno.serve(async (req) => {
     }) || null;
   };
 
-  const client = new ImapFlow({
-    host: "mailcluster.loopia.se",
-    port: 993,
-    secure: true,
-    auth: { user, pass },
-    logger: false,
-  });
+  const client = new SimpleImap("mailcluster.loopia.se", 993);
 
   let fetched = 0;
   let stored = 0;
@@ -137,52 +131,37 @@ Deno.serve(async (req) => {
   const results: Json[] = [];
 
   try {
-    await client.connect();
+    await client.connect(user, pass);
     for (const name of [PROCESSED, PARKED]) {
-      try {
-        await client.mailboxCreate(name);
-      } catch {
-        /* finns redan */
-      }
+      await client.createMailbox(name);
     }
 
     // Hitta rätt mapp (case-insensitivt), annars fall tillbaka till INBOX
     let targetFolder = folder;
     if (folder.toUpperCase() !== "INBOX") {
-      try {
-        const boxes = await client.list();
-        const hit = (boxes || []).find(
-          (b: { path: string; name?: string }) =>
-            b.path.toLowerCase() === folder.toLowerCase() ||
-            (b.name || "").toLowerCase() === folder.toLowerCase() ||
-            b.path.toLowerCase().endsWith(`.${folder.toLowerCase()}`) ||
-            b.path.toLowerCase().endsWith(`/${folder.toLowerCase()}`),
-        );
-        targetFolder = hit?.path || "INBOX";
-      } catch {
-        targetFolder = "INBOX";
-      }
+      const boxes = await client.listMailboxes();
+      const hit = boxes.find(
+        (p) =>
+          p.toLowerCase() === folder.toLowerCase() ||
+          p.toLowerCase().endsWith(`.${folder.toLowerCase()}`) ||
+          p.toLowerCase().endsWith(`/${folder.toLowerCase()}`),
+      );
+      targetFolder = hit || "INBOX";
     }
     console.log("mail-intake: öppnar mapp", targetFolder);
 
-    const lock = await client.getMailboxLock(targetFolder);
-    try {
-      const uids = (await client.search({ seen: false }, { uid: true })) || [];
-      console.log("mail-intake: olästa", (uids as number[]).length);
-      const batch = (uids as number[]).slice(-limit);
+    {
+      await client.select(targetFolder);
+      const uids = await client.searchUnseenUids();
+      console.log("mail-intake: olästa", uids.length);
+      const batch = uids.slice(-limit);
 
       for (const uid of batch) {
         fetched++;
         console.log("mail-intake: hämtar uid", uid);
         let source: Uint8Array | null = null;
         try {
-          for await (const m of client.fetch({ uid: String(uid) }, { source: true }, { uid: true })) {
-            const raw = m?.source as unknown;
-            if (raw) {
-              source = raw instanceof Uint8Array ? raw : new Uint8Array(raw as ArrayBufferLike);
-            }
-            break;
-          }
+          source = await client.fetchSource(uid);
         } catch (e) {
           console.log("mail-intake: kunde inte hämta uid", uid, String(e));
         }
