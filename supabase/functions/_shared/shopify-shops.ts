@@ -88,9 +88,83 @@ export function webhookSecret(shop: ShopifyShop | null): string {
   );
 }
 
+/** Klientuppgifternas prefix för butiken: SHOPIFY_CH_ADMIN_TOKEN → SHOPIFY_CH_ */
+function credentialPrefix(shop: ShopifyShop): string {
+  const m = String(shop.admin_token_env || "").match(/^SHOPIFY_([A-Z0-9]+)_ADMIN_TOKEN$/);
+  return m ? `SHOPIFY_${m[1]}_` : "";
+}
+
+const cleanCred = (v: string) =>
+  v.trim().replace(/^["']|["']$/g, "").replace(/-\d{6,}$/, "");
+
 /**
- * Admin-token för backfyllnad: butikens namngivna hemlighet, annars OAuth-token
- * i shopify_oauth_tokens för samma domän, annars den gamla hemligheten.
+ * Hämtar en färsk Admin-token med Shopifys client_credentials-flöde. Det är
+ * det flöde som gäller för appar man byggt till sin egen butik: butikens app
+ * behöver ingen installationsomgång, bara Client ID + Client secret. Tokens
+ * lever i 24 timmar och sparas i shopify_oauth_tokens med sitt utgångsdatum.
+ */
+export async function mintClientCredentialsToken(
+  db: SupabaseClient,
+  shop: ShopifyShop,
+): Promise<{ token: string | null; error?: string }> {
+  const prefix = credentialPrefix(shop);
+  const clientId =
+    cleanCred(env(prefix ? `${prefix}API_KEY` : "") || env("SHOPIFY_API_KEY"));
+  const clientSecret = cleanCred(
+    env(prefix ? `${prefix}API_SECRET` : "") ||
+      env("SHOPIFY_API_SECRET") ||
+      env("SHOPIFY_ACCESS_TOKEN"),
+  );
+  if (!clientId || !clientSecret) {
+    return {
+      token: null,
+      error: `Klientuppgifter saknas för ${shop.label} (${prefix || "SHOPIFY_"}API_KEY / ${prefix || "SHOPIFY_"}API_SECRET).`,
+    };
+  }
+  try {
+    const res = await fetch(`https://${shop.shop_domain}/admin/oauth/access_token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "client_credentials",
+        client_id: clientId,
+        client_secret: clientSecret,
+      }),
+    });
+    const text = await res.text();
+    if (!res.ok) {
+      return { token: null, error: `Shopify nekade tokenbegäran (${res.status}): ${text.slice(0, 300)}` };
+    }
+    const body = JSON.parse(text);
+    const token = String(body?.access_token || "");
+    if (!token) return { token: null, error: "Shopify svarade utan access_token." };
+    const ttl = Number(body?.expires_in);
+    const expiresAt = Number.isFinite(ttl) && ttl > 0
+      ? new Date(Date.now() + (ttl - 120) * 1000).toISOString()
+      : null;
+    await db.from("shopify_oauth_tokens").upsert(
+      {
+        shop: shop.shop_domain,
+        access_token: token,
+        scope: body?.scope ?? null,
+        access_mode: "client_credentials",
+        expires_at: expiresAt,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "shop" },
+    );
+    return { token };
+  } catch (e) {
+    return { token: null, error: `Kunde inte nå Shopify: ${(e as Error).message}` };
+  }
+}
+
+/**
+ * Admin-token för backfyllnad och API-anrop, i tur och ordning:
+ *   1. butikens namngivna hemlighet (shpat_-token som lagts in manuellt)
+ *   2. sparad token i shopify_oauth_tokens som inte gått ut
+ *   3. ny token via client_credentials (egen butiks-app, förnyas var 24:e timme)
+ *   4. den gamla enbutiksnyckeln
  */
 export async function adminToken(
   db: SupabaseClient,
@@ -100,12 +174,20 @@ export async function adminToken(
   if (named) return named;
   const { data } = await db
     .from("shopify_oauth_tokens")
-    .select("access_token")
+    .select("access_token, expires_at")
     .eq("shop", shop.shop_domain)
     .maybeSingle();
-  if (data?.access_token) return String(data.access_token);
+  const stored = data as { access_token?: string; expires_at?: string | null } | null;
+  const stillValid =
+    !!stored?.access_token &&
+    (!stored.expires_at || new Date(stored.expires_at).getTime() > Date.now());
+  if (stillValid) return String(stored!.access_token);
+  const minted = await mintClientCredentialsToken(db, shop);
+  if (minted.token) return minted.token;
+  if (stored?.access_token) return String(stored.access_token);
   return env("SHOPIFY_ADMIN_TOKEN") || null;
 }
+
 
 /**
  * Dagskurs mot SEK vid mottagning. Sparas på ordern så att en CHF-order
