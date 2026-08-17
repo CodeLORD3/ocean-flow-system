@@ -704,6 +704,12 @@ async function processEvent(db: SupabaseClient, eventId: string): Promise<void> 
       .eq("id", eventId);
   };
 
+  /**
+   * Deklareras UTANFÖR try: catch-grenen läser den vid DUPLIKAT. Låg den kvar
+   * inne i try blev catch en ReferenceError och raden fastnade på "bearbetar".
+   */
+  let shopifyOrderId: string | null = null;
+
   try {
     let payload: any = ev.payload;
     if (!payload && ev.raw_body) {
@@ -719,16 +725,17 @@ async function processEvent(db: SupabaseClient, eventId: string): Promise<void> 
       return;
     }
 
-    const shopifyOrderId = payload?.id != null ? String(payload.id) : null;
+    shopifyOrderId = payload?.id != null ? String(payload.id) : null;
     const orderName = String(payload?.name ?? payload?.order_number ?? shopifyOrderId ?? "");
     if (!shopifyOrderId) {
       await fail("Ordern saknar id");
       return;
     }
+    const orderId: string = shopifyOrderId;
 
     await db
       .from("shopify_webhook_events")
-      .update({ payload, shopify_order_id: shopifyOrderId, shopify_order_number: orderName })
+      .update({ payload, shopify_order_id: orderId, shopify_order_number: orderName })
       .eq("id", eventId);
 
     const topic = String(ev.topic ?? "orders/create").toLowerCase();
@@ -741,7 +748,7 @@ async function processEvent(db: SupabaseClient, eventId: string): Promise<void> 
     let dupQuery = db
       .from("shopify_webhook_events")
       .select("id, status, customer_order_id")
-      .eq("shopify_order_id", shopifyOrderId)
+      .eq("shopify_order_id", orderId)
       .eq("topic", ev.topic)
       .neq("id", eventId);
     dupQuery = ev.shop_domain
@@ -764,7 +771,7 @@ async function processEvent(db: SupabaseClient, eventId: string): Promise<void> 
 
     /* ---- Avbokning från webben ---- */
     if (topic === "orders/cancelled") {
-      const res = await cancelOrder(db, payload, shopifyOrderId, orderName);
+      const res = await cancelOrder(db, payload, orderId, orderName);
       if (!res.found) {
         await fail(`Avbokning för okänd order ${orderName} — ingen kundorder hittades`);
         return;
@@ -794,7 +801,7 @@ async function processEvent(db: SupabaseClient, eventId: string): Promise<void> 
     const { data: dupe } = await db
       .from("customer_orders")
       .select("id")
-      .eq("shopify_order_id", shopifyOrderId)
+      .eq("shopify_order_id", orderId)
       .maybeSingle();
     if (dupe) {
       await db
@@ -851,7 +858,7 @@ async function processEvent(db: SupabaseClient, eventId: string): Promise<void> 
       const { data: existing } = await db
         .from("customer_orders")
         .select("id")
-        .eq("shopify_order_id", shopifyOrderId)
+        .eq("shopify_order_id", shopifyOrderId ?? "")
         .maybeSingle();
       await db
         .from("shopify_webhook_events")
@@ -873,6 +880,28 @@ function afterResponse(work: Promise<unknown>) {
   const runtime = (globalThis as any).EdgeRuntime;
   if (runtime?.waitUntil) runtime.waitUntil(work);
   else void work;
+}
+
+/**
+ * Självläkning: en rad som stått i "bearbetar" i mer än 5 minuter har tappats
+ * (kraschad körning eller avbruten instans). Den körs om istället för att
+ * fastna för alltid.
+ */
+async function reclaimStale(db: SupabaseClient): Promise<void> {
+  const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  const { data: stale } = await db
+    .from("shopify_webhook_events")
+    .select("id")
+    .eq("status", "bearbetar")
+    .or(`last_attempt_at.is.null,last_attempt_at.lt.${cutoff}`)
+    .limit(10);
+  for (const row of stale || []) {
+    try {
+      await processEvent(db, row.id as string);
+    } catch (e) {
+      console.error("återkörning misslyckades:", e instanceof Error ? e.message : String(e));
+    }
+  }
 }
 
 /* ---------------------------------------------------------------- handler */
@@ -1058,7 +1087,12 @@ Deno.serve(async (req) => {
     return json({ ok: false, queued: false, error: "Kön kunde inte skrivas" }, 200);
   }
 
-  afterResponse(processEvent(db, queued.id));
+  afterResponse(
+    (async () => {
+      await processEvent(db, queued.id);
+      await reclaimStale(db);
+    })(),
+  );
   return json({ ok: true, queued: true, event_id: queued.id }, 200);
 });
 
