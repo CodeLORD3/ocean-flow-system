@@ -276,7 +276,9 @@ export default function CustomerOrders() {
           {TABS.map((t) => {
             const active = tab === t.id;
             const count = tabCounts?.[t.id] ?? 0;
-            const alert = t.id === "obetalda" && count > 0;
+            const alert = (t.id === "obetalda" || t.id === "godkannande") && count > 0;
+            // Godkännandefliken visas bara för butiker som faktiskt använder steget.
+            if (t.id === "godkannande" && count === 0 && !active) return null;
             return (
               <button
                 key={t.id}
