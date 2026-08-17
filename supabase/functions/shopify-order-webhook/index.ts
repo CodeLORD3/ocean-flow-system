@@ -881,6 +881,28 @@ function afterResponse(work: Promise<unknown>) {
   else void work;
 }
 
+/**
+ * Självläkning: en rad som stått i "bearbetar" i mer än 5 minuter har tappats
+ * (kraschad körning eller avbruten instans). Den körs om istället för att
+ * fastna för alltid.
+ */
+async function reclaimStale(db: SupabaseClient): Promise<void> {
+  const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+  const { data: stale } = await db
+    .from("shopify_webhook_events")
+    .select("id")
+    .eq("status", "bearbetar")
+    .or(`last_attempt_at.is.null,last_attempt_at.lt.${cutoff}`)
+    .limit(10);
+  for (const row of stale || []) {
+    try {
+      await processEvent(db, row.id as string);
+    } catch (e) {
+      console.error("återkörning misslyckades:", e instanceof Error ? e.message : String(e));
+    }
+  }
+}
+
 /* ---------------------------------------------------------------- handler */
 
 Deno.serve(async (req) => {
