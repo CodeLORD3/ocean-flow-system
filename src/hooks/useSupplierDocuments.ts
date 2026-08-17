@@ -10,6 +10,7 @@ export interface MailSender {
   legal_entity_id: string | null;
   active: boolean;
   note: string | null;
+  is_portal: boolean;
 }
 
 export interface MailMessage {
@@ -124,6 +125,7 @@ export function useMailIntakeActions() {
         pattern: sender.pattern.trim().toLowerCase().replace(/^@/, ""),
         kind: sender.pattern.includes("@") ? "email" : "domain",
         supplier_id: sender.supplier_id ?? null,
+        is_portal: sender.is_portal ?? false,
         legal_entity_id: sender.legal_entity_id ?? null,
         active: sender.active ?? true,
         note: sender.note ?? null,
@@ -144,6 +146,14 @@ export function useMailIntakeActions() {
     onSuccess: invalidate,
   });
 
+  const setDocumentSupplier = useMutation({
+    mutationFn: async ({ id, supplier_id }: { id: string; supplier_id: string }) => {
+      const { error } = await supabase.from("supplier_documents").update({ supplier_id }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
   const ignoreMessage = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("mail_intake_messages").update({ status: "ignorerad" }).eq("id", id);
@@ -152,5 +162,5 @@ export function useMailIntakeActions() {
     onSuccess: invalidate,
   });
 
-  return { runIntake, saveSender, removeSender, ignoreMessage, invalidate };
+  return { runIntake, saveSender, removeSender, ignoreMessage, setDocumentSupplier, invalidate };
 }
