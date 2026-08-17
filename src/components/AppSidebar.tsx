@@ -87,6 +87,7 @@ const salesNav = [
 
 const purchaseNav = [
   { title: "Lager", url: "/inventory", icon: Package },
+  { title: "Inköpsschema", url: "/purchase-schedule", icon: CalendarRange },
   { title: "Inköpsrapportering", url: "/purchase-reporting", icon: FileText },
   { title: "Produktion", url: "/production", icon: Scissors },
   { title: "Leverantörer", url: "/suppliers", icon: Truck },
