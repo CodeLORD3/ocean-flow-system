@@ -13,6 +13,7 @@ import {
   Store as StoreIcon,
   Trash2,
   Pencil,
+  MapPin,
   TriangleAlert,
   User,
   X,
@@ -208,6 +209,12 @@ export function RetailCustomerProfile({
         >
           <Mail className="h-3.5 w-3.5" /> {customer.email}
         </a>
+      )}
+      {[customer.street, customer.postal_code, customer.city].filter(Boolean).length > 0 && (
+        <span className="flex items-center gap-1">
+          <MapPin className="h-3.5 w-3.5" />
+          {[customer.street, customer.postal_code, customer.city].filter(Boolean).join(", ")}
+        </span>
       )}
       {customer.customer_no != null && (
         <span className="font-mono tabular-nums">Kundnr {customer.customer_no}</span>

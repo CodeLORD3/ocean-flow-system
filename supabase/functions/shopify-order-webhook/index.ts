@@ -227,6 +227,16 @@ async function evaluateReservation(
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const round3 = (n: number) => Math.round(n * 1000) / 1000;
 
+/**
+ * Eventbiljetter (t.ex. "Kräftskiva Lavaux SEPT 5th") är bokningar till ett event,
+ * inte varor. Shopify markerar dem med requires_shipping = false. De ska aldrig
+ * kräva produktmatchning, packas eller röra lagret.
+ */
+const EVENT_TITLE_RE = /kr(ä|a)ftskiva|crayfish party|biljett|ticket|\bevent\b/i;
+const isEventLine = (li: any) =>
+  li?.requires_shipping === false || EVENT_TITLE_RE.test(String(li?.title ?? li?.name ?? ""));
+const EVENT_LINE_NOTE = "Eventbokning — bokning till event, ingen vara att packa eller lagerföra";
+
 /** Normaliserar telefon till +46-format. Rådata sparas orört i phone. */
 function normPhone(v: unknown): string | null {
   if (v == null) return null;
@@ -544,10 +554,12 @@ async function createOrder(
     const lineTotal = round2(qty * price);
     estimated += lineTotal;
 
+    const isEvent = !product && isEventLine(li);
+
     let reservation = { status: "ingen", lotId: null as string | null };
     if (product) {
       reservation = await evaluateReservation(db, product.id, storeId, wantedDate, qty);
-    } else {
+    } else if (!isEvent) {
       unmatched++;
     }
 
@@ -571,7 +583,9 @@ async function createOrder(
       shopify_line_id: li?.id != null ? String(li.id) : null,
       shopify_sku: sku || null,
       shopify_title: title,
-      needs_product_match: !product,
+      // Eventbokningar ska inte köa för produktmatchning.
+      needs_product_match: !product && !isEvent,
+      note: isEvent ? EVENT_LINE_NOTE : null,
       sort_order: i,
     });
   }
