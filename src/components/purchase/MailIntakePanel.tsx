@@ -93,6 +93,10 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
     () => messages.filter((m) => m.status === "nyhetsbrev"),
     [messages],
   );
+  const reminderMessages = useMemo(
+    () => messages.filter((m) => m.status === "paminnelse"),
+    [messages],
+  );
   const lastRun = runs[0];
 
   const handleApprove = async (doc: SupplierDocument) => {
