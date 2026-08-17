@@ -85,15 +85,20 @@ Deno.serve(async (req) => {
   const API_VERSION = shop.api_version;
   const token = await adminToken(db, shop);
   if (!token) {
+    // Visa exakt varför client_credentials-flödet inte gav någon token.
+    const minted = await mintClientCredentialsToken(db, shop);
     return json(
       {
         ok: false,
-        error: `Ingen Admin-token finns för ${shop.label}. Lägg hemligheten ${shop.admin_token_env}, eller anslut butiken via OAuth.`,
+        error:
+          minted.error ??
+          `Ingen Admin-token finns för ${shop.label}. Lägg hemligheten ${shop.admin_token_env}, eller anslut butiken via OAuth.`,
         needs_oauth: true,
       },
       400,
     );
   }
+
 
 
   const result = {
