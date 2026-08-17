@@ -62,9 +62,11 @@ const toDraft = (l: CustomerOrderLine): DraftLine => ({
  */
 export function InlineOrderEdit({
   order,
+  currency,
   onClose,
 }: {
   order: CustomerOrder;
+  currency: string;
   onClose: () => void;
 }) {
   const { activeUser } = useActiveUser();
@@ -414,7 +416,7 @@ export function InlineOrderEdit({
                     step="0.01"
                     inputMode="decimal"
                     className="h-8 font-mono text-xs tabular-nums"
-                    placeholder="kr/enhet"
+                    placeholder={`${currency}/enhet`}
                     value={l.price}
                     onChange={(e) => patchLine(l.id, { price: e.target.value })}
                     aria-label="Pris per enhet"
@@ -463,7 +465,7 @@ export function InlineOrderEdit({
 
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm bg-card p-2 text-sm">
         <span className="text-xs text-muted-foreground">Summa</span>
-        <span className="font-mono text-sm font-semibold tabular-nums">{nf(total)} kr</span>
+        <span className="font-mono text-sm font-semibold tabular-nums">{nf(total)} {currency}</span>
       </div>
 
       <div className="flex gap-2">

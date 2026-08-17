@@ -207,7 +207,13 @@ export interface CustomerOrder {
   web_delivery_method?: string | null;
   customers_retail?: RetailCustomer | null;
   /** Butiken där beställningen hämtas (joinad). */
-  stores?: { id: string; name: string } | null;
+  stores?: {
+    id: string;
+    name: string;
+    city?: string | null;
+    country?: string | null;
+    currency?: string | null;
+  } | null;
   customer_order_lines?: CustomerOrderLine[];
 }
 
