@@ -163,9 +163,12 @@ Deno.serve(async (req) => {
       const batch = uids.slice(-limit);
 
       for (const uid of batch) {
+        if (Date.now() - startedAt > BUDGET_MS) {
+          console.log("mail-intake: avbryter, tidsbudget slut");
+          break;
+        }
         fetched++;
-        console.log("mail-intake: hämtar uid", uid);
-        let source: Uint8Array | null = null;
+
         try {
           source = await client.fetchSource(uid);
         } catch (e) {
