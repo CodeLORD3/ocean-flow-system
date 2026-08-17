@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, Truck, ChefHat, ShoppingCart, Archive, ArchiveRestore, Clock } from "lucide-react";
+import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, Truck, ChefHat, ShoppingCart, Archive, ArchiveRestore, Clock, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,6 +21,7 @@ import { useStores } from "@/hooks/useStores";
 import {
   useCustomerOrders,
   useArchiveCustomerOrder,
+  useApproveCustomerOrder,
   useCustomerOrderCounts,
   useCustomerOrderTabCounts,
 } from "@/hooks/useCustomerOrders";
@@ -48,6 +49,10 @@ import { TodayPickupsView } from "@/components/orders/TodayPickupsView";
 
 /** Orderflikarna: tre operativa lägen först, historiken nedtonad sist. */
 const TABS: { id: OrderTab; hint: string; muted?: boolean }[] = [
+  {
+    id: "godkannande",
+    hint: "Webbordrar för hämtning i butik som väntar på godkännande",
+  },
   { id: "pagaende", hint: "Aktiva, ännu inte färdigpackade" },
   { id: "packade", hint: "Färdiga, väntar på hämtning eller leverans" },
   { id: "obetalda", hint: "Utlämnade men betalning saknas" },
@@ -169,6 +174,7 @@ export default function CustomerOrders() {
 
   const isArchiveView = tab === "arkiverade";
   const archiveOrders = useArchiveCustomerOrder();
+  const approveOrders = useApproveCustomerOrder();
   const { data: tabCounts } = useCustomerOrderTabCounts(effectiveStore);
 
   const { data: orders = [], isLoading } = useCustomerOrders({
@@ -227,7 +233,23 @@ export default function CustomerOrders() {
           </span>
         </div>
 
-        {canEdit && marked.length > 0 && (
+        {canEdit && tab === "godkannande" && (
+          <Button
+            size="lg"
+            className="h-12 px-5 text-base"
+            disabled={approveOrders.isPending || (marked.length === 0 && viewOrders.length === 0)}
+            onClick={() =>
+              approveOrders.mutate(
+                { ids: marked.length > 0 ? marked : viewOrders.map((o) => o.id) },
+                { onSuccess: () => setMarked([]) },
+              )
+            }
+          >
+            <Check className="mr-2 h-5 w-5" />
+            Godkänn {marked.length > 0 ? marked.length : viewOrders.length}
+          </Button>
+        )}
+        {canEdit && tab !== "godkannande" && marked.length > 0 && (
           <Button
             variant="outline"
             size="lg"
@@ -272,7 +294,9 @@ export default function CustomerOrders() {
           {TABS.map((t) => {
             const active = tab === t.id;
             const count = tabCounts?.[t.id] ?? 0;
-            const alert = t.id === "obetalda" && count > 0;
+            const alert = (t.id === "obetalda" || t.id === "godkannande") && count > 0;
+            // Godkännandefliken visas bara för butiker som faktiskt använder steget.
+            if (t.id === "godkannande" && count === 0 && !active) return null;
             return (
               <button
                 key={t.id}
@@ -514,7 +538,9 @@ export default function CustomerOrders() {
             <EmptyState
               title={`Inget i ${ORDER_TAB_LABELS[tab].toLowerCase()}`}
               description={
-                tab === "pagaende"
+                tab === "godkannande"
+                  ? "Webbordrar för hämtning i butik som kräver godkännande hamnar här innan de går in i flödet."
+                  : tab === "pagaende"
                   ? "Här ligger beställningar som är aktiva och ännu inte färdigpackade. Skapa en med Ny beställning."
                   : tab === "packade"
                     ? "Färdigpackade beställningar som väntar på hämtning eller leverans hamnar här."

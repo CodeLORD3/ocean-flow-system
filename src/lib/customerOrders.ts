@@ -205,6 +205,10 @@ export interface CustomerOrder {
   price_locked?: boolean;
   wanted_time_window?: string | null;
   web_delivery_method?: string | null;
+  /* Extra godkännandesteg innan ordern går in i flödet */
+  needs_approval?: boolean | null;
+  approved_at?: string | null;
+  approved_by?: string | null;
   customers_retail?: RetailCustomer | null;
   /** Butiken där beställningen hämtas (joinad). */
   stores?: {
@@ -589,9 +593,16 @@ export function isUncollected(order: CustomerOrder) {
  * direkt ser vad som pågår, vad som är färdigpackat och vad som är utlämnat
  * men obetalt. Betalstatus hanteras separat från packflödet.
  */
-export type OrderTab = "pagaende" | "packade" | "obetalda" | "arkiverade" | "borttagna";
+export type OrderTab =
+  | "godkannande"
+  | "pagaende"
+  | "packade"
+  | "obetalda"
+  | "arkiverade"
+  | "borttagna";
 
 export const ORDER_TAB_LABELS: Record<OrderTab, string> = {
+  godkannande: "Att godkänna",
   pagaende: "Pågående",
   packade: "Packade",
   obetalda: "Hämtade – ej betalda",
@@ -617,6 +628,8 @@ export type OrderFlowFields = {
   web_paid?: boolean | null;
   wanted_date?: string;
   wanted_time?: string | null;
+  needs_approval?: boolean | null;
+  approved_at?: string | null;
 };
 
 /** Är beställningen betald? Webbordrar är betalda redan vid köpet. */
@@ -629,10 +642,16 @@ export function isHandedOver(o: OrderFlowFields) {
   return !!o.handed_over_at || ["levererad", "avhamtad"].includes(String(o.status));
 }
 
+/** Väntar ordern på ett extra godkännande innan den går in i flödet? */
+export function awaitsApproval(o: OrderFlowFields) {
+  return !!o.needs_approval && !o.approved_at;
+}
+
 /** Vilken flik hör beställningen till? En order ligger alltid i exakt en flik. */
 export function orderTab(o: OrderFlowFields): OrderTab {
   if (o.cancelled_at || o.status === "avbruten") return "borttagna";
   if (o.archived_at) return "arkiverade";
+  if (awaitsApproval(o)) return "godkannande";
   if (isHandedOver(o)) return isPaid(o) ? "arkiverade" : "obetalda";
   if (o.pack_status === "packad") return "packade";
   return "pagaende";
