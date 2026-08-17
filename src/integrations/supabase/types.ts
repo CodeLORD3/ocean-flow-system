@@ -1717,6 +1717,8 @@ export type Database = {
       customer_orders: {
         Row: {
           allergy_note: string | null
+          approved_at: string | null
+          approved_by: string | null
           archived_at: string | null
           archived_by: string | null
           booked_by_staff_id: string | null
@@ -1743,6 +1745,7 @@ export type Database = {
           handed_over_at: string | null
           id: string
           is_web_order: boolean
+          needs_approval: boolean
           no_show_at: string | null
           no_show_by: string | null
           note: string | null
@@ -1773,6 +1776,8 @@ export type Database = {
         }
         Insert: {
           allergy_note?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           archived_at?: string | null
           archived_by?: string | null
           booked_by_staff_id?: string | null
@@ -1799,6 +1804,7 @@ export type Database = {
           handed_over_at?: string | null
           id?: string
           is_web_order?: boolean
+          needs_approval?: boolean
           no_show_at?: string | null
           no_show_by?: string | null
           note?: string | null
@@ -1829,6 +1835,8 @@ export type Database = {
         }
         Update: {
           allergy_note?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           archived_at?: string | null
           archived_by?: string | null
           booked_by_staff_id?: string | null
@@ -1855,6 +1863,7 @@ export type Database = {
           handed_over_at?: string | null
           id?: string
           is_web_order?: boolean
+          needs_approval?: boolean
           no_show_at?: string | null
           no_show_by?: string | null
           note?: string | null
