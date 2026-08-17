@@ -169,6 +169,8 @@ export default function Suppliers() {
                 <tr className="border-b border-border bg-muted/30">
                   <th className="p-3 text-left font-medium text-muted-foreground">LEVERANTÖR</th>
                   <th className="p-3 text-left font-medium text-muted-foreground">TYP</th>
+                  <th className="p-3 text-left font-medium text-muted-foreground">VALUTA</th>
+
                   <th className="p-3 text-left font-medium text-muted-foreground">KONTAKT</th>
                   <th className="p-3 text-left font-medium text-muted-foreground">E-POST</th>
                   <th className="p-3 text-left font-medium text-muted-foreground">TELEFON</th>
