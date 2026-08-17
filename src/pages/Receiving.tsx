@@ -40,8 +40,10 @@ import { butikslagerId } from "@/lib/locations";
 
 import { format, differenceInDays, parseISO } from "date-fns";
 import { sv } from "date-fns/locale";
-import { getStoreCurrency, fmtCur } from "@/lib/currency";
-import { useCurrencySettings, convertSekToChfCost } from "@/hooks/useCurrencySettings";
+import { getStoreCurrency, fmtCur, fmtDual } from "@/lib/currency";
+import { useCurrencySettings } from "@/hooks/useCurrencySettings";
+import { useFxRate } from "@/hooks/useFxRate";
+
 import { ProductThumb } from "@/components/products/ProductThumb";
 
 const REPORT_TYPES = ["Skadad", "Fel kvantitet", "Dålig kvalitet", "Saknas", "Annat"];
