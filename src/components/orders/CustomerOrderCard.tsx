@@ -45,6 +45,8 @@ import { printConfirmation, confirmationText } from "@/lib/customerOrderConfirma
 import { printPackList } from "@/lib/customerOrderPackListPdf";
 import { allergenLabel, scaleQuantity } from "@/lib/catering";
 import { OrderAuditLine } from "./OrderAuditLine";
+import { CurrencyAmount, useSekRate } from "@/components/orders/CurrencyAmount";
+import { getStoreCurrency } from "@/lib/currency";
 
 
 const nf = (v: any, d = 2) =>
@@ -290,7 +292,7 @@ export function CustomerOrderCard({
             <div>
               Verkligt pris avviker mer än 15 % från det uppskattade. Ring kunden innan varan packas.
               <div className="font-mono tabular-nums">
-                Uppskattat {nf(order.estimated_total)} kr · nu {nf(actualTotal)} kr
+                Uppskattat {money(order.estimated_total)} · nu {money(actualTotal)}
               </div>
             </div>
           </div>
@@ -410,7 +412,7 @@ export function CustomerOrderCard({
                     {done && (
                       <div className="font-mono text-sm tabular-nums text-muted-foreground">
                         Packat {nf(l.quantity_packed, 3)} {l.unit} ×{" "}
-                        {nf(l.price_per_unit)} kr = {nf(l.line_total)} kr
+                        {money(l.price_per_unit)} = {money(l.line_total)}
                       </div>
                     )}
                   </CardContent>
@@ -421,11 +423,11 @@ export function CustomerOrderCard({
             <div className="rounded-md bg-muted p-3 text-sm">
               <div className="flex justify-between">
                 <span>Uppskattat vid registrering</span>
-                <span className="font-mono tabular-nums">{nf(order.estimated_total)} kr</span>
+                <span className="font-mono tabular-nums">{money(order.estimated_total)}</span>
               </div>
               <div className="flex justify-between font-semibold">
                 <span>Verkligt pris</span>
-                <span className="font-mono tabular-nums">{nf(actualTotal)} kr</span>
+                <span className="font-mono tabular-nums">{money(actualTotal)}</span>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 Betalning sker i kassan vid hämtning.
