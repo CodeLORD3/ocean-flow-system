@@ -85,8 +85,13 @@ Deno.serve(async (req) => {
   }
   // Inkorgen är standard; en testmapp kan pekas ut explicit.
   const folder = typeof body.folder === "string" && body.folder ? body.folder : "INBOX";
-  const limit = typeof body.limit === "number" ? Math.min(body.limit, 50) : 20;
+  // Varje mejl kostar mycket CPU (mailparser + tolkning), så vi tar få per körning
+  // och avbryter innan edge-runtimens CPU-budget tar slut.
+  const limit = typeof body.limit === "number" ? Math.min(body.limit, 10) : 3;
   const moveMail = body.move !== false;
+  const startedAt = Date.now();
+  const BUDGET_MS = 55_000;
+
 
   const { data: run } = await supabase
     .from("mail_intake_runs")
@@ -158,10 +163,15 @@ Deno.serve(async (req) => {
       const batch = uids.slice(-limit);
 
       for (const uid of batch) {
+        if (Date.now() - startedAt > BUDGET_MS) {
+          console.log("mail-intake: avbryter, tidsbudget slut");
+          break;
+        }
         fetched++;
         console.log("mail-intake: hämtar uid", uid);
         let source: Uint8Array | null = null;
         try {
+
           source = await client.fetchSource(uid);
         } catch (e) {
           console.log("mail-intake: kunde inte hämta uid", uid, String(e));
