@@ -264,6 +264,32 @@ Deno.serve(async (req) => {
           continue;
         }
 
+        // Nyhetsbrev/utskick: loggas som information, bilagor öppnas aldrig.
+        const newsletter = isNewsletter(
+          subject,
+          parsedMail.headers as unknown as Map<string, unknown>,
+          attachments.map((a) => a.filename || ""),
+        );
+        if (newsletter) {
+          await supabase.from("mail_intake_messages").insert({
+            message_id: messageId,
+            from_email: fromEmail,
+            from_name: fromAddr?.name || null,
+            subject,
+            sent_at: parsedMail.date ? new Date(parsedMail.date).toISOString() : null,
+            folder,
+            attachment_count: attachments.length,
+            status: "nyhetsbrev",
+          });
+          skipped++;
+          if (moveMail) {
+            await client.markSeen(uid);
+            await client.moveUid(uid, PARKED);
+          }
+          results.push({ messageId, fromEmail, subject, action: "nyhetsbrev_ignorerat" });
+          continue;
+        }
+
         const sender = matchSender(fromEmail);
         const { data: msgRow } = await supabase
           .from("mail_intake_messages")
