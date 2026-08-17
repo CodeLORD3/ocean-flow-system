@@ -480,4 +480,140 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
   );
 }
 
+/**
+ * Ett dokument i kön: liten förhandsvisning av de tolkade raderna plus attest/avvisa.
+ * Nästa dokument visas först när det här är hanterat.
+ */
+function DraftQueueCard({
+  doc,
+  suppliers,
+  busy,
+  queueLength,
+  onSetSupplier,
+  onApprove,
+  onReject,
+}: {
+  doc: SupplierDocument;
+  suppliers: any[];
+  busy: boolean;
+  queueLength: number;
+  onSetSupplier: (supplierId: string) => void;
+  onApprove: () => void;
+  onReject: () => void;
+}) {
+  const lines = doc.parsed?.lines ?? [];
+  const old = ageHours(doc.created_at) > 48;
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    resolveStorageUrl(doc.storage_path ? `/storage/v1/object/public/leverantorsdokument/${doc.storage_path}` : null)
+      .then((u) => active && setFileUrl(u))
+      .catch(() => active && setFileUrl(null));
+    return () => {
+      active = false;
+    };
+  }, [doc.storage_path]);
+
+  return (
+    <div className="p-3 space-y-2">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-[200px] flex-1">
+          <div className="flex items-center gap-2 text-xs font-medium">
+            <Badge variant="outline" className="h-4 px-1 text-[10px]">{docTypeLabel[doc.doc_type] ?? doc.doc_type}</Badge>
+            <span className="truncate">{doc.file_name}</span>
+            {queueLength > 1 && (
+              <span className="text-[10px] text-muted-foreground">1 av {queueLength}</span>
+            )}
+            {old && (
+              <span className="flex items-center gap-1 text-amber-600 text-[10px]">
+                <AlertTriangle className="h-3 w-3" /> äldre än 48 h
+              </span>
+            )}
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            {doc.parsed?.document?.supplier_name ?? "Okänd leverantör"}
+            {!doc.supplier_id ? " · välj leverantör innan attest" : ""}
+            {doc.document_number ? ` · nr ${doc.document_number}` : ""}
+            {doc.document_date ? ` · ${doc.document_date}` : ""} · {lines.length} rader
+            {doc.total_ex_vat ? ` · ${doc.total_ex_vat.toLocaleString("sv-SE")} ex moms` : ""}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {fileUrl && (
+            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" asChild>
+              <a href={fileUrl} target="_blank" rel="noreferrer">
+                <ExternalLink className="h-3 w-3" /> Öppna filen
+              </a>
+            </Button>
+          )}
+          {!doc.supplier_id && (
+            <Select onValueChange={onSetSupplier}>
+              <SelectTrigger className="h-7 w-[190px] max-w-full text-xs">
+                <SelectValue placeholder="Välj leverantör" />
+              </SelectTrigger>
+              <SelectContent>
+                {suppliers.map((s: any) => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={onReject}>
+            Avvisa
+          </Button>
+          <Button
+            size="sm"
+            className="h-7 text-xs gap-1"
+            disabled={busy || !doc.supplier_id}
+            onClick={onApprove}
+          >
+            {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShieldCheck className="h-3 w-3" />}
+            Attestera
+          </Button>
+        </div>
+      </div>
+
+      {lines.length > 0 && (
+        <div className="rounded border bg-muted/30 overflow-x-auto">
+          <table className="w-full text-[11px]">
+            <thead className="text-muted-foreground">
+              <tr className="border-b">
+                <th className="px-2 py-1 text-left font-medium">Produkt</th>
+                <th className="px-2 py-1 text-right font-medium">Mängd</th>
+                <th className="px-2 py-1 text-right font-medium">À-pris</th>
+                <th className="px-2 py-1 text-right font-medium">Belopp</th>
+              </tr>
+            </thead>
+            <tbody className="font-mono tabular-nums">
+              {lines.slice(0, 8).map((l: any, i: number) => (
+                <tr key={i} className="border-b last:border-0">
+                  <td className="px-2 py-1 font-sans max-w-[280px] truncate">
+                    {l.name ?? l.product_name ?? l.description ?? "—"}
+                  </td>
+                  <td className="px-2 py-1 text-right">
+                    {l.quantity != null ? `${Number(l.quantity).toLocaleString("sv-SE")} ${l.unit ?? ""}` : "—"}
+                  </td>
+                  <td className="px-2 py-1 text-right">
+                    {l.unit_price != null ? Number(l.unit_price).toLocaleString("sv-SE") : "—"}
+                  </td>
+                  <td className="px-2 py-1 text-right">
+                    {l.total != null ? Number(l.total).toLocaleString("sv-SE") : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {lines.length > 8 && (
+            <p className="px-2 py-1 text-[10px] text-muted-foreground">
+              +{lines.length - 8} rader till — syns i inköpsrapporten efter attest.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 export default MailIntakePanel;
