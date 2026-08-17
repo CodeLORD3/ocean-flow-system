@@ -712,10 +712,17 @@ export default function Receiving() {
                           />
                         </div>
                         {isChfStore && (
-                          <div className="col-span-2 space-y-0.5 pt-1 border-t border-border/40">
-
+                          <div className="col-span-2 space-y-1 pt-1 border-t border-border/40">
+                            {/* Inköpsvy för grossisten: SEK är primärvaluta, bolagsvalutan är referens. */}
+                            <div className="text-[10px] text-foreground">
+                              Inköpspris:{" "}
+                              <span className="font-mono tabular-nums font-medium">
+                                {fmtDual(sourceCost(line), SUPPLIER_CURRENCY, effectiveFx, localCurrency)}
+                              </span>
+                              <span className="text-muted-foreground"> / {line.products?.unit || "kg"}</span>
+                            </div>
                             <Label className="text-[9px] text-muted-foreground uppercase tracking-wide">
-                              Värde per {line.products?.unit || "kg"} ({localCurrency}) — auto-förslag, redigerbart
+                              Bokfört värde per {line.products?.unit || "kg"} ({localCurrency}) — auto, redigerbart
                             </Label>
                             <div className="flex items-center gap-2">
                               <Input
@@ -723,18 +730,31 @@ export default function Receiving() {
                                 step="0.01"
                                 value={report.unit_cost_local || ""}
                                 onChange={(e) => updateLineReport(line.id, "unit_cost_local", e.target.value)}
-                                className="h-6 text-[10px] bg-background w-32"
+                                className="h-6 text-[10px] bg-background w-32 font-mono tabular-nums"
                                 placeholder={autoChfCost(line) || "0.00"}
                               />
                               <span className="text-[9px] text-muted-foreground">
-                                Inköp: {Number(line.products?.cost_price || 0).toLocaleString("sv-SE")} SEK
                                 {Number(report.quantity_received) > 0 && Number(report.unit_cost_local) > 0 && (
-                                  <> · Totalt: {fmtCur(Number(report.quantity_received) * Number(report.unit_cost_local), localCurrency, { maximumFractionDigits: 2 })}</>
+                                  <>
+                                    Totalt:{" "}
+                                    {fmtCur(
+                                      Number(report.quantity_received) * sourceCost(line),
+                                      SUPPLIER_CURRENCY,
+                                      { maximumFractionDigits: 2 },
+                                    )}{" "}
+                                    ≈{" "}
+                                    {fmtCur(
+                                      Number(report.quantity_received) * Number(report.unit_cost_local),
+                                      localCurrency,
+                                      { maximumFractionDigits: 2 },
+                                    )}
+                                  </>
                                 )}
                               </span>
                             </div>
                           </div>
                         )}
+
                       </div>
 
                       {/* Deviation fields */}
