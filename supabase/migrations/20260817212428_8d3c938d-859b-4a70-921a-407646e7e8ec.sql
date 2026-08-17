@@ -1,0 +1,1 @@
+ALTER TABLE public.mail_intake_senders ADD COLUMN IF NOT EXISTS is_portal boolean NOT NULL DEFAULT false;

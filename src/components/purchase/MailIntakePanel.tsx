@@ -14,6 +14,7 @@ import { AlertTriangle, Copy, Inbox, Loader2, Mail, RefreshCw, ShieldCheck, Tras
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -57,11 +58,12 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
   const { data: products = [] } = useProducts();
   const { data: suppliers = [] } = useSuppliers();
   const { data: sizeGrades = [] } = useSizeGrades();
-  const { runIntake, saveSender, removeSender, ignoreMessage, invalidate } = useMailIntakeActions();
+  const { runIntake, saveSender, removeSender, ignoreMessage, setDocumentSupplier, invalidate } = useMailIntakeActions();
 
   const [busyId, setBusyId] = useState<string | null>(null);
   const [newPattern, setNewPattern] = useState("");
   const [newSupplier, setNewSupplier] = useState<string>("");
+  const [newPortal, setNewPortal] = useState(false);
   const [folder, setFolder] = useState("Test");
 
   const drafts = useMemo(
@@ -245,19 +247,39 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
                       </div>
                       <p className="text-[11px] text-muted-foreground mt-0.5">
                         {doc.parsed?.document?.supplier_name ?? "Okänd leverantör"}
+                        {!doc.supplier_id ? " · välj leverantör innan attest" : ""}
                         {doc.document_number ? ` · nr ${doc.document_number}` : ""}
                         {doc.document_date ? ` · ${doc.document_date}` : ""} · {lines.length} rader
                         {doc.total_ex_vat ? ` · ${doc.total_ex_vat.toLocaleString("sv-SE")} ex moms` : ""}
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5">
+                      {!doc.supplier_id && (
+                        <Select
+                          onValueChange={(supplier_id) =>
+                            setDocumentSupplier.mutate(
+                              { id: doc.id, supplier_id },
+                              { onSuccess: () => toast({ title: "Leverantör kopplad" }) },
+                            )
+                          }
+                        >
+                          <SelectTrigger className="h-7 w-[190px] max-w-full text-xs">
+                            <SelectValue placeholder="Välj leverantör" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {suppliers.map((s: any) => (
+                              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                       <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => handleReject(doc)}>
                         Avvisa
                       </Button>
                       <Button
                         size="sm"
                         className="h-7 text-xs gap-1"
-                        disabled={busyId === doc.id}
+                        disabled={busyId === doc.id || !doc.supplier_id}
                         onClick={() => handleApprove(doc)}
                       >
                         {busyId === doc.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShieldCheck className="h-3 w-3" />}
@@ -301,6 +323,25 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
                         ))}
                       </SelectContent>
                     </Select>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() =>
+                        saveSender.mutate(
+                          { pattern: m.from_email ?? "", supplier_id: null, is_portal: true },
+                          {
+                            onSuccess: () =>
+                              toast({
+                                title: "Vitlistad som förmedlare",
+                                description: "Leverantören identifieras per dokument (t.ex. Fortnox).",
+                              }),
+                          },
+                        )
+                      }
+                    >
+                      Förmedlare
+                    </Button>
                     <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => ignoreMessage.mutate(m.id)}>
                       Ignorera
                     </Button>
@@ -346,7 +387,11 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
               placeholder="adress@leverantor.se eller leverantor.se"
               className="h-8 text-xs"
             />
-            <Select value={newSupplier} onValueChange={setNewSupplier}>
+            <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground whitespace-nowrap">
+              <Checkbox checked={newPortal} onCheckedChange={(v) => setNewPortal(!!v)} />
+              Förmedlare
+            </label>
+            <Select value={newSupplier} onValueChange={setNewSupplier} disabled={newPortal}>
               <SelectTrigger className="h-8 w-[170px] max-w-full text-xs"><SelectValue placeholder="Leverantör" /></SelectTrigger>
               <SelectContent>
                 {suppliers.map((s: any) => (
@@ -357,14 +402,15 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
             <Button
               size="sm"
               className="h-8 text-xs"
-              disabled={!newPattern.trim() || !newSupplier}
+              disabled={!newPattern.trim() || (!newSupplier && !newPortal)}
               onClick={() =>
                 saveSender.mutate(
-                  { pattern: newPattern, supplier_id: newSupplier },
+                  { pattern: newPattern, supplier_id: newPortal ? null : newSupplier, is_portal: newPortal },
                   {
                     onSuccess: () => {
                       setNewPattern("");
                       setNewSupplier("");
+                      setNewPortal(false);
                     },
                   },
                 )
@@ -384,7 +430,9 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
                     <p className="text-xs font-medium truncate">{s.pattern}</p>
                     <p className="text-[11px] text-muted-foreground">
                       {s.kind === "domain" ? "Domän" : "Adress"} ·{" "}
-                      {suppliers.find((sup: any) => sup.id === s.supplier_id)?.name ?? "ingen leverantör"}
+                      {s.is_portal
+                        ? "förmedlare — leverantör per dokument"
+                        : suppliers.find((sup: any) => sup.id === s.supplier_id)?.name ?? "ingen leverantör"}
                       {!s.active && " · inaktiv"}
                     </p>
                   </div>
