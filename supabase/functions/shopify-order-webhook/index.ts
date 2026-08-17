@@ -232,12 +232,9 @@ const round3 = (n: number) => Math.round(n * 1000) / 1000;
  * inte varor. Shopify markerar dem med requires_shipping = false. De ska aldrig
  * kräva produktmatchning, packas eller röra lagret.
  */
-const EVENT_TITLE_RE = /kr(ä|a)ftskiva|crayfish party|event|biljett|ticket|bokning|middag|dinner/i;
-const isEventLine = (li: any) => {
-  const title = String(li?.title ?? li?.name ?? "");
-  const requiresShipping = li?.requires_shipping !== false;
-  return EVENT_TITLE_RE.test(title) && (!requiresShipping || li?.requires_shipping === undefined);
-};
+const EVENT_TITLE_RE = /kr(ä|a)ftskiva|crayfish party|biljett|ticket|\bevent\b/i;
+const isEventLine = (li: any) =>
+  li?.requires_shipping === false || EVENT_TITLE_RE.test(String(li?.title ?? li?.name ?? ""));
 const EVENT_LINE_NOTE = "Eventbokning — bokning till event, ingen vara att packa eller lagerföra";
 
 /** Normaliserar telefon till +46-format. Rådata sparas orört i phone. */
