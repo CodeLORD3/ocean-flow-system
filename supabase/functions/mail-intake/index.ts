@@ -10,7 +10,7 @@
  * IMAP-sessionen hålls kort och stängs varje körning (Loopia begränsar samtidiga anslutningar).
  */
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { SimpleImap } from "./imap.ts";
+import { SimpleImap, parseAddress } from "./imap.ts";
 import { simpleParser } from "npm:mailparser@3.7.1";
 import { Buffer } from "node:buffer";
 
@@ -121,18 +121,27 @@ Deno.serve(async (req) => {
   }
   // Inkorgen är standard; en testmapp kan pekas ut explicit.
   const folder = typeof body.folder === "string" && body.folder ? body.folder : "INBOX";
-  // Varje mejl kostar mycket CPU (mailparser + tolkning), så vi tar få per körning
-  // och avbryter innan edge-runtimens CPU-budget tar slut.
-  const limit = typeof body.limit === "number" ? Math.min(body.limit, 10) : 3;
+  // Varje fullt tolkat mejl kostar mycket CPU (mailparser), så vi tar få per
+  // körning, filtrerar på headers först och avbryter innan CPU-budgeten tar slut.
+  const limit = typeof body.limit === "number" ? Math.min(body.limit, 10) : 2;
   const moveMail = body.move !== false;
   const startedAt = Date.now();
-  const BUDGET_MS = 55_000;
+  const BUDGET_MS = 40_000;
+  const MAX_SOURCE_BYTES = 8 * 1024 * 1024;
 
+  // Körningar som dött mitt i (t.ex. CPU-budget) städas så historiken inte
+  // visar rader som hänger utan förklaring.
+  await supabase
+    .from("mail_intake_runs")
+    .update({ finished_at: new Date().toISOString(), ok: false, error: "avbruten — CPU-budget" })
+    .is("finished_at", null)
+    .lt("started_at", new Date(Date.now() - 5 * 60_000).toISOString());
 
   const { data: run } = await supabase
     .from("mail_intake_runs")
     .insert({ folder })
     .select("id")
+
     .single();
   const runId = run?.id as string | undefined;
 
@@ -140,13 +149,20 @@ Deno.serve(async (req) => {
   const pass = Deno.env.get("MAIL_INTAKE_PASSWORD");
   const finish = async (patch: Json, status = 200) => {
     if (runId) {
-      await supabase.from("mail_intake_runs").update({ finished_at: new Date().toISOString(), ...patch }).eq("id", runId);
+      // Tabellen har inga kolumner för detaljlistan, den går bara i svaret.
+      const { results: _drop, ...columns } = patch as Json & { results?: unknown };
+      const { error: runErr } = await supabase
+        .from("mail_intake_runs")
+        .update({ finished_at: new Date().toISOString(), ...columns })
+        .eq("id", runId);
+      if (runErr) console.error("mail-intake: kunde inte skriva körningen", runErr.message);
     }
     return new Response(JSON.stringify({ folder, ...patch }), {
       status,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   };
+
 
   if (!user || !pass) return await finish({ ok: false, error: "MAIL_INTAKE_USER/PASSWORD saknas" }, 500);
 
@@ -223,31 +239,48 @@ Deno.serve(async (req) => {
           break;
         }
         fetched++;
-        console.log("mail-intake: hämtar uid", uid);
-        let source: Uint8Array | null = null;
+
+        // Steg 1: bara headers + storlek. Filtren nedan behöver inget mer, och
+        // ett nyhetsbrev på 2 MB ska aldrig laddas ner eller tolkas.
+        let head: { headers: Map<string, string>; size: number } | null = null;
         try {
-
-          source = await client.fetchSource(uid);
+          head = await client.fetchHeaders(uid);
         } catch (e) {
-          console.log("mail-intake: kunde inte hämta uid", uid, String(e));
+          console.log("mail-intake: kunde inte läsa headers", uid, String(e));
         }
-        console.log("mail-intake: hämtad", uid, source?.length ?? 0);
-        if (!source) continue;
-        const parsedMail = await simpleParser(Buffer.from(source));
-        console.log("mail-intake: tolkad", uid, parsedMail.subject || "");
-        const messageId = parsedMail.messageId || `uid-${folder}-${uid}`;
-        const fromAddr = parsedMail.from?.value?.[0];
-        const fromEmail = (fromAddr?.address || "").toLowerCase();
-        const subject = parsedMail.subject || "";
-        const attachments = (parsedMail.attachments || []).filter(isDoc);
+        if (!head) continue;
+        const headers = head.headers;
+        const subject = headers.get("subject") || "";
+        const from = parseAddress(headers.get("from"));
+        const fromEmail = from.email;
+        const messageId = headers.get("message-id") || `uid-${folder}-${uid}`;
+        const sentAt = headers.get("date");
+        console.log("mail-intake: header", uid, head.size, subject.slice(0, 60));
 
-        // Mejl utan bilaga rörs aldrig — de lämnas olästa så att en människa ser dem.
-        if (attachments.length === 0) {
-          noAttachment++;
-          skipped++;
-          results.push({ messageId, fromEmail, subject, action: "lamnad_olast_utan_bilaga" });
-          continue;
-        }
+        const logMessage = async (status: string, attachmentCount = 0, supplierId: string | null = null) => {
+          const { data } = await supabase
+            .from("mail_intake_messages")
+            .insert({
+              message_id: messageId,
+              from_email: fromEmail,
+              from_name: from.name,
+              subject,
+              sent_at: sentAt ? new Date(sentAt).toISOString() : null,
+              folder,
+              attachment_count: attachmentCount,
+              supplier_id: supplierId,
+              status,
+            })
+            .select("id")
+            .single();
+          return data?.id as string | undefined;
+        };
+        const park = async () => {
+          if (moveMail) {
+            await client.markSeen(uid);
+            await client.moveUid(uid, PARKED);
+          }
+        };
 
         const { data: existing } = await supabase
           .from("mail_intake_messages")
@@ -264,82 +297,91 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        const fileNames = attachments.map((a) => a.filename || "");
-
         // Betalningspåminnelse/inkasso: sållas bort oavsett avsändare, så de
         // aldrig hamnar bland okända avsändare eller kan bokföras.
-        if (isReminder(subject, fileNames.join(" "))) {
-          await supabase.from("mail_intake_messages").insert({
-            message_id: messageId,
-            from_email: fromEmail,
-            from_name: fromAddr?.name || null,
-            subject,
-            sent_at: parsedMail.date ? new Date(parsedMail.date).toISOString() : null,
-            folder,
-            attachment_count: attachments.length,
-            status: "paminnelse",
-          });
+        if (isReminder(subject, "")) {
+          await logMessage("paminnelse");
           skipped++;
-          if (moveMail) {
-            await client.markSeen(uid);
-            await client.moveUid(uid, PARKED);
-          }
+          await park();
           results.push({ messageId, fromEmail, subject, action: "paminnelse_ignorerad" });
           continue;
         }
 
-        // Nyhetsbrev/utskick: loggas som information, bilagor öppnas aldrig.
-        const newsletter = isNewsletter(
-          subject,
-          parsedMail.headers as unknown as Map<string, unknown>,
-          fileNames,
-        );
-        if (newsletter) {
-          await supabase.from("mail_intake_messages").insert({
-            message_id: messageId,
-            from_email: fromEmail,
-            from_name: fromAddr?.name || null,
-            subject,
-            sent_at: parsedMail.date ? new Date(parsedMail.date).toISOString() : null,
-            folder,
-            attachment_count: attachments.length,
-            status: "nyhetsbrev",
-          });
+        // Nyhetsbrev/utskick: loggas som information, mejlet laddas aldrig ner.
+        if (isNewsletter(subject, headers as unknown as Map<string, unknown>, [])) {
+          await logMessage("nyhetsbrev");
           skipped++;
-          if (moveMail) {
-            await client.markSeen(uid);
-            await client.moveUid(uid, PARKED);
-          }
+          await park();
           results.push({ messageId, fromEmail, subject, action: "nyhetsbrev_ignorerat" });
           continue;
         }
 
         const sender = matchSender(fromEmail);
-        const { data: msgRow } = await supabase
-          .from("mail_intake_messages")
-          .insert({
-            message_id: messageId,
-            from_email: fromEmail,
-            from_name: fromAddr?.name || null,
-            subject,
-            sent_at: parsedMail.date ? new Date(parsedMail.date).toISOString() : null,
-            folder,
-            attachment_count: attachments.length,
-            supplier_id: sender?.supplier_id ?? null,
-            status: sender ? "behandlad" : "okand_avsandare",
-          })
-          .select("id")
-          .single();
 
-        // Okänd avsändare: parkeras, bilagan öppnas eller tolkas aldrig.
+        // Okänd avsändare: parkeras, mejlet laddas eller tolkas aldrig.
         if (!sender) {
-          if (moveMail) {
-            await client.markSeen(uid);
-            await client.moveUid(uid, PARKED);
-          }
+          await logMessage("okand_avsandare");
+          skipped++;
+          await park();
           results.push({ messageId, fromEmail, subject, action: "parkerad_okand_avsandare" });
           continue;
         }
+
+        // Storleksspärr: ett enda jättemejl får inte blockera hela kön.
+        if (head.size > MAX_SOURCE_BYTES) {
+          await logMessage("for_stort", 0, sender.supplier_id ?? null);
+          skipped++;
+          results.push({ messageId, fromEmail, subject, action: "for_stort", bytes: head.size });
+          continue;
+        }
+
+        // Steg 2: först nu laddas hela mejlet ner och tolkas.
+        if (Date.now() - startedAt > BUDGET_MS) {
+          console.log("mail-intake: avbryter före nedladdning, tidsbudget slut");
+          break;
+        }
+        console.log("mail-intake: hämtar uid", uid);
+        let source: Uint8Array | null = null;
+        try {
+          source = await client.fetchSource(uid);
+        } catch (e) {
+          console.log("mail-intake: kunde inte hämta uid", uid, String(e));
+        }
+        console.log("mail-intake: hämtad", uid, source?.length ?? 0);
+        if (!source) continue;
+        const parsedMail = await simpleParser(Buffer.from(source));
+        console.log("mail-intake: tolkad", uid, parsedMail.subject || "");
+        const attachments = (parsedMail.attachments || []).filter(isDoc);
+
+        // Mejl utan bilaga rörs aldrig — de lämnas olästa så att en människa ser dem.
+        if (attachments.length === 0) {
+          noAttachment++;
+          skipped++;
+          results.push({ messageId, fromEmail, subject, action: "lamnad_olast_utan_bilaga" });
+          continue;
+        }
+
+        const fileNames = attachments.map((a) => a.filename || "");
+
+        // Kontrollera filtren igen nu när bilagenamnen är kända.
+        if (isReminder(subject, fileNames.join(" "))) {
+          await logMessage("paminnelse", attachments.length);
+          skipped++;
+          await park();
+          results.push({ messageId, fromEmail, subject, action: "paminnelse_ignorerad" });
+          continue;
+        }
+        if (isNewsletter(subject, headers as unknown as Map<string, unknown>, fileNames)) {
+          await logMessage("nyhetsbrev", attachments.length);
+          skipped++;
+          await park();
+          results.push({ messageId, fromEmail, subject, action: "nyhetsbrev_ignorerat" });
+          continue;
+        }
+
+        const msgRowId = await logMessage("behandlad", attachments.length, sender.supplier_id ?? null);
+        const msgRow = { id: msgRowId };
+
 
         for (const att of attachments) {
           const bytes = new Uint8Array(att.content as ArrayBufferLike);
@@ -405,7 +447,15 @@ Deno.serve(async (req) => {
 
           // Tolkning med samma motor som den manuella inläsningen.
           try {
-            const fileUrl = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/${BUCKET}/${encodeURI(path)}`;
+            // Hinken är privat, så tolkningen måste få en signerad länk.
+            const { data: signed, error: signErr } = await supabase.storage
+              .from(BUCKET)
+              .createSignedUrl(path, 600);
+            if (signErr || !signed?.signedUrl) throw new Error(signErr?.message || "kunde inte signera fil-URL");
+            const fileUrl = signed.signedUrl.startsWith("http")
+              ? signed.signedUrl
+              : `${Deno.env.get("SUPABASE_URL")}${signed.signedUrl}`;
+
             const parseRes = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/parse-foljesedel`, {
               method: "POST",
               headers: {
