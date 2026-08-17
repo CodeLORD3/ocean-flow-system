@@ -589,9 +589,16 @@ export function isUncollected(order: CustomerOrder) {
  * direkt ser vad som pågår, vad som är färdigpackat och vad som är utlämnat
  * men obetalt. Betalstatus hanteras separat från packflödet.
  */
-export type OrderTab = "pagaende" | "packade" | "obetalda" | "arkiverade" | "borttagna";
+export type OrderTab =
+  | "godkannande"
+  | "pagaende"
+  | "packade"
+  | "obetalda"
+  | "arkiverade"
+  | "borttagna";
 
 export const ORDER_TAB_LABELS: Record<OrderTab, string> = {
+  godkannande: "Att godkänna",
   pagaende: "Pågående",
   packade: "Packade",
   obetalda: "Hämtade – ej betalda",
