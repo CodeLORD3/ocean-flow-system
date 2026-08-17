@@ -39,9 +39,10 @@ export default function Suppliers() {
 
   const [form, setForm] = useState({
     name: "", contact_person: "", email: "", phone: "", country: "Sverige", address: "", supplier_type: "Övrigt",
+    currency: "SEK", is_intercompany: false,
   });
 
-  const setField = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }));
+  const setField = (key: string, value: string | boolean) => setForm(f => ({ ...f, [key]: value }));
 
   const filtered = suppliers.filter(s => {
     const matchSearch = s.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -52,7 +53,7 @@ export default function Suppliers() {
 
   const openAdd = () => {
     setEditId(null);
-    setForm({ name: "", contact_person: "", email: "", phone: "", country: "Sverige", address: "", supplier_type: "Övrigt" });
+    setForm({ name: "", contact_person: "", email: "", phone: "", country: "Sverige", address: "", supplier_type: "Övrigt", currency: "SEK", is_intercompany: false });
     setDialogOpen(true);
   };
 
@@ -62,6 +63,8 @@ export default function Suppliers() {
       name: s.name, contact_person: s.contact_person || "", email: s.email || "",
       phone: s.phone || "", country: s.country || "Sverige", address: s.address || "",
       supplier_type: s.supplier_type || "Övrigt",
+      currency: (s.currency || "SEK").toUpperCase(),
+      is_intercompany: !!s.is_intercompany,
     });
     setDialogOpen(true);
   };
@@ -72,6 +75,8 @@ export default function Suppliers() {
       name: form.name, contact_person: form.contact_person || null, email: form.email || null,
       phone: form.phone || null, country: form.country || null, address: form.address || null,
       supplier_type: form.supplier_type || "Övrigt",
+      currency: form.currency || "SEK",
+      is_intercompany: form.is_intercompany,
     };
 
     if (editId) {
@@ -86,6 +91,7 @@ export default function Suppliers() {
       });
     }
   };
+
 
   const handleDelete = () => {
     if (!deleteTarget) return;
