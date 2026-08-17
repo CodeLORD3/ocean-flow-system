@@ -493,6 +493,21 @@ async function createOrder(
   ).toUpperCase();
   const fxRate = currency === "SEK" ? null : await fxRateToSek(currency);
 
+  /**
+   * Vissa butiker (t.ex. Fiskskaldjur Zollikon) vill granska webbupphämtningar
+   * i ett extra steg innan de dyker upp i det vanliga beställningsflödet.
+   */
+  let needsApproval = false;
+  if (isPickup) {
+    const { data: settings } = await db
+      .from("store_order_settings")
+      .select("require_web_pickup_approval")
+      .eq("store_id", storeId)
+      .maybeSingle();
+    needsApproval = !!(settings as any)?.require_web_pickup_approval;
+    if (needsApproval) notes.push("Väntar på godkännande av hämtning i butik");
+  }
+
   const { data: order, error: orderErr } = await db
     .from("customer_orders")
     .insert({
