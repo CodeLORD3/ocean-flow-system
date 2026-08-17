@@ -440,7 +440,15 @@ Deno.serve(async (req) => {
 
           // Tolkning med samma motor som den manuella inläsningen.
           try {
-            const fileUrl = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/${BUCKET}/${encodeURI(path)}`;
+            // Hinken är privat, så tolkningen måste få en signerad länk.
+            const { data: signed, error: signErr } = await supabase.storage
+              .from(BUCKET)
+              .createSignedUrl(path, 600);
+            if (signErr || !signed?.signedUrl) throw new Error(signErr?.message || "kunde inte signera fil-URL");
+            const fileUrl = signed.signedUrl.startsWith("http")
+              ? signed.signedUrl
+              : `${Deno.env.get("SUPABASE_URL")}${signed.signedUrl}`;
+
             const parseRes = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/parse-foljesedel`, {
               method: "POST",
               headers: {
