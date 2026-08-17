@@ -181,7 +181,7 @@ export default function Suppliers() {
               </thead>
               <tbody>
                 {filtered.length === 0 && (
-                  <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">
+                  <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">
                     {suppliers.length === 0 ? "Inga leverantörer ännu. Klicka \"Ny leverantör\" för att börja." : "Inga leverantörer matchar sökningen."}
                   </td></tr>
                 )}
@@ -193,6 +193,13 @@ export default function Suppliers() {
                         {s.supplier_type || "Övrigt"}
                       </Badge>
                     </td>
+                    <td className="p-3">
+                      <span className="font-mono tabular-nums text-foreground">{(s.currency || "SEK").toUpperCase()}</span>
+                      {s.is_intercompany && (
+                        <Badge variant="outline" className="ml-1.5 text-[9px] border-primary/30 text-primary">Koncernintern</Badge>
+                      )}
+                    </td>
+
                     <td className="p-3 text-muted-foreground">{s.contact_person || "–"}</td>
                     <td className="p-3 text-muted-foreground">{s.email || "–"}</td>
                     <td className="p-3 text-muted-foreground">{s.phone || "–"}</td>
