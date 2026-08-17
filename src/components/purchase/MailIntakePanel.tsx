@@ -196,8 +196,36 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
             Påminnelser
             {reminders.length > 0 && <Badge variant="secondary" className="ml-1.5 h-4 px-1 text-[10px]">{reminders.length}</Badge>}
           </TabsTrigger>
+          <TabsTrigger value="newsletters" className="text-xs">
+            Nyhetsbrev
+            {newsletters.length > 0 && <Badge variant="secondary" className="ml-1.5 h-4 px-1 text-[10px]">{newsletters.length}</Badge>}
+          </TabsTrigger>
           <TabsTrigger value="senders" className="text-xs">Vitlista</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="newsletters" className="flex-1 min-h-0 m-0">
+          <ScrollArea className="h-full">
+            <div className="divide-y">
+              {newsletters.length === 0 && (
+                <p className="p-6 text-center text-xs text-muted-foreground">
+                  Inga utskick har sållats bort.
+                </p>
+              )}
+              {newsletters.map((m) => (
+                <div key={m.id} className="px-3 py-2">
+                  <p className="text-xs font-medium truncate">{m.subject || "(utan ämne)"}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    {m.from_name ? `${m.from_name} — ` : ""}{m.from_email}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Nyhetsbrev/utskick — bilagor öppnas inte och kan inte bokföras.
+                  </p>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+
 
         <TabsContent value="reminders" className="flex-1 min-h-0 m-0">
           <ScrollArea className="h-full">
