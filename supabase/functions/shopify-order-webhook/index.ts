@@ -858,7 +858,7 @@ async function processEvent(db: SupabaseClient, eventId: string): Promise<void> 
       const { data: existing } = await db
         .from("customer_orders")
         .select("id")
-        .eq("shopify_order_id", shopifyOrderId)
+        .eq("shopify_order_id", shopifyOrderId ?? "")
         .maybeSingle();
       await db
         .from("shopify_webhook_events")
