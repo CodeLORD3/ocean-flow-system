@@ -8,6 +8,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { EmptyState } from "@/components/EmptyState";
 import { useCustomerOrders } from "@/hooks/useCustomerOrders";
 import { ORDER_TYPE_LABELS } from "@/lib/customerOrders";
+import { useSekRate } from "@/components/orders/CurrencyAmount";
 
 const nf = (v: unknown, d = 0) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -24,6 +25,10 @@ export function CustomerOrderStats({ storeId, currency = "SEK" }: { storeId?: st
   const [from, setFrom] = useState(iso(start));
   const [to, setTo] = useState(iso(new Date()));
   const [customerType, setCustomerType] = useState<"all" | "company" | "private">("all");
+  /* Som i SumUp-vyerna: butikens valuta först, SEK-motvärdet som referens. */
+  const sekRate = useSekRate(currency);
+  const cur = (v: unknown, d = 0) =>
+    `${nf(v, d)} ${currency}${sekRate ? ` ≈ ${nf(Number(v ?? 0) * sekRate, d)} SEK` : ""}`;
 
   const { data: allOrders = [], isLoading } = useCustomerOrders({
     storeId: storeId ?? undefined,
@@ -163,23 +168,23 @@ export function CustomerOrderStats({ storeId, currency = "SEK" }: { storeId?: st
               { label: "Order", value: nf(stats.count), sub: `${nf(stats.cancelled)} avbrutna` },
               {
                 label: "Uppskattat belopp",
-                value: `${nf(stats.estimated)} ${currency}`,
+                value: cur(stats.estimated),
                 sub: "vid registrering",
               },
               {
                 label: "Verkligt belopp",
-                value: `${nf(stats.actual)} ${currency}`,
+                value: cur(stats.actual),
                 sub: "packat och prissatt",
               },
               {
                 label: "Företagskunder",
                 value: `${nf(stats.companyOrders)} order`,
-                sub: `${nf(stats.companyValue)} ${currency}`,
+                sub: cur(stats.companyValue),
               },
               {
                 label: "Privatkunder",
                 value: `${nf(stats.privateOrders)} order`,
-                sub: `${nf(stats.privateValue)} ${currency}`,
+                sub: cur(stats.privateValue),
               },
               {
                 label: "Vikt avviker över 20 %",
@@ -226,7 +231,7 @@ export function CustomerOrderStats({ storeId, currency = "SEK" }: { storeId?: st
                   <div key={name} className="flex items-center justify-between gap-2">
                     <span className="truncate">{name}</span>
                     <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
-                      {nf(v.qty, 1)} kg · {nf(v.value)} {currency}
+                      {nf(v.qty, 1)} kg · {cur(v.value)}
                     </span>
                   </div>
                 ))}

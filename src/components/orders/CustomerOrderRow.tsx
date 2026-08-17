@@ -55,6 +55,7 @@ import { ProductThumb } from "@/components/products/ProductThumb";
 import { EntityImageGallery } from "@/components/images/EntityImageGallery";
 import { OrderAuditLine } from "./OrderAuditLine";
 import { getStoreCurrency } from "@/lib/currency";
+import { CurrencyAmount } from "@/components/orders/CurrencyAmount";
 
 
 
@@ -443,9 +444,11 @@ export function CustomerOrderRow({
                 />
               )}
               {readOnly && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
-              <span className="font-mono text-xs font-semibold tabular-nums">
-                {nf(total, 2)} {currency}
-              </span>
+              <CurrencyAmount
+                amount={total}
+                currency={currency}
+                className="font-mono text-xs font-semibold tabular-nums"
+              />
               <ChevronDown
                 className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${
                   isOpen ? "rotate-180" : ""
@@ -569,7 +572,11 @@ export function CustomerOrderRow({
             <span className="text-muted-foreground">
               {order.total_incl_vat ? "Verkligt pris" : "Uppskattat pris"}
             </span>
-            <span className="font-mono text-sm font-semibold tabular-nums">{nf(total, 2)} {currency}</span>
+            <CurrencyAmount
+              amount={total}
+              currency={currency}
+              className="font-mono text-sm font-semibold tabular-nums"
+            />
           </div>
 
           <button
