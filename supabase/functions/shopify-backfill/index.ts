@@ -14,7 +14,7 @@
  * Hemligheter: SHOPIFY_ADMIN_TOKEN och SHOPIFY_SHOP_DOMAIN — aldrig i koden.
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { adminToken, listShops, resolveShop } from "../_shared/shopify-shops.ts";
+import { adminToken, listShops, mintClientCredentialsToken, resolveShop } from "../_shared/shopify-shops.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
