@@ -258,8 +258,11 @@ export async function matchInvoiceToLots(doc: SupplierDocument): Promise<Invoice
 
 /** Attest av faktura: fastställer partipriset via samma RPC som manuellt flöde. */
 export async function approveInvoice(doc: SupplierDocument, rows: InvoiceMatchRow[]): Promise<number> {
+  if (doc.doc_type === "paminnelse") {
+    throw new Error("Påminnelser och inkassokrav får inte påverka partipriser.");
+  }
   let updated = 0;
-  for (const row of rows) {
+
     const { error } = await supabase.rpc("finalize_lot_price", {
       _lot_id: row.lotId,
       _final_unit_cost: row.invoiceCost,
