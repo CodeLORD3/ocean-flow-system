@@ -234,7 +234,18 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
         <TabsContent value="reminders" className="flex-1 min-h-0 m-0">
           <ScrollArea className="h-full">
             <div className="divide-y">
-              {reminders.length === 0 && (
+              {reminderMessages.map((m) => (
+                <div key={m.id} className="p-3">
+                  <div className="flex items-center gap-2 text-xs font-medium">
+                    <Badge variant="outline" className="h-4 px-1 text-[10px]">Påminnelse/inkasso</Badge>
+                    <span className="truncate">{m.subject || "(utan ämne)"}</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                    {m.from_name ? `${m.from_name} — ` : ""}{m.from_email} — bilagan öppnas inte.
+                  </p>
+                </div>
+              ))}
+              {reminders.length + reminderMessages.length === 0 && (
                 <div className="p-8 text-center text-xs text-muted-foreground">
                   <Inbox className="mx-auto mb-2 h-6 w-6 opacity-40" />
                   Inga påminnelser eller inkassokrav.
