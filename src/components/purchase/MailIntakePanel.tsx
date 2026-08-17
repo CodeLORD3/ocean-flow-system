@@ -402,10 +402,23 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
         <TabsContent value="problems" className="flex-1 min-h-0 m-0">
           <ScrollArea className="h-full">
             <div className="divide-y">
-              {problems.length === 0 && (
+              {problems.length === 0 && tooLarge.length === 0 && (
                 <p className="p-8 text-center text-xs text-muted-foreground">Inga dubbletter eller tolkningsfel.</p>
               )}
+              {tooLarge.map((m) => (
+                <div key={m.id} className="p-3 flex items-start gap-2">
+                  <AlertTriangle className="h-3.5 w-3.5 mt-0.5 text-amber-600" />
+                  <div className="min-w-[200px] flex-1">
+                    <p className="text-xs font-medium truncate">{m.subject || "(utan ämne)"}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">
+                      {m.from_name ? `${m.from_name} — ` : ""}{m.from_email} — mejlet är för stort att tolka
+                      automatiskt, ligger kvar oläst i inkorgen för manuell hantering.
+                    </p>
+                  </div>
+                </div>
+              ))}
               {problems.map((d) => (
+
                 <div key={d.id} className="p-3 flex items-start gap-2">
                   {d.status === "dubblett" ? (
                     <Copy className="h-3.5 w-3.5 mt-0.5 text-muted-foreground" />
