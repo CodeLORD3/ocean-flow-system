@@ -1620,7 +1620,7 @@ export default function PurchaseReporting() {
             </div>
 
             <Dialog open={mailOpen} onOpenChange={setMailOpen}>
-              <DialogContent className="max-w-4xl h-[80vh] p-0 gap-0 overflow-hidden">
+              <DialogContent className="w-[96vw] max-w-[1100px] h-[88vh] max-h-[88vh] p-0 gap-0 overflow-hidden flex flex-col">
                 <DialogHeader className="sr-only">
                   <DialogTitle>Mejlinlopp för leverantörsdokument</DialogTitle>
                 </DialogHeader>
