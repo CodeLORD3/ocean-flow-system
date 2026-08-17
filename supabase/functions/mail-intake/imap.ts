@@ -154,5 +154,59 @@ function extractLiteral(raw: Uint8Array): Uint8Array | undefined {
   const size = Number(m[1]);
   const startText = head.indexOf(m[0]) + m[0].length;
   // Byte-offset = teckenoffset eftersom huvudet är ren ASCII.
-  return raw.subarray(startText, startText + size);
+function quote(v: string) {
+  return `"${v.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
 }
+
+/** Avkodar MIME encoded-words (=?UTF-8?B?..?=) så ämnesrader kan filtreras. */
+export function decodeMimeWords(value: string): string {
+  return value.replace(/=\?([^?]+)\?([bBqQ])\?([^?]*)\?=/g, (_m, charset, enc, data) => {
+    try {
+      let bytes: Uint8Array;
+      if (enc.toLowerCase() === "b") {
+        const bin = atob(data.replace(/\s+/g, ""));
+        bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+      } else {
+        const text = String(data).replace(/_/g, " ");
+        const out: number[] = [];
+        for (let i = 0; i < text.length; i++) {
+          if (text[i] === "=" && /^[0-9a-fA-F]{2}$/.test(text.slice(i + 1, i + 3))) {
+            out.push(parseInt(text.slice(i + 1, i + 3), 16));
+            i += 2;
+          } else {
+            out.push(text.charCodeAt(i));
+          }
+        }
+        bytes = new Uint8Array(out);
+      }
+      return new TextDecoder(String(charset).toLowerCase()).decode(bytes);
+    } catch {
+      return data;
+    }
+  });
+}
+
+/** Enkel header-parsning: unfoldar rader och nycklar i gemener. */
+export function parseHeaders(raw: string): Map<string, string> {
+  const unfolded = raw.replace(/\r?\n[ \t]+/g, " ");
+  const map = new Map<string, string>();
+  for (const line of unfolded.split(/\r?\n/)) {
+    const idx = line.indexOf(":");
+    if (idx <= 0) continue;
+    const key = line.slice(0, idx).trim().toLowerCase();
+    const value = decodeMimeWords(line.slice(idx + 1).trim());
+    map.set(key, map.has(key) ? `${map.get(key)} ${value}` : value);
+  }
+  return map;
+}
+
+/** Plockar ut namn och adress ur en From-header. */
+export function parseAddress(value?: string | null): { name: string | null; email: string } {
+  const v = (value || "").trim();
+  const angle = v.match(/<([^>]+)>/);
+  const email = (angle ? angle[1] : v.split(/\s+/).pop() || "").trim().toLowerCase();
+  let name = angle ? v.slice(0, v.indexOf("<")).trim() : "";
+  name = name.replace(/^"|"$/g, "").trim();
+  return { name: name || null, email };
+}
+
