@@ -8,9 +8,11 @@
  *   GET  /shopify-oauth/callback (Shopify)           → byter code mot token
  *   GET  /shopify-oauth/status  (inloggad personal)  → visar om token finns
  *
- * Hemligheter: SHOPIFY_API_KEY (klient-ID) och SHOPIFY_API_SECRET
- * (klienthemlighet, shpss_...). Token lagras i shopify_oauth_tokens och
- * returneras aldrig till klienten.
+ * Hemligheter per butik: SHOPIFY_CH_API_KEY / SHOPIFY_CH_API_SECRET för
+ * Schweiz, SHOPIFY_SE_API_KEY / SHOPIFY_SE_API_SECRET för Sverige. Saknas de
+ * används de gamla enbutiksnycklarna SHOPIFY_API_KEY / SHOPIFY_API_SECRET.
+ * Prefixet läses ur shopify_shops.admin_token_env. Token lagras i
+ * shopify_oauth_tokens och returneras aldrig till klienten.
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { apiKey, apiSecret, configuredShop, shopDomain } from "../_shared/shopify-admin.ts";
@@ -22,6 +24,43 @@ const corsHeaders = {
 };
 
 const SCOPES = "read_orders,read_customers,read_locations";
+
+/**
+ * Klientuppgifter för den butik anslutningen gäller. Varje webbutik är en egen
+ * Shopify-app med egna nycklar, så prefixet hämtas ur butiksraden
+ * (SHOPIFY_CH_ADMIN_TOKEN → SHOPIFY_CH_API_KEY / SHOPIFY_CH_API_SECRET).
+ */
+async function credentialsFor(
+  db: SupabaseClient,
+  shop: string,
+): Promise<{ clientId: string; clientSecret: string; envNames: string }> {
+  let prefix = "";
+  if (shop) {
+    const { data } = await db
+      .from("shopify_shops")
+      .select("admin_token_env")
+      .eq("shop_domain", shop)
+      .maybeSingle();
+    const m = String((data as any)?.admin_token_env || "").match(/^SHOPIFY_([A-Z0-9]+)_ADMIN_TOKEN$/);
+    if (m) prefix = `SHOPIFY_${m[1]}_`;
+  }
+  const scoped = {
+    id: prefix ? Deno.env.get(`${prefix}API_KEY`) ?? "" : "",
+    secret: prefix ? Deno.env.get(`${prefix}API_SECRET`) ?? "" : "",
+  };
+  if (scoped.id && scoped.secret) {
+    return {
+      clientId: scoped.id,
+      clientSecret: scoped.secret,
+      envNames: `${prefix}API_KEY och ${prefix}API_SECRET`,
+    };
+  }
+  return {
+    clientId: apiKey(),
+    clientSecret: apiSecret(),
+    envNames: prefix ? `${prefix}API_KEY och ${prefix}API_SECRET` : "SHOPIFY_API_KEY och SHOPIFY_API_SECRET",
+  };
+}
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -97,19 +136,17 @@ Deno.serve(async (req) => {
   const action = url.pathname.split("/").filter(Boolean).pop() ?? "";
   const db = service();
 
-  const clientId = apiKey();
-  const clientSecret = apiSecret();
-
   /* ------------------------------------------------------------ callback */
   if (action === "callback") {
-    if (!clientId || !clientSecret) {
-      return html("Konfiguration saknas", "SHOPIFY_API_KEY och SHOPIFY_API_SECRET måste vara sparade.", 400);
-    }
     const shop = shopDomain(url.searchParams.get("shop") ?? "");
     const code = url.searchParams.get("code") ?? "";
     const state = url.searchParams.get("state") ?? "";
     if (!isValidShop(shop) || !code || !state) {
       return html("Ogiltig återkoppling", "Shopify skickade ofullständiga uppgifter.", 400);
+    }
+    const { clientId, clientSecret, envNames } = await credentialsFor(db, shop);
+    if (!clientId || !clientSecret) {
+      return html("Konfiguration saknas", `${envNames} måste vara sparade.`, 400);
     }
     if (!(await verifyQueryHmac(url, clientSecret))) {
       return html("Signaturen stämmer inte", "Anropet kunde inte verifieras mot Shopify.", 401);
@@ -166,7 +203,8 @@ Deno.serve(async (req) => {
   if (!userData?.user) return json({ ok: false, error: "Inloggning krävs" }, 401);
 
   if (action === "status") {
-    const shop = configuredShop();
+    const shop = shopDomain(url.searchParams.get("shop") || configuredShop());
+    const { clientId, clientSecret } = await credentialsFor(db, shop);
     const { data } = await db
       .from("shopify_oauth_tokens")
       .select("shop, scope, access_mode, updated_at")
@@ -185,12 +223,6 @@ Deno.serve(async (req) => {
   }
 
   if (action === "start") {
-    if (!clientId || !clientSecret) {
-      return json(
-        { ok: false, error: "SHOPIFY_API_KEY och SHOPIFY_API_SECRET måste vara sparade som hemligheter" },
-        400,
-      );
-    }
     let body: any = {};
     try {
       body = req.body ? await req.json() : {};
@@ -200,6 +232,10 @@ Deno.serve(async (req) => {
     const shop = shopDomain(body?.shop || configuredShop());
     if (!isValidShop(shop)) {
       return json({ ok: false, error: "Ogiltig butiksdomän (ska vara namn.myshopify.com)" }, 400);
+    }
+    const { clientId, clientSecret, envNames } = await credentialsFor(db, shop);
+    if (!clientId || !clientSecret) {
+      return json({ ok: false, error: `${envNames} måste vara sparade som hemligheter` }, 400);
     }
 
     const state = crypto.randomUUID().replace(/-/g, "");
