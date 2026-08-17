@@ -3183,37 +3183,52 @@ export type Database = {
         Row: {
           created_at: string | null
           delivery_number: string
+          fx_rate_date: string | null
+          fx_rate_to_entity: number | null
+          fx_source: string | null
           id: string
           notes: string | null
           received_by: string | null
           received_date: string
+          source_currency: string | null
           status: string
           supplier_id: string | null
           total_cost: number | null
+          total_cost_source: number | null
           total_weight: number | null
         }
         Insert: {
           created_at?: string | null
           delivery_number: string
+          fx_rate_date?: string | null
+          fx_rate_to_entity?: number | null
+          fx_source?: string | null
           id?: string
           notes?: string | null
           received_by?: string | null
           received_date?: string
+          source_currency?: string | null
           status?: string
           supplier_id?: string | null
           total_cost?: number | null
+          total_cost_source?: number | null
           total_weight?: number | null
         }
         Update: {
           created_at?: string | null
           delivery_number?: string
+          fx_rate_date?: string | null
+          fx_rate_to_entity?: number | null
+          fx_source?: string | null
           id?: string
           notes?: string | null
           received_by?: string | null
           received_date?: string
+          source_currency?: string | null
           status?: string
           supplier_id?: string | null
           total_cost?: number | null
+          total_cost_source?: number | null
           total_weight?: number | null
         }
         Relationships: [
@@ -3233,6 +3248,7 @@ export type Database = {
           delivery_id: string
           faktiskt_fangstomrade: string | null
           final_price_per_kg: number | null
+          fx_rate: number | null
           id: string
           location_id: string | null
           lot_id: string | null
@@ -3242,8 +3258,10 @@ export type Database = {
           product_id: string
           quantity: number
           redskapskategori: string | null
+          source_currency: string | null
           total_cost: number | null
           unit_cost: number
+          unit_cost_source: number | null
           upptinad: boolean
         }
         Insert: {
@@ -3252,6 +3270,7 @@ export type Database = {
           delivery_id: string
           faktiskt_fangstomrade?: string | null
           final_price_per_kg?: number | null
+          fx_rate?: number | null
           id?: string
           location_id?: string | null
           lot_id?: string | null
@@ -3261,8 +3280,10 @@ export type Database = {
           product_id: string
           quantity: number
           redskapskategori?: string | null
+          source_currency?: string | null
           total_cost?: number | null
           unit_cost: number
+          unit_cost_source?: number | null
           upptinad?: boolean
         }
         Update: {
@@ -3271,6 +3292,7 @@ export type Database = {
           delivery_id?: string
           faktiskt_fangstomrade?: string | null
           final_price_per_kg?: number | null
+          fx_rate?: number | null
           id?: string
           location_id?: string | null
           lot_id?: string | null
@@ -3280,8 +3302,10 @@ export type Database = {
           product_id?: string
           quantity?: number
           redskapskategori?: string | null
+          source_currency?: string | null
           total_cost?: number | null
           unit_cost?: number
+          unit_cost_source?: number | null
           upptinad?: boolean
         }
         Relationships: [
@@ -4005,6 +4029,7 @@ export type Database = {
           freeze_end: string | null
           freeze_start: string | null
           freeze_temp: number | null
+          fx_rate: number | null
           grade: string | null
           harvest_date: string | null
           id: string
@@ -4031,6 +4056,7 @@ export type Database = {
           receiving_temp_c: number | null
           receiving_temp_deviation_reason: string | null
           seal_number: string | null
+          source_currency: string | null
           species_fao_code: string | null
           statistical_doc: string | null
           status: string
@@ -4039,6 +4065,7 @@ export type Database = {
           terminated_reason: string | null
           traceability_required: boolean
           unit_cost: number | null
+          unit_cost_source: number | null
           updated_at: string
           vessel_name: string | null
           vessel_nation: string | null
@@ -4069,6 +4096,7 @@ export type Database = {
           freeze_end?: string | null
           freeze_start?: string | null
           freeze_temp?: number | null
+          fx_rate?: number | null
           grade?: string | null
           harvest_date?: string | null
           id?: string
@@ -4095,6 +4123,7 @@ export type Database = {
           receiving_temp_c?: number | null
           receiving_temp_deviation_reason?: string | null
           seal_number?: string | null
+          source_currency?: string | null
           species_fao_code?: string | null
           statistical_doc?: string | null
           status?: string
@@ -4103,6 +4132,7 @@ export type Database = {
           terminated_reason?: string | null
           traceability_required?: boolean
           unit_cost?: number | null
+          unit_cost_source?: number | null
           updated_at?: string
           vessel_name?: string | null
           vessel_nation?: string | null
@@ -4133,6 +4163,7 @@ export type Database = {
           freeze_end?: string | null
           freeze_start?: string | null
           freeze_temp?: number | null
+          fx_rate?: number | null
           grade?: string | null
           harvest_date?: string | null
           id?: string
@@ -4159,6 +4190,7 @@ export type Database = {
           receiving_temp_c?: number | null
           receiving_temp_deviation_reason?: string | null
           seal_number?: string | null
+          source_currency?: string | null
           species_fao_code?: string | null
           statistical_doc?: string | null
           status?: string
@@ -4167,6 +4199,7 @@ export type Database = {
           terminated_reason?: string | null
           traceability_required?: boolean
           unit_cost?: number | null
+          unit_cost_source?: number | null
           updated_at?: string
           vessel_name?: string | null
           vessel_nation?: string | null
@@ -6520,10 +6553,12 @@ export type Database = {
           expected_arrival_date: string | null
           fishing_gear: string | null
           fishing_gear_code: string | null
+          fx_rate: number | null
           grade: string | null
           id: string
           latin_name: string | null
           line_total: number | null
+          line_total_source: number | null
           lot_id: string | null
           lot_numbers: string[]
           match_method: string | null
@@ -6538,12 +6573,14 @@ export type Database = {
           quantity: number
           report_id: string
           size_grade: number | null
+          source_currency: string | null
           species_fao_code: string | null
           status: string
           supplier_article_no: string | null
           supplier_name: string | null
           unit: string | null
           unit_price: number | null
+          unit_price_source: number | null
           vessel_name: string | null
           vessel_nation: string | null
           vessel_reg: string | null
@@ -6562,10 +6599,12 @@ export type Database = {
           expected_arrival_date?: string | null
           fishing_gear?: string | null
           fishing_gear_code?: string | null
+          fx_rate?: number | null
           grade?: string | null
           id?: string
           latin_name?: string | null
           line_total?: number | null
+          line_total_source?: number | null
           lot_id?: string | null
           lot_numbers?: string[]
           match_method?: string | null
@@ -6580,12 +6619,14 @@ export type Database = {
           quantity?: number
           report_id: string
           size_grade?: number | null
+          source_currency?: string | null
           species_fao_code?: string | null
           status?: string
           supplier_article_no?: string | null
           supplier_name?: string | null
           unit?: string | null
           unit_price?: number | null
+          unit_price_source?: number | null
           vessel_name?: string | null
           vessel_nation?: string | null
           vessel_reg?: string | null
@@ -6604,10 +6645,12 @@ export type Database = {
           expected_arrival_date?: string | null
           fishing_gear?: string | null
           fishing_gear_code?: string | null
+          fx_rate?: number | null
           grade?: string | null
           id?: string
           latin_name?: string | null
           line_total?: number | null
+          line_total_source?: number | null
           lot_id?: string | null
           lot_numbers?: string[]
           match_method?: string | null
@@ -6622,12 +6665,14 @@ export type Database = {
           quantity?: number
           report_id?: string
           size_grade?: number | null
+          source_currency?: string | null
           species_fao_code?: string | null
           status?: string
           supplier_article_no?: string | null
           supplier_name?: string | null
           unit?: string | null
           unit_price?: number | null
+          unit_price_source?: number | null
           vessel_name?: string | null
           vessel_nation?: string | null
           vessel_reg?: string | null
@@ -6727,16 +6772,21 @@ export type Database = {
           file_hash: string | null
           file_name: string
           file_url: string
+          fx_rate: number | null
+          fx_rate_date: string | null
+          fx_source: string | null
           id: string
           legal_entity_id: string | null
           notes: string | null
           posted_at: string | null
           posted_by: string | null
           report_date: string
+          source_currency: string | null
           status: string
           supplier_id: string | null
           supplier_name_raw: string | null
           total_amount: number | null
+          total_amount_source: number | null
           total_ex_vat: number | null
         }
         Insert: {
@@ -6752,16 +6802,21 @@ export type Database = {
           file_hash?: string | null
           file_name: string
           file_url: string
+          fx_rate?: number | null
+          fx_rate_date?: string | null
+          fx_source?: string | null
           id?: string
           legal_entity_id?: string | null
           notes?: string | null
           posted_at?: string | null
           posted_by?: string | null
           report_date?: string
+          source_currency?: string | null
           status?: string
           supplier_id?: string | null
           supplier_name_raw?: string | null
           total_amount?: number | null
+          total_amount_source?: number | null
           total_ex_vat?: number | null
         }
         Update: {
@@ -6777,16 +6832,21 @@ export type Database = {
           file_hash?: string | null
           file_name?: string
           file_url?: string
+          fx_rate?: number | null
+          fx_rate_date?: string | null
+          fx_source?: string | null
           id?: string
           legal_entity_id?: string | null
           notes?: string | null
           posted_at?: string | null
           posted_by?: string | null
           report_date?: string
+          source_currency?: string | null
           status?: string
           supplier_id?: string | null
           supplier_name_raw?: string | null
           total_amount?: number | null
+          total_amount_source?: number | null
           total_ex_vat?: number | null
         }
         Relationships: [
@@ -8105,6 +8165,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          fx_rate: number | null
           id: string
           legal_entity_id: string | null
           location_id: string
@@ -8116,11 +8177,14 @@ export type Database = {
           quantity_pieces: number | null
           reference_id: string | null
           reference_type: string | null
+          source_currency: string | null
           unit_cost: number | null
+          unit_cost_source: number | null
         }
         Insert: {
           created_at?: string
           created_by?: string | null
+          fx_rate?: number | null
           id?: string
           legal_entity_id?: string | null
           location_id: string
@@ -8132,11 +8196,14 @@ export type Database = {
           quantity_pieces?: number | null
           reference_id?: string | null
           reference_type?: string | null
+          source_currency?: string | null
           unit_cost?: number | null
+          unit_cost_source?: number | null
         }
         Update: {
           created_at?: string
           created_by?: string | null
+          fx_rate?: number | null
           id?: string
           legal_entity_id?: string | null
           location_id?: string
@@ -8148,7 +8215,9 @@ export type Database = {
           quantity_pieces?: number | null
           reference_id?: string | null
           reference_type?: string | null
+          source_currency?: string | null
           unit_cost?: number | null
+          unit_cost_source?: number | null
         }
         Relationships: [
           {
@@ -9223,8 +9292,10 @@ export type Database = {
           contact_person: string | null
           country: string | null
           created_at: string | null
+          currency: string
           email: string | null
           id: string
+          is_intercompany: boolean
           name: string
           phone: string | null
           supplier_type: string | null
@@ -9234,8 +9305,10 @@ export type Database = {
           contact_person?: string | null
           country?: string | null
           created_at?: string | null
+          currency?: string
           email?: string | null
           id?: string
+          is_intercompany?: boolean
           name: string
           phone?: string | null
           supplier_type?: string | null
@@ -9245,8 +9318,10 @@ export type Database = {
           contact_person?: string | null
           country?: string | null
           created_at?: string | null
+          currency?: string
           email?: string | null
           id?: string
+          is_intercompany?: boolean
           name?: string
           phone?: string | null
           supplier_type?: string | null
