@@ -13,6 +13,7 @@ import {
   Store as StoreIcon,
   Trash2,
   Pencil,
+  MapPin,
   TriangleAlert,
   User,
   X,
