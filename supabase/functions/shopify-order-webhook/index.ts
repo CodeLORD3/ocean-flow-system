@@ -539,6 +539,7 @@ async function createOrder(
       currency,
       fx_rate_to_sek: fxRate,
       fx_rate_at: fxRate ? new Date().toISOString() : null,
+      needs_approval: needsApproval,
     })
     .select("id")
     .single();
