@@ -5,7 +5,7 @@ import { CustomerOrder, RetailCustomer } from "@/lib/customerOrders";
 const db = supabase as any;
 
 const ORDER_SELECT =
-  "*, stores(id, name), customers_retail(*), customer_order_lines(*, products!customer_order_lines_product_id_fkey(id, name, sku, unit, image_url, shelf_life_days, shelf_life_open_days, category, allergens), lots(id, lot_number, best_before))";
+  "*, stores(id, name, city, country, currency), customers_retail(*), customer_order_lines(*, products!customer_order_lines_product_id_fkey(id, name, sku, unit, image_url, shelf_life_days, shelf_life_open_days, category, allergens), lots(id, lot_number, best_before))";
 
 /** En enskild butikskund (privat eller organisation) för kundkortet. */
 export function useRetailCustomer(id?: string | null) {

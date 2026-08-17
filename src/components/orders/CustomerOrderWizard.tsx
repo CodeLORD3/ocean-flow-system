@@ -49,6 +49,7 @@ import {
 } from "@/hooks/useCustomerOrders";
 import { RetailCustomer, shelfLifeWarning } from "@/lib/customerOrders";
 import { qtyText } from "@/lib/retailCustomerStats";
+import { getStoreCurrency } from "@/lib/currency";
 import {
   useMajorHolidays,
   useSameDayOrders,
@@ -87,19 +88,21 @@ export function CustomerOrderWizard({
   onOpenChange,
   storeId,
   storeName,
-  currency,
+  currency: currencyProp,
   initialCustomer,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   storeId: string;
   storeName?: string | null;
-  currency: string;
+  currency?: string;
   /** Förvald kund, används av genvägen "Ny order" på kundkortet. */
   initialCustomer?: RetailCustomer | null;
 }) {
   const [step, setStep] = useState(1);
   const { activeUser } = useActiveUser();
+  const { data: stores = [] } = useStores();
+  const currency = currencyProp ?? getStoreCurrency(stores.find((store) => store.id === storeId));
   const { staff } = useStaffAuth();
   const { data: products = [] } = useProducts();
   const { isCategoryVisible } = useCategoryVisibility(storeId);

@@ -973,12 +973,12 @@ export function CustomerOrderRow({
 
 /** Kolumnrubrik som matchar radens desktoplayout. */
 export function CustomerOrderRowHeader({
-  currency,
+  currency = "SEK",
   selectable,
   allSelected,
   onSelectAll,
 }: {
-  currency: string;
+  currency?: string;
   selectable?: boolean;
   allSelected?: boolean;
   onSelectAll?: (next: boolean) => void;
