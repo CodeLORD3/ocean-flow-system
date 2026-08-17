@@ -28,6 +28,10 @@ export function CustomerHistoryDialog({
   orders: CustomerOrder[];
 }) {
   const sorted = [...orders].sort((a, b) => b.wanted_date.localeCompare(a.wanted_date));
+  const currency = getStoreCurrency((sorted[0] as any)?.stores);
+  const sekRate = useSekRate(currency);
+  const money = (v: unknown) =>
+    `${nf(v)} ${currency}${sekRate ? ` ≈ ${nf(Number(v ?? 0) * sekRate)} SEK` : ""}`;
   const spent = sorted.reduce(
     (s, o) => s + Number(o.total_incl_vat || o.estimated_total || 0),
     0,

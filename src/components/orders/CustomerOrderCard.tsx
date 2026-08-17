@@ -79,6 +79,11 @@ export function CustomerOrderCard({
   const updateLine = useUpdateOrderLine();
   const cancelOrder = useCancelCustomerOrder();
   const { data: events = [] } = useCustomerOrderEvents(order?.id);
+  /* Butikens valuta styr beloppen (Zollikon/Morges = CHF), SEK visas som växling. */
+  const currency = getStoreCurrency(order?.stores as any);
+  const sekRate = useSekRate(currency);
+  const money = (v: unknown, d = 2) =>
+    `${nf(v, d)} ${currency}${sekRate ? ` ≈ ${nf(Number(v ?? 0) * sekRate, d)} SEK` : ""}`;
 
   const [weights, setWeights] = useState<Record<string, string>>({});
   const [prices, setPrices] = useState<Record<string, number | null>>({});

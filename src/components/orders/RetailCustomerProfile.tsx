@@ -184,6 +184,10 @@ export function RetailCustomerProfile({
   const tags = customer.tags || [];
   const upcoming = stats.upcoming;
   const customerCurrency = getStoreCurrency(orders.find((order) => order.store_id === customer.store_id)?.stores);
+  /* Som i SumUp: butikens valuta först, SEK-motvärdet mot livekurs som referens. */
+  const sekRate = useSekRate(customerCurrency);
+  const cur = (v: unknown) =>
+    `${money(v)} ${customerCurrency}${sekRate ? ` ≈ ${money(Number(v ?? 0) * sekRate)} SEK` : ""}`;
 
   const lineText = (o: CustomerOrder) =>
     (o.customer_order_lines || [])
