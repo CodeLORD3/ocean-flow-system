@@ -7414,6 +7414,7 @@ export type Database = {
         Row: {
           access_mode: string
           access_token: string
+          expires_at: string | null
           scope: string | null
           shop: string
           updated_at: string
@@ -7421,6 +7422,7 @@ export type Database = {
         Insert: {
           access_mode?: string
           access_token: string
+          expires_at?: string | null
           scope?: string | null
           shop: string
           updated_at?: string
@@ -7428,6 +7430,7 @@ export type Database = {
         Update: {
           access_mode?: string
           access_token?: string
+          expires_at?: string | null
           scope?: string | null
           shop?: string
           updated_at?: string
