@@ -101,8 +101,6 @@ export function CustomerOrderWizard({
 }) {
   const [step, setStep] = useState(1);
   const { activeUser } = useActiveUser();
-  const { data: stores = [] } = useStores();
-  const currency = currencyProp ?? getStoreCurrency(stores.find((store) => store.id === storeId));
   const { staff } = useStaffAuth();
   const { data: products = [] } = useProducts();
   const { isCategoryVisible } = useCategoryVisibility(storeId);
@@ -111,6 +109,8 @@ export function CustomerOrderWizard({
 
   /** Hämtningsbutik. Byte flyttar hela ordern (priser, kundsök, sparning). */
   const [pickupStoreId, setPickupStoreId] = useState(storeId);
+  const pickupStore = stores.find((store) => store.id === pickupStoreId);
+  const currency = pickupStore ? getStoreCurrency(pickupStore) : currencyProp ?? "SEK";
 
   const [customerSearch, setCustomerSearch] = useState("");
   const { data: customers = [] } = useRetailCustomers(pickupStoreId, customerSearch);
