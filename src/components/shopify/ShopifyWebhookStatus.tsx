@@ -145,10 +145,11 @@ export default function ShopifyWebhookStatus() {
         if (!r) throw error;
       }
       if (r?.ok === false) {
-        toast.error(r?.error ?? "Backfyllnaden misslyckades");
-        if (r?.needs_oauth && shopDomain) {
-          toast.info("Anslut butiken via OAuth först — jag öppnar Shopify-godkännandet.");
+        if (r?.needs_oauth) {
+          toast.info("Butiken är inte ansluten än — jag öppnar Shopify-godkännandet.");
           await connect(shopDomain);
+        } else {
+          toast.error(r?.error ?? "Backfyllnaden misslyckades");
         }
       } else {
         toast.success(
