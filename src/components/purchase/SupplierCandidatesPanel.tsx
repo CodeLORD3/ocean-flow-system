@@ -59,26 +59,39 @@ export function SupplierCandidatesPanel() {
     [senders],
   );
 
+  // Förmedlare (Fortnox m.fl.): avsändaren är vitlistad, men varje företagsnamn
+  // i mejlen är en egen tänkbar leverantör.
+  const portals = useMemo(
+    () => new Set(senders.filter((s: any) => s.is_portal).map((s: any) => (s.pattern || "").toLowerCase())),
+    [senders],
+  );
+
   const candidates = useMemo<Candidate[]>(() => {
     const map = new Map<string, Candidate>();
     for (const m of messages as any[]) {
       const email = (m.from_email || "").toLowerCase();
       const domain = domainOf(email);
       if (!domain) continue;
-      if (whitelisted.has(email) || whitelisted.has(domain) || whitelisted.has(`@${domain}`)) continue;
-      const c = map.get(domain) ?? { domain, emails: [], names: [], subjects: [], count: 0 };
+      const viaPortal = portals.has(email) || portals.has(domain) || portals.has(`@${domain}`);
+      if (!viaPortal && (whitelisted.has(email) || whitelisted.has(domain) || whitelisted.has(`@${domain}`))) continue;
+      // Förmedlarmejl utan företagsnamn går inte att koppla till någon leverantör.
+      if (viaPortal && !m.from_name) continue;
+      const key = viaPortal ? `namn:${norm(String(m.from_name))}` : domain;
+      const c = map.get(key) ?? { key, domain, emails: [], names: [], subjects: [], count: 0, viaPortal };
       if (!c.emails.includes(email)) c.emails.push(email);
       if (m.from_name && !c.names.includes(m.from_name)) c.names.push(m.from_name);
       if (m.subject && c.subjects.length < 3) c.subjects.push(m.subject);
       c.count += 1;
-      map.set(domain, c);
+      map.set(key, c);
     }
     return [...map.values()]
       .map((c) => {
-        const registry = SUPPLIER_REGISTRY.find((r) => r.domain === c.domain);
-        const hints = [registry?.name, ...c.names, c.domain.split(".")[0]].filter(Boolean) as string[];
+        const registry = c.viaPortal
+          ? SUPPLIER_REGISTRY.find((r) => norm(r.name) === norm(c.names[0] || ""))
+          : SUPPLIER_REGISTRY.find((r) => r.domain === c.domain);
+        const hints = [registry?.name, ...c.names, ...(c.viaPortal ? [] : [c.domain.split(".")[0]])].filter(Boolean) as string[];
         const match = suppliers.find((s) => {
-          if (s.email && domainOf(s.email) === c.domain) return true;
+          if (!c.viaPortal && s.email && domainOf(s.email) === c.domain) return true;
           const sn = norm(s.name);
           return sn.length > 3 && hints.some((h) => {
             const hn = norm(h);
@@ -88,7 +101,8 @@ export function SupplierCandidatesPanel() {
         return { ...c, registry, match: match ? { id: match.id, name: match.name } : undefined };
       })
       .sort((a, b) => b.count - a.count);
-  }, [messages, whitelisted, suppliers]);
+  }, [messages, whitelisted, portals, suppliers]);
+
 
   const openCreate = (c: Candidate) => {
     const r = c.registry;
