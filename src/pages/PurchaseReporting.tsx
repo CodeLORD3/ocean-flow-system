@@ -527,6 +527,14 @@ export function plausibleLots(line: { lot_numbers?: string[] | null }): string[]
     .filter((n) => n.length >= 4);
 }
 
+/** Valutastämpel som sparas historiskt på inköpet när leverantören fakturerar i annan valuta. */
+type PurchaseFx = {
+  source_currency: string;
+  fx_rate: number | null;
+  fx_source: string | null;
+  fx_rate_date: string;
+};
+
 // Collapsible report section
 
 function ReportSection({
@@ -1063,14 +1071,43 @@ export default function PurchaseReporting() {
   const GROSSIST_FLYTANDE_ID = "5da57ad6-f72c-4a84-9873-87174d194e10";
 
   const confirmReport = useMutation({
-    mutationFn: async (reportId: string) => {
+    mutationFn: async ({ reportId, fx }: { reportId: string; fx: PurchaseFx | null }) => {
       const lines = allLines.filter((l) => l.report_id === reportId);
       const total = lines.reduce((s, l) => s + (l.line_total ?? 0), 0);
+
+      // Fakturerar leverantören i annan valuta än bolaget sparas originalbelopp,
+      // kurs och konverterat belopp så att bokfört värde aldrig ändras i efterhand.
+      const rate = fx?.fx_rate ?? null;
+      const reportUpdate: any = { status: "Godkänd", total_amount: total };
+      if (fx && rate) {
+        reportUpdate.total_amount = convertWithRate(total, rate);
+        reportUpdate.total_amount_source = total;
+        reportUpdate.source_currency = fx.source_currency;
+        reportUpdate.fx_rate = rate;
+        reportUpdate.fx_source = fx.fx_source;
+        reportUpdate.fx_rate_date = fx.fx_rate_date;
+      }
       const { error } = await supabase
         .from("purchase_reports")
-        .update({ status: "Godkänd", total_amount: total })
+        .update(reportUpdate)
         .eq("id", reportId);
       if (error) throw error;
+
+      if (fx && rate) {
+        for (const l of lines) {
+          const unitSource = Number(l.unit_price) || 0;
+          const totalSource = Number(l.line_total) || 0;
+          await supabase
+            .from("purchase_report_lines")
+            .update({
+              source_currency: fx.source_currency,
+              fx_rate: rate,
+              unit_price_source: unitSource,
+              line_total_source: totalSource,
+            } as any)
+            .eq("id", l.id);
+        }
+      }
 
       // Lagret bokförs av "Bokför inleverans" (partier + rörelse), inte här —
       // annars skulle samma inleverans hamna på lagret två gånger.
@@ -1081,7 +1118,8 @@ export default function PurchaseReporting() {
       const confirmedProductIds = productLines.map((l) => l.product_id!).filter(Boolean);
       await markOrderLinesBehandlas(confirmedProductIds);
     },
-    onSuccess: (_data, reportId) => {
+    onSuccess: (_data, vars) => {
+      const reportId = vars.reportId;
       queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
       queryClient.invalidateQueries({ queryKey: ["product_stock_locations"] });
       queryClient.invalidateQueries({ queryKey: ["all_stock_locations"] });
@@ -1812,7 +1850,7 @@ export default function PurchaseReporting() {
                       onDeleteLine={(id) => deleteLine.mutate(id)}
                       onViewDocument={(reportId) => { setSelectedReportId(reportId); setDocExpanded(true); setZoom(1); }}
                       onSelect={(reportId) => setSelectedReportId(reportId)}
-                      onConfirm={(reportId) => confirmReport.mutate(reportId)}
+                      onConfirm={(reportId, fx) => confirmReport.mutate({ reportId, fx })}
                       onUnlock={(reportId) => unlockReport.mutate(reportId)}
                       onRenameReport={(id, name) => renameReport.mutate({ id, name })}
                       onUpdateReportDate={(id, date) => updateReportDate.mutate({ id, date })}
@@ -1839,7 +1877,7 @@ export default function PurchaseReporting() {
                       onDeleteLine={(id) => deleteLine.mutate(id)}
                       onViewDocument={(reportId) => { setSelectedReportId(reportId); setDocExpanded(true); setZoom(1); }}
                       onSelect={(reportId) => setSelectedReportId(reportId)}
-                      onConfirm={(reportId) => confirmReport.mutate(reportId)}
+                      onConfirm={(reportId, fx) => confirmReport.mutate({ reportId, fx })}
                       onUnlock={(reportId) => unlockReport.mutate(reportId)}
                       onRenameReport={(id, name) => renameReport.mutate({ id, name })}
                       onUpdateReportDate={(id, date) => updateReportDate.mutate({ id, date })}
