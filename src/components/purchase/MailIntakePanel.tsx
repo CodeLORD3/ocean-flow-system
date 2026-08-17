@@ -199,7 +199,7 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
           </TabsTrigger>
           <TabsTrigger value="problems" className="text-xs">
             Dubbletter och fel
-            {problems.length > 0 && <Badge variant="secondary" className="ml-1.5 h-4 px-1 text-[10px]">{problems.length}</Badge>}
+            {problems.length + tooLarge.length > 0 && <Badge variant="secondary" className="ml-1.5 h-4 px-1 text-[10px]">{problems.length + tooLarge.length}</Badge>}
           </TabsTrigger>
           <TabsTrigger value="reminders" className="text-xs">
             Påminnelser
