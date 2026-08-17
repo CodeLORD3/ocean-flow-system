@@ -69,6 +69,19 @@ export class SimpleImap {
     return res.literal;
   }
 
+  /**
+   * Hämtar bara headers + storlek. Billigt jämfört med hela mejlet, så filtren
+   * (nyhetsbrev, påminnelse, okänd avsändare) kan köras utan att ladda ner
+   * megabyte av bilder och utan att elda upp CPU-budgeten i mailparser.
+   */
+  async fetchHeaders(uid: number): Promise<{ headers: Map<string, string>; size: number } | null> {
+    const res = await this.command(`UID FETCH ${uid} (RFC822.SIZE BODY.PEEK[HEADER])`, true);
+    if (!res.ok || !res.literal) return null;
+    const size = Number(res.text.match(/RFC822\.SIZE (\d+)/i)?.[1] ?? 0);
+    return { headers: parseHeaders(new TextDecoder().decode(res.literal)), size };
+  }
+
+
   async markSeen(uid: number) {
     await this.command(`UID STORE ${uid} +FLAGS (\\Seen)`);
   }
