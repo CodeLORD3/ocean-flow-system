@@ -624,6 +624,8 @@ export type OrderFlowFields = {
   web_paid?: boolean | null;
   wanted_date?: string;
   wanted_time?: string | null;
+  needs_approval?: boolean | null;
+  approved_at?: string | null;
 };
 
 /** Är beställningen betald? Webbordrar är betalda redan vid köpet. */
@@ -636,10 +638,16 @@ export function isHandedOver(o: OrderFlowFields) {
   return !!o.handed_over_at || ["levererad", "avhamtad"].includes(String(o.status));
 }
 
+/** Väntar ordern på ett extra godkännande innan den går in i flödet? */
+export function awaitsApproval(o: OrderFlowFields) {
+  return !!o.needs_approval && !o.approved_at;
+}
+
 /** Vilken flik hör beställningen till? En order ligger alltid i exakt en flik. */
 export function orderTab(o: OrderFlowFields): OrderTab {
   if (o.cancelled_at || o.status === "avbruten") return "borttagna";
   if (o.archived_at) return "arkiverade";
+  if (awaitsApproval(o)) return "godkannande";
   if (isHandedOver(o)) return isPaid(o) ? "arkiverade" : "obetalda";
   if (o.pack_status === "packad") return "packade";
   return "pagaende";
