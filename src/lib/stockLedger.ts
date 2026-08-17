@@ -25,11 +25,19 @@ export interface StockMovementInput {
   movementType: MovementType;
   lotId?: string | null;
   quantityPieces?: number | null;
+  /** Bokfört värde per enhet i bolagets valuta. */
   unitCost?: number | null;
+  /** Ursprungligt pris per enhet i leverantörens valuta (t.ex. SEK). */
+  unitCostSource?: number | null;
+  /** Ursprungsvalutan, t.ex. "SEK" för inköp från grossisten. */
+  sourceCurrency?: string | null;
+  /** Kursen som användes vid bokföringen — sparas historiskt. */
+  fxRate?: number | null;
   referenceType?: string | null;
   referenceId?: string | null;
   note?: string | null;
 }
+
 
 /**
  * Rörelsetyper som alltid är utflöden (kvantitet lagras negativ).
