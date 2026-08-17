@@ -72,17 +72,32 @@ export default function Receiving() {
   const [lineReports, setLineReports] = useState<Record<string, LineReport>>({});
   const { data: currencySettings } = useCurrencySettings();
 
-  // Fetch active store row to derive local currency (CHF for Zollikon, SEK otherwise)
+  // Butiksraden bär bolagets valuta (Componia AG = CHF för Zollikon och Morges)
   const { data: activeStore } = useQuery({
     queryKey: ["store_row", activeStoreId],
     enabled: !!activeStoreId,
     queryFn: async () => {
-      const { data } = await supabase.from("stores").select("id, name, city").eq("id", activeStoreId!).maybeSingle();
+      const { data } = await supabase
+        .from("stores")
+        .select("id, name, city, country, currency, legal_entity_id")
+        .eq("id", activeStoreId!)
+        .maybeSingle();
       return data;
     },
   });
   const localCurrency = getStoreCurrency(activeStore as any);
-  const isChfStore = localCurrency === "CHF";
+  // Grossisten (Fisk & Skaldjursspecialisten) fakturerar alltid i SEK.
+  const SUPPLIER_CURRENCY = "SEK";
+  const isChfStore = localCurrency !== SUPPLIER_CURRENCY;
+
+  // Kursen hämtas automatiskt men får redigeras per leverans. Den som används
+  // sparas på rörelsen, så gamla inleveranser står kvar oförändrade.
+  const { data: liveFx } = useFxRate(SUPPLIER_CURRENCY, localCurrency, isChfStore);
+  const [fxOverride, setFxOverride] = useState("");
+  const effectiveFx = Number(fxOverride) > 0 ? Number(fxOverride) : (liveFx?.rate ?? 0);
+  const fxSource = Number(fxOverride) > 0 ? "manuell" : (liveFx?.source ?? "okänd källa");
+  const transportPerKg = Number(currencySettings?.transport_chf_per_kg) || 0;
+
 
   // Only fetch orders with status "Skickad"
   const { data: pendingOrders = [] } = useQuery({
