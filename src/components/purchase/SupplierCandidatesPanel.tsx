@@ -227,7 +227,11 @@ export function SupplierCandidatesPanel() {
                   <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
                   {c.registry?.name || c.names[0] || c.domain}
                   <Badge variant="outline" className="h-4 px-1 text-[10px]">{c.count} mejl</Badge>
-                  {c.viaPortal && <Badge variant="outline" className="h-4 px-1 text-[10px]">Via förmedlare</Badge>}
+                  {c.viaPortal && (
+                    <Badge variant="outline" className="h-4 px-1 text-[10px]">
+                      {c.hidden ? `Bakom vitlistad (${c.domain})` : "Via förmedlare"}
+                    </Badge>
+                  )}
                   {c.registry && <Badge variant="secondary" className="h-4 px-1 text-[10px]">Uppgifter förifyllda</Badge>}
                 </p>
                 <p className="text-[11px] text-muted-foreground truncate">{c.emails.join(", ")}</p>
