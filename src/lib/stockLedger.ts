@@ -91,6 +91,10 @@ export async function recordMovements(movements: StockMovementInput[]) {
       quantity_kg: m.signed,
       quantity_pieces: m.quantityPieces ?? null,
       unit_cost: m.unitCost ?? null,
+      unit_cost_source: m.unitCostSource ?? null,
+      source_currency: m.sourceCurrency ?? null,
+      fx_rate: m.fxRate ?? null,
+
       reference_type: m.referenceType ?? null,
       reference_id: m.referenceId ?? null,
       note: m.note ?? null,
