@@ -148,6 +148,10 @@ export async function transferStock(params: {
   quantityKg: number;
   lotId?: string | null;
   unitCost?: number | null;
+  /** Ursprungspris per enhet + kurs, när flytten korsar valutagräns. */
+  unitCostSource?: number | null;
+  sourceCurrency?: string | null;
+  fxRate?: number | null;
   referenceType?: string | null;
   referenceId?: string | null;
   note?: string | null;
@@ -156,10 +160,24 @@ export async function transferStock(params: {
   if (!quantityKg) return;
   // Partipriset följer alltid med partiet oförändrat vid flytt. Först när
   // rörelsen saknar parti används lagerplatsens snittpris som reserv.
+  // Undantag: när flytten bär ett eget omräknat värde (valutabyte) gäller det.
   const cost =
-    (params.lotId ? await lotUnitCost(params.lotId) : null) ??
-    params.unitCost ??
-    (await currentBalance(params.productId, params.fromLocationId)).avgCost;
+    params.unitCostSource != null && params.fxRate != null
+      ? params.unitCost ?? null
+      : (params.lotId ? await lotUnitCost(params.lotId) : null) ??
+        params.unitCost ??
+        (await currentBalance(params.productId, params.fromLocationId)).avgCost;
+
+  const shared = {
+    lotId: params.lotId,
+    unitCost: cost || null,
+    unitCostSource: params.unitCostSource ?? null,
+    sourceCurrency: params.sourceCurrency ?? null,
+    fxRate: params.fxRate ?? null,
+    referenceType: params.referenceType,
+    referenceId: params.referenceId,
+    note: params.note,
+  };
 
   await recordMovements([
     {
@@ -167,25 +185,18 @@ export async function transferStock(params: {
       locationId: params.fromLocationId,
       quantityKg,
       movementType: "overforing_ut",
-      lotId: params.lotId,
-      unitCost: cost || null,
-      referenceType: params.referenceType,
-      referenceId: params.referenceId,
-      note: params.note,
+      ...shared,
     },
     {
       productId: params.productId,
       locationId: params.toLocationId,
       quantityKg,
       movementType: "overforing_in",
-      lotId: params.lotId,
-      unitCost: cost || null,
-      referenceType: params.referenceType,
-      referenceId: params.referenceId,
-      note: params.note,
+      ...shared,
     },
   ]);
 }
+
 
 /** Ett partis kvarvarande kvantitet på en lagerplats. */
 export interface LotBalance {
