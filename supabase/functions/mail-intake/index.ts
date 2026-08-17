@@ -12,6 +12,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { SimpleImap } from "./imap.ts";
 import { simpleParser } from "npm:mailparser@3.7.1";
+import { Buffer } from "node:buffer";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -167,7 +168,7 @@ Deno.serve(async (req) => {
         }
         console.log("mail-intake: hämtad", uid, source?.length ?? 0);
         if (!source) continue;
-        const parsedMail = await simpleParser(source);
+        const parsedMail = await simpleParser(Buffer.from(source));
         console.log("mail-intake: tolkad", uid, parsedMail.subject || "");
         const messageId = parsedMail.messageId || `uid-${folder}-${uid}`;
         const fromAddr = parsedMail.from?.value?.[0];
