@@ -262,6 +262,8 @@ export async function approveInvoice(doc: SupplierDocument, rows: InvoiceMatchRo
     throw new Error("Påminnelser och inkassokrav får inte påverka partipriser.");
   }
   let updated = 0;
+  for (const row of rows) {
+
 
     const { error } = await supabase.rpc("finalize_lot_price", {
       _lot_id: row.lotId,
