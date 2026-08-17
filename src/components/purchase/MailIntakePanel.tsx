@@ -186,8 +186,37 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
             Dubbletter och fel
             {problems.length > 0 && <Badge variant="secondary" className="ml-1.5 h-4 px-1 text-[10px]">{problems.length}</Badge>}
           </TabsTrigger>
+          <TabsTrigger value="reminders" className="text-xs">
+            Påminnelser
+            {reminders.length > 0 && <Badge variant="secondary" className="ml-1.5 h-4 px-1 text-[10px]">{reminders.length}</Badge>}
+          </TabsTrigger>
           <TabsTrigger value="senders" className="text-xs">Vitlista</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="reminders" className="flex-1 min-h-0 m-0">
+          <ScrollArea className="h-full">
+            <div className="divide-y">
+              {reminders.length === 0 && (
+                <div className="p-8 text-center text-xs text-muted-foreground">
+                  <Inbox className="mx-auto mb-2 h-6 w-6 opacity-40" />
+                  Inga påminnelser eller inkassokrav.
+                </div>
+              )}
+              {reminders.map((doc) => (
+                <div key={doc.id} className="p-3">
+                  <div className="flex items-center gap-2 text-xs font-medium">
+                    <Badge variant="outline" className="h-4 px-1 text-[10px]">Påminnelse/inkasso</Badge>
+                    <span className="truncate">{doc.file_name}</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Endast information — tolkas inte och påverkar inte inköp, lager eller priser.
+                  </p>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+
 
         <TabsContent value="drafts" className="flex-1 min-h-0 m-0">
           <ScrollArea className="h-full">
