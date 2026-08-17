@@ -26,14 +26,19 @@ const norm = (v: string) =>
   v.toLowerCase().replace(/\b(ab|as|a\/s|oy|gmbh|sa|sarl|group|sweden)\b/g, "").replace(/[^a-z0-9]/g, "");
 
 type Candidate = {
+  /** Nyckel: avsändardomän, eller "namn:x" för dokument via förmedlare (Fortnox). */
+  key: string;
   domain: string;
   emails: string[];
   names: string[];
   subjects: string[];
   count: number;
+  /** Förmedlarpost: avsändaren är redan vitlistad, leverantören avgörs per dokument. */
+  viaPortal?: boolean;
   match?: { id: string; name: string };
   registry?: RegistryEntry;
 };
+
 
 export function SupplierCandidatesPanel() {
   const { data: messages = [] } = useMailMessages();
@@ -54,26 +59,39 @@ export function SupplierCandidatesPanel() {
     [senders],
   );
 
+  // Förmedlare (Fortnox m.fl.): avsändaren är vitlistad, men varje företagsnamn
+  // i mejlen är en egen tänkbar leverantör.
+  const portals = useMemo(
+    () => new Set(senders.filter((s: any) => s.is_portal).map((s: any) => (s.pattern || "").toLowerCase())),
+    [senders],
+  );
+
   const candidates = useMemo<Candidate[]>(() => {
     const map = new Map<string, Candidate>();
     for (const m of messages as any[]) {
       const email = (m.from_email || "").toLowerCase();
       const domain = domainOf(email);
       if (!domain) continue;
-      if (whitelisted.has(email) || whitelisted.has(domain) || whitelisted.has(`@${domain}`)) continue;
-      const c = map.get(domain) ?? { domain, emails: [], names: [], subjects: [], count: 0 };
+      const viaPortal = portals.has(email) || portals.has(domain) || portals.has(`@${domain}`);
+      if (!viaPortal && (whitelisted.has(email) || whitelisted.has(domain) || whitelisted.has(`@${domain}`))) continue;
+      // Förmedlarmejl utan företagsnamn går inte att koppla till någon leverantör.
+      if (viaPortal && !m.from_name) continue;
+      const key = viaPortal ? `namn:${norm(String(m.from_name))}` : domain;
+      const c = map.get(key) ?? { key, domain, emails: [], names: [], subjects: [], count: 0, viaPortal };
       if (!c.emails.includes(email)) c.emails.push(email);
       if (m.from_name && !c.names.includes(m.from_name)) c.names.push(m.from_name);
       if (m.subject && c.subjects.length < 3) c.subjects.push(m.subject);
       c.count += 1;
-      map.set(domain, c);
+      map.set(key, c);
     }
     return [...map.values()]
       .map((c) => {
-        const registry = SUPPLIER_REGISTRY.find((r) => r.domain === c.domain);
-        const hints = [registry?.name, ...c.names, c.domain.split(".")[0]].filter(Boolean) as string[];
+        const registry = c.viaPortal
+          ? SUPPLIER_REGISTRY.find((r) => norm(r.name) === norm(c.names[0] || ""))
+          : SUPPLIER_REGISTRY.find((r) => r.domain === c.domain);
+        const hints = [registry?.name, ...c.names, ...(c.viaPortal ? [] : [c.domain.split(".")[0]])].filter(Boolean) as string[];
         const match = suppliers.find((s) => {
-          if (s.email && domainOf(s.email) === c.domain) return true;
+          if (!c.viaPortal && s.email && domainOf(s.email) === c.domain) return true;
           const sn = norm(s.name);
           return sn.length > 3 && hints.some((h) => {
             const hn = norm(h);
@@ -83,14 +101,16 @@ export function SupplierCandidatesPanel() {
         return { ...c, registry, match: match ? { id: match.id, name: match.name } : undefined };
       })
       .sort((a, b) => b.count - a.count);
-  }, [messages, whitelisted, suppliers]);
+  }, [messages, whitelisted, portals, suppliers]);
+
 
   const openCreate = (c: Candidate) => {
     const r = c.registry;
     setForm({
       name: r?.name || c.names[0] || c.domain,
       contact_person: "",
-      email: r?.email || c.emails[0] || "",
+      // Förmedlarens adress (t.ex. Fortnox) är inte leverantörens e-post.
+      email: r?.email || (c.viaPortal ? "" : c.emails[0] || ""),
       phone: r?.phone || "",
       country: r?.country || "Sverige",
       address: r?.address || "",
@@ -98,8 +118,9 @@ export function SupplierCandidatesPanel() {
       currency: r?.currency || "SEK",
       org_nr: r?.org_nr || "",
     });
-    setOpenDomain(c.domain);
+    setOpenDomain(c.key);
   };
+
 
   const linkSender = async (pattern: string, supplierId: string, note?: string) => {
     await saveSender.mutateAsync({ pattern, kind: "email", supplier_id: supplierId, is_portal: false, note } as any);
@@ -110,8 +131,12 @@ export function SupplierCandidatesPanel() {
     if (!c.match) return;
     setBusy(true);
     try {
-      for (const e of c.emails) await linkSender(e, c.match.id);
-      toast({ title: "Vitlistad", description: `${c.domain} → ${c.match.name}` });
+      // Förmedlaravsändare får aldrig låsas till en enskild leverantör.
+      if (!c.viaPortal) for (const e of c.emails) await linkSender(e, c.match.id);
+      toast({
+        title: c.viaPortal ? "Redan i registret" : "Vitlistad",
+        description: `${c.names[0] || c.domain} → ${c.match.name}`,
+      });
     } catch (e: any) {
       toast({ title: "Fel", description: e.message, variant: "destructive" });
     } finally {
@@ -134,10 +159,17 @@ export function SupplierCandidatesPanel() {
         currency: form.currency,
         is_intercompany: false,
       } as any);
-      for (const e of c.emails) {
-        await linkSender(e, created.id, form.org_nr ? `Org.nr ${form.org_nr}` : undefined);
+      if (!c.viaPortal) {
+        for (const e of c.emails) {
+          await linkSender(e, created.id, form.org_nr ? `Org.nr ${form.org_nr}` : undefined);
+        }
       }
-      toast({ title: "Leverantör skapad", description: `${form.name} är vitlistad för ${c.domain}` });
+      toast({
+        title: "Leverantör skapad",
+        description: c.viaPortal
+          ? `${form.name} matchas nu automatiskt i dokument via förmedlare`
+          : `${form.name} är vitlistad för ${c.domain}`,
+      });
       setOpenDomain(null);
     } catch (e: any) {
       toast({ title: "Fel", description: e.message, variant: "destructive" });
@@ -145,6 +177,7 @@ export function SupplierCandidatesPanel() {
       setBusy(false);
     }
   };
+
 
   return (
     <ScrollArea className="h-full">
@@ -158,13 +191,14 @@ export function SupplierCandidatesPanel() {
           </p>
         )}
         {candidates.map((c) => (
-          <div key={c.domain} className="p-3 space-y-2">
+          <div key={c.key} className="p-3 space-y-2">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="text-xs font-semibold flex items-center gap-1.5">
                   <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
                   {c.registry?.name || c.names[0] || c.domain}
                   <Badge variant="outline" className="h-4 px-1 text-[10px]">{c.count} mejl</Badge>
+                  {c.viaPortal && <Badge variant="outline" className="h-4 px-1 text-[10px]">Via förmedlare</Badge>}
                   {c.registry && <Badge variant="secondary" className="h-4 px-1 text-[10px]">Uppgifter förifyllda</Badge>}
                 </p>
                 <p className="text-[11px] text-muted-foreground truncate">{c.emails.join(", ")}</p>
@@ -177,15 +211,21 @@ export function SupplierCandidatesPanel() {
               </div>
               <div className="flex items-center gap-1.5">
                 {c.match ? (
-                  <Button size="sm" className="h-7 text-xs gap-1" disabled={busy} onClick={() => handleMatch(c)}>
-                    <ShieldCheck className="h-3.5 w-3.5" /> Matcha {c.match.name}
-                  </Button>
+                  c.viaPortal ? (
+                    <Badge variant="secondary" className="h-6 px-2 text-[10px] gap-1">
+                      <ShieldCheck className="h-3 w-3" /> Finns som {c.match.name}
+                    </Badge>
+                  ) : (
+                    <Button size="sm" className="h-7 text-xs gap-1" disabled={busy} onClick={() => handleMatch(c)}>
+                      <ShieldCheck className="h-3.5 w-3.5" /> Matcha {c.match.name}
+                    </Button>
+                  )
                 ) : null}
                 <Button
                   size="sm"
                   variant={c.match ? "outline" : "default"}
                   className="h-7 text-xs gap-1"
-                  onClick={() => (openDomain === c.domain ? setOpenDomain(null) : openCreate(c))}
+                  onClick={() => (openDomain === c.key ? setOpenDomain(null) : openCreate(c))}
                 >
                   <Plus className="h-3.5 w-3.5" /> Skapa ny
                 </Button>
@@ -197,7 +237,8 @@ export function SupplierCandidatesPanel() {
               </div>
             </div>
 
-            {openDomain === c.domain && (
+            {openDomain === c.key && (
+
               <div className="rounded-md border bg-muted/20 p-2 space-y-2">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div className="space-y-1">
