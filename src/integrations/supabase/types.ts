@@ -8605,6 +8605,7 @@ export type Database = {
           max_catering_per_day: number
           max_deliveries_per_slot: number
           opening_hours: Json
+          require_web_pickup_approval: boolean
           store_id: string
           updated_at: string
         }
@@ -8614,6 +8615,7 @@ export type Database = {
           max_catering_per_day?: number
           max_deliveries_per_slot?: number
           opening_hours?: Json
+          require_web_pickup_approval?: boolean
           store_id: string
           updated_at?: string
         }
@@ -8623,6 +8625,7 @@ export type Database = {
           max_catering_per_day?: number
           max_deliveries_per_slot?: number
           opening_hours?: Json
+          require_web_pickup_approval?: boolean
           store_id?: string
           updated_at?: string
         }
