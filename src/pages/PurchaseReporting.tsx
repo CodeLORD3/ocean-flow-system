@@ -914,6 +914,7 @@ export default function PurchaseReporting() {
   const { data: products = [] } = useProducts();
   const { data: sizeGrades = [] } = useSizeGrades();
   const { data: suppliers = [] } = useSuppliers();
+  const { currency: entityCurrency } = useEntityCurrency();
 
   const { data: reports = [], isLoading: reportsLoading } = useQuery({
     queryKey: ["purchase-reports"],
@@ -1850,6 +1851,7 @@ export default function PurchaseReporting() {
                       onDeleteLine={(id) => deleteLine.mutate(id)}
                       onViewDocument={(reportId) => { setSelectedReportId(reportId); setDocExpanded(true); setZoom(1); }}
                       onSelect={(reportId) => setSelectedReportId(reportId)}
+                      entityCurrency={entityCurrency}
                       onConfirm={(reportId, fx) => confirmReport.mutate({ reportId, fx })}
                       onUnlock={(reportId) => unlockReport.mutate(reportId)}
                       onRenameReport={(id, name) => renameReport.mutate({ id, name })}
@@ -1877,6 +1879,7 @@ export default function PurchaseReporting() {
                       onDeleteLine={(id) => deleteLine.mutate(id)}
                       onViewDocument={(reportId) => { setSelectedReportId(reportId); setDocExpanded(true); setZoom(1); }}
                       onSelect={(reportId) => setSelectedReportId(reportId)}
+                      entityCurrency={entityCurrency}
                       onConfirm={(reportId, fx) => confirmReport.mutate({ reportId, fx })}
                       onUnlock={(reportId) => unlockReport.mutate(reportId)}
                       onRenameReport={(id, name) => renameReport.mutate({ id, name })}
