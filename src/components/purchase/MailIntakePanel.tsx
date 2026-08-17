@@ -30,6 +30,8 @@ import {
   useMailSenders,
   useSupplierDocuments,
 } from "@/hooks/useSupplierDocuments";
+import { SupplierCandidatesPanel } from "@/components/purchase/SupplierCandidatesPanel";
+
 import {
   approveDeliveryNote,
   approveInvoice,
@@ -210,8 +212,14 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
             Nyhetsbrev
             {newsletters.length > 0 && <Badge variant="secondary" className="ml-1.5 h-4 px-1 text-[10px]">{newsletters.length}</Badge>}
           </TabsTrigger>
+          <TabsTrigger value="candidates" className="text-xs">Leverantörsförslag</TabsTrigger>
           <TabsTrigger value="senders" className="text-xs">Vitlista</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="candidates" className="flex-1 min-h-0 m-0">
+          <SupplierCandidatesPanel />
+        </TabsContent>
+
 
         <TabsContent value="newsletters" className="flex-1 min-h-0 m-0">
           <ScrollArea className="h-full">
