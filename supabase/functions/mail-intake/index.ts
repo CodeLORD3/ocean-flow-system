@@ -10,7 +10,7 @@
  * IMAP-sessionen hålls kort och stängs varje körning (Loopia begränsar samtidiga anslutningar).
  */
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { ImapFlow } from "npm:imapflow@1.0.164";
+import { SimpleImap } from "./imap.ts";
 import { simpleParser } from "npm:mailparser@3.7.1";
 
 const corsHeaders = {
@@ -192,8 +192,8 @@ Deno.serve(async (req) => {
           skipped++;
           results.push({ messageId, action: "redan_hamtat" });
           if (moveMail) {
-            await client.messageFlagsAdd(String(uid), ["\\Seen"], { uid: true });
-            await client.messageMove(String(uid), PROCESSED, { uid: true });
+            await client.markSeen(uid);
+            await client.moveUid(uid, PROCESSED);
           }
           continue;
         }
@@ -218,8 +218,8 @@ Deno.serve(async (req) => {
         // Okänd avsändare: parkeras, bilagan öppnas eller tolkas aldrig.
         if (!sender) {
           if (moveMail) {
-            await client.messageFlagsAdd(String(uid), ["\\Seen"], { uid: true });
-            await client.messageMove(String(uid), PARKED, { uid: true });
+            await client.markSeen(uid);
+            await client.moveUid(uid, PARKED);
           }
           results.push({ messageId, fromEmail, subject, action: "parkerad_okand_avsandare" });
           continue;
@@ -353,17 +353,15 @@ Deno.serve(async (req) => {
         }
 
         if (moveMail) {
-          await client.messageFlagsAdd(String(uid), ["\\Seen"], { uid: true });
-          await client.messageMove(String(uid), PROCESSED, { uid: true });
+          await client.markSeen(uid);
+          await client.moveUid(uid, PROCESSED);
         }
       }
-    } finally {
-      lock.release();
     }
   } catch (e) {
     console.error("mail-intake error:", e);
     try {
-      await client.logout();
+      await client.close();
     } catch { /* ignore */ }
     return await finish(
       { ok: false, error: e instanceof Error ? e.message : "okänt fel", fetched, stored, skipped, unread_without_attachment: noAttachment },
@@ -372,7 +370,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    await client.logout();
+    await client.close();
   } catch { /* ignore */ }
 
   return await finish({
