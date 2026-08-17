@@ -29,6 +29,9 @@ import { useSignedUrl } from "@/hooks/useSignedUrl";
 import { useSizeGrades, useSupplierArticleMap, learnSupplierArticle } from "@/hooks/useSizeGrades";
 import { suggestProducts } from "@/lib/foljesedelMatch";
 import { gradeRangeText } from "@/lib/sizeGrades";
+import { useEntityCurrency } from "@/hooks/useEntityCurrency";
+import { useFxRate } from "@/hooks/useFxRate";
+import { fmtCur, fmtDual, convertWithRate } from "@/lib/currency";
 
 // Magnifying glass overlay for document viewer
 function DocumentMagnifier({ children }: { children: React.ReactNode }) {
@@ -111,6 +114,9 @@ type Report = {
   notes: string | null;
   total_amount: number;
   display_name: string | null;
+  source_currency?: string | null;
+  fx_rate?: number | null;
+  total_amount_source?: number | null;
 };
 
 // Inline always-editable row
@@ -521,6 +527,14 @@ export function plausibleLots(line: { lot_numbers?: string[] | null }): string[]
     .filter((n) => n.length >= 4);
 }
 
+/** Valutastämpel som sparas historiskt på inköpet när leverantören fakturerar i annan valuta. */
+type PurchaseFx = {
+  source_currency: string;
+  fx_rate: number | null;
+  fx_source: string | null;
+  fx_rate_date: string;
+};
+
 // Collapsible report section
 
 function ReportSection({
@@ -539,6 +553,7 @@ function ReportSection({
   onUpdateReportDate,
   focusLineId,
   onQtyFocused,
+  entityCurrency,
 }: {
   report: Report;
   lines: ReportLine[];
@@ -549,12 +564,13 @@ function ReportSection({
   onDeleteLine: (id: string) => void;
   onViewDocument: (reportId: string) => void;
   onSelect?: (reportId: string) => void;
-  onConfirm: (reportId: string) => void;
+  onConfirm: (reportId: string, fx: PurchaseFx | null) => void;
   onUnlock: (reportId: string) => void;
   onRenameReport: (reportId: string, newName: string) => void;
   onUpdateReportDate: (reportId: string, newDate: string) => void;
   focusLineId: string | null;
   onQtyFocused: () => void;
+  entityCurrency: string;
 }) {
   const isLocked = report.status === "Godkänd";
   const [expanded, setExpanded] = useState(!isLocked);
@@ -581,6 +597,42 @@ function ReportSection({
   };
 
   const sectionTotal = lines.reduce((s, l) => s + (l.line_total ?? 0), 0);
+
+  // Leverantörens fakturavaluta styr vilken valuta beloppen matas in i. Skiljer
+  // den sig från bolagets valuta (Componia AG = CHF) visas ursprungsvalutan
+  // först och bolagsvalutan som referens.
+  const supplierCurrency = useMemo(() => {
+    const names = Array.from(new Set(lines.map((l) => l.supplier_name).filter(Boolean) as string[]));
+    const curs = Array.from(
+      new Set(
+        names
+          .map((n) => String((suppliers.find((s: any) => s.name === n) as any)?.currency || "").trim().toUpperCase())
+          .filter(Boolean),
+      ),
+    );
+    if (report.source_currency) return String(report.source_currency).toUpperCase();
+    return curs.length === 1 ? curs[0] : entityCurrency;
+  }, [lines, suppliers, entityCurrency, report.source_currency]);
+
+  const needsFx = supplierCurrency !== entityCurrency;
+  const { data: liveFx } = useFxRate(supplierCurrency, entityCurrency, needsFx && !isLocked);
+  const [fxInput, setFxInput] = useState<string>("");
+  const effectiveFx = needsFx
+    ? Number(fxInput) > 0
+      ? Number(fxInput)
+      : report.fx_rate ?? liveFx?.rate ?? null
+    : null;
+  const fxPayload: PurchaseFx | null = needsFx
+    ? {
+        source_currency: supplierCurrency,
+        fx_rate: effectiveFx,
+        fx_source: Number(fxInput) > 0 ? "manuell" : liveFx?.source ?? null,
+        fx_rate_date: new Date().toISOString().slice(0, 10),
+      }
+    : null;
+  const totalText = needsFx
+    ? fmtDual(sectionTotal, supplierCurrency, effectiveFx, entityCurrency)
+    : fmtCur(sectionTotal, entityCurrency, { minimumFractionDigits: 2 } as any);
 
   return (
     <div className="border-b last:border-b-0">
@@ -627,7 +679,7 @@ function ReportSection({
           </button>
         )}
         <span className="text-xs text-muted-foreground shrink-0">
-          {lines.length} rader · {sectionTotal.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr
+          {lines.length} rader · {totalText}
         </span>
         <div className="shrink-0 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
           <Label htmlFor={`report-date-${report.id}`} className="text-[10px] text-muted-foreground">
@@ -761,6 +813,29 @@ function ReportSection({
                 <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => onViewDocument(report.id)}>
                   <FileText className="h-3.5 w-3.5 mr-1" /> Visa dokument
                 </Button>
+                {needsFx && (
+                  <div className="flex items-center gap-1.5">
+                    <Label htmlFor={`fx-${report.id}`} className="text-[10px] text-muted-foreground">
+                      Kurs {supplierCurrency}→{entityCurrency}
+                    </Label>
+                    <Input
+                      id={`fx-${report.id}`}
+                      type="number"
+                      step="0.0001"
+                      className="h-6 w-[86px] text-[11px] px-1.5 tabular-nums"
+                      placeholder={effectiveFx ? effectiveFx.toFixed(4) : ""}
+                      value={fxInput}
+                      onChange={(e) => setFxInput(e.target.value)}
+                    />
+                    <span className="text-[10px] text-muted-foreground">
+                      {Number(fxInput) > 0
+                        ? "manuell kurs"
+                        : liveFx
+                          ? `${liveFx.source} · ${new Date(liveFx.fetchedAt).toLocaleTimeString("sv-SE")}`
+                          : "hämtar kurs…"}
+                    </span>
+                  </div>
+                )}
               </div>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -775,14 +850,14 @@ function ReportSection({
                     <AlertDialogDescription>
                       Du är på väg att låsa <strong>{displayName}</strong> med {lines.length} rader
                       och ett totalt värde på{" "}
-                      <strong>{sectionTotal.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} kr</strong>.
+                      <strong>{totalText}</strong>.
                       <br /><br />
                       När inköpet är bekräftat kan raderna inte längre redigeras. Dokumentet och listan kommer att vikas ihop.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => onConfirm(report.id)}>
+                    <AlertDialogAction onClick={() => onConfirm(report.id, fxPayload)}>
                       <CheckCircle2 className="h-4 w-4 mr-1" /> Bekräfta
                     </AlertDialogAction>
                   </AlertDialogFooter>
@@ -839,6 +914,7 @@ export default function PurchaseReporting() {
   const { data: products = [] } = useProducts();
   const { data: sizeGrades = [] } = useSizeGrades();
   const { data: suppliers = [] } = useSuppliers();
+  const { currency: entityCurrency } = useEntityCurrency();
 
   const { data: reports = [], isLoading: reportsLoading } = useQuery({
     queryKey: ["purchase-reports"],
@@ -996,14 +1072,43 @@ export default function PurchaseReporting() {
   const GROSSIST_FLYTANDE_ID = "5da57ad6-f72c-4a84-9873-87174d194e10";
 
   const confirmReport = useMutation({
-    mutationFn: async (reportId: string) => {
+    mutationFn: async ({ reportId, fx }: { reportId: string; fx: PurchaseFx | null }) => {
       const lines = allLines.filter((l) => l.report_id === reportId);
       const total = lines.reduce((s, l) => s + (l.line_total ?? 0), 0);
+
+      // Fakturerar leverantören i annan valuta än bolaget sparas originalbelopp,
+      // kurs och konverterat belopp så att bokfört värde aldrig ändras i efterhand.
+      const rate = fx?.fx_rate ?? null;
+      const reportUpdate: any = { status: "Godkänd", total_amount: total };
+      if (fx && rate) {
+        reportUpdate.total_amount = convertWithRate(total, rate);
+        reportUpdate.total_amount_source = total;
+        reportUpdate.source_currency = fx.source_currency;
+        reportUpdate.fx_rate = rate;
+        reportUpdate.fx_source = fx.fx_source;
+        reportUpdate.fx_rate_date = fx.fx_rate_date;
+      }
       const { error } = await supabase
         .from("purchase_reports")
-        .update({ status: "Godkänd", total_amount: total })
+        .update(reportUpdate)
         .eq("id", reportId);
       if (error) throw error;
+
+      if (fx && rate) {
+        for (const l of lines) {
+          const unitSource = Number(l.unit_price) || 0;
+          const totalSource = Number(l.line_total) || 0;
+          await supabase
+            .from("purchase_report_lines")
+            .update({
+              source_currency: fx.source_currency,
+              fx_rate: rate,
+              unit_price_source: unitSource,
+              line_total_source: totalSource,
+            } as any)
+            .eq("id", l.id);
+        }
+      }
 
       // Lagret bokförs av "Bokför inleverans" (partier + rörelse), inte här —
       // annars skulle samma inleverans hamna på lagret två gånger.
@@ -1014,7 +1119,8 @@ export default function PurchaseReporting() {
       const confirmedProductIds = productLines.map((l) => l.product_id!).filter(Boolean);
       await markOrderLinesBehandlas(confirmedProductIds);
     },
-    onSuccess: (_data, reportId) => {
+    onSuccess: (_data, vars) => {
+      const reportId = vars.reportId;
       queryClient.invalidateQueries({ queryKey: ["purchase-reports"] });
       queryClient.invalidateQueries({ queryKey: ["product_stock_locations"] });
       queryClient.invalidateQueries({ queryKey: ["all_stock_locations"] });
@@ -1745,7 +1851,8 @@ export default function PurchaseReporting() {
                       onDeleteLine={(id) => deleteLine.mutate(id)}
                       onViewDocument={(reportId) => { setSelectedReportId(reportId); setDocExpanded(true); setZoom(1); }}
                       onSelect={(reportId) => setSelectedReportId(reportId)}
-                      onConfirm={(reportId) => confirmReport.mutate(reportId)}
+                      entityCurrency={entityCurrency}
+                      onConfirm={(reportId, fx) => confirmReport.mutate({ reportId, fx })}
                       onUnlock={(reportId) => unlockReport.mutate(reportId)}
                       onRenameReport={(id, name) => renameReport.mutate({ id, name })}
                       onUpdateReportDate={(id, date) => updateReportDate.mutate({ id, date })}
@@ -1772,7 +1879,8 @@ export default function PurchaseReporting() {
                       onDeleteLine={(id) => deleteLine.mutate(id)}
                       onViewDocument={(reportId) => { setSelectedReportId(reportId); setDocExpanded(true); setZoom(1); }}
                       onSelect={(reportId) => setSelectedReportId(reportId)}
-                      onConfirm={(reportId) => confirmReport.mutate(reportId)}
+                      entityCurrency={entityCurrency}
+                      onConfirm={(reportId, fx) => confirmReport.mutate({ reportId, fx })}
                       onUnlock={(reportId) => unlockReport.mutate(reportId)}
                       onRenameReport={(id, name) => renameReport.mutate({ id, name })}
                       onUpdateReportDate={(id, date) => updateReportDate.mutate({ id, date })}
