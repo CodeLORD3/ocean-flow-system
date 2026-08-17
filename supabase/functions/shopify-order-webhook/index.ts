@@ -554,10 +554,12 @@ async function createOrder(
     const lineTotal = round2(qty * price);
     estimated += lineTotal;
 
+    const isEvent = !product && isEventLine(li);
+
     let reservation = { status: "ingen", lotId: null as string | null };
     if (product) {
       reservation = await evaluateReservation(db, product.id, storeId, wantedDate, qty);
-    } else {
+    } else if (!isEvent) {
       unmatched++;
     }
 
@@ -581,7 +583,9 @@ async function createOrder(
       shopify_line_id: li?.id != null ? String(li.id) : null,
       shopify_sku: sku || null,
       shopify_title: title,
-      needs_product_match: !product,
+      // Eventbokningar ska inte köa för produktmatchning.
+      needs_product_match: !product && !isEvent,
+      note: isEvent ? EVENT_LINE_NOTE : null,
       sort_order: i,
     });
   }
