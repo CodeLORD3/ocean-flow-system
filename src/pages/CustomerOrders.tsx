@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, Truck, ChefHat, ShoppingCart, Archive, ArchiveRestore, Clock } from "lucide-react";
+import { Plus, Search, Users, BarChart3, Filter, X, ArrowLeft, Truck, ChefHat, ShoppingCart, Archive, ArchiveRestore, Clock, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,6 +21,7 @@ import { useStores } from "@/hooks/useStores";
 import {
   useCustomerOrders,
   useArchiveCustomerOrder,
+  useApproveCustomerOrder,
   useCustomerOrderCounts,
   useCustomerOrderTabCounts,
 } from "@/hooks/useCustomerOrders";
@@ -173,6 +174,7 @@ export default function CustomerOrders() {
 
   const isArchiveView = tab === "arkiverade";
   const archiveOrders = useArchiveCustomerOrder();
+  const approveOrders = useApproveCustomerOrder();
   const { data: tabCounts } = useCustomerOrderTabCounts(effectiveStore);
 
   const { data: orders = [], isLoading } = useCustomerOrders({
