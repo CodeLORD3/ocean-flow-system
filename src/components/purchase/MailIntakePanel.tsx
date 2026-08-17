@@ -97,6 +97,11 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
     () => messages.filter((m) => m.status === "paminnelse"),
     [messages],
   );
+  const tooLarge = useMemo(
+    () => messages.filter((m) => m.status === "for_stort"),
+    [messages],
+  );
+
   const lastRun = runs[0];
 
   const handleApprove = async (doc: SupplierDocument) => {
