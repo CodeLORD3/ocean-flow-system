@@ -1239,6 +1239,7 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
               onClick={() => handleExportAuctionCsv(activeMap)}
             >
               <FileDown className="h-3.5 w-3.5" /> Exportera för auktion (CSV)
+            </Button>
             <Button
               variant="ghost"
               size="sm"
