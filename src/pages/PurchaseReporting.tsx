@@ -19,6 +19,7 @@ import { sv as svLocale } from "date-fns/locale";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import MailIntakePanel from "@/components/purchase/MailIntakePanel";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
@@ -898,6 +899,7 @@ export default function PurchaseReporting() {
   const [filterSupplier, setFilterSupplier] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [postOpen, setPostOpen] = useState(false);
+  const [mailOpen, setMailOpen] = useState(false);
 
   // New product dialog
   const [newProductOpen, setNewProductOpen] = useState(false);
@@ -1592,6 +1594,16 @@ export default function PurchaseReporting() {
                   </div>
                 )}
 
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 h-8 text-xs"
+                onClick={() => setMailOpen(true)}
+              >
+                <Mail className="h-3.5 w-3.5" />
+                Mejlinlopp
+              </Button>
+
               <Link to="/reports">
                 <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
                   <Archive className="h-3.5 w-3.5" />
@@ -1606,6 +1618,20 @@ export default function PurchaseReporting() {
               </div>
 
             </div>
+
+            <Dialog open={mailOpen} onOpenChange={setMailOpen}>
+              <DialogContent className="max-w-4xl h-[80vh] p-0 gap-0 overflow-hidden">
+                <DialogHeader className="sr-only">
+                  <DialogTitle>Mejlinlopp för leverantörsdokument</DialogTitle>
+                </DialogHeader>
+                <MailIntakePanel
+                  onOpenReport={(id) => {
+                    setSelectedReportId(id);
+                    setMailOpen(false);
+                  }}
+                />
+              </DialogContent>
+            </Dialog>
 
             <PostIncomingDialog
               open={postOpen}
