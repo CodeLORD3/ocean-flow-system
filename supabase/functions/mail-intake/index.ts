@@ -149,13 +149,20 @@ Deno.serve(async (req) => {
   const pass = Deno.env.get("MAIL_INTAKE_PASSWORD");
   const finish = async (patch: Json, status = 200) => {
     if (runId) {
-      await supabase.from("mail_intake_runs").update({ finished_at: new Date().toISOString(), ...patch }).eq("id", runId);
+      // Tabellen har inga kolumner för detaljlistan, den går bara i svaret.
+      const { results: _drop, ...columns } = patch as Json & { results?: unknown };
+      const { error: runErr } = await supabase
+        .from("mail_intake_runs")
+        .update({ finished_at: new Date().toISOString(), ...columns })
+        .eq("id", runId);
+      if (runErr) console.error("mail-intake: kunde inte skriva körningen", runErr.message);
     }
     return new Response(JSON.stringify({ folder, ...patch }), {
       status,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   };
+
 
   if (!user || !pass) return await finish({ ok: false, error: "MAIL_INTAKE_USER/PASSWORD saknas" }, 500);
 
