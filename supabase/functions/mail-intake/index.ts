@@ -68,7 +68,13 @@ const DOC_WORDS = [
   "auktion", "kredit", "leveransbesked", "packsedel", "rechnung", "facture",
 ];
 
-export function isNewsletter(subject: string, headers?: Map<string, unknown> | null): boolean {
+export function isNewsletter(
+  subject: string,
+  headers?: Map<string, unknown> | null,
+  fileNames: string[] = [],
+): boolean {
+  const hay = `${subject} ${fileNames.join(" ")}`.toLowerCase();
+  if (DOC_WORDS.some((w) => hay.includes(w))) return false;
   const get = (k: string) => {
     const v = headers?.get(k);
     return typeof v === "string" ? v.toLowerCase() : v ? String(v).toLowerCase() : "";
@@ -79,7 +85,6 @@ export function isNewsletter(subject: string, headers?: Map<string, unknown> | n
     if (get("x-campaign") || get("x-mailer-lid") || get("x-mailchimp-campaign-id")) return true;
     if (/mailchimp|sendgrid|mailerlite|klaviyo|hubspot|apsis|rule\.io|getanewsletter/.test(get("x-mailer"))) return true;
   }
-  const hay = subject.toLowerCase();
   return NEWSLETTER_WORDS.some((w) => hay.includes(w));
 }
 
