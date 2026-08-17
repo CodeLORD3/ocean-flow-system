@@ -131,8 +131,12 @@ export function SupplierCandidatesPanel() {
     if (!c.match) return;
     setBusy(true);
     try {
-      for (const e of c.emails) await linkSender(e, c.match.id);
-      toast({ title: "Vitlistad", description: `${c.domain} → ${c.match.name}` });
+      // Förmedlaravsändare får aldrig låsas till en enskild leverantör.
+      if (!c.viaPortal) for (const e of c.emails) await linkSender(e, c.match.id);
+      toast({
+        title: c.viaPortal ? "Redan i registret" : "Vitlistad",
+        description: `${c.names[0] || c.domain} → ${c.match.name}`,
+      });
     } catch (e: any) {
       toast({ title: "Fel", description: e.message, variant: "destructive" });
     } finally {
@@ -155,10 +159,17 @@ export function SupplierCandidatesPanel() {
         currency: form.currency,
         is_intercompany: false,
       } as any);
-      for (const e of c.emails) {
-        await linkSender(e, created.id, form.org_nr ? `Org.nr ${form.org_nr}` : undefined);
+      if (!c.viaPortal) {
+        for (const e of c.emails) {
+          await linkSender(e, created.id, form.org_nr ? `Org.nr ${form.org_nr}` : undefined);
+        }
       }
-      toast({ title: "Leverantör skapad", description: `${form.name} är vitlistad för ${c.domain}` });
+      toast({
+        title: "Leverantör skapad",
+        description: c.viaPortal
+          ? `${form.name} matchas nu automatiskt i dokument via förmedlare`
+          : `${form.name} är vitlistad för ${c.domain}`,
+      });
       setOpenDomain(null);
     } catch (e: any) {
       toast({ title: "Fel", description: e.message, variant: "destructive" });
@@ -166,6 +177,7 @@ export function SupplierCandidatesPanel() {
       setBusy(false);
     }
   };
+
 
   return (
     <ScrollArea className="h-full">
