@@ -4459,6 +4459,7 @@ export type Database = {
           active: boolean
           created_at: string
           id: string
+          is_portal: boolean
           kind: string
           legal_entity_id: string | null
           note: string | null
@@ -4470,6 +4471,7 @@ export type Database = {
           active?: boolean
           created_at?: string
           id?: string
+          is_portal?: boolean
           kind?: string
           legal_entity_id?: string | null
           note?: string | null
@@ -4481,6 +4483,7 @@ export type Database = {
           active?: boolean
           created_at?: string
           id?: string
+          is_portal?: boolean
           kind?: string
           legal_entity_id?: string | null
           note?: string | null
