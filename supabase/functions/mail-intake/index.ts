@@ -10,8 +10,9 @@
  * IMAP-sessionen hålls kort och stängs varje körning (Loopia begränsar samtidiga anslutningar).
  */
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { ImapFlow } from "npm:imapflow@1.0.164";
+import { SimpleImap } from "./imap.ts";
 import { simpleParser } from "npm:mailparser@3.7.1";
+import { Buffer } from "node:buffer";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -82,8 +83,8 @@ Deno.serve(async (req) => {
   } catch {
     body = {};
   }
-  // Verifiering sker mot en testmapp först — inkorgen pekas ut explicit.
-  const folder = typeof body.folder === "string" && body.folder ? body.folder : "Test";
+  // Inkorgen är standard; en testmapp kan pekas ut explicit.
+  const folder = typeof body.folder === "string" && body.folder ? body.folder : "INBOX";
   const limit = typeof body.limit === "number" ? Math.min(body.limit, 50) : 20;
   const moveMail = body.move !== false;
 
@@ -122,13 +123,7 @@ Deno.serve(async (req) => {
     }) || null;
   };
 
-  const client = new ImapFlow({
-    host: "mailcluster.loopia.se",
-    port: 993,
-    secure: true,
-    auth: { user, pass },
-    logger: false,
-  });
+  const client = new SimpleImap("mailcluster.loopia.se", 993);
 
   let fetched = 0;
   let stored = 0;
@@ -137,25 +132,44 @@ Deno.serve(async (req) => {
   const results: Json[] = [];
 
   try {
-    await client.connect();
+    await client.connect(user, pass);
     for (const name of [PROCESSED, PARKED]) {
-      try {
-        await client.mailboxCreate(name);
-      } catch {
-        /* finns redan */
-      }
+      await client.createMailbox(name);
     }
 
-    const lock = await client.getMailboxLock(folder);
-    try {
-      const uids = (await client.search({ seen: false })) || [];
-      const batch = (uids as number[]).slice(0, limit);
+    // Hitta rätt mapp (case-insensitivt), annars fall tillbaka till INBOX
+    let targetFolder = folder;
+    if (folder.toUpperCase() !== "INBOX") {
+      const boxes = await client.listMailboxes();
+      const hit = boxes.find(
+        (p) =>
+          p.toLowerCase() === folder.toLowerCase() ||
+          p.toLowerCase().endsWith(`.${folder.toLowerCase()}`) ||
+          p.toLowerCase().endsWith(`/${folder.toLowerCase()}`),
+      );
+      targetFolder = hit || "INBOX";
+    }
+    console.log("mail-intake: öppnar mapp", targetFolder);
+
+    {
+      await client.select(targetFolder);
+      const uids = await client.searchUnseenUids();
+      console.log("mail-intake: olästa", uids.length);
+      const batch = uids.slice(-limit);
 
       for (const uid of batch) {
         fetched++;
-        const msg = await client.fetchOne(String(uid), { source: true, envelope: true }, { uid: true });
-        if (!msg?.source) continue;
-        const parsedMail = await simpleParser(msg.source as Uint8Array);
+        console.log("mail-intake: hämtar uid", uid);
+        let source: Uint8Array | null = null;
+        try {
+          source = await client.fetchSource(uid);
+        } catch (e) {
+          console.log("mail-intake: kunde inte hämta uid", uid, String(e));
+        }
+        console.log("mail-intake: hämtad", uid, source?.length ?? 0);
+        if (!source) continue;
+        const parsedMail = await simpleParser(Buffer.from(source));
+        console.log("mail-intake: tolkad", uid, parsedMail.subject || "");
         const messageId = parsedMail.messageId || `uid-${folder}-${uid}`;
         const fromAddr = parsedMail.from?.value?.[0];
         const fromEmail = (fromAddr?.address || "").toLowerCase();
@@ -179,8 +193,8 @@ Deno.serve(async (req) => {
           skipped++;
           results.push({ messageId, action: "redan_hamtat" });
           if (moveMail) {
-            await client.messageFlagsAdd(String(uid), ["\\Seen"], { uid: true });
-            await client.messageMove(String(uid), PROCESSED, { uid: true });
+            await client.markSeen(uid);
+            await client.moveUid(uid, PROCESSED);
           }
           continue;
         }
@@ -205,8 +219,8 @@ Deno.serve(async (req) => {
         // Okänd avsändare: parkeras, bilagan öppnas eller tolkas aldrig.
         if (!sender) {
           if (moveMail) {
-            await client.messageFlagsAdd(String(uid), ["\\Seen"], { uid: true });
-            await client.messageMove(String(uid), PARKED, { uid: true });
+            await client.markSeen(uid);
+            await client.moveUid(uid, PARKED);
           }
           results.push({ messageId, fromEmail, subject, action: "parkerad_okand_avsandare" });
           continue;
@@ -340,17 +354,15 @@ Deno.serve(async (req) => {
         }
 
         if (moveMail) {
-          await client.messageFlagsAdd(String(uid), ["\\Seen"], { uid: true });
-          await client.messageMove(String(uid), PROCESSED, { uid: true });
+          await client.markSeen(uid);
+          await client.moveUid(uid, PROCESSED);
         }
       }
-    } finally {
-      lock.release();
     }
   } catch (e) {
     console.error("mail-intake error:", e);
     try {
-      await client.logout();
+      await client.close();
     } catch { /* ignore */ }
     return await finish(
       { ok: false, error: e instanceof Error ? e.message : "okänt fel", fetched, stored, skipped, unread_without_attachment: noAttachment },
@@ -359,7 +371,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    await client.logout();
+    await client.close();
   } catch { /* ignore */ }
 
   return await finish({
