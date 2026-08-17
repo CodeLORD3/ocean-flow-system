@@ -55,3 +55,6 @@ verify_jwt = false
 
 [functions.sumup-reconcile]
 verify_jwt = false
+
+[functions.mail-intake]
+verify_jwt = false

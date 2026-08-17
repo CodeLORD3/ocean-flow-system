@@ -4353,6 +4353,151 @@ export type Database = {
         }
         Relationships: []
       }
+      mail_intake_messages: {
+        Row: {
+          attachment_count: number
+          created_at: string
+          error: string | null
+          folder: string | null
+          from_email: string | null
+          from_name: string | null
+          id: string
+          message_id: string
+          received_at: string
+          sent_at: string | null
+          status: string
+          subject: string | null
+          supplier_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          attachment_count?: number
+          created_at?: string
+          error?: string | null
+          folder?: string | null
+          from_email?: string | null
+          from_name?: string | null
+          id?: string
+          message_id: string
+          received_at?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          supplier_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attachment_count?: number
+          created_at?: string
+          error?: string | null
+          folder?: string | null
+          from_email?: string | null
+          from_name?: string | null
+          id?: string
+          message_id?: string
+          received_at?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          supplier_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_intake_messages_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mail_intake_runs: {
+        Row: {
+          created_at: string
+          error: string | null
+          fetched: number
+          finished_at: string | null
+          folder: string | null
+          id: string
+          ok: boolean
+          skipped: number
+          started_at: string
+          stored: number
+          unread_without_attachment: number
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          fetched?: number
+          finished_at?: string | null
+          folder?: string | null
+          id?: string
+          ok?: boolean
+          skipped?: number
+          started_at?: string
+          stored?: number
+          unread_without_attachment?: number
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          fetched?: number
+          finished_at?: string | null
+          folder?: string | null
+          id?: string
+          ok?: boolean
+          skipped?: number
+          started_at?: string
+          stored?: number
+          unread_without_attachment?: number
+        }
+        Relationships: []
+      }
+      mail_intake_senders: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          kind: string
+          legal_entity_id: string | null
+          note: string | null
+          pattern: string
+          supplier_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          kind?: string
+          legal_entity_id?: string | null
+          note?: string | null
+          pattern: string
+          supplier_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          kind?: string
+          legal_entity_id?: string | null
+          note?: string | null
+          pattern?: string
+          supplier_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_intake_senders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       major_holidays: {
         Row: {
           capacity_cap: number | null
@@ -9294,6 +9439,119 @@ export type Database = {
           },
           {
             foreignKeyName: "supplier_article_map_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_documents: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          currency: string | null
+          delivery_date: string | null
+          doc_type: string
+          document_date: string | null
+          document_number: string | null
+          duplicate_of: string | null
+          file_hash: string | null
+          file_name: string | null
+          id: string
+          legal_entity_id: string | null
+          message_id: string | null
+          mime_type: string | null
+          parse_error: string | null
+          parse_status: string
+          parsed: Json | null
+          purchase_report_id: string | null
+          reject_reason: string | null
+          status: string
+          storage_path: string
+          supplier_id: string | null
+          total_ex_vat: number | null
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          currency?: string | null
+          delivery_date?: string | null
+          doc_type?: string
+          document_date?: string | null
+          document_number?: string | null
+          duplicate_of?: string | null
+          file_hash?: string | null
+          file_name?: string | null
+          id?: string
+          legal_entity_id?: string | null
+          message_id?: string | null
+          mime_type?: string | null
+          parse_error?: string | null
+          parse_status?: string
+          parsed?: Json | null
+          purchase_report_id?: string | null
+          reject_reason?: string | null
+          status?: string
+          storage_path: string
+          supplier_id?: string | null
+          total_ex_vat?: number | null
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          currency?: string | null
+          delivery_date?: string | null
+          doc_type?: string
+          document_date?: string | null
+          document_number?: string | null
+          duplicate_of?: string | null
+          file_hash?: string | null
+          file_name?: string | null
+          id?: string
+          legal_entity_id?: string | null
+          message_id?: string | null
+          mime_type?: string | null
+          parse_error?: string | null
+          parse_status?: string
+          parsed?: Json | null
+          purchase_report_id?: string | null
+          reject_reason?: string | null
+          status?: string
+          storage_path?: string
+          supplier_id?: string | null
+          total_ex_vat?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_documents_duplicate_of_fkey"
+            columns: ["duplicate_of"]
+            isOneToOne: false
+            referencedRelation: "supplier_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_documents_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "mail_intake_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_documents_purchase_report_id_fkey"
+            columns: ["purchase_report_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_documents_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"

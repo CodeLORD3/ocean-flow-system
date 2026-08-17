@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import ShopifyWebhookStatus from "@/components/shopify/ShopifyWebhookStatus";
 import BookingStatusCard from "@/components/booking/BookingStatusCard";
 import ImageCompressionCard from "@/components/admin/ImageCompressionCard";
+import SupplierDocumentsCard from "@/components/admin/SupplierDocumentsCard";
 import { PosHealthCard } from "@/components/poslive/PosHealthCard";
 import { SumupHealthCard } from "@/components/poslive/SumupHealthCard";
 import { PosLineReview } from "@/components/poslive/PosLineReview";
@@ -173,6 +174,8 @@ export default function SystemStatus() {
         <BookingStatusCard />
 
         <ImageCompressionCard />
+
+        <SupplierDocumentsCard />
         <ShopifyWebhookStatus />
         <Card className={hasDiff ? "border-destructive" : undefined}>
           <CardHeader className="pb-2">
