@@ -128,7 +128,7 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between gap-2 border-b p-3">
+      <div className="flex flex-wrap items-start justify-between gap-2 border-b p-3">
         <div>
           <h2 className="text-sm font-semibold flex items-center gap-1.5">
             <Mail className="h-4 w-4" /> Mejlinlopp — leverantörsdokument
@@ -173,7 +173,7 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
       </div>
 
       <Tabs defaultValue="drafts" className="flex-1 flex flex-col min-h-0">
-        <TabsList className="mx-3 mt-2 h-8">
+        <TabsList className="mx-3 mt-2 h-8 max-w-[calc(100%-1.5rem)] overflow-x-auto justify-start">
           <TabsTrigger value="drafts" className="text-xs">
             Väntar på attest
             {drafts.length > 0 && <Badge variant="secondary" className="ml-1.5 h-4 px-1 text-[10px]">{drafts.length}</Badge>}
@@ -232,8 +232,8 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
                 const lines = doc.parsed?.lines ?? [];
                 const old = ageHours(doc.created_at) > 48;
                 return (
-                  <div key={doc.id} className="p-3 flex items-start justify-between gap-3">
-                    <div className="min-w-0">
+                  <div key={doc.id} className="p-3 flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-[200px] flex-1">
                       <div className="flex items-center gap-2 text-xs font-medium">
                         <Badge variant="outline" className="h-4 px-1 text-[10px]">{docTypeLabel[doc.doc_type] ?? doc.doc_type}</Badge>
                         <span className="truncate">{doc.file_name}</span>
@@ -250,7 +250,7 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
                         {doc.total_ex_vat ? ` · ${doc.total_ex_vat.toLocaleString("sv-SE")} ex moms` : ""}
                       </p>
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => handleReject(doc)}>
                         Avvisa
                       </Button>
@@ -278,14 +278,14 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
                 <p className="p-8 text-center text-xs text-muted-foreground">Inga parkerade mejl från okända avsändare.</p>
               )}
               {unknownSenders.map((m) => (
-                <div key={m.id} className="p-3 flex items-start justify-between gap-3">
-                  <div className="min-w-0">
+                <div key={m.id} className="p-3 flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-[200px] flex-1">
                     <p className="text-xs font-medium truncate">{m.from_email}</p>
                     <p className="text-[11px] text-muted-foreground truncate">
                       {m.subject} · {m.attachment_count} bilagor · bilagan är inte öppnad
                     </p>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <Select
                       onValueChange={(supplierId) =>
                         saveSender.mutate(
@@ -294,7 +294,7 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
                         )
                       }
                     >
-                      <SelectTrigger className="h-7 w-[190px] text-xs"><SelectValue placeholder="Koppla till leverantör" /></SelectTrigger>
+                      <SelectTrigger className="h-7 w-[170px] max-w-full text-xs"><SelectValue placeholder="Koppla till leverantör" /></SelectTrigger>
                       <SelectContent>
                         {suppliers.map((s: any) => (
                           <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
@@ -324,7 +324,7 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
                   ) : (
                     <AlertTriangle className="h-3.5 w-3.5 mt-0.5 text-destructive" />
                   )}
-                  <div className="min-w-0">
+                  <div className="min-w-[200px] flex-1">
                     <p className="text-xs font-medium truncate">{d.file_name}</p>
                     <p className="text-[11px] text-muted-foreground">
                       {d.status === "dubblett"
@@ -347,7 +347,7 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
               className="h-8 text-xs"
             />
             <Select value={newSupplier} onValueChange={setNewSupplier}>
-              <SelectTrigger className="h-8 w-[190px] text-xs"><SelectValue placeholder="Leverantör" /></SelectTrigger>
+              <SelectTrigger className="h-8 w-[170px] max-w-full text-xs"><SelectValue placeholder="Leverantör" /></SelectTrigger>
               <SelectContent>
                 {suppliers.map((s: any) => (
                   <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
@@ -380,7 +380,7 @@ export function MailIntakePanel({ onOpenReport }: { onOpenReport?: (id: string) 
               )}
               {senders.map((s) => (
                 <div key={s.id} className="p-2.5 flex items-center justify-between gap-2">
-                  <div className="min-w-0">
+                  <div className="min-w-[200px] flex-1">
                     <p className="text-xs font-medium truncate">{s.pattern}</p>
                     <p className="text-[11px] text-muted-foreground">
                       {s.kind === "domain" ? "Domän" : "Adress"} ·{" "}
