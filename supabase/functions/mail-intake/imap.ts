@@ -154,9 +154,9 @@ function extractLiteral(raw: Uint8Array): Uint8Array | undefined {
   const size = Number(m[1]);
   const startText = head.indexOf(m[0]) + m[0].length;
   // Byte-offset = teckenoffset eftersom huvudet är ren ASCII.
-function quote(v: string) {
-  return `"${v.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+  return raw.subarray(startText, startText + size);
 }
+
 
 /** Avkodar MIME encoded-words (=?UTF-8?B?..?=) så ämnesrader kan filtreras. */
 export function decodeMimeWords(value: string): string {
