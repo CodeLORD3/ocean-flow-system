@@ -592,6 +592,7 @@ export default function CustomerOrders() {
                 selectedCount={markedOrders.length}
                 totalCount={viewOrders.length}
                 selectedSum={markedSum}
+                currency={currency}
                 extra={ORDER_TAB_LABELS[tab]}
               />
             </div>
@@ -601,7 +602,7 @@ export default function CustomerOrders() {
         {panel === "customers" && (
           <RetailCustomerRegistry storeId={effectiveStore} readOnly={!canEdit} />
         )}
-        {panel === "stats" && <CustomerOrderStats storeId={effectiveStore} />}
+        {panel === "stats" && <CustomerOrderStats storeId={effectiveStore} currency={currency} />}
         {panel === "route" && (
           <DeliveryRouteView
             storeId={effectiveStore}

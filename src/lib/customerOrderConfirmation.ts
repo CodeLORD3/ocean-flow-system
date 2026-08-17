@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import { CustomerOrder, ORDER_TYPE_LABELS } from "@/lib/customerOrders";
+import { getStoreCurrency } from "@/lib/currency";
 
 /**
  * Orderbekräftelse till kunden — samma text i papper som i SMS.
@@ -17,6 +18,7 @@ function address(order: CustomerOrder) {
 
 /** Kort text att skicka som SMS eller läsa upp i telefon. */
 export function confirmationText(order: CustomerOrder, storeName?: string | null) {
+  const currency = getStoreCurrency(order.stores);
   const when = `${order.wanted_date}${order.wanted_time ? ` kl ${String(order.wanted_time).slice(0, 5)}` : ""}`;
   const lines = (order.customer_order_lines || [])
     .filter((l) => l.pack_status !== "struken")
@@ -37,7 +39,7 @@ export function confirmationText(order: CustomerOrder, storeName?: string | null
     "",
     ...lines,
     "",
-    `Uppskattat belopp: ${nf(order.estimated_total)} kr.`,
+    `Uppskattat belopp: ${nf(order.estimated_total)} ${currency}.`,
     "Dagens pris gäller vid hämtning och du betalar för den vikt vi väger upp.",
     "Betalning sker i butiken.",
   ]
@@ -46,6 +48,7 @@ export function confirmationText(order: CustomerOrder, storeName?: string | null
 }
 
 export function buildConfirmationDoc(order: CustomerOrder, storeName?: string | null) {
+  const currency = getStoreCurrency(order.stores);
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const left = 16;
   let y = 20;
@@ -123,7 +126,7 @@ export function buildConfirmationDoc(order: CustomerOrder, storeName?: string | 
     doc.text(`${nf(l.quantity_ordered, 3)} ${l.unit}`, left + 100, y);
     const est = l.estimated_price_per_unit;
     doc.text(
-      est != null ? `${nf(Number(est) * Number(l.quantity_ordered))} kr` : "—",
+      est != null ? `${nf(Number(est) * Number(l.quantity_ordered))} ${currency}` : "—",
       left + 140,
       y,
     );
@@ -139,7 +142,7 @@ export function buildConfirmationDoc(order: CustomerOrder, storeName?: string | 
   y += 4;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text(`Uppskattat belopp: ${nf(order.estimated_total)} kr`, left, y);
+  doc.text(`Uppskattat belopp: ${nf(order.estimated_total)} ${currency}`, left, y);
   y += 8;
 
   doc.setFont("helvetica", "normal");
