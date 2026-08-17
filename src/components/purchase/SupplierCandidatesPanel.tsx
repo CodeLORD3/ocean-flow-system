@@ -191,13 +191,14 @@ export function SupplierCandidatesPanel() {
           </p>
         )}
         {candidates.map((c) => (
-          <div key={c.domain} className="p-3 space-y-2">
+          <div key={c.key} className="p-3 space-y-2">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="text-xs font-semibold flex items-center gap-1.5">
                   <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
                   {c.registry?.name || c.names[0] || c.domain}
                   <Badge variant="outline" className="h-4 px-1 text-[10px]">{c.count} mejl</Badge>
+                  {c.viaPortal && <Badge variant="outline" className="h-4 px-1 text-[10px]">Via förmedlare</Badge>}
                   {c.registry && <Badge variant="secondary" className="h-4 px-1 text-[10px]">Uppgifter förifyllda</Badge>}
                 </p>
                 <p className="text-[11px] text-muted-foreground truncate">{c.emails.join(", ")}</p>
@@ -210,15 +211,21 @@ export function SupplierCandidatesPanel() {
               </div>
               <div className="flex items-center gap-1.5">
                 {c.match ? (
-                  <Button size="sm" className="h-7 text-xs gap-1" disabled={busy} onClick={() => handleMatch(c)}>
-                    <ShieldCheck className="h-3.5 w-3.5" /> Matcha {c.match.name}
-                  </Button>
+                  c.viaPortal ? (
+                    <Badge variant="secondary" className="h-6 px-2 text-[10px] gap-1">
+                      <ShieldCheck className="h-3 w-3" /> Finns som {c.match.name}
+                    </Badge>
+                  ) : (
+                    <Button size="sm" className="h-7 text-xs gap-1" disabled={busy} onClick={() => handleMatch(c)}>
+                      <ShieldCheck className="h-3.5 w-3.5" /> Matcha {c.match.name}
+                    </Button>
+                  )
                 ) : null}
                 <Button
                   size="sm"
                   variant={c.match ? "outline" : "default"}
                   className="h-7 text-xs gap-1"
-                  onClick={() => (openDomain === c.domain ? setOpenDomain(null) : openCreate(c))}
+                  onClick={() => (openDomain === c.key ? setOpenDomain(null) : openCreate(c))}
                 >
                   <Plus className="h-3.5 w-3.5" /> Skapa ny
                 </Button>
@@ -230,7 +237,8 @@ export function SupplierCandidatesPanel() {
               </div>
             </div>
 
-            {openDomain === c.domain && (
+            {openDomain === c.key && (
+
               <div className="rounded-md border bg-muted/20 p-2 space-y-2">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div className="space-y-1">
