@@ -118,7 +118,10 @@ export function useCreateIncomingDelivery() {
             is_thawed: l.upptinad ?? false,
             best_before: l.best_before || null,
             quantity_kg: l.quantity,
-            unit_cost: l.unit_cost,
+            unit_cost: toBook(l.unit_cost),
+            unit_cost_source: crossCurrency ? l.unit_cost : null,
+            source_currency: crossCurrency ? sourceCurrency : null,
+            fx_rate: crossCurrency ? fxRate : null,
             traceability_required: !(prod as any)?.traceability_exempt,
             created_by: staffId,
           })
@@ -130,7 +133,10 @@ export function useCreateIncomingDelivery() {
           delivery_id: del.id,
           product_id: l.product_id,
           quantity: l.quantity,
-          unit_cost: l.unit_cost,
+          unit_cost: toBook(l.unit_cost),
+          unit_cost_source: crossCurrency ? l.unit_cost : null,
+          source_currency: crossCurrency ? sourceCurrency : null,
+          fx_rate: crossCurrency ? fxRate : null,
           batch_number: l.batch_number,
           best_before: l.best_before,
           redskapskategori: l.redskapskategori ?? null,
@@ -148,12 +154,16 @@ export function useCreateIncomingDelivery() {
             lotId: lot!.id,
             quantityKg: l.quantity,
             movementType: "inleverans",
-            unitCost: l.unit_cost,
+            unitCost: toBook(l.unit_cost),
+            unitCostSource: crossCurrency ? l.unit_cost : null,
+            sourceCurrency: crossCurrency ? sourceCurrency : null,
+            fxRate: crossCurrency ? fxRate : null,
             referenceType: "incoming_delivery",
             referenceId: del.id,
-            note: `Inleverans ${deliveryNumber}`,
+            note: `Inleverans ${deliveryNumber}${crossCurrency ? ` · ${l.unit_cost} ${sourceCurrency}/enhet, kurs ${fxRate}` : ""}`,
           });
         }
+
 
         // products.stock härleds nu av triggern sync_product_stock_total.
       }
