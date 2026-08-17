@@ -302,6 +302,44 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
     }
   };
 
+  /** Exporterar markerade rader som CSV att ta med till auktionen. */
+  const handleExportAuctionCsv = (map: Map<number, typeof filteredSchedule>) => {
+    const rows: string[][] = [["Dag", "Avgång", "Kategori", "Produkt", "Antal", "Enhet", "Butiker"]];
+    for (const [dayIndex, dayItems] of map.entries()) {
+      for (const item of dayItems) {
+        const key = `${dayIndex}-${item.productName}-${item.productId}`;
+        if (!selectedKeys.has(key)) continue;
+        rows.push([
+          format(item.departureDate, "EEE d/M", { locale: sv }),
+          item.departureTime || "",
+          item.category || "Övrigt",
+          item.productName,
+          String(item.totalQuantity ?? 0).replace(".", ","),
+          item.unit || "",
+          item.shops
+            .filter((s) => !s.packed)
+            .map((s) => `${s.name} ${s.quantity}`)
+            .join(" | "),
+        ]);
+      }
+    }
+    if (rows.length === 1) {
+      toast.error("Inga produkter markerade.");
+      return;
+    }
+    const csv = rows
+      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(";"))
+      .join("\r\n");
+    const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `auktion-inkop-v${currentWeek}-${currentYear}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`CSV exporterad (${rows.length - 1} produkter).`);
+  };
+
   const [manualDialogOpen, setManualDialogOpen] = useState(false);
   const [manualProductSearch, setManualProductSearch] = useState("");
   const [manualProductId, setManualProductId] = useState("");
@@ -1193,6 +1231,14 @@ export default function PurchaseSchedule({ title = "Inköpsschema" }: { title?: 
               onClick={() => setPdfDialogOpen(true)}
             >
               <FileDown className="h-3.5 w-3.5" /> Skapa inköpslista (PDF)
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-[11px] gap-1"
+              onClick={() => handleExportAuctionCsv(activeMap)}
+            >
+              <FileDown className="h-3.5 w-3.5" /> Exportera för auktion (CSV)
             </Button>
             <Button
               variant="ghost"
