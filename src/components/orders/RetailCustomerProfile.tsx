@@ -56,6 +56,7 @@ import {
   shortDate,
 } from "@/lib/retailCustomerStats";
 import { getStoreCurrency } from "@/lib/currency";
+import { CurrencyAmount, useSekRate } from "@/components/orders/CurrencyAmount";
 
 const AVATAR_BUCKET = "logos";
 
@@ -183,6 +184,10 @@ export function RetailCustomerProfile({
   const tags = customer.tags || [];
   const upcoming = stats.upcoming;
   const customerCurrency = getStoreCurrency(orders.find((order) => order.store_id === customer.store_id)?.stores);
+  /* Som i SumUp: butikens valuta först, SEK-motvärdet mot livekurs som referens. */
+  const sekRate = useSekRate(customerCurrency);
+  const cur = (v: unknown) =>
+    `${money(v)} ${customerCurrency}${sekRate ? ` ≈ ${money(Number(v ?? 0) * sekRate)} SEK` : ""}`;
 
   const lineText = (o: CustomerOrder) =>
     (o.customer_order_lines || [])
@@ -474,7 +479,7 @@ export function RetailCustomerProfile({
                     <p className="text-[11px] text-muted-foreground">{lineText(o)}</p>
                     <div className="flex flex-wrap items-center gap-2 text-sm">
                       <span className="font-mono font-semibold tabular-nums">
-                        {money(orderTotal(o))} kr
+                        {cur(orderTotal(o))}
                       </span>
                       <span className="text-muted-foreground">· Status:</span>
                       <Badge variant="secondary">{ORDER_STATUS_LABELS[o.status]}</Badge>
@@ -506,8 +511,8 @@ export function RetailCustomerProfile({
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Kpi label="Ordrar totalt" value={String(stats.total)} />
             <Kpi label="Ordrar i år" value={String(stats.thisYear)} />
-            <Kpi label="Totalt ordervärde" value={`${money(stats.totalValue)} kr`} />
-            <Kpi label="Genomsnittlig order" value={`${money(stats.average)} kr`} />
+            <Kpi label="Totalt ordervärde" value={cur(stats.totalValue)} />
+            <Kpi label="Genomsnittlig order" value={cur(stats.average)} />
           </div>
 
           <div className="grid gap-3 lg:grid-cols-3">
@@ -682,8 +687,8 @@ export function RetailCustomerProfile({
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <Kpi label="Totalt ordervärde" value={`${money(stats.totalValue)} kr`} />
-            <Kpi label="Genomsnittlig order" value={`${money(stats.average)} kr`} />
+            <Kpi label="Totalt ordervärde" value={cur(stats.totalValue)} />
+            <Kpi label="Genomsnittlig order" value={cur(stats.average)} />
             <Kpi
               label="Orderfrekvens"
               value={stats.perMonth.toLocaleString("sv-SE", { maximumFractionDigits: 1 })}

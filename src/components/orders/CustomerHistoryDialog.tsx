@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/EmptyState";
 import { CustomerOrder, ORDER_STATUS_LABELS, ORDER_TYPE_LABELS } from "@/lib/customerOrders";
+import { CurrencyAmount, useSekRate } from "@/components/orders/CurrencyAmount";
+import { getStoreCurrency } from "@/lib/currency";
 
 const nf = (v: unknown, d = 2) =>
   Number(v ?? 0).toLocaleString("sv-SE", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -26,6 +28,10 @@ export function CustomerHistoryDialog({
   orders: CustomerOrder[];
 }) {
   const sorted = [...orders].sort((a, b) => b.wanted_date.localeCompare(a.wanted_date));
+  const currency = getStoreCurrency((sorted[0] as any)?.stores);
+  const sekRate = useSekRate(currency);
+  const money = (v: unknown) =>
+    `${nf(v)} ${currency}${sekRate ? ` ≈ ${nf(Number(v ?? 0) * sekRate)} SEK` : ""}`;
   const spent = sorted.reduce(
     (s, o) => s + Number(o.total_incl_vat || o.estimated_total || 0),
     0,
@@ -37,7 +43,7 @@ export function CustomerHistoryDialog({
         <DialogHeader>
           <DialogTitle>Kundhistorik — {customerName}</DialogTitle>
           <DialogDescription>
-            {sorted.length} beställningar · {nf(spent)} kr totalt. Tryck en beställning i orderlistan
+            {sorted.length} beställningar · {money(spent)} totalt. Tryck en beställning i orderlistan
             för att öppna den igen.
           </DialogDescription>
         </DialogHeader>
@@ -59,7 +65,7 @@ export function CustomerHistoryDialog({
                   <Badge variant="outline">{ORDER_TYPE_LABELS[o.order_type]}</Badge>
                   <Badge variant="secondary">{ORDER_STATUS_LABELS[o.status]}</Badge>
                   <span className="ml-auto font-mono text-sm tabular-nums">
-                    {nf(o.total_incl_vat || o.estimated_total)} kr
+                    {money(o.total_incl_vat || o.estimated_total)}
                   </span>
                 </div>
                 <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">

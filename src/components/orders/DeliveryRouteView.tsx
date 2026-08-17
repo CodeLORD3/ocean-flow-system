@@ -135,7 +135,10 @@ export function DeliveryRouteView({
                       {o.wanted_time ? String(o.wanted_time).slice(0, 5) : "Ingen tid"}
                     </p>
                     <p className="font-mono tabular-nums text-xs text-muted-foreground">
-                      {nf(o.total_incl_vat || o.estimated_total)} kr
+                      <CurrencyAmount
+                        amount={Number(o.total_incl_vat || o.estimated_total || 0)}
+                        currency={getStoreCurrency((o as any).stores)}
+                      />
                     </p>
                   </div>
                   {!readOnly && !done && (

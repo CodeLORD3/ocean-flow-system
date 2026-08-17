@@ -21,6 +21,8 @@ export interface PackLabel {
   shelfLifeOpenDays?: number | null;
   lotNumber?: string | null;
   barcode?: string | null;
+  /** Butikens valuta, t.ex. "CHF" för Zollikon. Standard "kr" (SEK). */
+  currency?: string;
 }
 
 const nf = (v: number, d = 2) =>
@@ -60,8 +62,8 @@ export function buildPackLabelDoc(labels: PackLabel[]) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
     const right: string[] = [];
-    if (l.pricePerUnit != null) right.push(`${nf(l.pricePerUnit)} kr/${l.unit}`);
-    if (l.total != null) right.push(`${nf(l.total)} kr`);
+    if (l.pricePerUnit != null) right.push(`${nf(l.pricePerUnit)} ${l.currency || "kr"}/${l.unit}`);
+    if (l.total != null) right.push(`${nf(l.total)} ${l.currency || "kr"}`);
     doc.text(right.join("   "), 3, 16.5);
 
     doc.setFontSize(6);

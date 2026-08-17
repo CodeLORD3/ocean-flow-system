@@ -45,6 +45,8 @@ import { printConfirmation, confirmationText } from "@/lib/customerOrderConfirma
 import { printPackList } from "@/lib/customerOrderPackListPdf";
 import { allergenLabel, scaleQuantity } from "@/lib/catering";
 import { OrderAuditLine } from "./OrderAuditLine";
+import { CurrencyAmount, useSekRate } from "@/components/orders/CurrencyAmount";
+import { getStoreCurrency } from "@/lib/currency";
 
 
 const nf = (v: any, d = 2) =>
@@ -77,6 +79,11 @@ export function CustomerOrderCard({
   const updateLine = useUpdateOrderLine();
   const cancelOrder = useCancelCustomerOrder();
   const { data: events = [] } = useCustomerOrderEvents(order?.id);
+  /* Butikens valuta styr beloppen (Zollikon/Morges = CHF), SEK visas som växling. */
+  const currency = getStoreCurrency(order?.stores as any);
+  const sekRate = useSekRate(currency);
+  const money = (v: unknown, d = 2) =>
+    `${nf(v, d)} ${currency}${sekRate ? ` ≈ ${nf(Number(v ?? 0) * sekRate, d)} SEK` : ""}`;
 
   const [weights, setWeights] = useState<Record<string, string>>({});
   const [prices, setPrices] = useState<Record<string, number | null>>({});
@@ -169,6 +176,7 @@ export function CustomerOrderCard({
         shelfLifeOpenDays: (l.products as any)?.shelf_life_open_days ?? null,
         lotNumber: l.lots?.lot_number ?? null,
         barcode: l.products?.sku ?? null,
+        currency,
       })),
     );
   };
@@ -180,6 +188,7 @@ export function CustomerOrderCard({
   const makeQuote = () =>
     printQuote({
       orderNumber: order.order_number,
+      currency,
       storeName: (order as any).stores?.name || "",
       customerName,
       customerPhone: order.customers_retail?.phone || order.customer_phone_snapshot,
@@ -290,7 +299,7 @@ export function CustomerOrderCard({
             <div>
               Verkligt pris avviker mer än 15 % från det uppskattade. Ring kunden innan varan packas.
               <div className="font-mono tabular-nums">
-                Uppskattat {nf(order.estimated_total)} kr · nu {nf(actualTotal)} kr
+                Uppskattat {money(order.estimated_total)} · nu {money(actualTotal)}
               </div>
             </div>
           </div>
@@ -410,7 +419,7 @@ export function CustomerOrderCard({
                     {done && (
                       <div className="font-mono text-sm tabular-nums text-muted-foreground">
                         Packat {nf(l.quantity_packed, 3)} {l.unit} ×{" "}
-                        {nf(l.price_per_unit)} kr = {nf(l.line_total)} kr
+                        {money(l.price_per_unit)} = {money(l.line_total)}
                       </div>
                     )}
                   </CardContent>
@@ -421,11 +430,11 @@ export function CustomerOrderCard({
             <div className="rounded-md bg-muted p-3 text-sm">
               <div className="flex justify-between">
                 <span>Uppskattat vid registrering</span>
-                <span className="font-mono tabular-nums">{nf(order.estimated_total)} kr</span>
+                <span className="font-mono tabular-nums">{money(order.estimated_total)}</span>
               </div>
               <div className="flex justify-between font-semibold">
                 <span>Verkligt pris</span>
-                <span className="font-mono tabular-nums">{nf(actualTotal)} kr</span>
+                <span className="font-mono tabular-nums">{money(actualTotal)}</span>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 Betalning sker i kassan vid hämtning.
