@@ -40,9 +40,11 @@ const docTypeLabel: Record<string, string> = {
   foljesedel: "Följesedel",
   faktura: "Faktura",
   kreditnota: "Kreditnota",
+  paminnelse: "Påminnelse/inkasso",
   ovrigt: "Övrigt",
   okand: "Okänt",
 };
+
 
 const ageHours = (iso: string) => (Date.now() - new Date(iso).getTime()) / 3_600_000;
 
