@@ -231,7 +231,23 @@ export default function CustomerOrders() {
           </span>
         </div>
 
-        {canEdit && marked.length > 0 && (
+        {canEdit && tab === "godkannande" && (
+          <Button
+            size="lg"
+            className="h-12 px-5 text-base"
+            disabled={approveOrders.isPending || (marked.length === 0 && viewOrders.length === 0)}
+            onClick={() =>
+              approveOrders.mutate(
+                { ids: marked.length > 0 ? marked : viewOrders.map((o) => o.id) },
+                { onSuccess: () => setMarked([]) },
+              )
+            }
+          >
+            <Check className="mr-2 h-5 w-5" />
+            Godkänn {marked.length > 0 ? marked.length : viewOrders.length}
+          </Button>
+        )}
+        {canEdit && tab !== "godkannande" && marked.length > 0 && (
           <Button
             variant="outline"
             size="lg"
