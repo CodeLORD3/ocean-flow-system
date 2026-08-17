@@ -264,11 +264,35 @@ Deno.serve(async (req) => {
           continue;
         }
 
+        const fileNames = attachments.map((a) => a.filename || "");
+
+        // Betalningspåminnelse/inkasso: sållas bort oavsett avsändare, så de
+        // aldrig hamnar bland okända avsändare eller kan bokföras.
+        if (isReminder(subject, fileNames.join(" "))) {
+          await supabase.from("mail_intake_messages").insert({
+            message_id: messageId,
+            from_email: fromEmail,
+            from_name: fromAddr?.name || null,
+            subject,
+            sent_at: parsedMail.date ? new Date(parsedMail.date).toISOString() : null,
+            folder,
+            attachment_count: attachments.length,
+            status: "paminnelse",
+          });
+          skipped++;
+          if (moveMail) {
+            await client.markSeen(uid);
+            await client.moveUid(uid, PARKED);
+          }
+          results.push({ messageId, fromEmail, subject, action: "paminnelse_ignorerad" });
+          continue;
+        }
+
         // Nyhetsbrev/utskick: loggas som information, bilagor öppnas aldrig.
         const newsletter = isNewsletter(
           subject,
           parsedMail.headers as unknown as Map<string, unknown>,
-          attachments.map((a) => a.filename || ""),
+          fileNames,
         );
         if (newsletter) {
           await supabase.from("mail_intake_messages").insert({
