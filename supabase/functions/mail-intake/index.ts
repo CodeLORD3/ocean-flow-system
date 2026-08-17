@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
 
   const { data: senders } = await supabase
     .from("mail_intake_senders")
-    .select("pattern, kind, supplier_id, legal_entity_id, active")
+    .select("pattern, kind, supplier_id, legal_entity_id, active, is_portal")
     .eq("active", true);
 
   const matchSender = (email: string) => {
@@ -126,6 +126,25 @@ Deno.serve(async (req) => {
       const p = (s.pattern || "").toLowerCase().replace(/^@/, "");
       return s.kind === "domain" ? domain === p || domain.endsWith(`.${p}`) : addr === p;
     }) || null;
+  };
+
+
+  // Förmedlare (t.ex. Fortnox) skickar från samma adress för många leverantörer.
+  // Då avgörs leverantören per dokument utifrån namnet i PDF:en.
+  const { data: allSuppliers } = await supabase.from("suppliers").select("id, name");
+  const norm = (v: string) => v.toLowerCase().replace(/\b(ab|aktiebolag|as|a\/s|oy|gmbh|ag|hb|kb|sarl|ltd)\b/g, "").replace(/[^a-z0-9åäö]+/g, " ").trim();
+  const resolveSupplier = (name?: string | null) => {
+    if (!name) return null;
+    const target = norm(String(name));
+    if (!target) return null;
+    const list = allSuppliers || [];
+    const exact = list.find((s) => norm(s.name) === target);
+    if (exact) return exact.id as string;
+    const partial = list.find((s) => {
+      const n = norm(s.name);
+      return n.length >= 4 && (target.includes(n) || n.includes(target));
+    });
+    return (partial?.id as string) ?? null;
   };
 
   const client = new SimpleImap("mailcluster.loopia.se", 993);
@@ -241,7 +260,7 @@ Deno.serve(async (req) => {
           const hash = await sha256(bytes);
           const fileName = att.filename || `bilaga-${hash.slice(0, 8)}.pdf`;
           const ext = fileName.includes(".") ? fileName.split(".").pop() : "pdf";
-          const path = `${(sender.supplier_id ?? "okand")}/${new Date().getUTCFullYear()}/${hash}.${ext}`;
+          const path = `${(sender.supplier_id ?? (sender.is_portal ? "formedlare" : "okand"))}/${new Date().getUTCFullYear()}/${hash}.${ext}`;
 
           const { data: dupe } = await supabase
             .from("supplier_documents")
@@ -317,13 +336,24 @@ Deno.serve(async (req) => {
             const documentNumber = (header.document_number as string | null) ??
               (docType === "foljesedel" ? (header.document_date as string | null) : null);
 
+            // Förmedlaravsändare: identifiera leverantören ur dokumentet.
+            let docSupplierId: string | null = sender.supplier_id ?? null;
+            if (!docSupplierId) {
+              docSupplierId = resolveSupplier(
+                (header.supplier_name as string) ?? (header.supplier as string) ?? null,
+              );
+              if (docSupplierId) {
+                await supabase.from("supplier_documents").update({ supplier_id: docSupplierId }).eq("id", doc.id);
+              }
+            }
+
             // Dubblettspärr på dokumentnummer + leverantör.
             let duplicateOf: string | null = null;
-            if (documentNumber && sender.supplier_id) {
+            if (documentNumber && docSupplierId) {
               const { data: prev } = await supabase
                 .from("supplier_documents")
                 .select("id")
-                .eq("supplier_id", sender.supplier_id)
+                .eq("supplier_id", docSupplierId)
                 .eq("doc_type", docType)
                 .ilike("document_number", documentNumber)
                 .neq("id", doc.id)
@@ -350,6 +380,7 @@ Deno.serve(async (req) => {
               messageId,
               fileName,
               action: duplicateOf ? "dubblett_stoppad" : "utkast_skapat",
+              supplierResolved: !!docSupplierId,
               docType,
               documentNumber,
               lines: (parsed.products || []).length,
