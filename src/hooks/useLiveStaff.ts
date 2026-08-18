@@ -200,6 +200,8 @@ export function useLiveStaffDay(day: string) {
         name: store.name,
         city: store.city,
         isWholesale: !!store.is_wholesale,
+        unitType: (store as any).unit_type ?? "butik",
+        legalEntityId: store.legal_entity_id ?? null,
         hoursText: store.hours ?? null,
         hours,
         openNow,
