@@ -254,17 +254,28 @@ export function useSetFeaturedImages() {
       entityType,
       entityId,
       imageIds,
+      day,
     }: {
       entityType: string;
       entityId: string;
       imageIds: string[];
+      /** Datumnyckel (YYYY-MM-DD) som urvalet gäller. Utan den nollas hela enheten. */
+      day?: string;
     }) => {
-      const { error: clearErr } = await supabase
+      // Nollställningen begränsas till den aktuella dagen. Annars raderas
+      // tidigare dagars utvalda bilder och Bildflödets historik försvinner.
+      let clear = supabase
         .from("entity_images")
         .update({ is_featured: false })
         .eq("entity_type", entityType)
         .eq("entity_id", entityId)
         .eq("is_featured", true);
+      if (day) {
+        const start = new Date(`${day}T00:00:00`);
+        const end = new Date(start.getTime() + 86400000);
+        clear = clear.gte("created_at", start.toISOString()).lt("created_at", end.toISOString());
+      }
+      const { error: clearErr } = await clear;
       if (clearErr) throw clearErr;
       if (imageIds.length) {
         const { error } = await supabase
@@ -273,12 +284,24 @@ export function useSetFeaturedImages() {
           .in("id", imageIds);
         if (error) throw error;
       }
+      // Markera dagen som manuellt hanterad så det automatiska urvalet
+      // (4 bilder per dag) inte skriver över personalens val.
+      if (day) {
+        await supabase.rpc("mark_image_feature_day", {
+          _entity_type: entityType,
+          _entity_id: entityId,
+          _day: day,
+          _count: imageIds.length,
+        });
+      }
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ["entity-images", vars.entityType, vars.entityId] });
+      qc.invalidateQueries({ queryKey: ["image-feed"] });
     },
   });
 }
+
 
 
 /** Bild-ID:n som den inloggade användaren har hjärtat. */

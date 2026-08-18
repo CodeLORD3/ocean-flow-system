@@ -129,6 +129,8 @@ export function EntityImageGallery({
    */
   const featured = images.filter((i) => i.is_featured && dayKey(i.created_at) === todayKey);
   const favorites = images.filter((i) => favoriteIds.includes(i.id));
+  /** Antal bilder som laddats upp idag — styr påminnelsen om stjärnmärkning. */
+  const todayImageCount = images.filter((i) => dayKey(i.created_at) === todayKey).length;
 
   /**
    * Poolen med utvalda bilder (valfritt antal), sorterad så framsidans bilder ligger först.
@@ -282,12 +284,17 @@ export function EntityImageGallery({
           ? "Inga utvalda bilder ännu — välj vilka bilder som ska visas."
           : "Inga bilder ännu";
 
-  /** Snabbmarkering direkt på bilden: lägg till/ta bort ur den utvalda poolen (valfritt antal). */
+  /**
+   * Snabbmarkering direkt på bilden. Urvalet hanteras per dag, så gamla dagars
+   * utvalda bilder ligger kvar i Bildflödet.
+   */
   const toggleFeatured = (img: EntityImage) => {
-    const current = featured.map((i) => i.id);
+    const day = dayKey(img.created_at);
+    const current = images.filter((i) => i.is_featured && dayKey(i.created_at) === day).map((i) => i.id);
     const next = img.is_featured ? current.filter((id) => id !== img.id) : [...current, img.id];
-    setFeatured.mutate({ entityType, entityId, imageIds: next });
+    setFeatured.mutate({ entityType, entityId, day, imageIds: next });
   };
+
 
 
   const grid = (
@@ -344,13 +351,13 @@ export function EntityImageGallery({
                     <TooltipTrigger asChild>
                       <button
                         type="button"
-                        aria-label={img.is_featured ? "Ta bort från utvalda" : "Markera som utvald"}
+                        aria-label={img.is_featured ? "Ta bort från Bildflödet" : "Visa i Bildflödet"}
                         onClick={() => toggleFeatured(img)}
                         className={cn(
-                          "absolute top-1 right-1 flex h-8 w-8 items-center justify-center rounded-full border bg-background/90 backdrop-blur transition-opacity sm:h-6 sm:w-6",
+                          "absolute top-1 right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 bg-background/90 backdrop-blur transition-opacity sm:h-6 sm:w-6",
                           img.is_featured
-                            ? "text-amber-500 border-amber-400 ring-2 ring-amber-400/40"
-                            : "text-muted-foreground border-border sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+                            ? "text-amber-500 border-amber-400 ring-2 ring-amber-400/50"
+                            : "text-amber-600/80 border-amber-400/60 sm:opacity-70 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
                         )}
                       >
                         <Star className={cn("h-4 w-4 sm:h-3 sm:w-3", img.is_featured && "fill-current")} />
@@ -358,9 +365,10 @@ export function EntityImageGallery({
                     </TooltipTrigger>
                     <TooltipContent side="left" className="text-xs">
                       {img.is_featured
-                        ? "Utvald bild – klicka för att ta bort"
-                        : "Lägg till i utvalda bilder"}
+                        ? "Visas i Bildflödet – klicka för att ta bort"
+                        : "Visa i Bildflödet"}
                     </TooltipContent>
+
 
                   </Tooltip>
                 ) : null}
@@ -551,6 +559,15 @@ export function EntityImageGallery({
             {favorites.length}
           </Badge>
         )}
+        {previewCount && featured.length > 0 && (
+          <Badge
+            variant="outline"
+            className="h-9 shrink-0 gap-1 rounded-md px-3 font-mono tabular-nums text-[11px] text-amber-600 border-amber-300 sm:h-6 sm:px-2 sm:text-[10px]"
+          >
+            <Star className="h-3 w-3 fill-current sm:h-2.5 sm:w-2.5" />
+            {featured.length} utvalda idag
+          </Badge>
+        )}
         {editable && previewCount && images.length > 0 && (
           <Button
             variant="outline"
@@ -564,6 +581,35 @@ export function EntityImageGallery({
           </Button>
         )}
       </div>
+
+      {/* Saknas utvalda bilder för idag? Påminn personalen om stjärnan. */}
+      {editable && previewCount && !isLoading && featured.length === 0 && todayImageCount > 0 && (
+        <Card className="flex flex-wrap items-center justify-between gap-2 border-dashed border-amber-400/60 bg-amber-500/5 p-2.5">
+          <p className="flex items-start gap-2 text-xs text-foreground">
+            <Star className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+            <span>
+              Inga utvalda bilder idag — stjärnmärk de bilder som ska synas i Bildflödet.
+              {" "}
+              <span className="text-muted-foreground">
+                Väljer ingen markeras 4 av dagens bilder automatiskt.
+              </span>
+            </span>
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 shrink-0 gap-1.5 px-3 text-xs"
+            onClick={() => {
+              setCatalogOpen(true);
+              selectDay(todayKey);
+            }}
+          >
+            <CalendarDays className="h-3.5 w-3.5" />
+            Visa dagens bilder
+          </Button>
+        </Card>
+      )}
+
 
 
       {isLoading ? (
@@ -754,7 +800,7 @@ export function EntityImageGallery({
                   disabled={setFeatured.isPending || updateImage.isPending}
                   onClick={async () => {
                     try {
-                      await setFeatured.mutateAsync({ entityType, entityId, imageIds: selection });
+                      await setFeatured.mutateAsync({ entityType, entityId, day: todayKey, imageIds: selection });
                       // Framsidans bilder får lägst sorteringsordning så de hamnar först i poolen.
                       const order = frontSelection.filter((id) => selection.includes(id));
                       await Promise.all(
