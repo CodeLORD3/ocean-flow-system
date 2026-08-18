@@ -31,6 +31,8 @@ import ReportsRouter from "@/pages/ReportsRouter";
 import AuditRouter from "@/pages/AuditRouter";
 import BugReports from "@/pages/BugReports";
 import LiveStaff from "@/pages/LiveStaff";
+import Personalkollen from "@/pages/Integrations/Personalkollen";
+import PkOnSiteNow from "@/pages/PkOnSiteNow";
 import StaffSchedule from "@/pages/StaffSchedule";
 
 import TradeOffers from "@/pages/TradeOffers";
@@ -111,6 +113,8 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/audit": { component: <AuditRouter /> },
   "/bug-reports": { component: <BugReports /> },
   "/live-staff": { component: <LiveStaff /> },
+  "/personalkollen": { component: <Personalkollen /> },
+  "/on-site-now": { component: <PkOnSiteNow /> },
   "/staff-schedule": { component: <StaffSchedule /> },
 
   "/settings": { component: <PlaceholderPage title="Systeminställningar" /> },
