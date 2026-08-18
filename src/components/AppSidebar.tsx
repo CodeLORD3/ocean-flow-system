@@ -1,5 +1,6 @@
 import {
   Radio,
+  Plug,
   CalendarOff, Ruler,
   Landmark,
   Building2,
@@ -109,6 +110,8 @@ const orgNav = [
 const staffNav = [
   { title: "Personal", url: "/staff", icon: UserCheck },
   { title: "Live personal", url: "/live-staff", icon: Activity },
+  { title: "På plats nu", url: "/on-site-now", icon: Radio },
+  { title: "Personalkollen", url: "/personalkollen", icon: Plug },
   { title: "Schema", url: "/staff-schedule", icon: CalendarRange },
 ];
 
