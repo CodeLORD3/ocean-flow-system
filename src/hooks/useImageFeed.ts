@@ -62,17 +62,25 @@ export function useImageFeed(limit = 300) {
 
 
       const counts = new Map<string, number>();
+      const hearts = new Map<string, number>();
       if (images.length) {
-        const { data: comments, error: cErr } = await supabase
-          .from("entity_image_comments")
-          .select("image_id")
-          .in("image_id", images.map((i) => i.id));
+        const ids = images.map((i) => i.id);
+        const [{ data: comments, error: cErr }, { data: favs, error: fErr }] = await Promise.all([
+          supabase.from("entity_image_comments").select("image_id").in("image_id", ids),
+          supabase.from("entity_image_favorites").select("image_id").in("image_id", ids),
+        ]);
         if (cErr) throw cErr;
+        if (fErr) throw fErr;
         for (const c of comments || []) {
           const id = (c as { image_id: string }).image_id;
           counts.set(id, (counts.get(id) ?? 0) + 1);
         }
+        for (const f of favs || []) {
+          const id = (f as { image_id: string }).image_id;
+          hearts.set(id, (hearts.get(id) ?? 0) + 1);
+        }
       }
+
 
       const rows: FeedImage[] = images.map((img) => {
         let sourceName = "Okänd enhet";
