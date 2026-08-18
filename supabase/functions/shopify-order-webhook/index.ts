@@ -22,6 +22,8 @@ import {
   shopDomain,
   webhookSecret,
 } from "../_shared/shopify-shops.ts";
+import { localDate, resolveWantedDate } from "../_shared/webOrderDate.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -432,12 +434,41 @@ async function createOrder(
   const shopifyOrderId = String(payload?.id ?? "");
   const orderName = String(payload?.name ?? payload?.order_number ?? shopifyOrderId);
 
-  const deliveryMethod = attr(payload, "Delivery Method");
-  const isPickup = /pick\s*up|upph|h(ä|a)mt/i.test(deliveryMethod ?? "");
+  /**
+   * Leveranssätt: kassans note_attribute först, annars Shopifys egna
+   * fraktrader (Zollikon kör "Abholung"/"Pick up" som fraktalternativ).
+   */
+  const shippingTitles = (Array.isArray(payload?.shipping_lines) ? payload.shipping_lines : [])
+    .map((l: any) => [l?.title, l?.code].filter(Boolean).join(" "))
+    .filter(Boolean) as string[];
+  const deliveryMethod = attr(payload, "Delivery Method") ?? shippingTitles[0] ?? null;
+  const PICKUP_RE = /pick\s*up|pickup|upph|h(ä|a)mt|abhol|retrait|self[-\s]?serve/i;
+  const isPickup =
+    PICKUP_RE.test(deliveryMethod ?? "") ||
+    shippingTitles.some((t) => PICKUP_RE.test(t)) ||
+    (!shippingTitles.length && !payload?.shipping_address);
   const timeWindow = attr(payload, "Translated Delivery Time");
-  const wantedDate =
-    parseDeliveryDate(attr(payload, "Delivery Date")) ??
-    String(payload?.created_at ?? new Date().toISOString()).slice(0, 10);
+
+  /**
+   * Datumet ordern GÄLLER räknas alltid ut här — Shopify skickar bara när den
+   * lades. Se _shared/webOrderDate.ts för reglerna (torsdagsregeln,
+   * leveransrubriken och eventdatum).
+   */
+  const timeZone = (shop?.currency ?? "SEK").toUpperCase() === "CHF"
+    ? "Europe/Zurich"
+    : "Europe/Stockholm";
+  const orderLocalDate = localDate(String(payload?.created_at ?? new Date().toISOString()), timeZone);
+  const allLineItems: any[] = Array.isArray(payload?.line_items) ? payload.line_items : [];
+  const allEventLines = allLineItems.length > 0 && allLineItems.every((li) => isEventLine(li));
+  const dateResult = resolveWantedDate({
+    payload,
+    lineItems: allLineItems,
+    isPickup,
+    allEventLines,
+    orderLocalDate,
+  });
+  const wantedDate = dateResult.wantedDate;
+
 
   const customer = await resolveCustomer(db, payload, storeId);
 
@@ -476,10 +507,13 @@ async function createOrder(
   }
 
   const notes: string[] = [];
+  if (dateResult.eventWithoutDate) notes.push(dateResult.note!);
   if (payload?.note) notes.push(String(payload.note));
   notes.push(`Shopify ${orderName} — butik via ${via}`);
   notes.push(`Kund: ${customer.matchedVia}`);
+  if (!dateResult.eventWithoutDate && dateResult.note) notes.push(dateResult.note);
   if (customer.review) notes.push(customer.review);
+
 
   const paidTotal = Number(payload?.total_price ?? 0);
   const paid = String(payload?.financial_status ?? "").toLowerCase() === "paid";

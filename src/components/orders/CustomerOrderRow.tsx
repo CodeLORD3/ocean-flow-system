@@ -249,19 +249,23 @@ export function CustomerOrderRow({
   const paid = isPaid(order);
 
   const statusChip = (
-    <span className="inline-flex flex-wrap items-center gap-1">
+    <span className="inline-flex flex-nowrap items-center gap-1 whitespace-nowrap">
       <span
-        className={`inline-flex items-center rounded-sm border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-tight ${tone.chip}`}
+        className={`inline-flex items-center whitespace-nowrap rounded-sm border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-tight ${tone.chip}`}
       >
         {tone.label}
       </span>
       {late && (
-        <span className="inline-flex items-center rounded-sm border border-row-late-edge bg-card px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-tight text-row-late-text">
+        <span
+          title={`Försenad enligt önskat datum ${order.wanted_date ?? ""}`}
+          className="inline-flex items-center whitespace-nowrap rounded-sm border border-row-late-edge bg-card px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-tight text-row-late-text"
+        >
           {late}
         </span>
       )}
     </span>
   );
+
 
 
   return (
@@ -390,7 +394,7 @@ export function CustomerOrderRow({
 
 
 
-            <span className="flex w-24 shrink-0 items-center gap-1 border-r border-grid-line/70 px-2">
+            <span className="flex w-36 shrink-0 items-center gap-1 overflow-hidden whitespace-nowrap border-r border-grid-line/70 px-2">
               {statusChip}
               {hasAllergy && (
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-destructive" aria-label="Allergi" />
