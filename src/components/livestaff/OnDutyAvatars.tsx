@@ -103,13 +103,23 @@ export function OnDutyAvatars({
               )}
             </button>
           </TooltipTrigger>
-          <TooltipContent side="top" className="text-xs">
+          <TooltipContent side="top" className="max-w-[260px] text-xs">
             <p className="font-medium">{p.name}</p>
             <p className="text-muted-foreground">
               {STATUS_LABEL[p.status]}
               {p.since ? ` · in ${p.since}` : ""}
             </p>
+            {p.deviations.length > 0 && (
+              <div className="mt-1 space-y-0.5 border-t border-border pt-1">
+                {p.deviations.map((d, i) => (
+                  <p key={`${d.kind}-${i}`} className="text-destructive">
+                    {DEVIATION_LABEL[d.kind]} — {d.detail}
+                  </p>
+                ))}
+              </div>
+            )}
           </TooltipContent>
+
         </Tooltip>
       ))}
       {rest.length > 0 && (
