@@ -549,6 +549,26 @@ Deno.serve(async (req) => {
     }
     const api = new PkClient(token);
 
+    // Diagnostik: se svarsformen för en godtycklig sökväg utan att lagra något.
+    if (resource === "probe") {
+      const path = str(body.path) ?? "/work-periods/";
+      try {
+        const page = await api.get(`${BASE}${path}`);
+        out.push({
+          connection: conn.label,
+          path,
+          count: page.results.length,
+          next: page.next,
+          cursor: page.cursor,
+          keys: page.results[0] ? Object.keys(page.results[0]) : [],
+          first: page.results[0] ?? null,
+        });
+      } catch (e) {
+        out.push({ connection: conn.label, path, error: String((e as Error).message) });
+      }
+      continue;
+    }
+
     if (resource === "sales-check") {
       try {
         out.push({ connection: conn.label, sales_per_workplace: await salesCheck(api) });
