@@ -1,5 +1,5 @@
 import { CheckCircle2, Clock, Coffee, AlertTriangle, MinusCircle, Lock } from "lucide-react";
-import { LiveStatus, STATUS_LABEL } from "@/lib/liveStaff";
+import { DEVIATION_LABEL, LiveStatus, STATUS_LABEL, type DeviationKind } from "@/lib/liveStaff";
 import { cn } from "@/lib/utils";
 
 const CONFIG: Record<LiveStatus, { icon: any; className: string }> = {
