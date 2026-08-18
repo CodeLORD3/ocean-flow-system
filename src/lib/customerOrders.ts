@@ -597,6 +597,7 @@ export type OrderTab =
   | "godkannande"
   | "pagaende"
   | "packade"
+  | "event"
   | "obetalda"
   | "arkiverade"
   | "borttagna";
@@ -605,10 +606,12 @@ export const ORDER_TAB_LABELS: Record<OrderTab, string> = {
   godkannande: "Att godkänna",
   pagaende: "Pågående",
   packade: "Packade",
+  event: "Event & catering",
   obetalda: "Hämtade – ej betalda",
   arkiverade: "Arkiverade",
   borttagna: "Borttagna",
 };
+
 
 /** Anledningar vid borttagning av en order — ordern sparas för historiken. */
 export const DELETE_REASONS = [
