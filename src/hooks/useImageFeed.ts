@@ -20,9 +20,21 @@ export type FeedImage = EntityImage & {
   sourceKind: "store" | "wholesale" | "admin";
   city: string | null;
   commentCount: number;
+  /** Antal hjärtan från all personal (inte bara mina) */
+  favoriteCount: number;
 };
 
-export type FeedSource = { id: string; name: string; kind: FeedImage["sourceKind"] };
+export type FeedSource = {
+  id: string;
+  name: string;
+  kind: FeedImage["sourceKind"];
+  /** Antal bilder i flödet från enheten */
+  imageCount: number;
+  /** Bilder senaste 7 dagarna — måttet på hur aktiv enheten är */
+  recentCount: number;
+  /** Summa hjärtan på enhetens bilder */
+  favoriteCount: number;
+};
 
 export function useImageFeed(limit = 300) {
   return useQuery({
