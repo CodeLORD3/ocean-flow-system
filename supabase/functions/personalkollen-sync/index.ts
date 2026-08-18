@@ -324,31 +324,45 @@ async function syncCostgroups(db: SupabaseClient, _api: PkClient, conn: Conn) {
     .eq("connection_id", conn.id);
   const prior = new Map((existing ?? []).map((r: Row) => [String(r.url), r]));
 
+  const storeId = (needle: string): string | null => {
+    const hit = (stores ?? []).find((s: Row) => String(s.name ?? "") === needle);
+    return hit ? String(hit.id) : null;
+  };
+
   for (const [url, info] of seen) {
     const before = prior.get(url);
     const manual = bool(before?.store_id_manual);
-    let storeId = (before?.store_id as string | null) ?? null;
     const name = str(info.name);
-    if (!manual && !storeId && name) {
-      const target = normName(name);
-      const hits = (stores ?? []).filter((s: Row) => {
-        const n = normName(String(s.name ?? ""));
-        return n.length > 2 && (n === target || target.includes(n) || n.includes(target));
-      });
-      if (hits.length === 1) storeId = String(hits[0].id);
+    const companyGroup = !!name && /no\.?1\s*ab/i.test(name);
+
+    let store = (before?.store_id as string | null) ?? null;
+    let confidence = manual ? "manual" : companyGroup ? "company" : "none";
+
+    if (companyGroup) {
+      store = null;
+    } else if (!manual) {
+      // Nollställs varje synk och sätts bara om nyckelordet är entydigt.
+      const match = matchStoreByName(name ?? "");
+      store = match ? storeId(match) : null;
+      confidence = store ? "sure" : match ? "unsure" : "none";
     }
+
     rows.push({
       connection_id: conn.id,
       url,
       short_identifier: info.short_identifier ?? null,
       name,
       workplace_url: info.workplace_url ?? null,
-      store_id: storeId,
+      store_id: store,
       store_id_manual: manual,
+      is_company_group: companyGroup,
+      match_confidence: confidence,
       raw: info.raw ?? null,
       synced_at: new Date().toISOString(),
     });
   }
+
+
 
   const upserts = await upsert(db, "pk_costgroups", rows, "connection_id,url");
   return { pages: 0, upserts, cursor: null as string | null };
