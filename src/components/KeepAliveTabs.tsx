@@ -57,6 +57,8 @@ import Establishments from "@/pages/Establishments";
 import LegalEntitiesPage from "@/pages/LegalEntitiesPage";
 import FoodSafety from "@/pages/FoodSafety";
 import Chat from "@/pages/Chat";
+import ImageFeed from "@/pages/ImageFeed";
+
 import Checklist from "@/pages/Checklist";
 import Manual from "@/pages/Manual";
 import DailyReport from "@/pages/DailyReport";
