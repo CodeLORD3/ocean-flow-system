@@ -118,7 +118,10 @@ export interface OrderFilter {
   search?: string;
   /** true = endast arkiverade, false/undefined = endast ej arkiverade. */
   archived?: boolean;
+  /** true = både arkiverade och aktiva (används vid fritextsök över alla flikar). */
+  includeArchived?: boolean;
 }
+
 
 export function useCustomerOrders(filter: OrderFilter = {}) {
   return useQuery({
@@ -136,7 +139,8 @@ export function useCustomerOrders(filter: OrderFilter = {}) {
       if (filter.fromDate) q = q.gte("wanted_date", filter.fromDate);
       if (filter.toDate) q = q.lte("wanted_date", filter.toDate);
       if (filter.archived) q = q.not("archived_at", "is", null);
-      else q = q.is("archived_at", null);
+      else if (!filter.includeArchived) q = q.is("archived_at", null);
+
       const { data, error } = await q;
       if (error) throw error;
       let rows = (data || []) as CustomerOrder[];

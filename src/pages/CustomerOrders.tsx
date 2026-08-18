@@ -187,13 +187,31 @@ export default function CustomerOrders() {
     orderType,
     search,
     archived: isArchiveView,
+    // Vid sökning tas även arkiverade med, så inget känns försvunnet.
+    includeArchived: !isArchiveView && search.trim().length > 0,
   });
+
 
   const rowReadOnly = (o: CustomerOrder) =>
     isShop ? o.store_id !== activeStoreId : site === "production";
 
-  /** Den valda fliken avgör listan — en order ligger alltid i exakt en flik. */
-  const viewOrders = useMemo(() => orders.filter((o) => orderTab(o) === tab), [orders, tab]);
+  /**
+   * Den valda fliken avgör listan — en order ligger alltid i exakt en flik.
+   * Vid fritextsök söks däremot ALLA flikar, så att en order aldrig känns
+   * försvunnen bara för att den ligger i Event & catering eller Arkiverade.
+   */
+  const searching = search.trim().length > 0;
+  const viewOrders = useMemo(
+    () => (searching ? orders : orders.filter((o) => orderTab(o) === tab)),
+    [orders, tab, searching],
+  );
+  /** Vilka flikar sökträffarna kommer från, visas som hjälptext. */
+  const searchTabs = useMemo(() => {
+    if (!searching) return [] as string[];
+    const set = new Set(viewOrders.map((o) => ORDER_TAB_LABELS[orderTab(o)]));
+    return [...set];
+  }, [searching, viewOrders]);
+
 
 
   const markedOrders = viewOrders.filter((o) => marked.includes(o.id));
@@ -234,6 +252,13 @@ export default function CustomerOrders() {
           <span className="font-mono text-xs tabular-nums text-muted-foreground">
             {viewOrders.length} rader
           </span>
+          {searching && (
+            <span className="text-xs text-muted-foreground">
+              Sökning i alla flikar
+              {searchTabs.length > 0 ? ` — träffar i ${searchTabs.join(", ")}` : ""}
+            </span>
+          )}
+
         </div>
 
         {canEdit && tab === "godkannande" && (
