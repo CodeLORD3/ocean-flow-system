@@ -30,6 +30,7 @@ import {
   ORDER_STATUS_LABELS,
   ORDER_TYPE_LABELS,
   PACK_STATUS_LABELS,
+  ACTIVE_ORDER_TABS,
   ORDER_TAB_LABELS,
   OrderTab,
   orderTab,
@@ -50,6 +51,7 @@ import { TodayPickupsView } from "@/components/orders/TodayPickupsView";
 
 /** Orderflikarna: tre operativa lägen först, historiken nedtonad sist. */
 const TABS: { id: OrderTab; hint: string; muted?: boolean }[] = [
+  { id: "alla", hint: "Allt som är på gång: ska packas, levereras, hämtas samt event framöver" },
   {
     id: "godkannande",
     hint: "Webbordrar för hämtning i butik som väntar på godkännande",
@@ -62,6 +64,7 @@ const TABS: { id: OrderTab; hint: string; muted?: boolean }[] = [
   { id: "arkiverade", hint: "Avslutade — hämtade och betalda", muted: true },
   { id: "borttagna", hint: "Avbokade eller felregistrerade, sparas för historik", muted: true },
 ];
+
 
 
 
@@ -168,7 +171,7 @@ export default function CustomerOrders() {
     "orders",
   );
 
-  const [tab, setTab] = useState<OrderTab>("pagaende");
+  const [tab, setTab] = useState<OrderTab>("alla");
   const [marked, setMarked] = useState<string[]>([]);
 
   const toggleRow = (id: string) => setOpenRow((cur) => (cur === id ? null : id));
@@ -202,9 +205,17 @@ export default function CustomerOrders() {
    */
   const searching = search.trim().length > 0;
   const viewOrders = useMemo(
-    () => (searching ? orders : orders.filter((o) => orderTab(o) === tab)),
+    () =>
+      searching
+        ? orders
+        : orders.filter((o) =>
+            tab === "alla"
+              ? ACTIVE_ORDER_TABS.includes(orderTab(o))
+              : orderTab(o) === tab,
+          ),
     [orders, tab, searching],
   );
+
   /** Vilka flikar sökträffarna kommer från, visas som hjälptext. */
   const searchTabs = useMemo(() => {
     if (!searching) return [] as string[];

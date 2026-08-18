@@ -594,6 +594,7 @@ export function isUncollected(order: CustomerOrder) {
  * men obetalt. Betalstatus hanteras separat från packflödet.
  */
 export type OrderTab =
+  | "alla"
   | "godkannande"
   | "pagaende"
   | "packade"
@@ -603,6 +604,7 @@ export type OrderTab =
   | "borttagna";
 
 export const ORDER_TAB_LABELS: Record<OrderTab, string> = {
+  alla: "Alla",
   godkannande: "Att godkänna",
   pagaende: "Pågående",
   packade: "Packade",
@@ -611,6 +613,14 @@ export const ORDER_TAB_LABELS: Record<OrderTab, string> = {
   arkiverade: "Arkiverade",
   borttagna: "Borttagna",
 };
+
+/**
+ * "Alla" är en samlingsflik: allt som fortfarande är på gång — ska packas,
+ * levereras, hämtas eller är en eventbokning framöver. Utlämnat, arkiverat
+ * och borttaget ligger kvar i sina egna flikar.
+ */
+export const ACTIVE_ORDER_TABS: OrderTab[] = ["godkannande", "pagaende", "packade", "event"];
+
 
 
 /** Anledningar vid borttagning av en order — ordern sparas för historiken. */
