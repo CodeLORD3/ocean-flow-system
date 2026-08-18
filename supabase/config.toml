@@ -58,3 +58,9 @@ verify_jwt = false
 
 [functions.mail-intake]
 verify_jwt = false
+
+[functions.personalkollen-sync]
+verify_jwt = false
+
+[functions.personalkollen-reveal-pnr]
+verify_jwt = false
