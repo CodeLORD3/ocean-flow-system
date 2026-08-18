@@ -55,6 +55,9 @@ export interface LiveStoreRow {
   name: string;
   city: string;
   isWholesale: boolean;
+  /** butik | grossist | overhead — overhead redovisas separat per bolag. */
+  unitType: string;
+  legalEntityId: string | null;
   hoursText: string | null;
   hours: DayHours;
   openNow: boolean;
