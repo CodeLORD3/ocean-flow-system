@@ -687,12 +687,12 @@ export function lateMinutes(o: OrderFlowFields): number {
   return diff > 0 ? diff : 0;
 }
 
-/** "Försenad 35 min" eller "Försenad 2 dagar". */
+/** Kort märkning som alltid får plats på en rad: "Sen 35 min", "Sen 7 d". */
 export function lateText(o: OrderFlowFields): string | null {
   const m = lateMinutes(o);
   if (m <= 0) return null;
-  if (m < 60) return `Försenad ${m} min`;
-  if (m < 24 * 60) return `Försenad ${Math.floor(m / 60)} h`;
-  const d = Math.floor(m / (24 * 60));
-  return `Försenad ${d} ${d === 1 ? "dag" : "dagar"}`;
+  if (m < 60) return `Sen ${m} min`;
+  if (m < 24 * 60) return `Sen ${Math.floor(m / 60)} h`;
+  return `Sen ${Math.floor(m / (24 * 60))} d`;
 }
+
