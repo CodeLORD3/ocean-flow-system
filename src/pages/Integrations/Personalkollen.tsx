@@ -64,6 +64,8 @@ export default function Personalkollen() {
   const setMapping = usePkSetMapping();
   const setStaffLink = usePkSetStaffLink();
   const runSync = usePkRunSync();
+  const addCostgroup = usePkAddCostgroup();
+  const [newCg, setNewCg] = useState({ connectionId: "", shortIdentifier: "", name: "", storeId: NONE });
 
   const connName = useMemo(() => {
     const m = new Map<string, string>();
