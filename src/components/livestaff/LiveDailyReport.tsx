@@ -126,14 +126,18 @@ export function LiveDailyReport({
                         {s.costSource === "beräknad" ? (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Badge variant="secondary" className="text-[9px]">beräknad</Badge>
+                              <Badge variant="secondary" className="text-[9px]">
+                                {s.currency === "SEK" ? "ej i Personalkollen" : "beräknad"}
+                              </Badge>
                             </TooltipTrigger>
-                            <TooltipContent className="max-w-[240px] text-xs">
-                              Enheten saknar Personalkollen. Kostnaden räknas som arbetad tid × timlön
-                              från personalkortet, i {s.currency}.
+                            <TooltipContent className="max-w-[260px] text-xs">
+                              {s.currency === "SEK"
+                                ? "Enheten saknar mappning mot Personalkollen. Mappa kostnadsgruppen under Personalkollen → Butiksmappning för att få riktig kostnad."
+                                : `Enheten saknar Personalkollen. Kostnaden räknas som arbetad tid × timlön från personalkortet, i ${s.currency}.`}
                             </TooltipContent>
                           </Tooltip>
                         ) : s.ongoingCount > 0 ? (
+
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Badge
