@@ -5394,6 +5394,8 @@ export type Database = {
         Row: {
           connection_id: string
           id: string
+          is_company_group: boolean
+          match_confidence: string | null
           name: string | null
           raw: Json | null
           short_identifier: number | null
@@ -5406,6 +5408,8 @@ export type Database = {
         Insert: {
           connection_id: string
           id?: string
+          is_company_group?: boolean
+          match_confidence?: string | null
           name?: string | null
           raw?: Json | null
           short_identifier?: number | null
@@ -5418,6 +5422,8 @@ export type Database = {
         Update: {
           connection_id?: string
           id?: string
+          is_company_group?: boolean
+          match_confidence?: string | null
           name?: string | null
           raw?: Json | null
           short_identifier?: number | null
