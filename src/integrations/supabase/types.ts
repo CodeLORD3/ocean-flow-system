@@ -11738,7 +11738,6 @@ export type Database = {
           work_time_sec: number
         }[]
       }
-      pk_match_staff_by_name: { Args: never; Returns: number }
       pos_day_summary: {
         Args: { _date: string; _store_id: string }
         Returns: Json

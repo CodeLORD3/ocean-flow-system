@@ -218,7 +218,16 @@ export function useLiveStaffDay(day: string) {
     return map;
   }, [staff.data]);
 
-  return { rows, staffById, isLoading, now, nowMinutes, live };
+  /**
+   * Stämplingar som inte kunde knytas till någon butik (t.ex. Personalkollen-pass
+   * vars kostnadsgrupp saknar butiksmappning). Raden döljs inte — den flaggas.
+   */
+  const unassignedShifts = useMemo(
+    () => (actual.data ?? []).filter((s) => !s.store_id),
+    [actual.data],
+  );
+
+  return { rows, staffById, isLoading, now, nowMinutes, live, unassignedShifts };
 }
 
 export function staffName(staffById: Map<string, any>, id: string): string {

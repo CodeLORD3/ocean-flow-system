@@ -588,8 +588,8 @@ async function syncCursorResource(
 
 /* ---------------------------------------------------------- engångskontroll */
 
-async function salesCheck(api: PkClient) {
-  const since = new Date(Date.now() - 86400_000).toISOString().slice(0, 10) + "T00:00:00";
+async function salesCheck(api: PkClient, days = 1) {
+  const since = new Date(Date.now() - days * 86400_000).toISOString().slice(0, 10) + "T00:00:00";
   let url: string | null = `${BASE}/sales/?sale_time__gte=${encodeURIComponent(since)}`;
   const counts: Record<string, number> = {};
   let pages = 0;
@@ -665,7 +665,7 @@ Deno.serve(async (req) => {
 
     if (resource === "sales-check") {
       try {
-        out.push({ connection: conn.label, sales_per_workplace: await salesCheck(api) });
+        out.push({ connection: conn.label, sales_per_workplace: await salesCheck(api, Number(body.days ?? 1) || 1) });
       } catch (e) {
         failed = true;
         out.push({ connection: conn.label, error: String((e as Error).message) });
