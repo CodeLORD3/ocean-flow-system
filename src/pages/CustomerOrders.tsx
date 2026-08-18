@@ -252,6 +252,13 @@ export default function CustomerOrders() {
           <span className="font-mono text-xs tabular-nums text-muted-foreground">
             {viewOrders.length} rader
           </span>
+          {searching && (
+            <span className="text-xs text-muted-foreground">
+              Sökning i alla flikar
+              {searchTabs.length > 0 ? ` — träffar i ${searchTabs.join(", ")}` : ""}
+            </span>
+          )}
+
         </div>
 
         {canEdit && tab === "godkannande" && (
