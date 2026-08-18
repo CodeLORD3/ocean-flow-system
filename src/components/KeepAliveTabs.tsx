@@ -32,7 +32,7 @@ import AuditRouter from "@/pages/AuditRouter";
 import BugReports from "@/pages/BugReports";
 import LiveStaff from "@/pages/LiveStaff";
 import Personalkollen from "@/pages/Integrations/Personalkollen";
-import PkOnSiteNow from "@/pages/PkOnSiteNow";
+
 import StaffSchedule from "@/pages/StaffSchedule";
 
 import TradeOffers from "@/pages/TradeOffers";
