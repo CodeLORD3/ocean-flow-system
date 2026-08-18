@@ -351,13 +351,13 @@ export function EntityImageGallery({
                     <TooltipTrigger asChild>
                       <button
                         type="button"
-                        aria-label={img.is_featured ? "Ta bort från utvalda" : "Markera som utvald"}
+                        aria-label={img.is_featured ? "Ta bort från Bildflödet" : "Visa i Bildflödet"}
                         onClick={() => toggleFeatured(img)}
                         className={cn(
-                          "absolute top-1 right-1 flex h-8 w-8 items-center justify-center rounded-full border bg-background/90 backdrop-blur transition-opacity sm:h-6 sm:w-6",
+                          "absolute top-1 right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 bg-background/90 backdrop-blur transition-opacity sm:h-6 sm:w-6",
                           img.is_featured
-                            ? "text-amber-500 border-amber-400 ring-2 ring-amber-400/40"
-                            : "text-muted-foreground border-border sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+                            ? "text-amber-500 border-amber-400 ring-2 ring-amber-400/50"
+                            : "text-amber-600/80 border-amber-400/60 sm:opacity-70 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
                         )}
                       >
                         <Star className={cn("h-4 w-4 sm:h-3 sm:w-3", img.is_featured && "fill-current")} />
@@ -365,9 +365,10 @@ export function EntityImageGallery({
                     </TooltipTrigger>
                     <TooltipContent side="left" className="text-xs">
                       {img.is_featured
-                        ? "Utvald bild – klicka för att ta bort"
-                        : "Lägg till i utvalda bilder"}
+                        ? "Visas i Bildflödet – klicka för att ta bort"
+                        : "Visa i Bildflödet"}
                     </TooltipContent>
+
 
                   </Tooltip>
                 ) : null}
