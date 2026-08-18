@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useSite } from "@/contexts/SiteContext";
 import { useTabs } from "@/contexts/TabsContext";
-import { useStores } from "@/hooks/useStores";
+import { useAllowedStores } from "@/components/StoreSwitcher";
 import { useSessionTracking, closeCurrentSession } from "@/hooks/useSessionTracking";
 import { useChatSound } from "@/hooks/useChatSound";
 import {
@@ -124,7 +124,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       .replace(/-/g, " ")
       .replace(/^./, (c) => c.toUpperCase()) || "Översikt");
   const page = pageTitles[location.pathname] || { title: fallbackTitle, breadcrumb: ["Hem", fallbackTitle] };
-  const { data: allStores = [] } = useStores();
+  const allowedStores = useAllowedStores();
 
   const { staff } = useStaffAuth();
   useSessionTracking();
@@ -136,15 +136,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const access = isAdmin
     ? (["wholesale", "production", "shop"] as const)
     : rawAccess;
-  const lockedStoreId = isAdmin ? null : (staff?.allowed_store_id ?? null);
-  const lockedStoreIds = isAdmin ? [] : (staff?.allowed_store_ids ?? []);
-  const allowedSet = new Set<string>([
-    ...lockedStoreIds,
-    ...(lockedStoreId ? [lockedStoreId] : []),
-  ]);
-  const retailStores = allStores
-    .filter((s) => !s.is_wholesale)
-    .filter((s) => allowedSet.size === 0 || allowedSet.has(s.id));
+  // Butikslistan delas med sidomenyns butiksväxlare så meny och sidomeny matchar.
+  const retailStores = allowedStores;
+
 
   const currentPortalLabel =
     site === "shop" ? activeStoreName || "Butik" : site === "production" ? "Grossist" : "Admin";

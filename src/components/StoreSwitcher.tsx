@@ -1,18 +1,17 @@
 import { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { ChevronsUpDown, Store as StoreIcon, Check, LayoutGrid } from "lucide-react";
+import { ChevronsUpDown, Store as StoreIcon, Check } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSite } from "@/contexts/SiteContext";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useStores } from "@/hooks/useStores";
 import { cn } from "@/lib/utils";
+
 
 /**
  * Butiker som den inloggade får öppna. Inget explicit urval = alla butiker.
@@ -22,14 +21,19 @@ export function useAllowedStores() {
   const { staff } = useStaffAuth();
   const { data: stores = [] } = useStores();
   return useMemo(() => {
+    const access = (staff?.portal_access as string[] | undefined) ?? [];
+    // Admin har full åtkomst. Saknas butiksbehörighet finns inga butiker att byta till.
+    if (!access.includes("admin") && !access.includes("shop")) return [];
     const shopsOnly = stores.filter((s: any) => !s.is_wholesale);
     const ids = new Set<string>([
       ...((staff?.allowed_store_ids as string[] | undefined) ?? []),
       ...((staff as any)?.allowed_store_id ? [(staff as any).allowed_store_id as string] : []),
     ]);
+    if (access.includes("admin")) return shopsOnly;
     return ids.size === 0 ? shopsOnly : shopsOnly.filter((s: any) => ids.has(s.id));
   }, [staff, stores]);
 }
+
 
 /** Byt aktiv butik utan att lämna sidan man står på. */
 export function useSwitchStore() {
@@ -42,18 +46,12 @@ export function useSwitchStore() {
 
 /**
  * Snabbväxling mellan butiker direkt i sidomenyn — ett klick istället för
- * utloggning/portalval. Visar även vägen tillbaka till portalvalet.
+ * utloggning. Portalbyte sker enbart i menyn vid profilen.
  */
 export function StoreSwitcher({ collapsed = false }: { collapsed?: boolean }) {
-  const { activeStoreId, activeStoreName, clearPortal } = useSite();
+  const { activeStoreId, activeStoreName } = useSite();
   const stores = useAllowedStores();
   const switchStore = useSwitchStore();
-  const navigate = useNavigate();
-
-  const goPortals = () => {
-    clearPortal();
-    navigate("/choose-portal", { replace: true });
-  };
 
   if (collapsed) {
     return (
@@ -61,12 +59,7 @@ export function StoreSwitcher({ collapsed = false }: { collapsed?: boolean }) {
         <DropdownMenuTrigger className="w-full h-8 grid place-items-center rounded-md text-emerald-200/80 hover:bg-emerald-500/10">
           <StoreIcon className="h-4 w-4" />
         </DropdownMenuTrigger>
-        <StoreMenu
-          stores={stores}
-          activeStoreId={activeStoreId}
-          onPick={switchStore}
-          onPortals={goPortals}
-        />
+        <StoreMenu stores={stores} activeStoreId={activeStoreId} onPick={switchStore} />
       </DropdownMenu>
     );
   }
@@ -81,12 +74,7 @@ export function StoreSwitcher({ collapsed = false }: { collapsed?: boolean }) {
         <span className="truncate flex-1">{activeStoreName || "Välj butik"}</span>
         <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 opacity-70" />
       </DropdownMenuTrigger>
-      <StoreMenu
-        stores={stores}
-        activeStoreId={activeStoreId}
-        onPick={switchStore}
-        onPortals={goPortals}
-      />
+      <StoreMenu stores={stores} activeStoreId={activeStoreId} onPick={switchStore} />
     </DropdownMenu>
   );
 }
@@ -95,12 +83,10 @@ function StoreMenu({
   stores,
   activeStoreId,
   onPick,
-  onPortals,
 }: {
   stores: any[];
   activeStoreId: string | null;
   onPick: (id: string, name: string) => void;
-  onPortals: () => void;
 }) {
   return (
     <DropdownMenuContent align="start" className="w-60 max-h-[70vh] overflow-y-auto">
@@ -120,10 +106,7 @@ function StoreMenu({
           <span className="truncate">{s.name}</span>
         </DropdownMenuItem>
       ))}
-      <DropdownMenuSeparator />
-      <DropdownMenuItem onClick={onPortals} className="text-xs">
-        <LayoutGrid className="h-3.5 w-3.5 mr-1.5" /> Byt portal
-      </DropdownMenuItem>
     </DropdownMenuContent>
   );
+
 }
