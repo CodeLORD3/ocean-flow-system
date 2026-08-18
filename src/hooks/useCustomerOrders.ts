@@ -982,7 +982,7 @@ export function useCustomerOrderTabCounts(storeId?: string | null) {
       let q = db
         .from("customer_orders")
         .select(
-          "id, status, pack_status, archived_at, cancelled_at, handed_over_at, paid_at, web_paid, wanted_date, needs_approval, approved_at",
+          "id, status, pack_status, archived_at, cancelled_at, handed_over_at, paid_at, web_paid, wanted_date, needs_approval, approved_at, category, customer_order_lines(note)",
         );
       if (storeId) q = q.eq("store_id", storeId);
       const { data, error } = await q;
@@ -991,10 +991,12 @@ export function useCustomerOrderTabCounts(storeId?: string | null) {
         godkannande: 0,
         pagaende: 0,
         packade: 0,
+        event: 0,
         obetalda: 0,
         arkiverade: 0,
         borttagna: 0,
       };
+
       for (const row of (data || []) as any[]) counts[orderTab(row)] += 1;
       return counts;
     },
