@@ -8,6 +8,8 @@ export interface TabItem {
 
 const PAGE_TITLES: Record<string, string> = {
   "/": "Översikt",
+  "/image-feed": "Bildflöde",
+
   "/inventory": "Lagerhantering",
   "/orders": "Ordrar",
   "/suppliers": "Leverantörer",

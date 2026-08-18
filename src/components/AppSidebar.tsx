@@ -1,5 +1,7 @@
 import {
+  Images,
   Radio,
+
   Plug,
   CalendarOff, Ruler,
   Landmark,
@@ -70,6 +72,8 @@ import { canAccessRoute } from "@/lib/pageAccess";
 
 const overviewNav = [
   { title: "Översikt", url: "/organisation", icon: BarChart3 },
+  { title: "Bildflöde", url: "/image-feed", icon: Images },
+
   { title: "Chatt", url: "/chat", icon: MessageSquare },
 ];
 

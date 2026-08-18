@@ -57,6 +57,8 @@ import Establishments from "@/pages/Establishments";
 import LegalEntitiesPage from "@/pages/LegalEntitiesPage";
 import FoodSafety from "@/pages/FoodSafety";
 import Chat from "@/pages/Chat";
+import ImageFeed from "@/pages/ImageFeed";
+
 import Checklist from "@/pages/Checklist";
 import Manual from "@/pages/Manual";
 import DailyReport from "@/pages/DailyReport";
@@ -140,7 +142,9 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/legal-entities": { component: <LegalEntitiesPage /> },
   "/food-safety": { component: <FoodSafety /> },
   "/chat": { component: <Chat /> },
+  "/image-feed": { component: <ImageFeed /> },
   "/checklist": { component: <Checklist /> },
+
   "/manual": { component: <Manual /> },
   "/dagsrapport": { component: <DailyReport /> },
   "/production": { component: <ProductionRouter /> },

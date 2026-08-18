@@ -1,6 +1,8 @@
 import {
   CalendarOff,
+  Images,
   LayoutDashboard, ShoppingCart, Users, Fish, Package, Truck, Store, UserCheck, BarChart3, Settings, Anchor, CreditCard, ClipboardList, CalendarDays, Star, BookOpen, ListTodo, ChevronDown, FileText, SlidersHorizontal, MessageSquare, ClipboardCheck, History, ShieldCheck, ArrowLeftRight, Trash2,
+
   CalendarRange,
 } from "lucide-react";
 import { PortalLogo } from "@/components/PortalLogo";
@@ -26,7 +28,9 @@ import { canAccessRoute } from "@/lib/pageAccess";
 
 const overviewNav = [
   { title: "Översikt", url: "/organisation", icon: LayoutDashboard },
+  { title: "Bildflöde", url: "/image-feed", icon: Images },
   { title: "Chatt", url: "/chat", icon: MessageSquare },
+
   { title: "Checklista", url: "/checklist", icon: ClipboardCheck },
   { title: "Egenkontroll", url: "/food-safety", icon: ClipboardCheck },
   { title: "Kundbeställningar", url: "/customer-orders", icon: ClipboardList },
