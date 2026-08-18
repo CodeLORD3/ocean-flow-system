@@ -224,10 +224,9 @@ export function usePkSetMapping() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (p: { table: "pk_costgroups" | "pk_workplaces"; id: string; storeId: string | null }) => {
-      const { error } = await supabase
-        .from(p.table)
-        .update({ store_id: p.storeId, store_id_manual: true })
-        .eq("id", p.id);
+      const patch: Record<string, unknown> = { store_id: p.storeId, store_id_manual: true };
+      if (p.table === "pk_costgroups") patch.match_confidence = "manual";
+      const { error } = await supabase.from(p.table).update(patch as any).eq("id", p.id);
       if (error) throw error;
     },
     onSuccess: () => {
