@@ -80,6 +80,26 @@ export default function Personalkollen() {
   const unmappedCostgroups = (costgroups.data ?? []).filter((c) => !c.store_id).length;
   const unlinkedStaff = (pkStaff.data ?? []).filter((s) => !s.employee_id).length;
 
+  const norm = (v?: string | null) => (v ?? "").trim().toLowerCase();
+
+  /** Ej kopplade personer, med namnförslag som måste bekräftas manuellt. */
+  const unlinked = useMemo(() => {
+    const cards = staff.data ?? [];
+    const takenIds = new Set((pkStaff.data ?? []).map((p) => p.employee_id).filter(Boolean) as string[]);
+    return (pkStaff.data ?? [])
+      .filter((p) => !p.employee_id)
+      .map((p) => {
+        const suggestion =
+          cards.find(
+            (s: any) =>
+              norm(s.first_name) === norm(p.first_name) &&
+              norm(s.last_name) === norm(p.last_name) &&
+              !takenIds.has(s.id),
+          ) ?? null;
+        return { pk: p, suggestion };
+      });
+  }, [pkStaff.data, staff.data]);
+
   const doSync = (resource?: string) => {
     runSync.mutate(
       { resource },
@@ -150,6 +170,7 @@ export default function Personalkollen() {
           <TabsTrigger value="status">Status</TabsTrigger>
           <TabsTrigger value="mapping">Butiksmappning</TabsTrigger>
           <TabsTrigger value="staff">Personal</TabsTrigger>
+          <TabsTrigger value="unlinked">Ej kopplade{unlinked.length ? ` (${unlinked.length})` : ""}</TabsTrigger>
           <TabsTrigger value="cost">Personalkostnad</TabsTrigger>
         </TabsList>
 
@@ -338,6 +359,76 @@ export default function Personalkollen() {
                   ))}
                 </tbody>
               </table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="unlinked" className="pt-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Ej kopplade personer</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Automatisk koppling sker enbart på e-post. Namnträffar visas som förslag och måste bekräftas.
+              </p>
+            </CardHeader>
+            <CardContent className="overflow-x-auto p-0">
+              {unlinked.length === 0 ? (
+                <p className="p-4 text-sm text-muted-foreground">Alla personer är kopplade.</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="text-xs uppercase text-muted-foreground">
+                    <tr className="border-b">
+                      <th className="px-4 py-2 text-left font-medium">Personalkollen</th>
+                      <th className="px-4 py-2 text-left font-medium">Bolag</th>
+                      <th className="px-4 py-2 text-left font-medium">E-post</th>
+                      <th className="px-4 py-2 text-left font-medium">Förslag (namnträff)</th>
+                      <th className="px-4 py-2 text-right font-medium"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {unlinked.map(({ pk, suggestion }) => (
+                      <tr key={pk.id} className="border-b last:border-0">
+                        <td className="px-4 py-2">
+                          {`${pk.first_name ?? ""} ${pk.last_name ?? ""}`.trim() || "—"}
+                        </td>
+                        <td className="px-4 py-2">{connName.get(pk.connection_id) ?? "—"}</td>
+                        <td className="px-4 py-2 text-muted-foreground">{pk.email || "saknas"}</td>
+                        <td className="px-4 py-2">
+                          {suggestion ? (
+                            <span>
+                              {`${suggestion.first_name} ${suggestion.last_name}`}
+                              <span className="ml-2 text-xs text-muted-foreground">
+                                {(suggestion as any).email || "utan e-post"}
+                              </span>
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">Inget förslag</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-2 text-right">
+                          {suggestion ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                setStaffLink.mutate(
+                                  { id: pk.id, employeeId: suggestion.id },
+                                  {
+                                    onSuccess: () => toast.success("Koppling bekräftad"),
+                                    onError: (e: any) => toast.error(e?.message ?? "Kunde inte spara"),
+                                  },
+                                )
+                              }
+                            >
+                              Bekräfta koppling
+                            </Button>
+                          ) : null}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

@@ -41,7 +41,7 @@ export default function LiveStaff() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [selected, setSelected] = useState<string | null>(null);
 
-  const { rows, staffById, isLoading, now, nowMinutes, live } = useLiveStaffDay(day);
+  const { rows, staffById, isLoading, now, nowMinutes, live, unassignedShifts } = useLiveStaffDay(day);
 
   const cities = useMemo(() => Array.from(new Set(rows.map((r) => r.city))).sort(), [rows]);
 
@@ -212,6 +212,34 @@ export default function LiveStaff() {
         totals={costKpi.totals}
         overheadPct={costKpi.overheadPct}
       />
+
+      {unassignedShifts.length > 0 && (
+        <Card className="border-warning/40 shadow-card">
+          <CardContent className="space-y-2 p-3">
+            <p className="flex items-center gap-1 text-[11px] font-medium text-warning">
+              <AlertTriangle className="h-3.5 w-3.5" /> Okänd butik — {unassignedShifts.length} stämpling(ar) utan
+              butiksmappning
+            </p>
+            <div className="space-y-1">
+              {unassignedShifts.map((s) => (
+                <div key={s.id} className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="font-medium">{staffName(staffById, s.staff_id)}</span>
+                  <Badge variant="outline" className="text-[10px]">Okänd butik</Badge>
+                  <span className="font-mono tabular-nums text-muted-foreground">
+                    {new Date(s.clocked_in_at).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}
+                    {s.clocked_out_at
+                      ? `–${new Date(s.clocked_out_at).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" })}`
+                      : " – pågår"}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              Mappa kostnadsgruppen mot butik under Personalkollen → Butiksmappning så hamnar raderna rätt.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <StatusLegend />
 
