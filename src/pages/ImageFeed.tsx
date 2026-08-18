@@ -465,17 +465,23 @@ function ImageGrid({
                   className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
                 />
               </button>
-              {/* Tydlig avsändare direkt på bilden — man ska se vilket ställe som lagt ut */}
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end gap-1.5 bg-gradient-to-t from-black/75 via-black/30 to-transparent p-1.5 pt-6">
-                <span className="flex min-w-0 items-center gap-1 rounded-md bg-background/90 px-1.5 py-0.5 text-[11px] font-semibold text-foreground shadow-sm backdrop-blur">
-                  <Store className="h-3 w-3 shrink-0 text-primary" />
-                  <span className="truncate">{img.sourceName}</span>
-                </span>
-              </div>
+              {/* Avsändaren visas bara när korten inte redan ligger under en rubrik per ställe */}
+              {showSource && (
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end gap-1.5 bg-gradient-to-t from-black/75 via-black/30 to-transparent p-1.5 pt-6">
+                  <span className="flex min-w-0 items-center gap-1 rounded-md bg-background/90 px-1.5 py-0.5 text-[11px] font-semibold text-foreground shadow-sm backdrop-blur">
+                    <Store className="h-3 w-3 shrink-0 text-primary" />
+                    <span className="truncate">{img.sourceName}</span>
+                  </span>
+                </div>
+              )}
             </div>
             <div className="p-2 space-y-1">
               <div className="flex items-center justify-between gap-1.5 min-w-0">
-                {img.sourceKind === "store" && allowedIds.has(img.sourceId) ? (
+                {!showSource ? (
+                  <span className="truncate text-[10px] text-muted-foreground">
+                    {img.uploaded_by_name || "Okänd uppladdare"}
+                  </span>
+                ) : img.sourceKind === "store" && allowedIds.has(img.sourceId) ? (
                   <button
                     type="button"
                     onClick={() => onPeek(img.sourceId, img.sourceName)}
@@ -498,6 +504,7 @@ function ImageGrid({
                   })}
                 </span>
               </div>
+
 
               {img.caption && <p className="text-[11px] text-foreground line-clamp-2">{img.caption}</p>}
               <div className="flex items-center justify-between gap-2">
