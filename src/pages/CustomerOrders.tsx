@@ -547,7 +547,10 @@ export default function CustomerOrders() {
                   ? "Här ligger beställningar som är aktiva och ännu inte färdigpackade. Skapa en med Ny beställning."
                   : tab === "packade"
                     ? "Färdigpackade beställningar som väntar på hämtning eller leverans hamnar här."
+                    : tab === "event"
+                      ? "Eventbokningar och cateringbeställningar hamnar här, skilt från de vanliga ordrarna."
                     : tab === "obetalda"
+
                       ? "Inga utlämnade beställningar väntar på betalning. Bra jobbat."
                       : tab === "arkiverade"
                         ? "Beställningar som är både hämtade och betalda hamnar här automatiskt."
