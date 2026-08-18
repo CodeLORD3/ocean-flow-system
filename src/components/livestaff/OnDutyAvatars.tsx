@@ -64,6 +64,8 @@ export function OnDutyAvatars({
             imageUrl: s?.profile_image_url ?? null,
             status: r.status,
             since: open ? minutesToTime(open.from) : null,
+            deviations: r.deviations,
+
           };
         })
     : [];
