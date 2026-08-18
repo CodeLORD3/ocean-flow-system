@@ -759,7 +759,7 @@ export function EntityImageGallery({
                   disabled={setFeatured.isPending || updateImage.isPending}
                   onClick={async () => {
                     try {
-                      await setFeatured.mutateAsync({ entityType, entityId, imageIds: selection });
+                      await setFeatured.mutateAsync({ entityType, entityId, day: todayKey, imageIds: selection });
                       // Framsidans bilder får lägst sorteringsordning så de hamnar först i poolen.
                       const order = frontSelection.filter((id) => selection.includes(id));
                       await Promise.all(
