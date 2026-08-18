@@ -1,5 +1,12 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { LiveStatus, STATUS_LABEL, StaffDayRow, minutesToTime } from "@/lib/liveStaff";
+import {
+  DEVIATION_LABEL,
+  LiveStatus,
+  STATUS_LABEL,
+  StaffDayRow,
+  minutesToTime,
+  type Deviation,
+} from "@/lib/liveStaff";
 import { cn } from "@/lib/utils";
 
 const TONE: Record<string, string> = {
@@ -24,7 +31,9 @@ interface Person {
   imageUrl: string | null;
   status: LiveStatus;
   since: string | null;
+  deviations: Deviation[];
 }
+
 
 /**
  * Kompakt stapel med personerna som är instämplade just nu i en butik.
