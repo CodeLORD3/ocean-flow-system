@@ -124,7 +124,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       .replace(/-/g, " ")
       .replace(/^./, (c) => c.toUpperCase()) || "Översikt");
   const page = pageTitles[location.pathname] || { title: fallbackTitle, breadcrumb: ["Hem", fallbackTitle] };
-  const { data: allStores = [] } = useStores();
+  const allowedStores = useAllowedStores();
 
   const { staff } = useStaffAuth();
   useSessionTracking();
