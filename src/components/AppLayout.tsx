@@ -136,15 +136,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const access = isAdmin
     ? (["wholesale", "production", "shop"] as const)
     : rawAccess;
-  const lockedStoreId = isAdmin ? null : (staff?.allowed_store_id ?? null);
-  const lockedStoreIds = isAdmin ? [] : (staff?.allowed_store_ids ?? []);
-  const allowedSet = new Set<string>([
-    ...lockedStoreIds,
-    ...(lockedStoreId ? [lockedStoreId] : []),
-  ]);
-  const retailStores = allStores
-    .filter((s) => !s.is_wholesale)
-    .filter((s) => allowedSet.size === 0 || allowedSet.has(s.id));
+  // Butikslistan delas med sidomenyns butiksväxlare så meny och sidomeny matchar.
+  const retailStores = allowedStores;
+
 
   const currentPortalLabel =
     site === "shop" ? activeStoreName || "Butik" : site === "production" ? "Grossist" : "Admin";
