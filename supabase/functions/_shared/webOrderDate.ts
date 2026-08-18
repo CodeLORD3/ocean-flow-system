@@ -185,14 +185,18 @@ export function resolveWantedDate(opts: {
     };
   }
 
-  if (!isPickup) {
-    for (const t of deliveryTexts(payload)) {
-      const d = findDateInText(t, orderLocalDate);
-      if (d && d >= orderLocalDate) {
-        return { wantedDate: d, source: "leveransrubrik", note: `Leveransdatum läst ur "${t}"`, eventWithoutDate: false };
-      }
+  /**
+   * Står ett datum i kassans uppgifter (leveransrubrik, "Delivery Date") gäller
+   * det alltid — även vid hämtning, så att butiker som skickar ett hämtdatum
+   * behåller sitt. Torsdagsregeln används först när inget datum finns.
+   */
+  for (const t of deliveryTexts(payload)) {
+    const d = findDateInText(t, orderLocalDate);
+    if (d && d >= orderLocalDate) {
+      return { wantedDate: d, source: "leveransrubrik", note: `Datum läst ur "${t}"`, eventWithoutDate: false };
     }
   }
+
 
   return {
     wantedDate: thursday,
