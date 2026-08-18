@@ -133,10 +133,13 @@ export function resolveDayHours(
 }
 
 export function formatDayHours(h: DayHours): string {
-  if (h.closed) return "Stängt";
-  if (h.open === null || h.close === null) return "Öppettid saknas";
+  // Saknade tider ska inte se ut som ett medvetet stängt dygn.
+  if (h.source === "none") return "Öppettider saknas";
+  if (h.closed) return h.source === "special" ? "Stängt (avvikande dag)" : "Stängt enligt veckoschema";
+  if (h.open === null || h.close === null) return "Öppettider saknas";
   return `${minutesToTime(h.open)}–${minutesToTime(h.close)}`;
 }
+
 
 export interface Segment {
   kind: "work" | "break" | "planned";

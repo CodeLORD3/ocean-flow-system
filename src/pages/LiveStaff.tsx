@@ -29,6 +29,8 @@ import { OnDutyAvatars } from "@/components/livestaff/OnDutyAvatars";
 import { CityKpiCards } from "@/components/livestaff/CityKpiCards";
 import { LiveDailyReport } from "@/components/livestaff/LiveDailyReport";
 import { useStaffKpi } from "@/hooks/useStaffKpi";
+import { usePkOverheadCost } from "@/hooks/usePkLaborCost";
+
 import { OverheadGroups } from "@/components/livestaff/OverheadGroups";
 import { useLegalEntities } from "@/hooks/useLegalEntities";
 
@@ -103,6 +105,8 @@ export default function LiveStaff() {
   );
 
   const costKpi = useStaffKpi(day, kpiSources);
+  const overheadCost = usePkOverheadCost(day);
+
 
   const shiftDay = (delta: number) => {
     const d = new Date(`${day}T12:00:00`);
@@ -220,13 +224,15 @@ export default function LiveStaff() {
       <CityKpiCards cities={costKpi.cities} />
 
       <LiveDailyReport
-            cities={costKpi.cities}
-            day={day}
+        cities={costKpi.cities}
+        day={day}
         live={live}
         stores={costKpi.stores}
-        totals={costKpi.totals}
-        overheadPct={costKpi.overheadPct}
+        currencyTotals={costKpi.currencyTotals}
+        overheadRows={overheadCost.data ?? []}
+        entityNames={entityNames}
       />
+
 
       {unassignedShifts.length > 0 && (
         <Card className="border-warning/40 shadow-card">
@@ -306,10 +312,14 @@ export default function LiveStaff() {
                               className={`h-1.5 w-1.5 rounded-full ${r.openNow ? "bg-emerald-500" : "bg-muted-foreground/40"}`}
                             />
                             {formatDayHours(r.hours)}
+                            {r.hours.closed && r.workingNow > 0 && (
+                              <span className="text-amber-600">· pass pågår</span>
+                            )}
                             {r.deviations.length > 0 && (
                               <span className="text-destructive">· {r.deviations.length} avvikelse(r)</span>
                             )}
                           </p>
+
                         </button>
                       </div>
                       <div className="relative min-h-[2.75rem] flex-1 py-1.5">
@@ -323,7 +333,7 @@ export default function LiveStaff() {
                         {r.staffRows.length === 0 ? (
                           <p className="px-2 py-1.5 text-[10px] text-muted-foreground">
                             {r.hours.source === "none"
-                              ? "Öppettid saknas — ange veckoschema på Butiker"
+                              ? "Öppettider saknas — ange veckoschema på Butiker"
                               : "Inga planerade pass och inga stämplingar"}
                           </p>
                         ) : (

@@ -1,5 +1,5 @@
 import { CheckCircle2, Clock, Coffee, AlertTriangle, MinusCircle, Lock } from "lucide-react";
-import { LiveStatus, STATUS_LABEL } from "@/lib/liveStaff";
+import { DEVIATION_LABEL, LiveStatus, STATUS_LABEL, type DeviationKind } from "@/lib/liveStaff";
 import { cn } from "@/lib/utils";
 
 const CONFIG: Record<LiveStatus, { icon: any; className: string }> = {
@@ -30,11 +30,26 @@ export function StatusChip({ status, className }: { status: LiveStatus; classNam
 
 export function StatusLegend() {
   const order: LiveStatus[] = ["working", "planned", "break", "deviation", "done", "closed"];
+  const deviations: DeviationKind[] = [
+    "no_show",
+    "late_in",
+    "early_out",
+    "overtime",
+    "unplanned",
+    "unstaffed",
+  ];
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      {order.map((s) => (
-        <StatusChip key={s} status={s} />
-      ))}
+    <div className="space-y-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
+        {order.map((s) => (
+          <StatusChip key={s} status={s} />
+        ))}
+      </div>
+      <p className="text-[10px] text-muted-foreground">
+        Avvikelsetyper: {deviations.map((d) => DEVIATION_LABEL[d]).join(" · ")}. Hovra över personen för
+        att se vilken avvikelse som gäller.
+      </p>
     </div>
   );
 }
+

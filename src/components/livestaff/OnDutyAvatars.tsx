@@ -1,5 +1,12 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { LiveStatus, STATUS_LABEL, StaffDayRow, minutesToTime } from "@/lib/liveStaff";
+import {
+  DEVIATION_LABEL,
+  LiveStatus,
+  STATUS_LABEL,
+  StaffDayRow,
+  minutesToTime,
+  type Deviation,
+} from "@/lib/liveStaff";
 import { cn } from "@/lib/utils";
 
 const TONE: Record<string, string> = {
@@ -24,7 +31,9 @@ interface Person {
   imageUrl: string | null;
   status: LiveStatus;
   since: string | null;
+  deviations: Deviation[];
 }
+
 
 /**
  * Kompakt stapel med personerna som är instämplade just nu i en butik.
@@ -55,6 +64,8 @@ export function OnDutyAvatars({
             imageUrl: s?.profile_image_url ?? null,
             status: r.status,
             since: open ? minutesToTime(open.from) : null,
+            deviations: r.deviations,
+
           };
         })
     : [];
@@ -92,13 +103,23 @@ export function OnDutyAvatars({
               )}
             </button>
           </TooltipTrigger>
-          <TooltipContent side="top" className="text-xs">
+          <TooltipContent side="top" className="max-w-[260px] text-xs">
             <p className="font-medium">{p.name}</p>
             <p className="text-muted-foreground">
               {STATUS_LABEL[p.status]}
               {p.since ? ` · in ${p.since}` : ""}
             </p>
+            {p.deviations.length > 0 && (
+              <div className="mt-1 space-y-0.5 border-t border-border pt-1">
+                {p.deviations.map((d, i) => (
+                  <p key={`${d.kind}-${i}`} className="text-destructive">
+                    {DEVIATION_LABEL[d.kind]} — {d.detail}
+                  </p>
+                ))}
+              </div>
+            )}
           </TooltipContent>
+
         </Tooltip>
       ))}
       {rest.length > 0 && (
