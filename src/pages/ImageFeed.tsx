@@ -186,6 +186,23 @@ export default function ImageFeed() {
         </div>
       )}
 
+      {/* Statusrad: syns direkt om dagens bilder inte hunnit bli utvalda ännu */}
+      {!isLoading && rows.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+          <Badge variant="outline" className="h-6 gap-1 text-[10px]">
+            <Clock className="h-3 w-3" />
+            Senaste bilderna: {dayLabel(latestDay)}
+          </Badge>
+          {latestDay !== dayKey(new Date().toISOString()) && (
+            <span>
+              Inga bilder är utvalda idag ännu — stjärnmärk dagens bilder i &quot;Bilder från
+              butiken&quot; på Översikt så syns de här.
+            </span>
+          )}
+        </div>
+      )}
+
+
       {/* Topplista + aktivitet */}
       {(topImages.length > 0 || activeSources.length > 0) && !isLoading && (
         <div className="grid gap-3 lg:grid-cols-3">
