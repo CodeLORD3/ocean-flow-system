@@ -11690,6 +11690,14 @@ export type Database = {
         Args: { _type: string; _user_id: string; _value: string }
         Returns: boolean
       }
+      image_feed_store_labels: {
+        Args: never
+        Returns: {
+          city: string
+          id: string
+          name: string
+        }[]
+      }
       is_investor: { Args: never; Returns: boolean }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
