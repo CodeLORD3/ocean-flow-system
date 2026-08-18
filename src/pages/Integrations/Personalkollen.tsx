@@ -17,6 +17,7 @@ import {
   usePkStaff,
   usePkDailyLaborCost,
   usePkSetMapping,
+  usePkAddCostgroup,
   usePkSetStaffLink,
   usePkRunSync,
   pkHours,
