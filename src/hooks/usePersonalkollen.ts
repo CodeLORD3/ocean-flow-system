@@ -39,6 +39,9 @@ export interface PkCostgroup {
   workplace_url: string | null;
   store_id: string | null;
   store_id_manual: boolean;
+  is_company_group: boolean;
+  /** säker | osäker | ingen träff | manuell | bolagsgrupp */
+  match_confidence: string | null;
   synced_at: string | null;
 }
 
@@ -137,7 +140,9 @@ export function usePkCostgroups() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("pk_costgroups")
-        .select("id, connection_id, url, short_identifier, name, workplace_url, store_id, store_id_manual, synced_at")
+        .select(
+          "id, connection_id, url, short_identifier, name, workplace_url, store_id, store_id_manual, is_company_group, match_confidence, synced_at",
+        )
         .order("name");
       if (error) throw error;
       return (data ?? []) as PkCostgroup[];
@@ -219,10 +224,9 @@ export function usePkSetMapping() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (p: { table: "pk_costgroups" | "pk_workplaces"; id: string; storeId: string | null }) => {
-      const { error } = await supabase
-        .from(p.table)
-        .update({ store_id: p.storeId, store_id_manual: true })
-        .eq("id", p.id);
+      const patch: Record<string, unknown> = { store_id: p.storeId, store_id_manual: true };
+      if (p.table === "pk_costgroups") patch.match_confidence = "manual";
+      const { error } = await supabase.from(p.table).update(patch as any).eq("id", p.id);
       if (error) throw error;
     },
     onSuccess: () => {

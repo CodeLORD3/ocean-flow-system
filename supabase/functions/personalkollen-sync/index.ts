@@ -200,6 +200,32 @@ function normName(v: string): string {
     .replace(/[^a-z0-9]/g, "");
 }
 
+/**
+ * Butiksnyckelord för kostnadsställen i Personalkollen.
+ *
+ * Mappningen sätts bara på entydiga nyckelord — allt annat lämnas omappat och
+ * gulmarkeras i admin så att en människa väljer butik.
+ */
+const STORE_KEYWORDS: { needle: RegExp; store: string }[] = [
+  { needle: /alsten/, store: "Ålstens Fisk" },
+  { needle: /kungsholmen/, store: "Fiskskaldjur Kungsholmen" },
+  { needle: /torslandatorg|^torg$/, store: "Fiskskaldjur Torslanda Torg" },
+  { needle: /amhult/, store: "Fiskskaldjur Amhult" },
+  { needle: /saro/, store: "Fiskskaldjur Särö Centrum" },
+  { needle: /eriksberg/, store: "Fiskskaldjur Eriksberg" },
+  { needle: /marstrand/, store: "Fiskskaldjur Marstrand" },
+];
+
+function matchStoreByName(name: string): string | null {
+  const flat = name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+  const hits = STORE_KEYWORDS.filter((k) => k.needle.test(flat));
+  return hits.length === 1 ? hits[0].store : null;
+}
+
 /* -------------------------------------------------------------- upsert-lager */
 
 async function upsert(db: SupabaseClient, table: string, rows: Row[], onConflict: string) {
@@ -324,31 +350,45 @@ async function syncCostgroups(db: SupabaseClient, _api: PkClient, conn: Conn) {
     .eq("connection_id", conn.id);
   const prior = new Map((existing ?? []).map((r: Row) => [String(r.url), r]));
 
+  const storeId = (needle: string): string | null => {
+    const hit = (stores ?? []).find((s: Row) => String(s.name ?? "") === needle);
+    return hit ? String(hit.id) : null;
+  };
+
   for (const [url, info] of seen) {
     const before = prior.get(url);
     const manual = bool(before?.store_id_manual);
-    let storeId = (before?.store_id as string | null) ?? null;
     const name = str(info.name);
-    if (!manual && !storeId && name) {
-      const target = normName(name);
-      const hits = (stores ?? []).filter((s: Row) => {
-        const n = normName(String(s.name ?? ""));
-        return n.length > 2 && (n === target || target.includes(n) || n.includes(target));
-      });
-      if (hits.length === 1) storeId = String(hits[0].id);
+    const companyGroup = !!name && /no\.?1\s*ab/i.test(name);
+
+    let store = (before?.store_id as string | null) ?? null;
+    let confidence = manual ? "manual" : companyGroup ? "company" : "none";
+
+    if (companyGroup) {
+      store = null;
+    } else if (!manual) {
+      // Nollställs varje synk och sätts bara om nyckelordet är entydigt.
+      const match = matchStoreByName(name ?? "");
+      store = match ? storeId(match) : null;
+      confidence = store ? "sure" : match ? "unsure" : "none";
     }
+
     rows.push({
       connection_id: conn.id,
       url,
       short_identifier: info.short_identifier ?? null,
       name,
       workplace_url: info.workplace_url ?? null,
-      store_id: storeId,
+      store_id: store,
       store_id_manual: manual,
+      is_company_group: companyGroup,
+      match_confidence: confidence,
       raw: info.raw ?? null,
       synced_at: new Date().toISOString(),
     });
   }
+
+
 
   const upserts = await upsert(db, "pk_costgroups", rows, "connection_id,url");
   return { pages: 0, upserts, cursor: null as string | null };

@@ -255,7 +255,8 @@ export default function Personalkollen() {
             <CardHeader className="pb-2">
               <CardTitle className="text-base">Kostnadsgrupper → butik</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Kostnadsgruppen är butiksnivån i Personalkollen. Ändrar du här låses valet mot automatiken.
+                Kostnadsgruppen är butiksnivån i Personalkollen. Bolagsgrupper mappas aldrig till butik. Gula rader
+                är osäkra eller omappade och behöver ditt val.
               </p>
             </CardHeader>
             <CardContent className="overflow-x-auto p-0">
@@ -265,42 +266,72 @@ export default function Personalkollen() {
                     <th className="px-4 py-2 text-left font-medium">Bolag</th>
                     <th className="px-4 py-2 text-left font-medium">Kostnadsgrupp</th>
                     <th className="px-4 py-2 text-left font-medium">Butik</th>
+                    <th className="px-4 py-2 text-left font-medium">Säkerhet</th>
                     <th className="px-4 py-2 text-left font-medium">Källa</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {(costgroups.data ?? []).map((c) => (
-                    <tr key={c.id} className="border-b last:border-0">
-                      <td className="px-4 py-2">{connName.get(c.connection_id) ?? "—"}</td>
-                      <td className="px-4 py-2">{c.name ?? c.url}</td>
-                      <td className="px-4 py-2">
-                        <Select
-                          value={c.store_id ?? NONE}
-                          onValueChange={(v) =>
-                            setMapping.mutate(
-                              { table: "pk_costgroups", id: c.id, storeId: v === NONE ? null : v },
-                              { onError: (e: any) => toast.error(e?.message ?? "Kunde inte spara") },
-                            )
-                          }
-                        >
-                          <SelectTrigger className="h-8 w-[240px]">
-                            <SelectValue placeholder="Ingen butik" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value={NONE}>Ingen butik</SelectItem>
-                            {(stores.data ?? []).map((s) => (
-                              <SelectItem key={s.id} value={s.id}>
-                                {s.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </td>
-                      <td className="px-4 py-2">
-                        <Badge variant="outline">{c.store_id_manual ? "Manuell" : "Automatisk"}</Badge>
-                      </td>
-                    </tr>
-                  ))}
+                  {(costgroups.data ?? []).map((c) => {
+                    const needsAttention = !c.is_company_group && !c.store_id;
+                    const confidenceLabel = c.is_company_group
+                      ? "Bolagsgrupp"
+                      : c.store_id_manual
+                        ? "Manuell"
+                        : c.match_confidence === "sure"
+                          ? "Säker"
+                          : c.match_confidence === "unsure"
+                            ? "Osäker"
+                            : "Ingen träff";
+                    return (
+                      <tr
+                        key={c.id}
+                        className={`border-b last:border-0 ${needsAttention ? "bg-warning/10" : ""}`}
+                      >
+                        <td className="px-4 py-2">{connName.get(c.connection_id) ?? "—"}</td>
+                        <td className="px-4 py-2">
+                          {c.name ?? c.url}
+                          <span className="ml-2 font-mono text-xs text-muted-foreground tabular-nums">
+                            {c.short_identifier ?? ""}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2">
+                          {c.is_company_group ? (
+                            <span className="text-muted-foreground">Ingen butik (bolagsgrupp)</span>
+                          ) : (
+                            <Select
+                              value={c.store_id ?? NONE}
+                              onValueChange={(v) =>
+                                setMapping.mutate(
+                                  { table: "pk_costgroups", id: c.id, storeId: v === NONE ? null : v },
+                                  { onError: (e: any) => toast.error(e?.message ?? "Kunde inte spara") },
+                                )
+                              }
+                            >
+                              <SelectTrigger className="h-8 w-[240px]">
+                                <SelectValue placeholder="Ingen butik" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value={NONE}>Ingen butik</SelectItem>
+                                {(stores.data ?? []).map((s) => (
+                                  <SelectItem key={s.id} value={s.id}>
+                                    {s.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </td>
+                        <td className="px-4 py-2">
+                          <Badge variant={needsAttention ? "secondary" : "outline"}>{confidenceLabel}</Badge>
+                        </td>
+                        <td className="px-4 py-2">
+                          <Badge variant="outline">
+                            {c.is_company_group ? "—" : c.store_id_manual ? "Manuell" : "Automatisk"}
+                          </Badge>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
               <div className="space-y-2 border-t p-4">
