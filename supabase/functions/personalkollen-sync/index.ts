@@ -214,6 +214,8 @@ const STORE_KEYWORDS: { needle: RegExp; store: string }[] = [
   { needle: /saro/, store: "Fiskskaldjur Särö Centrum" },
   { needle: /eriksberg/, store: "Fiskskaldjur Eriksberg" },
   { needle: /marstrand/, store: "Fiskskaldjur Marstrand" },
+  // Grossist/lager och export hör till samma enhet.
+  { needle: /grossist|export/, store: "Grossist Göteborg" },
 ];
 
 function matchStoreByName(name: string): string | null {
