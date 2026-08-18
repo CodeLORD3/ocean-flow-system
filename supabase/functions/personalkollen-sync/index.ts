@@ -595,7 +595,7 @@ async function salesCheck(api: PkClient) {
 
 /* ---------------------------------------------------------------- handler */
 
-const RESOURCES = ["logged-times", "work-periods", "staffs", "workplaces"] as const;
+const RESOURCES = ["logged-times", "work-periods", "staffs", "workplaces", "costgroups"] as const;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
