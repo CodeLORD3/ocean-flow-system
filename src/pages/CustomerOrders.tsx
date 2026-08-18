@@ -204,9 +204,17 @@ export default function CustomerOrders() {
    */
   const searching = search.trim().length > 0;
   const viewOrders = useMemo(
-    () => (searching ? orders : orders.filter((o) => orderTab(o) === tab)),
+    () =>
+      searching
+        ? orders
+        : orders.filter((o) =>
+            tab === "alla"
+              ? ACTIVE_ORDER_TABS.includes(orderTab(o))
+              : orderTab(o) === tab,
+          ),
     [orders, tab, searching],
   );
+
   /** Vilka flikar sökträffarna kommer från, visas som hjälptext. */
   const searchTabs = useMemo(() => {
     if (!searching) return [] as string[];
