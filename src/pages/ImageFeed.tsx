@@ -348,23 +348,52 @@ export default function ImageFeed() {
                   </Badge>
                 </CardTitle>
                 <CardDescription className="text-[11px]">
-                  {Array.from(new Set(items.map((i) => i.sourceName))).join(" · ")}
+                  {groupBySource(items).length} ställe
+                  {groupBySource(items).length === 1 ? "" : "n"} har lagt ut
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <ImageGrid
-                  items={items}
-                  favoriteIds={favoriteIds}
-                  onOpen={setLightboxId}
-                  onToggleFavorite={(id, favorite) => toggleFavorite.mutate({ imageId: id, favorite })}
-                  onPeek={peek}
-                  allowedIds={allowedIds}
-                />
+              <CardContent className="space-y-4">
+                {/* En rubrik per ställe i stället för text på varje bild — grupperna blir lätta att skilja på */}
+                {groupBySource(items).map((g) => (
+                  <div key={g.id} className="space-y-2">
+                    <div className="flex items-center justify-between gap-2 border-b border-border pb-1.5">
+                      <div className="flex min-w-0 items-center gap-1.5">
+                        <Store className="h-3.5 w-3.5 shrink-0 text-primary" />
+                        <h3 className="truncate text-sm font-heading font-bold text-foreground">
+                          {g.name}
+                        </h3>
+                        <Badge variant="outline" className="shrink-0 text-[10px] tabular-nums">
+                          {g.items.length}
+                        </Badge>
+                      </div>
+                      {g.kind === "store" && allowedIds.has(g.id) && (
+                        <button
+                          type="button"
+                          onClick={() => peek(g.id, g.name)}
+                          className="shrink-0 text-[11px] font-medium text-primary hover:underline"
+                          aria-label={`Kika in hos ${g.name}`}
+                        >
+                          Kika in
+                        </button>
+                      )}
+                    </div>
+                    <ImageGrid
+                      items={g.items}
+                      favoriteIds={favoriteIds}
+                      onOpen={setLightboxId}
+                      onToggleFavorite={(id, favorite) => toggleFavorite.mutate({ imageId: id, favorite })}
+                      onPeek={peek}
+                      allowedIds={allowedIds}
+                      showSource={false}
+                    />
+                  </div>
+                ))}
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
 
       <ImageLightbox
         images={visible}
