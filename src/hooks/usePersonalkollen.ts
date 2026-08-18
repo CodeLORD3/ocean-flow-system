@@ -233,6 +233,41 @@ export function usePkSetMapping() {
   });
 }
 
+/**
+ * Manuellt tillagt kostnadsställe.
+ *
+ * Personalkollens /costgroups/-endpoint är stängd för våra API-nycklar, så nya
+ * grupper upptäcks först när de förekommer i pass eller stämplingar. Här kan en
+ * grupp läggas in i förväg med sitt id, så att första stämplingen hamnar rätt.
+ */
+export function usePkAddCostgroup() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (p: {
+      connectionId: string;
+      shortIdentifier: number;
+      name: string;
+      workplaceUrl: string | null;
+      storeId: string | null;
+    }) => {
+      const { error } = await supabase.from("pk_costgroups").insert({
+        connection_id: p.connectionId,
+        url: `https://personalkollen.se/api/costgroups/${p.shortIdentifier}/`,
+        short_identifier: p.shortIdentifier,
+        name: p.name,
+        workplace_url: p.workplaceUrl,
+        store_id: p.storeId,
+        store_id_manual: !!p.storeId,
+      } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pk-costgroups"] });
+      qc.invalidateQueries({ queryKey: ["pk-clocked-in-now"] });
+    },
+  });
+}
+
 /** Manuell koppling: Personalkollen-person → personalkort i Makrilltrade. */
 export function usePkSetStaffLink() {
   const qc = useQueryClient();
