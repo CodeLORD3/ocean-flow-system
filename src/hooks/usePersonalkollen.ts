@@ -140,7 +140,9 @@ export function usePkCostgroups() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("pk_costgroups")
-        .select("id, connection_id, url, short_identifier, name, workplace_url, store_id, store_id_manual, synced_at")
+        .select(
+          "id, connection_id, url, short_identifier, name, workplace_url, store_id, store_id_manual, is_company_group, match_confidence, synced_at",
+        )
         .order("name");
       if (error) throw error;
       return (data ?? []) as PkCostgroup[];
