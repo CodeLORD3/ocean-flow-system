@@ -401,6 +401,7 @@ export default function ImageFeed() {
         onIndexChange={(i) => setLightboxId(visible[i]?.id ?? null)}
         onClose={() => setLightboxId(null)}
         title="Bildflöde"
+        sourceLabelOf={(img) => visible.find((v) => v.id === img.id)?.sourceName ?? null}
         favoriteIds={favoriteIds}
         onToggleFavorite={(id, favorite) => toggleFavorite.mutate({ imageId: id, favorite })}
       />
