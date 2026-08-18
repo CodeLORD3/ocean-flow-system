@@ -6,16 +6,17 @@ import { Users, Clock, AlertTriangle, Radio } from "lucide-react";
 import { usePkClockedInNow, pkHours, type PkClockedInRow } from "@/hooks/usePersonalkollen";
 
 const STATUS_LABEL: Record<string, string> = {
-  on_time: "Enligt schema",
-  late: "Sen instämpling",
-  early: "Tidig instämpling",
-  unscheduled: "Utan planerat pass",
-  overtime: "Arbetar efter passets slut",
+  pa_plats: "På plats",
+  avslutad: "Avslutad",
+  oplanerad: "Utan planerat pass",
+  ej_instamplad: "Ej instämplad",
+  kommer: "Kommer senare",
 };
 
 function statusVariant(status?: string | null): "default" | "secondary" | "destructive" | "outline" {
-  if (status === "unscheduled" || status === "late") return "destructive";
-  if (status === "overtime") return "secondary";
+  if (status === "pa_plats") return "default";
+  if (status === "oplanerad" || status === "ej_instamplad") return "destructive";
+  if (status === "avslutad") return "secondary";
   return "outline";
 }
 
@@ -43,8 +44,10 @@ export default function PkOnSiteNow() {
     return [...map.values()].sort((a, b) => a.label.localeCompare(b.label, "sv"));
   }, [rows]);
 
-  const total = rows?.length ?? 0;
-  const deviations = (rows ?? []).filter((r) => r.status === "late" || r.status === "unscheduled").length;
+  const total = (rows ?? []).filter((r) => r.status === "pa_plats").length;
+  const deviations = (rows ?? []).filter(
+    (r) => r.status === "oplanerad" || r.status === "ej_instamplad",
+  ).length;
   const unmapped = (rows ?? []).filter((r) => !r.store_id).length;
 
   return (
@@ -53,7 +56,7 @@ export default function PkOnSiteNow() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">På plats nu</h1>
           <p className="text-sm text-muted-foreground">
-            Instämplad personal från Personalkollen, uppdaterad varje minut.
+            Dagens pass och stämplingar från Personalkollen, uppdaterade varje minut.
           </p>
         </div>
         <Badge variant="outline" className="gap-1">
@@ -96,7 +99,7 @@ export default function PkOnSiteNow() {
       ) : groups.length === 0 ? (
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            Ingen är instämplad just nu.
+            Inga pass eller stämplingar för dagen.
           </CardContent>
         </Card>
       ) : (
@@ -107,7 +110,7 @@ export default function PkOnSiteNow() {
                 <CardTitle className="flex items-center justify-between text-base">
                   <span>{g.label}</span>
                   <span className="font-mono text-sm tabular-nums text-muted-foreground">
-                    {g.rows.length} på plats
+                    {g.rows.filter((r) => r.status === "pa_plats").length} på plats · {g.rows.length} pass idag
                   </span>
                 </CardTitle>
               </CardHeader>
