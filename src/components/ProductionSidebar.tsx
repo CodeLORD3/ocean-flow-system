@@ -52,6 +52,8 @@ import {
 
 const overviewNav = [
   { title: "Översikt", url: "/organisation", icon: LayoutDashboard },
+  { title: "Bildflöde", url: "/image-feed", icon: Images },
+
   { title: "Kalender", url: "/schedule", icon: CalendarDays },
   { title: "Chatt", url: "/chat", icon: MessageSquare },
 ];
