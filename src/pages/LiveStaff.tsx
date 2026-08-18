@@ -333,7 +333,7 @@ export default function LiveStaff() {
                         {r.staffRows.length === 0 ? (
                           <p className="px-2 py-1.5 text-[10px] text-muted-foreground">
                             {r.hours.source === "none"
-                              ? "Öppettid saknas — ange veckoschema på Butiker"
+                              ? "Öppettider saknas — ange veckoschema på Butiker"
                               : "Inga planerade pass och inga stämplingar"}
                           </p>
                         ) : (
