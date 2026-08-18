@@ -245,7 +245,10 @@ export default function LiveStaff() {
         </Card>
       )}
 
+      <OverheadGroups rows={overheadRows} staffById={staffById} entityNames={entityNames} />
+
       <StatusLegend />
+
 
       {selectedRow ? (
         <StoreDetail
