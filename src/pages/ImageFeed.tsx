@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Heart, Images, MessageCircle, Star, Trophy, Flame, ArrowRight, Clock } from "lucide-react";
+import { Heart, Images, MessageCircle, Star, Trophy, Flame, ArrowRight, Clock, Store } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
