@@ -11795,10 +11795,19 @@ export type Database = {
           actual_cost: number
           day: string
           fixed_cost: number
+          ongoing_cost: number
+          ongoing_count: number
+          ongoing_sec: number
           scheduled_cost: number
           store_id: string
           variable_cost: number
           work_time_sec: number
+        }[]
+      }
+      pk_mapped_stores: {
+        Args: never
+        Returns: {
+          store_id: string
         }[]
       }
       pk_overhead_daily_cost: {
@@ -11807,6 +11816,8 @@ export type Database = {
           actual_cost: number
           fixed_cost: number
           legal_entity_id: string
+          ongoing_cost: number
+          ongoing_sec: number
           scheduled_cost: number
           unit_id: string
           unit_name: string
