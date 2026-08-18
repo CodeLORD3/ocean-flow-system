@@ -992,6 +992,7 @@ export function useCustomerOrderTabCounts(storeId?: string | null) {
       const { data, error } = await q;
       if (error) throw error;
       const counts: Record<string, number> = {
+        alla: 0,
         godkannande: 0,
         pagaende: 0,
         packade: 0,
@@ -1001,7 +1002,12 @@ export function useCustomerOrderTabCounts(storeId?: string | null) {
         borttagna: 0,
       };
 
-      for (const row of (data || []) as any[]) counts[orderTab(row)] += 1;
+      for (const row of (data || []) as any[]) {
+        const t = orderTab(row);
+        counts[t] += 1;
+        // "Alla" räknar allt som fortfarande är på gång.
+        if (ACTIVE_ORDER_TABS.includes(t)) counts.alla += 1;
+      }
       return counts;
     },
   });
