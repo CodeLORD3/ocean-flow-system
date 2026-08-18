@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useSite } from "@/contexts/SiteContext";
 import { useTabs } from "@/contexts/TabsContext";
-import { useStores } from "@/hooks/useStores";
+import { useAllowedStores } from "@/components/StoreSwitcher";
 import { useSessionTracking, closeCurrentSession } from "@/hooks/useSessionTracking";
 import { useChatSound } from "@/hooks/useChatSound";
 import {
