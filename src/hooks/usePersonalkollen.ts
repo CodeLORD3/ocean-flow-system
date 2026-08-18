@@ -39,6 +39,9 @@ export interface PkCostgroup {
   workplace_url: string | null;
   store_id: string | null;
   store_id_manual: boolean;
+  is_company_group: boolean;
+  /** säker | osäker | ingen träff | manuell | bolagsgrupp */
+  match_confidence: string | null;
   synced_at: string | null;
 }
 
