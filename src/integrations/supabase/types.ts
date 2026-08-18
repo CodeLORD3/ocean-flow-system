@@ -5390,6 +5390,60 @@ export type Database = {
           },
         ]
       }
+      pk_costgroups: {
+        Row: {
+          connection_id: string
+          id: string
+          name: string | null
+          raw: Json | null
+          short_identifier: number | null
+          store_id: string | null
+          store_id_manual: boolean
+          synced_at: string
+          url: string
+          workplace_url: string | null
+        }
+        Insert: {
+          connection_id: string
+          id?: string
+          name?: string | null
+          raw?: Json | null
+          short_identifier?: number | null
+          store_id?: string | null
+          store_id_manual?: boolean
+          synced_at?: string
+          url: string
+          workplace_url?: string | null
+        }
+        Update: {
+          connection_id?: string
+          id?: string
+          name?: string | null
+          raw?: Json | null
+          short_identifier?: number | null
+          store_id?: string | null
+          store_id_manual?: boolean
+          synced_at?: string
+          url?: string
+          workplace_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pk_costgroups_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "pk_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pk_costgroups_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pk_logged_times: {
         Row: {
           breaks: Json | null
@@ -11520,6 +11574,7 @@ export type Database = {
           clocked_out_at: string | null
           connection_id: string | null
           costgroup_name: string | null
+          costgroup_url: string | null
           display_name: string | null
           estimated_cost: number | null
           is_guest: boolean | null
@@ -11533,15 +11588,7 @@ export type Database = {
           workplace_name: string | null
           workplace_url: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "pk_workplaces_store_id_fkey"
-            columns: ["store_id"]
-            isOneToOne: false
-            referencedRelation: "stores"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Functions: {
