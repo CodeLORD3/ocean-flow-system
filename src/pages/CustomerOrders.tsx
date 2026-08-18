@@ -50,6 +50,7 @@ import { TodayPickupsView } from "@/components/orders/TodayPickupsView";
 
 /** Orderflikarna: tre operativa lägen först, historiken nedtonad sist. */
 const TABS: { id: OrderTab; hint: string; muted?: boolean }[] = [
+  { id: "alla", hint: "Allt som är på gång: ska packas, levereras, hämtas samt event framöver" },
   {
     id: "godkannande",
     hint: "Webbordrar för hämtning i butik som väntar på godkännande",
@@ -62,6 +63,7 @@ const TABS: { id: OrderTab; hint: string; muted?: boolean }[] = [
   { id: "arkiverade", hint: "Avslutade — hämtade och betalda", muted: true },
   { id: "borttagna", hint: "Avbokade eller felregistrerade, sparas för historik", muted: true },
 ];
+
 
 
 
