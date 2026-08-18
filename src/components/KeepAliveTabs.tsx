@@ -32,7 +32,7 @@ import AuditRouter from "@/pages/AuditRouter";
 import BugReports from "@/pages/BugReports";
 import LiveStaff from "@/pages/LiveStaff";
 import Personalkollen from "@/pages/Integrations/Personalkollen";
-import PkOnSiteNow from "@/pages/PkOnSiteNow";
+
 import StaffSchedule from "@/pages/StaffSchedule";
 
 import TradeOffers from "@/pages/TradeOffers";
@@ -114,7 +114,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/bug-reports": { component: <BugReports /> },
   "/live-staff": { component: <LiveStaff /> },
   "/personalkollen": { component: <Personalkollen /> },
-  "/on-site-now": { component: <PkOnSiteNow /> },
+  "/on-site-now": { component: <LiveStaff /> },
   "/staff-schedule": { component: <StaffSchedule /> },
 
   "/settings": { component: <PlaceholderPage title="Systeminställningar" /> },
