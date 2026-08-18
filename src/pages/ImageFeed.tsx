@@ -478,10 +478,9 @@ function ImageGrid({
             <div className="p-2 space-y-1">
               <div className="flex items-center justify-between gap-1.5 min-w-0">
                 {!showSource ? (
-                  <span className="truncate text-[10px] text-muted-foreground">
-                    {img.uploaded_by_name || "Okänd uppladdare"}
-                  </span>
+                  <span className="sr-only">{img.sourceName}</span>
                 ) : img.sourceKind === "store" && allowedIds.has(img.sourceId) ? (
+
                   <button
                     type="button"
                     onClick={() => onPeek(img.sourceId, img.sourceName)}
