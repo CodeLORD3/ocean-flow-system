@@ -5352,6 +5352,523 @@ export type Database = {
           },
         ]
       }
+      pk_connections: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          legal_entity_id: string | null
+          secret_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          legal_entity_id?: string | null
+          secret_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          legal_entity_id?: string | null
+          secret_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pk_connections_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
+        ]
+      }
+      pk_logged_times: {
+        Row: {
+          breaks: Json | null
+          breaks_duration_sec: number
+          comment: string | null
+          company_url: string | null
+          connection_id: string
+          cost: number | null
+          costgroup_name: string | null
+          costgroup_url: string | null
+          estimated_salary: number | null
+          first_seen_at: string
+          guest_id_masked: string | null
+          guest_name: string | null
+          id: string
+          identifier: string | null
+          is_canceled: boolean
+          is_guest: boolean
+          last_synced_at: string
+          raw: Json | null
+          real_start: string | null
+          real_stop: string | null
+          shift_salary: number | null
+          staff_url: string | null
+          start: string | null
+          stop: string | null
+          url: string
+          work_period_url: string | null
+          work_time_sec: number | null
+          workplace_url: string | null
+        }
+        Insert: {
+          breaks?: Json | null
+          breaks_duration_sec?: number
+          comment?: string | null
+          company_url?: string | null
+          connection_id: string
+          cost?: number | null
+          costgroup_name?: string | null
+          costgroup_url?: string | null
+          estimated_salary?: number | null
+          first_seen_at?: string
+          guest_id_masked?: string | null
+          guest_name?: string | null
+          id?: string
+          identifier?: string | null
+          is_canceled?: boolean
+          is_guest?: boolean
+          last_synced_at?: string
+          raw?: Json | null
+          real_start?: string | null
+          real_stop?: string | null
+          shift_salary?: number | null
+          staff_url?: string | null
+          start?: string | null
+          stop?: string | null
+          url: string
+          work_period_url?: string | null
+          work_time_sec?: number | null
+          workplace_url?: string | null
+        }
+        Update: {
+          breaks?: Json | null
+          breaks_duration_sec?: number
+          comment?: string | null
+          company_url?: string | null
+          connection_id?: string
+          cost?: number | null
+          costgroup_name?: string | null
+          costgroup_url?: string | null
+          estimated_salary?: number | null
+          first_seen_at?: string
+          guest_id_masked?: string | null
+          guest_name?: string | null
+          id?: string
+          identifier?: string | null
+          is_canceled?: boolean
+          is_guest?: boolean
+          last_synced_at?: string
+          raw?: Json | null
+          real_start?: string | null
+          real_stop?: string | null
+          shift_salary?: number | null
+          staff_url?: string | null
+          start?: string | null
+          stop?: string | null
+          url?: string
+          work_period_url?: string | null
+          work_time_sec?: number | null
+          workplace_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pk_logged_times_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "pk_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pk_staff: {
+        Row: {
+          confirmed: boolean | null
+          connection_id: string
+          default_cost_group: string | null
+          email: string | null
+          employee_id: string | null
+          employee_id_manual: boolean
+          employment_number: string | null
+          first_name: string | null
+          group_name: string | null
+          group_url: string | null
+          id: string
+          is_active_employment: boolean
+          last_name: string | null
+          mobile_phone: string | null
+          pk_id: number | null
+          pnr_encrypted: string | null
+          pnr_masked: string | null
+          raw: Json | null
+          registration_date: string | null
+          synced_at: string
+          url: string
+          workplace_url: string | null
+        }
+        Insert: {
+          confirmed?: boolean | null
+          connection_id: string
+          default_cost_group?: string | null
+          email?: string | null
+          employee_id?: string | null
+          employee_id_manual?: boolean
+          employment_number?: string | null
+          first_name?: string | null
+          group_name?: string | null
+          group_url?: string | null
+          id?: string
+          is_active_employment?: boolean
+          last_name?: string | null
+          mobile_phone?: string | null
+          pk_id?: number | null
+          pnr_encrypted?: string | null
+          pnr_masked?: string | null
+          raw?: Json | null
+          registration_date?: string | null
+          synced_at?: string
+          url: string
+          workplace_url?: string | null
+        }
+        Update: {
+          confirmed?: boolean | null
+          connection_id?: string
+          default_cost_group?: string | null
+          email?: string | null
+          employee_id?: string | null
+          employee_id_manual?: boolean
+          employment_number?: string | null
+          first_name?: string | null
+          group_name?: string | null
+          group_url?: string | null
+          id?: string
+          is_active_employment?: boolean
+          last_name?: string | null
+          mobile_phone?: string | null
+          pk_id?: number | null
+          pnr_encrypted?: string | null
+          pnr_masked?: string | null
+          raw?: Json | null
+          registration_date?: string | null
+          synced_at?: string
+          url?: string
+          workplace_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pk_staff_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "pk_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pk_staff_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pk_staff_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pk_staff_employments: {
+        Row: {
+          connection_id: string
+          end: string | null
+          fixed_cost_per_day: number | null
+          hourly_salary: number | null
+          id: string
+          monthly_salary: number | null
+          raw: Json | null
+          salary_type: string | null
+          service_grade: number | null
+          staff_url: string
+          start: string
+          synced_at: string
+        }
+        Insert: {
+          connection_id: string
+          end?: string | null
+          fixed_cost_per_day?: number | null
+          hourly_salary?: number | null
+          id?: string
+          monthly_salary?: number | null
+          raw?: Json | null
+          salary_type?: string | null
+          service_grade?: number | null
+          staff_url: string
+          start: string
+          synced_at?: string
+        }
+        Update: {
+          connection_id?: string
+          end?: string | null
+          fixed_cost_per_day?: number | null
+          hourly_salary?: number | null
+          id?: string
+          monthly_salary?: number | null
+          raw?: Json | null
+          salary_type?: string | null
+          service_grade?: number | null
+          staff_url?: string
+          start?: string
+          synced_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pk_staff_employments_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "pk_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pk_sync_log: {
+        Row: {
+          connection_id: string | null
+          created_at: string
+          error: string | null
+          id: string
+          pages: number
+          resource: string
+          status: string
+          upserts: number
+        }
+        Insert: {
+          connection_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          pages?: number
+          resource: string
+          status: string
+          upserts?: number
+        }
+        Update: {
+          connection_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          pages?: number
+          resource?: string
+          status?: string
+          upserts?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pk_sync_log_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "pk_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pk_sync_state: {
+        Row: {
+          connection_id: string
+          last_error: string | null
+          last_run_at: string | null
+          last_status: string | null
+          records_upserted: number
+          resource: string
+          sync_cursor: string | null
+        }
+        Insert: {
+          connection_id: string
+          last_error?: string | null
+          last_run_at?: string | null
+          last_status?: string | null
+          records_upserted?: number
+          resource: string
+          sync_cursor?: string | null
+        }
+        Update: {
+          connection_id?: string
+          last_error?: string | null
+          last_run_at?: string | null
+          last_status?: string | null
+          records_upserted?: number
+          resource?: string
+          sync_cursor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pk_sync_state_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "pk_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pk_work_periods: {
+        Row: {
+          additional_salaries: Json | null
+          breaks: Json | null
+          connection_id: string
+          costgroup_name: string | null
+          costgroup_url: string | null
+          date: string | null
+          description: string | null
+          end: string | null
+          end_time: string | null
+          estimated_cost: number | null
+          first_seen_at: string
+          id: string
+          is_deleted: boolean
+          is_published: boolean
+          last_synced_at: string
+          period_color: string | null
+          period_name: string | null
+          period_url: string | null
+          raw: Json | null
+          staff_name: string | null
+          staff_url: string | null
+          start: string | null
+          start_time: string | null
+          url: string
+          workplace_url: string | null
+        }
+        Insert: {
+          additional_salaries?: Json | null
+          breaks?: Json | null
+          connection_id: string
+          costgroup_name?: string | null
+          costgroup_url?: string | null
+          date?: string | null
+          description?: string | null
+          end?: string | null
+          end_time?: string | null
+          estimated_cost?: number | null
+          first_seen_at?: string
+          id?: string
+          is_deleted?: boolean
+          is_published?: boolean
+          last_synced_at?: string
+          period_color?: string | null
+          period_name?: string | null
+          period_url?: string | null
+          raw?: Json | null
+          staff_name?: string | null
+          staff_url?: string | null
+          start?: string | null
+          start_time?: string | null
+          url: string
+          workplace_url?: string | null
+        }
+        Update: {
+          additional_salaries?: Json | null
+          breaks?: Json | null
+          connection_id?: string
+          costgroup_name?: string | null
+          costgroup_url?: string | null
+          date?: string | null
+          description?: string | null
+          end?: string | null
+          end_time?: string | null
+          estimated_cost?: number | null
+          first_seen_at?: string
+          id?: string
+          is_deleted?: boolean
+          is_published?: boolean
+          last_synced_at?: string
+          period_color?: string | null
+          period_name?: string | null
+          period_url?: string | null
+          raw?: Json | null
+          staff_name?: string | null
+          staff_url?: string | null
+          start?: string | null
+          start_time?: string | null
+          url?: string
+          workplace_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pk_work_periods_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "pk_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pk_workplaces: {
+        Row: {
+          company_url: string | null
+          connection_id: string
+          id: string
+          is_missing_since: string | null
+          name: string | null
+          raw: Json | null
+          short_identifier: number | null
+          store_id: string | null
+          store_id_manual: boolean
+          synced_at: string
+          url: string
+        }
+        Insert: {
+          company_url?: string | null
+          connection_id: string
+          id?: string
+          is_missing_since?: string | null
+          name?: string | null
+          raw?: Json | null
+          short_identifier?: number | null
+          store_id?: string | null
+          store_id_manual?: boolean
+          synced_at?: string
+          url: string
+        }
+        Update: {
+          company_url?: string | null
+          connection_id?: string
+          id?: string
+          is_missing_since?: string | null
+          name?: string | null
+          raw?: Json | null
+          short_identifier?: number | null
+          store_id?: string | null
+          store_id_manual?: boolean
+          synced_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pk_workplaces_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "pk_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pk_workplaces_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pledges: {
         Row: {
           amount: number
@@ -10997,6 +11514,35 @@ export type Database = {
           },
         ]
       }
+      v_pk_clocked_in_now: {
+        Row: {
+          clocked_in_at: string | null
+          clocked_out_at: string | null
+          connection_id: string | null
+          costgroup_name: string | null
+          display_name: string | null
+          estimated_cost: number | null
+          is_guest: boolean | null
+          ongoing_seconds: number | null
+          scheduled_end: string | null
+          scheduled_start: string | null
+          staff_url: string | null
+          status: string | null
+          store_id: string | null
+          store_name: string | null
+          workplace_name: string | null
+          workplace_url: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pk_workplaces_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       anonymize_retail_customer: {
@@ -11124,6 +11670,20 @@ export type Database = {
           _store: string
         }
         Returns: undefined
+      }
+      pk_can_read: { Args: never; Returns: boolean }
+      pk_can_read_salary: { Args: never; Returns: boolean }
+      pk_daily_labor_cost: {
+        Args: { _date: string; _store_id: string }
+        Returns: {
+          actual_cost: number
+          day: string
+          fixed_cost: number
+          scheduled_cost: number
+          store_id: string
+          variable_cost: number
+          work_time_sec: number
+        }[]
       }
       pos_day_summary: {
         Args: { _date: string; _store_id: string }
