@@ -20,9 +20,21 @@ export type FeedImage = EntityImage & {
   sourceKind: "store" | "wholesale" | "admin";
   city: string | null;
   commentCount: number;
+  /** Antal hjärtan från all personal (inte bara mina) */
+  favoriteCount: number;
 };
 
-export type FeedSource = { id: string; name: string; kind: FeedImage["sourceKind"] };
+export type FeedSource = {
+  id: string;
+  name: string;
+  kind: FeedImage["sourceKind"];
+  /** Antal bilder i flödet från enheten */
+  imageCount: number;
+  /** Bilder senaste 7 dagarna — måttet på hur aktiv enheten är */
+  recentCount: number;
+  /** Summa hjärtan på enhetens bilder */
+  favoriteCount: number;
+};
 
 export function useImageFeed(limit = 300) {
   return useQuery({
@@ -50,17 +62,25 @@ export function useImageFeed(limit = 300) {
 
 
       const counts = new Map<string, number>();
+      const hearts = new Map<string, number>();
       if (images.length) {
-        const { data: comments, error: cErr } = await supabase
-          .from("entity_image_comments")
-          .select("image_id")
-          .in("image_id", images.map((i) => i.id));
+        const ids = images.map((i) => i.id);
+        const [{ data: comments, error: cErr }, { data: favs, error: fErr }] = await Promise.all([
+          supabase.from("entity_image_comments").select("image_id").in("image_id", ids),
+          supabase.from("entity_image_favorites").select("image_id").in("image_id", ids),
+        ]);
         if (cErr) throw cErr;
+        if (fErr) throw fErr;
         for (const c of comments || []) {
           const id = (c as { image_id: string }).image_id;
           counts.set(id, (counts.get(id) ?? 0) + 1);
         }
+        for (const f of favs || []) {
+          const id = (f as { image_id: string }).image_id;
+          hearts.set(id, (hearts.get(id) ?? 0) + 1);
+        }
       }
+
 
       const rows: FeedImage[] = images.map((img) => {
         let sourceName = "Okänd enhet";
@@ -88,12 +108,26 @@ export function useImageFeed(limit = 300) {
           sourceKind,
           city,
           commentCount: counts.get(img.id) ?? 0,
+          favoriteCount: hearts.get(img.id) ?? 0,
         };
       });
 
-      const sources: FeedSource[] = Array.from(
-        new Map(rows.map((r) => [r.sourceId, { id: r.sourceId, name: r.sourceName, kind: r.sourceKind }])).values(),
-      ).sort((a, b) => a.name.localeCompare(b.name, "sv"));
+      // Aktivitet per enhet: hur många bilder som lagts upp och hur mycket
+      // uppskattning de fått. Används för "Mest aktiva enheter".
+      const weekAgo = Date.now() - 7 * 86400000;
+      const sourceMap = new Map<string, FeedSource>();
+      for (const r of rows) {
+        const cur =
+          sourceMap.get(r.sourceId) ??
+          { id: r.sourceId, name: r.sourceName, kind: r.sourceKind, imageCount: 0, recentCount: 0, favoriteCount: 0 };
+        cur.imageCount += 1;
+        cur.favoriteCount += r.favoriteCount;
+        if (new Date(r.created_at).getTime() >= weekAgo) cur.recentCount += 1;
+        sourceMap.set(r.sourceId, cur);
+      }
+      const sources: FeedSource[] = Array.from(sourceMap.values()).sort((a, b) =>
+        a.name.localeCompare(b.name, "sv"),
+      );
 
       return { rows, sources };
     },

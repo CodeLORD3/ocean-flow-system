@@ -320,7 +320,11 @@ export function useToggleImageFavorite() {
         if (error) throw error;
       }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["entity-image-favorites"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["entity-image-favorites"] });
+      // Bildflödet visar totala antalet hjärtan per bild och enhet
+      qc.invalidateQueries({ queryKey: ["image-feed"] });
+    },
   });
 }
 

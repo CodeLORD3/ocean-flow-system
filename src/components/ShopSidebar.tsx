@@ -17,6 +17,7 @@ import { useSite } from "@/contexts/SiteContext";
 import { useStores } from "@/hooks/useStores";
 import { useStoreSidebarPrefs } from "@/hooks/useStoreSidebarPrefs";
 import { SidebarVisibilityDialog } from "@/components/SidebarVisibilityDialog";
+import { StoreSwitcher } from "@/components/StoreSwitcher";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
@@ -197,7 +198,7 @@ export function ShopSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r-2 border-r-emerald-700/30" style={{ background: 'hsl(160 30% 12%)' }}>
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="p-4 space-y-2">
         <PortalLogo
           portalName="shop"
           fallbackIcon={Store}
@@ -209,6 +210,7 @@ export function ShopSidebar() {
           storeId={activeStoreId}
           storeLogoUrl={activeStore?.logo_url}
         />
+        <StoreSwitcher collapsed={collapsed} />
       </SidebarHeader>
 
       <SidebarContent>
