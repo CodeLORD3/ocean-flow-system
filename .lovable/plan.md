@@ -15,8 +15,11 @@ Vi behåller principen "bara utvalda syns i flödet", men gör markeringen tydli
 1. **Sluta radera historik**
    Urvalet nollas bara för bilder från samma dag som de nya utvalda — äldre dagars utvalda bilder ligger kvar i flödet.
 
-2. **Tydlig uppmaning i "Bilder från butiken"**
-   Om dagens bilder finns men ingen är stjärnmärkt visas en tydlig rad: "Inga utvalda bilder idag — stjärnmärk de bilder som ska synas i Bildflödet", med knapp som öppnar dagens katalog direkt.
+2. **Automatiskt urval om ingen väljer själv**
+   Har en dag uppladdade bilder men noll utvalda, markeras automatiskt 4 av dagens bilder (de 4 senast uppladdade) som utvalda. Butiken/enheten och admin kan alltid ändra urvalet efteråt — av- och markera valfria bilder som vanligt. Väljer personalen aktivt bort alla respekteras det (autourvalet körs inte igen samma dag). Målet: varje dag med uppladdade bilder har alltid några bilder i Bildflödet.
+
+3. **Tydlig uppmaning i "Bilder från butiken"**
+
 
 3. **Tydligare stjärna**
    Stjärnknappen på varje bild får starkare kontrast och en kort text/tooltip "Visa i Bildflödet" så personalen förstår vad den gör, plus en räknare "X utvalda idag".
