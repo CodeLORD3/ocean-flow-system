@@ -17,6 +17,7 @@ import {
   usePkStaff,
   usePkDailyLaborCost,
   usePkSetMapping,
+  usePkAddCostgroup,
   usePkSetStaffLink,
   usePkRunSync,
   pkHours,
@@ -64,6 +65,8 @@ export default function Personalkollen() {
   const setMapping = usePkSetMapping();
   const setStaffLink = usePkSetStaffLink();
   const runSync = usePkRunSync();
+  const addCostgroup = usePkAddCostgroup();
+  const [newCg, setNewCg] = useState({ connectionId: "", shortIdentifier: "", name: "", storeId: NONE });
 
   const connName = useMemo(() => {
     const m = new Map<string, string>();
@@ -300,6 +303,83 @@ export default function Personalkollen() {
                   ))}
                 </tbody>
               </table>
+              <div className="space-y-2 border-t p-4">
+                <p className="text-sm font-medium">Lägg till kostnadsställe manuellt</p>
+                <p className="text-xs text-muted-foreground">
+                  Personalkollens kostnadsställe-endpoint är stängd för våra nycklar, så nya grupper upptäcks
+                  först vid första passet eller stämplingen. Lägg in id och namn här för att mappa i förväg.
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Select value={newCg.connectionId} onValueChange={(v) => setNewCg((s) => ({ ...s, connectionId: v }))}>
+                    <SelectTrigger className="h-8 w-[240px]">
+                      <SelectValue placeholder="Bolag" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(connections.data ?? []).map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    className="h-8 w-[120px]"
+                    placeholder="Id"
+                    value={newCg.shortIdentifier}
+                    onChange={(e) => setNewCg((s) => ({ ...s, shortIdentifier: e.target.value }))}
+                  />
+                  <Input
+                    className="h-8 w-[200px]"
+                    placeholder="Namn i Personalkollen"
+                    value={newCg.name}
+                    onChange={(e) => setNewCg((s) => ({ ...s, name: e.target.value }))}
+                  />
+                  <Select value={newCg.storeId} onValueChange={(v) => setNewCg((s) => ({ ...s, storeId: v }))}>
+                    <SelectTrigger className="h-8 w-[240px]">
+                      <SelectValue placeholder="Butik" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NONE}>Ingen butik</SelectItem>
+                      {(stores.data ?? []).map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    size="sm"
+                    disabled={addCostgroup.isPending}
+                    onClick={() => {
+                      const id = Number(newCg.shortIdentifier);
+                      if (!newCg.connectionId || !Number.isFinite(id) || id <= 0 || !newCg.name.trim()) {
+                        toast.error("Välj bolag och ange id och namn");
+                        return;
+                      }
+                      const wp =
+                        (workplaces.data ?? []).find((w) => w.connection_id === newCg.connectionId)?.url ?? null;
+                      addCostgroup.mutate(
+                        {
+                          connectionId: newCg.connectionId,
+                          shortIdentifier: id,
+                          name: newCg.name.trim(),
+                          workplaceUrl: wp,
+                          storeId: newCg.storeId === NONE ? null : newCg.storeId,
+                        },
+                        {
+                          onSuccess: () => {
+                            toast.success("Kostnadsställe tillagt");
+                            setNewCg({ connectionId: "", shortIdentifier: "", name: "", storeId: NONE });
+                          },
+                          onError: (e: any) => toast.error(e?.message ?? "Kunde inte spara"),
+                        },
+                      );
+                    }}
+                  >
+                    Lägg till
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
