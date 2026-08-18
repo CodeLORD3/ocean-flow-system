@@ -129,6 +129,8 @@ export function EntityImageGallery({
    */
   const featured = images.filter((i) => i.is_featured && dayKey(i.created_at) === todayKey);
   const favorites = images.filter((i) => favoriteIds.includes(i.id));
+  /** Antal bilder som laddats upp idag — styr påminnelsen om stjärnmärkning. */
+  const todayImageCount = images.filter((i) => dayKey(i.created_at) === todayKey).length;
 
   /**
    * Poolen med utvalda bilder (valfritt antal), sorterad så framsidans bilder ligger först.
