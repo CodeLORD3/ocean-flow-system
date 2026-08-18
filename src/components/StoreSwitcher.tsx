@@ -1,18 +1,17 @@
 import { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { ChevronsUpDown, Store as StoreIcon, Check, LayoutGrid } from "lucide-react";
+import { ChevronsUpDown, Store as StoreIcon, Check } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useSite } from "@/contexts/SiteContext";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import { useStores } from "@/hooks/useStores";
 import { cn } from "@/lib/utils";
+
 
 /**
  * Butiker som den inloggade får öppna. Inget explicit urval = alla butiker.
