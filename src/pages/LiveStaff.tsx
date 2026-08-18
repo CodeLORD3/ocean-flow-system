@@ -29,6 +29,8 @@ import { OnDutyAvatars } from "@/components/livestaff/OnDutyAvatars";
 import { CityKpiCards } from "@/components/livestaff/CityKpiCards";
 import { LiveDailyReport } from "@/components/livestaff/LiveDailyReport";
 import { useStaffKpi } from "@/hooks/useStaffKpi";
+import { OverheadGroups } from "@/components/livestaff/OverheadGroups";
+import { useLegalEntities } from "@/hooks/useLegalEntities";
 
 const LABEL_W = "w-40 sm:w-52";
 
@@ -41,7 +43,20 @@ export default function LiveStaff() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [selected, setSelected] = useState<string | null>(null);
 
-  const { rows, staffById, isLoading, now, nowMinutes, live, unassignedShifts } = useLiveStaffDay(day);
+  const { rows: allRows, staffById, isLoading, now, nowMinutes, live, unassignedShifts } = useLiveStaffDay(day);
+
+  // Overhead (administration) hålls utanför butiksvyn och butikernas kostnader.
+  const rows = useMemo(() => allRows.filter((r) => r.unitType !== "overhead"), [allRows]);
+  const overheadRows = useMemo(() => allRows.filter((r) => r.unitType === "overhead"), [allRows]);
+
+  const entities = useLegalEntities();
+  const entityNames = useMemo(() => {
+    const map = new Map<string, string>();
+    (entities.data ?? []).forEach((e: any) => map.set(String(e.id), String(e.legal_name ?? e.id)));
+    return map;
+  }, [entities.data]);
+
+
 
   const cities = useMemo(() => Array.from(new Set(rows.map((r) => r.city))).sort(), [rows]);
 
@@ -241,7 +256,10 @@ export default function LiveStaff() {
         </Card>
       )}
 
+      <OverheadGroups rows={overheadRows} staffById={staffById} entityNames={entityNames} />
+
       <StatusLegend />
+
 
       {selectedRow ? (
         <StoreDetail

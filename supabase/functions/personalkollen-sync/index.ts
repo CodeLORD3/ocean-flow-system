@@ -345,7 +345,7 @@ async function syncCostgroups(db: SupabaseClient, _api: PkClient, conn: Conn) {
     }
   }
 
-  const { data: stores } = await db.from("stores").select("id, name");
+  const { data: stores } = await db.from("stores").select("id, name, legal_entity_id, unit_type");
   const { data: existing } = await db
     .from("pk_costgroups")
     .select("url, store_id, store_id_manual")
@@ -357,23 +357,39 @@ async function syncCostgroups(db: SupabaseClient, _api: PkClient, conn: Conn) {
     return hit ? String(hit.id) : null;
   };
 
+  /** Overhead-enheten i samma bolag som kopplingen — administrationens hemvist. */
+  const overheadId = (): string | null => {
+    const hit = (stores ?? []).find(
+      (s: Row) =>
+        String(s.unit_type ?? "") === "overhead" &&
+        String(s.legal_entity_id ?? "") === String(conn.legal_entity_id ?? ""),
+    );
+    return hit ? String(hit.id) : null;
+  };
+
   for (const [url, info] of seen) {
     const before = prior.get(url);
     const manual = bool(before?.store_id_manual);
     const name = str(info.name);
     const companyGroup = !!name && /no\.?1\s*ab/i.test(name);
+    const overhead = !!name && /administration|overhead/i.test(name);
 
     let store = (before?.store_id as string | null) ?? null;
     let confidence = manual ? "manual" : companyGroup ? "company" : "none";
 
     if (companyGroup) {
       store = null;
+    } else if (!manual && overhead) {
+      // Administration hör till bolagets overhead-enhet, aldrig till en butik.
+      store = overheadId();
+      confidence = store ? "sure" : "unsure";
     } else if (!manual) {
       // Nollställs varje synk och sätts bara om nyckelordet är entydigt.
       const match = matchStoreByName(name ?? "");
       store = match ? storeId(match) : null;
       confidence = store ? "sure" : match ? "unsure" : "none";
     }
+
 
     rows.push({
       connection_id: conn.id,
