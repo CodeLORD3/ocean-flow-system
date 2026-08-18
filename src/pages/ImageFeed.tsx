@@ -395,34 +395,45 @@ function ImageGrid({
         const isFav = favoriteIds.includes(img.id);
         return (
           <div key={img.id} className="group rounded-lg border border-border overflow-hidden bg-card">
-            <button
-              type="button"
-              onClick={() => onOpen(img.id)}
-              className="block w-full aspect-[4/3] overflow-hidden"
-              aria-label={`Öppna bild från ${img.sourceName}`}
-            >
-              <img
-                src={img.url}
-                alt={img.caption || `Bild från ${img.sourceName}`}
-                loading="lazy"
-                style={focalStyle(img.focal_point)}
-                className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
-              />
-            </button>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => onOpen(img.id)}
+                className="block w-full aspect-[4/3] overflow-hidden"
+                aria-label={`Öppna bild från ${img.sourceName}`}
+              >
+                <img
+                  src={img.url}
+                  alt={img.caption || `Bild från ${img.sourceName}`}
+                  loading="lazy"
+                  style={focalStyle(img.focal_point)}
+                  className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
+                />
+              </button>
+              {/* Tydlig avsändare direkt på bilden — man ska se vilket ställe som lagt ut */}
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end gap-1.5 bg-gradient-to-t from-black/75 via-black/30 to-transparent p-1.5 pt-6">
+                <span className="flex min-w-0 items-center gap-1 rounded-md bg-background/90 px-1.5 py-0.5 text-[11px] font-semibold text-foreground shadow-sm backdrop-blur">
+                  <Store className="h-3 w-3 shrink-0 text-primary" />
+                  <span className="truncate">{img.sourceName}</span>
+                </span>
+              </div>
+            </div>
             <div className="p-2 space-y-1">
-              <div className="flex items-center gap-1.5 min-w-0">
+              <div className="flex items-center justify-between gap-1.5 min-w-0">
                 {img.sourceKind === "store" && allowedIds.has(img.sourceId) ? (
                   <button
                     type="button"
                     onClick={() => onPeek(img.sourceId, img.sourceName)}
                     title={`Kika in hos ${img.sourceName}`}
-                    className="max-w-full truncate rounded-full border border-border px-1.5 py-0.5 text-[10px] hover:border-primary hover:text-primary transition-colors"
+                    className="flex min-w-0 items-center gap-1 truncate rounded-full border border-border px-1.5 py-0.5 text-[11px] font-semibold hover:border-primary hover:text-primary transition-colors"
                   >
-                    {img.sourceName}
+                    <Store className="h-3 w-3 shrink-0 text-primary" />
+                    <span className="truncate">{img.sourceName}</span>
                   </button>
                 ) : (
-                  <Badge variant="outline" className="text-[10px] max-w-full truncate">
-                    {img.sourceName}
+                  <Badge variant="outline" className="gap-1 text-[11px] font-semibold max-w-full truncate">
+                    <Store className="h-3 w-3 shrink-0 text-primary" />
+                    <span className="truncate">{img.sourceName}</span>
                   </Badge>
                 )}
                 <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
@@ -432,6 +443,7 @@ function ImageGrid({
                   })}
                 </span>
               </div>
+
               {img.caption && <p className="text-[11px] text-foreground line-clamp-2">{img.caption}</p>}
               <div className="flex items-center justify-between gap-2">
                 <span className="text-[10px] text-muted-foreground truncate">
