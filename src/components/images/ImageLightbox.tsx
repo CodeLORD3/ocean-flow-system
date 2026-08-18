@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronLeft, ChevronRight, Heart, MessageCircle, Pencil, Send, Trash2, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Heart, MessageCircle, Pencil, Send, Store, Trash2, X } from "lucide-react";
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,8 @@ type Props = {
   onSaveCaption?: (id: string, caption: string | null) => void;
   favoriteIds?: string[];
   onToggleFavorite?: (id: string, favorite: boolean) => void;
+  /** Etikett för var bilden kommer ifrån (t.ex. butiksnamn) — visas ovanpå bilden. */
+  sourceLabelOf?: (image: EntityImage) => string | null | undefined;
 };
 
 /** Helskärmsgalleri: pilnavigering (desktop), Instagram-liknande swipe-karusell (mobil) och kommentarschatt. */
@@ -40,10 +42,12 @@ export function ImageLightbox({
   onSaveCaption,
   favoriteIds = [],
   onToggleFavorite,
+  sourceLabelOf,
 }: Props) {
   const open = index !== null && index >= 0 && index < images.length;
   const current = open ? images[index as number] : null;
   const isMobile = useIsMobile();
+  const sourceLabel = current ? sourceLabelOf?.(current) : null;
   const [caption, setCaption] = useState("");
   const [captionEditing, setCaptionEditing] = useState(false);
   const [draft, setDraft] = useState("");
@@ -503,9 +507,17 @@ export function ImageLightbox({
                   </button>
                 </DialogClose>
 
-                <span className="absolute top-2 left-2 rounded bg-background/80 px-2 py-0.5 font-mono tabular-nums text-[11px] text-foreground backdrop-blur">
-                  {(index as number) + 1} / {images.length}
-                </span>
+                <div className="absolute top-2 left-2 flex max-w-[70%] items-center gap-1.5">
+                  <span className="rounded bg-background/80 px-2 py-0.5 font-mono tabular-nums text-[11px] text-foreground backdrop-blur">
+                    {(index as number) + 1} / {images.length}
+                  </span>
+                  {sourceLabel && (
+                    <span className="flex min-w-0 items-center gap-1 rounded bg-background/90 px-2 py-0.5 text-[11px] font-semibold text-foreground backdrop-blur">
+                      <Store className="h-3 w-3 shrink-0 text-primary" />
+                      <span className="truncate">{sourceLabel}</span>
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Bild + bildtext är det viktiga; kommentarer bakom ikon */}
@@ -679,6 +691,13 @@ export function ImageLightbox({
                     <X className="h-4 w-4" />
                   </button>
                 </DialogClose>
+
+                {sourceLabel && (
+                  <span className="absolute top-2 left-2 flex max-w-[60%] items-center gap-1 rounded bg-background/90 px-2 py-1 text-xs font-semibold text-foreground backdrop-blur border border-border">
+                    <Store className="h-3.5 w-3.5 shrink-0 text-primary" />
+                    <span className="truncate">{sourceLabel}</span>
+                  </span>
+                )}
 
                 <span className="absolute bottom-2 right-2 rounded bg-background/80 px-2 py-0.5 font-mono tabular-nums text-[11px] text-foreground backdrop-blur">
                   {(index as number) + 1} / {images.length}

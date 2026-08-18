@@ -348,23 +348,52 @@ export default function ImageFeed() {
                   </Badge>
                 </CardTitle>
                 <CardDescription className="text-[11px]">
-                  {Array.from(new Set(items.map((i) => i.sourceName))).join(" · ")}
+                  {groupBySource(items).length} ställe
+                  {groupBySource(items).length === 1 ? "" : "n"} har lagt ut
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <ImageGrid
-                  items={items}
-                  favoriteIds={favoriteIds}
-                  onOpen={setLightboxId}
-                  onToggleFavorite={(id, favorite) => toggleFavorite.mutate({ imageId: id, favorite })}
-                  onPeek={peek}
-                  allowedIds={allowedIds}
-                />
+              <CardContent className="space-y-4">
+                {/* En rubrik per ställe i stället för text på varje bild — grupperna blir lätta att skilja på */}
+                {groupBySource(items).map((g) => (
+                  <div key={g.id} className="space-y-2">
+                    <div className="flex items-center justify-between gap-2 border-b border-border pb-1.5">
+                      <div className="flex min-w-0 items-center gap-1.5">
+                        <Store className="h-3.5 w-3.5 shrink-0 text-primary" />
+                        <h3 className="truncate text-sm font-heading font-bold text-foreground">
+                          {g.name}
+                        </h3>
+                        <Badge variant="outline" className="shrink-0 text-[10px] tabular-nums">
+                          {g.items.length}
+                        </Badge>
+                      </div>
+                      {g.kind === "store" && allowedIds.has(g.id) && (
+                        <button
+                          type="button"
+                          onClick={() => peek(g.id, g.name)}
+                          className="shrink-0 text-[11px] font-medium text-primary hover:underline"
+                          aria-label={`Kika in hos ${g.name}`}
+                        >
+                          Kika in
+                        </button>
+                      )}
+                    </div>
+                    <ImageGrid
+                      items={g.items}
+                      favoriteIds={favoriteIds}
+                      onOpen={setLightboxId}
+                      onToggleFavorite={(id, favorite) => toggleFavorite.mutate({ imageId: id, favorite })}
+                      onPeek={peek}
+                      allowedIds={allowedIds}
+                      showSource={false}
+                    />
+                  </div>
+                ))}
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
 
       <ImageLightbox
         images={visible}
@@ -372,11 +401,29 @@ export default function ImageFeed() {
         onIndexChange={(i) => setLightboxId(visible[i]?.id ?? null)}
         onClose={() => setLightboxId(null)}
         title="Bildflöde"
+        sourceLabelOf={(img) => visible.find((v) => v.id === img.id)?.sourceName ?? null}
         favoriteIds={favoriteIds}
         onToggleFavorite={(id, favorite) => toggleFavorite.mutate({ imageId: id, favorite })}
       />
     </motion.div>
   );
+}
+
+/** Grupperar en dags bilder per ställe, i den ordning ställena senast lade ut. */
+function groupBySource(items: FeedImage[]) {
+  const map = new Map<string, { id: string; name: string; kind: string; items: FeedImage[] }>();
+  items.forEach((img) => {
+    const g = map.get(img.sourceId);
+    if (g) g.items.push(img);
+    else
+      map.set(img.sourceId, {
+        id: img.sourceId,
+        name: img.sourceName,
+        kind: img.sourceKind,
+        items: [img],
+      });
+  });
+  return Array.from(map.values());
 }
 
 function ImageGrid({
@@ -386,6 +433,7 @@ function ImageGrid({
   onToggleFavorite,
   onPeek,
   allowedIds,
+  showSource = true,
 }: {
   items: FeedImage[];
   favoriteIds: string[];
@@ -393,7 +441,10 @@ function ImageGrid({
   onToggleFavorite: (id: string, favorite: boolean) => void;
   onPeek: (id: string, name: string) => void;
   allowedIds: Set<string>;
+  /** Visa avsändaren på varje kort — av när gruppen redan har en rubrik per ställe. */
+  showSource?: boolean;
 }) {
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
       {items.map((img) => {
@@ -415,17 +466,22 @@ function ImageGrid({
                   className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
                 />
               </button>
-              {/* Tydlig avsändare direkt på bilden — man ska se vilket ställe som lagt ut */}
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end gap-1.5 bg-gradient-to-t from-black/75 via-black/30 to-transparent p-1.5 pt-6">
-                <span className="flex min-w-0 items-center gap-1 rounded-md bg-background/90 px-1.5 py-0.5 text-[11px] font-semibold text-foreground shadow-sm backdrop-blur">
-                  <Store className="h-3 w-3 shrink-0 text-primary" />
-                  <span className="truncate">{img.sourceName}</span>
-                </span>
-              </div>
+              {/* Avsändaren visas bara när korten inte redan ligger under en rubrik per ställe */}
+              {showSource && (
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end gap-1.5 bg-gradient-to-t from-black/75 via-black/30 to-transparent p-1.5 pt-6">
+                  <span className="flex min-w-0 items-center gap-1 rounded-md bg-background/90 px-1.5 py-0.5 text-[11px] font-semibold text-foreground shadow-sm backdrop-blur">
+                    <Store className="h-3 w-3 shrink-0 text-primary" />
+                    <span className="truncate">{img.sourceName}</span>
+                  </span>
+                </div>
+              )}
             </div>
             <div className="p-2 space-y-1">
               <div className="flex items-center justify-between gap-1.5 min-w-0">
-                {img.sourceKind === "store" && allowedIds.has(img.sourceId) ? (
+                {!showSource ? (
+                  <span className="sr-only">{img.sourceName}</span>
+                ) : img.sourceKind === "store" && allowedIds.has(img.sourceId) ? (
+
                   <button
                     type="button"
                     onClick={() => onPeek(img.sourceId, img.sourceName)}
@@ -448,6 +504,7 @@ function ImageGrid({
                   })}
                 </span>
               </div>
+
 
               {img.caption && <p className="text-[11px] text-foreground line-clamp-2">{img.caption}</p>}
               <div className="flex items-center justify-between gap-2">
