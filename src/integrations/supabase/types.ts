@@ -9516,6 +9516,7 @@ export type Database = {
           requires_identification_mark: boolean
           slug: string
           sqm: number | null
+          unit_type: string
         }
         Insert: {
           active?: boolean
@@ -9542,6 +9543,7 @@ export type Database = {
           requires_identification_mark?: boolean
           slug: string
           sqm?: number | null
+          unit_type?: string
         }
         Update: {
           active?: boolean
@@ -9568,6 +9570,7 @@ export type Database = {
           requires_identification_mark?: boolean
           slug?: string
           sqm?: number | null
+          unit_type?: string
         }
         Relationships: [
           {
@@ -11740,6 +11743,19 @@ export type Database = {
           fixed_cost: number
           scheduled_cost: number
           store_id: string
+          variable_cost: number
+          work_time_sec: number
+        }[]
+      }
+      pk_overhead_daily_cost: {
+        Args: { _date: string }
+        Returns: {
+          actual_cost: number
+          fixed_cost: number
+          legal_entity_id: string
+          scheduled_cost: number
+          unit_id: string
+          unit_name: string
           variable_cost: number
           work_time_sec: number
         }[]
