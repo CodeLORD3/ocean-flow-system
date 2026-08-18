@@ -312,10 +312,14 @@ export default function LiveStaff() {
                               className={`h-1.5 w-1.5 rounded-full ${r.openNow ? "bg-emerald-500" : "bg-muted-foreground/40"}`}
                             />
                             {formatDayHours(r.hours)}
+                            {r.hours.closed && r.workingNow > 0 && (
+                              <span className="text-amber-600">· pass pågår</span>
+                            )}
                             {r.deviations.length > 0 && (
                               <span className="text-destructive">· {r.deviations.length} avvikelse(r)</span>
                             )}
                           </p>
+
                         </button>
                       </div>
                       <div className="relative min-h-[2.75rem] flex-1 py-1.5">
