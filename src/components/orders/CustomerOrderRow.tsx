@@ -394,7 +394,7 @@ export function CustomerOrderRow({
 
 
 
-            <span className="flex w-24 shrink-0 items-center gap-1 border-r border-grid-line/70 px-2">
+            <span className="flex w-36 shrink-0 items-center gap-1 overflow-hidden whitespace-nowrap border-r border-grid-line/70 px-2">
               {statusChip}
               {hasAllergy && (
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-destructive" aria-label="Allergi" />
