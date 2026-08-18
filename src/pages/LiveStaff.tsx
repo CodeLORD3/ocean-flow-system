@@ -220,13 +220,15 @@ export default function LiveStaff() {
       <CityKpiCards cities={costKpi.cities} />
 
       <LiveDailyReport
-            cities={costKpi.cities}
-            day={day}
+        cities={costKpi.cities}
+        day={day}
         live={live}
         stores={costKpi.stores}
-        totals={costKpi.totals}
-        overheadPct={costKpi.overheadPct}
+        currencyTotals={costKpi.currencyTotals}
+        overheadRows={overheadCost.data ?? []}
+        entityNames={entityNames}
       />
+
 
       {unassignedShifts.length > 0 && (
         <Card className="border-warning/40 shadow-card">
