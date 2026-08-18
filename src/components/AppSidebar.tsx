@@ -1,5 +1,6 @@
 import {
   Radio,
+  Plug,
   CalendarOff, Ruler,
   Landmark,
   Building2,
