@@ -282,12 +282,17 @@ export function EntityImageGallery({
           ? "Inga utvalda bilder ännu — välj vilka bilder som ska visas."
           : "Inga bilder ännu";
 
-  /** Snabbmarkering direkt på bilden: lägg till/ta bort ur den utvalda poolen (valfritt antal). */
+  /**
+   * Snabbmarkering direkt på bilden. Urvalet hanteras per dag, så gamla dagars
+   * utvalda bilder ligger kvar i Bildflödet.
+   */
   const toggleFeatured = (img: EntityImage) => {
-    const current = featured.map((i) => i.id);
+    const day = dayKey(img.created_at);
+    const current = images.filter((i) => i.is_featured && dayKey(i.created_at) === day).map((i) => i.id);
     const next = img.is_featured ? current.filter((id) => id !== img.id) : [...current, img.id];
-    setFeatured.mutate({ entityType, entityId, imageIds: next });
+    setFeatured.mutate({ entityType, entityId, day, imageIds: next });
   };
+
 
 
   const grid = (
