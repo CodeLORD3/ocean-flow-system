@@ -288,12 +288,34 @@ async function syncWorkplaces(db: SupabaseClient, api: PkClient, conn: Conn) {
 
 /**
  * Kostnadsgrupper = butiksnivån i Personalkollen (arbetsplatsen är bolaget).
- * Butiksmappningen sker därför här; manuell mappning skrivs aldrig över.
+ *
+ * /api/costgroups/ svarar 403 för dessa nycklar, så grupperna härleds ur de
+ * nästlade costgroup-objekten i pass och stämplingar. Butiksmappningen sker här;
+ * manuell mappning skrivs aldrig över.
  */
-async function syncCostgroups(db: SupabaseClient, api: PkClient, conn: Conn) {
-  let url: string | null = `${BASE}/costgroups/`;
-  let pages = 0;
+async function syncCostgroups(db: SupabaseClient, _api: PkClient, conn: Conn) {
   const rows: Row[] = [];
+  const seen = new Map<string, Row>();
+
+  for (const table of ["pk_work_periods", "pk_logged_times"]) {
+    const { data } = await db
+      .from(table)
+      .select("costgroup_url, costgroup_name, workplace_url, raw")
+      .eq("connection_id", conn.id)
+      .not("costgroup_url", "is", null)
+      .limit(5000);
+    for (const r of (data ?? []) as Row[]) {
+      const url = String(r.costgroup_url);
+      if (seen.has(url)) continue;
+      const nested = ((r.raw as Row)?.costgroup ?? null) as Row | null;
+      seen.set(url, {
+        name: str(r.costgroup_name) ?? str(nested?.name),
+        workplace_url: str(nested?.workplace) ?? str(r.workplace_url),
+        short_identifier: int(nested?.short_identifier),
+        raw: nested ?? { url },
+      });
+    }
+  }
 
   const { data: stores } = await db.from("stores").select("id, name");
   const { data: existing } = await db
@@ -302,44 +324,34 @@ async function syncCostgroups(db: SupabaseClient, api: PkClient, conn: Conn) {
     .eq("connection_id", conn.id);
   const prior = new Map((existing ?? []).map((r: Row) => [String(r.url), r]));
 
-  while (url) {
-    const page = await api.get(url);
-    pages++;
-    for (const r of page.results) {
-      const cgUrl = str(pick(r, "url", "resource_uri"));
-      if (!cgUrl) {
-        warn("Kostnadsgrupp utan url hoppades över");
-        continue;
-      }
-      const name = str(pick(r, "name", "description"));
-      const before = prior.get(cgUrl);
-      const manual = bool(before?.store_id_manual);
-      let storeId = (before?.store_id as string | null) ?? null;
-      if (!manual && !storeId && name) {
-        const target = normName(name);
-        const hits = (stores ?? []).filter((s: Row) => {
-          const n = normName(String(s.name ?? ""));
-          return n.length > 2 && (n === target || target.includes(n) || n.includes(target));
-        });
-        if (hits.length === 1) storeId = String(hits[0].id);
-      }
-      rows.push({
-        connection_id: conn.id,
-        url: cgUrl,
-        short_identifier: int(pick(r, "short_identifier", "identifier")),
-        name,
-        workplace_url: str(pick(r, "workplace", "workplace_url")),
-        store_id: storeId,
-        store_id_manual: manual,
-        raw: r,
-        synced_at: new Date().toISOString(),
+  for (const [url, info] of seen) {
+    const before = prior.get(url);
+    const manual = bool(before?.store_id_manual);
+    let storeId = (before?.store_id as string | null) ?? null;
+    const name = str(info.name);
+    if (!manual && !storeId && name) {
+      const target = normName(name);
+      const hits = (stores ?? []).filter((s: Row) => {
+        const n = normName(String(s.name ?? ""));
+        return n.length > 2 && (n === target || target.includes(n) || n.includes(target));
       });
+      if (hits.length === 1) storeId = String(hits[0].id);
     }
-    url = page.next;
+    rows.push({
+      connection_id: conn.id,
+      url,
+      short_identifier: info.short_identifier ?? null,
+      name,
+      workplace_url: info.workplace_url ?? null,
+      store_id: storeId,
+      store_id_manual: manual,
+      raw: info.raw ?? null,
+      synced_at: new Date().toISOString(),
+    });
   }
 
   const upserts = await upsert(db, "pk_costgroups", rows, "connection_id,url");
-  return { pages, upserts, cursor: null as string | null };
+  return { pages: 0, upserts, cursor: null as string | null };
 }
 
 
