@@ -41,7 +41,11 @@ export default function LiveStaff() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [selected, setSelected] = useState<string | null>(null);
 
-  const { rows, staffById, isLoading, now, nowMinutes, live, unassignedShifts } = useLiveStaffDay(day);
+  const { rows: allRows, staffById, isLoading, now, nowMinutes, live, unassignedShifts } = useLiveStaffDay(day);
+
+  // Overhead (administration) hålls utanför butiksvyn och butikernas kostnader.
+  const rows = useMemo(() => allRows.filter((r) => r.unitType !== "overhead"), [allRows]);
+  const overheadRows = useMemo(() => allRows.filter((r) => r.unitType === "overhead"), [allRows]);
 
   const cities = useMemo(() => Array.from(new Set(rows.map((r) => r.city))).sort(), [rows]);
 
