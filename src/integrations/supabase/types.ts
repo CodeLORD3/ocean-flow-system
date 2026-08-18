@@ -3188,6 +3188,39 @@ export type Database = {
           },
         ]
       }
+      image_feature_runs: {
+        Row: {
+          created_at: string
+          day: string
+          entity_id: string
+          entity_type: string
+          id: string
+          image_count: number
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          image_count?: number
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          image_count?: number
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       incoming_deliveries: {
         Row: {
           created_at: string | null
@@ -11611,6 +11644,10 @@ export type Database = {
         Args: { _customer_id: string; _reason?: string }
         Returns: Json
       }
+      autofeature_daily_images: {
+        Args: { _count?: number; _days_back?: number }
+        Returns: Json
+      }
       booking_status_day: { Args: { _day?: string }; Returns: Json }
       booking_volume_by_day: {
         Args: { _days?: number; _from?: string }
@@ -11706,6 +11743,15 @@ export type Database = {
       latin_norm: { Args: { v: string }; Returns: string }
       ledger_zero_empty_costs: { Args: never; Returns: number }
       lot_parasite_block_reason: { Args: { _lot_id: string }; Returns: string }
+      mark_image_feature_day: {
+        Args: {
+          _count: number
+          _day: string
+          _entity_id: string
+          _entity_type: string
+        }
+        Returns: undefined
+      }
       next_customer_order_number: {
         Args: { _date: string; _store_id: string }
         Returns: string
