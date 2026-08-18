@@ -172,6 +172,47 @@ export default function ShopifyWebhookStatus() {
     }
   };
 
+  /**
+   * Webhook-prenumerationer: visar vad Shopify har registrerat och skapar de
+   * topics som saknas (Shopify raderar prenumerationer som svarar fel).
+   */
+  const checkWebhooks = async (shopDomain: string, fix: boolean) => {
+    setBusy(`hooks:${shopDomain}`);
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        fix ? "shopify-webhooks/ensure" : "shopify-webhooks",
+        { body: { shop: shopDomain } },
+      );
+      let r = data as any;
+      if (error) {
+        try {
+          r = await (error as any)?.context?.json?.();
+        } catch {
+          r = null;
+        }
+        if (!r) throw error;
+      }
+      if (r?.ok === false && !Array.isArray(r?.failed)) {
+        toast.error(r?.error ?? "Kunde inte läsa webhook-prenumerationerna");
+        return;
+      }
+      const missing: string[] = r?.missing ?? [];
+      if (fix) {
+        const created: string[] = r?.created ?? [];
+        if (created.length) toast.success(`Registrerade: ${created.join(", ")}`);
+        for (const f of r?.failed ?? []) toast.error(`${f.topic}: ${f.error}`);
+        if (r?.note) toast.info(String(r.note));
+      }
+      if (missing.length === 0) toast.success(`${r?.shop_label ?? shopDomain}: alla webhooks finns`);
+      else toast.warning(`Saknade webhooks: ${missing.join(", ")}`);
+      await Promise.all([events.refetch(), lastReceived.refetch(), shops.refetch()]);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Webhook-kontrollen misslyckades");
+    } finally {
+      setBusy(null);
+    }
+  };
+
   /** OAuth-status: finns en giltig Admin-token för butiken? */
   const oauth = useQuery({
     queryKey: ["shopify-oauth-status"],
