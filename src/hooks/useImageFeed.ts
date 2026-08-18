@@ -108,12 +108,26 @@ export function useImageFeed(limit = 300) {
           sourceKind,
           city,
           commentCount: counts.get(img.id) ?? 0,
+          favoriteCount: hearts.get(img.id) ?? 0,
         };
       });
 
-      const sources: FeedSource[] = Array.from(
-        new Map(rows.map((r) => [r.sourceId, { id: r.sourceId, name: r.sourceName, kind: r.sourceKind }])).values(),
-      ).sort((a, b) => a.name.localeCompare(b.name, "sv"));
+      // Aktivitet per enhet: hur många bilder som lagts upp och hur mycket
+      // uppskattning de fått. Används för "Mest aktiva enheter".
+      const weekAgo = Date.now() - 7 * 86400000;
+      const sourceMap = new Map<string, FeedSource>();
+      for (const r of rows) {
+        const cur =
+          sourceMap.get(r.sourceId) ??
+          { id: r.sourceId, name: r.sourceName, kind: r.sourceKind, imageCount: 0, recentCount: 0, favoriteCount: 0 };
+        cur.imageCount += 1;
+        cur.favoriteCount += r.favoriteCount;
+        if (new Date(r.created_at).getTime() >= weekAgo) cur.recentCount += 1;
+        sourceMap.set(r.sourceId, cur);
+      }
+      const sources: FeedSource[] = Array.from(sourceMap.values()).sort((a, b) =>
+        a.name.localeCompare(b.name, "sv"),
+      );
 
       return { rows, sources };
     },
