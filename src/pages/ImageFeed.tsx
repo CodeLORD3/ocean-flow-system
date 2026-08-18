@@ -65,13 +65,18 @@ export default function ImageFeed() {
     return Array.from(map.entries()).sort((a, b) => b[0].localeCompare(a[0]));
   }, [visible]);
 
-  /** Topplista: mest hjärtade bilderna senaste 30 dagarna */
+  /** Topplista: max 4 mest hjärtade senaste 30 dagarna. Lika många hjärtan → flest kommentarer, sedan senaste bilden. */
   const topImages = useMemo(() => {
     const since = Date.now() - 30 * 86400000;
     return rows
       .filter((r) => new Date(r.created_at).getTime() >= since && r.favoriteCount > 0)
-      .sort((a, b) => b.favoriteCount - a.favoriteCount || b.commentCount - a.commentCount)
-      .slice(0, 6);
+      .sort(
+        (a, b) =>
+          b.favoriteCount - a.favoriteCount ||
+          b.commentCount - a.commentCount ||
+          b.created_at.localeCompare(a.created_at),
+      )
+      .slice(0, 4);
   }, [rows]);
 
   /** Mest aktiva enheter senaste 7 dagarna */
