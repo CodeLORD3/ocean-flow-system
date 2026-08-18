@@ -633,6 +633,8 @@ export type OrderFlowFields = {
   wanted_time?: string | null;
   needs_approval?: boolean | null;
   approved_at?: string | null;
+  category?: string | null;
+  customer_order_lines?: { note?: string | null }[] | null;
 };
 
 /** Är beställningen betald? Webbordrar är betalda redan vid köpet. */
@@ -650,15 +652,28 @@ export function awaitsApproval(o: OrderFlowFields) {
   return !!o.needs_approval && !o.approved_at;
 }
 
+/**
+ * Catering och eventbokningar (t.ex. kräftskivor) hanteras skilt från de
+ * vanliga hämtnings- och leveransordrarna och ligger i en egen flik.
+ */
+export function isEventOrCatering(o: OrderFlowFields) {
+  if (o.category === "catering" || o.category === "event") return true;
+  return (o.customer_order_lines || []).some((l) =>
+    String(l?.note || "").toLowerCase().startsWith("eventbokning"),
+  );
+}
+
 /** Vilken flik hör beställningen till? En order ligger alltid i exakt en flik. */
 export function orderTab(o: OrderFlowFields): OrderTab {
   if (o.cancelled_at || o.status === "avbruten") return "borttagna";
   if (o.archived_at) return "arkiverade";
   if (awaitsApproval(o)) return "godkannande";
+  if (isEventOrCatering(o)) return "event";
   if (isHandedOver(o)) return isPaid(o) ? "arkiverade" : "obetalda";
   if (o.pack_status === "packad") return "packade";
   return "pagaende";
 }
+
 
 /**
  * Minuter efter planerad hämtning. Visas som "Försenad 35 min" inne i
