@@ -83,6 +83,20 @@ const pick = (o: Row, ...keys: string[]): unknown => {
   return null;
 };
 
+/** costgroup kommer som objekt i vissa svar och som URL-sträng i andra. */
+function costGroup(r: Row): { url: string | null; name: string | null } {
+  const raw = pick(r, "costgroup", "cost_group");
+  if (raw && typeof raw === "object") {
+    const o = raw as Row;
+    return { url: str(o.url), name: str(o.name) };
+  }
+  return {
+    url: str(raw),
+    name: str(pick(r, "costgroup_name", "cost_group_name")),
+  };
+}
+
+
 function daysAgoIso(days: number): string {
   const d = new Date(Date.now() - days * 86400_000);
   return d.toISOString().slice(0, 19);
