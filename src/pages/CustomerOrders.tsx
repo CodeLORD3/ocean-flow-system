@@ -56,7 +56,9 @@ const TABS: { id: OrderTab; hint: string; muted?: boolean }[] = [
   },
   { id: "pagaende", hint: "Aktiva, ännu inte färdigpackade" },
   { id: "packade", hint: "Färdiga, väntar på hämtning eller leverans" },
+  { id: "event", hint: "Eventbokningar och catering, skilt från vanliga ordrar" },
   { id: "obetalda", hint: "Utlämnade men betalning saknas" },
+
   { id: "arkiverade", hint: "Avslutade — hämtade och betalda", muted: true },
   { id: "borttagna", hint: "Avbokade eller felregistrerade, sparas för historik", muted: true },
 ];
