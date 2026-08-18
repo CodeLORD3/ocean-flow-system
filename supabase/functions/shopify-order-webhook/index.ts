@@ -507,10 +507,13 @@ async function createOrder(
   }
 
   const notes: string[] = [];
+  if (dateResult.eventWithoutDate) notes.push(dateResult.note!);
   if (payload?.note) notes.push(String(payload.note));
   notes.push(`Shopify ${orderName} — butik via ${via}`);
   notes.push(`Kund: ${customer.matchedVia}`);
+  if (!dateResult.eventWithoutDate && dateResult.note) notes.push(dateResult.note);
   if (customer.review) notes.push(customer.review);
+
 
   const paidTotal = Number(payload?.total_price ?? 0);
   const paid = String(payload?.financial_status ?? "").toLowerCase() === "paid";
