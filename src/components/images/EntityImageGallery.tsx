@@ -556,6 +556,15 @@ export function EntityImageGallery({
             {favorites.length}
           </Badge>
         )}
+        {previewCount && featured.length > 0 && (
+          <Badge
+            variant="outline"
+            className="h-9 shrink-0 gap-1 rounded-md px-3 font-mono tabular-nums text-[11px] text-amber-600 border-amber-300 sm:h-6 sm:px-2 sm:text-[10px]"
+          >
+            <Star className="h-3 w-3 fill-current sm:h-2.5 sm:w-2.5" />
+            {featured.length} utvalda idag
+          </Badge>
+        )}
         {editable && previewCount && images.length > 0 && (
           <Button
             variant="outline"
@@ -569,6 +578,35 @@ export function EntityImageGallery({
           </Button>
         )}
       </div>
+
+      {/* Saknas utvalda bilder för idag? Påminn personalen om stjärnan. */}
+      {editable && previewCount && !isLoading && featured.length === 0 && todayImageCount > 0 && (
+        <Card className="flex flex-wrap items-center justify-between gap-2 border-dashed border-amber-400/60 bg-amber-500/5 p-2.5">
+          <p className="flex items-start gap-2 text-xs text-foreground">
+            <Star className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+            <span>
+              Inga utvalda bilder idag — stjärnmärk de bilder som ska synas i Bildflödet.
+              {" "}
+              <span className="text-muted-foreground">
+                Väljer ingen markeras 4 av dagens bilder automatiskt.
+              </span>
+            </span>
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 shrink-0 gap-1.5 px-3 text-xs"
+            onClick={() => {
+              setCatalogOpen(true);
+              selectDay(todayKey);
+            }}
+          >
+            <CalendarDays className="h-3.5 w-3.5" />
+            Visa dagens bilder
+          </Button>
+        </Card>
+      )}
+
 
 
       {isLoading ? (
