@@ -666,6 +666,7 @@ Deno.serve(async (req) => {
       try {
         let r: { pages: number; upserts: number; cursor: string | null };
         if (res === "workplaces") r = await syncWorkplaces(db, api, conn);
+        else if (res === "costgroups") r = await syncCostgroups(db, api, conn);
         else if (res === "staffs") r = await syncStaffs(db, api, conn);
         else if (res === "logged-times" || res === "work-periods")
           r = await syncCursorResource(db, api, conn, res, full);
