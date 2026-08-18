@@ -114,7 +114,7 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/bug-reports": { component: <BugReports /> },
   "/live-staff": { component: <LiveStaff /> },
   "/personalkollen": { component: <Personalkollen /> },
-  "/on-site-now": { component: <PkOnSiteNow /> },
+  "/on-site-now": { component: <LiveStaff /> },
   "/staff-schedule": { component: <StaffSchedule /> },
 
   "/settings": { component: <PlaceholderPage title="Systeminställningar" /> },
