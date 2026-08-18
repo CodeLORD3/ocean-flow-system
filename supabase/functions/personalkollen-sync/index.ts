@@ -200,6 +200,32 @@ function normName(v: string): string {
     .replace(/[^a-z0-9]/g, "");
 }
 
+/**
+ * Butiksnyckelord för kostnadsställen i Personalkollen.
+ *
+ * Mappningen sätts bara på entydiga nyckelord — allt annat lämnas omappat och
+ * gulmarkeras i admin så att en människa väljer butik.
+ */
+const STORE_KEYWORDS: { needle: RegExp; store: string }[] = [
+  { needle: /alsten/, store: "Ålstens Fisk" },
+  { needle: /kungsholmen/, store: "Fiskskaldjur Kungsholmen" },
+  { needle: /torslandatorg|^torg$/, store: "Fiskskaldjur Torslanda Torg" },
+  { needle: /amhult/, store: "Fiskskaldjur Amhult" },
+  { needle: /saro/, store: "Fiskskaldjur Särö Centrum" },
+  { needle: /eriksberg/, store: "Fiskskaldjur Eriksberg" },
+  { needle: /marstrand/, store: "Fiskskaldjur Marstrand" },
+];
+
+function matchStoreByName(name: string): string | null {
+  const flat = name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+  const hits = STORE_KEYWORDS.filter((k) => k.needle.test(flat));
+  return hits.length === 1 ? hits[0].store : null;
+}
+
 /* -------------------------------------------------------------- upsert-lager */
 
 async function upsert(db: SupabaseClient, table: string, rows: Row[], onConflict: string) {
