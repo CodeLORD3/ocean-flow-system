@@ -286,6 +286,63 @@ async function syncWorkplaces(db: SupabaseClient, api: PkClient, conn: Conn) {
   return { pages, upserts, cursor: null as string | null };
 }
 
+/**
+ * Kostnadsgrupper = butiksnivån i Personalkollen (arbetsplatsen är bolaget).
+ * Butiksmappningen sker därför här; manuell mappning skrivs aldrig över.
+ */
+async function syncCostgroups(db: SupabaseClient, api: PkClient, conn: Conn) {
+  let url: string | null = `${BASE}/costgroups/`;
+  let pages = 0;
+  const rows: Row[] = [];
+
+  const { data: stores } = await db.from("stores").select("id, name");
+  const { data: existing } = await db
+    .from("pk_costgroups")
+    .select("url, store_id, store_id_manual")
+    .eq("connection_id", conn.id);
+  const prior = new Map((existing ?? []).map((r: Row) => [String(r.url), r]));
+
+  while (url) {
+    const page = await api.get(url);
+    pages++;
+    for (const r of page.results) {
+      const cgUrl = str(pick(r, "url", "resource_uri"));
+      if (!cgUrl) {
+        warn("Kostnadsgrupp utan url hoppades över");
+        continue;
+      }
+      const name = str(pick(r, "name", "description"));
+      const before = prior.get(cgUrl);
+      const manual = bool(before?.store_id_manual);
+      let storeId = (before?.store_id as string | null) ?? null;
+      if (!manual && !storeId && name) {
+        const target = normName(name);
+        const hits = (stores ?? []).filter((s: Row) => {
+          const n = normName(String(s.name ?? ""));
+          return n.length > 2 && (n === target || target.includes(n) || n.includes(target));
+        });
+        if (hits.length === 1) storeId = String(hits[0].id);
+      }
+      rows.push({
+        connection_id: conn.id,
+        url: cgUrl,
+        short_identifier: int(pick(r, "short_identifier", "identifier")),
+        name,
+        workplace_url: str(pick(r, "workplace", "workplace_url")),
+        store_id: storeId,
+        store_id_manual: manual,
+        raw: r,
+        synced_at: new Date().toISOString(),
+      });
+    }
+    url = page.next;
+  }
+
+  const upserts = await upsert(db, "pk_costgroups", rows, "connection_id,url");
+  return { pages, upserts, cursor: null as string | null };
+}
+
+
 async function syncStaffs(db: SupabaseClient, api: PkClient, conn: Conn) {
   let url: string | null = `${BASE}/staffs/?with_employments=true`;
   let pages = 0;
