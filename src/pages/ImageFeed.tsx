@@ -408,6 +408,23 @@ export default function ImageFeed() {
   );
 }
 
+/** Grupperar en dags bilder per ställe, i den ordning ställena senast lade ut. */
+function groupBySource(items: FeedImage[]) {
+  const map = new Map<string, { id: string; name: string; kind: string; items: FeedImage[] }>();
+  items.forEach((img) => {
+    const g = map.get(img.sourceId);
+    if (g) g.items.push(img);
+    else
+      map.set(img.sourceId, {
+        id: img.sourceId,
+        name: img.sourceName,
+        kind: img.sourceKind,
+        items: [img],
+      });
+  });
+  return Array.from(map.values());
+}
+
 function ImageGrid({
   items,
   favoriteIds,
@@ -415,6 +432,7 @@ function ImageGrid({
   onToggleFavorite,
   onPeek,
   allowedIds,
+  showSource = true,
 }: {
   items: FeedImage[];
   favoriteIds: string[];
@@ -422,7 +440,10 @@ function ImageGrid({
   onToggleFavorite: (id: string, favorite: boolean) => void;
   onPeek: (id: string, name: string) => void;
   allowedIds: Set<string>;
+  /** Visa avsändaren på varje kort — av när gruppen redan har en rubrik per ställe. */
+  showSource?: boolean;
 }) {
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
       {items.map((img) => {
