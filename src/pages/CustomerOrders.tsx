@@ -56,7 +56,9 @@ const TABS: { id: OrderTab; hint: string; muted?: boolean }[] = [
   },
   { id: "pagaende", hint: "Aktiva, ännu inte färdigpackade" },
   { id: "packade", hint: "Färdiga, väntar på hämtning eller leverans" },
+  { id: "event", hint: "Eventbokningar och catering, skilt från vanliga ordrar" },
   { id: "obetalda", hint: "Utlämnade men betalning saknas" },
+
   { id: "arkiverade", hint: "Avslutade — hämtade och betalda", muted: true },
   { id: "borttagna", hint: "Avbokade eller felregistrerade, sparas för historik", muted: true },
 ];
@@ -545,7 +547,10 @@ export default function CustomerOrders() {
                   ? "Här ligger beställningar som är aktiva och ännu inte färdigpackade. Skapa en med Ny beställning."
                   : tab === "packade"
                     ? "Färdigpackade beställningar som väntar på hämtning eller leverans hamnar här."
+                    : tab === "event"
+                      ? "Eventbokningar och cateringbeställningar hamnar här, skilt från de vanliga ordrarna."
                     : tab === "obetalda"
+
                       ? "Inga utlämnade beställningar väntar på betalning. Bra jobbat."
                       : tab === "arkiverade"
                         ? "Beställningar som är både hämtade och betalda hamnar här automatiskt."
