@@ -170,7 +170,7 @@ export default function CustomerOrders() {
     "orders",
   );
 
-  const [tab, setTab] = useState<OrderTab>("pagaende");
+  const [tab, setTab] = useState<OrderTab>("alla");
   const [marked, setMarked] = useState<string[]>([]);
 
   const toggleRow = (id: string) => setOpenRow((cur) => (cur === id ? null : id));
