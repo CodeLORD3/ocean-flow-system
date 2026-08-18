@@ -107,12 +107,14 @@ export default function ImageFeed() {
         <Card>
           <CardContent className="py-8">
             <EmptyState
-              icon={Star}
+              bare
+              icon={<Star className="h-4 w-4" />}
               title="Inga utvalda bilder än"
               description="När någon markerar en bild som utvald på sin översiktssida hamnar den här för alla att se."
             />
           </CardContent>
         </Card>
+
       ) : (
         <div className="space-y-4">
           {days.map(([key, items]) => (
