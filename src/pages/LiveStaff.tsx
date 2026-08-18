@@ -49,6 +49,15 @@ export default function LiveStaff() {
   const rows = useMemo(() => allRows.filter((r) => r.unitType !== "overhead"), [allRows]);
   const overheadRows = useMemo(() => allRows.filter((r) => r.unitType === "overhead"), [allRows]);
 
+  const entities = useLegalEntities();
+  const entityNames = useMemo(() => {
+    const map = new Map<string, string>();
+    (entities.data ?? []).forEach((e: any) => map.set(String(e.id), String(e.legal_name ?? e.id)));
+    return map;
+  }, [entities.data]);
+
+
+
   const cities = useMemo(() => Array.from(new Set(rows.map((r) => r.city))).sort(), [rows]);
 
   const visible = useMemo(
