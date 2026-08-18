@@ -8807,6 +8807,8 @@ export type Database = {
           clocked_out_at: string | null
           created_at: string
           id: string
+          pk_logged_time_id: string | null
+          source: string
           staff_id: string
           store_id: string | null
           updated_at: string
@@ -8816,6 +8818,8 @@ export type Database = {
           clocked_out_at?: string | null
           created_at?: string
           id?: string
+          pk_logged_time_id?: string | null
+          source?: string
           staff_id: string
           store_id?: string | null
           updated_at?: string
@@ -8825,6 +8829,8 @@ export type Database = {
           clocked_out_at?: string | null
           created_at?: string
           id?: string
+          pk_logged_time_id?: string | null
+          source?: string
           staff_id?: string
           store_id?: string | null
           updated_at?: string
@@ -11732,6 +11738,7 @@ export type Database = {
           work_time_sec: number
         }[]
       }
+      pk_match_staff_by_name: { Args: never; Returns: number }
       pos_day_summary: {
         Args: { _date: string; _store_id: string }
         Returns: Json
