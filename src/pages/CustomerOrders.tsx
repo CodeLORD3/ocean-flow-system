@@ -187,7 +187,10 @@ export default function CustomerOrders() {
     orderType,
     search,
     archived: isArchiveView,
+    // Vid sökning tas även arkiverade med, så inget känns försvunnet.
+    includeArchived: !isArchiveView && search.trim().length > 0,
   });
+
 
   const rowReadOnly = (o: CustomerOrder) =>
     isShop ? o.store_id !== activeStoreId : site === "production";
