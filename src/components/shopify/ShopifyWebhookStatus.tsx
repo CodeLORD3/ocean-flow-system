@@ -449,6 +449,21 @@ export default function ShopifyWebhookStatus() {
                   />
                   Backfyll
                 </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-6 text-xs"
+                  disabled={busy === `hooks:${sh.shop_domain}`}
+                  onClick={() => checkWebhooks(sh.shop_domain, true)}
+                >
+                  <RefreshCw
+                    className={`mr-1 h-3 w-3 ${
+                      busy === `hooks:${sh.shop_domain}` ? "animate-spin" : ""
+                    }`}
+                  />
+                  Kontrollera webhooks
+                </Button>
+
               </div>
             ))}
           </div>
