@@ -472,18 +472,20 @@ async function syncCursorResource(
     .maybeSingle();
 
   const saved = full ? null : (str(state?.sync_cursor) ?? null);
-  const extra = resource === "work-periods" ? "&include_deleted=1" : "";
-  let url: string | null;
-  if (saved) {
-    url = `${BASE}/${resource}/?sync_cursor=${encodeURIComponent(saved)}${extra}`;
-  } else {
-    const since = resource === "logged-times" ? daysAgoIso(90) : daysAgoIso(30);
-    url = `${BASE}/${resource}/?start__gte=${encodeURIComponent(since)}${extra}`;
-  }
+  const extra = resource === "work-periods" ? "?include_deleted=1" : "";
+  // API:et ignorerar datumfilter på dessa resurser — första körningen hämtar allt
+  // och därefter används cursorn, som bara returnerar ändrade poster.
+  let url: string | null = saved
+    ? `${BASE}/${resource}/?sync_cursor=${encodeURIComponent(saved)}${
+        resource === "work-periods" ? "&include_deleted=1" : ""
+      }`
+    : `${BASE}/${resource}/${extra}`;
 
   let pages = 0;
   let upserts = 0;
   let newCursor: string | null = null;
+  let truncated = false;
+  const MAX_PAGES = 60;
 
   while (url) {
     const page = await api.get(url);
@@ -501,7 +503,16 @@ async function syncCursorResource(
       );
     }
     url = page.next;
+    if (url && pages >= MAX_PAGES) {
+      truncated = true;
+      warn(`${resource}: stannade efter ${MAX_PAGES} sidor, cursorn flyttas inte`);
+      break;
+    }
   }
+
+  // Cursorn flyttas bara när hela hämtningen är klar.
+  if (truncated) newCursor = null;
+
 
   return { pages, upserts, cursor: newCursor };
 }
