@@ -118,7 +118,10 @@ export interface OrderFilter {
   search?: string;
   /** true = endast arkiverade, false/undefined = endast ej arkiverade. */
   archived?: boolean;
+  /** true = både arkiverade och aktiva (används vid fritextsök över alla flikar). */
+  includeArchived?: boolean;
 }
+
 
 export function useCustomerOrders(filter: OrderFilter = {}) {
   return useQuery({
