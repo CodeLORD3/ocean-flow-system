@@ -92,6 +92,8 @@ export default function ImageFeed() {
 
   const lightboxIndex = lightboxId ? visible.findIndex((i) => i.id === lightboxId) : -1;
   const activeSource = sources.find((s) => s.id === source);
+  /** Senaste dagen som har utvalda bilder i flödet. */
+  const latestDay = rows.length ? dayKey(rows[0].created_at) : "";
 
   return (
     <motion.div
