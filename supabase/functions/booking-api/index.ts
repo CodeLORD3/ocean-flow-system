@@ -740,6 +740,17 @@ Deno.serve(async (req) => {
       const result = await staffBooking(db, body, req.headers.get("Authorization"));
       return new Response(JSON.stringify({ ok: true, ...result }), { headers });
     }
+    if (action === "swish-callback") {
+      await swishCallback(db, req);
+      return new Response("ok", { status: 200, headers: cors(origin) });
+    }
+    if (action === "create-payment") {
+      return new Response(JSON.stringify(await createPayment(db, body, req)), { headers });
+    }
+    if (action === "payment-status") {
+      return new Response(JSON.stringify(await paymentStatus(db, body)), { headers });
+    }
+
     return new Response(JSON.stringify({ ok: false, error: "Okänd förfrågan." }), { status: 404, headers });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Något gick fel. Ring gärna butiken.";
