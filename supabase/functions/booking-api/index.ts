@@ -233,7 +233,7 @@ async function catalog(db: SupabaseClient, storeId: string | null) {
       unit: p.unit,
       step: p.booking_step != null ? Number(p.booking_step) : (p.unit === "st" ? 1 : 0.5),
       lead_days: Number(p.booking_lead_days ?? 1),
-      image_url: p.image_url ?? null,
+      image_url: p.image_url ?? imageByProduct.get(p.id) ?? null,
     })),
   };
 }
