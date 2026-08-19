@@ -171,6 +171,23 @@ async function catalog(db: SupabaseClient, storeId: string | null) {
     if (!imageByStore.has(img.entity_id)) imageByStore.set(img.entity_id, img.url);
   });
 
+  // Produktfoto: products.image_url först, annars omslagsbilden i entity_images.
+  const productIdsWithoutImage = (products ?? []).filter((p: any) => !p.image_url).map((p: any) => p.id);
+  const { data: productImages } = productIdsWithoutImage.length
+    ? await db
+      .from("entity_images")
+      .select("entity_id, url, is_cover, sort_order")
+      .eq("entity_type", "product")
+      .in("entity_id", productIdsWithoutImage)
+      .order("is_cover", { ascending: false })
+      .order("sort_order")
+    : { data: [] as any[] };
+  const imageByProduct = new Map<string, string>();
+  (productImages ?? []).forEach((img: any) => {
+    if (!imageByProduct.has(img.entity_id)) imageByProduct.set(img.entity_id, img.url);
+  });
+
+
   const shaped = (stores ?? [])
     .filter((s: any) => !storeId || s.id === storeId)
     .map((s: any) => ({
@@ -216,7 +233,7 @@ async function catalog(db: SupabaseClient, storeId: string | null) {
       unit: p.unit,
       step: p.booking_step != null ? Number(p.booking_step) : (p.unit === "st" ? 1 : 0.5),
       lead_days: Number(p.booking_lead_days ?? 1),
-      image_url: p.image_url ?? null,
+      image_url: p.image_url ?? imageByProduct.get(p.id) ?? null,
     })),
   };
 }
