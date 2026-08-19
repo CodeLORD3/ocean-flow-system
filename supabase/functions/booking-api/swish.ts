@@ -141,8 +141,8 @@ export async function paymentStatus(db: SupabaseClient, body: any) {
 }
 
 /** POST /swish-callback — svarar alltid 200 så Swish inte köar om i onödan. */
-export async function swishCallback(db: SupabaseClient, req: Request) {
-  const payload = await req.json().catch(() => null);
+// deno-lint-ignore no-explicit-any
+export async function swishCallback(db: SupabaseClient, payload: any, req: Request) {
   if (payload?.id) {
     const { data: row } = await db
       .from("payments")
