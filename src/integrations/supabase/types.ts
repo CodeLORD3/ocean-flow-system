@@ -5385,6 +5385,59 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          amount: number
+          callback_identifier: string | null
+          created_at: string
+          date_paid: string | null
+          error_code: string | null
+          id: string
+          payment_ref: string
+          phone: string | null
+          status: string
+          store_id: string | null
+          updated_at: string
+          verification_ref: string | null
+        }
+        Insert: {
+          amount?: number
+          callback_identifier?: string | null
+          created_at?: string
+          date_paid?: string | null
+          error_code?: string | null
+          id?: string
+          payment_ref: string
+          phone?: string | null
+          status?: string
+          store_id?: string | null
+          updated_at?: string
+          verification_ref?: string | null
+        }
+        Update: {
+          amount?: number
+          callback_identifier?: string | null
+          created_at?: string
+          date_paid?: string | null
+          error_code?: string | null
+          id?: string
+          payment_ref?: string
+          phone?: string | null
+          status?: string
+          store_id?: string | null
+          updated_at?: string
+          verification_ref?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pk_connections: {
         Row: {
           created_at: string
