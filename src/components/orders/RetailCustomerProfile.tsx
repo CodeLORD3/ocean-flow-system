@@ -166,6 +166,13 @@ export function RetailCustomerProfile({
     }
   };
 
+  /* Som i SumUp: butikens valuta först, SEK-motvärdet mot livekurs som referens.
+     Hooken måste ligga före alla tidiga returer — annars byter hook-antalet. */
+  const customerCurrency = getStoreCurrency(
+    orders.find((order) => order.store_id === customer?.store_id)?.stores,
+  );
+  const sekRate = useSekRate(customerCurrency);
+
   if (isLoading) return <p className="p-4 text-sm text-muted-foreground">Hämtar kunden…</p>;
   if (!customer)
     return (
@@ -183,11 +190,9 @@ export function RetailCustomerProfile({
   const noShows = Number(customer.no_show_count || 0);
   const tags = customer.tags || [];
   const upcoming = stats.upcoming;
-  const customerCurrency = getStoreCurrency(orders.find((order) => order.store_id === customer.store_id)?.stores);
-  /* Som i SumUp: butikens valuta först, SEK-motvärdet mot livekurs som referens. */
-  const sekRate = useSekRate(customerCurrency);
   const cur = (v: unknown) =>
     `${money(v)} ${customerCurrency}${sekRate ? ` ≈ ${money(Number(v ?? 0) * sekRate)} SEK` : ""}`;
+
 
   const lineText = (o: CustomerOrder) =>
     (o.customer_order_lines || [])
