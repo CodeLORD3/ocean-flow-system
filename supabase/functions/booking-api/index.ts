@@ -16,7 +16,7 @@
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { normalizePhoneSe, sendSms, smsTestMode } from "../_shared/sms.ts";
-import { createPayment, paymentStatus, swishCallback } from "./swish.ts";
+import { createPayment, paymentStatus, swishCallback, swishDiagnose } from "./swish.ts";
 
 /** Exakt felmeddelande vid ogiltigt eller utländskt nummer — samma text överallt. */
 const PHONE_ERROR = "Ange ett svenskt mobilnummer, eller ring butiken så bokar vi åt dig.";
