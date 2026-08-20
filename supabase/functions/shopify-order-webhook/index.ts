@@ -671,10 +671,18 @@ async function createOrder(
       (titleK ? byKey.get(titleK) : null) ??
       null;
 
-    // Styckvaror i antal, viktvaror i kg — mängden tas som den är.
-    const qty = round3(Number(li?.quantity ?? 0));
-    const price = round2(Number(li?.price ?? 0));
-    const lineTotal = round2(qty * price);
+    /**
+     * Styckvaror räknas i antal. Viktvaror räknas i KILO: antal förpackningar
+     * gånger förpackningens vikt (0,5kg → 4 st blir 2 kg). Priset räknas om till
+     * pris per kilo så att radsumman blir exakt densamma som kunden betalade.
+     */
+    const packs = round3(Number(li?.quantity ?? 0));
+    const packPrice = round2(Number(li?.price ?? 0));
+    const lineTotal = round2(packs * packPrice);
+    const isWeight = !!product && stockUnitOf(product.unit) === "kg";
+    const pack = isWeight ? packSizeKg(title, sku, li?.grams) : 1;
+    const qty = pack !== 1 ? round3(packs * pack) : packs;
+    const price = pack !== 1 && pack > 0 ? round2(packPrice / pack) : packPrice;
     estimated += lineTotal;
 
     const isEvent = !product && isEventLine(li);
@@ -698,6 +706,7 @@ async function createOrder(
       // Förskottsbetald webborder: radpriset låses från Shopify.
       price_per_unit: price,
       line_total: lineTotal,
+
       price_locked: true,
       pack_status: "opackad",
       reservation_status: reservation.status,
