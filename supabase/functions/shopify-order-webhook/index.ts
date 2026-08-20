@@ -20,7 +20,7 @@ import {
   fxRateToSek,
   shopByDomain,
   shopDomain,
-  webhookSecret,
+  webhookSecrets,
 } from "../_shared/shopify-shops.ts";
 import { localDate, resolveWantedDate } from "../_shared/webOrderDate.ts";
 
@@ -89,6 +89,25 @@ function attr(payload: any, key: string): string | null {
 /* ------------------------------------------------------------ enhetslogik */
 
 const PIECE_UNITS = ["st", "stk", "styck", "pcs", "pc", "piece"];
+
+/**
+ * Nyckel för tolerant jämförelse av SKU och titel mellan Shopify (svensk och
+ * schweizisk butik) och produktregistret: ASCII, gemener, inga skiljetecken.
+ * "Rö-013", "ro 013" och "RO013" blir samma nyckel.
+ */
+function matchKey(v: unknown): string {
+  return String(v ?? "")
+    .normalize("NFC")
+    .replace(/[ÅÄåä]/g, "a")
+    .replace(/[Öö]/g, "o")
+    .replace(/[Üü]/g, "u")
+    .replace(/[Éé]/g, "e")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
 /** Produktens lagerenhet — samma regel som src/lib/units.ts. Ingen omräkning. */
 const stockUnitOf = (unit?: string | null): "kg" | "st" =>
   PIECE_UNITS.includes(String(unit ?? "").toLowerCase().trim()) ? "st" : "kg";
@@ -483,28 +502,52 @@ async function createOrder(
   // Shopify lämnar ibland SKU tomt (t.ex. signalkräftorna) — då kopplas raden
   // på produkttiteln istället, som också kan ligga som nyckel i kopplingstabellen.
   const titles = lineItems.map((l) => String(l?.title ?? l?.name ?? "").trim()).filter(Boolean);
-  const mapKeys = [...new Set([...skus, ...titles])];
 
-  const [{ data: products }, { data: mapped }] = await Promise.all([
+  /**
+   * Matchningen är tolerant: skiftläge, svenska tecken, komma/punkt och extra
+   * mellanslag spelar ingen roll. Samma nyckel används för både svenska och
+   * schweiziska Shopify — kopplingstabellen läses i sin helhet så att en
+   * engelsk titel från fiskskaldjur.ch hittar sin svenska produkt.
+   */
+  const [{ data: products }, { data: byName }, { data: mapped }] = await Promise.all([
     skus.length
       ? db.from("products").select("id, sku, unit, name").in("sku", skus)
       : Promise.resolve({ data: [] as any[] } as any),
-    mapKeys.length
-      ? db.from("shopify_product_map").select("shopify_sku, product_id").in("shopify_sku", mapKeys)
+    titles.length
+      ? db.from("products").select("id, sku, unit, name").in("name", titles)
       : Promise.resolve({ data: [] as any[] } as any),
+    db
+      .from("shopify_product_map")
+      .select("shopify_sku, shopify_title, product_id, shop_id")
+      .limit(5000),
   ]);
 
-  const bySku = new Map<string, any>();
-  for (const p of (products || []) as any[]) bySku.set(String(p.sku).trim(), p);
-  const mapBySku = new Map<string, string>();
-  for (const m of (mapped || []) as any[]) mapBySku.set(String(m.shopify_sku).trim(), m.product_id);
+  const byKey = new Map<string, any>();
+  for (const p of [...((products || []) as any[]), ...((byName || []) as any[])]) {
+    if (p?.sku) byKey.set(matchKey(p.sku), p);
+    if (p?.name) byKey.set(matchKey(p.name), p);
+  }
 
-  const extraIds = [...mapBySku.values()];
+  /* Butiksspecifika kopplingar vinner över generella. */
+  const mapByKey = new Map<string, string>();
+  const rows = ((mapped || []) as any[]).sort((a, b) =>
+    (a.shop_id === shop?.id ? 1 : 0) - (b.shop_id === shop?.id ? 1 : 0)
+  );
+  for (const m of rows) {
+    if (m.shop_id && shop?.id && m.shop_id !== shop.id) continue;
+    for (const k of [m.shopify_sku, m.shopify_title]) {
+      const key = matchKey(k);
+      if (key) mapByKey.set(key, m.product_id);
+    }
+  }
+
+  const extraIds = [...new Set(mapByKey.values())].filter(Boolean);
   const byId = new Map<string, any>();
   if (extraIds.length) {
     const { data: extra } = await db.from("products").select("id, sku, unit, name").in("id", extraIds);
     for (const p of (extra || []) as any[]) byId.set(p.id, p);
   }
+
 
   const notes: string[] = [];
   if (dateResult.eventWithoutDate) notes.push(dateResult.note!);
@@ -592,12 +635,15 @@ async function createOrder(
     const li = lineItems[i];
     const sku = String(li?.sku ?? "").trim();
     const title = String(li?.title ?? li?.name ?? "Okänd artikel");
-    const mapKey = sku || title.trim();
+    const skuK = matchKey(sku);
+    const titleK = matchKey(title);
     const product =
-      (sku ? bySku.get(sku) : null) ??
-      (mapBySku.has(mapKey) ? byId.get(mapBySku.get(mapKey)!) : null) ??
-      (mapBySku.has(title.trim()) ? byId.get(mapBySku.get(title.trim())!) : null) ??
+      (skuK ? byKey.get(skuK) : null) ??
+      (skuK && mapByKey.has(skuK) ? byId.get(mapByKey.get(skuK)!) : null) ??
+      (titleK && mapByKey.has(titleK) ? byId.get(mapByKey.get(titleK)!) : null) ??
+      (titleK ? byKey.get(titleK) : null) ??
       null;
+
     // Styckvaror i antal, viktvaror i kg — mängden tas som den är.
     const qty = round3(Number(li?.quantity ?? 0));
     const price = round2(Number(li?.price ?? 0));
@@ -1057,10 +1103,10 @@ Deno.serve(async (req) => {
     return json({ ok: after?.status !== "fel", ...after });
   }
 
-  /* Vilken webbutik? Domänen i headern avgör vilken hemlighet som gäller. */
+  /* Vilken webbutik? Domänen i headern avgör vilka hemligheter som gäller. */
   const domain = shopDomain(req.headers.get("x-shopify-shop-domain"));
   const shop = await shopByDomain(db, domain);
-  const secret = webhookSecret(shop);
+  const secrets = webhookSecrets(shop);
   const topic = req.headers.get("x-shopify-topic") ?? "orders/create";
   const header = req.headers.get("x-shopify-hmac-sha256") ?? "";
 
@@ -1068,7 +1114,7 @@ Deno.serve(async (req) => {
    * Saknad nyckel är ett internt konfigurationsfel, inte Shopifys fel:
    * logga det och svara 200 så att prenumerationen inte raderas.
    */
-  if (!secret) {
+  if (!secrets.length) {
     await db.from("shopify_webhook_events").insert({
       topic,
       hmac_valid: false,
@@ -1084,7 +1130,13 @@ Deno.serve(async (req) => {
     return json({ ok: false, error: "Signeringsnyckel saknas" }, 200);
   }
 
-  const expected = await hmacBase64(secret, raw);
+  /**
+   * Signaturen godkänns om NÅGON av butikens nycklar stämmer. Shopify signerar
+   * Admin API-skapade webhooks med appens klienthemlighet och manuellt inlagda
+   * med butikens notifikationsnyckel — båda är giltiga vägar in.
+   */
+  const expectedList = await Promise.all(secrets.map((s) => hmacBase64(s, raw)));
+  const expected = expectedList[0];
   let signature = header;
 
   /**
@@ -1100,18 +1152,20 @@ Deno.serve(async (req) => {
   }
 
   /* Enda felsvaret: ogiltig signatur. */
-  if (!signature || !safeEqual(signature, expected)) {
+  if (!signature || !expectedList.some((e) => safeEqual(signature, e))) {
     await db.from("shopify_webhook_events").insert({
       topic,
       hmac_valid: false,
       status: "ogiltig_hmac",
       shop_domain: domain || null,
       shop_id: shop?.id ?? null,
-      error: "X-Shopify-Hmac-Sha256 stämmer inte med beräknad signatur",
+      error:
+        `X-Shopify-Hmac-Sha256 stämmer inte med någon av butikens ${expectedList.length} nycklar`,
       processed_at: new Date().toISOString(),
     });
     return json({ ok: false, error: "Ogiltig signatur" }, 401);
   }
+
 
   /* Signaturen är verifierad: spara rått i kön och kvittera direkt med 200. */
   let payload: any = null;
