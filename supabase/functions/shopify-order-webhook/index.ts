@@ -249,6 +249,33 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 const round3 = (n: number) => Math.round(n * 1000) / 1000;
 
 /**
+ * Webbutiken säljer viktvaror i förpackningar ("Räkor Färska, 0,5kg"), medan
+ * Makrilltrade räknar viktvaror i KILO. Shopify skickar antal förpackningar —
+ * 4 st à 0,5 kg är 2 kg, inte 4 kg. Här läses förpackningsstorleken ut ur
+ * titel/SKU (0,5kg, 500g, 1/2 kg) med line_items.grams som reserv.
+ * Returnerar 1 när ingen storlek kan läsas — då tolkas raden som hela kilon.
+ */
+function packSizeKg(title: string, sku: string, grams: unknown): number {
+  const text = `${title} ${sku}`.toLowerCase().replace(/\u00a0/g, " ");
+  const half = /(^|[^0-9])1\s*\/\s*2\s*kg/.test(text);
+  if (half) return 0.5;
+  const kg = text.match(/(\d+(?:[.,]\d+)?)\s*\.?\s*kg\b/);
+  if (kg) {
+    const n = Number(kg[1].replace(",", "."));
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  const g = text.match(/(\d+(?:[.,]\d+)?)\s*g\b/);
+  if (g) {
+    const n = Number(g[1].replace(",", "."));
+    if (Number.isFinite(n) && n > 0) return n / 1000;
+  }
+  const fromGrams = Number(grams ?? 0);
+  if (Number.isFinite(fromGrams) && fromGrams > 0) return fromGrams / 1000;
+  return 1;
+}
+
+
+/**
  * Eventbiljetter (t.ex. "Kräftskiva Lavaux SEPT 5th") är bokningar till ett event,
  * inte varor. Shopify markerar dem med requires_shipping = false. De ska aldrig
  * kräva produktmatchning, packas eller röra lagret.
