@@ -89,6 +89,25 @@ function attr(payload: any, key: string): string | null {
 /* ------------------------------------------------------------ enhetslogik */
 
 const PIECE_UNITS = ["st", "stk", "styck", "pcs", "pc", "piece"];
+
+/**
+ * Nyckel för tolerant jämförelse av SKU och titel mellan Shopify (svensk och
+ * schweizisk butik) och produktregistret: ASCII, gemener, inga skiljetecken.
+ * "Rö-013", "ro 013" och "RO013" blir samma nyckel.
+ */
+function matchKey(v: unknown): string {
+  return String(v ?? "")
+    .normalize("NFC")
+    .replace(/[ÅÄåä]/g, "a")
+    .replace(/[Öö]/g, "o")
+    .replace(/[Üü]/g, "u")
+    .replace(/[Éé]/g, "e")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
 /** Produktens lagerenhet — samma regel som src/lib/units.ts. Ingen omräkning. */
 const stockUnitOf = (unit?: string | null): "kg" | "st" =>
   PIECE_UNITS.includes(String(unit ?? "").toLowerCase().trim()) ? "st" : "kg";
