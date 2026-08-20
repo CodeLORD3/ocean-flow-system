@@ -22,8 +22,12 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
 export function CustomerOrderStats({ storeId, currency = "SEK" }: { storeId?: string | null; currency?: string }) {
   const start = new Date();
   start.setDate(start.getDate() - 30);
+  /* Webbordrar (Shopify/bokningssida) har ofta framtida hämtdatum – därför
+     sträcker sig standardperioden 30 dagar framåt också. */
+  const end = new Date();
+  end.setDate(end.getDate() + 30);
   const [from, setFrom] = useState(iso(start));
-  const [to, setTo] = useState(iso(new Date()));
+  const [to, setTo] = useState(iso(end));
   const [customerType, setCustomerType] = useState<"all" | "company" | "private">("all");
   /* Som i SumUp-vyerna: butikens valuta först, SEK-motvärdet som referens. */
   const sekRate = useSekRate(currency);
@@ -34,7 +38,10 @@ export function CustomerOrderStats({ storeId, currency = "SEK" }: { storeId?: st
     storeId: storeId ?? undefined,
     fromDate: from,
     toDate: to,
+    /* Arkiverade order räknas med – annars försvinner färdiga webbordrar. */
+    includeArchived: true,
   });
+
 
   const orders = useMemo(
     () =>
