@@ -79,6 +79,19 @@ export function SupplierCandidatesPanel() {
     return byPattern;
   }, [senders, suppliers]);
 
+  // Godkända företagsnamn (bakom vitlistad adress eller via förmedlare) sparas
+  // som namn-mönster. Utan detta kom kandidaten tillbaka i listan direkt.
+  const approvedNames = useMemo(
+    () =>
+      new Set(
+        (senders as any[])
+          .filter((s) => s.active !== false && String(s.pattern || "").startsWith("namn:"))
+          .map((s) => String(s.pattern).toLowerCase()),
+      ),
+    [senders],
+  );
+
+
   const candidates = useMemo<Candidate[]>(() => {
     const map = new Map<string, Candidate>();
     for (const m of messages as any[]) {
