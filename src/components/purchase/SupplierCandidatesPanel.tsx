@@ -79,6 +79,19 @@ export function SupplierCandidatesPanel() {
     return byPattern;
   }, [senders, suppliers]);
 
+  // Godkända företagsnamn (bakom vitlistad adress eller via förmedlare) sparas
+  // som namn-mönster. Utan detta kom kandidaten tillbaka i listan direkt.
+  const approvedNames = useMemo(
+    () =>
+      new Set(
+        (senders as any[])
+          .filter((s) => s.active !== false && String(s.pattern || "").startsWith("namn:"))
+          .map((s) => String(s.pattern).toLowerCase()),
+      ),
+    [senders],
+  );
+
+
   const candidates = useMemo<Candidate[]>(() => {
     const map = new Map<string, Candidate>();
     for (const m of messages as any[]) {
@@ -104,6 +117,8 @@ export function SupplierCandidatesPanel() {
       // Förmedlarmejl utan företagsnamn går inte att koppla till någon leverantör.
       if (grouped && !m.from_name) continue;
       const key = grouped ? `namn:${norm(String(m.from_name))}` : domain;
+      if (grouped && approvedNames.has(key)) continue;
+
       const c =
         map.get(key) ?? { key, domain, emails: [], names: [], subjects: [], count: 0, viaPortal: grouped, hidden };
       if (!c.emails.includes(email)) c.emails.push(email);
@@ -129,7 +144,7 @@ export function SupplierCandidatesPanel() {
         return { ...c, registry, match: match ? { id: match.id, name: match.name } : undefined };
       })
       .sort((a, b) => b.count - a.count);
-  }, [messages, whitelisted, portals, senderSupplier, suppliers]);
+  }, [messages, whitelisted, portals, senderSupplier, suppliers, approvedNames]);
 
 
 
@@ -151,19 +166,31 @@ export function SupplierCandidatesPanel() {
   };
 
 
-  const linkSender = async (pattern: string, supplierId: string, note?: string) => {
-    await saveSender.mutateAsync({ pattern, kind: "email", supplier_id: supplierId, is_portal: false, note } as any);
+  const linkSender = async (pattern: string, supplierId: string, note?: string, kind = "email") => {
+    await saveSender.mutateAsync({ pattern, kind, supplier_id: supplierId, is_portal: false, note } as any);
     invalidate();
+  };
+
+  /**
+   * Godkänner kandidaten. Vanlig avsändare vitlistas per e-postadress; företag
+   * bakom förmedlare/vitlistad adress sparas som namn-mönster så att de räknas
+   * som klara och försvinner ur listan.
+   */
+  const approveCandidate = async (c: Candidate, supplierId: string, note?: string) => {
+    if (c.viaPortal) {
+      await linkSender(c.key, supplierId, note ?? `Namnmatchning: ${c.names[0] ?? ""}`.trim(), "namn");
+    } else {
+      for (const e of c.emails) await linkSender(e, supplierId, note);
+    }
   };
 
   const handleMatch = async (c: Candidate) => {
     if (!c.match) return;
     setBusy(true);
     try {
-      // Förmedlaravsändare får aldrig låsas till en enskild leverantör.
-      if (!c.viaPortal) for (const e of c.emails) await linkSender(e, c.match.id);
+      await approveCandidate(c, c.match.id);
       toast({
-        title: c.viaPortal ? "Redan i registret" : "Vitlistad",
+        title: "Kopplad",
         description: `${c.names[0] || c.domain} → ${c.match.name}`,
       });
     } catch (e: any) {
@@ -188,11 +215,8 @@ export function SupplierCandidatesPanel() {
         currency: form.currency,
         is_intercompany: false,
       } as any);
-      if (!c.viaPortal) {
-        for (const e of c.emails) {
-          await linkSender(e, created.id, form.org_nr ? `Org.nr ${form.org_nr}` : undefined);
-        }
-      }
+      await approveCandidate(c, created.id, form.org_nr ? `Org.nr ${form.org_nr}` : undefined);
+
       toast({
         title: "Leverantör skapad",
         description: c.viaPortal
@@ -244,16 +268,11 @@ export function SupplierCandidatesPanel() {
               </div>
               <div className="flex items-center gap-1.5">
                 {c.match ? (
-                  c.viaPortal ? (
-                    <Badge variant="secondary" className="h-6 px-2 text-[10px] gap-1">
-                      <ShieldCheck className="h-3 w-3" /> Finns som {c.match.name}
-                    </Badge>
-                  ) : (
-                    <Button size="sm" className="h-7 text-xs gap-1" disabled={busy} onClick={() => handleMatch(c)}>
-                      <ShieldCheck className="h-3.5 w-3.5" /> Matcha {c.match.name}
-                    </Button>
-                  )
+                  <Button size="sm" className="h-7 text-xs gap-1" disabled={busy} onClick={() => handleMatch(c)}>
+                    <ShieldCheck className="h-3.5 w-3.5" /> Matcha {c.match.name}
+                  </Button>
                 ) : null}
+
                 <Button
                   size="sm"
                   variant={c.match ? "outline" : "default"}
