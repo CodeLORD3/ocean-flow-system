@@ -635,12 +635,15 @@ async function createOrder(
     const li = lineItems[i];
     const sku = String(li?.sku ?? "").trim();
     const title = String(li?.title ?? li?.name ?? "Okänd artikel");
-    const mapKey = sku || title.trim();
+    const skuK = matchKey(sku);
+    const titleK = matchKey(title);
     const product =
-      (sku ? bySku.get(sku) : null) ??
-      (mapBySku.has(mapKey) ? byId.get(mapBySku.get(mapKey)!) : null) ??
-      (mapBySku.has(title.trim()) ? byId.get(mapBySku.get(title.trim())!) : null) ??
+      (skuK ? byKey.get(skuK) : null) ??
+      (skuK && mapByKey.has(skuK) ? byId.get(mapByKey.get(skuK)!) : null) ??
+      (titleK && mapByKey.has(titleK) ? byId.get(mapByKey.get(titleK)!) : null) ??
+      (titleK ? byKey.get(titleK) : null) ??
       null;
+
     // Styckvaror i antal, viktvaror i kg — mängden tas som den är.
     const qty = round3(Number(li?.quantity ?? 0));
     const price = round2(Number(li?.price ?? 0));
