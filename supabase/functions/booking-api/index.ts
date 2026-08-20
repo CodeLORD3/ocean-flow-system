@@ -776,7 +776,16 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify(await createPayment(db, body, req)), { headers });
     }
     if (action === "payment-status") {
-      return new Response(JSON.stringify(await paymentStatus(db, body)), { headers });
+      // Stöder både POST-body och GET ?payment_id=…
+      const q = {
+        payment_id: url.searchParams.get("payment_id") ?? undefined,
+        payment_ref: url.searchParams.get("payment_ref") ?? undefined,
+        ...body,
+      };
+      return new Response(JSON.stringify(await paymentStatus(db, q)), { headers });
+    }
+    if (action === "swish-diagnose") {
+      return new Response(JSON.stringify(await swishDiagnose()), { headers });
     }
 
     return new Response(JSON.stringify({ ok: false, error: "Okänd förfrågan." }), { status: 404, headers });
