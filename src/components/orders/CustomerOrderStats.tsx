@@ -38,8 +38,6 @@ export function CustomerOrderStats({ storeId, currency = "SEK" }: { storeId?: st
     storeId: storeId ?? undefined,
     fromDate: from,
     toDate: to,
-    /* Arkiverade order räknas med – annars försvinner färdiga webbordrar. */
-    includeArchived: true,
   });
 
 
@@ -56,7 +54,15 @@ export function CustomerOrderStats({ storeId, currency = "SEK" }: { storeId?: st
   );
 
   const stats = useMemo(() => {
-    const live = orders.filter((o) => o.status !== "avbruten");
+    /* Totalen visar bara utestående order: inte avbrutna, inte utlämnade
+       (avhämtade/levererade) och inte arkiverade (filtreras redan i frågan). */
+    const live = orders.filter(
+      (o) =>
+        o.status !== "avbruten" &&
+        !o.handed_over_at &&
+        !["avhamtad", "levererad"].includes(String(o.status)),
+    );
+
     const cancelled = orders.length - live.length;
     const companyOrders = live.filter((o) => o.customers_retail?.is_company).length;
     const companyValue = live
