@@ -249,6 +249,33 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 const round3 = (n: number) => Math.round(n * 1000) / 1000;
 
 /**
+ * Webbutiken säljer viktvaror i förpackningar ("Räkor Färska, 0,5kg"), medan
+ * Makrilltrade räknar viktvaror i KILO. Shopify skickar antal förpackningar —
+ * 4 st à 0,5 kg är 2 kg, inte 4 kg. Här läses förpackningsstorleken ut ur
+ * titel/SKU (0,5kg, 500g, 1/2 kg) med line_items.grams som reserv.
+ * Returnerar 1 när ingen storlek kan läsas — då tolkas raden som hela kilon.
+ */
+function packSizeKg(title: string, sku: string, grams: unknown): number {
+  const text = `${title} ${sku}`.toLowerCase().replace(/\u00a0/g, " ");
+  const half = /(^|[^0-9])1\s*\/\s*2\s*kg/.test(text);
+  if (half) return 0.5;
+  const kg = text.match(/(\d+(?:[.,]\d+)?)\s*\.?\s*kg\b/);
+  if (kg) {
+    const n = Number(kg[1].replace(",", "."));
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  const g = text.match(/(\d+(?:[.,]\d+)?)\s*g\b/);
+  if (g) {
+    const n = Number(g[1].replace(",", "."));
+    if (Number.isFinite(n) && n > 0) return n / 1000;
+  }
+  const fromGrams = Number(grams ?? 0);
+  if (Number.isFinite(fromGrams) && fromGrams > 0) return fromGrams / 1000;
+  return 1;
+}
+
+
+/**
  * Eventbiljetter (t.ex. "Kräftskiva Lavaux SEPT 5th") är bokningar till ett event,
  * inte varor. Shopify markerar dem med requires_shipping = false. De ska aldrig
  * kräva produktmatchning, packas eller röra lagret.
@@ -644,10 +671,18 @@ async function createOrder(
       (titleK ? byKey.get(titleK) : null) ??
       null;
 
-    // Styckvaror i antal, viktvaror i kg — mängden tas som den är.
-    const qty = round3(Number(li?.quantity ?? 0));
-    const price = round2(Number(li?.price ?? 0));
-    const lineTotal = round2(qty * price);
+    /**
+     * Styckvaror räknas i antal. Viktvaror räknas i KILO: antal förpackningar
+     * gånger förpackningens vikt (0,5kg → 4 st blir 2 kg). Priset räknas om till
+     * pris per kilo så att radsumman blir exakt densamma som kunden betalade.
+     */
+    const packs = round3(Number(li?.quantity ?? 0));
+    const packPrice = round2(Number(li?.price ?? 0));
+    const lineTotal = round2(packs * packPrice);
+    const isWeight = !!product && stockUnitOf(product.unit) === "kg";
+    const pack = isWeight ? packSizeKg(title, sku, li?.grams) : 1;
+    const qty = pack !== 1 ? round3(packs * pack) : packs;
+    const price = pack !== 1 && pack > 0 ? round2(packPrice / pack) : packPrice;
     estimated += lineTotal;
 
     const isEvent = !product && isEventLine(li);
@@ -671,6 +706,7 @@ async function createOrder(
       // Förskottsbetald webborder: radpriset låses från Shopify.
       price_per_unit: price,
       line_total: lineTotal,
+
       price_locked: true,
       pack_status: "opackad",
       reservation_status: reservation.status,
