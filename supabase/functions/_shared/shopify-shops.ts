@@ -77,16 +77,34 @@ export async function resolveShop(
 }
 
 /**
- * Signeringsnyckeln för butiken. Butikens egen nyckel först, sedan den gamla
- * gemensamma nyckeln som reserv (bara under flytten av svenska butiken).
+ * Alla nycklar en webhook från butiken kan vara signerad med, i tur och ordning.
+ *
+ * Shopify signerar webhooks som skapats via Admin API med APPENS klienthemlighet
+ * (Client secret), inte med en egen "webhook secret". Bara webhooks som lagts in
+ * manuellt i butikens admin använder butikens notifikationsnyckel. Därför måste
+ * alla kandidater provas — annars faller hela butikens flöde bort som
+ * "ogiltig signatur" trots att allt annat är rätt.
  */
-export function webhookSecret(shop: ShopifyShop | null): string {
-  return (
-    env(shop?.webhook_secret_env) ||
-    env("SHOPIFY_WEBHOOK_SECRET") ||
-    ""
-  );
+export function webhookSecrets(shop: ShopifyShop | null): string[] {
+  const prefix = shop ? credentialPrefix(shop) : "";
+  const candidates = [
+    env(shop?.webhook_secret_env),
+    prefix ? env(`${prefix}API_SECRET`) : "",
+    prefix ? env(`${prefix}WEBHOOK_SECRET`) : "",
+    env("SHOPIFY_WEBHOOK_SECRET"),
+    env("SHOPIFY_API_SECRET"),
+    env("SHOPIFY_ACCESS_TOKEN"),
+  ]
+    .map((v) => cleanCred(String(v ?? "")))
+    .filter(Boolean);
+  return [...new Set(candidates)];
 }
+
+/** Bakåtkompatibelt: den första kandidaten. */
+export function webhookSecret(shop: ShopifyShop | null): string {
+  return webhookSecrets(shop)[0] ?? "";
+}
+
 
 /** Klientuppgifternas prefix för butiken: SHOPIFY_CH_ADMIN_TOKEN → SHOPIFY_CH_ */
 function credentialPrefix(shop: ShopifyShop): string {
