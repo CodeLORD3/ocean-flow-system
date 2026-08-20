@@ -150,7 +150,7 @@ async function catalog(db: SupabaseClient, storeId: string | null) {
   const { data: products } = await db
     .from("products")
     .select(
-      "id, name, booking_display_name, booking_circa_price, day_price, unit, booking_step, booking_lead_days, image_url",
+      "id, name, booking_display_name, booking_circa_price, day_price, unit, booking_step, booking_lead_days, image_url, bookable_online, active",
     )
     .eq("bookable_online", true)
     .eq("active", true)
@@ -234,6 +234,10 @@ async function catalog(db: SupabaseClient, storeId: string | null) {
       step: p.booking_step != null ? Number(p.booking_step) : (p.unit === "st" ? 1 : 0.5),
       lead_days: Number(p.booking_lead_days ?? 1),
       image_url: p.image_url ?? imageByProduct.get(p.id) ?? null,
+      // Speglar spärren i frågan ovan så fronten kan verifiera filtreringen.
+      bookable: p.bookable_online === true && p.active === true,
+      bookable_online: p.bookable_online === true,
+      active: p.active === true,
     })),
   };
 }
