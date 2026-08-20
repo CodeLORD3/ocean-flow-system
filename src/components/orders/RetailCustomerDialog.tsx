@@ -33,9 +33,16 @@ const empty = {
   contact_reference: "",
 };
 
+/** Gemensam etikettstil för de små rubrikerna mellan fältgrupperna. */
+const sectionClass =
+  "sm:col-span-2 pt-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground";
+
 /**
  * Redigeringsmodalen för butikskunder. Delas av Kundregistret och kundkortet
  * så att det bara finns ett formulär för kunduppgifterna.
+ *
+ * Mobil: dialogen fyller skärmen, fälten skrollar och spara/avbryt ligger kvar
+ * längst ned så att man aldrig behöver skrolla för att spara.
  */
 export function RetailCustomerDialog({
   open,
@@ -55,9 +62,11 @@ export function RetailCustomerDialog({
   const update = useUpdateRetailCustomer();
 
   const [form, setForm] = useState(empty);
+  const [showMore, setShowMore] = useState(false);
 
   useEffect(() => {
     if (!open) return;
+    setShowMore(!!editing);
     if (!editing) return setForm(empty);
     setForm({
       name: editing.name,
@@ -76,6 +85,8 @@ export function RetailCustomerDialog({
       contact_reference: editing.contact_reference || "",
     });
   }, [open, editing]);
+
+  const saving = create.isPending || update.isPending;
 
   const save = async () => {
     const first = form.first_name.trim();
@@ -108,7 +119,6 @@ export function RetailCustomerDialog({
       }
       toast.success("Kunden är sparad.");
       onOpenChange(false);
-
     } catch (e: any) {
       toast.error(e.message || "Kunden kunde inte sparas.");
     }
@@ -116,162 +126,204 @@ export function RetailCustomerDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{editing ? "Redigera kund" : "Ny kund"}</DialogTitle>
-          <DialogDescription>
+      <DialogContent
+        className="flex h-[100dvh] max-h-[100dvh] w-full max-w-none flex-col gap-0 overflow-hidden rounded-none p-0 sm:h-auto sm:max-h-[90vh] sm:max-w-lg sm:rounded-lg"
+      >
+        <DialogHeader className="shrink-0 border-b border-border px-4 py-3 text-left sm:px-6">
+          <DialogTitle className="text-base sm:text-lg">
+            {editing ? "Redigera kund" : "Ny kund"}
+          </DialogTitle>
+          <DialogDescription className="text-xs">
             Uppgifterna är personuppgifter och syns bara i din butik.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="flex items-center justify-between gap-3 rounded-md border border-border p-3 sm:col-span-2">
+
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex items-center justify-between gap-3 rounded-md border border-border p-3 sm:col-span-2">
+              <div className="min-w-0">
+                <Label htmlFor="reg-is-company">Organisation</Label>
+                <p className="text-xs text-muted-foreground">
+                  Klubb, förening eller företag. Kontaktpersonens namn läggs i
+                  förnamn/efternamn.
+                </p>
+              </div>
+              <Switch
+                id="reg-is-company"
+                checked={form.is_company}
+                onCheckedChange={(v) => setForm({ ...form, is_company: v })}
+              />
+            </div>
+
+            {form.is_company && (
+              <>
+                <div className="sm:col-span-2">
+                  <Label>Organisationsnamn</Label>
+                  <Input
+                    className="h-12 text-base"
+                    autoCapitalize="words"
+                    value={form.company_name}
+                    onChange={(e) => setForm({ ...form, company_name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Org.nummer</Label>
+                  <Input
+                    className="h-12 text-base"
+                    inputMode="numeric"
+                    value={form.org_number}
+                    onChange={(e) => setForm({ ...form, org_number: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Referens/kontaktperson</Label>
+                  <Input
+                    className="h-12 text-base"
+                    autoCapitalize="words"
+                    value={form.contact_reference}
+                    onChange={(e) => setForm({ ...form, contact_reference: e.target.value })}
+                  />
+                </div>
+              </>
+            )}
+
             <div>
-              <Label htmlFor="reg-is-company">Organisation</Label>
-              <p className="text-xs text-muted-foreground">
-                Klubb, förening eller företag. Hela namnet ligger i organisationsnamnet och
-                förnamn/efternamn avser kontaktpersonen.
-              </p>
+              <Label>
+                Förnamn{" "}
+                {form.is_company && <span className="text-muted-foreground">(valfritt)</span>}
+              </Label>
+              <Input
+                className="h-12 text-base"
+                autoCapitalize="words"
+                autoComplete="given-name"
+                enterKeyHint="next"
+                value={form.first_name}
+                onChange={(e) => setForm({ ...form, first_name: e.target.value })}
+              />
             </div>
-            <Switch
-              id="reg-is-company"
-              checked={form.is_company}
-              onCheckedChange={(v) => setForm({ ...form, is_company: v })}
-            />
-          </div>
-          {form.is_company && (
-            <>
-              <div>
-                <Label>Organisationsnamn</Label>
-                <Input
-                  className="h-12"
-                  value={form.company_name}
-                  onChange={(e) => setForm({ ...form, company_name: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>Org.nummer</Label>
-                <Input
-                  className="h-12"
-                  value={form.org_number}
-                  onChange={(e) => setForm({ ...form, org_number: e.target.value })}
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <Label>Referens/kontaktperson</Label>
-                <Input
-                  className="h-12"
-                  value={form.contact_reference}
-                  onChange={(e) => setForm({ ...form, contact_reference: e.target.value })}
-                />
-              </div>
-            </>
-          )}
-
-          <h4 className="sm:col-span-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Kunduppgifter
-          </h4>
-          <div>
-
-            <Label>
-              Förnamn {form.is_company && <span className="text-muted-foreground">(valfritt)</span>}
-            </Label>
-            <Input
-              className="h-12"
-              value={form.first_name}
-              onChange={(e) => setForm({ ...form, first_name: e.target.value })}
-            />
-          </div>
-          <div>
-            <Label>
-              Efternamn {form.is_company && <span className="text-muted-foreground">(valfritt)</span>}
-            </Label>
-            <Input
-              className="h-12"
-              value={form.last_name}
-              onChange={(e) => setForm({ ...form, last_name: e.target.value })}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <Label>Smeknamn (valfritt)</Label>
-            <Input
-              className="h-12"
-              value={form.nickname}
-              onChange={(e) => setForm({ ...form, nickname: e.target.value })}
-            />
-          </div>
-          {editing && (
-            <div className="sm:col-span-2 text-xs text-muted-foreground">
-              Originalnamn (oförändrat): {editing.name || "—"}
+            <div>
+              <Label>
+                Efternamn{" "}
+                {form.is_company && <span className="text-muted-foreground">(valfritt)</span>}
+              </Label>
+              <Input
+                className="h-12 text-base"
+                autoCapitalize="words"
+                autoComplete="family-name"
+                enterKeyHint="next"
+                value={form.last_name}
+                onChange={(e) => setForm({ ...form, last_name: e.target.value })}
+              />
             </div>
-          )}
+            <div>
+              <Label>Telefon</Label>
+              <Input
+                className="h-12 text-base"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                enterKeyHint="next"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>E-post</Label>
+              <Input
+                className="h-12 text-base"
+                type="email"
+                inputMode="email"
+                autoCapitalize="none"
+                autoComplete="email"
+                enterKeyHint="done"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+              />
+            </div>
 
-          <h4 className="sm:col-span-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Kontaktinformation
-          </h4>
-          <div>
+            {!showMore && (
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 sm:col-span-2"
+                onClick={() => setShowMore(true)}
+              >
+                Visa fler fält (adress, smeknamn, anteckning)
+              </Button>
+            )}
 
-            <Label>Telefon</Label>
-            <Input
-              className="h-12"
-              inputMode="tel"
-              value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            />
-          </div>
-          <div>
-            <Label>E-post</Label>
-            <Input
-              className="h-12"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-          </div>
-          <h4 className="sm:col-span-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Adress
-          </h4>
-          <div className="sm:col-span-2">
+            {showMore && (
+              <>
+                <div className="sm:col-span-2">
+                  <Label>Smeknamn (valfritt)</Label>
+                  <Input
+                    className="h-12 text-base"
+                    value={form.nickname}
+                    onChange={(e) => setForm({ ...form, nickname: e.target.value })}
+                  />
+                </div>
+                {editing && (
+                  <div className="text-xs text-muted-foreground sm:col-span-2">
+                    Originalnamn (oförändrat): {editing.name || "—"}
+                  </div>
+                )}
 
-            <Label>Gata</Label>
-            <Input
-              className="h-12"
-              value={form.street}
-              onChange={(e) => setForm({ ...form, street: e.target.value })}
-            />
-          </div>
-          <div>
-            <Label>Postnummer</Label>
-            <Input
-              className="h-12"
-              value={form.postal_code}
-              onChange={(e) => setForm({ ...form, postal_code: e.target.value })}
-            />
-          </div>
-          <div>
-            <Label>Ort</Label>
-            <Input
-              className="h-12"
-              value={form.city}
-              onChange={(e) => setForm({ ...form, city: e.target.value })}
-            />
-          </div>
-          <h4 className="sm:col-span-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Anteckning
-          </h4>
-          <div className="sm:col-span-2">
-            <Label>Anteckning (t.ex. föredraget kontaktsätt eller hämtningsönskemål)</Label>
+                <h4 className={sectionClass}>Adress</h4>
+                <div className="sm:col-span-2">
+                  <Label>Gata</Label>
+                  <Input
+                    className="h-12 text-base"
+                    autoComplete="address-line1"
+                    value={form.street}
+                    onChange={(e) => setForm({ ...form, street: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Postnummer</Label>
+                  <Input
+                    className="h-12 text-base"
+                    inputMode="numeric"
+                    autoComplete="postal-code"
+                    value={form.postal_code}
+                    onChange={(e) => setForm({ ...form, postal_code: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Ort</Label>
+                  <Input
+                    className="h-12 text-base"
+                    autoCapitalize="words"
+                    autoComplete="address-level2"
+                    value={form.city}
+                    onChange={(e) => setForm({ ...form, city: e.target.value })}
+                  />
+                </div>
 
-            <Textarea
-              value={form.note}
-              onChange={(e) => setForm({ ...form, note: e.target.value })}
-            />
+                <h4 className={sectionClass}>Anteckning</h4>
+                <div className="sm:col-span-2">
+                  <Label>Anteckning (t.ex. kontaktsätt eller hämtningsönskemål)</Label>
+                  <Textarea
+                    className="text-base"
+                    rows={3}
+                    value={form.note}
+                    onChange={(e) => setForm({ ...form, note: e.target.value })}
+                  />
+                </div>
+              </>
+            )}
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" className="h-12" onClick={() => onOpenChange(false)}>
+
+        <DialogFooter className="shrink-0 gap-2 border-t border-border px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
+          <Button
+            variant="outline"
+            className="h-12 w-full sm:w-auto"
+            onClick={() => onOpenChange(false)}
+          >
             Avbryt
           </Button>
-          <Button className="h-12" onClick={save}>
-            Spara
+          <Button className="h-12 w-full sm:w-auto" disabled={saving} onClick={save}>
+            {saving ? "Sparar…" : "Spara"}
           </Button>
         </DialogFooter>
       </DialogContent>
