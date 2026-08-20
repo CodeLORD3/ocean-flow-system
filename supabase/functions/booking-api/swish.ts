@@ -21,10 +21,14 @@ export const swishConfigured = () => !!pem("SWISH_CERT_PEM") && !!pem("SWISH_KEY
 let httpClient: unknown = null;
 function swishClient() {
   if (httpClient) return httpClient;
+  // Swish kräver mTLS (TLS 1.2+). Root-CA:t är valfritt men rekommenderat av Swish;
+  // ligger det som secret skickar vi med det för att verifiera deras servercert.
+  const caPem = pem("SWISH_CA_PEM");
   // deno-lint-ignore no-explicit-any
   httpClient = (Deno as any).createHttpClient({
     cert: pem("SWISH_CERT_PEM"),
     key: pem("SWISH_KEY_PEM"),
+    ...(caPem ? { caCerts: [caPem] } : {}),
   });
   return httpClient;
 }
@@ -57,15 +61,17 @@ export async function createPayment(db: SupabaseClient, body: any, req: Request)
   const paymentRef = uuid32();
   const callbackIdentifier = uuid32();
   const payerAlias = normalizeAlias(body?.payer_alias);
-  const origin = new URL(req.url).origin;
+  // callbackUrl måste vara publik HTTPS på port 443 — härled den från projektets
+  // URL istället för req.url, som kan vara en intern adress bakom proxyn.
+  const base = (Deno.env.get("SUPABASE_URL") ?? new URL(req.url).origin).replace(/\/$/, "");
 
   const payload: Record<string, unknown> = {
-    payeePaymentReference: paymentRef.slice(0, 20),
+    payeePaymentReference: paymentRef,
     payeeAlias: Deno.env.get("SWISH_PAYEE_ALIAS"),
     currency: "SEK",
     amount: DEPOSIT_SEK,
     message: `Forbokning ${paymentRef.slice(0, 6)}`,
-    callbackUrl: `${origin}/functions/v1/booking-api/swish-callback`,
+    callbackUrl: `${base}/functions/v1/booking-api/swish-callback`,
     callbackIdentifier,
   };
   if (payerAlias) payload.payerAlias = payerAlias;
@@ -150,7 +156,7 @@ export async function swishCallback(db: SupabaseClient, payload: any, req: Reque
       .eq("payment_ref", payload.id)
       .maybeSingle();
     const sent = req.headers.get("callbackidentifier") ?? payload.callbackIdentifier;
-    if (row && sent === row.callback_identifier) {
+    if (row && typeof sent === "string" && sent.toUpperCase() === String(row.callback_identifier).toUpperCase()) {
       await db
         .from("payments")
         .update({
