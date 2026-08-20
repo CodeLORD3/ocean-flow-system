@@ -11959,6 +11959,7 @@ export type Database = {
         Args: { _portals: string[]; _staff_id: string; _store_ids: string[] }
         Returns: undefined
       }
+      shopify_match_key: { Args: { v: string }; Returns: string }
       species_key: { Args: { v: string }; Returns: string }
       staff_has_store: { Args: { _store: string }; Returns: boolean }
       stock_reconciliation_check: { Args: { _source?: string }; Returns: Json }
