@@ -166,19 +166,31 @@ export function SupplierCandidatesPanel() {
   };
 
 
-  const linkSender = async (pattern: string, supplierId: string, note?: string) => {
-    await saveSender.mutateAsync({ pattern, kind: "email", supplier_id: supplierId, is_portal: false, note } as any);
+  const linkSender = async (pattern: string, supplierId: string, note?: string, kind = "email") => {
+    await saveSender.mutateAsync({ pattern, kind, supplier_id: supplierId, is_portal: false, note } as any);
     invalidate();
+  };
+
+  /**
+   * Godkänner kandidaten. Vanlig avsändare vitlistas per e-postadress; företag
+   * bakom förmedlare/vitlistad adress sparas som namn-mönster så att de räknas
+   * som klara och försvinner ur listan.
+   */
+  const approveCandidate = async (c: Candidate, supplierId: string, note?: string) => {
+    if (c.viaPortal) {
+      await linkSender(c.key, supplierId, note ?? `Namnmatchning: ${c.names[0] ?? ""}`.trim(), "namn");
+    } else {
+      for (const e of c.emails) await linkSender(e, supplierId, note);
+    }
   };
 
   const handleMatch = async (c: Candidate) => {
     if (!c.match) return;
     setBusy(true);
     try {
-      // Förmedlaravsändare får aldrig låsas till en enskild leverantör.
-      if (!c.viaPortal) for (const e of c.emails) await linkSender(e, c.match.id);
+      await approveCandidate(c, c.match.id);
       toast({
-        title: c.viaPortal ? "Redan i registret" : "Vitlistad",
+        title: "Kopplad",
         description: `${c.names[0] || c.domain} → ${c.match.name}`,
       });
     } catch (e: any) {
@@ -203,11 +215,8 @@ export function SupplierCandidatesPanel() {
         currency: form.currency,
         is_intercompany: false,
       } as any);
-      if (!c.viaPortal) {
-        for (const e of c.emails) {
-          await linkSender(e, created.id, form.org_nr ? `Org.nr ${form.org_nr}` : undefined);
-        }
-      }
+      await approveCandidate(c, created.id, form.org_nr ? `Org.nr ${form.org_nr}` : undefined);
+
       toast({
         title: "Leverantör skapad",
         description: c.viaPortal
