@@ -144,7 +144,7 @@ export function SupplierCandidatesPanel() {
         return { ...c, registry, match: match ? { id: match.id, name: match.name } : undefined };
       })
       .sort((a, b) => b.count - a.count);
-  }, [messages, whitelisted, portals, senderSupplier, suppliers]);
+  }, [messages, whitelisted, portals, senderSupplier, suppliers, approvedNames]);
 
 
 
