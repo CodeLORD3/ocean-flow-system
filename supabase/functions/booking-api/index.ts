@@ -736,7 +736,7 @@ async function staffBooking(db: SupabaseClient, body: any, authHeader: string | 
 Deno.serve(async (req) => {
   const origin = req.headers.get("origin");
   const headers = { ...cors(origin), "Content-Type": "application/json" };
-  if (req.method === "OPTIONS") return new Response("ok", { headers: cors(origin) });
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(origin) });
 
   const url = new URL(req.url);
   const action = url.pathname.replace(/^.*booking-api\/?/, "").replace(/\/$/, "") || "catalog";
