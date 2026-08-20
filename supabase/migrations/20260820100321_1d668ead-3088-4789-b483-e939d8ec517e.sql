@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.stamp_actor() FROM PUBLIC, anon, authenticated;
