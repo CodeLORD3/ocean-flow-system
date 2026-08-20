@@ -268,16 +268,11 @@ export function SupplierCandidatesPanel() {
               </div>
               <div className="flex items-center gap-1.5">
                 {c.match ? (
-                  c.viaPortal ? (
-                    <Badge variant="secondary" className="h-6 px-2 text-[10px] gap-1">
-                      <ShieldCheck className="h-3 w-3" /> Finns som {c.match.name}
-                    </Badge>
-                  ) : (
-                    <Button size="sm" className="h-7 text-xs gap-1" disabled={busy} onClick={() => handleMatch(c)}>
-                      <ShieldCheck className="h-3.5 w-3.5" /> Matcha {c.match.name}
-                    </Button>
-                  )
+                  <Button size="sm" className="h-7 text-xs gap-1" disabled={busy} onClick={() => handleMatch(c)}>
+                    <ShieldCheck className="h-3.5 w-3.5" /> Matcha {c.match.name}
+                  </Button>
                 ) : null}
+
                 <Button
                   size="sm"
                   variant={c.match ? "outline" : "default"}
