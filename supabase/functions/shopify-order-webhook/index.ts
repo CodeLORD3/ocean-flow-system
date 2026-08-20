@@ -1057,10 +1057,10 @@ Deno.serve(async (req) => {
     return json({ ok: after?.status !== "fel", ...after });
   }
 
-  /* Vilken webbutik? Domänen i headern avgör vilken hemlighet som gäller. */
+  /* Vilken webbutik? Domänen i headern avgör vilka hemligheter som gäller. */
   const domain = shopDomain(req.headers.get("x-shopify-shop-domain"));
   const shop = await shopByDomain(db, domain);
-  const secret = webhookSecret(shop);
+  const secrets = webhookSecrets(shop);
   const topic = req.headers.get("x-shopify-topic") ?? "orders/create";
   const header = req.headers.get("x-shopify-hmac-sha256") ?? "";
 
@@ -1068,7 +1068,7 @@ Deno.serve(async (req) => {
    * Saknad nyckel är ett internt konfigurationsfel, inte Shopifys fel:
    * logga det och svara 200 så att prenumerationen inte raderas.
    */
-  if (!secret) {
+  if (!secrets.length) {
     await db.from("shopify_webhook_events").insert({
       topic,
       hmac_valid: false,
@@ -1084,7 +1084,13 @@ Deno.serve(async (req) => {
     return json({ ok: false, error: "Signeringsnyckel saknas" }, 200);
   }
 
-  const expected = await hmacBase64(secret, raw);
+  /**
+   * Signaturen godkänns om NÅGON av butikens nycklar stämmer. Shopify signerar
+   * Admin API-skapade webhooks med appens klienthemlighet och manuellt inlagda
+   * med butikens notifikationsnyckel — båda är giltiga vägar in.
+   */
+  const expectedList = await Promise.all(secrets.map((s) => hmacBase64(s, raw)));
+  const expected = expectedList[0];
   let signature = header;
 
   /**
@@ -1100,18 +1106,20 @@ Deno.serve(async (req) => {
   }
 
   /* Enda felsvaret: ogiltig signatur. */
-  if (!signature || !safeEqual(signature, expected)) {
+  if (!signature || !expectedList.some((e) => safeEqual(signature, e))) {
     await db.from("shopify_webhook_events").insert({
       topic,
       hmac_valid: false,
       status: "ogiltig_hmac",
       shop_domain: domain || null,
       shop_id: shop?.id ?? null,
-      error: "X-Shopify-Hmac-Sha256 stämmer inte med beräknad signatur",
+      error:
+        `X-Shopify-Hmac-Sha256 stämmer inte med någon av butikens ${expectedList.length} nycklar`,
       processed_at: new Date().toISOString(),
     });
     return json({ ok: false, error: "Ogiltig signatur" }, 401);
   }
+
 
   /* Signaturen är verifierad: spara rått i kön och kvittera direkt med 200. */
   let payload: any = null;
