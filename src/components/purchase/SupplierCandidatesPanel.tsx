@@ -117,6 +117,8 @@ export function SupplierCandidatesPanel() {
       // Förmedlarmejl utan företagsnamn går inte att koppla till någon leverantör.
       if (grouped && !m.from_name) continue;
       const key = grouped ? `namn:${norm(String(m.from_name))}` : domain;
+      if (grouped && approvedNames.has(key)) continue;
+
       const c =
         map.get(key) ?? { key, domain, emails: [], names: [], subjects: [], count: 0, viaPortal: grouped, hidden };
       if (!c.emails.includes(email)) c.emails.push(email);
