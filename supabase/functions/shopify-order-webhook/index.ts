@@ -20,7 +20,7 @@ import {
   fxRateToSek,
   shopByDomain,
   shopDomain,
-  webhookSecret,
+  webhookSecrets,
 } from "../_shared/shopify-shops.ts";
 import { localDate, resolveWantedDate } from "../_shared/webOrderDate.ts";
 
