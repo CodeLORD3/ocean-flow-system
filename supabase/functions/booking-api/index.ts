@@ -16,7 +16,7 @@
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { normalizePhoneSe, sendSms, smsTestMode } from "../_shared/sms.ts";
-import { createPayment, paymentStatus, swishCallback } from "./swish.ts";
+import { createPayment, paymentStatus, swishCallback, swishDiagnose } from "./swish.ts";
 
 /** Exakt felmeddelande vid ogiltigt eller utländskt nummer — samma text överallt. */
 const PHONE_ERROR = "Ange ett svenskt mobilnummer, eller ring butiken så bokar vi åt dig.";
@@ -40,8 +40,14 @@ const ALLOWED_ORIGINS = [
   "http://localhost:8080",
 ];
 
+function originAllowed(origin: string) {
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  // Alla förhandsvisningar och publicerade Lovable-sajter.
+  return /^https:\/\/[a-z0-9-]+(\.[a-z0-9-]+)*\.lovable(project)?\.(app|com)$/.test(origin);
+}
+
 function cors(origin: string | null) {
-  const allow = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allow = origin && originAllowed(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
     "Access-Control-Allow-Origin": allow,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -730,7 +736,7 @@ async function staffBooking(db: SupabaseClient, body: any, authHeader: string | 
 Deno.serve(async (req) => {
   const origin = req.headers.get("origin");
   const headers = { ...cors(origin), "Content-Type": "application/json" };
-  if (req.method === "OPTIONS") return new Response("ok", { headers: cors(origin) });
+  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(origin) });
 
   const url = new URL(req.url);
   const action = url.pathname.replace(/^.*booking-api\/?/, "").replace(/\/$/, "") || "catalog";
@@ -770,7 +776,16 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify(await createPayment(db, body, req)), { headers });
     }
     if (action === "payment-status") {
-      return new Response(JSON.stringify(await paymentStatus(db, body)), { headers });
+      // Stöder både POST-body och GET ?payment_id=…
+      const q = {
+        payment_id: url.searchParams.get("payment_id") ?? undefined,
+        payment_ref: url.searchParams.get("payment_ref") ?? undefined,
+        ...body,
+      };
+      return new Response(JSON.stringify(await paymentStatus(db, q)), { headers });
+    }
+    if (action === "swish-diagnose") {
+      return new Response(JSON.stringify(await swishDiagnose()), { headers });
     }
 
     return new Response(JSON.stringify({ ok: false, error: "Okänd förfrågan." }), { status: 404, headers });
