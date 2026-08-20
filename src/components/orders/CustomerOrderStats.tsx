@@ -244,14 +244,15 @@ export function CustomerOrderStats({ storeId, currency = "SEK" }: { storeId?: st
                 <CardTitle className="text-sm">Mest sålda varor</CardTitle>
               </CardHeader>
               <CardContent className="space-y-1 text-sm">
-                {stats.top.map(([name, v]) => (
-                  <div key={name} className="flex items-center justify-between gap-2">
-                    <span className="truncate">{name}</span>
+                {stats.top.map(([key, v]) => (
+                  <div key={key} className="flex items-center justify-between gap-2">
+                    <span className="truncate">{key.split("|")[0]}</span>
                     <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
-                      {nf(v.qty, 1)} kg · {cur(v.value)}
+                      {nf(v.qty, v.unit === "kg" ? 1 : 0)} {v.unit} · {cur(v.value)}
                     </span>
                   </div>
                 ))}
+
               </CardContent>
             </Card>
           </div>
