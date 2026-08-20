@@ -121,22 +121,35 @@ export function useMailIntakeActions() {
 
   const saveSender = useMutation({
     mutationFn: async (sender: Partial<MailSender> & { pattern: string }) => {
+      const pattern = sender.pattern.trim().toLowerCase().replace(/^@/, "");
       const payload = {
-        pattern: sender.pattern.trim().toLowerCase().replace(/^@/, ""),
-        kind: sender.pattern.includes("@") ? "email" : "domain",
+        pattern,
+        kind: sender.kind ?? (pattern.includes("@") ? "email" : "domain"),
         supplier_id: sender.supplier_id ?? null,
         is_portal: sender.is_portal ?? false,
         legal_entity_id: sender.legal_entity_id ?? null,
         active: sender.active ?? true,
         note: sender.note ?? null,
       };
-      const { error } = sender.id
-        ? await supabase.from("mail_intake_senders").update(payload).eq("id", sender.id)
+      // Mönstret är unikt: finns raden redan uppdaterar vi den i stället för att
+      // krocka mot unikindexet (annars misslyckades kopplingen tyst).
+      let id = sender.id;
+      if (!id) {
+        const { data: existing } = await supabase
+          .from("mail_intake_senders")
+          .select("id")
+          .eq("pattern", pattern)
+          .maybeSingle();
+        id = (existing as any)?.id;
+      }
+      const { error } = id
+        ? await supabase.from("mail_intake_senders").update(payload).eq("id", id)
         : await supabase.from("mail_intake_senders").insert(payload);
       if (error) throw error;
     },
     onSuccess: invalidate,
   });
+
 
   const removeSender = useMutation({
     mutationFn: async (id: string) => {
