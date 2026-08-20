@@ -1159,6 +1159,7 @@ Deno.serve(async (req) => {
       status: "ogiltig_hmac",
       shop_domain: domain || null,
       shop_id: shop?.id ?? null,
+      raw_body: raw,
       error:
         `X-Shopify-Hmac-Sha256 stämmer inte med någon av butikens ${expectedList.length} nycklar`,
       processed_at: new Date().toISOString(),
