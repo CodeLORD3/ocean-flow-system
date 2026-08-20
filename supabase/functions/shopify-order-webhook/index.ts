@@ -483,28 +483,52 @@ async function createOrder(
   // Shopify lämnar ibland SKU tomt (t.ex. signalkräftorna) — då kopplas raden
   // på produkttiteln istället, som också kan ligga som nyckel i kopplingstabellen.
   const titles = lineItems.map((l) => String(l?.title ?? l?.name ?? "").trim()).filter(Boolean);
-  const mapKeys = [...new Set([...skus, ...titles])];
 
-  const [{ data: products }, { data: mapped }] = await Promise.all([
+  /**
+   * Matchningen är tolerant: skiftläge, svenska tecken, komma/punkt och extra
+   * mellanslag spelar ingen roll. Samma nyckel används för både svenska och
+   * schweiziska Shopify — kopplingstabellen läses i sin helhet så att en
+   * engelsk titel från fiskskaldjur.ch hittar sin svenska produkt.
+   */
+  const [{ data: products }, { data: byName }, { data: mapped }] = await Promise.all([
     skus.length
       ? db.from("products").select("id, sku, unit, name").in("sku", skus)
       : Promise.resolve({ data: [] as any[] } as any),
-    mapKeys.length
-      ? db.from("shopify_product_map").select("shopify_sku, product_id").in("shopify_sku", mapKeys)
+    titles.length
+      ? db.from("products").select("id, sku, unit, name").in("name", titles)
       : Promise.resolve({ data: [] as any[] } as any),
+    db
+      .from("shopify_product_map")
+      .select("shopify_sku, shopify_title, product_id, shop_id")
+      .limit(5000),
   ]);
 
-  const bySku = new Map<string, any>();
-  for (const p of (products || []) as any[]) bySku.set(String(p.sku).trim(), p);
-  const mapBySku = new Map<string, string>();
-  for (const m of (mapped || []) as any[]) mapBySku.set(String(m.shopify_sku).trim(), m.product_id);
+  const byKey = new Map<string, any>();
+  for (const p of [...((products || []) as any[]), ...((byName || []) as any[])]) {
+    if (p?.sku) byKey.set(matchKey(p.sku), p);
+    if (p?.name) byKey.set(matchKey(p.name), p);
+  }
 
-  const extraIds = [...mapBySku.values()];
+  /* Butiksspecifika kopplingar vinner över generella. */
+  const mapByKey = new Map<string, string>();
+  const rows = ((mapped || []) as any[]).sort((a, b) =>
+    (a.shop_id === shop?.id ? 1 : 0) - (b.shop_id === shop?.id ? 1 : 0)
+  );
+  for (const m of rows) {
+    if (m.shop_id && shop?.id && m.shop_id !== shop.id) continue;
+    for (const k of [m.shopify_sku, m.shopify_title]) {
+      const key = matchKey(k);
+      if (key) mapByKey.set(key, m.product_id);
+    }
+  }
+
+  const extraIds = [...new Set(mapByKey.values())].filter(Boolean);
   const byId = new Map<string, any>();
   if (extraIds.length) {
     const { data: extra } = await db.from("products").select("id, sku, unit, name").in("id", extraIds);
     for (const p of (extra || []) as any[]) byId.set(p.id, p);
   }
+
 
   const notes: string[] = [];
   if (dateResult.eventWithoutDate) notes.push(dateResult.note!);
