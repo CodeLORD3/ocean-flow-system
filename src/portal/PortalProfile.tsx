@@ -92,10 +92,16 @@ export default function PortalProfile() {
       if (u) {
         const { data: files } = await supabase.storage.from("kyc-documents").list(u.id);
         if (files && files.length > 0) {
-          setUploadedFiles(files.map(f => ({
-            name: f.name,
-            url: supabase.storage.from("kyc-documents").getPublicUrl(`${u.id}/${f.name}`).data.publicUrl,
-          })));
+          // Hinken är privat — hämta korta signerade länkar i stället för publika URL:er.
+          const entries = await Promise.all(
+            files.map(async (f) => {
+              const { data } = await supabase.storage
+                .from("kyc-documents")
+                .createSignedUrl(`${u.id}/${f.name}`, 3600);
+              return { name: f.name, url: data?.signedUrl || "" };
+            })
+          );
+          setUploadedFiles(entries.filter((f) => f.url));
         }
       }
       // Load notification preferences
