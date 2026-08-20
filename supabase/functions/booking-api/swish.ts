@@ -18,9 +18,25 @@ const baseUrl = () => (Deno.env.get("SWISH_BASE_URL") ?? DEFAULT_BASE).replace(/
 /** Deposition per bokning — priset låses aldrig, resten betalas i butik. */
 export const DEPOSIT_SEK = 200;
 
-/** Secrets kan lagras med literala \n — normalisera till riktiga radbrytningar. */
-const pem = (name: string) =>
-  (Deno.env.get(name) ?? "").replace(/\\r/g, "").replace(/\\n/g, "\n").trim();
+/**
+ * Secrets kan ha tappat radbrytningar (literala \n eller mellanslag). Vi bygger
+ * om varje PEM-block från grunden: base64-innehållet rensas och radbryts på 64
+ * tecken, vilket är enda formatet Deno.createHttpClient accepterar.
+ */
+function normalizePem(raw: string): string {
+  const text = raw.replace(/\\r/g, "").replace(/\\n/g, "\n").trim();
+  const blocks = [...text.matchAll(/-----BEGIN ([A-Z0-9 ]+)-----([\s\S]*?)-----END \1-----/g)];
+  if (!blocks.length) return text;
+  return blocks
+    .map(([, label, bodyRaw]) => {
+      const b64 = bodyRaw.replace(/[^A-Za-z0-9+/=]/g, "");
+      const lines = b64.match(/.{1,64}/g) ?? [];
+      return `-----BEGIN ${label}-----\n${lines.join("\n")}\n-----END ${label}-----`;
+    })
+    .join("\n") + "\n";
+}
+
+const pem = (name: string) => normalizePem(Deno.env.get(name) ?? "");
 
 export const swishConfigured = () => !!pem("SWISH_CERT_PEM") && !!pem("SWISH_KEY_PEM");
 
