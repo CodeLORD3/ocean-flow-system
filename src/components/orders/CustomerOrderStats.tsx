@@ -76,7 +76,7 @@ export function CustomerOrderStats({ storeId, currency = "SEK" }: { storeId?: st
     const actual = live.reduce((s, o) => s + Number(o.total_incl_vat || 0), 0);
 
     const byType = new Map<string, number>();
-    const byProduct = new Map<string, { qty: number; value: number; count: number }>();
+    const byProduct = new Map<string, { qty: number; value: number; count: number; unit: string }>();
     let catering = 0;
     let packedLines = 0;
     let deviating = 0;
@@ -87,12 +87,16 @@ export function CustomerOrderStats({ storeId, currency = "SEK" }: { storeId?: st
       for (const l of o.customer_order_lines || []) {
         if (l.pack_status === "struken") continue;
         const name = l.is_free_text ? l.free_text_name || "Fritextrad" : l.products?.name || "Produkt";
-        const prev = byProduct.get(name) || { qty: 0, value: 0, count: 0 };
+        /* Enheten följer raden – kg och st får aldrig summeras ihop. */
+        const unit = String((l as any).unit || l.products?.unit || "st").toLowerCase();
+        const key = `${name}|${unit}`;
+        const prev = byProduct.get(key) || { qty: 0, value: 0, count: 0, unit };
         const qty = Number(l.quantity_packed ?? l.quantity_ordered ?? 0);
         prev.qty += qty;
         prev.value += Number(l.line_total ?? qty * Number(l.estimated_price_per_unit || 0));
         prev.count += 1;
-        byProduct.set(name, prev);
+        byProduct.set(key, prev);
+
         if (l.quantity_packed != null && Number(l.quantity_ordered) > 0) {
           packedLines += 1;
           const diff =
