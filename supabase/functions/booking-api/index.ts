@@ -40,8 +40,14 @@ const ALLOWED_ORIGINS = [
   "http://localhost:8080",
 ];
 
+function originAllowed(origin: string) {
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  // Alla förhandsvisningar och publicerade Lovable-sajter.
+  return /^https:\/\/[a-z0-9-]+(\.[a-z0-9-]+)*\.lovable(project)?\.(app|com)$/.test(origin);
+}
+
 function cors(origin: string | null) {
-  const allow = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allow = origin && originAllowed(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
     "Access-Control-Allow-Origin": allow,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
