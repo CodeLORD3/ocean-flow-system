@@ -269,7 +269,7 @@ export function InlineOrderPacking({
                 type="button"
                 onClick={() => setOpenLine(expanded ? null : l.id)}
                 disabled={done || struck}
-                className="flex min-w-0 flex-1 items-center gap-2 px-1 py-1 text-left text-[13px] disabled:cursor-default"
+                className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-0.5 px-1 py-1 text-left text-[13px] disabled:cursor-default sm:flex-nowrap"
               >
                 <PackStep status={l.pack_status} index={i + 1} />
 
@@ -279,7 +279,12 @@ export function InlineOrderPacking({
                   productId={l.product_id}
                   className="h-8 w-10 rounded"
                 />
-                <span className={`min-w-0 flex-1 truncate font-medium ${struck ? "line-through" : ""}`}>
+                {/* Mobil: produktnamnet ligger på egen rad ovanför siffrorna så det aldrig kapas. */}
+                <span
+                  className={`order-first w-full whitespace-normal break-words font-medium leading-snug sm:order-none sm:w-auto sm:min-w-0 sm:flex-1 sm:truncate ${
+                    struck ? "line-through" : ""
+                  }`}
+                >
                   {name}
                 </span>
                 <span className="w-24 shrink-0 text-right font-mono text-xs tabular-nums">
