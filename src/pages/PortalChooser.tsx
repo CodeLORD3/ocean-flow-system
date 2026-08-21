@@ -181,6 +181,7 @@ export default function PortalChooser() {
     );
   }
 
+  // build: portalval läser behörighet från staff_access (user_scopes)
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6">
       <div className="w-full max-w-3xl">
