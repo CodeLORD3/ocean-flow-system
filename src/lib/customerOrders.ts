@@ -180,6 +180,8 @@ export interface CustomerOrder {
   total_incl_vat: number;
   note: string | null;
   packed_at: string | null;
+  /** Sätts när personalen trycker "Starta packning" — ordern tonas gul. */
+  packing_started_at?: string | null;
   handed_over_at: string | null;
   archived_at?: string | null;
   cancelled_at?: string | null;

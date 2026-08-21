@@ -1753,6 +1753,7 @@ export type Database = {
           order_type: string
           pack_status: string
           packed_at: string | null
+          packing_started_at: string | null
           paid_at: string | null
           paid_by: string | null
           paid_total: number | null
@@ -1812,6 +1813,7 @@ export type Database = {
           order_type?: string
           pack_status?: string
           packed_at?: string | null
+          packing_started_at?: string | null
           paid_at?: string | null
           paid_by?: string | null
           paid_total?: number | null
@@ -1871,6 +1873,7 @@ export type Database = {
           order_type?: string
           pack_status?: string
           packed_at?: string | null
+          packing_started_at?: string | null
           paid_at?: string | null
           paid_by?: string | null
           paid_total?: number | null
