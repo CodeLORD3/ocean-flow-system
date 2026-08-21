@@ -1,0 +1,1 @@
+ALTER TABLE public.customer_orders ADD COLUMN IF NOT EXISTS packing_started_at timestamptz;

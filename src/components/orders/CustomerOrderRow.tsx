@@ -18,6 +18,8 @@ import {
   Trash2,
   RotateCcw,
   HandCoins,
+  Truck,
+  Store,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -146,13 +148,14 @@ export const rowTone = (order: CustomerOrder): Tone => {
       chip: "bg-card text-row-ok-text border-row-ok-edge",
       label: "Packad",
     };
-  if (order.pack_status === "pagaende")
+  /* Vit (Ny) → gul (packning påbörjad eller delvis packad) → grön (Packad). */
+  if (order.pack_status === "pagaende" || !!order.packing_started_at)
     return {
       row: "bg-row-warn",
       hover: "hover:bg-row-warn-hover",
       edge: "bg-row-warn-edge",
       chip: "bg-card text-row-warn-text border-row-warn-edge",
-      label: "Pågående",
+      label: order.pack_status === "pagaende" ? "Pågående" : "Packning startad",
     };
   return {
     row: "bg-row-neutral",
@@ -266,6 +269,23 @@ export function CustomerOrderRow({
     </span>
   );
 
+  /* Leveranstyp: lastbil för hemleverans, butiksikon för upphämtning. */
+  const isDelivery = order.order_type === "leverans";
+  const deliveryLabel = isDelivery ? "Hemleverans" : "Upphämtning i butik";
+  const deliveryIcon = (
+    <span
+      className="inline-flex items-center"
+      title={deliveryLabel}
+      aria-label={deliveryLabel}
+      role="img"
+    >
+      {isDelivery ? (
+        <Truck className="h-3.5 w-3.5 text-primary" aria-hidden />
+      ) : (
+        <Store className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+      )}
+    </span>
+  );
 
 
   return (
@@ -305,6 +325,10 @@ export function CustomerOrderRow({
             <span className="w-16 shrink-0 whitespace-nowrap border-r border-grid-line/70 px-2 font-mono text-[9px] tabular-nums text-muted-foreground">
               {itemsLabel}
             </span>
+            <span className="flex w-10 shrink-0 items-center justify-center border-r border-grid-line/70 px-2">
+              {deliveryIcon}
+            </span>
+
             {/* Kundnamnet börjar alltid på samma x-position — källan står i egen kolumn efter namnet. */}
             <span className="flex min-w-[14rem] shrink-0 flex-1 items-center whitespace-nowrap border-r border-grid-line/70 pl-3 pr-5 font-semibold">
               {order.customer_id ? (
@@ -414,21 +438,46 @@ export function CustomerOrderRow({
             />
           </div>
 
-          <div className="sm:hidden">
-            <div className="flex min-h-5 items-center gap-2">
-              {order.is_web_order && (
-                <span className="shrink-0 rounded-sm bg-primary/15 px-1 text-[10px] font-bold uppercase text-primary">
-                  Webb
-                </span>
-              )}
+          {/* Mobil: namnet först, helt och aldrig avklippt. Pris visas inte här. */}
+          <div className="space-y-1 sm:hidden">
+            <div className="flex items-start gap-2">
               <span
-                className={`min-w-0 flex-1 whitespace-nowrap text-sm font-semibold leading-tight ${
+                className={`min-w-0 flex-1 break-words text-[15px] font-semibold leading-snug ${
                   cancelled ? "line-through" : ""
                 }`}
               >
                 {name}
               </span>
+              <ChevronDown
+                className={`mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform ${
+                  isOpen ? "rotate-180" : ""
+                }`}
+              />
+            </div>
 
+            <div className="flex flex-wrap items-center gap-1.5">
+              {deliveryIcon}
+              {statusChip}
+              {hasAllergy && (
+                <AlertTriangle
+                  className="h-3.5 w-3.5 shrink-0 text-destructive"
+                  aria-label="Allergi"
+                />
+              )}
+              {order.is_web_order && (
+                <span className="shrink-0 rounded-sm bg-primary/15 px-1 text-[10px] font-bold uppercase text-primary">
+                  Webb
+                </span>
+              )}
+              {readOnly && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
+            </div>
+
+            <div className="flex items-center gap-2 font-mono text-[11px] tabular-nums text-muted-foreground">
+              <span className="min-w-0 truncate">
+                {weekday(order.wanted_date)} {shortDate(order.wanted_date)}
+                {time} · {itemsLabel}
+                {order.stores?.name ? ` · ${order.stores.name}` : ""}
+              </span>
               {hasComment && (
                 <MessageSquare
                   className="h-3.5 w-3.5 shrink-0 text-primary"
@@ -436,39 +485,14 @@ export function CustomerOrderRow({
                 />
               )}
               {photoCount > 0 && (
-                <span className="flex shrink-0 items-center gap-0.5 font-mono text-[10px] tabular-nums text-muted-foreground">
+                <span className="flex shrink-0 items-center gap-0.5">
                   <Camera className="h-3.5 w-3.5" aria-label="Bilder finns" />
                   {photoCount}
                 </span>
               )}
-              {hasAllergy && (
-                <AlertTriangle
-                  className="h-3.5 w-3.5 shrink-0 text-destructive"
-                  aria-label="Allergi"
-                />
-              )}
-              {readOnly && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
-              <CurrencyAmount
-                amount={total}
-                currency={currency}
-                className="font-mono text-xs font-semibold tabular-nums"
-              />
-              <ChevronDown
-                className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${
-                  isOpen ? "rotate-180" : ""
-                }`}
-              />
-            </div>
-
-            <div className="mt-0.5 flex h-5 items-center gap-2 font-mono text-[11px] tabular-nums text-muted-foreground">
-              {statusChip}
-              <span className="truncate">
-                {weekday(order.wanted_date)} {shortDate(order.wanted_date)}
-                {time} · {itemsLabel}
-                {order.stores?.name ? ` · ${order.stores.name}` : ""}
-              </span>
             </div>
           </div>
+
 
 
         </button>
@@ -1009,6 +1033,7 @@ export function CustomerOrderRowHeader({
       <span className="flex min-w-0 flex-1 items-center px-2.5 py-1">
         <span className="w-36 shrink-0 border-r border-grid-line pr-2">Datum</span>
         <span className="w-16 shrink-0 border-r border-grid-line px-2">Art.</span>
+        <span className="w-10 shrink-0 border-r border-grid-line px-2 text-center">Lev.</span>
         <span className="min-w-[14rem] flex-1 border-r border-grid-line pl-3 pr-5">Kund</span>
         <span className="w-12 shrink-0 border-r border-grid-line px-2 text-center">Ordrar</span>
         <span className="w-14 shrink-0 border-r border-grid-line px-2">Källa</span>

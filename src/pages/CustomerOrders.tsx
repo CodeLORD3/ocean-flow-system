@@ -166,7 +166,8 @@ export default function CustomerOrders() {
   const [packStatus, setPackStatus] = useState("all");
   const [orderType, setOrderType] = useState("all");
   const [wizardOpen, setWizardOpen] = useState(false);
-  const [openRow, setOpenRow] = useState<string | null>(null);
+  /* Flera ordrar kan vara öppna samtidigt — att öppna en stänger inte de andra. */
+  const [openRows, setOpenRows] = useState<string[]>([]);
   const [panel, setPanel] = useState<"orders" | "customers" | "stats" | "route" | "kitchen" | "needs" | "pickups">(
     "orders",
   );
@@ -174,7 +175,8 @@ export default function CustomerOrders() {
   const [tab, setTab] = useState<OrderTab>("alla");
   const [marked, setMarked] = useState<string[]>([]);
 
-  const toggleRow = (id: string) => setOpenRow((cur) => (cur === id ? null : id));
+  const toggleRow = (id: string) =>
+    setOpenRows((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
   const toggleMark = (id: string, next: boolean) =>
     setMarked((cur) => (next ? [...new Set([...cur, id])] : cur.filter((x) => x !== id)));
 
@@ -346,7 +348,7 @@ export default function CustomerOrders() {
                 onClick={() => {
                   setTab(t.id);
                   setMarked([]);
-                  setOpenRow(null);
+                  setOpenRows([]);
                 }}
                 className={`flex items-center gap-1.5 whitespace-nowrap rounded-sm px-3 py-2 text-xs transition-colors ${
                   active
@@ -638,7 +640,7 @@ export default function CustomerOrders() {
                             order={o}
                             canEdit={canEdit}
                             readOnly={rowReadOnly(o)}
-                            open={openRow === o.id}
+                            open={openRows.includes(o.id)}
                             onToggle={toggleRow}
                             selected={marked.includes(o.id)}
                             onSelect={toggleMark}

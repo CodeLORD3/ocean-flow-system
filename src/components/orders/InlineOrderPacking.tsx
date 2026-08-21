@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, RotateCcw } from "lucide-react";
+import { CheckCircle2, RotateCcw, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ProductThumb } from "@/components/products/ProductThumb";
@@ -173,6 +174,46 @@ export function InlineOrderPacking({
     onOrderPacked?.();
   };
 
+  const packingStarted = !!order.packing_started_at || order.pack_status !== "opackad";
+
+  /** Startar packningen: hela orderraden i listan blir gul och läget sparas. */
+  const startPacking = async () => {
+    await updateOrder.mutateAsync({
+      id: order.id,
+      patch: { packing_started_at: new Date().toISOString() } as any,
+      event: {
+        type: "andrad",
+        description: "Packning påbörjad",
+        by: activeUser?.first_name ?? null,
+      },
+    });
+    toast.success("Packningen är påbörjad.");
+  };
+
+  /** Kryssrutan packar raden direkt med beställd/vägd mängd, eller ångrar. */
+  const toggleLine = async (line: CustomerOrderLine, next: boolean) => {
+    if (next) {
+      if (!order.packing_started_at && order.pack_status === "opackad") {
+        await updateOrder.mutateAsync({
+          id: order.id,
+          patch: { packing_started_at: new Date().toISOString() } as any,
+        });
+      }
+      await doPack(line);
+      return;
+    }
+    try {
+      await unpackLine.mutateAsync({
+        order,
+        line,
+        performedBy: activeUser ? `${activeUser.first_name} ${activeUser.last_name}` : null,
+      });
+      toast.success("Raden är opackad igen.");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Kunde inte ångra.");
+    }
+  };
+
   return (
     <div className="space-y-2">
       {priceAlarm && (
@@ -184,21 +225,54 @@ export function InlineOrderPacking({
         </div>
       )}
 
+      {!packingStarted && (
+        <Button
+          className="h-11 w-full sm:w-auto"
+          disabled={updateOrder.isPending}
+          onClick={startPacking}
+        >
+          <PlayCircle className="mr-2 h-4 w-4" /> Starta packning
+        </Button>
+      )}
+
       <ul className="divide-y divide-border overflow-hidden rounded-md border border-border">
         {lines.map((l, i) => {
           const name = (l.products?.name || l.free_text_name || "Vara") as string;
           const done = l.pack_status === "packad";
           const struck = l.pack_status === "struken";
           const expanded = openLine === l.id && !done && !struck;
+          /* Packad rad är gul under pågående packning och grön när hela ordern är klar. */
+          const rowBg = done
+            ? allPacked
+              ? "bg-row-ok"
+              : "bg-row-warn"
+            : struck
+              ? "bg-row-off"
+              : "bg-card";
           return (
-            <li key={l.id} className={done ? "bg-row-ok" : struck ? "bg-row-off" : "bg-card"}>
+            <li key={l.id} className={rowBg}>
+              <div className="flex items-center gap-1">
+                {/* Stor kryssruta för tumtryck: markerar just den varan som packad. */}
+                <label
+                  className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Checkbox
+                    className="h-6 w-6"
+                    checked={done}
+                    disabled={struck || packLine.isPending || unpackLine.isPending}
+                    onCheckedChange={(v) => toggleLine(l, !!v)}
+                    aria-label={`Markera ${name} som packad`}
+                  />
+                </label>
               <button
                 type="button"
                 onClick={() => setOpenLine(expanded ? null : l.id)}
                 disabled={done || struck}
-                className="flex w-full items-center gap-2 px-2 py-1 text-left text-[13px] disabled:cursor-default"
+                className="flex min-w-0 flex-1 items-center gap-2 px-1 py-1 text-left text-[13px] disabled:cursor-default"
               >
                 <PackStep status={l.pack_status} index={i + 1} />
+
                 <ProductThumb
                   src={l.products?.image_url}
                   alt={name}
@@ -235,6 +309,8 @@ export function InlineOrderPacking({
                 )}
 
               </button>
+              </div>
+
               {(done || struck || l.pack_status === "restnoterad") && (
                 <div className="flex justify-end px-2 pb-1">
                   <Button

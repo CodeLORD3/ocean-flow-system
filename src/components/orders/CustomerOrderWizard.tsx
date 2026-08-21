@@ -348,16 +348,19 @@ export function CustomerOrderWizard({
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
 
-      <DialogContent className="max-w-3xl max-h-[92vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="flex h-[100dvh] max-h-[100dvh] w-full max-w-none flex-col gap-0 overflow-hidden rounded-none p-0 sm:h-auto sm:max-h-[92vh] sm:max-w-3xl sm:rounded-lg">
+        <DialogHeader className="shrink-0 space-y-1.5 border-b border-border px-4 py-3 sm:px-6">
           <DialogTitle>Ny kundbeställning{storeName ? ` — ${storeName}` : ""}</DialogTitle>
           <DialogDescription>
             Steg {step} av 4: {STEP_TITLES[step - 1]}
           </DialogDescription>
         </DialogHeader>
 
+        {/* Skrollbart innehåll, fast fot — samma mönster som kunddialogen. */}
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
         {/* Stegindikator: alla fyra steg synliga, kommande steg dämpade */}
         <div className="flex gap-2">
+
           {STEP_TITLES.map((t, i) => (
             <div key={t} className="flex-1 space-y-1">
               <div
@@ -973,8 +976,9 @@ export function CustomerOrderWizard({
             </div>
           </div>
         )}
+        </div>
 
-        <DialogFooter className="gap-2 sm:justify-between">
+        <DialogFooter className="shrink-0 gap-2 border-t border-border px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:justify-between sm:px-6">
           <Button variant="ghost" className="h-12" onClick={() => onOpenChange(false)}>
             Avbryt
           </Button>
