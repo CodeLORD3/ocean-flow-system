@@ -9,6 +9,7 @@ import { useStores } from "@/hooks/useStores";
 import { useStoreCoverImages } from "@/hooks/useStoreCoverImages";
 import { focalStyle } from "@/lib/imageFocal";
 import FirstLoginPasswordChange from "./FirstLoginPasswordChange";
+import { thumbUrl, THUMB_CARD } from "@/lib/imageThumb";
 
 
 const PORTAL_META: Record<PortalKey, { title: string; description: string; icon: any }> = {
@@ -146,7 +147,7 @@ export default function PortalChooser() {
                   <div className="relative aspect-[16/9] bg-muted">
                     {cover?.url ? (
                       <img
-                        src={cover.url}
+                        src={thumbUrl(cover.url, THUMB_CARD)}
                         alt={`${s.name} – butiksbild`}
                         loading="lazy"
                         className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"

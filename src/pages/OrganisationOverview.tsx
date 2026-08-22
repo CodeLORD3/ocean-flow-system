@@ -39,6 +39,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 import {
+import { thumbUrl, THUMB_CARD } from "@/lib/imageThumb";
   BarChart,
   Bar,
   XAxis,
@@ -359,7 +360,7 @@ export default function OrganisationOverview() {
                       <div key={store.id} className="flex items-center gap-2 sm:gap-3 py-1.5 border-b border-border/30 last:border-0">
                         <div className="h-9 w-12 sm:h-11 sm:w-16 shrink-0 overflow-hidden rounded-md bg-muted">
                           <img
-                            src={covers[store.id]?.url || store.logo_url || storeHero}
+                            src={thumbUrl(covers[store.id]?.url || store.logo_url, THUMB_CARD) || storeHero}
                             alt={`Butiksbild för ${store.name}`}
                             loading="lazy"
                             width={320}

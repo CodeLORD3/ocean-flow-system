@@ -21,6 +21,7 @@ import { useAllowedStores } from "@/components/StoreSwitcher";
 import { useSessionTracking, closeCurrentSession } from "@/hooks/useSessionTracking";
 import { useChatSound } from "@/hooks/useChatSound";
 import {
+import { thumbUrl, THUMB_AVATAR } from "@/lib/imageThumb";
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -79,7 +80,7 @@ function AccountMenu() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-8 gap-2 px-2">
           <Avatar className="h-6 w-6">
-            {staff?.profile_image_url && <AvatarImage src={staff.profile_image_url} />}
+            {staff?.profile_image_url && <AvatarImage src={thumbUrl(staff.profile_image_url, THUMB_AVATAR)} />}
             <AvatarFallback className="text-[10px] bg-primary/10 text-primary">{initials}</AvatarFallback>
           </Avatar>
           <span className="hidden sm:inline text-xs font-medium">

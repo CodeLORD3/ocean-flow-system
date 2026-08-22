@@ -21,6 +21,7 @@ import { usePayrollOverhead, useStoreRevenueRange } from "@/hooks/useStaffKpi";
 import { useMinuteTick } from "@/hooks/useLiveStaff";
 import { buildActualMap, diffTone, signedMinutes } from "@/lib/scheduleCompare";
 import { dateKey, formatMinutes, type PlannedShiftRow } from "@/lib/liveStaff";
+import { thumbUrl, THUMB_AVATAR } from "@/lib/imageThumb";
 
 
 const DAY_NAMES = ["Mån", "Tis", "Ons", "Tors", "Fre", "Lör", "Sön"];
@@ -554,7 +555,7 @@ export default function StaffSchedule() {
                         <td className="sticky left-0 z-10 max-w-[250px] border-r border-border bg-card px-2 py-1.5">
                           <div className="flex items-center gap-1.5">
                             <Avatar className="h-7 w-7 shrink-0">
-                              <AvatarImage src={avatars[s.id]} alt="" />
+                              <AvatarImage src={thumbUrl(avatars[s.id], THUMB_AVATAR)} alt="" />
                               <AvatarFallback className="text-[9px]">{initials || "?"}</AvatarFallback>
                             </Avatar>
                             <div className="min-w-0 flex-1">

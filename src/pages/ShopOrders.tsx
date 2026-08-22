@@ -41,6 +41,7 @@ import { useSite } from "@/contexts/SiteContext";
 import { useActiveUser } from "@/contexts/ActiveUserContext";
 import { useCreateChangeRequest, useOrderChangeRequests, useResolveChangeRequest } from "@/hooks/useOrderChangeRequests";
 import { useNotificationFlash } from "@/lib/notificationFlash";
+import { thumbUrl, THUMB_CARD } from "@/lib/imageThumb";
 
 type OrderLine = {
   product_id: string;
@@ -825,7 +826,7 @@ export default function ShopOrders() {
           </DialogHeader>
           {previewProduct?.image_url ? (
             <img
-              src={previewProduct.image_url}
+              src={thumbUrl(previewProduct.image_url, THUMB_CARD)}
               alt={previewProduct.name}
               className="w-full h-48 object-cover rounded-md border border-border"
              loading="lazy" decoding="async" />
