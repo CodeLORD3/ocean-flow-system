@@ -1,3 +1,4 @@
+import { thumbUrl, THUMB_CARD } from "@/lib/imageThumb";
 import { motion } from "framer-motion";
 import { displayOrderWeek } from "@/lib/orderWeek";
 import {
@@ -39,7 +40,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 import {
-import { thumbUrl, THUMB_CARD } from "@/lib/imageThumb";
   BarChart,
   Bar,
   XAxis,

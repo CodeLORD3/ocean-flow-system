@@ -1,3 +1,4 @@
+import { thumbUrl, THUMB_AVATAR } from "@/lib/imageThumb";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { ShopSidebar } from "@/components/ShopSidebar";
@@ -21,7 +22,6 @@ import { useAllowedStores } from "@/components/StoreSwitcher";
 import { useSessionTracking, closeCurrentSession } from "@/hooks/useSessionTracking";
 import { useChatSound } from "@/hooks/useChatSound";
 import {
-import { thumbUrl, THUMB_AVATAR } from "@/lib/imageThumb";
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,

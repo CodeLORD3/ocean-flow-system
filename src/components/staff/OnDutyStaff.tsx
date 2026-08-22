@@ -1,3 +1,4 @@
+import { thumbUrl, THUMB_AVATAR } from "@/lib/imageThumb";
 import { useState } from "react";
 import { LogIn, LogOut, Clock } from "lucide-react";
 import { useStaff } from "@/hooks/useStaff";
@@ -7,7 +8,6 @@ import { useStores } from "@/hooks/useStores";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
-import { thumbUrl, THUMB_AVATAR } from "@/lib/imageThumb";
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
