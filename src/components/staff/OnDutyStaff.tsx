@@ -1,3 +1,4 @@
+import { thumbUrl, THUMB_AVATAR } from "@/lib/imageThumb";
 import { useState } from "react";
 import { LogIn, LogOut, Clock } from "lucide-react";
 import { useStaff } from "@/hooks/useStaff";
@@ -133,7 +134,7 @@ export function OnDutyStaff({ storeId }: { storeId?: string | null }) {
                 >
                   {person.profile_image_url ? (
                     <img
-                      src={person.profile_image_url}
+                      src={thumbUrl(person.profile_image_url, THUMB_AVATAR)}
                       alt={`${person.first_name} ${person.last_name}`}
                       className="h-3.5 w-3.5 rounded-full object-cover"
                      loading="lazy" decoding="async" />

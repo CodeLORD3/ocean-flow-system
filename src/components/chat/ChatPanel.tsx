@@ -31,6 +31,7 @@ import {
 } from "@/hooks/useChat";
 import { useStaffAvatars } from "@/hooks/useStaffAvatars";
 import { useSignedUrl } from "@/hooks/useSignedUrl";
+import { thumbUrl, THUMB_AVATAR, THUMB_CARD } from "@/lib/imageThumb";
 
 function portalIcon(kind: PortalProfile["kind"]) {
   return kind === "admin" ? Shield : kind === "grossist" ? Factory : Store;
@@ -67,7 +68,7 @@ function PortalAvatar({
       )}
     >
       {url ? (
-        <img src={url} alt={`Profilbild för ${name}`} loading="lazy" className="h-full w-full object-cover" />
+        <img src={thumbUrl(url, THUMB_AVATAR)} alt={`Profilbild för ${name}`} loading="lazy" className="h-full w-full object-cover" />
       ) : (
         initialsOf(name)
       )}
@@ -682,7 +683,7 @@ export function ChatPanel({ compact = false, className, onOpenFull, focusPortalK
                         {m.image_url && (
                           <a href={m.image_url} target="_blank" rel="noreferrer">
                             <img
-                              src={m.image_url}
+                              src={thumbUrl(m.image_url, THUMB_CARD)}
                               alt="Bifogad bild i chatt"
                               loading="lazy"
                               className="mt-1 max-h-40 w-full rounded-lg object-cover"

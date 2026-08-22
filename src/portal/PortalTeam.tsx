@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, Award, Linkedin, Mail } from "lucide-react";
+import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 
 const DEFAULT_TEAM = [
   { name: "Erik Lindgren", role: "Founder & CEO", desc: "15+ years in commodity trading and structured finance across Nordic and European markets.", bio: "Erik founded Makrill Trade to bridge the gap between institutional trade finance and everyday investors. He previously led commodity desks at two major Nordic banks.", experience: "15 years in commodity trading", linkedin: "#" },
@@ -43,7 +44,7 @@ export default function PortalTeam() {
             <div key={i} className="border border-border p-4 text-center space-y-2 flex flex-col">
               {person.image_url ? (
                 <img
-                  src={person.image_url}
+                  src={thumbUrl(person.image_url, THUMB_TILE)}
                   alt={person.name}
                   className="h-16 w-16 rounded-full object-cover mx-auto border border-border"
                   style={{ objectPosition: person.image_position || "center" }}

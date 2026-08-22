@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useStaff } from "@/hooks/useStaff";
+import { thumbUrl, THUMB_AVATAR } from "@/lib/imageThumb";
 
 interface Props {
   open: boolean;
@@ -99,7 +100,7 @@ export function StoreStaffDialog({ open, onOpenChange, storeId, storeName }: Pro
                 />
                 <div className="h-7 w-7 rounded-full bg-primary/10 overflow-hidden flex items-center justify-center shrink-0">
                   {s.profile_image_url ? (
-                    <img src={s.profile_image_url} alt={`${s.first_name} ${s.last_name}`} className="h-full w-full object-cover"  loading="lazy" decoding="async" />
+                    <img src={thumbUrl(s.profile_image_url, THUMB_AVATAR)} alt={`${s.first_name} ${s.last_name}`} className="h-full w-full object-cover"  loading="lazy" decoding="async" />
                   ) : (
                     <User className="h-3.5 w-3.5 text-primary" />
                   )}

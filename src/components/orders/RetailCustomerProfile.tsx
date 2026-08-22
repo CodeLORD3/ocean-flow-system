@@ -57,6 +57,7 @@ import {
 } from "@/lib/retailCustomerStats";
 import { getStoreCurrency } from "@/lib/currency";
 import { CurrencyAmount, useSekRate } from "@/components/orders/CurrencyAmount";
+import { thumbUrl, THUMB_AVATAR } from "@/lib/imageThumb";
 
 const AVATAR_BUCKET = "logos";
 
@@ -311,7 +312,7 @@ export function RetailCustomerProfile({
               <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-border bg-muted">
                 {customer.avatar_url ? (
                   <img
-                    src={customer.avatar_url}
+                    src={thumbUrl(customer.avatar_url, THUMB_AVATAR)}
                     alt={`Kundbild för ${fullName}`}
                     className="h-full w-full object-cover"
                    loading="lazy" decoding="async" />

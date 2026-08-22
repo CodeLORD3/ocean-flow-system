@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useProductPhotos } from "@/hooks/useEntityImages";
+import { thumbUrl, THUMB_CARD, THUMB_TILE } from "@/lib/imageThumb";
 
 interface ProductImagesDialogProps {
   open: boolean;
@@ -58,7 +59,7 @@ export function ProductImagesDialog({
         {current ? (
           <div className="relative">
             <img
-              src={current.url}
+              src={thumbUrl(current.url, THUMB_CARD)}
               alt={current.caption || productName}
               className="h-auto max-h-[75vh] w-full rounded-md object-contain"
              loading="lazy" decoding="async" />
@@ -104,7 +105,7 @@ export function ProductImagesDialog({
                       i === idx ? "border-primary" : "border-border opacity-70"
                     }`}
                   >
-                    <img src={img.url} alt="" className="h-full w-full object-cover"  loading="lazy" decoding="async" />
+                    <img src={thumbUrl(img.url, THUMB_TILE)} alt="" className="h-full w-full object-cover"  loading="lazy" decoding="async" />
                   </button>
                 ))}
               </div>

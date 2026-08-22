@@ -10,6 +10,7 @@ import {
   useUploadEntityImage,
 } from "@/hooks/useEntityImages";
 import { cn } from "@/lib/utils";
+import { thumbUrl, THUMB_FULL, THUMB_TILE } from "@/lib/imageThumb";
 
 interface ProductPhotosGalleryProps {
   productId?: string | null;
@@ -106,7 +107,7 @@ export function ProductPhotosGallery({
                 className="block aspect-square w-full"
               >
                 <img
-                  src={img.url}
+                  src={thumbUrl(img.url, THUMB_TILE)}
                   alt={img.caption || productName || "Produktbild"}
                   loading="lazy"
                   className="h-full w-full object-cover"
@@ -141,7 +142,7 @@ export function ProductPhotosGallery({
           {zoomIdx !== null && images[zoomIdx] && (
             <div className="relative">
               <img
-                src={images[zoomIdx].url}
+                src={thumbUrl(images[zoomIdx].url, THUMB_FULL)}
                 alt={images[zoomIdx].caption || productName || "Produktbild"}
                 className="h-auto max-h-[75vh] w-full rounded-md object-contain"
                loading="lazy" decoding="async" />

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, Shield, Globe, Target, Heart, Award } from "lucide-react";
+import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 
 const ICON_MAP: Record<string, any> = { Shield, Globe, Target, Heart };
 
@@ -78,7 +79,7 @@ export default function PortalAbout() {
             <div key={i} className="border border-border p-4 text-center space-y-2">
               {person.image_url ? (
                 <img
-                  src={person.image_url}
+                  src={thumbUrl(person.image_url, THUMB_TILE)}
                   alt={person.name}
                   className="h-14 w-14 rounded-full object-cover mx-auto border border-border"
                   style={{ objectPosition: person.image_position || "center" }}

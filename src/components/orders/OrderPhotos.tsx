@@ -19,6 +19,7 @@ import {
 } from "@/hooks/useEntityImages";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { thumbUrl, THUMB_TILE, THUMB_FULL } from "@/lib/imageThumb";
 
 export const ORDER_PHOTO_ENTITY = "shop_order";
 export const ORDER_LINE_PHOTO_ENTITY = "shop_order_line";
@@ -238,7 +239,7 @@ export function OrderPhotosButton({
                     className="block aspect-square w-full"
                   >
                     <img
-                      src={img.url}
+                      src={thumbUrl(img.url, THUMB_TILE)}
                       alt={img.caption || title}
                       loading="lazy"
                       className="h-full w-full object-cover"
@@ -290,7 +291,7 @@ export function OrderPhotosButton({
 
       <Dialog open={!!zoom} onOpenChange={(o) => !o && setZoom(null)}>
         <DialogContent className="max-w-4xl p-2">
-          {zoom && <img src={zoom} alt={title} className="h-auto w-full rounded-md"  loading="lazy" decoding="async" />}
+          {zoom && <img src={thumbUrl(zoom, THUMB_FULL)} alt={title} className="h-auto w-full rounded-md"  loading="lazy" decoding="async" />}
         </DialogContent>
       </Dialog>
     </>

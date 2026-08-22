@@ -20,6 +20,7 @@ import { PORTAL_IMAGE_ENTITY_TYPE, portalImageEntityId } from "@/lib/portalImage
 
 import { Slider } from "@/components/ui/slider";
 import { MapPin, Store as StoreIcon, Upload, Images, Pencil, Trash2, Check, X, Loader2, Crop } from "lucide-react";
+import { thumbUrl, THUMB_CARD } from "@/lib/imageThumb";
 
 /**
  * Hero/cover image shown at the top of every page inside a shop portal
@@ -231,7 +232,7 @@ export function StoreHero() {
                         img.id === cover?.id ? "border-primary" : "border-border hover:border-primary/60"
                       }`}
                     >
-                      <img src={img.url} alt={img.caption || "Portalbild"} className="h-full w-full object-cover"  loading="lazy" decoding="async" />
+                      <img src={thumbUrl(img.url, THUMB_CARD)} alt={img.caption || "Portalbild"} className="h-full w-full object-cover"  loading="lazy" decoding="async" />
                     </button>
                   ))}
                 </div>

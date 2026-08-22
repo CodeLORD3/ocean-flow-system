@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Package, ShoppingCart, Ruler } from "lucide-react";
 import storeHero from "@/assets/store-hero.jpg";
 import type { Store } from "@/hooks/useStores";
+import { thumbUrl, THUMB_CARD } from "@/lib/imageThumb";
 
 const fadeUp = { hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.25 } } };
 
@@ -139,7 +140,7 @@ export function OurStoresSection({ storeFilterId }: { storeFilterId?: string | n
             >
               <div className="relative aspect-video overflow-hidden bg-muted">
                 <img
-                  src={photoByStore[store.id]?.url || store.logo_url || storeHero}
+                  src={thumbUrl(photoByStore[store.id]?.url || store.logo_url, THUMB_CARD) || storeHero}
 
                   alt={`Butiksfasad för ${store.name}`}
                   loading="lazy"

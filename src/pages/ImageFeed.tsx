@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { dayKey, dayLabel, initialsOf } from "@/lib/imageMeta";
 import { focalStyle } from "@/lib/imageFocal";
 import { cn } from "@/lib/utils";
+import { thumbUrl, THUMB_TILE, THUMB_CARD } from "@/lib/imageThumb";
 
 const ALL = "all";
 
@@ -234,7 +235,7 @@ export default function ImageFeed() {
                       aria-label={`Öppna bild från ${img.sourceName}`}
                     >
                       <img
-                        src={img.url}
+                        src={thumbUrl(img.url, THUMB_TILE)}
                         alt={img.caption || `Bild från ${img.sourceName}`}
                         loading="lazy"
                         style={focalStyle(img.focal_point)}
@@ -459,7 +460,7 @@ function ImageGrid({
                 aria-label={`Öppna bild från ${img.sourceName}`}
               >
                 <img
-                  src={img.url}
+                  src={thumbUrl(img.url, THUMB_CARD)}
                   alt={img.caption || `Bild från ${img.sourceName}`}
                   loading="lazy"
                   style={focalStyle(img.focal_point)}
