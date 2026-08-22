@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Fish } from "lucide-react";
 import ProductImagesDialog from "@/components/products/ProductImagesDialog";
 import { cn } from "@/lib/utils";
+import { thumbUrl, THUMB_TILE } from "@/lib/imageThumb";
 
 interface ProductThumbProps {
   src?: string | null;
@@ -60,7 +61,7 @@ export function ProductThumb({ src, alt, className, static: isStatic, productId 
 
   const img = (
     <img
-      src={src as string}
+      src={thumbUrl(src as string, THUMB_TILE) as string}
       alt={alt}
       loading="lazy"
       onError={() => setFailed(true)}

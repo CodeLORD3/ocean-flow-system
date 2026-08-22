@@ -40,6 +40,7 @@ import { ImageLightbox } from "@/components/images/ImageLightbox";
 import { cn } from "@/lib/utils";
 import { focalStyle, focalPercent, focalLabel } from "@/lib/imageFocal";
 import { dayKey, dayLabel, initialsOf } from "@/lib/imageMeta";
+import { thumbUrl, THUMB_TILE, THUMB_CARD } from "@/lib/imageThumb";
 
 /** Datum + tid då bilden laddades upp, t.ex. "03-08 10:24". */
 function uploadedLabel(iso: string) {
@@ -310,7 +311,7 @@ export function EntityImageGallery({
               className="relative block w-full aspect-video bg-muted overflow-hidden"
             >
               <img
-                src={img.url}
+                src={thumbUrl(img.url, THUMB_CARD)}
                 alt={img.caption || `${title} bild`}
                 loading="lazy"
                 className="h-full w-full object-cover transition-transform group-hover:scale-[1.03]"
@@ -750,7 +751,7 @@ export function EntityImageGallery({
                       aria-label={active ? "Ta bort ur utvalda" : "Lägg till i utvalda"}
                     >
                       <img
-                        src={img.url}
+                        src={thumbUrl(img.url, THUMB_TILE)}
                         alt={img.caption || "Bild"}
                         loading="lazy"
                         className="h-full w-full object-cover"

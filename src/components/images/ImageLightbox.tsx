@@ -15,6 +15,7 @@ import {
   type EntityImage,
 } from "@/hooks/useEntityImages";
 import { useStaffAuth } from "@/contexts/StaffAuthContext";
+import { thumbUrl, THUMB_FULL } from "@/lib/imageThumb";
 
 type Props = {
   images: EntityImage[];
@@ -474,7 +475,7 @@ export function ImageLightbox({
                   {images.map((img) => (
                     <div key={img.id} className="h-full w-full shrink-0 snap-center flex items-center justify-center">
                       <img
-                        src={img.url}
+                        src={thumbUrl(img.url, THUMB_FULL)}
                         alt={img.caption || title}
                         className="max-h-full w-full object-contain select-none"
                         draggable={false}
@@ -640,7 +641,7 @@ export function ImageLightbox({
                 }}
               >
                 <img
-                  src={current.url}
+                  src={thumbUrl(current.url, THUMB_FULL)}
                   alt={current.caption || title}
                   className="max-h-[70vh] w-full object-contain"
                  loading="lazy" decoding="async" />
