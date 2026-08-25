@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -12287,6 +12287,10 @@ export type Database = {
       can_see_employee_folder: { Args: { _name: string }; Returns: boolean }
       can_see_store: { Args: { _store_id: string }; Returns: boolean }
       clock_code_hash: { Args: { _code: string }; Returns: string }
+      clock_pending_approve: {
+        Args: { _employee_id: string; _id: string }
+        Returns: Json
+      }
       clock_station_create: {
         Args: {
           _legal_entity_id?: string
