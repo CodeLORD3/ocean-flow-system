@@ -293,7 +293,7 @@ export function EmployeeDialog({ open, employee, onOpenChange }: Props) {
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium">
                               {em.job_title || "Anställning"}
-                              {em.legal_entity_id && <span className="text-muted-foreground"> · {em.legal_entity_id}</span>}
+                              {em.legal_entity_id && <span className="text-muted-foreground"> · {entityName(em.legal_entity_id)}</span>}
                             </p>
                             <p className="font-mono text-xs tabular-nums text-muted-foreground">
                               {em.start_date || "–"} → {em.end_date || "löpande"} · {em.employment_rate} %
