@@ -107,7 +107,13 @@ export function useEmployees(includeInactive = true) {
   return useQuery({
     queryKey: ["employees", includeInactive],
     queryFn: async () => {
-      let q = supabase.from("employees").select("*").order("first_name");
+      // Aldrig pnr_encrypted/pnr_hash till klienten – bara maskerade fält.
+      let q = supabase
+        .from("employees")
+        .select(
+          "id, staff_id, pk_staff_id, first_name, last_name, email, phone, profile_image_url, birth_date, address_street, postal_code, city, country, pnr_masked, pnr_last4, alt_clock_identifier, emergency_contact_name, emergency_contact_phone, emergency_contact_relation, notes, is_active, created_at, updated_at",
+        )
+        .order("first_name");
       if (!includeInactive) q = q.eq("is_active", true);
       const { data, error } = await q;
       if (error) throw error;
