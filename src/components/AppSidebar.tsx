@@ -116,6 +116,9 @@ const staffNav = [
   { title: "Personal", url: "/staff", icon: UserCheck },
   { title: "Personalregister", url: "/employees", icon: IdCard },
   { title: "På plats nu", url: "/live-staff", icon: Activity },
+  { title: "Stämpelklocka", url: "/clock-stations", icon: Clock },
+  { title: "Rapporterad tid", url: "/time-entries", icon: ClipboardCheck },
+  { title: "Klocka vs PK", url: "/clock-vs-pk", icon: Scale },
   { title: "Personalkollen", url: "/personalkollen", icon: Plug },
   { title: "Schema", url: "/staff-schedule", icon: CalendarRange },
 ];

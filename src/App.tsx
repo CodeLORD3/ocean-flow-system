@@ -17,6 +17,7 @@ import PortalChooser from "@/pages/PortalChooser";
 import FirstLoginPasswordChange from "@/pages/FirstLoginPasswordChange";
 import StaffForgotPassword from "@/pages/StaffForgotPassword";
 import StaffResetPassword from "@/pages/StaffResetPassword";
+import Clock from "@/pages/Clock";
 import { Loader2 } from "lucide-react";
 
 // Investor Portal
@@ -86,6 +87,9 @@ const AppContent = () => {
             <Route path="/choose-portal" element={<PortalChooser />} />
             <Route path="/forgot-password" element={<StaffForgotPassword />} />
             <Route path="/reset-password" element={<StaffResetPassword />} />
+
+            {/* Stämpelklocka — fristående kioskläge, ingen ERP-inloggning */}
+            <Route path="/clock" element={<Clock />} />
 
             {/* Investor Portal (separate auth) */}
             <Route path="/portal/login" element={<PortalLogin />} />

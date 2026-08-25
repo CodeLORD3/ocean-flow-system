@@ -33,6 +33,9 @@ import AuditRouter from "@/pages/AuditRouter";
 import BugReports from "@/pages/BugReports";
 import LiveStaff from "@/pages/LiveStaff";
 import Personalkollen from "@/pages/Integrations/Personalkollen";
+import ClockStations from "@/pages/ClockStations";
+import TimeEntriesPage from "@/pages/TimeEntriesPage";
+import ClockVsPk from "@/pages/ClockVsPk";
 
 import StaffSchedule from "@/pages/StaffSchedule";
 
@@ -118,6 +121,9 @@ const ROUTE_MAP: Record<string, RouteEntry> = {
   "/bug-reports": { component: <BugReports /> },
   "/live-staff": { component: <LiveStaff /> },
   "/personalkollen": { component: <Personalkollen /> },
+  "/clock-stations": { component: <ClockStations /> },
+  "/time-entries": { component: <TimeEntriesPage /> },
+  "/clock-vs-pk": { component: <ClockVsPk /> },
   "/on-site-now": { component: <LiveStaff /> },
   "/staff-schedule": { component: <StaffSchedule /> },
 
