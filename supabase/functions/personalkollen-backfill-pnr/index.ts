@@ -15,7 +15,7 @@ function corsHeaders(req: Request) {
   const allowed = ALLOWED_ORIGINS.has(origin) || origin.endsWith(".lovable.app");
   return {
     "Access-Control-Allow-Origin": allowed ? origin : "https://makrilltrade.com",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
   };
 }
