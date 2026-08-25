@@ -3104,6 +3104,7 @@ export type Database = {
           notes: string | null
           phone: string | null
           pk_staff_id: string | null
+          pnr_encrypted: string | null
           pnr_hash: string | null
           pnr_last4: string | null
           pnr_masked: string | null
@@ -3130,6 +3131,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           pk_staff_id?: string | null
+          pnr_encrypted?: string | null
           pnr_hash?: string | null
           pnr_last4?: string | null
           pnr_masked?: string | null
@@ -3156,6 +3158,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           pk_staff_id?: string | null
+          pnr_encrypted?: string | null
           pnr_hash?: string | null
           pnr_last4?: string | null
           pnr_masked?: string | null
@@ -3188,6 +3191,7 @@ export type Database = {
           ch_notes: string | null
           conversion_date: string | null
           cost_center: string | null
+          country_code: string
           created_at: string
           employee_id: string
           employment_number: string | null
@@ -3221,6 +3225,7 @@ export type Database = {
           ch_notes?: string | null
           conversion_date?: string | null
           cost_center?: string | null
+          country_code?: string
           created_at?: string
           employee_id: string
           employment_number?: string | null
@@ -3254,6 +3259,7 @@ export type Database = {
           ch_notes?: string | null
           conversion_date?: string | null
           cost_center?: string | null
+          country_code?: string
           created_at?: string
           employee_id?: string
           employment_number?: string | null
@@ -12018,6 +12024,7 @@ export type Database = {
         }[]
       }
       can_see_company: { Args: { _legal_entity_id: string }; Returns: boolean }
+      can_see_employee: { Args: { _employee_id: string }; Returns: boolean }
       can_see_store: { Args: { _store_id: string }; Returns: boolean }
       company_of_location: {
         Args: { _location_id: string; _on?: string }
@@ -12054,6 +12061,8 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      employee_is_self: { Args: { _employee_id: string }; Returns: boolean }
+      employee_pnr_key: { Args: never; Returns: string }
       entity_series_code: {
         Args: { _legal_entity_id: string }
         Returns: string
@@ -12067,6 +12076,7 @@ export type Database = {
         }
         Returns: Json
       }
+      get_employee_pnr: { Args: { _employee_id: string }; Returns: string }
       has_company_access: {
         Args: { _legal_entity_id: string; _user_id: string }
         Returns: boolean
@@ -12098,6 +12108,15 @@ export type Database = {
       last_name_key: { Args: { v: string }; Returns: string }
       latin_norm: { Args: { v: string }; Returns: string }
       ledger_zero_empty_costs: { Args: never; Returns: number }
+      lookup_employee_by_pnr: {
+        Args: { _pnr: string }
+        Returns: {
+          employee_id: string
+          first_name: string
+          is_active: boolean
+          pnr_masked: string
+        }[]
+      }
       lot_parasite_block_reason: { Args: { _lot_id: string }; Returns: string }
       mark_image_feature_day: {
         Args: {
@@ -12132,6 +12151,7 @@ export type Database = {
       nimpos_health: { Args: { _date?: string }; Returns: Json }
       normalize_email: { Args: { v: string }; Returns: string }
       normalize_phone_se: { Args: { v: string }; Returns: string }
+      normalize_pnr: { Args: { _pnr: string }; Returns: string }
       notify_event: {
         Args: {
           _eid: string
@@ -12181,6 +12201,7 @@ export type Database = {
           work_time_sec: number
         }[]
       }
+      pnr_hash: { Args: { _pnr: string }; Returns: string }
       pos_day_summary: {
         Args: { _date: string; _store_id: string }
         Returns: Json
@@ -12241,6 +12262,10 @@ export type Database = {
       reclassify_lot_product: {
         Args: { _lot_id: string; _new_product_id: string }
         Returns: Json
+      }
+      set_employee_pnr: {
+        Args: { _employee_id: string; _pnr: string }
+        Returns: undefined
       }
       set_store_membership: {
         Args: { _member: boolean; _staff_id: string; _store_id: string }
