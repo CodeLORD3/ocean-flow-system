@@ -101,6 +101,75 @@ export function EmployeeDialog({ open, employee, onOpenChange }: Props) {
 
   const savedPnr = employee?.pnr_masked;
 
+  // Personalkollen-status: kopplat kort, samt förslag när koppling saknas.
+  const { data: pkStaff = [] } = usePkStaffCandidates();
+  const linkPk = useLinkPkStaff();
+  const linkedPk = pkStaff.find((p) => p.employee_id === employeeId || p.id === employee?.pk_staff_id) ?? null;
+  const pkMatchSource = linkedPk
+    ? linkedPk.email && employee?.email && linkedPk.email.toLowerCase() === employee.email.toLowerCase()
+      ? "e-post"
+      : "manuell"
+    : null;
+  const pkSuggestions = pkStaff.filter(
+    (p) =>
+      !p.employee_id &&
+      ((p.email && employee?.email && p.email.toLowerCase() === employee.email.toLowerCase()) ||
+        `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim().toLowerCase() ===
+          `${employee?.first_name ?? ""} ${employee?.last_name ?? ""}`.trim().toLowerCase()),
+  );
+
+  const { data: entities = [] } = useLegalEntities();
+  const entityName = (id: string | null) =>
+    (id && (entities as any[]).find((e) => e.legal_entity_id === id)?.legal_name) || id || null;
+
+  const pkRow = employeeId ? (
+    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/30 p-3 text-sm">
+      <Link2 className="h-4 w-4 text-muted-foreground" />
+      {linkedPk ? (
+        <>
+          <span>
+            Kopplad till Personalkollen:{" "}
+            <span className="font-medium">
+              {[linkedPk.first_name, linkedPk.last_name].filter(Boolean).join(" ") || "okänt namn"}
+            </span>
+            {linkedPk.employment_number && (
+              <span className="font-mono text-muted-foreground"> · {linkedPk.employment_number}</span>
+            )}
+          </span>
+          <Badge variant="outline">Matchning: {pkMatchSource}</Badge>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => linkPk.mutate({ employeeId, pkStaffId: null })}
+            disabled={linkPk.isPending}
+          >
+            Koppla bort
+          </Button>
+        </>
+      ) : (
+        <>
+          <span className="text-muted-foreground">Ej kopplad till Personalkollen</span>
+          <div className="min-w-[220px]">
+            <Select onValueChange={(v) => linkPk.mutate({ employeeId, pkStaffId: v })}>
+              <SelectTrigger className="h-8">
+                <SelectValue placeholder={pkSuggestions.length ? "Förslag finns – välj kort" : "Välj kort att koppla"} />
+              </SelectTrigger>
+              <SelectContent>
+                {[...pkSuggestions, ...pkStaff.filter((p) => !p.employee_id && !pkSuggestions.includes(p))].map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {[p.first_name, p.last_name].filter(Boolean).join(" ") || p.email || p.id.slice(0, 8)}
+                    {p.employment_number ? ` · ${p.employment_number}` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </>
+      )}
+    </div>
+  ) : null;
+
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
