@@ -64,3 +64,12 @@ verify_jwt = false
 
 [functions.personalkollen-reveal-pnr]
 verify_jwt = false
+
+[functions.clock-activate]
+verify_jwt = false
+
+[functions.clock-punch]
+verify_jwt = false
+
+[functions.clock-status]
+verify_jwt = false
