@@ -4,16 +4,26 @@
  */
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const ALLOWED_ORIGINS = new Set([
+  "https://makrilltrade.com",
+  "https://www.makrilltrade.com",
+  "https://ocean-flow-system.lovable.app",
+]);
 
-const json = (body: unknown, status = 200) =>
+function corsHeaders(req: Request) {
+  const origin = req.headers.get("Origin") ?? "";
+  const allowed = ALLOWED_ORIGINS.has(origin) || origin.endsWith(".lovable.app");
+  return {
+    "Access-Control-Allow-Origin": allowed ? origin : "https://makrilltrade.com",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+}
+
+const json = (req: Request, body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...corsHeaders(req), "Content-Type": "application/json" },
   });
 
 type Row = Record<string, unknown>;
@@ -41,33 +51,33 @@ function nameOf(r: Row): string {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
+  if (req.method !== "POST") return json(req, { error: "Method not allowed" }, 405);
 
   const db = service();
   const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
-  if (!token) return json({ error: "Inte inloggad" }, 401);
+  if (!token) return json(req, { error: "Inte inloggad" }, 401);
 
   const { data: auth } = await db.auth.getUser(token);
   const user = auth?.user;
-  if (!user) return json({ error: "Inte inloggad" }, 401);
+  if (!user) return json(req, { error: "Inte inloggad" }, 401);
 
   const { data: roles } = await db.from("user_roles").select("role").eq("user_id", user.id);
   const ok = (roles ?? []).some((r: Row) => r.role === "admin" || r.role === "platform_admin");
-  if (!ok) return json({ error: "Saknar behörighet" }, 403);
+  if (!ok) return json(req, { error: "Saknar behörighet" }, 403);
 
   const { data: rows, error } = await db
     .from("pk_staff")
     .select("id, pk_id, first_name, last_name, pnr_encrypted, employee_id")
     .not("employee_id", "is", null);
-  if (error) return json({ error: error.message }, 500);
+  if (error) return json(req, { error: error.message }, 500);
 
   const employeeIds = [...new Set((rows ?? []).map((r: Row) => String(r.employee_id)).filter(Boolean))];
   const { data: employees, error: employeeError } = await db
     .from("employees")
     .select("id, first_name, last_name, is_active, pnr_hash")
     .in("id", employeeIds.length ? employeeIds : ["00000000-0000-0000-0000-000000000000"]);
-  if (employeeError) return json({ error: employeeError.message }, 500);
+  if (employeeError) return json(req, { error: employeeError.message }, 500);
 
   const employeeById = new Map((employees ?? []).map((e: Row) => [String(e.id), e]));
   const activeIds = new Set((employees ?? []).filter((e: Row) => e.is_active !== false).map((e: Row) => String(e.id)));
@@ -124,7 +134,7 @@ Deno.serve(async (req) => {
     user_id: user.id,
   });
 
-  return json({
+  return json(req, {
     ok: failed.length === 0,
     employees_seen: employeeIds.length,
     already_with_pnr_hash: alreadyWithHash.size,

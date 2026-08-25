@@ -23,7 +23,7 @@ import {
   pkHours,
 } from "@/hooks/usePersonalkollen";
 import { useStores } from "@/hooks/useStores";
-import { useStaff } from "@/hooks/useStaff";
+import { useEmployees } from "@/hooks/useEmployees";
 
 const NONE = "__none__";
 
@@ -60,7 +60,7 @@ export default function Personalkollen() {
   const workplaces = usePkWorkplaces();
   const pkStaff = usePkStaff();
   const stores = useStores();
-  const staff = useStaff();
+  const employees = useEmployees();
   const cost = usePkDailyLaborCost(null, date);
   const setMapping = usePkSetMapping();
   const setStaffLink = usePkSetStaffLink();
@@ -87,7 +87,7 @@ export default function Personalkollen() {
 
   /** Ej kopplade personer, med namnförslag som måste bekräftas manuellt. */
   const unlinked = useMemo(() => {
-    const cards = staff.data ?? [];
+    const cards = employees.data ?? [];
     const takenIds = new Set((pkStaff.data ?? []).map((p) => p.employee_id).filter(Boolean) as string[]);
     return (pkStaff.data ?? [])
       .filter((p) => !p.employee_id)
@@ -101,7 +101,7 @@ export default function Personalkollen() {
           ) ?? null;
         return { pk: p, suggestion };
       });
-  }, [pkStaff.data, staff.data]);
+  }, [pkStaff.data, employees.data]);
 
   const doSync = (resource?: string) => {
     runSync.mutate(
@@ -590,9 +590,9 @@ export default function Personalkollen() {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value={NONE}>Ingen koppling</SelectItem>
-                              {(staff.data ?? []).map((s) => (
+                              {(employees.data ?? []).map((s) => (
                                 <SelectItem key={s.id} value={s.id}>
-                                  {`${s.first_name} ${s.last_name}`}
+                                  {`${s.first_name} ${s.last_name}`.trim()}
                                 </SelectItem>
                               ))}
                             </SelectContent>
