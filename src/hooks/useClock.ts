@@ -210,12 +210,21 @@ export function useHandlePendingRegistration() {
       action: "approved" | "rejected";
       employee_id?: string | null;
     }) => {
+      if (action === "approved") {
+        // RPC:n flyttar klockidentiteten (pnr_hash) till personen så att
+        // stämpling fungerar direkt efter godkännande.
+        const { error } = await supabase.rpc("clock_pending_approve", {
+          _id: id,
+          _employee_id: employee_id!,
+        });
+        if (error) throw error;
+        return;
+      }
       const { data: user } = await supabase.auth.getUser();
       const { error } = await supabase
         .from("clock_pending_registrations")
         .update({
           status: action,
-          employee_id: employee_id ?? null,
           handled_by: user.user?.id ?? null,
           handled_at: new Date().toISOString(),
         })
