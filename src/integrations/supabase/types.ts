@@ -1049,6 +1049,191 @@ export type Database = {
           },
         ]
       }
+      clock_pending_registrations: {
+        Row: {
+          attempts: number
+          created_at: string
+          employee_id: string | null
+          handled_at: string | null
+          handled_by: string | null
+          id: string
+          identifier_masked: string | null
+          legal_entity_id: string | null
+          occurred_at: string
+          pnr_hash: string | null
+          pnr_masked: string | null
+          stated_name: string | null
+          station_id: string | null
+          status: string
+          store_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          employee_id?: string | null
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          identifier_masked?: string | null
+          legal_entity_id?: string | null
+          occurred_at?: string
+          pnr_hash?: string | null
+          pnr_masked?: string | null
+          stated_name?: string | null
+          station_id?: string | null
+          status?: string
+          store_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          employee_id?: string | null
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          identifier_masked?: string | null
+          legal_entity_id?: string | null
+          occurred_at?: string
+          pnr_hash?: string | null
+          pnr_masked?: string | null
+          stated_name?: string | null
+          station_id?: string | null
+          status?: string
+          store_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clock_pending_registrations_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clock_pending_registrations_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "clock_stations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clock_pending_registrations_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clock_rate_limits: {
+        Row: {
+          attempts: number
+          minute_bucket: string
+          station_id: string
+        }
+        Insert: {
+          attempts?: number
+          minute_bucket: string
+          station_id: string
+        }
+        Update: {
+          attempts?: number
+          minute_bucket?: string
+          station_id?: string
+        }
+        Relationships: []
+      }
+      clock_station_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          last_used_at: string
+          station_id: string
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          last_used_at?: string
+          station_id: string
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          last_used_at?: string
+          station_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clock_station_sessions_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "clock_stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clock_stations: {
+        Row: {
+          activation_code_hash: string
+          activation_code_hint: string | null
+          code_rotated_at: string
+          created_at: string
+          id: string
+          last_seen_at: string | null
+          legal_entity_id: string | null
+          name: string
+          profile: Json
+          status: string
+          store_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          activation_code_hash: string
+          activation_code_hint?: string | null
+          code_rotated_at?: string
+          created_at?: string
+          id?: string
+          last_seen_at?: string | null
+          legal_entity_id?: string | null
+          name: string
+          profile?: Json
+          status?: string
+          store_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          activation_code_hash?: string
+          activation_code_hint?: string | null
+          code_rotated_at?: string
+          created_at?: string
+          id?: string
+          last_seen_at?: string | null
+          legal_entity_id?: string | null
+          name?: string
+          profile?: Json
+          status?: string
+          store_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clock_stations_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address: string | null
@@ -10626,6 +10811,86 @@ export type Database = {
         }
         Relationships: []
       }
+      time_entries: {
+        Row: {
+          correction_kind: string | null
+          corrects_entry_id: string | null
+          created_at: string
+          created_by: string | null
+          employee_id: string
+          id: string
+          legal_entity_id: string | null
+          note: string | null
+          occurred_at: string
+          registered_at: string
+          source: string
+          station_id: string | null
+          store_id: string | null
+          type: string
+        }
+        Insert: {
+          correction_kind?: string | null
+          corrects_entry_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          employee_id: string
+          id?: string
+          legal_entity_id?: string | null
+          note?: string | null
+          occurred_at: string
+          registered_at?: string
+          source?: string
+          station_id?: string | null
+          store_id?: string | null
+          type: string
+        }
+        Update: {
+          correction_kind?: string | null
+          corrects_entry_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          employee_id?: string
+          id?: string
+          legal_entity_id?: string | null
+          note?: string | null
+          occurred_at?: string
+          registered_at?: string
+          source?: string
+          station_id?: string | null
+          store_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_corrects_entry_id_fkey"
+            columns: ["corrects_entry_id"]
+            isOneToOne: false
+            referencedRelation: "time_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "clock_stations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trade_offers: {
         Row: {
           annual_return: number | null
@@ -12021,6 +12286,24 @@ export type Database = {
       can_see_employee: { Args: { _employee_id: string }; Returns: boolean }
       can_see_employee_folder: { Args: { _name: string }; Returns: boolean }
       can_see_store: { Args: { _store_id: string }; Returns: boolean }
+      clock_code_hash: { Args: { _code: string }; Returns: string }
+      clock_station_create: {
+        Args: {
+          _legal_entity_id?: string
+          _name: string
+          _profile?: Json
+          _store_id: string
+        }
+        Returns: Json
+      }
+      clock_station_revoke: {
+        Args: { _station_id: string }
+        Returns: undefined
+      }
+      clock_station_rotate_code: {
+        Args: { _station_id: string }
+        Returns: Json
+      }
       company_of_location: {
         Args: { _location_id: string; _on?: string }
         Returns: string
