@@ -22,6 +22,8 @@ import {
   CreditCard,
   ClipboardList,
   ClipboardCheck,
+  Clock,
+  Scale,
   TrendingUp,
   Shield,
   Factory,
