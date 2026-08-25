@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, Trash2, ShieldCheck, AlertTriangle, Link2 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
