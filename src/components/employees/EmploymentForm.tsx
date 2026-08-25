@@ -53,7 +53,13 @@ export function EmploymentForm({ employeeId, employment, onDone }: Props) {
   });
   const set = (k: string, v: string | boolean) => setF((p) => ({ ...p, [k]: v }));
 
+  // Tidigare visstidsrader hos personen minskar tiden kvar till konvertering.
+  const { data: allEmployments = [] } = useEmployments(employeeId);
+  const earlier = allEmployments.filter((em) => em.id !== employment?.id);
+  const autoConversion = conversionDateFor(f.start_date, f.form, earlier);
+
   const num = (v: string) => (v.trim() === "" ? null : Number(v.replace(",", ".")));
+
 
   const submit = async () => {
     try {
