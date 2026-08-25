@@ -280,16 +280,60 @@ export function employeeName(e: Pick<Employee, "first_name" | "last_name">): str
 }
 
 /** LAS-varningar: provanställning som löper ut och visstid som närmar sig konvertering. */
+/** Antal dagar en visstidsanställning får pågå innan LAS-konvertering (12 mån). */
+export const VISSTID_LIMIT_MONTHS = 12;
+
+/** Anställningsformer som omvandlas till tillsvidare enligt LAS. */
+export const CONVERTING_FORMS = ["sarskild_visstid", "vikariat"];
+
+/**
+ * Räknar ut när en visstidsanställning slår över i tillsvidare: 12 månader
+ * räknat från startdatum, minskat med redan upparbetad visstid hos samma
+ * bolag inom en femårsperiod.
+ */
+export function conversionDateFor(
+  startDate: string,
+  form: string,
+  earlier: Employment[] = [],
+  today = new Date(),
+): string | null {
+  if (!CONVERTING_FORMS.includes(form) || !startDate) return null;
+  const start = new Date(startDate);
+  if (Number.isNaN(start.getTime())) return null;
+
+  const fiveYearsAgo = new Date(start);
+  fiveYearsAgo.setFullYear(fiveYearsAgo.getFullYear() - 5);
+
+  let usedDays = 0;
+  for (const em of earlier) {
+    if (!CONVERTING_FORMS.includes(em.form) || !em.start_date) continue;
+    const from = new Date(em.start_date);
+    if (Number.isNaN(from.getTime()) || from < fiveYearsAgo || from >= start) continue;
+    const to = em.end_date ? new Date(em.end_date) : today;
+    const span = Math.max(0, Math.ceil((to.getTime() - from.getTime()) / 86400000));
+    usedDays += span;
+  }
+
+  const conv = new Date(start);
+  conv.setMonth(conv.getMonth() + VISSTID_LIMIT_MONTHS);
+  conv.setDate(conv.getDate() - usedDays);
+  return conv.toISOString().slice(0, 10);
+}
+
 export function lasWarnings(em: Employment, today = new Date()): string[] {
   const out: string[] = [];
   const days = (d: string) => Math.ceil((new Date(d).getTime() - today.getTime()) / 86400000);
   if (em.form === "prov" && em.probation_end_date) {
     const d = days(em.probation_end_date);
-    if (d <= 30) out.push(d < 0 ? "Provanställningen har passerat utgångsdatum" : `Provanställningen går ut om ${d} dagar`);
+    if (d <= 60) out.push(d < 0 ? "Provanställningen har passerat utgångsdatum" : `Provanställningen går ut om ${d} dagar`);
   }
-  if (em.form === "sarskild_visstid" && em.conversion_date) {
-    const d = days(em.conversion_date);
-    if (d <= 30) out.push(d < 0 ? "Visstid ska ha konverterats till tillsvidare" : `Konverteras till tillsvidare om ${d} dagar`);
+  // Konverteringsdatum kan saknas på äldre rader – räkna fram det då.
+  const conv = CONVERTING_FORMS.includes(em.form)
+    ? em.conversion_date || (em.start_date ? conversionDateFor(em.start_date, em.form, [], today) : null)
+    : null;
+  if (conv && em.is_active) {
+    const d = days(conv);
+    if (d <= 60) out.push(d < 0 ? "Visstid ska ha konverterats till tillsvidare" : `Konverteras till tillsvidare om ${d} dagar`);
   }
   if (em.end_date) {
     const d = days(em.end_date);
@@ -297,3 +341,58 @@ export function lasWarnings(em: Employment, today = new Date()): string[] {
   }
   return out;
 }
+
+/** Personalkollen-kort som ännu inte är kopplade till registret. */
+export function usePkStaffCandidates() {
+  return useQuery({
+    queryKey: ["pk_staff_candidates"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("pk_staff")
+        .select("id, first_name, last_name, email, employment_number, employee_id")
+        .order("first_name");
+      if (error) throw error;
+      return (data ?? []) as {
+        id: string; first_name: string | null; last_name: string | null;
+        email: string | null; employment_number: string | null; employee_id: string | null;
+      }[];
+    },
+  });
+}
+
+/** Kopplar eller kopplar bort ett Personalkollen-kort mot en person i registret. */
+export function useLinkPkStaff() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ employeeId, pkStaffId }: { employeeId: string; pkStaffId: string | null }) => {
+      if (pkStaffId) {
+        const { error } = await supabase
+          .from("pk_staff")
+          .update({ employee_id: employeeId, employee_id_manual: true })
+          .eq("id", pkStaffId);
+        if (error) throw error;
+        const { error: e2 } = await supabase
+          .from("employees")
+          .update({ pk_staff_id: pkStaffId })
+          .eq("id", employeeId);
+        if (e2) throw e2;
+      } else {
+        const { error } = await supabase
+          .from("pk_staff")
+          .update({ employee_id: null, employee_id_manual: false })
+          .eq("employee_id", employeeId);
+        if (error) throw error;
+        const { error: e2 } = await supabase
+          .from("employees")
+          .update({ pk_staff_id: null })
+          .eq("id", employeeId);
+        if (e2) throw e2;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["employees"] });
+      qc.invalidateQueries({ queryKey: ["pk_staff_candidates"] });
+    },
+  });
+}
+
