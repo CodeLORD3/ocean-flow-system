@@ -6031,14 +6031,7 @@ export type Database = {
             foreignKeyName: "pk_staff_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
-            referencedRelation: "staff"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pk_staff_employee_id_fkey"
-            columns: ["employee_id"]
-            isOneToOne: false
-            referencedRelation: "staff_access"
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
         ]
