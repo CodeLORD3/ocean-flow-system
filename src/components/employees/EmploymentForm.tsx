@@ -155,12 +155,18 @@ export function EmploymentForm({ employeeId, employment, onDone }: Props) {
             <Input type="date" value={f.probation_end_date} onChange={(e) => set("probation_end_date", e.target.value)} />
           </div>
         )}
-        {f.form === "sarskild_visstid" && (
+        {CONVERTING_FORMS.includes(f.form) && (
           <div>
             <Label>Konverteringsdatum (LAS)</Label>
             <Input type="date" value={f.conversion_date} onChange={(e) => set("conversion_date", e.target.value)} />
+            <p className="mt-1 text-xs text-muted-foreground">
+              {autoConversion
+                ? `Beräknas automatiskt till ${autoConversion} (12 mån visstid inom femårsperiod). Går att justera.`
+                : "Fylls i automatiskt när startdatum är satt."}
+            </p>
           </div>
         )}
+
         <div>
           <Label>Sysselsättningsgrad (%)</Label>
           <Input value={f.employment_rate} onChange={(e) => set("employment_rate", e.target.value)} inputMode="decimal" className="font-mono tabular-nums" />
