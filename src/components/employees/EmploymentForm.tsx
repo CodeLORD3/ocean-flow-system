@@ -101,7 +101,7 @@ export function EmploymentForm({ employeeId, employment, onDone }: Props) {
             <SelectTrigger><SelectValue placeholder="Välj bolag" /></SelectTrigger>
             <SelectContent>
               {entities.map((e: any) => (
-                <SelectItem key={e.legal_entity_id} value={e.legal_entity_id}>{e.name}</SelectItem>
+                <SelectItem key={e.legal_entity_id} value={e.legal_entity_id}>{e.legal_name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
