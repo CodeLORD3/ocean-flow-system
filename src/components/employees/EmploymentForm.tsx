@@ -8,7 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useStores } from "@/hooks/useStores";
 import { useLegalEntities } from "@/hooks/useLegalEntities";
 import {
-  Employment, EMPLOYMENT_FORMS, AGREEMENT_AREAS, useSaveEmployment,
+  Employment, EMPLOYMENT_FORMS, AGREEMENT_AREAS, CONVERTING_FORMS,
+  conversionDateFor, useSaveEmployment, useEmployments,
 } from "@/hooks/useEmployees";
 
 interface Props {
@@ -52,7 +53,13 @@ export function EmploymentForm({ employeeId, employment, onDone }: Props) {
   });
   const set = (k: string, v: string | boolean) => setF((p) => ({ ...p, [k]: v }));
 
+  // Tidigare visstidsrader hos personen minskar tiden kvar till konvertering.
+  const { data: allEmployments = [] } = useEmployments(employeeId);
+  const earlier = allEmployments.filter((em) => em.id !== employment?.id);
+  const autoConversion = conversionDateFor(f.start_date, f.form, earlier);
+
   const num = (v: string) => (v.trim() === "" ? null : Number(v.replace(",", ".")));
+
 
   const submit = async () => {
     try {
@@ -68,7 +75,7 @@ export function EmploymentForm({ employeeId, employment, onDone }: Props) {
         start_date: f.start_date || null,
         end_date: f.end_date || null,
         probation_end_date: f.probation_end_date || null,
-        conversion_date: f.conversion_date || null,
+        conversion_date: f.conversion_date || autoConversion,
         employment_rate: Number(f.employment_rate || 100),
         pay_type: f.pay_type,
         monthly_salary: num(f.monthly_salary),
@@ -155,12 +162,18 @@ export function EmploymentForm({ employeeId, employment, onDone }: Props) {
             <Input type="date" value={f.probation_end_date} onChange={(e) => set("probation_end_date", e.target.value)} />
           </div>
         )}
-        {f.form === "sarskild_visstid" && (
+        {CONVERTING_FORMS.includes(f.form) && (
           <div>
             <Label>Konverteringsdatum (LAS)</Label>
             <Input type="date" value={f.conversion_date} onChange={(e) => set("conversion_date", e.target.value)} />
+            <p className="mt-1 text-xs text-muted-foreground">
+              {autoConversion
+                ? `Beräknas automatiskt till ${autoConversion} (12 mån visstid inom femårsperiod). Går att justera.`
+                : "Fylls i automatiskt när startdatum är satt."}
+            </p>
           </div>
         )}
+
         <div>
           <Label>Sysselsättningsgrad (%)</Label>
           <Input value={f.employment_rate} onChange={(e) => set("employment_rate", e.target.value)} inputMode="decimal" className="font-mono tabular-nums" />
