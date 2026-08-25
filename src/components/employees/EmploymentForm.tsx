@@ -75,7 +75,7 @@ export function EmploymentForm({ employeeId, employment, onDone }: Props) {
         start_date: f.start_date || null,
         end_date: f.end_date || null,
         probation_end_date: f.probation_end_date || null,
-        conversion_date: f.conversion_date || null,
+        conversion_date: f.conversion_date || autoConversion,
         employment_rate: Number(f.employment_rate || 100),
         pay_type: f.pay_type,
         monthly_salary: num(f.monthly_salary),
