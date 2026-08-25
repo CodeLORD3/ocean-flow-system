@@ -188,6 +188,8 @@ export function EmployeeDialog({ open, employee, onOpenChange }: Props) {
           </TabsList>
 
           <TabsContent value="person" className="space-y-4 pt-4">
+            {pkRow}
+
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <Label>Förnamn</Label>
