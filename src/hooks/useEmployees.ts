@@ -129,6 +129,11 @@ export function useEmployments(employeeId?: string) {
   });
 }
 
+/** Alla anställningar, för listvyn i registret. */
+export function useAllEmployments() {
+  return useEmployments(undefined);
+}
+
 export function useEmployeeDocuments(employeeId?: string) {
   return useQuery({
     queryKey: ["employee-documents", employeeId],
