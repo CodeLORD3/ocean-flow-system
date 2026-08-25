@@ -13,10 +13,14 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Employee, Employment, EMPLOYMENT_FORMS, AGREEMENT_AREAS,
   employeeName, lasWarnings, useEmployments, useSaveEmployee, useDeleteEmployment,
+  usePkStaffCandidates, useLinkPkStaff,
 } from "@/hooks/useEmployees";
+import { useLegalEntities } from "@/hooks/useLegalEntities";
 import { isValidPnr, maskPnr } from "@/lib/personnummer";
 import { EmploymentForm } from "./EmploymentForm";
 import { EmployeeDocuments } from "./EmployeeDocuments";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 interface Props {
   open: boolean;
