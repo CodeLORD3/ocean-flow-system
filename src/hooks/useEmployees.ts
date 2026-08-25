@@ -158,28 +158,38 @@ export function useSaveEmployee() {
     mutationFn: async (input: EmployeeInput) => {
       const { id, pnr, ...rest } = input;
       const patch: Record<string, unknown> = { ...rest };
-      if (pnr && pnr.replace(/\D/g, "").length >= 10) {
-        patch.pnr_hash = await hashPnr(pnr);
-        patch.pnr_masked = maskPnr(pnr);
-        patch.pnr_last4 = pnrLast4(pnr);
-        if (!rest.birth_date) patch.birth_date = birthDateFromPnr(pnr);
-      }
-      if (id) {
-        const { error } = await supabase.from("employees").update(patch as any).eq("id", id);
+      const hasPnr = !!pnr && pnr.replace(/\D/g, "").length >= 10;
+      if (hasPnr && !rest.birth_date) patch.birth_date = birthDateFromPnr(pnr!);
+
+      let employeeId = id;
+      if (employeeId) {
+        const { error } = await supabase.from("employees").update(patch as any).eq("id", employeeId);
         if (error) throw error;
-        return id;
+      } else {
+        const { data, error } = await supabase
+          .from("employees")
+          .insert(patch as any)
+          .select("id")
+          .single();
+        if (error) throw error;
+        employeeId = data.id as string;
       }
-      const { data, error } = await supabase
-        .from("employees")
-        .insert(patch as any)
-        .select("id")
-        .single();
-      if (error) throw error;
-      return data.id as string;
+
+      // Personnummer skrivs aldrig direkt från klienten: funktionen krypterar
+      // värdet med nyckeln i valvet och sätter hash, maskering och sista fyra.
+      if (hasPnr) {
+        const { error } = await supabase.rpc("set_employee_pnr", {
+          _employee_id: employeeId,
+          _pnr: pnr!,
+        });
+        if (error) throw error;
+      }
+      return employeeId as string;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["employees"] }),
   });
 }
+
 
 export function useSaveEmployment() {
   const qc = useQueryClient();
