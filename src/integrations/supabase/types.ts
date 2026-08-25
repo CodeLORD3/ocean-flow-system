@@ -3005,6 +3005,306 @@ export type Database = {
           },
         ]
       }
+      employee_documents: {
+        Row: {
+          created_at: string
+          doc_type: string
+          employee_id: string
+          employment_id: string | null
+          expires_at: string | null
+          file_path: string
+          file_size: number | null
+          id: string
+          mime_type: string | null
+          signature_status: string
+          signed_at: string | null
+          title: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          doc_type?: string
+          employee_id: string
+          employment_id?: string | null
+          expires_at?: string | null
+          file_path: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          signature_status?: string
+          signed_at?: string | null
+          title: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          doc_type?: string
+          employee_id?: string
+          employment_id?: string | null
+          expires_at?: string | null
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          mime_type?: string | null
+          signature_status?: string
+          signed_at?: string | null
+          title?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_documents_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_documents_employment_id_fkey"
+            columns: ["employment_id"]
+            isOneToOne: false
+            referencedRelation: "employments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employees: {
+        Row: {
+          address_street: string | null
+          alt_clock_identifier: string | null
+          birth_date: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          emergency_contact_relation: string | null
+          first_name: string
+          id: string
+          is_active: boolean
+          last_name: string
+          notes: string | null
+          phone: string | null
+          pk_staff_id: string | null
+          pnr_hash: string | null
+          pnr_last4: string | null
+          pnr_masked: string | null
+          postal_code: string | null
+          profile_image_url: string | null
+          staff_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          address_street?: string | null
+          alt_clock_identifier?: string | null
+          birth_date?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relation?: string | null
+          first_name: string
+          id?: string
+          is_active?: boolean
+          last_name: string
+          notes?: string | null
+          phone?: string | null
+          pk_staff_id?: string | null
+          pnr_hash?: string | null
+          pnr_last4?: string | null
+          pnr_masked?: string | null
+          postal_code?: string | null
+          profile_image_url?: string | null
+          staff_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address_street?: string | null
+          alt_clock_identifier?: string | null
+          birth_date?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          emergency_contact_relation?: string | null
+          first_name?: string
+          id?: string
+          is_active?: boolean
+          last_name?: string
+          notes?: string | null
+          phone?: string | null
+          pk_staff_id?: string | null
+          pnr_hash?: string | null
+          pnr_last4?: string | null
+          pnr_masked?: string | null
+          postal_code?: string | null
+          profile_image_url?: string | null
+          staff_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: true
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employees_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: true
+            referencedRelation: "staff_access"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employments: {
+        Row: {
+          agreement_area: string
+          bexio_employee_id: string | null
+          ch_notes: string | null
+          conversion_date: string | null
+          cost_center: string | null
+          created_at: string
+          employee_id: string
+          employment_number: string | null
+          employment_rate: number
+          end_date: string | null
+          form: string
+          fortnox_employee_id: string | null
+          hourly_rate: number | null
+          id: string
+          is_active: boolean
+          job_title: string | null
+          legal_entity_id: string | null
+          monthly_salary: number | null
+          notes: string | null
+          pay_type: string
+          pension_lf: boolean
+          probation_end_date: string | null
+          start_date: string | null
+          store_id: string | null
+          tax_adjustment: number | null
+          tax_column: number | null
+          tax_table: number | null
+          updated_at: string
+          vacation_days: number
+          vacation_rule: string
+          vacation_supplement_pct: number
+        }
+        Insert: {
+          agreement_area?: string
+          bexio_employee_id?: string | null
+          ch_notes?: string | null
+          conversion_date?: string | null
+          cost_center?: string | null
+          created_at?: string
+          employee_id: string
+          employment_number?: string | null
+          employment_rate?: number
+          end_date?: string | null
+          form?: string
+          fortnox_employee_id?: string | null
+          hourly_rate?: number | null
+          id?: string
+          is_active?: boolean
+          job_title?: string | null
+          legal_entity_id?: string | null
+          monthly_salary?: number | null
+          notes?: string | null
+          pay_type?: string
+          pension_lf?: boolean
+          probation_end_date?: string | null
+          start_date?: string | null
+          store_id?: string | null
+          tax_adjustment?: number | null
+          tax_column?: number | null
+          tax_table?: number | null
+          updated_at?: string
+          vacation_days?: number
+          vacation_rule?: string
+          vacation_supplement_pct?: number
+        }
+        Update: {
+          agreement_area?: string
+          bexio_employee_id?: string | null
+          ch_notes?: string | null
+          conversion_date?: string | null
+          cost_center?: string | null
+          created_at?: string
+          employee_id?: string
+          employment_number?: string | null
+          employment_rate?: number
+          end_date?: string | null
+          form?: string
+          fortnox_employee_id?: string | null
+          hourly_rate?: number | null
+          id?: string
+          is_active?: boolean
+          job_title?: string | null
+          legal_entity_id?: string | null
+          monthly_salary?: number | null
+          notes?: string | null
+          pay_type?: string
+          pension_lf?: boolean
+          probation_end_date?: string | null
+          start_date?: string | null
+          store_id?: string | null
+          tax_adjustment?: number | null
+          tax_column?: number | null
+          tax_table?: number | null
+          updated_at?: string
+          vacation_days?: number
+          vacation_rule?: string
+          vacation_supplement_pct?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employments_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employments_legal_entity_id_fkey"
+            columns: ["legal_entity_id"]
+            isOneToOne: false
+            referencedRelation: "legal_entities"
+            referencedColumns: ["legal_entity_id"]
+          },
+          {
+            foreignKeyName: "employments_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entity_image_comments: {
         Row: {
           author_name: string
