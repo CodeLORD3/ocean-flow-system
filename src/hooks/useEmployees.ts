@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { hashPnr, maskPnr, pnrLast4, birthDateFromPnr } from "@/lib/personnummer";
+import { birthDateFromPnr } from "@/lib/personnummer";
 
 /**
  * Personalregistret (etapp 1 i personalmodulen).
