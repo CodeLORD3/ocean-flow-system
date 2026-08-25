@@ -6031,14 +6031,7 @@ export type Database = {
             foreignKeyName: "pk_staff_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
-            referencedRelation: "staff"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pk_staff_employee_id_fkey"
-            columns: ["employee_id"]
-            isOneToOne: false
-            referencedRelation: "staff_access"
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
         ]
@@ -12264,6 +12257,10 @@ export type Database = {
       reclassify_lot_product: {
         Args: { _lot_id: string; _new_product_id: string }
         Returns: Json
+      }
+      service_set_employee_pnr: {
+        Args: { _employee_id: string; _pnr: string }
+        Returns: undefined
       }
       set_employee_pnr: {
         Args: { _employee_id: string; _pnr: string }

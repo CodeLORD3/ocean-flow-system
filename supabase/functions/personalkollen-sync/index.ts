@@ -420,9 +420,9 @@ async function syncStaffs(db: SupabaseClient, api: PkClient, conn: Conn) {
   const employments: Row[] = [];
   const today = new Date().toISOString().slice(0, 10);
 
-  const { data: ourStaff } = await db.from("staff").select("id, email");
+  const { data: ourEmployees } = await db.from("employees").select("id, email");
   const byEmail = new Map(
-    (ourStaff ?? [])
+    (ourEmployees ?? [])
       .filter((s: Row) => s.email)
       .map((s: Row) => [String(s.email).toLowerCase().trim(), String(s.id)]),
   );

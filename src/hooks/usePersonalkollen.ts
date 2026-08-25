@@ -283,7 +283,11 @@ export function usePkSetStaffLink() {
         .eq("id", p.id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["pk-staff"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["pk-staff"] });
+      qc.invalidateQueries({ queryKey: ["employees"] });
+      qc.invalidateQueries({ queryKey: ["pk_staff_candidates"] });
+    },
   });
 }
 
