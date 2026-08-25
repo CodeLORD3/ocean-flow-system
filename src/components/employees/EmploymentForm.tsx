@@ -20,7 +20,7 @@ interface Props {
 /** Formulär för en anställning: LAS-fält, lön, skatt, semester, pension, avtalsområde. */
 export function EmploymentForm({ employeeId, employment, onDone }: Props) {
   const { toast } = useToast();
-  const { data: stores = [] } = useStores(true);
+  const { data: stores = [] } = useStores();
   const { data: entities = [] } = useLegalEntities();
   const save = useSaveEmployment();
 
