@@ -668,6 +668,7 @@ export default function CustomerOrders() {
                             orderCount={
                               o.customer_id ? customerOrderCounts?.[o.customer_id] ?? 0 : 0
                             }
+                            highlightProduct={focus?.orderId === o.id ? focus.product : null}
                           />
                         ))}
                       </div>
@@ -696,7 +697,9 @@ export default function CustomerOrders() {
         )}
         {panel === "stats" && <CustomerOrderStats storeId={effectiveStore} currency={currency} />}
         {panel === "needs" && <PurchaseNeedsView />}
-        {panel === "totals" && <TotalOrderedView storeId={effectiveStore} />}
+        {panel === "totals" && (
+          <TotalOrderedView storeId={effectiveStore} onOpenOrder={openFromTotals} />
+        )}
 
       </div>
 
