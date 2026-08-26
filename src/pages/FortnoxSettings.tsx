@@ -188,6 +188,23 @@ export default function FortnoxSettings() {
                       <span className="break-all">{c.last_error}</span>
                     </div>
                   )}
+                  <div className="mt-2 flex items-start gap-2">
+                    <Switch
+                      checked={c?.auto_bookkeep === true}
+                      disabled={!c || autoBookkeep.isPending}
+                      onCheckedChange={(v) => autoBookkeep.mutate({ code: e.code, value: v })}
+                      aria-label="Bokför och skicka automatiskt"
+                    />
+                    <div className="text-xs">
+                      <div className="font-medium">Bokför och skicka automatiskt</div>
+                      <div className="text-muted-foreground">
+                        Av = fakturan skapas som utkast i Fortnox och bokförs/skickas där.
+                      </div>
+                    </div>
+                  </div>
+
+                    </div>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" disabled={busy === e.code} onClick={() => connect(e.code)}>
