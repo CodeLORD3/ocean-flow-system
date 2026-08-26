@@ -273,7 +273,7 @@ export default function FortnoxSettings() {
                         {j.last_error && <div className="text-xs text-destructive break-all">{j.last_error}</div>}
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant={j.status === "sent" ? "default" : j.status === "error" ? "destructive" : "outline"}>{j.status}</Badge>
+                        <Badge variant={j.status === "bookkept" || j.status === "sent" ? "default" : j.status === "failed" ? "destructive" : "outline"}>{JOB_STATUS_LABELS[j.status] ?? j.status}</Badge>
                         {j.fortnox_url && (
                           <a href={j.fortnox_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline">Öppna</a>
                         )}
