@@ -1026,7 +1026,7 @@ export function CustomerOrderRow({
         </div>
       )}
 
-      {isOpen && (
+      {isOpen && showMore && (
         <OrderAuditLine
           createdBy={(order as any).created_by}
           createdAt={order.created_at}
