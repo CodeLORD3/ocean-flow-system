@@ -23,6 +23,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { EmptyState } from "@/components/EmptyState";
+import { ProductThumb } from "@/components/products/ProductThumb";
+
 import { useCustomerOrders } from "@/hooks/useCustomerOrders";
 import { CustomerOrder, ORDER_TYPE_LABELS, isoWeekOf } from "@/lib/customerOrders";
 
