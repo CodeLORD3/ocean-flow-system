@@ -766,6 +766,7 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
                           </div>
                         )}
                       </div>
+                      </Fragment>
                     );
                   })}
                 </CardContent>
