@@ -62,6 +62,16 @@ export function generateTotalOrderedChecklistPdf(payload: TotalChecklistPayload)
 
   let y = 30;
 
+  if (payload.selectionNote) {
+    doc.setFontSize(9);
+    doc.setTextColor(110, 110, 110);
+    doc.text(payload.selectionNote, margin, y - 2);
+    doc.setTextColor(0, 0, 0);
+    y += 5;
+  }
+
+
+
   for (const g of payload.groups) {
     if (y > 250) {
       doc.addPage();
