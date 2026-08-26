@@ -23,9 +23,25 @@ async function syncOne(sb: any, job: any) {
     status_synced_at: new Date().toISOString(),
   };
   if (newStatus !== job.status) patch.status = newStatus;
-  // Annullering hanteras separat – här bara statusen, ingen reversering.
+
+  // Annullering gjord direkt i Fortnox: reversera lageruttaget en gång.
+  let reversed = false;
+  if (newStatus === "cancelled" && !job.cancelled_at) {
+    const { error: rErr } = await sb.rpc("fortnox_on_invoice_cancelled", {
+      p_order_id: job.order_id,
+      p_entity: job.legal_entity_code,
+      p_document_number: String(job.fortnox_document_number),
+    });
+    if (rErr) {
+      patch.last_error = `Lagerreversering misslyckades: ${rErr.message}`;
+    } else {
+      patch.cancelled_at = new Date().toISOString();
+      reversed = true;
+    }
+  }
+
   await sb.from("fortnox_invoice_jobs").update(patch).eq("id", job.id);
-  return { order_id: job.order_id, document_number: job.fortnox_document_number, status: newStatus };
+  return { order_id: job.order_id, document_number: job.fortnox_document_number, status: newStatus, reversed };
 }
 
 Deno.serve(async (req) => {
