@@ -295,12 +295,22 @@ export function CustomerOrderRow({
   return (
     <div
       id={`order-${order.id}`}
-      className={`overflow-hidden border-x border-b border-grid-line ${tone.row} ${
-        isOpen ? "border-primary ring-1 ring-primary" : ""
+      className={`relative overflow-hidden border-x border-b border-grid-line ${tone.row} ${
+        isOpen
+          ? "z-10 my-2.5 rounded-2xl border border-primary/25 bg-primary/[0.05] pl-2 shadow-[0_6px_20px_-12px_hsl(var(--primary)/0.45)]"
+          : ""
       } ${selected && !isOpen ? "ring-1 ring-inset ring-primary" : ""}`}
     >
+      {/* Aktiv order: tjock, mjuk accentlinje längs hela kortets vänsterkant. */}
+      {isOpen && (
+        <span
+          className="pointer-events-none absolute bottom-1.5 left-1.5 top-1.5 w-1.5 rounded-full bg-primary"
+          aria-hidden
+        />
+      )}
       <div className="flex">
-        <div className={`w-1 shrink-0 ${tone.edge}`} aria-hidden />
+        {!isOpen && <div className={`w-1 shrink-0 ${tone.edge}`} aria-hidden />}
+
         {onSelect && (
           <div className="hidden w-9 shrink-0 items-center justify-center border-r border-grid-line/70 sm:flex">
             <Checkbox
