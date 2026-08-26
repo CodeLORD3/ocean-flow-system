@@ -26,6 +26,7 @@ export default function FortnoxSettings() {
   const [entity, setEntity] = useState(ENTITIES[1].code);
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
+  const callbackUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fortnox-oauth-callback`;
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
@@ -145,6 +146,21 @@ export default function FortnoxSettings() {
         <Plug className="h-5 w-5 text-primary" />
         <h1 className="text-lg font-semibold">Fortnox</h1>
       </div>
+
+      <Card>
+        <CardHeader className="pb-2"><CardTitle className="text-sm">Redirect-URI för Fortnox-appen</CardTitle></CardHeader>
+        <CardContent>
+          <p className="mb-1 text-xs text-muted-foreground">
+            Klistra in exakt den här adressen som Redirect URI i Fortnox Developer Portal innan du kopplar.
+          </p>
+          <div className="flex items-center gap-2">
+            <Input readOnly className="h-8 font-mono text-xs" value={callbackUrl} onFocus={(e) => e.currentTarget.select()} />
+            <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(callbackUrl); toast.success("Kopierad"); }}>
+              Kopiera
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="pb-2"><CardTitle className="text-sm">Bolagskopplingar</CardTitle></CardHeader>
