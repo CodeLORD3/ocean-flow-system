@@ -295,12 +295,22 @@ export function CustomerOrderRow({
   return (
     <div
       id={`order-${order.id}`}
-      className={`overflow-hidden border-x border-b border-grid-line ${tone.row} ${
-        isOpen ? "border-primary ring-1 ring-primary" : ""
+      className={`relative overflow-hidden border-x border-b border-grid-line ${tone.row} ${
+        isOpen
+          ? "z-10 my-2.5 rounded-2xl border border-primary/25 bg-primary/[0.05] pl-2 shadow-[0_6px_20px_-12px_hsl(var(--primary)/0.45)]"
+          : ""
       } ${selected && !isOpen ? "ring-1 ring-inset ring-primary" : ""}`}
     >
+      {/* Aktiv order: tjock, mjuk accentlinje längs hela kortets vänsterkant. */}
+      {isOpen && (
+        <span
+          className="pointer-events-none absolute bottom-1.5 left-1.5 top-1.5 w-1.5 rounded-full bg-primary"
+          aria-hidden
+        />
+      )}
       <div className="flex">
-        <div className={`w-1 shrink-0 ${tone.edge}`} aria-hidden />
+        {!isOpen && <div className={`w-1 shrink-0 ${tone.edge}`} aria-hidden />}
+
         {onSelect && (
           <div className="hidden w-9 shrink-0 items-center justify-center border-r border-grid-line/70 sm:flex">
             <Checkbox
@@ -335,7 +345,11 @@ export function CustomerOrderRow({
             </span>
 
             {/* Kundnamnet börjar alltid på samma x-position — källan står i egen kolumn efter namnet. */}
-            <span className="flex min-w-[14rem] shrink-0 flex-1 items-center whitespace-nowrap border-r border-grid-line/70 pl-3 pr-5 font-semibold">
+            <span
+              className={`flex min-w-[14rem] shrink-0 flex-1 items-center whitespace-nowrap border-r border-grid-line/70 pl-3 pr-5 ${
+                isOpen ? "text-[13px] font-bold tracking-tight" : "font-semibold"
+              }`}
+            >
               {order.customer_id ? (
                 <span
                   role="link"
@@ -447,9 +461,9 @@ export function CustomerOrderRow({
           <div className="space-y-1 sm:hidden">
             <div className="flex items-start gap-2">
               <span
-                className={`min-w-0 flex-1 break-words text-[15px] font-semibold leading-snug ${
-                  cancelled ? "line-through" : ""
-                }`}
+                className={`min-w-0 flex-1 break-words leading-snug ${
+                  isOpen ? "text-[17px] font-bold" : "text-[15px] font-semibold"
+                } ${cancelled ? "line-through" : ""}`}
               >
                 {name}
               </span>
@@ -524,7 +538,7 @@ export function CustomerOrderRow({
       )}
 
       {isOpen && (
-        <div className="space-y-2.5 border-t-2 border-primary bg-muted/60 p-2.5">
+        <div className="space-y-3 border-t border-primary/20 px-3 pb-3 pt-2.5">
           {/* Allergi är säkerhetskritisk och visas alltid först. */}
           {(order.allergy_note || allergens.length > 0) && (
             <div className="space-y-1.5 rounded-sm border border-destructive/40 bg-destructive/10 p-2 text-xs">
@@ -543,9 +557,14 @@ export function CustomerOrderRow({
             </div>
           )}
 
+          {/* Rubrik som binder varorna till just den här kunden. */}
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-primary">
+            {name}s beställning
+          </div>
+
           {/* Varorna först: vad är beställt och hur mycket. */}
           {readOnly ? (
-            <ul className="divide-y divide-grid-line rounded-sm border border-grid-line">
+            <ul className="divide-y divide-border/70">
               {lines.map((l) => {
                 const label = (l.products?.name || l.free_text_name || "Vara") as string;
                 const struck = l.pack_status === "struken";
@@ -598,7 +617,7 @@ export function CustomerOrderRow({
 
           {/* Kommentaren direkt under varorna — den styr ofta packningen. */}
           {(order.note || lineNotes.length > 0) && (
-            <div className="space-y-1 rounded-sm border border-grid-line bg-card p-2 text-xs">
+            <div className="space-y-1 rounded-xl border border-border/60 bg-background/70 p-2.5 text-xs">
               <div className="flex items-center gap-1.5 font-semibold text-foreground">
                 <MessageSquare className="h-3.5 w-3.5 text-primary" /> Kommentar
               </div>
@@ -611,7 +630,7 @@ export function CustomerOrderRow({
             </div>
           )}
 
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm bg-muted/50 p-2 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-primary/15 bg-background/70 px-3 py-2 text-xs">
             <span className="text-muted-foreground">
               {order.total_incl_vat ? "Verkligt pris" : "Uppskattat pris"}
             </span>
