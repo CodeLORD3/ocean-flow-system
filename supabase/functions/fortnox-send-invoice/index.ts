@@ -20,6 +20,7 @@ Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({}));
   const orderId: string | undefined = body?.order_id;
   const dryRun = body?.dry_run === true;
+  const send_email = body?.send_email === true;
   if (!orderId || !/^[0-9a-f-]{36}$/i.test(orderId)) return json({ error: "order_id (uuid) krävs" }, 400);
 
   const sb = adminClient();
