@@ -586,16 +586,8 @@ export default function CustomerOrders() {
         )}
 
         {panel === "orders" && focus && (
-          <div className="flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/5 p-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9"
-              onClick={() => {
-                setFocus(null);
-                setPanel("totals");
-              }}
-            >
+          <div className="sticky top-0 z-30 -mx-1 flex flex-wrap items-center gap-2 rounded-md border border-primary/40 bg-primary/10 p-2 backdrop-blur supports-[backdrop-filter]:bg-primary/10">
+            <Button size="sm" className="h-9 font-semibold" onClick={backToTotals}>
               <ArrowLeft className="mr-1.5 h-4 w-4" /> Tillbaka till totallistan
             </Button>
             <span className="text-xs text-muted-foreground">
@@ -603,6 +595,7 @@ export default function CustomerOrders() {
             </span>
           </div>
         )}
+
 
         <div className={panel === "orders" ? "space-y-3" : "hidden"}>
 
