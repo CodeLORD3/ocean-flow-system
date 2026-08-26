@@ -111,7 +111,14 @@ Deno.serve(async (req) => {
 
   try {
     // 3) Säkerställ artiklar i Fortnox (SERVICE, inget lager i Fortnox)
+    const seenArticles = new Map<string, string>();
     for (const r of rows) {
+      const cachedArt = seenArticles.get(r.article_number);
+      if (cachedArt) {
+        r.article_number = cachedArt;
+        continue;
+      }
+      const originalArt = r.article_number;
       const { data: mapped } = await sb.from("fortnox_article_map")
         .select("fortnox_article_number")
         .eq("legal_entity_code", entity)
@@ -119,6 +126,7 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (mapped?.fortnox_article_number) {
         r.article_number = mapped.fortnox_article_number;
+        seenArticles.set(originalArt, r.article_number);
         continue;
       }
       let exists = true;
@@ -129,16 +137,24 @@ Deno.serve(async (req) => {
         else throw e;
       }
       if (!exists) {
-        await fortnoxRequest(sb, entity, "POST", "/articles", {
-          Article: {
-            ArticleNumber: r.article_number,
-            Description: r.description?.slice(0, 50) ?? "Vara",
-            Type: "SERVICE",
-            StockGoods: false,
-            Active: true,
-            EAN: r.ean ?? undefined,
-          },
-        });
+        try {
+          await fortnoxRequest(sb, entity, "POST", "/articles", {
+            Article: {
+              ArticleNumber: r.article_number,
+              Description: r.description?.slice(0, 50) ?? "Vara",
+              Type: "SERVICE",
+              StockGoods: false,
+              Active: true,
+              EAN: r.ean ?? undefined,
+            },
+          });
+        } catch (e) {
+          const already =
+            e instanceof FortnoxError &&
+            e.status === 400 &&
+            (e.fortnoxCode === 2000013 || /anv[äa]nds redan|already/i.test(e.message));
+          if (!already) throw e;
+        }
       }
       if (r.product_id) {
         await sb.from("fortnox_article_map").upsert(
@@ -146,7 +162,9 @@ Deno.serve(async (req) => {
           { onConflict: "legal_entity_code,product_id" },
         );
       }
+      seenArticles.set(originalArt, r.article_number);
     }
+
     payload.Invoice.InvoiceRows = rows.map((r) => ({
       ArticleNumber: r.article_number,
       Description: r.description?.slice(0, 50),
