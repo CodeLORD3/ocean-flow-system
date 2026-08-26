@@ -549,10 +549,15 @@ export function CustomerOrderRow({
               {lines.map((l) => {
                 const label = (l.products?.name || l.free_text_name || "Vara") as string;
                 const struck = l.pack_status === "struken";
+                const marked =
+                  !!highlightProduct &&
+                  label.toLowerCase() === highlightProduct.trim().toLowerCase();
                 return (
                   <li
                     key={l.id}
-                    className="flex flex-wrap items-center gap-x-2 gap-y-1 px-2.5 py-1.5 text-xs"
+                    className={`flex flex-wrap items-center gap-x-2 gap-y-1 px-2.5 py-1.5 text-xs ${
+                      marked ? "bg-primary/10 ring-1 ring-inset ring-primary" : ""
+                    }`}
                   >
                     <ProductThumb
                       src={l.products?.image_url}
