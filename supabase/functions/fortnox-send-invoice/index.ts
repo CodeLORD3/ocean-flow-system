@@ -65,7 +65,24 @@ Deno.serve(async (req) => {
 
   if (dryRun) return json({ ok: true, dry_run: true, legal_entity_code: entity, idempotency_key: idempotencyKey, payload });
 
-  // 2) Idempotent jobb
+  // 2) Idempotent jobb – läs befintligt jobb FÖRE upsert så att status inte skrivs över
+  const { data: prior } = await sb
+    .from("fortnox_invoice_jobs")
+    .select("*")
+    .eq("idempotency_key", idempotencyKey)
+    .maybeSingle();
+
+  if (prior?.fortnox_document_number && ["created", "bookkept", "sent"].includes(prior.status)) {
+    return json({
+      ok: true,
+      already: true,
+      already_sent: true,
+      status: prior.status,
+      document_number: prior.fortnox_document_number,
+      url: prior.fortnox_url,
+    });
+  }
+
   const { data: job, error: jErr } = await sb
     .from("fortnox_invoice_jobs")
     .upsert(
@@ -83,9 +100,6 @@ Deno.serve(async (req) => {
     .single();
   if (jErr) return json({ error: jErr.message }, 500);
 
-  if (job.status === "sent" && job.fortnox_document_number) {
-    return json({ ok: true, already_sent: true, document_number: job.fortnox_document_number, url: job.fortnox_url });
-  }
 
   const fail = async (msg: string, status = 502) => {
     await sb.from("fortnox_invoice_jobs")
