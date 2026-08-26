@@ -3682,6 +3682,282 @@ export type Database = {
           },
         ]
       }
+      fortnox_api_log: {
+        Row: {
+          created_at: string
+          duration_ms: number | null
+          error: string | null
+          id: number
+          legal_entity_code: string | null
+          method: string | null
+          path: string | null
+          status_code: number | null
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: number
+          legal_entity_code?: string | null
+          method?: string | null
+          path?: string | null
+          status_code?: number | null
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number | null
+          error?: string | null
+          id?: number
+          legal_entity_code?: string | null
+          method?: string | null
+          path?: string | null
+          status_code?: number | null
+        }
+        Relationships: []
+      }
+      fortnox_article_map: {
+        Row: {
+          created_at: string
+          fortnox_article_number: string
+          id: string
+          legal_entity_code: string
+          product_id: string
+        }
+        Insert: {
+          created_at?: string
+          fortnox_article_number: string
+          id?: string
+          legal_entity_code: string
+          product_id: string
+        }
+        Update: {
+          created_at?: string
+          fortnox_article_number?: string
+          id?: string
+          legal_entity_code?: string
+          product_id?: string
+        }
+        Relationships: []
+      }
+      fortnox_connections: {
+        Row: {
+          access_secret_id: string | null
+          access_token_expires_at: string | null
+          account_type: string
+          connected_by: string | null
+          created_at: string
+          fortnox_company_name: string | null
+          fortnox_database_number: string | null
+          fortnox_org_number: string | null
+          id: string
+          last_error: string | null
+          last_refreshed_at: string | null
+          legal_entity_code: string
+          legal_entity_name: string
+          refresh_lock_until: string | null
+          refresh_secret_id: string | null
+          scopes: string[]
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          access_secret_id?: string | null
+          access_token_expires_at?: string | null
+          account_type?: string
+          connected_by?: string | null
+          created_at?: string
+          fortnox_company_name?: string | null
+          fortnox_database_number?: string | null
+          fortnox_org_number?: string | null
+          id?: string
+          last_error?: string | null
+          last_refreshed_at?: string | null
+          legal_entity_code: string
+          legal_entity_name: string
+          refresh_lock_until?: string | null
+          refresh_secret_id?: string | null
+          scopes?: string[]
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          access_secret_id?: string | null
+          access_token_expires_at?: string | null
+          account_type?: string
+          connected_by?: string | null
+          created_at?: string
+          fortnox_company_name?: string | null
+          fortnox_database_number?: string | null
+          fortnox_org_number?: string | null
+          id?: string
+          last_error?: string | null
+          last_refreshed_at?: string | null
+          legal_entity_code?: string
+          legal_entity_name?: string
+          refresh_lock_until?: string | null
+          refresh_secret_id?: string | null
+          scopes?: string[]
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fortnox_customer_map: {
+        Row: {
+          confirmed: boolean
+          created_at: string
+          fortnox_customer_number: string
+          id: string
+          legal_entity_code: string
+          makrilltrade_customer_id: string
+          match_method: string
+        }
+        Insert: {
+          confirmed?: boolean
+          created_at?: string
+          fortnox_customer_number: string
+          id?: string
+          legal_entity_code: string
+          makrilltrade_customer_id: string
+          match_method?: string
+        }
+        Update: {
+          confirmed?: boolean
+          created_at?: string
+          fortnox_customer_number?: string
+          id?: string
+          legal_entity_code?: string
+          makrilltrade_customer_id?: string
+          match_method?: string
+        }
+        Relationships: []
+      }
+      fortnox_customers: {
+        Row: {
+          active: boolean
+          city: string | null
+          country_code: string | null
+          currency: string | null
+          customer_number: string
+          email: string | null
+          legal_entity_code: string
+          name: string | null
+          org_number: string | null
+          org_number_norm: string | null
+          raw: Json | null
+          synced_at: string
+          vat_type: string | null
+        }
+        Insert: {
+          active?: boolean
+          city?: string | null
+          country_code?: string | null
+          currency?: string | null
+          customer_number: string
+          email?: string | null
+          legal_entity_code: string
+          name?: string | null
+          org_number?: string | null
+          org_number_norm?: string | null
+          raw?: Json | null
+          synced_at?: string
+          vat_type?: string | null
+        }
+        Update: {
+          active?: boolean
+          city?: string | null
+          country_code?: string | null
+          currency?: string | null
+          customer_number?: string
+          email?: string | null
+          legal_entity_code?: string
+          name?: string | null
+          org_number?: string | null
+          org_number_norm?: string | null
+          raw?: Json | null
+          synced_at?: string
+          vat_type?: string | null
+        }
+        Relationships: []
+      }
+      fortnox_invoice_jobs: {
+        Row: {
+          attempts: number
+          created_at: string
+          created_by: string | null
+          fortnox_document_number: string | null
+          fortnox_url: string | null
+          id: string
+          idempotency_key: string
+          last_error: string | null
+          legal_entity_code: string
+          order_id: string
+          request_payload: Json | null
+          response: Json | null
+          status: string
+          stock_booked_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          created_by?: string | null
+          fortnox_document_number?: string | null
+          fortnox_url?: string | null
+          id?: string
+          idempotency_key: string
+          last_error?: string | null
+          legal_entity_code: string
+          order_id: string
+          request_payload?: Json | null
+          response?: Json | null
+          status?: string
+          stock_booked_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          created_by?: string | null
+          fortnox_document_number?: string | null
+          fortnox_url?: string | null
+          id?: string
+          idempotency_key?: string
+          last_error?: string | null
+          legal_entity_code?: string
+          order_id?: string
+          request_payload?: Json | null
+          response?: Json | null
+          status?: string
+          stock_booked_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fortnox_oauth_states: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          legal_entity_code: string
+          state: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at: string
+          legal_entity_code: string
+          state: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          legal_entity_code?: string
+          state?: string
+        }
+        Relationships: []
+      }
       image_feature_runs: {
         Row: {
           created_at: string
@@ -12357,6 +12633,49 @@ export type Database = {
           _lot_id: string
         }
         Returns: Json
+      }
+      fortnox_auto_match_customers: {
+        Args: { p_entity: string }
+        Returns: number
+      }
+      fortnox_build_invoice_input: {
+        Args: { p_order_id: string }
+        Returns: Json
+      }
+      fortnox_claim_refresh: { Args: { p_entity: string }; Returns: boolean }
+      fortnox_on_invoice_created: {
+        Args: {
+          p_document_number: string
+          p_entity: string
+          p_order_id: string
+        }
+        Returns: undefined
+      }
+      fortnox_read_tokens: {
+        Args: { p_entity: string }
+        Returns: {
+          access_token: string
+          expires_at: string
+          refresh_token: string
+          status: string
+        }[]
+      }
+      fortnox_release_refresh: {
+        Args: { p_entity: string }
+        Returns: undefined
+      }
+      fortnox_store_tokens: {
+        Args: {
+          p_access: string
+          p_entity: string
+          p_expires_at: string
+          p_refresh: string
+        }
+        Returns: undefined
+      }
+      fortnox_vat_rate: {
+        Args: { p_category: string; p_entity: string }
+        Returns: number
       }
       get_employee_pnr: { Args: { _employee_id: string }; Returns: string }
       has_company_access: {

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ImageIcon, Camera, Star } from "lucide-react";
+import { FortnoxInvoiceButton } from "@/components/orders/FortnoxInvoiceButton";
 import {
   ChevronDown,
   Lock,
@@ -930,6 +931,7 @@ export function CustomerOrderRow({
                     )}
                   </Button>
                 )}
+                {!readOnly && canEdit && !cancelled && <FortnoxInvoiceButton orderId={order.id} />}
                 {!readOnly && canEdit && !cancelled && (
                   <Button
                     variant="outline"
