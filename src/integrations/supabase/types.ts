@@ -3950,6 +3950,7 @@ export type Database = {
           last_error: string | null
           legal_entity_code: string
           order_id: string
+          order_kind: string
           request_payload: Json | null
           response: Json | null
           status: string
@@ -3975,6 +3976,7 @@ export type Database = {
           last_error?: string | null
           legal_entity_code: string
           order_id: string
+          order_kind?: string
           request_payload?: Json | null
           response?: Json | null
           status?: string
@@ -4000,6 +4002,7 @@ export type Database = {
           last_error?: string | null
           legal_entity_code?: string
           order_id?: string
+          order_kind?: string
           request_payload?: Json | null
           response?: Json | null
           status?: string
@@ -10429,6 +10432,7 @@ export type Database = {
           created_at: string | null
           currency: string
           establishment_id: string | null
+          fortnox_customer_number: string | null
           hours: string | null
           id: string
           inventory_location_id: string | null
@@ -10456,6 +10460,7 @@ export type Database = {
           created_at?: string | null
           currency: string
           establishment_id?: string | null
+          fortnox_customer_number?: string | null
           hours?: string | null
           id?: string
           inventory_location_id?: string | null
@@ -10483,6 +10488,7 @@ export type Database = {
           created_at?: string | null
           currency?: string
           establishment_id?: string | null
+          fortnox_customer_number?: string | null
           hours?: string | null
           id?: string
           inventory_location_id?: string | null
@@ -12717,6 +12723,10 @@ export type Database = {
         Returns: number
       }
       fortnox_build_invoice_input: {
+        Args: { p_order_id: string }
+        Returns: Json
+      }
+      fortnox_build_shop_invoice_input: {
         Args: { p_order_id: string }
         Returns: Json
       }
