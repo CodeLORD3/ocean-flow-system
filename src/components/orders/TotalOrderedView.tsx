@@ -702,11 +702,17 @@ export function TotalOrderedView({
                               </div>
                               <div className="divide-y divide-border/40">
                                 {visible.map((o) => (
-                                  <div
+                                  <button
+                                    type="button"
                                     key={`${key}-${o.orderNumber}`}
-                                    className="grid grid-cols-[auto,1fr] items-baseline gap-x-2 gap-y-0.5 px-2 py-2 text-xs md:flex md:flex-wrap md:py-1.5"
+                                    onClick={() => onOpenOrder?.(o.orderId, r.name)}
+                                    disabled={!onOpenOrder}
+                                    title={onOpenOrder ? `Öppna ${o.orderNumber}` : undefined}
+                                    className="grid w-full grid-cols-[auto,1fr] items-baseline gap-x-2 gap-y-0.5 px-2 py-2 text-left text-xs transition-colors hover:bg-muted/50 md:flex md:flex-wrap md:py-1.5"
                                   >
-                                    <span className="font-mono text-muted-foreground">{o.orderNumber}</span>
+                                    <span className="font-mono text-primary underline-offset-2 hover:underline">
+                                      {o.orderNumber}
+                                    </span>
                                     <span className="min-w-0 truncate md:flex-1">{o.customer}</span>
                                     <span className="col-span-2 flex flex-wrap items-baseline gap-2 md:contents">
                                       <span className="font-mono tabular-nums">
@@ -715,7 +721,7 @@ export function TotalOrderedView({
                                       <span className="text-muted-foreground">{typeLabel(o.orderType)}</span>
                                       <span className="font-mono text-muted-foreground">{o.wantedDate}</span>
                                     </span>
-                                  </div>
+                                  </button>
                                 ))}
                               </div>
 
