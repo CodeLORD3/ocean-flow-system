@@ -496,6 +496,19 @@ export default function CustomerOrders() {
           </div>
 
           <div className="ml-auto flex shrink-0 flex-wrap gap-2">
+            {/* Totallista lyfts fram: personalen sorterar och packar varor i bulk innan enskilda ordrar packas. */}
+            <Button
+              variant={panel === "totals" ? "default" : "outline"}
+              size="sm"
+              className={`h-11 gap-1.5 px-4 text-xs font-semibold ${
+                panel === "totals"
+                  ? "shadow-sm"
+                  : "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"
+              }`}
+              onClick={() => setPanel(panel === "totals" ? "orders" : "totals")}
+            >
+              <Sigma className="h-4 w-4" /> Totallista
+            </Button>
             <Button
               variant={panel === "pickups" ? "default" : "outline"}
               size="sm"
@@ -504,6 +517,7 @@ export default function CustomerOrders() {
             >
               <Clock className="h-4 w-4" /> Hämtningar
             </Button>
+
             <Button
               variant={panel === "route" ? "default" : "outline"}
               size="sm"
