@@ -283,15 +283,17 @@ export function TotalOrderedView({ storeId }: { storeId: string | null }) {
 
   const exportCsv = () => {
     const rows: string[][] = [
-      ["Period", "Produkt", "Enhet", "Mängd", "Antal ordrar", "Leveranssätt", "Ordrar"],
+      ["Period", "Kategori", "Produkt", "Enhet", "Mängd", "Värde", "Antal ordrar", "Leveranssätt", "Ordrar"],
     ];
     for (const g of groups)
       for (const r of g.rows)
         rows.push([
           g.label,
+          r.category,
           r.name,
           r.unit,
           qtyText(r.total, r.unit),
+          moneyText(r.value),
           String(r.orders.length),
           byType(r)
             .map(([t, v]) => `${t} ${qtyText(v.qty, r.unit)} ${r.unit} (${v.orders})`)
