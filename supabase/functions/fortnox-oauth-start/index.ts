@@ -1,4 +1,4 @@
-import { adminClient, requireUser, json, corsHeaders, FORTNOX_AUTH_URL, FORTNOX_SCOPES, LEGAL_ENTITIES } from "../_shared/fortnox.ts";
+import { adminClient, requireUser, json, corsHeaders, FORTNOX_AUTH_URL, FORTNOX_SCOPES, LEGAL_ENTITIES, redirectUri } from "../_shared/fortnox.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
 
   const url = new URL(FORTNOX_AUTH_URL);
   url.searchParams.set("client_id", Deno.env.get("FORTNOX_CLIENT_ID")!);
-  url.searchParams.set("redirect_uri", Deno.env.get("FORTNOX_REDIRECT_URI")!);
+  url.searchParams.set("redirect_uri", redirectUri());
   url.searchParams.set("scope", FORTNOX_SCOPES.join(" "));
   url.searchParams.set("state", state);
   url.searchParams.set("access_type", "offline");

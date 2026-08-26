@@ -1,12 +1,12 @@
 // Publik (verify_jwt = false): Fortnox redirectar webbläsaren hit.
-import { adminClient, exchangeCode, storeTokens, fortnoxRequest } from "../_shared/fortnox.ts";
+import { adminClient, exchangeCode, storeTokens, fortnoxRequest, APP_URL } from "../_shared/fortnox.ts";
 
 Deno.serve(async (req) => {
   const u = new URL(req.url);
   const code = u.searchParams.get("code");
   const state = u.searchParams.get("state");
   const oauthError = u.searchParams.get("error");
-  const appUrl = Deno.env.get("APP_URL")!;
+  const appUrl = Deno.env.get("APP_URL") ?? APP_URL;
   const back = (q: string) => Response.redirect(`${appUrl}/fortnox?${q}`, 302);
 
   if (oauthError) return back(`error=${encodeURIComponent(oauthError)}`);

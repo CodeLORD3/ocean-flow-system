@@ -85,11 +85,17 @@ async function tokenRequest(params: Record<string, string>): Promise<TokenRespon
   return body as TokenResponse;
 }
 
+export function redirectUri(): string {
+  return `${Deno.env.get("SUPABASE_URL")}/functions/v1/fortnox-oauth-callback`;
+}
+
+export const APP_URL = "https://ocean-flow-system.lovable.app";
+
 export function exchangeCode(code: string): Promise<TokenResponse> {
   return tokenRequest({
     grant_type: "authorization_code",
     code,
-    redirect_uri: Deno.env.get("FORTNOX_REDIRECT_URI")!,
+    redirect_uri: redirectUri(),
   });
 }
 
