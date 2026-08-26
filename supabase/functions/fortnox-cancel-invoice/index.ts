@@ -48,12 +48,18 @@ Deno.serve(async (req) => {
       await fortnoxRequest(sb, entity, "PUT", `/invoices/${nr}/cancel`);
     }
 
-    const { error: rErr } = await sb.rpc("fortnox_on_invoice_cancelled", {
-      p_order_id: orderId,
-      p_entity: entity,
-      p_document_number: String(nr),
-    });
-    if (rErr) return await fail(`Annullerad i Fortnox men lagerreversering misslyckades: ${rErr.message}`);
+    // Butiksordrar bokar inget lager vid fakturering och ska därför inte reverseras.
+    if (job.order_kind !== "shop_order") {
+      const { error: rErr } = await sb.rpc("fortnox_on_invoice_cancelled", {
+        p_order_id: orderId,
+        p_entity: entity,
+        p_document_number: String(nr),
+      });
+      if (rErr) return await fail(`Annullerad i Fortnox men lagerreversering misslyckades: ${rErr.message}`);
+    } else {
+      await sb.from("shop_orders").update({ invoice_status: "Väntande" }).eq("id", orderId);
+    }
+
 
     await sb.from("fortnox_invoice_jobs").update({
       status: "cancelled",
