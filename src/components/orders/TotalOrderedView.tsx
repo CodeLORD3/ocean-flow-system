@@ -540,46 +540,55 @@ export function TotalOrderedView({
       </div>
 
       {/* Sammanfattning */}
-      <Card className="overflow-hidden border-border/60 shadow-sm">
-        <CardContent className="flex flex-wrap items-center gap-4 py-4 sm:gap-8 sm:py-5">
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-primary/10 p-2.5 ring-1 ring-inset ring-primary/20">
-              <CalendarDays className="h-5 w-5 text-primary" />
+      <Card className="overflow-hidden rounded-2xl border-border/60 shadow-sm">
+        <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:gap-6 sm:p-4">
+          <div className="grid flex-1 grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-6">
+            <div className="flex items-center gap-2.5 rounded-xl bg-muted/25 p-2.5 sm:bg-transparent sm:p-0">
+              <div className="rounded-xl bg-primary/10 p-2 ring-1 ring-inset ring-primary/20">
+                <CalendarDays className="h-4 w-4 text-primary" />
+              </div>
+              <div className="min-w-0 space-y-0.5">
+                <div className="truncate text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+                  Unika ordrar
+                </div>
+                <div className="font-mono text-xl font-semibold leading-none tabular-nums sm:text-2xl">
+                  {orderCount} st
+                </div>
+              </div>
             </div>
-            <div className="space-y-0.5">
-              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Unika ordrar</div>
-              <div className="font-mono text-2xl font-semibold leading-none tabular-nums">{orderCount} st</div>
-              <div className="text-[11px] text-muted-foreground">i valt urval</div>
+            <div className="hidden h-10 w-px bg-border/60 sm:block" />
+            <div className="flex items-center gap-2.5 rounded-xl bg-muted/25 p-2.5 sm:bg-transparent sm:p-0">
+              <div className="rounded-xl bg-accent/50 p-2 ring-1 ring-inset ring-border/60">
+                <Package className="h-4 w-4 text-accent-foreground" />
+              </div>
+              <div className="min-w-0 space-y-0.5">
+                <div className="truncate text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+                  Olika produkter
+                </div>
+                <div className="font-mono text-xl font-semibold leading-none tabular-nums sm:text-2xl">
+                  {productCount} st
+                </div>
+              </div>
             </div>
           </div>
-          <div className="hidden h-12 w-px bg-border/70 sm:block" />
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-accent/50 p-2.5 ring-1 ring-inset ring-border/60">
-              <Package className="h-5 w-5 text-accent-foreground" />
-            </div>
-            <div className="space-y-0.5">
-              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Olika produkter</div>
-              <div className="font-mono text-2xl font-semibold leading-none tabular-nums">{productCount} st</div>
-              <div className="text-[11px] text-muted-foreground">i valt urval</div>
-            </div>
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-11 gap-1.5 rounded-xl text-xs sm:h-10"
+              onClick={exportCsv}
+            >
+              <Download className="h-4 w-4" /> <span className="truncate">Excel/CSV</span>
+            </Button>
+            <Button
+              size="sm"
+              className="h-11 gap-1.5 rounded-xl text-xs font-semibold sm:h-10 sm:text-sm"
+              onClick={() => setPrintOpen(true)}
+              disabled={groups.length === 0}
+            >
+              <Printer className="h-4 w-4" /> <span className="truncate">Skriv ut</span>
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-11 w-full gap-1.5 rounded-lg text-xs sm:ml-auto sm:h-10 sm:w-auto"
-            onClick={exportCsv}
-          >
-            <Download className="h-4 w-4" /> Exportera till Excel/CSV
-          </Button>
-          <Button
-            size="sm"
-            className="h-12 w-full gap-2 rounded-lg text-sm font-semibold sm:h-11 sm:w-auto"
-            onClick={() => setPrintOpen(true)}
-            disabled={groups.length === 0}
-          >
-            <Printer className="h-5 w-5" /> Skriv ut lista
-          </Button>
-
         </CardContent>
       </Card>
 
