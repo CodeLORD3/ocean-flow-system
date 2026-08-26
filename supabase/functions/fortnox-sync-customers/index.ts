@@ -12,7 +12,6 @@ Deno.serve(async (req) => {
   const sb = adminClient();
   let page = 1;
   let fetched = 0;
-  const norm = (v: string | null | undefined) => (v ?? "").replace(/\D/g, "");
 
   try {
     while (page <= 200) {
@@ -25,7 +24,6 @@ Deno.serve(async (req) => {
         customer_number: String(c.CustomerNumber),
         name: c.Name ?? null,
         org_number: c.OrganisationNumber ?? null,
-        org_number_norm: norm(c.OrganisationNumber),
         email: c.Email ?? null,
         city: c.City ?? null,
         country_code: c.CountryCode ?? null,
