@@ -14,6 +14,16 @@ const ENTITIES = [
   { code: "fsab-se", name: "Fisk & Skaldjursspecialisten AB" },
 ];
 
+const JOB_STATUS_LABELS: Record<string, string> = {
+  pending: "Köad",
+  creating: "Skickar",
+  created: "Faktura skapad",
+  bookkept: "Klar – lager bokfört",
+  sent: "Skickad",
+  failed: "Misslyckades",
+};
+
+
 const statusBadge = (status: string) => {
   if (status === "connected") return <Badge className="bg-emerald-600/15 text-emerald-400 border-emerald-600/30">Kopplad</Badge>;
   if (status === "needs_reauth") return <Badge variant="destructive">Måste kopplas om</Badge>;
