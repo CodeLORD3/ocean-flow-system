@@ -70,11 +70,12 @@ Deno.serve(async (req) => {
     return json({ ok: true, dry_run: true, legal_entity_code: entity, idempotency_key: idempotencyKey, payload });
   }
 
-  const { data: prior } = await sb
+  const { data: priorJobs } = await sb
     .from("fortnox_invoice_jobs")
     .select("*")
-    .eq("idempotency_key", idempotencyKey)
-    .maybeSingle();
+    .eq("order_id", orderId)
+    .order("created_at", { ascending: false });
+  const prior = priorJobs?.[0] ?? null;
 
   if (prior?.fortnox_document_number && ["created", "bookkept", "sent", "paid"].includes(prior.status)) {
     return json({
@@ -91,6 +92,13 @@ Deno.serve(async (req) => {
   if (prior?.status === "creating" && Date.now() - new Date(prior.updated_at ?? prior.created_at).getTime() < 120_000) {
     return json({ error: "Fakturan skickas redan till Fortnox. Vänta någon minut och uppdatera status." }, 409);
   }
+
+  // Ny faktura efter annullering: ny nyckel så Fortnox inte återanvänder den annullerade
+  if (prior?.status === "cancelled" || (prior?.fortnox_document_number && prior?.status === "failed")) {
+    idempotencyKey = `MKR-SHOP-${orderId}-R${(priorJobs?.length ?? 1) + 1}`;
+    payload.Invoice.ExternalInvoiceReference1 = idempotencyKey;
+  }
+
 
 
   const { data: job, error: jErr } = await sb
