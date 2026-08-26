@@ -930,6 +930,7 @@ export function CustomerOrderRow({
                     )}
                   </Button>
                 )}
+                {!readOnly && canEdit && !cancelled && <FortnoxInvoiceButton orderId={order.id} />}
                 {!readOnly && canEdit && !cancelled && (
                   <Button
                     variant="outline"
