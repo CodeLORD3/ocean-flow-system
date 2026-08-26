@@ -95,11 +95,9 @@ Deno.serve(async (req) => {
 
   // Ny faktura efter annullering: ny nyckel så Fortnox inte återanvänder den annullerade
   if (prior?.status === "cancelled" || (prior?.fortnox_document_number && prior?.status === "failed")) {
-    idempotencyKey = `MKR-SHOP-${orderId}-R${(priorJobs?.length ?? 1) + 1}`;
+    idempotencyKey = `MKR-SHOP-${orderId}-R${Math.floor(Date.now() / 1000)}`;
     payload.Invoice.ExternalInvoiceReference1 = idempotencyKey;
   }
-
-
 
   const { data: job, error: jErr } = await sb
     .from("fortnox_invoice_jobs")
@@ -112,9 +110,13 @@ Deno.serve(async (req) => {
         request_payload: payload,
         created_by: user.id,
         status: "creating",
+        fortnox_document_number: null,
+        fortnox_url: null,
+        last_error: null,
       },
-      { onConflict: "idempotency_key" },
+      { onConflict: "order_id" },
     )
+
     .select()
     .single();
   if (jErr) return json({ error: jErr.message }, 500);
