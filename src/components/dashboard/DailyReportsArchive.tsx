@@ -51,6 +51,7 @@ export function DailyReportsArchive() {
   const { data: reports = [], isLoading } = useAllDailyReports();
   const { data: stores = [] } = useStores(true);
   const { data: staff = [] } = useStaff();
+  const { nameOf } = useActorNames();
   const [storeFilter, setStoreFilter] = useState<string>("all");
   const [openId, setOpenId] = useState<string | null>(null);
 
