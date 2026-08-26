@@ -88,10 +88,10 @@ export const ROLE_DEFS: RoleDef[] = [
   {
     key: "store_staff",
     label: "Butikspersonal",
-    description: "Daglig drift i valda butiker.",
+    description: "Daglig drift i den egna butiken.",
     scope: "store",
     portals: ["shop"],
-    rank: 7,
+    rank: 8,
   },
 ];
 
