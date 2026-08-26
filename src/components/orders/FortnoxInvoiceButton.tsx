@@ -42,7 +42,9 @@ export function FortnoxInvoiceButton({ orderId }: { orderId: string }) {
     qc.invalidateQueries({ queryKey: ["fortnox_invoice_jobs"] });
   };
 
-  const sent = job.data?.status === "sent" && job.data?.fortnox_document_number;
+  const sent =
+    ["created", "bookkept", "sent"].includes(job.data?.status ?? "") && job.data?.fortnox_document_number;
+
 
   if (sent) {
     return (
