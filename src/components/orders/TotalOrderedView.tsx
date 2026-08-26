@@ -374,8 +374,8 @@ export function TotalOrderedView({
       {/* Kontrollpaneler: vygruppering, datumval, filter */}
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
 
-        <Card>
-          <CardHeader className="pb-2">
+        <Card className="rounded-2xl border-border/60 shadow-sm">
+          <CardHeader className="p-3 pb-1.5">
             <CardTitle className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
               1. Vygruppering
             </CardTitle>
@@ -397,13 +397,13 @@ export function TotalOrderedView({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
+        <Card className="rounded-2xl border-border/60 shadow-sm">
+          <CardHeader className="p-3 pb-1.5">
             <CardTitle className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
               2. Datumval
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-2 p-3 pt-0">
             <div className="flex flex-wrap gap-1">
               <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => quickRange("today")}>
                 Idag
@@ -483,13 +483,13 @@ export function TotalOrderedView({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
+        <Card className="rounded-2xl border-border/60 shadow-sm">
+          <CardHeader className="p-3 pb-1.5">
             <CardTitle className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
               3. Filter
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-2 p-3 pt-0">
             <Select value={orderType} onValueChange={setOrderType}>
               <SelectTrigger className="h-10 text-xs">
                 <SelectValue placeholder="Leveranssätt" />
