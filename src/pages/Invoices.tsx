@@ -13,7 +13,6 @@ import { useShopOrders } from "@/hooks/useShopOrders";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import DeliveryNote from "@/components/DeliveryNote";
-import { FortnoxInvoiceQueue } from "@/components/orders/FortnoxInvoiceQueue";
 
 
 const INVOICE_STATUSES = [
@@ -101,8 +100,6 @@ export default function Invoices() {
           </CardContent>
         </Card>
       </div>
-
-      <FortnoxInvoiceQueue />
 
       <Card className="shadow-card">
         <CardHeader className="pb-2">
