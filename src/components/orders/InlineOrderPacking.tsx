@@ -271,7 +271,7 @@ export function InlineOrderPacking({
         </Button>
       )}
 
-      <ul className="divide-y divide-border overflow-hidden rounded-md border border-border">
+      <ul className="divide-y divide-border/70">
         {lines.map((l, i) => {
           const name = (l.products?.name || l.free_text_name || "Vara") as string;
           const done = l.pack_status === "packad";
@@ -284,7 +284,7 @@ export function InlineOrderPacking({
               : "bg-row-warn"
             : struck
               ? "bg-row-off"
-              : "bg-card";
+              : "bg-transparent";
           const marked =
             !!highlightProduct && name.toLowerCase() === highlightProduct.trim().toLowerCase();
           return (
